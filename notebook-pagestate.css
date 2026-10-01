@@ -1,0 +1,89 @@
+/* Notebook page-state placement. Loaded after the earlier notebook layers. */
+
+/* Grid can render as dots without changing spatial coordinates. */
+.notebook-page.paper-grid[data-grid-paper="dots"] .notebook-page-body {
+  background-image: radial-gradient(circle, color-mix(in srgb,var(--paper-line) 88%,var(--paper-muted)) 1px, transparent 1.2px) !important;
+  background-size: var(--notebook-row-size) var(--notebook-row-size) !important;
+  background-position: 0 0 !important;
+}
+
+/* Style-menu paper variants mirror the compact single/two-column controls. */
+.notebook-style-grid-controls {
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  margin:-3px -3px -3px 5px;
+}
+.notebook-style-grid-choice {
+  width:24px;
+  height:22px;
+  display:inline-grid;
+  place-items:center;
+  border:1px solid transparent;
+  border-radius:4px;
+  color:var(--muted);
+  cursor:pointer;
+}
+.notebook-style-grid-choice:hover {
+  color:var(--ink);
+  border-color:var(--border);
+  background:var(--panel-soft);
+}
+.notebook-style-grid-choice.active {
+  color:var(--ink);
+  border-color:var(--border-strong);
+  background:var(--panel-soft);
+}
+.notebook-style-grid-choice:focus-visible {
+  outline:1px solid var(--border-strong);
+  outline-offset:1px;
+}
+.notebook-paper-choice-icon {
+  width:15px;
+  height:11px;
+  display:block;
+  opacity:.8;
+}
+.notebook-paper-choice-icon.grid {
+  border:1px solid currentColor;
+  border-radius:2px;
+  background:
+    linear-gradient(to right,transparent 45%,currentColor 46%,currentColor 54%,transparent 55%),
+    linear-gradient(to bottom,transparent 45%,currentColor 46%,currentColor 54%,transparent 55%);
+  background-size:5px 5px;
+}
+.notebook-paper-choice-icon.dots {
+  border:1px solid currentColor;
+  border-radius:2px;
+  background-image:radial-gradient(circle,currentColor 1px,transparent 1.2px);
+  background-size:4px 4px;
+}
+
+/* Normal paper is now row-aware. Saved page objects and the live writing object can leave
+   intentional blank rows between one another instead of being forced into one continuous feed. */
+.notebook-page-state-flow,
+.notebook-page-column {
+  position:relative;
+}
+.notebook-page-state-flow > .notebook-entry,
+.notebook-page-state-flow > .notebook-writing-zone,
+.notebook-page-column > .notebook-entry,
+.notebook-page-column > .notebook-writing-zone {
+  margin-bottom:0 !important;
+}
+.notebook-page-state-flow .notebook-writing-zone,
+.notebook-page-column .notebook-writing-zone {
+  min-height:var(--notebook-row-size) !important;
+  padding-bottom:calc(var(--notebook-row-size) * 5);
+}
+
+/* When there is a lot of open paper, keep it genuinely clickable. */
+.notebook-page.paper-blank .notebook-page-body,
+.notebook-page.paper-lines .notebook-page-body,
+.notebook-page.paper-cornell .notebook-page-body {
+  min-height:max(calc(100% + 96px),720px) !important;
+}
+
+/* Grid's old unplaced-draft badge should no longer be needed; page-state materializes a draft
+   before Grid renders. Hide it defensively if an old buffer somehow survives. */
+.grid-unplaced-draft { display:none !important; }
