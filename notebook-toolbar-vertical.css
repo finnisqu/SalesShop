@@ -1,0 +1,135 @@
+/* Keep the notebook object toolbar stable while compact option palettes expand upward. */
+
+/* The outer Format launcher has done its job once the toolbar is open. Hiding it keeps the
+   expanded strip visually clean; clicking away still closes the toolbar. */
+.notebook-spatial-object.format-open > .spatial-object-format-toggle,
+.grid-note.text-format-open > .grid-text-format-toggle {
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+/* Collapsible table controls occupy one fixed slot in the toolbar. Their alternate choices are
+   absolutely positioned above that slot instead of widening the toolbar horizontally. */
+.spatial-align-control,
+.spatial-number-format-control,
+.spatial-fill-control,
+.spatial-align-control:hover,
+.spatial-align-control:focus-within,
+.spatial-number-format-control:hover,
+.spatial-number-format-control:focus-within,
+.spatial-fill-control:hover,
+.spatial-fill-control:focus-within {
+  position:relative !important;
+  width:18px !important;
+  min-width:18px !important;
+  max-width:18px !important;
+  height:16px !important;
+  overflow:visible !important;
+  transition:none !important;
+}
+
+.spatial-align-choice,
+.spatial-number-format-choice,
+.spatial-fill-choice {
+  flex:0 0 16px !important;
+  width:16px !important;
+  height:16px !important;
+}
+
+/* Active choice remains the stationary trigger in the main toolbar. */
+.spatial-align-choice.active,
+.spatial-number-format-choice.active,
+.spatial-fill-choice.active {
+  position:relative !important;
+  inset:auto !important;
+  z-index:2;
+  opacity:.84 !important;
+  pointer-events:auto !important;
+}
+
+/* Alternate choices form a small vertical palette above the trigger. */
+.spatial-align-choice:not(.active),
+.spatial-number-format-choice:not(.active),
+.spatial-fill-choice:not(.active) {
+  position:absolute !important;
+  left:0 !important;
+  z-index:40;
+  margin:0 !important;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent) !important;
+  border-radius:4px !important;
+  background:color-mix(in srgb,var(--paper) 97%,var(--panel)) !important;
+  box-shadow:0 3px 9px rgba(0,0,0,.08) !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  transform:translateY(2px) scale(.97);
+  transition:opacity .08s ease,transform .08s ease !important;
+}
+
+.spatial-align-control:hover .spatial-align-choice:not(.active),
+.spatial-align-control:focus-within .spatial-align-choice:not(.active),
+.spatial-number-format-control:hover .spatial-number-format-choice:not(.active),
+.spatial-number-format-control:focus-within .spatial-number-format-choice:not(.active),
+.spatial-fill-control:hover .spatial-fill-choice:not(.active),
+.spatial-fill-control:focus-within .spatial-fill-choice:not(.active) {
+  opacity:.88 !important;
+  pointer-events:auto !important;
+  transform:translateY(0) scale(1);
+}
+
+.spatial-align-choice:not(.active):hover,
+.spatial-number-format-choice:not(.active):hover,
+.spatial-fill-choice:not(.active):hover {
+  opacity:1 !important;
+  color:var(--paper-ink) !important;
+  background:color-mix(in srgb,var(--paper) 88%,var(--paper-muted)) !important;
+}
+
+/* Alignment stack: nearest alternate first. */
+.spatial-align-control[data-active-align="left"] .spatial-align-choice:nth-child(2),
+.spatial-align-control[data-active-align="center"] .spatial-align-choice:nth-child(1),
+.spatial-align-control[data-active-align="right"] .spatial-align-choice:nth-child(2) { bottom:19px !important; }
+.spatial-align-control[data-active-align="left"] .spatial-align-choice:nth-child(3),
+.spatial-align-control[data-active-align="center"] .spatial-align-choice:nth-child(3),
+.spatial-align-control[data-active-align="right"] .spatial-align-choice:nth-child(1) { bottom:37px !important; }
+
+/* Number-format stack follows the toolbar order: none, currency, percent, decimal. */
+.spatial-number-format-control[data-active-number-format="none"] .spatial-number-format-choice:nth-child(2),
+.spatial-number-format-control[data-active-number-format="currency"] .spatial-number-format-choice:nth-child(1),
+.spatial-number-format-control[data-active-number-format="percent"] .spatial-number-format-choice:nth-child(2),
+.spatial-number-format-control[data-active-number-format="decimal"] .spatial-number-format-choice:nth-child(3) { bottom:19px !important; }
+.spatial-number-format-control[data-active-number-format="none"] .spatial-number-format-choice:nth-child(3),
+.spatial-number-format-control[data-active-number-format="currency"] .spatial-number-format-choice:nth-child(3),
+.spatial-number-format-control[data-active-number-format="percent"] .spatial-number-format-choice:nth-child(1),
+.spatial-number-format-control[data-active-number-format="decimal"] .spatial-number-format-choice:nth-child(2) { bottom:37px !important; }
+.spatial-number-format-control[data-active-number-format="none"] .spatial-number-format-choice:nth-child(4),
+.spatial-number-format-control[data-active-number-format="currency"] .spatial-number-format-choice:nth-child(4),
+.spatial-number-format-control[data-active-number-format="percent"] .spatial-number-format-choice:nth-child(4),
+.spatial-number-format-control[data-active-number-format="decimal"] .spatial-number-format-choice:nth-child(1) { bottom:55px !important; }
+
+/* Fill stack follows: none, yellow, mint, blue, rose. */
+.spatial-fill-control[data-active-fill="none"] .spatial-fill-choice:nth-child(2),
+.spatial-fill-control[data-active-fill="yellow"] .spatial-fill-choice:nth-child(1),
+.spatial-fill-control[data-active-fill="mint"] .spatial-fill-choice:nth-child(2),
+.spatial-fill-control[data-active-fill="blue"] .spatial-fill-choice:nth-child(3),
+.spatial-fill-control[data-active-fill="rose"] .spatial-fill-choice:nth-child(4) { bottom:19px !important; }
+.spatial-fill-control[data-active-fill="none"] .spatial-fill-choice:nth-child(3),
+.spatial-fill-control[data-active-fill="yellow"] .spatial-fill-choice:nth-child(3),
+.spatial-fill-control[data-active-fill="mint"] .spatial-fill-choice:nth-child(1),
+.spatial-fill-control[data-active-fill="blue"] .spatial-fill-choice:nth-child(2),
+.spatial-fill-control[data-active-fill="rose"] .spatial-fill-choice:nth-child(3) { bottom:37px !important; }
+.spatial-fill-control[data-active-fill="none"] .spatial-fill-choice:nth-child(4),
+.spatial-fill-control[data-active-fill="yellow"] .spatial-fill-choice:nth-child(4),
+.spatial-fill-control[data-active-fill="mint"] .spatial-fill-choice:nth-child(4),
+.spatial-fill-control[data-active-fill="blue"] .spatial-fill-choice:nth-child(1),
+.spatial-fill-control[data-active-fill="rose"] .spatial-fill-choice:nth-child(2) { bottom:55px !important; }
+.spatial-fill-control[data-active-fill="none"] .spatial-fill-choice:nth-child(5),
+.spatial-fill-control[data-active-fill="yellow"] .spatial-fill-choice:nth-child(5),
+.spatial-fill-control[data-active-fill="mint"] .spatial-fill-choice:nth-child(5),
+.spatial-fill-control[data-active-fill="blue"] .spatial-fill-choice:nth-child(5),
+.spatial-fill-control[data-active-fill="rose"] .spatial-fill-choice:nth-child(1) { bottom:73px !important; }
+
+/* The palette should be allowed to float above the otherwise compact toolbar. */
+.spatial-table-controls,
+.spatial-table-controls-advanced {
+  overflow:visible !important;
+}
