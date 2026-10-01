@@ -20,6 +20,7 @@
 /* Outside Cornell, preserve the cue as a compact semantic tag attached to the note. */
 .entry-cue-inline,
 .draft-cue-tag,
+.grid-history-cue,
 .grid-note-cue,
 .grid-editor-cue {
   display: inline-flex;
@@ -53,25 +54,70 @@
   background-position: 0 0, 20px 0;
 }
 
-/* Grid becomes a lightweight spatial layer. The chronological source entries stay in the data,
-   but this view renders them as anchored text blocks. */
+/* Grid becomes a lightweight spatial layer. Chronological notes live in a history rail at left;
+   the open grid to the right is the actual spatial workspace. */
 .notebook-page.paper-grid .notebook-page-body.grid-spatial-active > .notebook-entries,
 .notebook-page.paper-grid .notebook-page-body.grid-spatial-active > .notebook-writing-zone {
   display: none !important;
 }
 .grid-notebook-canvas {
+  --grid-archive-width: 224px;
+  --grid-workspace-left: 252px;
   position: relative;
   width: 100%;
   min-height: max(100%, 560px);
-  cursor: text;
+  cursor: default;
   user-select: none;
 }
+
+.grid-history-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--grid-archive-width);
+  min-height: 100%;
+  padding: 0 14px 0 2px;
+  border-right: 2px solid color-mix(in srgb, var(--paper-muted) 46%, transparent);
+  box-shadow: 8px 0 14px -14px color-mix(in srgb, var(--paper-ink) 48%, transparent);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--paper-muted) 28%, transparent) transparent;
+  z-index: 1;
+}
+.grid-history-rail::-webkit-scrollbar { width: 4px; }
+.grid-history-rail::-webkit-scrollbar-track { background: transparent; }
+.grid-history-rail::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--paper-muted) 28%, transparent);
+  border-radius: 999px;
+}
+.grid-history-entry {
+  min-height: 28px;
+  color: color-mix(in srgb, var(--paper-ink) 72%, var(--paper-muted));
+  font-family: Georgia, serif;
+  font-size: 12px;
+  line-height: 28px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.grid-history-entry + .grid-history-entry {
+  margin-top: 2px;
+}
+.grid-history-cue {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.grid-history-cue + .grid-history-text {
+  display: block;
+}
+.grid-history-text { white-space: pre-wrap; }
+
 .grid-note,
 .grid-editor-wrap {
   position: absolute;
-  left: calc(var(--grid-col) * 28px + 4px);
+  left: calc(var(--grid-workspace-left) + (var(--grid-col) * 28px) + 4px);
   top: calc(var(--grid-row) * 28px);
-  max-width: min(336px, calc(100% - (var(--grid-col) * 28px) - 12px));
+  max-width: min(336px, calc(100% - var(--grid-workspace-left) - (var(--grid-col) * 28px) - 12px));
   z-index: 2;
 }
 .grid-note {
@@ -90,28 +136,20 @@
   outline: 1px solid color-mix(in srgb, var(--paper-muted) 14%, transparent);
   border-radius: 3px;
 }
-.grid-note-auto {
-  opacity: .86;
-}
 .grid-note-cue {
   margin-top: 4px;
   margin-bottom: 4px;
   line-height: 18px;
 }
-.grid-note-text {
-  white-space: pre-wrap;
-}
-.grid-note-cue + .grid-note-text {
-  display: block;
-}
+.grid-note-text { white-space: pre-wrap; }
+.grid-note-cue + .grid-note-text { display: block; }
+
 .grid-editor-wrap {
   min-width: 168px;
-  width: min(308px, calc(100% - (var(--grid-col) * 28px) - 10px));
+  width: min(308px, calc(100% - var(--grid-workspace-left) - (var(--grid-col) * 28px) - 10px));
   z-index: 10;
 }
-.grid-editor-cue {
-  margin: 4px 0 4px;
-}
+.grid-editor-cue { margin: 4px 0 4px; }
 .grid-editor {
   display: block;
   width: 100%;
@@ -130,6 +168,38 @@
   line-height: 28px;
 }
 .grid-editor::placeholder { color: var(--paper-muted); opacity: .5; }
+
+.grid-editor-selection-tools {
+  position: absolute;
+  right: 0;
+  top: -27px;
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(3px);
+  transition: opacity .1s ease, transform .1s ease;
+  z-index: 20;
+}
+.grid-editor-selection-tools.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.grid-editor-selection-tools button {
+  height: 22px;
+  border: 1px solid color-mix(in srgb, var(--paper-muted) 28%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--paper) 90%, var(--panel));
+  color: var(--paper-ink);
+  padding: 0 7px;
+  font-size: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.grid-editor-selection-tools button:hover {
+  border-color: color-mix(in srgb, var(--tab-notebook) 50%, var(--paper-muted));
+}
+
 .grid-unplaced-draft {
   position: absolute;
   right: 4px;
@@ -144,9 +214,15 @@
 }
 
 @media (max-width: 720px) {
+  .grid-notebook-canvas {
+    --grid-archive-width: 168px;
+    --grid-workspace-left: 196px;
+  }
   .grid-note,
   .grid-editor-wrap {
-    max-width: min(252px, calc(100% - (var(--grid-col) * 28px) - 8px));
+    max-width: min(252px, calc(100% - var(--grid-workspace-left) - (var(--grid-col) * 28px) - 8px));
   }
-  .grid-editor-wrap { width: min(252px, calc(100% - (var(--grid-col) * 28px) - 8px)); }
+  .grid-editor-wrap {
+    width: min(252px, calc(100% - var(--grid-workspace-left) - (var(--grid-col) * 28px) - 8px));
+  }
 }
