@@ -30,7 +30,7 @@
 }
 .spatial-object-format-toggle { left:0; }
 .spatial-object-drag-handle {
-  right:0;
+  right:-24px;
   cursor:grab;
 }
 .spatial-object-drag-handle:active { cursor:grabbing; }
@@ -151,10 +151,4 @@
 .notebook-spatial-object.is-dragging {
   opacity:.82;
   cursor:grabbing;
-}
-
-/* Multi-cell table selections are an object-level range, so browser text selection should not
-   compete visually while the range is active. */
-.spatial-table td.spatial-table-cell-selected {
-  user-select:none;
 }
