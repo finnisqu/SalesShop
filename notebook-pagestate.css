@@ -1,10 +1,20 @@
 /* Notebook page-state placement. Loaded after the earlier notebook layers. */
 
-/* Grid can render as dots without changing spatial coordinates. */
+/* Grid and dot paper share the exact same lattice.
+   Grid vertices sit on the row/column boundaries; dots use those same intersections rather
+   than the center of each square, so switching paper types never shifts the visual origin. */
+.notebook-page.paper-grid[data-grid-paper="grid"] .notebook-page-body {
+  background-position: 20px 0, 20px 0 !important;
+}
 .notebook-page.paper-grid[data-grid-paper="dots"] .notebook-page-body {
-  background-image: radial-gradient(circle, color-mix(in srgb,var(--paper-line) 88%,var(--paper-muted)) 1px, transparent 1.2px) !important;
+  background-image: radial-gradient(
+    circle at 0 0,
+    color-mix(in srgb,var(--paper-line) 72%,var(--paper-muted)) 0,
+    color-mix(in srgb,var(--paper-line) 72%,var(--paper-muted)) .65px,
+    transparent .85px
+  ) !important;
   background-size: var(--notebook-row-size) var(--notebook-row-size) !important;
-  background-position: 0 0 !important;
+  background-position: 20px 0 !important;
 }
 
 /* Style-menu paper variants mirror the compact single/two-column controls. */
@@ -55,7 +65,7 @@
 .notebook-paper-choice-icon.dots {
   border:1px solid currentColor;
   border-radius:2px;
-  background-image:radial-gradient(circle,currentColor 1px,transparent 1.2px);
+  background-image:radial-gradient(circle,currentColor .7px,transparent .9px);
   background-size:4px 4px;
 }
 
