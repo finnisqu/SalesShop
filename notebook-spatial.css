@@ -1,0 +1,230 @@
+/* Spatial notebook: Lined writing modes vs Blank/Grid/Dots construction canvas. */
+
+/* Blank is the same spatial coordinate system with no background marks. */
+.notebook-page.paper-grid[data-grid-paper="blank"] .notebook-page-body {
+  background-image:none !important;
+}
+
+/* The Style menu now presents two conceptual families rather than four unrelated rows. */
+.notebook-view-menu.notebook-style-groups {
+  width:190px !important;
+  padding:6px !important;
+}
+.notebook-style-group + .notebook-style-group {
+  margin-top:7px;
+  padding-top:7px;
+  border-top:1px solid color-mix(in srgb,var(--border) 72%,transparent);
+}
+.notebook-style-group-label {
+  margin:0 3px 4px;
+  color:var(--muted);
+  font-size:7.5px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.notebook-style-choice-row {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:3px;
+}
+.notebook-style-choice {
+  height:31px;
+  display:grid;
+  place-items:center;
+  border:1px solid transparent;
+  border-radius:5px;
+  background:transparent;
+  color:var(--muted);
+  padding:0;
+  cursor:pointer;
+}
+.notebook-style-choice:hover {
+  color:var(--ink);
+  border-color:var(--border);
+  background:var(--panel-soft);
+}
+.notebook-style-choice.active {
+  color:var(--ink);
+  border-color:var(--border-strong);
+  background:var(--panel-soft);
+}
+.notebook-style-choice-text {
+  font-size:8px;
+  font-weight:600;
+}
+.notebook-spatial-style-icon {
+  width:22px;
+  height:15px;
+  position:relative;
+  display:block;
+  border:1px solid currentColor;
+  border-radius:2px;
+  opacity:.78;
+  overflow:hidden;
+}
+.notebook-spatial-style-icon.lined-single,
+.notebook-spatial-style-icon.lined-double {
+  background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,currentColor 3px,currentColor 4px);
+}
+.notebook-spatial-style-icon.lined-double::after {
+  content:'';
+  position:absolute;
+  left:50%;
+  top:1px;
+  bottom:1px;
+  width:1px;
+  background:currentColor;
+  opacity:.65;
+}
+.notebook-spatial-style-icon.blank {
+  background:transparent;
+}
+.notebook-spatial-style-icon.grid {
+  background-image:
+    linear-gradient(to right,transparent calc(50% - .5px),currentColor calc(50% - .5px),currentColor calc(50% + .5px),transparent calc(50% + .5px)),
+    linear-gradient(to bottom,transparent calc(50% - .5px),currentColor calc(50% - .5px),currentColor calc(50% + .5px),transparent calc(50% + .5px));
+  background-size:6px 6px;
+  background-position:-.5px -.5px;
+}
+.notebook-spatial-style-icon.dots {
+  background-image:radial-gradient(circle,currentColor .7px,transparent .8px);
+  background-size:6px 6px;
+  background-position:-.5px -.5px;
+}
+.notebook-style-choice.active .notebook-spatial-style-icon { opacity:1; }
+
+/* Empty spatial-canvas drag selection snaps exactly to notebook grid cells. */
+.grid-cell-selection {
+  position:absolute;
+  z-index:24;
+  left:calc(var(--select-col) * var(--notebook-row-size));
+  top:calc(var(--select-row) * var(--notebook-row-size));
+  width:calc(var(--select-cols) * var(--notebook-row-size));
+  height:calc(var(--select-rows) * var(--notebook-row-size));
+  border:1px solid color-mix(in srgb,var(--tab-notebook) 62%,var(--paper-ink));
+  background:color-mix(in srgb,var(--tab-notebook) 9%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--paper) 35%,transparent);
+  pointer-events:none;
+}
+.grid-cell-selection-toolbar {
+  position:absolute;
+  z-index:30;
+  left:calc(var(--select-col) * var(--notebook-row-size));
+  top:max(2px,calc((var(--select-row) * var(--notebook-row-size)) - 28px));
+  display:flex;
+  align-items:center;
+  gap:2px;
+  padding:2px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 26%,transparent);
+  border-radius:6px;
+  background:color-mix(in srgb,var(--paper) 94%,var(--panel));
+  box-shadow:0 6px 16px rgba(0,0,0,.1);
+}
+.grid-cell-selection-toolbar button {
+  height:22px;
+  border:1px solid transparent;
+  border-radius:4px;
+  background:transparent;
+  color:var(--paper-muted);
+  padding:0 7px;
+  font-size:8px;
+  font-weight:600;
+}
+.grid-cell-selection-toolbar button:hover {
+  color:var(--paper-ink);
+  border-color:color-mix(in srgb,var(--paper-muted) 26%,transparent);
+  background:color-mix(in srgb,var(--paper-muted) 8%,transparent);
+}
+
+/* Persistent spatial page objects use the same logical grid coordinates. */
+.notebook-spatial-object {
+  position:absolute;
+  z-index:1;
+  left:calc(var(--object-col) * var(--notebook-row-size));
+  top:calc(var(--object-row) * var(--notebook-row-size));
+  width:calc(var(--object-cols) * var(--notebook-row-size));
+  height:calc(var(--object-rows) * var(--notebook-row-size));
+  box-sizing:border-box;
+}
+.notebook-spatial-object.is-selected {
+  outline:1px solid color-mix(in srgb,var(--tab-notebook) 42%,transparent);
+  outline-offset:2px;
+}
+.spatial-object-delete {
+  position:absolute;
+  z-index:4;
+  right:-7px;
+  top:-7px;
+  width:17px;
+  height:17px;
+  display:grid;
+  place-items:center;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 22%,transparent);
+  border-radius:50%;
+  padding:0;
+  background:var(--paper);
+  color:var(--paper-muted);
+  font:600 12px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  opacity:.25;
+}
+.notebook-spatial-object:hover > .spatial-object-delete,
+.notebook-spatial-object.is-selected > .spatial-object-delete {
+  opacity:.75;
+}
+.spatial-object-delete:hover {
+  opacity:1 !important;
+  color:#b74747;
+}
+
+.spatial-object-box {
+  border:1.25px solid color-mix(in srgb,var(--paper-ink) 62%,var(--paper-muted));
+  background:color-mix(in srgb,var(--paper) 5%,transparent);
+  pointer-events:none;
+}
+.spatial-object-box > .spatial-object-delete { pointer-events:auto; }
+
+.spatial-object-cloud {
+  pointer-events:none;
+}
+.spatial-object-cloud > .spatial-object-delete { pointer-events:auto; }
+.spatial-cloud-svg {
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+.spatial-cloud-svg path {
+  fill:color-mix(in srgb,var(--paper) 4%,transparent);
+  stroke:color-mix(in srgb,var(--paper-ink) 60%,var(--paper-muted));
+  stroke-width:1.35;
+  vector-effect:non-scaling-stroke;
+}
+
+/* Tables are real editable cells. Their geometry is inherited from the selected grid cells. */
+.spatial-object-table {
+  z-index:2;
+}
+.spatial-table {
+  width:100%;
+  height:100%;
+  table-layout:fixed;
+  border-collapse:collapse;
+  background:color-mix(in srgb,var(--paper) 80%,transparent);
+  color:var(--paper-ink);
+  font-family:Georgia,serif;
+  font-size:var(--notebook-font-size);
+}
+.spatial-table td {
+  border:1px solid color-mix(in srgb,var(--paper-ink) 42%,var(--paper-muted));
+  padding:1px 3px;
+  vertical-align:top;
+  outline:0;
+  overflow-wrap:anywhere;
+  line-height:calc(var(--notebook-row-size) - 4px);
+}
+.spatial-table td:focus {
+  background:color-mix(in srgb,var(--tab-notebook) 7%,var(--paper));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 38%,transparent);
+}
+
+.notebook-readonly .spatial-object-delete { display:none !important; }
