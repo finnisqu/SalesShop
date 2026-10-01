@@ -1,3 +1,5 @@
+let draftSelectionText = '';
+
 function renderNotebook() {
   const placeholder = $('#view-notebook');
   if (placeholder) placeholder.innerHTML = '';
@@ -14,7 +16,12 @@ function renderNotebookSurface(root) {
   root.innerHTML = `
     <div class="notebook-shell">
       <div class="notebook-toolbar">
-        <span class="notebook-toolbar-date">${isToday?'Today':fmtDate(currentNotebookDate,{weekday:'short',month:'short',day:'numeric'})}</span>
+        <div class="notebook-toolbar-left">
+          <button class="notebook-icon-tool" data-mic title="Voice note" aria-label="Voice note">🎙</button>
+          <button class="notebook-icon-tool" data-attach title="Attach image or file" aria-label="Attach image or file">📎</button>
+          <input data-file-input type="file" multiple hidden />
+          <span class="notebook-toolbar-date">${isToday?'Today':fmtDate(currentNotebookDate,{weekday:'short',month:'short',day:'numeric'})}</span>
+        </div>
         <div class="notebook-toolbar-actions">
           ${!isToday?'<button class="notebook-tool" data-today>Today</button>':''}
           <button class="notebook-tool" data-history>History</button>
@@ -26,17 +33,14 @@ function renderNotebookSurface(root) {
         </div>
         <div class="notebook-page-body">
           <div class="notebook-entries">
-            ${entries.map(e=>`<div class="notebook-entry" data-entry-id="${e.id}">
-              <div class="entry-time">${fmtTimestamp(e.createdAt)}</div>
-              <div class="entry-text">${escapeHtml(e.text)}</div>
-            </div>`).join('')}
+            ${entries.map(notebookEntryHtml).join('')}
           </div>
           <div class="notebook-writing-zone ${entries.length?'':'blank-page'}">
-            <textarea data-notebook-input class="notebook-input" placeholder="Start writing…"></textarea>
-            <div class="notebook-actions">
-              <button data-mic class="mic-button">🎙 Voice</button>
-              <button data-note-save class="paper-action">Add</button>
+            <div class="draft-selection-tools" data-draft-tools>
+              <button type="button" data-draft-promote>Promote</button>
+              <button type="button" data-draft-link>Link</button>
             </div>
+            <textarea data-notebook-input class="notebook-input" placeholder="Start writing…"></textarea>
           </div>
         </div>
       </div>
@@ -44,18 +48,66 @@ function renderNotebookSurface(root) {
   bindNotebookSurface(root);
 }
 
+function notebookEntryHtml(entry) {
+  const attachment = entry.attachment;
+  let attachmentHtml = '';
+  if (attachment) {
+    if (attachment.dataUrl && attachment.type?.startsWith('image/')) {
+      attachmentHtml = `<div class="notebook-attachment"><img class="notebook-attachment-image" src="${escapeHtml(attachment.dataUrl)}" alt="${escapeHtml(attachment.name)}"><div class="notebook-attachment-file">📎 ${escapeHtml(attachment.name)}</div></div>`;
+    } else if (attachment.dataUrl) {
+      attachmentHtml = `<div class="notebook-attachment"><a class="notebook-attachment-file" href="${escapeHtml(attachment.dataUrl)}" download="${escapeHtml(attachment.name)}">📎 ${escapeHtml(attachment.name)}</a></div>`;
+    } else {
+      attachmentHtml = `<div class="notebook-attachment"><span class="notebook-attachment-file">📎 ${escapeHtml(attachment.name)}</span></div>`;
+    }
+  }
+  return `<div class="notebook-entry" data-entry-id="${entry.id}">
+    <div class="entry-time">${fmtTimestamp(entry.createdAt)}</div>
+    ${entry.source === 'attachment' ? '' : `<div class="entry-text">${escapeHtml(entry.text)}</div>`}
+    ${attachmentHtml}
+  </div>`;
+}
+
 function bindNotebookSurface(root) {
   $('[data-history]', root)?.addEventListener('click', openNotebookHistory);
   $('[data-today]', root)?.addEventListener('click',()=>{ currentNotebookDate=dateKey(); renderAll(); });
-  $('[data-note-save]', root)?.addEventListener('click',()=>saveNotebookDraft(root));
-  $('[data-notebook-input]', root)?.addEventListener('keydown',e=>{
-    if ((e.ctrlKey||e.metaKey) && e.key === 'Enter') { e.preventDefault(); saveNotebookDraft(root); }
+
+  const input = $('[data-notebook-input]', root);
+  input?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      saveNotebookDraft(root);
+    }
   });
+  ['select','mouseup','keyup'].forEach(eventName => input?.addEventListener(eventName,()=>updateDraftSelectionTools(root)));
+  input?.addEventListener('input',()=>updateDraftSelectionTools(root));
+
+  $('[data-draft-promote]', root)?.addEventListener('mousedown',e=>e.preventDefault());
+  $('[data-draft-link]', root)?.addEventListener('mousedown',e=>e.preventDefault());
+  $('[data-draft-promote]', root)?.addEventListener('click',()=>{
+    if (draftSelectionText) openPromoteModal(draftSelectionText, null);
+  });
+  $('[data-draft-link]', root)?.addEventListener('click',()=>{
+    if (draftSelectionText) openLinkModal(draftSelectionText, null);
+  });
+
   $('[data-mic]', root)?.addEventListener('click',()=>toggleSpeech(root));
+  $('[data-attach]', root)?.addEventListener('click',()=> $('[data-file-input]', root)?.click());
+  $('[data-file-input]', root)?.addEventListener('change', e => handleNotebookFiles([...e.target.files], currentNotebookDate));
+
   $$('.entry-text', root).forEach(el => {
     el.onmouseup = e => handleSelection(e, el.closest('.notebook-entry').dataset.entryId);
     el.oncontextmenu = e => { e.preventDefault(); handleSelection(e, el.closest('.notebook-entry').dataset.entryId, true); };
   });
+}
+
+function updateDraftSelectionTools(root) {
+  const input = $('[data-notebook-input]', root);
+  const tools = $('[data-draft-tools]', root);
+  if (!input || !tools) return;
+  const start = input.selectionStart ?? 0;
+  const end = input.selectionEnd ?? 0;
+  draftSelectionText = start !== end ? input.value.slice(start,end).trim() : '';
+  tools.classList.toggle('visible', !!draftSelectionText);
 }
 
 function saveNotebookDraft(root) {
@@ -82,11 +134,44 @@ function openNotebookHistory() {
   });
 }
 
-function addNotebookEntry(text, source='typed', key=dateKey()) {
+function addNotebookEntry(text, source='typed', key=dateKey(), extra={}) {
   if(!state.notebook[key]) state.notebook[key]=[];
-  state.notebook[key].push({id:uid('note'), createdAt:nowISO(), text, source});
+  state.notebook[key].push({id:uid('note'), createdAt:nowISO(), text, source, ...extra});
   save();
   renderAll();
+}
+
+async function handleNotebookFiles(files, key=dateKey()) {
+  if (!files.length) return;
+  if(!state.notebook[key]) state.notebook[key]=[];
+  let oversized = 0;
+  for (const file of files) {
+    let dataUrl = '';
+    if (file.size <= 900 * 1024) {
+      try { dataUrl = await readFileAsDataURL(file); } catch {}
+    } else {
+      oversized += 1;
+    }
+    state.notebook[key].push({
+      id: uid('note'),
+      createdAt: nowISO(),
+      text: file.name,
+      source: 'attachment',
+      attachment: {name:file.name, type:file.type || 'application/octet-stream', size:file.size, dataUrl}
+    });
+  }
+  save();
+  renderAll();
+  toast(oversized ? 'Attached. Large files are saved as metadata in this prototype.' : 'Attached');
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function toggleSpeech(root) {
@@ -95,7 +180,7 @@ function toggleSpeech(root) {
   const btn=$('[data-mic]', root); const input=$('[data-notebook-input]', root);
   if (speech) {
     speech.stop(); speech=null; speechTarget=null;
-    btn?.classList.remove('recording'); if(btn)btn.textContent='🎙 Voice';
+    btn?.classList.remove('recording'); if(btn)btn.textContent='🎙';
     return;
   }
   speechTarget = input;
@@ -113,13 +198,13 @@ function toggleSpeech(root) {
     if(speechTarget) speechTarget.value=(final+interim).trim();
   };
   speech.onend = () => {
-    btn?.classList.remove('recording'); if(btn)btn.textContent='🎙 Voice';
+    btn?.classList.remove('recording'); if(btn)btn.textContent='🎙';
     speech=null; speechTarget=null;
   };
   speech.onerror = () => toast('Microphone transcription stopped.');
   speech.start();
   btn.classList.add('recording');
-  btn.textContent='■ Stop';
+  btn.textContent='■';
 }
 
 function handleSelection(e, entryId, force=false) {
@@ -162,21 +247,32 @@ function promoteText(type,text,entryId) {
   if(type==='reminder') { closeModal(); return openReminderModal(text,entryId); }
   if(type==='project') state.workItems.push({id:uid('work'),title:text,company:'',stage:'Discovery',due:'',amount:0,nextAction:'',lastTouchpoint:'',sourceEntryId:entryId});
   if(type==='update') { closeModal(); return openProjectUpdateModal(text,entryId); }
-  save(); closeModal(); renderAll(); toast(`Promoted to ${type}`);
+  save(); closeModal();
+  if (entryId) renderAll();
+  toast(`Promoted to ${type}`);
 }
 
 function openReminderModal(text,entryId) {
   openModal('Reminder','',`<div class="field"><label>Reminder</label><input id="remText" value="${escapeHtml(text)}"></div><div class="field spaced-field"><label>Date</label><input id="remDate" type="date"></div><div class="modal-actions"><button class="primary-button" id="saveRem">Save reminder</button></div>`);
-  $('#saveRem').onclick=()=>{ state.reminders.push({id:uid('rem'),text:$('#remText').value.trim(),date:$('#remDate').value,createdAt:nowISO(),sourceEntryId:entryId}); save(); closeModal(); renderAll(); toast('Reminder created'); };
+  $('#saveRem').onclick=()=>{
+    state.reminders.push({id:uid('rem'),text:$('#remText').value.trim(),date:$('#remDate').value,createdAt:nowISO(),sourceEntryId:entryId});
+    save(); closeModal(); if(entryId) renderAll(); toast('Reminder created');
+  };
 }
 
 function openProjectUpdateModal(text,entryId) {
   openModal('Project update','',`<div class="field"><label>Work item</label><select id="updWork" class="field-select">${state.workItems.map(w=>`<option value="${w.id}">${escapeHtml(w.title)}</option>`).join('')}</select></div><div class="field spaced-field"><label>Update</label><textarea id="updText" rows="4">${escapeHtml(text)}</textarea></div><div class="modal-actions"><button class="primary-button" id="saveUpd">Attach update</button></div>`);
-  $('#saveUpd').onclick=()=>{ state.projectUpdates.push({id:uid('upd'),workItemId:$('#updWork').value,text:$('#updText').value.trim(),createdAt:nowISO(),sourceEntryId:entryId}); save(); closeModal(); renderAll(); toast('Project updated'); };
+  $('#saveUpd').onclick=()=>{
+    state.projectUpdates.push({id:uid('upd'),workItemId:$('#updWork').value,text:$('#updText').value.trim(),createdAt:nowISO(),sourceEntryId:entryId});
+    save(); closeModal(); if(entryId) renderAll(); toast('Project updated');
+  };
 }
 
 function openLinkModal(text,entryId) {
   removeSelectionPopover();
   openModal('Link selection','',`<div class="selection-quote">“${escapeHtml(text)}”</div><div class="field"><label>Link to work item</label><select id="linkWork" class="field-select">${state.workItems.map(w=>`<option value="${w.id}">${escapeHtml(w.title)}</option>`).join('')}</select></div><div class="modal-actions"><button class="primary-button" id="saveLink">Link</button></div>`);
-  $('#saveLink').onclick=()=>{ state.projectUpdates.push({id:uid('link'),workItemId:$('#linkWork').value,text:`Linked notebook text: ${text}`,createdAt:nowISO(),sourceEntryId:entryId,linkOnly:true}); save();closeModal();toast('Linked to work item'); };
+  $('#saveLink').onclick=()=>{
+    state.projectUpdates.push({id:uid('link'),workItemId:$('#linkWork').value,text:`Linked notebook text: ${text}`,createdAt:nowISO(),sourceEntryId:entryId,linkOnly:true});
+    save(); closeModal(); if(entryId) renderAll(); toast('Linked to work item');
+  };
 }
