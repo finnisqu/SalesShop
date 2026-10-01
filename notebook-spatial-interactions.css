@@ -1,0 +1,160 @@
+/* Shared hover controls for persistent spatial notebook objects. */
+
+.notebook-spatial-object.spatial-object-hover-ui {
+  overflow:visible;
+}
+
+/* The old standalone delete chip is superseded by each object's formatting strip. */
+.notebook-spatial-object.spatial-object-hover-ui > .spatial-object-delete {
+  display:none !important;
+}
+
+.spatial-object-format-toggle,
+.spatial-object-drag-handle {
+  position:absolute;
+  z-index:18;
+  top:-24px;
+  width:21px;
+  height:20px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 22%,transparent);
+  border-radius:5px;
+  background:color-mix(in srgb,var(--paper) 96%,var(--panel));
+  color:var(--paper-muted);
+  box-shadow:0 4px 10px rgba(0,0,0,.06);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .09s ease,color .09s ease,background .09s ease;
+}
+.spatial-object-format-toggle { left:0; }
+.spatial-object-drag-handle {
+  right:0;
+  cursor:grab;
+}
+.spatial-object-drag-handle:active { cursor:grabbing; }
+
+.notebook-spatial-object:hover > .spatial-object-format-toggle,
+.notebook-spatial-object:hover > .spatial-object-drag-handle,
+.notebook-spatial-object.is-selected > .spatial-object-format-toggle,
+.notebook-spatial-object.is-selected > .spatial-object-drag-handle,
+.notebook-spatial-object.format-open > .spatial-object-format-toggle,
+.notebook-spatial-object.format-open > .spatial-object-drag-handle {
+  opacity:.58;
+  pointer-events:auto;
+}
+.spatial-object-format-toggle:hover,
+.spatial-object-drag-handle:hover,
+.notebook-spatial-object.format-open > .spatial-object-format-toggle {
+  opacity:1 !important;
+  color:var(--paper-ink);
+  background:color-mix(in srgb,var(--paper) 90%,var(--paper-muted));
+}
+
+.spatial-format-glyph {
+  width:11px;
+  height:10px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:2px;
+}
+.spatial-format-glyph i {
+  display:block;
+  height:1px;
+  background:currentColor;
+  border-radius:1px;
+}
+.spatial-format-glyph i:nth-child(1) { width:10px; }
+.spatial-format-glyph i:nth-child(2) { width:7px; }
+.spatial-format-glyph i:nth-child(3) { width:9px; }
+
+.spatial-drag-dots {
+  display:flex;
+  align-items:center;
+  gap:2px;
+}
+.spatial-drag-dots i {
+  width:2.5px;
+  height:2.5px;
+  border-radius:50%;
+  background:currentColor;
+}
+
+/* Existing table controls no longer bloom merely on hover/focus. The tiny Format button owns
+   disclosure and the toolbar grows rightward from it. */
+#notebookDock .spatial-object-table:not(.format-open) > .spatial-table-controls {
+  opacity:0 !important;
+  pointer-events:none !important;
+  transform:translateY(2px) !important;
+}
+#notebookDock .spatial-object-table.format-open > .spatial-table-controls {
+  opacity:.96 !important;
+  pointer-events:auto !important;
+  transform:translateY(0) !important;
+}
+#notebookDock .spatial-object-table > .spatial-table-controls {
+  left:24px !important;
+  top:-26px !important;
+}
+
+.spatial-table-delete-button {
+  font-size:12px !important;
+  line-height:1 !important;
+}
+
+/* Rectangle/cloud toolbar mirrors the table strip but remains intentionally small for now. */
+.spatial-shape-toolbar {
+  position:absolute;
+  z-index:17;
+  left:24px;
+  top:-26px;
+  height:24px;
+  display:flex;
+  align-items:center;
+  gap:2px;
+  padding:2px 3px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent);
+  border-radius:6px;
+  background:color-mix(in srgb,var(--paper) 95%,var(--panel));
+  color:var(--paper-muted);
+  box-shadow:0 5px 14px rgba(0,0,0,.08);
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(2px);
+  transition:opacity .1s ease,transform .1s ease;
+  white-space:nowrap;
+}
+.notebook-spatial-object.format-open > .spatial-shape-toolbar {
+  opacity:.96;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+.spatial-shape-toolbar button {
+  height:19px;
+  border:1px solid transparent;
+  border-radius:4px;
+  background:transparent;
+  color:inherit;
+  padding:0 5px;
+  font:600 7px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  cursor:pointer;
+}
+.spatial-shape-toolbar button:hover,
+.spatial-shape-toolbar button.active {
+  color:var(--paper-ink);
+  border-color:color-mix(in srgb,var(--paper-muted) 26%,transparent);
+  background:color-mix(in srgb,var(--paper-muted) 8%,transparent);
+}
+
+.notebook-spatial-object.is-dragging {
+  opacity:.82;
+  cursor:grabbing;
+}
+
+/* Multi-cell table selections are an object-level range, so browser text selection should not
+   compete visually while the range is active. */
+.spatial-table td.spatial-table-cell-selected {
+  user-select:none;
+}
