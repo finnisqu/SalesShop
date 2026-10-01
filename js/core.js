@@ -2,6 +2,7 @@ const STORAGE_KEY = 'salesshop-prototype-v1';
 const STAGES = ['Discovery', 'Intent to Bid', 'Bid Development', 'Bid Sent', 'Negotiation', 'Closed Won', 'Closed Lost', 'Discarded'];
 const CLOSED_STAGES = new Set(['Closed Won', 'Closed Lost', 'Discarded']);
 const ACCOUNT_STAGES = ['Discovery', 'Outreach', 'Connected', 'Quoted', 'Won', 'Active', 'Cold', 'Lost'];
+const ACCOUNT_BOARD_COLUMNS = [...ACCOUNT_STAGES, 'Non-Customer'];
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -21,12 +22,17 @@ const escapeHtml = (str='') => String(str).replace(/[&<>"']/g, c => ({'&':'&amp;
 function hubSpotPrototypeData() {
   return {
     companies: [
-      {id:'hub_company_54997524294', hubspotId:'54997524294', name:'D.A. Everett', domain:'daeverettgroup.com', contactCount:1, dealCount:0, source:'hubspot'},
-      {id:'hub_company_56607598650', hubspotId:'56607598650', name:'pagegrace.com', domain:'pagegrace.com', contactCount:1, dealCount:0, lastContacted:'2026-09-22T16:00:15.556Z', lastEngagement:'2026-09-22T16:04:36.320Z', source:'hubspot', partial:true},
-      {id:'hub_company_16317301153', hubspotId:'16317301153', name:'D.R. Horton (DHI Communities)', domain:'drhorton.com', contactCount:16, dealCount:3, lastContacted:'2026-10-01T14:48:53.801Z', lastActivity:'2026-10-01T15:18:31Z', lastEngagement:'2026-10-01T15:18:39.908Z', source:'hubspot'},
-      {id:'hub_company_16317510810', hubspotId:'16317510810', name:'BAR Construction', domain:'barconstruction.com', contactCount:9, dealCount:2, lastContacted:'2026-09-30T20:23:07.164Z', lastActivity:'2026-09-30T20:23:07.164Z', lastEngagement:'2026-09-29T16:11:05.815Z', source:'hubspot'},
-      {id:'hub_company_16922951271', hubspotId:'16922951271', name:'RAYWEST DESIGNBUILD', domain:'raywestdesignbuild.com', contactCount:15, dealCount:17, lastContacted:'2026-09-23T20:25:24.302Z', lastActivity:'2026-09-25T13:05:12Z', lastEngagement:'2026-09-24T13:35:54.456Z', source:'hubspot'},
-      {id:'hub_company_16317413965', hubspotId:'16317413965', name:'Choate Construction', domain:'choateco.com', contactCount:2, dealCount:1, lastActivity:'2025-12-31T13:00:00Z', source:'hubspot'}
+      {id:'hub_company_54997524294', hubspotId:'54997524294', name:'D.A. Everett', domain:'daeverettgroup.com', contactCount:1, dealCount:0, source:'hubspot', accountType:'sales'},
+      {id:'hub_company_56607598650', hubspotId:'56607598650', name:'pagegrace.com', domain:'pagegrace.com', contactCount:1, dealCount:0, lastContacted:'2026-09-22T16:00:15.556Z', lastEngagement:'2026-09-22T16:04:36.320Z', source:'hubspot', partial:true, accountType:'sales'},
+      {id:'hub_company_16317301153', hubspotId:'16317301153', name:'D.R. Horton (DHI Communities)', domain:'drhorton.com', contactCount:16, dealCount:3, lastContacted:'2026-10-01T14:48:53.801Z', lastActivity:'2026-10-01T15:18:31Z', lastEngagement:'2026-10-01T15:18:39.908Z', source:'hubspot', accountType:'sales'},
+      {id:'hub_company_16317510810', hubspotId:'16317510810', name:'BAR Construction', domain:'barconstruction.com', contactCount:9, dealCount:2, lastContacted:'2026-09-30T20:23:07.164Z', lastActivity:'2026-09-30T20:23:07.164Z', lastEngagement:'2026-09-29T16:11:05.815Z', source:'hubspot', accountType:'sales'},
+      {id:'hub_company_16922951271', hubspotId:'16922951271', name:'RAYWEST DESIGNBUILD', domain:'raywestdesignbuild.com', contactCount:15, dealCount:17, lastContacted:'2026-09-23T20:25:24.302Z', lastActivity:'2026-09-25T13:05:12Z', lastEngagement:'2026-09-24T13:35:54.456Z', source:'hubspot', accountType:'sales'},
+      {id:'hub_company_16317413965', hubspotId:'16317413965', name:'Choate Construction', domain:'choateco.com', contactCount:2, dealCount:1, lastActivity:'2025-12-31T13:00:00Z', source:'hubspot', accountType:'sales'},
+      {id:'hub_company_35375111240', hubspotId:'35375111240', name:'Business Insurers of the Carolinas', domain:'business-insurers.com', contactCount:3, source:'hubspot', accountType:'non-customer', relationshipLabel:'Insurance'},
+      {id:'hub_company_16317558121', hubspotId:'16317558121', name:'World Stone of Sanford', domain:'worldstoneonline.com', contactCount:30, source:'hubspot', accountType:'non-customer', relationshipLabel:'Internal'},
+      {id:'hub_company_30256138930', hubspotId:'30256138930', name:'linnstone', domain:'linnstone.com', contactCount:6, source:'hubspot', accountType:'non-customer', relationshipLabel:'Supplier'},
+      {id:'hub_company_38667169345', hubspotId:'38667169345', name:'PANMIN', domain:'panmin.com', contactCount:1, lastContacted:'2026-09-30T16:05:19.922Z', source:'hubspot', accountType:'non-customer', relationshipLabel:'Supplier'},
+      {id:'hub_company_50538147405', hubspotId:'50538147405', name:'DEYUANS', domain:'deyuans.com', contactCount:1, lastContacted:'2026-09-30T16:05:19.922Z', source:'hubspot', accountType:'non-customer', relationshipLabel:'Supplier'}
     ],
     contacts: [
       {id:'hub_contact_97392940550', hubspotId:'97392940550', name:'Austin Riccio', company:'BAR Construction', companyId:'hub_company_16317510810', detail:'Estimating Manager', email:'ariccio@barconstruction.com', lastContacted:'2025-02-06T13:48:46.829Z', source:'hubspot'},
@@ -55,6 +61,16 @@ function mergeById(target, additions) {
   additions.forEach(item=>{ if(!existing.has(item.id)) target.push({...item}); });
 }
 
+function fillMissingById(target, additions) {
+  additions.forEach(item=>{
+    const existing=(target||[]).find(x=>x.id===item.id);
+    if(!existing)return;
+    Object.entries(item).forEach(([key,value])=>{
+      if(existing[key]===undefined || existing[key]===null || existing[key]==='') existing[key]=value;
+    });
+  });
+}
+
 function seedData() {
   const today = dateKey();
   const yesterdayDate = new Date(); yesterdayDate.setDate(yesterdayDate.getDate()-1);
@@ -68,7 +84,7 @@ function seedData() {
       theme:'dark',
       boardMode:'projects',
       collapsedStages:['Closed Lost','Discarded'],
-      collapsedAccountStages:['Lost']
+      collapsedAccountStages:['Lost','Non-Customer']
     },
     notebook: {
       [today]: [
@@ -98,8 +114,8 @@ function seedData() {
       ...hub.contacts
     ],
     companies: [
-      {id:uid('company'), name:'ABC Construction'},
-      {id:uid('company'), name:'Greystone Builders'},
+      {id:uid('company'), name:'ABC Construction', accountType:'sales'},
+      {id:uid('company'), name:'Greystone Builders', accountType:'sales'},
       ...hub.companies
     ],
     crmDeals: hub.crmDeals,
@@ -111,14 +127,15 @@ function normalizeState(raw) {
   const s = raw || seedData();
   s.settings = {...{
     notebookMode:'daily', companyName:'World Stone', theme:'dark', boardMode:'projects',
-    collapsedStages:['Closed Lost','Discarded'], collapsedAccountStages:['Lost']
+    collapsedStages:['Closed Lost','Discarded'], collapsedAccountStages:['Lost','Non-Customer']
   }, ...(s.settings||{})};
   if (!['dark','light'].includes(s.settings.theme)) s.settings.theme='dark';
   if (!['projects','accounts'].includes(s.settings.boardMode)) s.settings.boardMode='projects';
   if (!Array.isArray(s.settings.collapsedStages)) s.settings.collapsedStages=['Closed Lost','Discarded'];
-  if (!Array.isArray(s.settings.collapsedAccountStages)) s.settings.collapsedAccountStages=['Lost'];
+  if (!Array.isArray(s.settings.collapsedAccountStages)) s.settings.collapsedAccountStages=['Lost','Non-Customer'];
   s.settings.collapsedStages = [...new Set(s.settings.collapsedStages.filter(stage=>STAGES.includes(stage)))];
-  s.settings.collapsedAccountStages = [...new Set(s.settings.collapsedAccountStages.filter(stage=>ACCOUNT_STAGES.includes(stage)))];
+  s.settings.collapsedAccountStages = [...new Set(s.settings.collapsedAccountStages.filter(stage=>ACCOUNT_BOARD_COLUMNS.includes(stage)))];
+  if (!s.settings.collapsedAccountStages.includes('Non-Customer')) s.settings.collapsedAccountStages.push('Non-Customer');
   const stageMap = {
     'New':'Discovery', 'Takeoff':'Bid Development', 'Pricing':'Bid Development', 'Review':'Bid Development',
     'Sent':'Bid Sent', 'Decision':'Negotiation', 'Awarded':'Closed Won'
@@ -131,6 +148,9 @@ function normalizeState(raw) {
   mergeById(s.contacts, hub.contacts);
   mergeById(s.crmDeals, hub.crmDeals);
   mergeById(s.workItems, hub.workItems);
+  fillMissingById(s.companies, hub.companies);
+  fillMissingById(s.contacts, hub.contacts);
+  (s.companies||[]).forEach(c=>{ if(!c.accountType)c.accountType='sales'; });
   return s;
 }
 
