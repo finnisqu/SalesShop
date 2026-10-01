@@ -35,12 +35,11 @@
 }
 .spatial-object-drag-handle:active { cursor:grabbing; }
 
+/* Format stays available while its toolbar is open; the drag handle is deliberately hover-only. */
 .notebook-spatial-object:hover > .spatial-object-format-toggle,
-.notebook-spatial-object:hover > .spatial-object-drag-handle,
-.notebook-spatial-object.is-selected > .spatial-object-format-toggle,
-.notebook-spatial-object.is-selected > .spatial-object-drag-handle,
 .notebook-spatial-object.format-open > .spatial-object-format-toggle,
-.notebook-spatial-object.format-open > .spatial-object-drag-handle {
+.notebook-spatial-object:hover > .spatial-object-drag-handle,
+.notebook-spatial-object.is-dragging > .spatial-object-drag-handle {
   opacity:.58;
   pointer-events:auto;
 }
