@@ -1,0 +1,65 @@
+/* Notebook QOL chrome: toolbar follows the physical sheet. */
+
+.notebook-width-medium .notebook-toolbar {
+  width: min(900px, calc(100% - 96px));
+  max-width: 900px;
+  margin-inline: auto;
+}
+.notebook-width-full .notebook-toolbar {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+
+.notebook-history-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.notebook-history-button {
+  width: 27px;
+  height: 23px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.notebook-history-button:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--border-strong);
+  background: var(--panel-soft);
+}
+.notebook-history-button:disabled {
+  opacity: .28;
+  cursor: default;
+}
+
+/* Keep the existing left slot compact now that it contains undo/redo. */
+.notebook-toolbar-left {
+  min-width: 58px;
+}
+
+@media (max-width: 900px) {
+  .notebook-width-medium .notebook-toolbar {
+    width: min(100%, 760px);
+    max-width: 760px;
+  }
+}
+
+@media (max-width: 640px) {
+  .notebook-width-medium .notebook-toolbar,
+  .notebook-width-full .notebook-toolbar {
+    width: 100%;
+    max-width: none;
+  }
+  .notebook-toolbar-left {
+    display: flex !important;
+    min-width: auto;
+  }
+}
