@@ -1,0 +1,125 @@
+/* Current-page notebook flow: all committed content stays visible until New Page. */
+
+/* Remove the short-term-history behavior in the normal notebook views. */
+.notebook-entries,
+.notebook-entries.has-scrollback,
+.notebook-entries.draft-hides-history {
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+.notebook-writing-zone,
+.notebook-writing-zone.blank-page {
+  min-height: 168px;
+}
+
+/* Grid now uses the entire sheet. The old rail is gone; the faint rule remains as a
+   notebook-style margin reference and runs the full height of the page. */
+.grid-notebook-canvas.grid-notebook-full-sheet {
+  --grid-workspace-left: 0px;
+  --grid-archive-width: 0px;
+  min-height: max(100%, 720px);
+  user-select: none;
+}
+.grid-notebook-canvas.grid-notebook-full-sheet::before {
+  content: '';
+  position: absolute;
+  left: 252px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--paper-muted) 18%, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+.grid-notebook-full-sheet .grid-note,
+.grid-notebook-full-sheet .grid-editor-wrap {
+  left: calc((var(--grid-col) * 28px) + 4px);
+  max-width: min(336px, calc(100% - (var(--grid-col) * 28px) - 12px));
+}
+.grid-notebook-full-sheet .grid-editor-wrap {
+  width: min(308px, calc(100% - (var(--grid-col) * 28px) - 10px));
+}
+.grid-history-rail { display:none !important; }
+
+/* Voice memos are small inline paper objects that precede their transcript. */
+.voice-memo-chip {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 8px 2px 0;
+  padding: 2px 7px 2px 3px;
+  border: 1px solid color-mix(in srgb, var(--paper-muted) 24%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 88%, var(--panel));
+  color: var(--paper-ink);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 9px;
+  line-height: 1;
+  vertical-align: middle;
+}
+.grid-note .voice-memo-chip {
+  display: flex;
+  margin-bottom: 1px;
+}
+.voice-memo-play {
+  width: 19px;
+  height: 19px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper-muted) 11%, transparent);
+  color: var(--paper-muted);
+  padding: 0;
+  font-size: 8px;
+  line-height: 1;
+}
+.voice-memo-play:not(:disabled):hover,
+.voice-memo-chip.playing .voice-memo-play {
+  color: var(--paper-ink);
+  background: color-mix(in srgb, var(--paper-muted) 18%, transparent);
+}
+.voice-memo-play:disabled { opacity: .65; }
+.voice-memo-chip.recording .voice-memo-play {
+  color: #c95f5f;
+  background: color-mix(in srgb, #c95f5f 10%, transparent);
+}
+.voice-memo-title {
+  min-width: 54px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  outline: 0;
+}
+.voice-memo-title[contenteditable="true"] { cursor: text; }
+.voice-memo-title[contenteditable="true"]:focus {
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--paper-muted) 42%, transparent);
+}
+.voice-memo-duration {
+  color: var(--paper-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A live transcript should read like notebook text immediately. */
+.notebook-entry:has(.voice-memo-chip) .entry-text,
+.grid-note:has(.voice-memo-chip) .grid-note-text {
+  margin-top: 0;
+}
+
+@media (max-width: 720px) {
+  .grid-notebook-canvas.grid-notebook-full-sheet::before { left: 168px; }
+  .grid-notebook-full-sheet .grid-note,
+  .grid-notebook-full-sheet .grid-editor-wrap {
+    max-width: min(252px, calc(100% - (var(--grid-col) * 28px) - 8px));
+  }
+  .grid-notebook-full-sheet .grid-editor-wrap {
+    width: min(252px, calc(100% - (var(--grid-col) * 28px) - 8px));
+  }
+}
