@@ -9,20 +9,38 @@
   color: #463c2d !important;
   box-shadow: 0 7px 20px rgba(54,43,20,.18) !important;
 }
+
+/* Fully own the button surface here. Some global dark-mode button selectors are
+   more specific than the base rich-text rules, which could intermittently make
+   selected-text controls render as dark pills depending on which editor created
+   the toolbar. Contextual notebook controls should always look like paper. */
 .notebook-paper-popover .rich-tool,
 .notebook-shell .rich-selection-toolbar .rich-tool,
 .notebook-shell .rich-selection-popover .rich-tool {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
   color: #463c2d !important;
   opacity: 1 !important;
+  box-shadow: none !important;
 }
 .notebook-paper-popover .rich-tool-action,
 .notebook-shell .rich-tool-action {
   color: #6e624b !important;
 }
 .notebook-paper-popover .rich-tool:hover,
+.notebook-paper-popover .rich-tool:focus-visible,
+.notebook-paper-popover .rich-tool:active,
 .notebook-shell .rich-selection-toolbar .rich-tool:hover,
-.notebook-shell .rich-selection-popover .rich-tool:hover {
+.notebook-shell .rich-selection-toolbar .rich-tool:focus-visible,
+.notebook-shell .rich-selection-toolbar .rich-tool:active,
+.notebook-shell .rich-selection-popover .rich-tool:hover,
+.notebook-shell .rich-selection-popover .rich-tool:focus-visible,
+.notebook-shell .rich-selection-popover .rich-tool:active {
   background: rgba(103,86,47,.09) !important;
+  color: #332b20 !important;
 }
 .notebook-paper-popover .rich-tool-separator,
 .notebook-shell .rich-tool-separator {
