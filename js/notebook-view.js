@@ -175,22 +175,25 @@ renderNotebookSurface = function(root) {
 
 const _salesShopSaveNotebookDraft = saveNotebookDraft;
 saveNotebookDraft = function(root) {
-  if (notebookPaperView() !== 'cornell') {
+  captureNotebookDraftBuffer(root);
+  const draft = notebookBufferedDraft();
+  const input = $('[data-notebook-input]', root);
+  const text = (input?.value ?? draft.text).trim();
+  const cueInput = $('[data-cornell-cue]', root);
+  const cue = (cueInput?.value ?? draft.cue).trim();
+
+  if (!text && !cue) return;
+  if (cue) {
+    appendNotebookEntry(text,'typed',currentNotebookDate,currentNotebookPageId,{cue});
     clearNotebookBufferedDraft();
-    return _salesShopSaveNotebookDraft(root);
+    save();
+    renderAll();
+    toast('Added');
+    return;
   }
 
-  const input = $('[data-notebook-input]', root);
-  const cueInput = $('[data-cornell-cue]', root);
-  const text = input?.value.trim() || '';
-  const cue = cueInput?.value.trim() || '';
-  if (!text && !cue) return;
-
-  appendNotebookEntry(text,'typed',currentNotebookDate,currentNotebookPageId,cue ? {cue} : {});
   clearNotebookBufferedDraft();
-  save();
-  renderAll();
-  toast('Added');
+  return _salesShopSaveNotebookDraft(root);
 };
 
 startFreshNotebookPage = function(root) {
