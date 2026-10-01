@@ -13,23 +13,36 @@ function notebookDraftKey(key=currentNotebookDate, pageId=currentNotebookPageId)
   return `${key}::${pageId || 'page'}`;
 }
 
+function persistentNotebookDrafts() {
+  state.settings.notebookDrafts ||= {};
+  return state.settings.notebookDrafts;
+}
+
 function notebookBufferedDraft(key=currentNotebookDate, pageId=currentNotebookPageId) {
   const id = notebookDraftKey(key,pageId);
-  notebookDraftBuffer[id] ||= {text:'', cue:''};
+  if (!notebookDraftBuffer[id]) {
+    const persisted = persistentNotebookDrafts()[id];
+    notebookDraftBuffer[id] = persisted ? {...persisted} : {text:'', cue:''};
+  }
   return notebookDraftBuffer[id];
 }
 
 function clearNotebookBufferedDraft(key=currentNotebookDate, pageId=currentNotebookPageId) {
-  delete notebookDraftBuffer[notebookDraftKey(key,pageId)];
+  const id = notebookDraftKey(key,pageId);
+  delete notebookDraftBuffer[id];
+  delete persistentNotebookDrafts()[id];
 }
 
 function captureNotebookDraftBuffer(root) {
   if (!root) return;
+  const id = notebookDraftKey();
   const draft = notebookBufferedDraft();
   const input = $('[data-notebook-input]', root);
   const cue = $('[data-cornell-cue]', root);
   if (input) draft.text = input.value;
   if (cue) draft.cue = cue.value;
+  persistentNotebookDrafts()[id] = {...draft};
+  save();
 }
 
 function renderNotebookViewMenu(root) {
@@ -216,6 +229,7 @@ saveNotebookDraft = function(root) {
   }
 
   clearNotebookBufferedDraft();
+  save();
   return _salesShopSaveNotebookDraft(root);
 };
 
