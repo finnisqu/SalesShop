@@ -92,6 +92,8 @@
 .notebook-page.paper-grid .notebook-page-body,
 .notebook-page.paper-cornell .notebook-page-body {
   background-attachment: local;
+  /* Keep the chosen paper ruling going through the unused part of the sheet. */
+  min-height: calc(100% - 52px);
 }
 .notebook-page.paper-lines .notebook-entry,
 .notebook-page.paper-grid .notebook-entry,
