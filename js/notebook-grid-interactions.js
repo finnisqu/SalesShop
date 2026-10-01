@@ -1,4 +1,4 @@
-/* Grid interaction polish: select, hold-to-drag, grab handles, double-click edit, minimal inline editor. */
+/* Grid interaction polish: select, grab-handle drag, double-click edit, minimal inline editor. */
 
 let selectedGridEntryId = null;
 
@@ -31,17 +31,17 @@ function bindGridNoteDrag(note, canvas) {
 
   note.addEventListener('click', e => {
     if (e.detail > 1) return;
+    if (e.target.closest('.grid-grab-handle')) return;
     if (window.getSelection()?.toString().trim()) return;
     e.stopPropagation();
     selectGridNote(note, canvas);
   });
 
-  note.addEventListener('pointerdown', e => {
+  /* Movement is grab-handle-only. The note body is now purely for selection / reading / editing. */
+  handle.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
-    if (e.target.closest('.grid-editor-selection-tools')) return;
-
-    const fromHandle = !!e.target.closest('.grid-grab-handle');
-    const wasSelected = selectedGridEntryId === note.dataset.entryId;
+    e.preventDefault();
+    e.stopPropagation();
     selectGridNote(note, canvas);
 
     const startX = e.clientX;
@@ -49,48 +49,30 @@ function bindGridNoteDrag(note, canvas) {
     const startCol = Number(note.dataset.gridCol) || 0;
     const startRow = Number(note.dataset.gridRow) || 0;
     let dragging = false;
-    let armed = fromHandle;
     let nextCol = startCol;
     let nextRow = startRow;
-    let holdTimer = null;
 
-    const armDrag = () => {
-      armed = true;
-      note.classList.add('is-drag-ready');
-    };
-
-    /* The handle is immediate. The note body becomes drag-intent after a short, deliberate hold.
-       This leaves a normal quick mouse sweep available for selecting text. */
-    if (!fromHandle) holdTimer = setTimeout(armDrag, wasSelected ? 120 : 165);
+    note.classList.add('is-drag-ready');
+    handle.setPointerCapture?.(e.pointerId);
 
     const beginDragging = () => {
       if (dragging) return;
       dragging = true;
       note.classList.remove('is-drag-ready');
       note.classList.add('is-dragging');
-      note.style.userSelect = 'none';
       window.getSelection()?.removeAllRanges();
-      try { note.setPointerCapture?.(e.pointerId); } catch {}
     };
 
     const onMove = ev => {
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
       const distance = Math.hypot(dx, dy);
-
-      /* Handle is intentionally easy. Body drag is easy once hold-intent is established,
-         but a quick body movement still needs a stronger threshold so clicks/text selection stay stable. */
-      if (!armed) {
-        if (distance < 10) return;
-        if (!wasSelected) return;
-        armed = true;
-      }
-      if (!dragging && distance < (fromHandle ? 3 : 4)) return;
+      if (!dragging && distance < 2) return;
       beginDragging();
-
       ev.preventDefault();
-      /* Actual position stays snapped. You have to travel roughly half a square before a note
-         leaves its home square, even though drag intent itself now feels immediate. */
+
+      /* Intent is easy, but coordinates stay sticky to the current home square until the pointer
+         travels roughly half a grid square. */
       nextCol = Math.max(0, startCol + Math.round(dx / NOTEBOOK_GRID_SIZE));
       nextRow = Math.max(0, startRow + Math.round(dy / NOTEBOOK_GRID_SIZE));
       note.style.setProperty('--grid-col', nextCol);
@@ -98,7 +80,6 @@ function bindGridNoteDrag(note, canvas) {
     };
 
     const onUp = () => {
-      if (holdTimer) clearTimeout(holdTimer);
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
       document.removeEventListener('pointercancel', onUp);
@@ -106,7 +87,6 @@ function bindGridNoteDrag(note, canvas) {
 
       if (!dragging) return;
       note.classList.remove('is-dragging');
-      note.style.userSelect = '';
       note.dataset.gridCol = String(nextCol);
       note.dataset.gridRow = String(nextRow);
 
@@ -123,7 +103,11 @@ function bindGridNoteDrag(note, canvas) {
     document.addEventListener('pointercancel', onUp, {once:true});
   });
 
-  /* Prevent the handle itself from triggering edit selection/double-click behavior. */
+  handle.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    selectGridNote(note, canvas);
+  });
   handle.addEventListener('dblclick', e => {
     e.preventDefault();
     e.stopPropagation();
