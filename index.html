@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SalesShop Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div>
+          <div class="brand-name">SalesShop</div>
+          <div class="brand-subtitle">Prototype</div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button class="nav-item active" data-view="home"><span>⌂</span> Home</button>
+        <button class="nav-item" data-view="board"><span>▦</span> Board</button>
+        <button class="nav-item" data-view="notebook"><span>▤</span> Notebook</button>
+        <button class="nav-item" data-view="quotes"><span>▧</span> Quotes</button>
+        <button class="nav-item" data-view="memory"><span>⌘</span> Memory</button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="quiet-button" id="resetDemoBtn">Reset demo data</button>
+        <div class="save-status"><span class="save-dot"></span> Saved locally</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="command-wrap">
+          <span class="command-icon">⌕</span>
+          <input id="commandInput" class="command-input" placeholder="Search everything, or type something to remember…" autocomplete="off" />
+          <span class="command-hint">Enter</span>
+          <div id="commandResults" class="command-results hidden"></div>
+        </div>
+        <button class="primary-button" id="quickNewBtn">+ New</button>
+      </header>
+
+      <section id="view-home" class="view active"></section>
+      <section id="view-board" class="view"></section>
+      <section id="view-notebook" class="view"></section>
+      <section id="view-quotes" class="view"></section>
+      <section id="view-memory" class="view"></section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <div id="modalRoot"></div>
+
+  <template id="modalTemplate">
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <div class="eyebrow modal-eyebrow"></div>
+            <h2 class="modal-title"></h2>
+          </div>
+          <button class="icon-button modal-close" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body"></div>
+      </div>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
