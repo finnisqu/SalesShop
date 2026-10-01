@@ -182,7 +182,133 @@
 }
 .notebook-attachment-file:hover { color: var(--paper-ink); }
 
+/* Board lens switch: same CRM memory, project view or account view. */
+.board-mode-bar {
+  height: 29px;
+  min-height: 29px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 1px 6px;
+}
+.board-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--panel-soft) 72%, transparent);
+}
+.board-mode-button {
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  padding: 3px 8px;
+  font-size: 8.5px;
+  font-weight: 650;
+}
+.board-mode-button:hover { color: var(--ink); }
+.board-mode-button.active {
+  color: var(--ink);
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+}
+.board-mode-note {
+  color: var(--muted);
+  font-size: 8px;
+  opacity: .72;
+}
+.board-page { height: calc(100% - 29px); }
+
+/* Account cards reuse the same physical sleeve interaction. */
+.account-card .work-card-face { position: relative; }
+.account-override-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--tab-memory);
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.smart-stage-reason {
+  color: var(--muted);
+  font-style: italic;
+}
+.account-card:hover .work-card-reveal { max-height: 160px; }
+
+.account-modal-summary {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 6px;
+  margin-bottom: 11px;
+}
+.account-modal-summary > div {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px;
+  min-width: 0;
+}
+.account-modal-summary strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-summary-label {
+  display: block;
+  color: var(--muted);
+  font-size: 7.5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.account-detail-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 9px;
+  border-bottom: 1px solid var(--border);
+}
+.account-detail-line span { color: var(--muted); }
+.account-section-title {
+  margin: 12px 0 5px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.account-reason-box {
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-soft);
+  font-size: 9px;
+}
+.account-related-list { border-top: 1px solid var(--border); }
+.account-related-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 1px;
+  border-bottom: 1px solid var(--border);
+  font-size: 9px;
+}
+.account-related-row > div { min-width: 0; }
+.account-related-row strong { font-size: 9px; }
+.account-related-row span {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 8px;
+}
+
 @media (max-width: 760px) {
   .board-column { width: 124px; }
   .board-column.collapsed { width: 28px; }
+  .board-mode-note { display: none; }
+  .account-modal-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
