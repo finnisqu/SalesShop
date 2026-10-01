@@ -1,15 +1,75 @@
-function renderMemory() {
-  $('#view-memory').innerHTML=`
-    <div class="page-head"><div><div class="eyebrow">Breadcrumb CRM</div><h1>Memory</h1><div class="page-subtitle">The database is here when you want it, but it does not run the experience.</div></div></div>
-    <div class="memory-grid">
-      ${memoryPanel('Contacts',state.contacts.map(c=>({title:c.name,meta:[c.company,c.detail].filter(Boolean).join(' · ')||'Partial contact'})))}
-      ${memoryPanel('Companies',state.companies.map(c=>({title:c.name||c.domain||'Untitled company',meta:`${accountBoardColumn(c)}${c.relationshipLabel?` · ${c.relationshipLabel}`:''}${c.domain?` · ${c.domain}`:''}`})))}
-      ${memoryPanel('Deals',state.crmDeals.map(d=>({title:d.name,meta:`${d.stage} · ${money(d.amount)}`})))}
-      ${memoryPanel('Touchpoints',state.touchpoints.map(t=>({title:t.text,meta:new Date(t.createdAt).toLocaleString()})))}
-      ${memoryPanel('Reminders',state.reminders.map(r=>({title:r.text,meta:r.date?`Due ${fmtDate(r.date)}`:'No date required'})))}
-      ${memoryPanel('Project updates',state.projectUpdates.map(u=>({title:u.text,meta:state.workItems.find(w=>w.id===u.workItemId)?.title||'Linked breadcrumb'})))}
-    </div>`;
+let currentMemorySection = 'companies';
+
+function memoryCollections() {
+  return [
+    {
+      id:'contacts', label:'Contacts',
+      items:state.contacts.map(c=>({title:c.name,meta:[c.company,c.detail||c.email].filter(Boolean).join(' · ')||'Partial contact'}))
+    },
+    {
+      id:'companies', label:'Companies',
+      items:state.companies.map(c=>({
+        title:c.name||c.domain||'Untitled company',
+        meta:`${accountBoardColumn(c)}${c.relationshipLabel?` · ${c.relationshipLabel}`:''}${c.domain?` · ${c.domain}`:''}`,
+        action:'account', idRef:c.id
+      }))
+    },
+    {
+      id:'deals', label:'Deals',
+      items:state.crmDeals.map(d=>({title:d.name,meta:`${d.stage} · ${money(d.amount)}`,action:'account',idRef:d.companyId}))
+    },
+    {
+      id:'touchpoints', label:'Touchpoints',
+      items:state.touchpoints.map(t=>({title:t.text,meta:new Date(t.createdAt).toLocaleString()}))
+    },
+    {
+      id:'reminders', label:'Reminders',
+      items:state.reminders.map(r=>({title:r.text,meta:r.date?`Due ${fmtDate(r.date)}`:'No date required'}))
+    },
+    {
+      id:'updates', label:'Project Updates',
+      items:state.projectUpdates.map(u=>({title:u.text,meta:state.workItems.find(w=>w.id===u.workItemId)?.title||'Linked breadcrumb'}))
+    }
+  ];
 }
+
+function renderMemory() {
+  const collections=memoryCollections();
+  if(!collections.some(c=>c.id===currentMemorySection)) currentMemorySection='companies';
+  const active=collections.find(c=>c.id===currentMemorySection) || collections[0];
+
+  $('#view-memory').innerHTML=`
+    <div class="memory-explorer">
+      <aside class="memory-nav">
+        <div class="memory-nav-title">Memory</div>
+        <div class="memory-nav-list">
+          ${collections.map(c=>`<button class="memory-nav-item ${c.id===active.id?'active':''}" data-memory-section="${c.id}"><span>${c.label}</span><span class="memory-nav-count">${c.items.length}</span></button>`).join('')}
+        </div>
+      </aside>
+      <section class="memory-browser">
+        <div class="memory-browser-head"><h2>${active.label}</h2><span>${active.items.length}</span></div>
+        <div class="memory-browser-list">
+          ${active.items.length ? active.items.slice().reverse().map(memoryExplorerRow).join('') : '<div class="memory-empty">Nothing here yet.</div>'}
+        </div>
+      </section>
+    </div>`;
+
+  $$('[data-memory-section]', $('#view-memory')).forEach(btn=>btn.onclick=()=>{
+    currentMemorySection=btn.dataset.memorySection;
+    renderMemory();
+  });
+  $$('[data-memory-action="account"]', $('#view-memory')).forEach(row=>row.onclick=()=>openAccount(row.dataset.idRef));
+}
+
+function memoryExplorerRow(item) {
+  const actionable=item.action&&item.idRef;
+  return `<button class="memory-browser-row ${actionable?'actionable':''}" ${actionable?`data-memory-action="${item.action}" data-id-ref="${item.idRef}"`:''}>
+    <div class="memory-browser-primary">${escapeHtml(item.title||'Untitled')}</div>
+    <div class="memory-browser-meta">${escapeHtml(item.meta||'')}</div>
+    ${actionable?'<span class="memory-browser-chevron">›</span>':''}
+  </button>`;
+}
+
 function memoryPanel(title,items){ return `<div class="panel"><div class="panel-head"><h2>${title}</h2><span class="helper">${items.length}</span></div><div class="memory-list">${items.length?items.slice().reverse().map(i=>`<div class="memory-item"><div class="memory-title">${escapeHtml(i.title)}</div><div class="memory-meta">${escapeHtml(i.meta||'')}</div></div>`).join(''):'<div class="panel-body helper">Nothing here yet.</div>'}</div></div>`; }
 
 function openModal(eyebrow,title,bodyHtml) {
@@ -30,12 +90,12 @@ function indexEverything() {
   const rows=[];
   state.workItems.forEach(w=>rows.push({type:'Project',title:w.title,text:`${w.company} ${w.stage} ${w.nextAction||''}`,go:()=>{state.settings.boardMode='projects';save();showView('board');setTimeout(()=>openWorkItem(w.id),0);}}));
   state.quotes.forEach(q=>rows.push({type:'Quote',title:q.title||q.quoteNumber,text:`${q.customer} ${q.quoteNumber} ${money(quoteTotal(q))}`,go:()=>{currentQuoteId=q.id;showView('quotes');}}));
-  Object.entries(state.notebook).forEach(([d,entries])=>entries.forEach(n=>rows.push({type:'Notebook',title:fmtDate(d,{month:'short',day:'numeric',year:'numeric'}),text:n.text,go:()=>{showView('notebook');currentNotebookDate=d;currentNotebookPageId=n.pageId||null;renderAll();}})));
-  state.contacts.forEach(c=>rows.push({type:'Contact',title:c.name,text:c.company||'',go:()=>showView('memory')}));
+  Object.entries(state.notebook).forEach(([d,entries])=>entries.forEach(n=>rows.push({type:'Notebook',title:fmtDate(d,{month:'short',day:'numeric',year:'numeric'}),text:`${n.cue||''} ${n.text||''}`,go:()=>{showView('notebook');currentNotebookDate=d;currentNotebookPageId=n.pageId||null;renderAll();}})));
+  state.contacts.forEach(c=>rows.push({type:'Contact',title:c.name,text:c.company||'',go:()=>{currentMemorySection='contacts';showView('memory');}}));
   state.companies.forEach(c=>rows.push({type:'Company',title:c.name||c.domain||'Untitled company',text:`${c.domain||''} ${accountBoardColumn(c)} ${c.relationshipLabel||''}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(c.id),0);}}));
   state.crmDeals.forEach(d=>rows.push({type:'Deal',title:d.name,text:`${d.stage} ${money(d.amount)}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(d.companyId),0);}}));
-  state.touchpoints.forEach(t=>rows.push({type:'Touchpoint',title:t.text,text:new Date(t.createdAt).toLocaleDateString(),go:()=>showView('memory')}));
-  state.reminders.forEach(r=>rows.push({type:'Reminder',title:r.text,text:r.date||'',go:()=>showView('memory')}));
+  state.touchpoints.forEach(t=>rows.push({type:'Touchpoint',title:t.text,text:new Date(t.createdAt).toLocaleDateString(),go:()=>{currentMemorySection='touchpoints';showView('memory');}}));
+  state.reminders.forEach(r=>rows.push({type:'Reminder',title:r.text,text:r.date||'',go:()=>{currentMemorySection='reminders';showView('memory');}}));
   return rows;
 }
 
