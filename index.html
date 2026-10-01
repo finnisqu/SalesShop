@@ -7,46 +7,46 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="workspace.css" />
 </head>
-<body>
+<body data-view="board">
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
+    <header class="app-header">
+      <div class="brand-inline">
         <div class="brand-mark">S</div>
-        <div><div class="brand-name">SalesShop</div><div class="brand-subtitle">Prototype</div></div>
+        <div class="brand-name">SalesShop</div>
       </div>
-      <nav class="nav" id="nav">
-        <button class="nav-item active" data-view="home"><span>⌂</span> Work</button>
-        <button class="nav-item" data-view="board"><span>▦</span> Board</button>
-        <button class="nav-item" data-view="notebook"><span>▤</span> Notebook</button>
-        <button class="nav-item" data-view="quotes"><span>▧</span> Quotes</button>
-        <button class="nav-item" data-view="memory"><span>⌘</span> Memory</button>
-      </nav>
-      <div class="sidebar-bottom">
-        <button class="quiet-button" id="resetDemoBtn">Reset demo data</button>
-        <div class="save-status"><span class="save-dot"></span> Saved locally</div>
-      </div>
-    </aside>
 
-    <main class="main">
-      <header class="topbar">
+      <nav class="top-tabs" id="nav" aria-label="SalesShop sections">
+        <button class="top-tab tab-notebook" data-view="notebook"><span class="tab-dot"></span>Notebook</button>
+        <button class="top-tab tab-board active" data-view="board"><span class="tab-dot"></span>Board</button>
+        <button class="top-tab tab-quotes" data-view="quotes"><span class="tab-dot"></span>Quotes</button>
+        <button class="top-tab tab-memory" data-view="memory"><span class="tab-dot"></span>Memory</button>
+      </nav>
+
+      <div class="header-tools">
         <div class="command-wrap">
           <span class="command-icon">⌕</span>
-          <input id="commandInput" class="command-input" placeholder="Search everything, or type something to remember…" autocomplete="off" />
+          <input id="commandInput" class="command-input" placeholder="Search or remember…" autocomplete="off" />
           <span class="command-hint">⌘K</span>
           <div id="commandResults" class="command-results hidden"></div>
         </div>
         <button class="top-icon-button" id="themeToggleBtn" title="Switch theme">☀</button>
-        <button class="primary-button" id="quickNewBtn">+ New</button>
-      </header>
+        <button class="primary-button compact-new" id="quickNewBtn">+ New</button>
+      </div>
+    </header>
 
-      <section id="view-home" class="view active"></section>
-      <section id="view-board" class="view"></section>
-      <section id="view-notebook" class="view"></section>
-      <section id="view-quotes" class="view"></section>
-      <section id="view-memory" class="view"></section>
+    <main class="workspace-body" id="workspaceBody">
+      <section id="view-home" class="view legacy-view"></section>
+      <section id="view-board" class="view active page-accent-board"></section>
+      <section id="view-notebook" class="view notebook-placeholder"></section>
+      <section id="view-quotes" class="view page-accent-quotes"></section>
+      <section id="view-memory" class="view page-accent-memory"></section>
+      <section id="notebookDock" class="notebook-dock"></section>
     </main>
   </div>
 
+  <div class="utility-corner">
+    <button class="quiet-button" id="resetDemoBtn">Reset demo</button>
+  </div>
   <div id="toast" class="toast hidden"></div>
   <div id="modalRoot"></div>
   <template id="modalTemplate">
