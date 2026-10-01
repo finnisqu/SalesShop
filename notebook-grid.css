@@ -144,34 +144,52 @@
 .grid-note-text { white-space: pre-wrap; }
 .grid-note-cue + .grid-note-text { display: block; }
 
+/* Typing should feel like writing directly on graph paper, not opening a form. */
 .grid-editor-wrap {
-  min-width: 168px;
+  min-width: 28px;
   width: min(308px, calc(100% - var(--grid-workspace-left) - (var(--grid-col) * 28px) - 10px));
   z-index: 10;
+  isolation: isolate;
+}
+.grid-editor-wrap::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border: 1px solid color-mix(in srgb, var(--tab-notebook) 30%, transparent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--tab-notebook) 6%, transparent);
+  pointer-events: none;
+  z-index: 0;
 }
 .grid-editor-cue { margin: 4px 0 4px; }
 .grid-editor {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   min-height: 28px;
   resize: none;
   overflow: hidden;
   border: 0;
-  outline: 1px solid color-mix(in srgb, var(--tab-notebook) 35%, transparent);
-  outline-offset: 1px;
-  border-radius: 2px;
-  padding: 0 3px;
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  outline: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
   color: var(--paper-ink);
+  caret-color: var(--paper-ink);
   font-family: Georgia, serif;
   font-size: 13px;
   line-height: 28px;
 }
-.grid-editor::placeholder { color: var(--paper-muted); opacity: .5; }
+.grid-editor:focus { outline: 0; box-shadow: none; }
+.grid-editor::placeholder { color: transparent; }
 
 .grid-editor-selection-tools {
   position: absolute;
-  right: 0;
+  left: 0;
   top: -27px;
   display: flex;
   gap: 3px;
