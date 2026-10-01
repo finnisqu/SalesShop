@@ -30,7 +30,7 @@ function indexEverything() {
   const rows=[];
   state.workItems.forEach(w=>rows.push({type:'Project',title:w.title,text:`${w.company} ${w.stage} ${w.nextAction||''}`,go:()=>{state.settings.boardMode='projects';save();showView('board');setTimeout(()=>openWorkItem(w.id),0);}}));
   state.quotes.forEach(q=>rows.push({type:'Quote',title:q.title||q.quoteNumber,text:`${q.customer} ${q.quoteNumber} ${money(quoteTotal(q))}`,go:()=>{currentQuoteId=q.id;showView('quotes');}}));
-  Object.entries(state.notebook).forEach(([d,entries])=>entries.forEach(n=>rows.push({type:'Notebook',title:fmtDate(d,{month:'short',day:'numeric',year:'numeric'}),text:n.text,go:()=>{currentNotebookDate=d;currentNotebookPageId=n.pageId||null;showView('notebook');}})));
+  Object.entries(state.notebook).forEach(([d,entries])=>entries.forEach(n=>rows.push({type:'Notebook',title:fmtDate(d,{month:'short',day:'numeric',year:'numeric'}),text:n.text,go:()=>{showView('notebook');currentNotebookDate=d;currentNotebookPageId=n.pageId||null;renderAll();}})));
   state.contacts.forEach(c=>rows.push({type:'Contact',title:c.name,text:c.company||'',go:()=>showView('memory')}));
   state.companies.forEach(c=>rows.push({type:'Company',title:c.name||c.domain||'Untitled company',text:`${c.domain||''} ${accountBoardColumn(c)} ${c.relationshipLabel||''}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(c.id),0);}}));
   state.crmDeals.forEach(d=>rows.push({type:'Deal',title:d.name,text:`${d.stage} ${money(d.amount)}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(d.companyId),0);}}));
