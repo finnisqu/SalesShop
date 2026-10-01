@@ -1,47 +1,70 @@
 /* Optional two-column Blank / Lines presentation. */
 
-/* The two-column affordance lives at the right side of the Blank / Lines rows. */
+/* Blank / Lines get two separate layout choices inside the Style menu. */
 .notebook-view-option {
   grid-template-columns:14px minmax(0,1fr) auto !important;
 }
-.notebook-style-column-toggle {
+.notebook-style-column-controls {
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  margin:-3px -3px -3px 5px;
+}
+.notebook-style-column-choice {
   width:24px;
   height:22px;
   display:inline-grid;
   place-items:center;
-  margin:-3px -3px -3px 2px;
+  border:1px solid transparent;
   border-radius:4px;
   color:var(--muted);
   cursor:pointer;
 }
-.notebook-style-column-toggle:hover,
-.notebook-style-column-toggle.active {
+.notebook-style-column-choice:hover {
   color:var(--ink);
+  border-color:var(--border);
   background:var(--panel-soft);
 }
-.notebook-style-column-toggle:focus-visible {
+.notebook-style-column-choice.active {
+  color:var(--ink);
+  border-color:var(--border-strong);
+  background:var(--panel-soft);
+}
+.notebook-style-column-choice:focus-visible {
   outline:1px solid var(--border-strong);
   outline-offset:1px;
 }
-.notebook-column-glyph {
-  width:16px;
-  height:10px;
-  display:grid;
-  gap:2px;
-}
-.notebook-column-glyph.one { grid-template-columns:1fr; }
-.notebook-column-glyph.two { grid-template-columns:1fr 1fr; }
-.notebook-column-glyph i {
-  display:block;
-  min-width:0;
-  border:1px solid currentColor;
-  border-radius:1.5px;
-  opacity:.7;
-}
-.notebook-style-column-toggle.active .notebook-column-glyph i { opacity:1; }
 
-.notebook-column-source {
-  display:none !important;
+/* A single page outline is easier to read than the previous one/two little boxes.
+   The two-column version simply adds the divider inside the same sheet. */
+.notebook-column-page-icon {
+  position:relative;
+  width:15px;
+  height:11px;
+  display:block;
+  border:1px solid currentColor;
+  border-radius:2px;
+  opacity:.78;
+}
+.notebook-column-page-icon.two::after {
+  content:'';
+  position:absolute;
+  left:50%;
+  top:1.5px;
+  bottom:1.5px;
+  width:1px;
+  background:currentColor;
+  transform:translateX(-.5px);
+  opacity:.8;
+}
+.notebook-style-column-choice.active .notebook-column-page-icon { opacity:1; }
+
+.notebook-column-source { display:none !important; }
+
+/* Each side is a real writing stream. The columns fill the physical sheet rather than
+   only wrapping the height of the content already inside them. */
+.notebook-columns-two .notebook-page-body {
+  position:relative;
 }
 .notebook-two-column-layout {
   display:grid;
@@ -49,24 +72,31 @@
   gap:38px;
   align-items:start;
   min-height:100%;
+  position:relative;
+  z-index:1;
 }
 .notebook-page-column {
   min-width:0;
   min-height:100%;
+  padding-bottom:120px;
+  cursor:text;
 }
-.notebook-page-column-right {
-  position:relative;
-}
-.notebook-page-column-right::before {
+
+/* The divider belongs to the paper, not to the amount of content in either column,
+   so it continues through the entire notebook sheet. */
+.notebook-columns-two .notebook-page-body::after {
   content:'';
   position:absolute;
-  left:-19px;
+  z-index:0;
   top:0;
   bottom:0;
+  left:50%;
   width:1px;
-  background:color-mix(in srgb,var(--paper-muted) 10%,transparent);
+  background:color-mix(in srgb,var(--paper-muted) 13%,transparent);
   pointer-events:none;
 }
+.notebook-page-column-right::before { content:none !important; }
+
 .notebook-columns-two .notebook-entry,
 .notebook-columns-two .notebook-writing-zone {
   width:100%;
@@ -81,19 +111,27 @@
   height:auto;
 }
 
-/* Floating mode always stays one-column; the user's preference is merely suspended. */
-body.notebook-floating-mode .notebook-two-column-layout {
-  display:block;
+/* Subtle feedback for the side that currently owns the live caret. */
+.notebook-columns-two .notebook-page-column:has(.notebook-writing-zone) {
+  background:linear-gradient(to bottom,color-mix(in srgb,var(--tab-notebook) 2.5%,transparent),transparent 70px);
 }
-body.notebook-floating-mode .notebook-page-column-right::before { display:none; }
+
+/* Floating mode always stays one-column; the user's preference is merely suspended. */
+body.notebook-floating-mode .notebook-two-column-layout { display:block; }
+body.notebook-floating-mode .notebook-columns-two .notebook-page-body::after { display:none; }
 
 @media (max-width:760px) {
   .notebook-two-column-layout { gap:24px; }
-  .notebook-page-column-right::before { left:-12px; }
 }
 
 @media (max-width:560px) {
+  /* On genuinely narrow screens, presenting both columns side-by-side stops being useful.
+     The stored left/right assignments are preserved and return when space is available. */
   .notebook-two-column-layout { display:block; }
-  .notebook-page-column-right::before { display:none; }
-  .notebook-page-column-right { margin-top:12px; }
+  .notebook-columns-two .notebook-page-body::after { display:none; }
+  .notebook-page-column-right {
+    margin-top:12px;
+    border-top:1px solid color-mix(in srgb,var(--paper-muted) 13%,transparent);
+    padding-top:12px;
+  }
 }
