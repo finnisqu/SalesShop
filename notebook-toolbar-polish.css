@@ -79,6 +79,18 @@
 .notebook-position-control .notebook-width-button.active {
   opacity:1;
 }
+/* Clicking a choice temporarily overrides :hover so the group visibly collapses to the
+   selected icon right away. Moving away re-arms the hover expansion. */
+.notebook-position-control.position-click-collapsed,
+.notebook-position-control.position-click-collapsed:hover,
+.notebook-position-control.position-click-collapsed:focus-within {
+  width:31px !important;
+  max-width:31px !important;
+}
+.notebook-position-control.position-click-collapsed .notebook-width-button:not(.active) {
+  opacity:0 !important;
+  pointer-events:none !important;
+}
 
 /* Placeholder fourth option: dock into the future left navigator. */
 .notebook-width-glyph.dock-left {
