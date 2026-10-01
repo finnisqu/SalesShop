@@ -55,8 +55,12 @@ function syncNotebookPositionControl(root) {
     control.dataset.positionSyncBound='1';
     control.addEventListener('click',event=>{
       if (!event.target.closest('[data-notebook-width]')) return;
+      /* After a choice is made, collapse immediately to the selected icon even though the
+         pointer is technically still hovering the control. Leaving the control re-arms hover. */
+      control.classList.add('position-click-collapsed');
       setTimeout(()=>syncNotebookPositionControl($('#notebookDock')),0);
     });
+    control.addEventListener('mouseleave',()=>control.classList.remove('position-click-collapsed'));
   }
 }
 
