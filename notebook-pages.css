@@ -1,0 +1,39 @@
+/* Notebook page behavior: keep the active thought visually dominant. */
+.notebook-entries {
+  max-height: 104px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--paper-muted) 32%, transparent) transparent;
+  scroll-behavior: smooth;
+}
+.notebook-entries::-webkit-scrollbar { width: 4px; }
+.notebook-entries::-webkit-scrollbar-track { background: transparent; }
+.notebook-entries::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--paper-muted) 30%, transparent);
+  border-radius: 999px;
+}
+.notebook-entries:not(.has-scrollback) {
+  overflow-y: visible;
+  max-height: none;
+  padding-right: 0;
+}
+.notebook-entry {
+  min-height: 27px;
+}
+.notebook-entries.has-scrollback {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 100%);
+}
+.notebook-writing-zone,
+.notebook-writing-zone.blank-page {
+  min-height: 150px;
+  padding-top: 10px;
+}
+.notebook-new-page {
+  font-weight: 700;
+  color: var(--paper-muted);
+}
+.notebook-new-page:hover {
+  color: var(--ink);
+}
