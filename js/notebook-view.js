@@ -107,7 +107,7 @@ function applyNotebookPaperView(root) {
     cue.placeholder = 'Cue / heading';
     const body = document.createElement('div');
     body.className = 'cornell-draft-body';
-    input.placeholder = 'Note / bullet…';
+    input.placeholder = 'Note…';
     zone.insertBefore(row,input);
     row.appendChild(cue);
     row.appendChild(body);
@@ -129,7 +129,7 @@ function updateNotebookDraftFocus(root) {
   if (!input || !entries) return;
 
   input.style.height = 'auto';
-  const baseDraftHeight = 110;
+  const baseDraftHeight = 28;
   const naturalHeight = Math.max(baseDraftHeight, input.scrollHeight);
   input.style.height = `${naturalHeight}px`;
 
@@ -151,10 +151,33 @@ function bindNotebookViewEnhancements(root) {
     updateNotebookDraftFocus(root);
   };
   input?.addEventListener('input', sync);
+
+  /* Enter is just writing. Shift+Enter is the intentionally less-automatic commit gesture. */
+  input?.addEventListener('keydown', e=>{
+    if (e.key !== 'Enter' || e.isComposing) return;
+    if (e.shiftKey) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      captureNotebookDraftBuffer(root);
+      saveNotebookDraft(root);
+      return;
+    }
+    /* Stop the older Enter-to-save handler, but keep the browser's normal newline. */
+    e.stopImmediatePropagation();
+    requestAnimationFrame(()=>{
+      captureNotebookDraftBuffer(root);
+      updateNotebookDraftFocus(root);
+    });
+  }, true);
+
   cue?.addEventListener('input', captureNotebookDraftBuffer.bind(null,root));
   cue?.addEventListener('keydown', e=>{
-    if (e.key === 'Enter') {
-      e.preventDefault();
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (e.shiftKey) {
+      captureNotebookDraftBuffer(root);
+      saveNotebookDraft(root);
+    } else {
       input?.focus();
     }
   });
