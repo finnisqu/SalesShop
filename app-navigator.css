@@ -1,0 +1,56 @@
+/* Left navigator rails for tabs that do not already own one. */
+.view.has-section-navigator {
+  position:relative;
+  padding-left:164px !important;
+}
+.section-navigator {
+  position:absolute;
+  left:8px;
+  top:8px;
+  bottom:8px;
+  width:144px;
+  padding:8px 7px;
+  border-right:1px solid var(--border);
+  color:var(--muted);
+  overflow:auto;
+}
+.section-navigator-title {
+  margin:0 0 8px;
+  padding:0 5px;
+  color:var(--ink);
+  font-size:10px;
+  font-weight:750;
+}
+.section-nav-item {
+  width:100%;
+  min-height:27px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  border:0;
+  border-radius:5px;
+  background:transparent;
+  color:var(--muted);
+  padding:4px 6px;
+  text-align:left;
+  font-size:9px;
+}
+.section-nav-item:hover { color:var(--ink); background:var(--panel-soft); }
+.section-nav-item.active { color:var(--ink); background:color-mix(in srgb,var(--panel-soft) 78%,transparent); font-weight:650; }
+.section-nav-item span { font-size:8px; color:var(--muted); }
+.section-nav-divider { height:1px; margin:8px 5px; background:var(--border); }
+.section-nav-placeholder {
+  padding:2px 5px;
+  font-size:8px;
+  line-height:1.45;
+  color:var(--muted);
+  opacity:.7;
+}
+
+/* Memory already has the navigator/explorer concept built in, so it stays untouched. */
+
+@media (max-width:820px) {
+  .view.has-section-navigator { padding-left:10px !important; }
+  .section-navigator { display:none; }
+}
