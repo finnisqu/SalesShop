@@ -1,0 +1,69 @@
+/* Grid interaction polish loaded after notebook-grid.css. */
+
+.grid-note {
+  transition: background .1s ease, outline-color .1s ease, opacity .1s ease;
+}
+.grid-note.is-selected {
+  outline: 1px solid color-mix(in srgb, var(--tab-notebook) 34%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.grid-note.is-selected::after {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 8px;
+  width: 3px;
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tab-notebook) 55%, transparent);
+  opacity: .7;
+  pointer-events: none;
+}
+.grid-note.is-dragging {
+  opacity: .72;
+  cursor: grabbing;
+  z-index: 30;
+}
+
+/* The editor should disappear into the paper: only caret, text, and the faint home square remain. */
+.grid-editor-wrap.grid-editor-minimal {
+  min-width: 28px !important;
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.grid-editor-wrap.grid-editor-minimal .grid-editor-cue {
+  display: none !important;
+}
+.grid-editor-wrap.grid-editor-minimal .grid-editor {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  caret-color: var(--paper-ink) !important;
+}
+.grid-editor-wrap.grid-editor-minimal .grid-editor:focus,
+.grid-editor-wrap.grid-editor-minimal .grid-editor:focus-visible {
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.grid-editor-wrap.grid-editor-minimal .grid-editor::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
+}
+.grid-editor-wrap.grid-editor-minimal::before {
+  border-color: color-mix(in srgb, var(--tab-notebook) 26%, transparent);
+  background: color-mix(in srgb, var(--tab-notebook) 4%, transparent);
+}
