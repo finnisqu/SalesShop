@@ -1,0 +1,79 @@
+/* Saved-history editing + readable notebook-paper contextual controls. */
+
+/* The notebook toolbar lives on paper even when the app theme is dark. */
+.notebook-paper-popover,
+.notebook-shell .rich-selection-toolbar,
+.notebook-shell .rich-selection-popover {
+  background: #fff8dd !important;
+  border-color: rgba(104,88,52,.24) !important;
+  color: #463c2d !important;
+  box-shadow: 0 7px 20px rgba(54,43,20,.18) !important;
+}
+.notebook-paper-popover .rich-tool,
+.notebook-shell .rich-selection-toolbar .rich-tool,
+.notebook-shell .rich-selection-popover .rich-tool {
+  color: #463c2d !important;
+  opacity: 1 !important;
+}
+.notebook-paper-popover .rich-tool-action,
+.notebook-shell .rich-tool-action {
+  color: #6e624b !important;
+}
+.notebook-paper-popover .rich-tool:hover,
+.notebook-shell .rich-selection-toolbar .rich-tool:hover,
+.notebook-shell .rich-selection-popover .rich-tool:hover {
+  background: rgba(103,86,47,.09) !important;
+}
+.notebook-paper-popover .rich-tool-separator,
+.notebook-shell .rich-tool-separator {
+  background: rgba(91,76,44,.22) !important;
+}
+
+/* Make the highlighters read as actual ink swatches instead of empty controls. */
+.rich-highlight {
+  width: 19px !important;
+  min-width: 19px !important;
+  height: 19px !important;
+  padding: 2px !important;
+  border: 1px solid rgba(74,62,38,.15) !important;
+  border-radius: 5px !important;
+  background: transparent !important;
+}
+.rich-highlight > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.22);
+}
+.rich-highlight-yellow > span { background: rgba(244,208,92,.88); }
+.rich-highlight-mint > span { background: rgba(109,201,156,.80); }
+.rich-highlight-rose > span { background: rgba(232,128,147,.76); }
+.rich-tool-cue {
+  min-width: 30px;
+  padding-inline: 6px;
+  font-weight: 700;
+  font-size: 8px;
+}
+
+/* Saved entries remain paper text, but show a tiny editing affordance while active. */
+.entry-text.saved-note-editing,
+.grid-history-text.saved-note-editing,
+.grid-note-text.saved-note-editing {
+  outline: 1px solid rgba(181,143,38,.26);
+  outline-offset: 2px;
+  border-radius: 2px;
+  background: rgba(255,249,220,.18);
+  caret-color: var(--paper-ink);
+}
+.entry-text[contenteditable="true"],
+.grid-history-text[contenteditable="true"],
+.grid-note-text[contenteditable="true"] {
+  cursor: text;
+}
+
+/* Cue tags should stay distinct while the surrounding saved entry is edited. */
+.saved-note-editing .entry-cue-inline {
+  user-select: none;
+  cursor: default;
+}
