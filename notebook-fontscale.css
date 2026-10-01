@@ -1,0 +1,169 @@
+/* Global notebook font scale. JS sets --notebook-font-size and --notebook-row-size on the shell. */
+
+.notebook-shell {
+  --notebook-font-size:13px;
+  --notebook-row-size:28px;
+}
+
+/* Normal notebook writing follows one global text size. */
+.notebook-page .entry-text,
+.notebook-page .notebook-input,
+.notebook-page .notebook-rich-editor,
+.notebook-page .grid-note,
+.notebook-page .grid-note-text,
+.notebook-page .grid-editor,
+.notebook-page .grid-rich-editor,
+.notebook-page .grid-history-entry,
+.notebook-page .cornell-entry-cue,
+.notebook-page .cornell-cue-input,
+.notebook-page .cornell-entry-body {
+  font-size:var(--notebook-font-size) !important;
+  line-height:var(--notebook-row-size) !important;
+}
+
+.notebook-page .notebook-entry,
+.notebook-page .grid-note,
+.notebook-page .grid-editor-wrap,
+.notebook-page .cornell-draft-row {
+  min-height:var(--notebook-row-size) !important;
+}
+.notebook-page .cornell-cue-input {
+  height:var(--notebook-row-size) !important;
+}
+.notebook-page .notebook-rich-editor,
+.notebook-page .grid-rich-editor,
+.notebook-page .grid-editor {
+  min-height:var(--notebook-row-size) !important;
+}
+
+/* Cue tags are content too, but remain compact pills outside Cornell. */
+.notebook-page .entry-cue-inline,
+.notebook-page .draft-cue-tag,
+.notebook-page .grid-note-cue,
+.notebook-page .grid-editor-cue,
+.notebook-page .grid-history-cue {
+  font-size:var(--notebook-font-size) !important;
+  line-height:calc(var(--notebook-row-size) - 4px) !important;
+  min-height:calc(var(--notebook-row-size) - 4px) !important;
+}
+
+/* Paper ruling derives from the same rhythm as the text. */
+.notebook-page.paper-lines .notebook-page-body {
+  background-image:repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--notebook-row-size) - 1px),
+    var(--paper-line) calc(var(--notebook-row-size) - 1px),
+    var(--paper-line) var(--notebook-row-size)
+  ) !important;
+}
+.notebook-page.paper-grid .notebook-page-body {
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--notebook-row-size) - 1px),
+      var(--paper-line) calc(var(--notebook-row-size) - 1px),
+      var(--paper-line) var(--notebook-row-size)
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(var(--notebook-row-size) - 1px),
+      var(--paper-line) calc(var(--notebook-row-size) - 1px),
+      var(--paper-line) var(--notebook-row-size)
+    ) !important;
+}
+.notebook-page.paper-cornell .notebook-page-body {
+  background-image:
+    linear-gradient(to right,
+      transparent calc(26% - .5px),
+      color-mix(in srgb,var(--paper-muted) 28%,transparent) 26%,
+      transparent calc(26% + .5px)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--notebook-row-size) - 1px),
+      var(--paper-line) calc(var(--notebook-row-size) - 1px),
+      var(--paper-line) var(--notebook-row-size)
+    ) !important;
+}
+
+/* Spatial Grid coordinates remain logical rows/columns while their physical square size changes. */
+.grid-notebook-full-sheet .grid-note,
+.grid-notebook-full-sheet .grid-editor-wrap,
+.grid-note,
+.grid-editor-wrap {
+  left:calc((var(--grid-col) * var(--notebook-row-size)) + 4px) !important;
+  top:calc(var(--grid-row) * var(--notebook-row-size)) !important;
+}
+.grid-note,
+.grid-editor-wrap {
+  min-width:var(--notebook-row-size) !important;
+}
+.grid-notebook-full-sheet .grid-note,
+.grid-notebook-full-sheet .grid-editor-wrap {
+  max-width:min(336px,calc(100% - (var(--grid-col) * var(--notebook-row-size)) - 12px)) !important;
+}
+.grid-notebook-full-sheet .grid-editor-wrap {
+  width:min(308px,calc(100% - (var(--grid-col) * var(--notebook-row-size)) - 10px)) !important;
+}
+.grid-editor-wrap::before {
+  width:var(--notebook-row-size) !important;
+  height:var(--notebook-row-size) !important;
+}
+
+/* Compact persistent font-size control beside undo / redo. */
+.notebook-font-control {
+  height:23px;
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  margin-left:3px;
+  padding:0 3px 0 5px;
+  border:1px solid transparent;
+  border-radius:5px;
+  color:var(--muted);
+}
+.notebook-font-control:hover,
+.notebook-font-control:focus-within {
+  color:var(--ink);
+  border-color:var(--border-strong);
+  background:var(--panel-soft);
+}
+.notebook-font-a {
+  font-family:Georgia,serif;
+  font-size:11px;
+  line-height:1;
+}
+.notebook-font-control select {
+  width:34px;
+  height:19px;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:inherit;
+  padding:0;
+  font-size:9px;
+  font-weight:600;
+  cursor:pointer;
+}
+.notebook-font-control select option {
+  color:var(--ink);
+  background:var(--panel);
+}
+
+/* The Style menu has room for the two-column icon at the right side of Blank / Lines. */
+.notebook-view-menu {
+  width:136px !important;
+}
+
+@media (max-width:720px) {
+  .grid-notebook-full-sheet .grid-note,
+  .grid-notebook-full-sheet .grid-editor-wrap {
+    max-width:min(252px,calc(100% - (var(--grid-col) * var(--notebook-row-size)) - 8px)) !important;
+  }
+  .grid-notebook-full-sheet .grid-editor-wrap {
+    width:min(252px,calc(100% - (var(--grid-col) * var(--notebook-row-size)) - 8px)) !important;
+  }
+}
