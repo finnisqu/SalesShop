@@ -1,6 +1,6 @@
 /* Notebook page behavior: keep the active thought visually dominant. */
 .notebook-entries {
-  max-height: 104px;
+  max-height: 84px;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 4px;
