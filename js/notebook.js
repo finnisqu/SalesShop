@@ -1,29 +1,43 @@
 function renderNotebook() {
-  $('#view-notebook').innerHTML = `
-    <div class="page-head compact-head"><div><div class="eyebrow">Notebook</div><h1>Write first. Organize later.</h1><div class="page-subtitle">A partial record is still a useful record.</div></div></div>
-    <div id="fullNotebookMount"></div>`;
-  renderNotebookSurface($('#fullNotebookMount'), {embedded:false, prefix:'full'});
+  const placeholder = $('#view-notebook');
+  if (placeholder) placeholder.innerHTML = '';
+  renderNotebookSurface($('#notebookDock'));
 }
 
-function renderNotebookSurface(root, {embedded=false, prefix='note'}={}) {
+function renderNotebookSurface(root) {
   if(!root) return;
   const keys = [...new Set([dateKey(), ...Object.keys(state.notebook)])].sort().reverse();
-  if (!keys.includes(currentNotebookDate)) currentNotebookDate = keys[0];
+  if (!keys.includes(currentNotebookDate)) currentNotebookDate = dateKey();
   const entries = state.notebook[currentNotebookDate] || [];
+  const isToday = currentNotebookDate === dateKey();
+
   root.innerHTML = `
-    <div class="notebook-surface ${embedded?'embedded-notebook':''}">
-      <div class="notebook-days">
-        ${keys.slice(0, embedded ? 8 : 24).map(k=>`<button class="day-button ${k===currentNotebookDate?'active':''}" data-date="${k}"><span class="day-label">${k===dateKey()?'Today':fmtDate(k,{weekday:'short',month:'short',day:'numeric'})}</span><span class="day-count">${(state.notebook[k]||[]).length}</span></button>`).join('')}
-        ${currentNotebookDate!==dateKey()?`<button class="day-button today-shortcut" data-today="true">Today</button>`:''}
+    <div class="notebook-shell">
+      <div class="notebook-toolbar">
+        <span class="notebook-toolbar-date">${isToday?'Today':fmtDate(currentNotebookDate,{weekday:'short',month:'short',day:'numeric'})}</span>
+        <div class="notebook-toolbar-actions">
+          ${!isToday?'<button class="notebook-tool" data-today>Today</button>':''}
+          <button class="notebook-tool" data-history>History</button>
+        </div>
       </div>
       <div class="notebook-page">
-        <div class="notebook-paper-head"><div class="notebook-date">${fmtDate(currentNotebookDate,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div><div class="notebook-caption">Searchable forever. Structure only what deserves it.</div></div>
-        <div class="notebook-composer">
-          <textarea data-notebook-input class="notebook-input" placeholder="What happened? What do you need to remember?"></textarea>
-          <div class="notebook-actions"><button data-mic class="mic-button">🎙 Voice note</button><button data-note-save class="paper-action">Add to page</button></div>
+        <div class="notebook-paper-head">
+          <div class="notebook-date">${fmtDate(currentNotebookDate,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
         </div>
-        <div class="notebook-entries">
-          ${entries.length ? entries.map(e=>`<div class="notebook-entry" data-entry-id="${e.id}"><div class="entry-meta"><span>${fmtTimestamp(e.createdAt)}</span>${e.source==='voice'?'<span class="entry-source">voice</span>':''}</div><div class="entry-text">${escapeHtml(e.text)}</div></div>`).join('') : '<div class="empty-page">A blank page is allowed.</div>'}
+        <div class="notebook-page-body">
+          <div class="notebook-entries">
+            ${entries.map(e=>`<div class="notebook-entry" data-entry-id="${e.id}">
+              <div class="entry-time">${fmtTimestamp(e.createdAt)}</div>
+              <div class="entry-text">${escapeHtml(e.text)}</div>
+            </div>`).join('')}
+          </div>
+          <div class="notebook-writing-zone ${entries.length?'':'blank-page'}">
+            <textarea data-notebook-input class="notebook-input" placeholder="Start writing…"></textarea>
+            <div class="notebook-actions">
+              <button data-mic class="mic-button">🎙 Voice</button>
+              <button data-note-save class="paper-action">Add</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -31,11 +45,11 @@ function renderNotebookSurface(root, {embedded=false, prefix='note'}={}) {
 }
 
 function bindNotebookSurface(root) {
-  $$('.day-button[data-date]', root).forEach(b => b.onclick=()=>{currentNotebookDate=b.dataset.date;renderAll();});
-  $('[data-today]', root)?.addEventListener('click',()=>{currentNotebookDate=dateKey();renderAll();});
-  $('[data-note-save]', root)?.addEventListener('click',()=>{
-    const input=$('[data-notebook-input]', root); const val=input.value.trim(); if(!val)return;
-    addNotebookEntry(val,'typed',currentNotebookDate); toast('Added to notebook');
+  $('[data-history]', root)?.addEventListener('click', openNotebookHistory);
+  $('[data-today]', root)?.addEventListener('click',()=>{ currentNotebookDate=dateKey(); renderAll(); });
+  $('[data-note-save]', root)?.addEventListener('click',()=>saveNotebookDraft(root));
+  $('[data-notebook-input]', root)?.addEventListener('keydown',e=>{
+    if ((e.ctrlKey||e.metaKey) && e.key === 'Enter') { e.preventDefault(); saveNotebookDraft(root); }
   });
   $('[data-mic]', root)?.addEventListener('click',()=>toggleSpeech(root));
   $$('.entry-text', root).forEach(el => {
@@ -44,23 +58,68 @@ function bindNotebookSurface(root) {
   });
 }
 
+function saveNotebookDraft(root) {
+  const input=$('[data-notebook-input]', root);
+  const val=input?.value.trim();
+  if(!val)return;
+  addNotebookEntry(val,'typed',currentNotebookDate);
+  toast('Added');
+}
+
+function openNotebookHistory() {
+  const keys = [...new Set([dateKey(), ...Object.keys(state.notebook)])].sort().reverse();
+  openModal('Notebook','History',`
+    <div class="history-list">
+      ${keys.map(k=>`<button class="history-row ${k===currentNotebookDate?'active':''}" data-history-date="${k}">
+        <span>${k===dateKey()?'Today':fmtDate(k,{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span>
+        <span>${(state.notebook[k]||[]).length}</span>
+      </button>`).join('')}
+    </div>`);
+  $$('[data-history-date]').forEach(btn=>btn.onclick=()=>{
+    currentNotebookDate=btn.dataset.historyDate;
+    closeModal();
+    renderAll();
+  });
+}
+
 function addNotebookEntry(text, source='typed', key=dateKey()) {
   if(!state.notebook[key]) state.notebook[key]=[];
-  state.notebook[key].push({id:uid('note'), createdAt:nowISO(), text, source}); save(); renderAll();
+  state.notebook[key].push({id:uid('note'), createdAt:nowISO(), text, source});
+  save();
+  renderAll();
 }
 
 function toggleSpeech(root) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) return toast('Live browser dictation is not supported here. Typing still works.');
   const btn=$('[data-mic]', root); const input=$('[data-notebook-input]', root);
-  if (speech) { speech.stop(); speech=null; speechTarget=null; btn?.classList.remove('recording'); if(btn)btn.textContent='🎙 Voice note'; return; }
+  if (speech) {
+    speech.stop(); speech=null; speechTarget=null;
+    btn?.classList.remove('recording'); if(btn)btn.textContent='🎙 Voice';
+    return;
+  }
   speechTarget = input;
-  speech = new SpeechRecognition(); speech.continuous=true; speech.interimResults=true; speech.lang='en-US';
+  speech = new SpeechRecognition();
+  speech.continuous=true;
+  speech.interimResults=true;
+  speech.lang='en-US';
   let final=input.value ? `${input.value.trim()} ` : '';
-  speech.onresult = e => { let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) final += t+' '; else interim += t; } if(speechTarget) speechTarget.value=(final+interim).trim(); };
-  speech.onend = () => { btn?.classList.remove('recording'); if(btn)btn.textContent='🎙 Voice note'; speech=null; speechTarget=null; };
+  speech.onresult = e => {
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal) final += t+' '; else interim += t;
+    }
+    if(speechTarget) speechTarget.value=(final+interim).trim();
+  };
+  speech.onend = () => {
+    btn?.classList.remove('recording'); if(btn)btn.textContent='🎙 Voice';
+    speech=null; speechTarget=null;
+  };
   speech.onerror = () => toast('Microphone transcription stopped.');
-  speech.start(); btn.classList.add('recording'); btn.textContent='■ Stop recording';
+  speech.start();
+  btn.classList.add('recording');
+  btn.textContent='■ Stop';
 }
 
 function handleSelection(e, entryId, force=false) {
@@ -81,7 +140,7 @@ function removeSelectionPopover(){ $('#selectionPopover')?.remove(); }
 
 function openPromoteModal(text, entryId) {
   removeSelectionPopover();
-  openModal('Promote selection', 'Give this breadcrumb more structure', `
+  openModal('Promote selection', '', `
     <div class="selection-quote">“${escapeHtml(text)}”</div>
     <div class="promote-grid">
       ${[
@@ -107,17 +166,17 @@ function promoteText(type,text,entryId) {
 }
 
 function openReminderModal(text,entryId) {
-  openModal('Reminder','When should this come back?',`<div class="field"><label>Reminder</label><input id="remText" value="${escapeHtml(text)}"></div><div class="field spaced-field"><label>Date</label><input id="remDate" type="date"></div><div class="modal-actions"><button class="primary-button" id="saveRem">Save reminder</button></div>`);
+  openModal('Reminder','',`<div class="field"><label>Reminder</label><input id="remText" value="${escapeHtml(text)}"></div><div class="field spaced-field"><label>Date</label><input id="remDate" type="date"></div><div class="modal-actions"><button class="primary-button" id="saveRem">Save reminder</button></div>`);
   $('#saveRem').onclick=()=>{ state.reminders.push({id:uid('rem'),text:$('#remText').value.trim(),date:$('#remDate').value,createdAt:nowISO(),sourceEntryId:entryId}); save(); closeModal(); renderAll(); toast('Reminder created'); };
 }
 
 function openProjectUpdateModal(text,entryId) {
-  openModal('Project update','Attach this breadcrumb',`<div class="field"><label>Work item</label><select id="updWork" class="field-select">${state.workItems.map(w=>`<option value="${w.id}">${escapeHtml(w.title)}</option>`).join('')}</select></div><div class="field spaced-field"><label>Update</label><textarea id="updText" rows="4">${escapeHtml(text)}</textarea></div><div class="modal-actions"><button class="primary-button" id="saveUpd">Attach update</button></div>`);
+  openModal('Project update','',`<div class="field"><label>Work item</label><select id="updWork" class="field-select">${state.workItems.map(w=>`<option value="${w.id}">${escapeHtml(w.title)}</option>`).join('')}</select></div><div class="field spaced-field"><label>Update</label><textarea id="updText" rows="4">${escapeHtml(text)}</textarea></div><div class="modal-actions"><button class="primary-button" id="saveUpd">Attach update</button></div>`);
   $('#saveUpd').onclick=()=>{ state.projectUpdates.push({id:uid('upd'),workItemId:$('#updWork').value,text:$('#updText').value.trim(),createdAt:nowISO(),sourceEntryId:entryId}); save(); closeModal(); renderAll(); toast('Project updated'); };
 }
 
 function openLinkModal(text,entryId) {
   removeSelectionPopover();
-  openModal('Link selection','Connect the note without changing it',`<div class="selection-quote">“${escapeHtml(text)}”</div><div class="field"><label>Link to work item</label><select id="linkWork" class="field-select">${state.workItems.map(w=>`<option value="${w.id}">${escapeHtml(w.title)}</option>`).join('')}</select></div><div class="modal-actions"><button class="primary-button" id="saveLink">Link</button></div>`);
+  openModal('Link selection','',`<div class="selection-quote">“${escapeHtml(text)}”</div><div class="field"><label>Link to work item</label><select id="linkWork" class="field-select">${state.workItems.map(w=>`<option value="${w.id}">${escapeHtml(w.title)}</option>`).join('')}</select></div><div class="modal-actions"><button class="primary-button" id="saveLink">Link</button></div>`);
   $('#saveLink').onclick=()=>{ state.projectUpdates.push({id:uid('link'),workItemId:$('#linkWork').value,text:`Linked notebook text: ${text}`,createdAt:nowISO(),sourceEntryId:entryId,linkOnly:true}); save();closeModal();toast('Linked to work item'); };
 }
