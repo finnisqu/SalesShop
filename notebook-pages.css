@@ -1,12 +1,13 @@
 /* Notebook page behavior: keep the active thought visually dominant. */
 .notebook-entries {
-  max-height: 84px;
+  max-height: var(--notebook-history-max, 84px);
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 4px;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--paper-muted) 32%, transparent) transparent;
   scroll-behavior: smooth;
+  transition: max-height .12s ease;
 }
 .notebook-entries::-webkit-scrollbar { width: 4px; }
 .notebook-entries::-webkit-scrollbar-track { background: transparent; }
@@ -14,26 +15,161 @@
   background: color-mix(in srgb, var(--paper-muted) 30%, transparent);
   border-radius: 999px;
 }
-.notebook-entries:not(.has-scrollback) {
-  overflow-y: visible;
-  max-height: none;
-  padding-right: 0;
-}
-.notebook-entry {
-  min-height: 27px;
-}
+.notebook-entry { min-height: 27px; }
 .notebook-entries.has-scrollback {
   mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 100%);
+}
+.notebook-entries.draft-hides-history {
+  max-height: 0 !important;
+  padding: 0;
+  overflow: hidden;
 }
 .notebook-writing-zone,
 .notebook-writing-zone.blank-page {
   min-height: 150px;
   padding-top: 10px;
 }
+.notebook-input {
+  min-height: 110px;
+  overflow: hidden;
+}
 .notebook-new-page {
   font-weight: 700;
   color: var(--paper-muted);
 }
-.notebook-new-page:hover {
+.notebook-new-page:hover { color: var(--ink); }
+
+/* View menu */
+.notebook-view-wrap { position: relative; }
+.notebook-view-button { min-width: 34px; }
+.notebook-view-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 5px);
+  z-index: 80;
+  display: none;
+  width: 112px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.notebook-view-menu.open { display: block; }
+.notebook-view-option {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 3px;
+  align-items: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
   color: var(--ink);
+  padding: 5px 6px;
+  text-align: left;
+  font-size: 9px;
+}
+.notebook-view-option:hover { background: var(--panel-soft); }
+.notebook-view-option span { color: var(--tab-notebook); font-weight: 800; }
+
+/* Paper choices. Blank remains the default physical sheet. */
+.notebook-page.paper-lines .notebook-page-body {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 27px,
+    var(--paper-line) 28px
+  );
+}
+.notebook-page.paper-grid .notebook-page-body {
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--paper-line) 28px),
+    repeating-linear-gradient(to right, transparent 0, transparent 27px, var(--paper-line) 28px);
+}
+.notebook-page.paper-lines .notebook-page-body,
+.notebook-page.paper-grid .notebook-page-body,
+.notebook-page.paper-cornell .notebook-page-body {
+  background-attachment: local;
+}
+
+/* Cornell is the first paper view with optional structure: cue/header + note body. */
+.notebook-page.paper-cornell .notebook-page-body {
+  background-image:
+    linear-gradient(to right,
+      transparent calc(26% - .5px),
+      color-mix(in srgb, var(--paper-muted) 28%, transparent) 26%,
+      transparent calc(26% + .5px)),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--paper-line) 28px);
+}
+.notebook-entry.cornell-entry {
+  display: grid;
+  grid-template-columns: minmax(92px, 26%) minmax(0, 1fr);
+  gap: 14px;
+  padding: 5px 0;
+}
+.cornell-entry-cue {
+  min-width: 0;
+  padding-right: 7px;
+  color: var(--paper-muted);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.cornell-entry-body {
+  position: relative;
+  padding-left: 12px;
+}
+.cornell-entry-body::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--paper-muted);
+}
+.cornell-entry .entry-time { grid-column: 2; }
+.cornell-draft-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 26%) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.cornell-cue-input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--paper-ink);
+  padding: 2px 7px 0 0;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+}
+.cornell-cue-input::placeholder { color: var(--paper-muted); opacity: .55; }
+.cornell-draft-body {
+  position: relative;
+  min-width: 0;
+  padding-left: 12px;
+}
+.cornell-draft-body::before {
+  content: '•';
+  position: absolute;
+  top: 1px;
+  left: 0;
+  color: var(--paper-muted);
+}
+.entry-cue-inline {
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: .8em;
+  font-weight: 750;
+  color: var(--paper-muted);
+}
+
+@media (max-width: 720px) {
+  .notebook-entry.cornell-entry,
+  .cornell-draft-row {
+    grid-template-columns: minmax(72px, 30%) minmax(0,1fr);
+    gap: 9px;
+  }
 }
