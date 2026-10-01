@@ -1,0 +1,120 @@
+/* Quiet persistent notebook toolbar + morphing Position control. */
+
+/* Persistent controls should be visible but not visually dominant. */
+.notebook-toolbar .notebook-history-button,
+.notebook-toolbar .notebook-icon-tool,
+.notebook-toolbar .notebook-toolbar-button,
+.notebook-toolbar .notebook-width-button,
+.notebook-toolbar .notebook-font-control {
+  opacity:.68;
+  transition:opacity .11s ease,background-color .11s ease,border-color .11s ease,color .11s ease;
+}
+.notebook-toolbar .notebook-history-button:hover:not(:disabled),
+.notebook-toolbar .notebook-icon-tool:hover:not(:disabled),
+.notebook-toolbar .notebook-toolbar-button:hover:not(:disabled),
+.notebook-toolbar .notebook-width-button:hover:not(:disabled),
+.notebook-toolbar .notebook-font-control:hover,
+.notebook-toolbar .notebook-font-control:focus-within,
+.notebook-toolbar .notebook-width-button.active {
+  opacity:1;
+}
+
+/* Give the left-side permanent tools the same quiet outline language as the right toolbar. */
+.notebook-history-button,
+.notebook-capture-tools .notebook-icon-tool,
+.notebook-font-control {
+  border-color:color-mix(in srgb,var(--border) 72%,transparent) !important;
+}
+.notebook-history-button:hover:not(:disabled),
+.notebook-capture-tools .notebook-icon-tool:hover:not(:disabled),
+.notebook-capture-tools .notebook-icon-tool.recording,
+.notebook-font-control:hover,
+.notebook-font-control:focus-within {
+  border-color:var(--border-strong) !important;
+}
+
+/* Font size reads as A 13; the select chevron is unnecessary. */
+.notebook-font-control select {
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:none !important;
+  padding-right:0 !important;
+  text-align:center;
+  text-align-last:center;
+}
+
+/* Medium / Full / Float become one compact Position control. */
+.notebook-position-control {
+  width:31px;
+  max-width:31px;
+  overflow:hidden;
+  display:inline-flex !important;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:1px;
+  padding:2px !important;
+  transition:width .16s ease,max-width .16s ease,box-shadow .12s ease;
+}
+.notebook-position-control:hover,
+.notebook-position-control:focus-within {
+  width:118px;
+  max-width:118px;
+}
+.notebook-position-control .notebook-width-button {
+  flex:0 0 27px;
+  width:27px;
+  min-width:27px;
+}
+.notebook-position-control:not(:hover):not(:focus-within) .notebook-width-button:not(.active) {
+  opacity:0;
+  pointer-events:none;
+}
+.notebook-position-control:hover .notebook-width-button,
+.notebook-position-control:focus-within .notebook-width-button {
+  opacity:.68;
+  pointer-events:auto;
+}
+.notebook-position-control:hover .notebook-width-button:hover,
+.notebook-position-control:focus-within .notebook-width-button:focus,
+.notebook-position-control .notebook-width-button.active {
+  opacity:1;
+}
+
+/* Placeholder fourth option: dock into the future left navigator. */
+.notebook-width-glyph.dock-left {
+  width:18px;
+  height:11px;
+  display:block;
+  position:relative;
+  border:1px solid currentColor;
+  border-radius:2px;
+}
+.notebook-width-glyph.dock-left::before {
+  content:'';
+  position:absolute;
+  left:3px;
+  top:1px;
+  bottom:1px;
+  width:1px;
+  background:currentColor;
+  opacity:.85;
+}
+.notebook-width-glyph.dock-left i {
+  position:absolute;
+  left:1px;
+  top:2px;
+  width:1px;
+  height:5px;
+  border-radius:1px;
+  background:currentColor;
+  opacity:.55;
+}
+.notebook-position-placeholder { cursor:pointer; }
+
+@media (max-width:640px) {
+  .notebook-position-control:hover,
+  .notebook-position-control:focus-within {
+    width:118px;
+    max-width:118px;
+  }
+}
