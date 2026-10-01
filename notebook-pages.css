@@ -15,7 +15,7 @@
   background: color-mix(in srgb, var(--paper-muted) 30%, transparent);
   border-radius: 999px;
 }
-.notebook-entry { min-height: 27px; }
+.notebook-entry { min-height: 28px; }
 .notebook-entries.has-scrollback {
   mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 100%);
 }
@@ -30,7 +30,7 @@
   padding-top: 10px;
 }
 .notebook-input {
-  min-height: 110px;
+  min-height: 28px;
   overflow: hidden;
 }
 .notebook-new-page {
@@ -73,92 +73,109 @@
 .notebook-view-option:hover { background: var(--panel-soft); }
 .notebook-view-option span { color: var(--tab-notebook); font-weight: 800; }
 
-/* Paper choices. Blank remains the default physical sheet. */
+/* Paper choices. One 28px row equals one text line. */
 .notebook-page.paper-lines .notebook-page-body {
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0,
     transparent 27px,
+    var(--paper-line) 27px,
     var(--paper-line) 28px
   );
 }
 .notebook-page.paper-grid .notebook-page-body {
   background-image:
-    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--paper-line) 28px),
-    repeating-linear-gradient(to right, transparent 0, transparent 27px, var(--paper-line) 28px);
+    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--paper-line) 27px, var(--paper-line) 28px),
+    repeating-linear-gradient(to right, transparent 0, transparent 27px, var(--paper-line) 27px, var(--paper-line) 28px);
 }
 .notebook-page.paper-lines .notebook-page-body,
 .notebook-page.paper-grid .notebook-page-body,
 .notebook-page.paper-cornell .notebook-page-body {
   background-attachment: local;
 }
+.notebook-page.paper-lines .notebook-entry,
+.notebook-page.paper-grid .notebook-entry,
+.notebook-page.paper-cornell .notebook-entry {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.notebook-page.paper-lines .entry-text,
+.notebook-page.paper-grid .entry-text,
+.notebook-page.paper-cornell .entry-text,
+.notebook-page.paper-lines .notebook-input,
+.notebook-page.paper-grid .notebook-input,
+.notebook-page.paper-cornell .notebook-input {
+  line-height: 28px;
+}
+.notebook-page.paper-lines .notebook-writing-zone,
+.notebook-page.paper-grid .notebook-writing-zone,
+.notebook-page.paper-cornell .notebook-writing-zone,
+.notebook-page.paper-lines .notebook-writing-zone.blank-page,
+.notebook-page.paper-grid .notebook-writing-zone.blank-page,
+.notebook-page.paper-cornell .notebook-writing-zone.blank-page {
+  padding-top: 0;
+}
 
-/* Cornell is the first paper view with optional structure: cue/header + note body. */
+/* Cornell: cue/header at left, note body at right. The columns provide the structure; no bullets needed. */
 .notebook-page.paper-cornell .notebook-page-body {
   background-image:
     linear-gradient(to right,
       transparent calc(26% - .5px),
       color-mix(in srgb, var(--paper-muted) 28%, transparent) 26%,
       transparent calc(26% + .5px)),
-    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--paper-line) 28px);
+    repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--paper-line) 27px, var(--paper-line) 28px);
 }
 .notebook-entry.cornell-entry {
   display: grid;
   grid-template-columns: minmax(92px, 26%) minmax(0, 1fr);
   gap: 14px;
-  padding: 5px 0;
+  padding: 0;
+  min-height: 28px;
 }
 .cornell-entry-cue {
   min-width: 0;
-  padding-right: 7px;
+  padding: 0 7px 0 0;
   color: var(--paper-muted);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 9px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 28px;
   overflow-wrap: anywhere;
 }
 .cornell-entry-body {
   position: relative;
-  padding-left: 12px;
+  padding-left: 0;
+  line-height: 28px;
 }
-.cornell-entry-body::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: var(--paper-muted);
-}
+.cornell-entry-body::before { content: none; }
 .cornell-entry .entry-time { grid-column: 2; }
 .cornell-draft-row {
   display: grid;
   grid-template-columns: minmax(92px, 26%) minmax(0, 1fr);
   gap: 14px;
   align-items: start;
+  min-height: 28px;
 }
 .cornell-cue-input {
   width: 100%;
+  height: 28px;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--paper-ink);
-  padding: 2px 7px 0 0;
+  padding: 0 7px 0 0;
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 10px;
   font-weight: 700;
+  line-height: 28px;
 }
 .cornell-cue-input::placeholder { color: var(--paper-muted); opacity: .55; }
 .cornell-draft-body {
   position: relative;
   min-width: 0;
-  padding-left: 12px;
+  padding-left: 0;
 }
-.cornell-draft-body::before {
-  content: '•';
-  position: absolute;
-  top: 1px;
-  left: 0;
-  color: var(--paper-muted);
-}
+.cornell-draft-body::before { content: none; }
 .entry-cue-inline {
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: .8em;
