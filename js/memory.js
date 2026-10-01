@@ -3,7 +3,7 @@ function renderMemory() {
     <div class="page-head"><div><div class="eyebrow">Breadcrumb CRM</div><h1>Memory</h1><div class="page-subtitle">The database is here when you want it, but it does not run the experience.</div></div></div>
     <div class="memory-grid">
       ${memoryPanel('Contacts',state.contacts.map(c=>({title:c.name,meta:[c.company,c.detail].filter(Boolean).join(' · ')||'Partial contact'})))}
-      ${memoryPanel('Companies',state.companies.map(c=>({title:c.name||c.domain||'Untitled company',meta:`${accountStage(c)}${c.domain?` · ${c.domain}`:''}`})))}
+      ${memoryPanel('Companies',state.companies.map(c=>({title:c.name||c.domain||'Untitled company',meta:`${accountBoardColumn(c)}${c.relationshipLabel?` · ${c.relationshipLabel}`:''}${c.domain?` · ${c.domain}`:''}`})))}
       ${memoryPanel('Deals',state.crmDeals.map(d=>({title:d.name,meta:`${d.stage} · ${money(d.amount)}`})))}
       ${memoryPanel('Touchpoints',state.touchpoints.map(t=>({title:t.text,meta:new Date(t.createdAt).toLocaleString()})))}
       ${memoryPanel('Reminders',state.reminders.map(r=>({title:r.text,meta:r.date?`Due ${fmtDate(r.date)}`:'No date required'})))}
@@ -32,7 +32,7 @@ function indexEverything() {
   state.quotes.forEach(q=>rows.push({type:'Quote',title:q.title||q.quoteNumber,text:`${q.customer} ${q.quoteNumber} ${money(quoteTotal(q))}`,go:()=>{currentQuoteId=q.id;showView('quotes');}}));
   Object.entries(state.notebook).forEach(([d,entries])=>entries.forEach(n=>rows.push({type:'Notebook',title:fmtDate(d,{month:'short',day:'numeric',year:'numeric'}),text:n.text,go:()=>{currentNotebookDate=d;showView('notebook');}})));
   state.contacts.forEach(c=>rows.push({type:'Contact',title:c.name,text:c.company||'',go:()=>showView('memory')}));
-  state.companies.forEach(c=>rows.push({type:'Company',title:c.name||c.domain||'Untitled company',text:`${c.domain||''} ${accountStage(c)}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(c.id),0);}}));
+  state.companies.forEach(c=>rows.push({type:'Company',title:c.name||c.domain||'Untitled company',text:`${c.domain||''} ${accountBoardColumn(c)} ${c.relationshipLabel||''}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(c.id),0);}}));
   state.crmDeals.forEach(d=>rows.push({type:'Deal',title:d.name,text:`${d.stage} ${money(d.amount)}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(d.companyId),0);}}));
   state.touchpoints.forEach(t=>rows.push({type:'Touchpoint',title:t.text,text:new Date(t.createdAt).toLocaleDateString(),go:()=>showView('memory')}));
   state.reminders.forEach(r=>rows.push({type:'Reminder',title:r.text,text:r.date||'',go:()=>showView('memory')}));
