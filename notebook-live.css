@@ -1,0 +1,154 @@
+/* Live-page notebook + floating presentation. Loaded last among notebook styles. */
+
+/* The former Grid history divider is gone completely. */
+.grid-notebook-canvas.grid-notebook-full-sheet::before { content:none !important; display:none !important; }
+
+/* Capture tools live in the persistent toolbar so they remain reachable while scrolling. */
+.notebook-capture-tools {
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+}
+.notebook-capture-tools .notebook-icon-tool {
+  width:27px;
+  height:23px;
+  display:inline-grid;
+  place-items:center;
+  border:1px solid transparent;
+  border-radius:5px;
+  background:transparent;
+  color:var(--muted);
+  padding:0;
+  font-size:0 !important;
+}
+.notebook-capture-tools .notebook-icon-tool:hover:not(:disabled),
+.notebook-capture-tools .notebook-icon-tool.recording {
+  color:var(--ink);
+  border-color:var(--border-strong);
+  background:var(--panel-soft);
+}
+.notebook-capture-tools .notebook-icon-tool:disabled { opacity:.28; cursor:default; }
+.notebook-capture-tools .notebook-icon-tool::before {
+  content:'';
+  width:15px;
+  height:15px;
+  display:block;
+  background:currentColor;
+  mask-repeat:no-repeat;
+  mask-position:center;
+  mask-size:contain;
+  -webkit-mask-repeat:no-repeat;
+  -webkit-mask-position:center;
+  -webkit-mask-size:contain;
+}
+.notebook-capture-tools .notebook-icon-tool[data-mic]::before {
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15Zm-6-3.5a6 6 0 0 0 12 0M12 17.5V22m-3 0h6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15Zm-6-3.5a6 6 0 0 0 12 0M12 17.5V22m-3 0h6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.notebook-capture-tools .notebook-icon-tool[data-attach]::before {
+  width:16px;
+  height:16px;
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9.5 12.5 5.9-5.9a3.5 3.5 0 1 1 5 5l-8.5 8.5a5 5 0 0 1-7.1-7.1l8.1-8.1a2.8 2.8 0 0 1 4 4l-7.7 7.7a1.4 1.4 0 1 1-2-2l7.1-7.1' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9.5 12.5 5.9-5.9a3.5 3.5 0 1 1 5 5l-8.5 8.5a5 5 0 0 1-7.1-7.1l8.1-8.1a2.8 2.8 0 0 1 4 4l-7.7 7.7a1.4 1.4 0 1 1-2-2l7.1-7.1' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.notebook-capture-tools .notebook-icon-tool.recording { color:#d85c5c; }
+.notebook-paper-head-tools { display:none !important; }
+
+/* History pages are paper you can read/copy until deliberately unlocked. */
+.notebook-history-edit {
+  width:27px !important;
+  padding:0 !important;
+  text-align:center;
+}
+.notebook-readonly .notebook-writing-zone { display:none !important; }
+.notebook-readonly .grid-grab-handle { display:none !important; }
+.notebook-readonly .grid-note { cursor:text; }
+.notebook-readonly .voice-memo-title { cursor:default !important; }
+
+/* Third presentation glyph: a little floating sheet. */
+.notebook-width-glyph.float {
+  width:14px;
+  height:10px;
+  position:relative;
+  box-shadow:3px -2px 0 -2px currentColor;
+}
+
+/* Floating Post-it / notepad presentation. */
+body.notebook-floating-mode .workspace-body {
+  grid-template-rows:minmax(0,1fr) !important;
+}
+body.notebook-floating-mode .notebook-dock {
+  position:fixed;
+  z-index:95;
+  right:18px;
+  bottom:18px;
+  left:auto;
+  top:auto;
+  width:370px;
+  height:430px;
+  min-width:280px;
+  min-height:230px;
+  max-width:min(720px,calc(100vw - 16px));
+  max-height:calc(100vh - 62px);
+  padding:6px;
+  resize:both;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--tab-notebook) 42%,var(--border));
+  border-radius:9px;
+  background:var(--bg);
+  box-shadow:0 18px 48px rgba(0,0,0,.28);
+}
+body.notebook-floating-mode .notebook-shell {
+  width:100%;
+  max-width:none;
+  height:100%;
+}
+body.notebook-floating-mode .notebook-toolbar {
+  width:100% !important;
+  max-width:none !important;
+  margin-inline:0 !important;
+}
+body.notebook-floating-mode .notebook-page {
+  width:100% !important;
+  max-width:none !important;
+  margin-inline:0 !important;
+}
+body.notebook-floating-mode .notebook-width-controls { transform:scale(.95); }
+body.notebook-float-moving { user-select:none; }
+
+.notebook-float-grab {
+  width:24px;
+  height:23px;
+  display:none;
+  grid-template-columns:repeat(3,2px);
+  grid-template-rows:repeat(2,2px);
+  place-content:center;
+  gap:2px;
+  border:0;
+  border-radius:5px;
+  background:transparent;
+  padding:0;
+  cursor:grab;
+}
+.notebook-float-grab span {
+  width:2px;
+  height:2px;
+  border-radius:50%;
+  background:var(--muted);
+}
+body.notebook-floating-mode .notebook-float-grab { display:grid; }
+body.notebook-floating-mode .notebook-float-grab:hover { background:var(--panel-soft); }
+body.notebook-float-moving .notebook-float-grab { cursor:grabbing; }
+
+/* Medium / Full are true viewports onto the same elastic Grid canvas. */
+.notebook-page.paper-grid { overflow:auto !important; }
+.grid-notebook-canvas.grid-notebook-full-sheet { min-width:100%; }
+
+@media (max-width:640px) {
+  body.notebook-floating-mode .notebook-dock {
+    width:min(360px,calc(100vw - 12px));
+    height:390px;
+    right:6px;
+    bottom:6px;
+  }
+}
