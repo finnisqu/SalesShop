@@ -1,71 +1,75 @@
 function renderHome() {
-  const open = state.workItems.filter(w => w.stage !== 'Awarded');
-  const sent = state.workItems.filter(w => ['Sent','Decision'].includes(w.stage)).reduce((s,w)=>s+Number(w.amount||0),0);
-  const quoted = state.quotes.reduce((s,q)=>s+quoteTotal(q),0);
-  const attention = state.workItems.filter(w => w.nextAction).slice(0,5);
-  const todayNotes = state.notebook[dateKey()] || [];
+  const layout = state.settings.workspaceLayout || 'stacked';
+  const openCount = state.workItems.filter(w => !CLOSED_STAGES.has(w.stage)).length;
+  const bidValue = state.workItems.filter(w => ['Bid Sent','Negotiation'].includes(w.stage)).reduce((s,w)=>s+Number(w.amount||0),0);
+  const todayNotes = (state.notebook[dateKey()] || []).length;
   $('#view-home').innerHTML = `
-    <div class="page-head">
-      <div><div class="eyebrow">Working memory</div><h1>Good morning.</h1><div class="page-subtitle">Capture first. Structure only when it helps.</div></div>
-      <button class="secondary-button" data-go="notebook">Open today’s page</button>
+    <div class="workspace-head">
+      <div class="workspace-title-row">
+        <h1>Work</h1>
+        <span class="workspace-meta">${openCount} open · ${money(bidValue)} out · ${todayNotes} notes today</span>
+      </div>
+      <div class="workspace-controls" aria-label="Workspace layout">
+        <button class="layout-button ${layout==='stacked'?'active':''}" data-layout="stacked" title="Stack board and notebook">Stacked</button>
+        <button class="layout-button ${layout==='columns'?'active':''}" data-layout="columns" title="Board and notebook side by side">Columns</button>
+      </div>
     </div>
-    <div class="home-grid">
-      <div class="panel">
-        <div class="panel-head"><h2>What needs attention</h2><button class="text-button" data-go="board">View board</button></div>
-        <div class="panel-body">
-          <div class="stat-row">
-            <div class="stat"><div class="stat-value">${open.length}</div><div class="stat-label">open work items</div></div>
-            <div class="stat"><div class="stat-value">${money(sent)}</div><div class="stat-label">awaiting decision</div></div>
-            <div class="stat"><div class="stat-value">${money(quoted)}</div><div class="stat-label">quote book</div></div>
-          </div>
-          <div class="attention-list">
-            ${attention.map((w,i)=>`<div class="attention-item"><div><div class="attention-title">${escapeHtml(w.title)}</div><div class="attention-meta">${escapeHtml(w.company || 'No company yet')} · ${escapeHtml(w.nextAction)}</div></div><span class="pill ${i===0?'amber':''}">${escapeHtml(w.stage)}</span></div>`).join('') || '<div class="helper">Nothing pressing.</div>'}
-          </div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><h2>Scratchpad</h2><span class="helper">${todayNotes.length} entries today</span></div>
-        <div class="panel-body">
-          <textarea id="homeQuickNote" class="quick-note" placeholder="Write anything. It does not have to belong anywhere yet."></textarea>
-          <div class="quick-note-actions"><span class="helper">Saved to today’s notebook page</span><button id="homeSaveNote" class="primary-button">Remember</button></div>
-        </div>
-      </div>
+    <div class="workspace-layout ${layout}">
+      <section class="workspace-section board-section">
+        <div class="section-line"><div><strong>Projects & quotes</strong><span>Whatever can be quoted</span></div><button class="text-button" data-go="board">Open board</button></div>
+        <div id="homeBoardMount"></div>
+      </section>
+      <section class="workspace-section notebook-section">
+        <div class="section-line"><div><strong>Notebook</strong><span>Write first. Organize later.</span></div><button class="text-button" data-go="notebook">Open notebook</button></div>
+        <div id="homeNotebookMount"></div>
+      </section>
     </div>`;
-  $$('[data-go]', $('#view-home')).forEach(b => b.onclick = () => showView(b.dataset.go));
-  $('#homeSaveNote').onclick = () => {
-    const text = $('#homeQuickNote').value.trim(); if (!text) return;
-    addNotebookEntry(text, 'typed'); $('#homeQuickNote').value=''; toast('Added to today’s notebook');
-  };
+
+  renderBoardSurface($('#homeBoardMount'), {embedded:true});
+  renderNotebookSurface($('#homeNotebookMount'), {embedded:true, prefix:'home'});
+  $$('[data-layout]', $('#view-home')).forEach(b => b.onclick=()=>mutate(()=>state.settings.workspaceLayout=b.dataset.layout));
+  $$('[data-go]', $('#view-home')).forEach(b => b.onclick=()=>showView(b.dataset.go));
 }
 
 function renderBoard() {
   $('#view-board').innerHTML = `
-    <div class="page-head"><div><div class="eyebrow">Whatever can be quoted</div><h1>Board</h1><div class="page-subtitle">Cards can begin almost empty and collect breadcrumbs over time.</div></div></div>
-    <div class="board-wrap"><div class="board">
-      ${STAGES.map(stage => {
-        const items = state.workItems.filter(w => w.stage === stage);
-        return `<div class="board-column" data-stage="${stage}">
-          <div class="column-head"><span class="column-title">${stage}</span><span class="column-count">${items.length}</span></div>
-          <div class="card-stack">${items.map(workCardHtml).join('')}</div>
-          <div class="add-card-row"><input class="add-card-input" data-add-stage="${stage}" placeholder="+ Add something…" /></div>
-        </div>`;
-      }).join('')}
-    </div></div>`;
+    <div class="page-head compact-head"><div><div class="eyebrow">Whatever can be quoted</div><h1>Board</h1><div class="page-subtitle">Drag the work. Fill in only what becomes useful.</div></div></div>
+    <div id="fullBoardMount"></div>`;
+  renderBoardSurface($('#fullBoardMount'), {embedded:false});
+}
 
-  $$('.work-card', $('#view-board')).forEach(card => {
+function renderBoardSurface(root, {embedded=false}={}) {
+  if (!root) return;
+  root.innerHTML = `<div class="board-wrap ${embedded?'embedded-board':''}"><div class="board">
+    ${STAGES.map(stage => {
+      const items = state.workItems.filter(w => w.stage === stage);
+      const closed = CLOSED_STAGES.has(stage);
+      return `<div class="board-column ${closed?'terminal-column':''}" data-stage="${stage}">
+        <div class="column-head"><span class="column-title">${stage}</span><span class="column-count">${items.length}</span></div>
+        <div class="card-stack">${items.map(workCardHtml).join('')}</div>
+        <div class="add-card-row"><input class="add-card-input" data-add-stage="${stage}" placeholder="+ Add…" /></div>
+      </div>`;
+    }).join('')}
+  </div></div>`;
+  bindBoardSurface(root);
+}
+
+function bindBoardSurface(root) {
+  $$('.work-card', root).forEach(card => {
     card.draggable = true;
     card.ondragstart = e => { card.classList.add('dragging'); e.dataTransfer.setData('text/plain', card.dataset.id); };
     card.ondragend = () => card.classList.remove('dragging');
     card.ondblclick = () => openWorkItem(card.dataset.id);
   });
-  $$('.board-column', $('#view-board')).forEach(col => {
+  $$('.board-column', root).forEach(col => {
     col.ondragover = e => { e.preventDefault(); col.classList.add('dragover'); };
     col.ondragleave = () => col.classList.remove('dragover');
     col.ondrop = e => { e.preventDefault(); col.classList.remove('dragover'); const id=e.dataTransfer.getData('text/plain'); mutate(()=>{ const w=state.workItems.find(x=>x.id===id); if(w)w.stage=col.dataset.stage; }); };
   });
-  $$('.add-card-input', $('#view-board')).forEach(inp => inp.onkeydown = e => {
+  $$('.add-card-input', root).forEach(inp => inp.onkeydown = e => {
     if (e.key === 'Enter' && inp.value.trim()) {
-      const title = inp.value.trim(); mutate(()=>state.workItems.push({id:uid('work'),title,company:'',stage:inp.dataset.addStage,due:'',amount:0,nextAction:'',lastTouchpoint:''}));
+      const title = inp.value.trim();
+      mutate(()=>state.workItems.push({id:uid('work'),title,company:'',stage:inp.dataset.addStage,due:'',amount:0,nextAction:'',lastTouchpoint:''}));
       toast('Card added');
     }
   });
@@ -74,11 +78,13 @@ function renderBoard() {
 function workCardHtml(w) {
   return `<div class="work-card" data-id="${w.id}">
     <div class="work-card-title">${escapeHtml(w.title)}</div>
-    <div class="work-card-company">${escapeHtml(w.company || 'Loose card — no company yet')}</div>
-    ${w.amount ? `<div class="work-card-row"><span>Value</span><strong>${money(w.amount)}</strong></div>`:''}
-    ${w.due ? `<div class="work-card-row"><span>Due</span><span>${fmtDate(w.due)}</span></div>`:''}
-    ${w.lastTouchpoint ? `<div class="work-card-row"><span>Last touchpoint</span><span>${fmtDate(w.lastTouchpoint)}</span></div>`:''}
-    ${w.nextAction ? `<div class="work-card-next"><strong>Next:</strong> ${escapeHtml(w.nextAction)}</div>`:''}
+    ${w.company ? `<div class="work-card-company">${escapeHtml(w.company)}</div>` : ''}
+    <div class="work-card-facts">
+      ${w.amount ? `<span>${money(w.amount)}</span>`:''}
+      ${w.due ? `<span>Due ${fmtDate(w.due)}</span>`:''}
+      ${w.lastTouchpoint ? `<span>Touchpoint ${fmtDate(w.lastTouchpoint)}</span>`:''}
+    </div>
+    ${w.nextAction ? `<div class="work-card-next">${escapeHtml(w.nextAction)}</div>`:''}
   </div>`;
 }
 
@@ -88,7 +94,7 @@ function openWorkItem(id) {
     <div class="form-grid">
       <div class="field"><label>Name</label><input id="wiTitle" value="${escapeHtml(w.title)}"></div>
       <div class="field"><label>Company</label><input id="wiCompany" value="${escapeHtml(w.company||'')}"></div>
-      <div class="field"><label>Stage</label><select id="wiStage" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:9px">${STAGES.map(s=>`<option ${s===w.stage?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>Stage</label><select id="wiStage" class="field-select">${STAGES.map(s=>`<option ${s===w.stage?'selected':''}>${s}</option>`).join('')}</select></div>
       <div class="field"><label>Due</label><input id="wiDue" type="date" value="${w.due||''}"></div>
       <div class="field"><label>Value</label><input id="wiAmount" type="number" value="${w.amount||''}"></div>
       <div class="field"><label>Next action</label><input id="wiNext" value="${escapeHtml(w.nextAction||'')}"></div>
