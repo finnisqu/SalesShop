@@ -47,7 +47,6 @@ function installNotebookPageHeader(root) {
   });
 }
 
-/* History prefers the deliberate page header, then falls back to the existing content preview. */
 openNotebookHistory = function() {
   const rows = notebookHistoryRows();
   openModal('Notebook','History',`
@@ -71,7 +70,6 @@ openNotebookHistory = function() {
   });
 };
 
-/* Include page headers in the notebook undo snapshot without replacing the existing history stack. */
 if (typeof notebookHistorySnapshot === 'function' && !window.__salesShopPageHeaderUndo) {
   window.__salesShopPageHeaderUndo = true;
   const _pageHeaderSnapshot = notebookHistorySnapshot;
@@ -93,13 +91,19 @@ if (typeof notebookHistorySnapshot === 'function' && !window.__salesShopPageHead
 
 function closeActiveGridWritingMode() {
   if (typeof activeGridEditor === 'undefined' || !activeGridEditor) return;
-  /* Grid editors persist on each input. Removing the editor here therefore dismisses the visual
-     caret without losing already typed content. Empty editors simply disappear. */
   if (typeof closeGridEditor === 'function') closeGridEditor({rerender:false});
   else {
     try { activeGridEditor.wrap?.remove(); } catch {}
     activeGridEditor = null;
   }
+}
+
+function clearNotebookCellSelectionMode(root=$('#notebookDock')) {
+  if (typeof activeSpatialSelection !== 'undefined') activeSpatialSelection = null;
+  if (typeof activeSpatialTableSelection !== 'undefined') activeSpatialTableSelection = null;
+  const canvas = root ? $('.grid-notebook-canvas',root) : null;
+  if (canvas && typeof clearSpatialSelection === 'function') clearSpatialSelection(canvas);
+  if (root) $$('.spatial-table-cell-selected',root).forEach(cell=>cell.classList.remove('spatial-table-cell-selected'));
 }
 
 function clearNotebookObjectMode(root=$('#notebookDock')) {
@@ -114,9 +118,9 @@ function clearNotebookObjectMode(root=$('#notebookDock')) {
   if (typeof selectedGridEntryId !== 'undefined') selectedGridEntryId = null;
   if (typeof selectedSpatialObjectId !== 'undefined') selectedSpatialObjectId = null;
   if (typeof openSpatialFormatObjectId !== 'undefined') openSpatialFormatObjectId = null;
+  clearNotebookCellSelectionMode(root);
 }
 
-/* Starting a new Grid editor means writing mode owns the page. Clear any stale object selection. */
 if (typeof openGridEditor === 'function' && !window.__salesShopExclusiveGridWritingMode) {
   window.__salesShopExclusiveGridWritingMode = true;
   const _exclusiveModeOpenGridEditor = openGridEditor;
@@ -142,7 +146,6 @@ function gridTextObjectFormat(entry,text,command) {
   if (!entry || !text || !['bold','italic','underline'].includes(command)) return;
   if (typeof notebookTextIsSoftLocked === 'function' && notebookTextIsSoftLocked(entry)) return;
   if (typeof notebookPushUndoCheckpoint === 'function') notebookPushUndoCheckpoint();
-
   const selection = window.getSelection();
   let range = null;
   if (selection?.rangeCount) {
@@ -153,7 +156,6 @@ function gridTextObjectFormat(entry,text,command) {
     range = document.createRange();
     range.selectNodeContents(text);
   }
-
   if (typeof applyRichFormat === 'function') applyRichFormat(range,text,command);
   entry.text = typeof richPlainTextFromNode === 'function' ? richPlainTextFromNode(text) : (text.textContent || '');
   entry.richHtml = typeof sanitizeRichHtml === 'function' ? sanitizeRichHtml(text.innerHTML) : '';
@@ -172,7 +174,6 @@ function gridTextObjectToolbar(note,entry,text) {
     <span class="grid-text-toolbar-separator"></span>
     <button type="button" data-grid-text-promote>Promote</button>
     <button type="button" data-grid-text-link>Link</button>`;
-
   $$('button',toolbar).forEach(button=>button.addEventListener('mousedown',event=>event.preventDefault()));
   $$('[data-grid-text-format]',toolbar).forEach(button=>button.onclick=event=>{
     event.preventDefault();
@@ -180,14 +181,12 @@ function gridTextObjectToolbar(note,entry,text) {
     gridTextObjectFormat(entry,text,button.dataset.gridTextFormat);
   });
   $('[data-grid-text-promote]',toolbar).onclick=event=>{
-    event.preventDefault();
-    event.stopPropagation();
+    event.preventDefault(); event.stopPropagation();
     const value = gridTextObjectSelectedText(text,entry);
     if (value) openPromoteModal(value,entry.id);
   };
   $('[data-grid-text-link]',toolbar).onclick=event=>{
-    event.preventDefault();
-    event.stopPropagation();
+    event.preventDefault(); event.stopPropagation();
     const value = gridTextObjectSelectedText(text,entry);
     if (value) openLinkModal(value,entry.id);
   };
@@ -204,9 +203,9 @@ function gridTextObjectFormatToggle(note,entry) {
     ? spatialFormatGlyph()
     : '<span class="spatial-format-glyph" aria-hidden="true"><i></i><i></i><i></i></span>';
   button.onclick = event=>{
-    event.preventDefault();
-    event.stopPropagation();
+    event.preventDefault(); event.stopPropagation();
     closeActiveGridWritingMode();
+    clearNotebookCellSelectionMode($('#notebookDock'));
     const opening = !note.classList.contains('text-format-open');
     $$('.grid-note.text-format-open').forEach(el=>el.classList.remove('text-format-open'));
     note.classList.toggle('text-format-open',opening);
@@ -224,8 +223,7 @@ function gridTextObjectDeleteButton(entry) {
   existing.setAttribute('aria-label','Delete text box');
   existing.textContent = '×';
   existing.onclick = event=>{
-    event.preventDefault();
-    event.stopPropagation();
+    event.preventDefault(); event.stopPropagation();
     if (typeof notebookTextIsSoftLocked === 'function' && notebookTextIsSoftLocked(entry)) return;
     if (typeof removeNotebookEntry === 'function') removeNotebookEntry(entry.id);
   };
@@ -236,10 +234,7 @@ function bindGridTextHoverChrome(note) {
   if (!note || note.dataset.textHoverChromeBound) return;
   note.dataset.textHoverChromeBound = '1';
   let timer = null;
-  const show = ()=>{
-    clearTimeout(timer);
-    note.classList.add('text-hover-controls-visible');
-  };
+  const show = ()=>{ clearTimeout(timer); note.classList.add('text-hover-controls-visible'); };
   const hide = ()=>{
     clearTimeout(timer);
     timer = setTimeout(()=>{
@@ -255,7 +250,6 @@ function bindGridTextHoverChrome(note) {
   });
 }
 
-/* Unlocked Grid notes behave like text first. Their grab handle and chrome own object interaction. */
 function bindDirectGridTextEditing(root) {
   if (!root) return;
   $$('.grid-note',root).forEach(note=>{
@@ -263,37 +257,26 @@ function bindDirectGridTextEditing(root) {
     const entry = typeof notebookEntryById === 'function' ? notebookEntryById(entryId) : null;
     const text = $('.grid-note-text',note);
     if (!entry || !text) return;
-
     note.classList.add('grid-text-box-object');
     const editable = (typeof isCurrentNotebookPageEditable !== 'function' || isCurrentNotebookPageEditable()) &&
       !(typeof notebookTextIsSoftLocked === 'function' && notebookTextIsSoftLocked(entry));
     text.contentEditable = editable ? 'true' : 'false';
     text.spellcheck = true;
     text.classList.toggle('grid-note-text-direct-edit',editable);
-
     if (!$('.grid-text-format-toggle',note)) note.appendChild(gridTextObjectFormatToggle(note,entry));
     if (!$('.grid-text-object-toolbar',note)) note.appendChild(gridTextObjectToolbar(note,entry,text));
-
-    /* Soft-lock still controls whether whole-block deletion is allowed. */
     const oldSoftDelete = $('.notebook-text-delete',note);
     if (oldSoftDelete) oldSoftDelete.style.display = 'none';
     if (editable && !$('.grid-text-object-delete',note)) note.appendChild(gridTextObjectDeleteButton(entry));
-
-    if (openGridTextToolbarEntryId === entry.id) {
-      note.classList.add('text-format-open','is-selected');
-    }
+    if (openGridTextToolbarEntryId === entry.id) note.classList.add('text-format-open','is-selected');
     bindGridTextHoverChrome(note);
-
     if (!editable || text.dataset.directGridEditBound) return;
     text.dataset.directGridEditBound = '1';
-
-    /* Text interaction must never accidentally become object selection. */
     ['pointerdown','click','dblclick'].forEach(type=>text.addEventListener(type,event=>event.stopPropagation()));
-    text.addEventListener('beforeinput',()=>{
-      if (typeof notebookBeginTypingCheckpoint === 'function') notebookBeginTypingCheckpoint();
-    });
+    text.addEventListener('beforeinput',()=>{ if (typeof notebookBeginTypingCheckpoint === 'function') notebookBeginTypingCheckpoint(); });
     text.addEventListener('focus',()=>{
       closeActiveGridWritingMode();
+      clearNotebookCellSelectionMode(root);
       note.classList.add('is-text-editing');
       note.classList.remove('is-selected');
     });
@@ -307,29 +290,23 @@ function bindDirectGridTextEditing(root) {
   });
 }
 
-/* Spatial-object chrome stays consistent with text boxes, and object interaction owns the page mode. */
 function syncSpatialChrome(root) {
   if (!root) return;
   $$('.notebook-spatial-object',root).forEach(wrap=>{
     const drag = $('.spatial-object-drag-handle',wrap);
     const del = $('.spatial-object-delete',wrap);
     if (drag) drag.title = 'Drag to move';
-    if (del) {
-      del.title = 'Delete';
-      del.setAttribute('aria-label','Delete object');
-    }
+    if (del) { del.title = 'Delete'; del.setAttribute('aria-label','Delete object'); }
   });
 }
 
-/* Object selection / movement dismisses an empty typing caret immediately. This runs in capture
-   so older object listeners never see two active modes at once. */
 if (!window.__salesShopExclusiveObjectMode) {
   window.__salesShopExclusiveObjectMode = true;
   document.addEventListener('pointerdown',event=>{
     const objectTarget = event.target?.closest?.('.notebook-spatial-object,.grid-note');
     if (!objectTarget || event.target.closest('.grid-editor-wrap')) return;
     closeActiveGridWritingMode();
-
+    clearNotebookCellSelectionMode($('#notebookDock'));
     const root = $('#notebookDock');
     if (!root) return;
     if (objectTarget.classList.contains('notebook-spatial-object')) {
@@ -342,7 +319,6 @@ if (!window.__salesShopExclusiveObjectMode) {
       $$('.notebook-spatial-object.is-selected,.notebook-spatial-object.format-open',root).forEach(el=>el.classList.remove('is-selected','format-open'));
     }
   },true);
-
   document.addEventListener('pointerdown',event=>{
     if (event.target?.closest?.('.grid-note,.notebook-spatial-object')) return;
     openGridTextToolbarEntryId = null;
