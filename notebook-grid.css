@@ -1,0 +1,152 @@
+/* Spatial Grid notebook + cue continuity. Loaded after notebook-pages.css. */
+
+/* Cornell cues should feel like handwriting on the same ruled paper, not UI labels. */
+.cornell-entry-cue,
+.cornell-cue-input {
+  color: var(--paper-ink);
+  font-family: Georgia, serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 28px;
+  letter-spacing: 0;
+}
+.cornell-cue-input::placeholder {
+  color: var(--paper-muted);
+  opacity: .55;
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+
+/* Outside Cornell, preserve the cue as a compact semantic tag attached to the note. */
+.entry-cue-inline,
+.draft-cue-tag,
+.grid-note-cue,
+.grid-editor-cue {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  min-height: 20px;
+  margin-right: 7px;
+  padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--paper-muted) 24%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 84%, var(--panel));
+  color: var(--paper-muted);
+  font-family: Georgia, serif;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 18px;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.draft-cue-tag {
+  display: flex;
+  margin: 0 0 4px 0;
+}
+
+/* Align the grid origin with the notebook text inset. */
+.notebook-page.paper-grid .notebook-page-body {
+  position: relative;
+  background-position: 0 0, 20px 0;
+}
+
+/* Grid becomes a lightweight spatial layer. The chronological source entries stay in the data,
+   but this view renders them as anchored text blocks. */
+.notebook-page.paper-grid .notebook-page-body.grid-spatial-active > .notebook-entries,
+.notebook-page.paper-grid .notebook-page-body.grid-spatial-active > .notebook-writing-zone {
+  display: none !important;
+}
+.grid-notebook-canvas {
+  position: relative;
+  width: 100%;
+  min-height: max(100%, 560px);
+  cursor: text;
+  user-select: none;
+}
+.grid-note,
+.grid-editor-wrap {
+  position: absolute;
+  left: calc(var(--grid-col) * 28px + 4px);
+  top: calc(var(--grid-row) * 28px);
+  max-width: min(336px, calc(100% - (var(--grid-col) * 28px) - 12px));
+  z-index: 2;
+}
+.grid-note {
+  min-width: 28px;
+  color: var(--paper-ink);
+  font-family: Georgia, serif;
+  font-size: 13px;
+  line-height: 28px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  cursor: text;
+}
+.grid-note:hover {
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--paper-muted) 14%, transparent);
+  border-radius: 3px;
+}
+.grid-note-auto {
+  opacity: .86;
+}
+.grid-note-cue {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  line-height: 18px;
+}
+.grid-note-text {
+  white-space: pre-wrap;
+}
+.grid-note-cue + .grid-note-text {
+  display: block;
+}
+.grid-editor-wrap {
+  min-width: 168px;
+  width: min(308px, calc(100% - (var(--grid-col) * 28px) - 10px));
+  z-index: 10;
+}
+.grid-editor-cue {
+  margin: 4px 0 4px;
+}
+.grid-editor {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  resize: none;
+  overflow: hidden;
+  border: 0;
+  outline: 1px solid color-mix(in srgb, var(--tab-notebook) 35%, transparent);
+  outline-offset: 1px;
+  border-radius: 2px;
+  padding: 0 3px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  color: var(--paper-ink);
+  font-family: Georgia, serif;
+  font-size: 13px;
+  line-height: 28px;
+}
+.grid-editor::placeholder { color: var(--paper-muted); opacity: .5; }
+.grid-unplaced-draft {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 88%, var(--panel));
+  color: var(--paper-muted);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 8px;
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .grid-note,
+  .grid-editor-wrap {
+    max-width: min(252px, calc(100% - (var(--grid-col) * 28px) - 8px));
+  }
+  .grid-editor-wrap { width: min(252px, calc(100% - (var(--grid-col) * 28px) - 8px)); }
+}
