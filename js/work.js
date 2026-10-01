@@ -11,7 +11,7 @@ function renderBoard() {
         <button class="board-mode-button ${mode==='projects'?'active':''}" data-board-mode="projects">Projects</button>
         <button class="board-mode-button ${mode==='accounts'?'active':''}" data-board-mode="accounts">Accounts</button>
       </div>
-      ${mode==='accounts' ? '<span class="board-mode-note">Stages are inferred from CRM breadcrumbs unless overridden.</span>' : ''}
+      ${mode==='accounts' ? '<span class="board-mode-note">Sales stages are inferred from CRM breadcrumbs unless overridden.</span>' : ''}
     </div>
     <div id="fullBoardMount" class="board-page"></div>`;
 
@@ -124,10 +124,10 @@ function renderAccountBoardSurface(root) {
   if (!root) return;
   const collapsed = new Set(state.settings.collapsedAccountStages || []);
   root.innerHTML = `<div class="board-wrap account-board-wrap"><div class="board account-board">
-    ${ACCOUNT_STAGES.map(stage => {
-      const companies = state.companies.filter(c => accountStage(c) === stage);
+    ${ACCOUNT_BOARD_COLUMNS.map(stage => {
+      const companies = state.companies.filter(c => accountBoardColumn(c) === stage);
       const isCollapsed = collapsed.has(stage);
-      return `<div class="board-column account-column ${isCollapsed?'collapsed':''}" data-account-stage="${stage}">
+      return `<div class="board-column account-column ${stage==='Non-Customer'?'non-customer-column':''} ${isCollapsed?'collapsed':''}" data-account-stage="${stage}">
         <button class="column-head" data-toggle-account-stage="${stage}" title="${isCollapsed?'Open':'Collapse'} ${stage}">
           <span class="column-title">${stage}</span>
           <span class="column-count">${companies.length}</span>
@@ -167,18 +167,39 @@ function bindAccountBoard(root) {
     col.ondrop=e=>{
       e.preventDefault(); col.classList.remove('dragover');
       const id=e.dataTransfer.getData('text/plain');
-      mutate(()=>{ const company=state.companies.find(c=>c.id===id); if(company) company.accountStageOverride=col.dataset.accountStage; });
-      toast('Account stage overridden');
+      const target=col.dataset.accountStage;
+      mutate(()=>{
+        const company=state.companies.find(c=>c.id===id);
+        if(!company)return;
+        if(target==='Non-Customer') {
+          company.accountType='non-customer';
+          company.accountStageOverride='';
+        } else {
+          company.accountType='sales';
+          company.accountStageOverride=target==='Discovery'?'':target;
+        }
+      });
+      toast(target==='Non-Customer'?'Moved to non-customer relationships':'Sales account stage overridden');
     };
   });
 
   $$('[data-add-account-stage]', root).forEach(inp=>inp.onkeydown=e=>{
     if(e.key==='Enter'&&inp.value.trim()){
       const name=inp.value.trim();
-      mutate(()=>state.companies.push({id:uid('company'),name,accountStageOverride:inp.dataset.addAccountStage==='Discovery'?'':inp.dataset.addAccountStage}));
+      const target=inp.dataset.addAccountStage;
+      mutate(()=>state.companies.push({
+        id:uid('company'),
+        name,
+        accountType:target==='Non-Customer'?'non-customer':'sales',
+        accountStageOverride:target==='Non-Customer'||target==='Discovery'?'':target
+      }));
       toast('Company added');
     }
   });
+}
+
+function accountBoardColumn(company) {
+  return company.accountType==='non-customer' ? 'Non-Customer' : accountStage(company);
 }
 
 function accountStage(company) {
@@ -239,6 +260,7 @@ function featuredAccountDeal(company) {
   return [...deals].sort((a,b)=>priority.indexOf(a.stage)-priority.indexOf(b.stage))[0] || null;
 }
 function accountReason(company) {
+  if(company.accountType==='non-customer') return company.relationshipLabel || 'Non-customer relationship';
   const stage=accountStage(company); const deal=featuredAccountDeal(company); const touch=latestAccountTouch(company);
   if(company.accountStageOverride) return `Manual override · ${stage}`;
   if(stage==='Active'&&deal) return `${deal.name} · ${deal.stage}`;
@@ -255,12 +277,13 @@ function accountCardHtml(company) {
   const lastTouch=latestAccountTouch(company);
   const contacts=company.contactCount ?? state.contacts.filter(c=>c.companyId===company.id || c.company===company.name).length;
   const deals=company.dealCount ?? accountDeals(company).length;
-  const details=company.domain || contacts || deals || lastTouch || deal;
+  const details=company.domain || contacts || deals || lastTouch || deal || company.relationshipLabel;
   return `<div class="work-card account-card ${details?'has-details':''}" data-company-id="${company.id}">
     <div class="work-card-face"><span class="work-card-title">${escapeHtml(company.name || company.domain || 'Untitled company')}</span>${company.accountStageOverride?'<span class="account-override-dot" title="Manual stage override"></span>':''}</div>
     ${details?`<div class="work-card-reveal account-card-reveal">
       ${company.domain?`<div class="work-card-company">${escapeHtml(company.domain)}</div>`:''}
       <div class="work-card-facts">
+        ${company.relationshipLabel?`<span>${escapeHtml(company.relationshipLabel)}</span>`:''}
         ${contacts?`<span>${contacts} contact${contacts===1?'':'s'}</span>`:''}
         ${deals?`<span>${deals} deal${deals===1?'':'s'}</span>`:''}
         ${lastTouch?`<span>Touch ${fmtDate(lastTouch,{month:'short',day:'numeric'})}</span>`:''}
@@ -273,18 +296,22 @@ function accountCardHtml(company) {
 
 function openAccount(id) {
   const company=state.companies.find(c=>c.id===id); if(!company)return;
-  const stage=accountStage(company);
+  const salesStage=accountStage(company);
+  const boardColumn=accountBoardColumn(company);
   const deals=accountDeals(company);
   const contacts=state.contacts.filter(c=>c.companyId===company.id || c.company===company.name);
   const lastTouch=latestAccountTouch(company);
   openModal('Account', company.name || company.domain || 'Company', `
     <div class="account-modal-summary">
-      <div><span class="account-summary-label">Smart stage</span><strong>${stage}</strong></div>
+      <div><span class="account-summary-label">Type</span><strong>${company.accountType==='non-customer'?'Non-customer':'Sales account'}</strong></div>
+      <div><span class="account-summary-label">Board</span><strong>${boardColumn}</strong></div>
       ${lastTouch?`<div><span class="account-summary-label">Last touch</span><strong>${fmtDate(lastTouch,{month:'short',day:'numeric',year:'numeric'})}</strong></div>`:''}
       <div><span class="account-summary-label">Contacts</span><strong>${company.contactCount ?? contacts.length}</strong></div>
       <div><span class="account-summary-label">Deals</span><strong>${company.dealCount ?? deals.length}</strong></div>
     </div>
-    <div class="field spaced-field"><label>Stage behavior</label><select id="accountStageOverride" class="field-select"><option value="">Auto · ${stage}</option>${ACCOUNT_STAGES.map(s=>`<option value="${s}" ${company.accountStageOverride===s?'selected':''}>Override · ${s}</option>`).join('')}</select></div>
+    <div class="field spaced-field"><label>Account type</label><select id="accountType" class="field-select"><option value="sales" ${company.accountType!=='non-customer'?'selected':''}>Sales account / could buy from us</option><option value="non-customer" ${company.accountType==='non-customer'?'selected':''}>Non-customer relationship</option></select></div>
+    <div class="field spaced-field"><label>Sales stage behavior</label><select id="accountStageOverride" class="field-select"><option value="">Auto · ${salesStage}</option>${ACCOUNT_STAGES.map(s=>`<option value="${s}" ${company.accountStageOverride===s?'selected':''}>Override · ${s}</option>`).join('')}</select></div>
+    ${company.relationshipLabel?`<div class="account-detail-line"><span>Relationship</span><strong>${escapeHtml(company.relationshipLabel)}</strong></div>`:''}
     ${company.domain?`<div class="account-detail-line"><span>Domain</span><strong>${escapeHtml(company.domain)}</strong></div>`:''}
     <div class="account-section-title">Why it is here</div>
     <div class="account-reason-box">${escapeHtml(accountReason(company))}</div>
@@ -292,7 +319,10 @@ function openAccount(id) {
     ${contacts.length?`<div class="account-section-title">Contacts</div><div class="account-related-list">${contacts.map(c=>`<div class="account-related-row"><div><strong>${escapeHtml(c.name)}</strong><span>${escapeHtml(c.detail||c.email||'')}</span></div></div>`).join('')}</div>`:''}
     <div class="modal-actions"><button class="primary-button" id="saveAccountStage">Save</button></div>`);
   $('#saveAccountStage').onclick=()=>{
-    mutate(()=>company.accountStageOverride=$('#accountStageOverride').value);
+    mutate(()=>{
+      company.accountType=$('#accountType').value;
+      company.accountStageOverride=company.accountType==='non-customer'?'':$('#accountStageOverride').value;
+    });
     closeModal();
   };
 }
