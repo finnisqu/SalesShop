@@ -1,0 +1,93 @@
+/* Adjustable table controls + rectangular cloud callout. */
+
+/* Tables expose quiet size controls only when hovered/selected/focused. */
+.spatial-table-controls {
+  position:absolute;
+  z-index:8;
+  left:0;
+  top:-27px;
+  height:24px;
+  display:flex;
+  align-items:center;
+  gap:2px;
+  padding:2px 3px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent);
+  border-radius:6px;
+  background:color-mix(in srgb,var(--paper) 95%,var(--panel));
+  color:var(--paper-muted);
+  box-shadow:0 5px 14px rgba(0,0,0,.08);
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(2px);
+  transition:opacity .1s ease,transform .1s ease;
+  white-space:nowrap;
+}
+.spatial-object-table:hover > .spatial-table-controls,
+.spatial-object-table.is-selected > .spatial-table-controls,
+.spatial-object-table:focus-within > .spatial-table-controls {
+  opacity:.92;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+.spatial-table-controls button {
+  width:19px;
+  height:19px;
+  display:grid;
+  place-items:center;
+  border:1px solid transparent;
+  border-radius:4px;
+  background:transparent;
+  color:inherit;
+  padding:0;
+  font:600 11px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  cursor:pointer;
+}
+.spatial-table-controls button:hover {
+  color:var(--paper-ink);
+  border-color:color-mix(in srgb,var(--paper-muted) 26%,transparent);
+  background:color-mix(in srgb,var(--paper-muted) 8%,transparent);
+}
+.spatial-table-control-label {
+  padding:0 2px;
+  font:600 7px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.02em;
+}
+.spatial-table-count {
+  min-width:11px;
+  text-align:center;
+  color:var(--paper-ink);
+  font:600 7px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+.spatial-table-control-separator {
+  width:1px;
+  height:12px;
+  margin:0 2px;
+  background:color-mix(in srgb,var(--paper-muted) 20%,transparent);
+}
+
+/* Callout cloud: rectangular usable area with only the outline becoming scalloped/cloud-like. */
+.spatial-object-cloud {
+  pointer-events:auto !important;
+  cursor:default;
+}
+.spatial-object-cloud .spatial-cloud-svg {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+.spatial-object-cloud .spatial-cloud-svg path {
+  fill:color-mix(in srgb,var(--paper) 2%,transparent);
+  stroke:color-mix(in srgb,var(--paper-ink) 58%,var(--paper-muted));
+  stroke-width:1.15;
+  vector-effect:non-scaling-stroke;
+  stroke-linejoin:round;
+}
+
+/* Rectangle should be directly selectable too, consistent with tables/clouds. */
+.spatial-object-box {
+  pointer-events:auto !important;
+  cursor:default;
+}
