@@ -1,0 +1,200 @@
+/* Final notebook interaction polish. */
+
+/* Transient app messages belong near the top-center, away from Netlify's bottom-right badge. */
+#toast.toast {
+  position:fixed !important;
+  top:62px !important;
+  bottom:auto !important;
+  left:50% !important;
+  right:auto !important;
+  transform:translateX(-50%) !important;
+  max-width:min(520px,calc(100vw - 32px));
+  z-index:220 !important;
+}
+
+/* Page header: intentionally blank by default, with no placeholder. */
+.notebook-paper-head {
+  position:relative;
+  min-height:68px;
+}
+.notebook-page-header {
+  position:absolute;
+  right:30px;
+  top:24px;
+  width:min(42%,330px);
+  min-width:120px;
+  min-height:28px;
+  border:0;
+  border-bottom:1px solid transparent;
+  outline:0;
+  background:transparent;
+  color:var(--paper-ink);
+  font-family:Georgia,serif;
+  font-size:15px;
+  font-weight:600;
+  line-height:28px;
+  text-align:right;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  opacity:.82;
+}
+.notebook-page-header[contenteditable="true"]:hover,
+.notebook-page-header[contenteditable="true"]:focus {
+  border-bottom-color:color-mix(in srgb,var(--paper-muted) 20%,transparent);
+  opacity:1;
+}
+.notebook-history-header-preview { font-weight:650; }
+
+/* Existing Grid text is text-first when unlocked. */
+.grid-note-text.grid-note-text-direct-edit {
+  cursor:text;
+  user-select:text;
+  outline:0;
+}
+.grid-note.is-text-editing {
+  outline-color:transparent !important;
+  background:color-mix(in srgb,var(--paper) 76%,transparent);
+}
+.grid-note.is-text-editing::after { display:none !important; }
+
+/* Text grab handles: invisible at rest, visible only on hover/selection/drag. */
+.grid-grab-handle {
+  opacity:0 !important;
+  pointer-events:none;
+}
+.grid-note:hover > .grid-grab-handle,
+.grid-note.is-selected > .grid-grab-handle,
+.grid-note.is-drag-ready > .grid-grab-handle,
+.grid-note.is-dragging > .grid-grab-handle {
+  opacity:.62 !important;
+  pointer-events:auto;
+}
+.grid-note.is-dragging > .grid-grab-handle { opacity:1 !important; }
+
+/* Object top chrome: Format left, Delete right, Move centered. */
+.spatial-object-format-toggle,
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui > .spatial-object-delete {
+  top:-20px !important;
+  width:18px !important;
+  height:18px !important;
+  border-radius:4px !important;
+}
+.spatial-object-format-toggle {
+  left:0 !important;
+  right:auto !important;
+}
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui > .spatial-object-delete {
+  left:auto !important;
+  right:0 !important;
+}
+
+/* Table/shape move handle now visually matches the text handle. */
+.spatial-object-drag-handle {
+  left:50% !important;
+  right:auto !important;
+  top:-10px !important;
+  transform:translateX(-50%) !important;
+  width:24px !important;
+  height:10px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:999px !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+.spatial-drag-dots { gap:2px !important; }
+.spatial-drag-dots i {
+  width:2px !important;
+  height:2px !important;
+  background:var(--paper-muted) !important;
+}
+.notebook-spatial-object:hover > .spatial-object-drag-handle,
+.notebook-spatial-object.is-selected > .spatial-object-drag-handle,
+.notebook-spatial-object.is-dragging > .spatial-object-drag-handle,
+.notebook-spatial-object.hover-controls-visible > .spatial-object-drag-handle {
+  opacity:.62 !important;
+  pointer-events:auto !important;
+}
+.notebook-spatial-object.is-dragging > .spatial-object-drag-handle { opacity:1 !important; }
+/* Never let the move handle show through an expanded formatting strip. */
+.notebook-spatial-object.format-open > .spatial-object-drag-handle {
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+/* Smaller expanding object toolbars, centered over the object so narrow objects can spill both ways. */
+#notebookDock .spatial-object-table > .spatial-table-controls,
+.spatial-shape-toolbar {
+  left:50% !important;
+  right:auto !important;
+  top:-23px !important;
+  height:20px !important;
+  min-height:20px !important;
+  padding:1px 2px !important;
+  gap:0 !important;
+  border-radius:5px !important;
+  transform:translateX(-50%) translateY(2px) !important;
+}
+#notebookDock .spatial-object-table.format-open > .spatial-table-controls,
+.notebook-spatial-object.format-open > .spatial-shape-toolbar {
+  transform:translateX(-50%) translateY(0) !important;
+}
+.spatial-table-controls button,
+.spatial-shape-toolbar button {
+  height:16px !important;
+  min-height:16px !important;
+  font-size:6.5px !important;
+  border-radius:3px !important;
+}
+.spatial-table-controls button {
+  width:16px;
+  padding:0 3px !important;
+}
+.spatial-table-control-label,
+.spatial-table-count,
+.spatial-table-row-role,
+.spatial-table-crm-action,
+.spatial-table-merge-button {
+  font-size:6.5px !important;
+}
+.spatial-table-row-role,
+.spatial-table-crm-action,
+.spatial-table-merge-button {
+  min-width:25px !important;
+  padding:0 3px !important;
+}
+.spatial-table-control-separator {
+  height:10px !important;
+  margin:0 1px !important;
+}
+.spatial-align-control,
+.spatial-number-format-control,
+.spatial-fill-control {
+  height:16px !important;
+}
+.spatial-align-control { width:18px; }
+.spatial-align-control:hover,
+.spatial-align-control:focus-within { width:54px; }
+.spatial-number-format-control { width:18px; }
+.spatial-number-format-control:hover,
+.spatial-number-format-control:focus-within { width:72px; }
+.spatial-fill-control { width:18px; }
+.spatial-fill-control:hover,
+.spatial-fill-control:focus-within { width:90px; }
+.spatial-align-control .spatial-align-choice,
+.spatial-number-format-choice,
+.spatial-fill-choice {
+  flex-basis:16px !important;
+  width:16px !important;
+  height:16px !important;
+}
+
+/* No temporary Type… copy inside tiny callout shapes. */
+.spatial-shape-text:empty::before { content:none !important; display:none !important; }
+
+@media (max-width:700px) {
+  .notebook-page-header { right:18px; width:40%; min-width:90px; font-size:13px; }
+}
