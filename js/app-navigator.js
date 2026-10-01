@@ -32,18 +32,35 @@ function installSectionNavigator(viewName,html) {
   view.insertAdjacentHTML('afterbegin',html);
 }
 
-function installAppNavigators() {
-  installSectionNavigator('board',boardNavigatorHtml());
-  installSectionNavigator('quotes',quoteNavigatorHtml());
-
+function bindAppNavigatorActions() {
   $$('[data-nav-board-mode]').forEach(btn=>btn.onclick=()=>{
     state.settings.boardMode=btn.dataset.navBoardMode;
     save();
     renderBoard();
-    installAppNavigators();
   });
   $('[data-quote-nav="new"]')?.addEventListener('click',()=>createBlankQuote());
 }
+
+function installAppNavigators() {
+  installSectionNavigator('board',boardNavigatorHtml());
+  installSectionNavigator('quotes',quoteNavigatorHtml());
+  bindAppNavigatorActions();
+}
+
+/* Board and Quotes sometimes re-render without using renderAll(), so keep their rails attached there too. */
+const _salesShopNavigatorRenderBoard = renderBoard;
+renderBoard = function() {
+  _salesShopNavigatorRenderBoard();
+  installSectionNavigator('board',boardNavigatorHtml());
+  bindAppNavigatorActions();
+};
+
+const _salesShopNavigatorRenderQuotes = renderQuotes;
+renderQuotes = function() {
+  _salesShopNavigatorRenderQuotes();
+  installSectionNavigator('quotes',quoteNavigatorHtml());
+  bindAppNavigatorActions();
+};
 
 const _salesShopNavigatorRenderAll = renderAll;
 renderAll = function() {
