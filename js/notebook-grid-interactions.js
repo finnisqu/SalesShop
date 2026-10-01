@@ -1,6 +1,19 @@
-/* Grid interaction polish: select, stable drag, double-click edit, minimal inline editor. */
+/* Grid interaction polish: select, hold-to-drag, grab handles, double-click edit, minimal inline editor. */
 
 let selectedGridEntryId = null;
+
+function ensureGridGrabHandle(note) {
+  let handle = $('.grid-grab-handle', note);
+  if (handle) return handle;
+  handle = document.createElement('button');
+  handle.type = 'button';
+  handle.className = 'grid-grab-handle';
+  handle.setAttribute('aria-label','Move note');
+  handle.setAttribute('title','Drag to move');
+  handle.innerHTML = '<span></span><span></span><span></span>';
+  note.appendChild(handle);
+  return handle;
+}
 
 function selectGridNote(note, canvas) {
   $$('.grid-note.is-selected', canvas).forEach(el => el.classList.remove('is-selected'));
@@ -14,6 +27,8 @@ function clearGridNoteSelection(canvas) {
 }
 
 function bindGridNoteDrag(note, canvas) {
+  const handle = ensureGridGrabHandle(note);
+
   note.addEventListener('click', e => {
     if (e.detail > 1) return;
     if (window.getSelection()?.toString().trim()) return;
@@ -23,30 +38,59 @@ function bindGridNoteDrag(note, canvas) {
 
   note.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
-    /* First click only selects. A note must already be selected before it can move. */
-    if (selectedGridEntryId !== note.dataset.entryId) return;
+    if (e.target.closest('.grid-editor-selection-tools')) return;
+
+    const fromHandle = !!e.target.closest('.grid-grab-handle');
+    const wasSelected = selectedGridEntryId === note.dataset.entryId;
+    selectGridNote(note, canvas);
 
     const startX = e.clientX;
     const startY = e.clientY;
     const startCol = Number(note.dataset.gridCol) || 0;
     const startRow = Number(note.dataset.gridRow) || 0;
     let dragging = false;
+    let armed = fromHandle;
     let nextCol = startCol;
     let nextRow = startRow;
+    let holdTimer = null;
+
+    const armDrag = () => {
+      armed = true;
+      note.classList.add('is-drag-ready');
+    };
+
+    /* The handle is immediate. The note body becomes drag-intent after a short, deliberate hold.
+       This leaves a normal quick mouse sweep available for selecting text. */
+    if (!fromHandle) holdTimer = setTimeout(armDrag, wasSelected ? 120 : 165);
+
+    const beginDragging = () => {
+      if (dragging) return;
+      dragging = true;
+      note.classList.remove('is-drag-ready');
+      note.classList.add('is-dragging');
+      note.style.userSelect = 'none';
+      window.getSelection()?.removeAllRanges();
+      try { note.setPointerCapture?.(e.pointerId); } catch {}
+    };
 
     const onMove = ev => {
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
-      if (!dragging && Math.hypot(dx, dy) < 9) return;
+      const distance = Math.hypot(dx, dy);
 
-      if (!dragging) {
-        dragging = true;
-        note.classList.add('is-dragging');
-        note.style.userSelect = 'none';
-        window.getSelection()?.removeAllRanges();
+      /* Handle is intentionally easy. Body drag is easy once hold-intent is established,
+         but a quick body movement still needs a stronger threshold so clicks/text selection stay stable. */
+      if (!armed) {
+        if (distance < 10) return;
+        if (!wasSelected) return;
+        armed = true;
       }
+      if (!dragging && distance < (fromHandle ? 3 : 4)) return;
+      beginDragging();
 
       ev.preventDefault();
+      /* Actual position stays snapped. You have to travel roughly half a square before a note
+         leaves its home square, even though drag intent itself now feels immediate. */
       nextCol = Math.max(0, startCol + Math.round(dx / NOTEBOOK_GRID_SIZE));
       nextRow = Math.max(0, startRow + Math.round(dy / NOTEBOOK_GRID_SIZE));
       note.style.setProperty('--grid-col', nextCol);
@@ -54,9 +98,11 @@ function bindGridNoteDrag(note, canvas) {
     };
 
     const onUp = () => {
+      if (holdTimer) clearTimeout(holdTimer);
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
       document.removeEventListener('pointercancel', onUp);
+      note.classList.remove('is-drag-ready');
 
       if (!dragging) return;
       note.classList.remove('is-dragging');
@@ -75,6 +121,12 @@ function bindGridNoteDrag(note, canvas) {
     document.addEventListener('pointermove', onMove, {passive:false});
     document.addEventListener('pointerup', onUp, {once:true});
     document.addEventListener('pointercancel', onUp, {once:true});
+  });
+
+  /* Prevent the handle itself from triggering edit selection/double-click behavior. */
+  handle.addEventListener('dblclick', e => {
+    e.preventDefault();
+    e.stopPropagation();
   });
 }
 
