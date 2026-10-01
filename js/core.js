@@ -15,7 +15,7 @@ const dateKey = (d = new Date()) => {
 const fmtDate = (value, opts={month:'short', day:'numeric'}) => value ? new Date(`${value}T12:00:00`).toLocaleDateString(undefined, opts) : '—';
 const fmtTimestamp = (iso) => new Date(iso).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
 const money = (value) => new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0}).format(Number(value || 0));
-const escapeHtml = (str='') => String(str).replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
+const escapeHtml = (str='') => String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function seedData() {
   const today = dateKey();
