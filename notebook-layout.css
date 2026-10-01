@@ -15,6 +15,7 @@
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--paper-muted) 28%, transparent) transparent;
+  cursor: text;
 }
 .notebook-page::-webkit-scrollbar { width: 6px; }
 .notebook-page::-webkit-scrollbar-track { background: transparent; }
@@ -22,6 +23,14 @@
   background: color-mix(in srgb, var(--paper-muted) 25%, transparent);
   border-radius: 999px;
 }
+.notebook-page button,
+.notebook-page a,
+.notebook-page .grid-note,
+.notebook-page .grid-grab-handle { cursor: default; }
+.notebook-page .grid-note-text,
+.notebook-page [contenteditable="true"] { cursor: text; }
+.notebook-page .grid-grab-handle { cursor: grab; }
+.notebook-page .grid-note.is-dragging .grid-grab-handle { cursor: grabbing; }
 
 /* Top utility strip: empty left balance, centered page-size controls, uniform actions at right. */
 .notebook-toolbar {
@@ -99,28 +108,55 @@
 .notebook-width-glyph.full { width: 18px; }
 .notebook-width-button.active .notebook-width-glyph { opacity: 1; }
 
-/* The microphone and attachment controls now live on the sheet beside the printed date. */
+/* The microphone and attachment controls live on the sheet beside the printed date. */
 .notebook-paper-head {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 }
 .notebook-paper-head-tools {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  margin-left: 2px;
+  gap: 3px;
+  margin-left: 3px;
 }
 .notebook-paper-head .notebook-icon-tool {
-  width: 22px;
-  height: 22px;
+  width: 27px;
+  height: 27px;
+  display: inline-grid;
+  place-items: center;
   color: var(--paper-muted);
-  border-radius: 5px;
+  border-radius: 6px;
+  font-size: 0 !important;
+}
+.notebook-paper-head .notebook-icon-tool::before {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  opacity: .9;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+.notebook-paper-head .notebook-icon-tool[data-mic]::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15Zm-6-3.5a6 6 0 0 0 12 0M12 17.5V22m-3 0h6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15Zm-6-3.5a6 6 0 0 0 12 0M12 17.5V22m-3 0h6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.notebook-paper-head .notebook-icon-tool[data-attach]::before {
+  width: 17px;
+  height: 17px;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9.5 12.5 5.9-5.9a3.5 3.5 0 1 1 5 5l-8.5 8.5a5 5 0 0 1-7.1-7.1l8.1-8.1a2.8 2.8 0 0 1 4 4l-7.7 7.7a1.4 1.4 0 1 1-2-2l7.1-7.1' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9.5 12.5 5.9-5.9a3.5 3.5 0 1 1 5 5l-8.5 8.5a5 5 0 0 1-7.1-7.1l8.1-8.1a2.8 2.8 0 0 1 4 4l-7.7 7.7a1.4 1.4 0 1 1-2-2l7.1-7.1' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 .notebook-paper-head .notebook-icon-tool:hover,
 .notebook-paper-head .notebook-icon-tool.recording {
   color: var(--paper-ink);
-  background: color-mix(in srgb, var(--paper-muted) 8%, transparent);
+  background: color-mix(in srgb, var(--paper-muted) 9%, transparent);
 }
 .notebook-paper-head .notebook-icon-tool.recording { color: #d85c5c; }
 
