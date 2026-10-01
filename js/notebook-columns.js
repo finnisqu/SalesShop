@@ -1,5 +1,6 @@
 /* Optional two-column presentation for Blank and Lines.
-   This is deliberately view-only: notebook entries keep their normal storage/order. */
+   This is deliberately view-only: notebook entries keep their normal storage/order.
+   The toggle lives beside Blank / Lines inside the Style menu rather than in the main toolbar. */
 
 function notebookColumnMode() {
   return state.settings?.notebookColumnMode === 'two' ? 'two' : 'one';
@@ -10,72 +11,58 @@ function notebookColumnsEligible() {
   return (style === 'blank' || style === 'lines') && notebookWidthMode() !== 'float';
 }
 
-function notebookColumnGlyph(kind) {
+function notebookColumnGlyph(kind='two') {
   return kind === 'two'
-    ? '<span class="notebook-column-glyph two"><i></i><i></i></span>'
-    : '<span class="notebook-column-glyph one"><i></i></span>';
+    ? '<span class="notebook-column-glyph two" aria-hidden="true"><i></i><i></i></span>'
+    : '<span class="notebook-column-glyph one" aria-hidden="true"><i></i></span>';
 }
 
-function installNotebookColumnControls(root) {
-  const widthControls = $('[data-notebook-width-controls]',root);
-  if (!widthControls) return;
+function installNotebookColumnStyleToggles(root) {
+  const menu = $('[data-notebook-view-menu]',root);
+  if (!menu) return;
 
-  let divider = $('[data-column-control-divider]',widthControls);
-  if (!divider) {
-    divider = document.createElement('span');
-    divider.className = 'notebook-layout-control-divider';
-    divider.dataset.columnControlDivider = '';
-    widthControls.appendChild(divider);
-  }
+  ['blank','lines'].forEach(style=>{
+    const row = $(`[data-paper-view="${style}"]`,menu);
+    if (!row || $('[data-style-columns]',row)) return;
 
-  let one = $('[data-notebook-columns="one"]',widthControls);
-  if (!one) {
-    one = document.createElement('button');
-    one.type = 'button';
-    one.className = 'notebook-width-button notebook-column-button';
-    one.dataset.notebookColumns = 'one';
-    one.title = 'One column';
-    one.setAttribute('aria-label','One column');
-    one.innerHTML = notebookColumnGlyph('one');
-    widthControls.appendChild(one);
-  }
+    const toggle = document.createElement('span');
+    toggle.className = 'notebook-style-column-toggle';
+    toggle.dataset.styleColumns = style;
+    toggle.setAttribute('role','button');
+    toggle.setAttribute('tabindex','0');
+    toggle.setAttribute('title','Two columns');
+    toggle.setAttribute('aria-label',`Two columns for ${style} notebook`);
+    toggle.innerHTML = notebookColumnGlyph('two');
+    row.appendChild(toggle);
 
-  let two = $('[data-notebook-columns="two"]',widthControls);
-  if (!two) {
-    two = document.createElement('button');
-    two.type = 'button';
-    two.className = 'notebook-width-button notebook-column-button';
-    two.dataset.notebookColumns = 'two';
-    two.title = 'Two columns';
-    two.setAttribute('aria-label','Two columns');
-    two.innerHTML = notebookColumnGlyph('two');
-    widthControls.appendChild(two);
-  }
-
-  $$('[data-notebook-columns]',widthControls).forEach(btn=>{
-    btn.onclick = ()=>{
+    const activate = e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      captureNotebookDraftBuffer(root);
       state.settings ||= {};
-      state.settings.notebookColumnMode = btn.dataset.notebookColumns === 'two' ? 'two' : 'one';
+      const turningOff = notebookPaperView() === style && notebookColumnMode() === 'two';
+      state.settings.notebookPaperView = style;
+      state.settings.notebookColumnMode = turningOff ? 'one' : 'two';
       save();
       renderAll();
     };
+    toggle.addEventListener('click',activate);
+    toggle.addEventListener('keydown',e=>{
+      if (e.key === 'Enter' || e.key === ' ') activate(e);
+    });
   });
 
-  updateNotebookColumnControls(root);
+  updateNotebookColumnStyleToggles(root);
 }
 
-function updateNotebookColumnControls(root) {
-  const eligible = notebookColumnsEligible();
+function updateNotebookColumnStyleToggles(root) {
   const mode = notebookColumnMode();
-  const widthControls = $('[data-notebook-width-controls]',root);
-  if (!widthControls) return;
-
-  $('[data-column-control-divider]',widthControls)?.classList.toggle('hidden',!eligible);
-  $$('[data-notebook-columns]',widthControls).forEach(btn=>{
-    btn.classList.toggle('hidden',!eligible);
-    const active = eligible && btn.dataset.notebookColumns === mode;
-    btn.classList.toggle('active',active);
-    btn.setAttribute('aria-pressed',String(active));
+  const style = notebookPaperView();
+  $$('[data-style-columns]',root).forEach(toggle=>{
+    const eligibleStyle = toggle.dataset.styleColumns;
+    const active = mode === 'two' && style === eligibleStyle && notebookWidthMode() !== 'float';
+    toggle.classList.toggle('active',active);
+    toggle.setAttribute('aria-pressed',String(active));
   });
 }
 
@@ -86,7 +73,6 @@ function clearNotebookColumnLayout(root) {
   const layout = $('[data-notebook-column-layout]',root);
   if (!body || !layout) return;
 
-  /* This path mostly matters when width mode changes without a full render. */
   const entries = $$('.notebook-entry',layout);
   entries.forEach(entry=>source?.appendChild(entry));
   if (writing && writing.parentElement !== body) body.appendChild(writing);
@@ -105,7 +91,7 @@ function applyNotebookColumnLayout(root) {
   const active = notebookColumnsEligible() && notebookColumnMode() === 'two';
   shell.classList.toggle('notebook-columns-two',active);
   shell.classList.toggle('notebook-columns-one',!active);
-  updateNotebookColumnControls(root);
+  updateNotebookColumnStyleToggles(root);
   if (!active) return;
 
   const entries = $$('.notebook-entry',source);
@@ -138,14 +124,14 @@ const _salesShopColumnApplyWidth = applyNotebookWidthMode;
 applyNotebookWidthMode = function(root) {
   _salesShopColumnApplyWidth(root);
   if (!root) return;
-  updateNotebookColumnControls(root);
   applyNotebookColumnLayout(root);
+  updateNotebookColumnStyleToggles(root);
 };
 
 const _salesShopColumnRenderNotebook = renderNotebookSurface;
 renderNotebookSurface = function(root) {
   _salesShopColumnRenderNotebook(root);
   if (!root) return;
-  installNotebookColumnControls(root);
+  installNotebookColumnStyleToggles(root);
   applyNotebookColumnLayout(root);
 };
