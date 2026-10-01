@@ -1,0 +1,80 @@
+/* Page objects persist across paper backgrounds. Lined/Cornell simply hide the visible spatial grid. */
+
+.notebook-page-body {
+  position:relative;
+}
+
+.notebook-page-object-layer {
+  position:absolute;
+  z-index:6;
+  inset:0;
+  min-height:100%;
+  pointer-events:none;
+}
+.notebook-page-object-layer > .notebook-spatial-object {
+  pointer-events:auto;
+}
+
+/* Tables remain intentionally plain by default. Title/Header are explicit semantic options. */
+.spatial-table-row-role-controls {
+  display:inline-flex;
+  align-items:center;
+  gap:1px;
+}
+.spatial-table-row-role {
+  width:auto !important;
+  min-width:30px;
+  padding:0 5px !important;
+  font-size:7px !important;
+}
+.spatial-table-row-role.active {
+  color:var(--paper-ink) !important;
+  border-color:color-mix(in srgb,var(--paper-muted) 30%,transparent) !important;
+  background:color-mix(in srgb,var(--paper-muted) 10%,transparent) !important;
+}
+
+.spatial-table td.spatial-table-title-cell {
+  font-weight:700;
+  text-align:center !important;
+  background:color-mix(in srgb,var(--paper-muted) 7%,var(--paper)) !important;
+}
+.spatial-table td.spatial-table-header-cell {
+  font-weight:700;
+  text-align:center !important;
+  background:color-mix(in srgb,var(--paper-muted) 16%,var(--paper)) !important;
+}
+.spatial-table td.spatial-table-title-cell.spatial-table-cell-selected,
+.spatial-table td.spatial-table-header-cell.spatial-table-cell-selected {
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 42%,transparent) !important;
+}
+
+/* Bring back a direct delete affordance without making it permanent chrome. It shares the same
+   hover grace used by Format / Move, and stacks below the three-dot move handle. */
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui > .spatial-object-delete {
+  display:grid !important;
+  right:-24px !important;
+  top:0 !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  transition:opacity .1s ease,color .1s ease,background .1s ease;
+}
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui:hover > .spatial-object-delete,
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui.hover-controls-visible > .spatial-object-delete,
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui.format-open > .spatial-object-delete {
+  opacity:.5 !important;
+  pointer-events:auto !important;
+}
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui > .spatial-object-delete:hover {
+  opacity:1 !important;
+  color:#b74747 !important;
+}
+
+/* On lined paper the objects should read more like Word-style floating objects than a CAD layer. */
+.notebook-page.paper-lines .notebook-page-object-layer .notebook-spatial-object,
+.notebook-page.paper-cornell .notebook-page-object-layer .notebook-spatial-object {
+  --lined-object-softness:.92;
+}
+.notebook-page.paper-lines .notebook-page-object-layer .spatial-object-box,
+.notebook-page.paper-cornell .notebook-page-object-layer .spatial-object-box {
+  background:color-mix(in srgb,var(--paper) 2%,transparent);
+}
