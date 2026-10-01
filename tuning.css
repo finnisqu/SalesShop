@@ -306,6 +306,92 @@
   font-size: 8px;
 }
 
+/* Board containment: the board stays in its half of the workspace; each column scrolls itself. */
+#view-board {
+  overflow: hidden;
+}
+#view-board .board-page,
+#view-board .board-wrap,
+#view-board .board {
+  min-height: 0;
+}
+#view-board .board-page {
+  height: calc(100% - 29px);
+  overflow: hidden;
+}
+#view-board .board-wrap {
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 3px;
+}
+#view-board .board {
+  height: 100%;
+  min-height: 0;
+  align-items: stretch;
+}
+#view-board .board-column {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#view-board .column-head {
+  flex: 0 0 auto;
+}
+#view-board .column-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+#view-board .column-body::-webkit-scrollbar { width: 5px; }
+#view-board .column-body::-webkit-scrollbar-track { background: transparent; }
+#view-board .column-body::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+#view-board .board-column.collapsed .column-head {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Hover is a peek, not a mini CRM card: at most two compact detail lines. */
+.work-card:hover .work-card-reveal,
+.account-card:hover .work-card-reveal {
+  max-height: 38px;
+  padding: 4px 7px 5px;
+}
+.work-card-reveal {
+  font-size: 8px;
+}
+.work-card-company {
+  margin: 0 0 2px;
+  line-height: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.work-card-facts {
+  display: block;
+  line-height: 13px;
+  min-height: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.work-card-facts span { display: none; }
+.work-card-facts span:first-child {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.work-card-next { display: none; }
+
 @media (max-width: 760px) {
   .board-column { width: 124px; }
   .board-column.collapsed { width: 28px; }
