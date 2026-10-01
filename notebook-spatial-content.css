@@ -1,0 +1,164 @@
+/* Spatial embedded content: compact table formats, persistent hover affordances, and anchored shape text. */
+
+/* Give the pointer time to cross the small gap between an object and its hover controls. */
+.notebook-spatial-object.hover-controls-visible > .spatial-object-format-toggle,
+.notebook-spatial-object.hover-controls-visible > .spatial-object-drag-handle {
+  opacity:.62 !important;
+  pointer-events:auto !important;
+}
+.notebook-spatial-object.hover-controls-visible > .spatial-object-format-toggle:hover,
+.notebook-spatial-object.hover-controls-visible > .spatial-object-drag-handle:hover {
+  opacity:1 !important;
+}
+
+/* Table number formats use the same collapsed-then-expand language as Alignment/Position. */
+.spatial-number-format-control {
+  width:21px;
+  height:19px;
+  display:inline-flex;
+  align-items:center;
+  gap:1px;
+  overflow:hidden;
+  transition:width .12s ease;
+}
+.spatial-number-format-control:hover,
+.spatial-number-format-control:focus-within { width:84px; }
+.spatial-number-format-choice {
+  flex:0 0 19px;
+  width:19px !important;
+  height:19px !important;
+  padding:0 !important;
+  opacity:0;
+  pointer-events:none;
+  font-size:7px !important;
+  font-weight:700 !important;
+}
+.spatial-number-format-choice.active {
+  order:-1;
+  opacity:.8;
+  pointer-events:auto;
+}
+.spatial-number-format-control:hover .spatial-number-format-choice,
+.spatial-number-format-control:focus-within .spatial-number-format-choice {
+  opacity:.62;
+  pointer-events:auto;
+}
+.spatial-number-format-control .spatial-number-format-choice:hover { opacity:1; }
+
+/* Cell fill is another morphing control: active swatch at rest, palette on hover. */
+.spatial-fill-control {
+  width:21px;
+  height:19px;
+  display:inline-flex;
+  align-items:center;
+  gap:1px;
+  overflow:hidden;
+  transition:width .12s ease;
+}
+.spatial-fill-control:hover,
+.spatial-fill-control:focus-within { width:105px; }
+.spatial-fill-choice {
+  flex:0 0 19px;
+  width:19px !important;
+  height:19px !important;
+  padding:0 !important;
+  opacity:0;
+  pointer-events:none;
+}
+.spatial-fill-choice.active {
+  order:-1;
+  opacity:.9;
+  pointer-events:auto;
+}
+.spatial-fill-control:hover .spatial-fill-choice,
+.spatial-fill-control:focus-within .spatial-fill-choice {
+  opacity:.7;
+  pointer-events:auto;
+}
+.spatial-fill-choice:hover { opacity:1 !important; }
+.spatial-fill-choice > span {
+  width:10px;
+  height:10px;
+  display:block;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 32%,transparent);
+  border-radius:2px;
+  background:transparent;
+}
+.spatial-fill-choice.fill-yellow > span { background:#f4e7a6; }
+.spatial-fill-choice.fill-mint > span { background:#cfe9d5; }
+.spatial-fill-choice.fill-blue > span { background:#cbdff0; }
+.spatial-fill-choice.fill-rose > span { background:#efd0d3; }
+.spatial-fill-choice.fill-none > span {
+  background:linear-gradient(135deg,transparent 44%,color-mix(in srgb,var(--paper-muted) 55%,transparent) 45%,color-mix(in srgb,var(--paper-muted) 55%,transparent) 55%,transparent 56%);
+}
+
+.spatial-table td[data-cell-fill="yellow"],
+.spatial-table td.spatial-table-cell-selected[data-cell-fill="yellow"] { background:#f7edba !important; }
+.spatial-table td[data-cell-fill="mint"],
+.spatial-table td.spatial-table-cell-selected[data-cell-fill="mint"] { background:#dcefe0 !important; }
+.spatial-table td[data-cell-fill="blue"],
+.spatial-table td.spatial-table-cell-selected[data-cell-fill="blue"] { background:#dbe9f4 !important; }
+.spatial-table td[data-cell-fill="rose"],
+.spatial-table td.spatial-table-cell-selected[data-cell-fill="rose"] { background:#f3dcde !important; }
+.spatial-table td.spatial-table-cell-selected[data-cell-fill]:not([data-cell-fill="none"]) {
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 42%,transparent) !important;
+}
+
+.spatial-table-crm-action {
+  width:auto !important;
+  min-width:30px;
+  padding:0 5px !important;
+  font-size:7px !important;
+}
+
+/* Rectangle/cloud text is physically inside the shape object, so movement and deletion keep them together. */
+.spatial-shape-text {
+  position:absolute;
+  z-index:3;
+  inset:3px 5px;
+  min-width:0;
+  min-height:calc(100% - 6px);
+  border:0;
+  outline:0;
+  padding:0;
+  background:transparent;
+  color:var(--paper-ink);
+  caret-color:var(--paper-ink);
+  font-family:Georgia,serif;
+  font-size:var(--notebook-font-size);
+  line-height:var(--notebook-row-size);
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  cursor:text;
+}
+.spatial-shape-text:empty::before {
+  content:'Type…';
+  color:var(--paper-muted);
+  opacity:0;
+  pointer-events:none;
+}
+.notebook-spatial-object:hover > .spatial-shape-text:empty::before,
+.spatial-shape-text:focus:empty::before { opacity:.32; }
+.spatial-object-cloud .spatial-cloud-svg { pointer-events:none; }
+
+/* Selected embedded text gets the same paper-toned Promote / Link popover as notebook prose. */
+.spatial-selection-popover {
+  display:flex;
+  gap:2px;
+  padding:2px;
+  border-radius:6px;
+}
+.spatial-selection-popover button {
+  height:22px;
+  border:1px solid transparent;
+  border-radius:4px;
+  padding:0 7px;
+  background:transparent;
+  color:#463c2d;
+  font-size:8px;
+  font-weight:600;
+}
+.spatial-selection-popover button:hover {
+  border-color:rgba(70,60,45,.18);
+  background:rgba(70,60,45,.07);
+}
