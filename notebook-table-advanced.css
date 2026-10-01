@@ -1,0 +1,82 @@
+/* Advanced table cells: range selection, merge/split, compact alignment control. */
+
+.spatial-table td.spatial-table-cell-selected {
+  background:color-mix(in srgb,var(--tab-notebook) 10%,var(--paper));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 32%,transparent);
+}
+.spatial-table td.spatial-table-cell-merged {
+  vertical-align:middle;
+}
+
+.spatial-table-merge-button {
+  width:auto !important;
+  min-width:31px;
+  padding:0 5px !important;
+  font-size:7px !important;
+}
+.spatial-table-merge-button:disabled {
+  opacity:.28;
+  cursor:default;
+}
+
+/* Alignment works like the notebook Position control: only the active choice is visible at rest. */
+.spatial-align-control {
+  width:21px;
+  height:19px;
+  display:inline-flex;
+  align-items:center;
+  gap:1px;
+  overflow:hidden;
+  transition:width .12s ease;
+}
+.spatial-align-control:hover,
+.spatial-align-control:focus-within {
+  width:63px;
+}
+.spatial-align-control .spatial-align-choice {
+  flex:0 0 19px;
+  width:19px;
+  height:19px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .08s ease;
+}
+.spatial-align-control .spatial-align-choice.active {
+  order:-1;
+  opacity:.78;
+  pointer-events:auto;
+}
+.spatial-align-control:hover .spatial-align-choice,
+.spatial-align-control:focus-within .spatial-align-choice {
+  opacity:.65;
+  pointer-events:auto;
+}
+.spatial-align-control:hover .spatial-align-choice:hover,
+.spatial-align-control:focus-within .spatial-align-choice:hover,
+.spatial-align-control .spatial-align-choice.active:hover {
+  opacity:1;
+}
+.spatial-align-glyph {
+  width:11px;
+  height:10px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:1.5px;
+}
+.spatial-align-glyph i {
+  display:block;
+  height:1px;
+  background:currentColor;
+  border-radius:1px;
+}
+.spatial-align-glyph i:nth-child(1) { width:10px; }
+.spatial-align-glyph i:nth-child(2) { width:7px; }
+.spatial-align-glyph i:nth-child(3) { width:9px; }
+.spatial-align-glyph.center i { margin-inline:auto; }
+.spatial-align-glyph.right i { margin-left:auto; }
+
+/* Keep the richer floating strip compact even with merge/alignment added. */
+.spatial-table-controls-advanced {
+  gap:1px;
+}
