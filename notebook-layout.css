@@ -1,0 +1,154 @@
+/* Notebook paper/layout polish. Loaded last so the physical notebook owns the final chrome. */
+
+/* No animated reset of the short-term-history strip on app/tab renders. */
+.notebook-entries {
+  scroll-behavior: auto !important;
+  transition: none !important;
+}
+
+/* Give the sheet enough vertical travel that recent history can naturally scroll off the page. */
+.notebook-page-body {
+  min-height: calc(100% + 96px) !important;
+  padding-bottom: 110px !important;
+}
+.notebook-page {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--paper-muted) 28%, transparent) transparent;
+}
+.notebook-page::-webkit-scrollbar { width: 6px; }
+.notebook-page::-webkit-scrollbar-track { background: transparent; }
+.notebook-page::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--paper-muted) 25%, transparent);
+  border-radius: 999px;
+}
+
+/* Top utility strip: empty left balance, centered page-size controls, uniform actions at right. */
+.notebook-toolbar {
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  height: 29px !important;
+  min-height: 29px !important;
+  padding: 0 2px 5px !important;
+}
+.notebook-toolbar-left {
+  justify-self: start;
+  min-width: 1px;
+}
+.notebook-toolbar-actions {
+  justify-self: end;
+  gap: 4px !important;
+}
+
+.notebook-toolbar-button,
+.notebook-width-button {
+  height: 23px;
+  min-height: 23px;
+  border: 1px solid var(--border) !important;
+  border-radius: 5px !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  padding: 0 7px !important;
+  font-size: 8.5px !important;
+  font-weight: 600 !important;
+  line-height: 21px !important;
+  box-shadow: none !important;
+}
+.notebook-toolbar-button:hover,
+.notebook-width-button:hover,
+.notebook-width-button.active {
+  color: var(--ink) !important;
+  border-color: var(--border-strong) !important;
+  background: var(--panel-soft) !important;
+}
+.notebook-new-page {
+  font-weight: 600 !important;
+}
+.notebook-view-button {
+  min-width: auto !important;
+}
+
+.notebook-width-controls {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--panel-soft) 62%, transparent);
+}
+.notebook-width-button {
+  width: 27px;
+  min-width: 27px;
+  padding: 0 !important;
+  display: inline-grid;
+  place-items: center;
+  border-color: transparent !important;
+}
+.notebook-width-glyph {
+  display: block;
+  height: 9px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  opacity: .75;
+}
+.notebook-width-glyph.medium { width: 12px; }
+.notebook-width-glyph.full { width: 18px; }
+.notebook-width-button.active .notebook-width-glyph { opacity: 1; }
+
+/* The microphone and attachment controls now live on the sheet beside the printed date. */
+.notebook-paper-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.notebook-paper-head-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 2px;
+}
+.notebook-paper-head .notebook-icon-tool {
+  width: 22px;
+  height: 22px;
+  color: var(--paper-muted);
+  border-radius: 5px;
+}
+.notebook-paper-head .notebook-icon-tool:hover,
+.notebook-paper-head .notebook-icon-tool.recording {
+  color: var(--paper-ink);
+  background: color-mix(in srgb, var(--paper-muted) 8%, transparent);
+}
+.notebook-paper-head .notebook-icon-tool.recording { color: #d85c5c; }
+
+/* Width modes only affect the physical sheet; the utility strip remains centered in the app. */
+.notebook-width-full .notebook-page {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+.notebook-width-medium .notebook-page {
+  width: min(900px, calc(100% - 96px));
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+@media (max-width: 900px) {
+  .notebook-width-medium .notebook-page {
+    width: min(100%, 760px);
+    max-width: 760px;
+  }
+}
+
+@media (max-width: 640px) {
+  .notebook-toolbar {
+    grid-template-columns: auto 1fr;
+  }
+  .notebook-toolbar-left { display: none; }
+  .notebook-width-controls { justify-self: start; }
+  .notebook-toolbar-actions { justify-self: end; }
+  .notebook-width-medium .notebook-page { width: 100%; max-width: none; }
+}
