@@ -23,7 +23,12 @@ function seedData() {
   const yesterday = dateKey(yesterdayDate);
   const q1 = uid('quote');
   return {
-    settings: { notebookMode: 'daily', companyName: 'World Stone', workspaceLayout:'stacked', theme:'dark' },
+    settings: {
+      notebookMode:'daily',
+      companyName:'World Stone',
+      theme:'dark',
+      collapsedStages:['Closed Lost','Discarded']
+    },
     notebook: {
       [today]: [
         { id: uid('note'), createdAt: new Date().setHours(8,42,0,0), text: 'Riverwalk pricing is probably too tight on install. Check with Robert.', source:'typed' },
@@ -59,9 +64,10 @@ function seedData() {
 
 function normalizeState(raw) {
   const s = raw || seedData();
-  s.settings = {...{notebookMode:'daily', companyName:'World Stone', workspaceLayout:'stacked', theme:'dark'}, ...(s.settings||{})};
-  if (!['stacked','columns'].includes(s.settings.workspaceLayout)) s.settings.workspaceLayout='stacked';
+  s.settings = {...{notebookMode:'daily', companyName:'World Stone', theme:'dark', collapsedStages:['Closed Lost','Discarded']}, ...(s.settings||{})};
   if (!['dark','light'].includes(s.settings.theme)) s.settings.theme='dark';
+  if (!Array.isArray(s.settings.collapsedStages)) s.settings.collapsedStages=['Closed Lost','Discarded'];
+  s.settings.collapsedStages = [...new Set(s.settings.collapsedStages.filter(stage=>STAGES.includes(stage)))];
   const stageMap = {
     'New':'Discovery', 'Takeoff':'Bid Development', 'Pricing':'Bid Development', 'Review':'Bid Development',
     'Sent':'Bid Sent', 'Decision':'Negotiation', 'Awarded':'Closed Won'
@@ -72,7 +78,7 @@ function normalizeState(raw) {
 }
 
 let state = load();
-let currentView = 'home';
+let currentView = 'board';
 let currentNotebookDate = dateKey();
 let currentQuoteId = state.quotes[0]?.id || null;
 let speech = null;
@@ -107,9 +113,13 @@ function toggleTheme() {
 
 function showView(name) {
   currentView = name;
+  document.body.dataset.view = name;
+  const workspace = $('#workspaceBody');
+  workspace?.classList.toggle('notebook-focus', name === 'notebook');
   $$('.view').forEach(v => v.classList.remove('active'));
-  $(`#view-${name}`).classList.add('active');
-  $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  if (name !== 'notebook') $(`#view-${name}`)?.classList.add('active');
+  $$('.top-tab').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  if (name === 'notebook') currentNotebookDate = dateKey();
   renderAll();
 }
 
