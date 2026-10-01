@@ -1,0 +1,174 @@
+/* Contextual rich text for notebook + grid. Keep it paper-like, not word-processor-like. */
+
+.richtext-source {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+.notebook-rich-editor,
+.grid-rich-editor {
+  outline: 0;
+  border: 0;
+  background: transparent;
+  color: var(--paper-ink);
+  font-family: Georgia, serif;
+  font-size: 13px;
+  line-height: 28px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  caret-color: var(--paper-ink);
+}
+.notebook-rich-editor {
+  width: 100%;
+  min-height: 28px;
+  padding: 0;
+}
+.grid-rich-editor {
+  position: relative;
+  z-index: 2;
+  width: min(308px, calc(100vw - 40px));
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+.notebook-rich-editor:focus,
+.grid-rich-editor:focus { outline: 0; }
+
+.rich-rendered-text,
+.notebook-rich-editor,
+.grid-rich-editor {
+  white-space: pre-wrap;
+}
+
+/* Tiny formatting vocabulary. */
+[data-heading="h1"] {
+  font-size: 1.34em;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+[data-heading="h2"] {
+  font-size: 1.13em;
+  font-weight: 700;
+}
+[data-highlight="yellow"] {
+  background: rgba(244, 208, 92, .38);
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+[data-highlight="mint"] {
+  background: rgba(109, 201, 156, .28);
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+[data-highlight="rose"] {
+  background: rgba(232, 128, 147, .25);
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Reuse the existing contextual strip, but make it capable of a few more tools. */
+.rich-selection-toolbar,
+.rich-selection-popover {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--paper-muted) 24%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--paper) 92%, var(--panel));
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+  white-space: nowrap;
+}
+.rich-selection-toolbar {
+  width: max-content;
+  max-width: min(96vw, 460px);
+}
+.rich-selection-popover {
+  position: fixed;
+  z-index: 150;
+  width: max-content;
+  max-width: min(96vw, 460px);
+}
+
+.rich-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  min-width: 22px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--paper-ink);
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+}
+.rich-tool:hover {
+  background: color-mix(in srgb, var(--paper-muted) 10%, transparent);
+}
+.rich-tool-text { font-family: Georgia, serif; font-size: 11px; }
+.rich-tool-heading { font-weight: 700; letter-spacing: -.02em; }
+.rich-tool-action {
+  padding-inline: 7px;
+  color: var(--paper-muted);
+  font-size: 8px;
+}
+.rich-tool-separator {
+  width: 1px;
+  height: 14px;
+  margin: 0 2px;
+  background: color-mix(in srgb, var(--paper-muted) 24%, transparent);
+}
+.rich-highlight {
+  min-width: 18px;
+  width: 18px;
+  height: 18px;
+  margin: 0 1px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+.rich-highlight-yellow { background: rgba(244,208,92,.72); }
+.rich-highlight-mint { background: rgba(109,201,156,.62); }
+.rich-highlight-rose { background: rgba(232,128,147,.58); }
+
+/* The original draft selection container is positioned for a tiny Promote/Link pair.
+   Give the expanded toolbar a little more room while keeping it contextual. */
+.draft-selection-tools.rich-selection-toolbar {
+  right: auto;
+  left: 0;
+  top: -29px;
+}
+.grid-editor-selection-tools.rich-selection-toolbar {
+  left: 0;
+  right: auto;
+  top: -30px;
+}
+
+/* When editing on graph paper, the rich editor should still disappear into the sheet. */
+.grid-editor-wrap.grid-editor-minimal .grid-rich-editor {
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 720px) {
+  .rich-selection-toolbar,
+  .rich-selection-popover {
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .rich-selection-toolbar::-webkit-scrollbar,
+  .rich-selection-popover::-webkit-scrollbar { display:none; }
+}
