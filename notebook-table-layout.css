@@ -1,0 +1,26 @@
+/* Table layout defaults: wider cells and stable single-line notebook rows. */
+
+.spatial-object-table,
+.spatial-table {
+  overflow:visible !important;
+}
+
+.spatial-table tr {
+  height:var(--notebook-row-size);
+}
+
+.spatial-table td {
+  height:var(--notebook-row-size);
+  box-sizing:border-box;
+  white-space:nowrap !important;
+  overflow:visible !important;
+  overflow-wrap:normal !important;
+  word-break:normal !important;
+  text-overflow:clip !important;
+}
+
+/* Keep the active cell legible while allowing long single-line text to extend beyond its box. */
+.spatial-table td:focus {
+  position:relative;
+  z-index:3;
+}
