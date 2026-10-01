@@ -38,7 +38,7 @@ toggleSpeech = function(root) {
       const transcript = e.results[i][0].transcript.trim();
       if (!transcript) continue;
       const existing = richPlainTextFromNode(editor);
-      insertRichPlainText(`${existing && !existing.endsWith(/\s/) ? ' ' : ''}${transcript} `);
+      insertRichPlainText(`${existing && !/\s$/.test(existing) ? ' ' : ''}${transcript} `);
       syncRichDraft(root, editor);
     }
   };
