@@ -1,4 +1,51 @@
 let draftSelectionText = '';
+let currentNotebookPageId = null;
+
+function notebookPageState() {
+  state.settings.activeNotebookPageByDate ||= {};
+  return state.settings.activeNotebookPageByDate;
+}
+
+function ensureNotebookPage(key) {
+  state.notebook[key] ||= [];
+  const entries = state.notebook[key];
+  const activeByDate = notebookPageState();
+  let changed = false;
+
+  if (entries.some(entry => !entry.pageId)) {
+    const legacyPageId = `page_${key}_legacy`;
+    entries.forEach(entry => {
+      if (!entry.pageId) entry.pageId = legacyPageId;
+    });
+    changed = true;
+  }
+
+  const pageIds = [...new Set(entries.map(entry => entry.pageId).filter(Boolean))];
+  if (!activeByDate[key]) {
+    activeByDate[key] = pageIds[pageIds.length - 1] || uid('page');
+    changed = true;
+  }
+
+  const validIds = new Set([...pageIds, activeByDate[key]]);
+  if (!currentNotebookPageId || !validIds.has(currentNotebookPageId)) {
+    currentNotebookPageId = activeByDate[key];
+  }
+
+  if (changed) save();
+  return currentNotebookPageId;
+}
+
+function notebookEntriesForPage(key, pageId) {
+  return (state.notebook[key] || []).filter(entry => entry.pageId === pageId);
+}
+
+function appendNotebookEntry(text, source='typed', key=dateKey(), pageId=null, extra={}) {
+  state.notebook[key] ||= [];
+  const targetPageId = pageId || ensureNotebookPage(key);
+  const entry = {id:uid('note'), createdAt:nowISO(), text, source, pageId:targetPageId, ...extra};
+  state.notebook[key].push(entry);
+  return entry;
+}
 
 function renderNotebook() {
   const placeholder = $('#view-notebook');
@@ -10,7 +57,8 @@ function renderNotebookSurface(root) {
   if(!root) return;
   const keys = [...new Set([dateKey(), ...Object.keys(state.notebook)])].sort().reverse();
   if (!keys.includes(currentNotebookDate)) currentNotebookDate = dateKey();
-  const entries = state.notebook[currentNotebookDate] || [];
+  const pageId = ensureNotebookPage(currentNotebookDate);
+  const entries = notebookEntriesForPage(currentNotebookDate, pageId);
   const isToday = currentNotebookDate === dateKey();
 
   root.innerHTML = `
@@ -24,6 +72,7 @@ function renderNotebookSurface(root) {
         </div>
         <div class="notebook-toolbar-actions">
           ${!isToday?'<button class="notebook-tool" data-today>Today</button>':''}
+          <button class="notebook-tool notebook-new-page" data-new-page>+ New Page</button>
           <button class="notebook-tool" data-history>History</button>
         </div>
       </div>
@@ -32,7 +81,7 @@ function renderNotebookSurface(root) {
           <div class="notebook-date">${fmtDate(currentNotebookDate,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
         </div>
         <div class="notebook-page-body">
-          <div class="notebook-entries">
+          <div class="notebook-entries ${entries.length > 3 ? 'has-scrollback' : ''}" data-notebook-entries>
             ${entries.map(notebookEntryHtml).join('')}
           </div>
           <div class="notebook-writing-zone ${entries.length?'':'blank-page'}">
@@ -46,6 +95,7 @@ function renderNotebookSurface(root) {
       </div>
     </div>`;
   bindNotebookSurface(root);
+  requestAnimationFrame(()=>scrollNotebookEntriesToBottom(root));
 }
 
 function notebookEntryHtml(entry) {
@@ -69,7 +119,12 @@ function notebookEntryHtml(entry) {
 
 function bindNotebookSurface(root) {
   $('[data-history]', root)?.addEventListener('click', openNotebookHistory);
-  $('[data-today]', root)?.addEventListener('click',()=>{ currentNotebookDate=dateKey(); renderAll(); });
+  $('[data-new-page]', root)?.addEventListener('click',()=>startFreshNotebookPage(root));
+  $('[data-today]', root)?.addEventListener('click',()=>{
+    currentNotebookDate=dateKey();
+    currentNotebookPageId=notebookPageState()[currentNotebookDate] || null;
+    renderAll();
+  });
 
   const input = $('[data-notebook-input]', root);
   input?.addEventListener('keydown', e => {
@@ -92,12 +147,17 @@ function bindNotebookSurface(root) {
 
   $('[data-mic]', root)?.addEventListener('click',()=>toggleSpeech(root));
   $('[data-attach]', root)?.addEventListener('click',()=> $('[data-file-input]', root)?.click());
-  $('[data-file-input]', root)?.addEventListener('change', e => handleNotebookFiles([...e.target.files], currentNotebookDate));
+  $('[data-file-input]', root)?.addEventListener('change', e => handleNotebookFiles([...e.target.files], currentNotebookDate, currentNotebookPageId));
 
   $$('.entry-text', root).forEach(el => {
     el.onmouseup = e => handleSelection(e, el.closest('.notebook-entry').dataset.entryId);
     el.oncontextmenu = e => { e.preventDefault(); handleSelection(e, el.closest('.notebook-entry').dataset.entryId, true); };
   });
+}
+
+function scrollNotebookEntriesToBottom(root) {
+  const entries = $('[data-notebook-entries]', root);
+  if (entries) entries.scrollTop = entries.scrollHeight;
 }
 
 function updateDraftSelectionTools(root) {
@@ -114,36 +174,86 @@ function saveNotebookDraft(root) {
   const input=$('[data-notebook-input]', root);
   const val=input?.value.trim();
   if(!val)return;
-  addNotebookEntry(val,'typed',currentNotebookDate);
+  appendNotebookEntry(val,'typed',currentNotebookDate,currentNotebookPageId);
+  save();
+  renderAll();
   toast('Added');
 }
 
+function startFreshNotebookPage(root) {
+  const input=$('[data-notebook-input]', root);
+  const draft=input?.value.trim();
+  if (draft) appendNotebookEntry(draft,'typed',currentNotebookDate,currentNotebookPageId);
+
+  currentNotebookDate = dateKey();
+  state.notebook[currentNotebookDate] ||= [];
+  const newPageId = uid('page');
+  notebookPageState()[currentNotebookDate] = newPageId;
+  currentNotebookPageId = newPageId;
+  save();
+  renderAll();
+  setTimeout(()=>document.querySelector('[data-notebook-input]')?.focus(),0);
+  toast('Fresh page');
+}
+
+function notebookHistoryRows() {
+  const rows=[];
+  const activeByDate=notebookPageState();
+  const keys=[...new Set([dateKey(),...Object.keys(state.notebook),...Object.keys(activeByDate)])].sort().reverse();
+  keys.forEach(key=>{
+    const entries=state.notebook[key]||[];
+    const ids=[...new Set(entries.map(e=>e.pageId).filter(Boolean))];
+    if(activeByDate[key]&&!ids.includes(activeByDate[key])) ids.push(activeByDate[key]);
+    ids.forEach((pageId,index)=>{
+      const pageEntries=entries.filter(e=>e.pageId===pageId);
+      rows.push({
+        key,
+        pageId,
+        pageNumber:index+1,
+        count:pageEntries.length,
+        lastAt:pageEntries[pageEntries.length-1]?.createdAt || '',
+        active:activeByDate[key]===pageId
+      });
+    });
+  });
+  return rows;
+}
+
 function openNotebookHistory() {
-  const keys = [...new Set([dateKey(), ...Object.keys(state.notebook)])].sort().reverse();
+  const rows=notebookHistoryRows();
   openModal('Notebook','History',`
     <div class="history-list">
-      ${keys.map(k=>`<button class="history-row ${k===currentNotebookDate?'active':''}" data-history-date="${k}">
-        <span>${k===dateKey()?'Today':fmtDate(k,{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span>
-        <span>${(state.notebook[k]||[]).length}</span>
+      ${rows.map(row=>`<button class="history-row ${row.key===currentNotebookDate&&row.pageId===currentNotebookPageId?'active':''}" data-history-date="${row.key}" data-history-page="${row.pageId}">
+        <span>${row.key===dateKey()?'Today':fmtDate(row.key,{weekday:'short',month:'short',day:'numeric',year:'numeric'})} · Page ${row.pageNumber}${row.active?' · current':''}</span>
+        <span>${row.count}</span>
       </button>`).join('')}
     </div>`);
-  $$('[data-history-date]').forEach(btn=>btn.onclick=()=>{
+  $$('[data-history-page]').forEach(btn=>btn.onclick=()=>{
     currentNotebookDate=btn.dataset.historyDate;
+    currentNotebookPageId=btn.dataset.historyPage;
     closeModal();
     renderAll();
   });
 }
 
 function addNotebookEntry(text, source='typed', key=dateKey(), extra={}) {
-  if(!state.notebook[key]) state.notebook[key]=[];
-  state.notebook[key].push({id:uid('note'), createdAt:nowISO(), text, source, ...extra});
+  const previousDate=currentNotebookDate;
+  const previousPage=currentNotebookPageId;
+  const activePage=notebookPageState()[key] || null;
+  currentNotebookDate=key;
+  currentNotebookPageId=activePage;
+  const pageId=ensureNotebookPage(key);
+  appendNotebookEntry(text,source,key,pageId,extra);
+  currentNotebookDate=previousDate;
+  currentNotebookPageId=previousPage;
   save();
   renderAll();
 }
 
-async function handleNotebookFiles(files, key=dateKey()) {
+async function handleNotebookFiles(files, key=dateKey(), pageId=null) {
   if (!files.length) return;
-  if(!state.notebook[key]) state.notebook[key]=[];
+  state.notebook[key] ||= [];
+  const targetPageId=pageId || ensureNotebookPage(key);
   let oversized = 0;
   for (const file of files) {
     let dataUrl = '';
@@ -152,11 +262,7 @@ async function handleNotebookFiles(files, key=dateKey()) {
     } else {
       oversized += 1;
     }
-    state.notebook[key].push({
-      id: uid('note'),
-      createdAt: nowISO(),
-      text: file.name,
-      source: 'attachment',
+    appendNotebookEntry(file.name,'attachment',key,targetPageId,{
       attachment: {name:file.name, type:file.type || 'application/octet-stream', size:file.size, dataUrl}
     });
   }
