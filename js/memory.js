@@ -2,8 +2,9 @@ function renderMemory() {
   $('#view-memory').innerHTML=`
     <div class="page-head"><div><div class="eyebrow">Breadcrumb CRM</div><h1>Memory</h1><div class="page-subtitle">The database is here when you want it, but it does not run the experience.</div></div></div>
     <div class="memory-grid">
-      ${memoryPanel('Contacts',state.contacts.map(c=>({title:c.name,meta:c.company||'Partial contact'})))}
-      ${memoryPanel('Companies',state.companies.map(c=>({title:c.name,meta:'Company breadcrumb'})))}
+      ${memoryPanel('Contacts',state.contacts.map(c=>({title:c.name,meta:[c.company,c.detail].filter(Boolean).join(' · ')||'Partial contact'})))}
+      ${memoryPanel('Companies',state.companies.map(c=>({title:c.name||c.domain||'Untitled company',meta:`${accountStage(c)}${c.domain?` · ${c.domain}`:''}`})))}
+      ${memoryPanel('Deals',state.crmDeals.map(d=>({title:d.name,meta:`${d.stage} · ${money(d.amount)}`})))}
       ${memoryPanel('Touchpoints',state.touchpoints.map(t=>({title:t.text,meta:new Date(t.createdAt).toLocaleString()})))}
       ${memoryPanel('Reminders',state.reminders.map(r=>({title:r.text,meta:r.date?`Due ${fmtDate(r.date)}`:'No date required'})))}
       ${memoryPanel('Project updates',state.projectUpdates.map(u=>({title:u.text,meta:state.workItems.find(w=>w.id===u.workItemId)?.title||'Linked breadcrumb'})))}
@@ -19,19 +20,20 @@ function closeModal(){ $('#modalRoot').innerHTML=''; }
 
 function openQuickNew() {
   openModal('Quick create','What do you want to start?',`<div class="promote-grid"><button class="promote-option" id="newWorkQuick"><div class="promote-title">Something to quote</div><div class="promote-desc">Start with only a name. Add the rest later.</div></button><button class="promote-option" id="newQuoteQuick"><div class="promote-title">Quote</div><div class="promote-desc">Start a blank, unrestricted quote.</div></button><button class="promote-option" id="newNoteQuick"><div class="promote-title">Notebook entry</div><div class="promote-desc">Capture a thought with no structure.</div></button><button class="promote-option" id="newTouchQuick"><div class="promote-title">Touchpoint</div><div class="promote-desc">Record only that contact happened.</div></button></div>`);
-  $('#newWorkQuick').onclick=()=>{ closeModal(); showView('board'); setTimeout(()=>$('.add-card-input[data-add-stage="New"]')?.focus(),0); };
+  $('#newWorkQuick').onclick=()=>{ closeModal(); state.settings.boardMode='projects'; save(); showView('board'); setTimeout(()=>$('.add-card-input[data-add-stage="Discovery"]')?.focus(),0); };
   $('#newQuoteQuick').onclick=()=>{ closeModal(); showView('quotes'); createBlankQuote(); };
-  $('#newNoteQuick').onclick=()=>{ closeModal(); showView('notebook'); setTimeout(()=>$('#notebookInput')?.focus(),0); };
+  $('#newNoteQuick').onclick=()=>{ closeModal(); showView('notebook'); setTimeout(()=>document.querySelector('[data-notebook-input]')?.focus(),0); };
   $('#newTouchQuick').onclick=()=>{ closeModal(); openModal('Touchpoint','Who did you talk with?',`<div class="field"><label>Person or company</label><input id="quickTouch" placeholder="John at ABC"></div><div class="modal-actions"><button class="primary-button" id="saveQuickTouch">Record touchpoint</button></div>`); $('#saveQuickTouch').onclick=()=>{ const text=$('#quickTouch').value.trim(); if(!text)return; state.touchpoints.push({id:uid('touch'),text,createdAt:nowISO()});save();closeModal();renderAll();toast('Touchpoint recorded'); }; };
 }
 
 function indexEverything() {
   const rows=[];
-  state.workItems.forEach(w=>rows.push({type:'Project',title:w.title,text:`${w.company} ${w.stage} ${w.nextAction||''}`,go:()=>{showView('board');setTimeout(()=>openWorkItem(w.id),0);}}));
+  state.workItems.forEach(w=>rows.push({type:'Project',title:w.title,text:`${w.company} ${w.stage} ${w.nextAction||''}`,go:()=>{state.settings.boardMode='projects';save();showView('board');setTimeout(()=>openWorkItem(w.id),0);}}));
   state.quotes.forEach(q=>rows.push({type:'Quote',title:q.title||q.quoteNumber,text:`${q.customer} ${q.quoteNumber} ${money(quoteTotal(q))}`,go:()=>{currentQuoteId=q.id;showView('quotes');}}));
   Object.entries(state.notebook).forEach(([d,entries])=>entries.forEach(n=>rows.push({type:'Notebook',title:fmtDate(d,{month:'short',day:'numeric',year:'numeric'}),text:n.text,go:()=>{currentNotebookDate=d;showView('notebook');}})));
   state.contacts.forEach(c=>rows.push({type:'Contact',title:c.name,text:c.company||'',go:()=>showView('memory')}));
-  state.companies.forEach(c=>rows.push({type:'Company',title:c.name,text:'',go:()=>showView('memory')}));
+  state.companies.forEach(c=>rows.push({type:'Company',title:c.name||c.domain||'Untitled company',text:`${c.domain||''} ${accountStage(c)}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(c.id),0);}}));
+  state.crmDeals.forEach(d=>rows.push({type:'Deal',title:d.name,text:`${d.stage} ${money(d.amount)}`,go:()=>{state.settings.boardMode='accounts';save();showView('board');setTimeout(()=>openAccount(d.companyId),0);}}));
   state.touchpoints.forEach(t=>rows.push({type:'Touchpoint',title:t.text,text:new Date(t.createdAt).toLocaleDateString(),go:()=>showView('memory')}));
   state.reminders.forEach(r=>rows.push({type:'Reminder',title:r.text,text:r.date||'',go:()=>showView('memory')}));
   return rows;
