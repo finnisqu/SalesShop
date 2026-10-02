@@ -18,6 +18,23 @@ html[data-theme="dark"] .notebook-shell[data-reference-paper-tint="same"] .noteb
   --paper-muted:#a99f82;
 }
 
+.notebook-reference-meta-button {
+  width:23px !important;
+  min-width:23px !important;
+  padding:0 !important;
+}
+.notebook-reference-meta-button svg {
+  width:13px;
+  height:13px;
+  opacity:.62;
+}
+.notebook-reference-meta-button.active {
+  color:var(--tab-notebook) !important;
+  border-color:color-mix(in srgb,var(--tab-notebook) 34%,var(--paper-muted)) !important;
+}
+.notebook-reference-meta-button.active svg,
+.notebook-reference-meta-button:hover svg { opacity:1; }
+
 /* Auto can resolve to a wide Split without changing the persisted preference. Keep the two seam
    tabs visible there too so the user can grab either paper edge and pull it into a layered stack. */
 .notebook-page-pair[data-paper-layout="auto"][data-paper-resolved-layout="split"] .notebook-paper-peek {
