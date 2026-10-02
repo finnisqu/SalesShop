@@ -1,0 +1,173 @@
+/* Dual Binder tab rails + final selection polish. */
+
+/* The Binder now reserves a narrow physical tab reveal on both outside edges. */
+.notebook-shell.notebook-binder-mode {
+  --binder-tab-reveal:20px;
+  --binder-tab-height:58px;
+}
+.notebook-shell.notebook-binder-mode .notebook-page-pair {
+  overflow:visible !important;
+}
+
+/* Retire the older one-sided rail. */
+.notebook-shell.notebook-binder-mode .notebook-binder-tabs-final {
+  display:none !important;
+}
+
+.notebook-binder-side-rail {
+  position:absolute;
+  z-index:1;
+  top:84px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  pointer-events:auto;
+}
+.notebook-binder-side-rail-left {
+  left:0;
+  transform:translateX(calc(-1 * var(--binder-tab-reveal) + 4px));
+}
+.notebook-binder-side-rail-right {
+  right:0;
+  transform:translateX(calc(var(--binder-tab-reveal) - 4px));
+}
+
+.notebook-binder-side-tab {
+  position:relative;
+  width:var(--binder-tab-reveal);
+  height:var(--binder-tab-height);
+  min-width:var(--binder-tab-reveal);
+  min-height:var(--binder-tab-height);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:2px 1px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 28%,var(--border));
+  color:var(--paper-muted);
+  opacity:.58;
+  box-shadow:0 3px 9px rgba(0,0,0,.07);
+  cursor:pointer;
+  overflow:hidden;
+  transition:opacity .1s ease,transform .1s ease,box-shadow .1s ease,border-color .1s ease;
+}
+.notebook-binder-side-rail-left .notebook-binder-side-tab {
+  border-radius:6px 0 0 6px;
+  border-right-color:transparent;
+}
+.notebook-binder-side-rail-right .notebook-binder-side-tab {
+  border-radius:0 6px 6px 0;
+  border-left-color:transparent;
+}
+
+/* Tabs are literally made from the same paper tint as their page. */
+html:not([data-theme="dark"]) .notebook-binder-side-tab[data-paper-color="warm"] { background:#fff9df; color:#94896c; }
+html[data-theme="dark"] .notebook-binder-side-tab[data-paper-color="warm"] { background:#29271f; color:#a99f82; }
+html:not([data-theme="dark"]) .notebook-binder-side-tab[data-paper-color="blue"] { background:#f1f8fb; color:#7e97a5; }
+html[data-theme="dark"] .notebook-binder-side-tab[data-paper-color="blue"] { background:#222b30; color:#92aab5; }
+html:not([data-theme="dark"]) .notebook-binder-side-tab[data-paper-color="neutral"] { background:#f7f7f3; color:#898d91; }
+html[data-theme="dark"] .notebook-binder-side-tab[data-paper-color="neutral"] { background:#25282a; color:#9ba0a4; }
+
+.notebook-binder-side-tab:hover {
+  opacity:.9;
+  box-shadow:0 5px 12px rgba(0,0,0,.10);
+}
+.notebook-binder-side-rail-left .notebook-binder-side-tab:hover { transform:translateX(-2px); }
+.notebook-binder-side-rail-right .notebook-binder-side-tab:hover { transform:translateX(2px); }
+
+/* This tab/page is physically occupying this side: visually fuse it into the sheet edge. */
+.notebook-binder-side-tab.on-this-side {
+  opacity:1;
+  border-color:color-mix(in srgb,var(--paper-muted) 44%,var(--border-strong));
+  box-shadow:0 5px 13px rgba(0,0,0,.11);
+}
+.notebook-binder-side-rail-left .notebook-binder-side-tab.on-this-side {
+  transform:translateX(4px);
+}
+.notebook-binder-side-rail-right .notebook-binder-side-tab.on-this-side {
+  transform:translateX(-4px);
+}
+.notebook-binder-side-tab.renderer-active {
+  outline:1px solid color-mix(in srgb,var(--tab-notebook) 34%,transparent);
+  outline-offset:-2px;
+}
+
+/* If the page is already open across the Binder, retain the tab but mark it as "over there". */
+.notebook-binder-side-tab.on-other-side {
+  opacity:.38;
+}
+.notebook-binder-across-cue {
+  position:absolute;
+  top:3px;
+  left:50%;
+  transform:translateX(-50%);
+  font:800 7px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--paper-muted);
+  opacity:.9;
+}
+
+.notebook-binder-side-tab-index {
+  position:absolute;
+  bottom:3px;
+  left:50%;
+  transform:translateX(-50%);
+  font:700 5.2px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  opacity:.65;
+}
+.notebook-binder-side-tab-label {
+  max-height:43px;
+  max-width:12px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  writing-mode:vertical-rl;
+  transform:rotate(180deg);
+  font:700 5.5px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.02em;
+}
+
+/* Keep page-local split controls a true 2x2 icon pad at every Binder width. */
+.notebook-shell.notebook-binder-mode .notebook-binder-local-actions.binder-grid {
+  width:47px !important;
+  max-width:47px !important;
+  grid-template-columns:22px 22px !important;
+  grid-template-rows:22px 22px !important;
+  gap:3px !important;
+}
+.notebook-shell.notebook-binder-mode .notebook-binder-local-actions.binder-grid .notebook-binder-grid-button,
+.notebook-shell.notebook-binder-mode .notebook-binder-local-actions.binder-grid .notebook-binder-style {
+  width:22px !important;
+  min-width:22px !important;
+  height:22px !important;
+  min-height:22px !important;
+}
+
+/* Sheets-style range: one restrained outer rectangle, rather than a border around every cell. */
+.spatial-table td.spatial-table-cell-selected:not(.spreadsheet-active-cell),
+.spatial-table td.spreadsheet-range-cell:not(.spreadsheet-active-cell) {
+  background:color-mix(in srgb,var(--tab-notebook) 3.5%,var(--paper)) !important;
+  box-shadow:none !important;
+}
+html[data-theme="dark"] .spatial-table td.spreadsheet-range-cell:not(.spreadsheet-active-cell) {
+  background:color-mix(in srgb,var(--tab-notebook) 5%,var(--paper)) !important;
+}
+.spatial-table td.spreadsheet-active-cell {
+  background:color-mix(in srgb,var(--tab-notebook) 2%,var(--paper)) !important;
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tab-notebook) 68%,var(--paper-ink)) !important;
+}
+.spreadsheet-range-outline {
+  position:absolute;
+  z-index:34;
+  box-sizing:border-box;
+  border:1.25px solid color-mix(in srgb,var(--tab-notebook) 56%,var(--paper-ink));
+  border-radius:1px;
+  pointer-events:none;
+  box-shadow:0 0 0 .5px color-mix(in srgb,var(--paper) 54%,transparent);
+}
+
+@media (max-width:900px) {
+  .notebook-shell.notebook-binder-mode {
+    --binder-tab-reveal:18px;
+    --binder-tab-height:54px;
+  }
+  .notebook-binder-side-tab-label { font-size:5.1px; }
+}
