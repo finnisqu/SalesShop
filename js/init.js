@@ -33,10 +33,38 @@ init();
     link.dataset.binderFluidQc='';
     document.head.appendChild(link);
   }
-  if (!document.querySelector('script[data-binder-fluid-qc]')) {
-    const script=document.createElement('script');
-    script.src='js/notebook-binder-fluid-qc.js';
-    script.dataset.binderFluidQc='';
-    document.body.appendChild(script);
+
+  const loadVisualFixes=()=>{
+    if (!document.querySelector('link[data-binder-visual-fixes]')) {
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href='notebook-binder-visual-fixes.css';
+      link.dataset.binderVisualFixes='';
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector('script[data-binder-visual-fixes]')) {
+      const script=document.createElement('script');
+      script.src='js/notebook-binder-visual-fixes.js';
+      script.async=false;
+      script.dataset.binderVisualFixes='';
+      document.body.appendChild(script);
+    }
+  };
+
+  const existing=document.querySelector('script[data-binder-fluid-qc]');
+  if (existing) {
+    if (existing.dataset.loaded==='1') loadVisualFixes();
+    else existing.addEventListener('load',loadVisualFixes,{once:true});
+    return;
   }
+
+  const script=document.createElement('script');
+  script.src='js/notebook-binder-fluid-qc.js';
+  script.async=false;
+  script.dataset.binderFluidQc='';
+  script.addEventListener('load',()=>{
+    script.dataset.loaded='1';
+    loadVisualFixes();
+  },{once:true});
+  document.body.appendChild(script);
 })();
