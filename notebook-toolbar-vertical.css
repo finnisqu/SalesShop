@@ -133,3 +133,107 @@
 .spatial-table-controls-advanced {
   overflow:visible !important;
 }
+
+/* Compact table-size steppers: icon + minus/count/plus, with no repeated Cols/Rows words. */
+.spatial-table-dimension-stepper {
+  height:16px;
+  display:inline-flex;
+  align-items:center;
+  gap:0;
+  padding:0 1px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 18%,transparent);
+  border-radius:4px;
+  background:color-mix(in srgb,var(--paper-muted) 3%,transparent);
+  flex:0 0 auto;
+}
+.spatial-table-dimension-stepper + .spatial-table-dimension-stepper { margin-left:1px; }
+.spatial-table-dimension-stepper button {
+  width:12px !important;
+  min-width:12px !important;
+  height:14px !important;
+  min-height:14px !important;
+  padding:0 !important;
+  font-size:8px !important;
+}
+.spatial-table-dimension-stepper .spatial-table-count {
+  min-width:10px !important;
+  padding:0 1px;
+  font-size:6.5px !important;
+}
+.spatial-table-dimension-icon {
+  width:10px;
+  height:9px;
+  margin:0 1px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 58%,transparent);
+  border-radius:1px;
+  opacity:.74;
+  flex:0 0 auto;
+}
+.spatial-table-dimension-icon.cols {
+  background:linear-gradient(to right,transparent 46%,currentColor 47% 53%,transparent 54%);
+}
+.spatial-table-dimension-icon.rows {
+  background:linear-gradient(to bottom,transparent 46%,currentColor 47% 53%,transparent 54%);
+}
+
+/* Anchor toolbars by their bottom edge so a wrapped second row grows upward, never into the object. */
+#notebookDock .spatial-object-table > .spatial-table-controls,
+.spatial-shape-toolbar,
+.grid-text-object-toolbar {
+  top:auto !important;
+  bottom:calc(100% + 3px) !important;
+}
+
+/* The notebook page itself is the responsive container. This reacts to Float-pad width, not only
+   the browser viewport. */
+.notebook-page {
+  container-type:inline-size;
+  container-name:notebook-page;
+}
+
+@container notebook-page (max-width:560px) {
+  /* Date yields to the user-defined page header on small pads. */
+  .notebook-paper-head {
+    min-height:58px !important;
+    padding:18px 20px 11px !important;
+  }
+  .notebook-date { display:none !important; }
+  .notebook-page-header {
+    position:static !important;
+    display:block !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+    min-height:28px !important;
+    margin:0 !important;
+    text-align:left !important;
+    line-height:28px !important;
+  }
+
+  /* Long object toolbars wrap cleanly instead of compressing every control. */
+  #notebookDock .spatial-object-table > .spatial-table-controls,
+  .spatial-shape-toolbar,
+  .grid-text-object-toolbar {
+    width:max-content !important;
+    max-width:min(310px,calc(100cqw - 24px)) !important;
+    height:auto !important;
+    min-height:20px !important;
+    flex-wrap:wrap !important;
+    justify-content:center !important;
+    align-content:center !important;
+    row-gap:1px !important;
+    white-space:nowrap !important;
+  }
+  .spatial-table-control-separator {
+    margin:0 1px !important;
+  }
+}
+
+@container notebook-page (max-width:390px) {
+  #notebookDock .spatial-object-table > .spatial-table-controls,
+  .spatial-shape-toolbar,
+  .grid-text-object-toolbar {
+    max-width:calc(100cqw - 18px) !important;
+  }
+  .notebook-paper-head { padding-inline:16px !important; }
+}
