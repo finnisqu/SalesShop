@@ -13,13 +13,23 @@ function notebookNavigationSnapshot() {
       roster=(notebookFinalBinderRoster?.()||[]).map(ref=>({key:ref.key,pageId:ref.pageId})).filter(ref=>ref.key&&ref.pageId);
     } catch {}
   }
+  let date=currentNotebookDate;
+  let pageId=currentNotebookPageId;
+  try {
+    const working=notebookWorkingPageState?.();
+    const workingOpen=working?.key&&working?.pageId && (!roster.length || roster.some(ref=>ref.key===working.key&&ref.pageId===working.pageId));
+    if (currentView!=='notebook' && workingOpen) {
+      date=working.key;
+      pageId=working.pageId;
+    }
+  } catch {}
   return {
     roster,
     spread:Array.isArray(state.settings.notebookBinderSpread)?[...state.settings.notebookBinderSpread]:[],
     mode:state.settings.notebookBinderDisplayMode==='double'?'double':'single',
     activeSide:state.settings.notebookBinderActiveSide||'left',
-    date:currentNotebookDate,
-    pageId:currentNotebookPageId
+    date,
+    pageId
   };
 }
 
