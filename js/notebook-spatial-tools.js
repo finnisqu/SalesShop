@@ -51,19 +51,27 @@ function resizeSpatialTable(object,{cols=0,rows=0}={}) {
   renderAll();
 }
 
+function spatialTableDimensionStepper(axis,count) {
+  const isCols=axis==='cols';
+  const wrap=document.createElement('span');
+  wrap.className='spatial-table-dimension-stepper';
+  wrap.dataset.tableDimension=axis;
+  wrap.title=isCols ? `${count} column${count===1?'':'s'}` : `${count} row${count===1?'':'s'}`;
+  wrap.innerHTML=`
+    <span class="spatial-table-dimension-icon ${isCols?'cols':'rows'}" aria-hidden="true"></span>
+    <button type="button" ${isCols?'data-table-cols':'data-table-rows'}="-1" title="Remove ${isCols?'column':'row'}" aria-label="Remove ${isCols?'column':'row'}">−</button>
+    <span class="spatial-table-count">${count}</span>
+    <button type="button" ${isCols?'data-table-cols':'data-table-rows'}="1" title="Add ${isCols?'column':'row'}" aria-label="Add ${isCols?'column':'row'}">+</button>`;
+  return wrap;
+}
+
 function spatialTableControls(object) {
   const controls=document.createElement('div');
   controls.className='spatial-table-controls';
-  controls.innerHTML=`
-    <span class="spatial-table-control-label">Cols</span>
-    <button type="button" data-table-cols="-1" title="Remove column" aria-label="Remove column">−</button>
-    <span class="spatial-table-count">${object.cols}</span>
-    <button type="button" data-table-cols="1" title="Add column" aria-label="Add column">+</button>
-    <span class="spatial-table-control-separator"></span>
-    <span class="spatial-table-control-label">Rows</span>
-    <button type="button" data-table-rows="-1" title="Remove row" aria-label="Remove row">−</button>
-    <span class="spatial-table-count">${object.rows}</span>
-    <button type="button" data-table-rows="1" title="Add row" aria-label="Add row">+</button>`;
+  controls.append(
+    spatialTableDimensionStepper('cols',object.cols),
+    spatialTableDimensionStepper('rows',object.rows)
+  );
 
   $$('[data-table-cols]',controls).forEach(button=>button.onclick=event=>{
     event.preventDefault();
