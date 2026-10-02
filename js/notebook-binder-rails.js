@@ -2,7 +2,36 @@
    - Every open Binder page has a tab on both the left and right rails.
    - Clicking a rail chooses which physical side that page occupies.
    - Tabs read persistent page color metadata only.
-   - Shift/drag range selection gets one quiet Sheets-like outer outline. */
+   - Shift/drag range selection gets one quiet Sheets-like outer outline.
+   - Persisted Binder pages are restored before rendering so a hidden page cannot reappear only after
+     an unrelated action such as changing paper color. */
+
+function primeNotebookBinderIdentityForRender() {
+  /* On a hard refresh the page renderer can run before currentNotebookPageId has been established.
+     Recover the saved working page first so Binder spread/reference compatibility state is derived
+     from the real active page, not from a temporary null identity. */
+  if (!currentNotebookPageId) {
+    const working=typeof notebookWorkingPageState==='function' ? notebookWorkingPageState() : null;
+    if (working?.key && working?.pageId) {
+      currentNotebookDate=working.key;
+      currentNotebookPageId=working.pageId;
+    } else if (currentNotebookDate) {
+      currentNotebookPageId=notebookPageState?.()[currentNotebookDate] || ensureNotebookPage?.(currentNotebookDate) || null;
+    }
+  }
+
+  const pages=typeof notebookBinderOpenPages==='function' ? notebookBinderOpenPages() : [];
+  if (pages.length>1) {
+    /* Rehydrate the old two-page compatibility pointer before the base renderer decides whether to
+       build a page pair. This makes refresh deterministic: an open Binder is visible immediately. */
+    syncNotebookBinderLegacyState?.({persist:false});
+  } else if (pages.length===1) {
+    /* A true one-page Notebook must not retain a ghost Reference pointer from an older session. */
+    if (state.settings?.notebookReferencePage) delete state.settings.notebookReferencePage;
+    state.settings.notebookBinderSpread=[pages[0].id];
+    state.settings.notebookOpenPageOrder=[pages[0].id];
+  }
+}
 
 function notebookBinderOpenPageOnSide(ref,side,{record=true}={}) {
   ref=binderNormalizeRef?.(ref);
@@ -60,7 +89,8 @@ function notebookBinderRailTab(ref,index,side,spread,active) {
   button.dataset.openSide=onThisSide?side:(onOtherSide?(side==='left'?'right':'left'):'');
   button.title=`${notebookPeerPageTitle?.(ref)||ref.key} — open on ${side}`;
   button.setAttribute('aria-label',button.title);
-  button.innerHTML=`<span class="notebook-binder-side-tab-index">${index+1}</span><span class="notebook-binder-side-tab-label">${escapeHtml(notebookPeerPageTitle?.(ref)||ref.key)}</span>${onOtherSide?`<span class="notebook-binder-across-cue" aria-hidden="true">${side==='left'?'›':'‹'}</span>`:''}`;
+  /* The opposite-side state is conveyed by lower opacity, not an extra chevron. */
+  button.innerHTML=`<span class="notebook-binder-side-tab-index">${index+1}</span><span class="notebook-binder-side-tab-label">${escapeHtml(notebookPeerPageTitle?.(ref)||ref.key)}</span>`;
   button.onclick=event=>{
     event.preventDefault();
     event.stopPropagation();
@@ -146,9 +176,17 @@ function refreshNotebookBinderRails(root=$('#notebookDock')) {
 
 const _binderRailsRenderNotebook=renderNotebookSurface;
 renderNotebookSurface=function(root) {
+  primeNotebookBinderIdentityForRender();
   _binderRailsRenderNotebook(root);
   if (!root) return;
   refreshNotebookBinderRails(root);
 };
 
-requestAnimationFrame(()=>refreshNotebookBinderRails($('#notebookDock')));
+requestAnimationFrame(()=>{
+  primeNotebookBinderIdentityForRender();
+  /* If the first paint happened before Binder state was restored, one deterministic rerender now
+     builds the actual persisted spread instead of waiting for the next Style/Favorite action. */
+  const pages=notebookBinderOpenPages?.() || [];
+  if (pages.length>1 && !$('#notebookDock .notebook-reference-page')) renderAll?.();
+  else refreshNotebookBinderRails($('#notebookDock'));
+});
