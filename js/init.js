@@ -25,10 +25,10 @@ function init() {
 init();
 
 /* Notebook finalization.
-   Keep the useful fluid/spatial fixes, then finish with ONE Binder owner.
+   Keep the useful fluid/spatial fixes, then finish with ONE Binder owner and one quarantine layer.
    The old tabs-QC -> mode-QC -> split-selection -> navigation-final chain is retired. */
 (function loadNotebookFinalLayers(){
-  const BUILD='20261002-1620-binder-clean';
+  const BUILD='20261002-1634-binder-quarantine';
   const withBuild=path=>`${path}?v=${BUILD}`;
 
   const ensureStyle=(key,path)=>{
@@ -65,7 +65,10 @@ init();
     ensureStyle('binder-visual-fixes','notebook-binder-visual-fixes.css');
     loadScript('binder-visual-fixes','js/notebook-binder-visual-fixes.js',()=>{
       ensureStyle('binder-single-clean','notebook-binder-single-clean.css');
-      loadScript('binder-single-clean','js/notebook-binder-single-clean.js');
+      loadScript('binder-single-clean','js/notebook-binder-single-clean.js',()=>{
+        ensureStyle('binder-single-hotfix','notebook-binder-single-hotfix.css');
+        loadScript('binder-single-hotfix','js/notebook-binder-single-hotfix.js');
+      });
     });
   });
 })();
