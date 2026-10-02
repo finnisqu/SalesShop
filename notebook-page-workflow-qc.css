@@ -17,3 +17,29 @@ html[data-theme="dark"] .notebook-shell[data-reference-paper-tint="same"] .noteb
   --paper-line:rgba(225,210,155,.10);
   --paper-muted:#a99f82;
 }
+
+/* Auto can resolve to a wide Split without changing the persisted preference. Keep the two seam
+   tabs visible there too so the user can grab either paper edge and pull it into a layered stack. */
+.notebook-page-pair[data-paper-layout="auto"][data-paper-resolved-layout="split"] .notebook-paper-peek {
+  display:grid !important;
+  place-items:center;
+  top:86px;
+  width:25px;
+  height:88px;
+  z-index:8;
+  opacity:.66;
+  cursor:ew-resize;
+}
+.notebook-page-pair[data-paper-layout="auto"][data-paper-resolved-layout="split"] .notebook-paper-peek-current {
+  left:calc(50% - 30px) !important;
+  right:auto !important;
+  border-radius:5px 0 0 5px !important;
+}
+.notebook-page-pair[data-paper-layout="auto"][data-paper-resolved-layout="split"] .notebook-paper-peek-reference {
+  left:calc(50% + 5px) !important;
+  right:auto !important;
+  border-radius:0 5px 5px 0 !important;
+}
+.notebook-page-pair[data-paper-layout="auto"][data-paper-resolved-layout="split"] .notebook-paper-peek:hover {
+  opacity:1;
+}
