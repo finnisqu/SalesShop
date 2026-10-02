@@ -57,13 +57,19 @@ function notebookTabQcRelabelTopTabs(root=$('#notebookDock')) {
     const {page,index}=hit;
     const label=notebookTabQcLabel(page,pages,index);
     const span=$('.notebook-binder-top-tab-label',button);
-    if (span) span.textContent=label;
-    else button.textContent=label;
+    if (span && span.textContent!==label) span.textContent=label;
+    else if (!span && button.textContent!==label) button.textContent=label;
     button.dataset.tabSide=notebookTabQcSideForIndex(index,pages);
     const active=button.classList.contains('active');
-    button.title=active ? `${label} — current page` : label;
-    button.setAttribute('aria-label',button.title);
+    const title=active ? `${label} — current page` : label;
+    if (button.title!==title) button.title=title;
+    if (button.getAttribute('aria-label')!==title) button.setAttribute('aria-label',title);
   });
+}
+
+function notebookTabQcSameChildren(parent,desired) {
+  if (!parent || parent.children.length!==desired.length) return false;
+  return desired.every((node,index)=>parent.children[index]===node);
 }
 
 /* Make left/right ownership visible instead of relying on a hairline through one continuous row. */
@@ -92,13 +98,15 @@ function notebookTabQcArrangeTopTabs(root=$('#notebookDock')) {
   }
 
   const leftCount=notebookTabQcLeftCount(pages);
-  buttons.forEach((button,index)=>{
-    const bank=index<leftCount?left:right;
-    bank.appendChild(button);
-  });
-  nav.replaceChildren(left,spine,right);
-  nav.dataset.leftCount=String(Math.min(leftCount,buttons.length));
-  nav.dataset.rightCount=String(Math.max(0,buttons.length-leftCount));
+  const desiredLeft=buttons.slice(0,leftCount);
+  const desiredRight=buttons.slice(leftCount);
+  if (!notebookTabQcSameChildren(left,desiredLeft)) left.replaceChildren(...desiredLeft);
+  if (!notebookTabQcSameChildren(right,desiredRight)) right.replaceChildren(...desiredRight);
+  if (nav.children.length!==3 || nav.children[0]!==left || nav.children[1]!==spine || nav.children[2]!==right) {
+    nav.replaceChildren(left,spine,right);
+  }
+  nav.dataset.leftCount=String(desiredLeft.length);
+  nav.dataset.rightCount=String(desiredRight.length);
 }
 
 function notebookTabQcVisibleSheets(shell) {
@@ -144,7 +152,6 @@ function notebookTabQcBuildUnderlays(root=$('#notebookDock')) {
   if (!sheets.length) return;
 
   const shellRect=shell.getBoundingClientRect();
-  const displayMode=typeof notebookBinderDisplayMode==='function' ? notebookBinderDisplayMode() : (sheets.length>1?'double':'single');
   const leftCount=notebookTabQcLeftCount(pages);
   const leftItems=[],rightItems=[];
   pages.forEach((ref,index)=>{
@@ -180,7 +187,7 @@ function notebookTabQcBuildUnderlays(root=$('#notebookDock')) {
       page.style.left=`${Math.round(rect.left-shellRect.left + (side==='left'?-depth*6:depth*6))}px`;
       page.style.top=`${Math.round(rect.top-shellRect.top + depth*2)}px`;
       page.style.width=`${Math.round(rect.width)}px`;
-      page.style.height=`${Math.round(rect.height-depth*2)}px`;
+      page.style.height=`${Math.round(Math.max(1,rect.height-depth*2))}px`;
       page.style.zIndex=String(Math.max(1,8-depth));
       page.onclick=event=>{
         event.preventDefault();event.stopPropagation();
@@ -192,9 +199,6 @@ function notebookTabQcBuildUnderlays(root=$('#notebookDock')) {
 
   makeSide('left',leftItems,leftSheet);
   makeSide('right',rightItems,rightSheet);
-  if (displayMode==='single') {
-    /* Single-sheet mode can legitimately have hidden pages in both banks behind the same paper. */
-  }
   shell.appendChild(underlays);
 }
 
@@ -219,12 +223,16 @@ if (!window.__salesShopBinderTabQcWatch) {
   const root=$('#notebookDock');
   if (root && typeof MutationObserver!=='undefined') {
     let scheduled=false;
-    const observer=new MutationObserver(()=>{
-      if (scheduled) return;
+    const legacySelector='.notebook-binder-side-rail,.notebook-binder-side-tab,.notebook-binder-tabs,.notebook-binder-tabs-final,.notebook-paper-peek,.notebook-paper-active-tab';
+    const observer=new MutationObserver(mutations=>{
+      const legacyAdded=mutations.some(mutation=>Array.from(mutation.addedNodes||[]).some(node=>
+        node.nodeType===1 && (node.matches?.(legacySelector) || node.querySelector?.(legacySelector))
+      ));
+      if (!legacyAdded || scheduled) return;
       scheduled=true;
       requestAnimationFrame(()=>{
         scheduled=false;
-        notebookTabQcPolish(root);
+        notebookTabQcRemoveLegacySideNavigation(root);
       });
     });
     observer.observe(root,{childList:true,subtree:true});
