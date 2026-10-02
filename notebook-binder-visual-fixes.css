@@ -1,66 +1,354 @@
-/* Final visual fixes for spatial attachments, Binder rails, and Medium presentation. */
+/* Final Binder / spatial presentation layer. */
 
 #notebookDock .notebook-shell {
   overflow:visible !important;
 }
 
-/* Spatial/image attachments should render as actual notebook objects, not bare filenames. */
+/* --------------------------------------------------------------------------
+   Spatial image objects
+   -------------------------------------------------------------------------- */
 #notebookDock .notebook-spatial-attachment-preview {
+  --spatial-image-width:220px;
+  position:relative;
   margin:0;
   padding:0;
   display:inline-flex;
   flex-direction:column;
   gap:3px;
-  max-width:220px;
+  width:var(--spatial-image-width);
+  max-width:none;
   vertical-align:top;
 }
 #notebookDock .notebook-spatial-attachment-image {
   display:block;
-  max-width:220px;
-  max-height:180px;
-  width:auto;
+  width:100%;
   height:auto;
+  max-width:none;
+  max-height:none;
   object-fit:contain;
   border-radius:3px;
   box-shadow:0 1px 0 color-mix(in srgb,var(--paper-muted) 18%,transparent);
+  user-select:none;
 }
 #notebookDock .notebook-spatial-attachment-preview figcaption {
-  max-width:220px;
+  width:100%;
   color:var(--paper-muted);
   font:9px/1.25 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-#notebookDock .grid-history-entry .notebook-spatial-attachment-image {
-  max-width:112px;
-  max-height:82px;
-}
-#notebookDock .grid-history-entry .notebook-spatial-attachment-preview figcaption {
+#notebookDock .grid-history-entry .notebook-spatial-attachment-preview {
+  --spatial-image-width:112px !important;
   max-width:112px;
 }
 #notebookDock .grid-note.has-spatial-image-attachment {
-  max-width:228px !important;
+  width:var(--spatial-image-width,220px) !important;
+  max-width:none !important;
   line-height:normal !important;
 }
+#notebookDock .notebook-spatial-image-resize {
+  position:absolute;
+  right:-5px;
+  bottom:15px;
+  width:11px;
+  height:11px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--paper-muted);
+  opacity:0;
+  cursor:nwse-resize;
+  transition:opacity .1s ease;
+  z-index:8;
+}
+#notebookDock .notebook-spatial-image-resize span,
+#notebookDock .notebook-spatial-image-resize span::before,
+#notebookDock .notebook-spatial-image-resize span::after {
+  content:'';
+  position:absolute;
+  right:0;
+  bottom:0;
+  width:7px;
+  height:1px;
+  background:currentColor;
+  transform-origin:right center;
+  transform:rotate(-45deg);
+  border-radius:2px;
+}
+#notebookDock .notebook-spatial-image-resize span::before { width:4px;right:0;bottom:3px; }
+#notebookDock .notebook-spatial-image-resize span::after { width:4px;right:3px;bottom:0; }
+#notebookDock .grid-note.notebook-spatial-image-object:hover .notebook-spatial-image-resize,
+#notebookDock .grid-note.notebook-spatial-image-object.is-selected .notebook-spatial-image-resize,
+#notebookDock .grid-note.notebook-spatial-image-object.is-resizing-image .notebook-spatial-image-resize {
+  opacity:.72;
+}
+#notebookDock .grid-note.notebook-spatial-image-object.is-resizing-image {
+  user-select:none;
+}
 
-/* Open Binder tabs remain visible even when only one sheet is mounted. */
-#notebookDock .notebook-binder-side-rail {
-  display:flex !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  overflow:visible !important;
-  pointer-events:auto !important;
-}
-#notebookDock .notebook-binder-side-tab.current-page-tab {
-  cursor:default !important;
-}
-#notebookDock .notebook-binder-side-tab.current-page-tab:hover {
-  opacity:1 !important;
+/* --------------------------------------------------------------------------
+   Promoted / linked source cue. Ordinary notebook content never soft-locks.
+   -------------------------------------------------------------------------- */
+#notebookDock .notebook-text-lock { display:none !important; }
+#notebookDock .notebook-text-softlocked { opacity:1 !important; }
+#notebookDock .notebook-stored-source-marker {
+  position:absolute;
+  right:-7px;
+  top:-7px;
+  display:grid;
+  place-items:center;
+  width:12px;
+  height:12px;
+  border:1px solid color-mix(in srgb,var(--tab-notebook) 34%,var(--paper-muted));
+  border-radius:999px;
+  background:var(--paper);
+  color:color-mix(in srgb,var(--tab-notebook) 72%,var(--paper-ink));
+  font:700 7px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  opacity:.62;
+  pointer-events:none;
+  z-index:9;
 }
 
-/* Medium toolbar follows the same centered footprint as its single visible paper. */
+/* --------------------------------------------------------------------------
+   One top Binder tab bar. The old duplicate side rails are retired.
+   -------------------------------------------------------------------------- */
+#notebookDock .notebook-binder-side-rail,
+#notebookDock .notebook-binder-tabs,
+#notebookDock .notebook-binder-tabs-final {
+  display:none !important;
+}
+#notebookDock .notebook-binder-top-tabs {
+  position:relative;
+  z-index:55;
+  box-sizing:border-box;
+  display:flex;
+  align-items:flex-end;
+  gap:2px;
+  height:29px;
+  min-height:29px;
+  margin:0 auto -1px;
+  padding:3px 8px 0;
+  overflow:visible;
+  pointer-events:auto;
+}
+#notebookDock .notebook-binder-top-tabs::after {
+  content:'';
+  position:absolute;
+  left:8px;
+  right:8px;
+  bottom:0;
+  height:1px;
+  background:color-mix(in srgb,var(--border) 64%,transparent);
+  z-index:-1;
+}
+#notebookDock .notebook-binder-top-tab {
+  position:relative;
+  flex:1 1 0;
+  min-width:58px;
+  max-width:150px;
+  height:25px;
+  padding:0 10px;
+  border:1px solid color-mix(in srgb,var(--border) 82%,transparent);
+  border-bottom-color:color-mix(in srgb,var(--border) 60%,transparent);
+  border-radius:7px 7px 0 0;
+  background:color-mix(in srgb,var(--tab-paper,var(--paper)) 96%,var(--panel));
+  color:var(--paper-ink);
+  opacity:.68;
+  box-shadow:0 -1px 3px rgba(0,0,0,.025);
+  cursor:pointer;
+  transition:opacity .11s ease,transform .12s ease,border-color .12s ease,box-shadow .12s ease;
+  overflow:hidden;
+}
+#notebookDock .notebook-binder-top-tab[data-paper-color="warm"] { --tab-paper:var(--paper); }
+#notebookDock .notebook-binder-top-tab[data-paper-color="blue"] { --tab-paper:#f1f8fb; }
+#notebookDock .notebook-binder-top-tab[data-paper-color="neutral"] { --tab-paper:#f7f7f3; }
+html[data-theme="dark"] #notebookDock .notebook-binder-top-tab[data-paper-color="warm"] { --tab-paper:#29271f; }
+html[data-theme="dark"] #notebookDock .notebook-binder-top-tab[data-paper-color="blue"] { --tab-paper:#222b30; }
+html[data-theme="dark"] #notebookDock .notebook-binder-top-tab[data-paper-color="neutral"] { --tab-paper:#25282a; }
+#notebookDock .notebook-binder-top-tab:hover { opacity:.92; }
+#notebookDock .notebook-binder-top-tab.active {
+  opacity:1;
+  border-color:color-mix(in srgb,var(--tab-notebook) 32%,var(--border));
+  border-bottom-color:var(--tab-paper,var(--paper));
+  box-shadow:0 -2px 8px rgba(0,0,0,.045);
+  cursor:default;
+}
+#notebookDock .notebook-binder-top-tab.visible-page:not(.active) {
+  opacity:.86;
+}
+#notebookDock .notebook-binder-top-tab.favorite-page-tab {
+  box-shadow:inset 0 2px 0 color-mix(in srgb,var(--tab-notebook) 64%,transparent),0 -1px 3px rgba(0,0,0,.025);
+}
+#notebookDock .notebook-binder-top-tab.favorite-page-tab::before {
+  content:'★';
+  margin-right:5px;
+  color:var(--tab-notebook);
+  font-size:7px;
+  vertical-align:1px;
+}
+#notebookDock .notebook-binder-top-tab-label {
+  display:inline-block;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:700 8px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.01em;
+}
+#notebookDock .notebook-binder-top-tab.is-dragging { opacity:.32; }
+#notebookDock .notebook-binder-top-tab.drag-over {
+  border-color:var(--tab-notebook);
+  transform:translateY(-2px);
+}
+
+/* A quiet center cue divides the tabs into natural left/right banks in Double mode. */
+#notebookDock .notebook-binder-top-tabs[data-display-mode="double"]::before {
+  content:'';
+  position:absolute;
+  left:50%;
+  top:5px;
+  bottom:4px;
+  width:1px;
+  background:color-mix(in srgb,var(--border-strong) 42%,transparent);
+  pointer-events:none;
+}
+
+/* --------------------------------------------------------------------------
+   Real paper slivers around the visible page(s).
+   -------------------------------------------------------------------------- */
+#notebookDock .notebook-binder-page-layers {
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  overflow:visible;
+}
+#notebookDock .notebook-binder-page-layer {
+  position:absolute;
+  box-sizing:border-box;
+  width:10px;
+  padding:0;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 25%,var(--border));
+  background:var(--layer-paper,var(--paper));
+  box-shadow:0 2px 8px rgba(0,0,0,.055);
+  color:var(--paper-ink);
+  pointer-events:auto;
+  cursor:pointer;
+  overflow:visible;
+  transition:width .14s ease,box-shadow .14s ease,filter .14s ease;
+}
+#notebookDock .notebook-binder-page-layer-left { border-radius:6px 0 0 6px; }
+#notebookDock .notebook-binder-page-layer-right { border-radius:0 6px 6px 0; }
+#notebookDock .notebook-binder-page-layer > span {
+  position:absolute;
+  top:18px;
+  min-width:88px;
+  max-width:140px;
+  padding:5px 7px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 28%,var(--border));
+  border-radius:5px;
+  background:var(--layer-paper,var(--paper));
+  box-shadow:0 5px 14px rgba(0,0,0,.08);
+  color:var(--paper-ink);
+  font:700 8px/1.2 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  opacity:0;
+  transform:translateX(0) scale(.98);
+  pointer-events:none;
+  transition:opacity .12s ease,transform .12s ease;
+}
+#notebookDock .notebook-binder-page-layer-left > span { left:8px; }
+#notebookDock .notebook-binder-page-layer-right > span { right:8px; }
+#notebookDock .notebook-binder-page-layer.is-peeking {
+  width:18px;
+  box-shadow:0 4px 14px rgba(0,0,0,.09);
+  filter:brightness(1.01);
+}
+#notebookDock .notebook-binder-page-layer.is-peeking > span {
+  opacity:1;
+  transform:translateX(0) scale(1);
+}
+
+/* The visible paper moves just enough to suggest peeking under the physical stack. */
+#notebookDock .notebook-shell > .notebook-page,
+#notebookDock .notebook-page-pair > .notebook-page,
+#notebookDock .notebook-page-pair > .notebook-reference-page {
+  transition:translate .14s cubic-bezier(.2,.72,.25,1);
+}
+#notebookDock .notebook-shell.binder-layer-peek-left > .notebook-page,
+#notebookDock .notebook-shell.binder-layer-peek-left .notebook-page-pair > [data-peer-side="left"],
+#notebookDock .notebook-shell.binder-layer-peek-left .notebook-page-pair > .notebook-page:first-child {
+  translate:var(--binder-layer-peek,30px) 0;
+}
+#notebookDock .notebook-shell.binder-layer-peek-right > .notebook-page,
+#notebookDock .notebook-shell.binder-layer-peek-right .notebook-page-pair > [data-peer-side="right"],
+#notebookDock .notebook-shell.binder-layer-peek-right .notebook-page-pair > .notebook-reference-page:last-child {
+  translate:calc(var(--binder-layer-peek,30px) * -1) 0;
+}
+
+/* --------------------------------------------------------------------------
+   Position control gains one orthogonal Single / Double button.
+   -------------------------------------------------------------------------- */
+#notebookDock .notebook-position-control:hover,
+#notebookDock .notebook-position-control:focus-within {
+  width:147px !important;
+  max-width:147px !important;
+}
+#notebookDock .notebook-position-control .notebook-spread-toggle {
+  flex:0 0 27px;
+  width:27px;
+  min-width:27px;
+  opacity:.68;
+}
+#notebookDock .notebook-position-control:not(:hover):not(:focus-within) .notebook-spread-toggle {
+  opacity:0;
+  pointer-events:none;
+}
+#notebookDock .notebook-position-control:hover .notebook-spread-toggle,
+#notebookDock .notebook-position-control:focus-within .notebook-spread-toggle {
+  opacity:.68;
+  pointer-events:auto;
+}
+#notebookDock .notebook-position-control .notebook-spread-toggle:hover:not(:disabled) { opacity:1; }
+#notebookDock .notebook-position-control .notebook-spread-toggle:disabled { opacity:.2 !important;cursor:default; }
+#notebookDock .notebook-spread-glyph {
+  position:relative;
+  display:block;
+  width:18px;
+  height:12px;
+}
+#notebookDock .notebook-spread-glyph i {
+  position:absolute;
+  top:1px;
+  bottom:1px;
+  border:1px solid currentColor;
+  border-radius:2px;
+}
+#notebookDock .notebook-spread-glyph.single i { left:3px;right:3px; }
+#notebookDock .notebook-spread-glyph.double i:first-child { left:1px;width:7px; }
+#notebookDock .notebook-spread-glyph.double i:last-child { right:1px;width:7px; }
+
+/* Medium toolbar follows the same footprint as the visible paper/spread. */
 #notebookDock .notebook-shell.notebook-width-medium .notebook-toolbar {
   margin-left:auto !important;
   margin-right:auto !important;
+}
+
+/* Reserve scroll geometry permanently to avoid paper-width jumps. */
+#notebookDock .notebook-page,
+#notebookDock .notebook-reference-scroller,
+#notebookDock .notebook-entries,
+#notebookDock .grid-history-rail {
+  scrollbar-gutter:stable !important;
+}
+
+@media (max-width:700px) {
+  #notebookDock .notebook-binder-top-tab {
+    min-width:38px;
+    padding-inline:6px;
+  }
+  #notebookDock .notebook-binder-top-tab-label { font-size:7px; }
 }
