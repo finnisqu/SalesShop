@@ -77,9 +77,122 @@
 #notebookDock .notebook-binder-tab-clean.favorite .notebook-binder-tab-open {
   padding-left:18px;
 }
+
+/* Final presentation-control geometry. Binder styling previously widened this to auto, which fought
+   the fixed four-choice palette and prevented the immediate click-collapse state from winning. */
+#notebookDock .notebook-position-control:hover:not(.position-click-collapsed),
+#notebookDock .notebook-position-control:focus-within:not(.position-click-collapsed) {
+  width:118px !important;
+  max-width:118px !important;
+}
+#notebookDock .notebook-position-control.position-click-collapsed,
+#notebookDock .notebook-position-control.position-click-collapsed:hover,
+#notebookDock .notebook-position-control.position-click-collapsed:focus-within {
+  width:31px !important;
+  max-width:31px !important;
+}
+
+/* Keyboard focus should be visible even though the notebook chrome remains intentionally quiet. */
+#notebookDock .notebook-binder-tab-open:focus-visible,
+#notebookDock .notebook-binder-tab-close:focus-visible,
+#notebookDock .notebook-single-page-action:focus-visible,
+#notebookDock .notebook-single-style-menu button:focus-visible {
+  outline:1.5px solid color-mix(in srgb,var(--tab-notebook) 78%,var(--paper-ink));
+  outline-offset:1px;
+}
+
+/* The Color popup previews the actual dark paper identities instead of light swatches. */
+html[data-theme="dark"] #notebookDock .notebook-single-style-menu .swatch-warm { background:#29271f; }
+html[data-theme="dark"] #notebookDock .notebook-single-style-menu .swatch-blue { background:#222b30; }
+html[data-theme="dark"] #notebookDock .notebook-single-style-menu .swatch-neutral { background:#25282a; }
+
+/* Keep the legacy viewport fallback for genuinely small browser windows. */
 @media (max-width:720px) {
+  #notebookDock .notebook-binder-tab-clean { min-width:36px;padding-inline:0; }
   #notebookDock .notebook-binder-tab-label { font-size:7px; }
+  #notebookDock .notebook-paper-head { padding-right:96px !important; }
+  #notebookDock .notebook-single-page-action { width:26px;height:26px;min-width:26px; }
+  #notebookDock .notebook-page-header { right:100px !important;width:34% !important;max-width:calc(100% - 250px) !important; }
   #notebookDock .notebook-binder-tab-close { right:2px;width:15px;height:15px;min-width:15px; }
   #notebookDock .notebook-binder-tab-clean:hover .notebook-binder-tab-open,
   #notebookDock .notebook-binder-tab-clean:focus-within .notebook-binder-tab-open { padding-right:19px; }
+}
+
+/* A desktop Float pad is narrow even though the browser viewport is not. Size the paper header from
+   the notebook itself so page title/actions stay usable in Medium, Float, and resized Float pads. */
+@container notebook-shell (max-width:720px) {
+  #notebookDock .notebook-paper-head {
+    padding-right:96px !important;
+  }
+  #notebookDock .notebook-single-page-actions {
+    right:10px;
+    top:10px;
+    gap:3px;
+  }
+  #notebookDock .notebook-single-page-action {
+    width:26px;
+    height:26px;
+    min-width:26px;
+  }
+  #notebookDock .notebook-page-header {
+    right:100px !important;
+    width:34% !important;
+    max-width:calc(100% - 250px) !important;
+  }
+  #notebookDock .notebook-date {
+    max-width:calc(100% - 100px);
+  }
+  #notebookDock .notebook-binder-tab-clean {
+    min-width:36px;
+    padding-inline:0;
+  }
+  #notebookDock .notebook-binder-tab-label {
+    font-size:7px;
+  }
+  #notebookDock .notebook-binder-tab-close {
+    right:2px;
+    width:15px;
+    height:15px;
+    min-width:15px;
+  }
+  #notebookDock .notebook-binder-tab-clean:hover .notebook-binder-tab-open,
+  #notebookDock .notebook-binder-tab-clean:focus-within .notebook-binder-tab-open {
+    padding-right:19px;
+  }
+}
+
+@container notebook-shell (max-width:430px) {
+  #notebookDock .notebook-paper-head {
+    padding-right:84px !important;
+    gap:5px;
+  }
+  #notebookDock .notebook-single-page-actions {
+    right:7px;
+    top:8px;
+    gap:2px;
+  }
+  #notebookDock .notebook-single-page-action {
+    width:24px;
+    height:24px;
+    min-width:24px;
+    border-radius:6px;
+  }
+  #notebookDock .notebook-single-page-action svg {
+    width:13px;
+    height:13px;
+  }
+  #notebookDock .notebook-page-header {
+    position:static !important;
+    order:3;
+    width:min(52%,180px) !important;
+    max-width:52% !important;
+    margin-left:auto;
+  }
+  #notebookDock .notebook-date {
+    max-width:50%;
+  }
+  #notebookDock .notebook-single-style-menu {
+    top:29px;
+    min-width:98px;
+  }
 }
