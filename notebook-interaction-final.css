@@ -28,7 +28,8 @@ body.notebook-floating-mode .notebook-width-controls {
   max-width:27px !important;
 }
 
-/* Large tables anchor their toolbar over the active cell/range rather than the table's midpoint. */
+/* Table toolbar stays centered over the table. Edge clamping may only nudge it enough to remain
+   visible inside the notebook viewport. */
 #notebookDock .spatial-object-table > .spatial-table-controls {
   left:var(--toolbar-anchor-x,50%) !important;
   width:max-content;
@@ -124,6 +125,41 @@ body.notebook-floating-mode .notebook-width-controls {
   border-color:color-mix(in srgb,var(--tab-notebook) 48%,var(--paper-muted)) !important;
   background:color-mix(in srgb,var(--tab-notebook) 10%,var(--paper)) !important;
   font-size:9px !important;
+}
+
+/* Typing = in an empty cell opens this tiny function palette directly above that result cell. */
+.cell-function-palette {
+  position:absolute;
+  z-index:120;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  transform:translate(-50%,calc(-100% - 5px));
+  overflow:visible;
+}
+.cell-function-palette.flyout-down {
+  transform:translate(-50%,5px);
+}
+.cell-function-palette button {
+  width:20px;
+  min-width:20px;
+  height:20px;
+  min-height:20px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent);
+  border-radius:4px;
+  background:color-mix(in srgb,var(--paper) 97%,var(--panel));
+  color:var(--paper-muted);
+  box-shadow:0 3px 9px rgba(0,0,0,.08);
+  font:700 8px/1 Georgia,serif;
+}
+.cell-function-palette button:hover,
+.cell-function-palette button:focus-visible {
+  color:var(--paper-ink);
+  background:color-mix(in srgb,var(--paper) 88%,var(--paper-muted));
+  outline:0;
 }
 
 /* Shape and text toolbars keep the larger delete X at the far end. */
