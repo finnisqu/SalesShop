@@ -23,3 +23,20 @@ function init() {
 }
 
 init();
+
+/* Final notebook/Binder QC is intentionally loaded after the full legacy override stack. */
+(function loadBinderFluidQc(){
+  if (!document.querySelector('link[data-binder-fluid-qc]')) {
+    const link=document.createElement('link');
+    link.rel='stylesheet';
+    link.href='notebook-binder-fluid-qc.css';
+    link.dataset.binderFluidQc='';
+    document.head.appendChild(link);
+  }
+  if (!document.querySelector('script[data-binder-fluid-qc]')) {
+    const script=document.createElement('script');
+    script.src='js/notebook-binder-fluid-qc.js';
+    script.dataset.binderFluidQc='';
+    document.body.appendChild(script);
+  }
+})();
