@@ -1,0 +1,70 @@
+/* Subtle spreadsheet-style formula inspection. Loaded after the rest of the notebook table UI. */
+
+.spatial-table td.has-notebook-formula {
+  position:relative;
+}
+.spatial-table td.has-notebook-formula::after {
+  content:'ƒ';
+  position:absolute;
+  right:2px;
+  top:1px;
+  font:600 5.5px/1 Georgia,serif;
+  color:var(--paper-muted);
+  opacity:.32;
+  pointer-events:none;
+}
+.spatial-table td.notebook-formula-result-preview {
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tab-notebook) 56%,var(--paper-ink)) !important;
+}
+.spatial-table td.notebook-formula-source-preview {
+  background:color-mix(in srgb,var(--tab-notebook) 8%,var(--paper)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 32%,transparent) !important;
+}
+
+.table-formula-inspector {
+  position:absolute;
+  z-index:92;
+  transform:translate(-50%,calc(-100% - 4px));
+  max-width:min(260px,calc(100vw - 24px));
+  min-height:18px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:2px 6px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 22%,transparent);
+  border-radius:5px;
+  background:color-mix(in srgb,var(--paper) 96%,var(--panel));
+  color:var(--paper-muted);
+  box-shadow:0 4px 11px rgba(0,0,0,.08);
+  font:600 6.5px/1.1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  opacity:.9;
+  cursor:default;
+}
+.table-formula-inspector.below {
+  transform:translate(-50%,4px);
+}
+.table-formula-inspector:hover {
+  color:var(--paper-ink);
+  opacity:1;
+}
+.table-formula-inspector-fx {
+  flex:0 0 auto;
+  font:700 7px/1 Georgia,serif;
+  opacity:.72;
+}
+
+/* Existing editable formula mode remains stronger than passive inspection. */
+.spatial-table td.notebook-function-target {
+  outline:1px solid color-mix(in srgb,var(--tab-notebook) 28%,transparent);
+  outline-offset:-2px;
+}
+.spatial-table td.notebook-function-source {
+  background:color-mix(in srgb,var(--tab-notebook) 15%,var(--paper)) !important;
+}
+
+html[data-theme="dark"] .spatial-table td.notebook-formula-source-preview {
+  background:color-mix(in srgb,var(--tab-notebook) 12%,var(--paper)) !important;
+}
