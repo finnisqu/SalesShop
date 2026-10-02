@@ -9,6 +9,9 @@ function notebookTableSizeControl(controls,object) {
   if (steppers.length < 2) return;
 
   const anchor = steppers[0];
+  const parent = anchor.parentNode;
+  if (!parent) return;
+
   const control = document.createElement('span');
   control.className = 'spatial-table-size-control';
   control.dataset.tableSizeControl = object.id;
@@ -22,10 +25,13 @@ function notebookTableSizeControl(controls,object) {
 
   const panel = document.createElement('span');
   panel.className = 'spatial-table-size-panel';
-  panel.append(...steppers);
 
+  /* Insert the replacement slot before moving its source controls. Moving the steppers first made
+     the anchor a descendant of the new control, which caused a HierarchyRequestError and aborted
+     the notebook render chain. */
+  parent.insertBefore(control,anchor);
+  panel.append(...steppers);
   control.append(trigger,panel);
-  anchor.before(control);
 
   if (openTableSizeObjectId === object.id) control.classList.add('size-open');
 
@@ -55,6 +61,21 @@ function notebookMoveTableDeleteToEnd(controls) {
   if (separator) controls.appendChild(separator);
   controls.appendChild(del);
   del.classList.add('spatial-table-delete-at-end');
+}
+
+function notebookCompactMergeButton(controls) {
+  if (!controls) return;
+  const button = $('.spatial-table-merge-button',controls);
+  if (!button) return;
+  const label = String(button.textContent || '').trim();
+  if (label === 'Merge') {
+    button.classList.add('spatial-table-merge-icon-button');
+    button.title = 'Merge selected cells';
+    button.setAttribute('aria-label','Merge selected cells');
+    button.innerHTML = '<span class="spatial-table-merge-glyph" aria-hidden="true"><i></i><i></i><b></b></span>';
+  } else {
+    button.classList.remove('spatial-table-merge-icon-button');
+  }
 }
 
 function clampNotebookFloatingToolbar(toolbar) {
@@ -92,6 +113,7 @@ const _salesShopToolbarLayoutAdvancedControls = advancedSpatialTableControls;
 advancedSpatialTableControls = function(object) {
   const controls = _salesShopToolbarLayoutAdvancedControls(object);
   notebookTableSizeControl(controls,object);
+  notebookCompactMergeButton(controls);
   notebookMoveTableDeleteToEnd(controls);
   requestAnimationFrame(()=>clampNotebookFloatingToolbar(controls));
   return controls;
@@ -104,6 +126,7 @@ function installNotebookToolbarLayout(root) {
     const controls = $('.spatial-table-controls',wrap);
     if (!object || !controls) return;
     notebookTableSizeControl(controls,object);
+    notebookCompactMergeButton(controls);
     notebookMoveTableDeleteToEnd(controls);
   });
   scheduleNotebookToolbarClamp(root);
