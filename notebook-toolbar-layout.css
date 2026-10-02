@@ -13,7 +13,7 @@
   transform:translateX(calc(-50% + var(--toolbar-edge-shift,0px))) translateY(0) !important;
 }
 
-/* One compact 2x2 grid button owns table size. Rows/columns rise into a small palette above it. */
+/* One compact 2x2 grid button owns table structure. Rows/columns plus Title/Header rise above it. */
 .spatial-table-size-control {
   position:relative;
   flex:0 0 16px;
@@ -65,6 +65,7 @@
   flex-direction:column;
   align-items:stretch;
   gap:2px;
+  min-width:58px;
   padding:3px;
   border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent);
   border-radius:5px;
@@ -83,10 +84,30 @@
   transform:translateX(-50%) translateY(0) scale(1);
 }
 .spatial-table-size-panel .spatial-table-dimension-stepper {
-  width:max-content;
+  width:100%;
   min-width:51px;
   margin:0 !important;
   background:transparent;
+}
+.spatial-table-size-panel-divider {
+  display:block;
+  width:100%;
+  height:1px;
+  margin:1px 0;
+  background:color-mix(in srgb,var(--paper-muted) 20%,transparent);
+}
+.spatial-table-size-panel .spatial-table-row-role-controls {
+  display:grid !important;
+  grid-template-columns:1fr 1fr;
+  gap:2px !important;
+  width:100%;
+}
+.spatial-table-size-panel .spatial-table-row-role {
+  min-width:0 !important;
+  width:auto !important;
+  height:16px !important;
+  padding:0 3px !important;
+  font-size:6.5px !important;
 }
 
 /* Merge is an icon-only action; Split remains text because it describes the reverse operation. */
@@ -149,12 +170,12 @@
 }
 .spatial-table-delete-at-end + * { order:1000; }
 
-/* Move handles are top-center in the calm state, matching the original paper-object metaphor. */
+/* Move handles are top-center in the calm state with a little breathing room above the object. */
 .grid-grab-handle,
 .spatial-object-drag-handle {
   left:50% !important;
   right:auto !important;
-  top:-11px !important;
+  top:-16px !important;
   width:24px !important;
   height:10px !important;
   transform:translateX(-50%) !important;
@@ -162,6 +183,33 @@
 }
 .spatial-drag-dots {
   flex-direction:row !important;
+}
+
+/* Narrow objects push the closed Tools / X buttons outward so they don't crowd the centered
+   grab handle. Ultra-small one-square objects get a little more separation again. */
+.compact-object-chrome:not(.format-open) > .spatial-object-format-toggle {
+  left:-12px !important;
+}
+.compact-object-chrome:not(.format-open) > .spatial-object-delete {
+  right:-12px !important;
+}
+.grid-note.compact-object-chrome:not(.text-format-open) > .grid-text-format-toggle {
+  left:-12px !important;
+}
+.grid-note.compact-object-chrome:not(.text-format-open) > .grid-text-object-delete {
+  right:-12px !important;
+}
+.ultra-compact-object-chrome:not(.format-open) > .spatial-object-format-toggle {
+  left:-20px !important;
+}
+.ultra-compact-object-chrome:not(.format-open) > .spatial-object-delete {
+  right:-20px !important;
+}
+.grid-note.ultra-compact-object-chrome:not(.text-format-open) > .grid-text-format-toggle {
+  left:-20px !important;
+}
+.grid-note.ultra-compact-object-chrome:not(.text-format-open) > .grid-text-object-delete {
+  right:-20px !important;
 }
 
 /* Once formatting is open, the top-center real estate belongs to the toolbar. Move shifts to the
@@ -183,6 +231,12 @@
 /* The direct X stays visually separate from the top-center move handle. */
 #notebookDock .notebook-spatial-object.spatial-object-hover-ui > .spatial-object-delete {
   right:-5px !important;
+}
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui.compact-object-chrome:not(.format-open) > .spatial-object-delete {
+  right:-12px !important;
+}
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui.ultra-compact-object-chrome:not(.format-open) > .spatial-object-delete {
+  right:-20px !important;
 }
 
 @container notebook-page (max-width:560px) {
