@@ -19,18 +19,34 @@ function notebookTableSizeControl(controls,object) {
   const trigger = document.createElement('button');
   trigger.type = 'button';
   trigger.className = 'spatial-table-size-trigger';
-  trigger.title = 'Rows and columns';
-  trigger.setAttribute('aria-label','Rows and columns');
+  trigger.title = 'Table structure';
+  trigger.setAttribute('aria-label','Table structure');
   trigger.innerHTML = '<span class="spatial-table-size-grid" aria-hidden="true"></span>';
 
   const panel = document.createElement('span');
   panel.className = 'spatial-table-size-panel';
 
-  /* Insert the replacement slot before moving its source controls. Moving the steppers first made
-     the anchor a descendant of the new control, which caused a HierarchyRequestError and aborted
-     the notebook render chain. */
+  /* Insert the replacement slot before moving source controls into it. */
   parent.insertBefore(control,anchor);
   panel.append(...steppers);
+
+  /* Title/Header are table-structure choices too. Keep them out of the main strip and with the
+     row/column controls inside this one compact 2x2-grid menu. */
+  const rowRoles = $('.spatial-table-row-role-controls',controls);
+  if (rowRoles) {
+    const roleDivider = document.createElement('span');
+    roleDivider.className = 'spatial-table-size-panel-divider';
+    panel.append(roleDivider,rowRoles);
+
+    /* The semantic-row layer inserts a separator immediately after these controls. Once the
+       controls live in this popover, that separator no longer belongs in the main toolbar. */
+    const oldDivider = [...controls.children].find(el=>
+      el.classList?.contains('spatial-table-control-separator') &&
+      (el.previousElementSibling === control || el.previousElementSibling === rowRoles)
+    );
+    oldDivider?.remove();
+  }
+
   control.append(trigger,panel);
 
   if (openTableSizeObjectId === object.id) control.classList.add('size-open');
@@ -78,6 +94,15 @@ function notebookCompactMergeButton(controls) {
   }
 }
 
+function markCompactNotebookObjectChrome(root=$('#notebookDock')) {
+  if (!root) return;
+  $$('.notebook-spatial-object,.grid-note',root).forEach(object=>{
+    const width = object.getBoundingClientRect().width || object.offsetWidth || 0;
+    object.classList.toggle('compact-object-chrome',width > 0 && width < 82);
+    object.classList.toggle('ultra-compact-object-chrome',width > 0 && width < 44);
+  });
+}
+
 function clampNotebookFloatingToolbar(toolbar) {
   if (!toolbar?.isConnected) return;
   const page = toolbar.closest('.notebook-page');
@@ -98,6 +123,7 @@ function clampNotebookFloatingToolbar(toolbar) {
 
 function clampNotebookFloatingToolbars(root=$('#notebookDock')) {
   if (!root) return;
+  markCompactNotebookObjectChrome(root);
   $$('.spatial-table-controls,.spatial-shape-toolbar,.grid-text-object-toolbar',root)
     .forEach(clampNotebookFloatingToolbar);
 }
@@ -129,6 +155,7 @@ function installNotebookToolbarLayout(root) {
     notebookCompactMergeButton(controls);
     notebookMoveTableDeleteToEnd(controls);
   });
+  markCompactNotebookObjectChrome(root);
   scheduleNotebookToolbarClamp(root);
 
   const page = $('.notebook-page',root);
