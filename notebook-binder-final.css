@@ -1,0 +1,270 @@
+/* Final physical frameworks: one page = Notebook, multiple pages = Binder. */
+
+/* ---- Notebook: one open sheet ------------------------------------------------ */
+.notebook-shell.notebook-single-mode .notebook-binder-tabs,
+.notebook-shell.notebook-single-mode .notebook-page-pair::before {
+  display:none !important;
+}
+.notebook-shell.notebook-single-mode.notebook-width-medium > .notebook-page,
+.notebook-shell.notebook-single-mode.notebook-width-medium .notebook-page:not(.notebook-reference-page) {
+  width:min(900px,calc(100% - 96px)) !important;
+  max-width:900px !important;
+  margin-inline:auto !important;
+}
+.notebook-shell.notebook-single-mode.notebook-width-full > .notebook-page,
+.notebook-shell.notebook-single-mode.notebook-width-full .notebook-page:not(.notebook-reference-page) {
+  width:100% !important;
+  max-width:none !important;
+  margin-inline:0 !important;
+}
+
+/* A single page only needs Favorite + Style as quiet paper-local metadata. */
+.notebook-shell.notebook-single-mode .notebook-binder-local-actions {
+  display:grid !important;
+  grid-template-columns:23px 23px !important;
+  grid-template-rows:23px !important;
+  gap:3px !important;
+  top:10px !important;
+  right:11px !important;
+  max-width:none !important;
+}
+
+/* ---- Binder: 2–4 open pages -------------------------------------------------- */
+.notebook-shell.notebook-binder-mode {
+  --binder-gutter:52px;
+}
+.notebook-shell.notebook-binder-mode .notebook-page-pair {
+  position:relative !important;
+  width:calc(100% - var(--binder-gutter) - 10px) !important;
+  max-width:1500px !important;
+  margin-left:var(--binder-gutter) !important;
+  margin-right:10px !important;
+  overflow:visible !important;
+}
+.notebook-shell.notebook-binder-mode.notebook-width-medium .notebook-page-pair {
+  width:min(1120px,calc(100% - var(--binder-gutter) - 58px)) !important;
+  max-width:1120px !important;
+  margin-left:max(var(--binder-gutter),calc((100% - 1120px) / 2)) !important;
+  margin-right:auto !important;
+}
+.notebook-shell.notebook-binder-mode.notebook-width-full .notebook-page-pair {
+  max-width:1500px !important;
+}
+
+/* Subtle binder spine behind the tabs. */
+.notebook-shell.notebook-binder-mode .notebook-page-pair::before {
+  content:'';
+  position:absolute;
+  z-index:1;
+  left:-13px;
+  top:8px;
+  bottom:8px;
+  width:2px;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--border-strong) 54%,transparent);
+  box-shadow:-4px 0 10px rgba(0,0,0,.06);
+  pointer-events:none;
+}
+
+/* Binder tabs reserve real screen space rather than hanging outside an overflow-clipped page. */
+.notebook-shell.notebook-binder-mode .notebook-binder-tabs-final {
+  position:absolute !important;
+  z-index:70 !important;
+  left:calc(-1 * var(--binder-gutter) + 5px) !important;
+  top:72px !important;
+  width:42px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:5px !important;
+  transform:none !important;
+  pointer-events:auto !important;
+}
+.notebook-shell.notebook-binder-mode .notebook-binder-tab {
+  width:42px !important;
+  height:62px !important;
+  flex:0 0 62px !important;
+  position:relative;
+  display:grid !important;
+  grid-template-columns:10px minmax(0,1fr) !important;
+  align-items:center !important;
+  gap:2px !important;
+  padding:4px 3px 4px 2px !important;
+  border-radius:7px 0 0 7px !important;
+  transform:none !important;
+  opacity:.78 !important;
+  overflow:hidden;
+}
+.notebook-shell.notebook-binder-mode .notebook-binder-tab:hover {
+  transform:translateX(-2px) !important;
+  opacity:1 !important;
+}
+.notebook-shell.notebook-binder-mode .notebook-binder-tab.active {
+  transform:translateX(-4px) !important;
+  opacity:1 !important;
+  box-shadow:0 6px 16px rgba(0,0,0,.14) !important;
+  border-color:color-mix(in srgb,var(--paper-muted) 52%,var(--border-strong)) !important;
+}
+.notebook-shell.notebook-binder-mode .notebook-binder-tab.in-spread::after {
+  content:'';
+  position:absolute;
+  right:2px;
+  top:7px;
+  bottom:7px;
+  width:2px;
+  border-radius:99px;
+  background:color-mix(in srgb,var(--tab-notebook) 50%,transparent);
+}
+.notebook-binder-tab-index {
+  align-self:start;
+  margin-top:2px;
+  color:var(--paper-muted);
+  font:700 5.8px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  opacity:.7;
+}
+.notebook-shell.notebook-binder-mode .notebook-binder-tab-title {
+  max-height:52px !important;
+  writing-mode:vertical-rl !important;
+  transform:rotate(180deg) !important;
+  font-size:6.2px !important;
+}
+
+/* Stable physical side assignment for the two visible Binder sheets. */
+.notebook-shell.notebook-binder-mode .notebook-page-pair[data-paper-resolved-layout="split"] > [data-peer-side="left"] {
+  grid-column:1 !important;
+}
+.notebook-shell.notebook-binder-mode .notebook-page-pair[data-paper-resolved-layout="split"] > [data-peer-side="right"] {
+  grid-column:2 !important;
+}
+
+/* ---- Page-local 2x2 icon cluster -------------------------------------------- */
+.notebook-shell.notebook-binder-mode .notebook-binder-local-actions.binder-grid {
+  position:absolute !important;
+  z-index:28 !important;
+  top:9px !important;
+  right:10px !important;
+  width:49px !important;
+  max-width:49px !important;
+  display:grid !important;
+  grid-template-columns:23px 23px !important;
+  grid-template-rows:23px 23px !important;
+  gap:3px !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.notebook-binder-grid-button {
+  width:23px !important;
+  min-width:23px !important;
+  height:23px !important;
+  min-height:23px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+}
+.notebook-binder-grid-button svg {
+  width:13px;
+  height:13px;
+  display:block;
+}
+.notebook-binder-grid-button.notebook-peer-close svg { width:12px;height:12px; }
+.notebook-binder-grid-button.notebook-peer-swap svg { width:14px;height:14px; }
+.notebook-binder-style {
+  width:23px;
+  height:23px;
+  position:relative;
+}
+.notebook-binder-style .notebook-peer-style-menu {
+  right:0 !important;
+  top:calc(100% + 4px) !important;
+}
+
+/* Remove every live-page lock button. Lock remains available in History only. */
+#notebookDock [data-notebook-page-lock],
+#notebookDock .notebook-peer-lock,
+#notebookDock .notebook-reference-meta-button[title*="lock" i] {
+  display:none !important;
+}
+
+/* Locked pages are marked beside their title, not turned into a toolbar mode. */
+.notebook-open-locked-marker {
+  position:relative;
+  flex:0 0 auto;
+  display:inline-grid;
+  place-items:center;
+  width:16px;
+  height:16px;
+  margin:0 4px 0 0;
+  color:var(--paper-muted);
+  opacity:.7;
+  vertical-align:middle;
+}
+.notebook-open-locked-marker svg { width:12px;height:12px; }
+.notebook-paper-head > .notebook-open-locked-marker {
+  position:absolute;
+  left:13px;
+  top:12px;
+}
+.notebook-paper-head > .notebook-open-locked-marker + .notebook-date,
+.notebook-paper-head > .notebook-open-locked-marker ~ .notebook-date {
+  margin-left:20px !important;
+}
+.notebook-reference-title-wrap > .notebook-open-locked-marker {
+  position:absolute;
+  left:13px;
+  top:12px;
+}
+.notebook-reference-head:has(.notebook-open-locked-marker) .notebook-reference-title-wrap {
+  padding-left:20px;
+}
+
+/* The 2x2 cluster owns the upper-right corner of compressed Binder pages. */
+.notebook-shell.notebook-binder-mode .notebook-page-pair > .notebook-page .notebook-paper-head,
+.notebook-shell.notebook-binder-mode .notebook-reference-head {
+  min-height:68px !important;
+  padding-right:70px !important;
+}
+
+/* ---- Presentation consistency ---------------------------------------------- */
+/* Earlier Binder/Split rules used !important full-width values. These are the final presentation
+   bounds so Medium has a visible, deterministic effect in both Notebook and Binder frameworks. */
+.notebook-shell.notebook-width-medium {
+  --notebook-medium-max:900px;
+}
+.notebook-shell.notebook-width-medium.notebook-single-mode .notebook-page {
+  width:min(var(--notebook-medium-max),calc(100% - 96px)) !important;
+  max-width:var(--notebook-medium-max) !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.notebook-shell.notebook-width-full.notebook-single-mode .notebook-page {
+  width:100% !important;
+  max-width:none !important;
+}
+
+/* The old one-at-a-time side tab experiment stays retired. */
+.notebook-paper-active-tab,
+.notebook-paper-peek { display:none !important; }
+
+@media (max-width:900px) {
+  .notebook-shell.notebook-binder-mode { --binder-gutter:46px; }
+  .notebook-shell.notebook-binder-mode .notebook-page-pair {
+    width:calc(100% - var(--binder-gutter) - 4px) !important;
+    margin-left:var(--binder-gutter) !important;
+    margin-right:4px !important;
+  }
+  .notebook-shell.notebook-binder-mode .notebook-binder-tabs-final {
+    width:37px !important;
+    left:calc(-1 * var(--binder-gutter) + 4px) !important;
+  }
+  .notebook-shell.notebook-binder-mode .notebook-binder-tab {
+    width:37px !important;
+    height:57px !important;
+    flex-basis:57px !important;
+  }
+}
+
+@media (max-width:640px) {
+  .notebook-shell.notebook-single-mode.notebook-width-medium .notebook-page {
+    width:100% !important;
+    max-width:none !important;
+  }
+}
