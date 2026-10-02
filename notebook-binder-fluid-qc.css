@@ -16,8 +16,11 @@
   scroll-behavior:auto !important;
 }
 
-/* The elastic Grid canvas itself carries the ruling too, so expanding content never outruns the
-   visible graph paper at the right/bottom edge. */
+/* The elastic Grid canvas owns the graph ruling, so expanding content never outruns the visible
+   paper at the right/bottom edge. Remove the duplicate body layer to keep line opacity unchanged. */
+#notebookDock .notebook-page.paper-grid[data-grid-paper="grid"] .notebook-page-body {
+  background-image:none !important;
+}
 #notebookDock .notebook-page.paper-grid[data-grid-paper="grid"] .grid-notebook-canvas {
   background-image:
     repeating-linear-gradient(to bottom,transparent 0,transparent 27px,var(--paper-line) 27px,var(--paper-line) 28px),
