@@ -1,0 +1,133 @@
+/* Final notebook interaction polish: stable presentation width, selection-anchored table strips,
+   safer delete actions, shape resize handles, and staged function selection. */
+
+/* Presentation must never be flex-squashed in a narrow floating notebook. */
+.notebook-position-control,
+body.notebook-floating-mode .notebook-position-control {
+  width:31px !important;
+  min-width:31px !important;
+  max-width:31px !important;
+  flex:0 0 31px !important;
+  transform:none !important;
+  z-index:80;
+}
+.notebook-position-control:hover:not(.position-click-collapsed),
+.notebook-position-control:focus-within:not(.position-click-collapsed) {
+  width:118px !important;
+  min-width:118px !important;
+  max-width:118px !important;
+  flex:0 0 118px !important;
+}
+body.notebook-floating-mode .notebook-width-controls {
+  transform:none !important;
+}
+.notebook-position-control .notebook-width-button {
+  flex:0 0 27px !important;
+  width:27px !important;
+  min-width:27px !important;
+  max-width:27px !important;
+}
+
+/* Large tables anchor their toolbar over the active cell/range rather than the table's midpoint. */
+#notebookDock .spatial-object-table > .spatial-table-controls {
+  left:var(--toolbar-anchor-x,50%) !important;
+  width:max-content;
+  flex-shrink:0 !important;
+}
+
+/* No exterior delete chip: deleting an object is deliberately a two-step Tools -> X action. */
+.notebook-spatial-object > .spatial-object-delete,
+.grid-note > .grid-text-object-delete {
+  display:none !important;
+}
+.notebook-toolbar-delete,
+.spatial-table-controls [data-table-delete],
+.spatial-shape-toolbar [data-shape-delete],
+.grid-text-object-toolbar [data-grid-toolbar-delete] {
+  width:19px !important;
+  min-width:19px !important;
+  height:17px !important;
+  min-height:17px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  font-size:13px !important;
+  font-weight:650 !important;
+  line-height:1 !important;
+  margin-left:2px !important;
+}
+.notebook-toolbar-delete:hover,
+.spatial-table-controls [data-table-delete]:hover,
+.spatial-shape-toolbar [data-shape-delete]:hover,
+.grid-text-object-toolbar [data-grid-toolbar-delete]:hover {
+  color:#b74747 !important;
+}
+
+/* Rectangle/cloud resizing: quiet side handles appear only while the object is engaged. */
+.spatial-resize-handle {
+  position:absolute;
+  z-index:16;
+  width:14px;
+  height:10px;
+  padding:0;
+  border:0;
+  background:transparent;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .08s ease;
+}
+.spatial-resize-handle::after {
+  content:'';
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:8px;
+  height:2px;
+  border-radius:2px;
+  background:color-mix(in srgb,var(--paper-ink) 58%,var(--paper-muted));
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--paper) 72%,transparent);
+}
+.spatial-resize-n { left:50%; top:-5px; transform:translateX(-50%); cursor:ns-resize; }
+.spatial-resize-s { left:50%; bottom:-5px; transform:translateX(-50%); cursor:ns-resize; }
+.spatial-resize-e { right:-7px; top:50%; transform:translateY(-50%); cursor:ew-resize; }
+.spatial-resize-w { left:-7px; top:50%; transform:translateY(-50%); cursor:ew-resize; }
+.spatial-resize-e::after,
+.spatial-resize-w::after {
+  width:2px;
+  height:8px;
+}
+.notebook-spatial-object:hover > .spatial-resize-handle,
+.notebook-spatial-object.is-selected > .spatial-resize-handle,
+.notebook-spatial-object.is-resizing > .spatial-resize-handle {
+  opacity:.48;
+  pointer-events:auto;
+}
+.spatial-resize-handle:hover,
+.notebook-spatial-object.is-resizing > .spatial-resize-handle {
+  opacity:1 !important;
+}
+.notebook-spatial-object.is-resizing {
+  user-select:none;
+}
+
+/* Function-pick mode clearly separates the result cell from its source cells. */
+.spatial-table td.notebook-function-target {
+  box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tab-notebook) 70%,var(--paper-ink)) !important;
+}
+.spatial-table td.notebook-function-source {
+  background:color-mix(in srgb,var(--tab-notebook) 14%,var(--paper)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 46%,transparent) !important;
+}
+.spatial-function-control.function-picking .spatial-function-trigger {
+  color:var(--paper-ink) !important;
+  border-color:color-mix(in srgb,var(--tab-notebook) 48%,var(--paper-muted)) !important;
+  background:color-mix(in srgb,var(--tab-notebook) 10%,var(--paper)) !important;
+  font-size:9px !important;
+}
+
+/* Shape and text toolbars keep the larger delete X at the far end. */
+.spatial-shape-toolbar .notebook-toolbar-delete,
+.grid-text-object-toolbar .notebook-toolbar-delete {
+  order:999;
+}
