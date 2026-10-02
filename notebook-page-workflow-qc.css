@@ -1,0 +1,19 @@
+/* Guards for notebook-page-workflow.css. */
+.notebook-history-favorites.is-empty {
+  height:0 !important;
+  min-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
+}
+
+html:not([data-theme="dark"]) .notebook-shell[data-reference-paper-tint="same"] .notebook-reference-page {
+  --paper:#fff9df;
+  --paper-line:rgba(116,102,60,.16);
+  --paper-muted:#94896c;
+}
+html[data-theme="dark"] .notebook-shell[data-reference-paper-tint="same"] .notebook-reference-page {
+  --paper:#29271f;
+  --paper-line:rgba(225,210,155,.10);
+  --paper-muted:#a99f82;
+}
