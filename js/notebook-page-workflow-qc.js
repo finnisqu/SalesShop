@@ -1,5 +1,7 @@
 /* Small guards for notebook-page-workflow. */
 
+if (typeof nowISO==='undefined') window.nowISO=()=>new Date().toISOString();
+
 if (typeof notebookFavoriteShelfHtml==='function' && !window.__salesShopFavoriteShelfPlaceholder) {
   window.__salesShopFavoriteShelfPlaceholder=true;
   const _favoriteShelfHtml=notebookFavoriteShelfHtml;
