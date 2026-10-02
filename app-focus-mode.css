@@ -1,0 +1,72 @@
+/* App-level distraction-free fullscreen. */
+.focus-mode-button {
+  display:grid;
+  place-items:center;
+  padding:0;
+}
+.focus-mode-button svg {
+  width:17px;
+  height:17px;
+}
+.focus-mode-button.active {
+  color:var(--ink);
+  border-color:var(--border-strong);
+  background:var(--panel-soft);
+}
+
+body.app-focus-mode .app-header {
+  display:none !important;
+}
+body.app-focus-mode .app-shell {
+  height:100dvh !important;
+  min-height:100dvh !important;
+}
+body.app-focus-mode .workspace-body {
+  flex:1 1 auto;
+  min-height:0;
+}
+body.app-focus-mode .utility-corner {
+  display:none !important;
+}
+
+.focus-mode-exit {
+  position:fixed;
+  z-index:260;
+  top:8px;
+  right:8px;
+  height:27px;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  border:1px solid color-mix(in srgb,var(--border-strong) 78%,transparent);
+  border-radius:6px;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);
+  color:var(--muted);
+  padding:0 7px;
+  box-shadow:0 5px 16px rgba(0,0,0,.12);
+  backdrop-filter:blur(6px);
+  font-size:7px;
+  font-weight:700;
+  opacity:.58;
+  transition:opacity .1s ease,color .1s ease,background .1s ease;
+}
+.focus-mode-exit[hidden] { display:none !important; }
+.focus-mode-exit:hover {
+  opacity:1;
+  color:var(--ink);
+  background:var(--panel);
+}
+.focus-mode-exit svg {
+  width:13px;
+  height:13px;
+}
+
+/* Focus mode gives the actual work surface every available pixel. */
+body.app-focus-mode .view.active,
+body.app-focus-mode .notebook-dock {
+  padding-top:4px;
+}
+body.app-focus-mode.notebook-floating-mode .notebook-dock {
+  max-height:calc(100dvh - 12px) !important;
+  top:6px !important;
+}
