@@ -1,0 +1,79 @@
+/* Final Notebook/Binder navigation polish. */
+
+/* Swap is no longer part of the page model. Tabs determine which sheet is shown where. */
+#notebookDock .notebook-peer-swap,
+#notebookDock .notebook-reference-swap,
+#notebookDock .notebook-binder-grid-button.notebook-peer-swap,
+#notebookDock [data-notebook-swap],
+#notebookDock [data-peer-swap] {
+  display:none !important;
+}
+
+/* The older current/worked badge belongs to the retired rigid live/reference model. */
+#notebookDock .notebook-working-page-badge,
+#notebookDock .notebook-current-worked,
+#notebookDock .notebook-current-worked-today,
+#notebookDock .notebook-working-badge,
+#notebookDock [data-notebook-worked-today] {
+  display:none !important;
+}
+
+/* Page-local actions own a reserved upper-right lane. They must never sit on top of page copy. */
+#notebookDock .notebook-paper-head,
+#notebookDock .notebook-reference-head {
+  position:relative !important;
+  padding-right:104px !important;
+  box-sizing:border-box !important;
+}
+#notebookDock .notebook-peer-local-actions,
+#notebookDock .notebook-binder-local-actions,
+#notebookDock [data-peer-local-actions] {
+  position:absolute !important;
+  top:10px !important;
+  right:10px !important;
+  left:auto !important;
+  width:auto !important;
+  max-width:90px !important;
+  display:flex !important;
+  flex-flow:row nowrap !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:3px !important;
+  z-index:34 !important;
+}
+
+/* The editable page title used to terminate only 30px from the right edge, directly beneath the
+   page toolbar. Reserve the action lane instead and ellipsize long titles before they collide. */
+#notebookDock .notebook-page-header {
+  right:106px !important;
+  width:min(38%,300px) !important;
+  max-width:calc(100% - 230px) !important;
+  min-width:90px !important;
+}
+#notebookDock .notebook-reference-title-wrap,
+#notebookDock .notebook-reference-title,
+#notebookDock .notebook-reference-page-header {
+  max-width:calc(100% - 104px) !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+/* In genuinely narrow papers, actions may compact but still get their own row/space. */
+@container notebook-shell (max-width:560px) {
+  #notebookDock .notebook-paper-head,
+  #notebookDock .notebook-reference-head {
+    padding-right:82px !important;
+  }
+  #notebookDock .notebook-page-header {
+    right:84px !important;
+    width:min(42%,220px) !important;
+    max-width:calc(100% - 180px) !important;
+  }
+  #notebookDock .notebook-peer-local-actions,
+  #notebookDock .notebook-binder-local-actions,
+  #notebookDock [data-peer-local-actions] {
+    max-width:70px !important;
+    gap:2px !important;
+  }
+}
