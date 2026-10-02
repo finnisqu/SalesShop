@@ -34,6 +34,23 @@ init();
     document.head.appendChild(link);
   }
 
+  const loadModeQc=()=>{
+    if (!document.querySelector('link[data-binder-mode-qc]')) {
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href='notebook-binder-mode-qc.css';
+      link.dataset.binderModeQc='';
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector('script[data-binder-mode-qc]')) {
+      const script=document.createElement('script');
+      script.src='js/notebook-binder-mode-qc.js';
+      script.async=false;
+      script.dataset.binderModeQc='';
+      document.body.appendChild(script);
+    }
+  };
+
   const loadTabQc=()=>{
     if (!document.querySelector('link[data-binder-tabs-qc]')) {
       const link=document.createElement('link');
@@ -42,13 +59,23 @@ init();
       link.dataset.binderTabsQc='';
       document.head.appendChild(link);
     }
-    if (!document.querySelector('script[data-binder-tabs-qc]')) {
-      const script=document.createElement('script');
-      script.src='js/notebook-binder-tabs-qc.js';
-      script.async=false;
-      script.dataset.binderTabsQc='';
-      document.body.appendChild(script);
+
+    const existingTabs=document.querySelector('script[data-binder-tabs-qc]');
+    if (existingTabs) {
+      if (existingTabs.dataset.loaded==='1') loadModeQc();
+      else existingTabs.addEventListener('load',loadModeQc,{once:true});
+      return;
     }
+
+    const tabs=document.createElement('script');
+    tabs.src='js/notebook-binder-tabs-qc.js';
+    tabs.async=false;
+    tabs.dataset.binderTabsQc='';
+    tabs.addEventListener('load',()=>{
+      tabs.dataset.loaded='1';
+      loadModeQc();
+    },{once:true});
+    document.body.appendChild(tabs);
   };
 
   const loadVisualFixes=()=>{
