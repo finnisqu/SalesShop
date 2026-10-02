@@ -120,21 +120,22 @@
   background:color-mix(in srgb,var(--paper) 88%,var(--paper-muted)) !important;
 }
 
-/* Fixed top-to-bottom order, independent of active state. */
-.spatial-align-choice[data-table-align="left"] { bottom:55px !important; }
-.spatial-align-choice[data-table-align="center"] { bottom:37px !important; }
-.spatial-align-choice[data-table-align="right"] { bottom:19px !important; }
+/* Fixed top-to-bottom order, independent of active state. Specificity intentionally matches the
+   older active-dependent rules so this final layer always wins. */
+.spatial-align-control[data-active-align] .spatial-align-choice[data-table-align="left"] { bottom:55px !important; }
+.spatial-align-control[data-active-align] .spatial-align-choice[data-table-align="center"] { bottom:37px !important; }
+.spatial-align-control[data-active-align] .spatial-align-choice[data-table-align="right"] { bottom:19px !important; }
 
-.spatial-number-format-choice[data-number-format="none"] { bottom:73px !important; }
-.spatial-number-format-choice[data-number-format="currency"] { bottom:55px !important; }
-.spatial-number-format-choice[data-number-format="percent"] { bottom:37px !important; }
-.spatial-number-format-choice[data-number-format="decimal"] { bottom:19px !important; }
+.spatial-number-format-control[data-active-number-format] .spatial-number-format-choice[data-number-format="none"] { bottom:73px !important; }
+.spatial-number-format-control[data-active-number-format] .spatial-number-format-choice[data-number-format="currency"] { bottom:55px !important; }
+.spatial-number-format-control[data-active-number-format] .spatial-number-format-choice[data-number-format="percent"] { bottom:37px !important; }
+.spatial-number-format-control[data-active-number-format] .spatial-number-format-choice[data-number-format="decimal"] { bottom:19px !important; }
 
-.spatial-fill-choice[data-cell-fill="none"] { bottom:91px !important; }
-.spatial-fill-choice[data-cell-fill="yellow"] { bottom:73px !important; }
-.spatial-fill-choice[data-cell-fill="mint"] { bottom:55px !important; }
-.spatial-fill-choice[data-cell-fill="blue"] { bottom:37px !important; }
-.spatial-fill-choice[data-cell-fill="rose"] { bottom:19px !important; }
+.spatial-fill-control[data-active-fill] .spatial-fill-choice[data-cell-fill="none"] { bottom:91px !important; }
+.spatial-fill-control[data-active-fill] .spatial-fill-choice[data-cell-fill="yellow"] { bottom:73px !important; }
+.spatial-fill-control[data-active-fill] .spatial-fill-choice[data-cell-fill="mint"] { bottom:55px !important; }
+.spatial-fill-control[data-active-fill] .spatial-fill-choice[data-cell-fill="blue"] { bottom:37px !important; }
+.spatial-fill-control[data-active-fill] .spatial-fill-choice[data-cell-fill="rose"] { bottom:19px !important; }
 
 /* A small invisible bridge means the pointer can cross the few pixels between trigger and palette
    while the JS grace timer keeps the palette latched. */
