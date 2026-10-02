@@ -1,0 +1,57 @@
+/* Final Sheets-like range visuals + persistent Binder presentation affordance. */
+
+/* Sheets-style selected range: one continuous light wash, white/strong anchor, blue outer frame. */
+#notebookDock .spatial-table td.spreadsheet-range-cell,
+#notebookDock .spatial-table td.spatial-table-cell-selected.spreadsheet-range-cell {
+  background:color-mix(in srgb,var(--tab-notebook) 12%,var(--paper)) !important;
+  box-shadow:none !important;
+}
+#notebookDock .spatial-table td.spreadsheet-active-cell,
+#notebookDock .spatial-table td.spatial-table-cell-selected.spreadsheet-active-cell {
+  position:relative;
+  z-index:2;
+  background:var(--paper) !important;
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tab-notebook) 78%,var(--paper-ink)) !important;
+}
+#notebookDock .spreadsheet-range-outline-final {
+  position:absolute;
+  z-index:31;
+  box-sizing:border-box;
+  border:1.5px solid color-mix(in srgb,var(--tab-notebook) 82%,#2563eb);
+  border-radius:1px;
+  pointer-events:none;
+}
+html[data-theme="dark"] #notebookDock .spatial-table td.spreadsheet-range-cell {
+  background:color-mix(in srgb,var(--tab-notebook) 15%,var(--paper)) !important;
+}
+
+/* The Single/Double control is part of the Position flyout even after toggling modes. */
+#notebookDock .notebook-position-control:hover .notebook-spread-toggle,
+#notebookDock .notebook-position-control:focus-within .notebook-spread-toggle,
+#notebookDock .notebook-position-control.position-click-collapsed:hover .notebook-spread-toggle,
+#notebookDock .notebook-position-control.position-click-collapsed:focus-within .notebook-spread-toggle {
+  display:grid !important;
+  opacity:.72 !important;
+  pointer-events:auto !important;
+}
+#notebookDock .notebook-position-control .notebook-spread-toggle:hover:not(:disabled) {
+  opacity:1 !important;
+}
+
+/* A one-sheet Binder is still a Binder: keep its tab strip and physical paper stack visible. */
+#notebookDock .notebook-shell[data-binder-open-count]:not([data-binder-open-count="1"]) .notebook-binder-top-tabs {
+  display:grid !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+#notebookDock .notebook-binder-top-tabs[data-display-mode="single"] {
+  grid-template-columns:minmax(0,1fr) !important;
+}
+#notebookDock .notebook-binder-top-tabs[data-display-mode="single"] .notebook-binder-tab-bank-left {
+  display:flex !important;
+  justify-content:flex-start !important;
+}
+#notebookDock .notebook-binder-top-tabs[data-display-mode="single"] .notebook-binder-tab-bank-right,
+#notebookDock .notebook-binder-top-tabs[data-display-mode="single"] .notebook-binder-tab-spine {
+  display:none !important;
+}
