@@ -34,6 +34,23 @@ init();
     document.head.appendChild(link);
   }
 
+  const loadNavigationFinal=()=>{
+    if (!document.querySelector('link[data-notebook-navigation-final]')) {
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href='notebook-navigation-final.css';
+      link.dataset.notebookNavigationFinal='';
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector('script[data-notebook-navigation-final]')) {
+      const script=document.createElement('script');
+      script.src='js/notebook-navigation-final.js';
+      script.async=false;
+      script.dataset.notebookNavigationFinal='';
+      document.body.appendChild(script);
+    }
+  };
+
   const loadFinalBinderSelection=()=>{
     if (!document.querySelector('link[data-binder-selection-final]')) {
       const link=document.createElement('link');
@@ -42,13 +59,23 @@ init();
       link.dataset.binderSelectionFinal='';
       document.head.appendChild(link);
     }
-    if (!document.querySelector('script[data-binder-selection-final]')) {
-      const script=document.createElement('script');
-      script.src='js/notebook-binder-selection-final.js';
-      script.async=false;
-      script.dataset.binderSelectionFinal='';
-      document.body.appendChild(script);
+
+    const existingSelection=document.querySelector('script[data-binder-selection-final]');
+    if (existingSelection) {
+      if (existingSelection.dataset.loaded==='1') loadNavigationFinal();
+      else existingSelection.addEventListener('load',loadNavigationFinal,{once:true});
+      return;
     }
+
+    const selection=document.createElement('script');
+    selection.src='js/notebook-binder-selection-final.js';
+    selection.async=false;
+    selection.dataset.binderSelectionFinal='';
+    selection.addEventListener('load',()=>{
+      selection.dataset.loaded='1';
+      loadNavigationFinal();
+    },{once:true});
+    document.body.appendChild(selection);
   };
 
   const loadModeQc=()=>{
