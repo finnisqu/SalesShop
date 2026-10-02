@@ -210,12 +210,12 @@
     line-height:28px !important;
   }
 
-  /* Long object toolbars wrap cleanly instead of compressing every control. */
+  /* At small pad widths the long table strip deliberately becomes a tidy two-row control. */
   #notebookDock .spatial-object-table > .spatial-table-controls,
   .spatial-shape-toolbar,
   .grid-text-object-toolbar {
     width:max-content !important;
-    max-width:min(310px,calc(100cqw - 24px)) !important;
+    max-width:min(270px,calc(100cqw - 24px)) !important;
     height:auto !important;
     min-height:20px !important;
     flex-wrap:wrap !important;
@@ -224,16 +224,14 @@
     row-gap:1px !important;
     white-space:nowrap !important;
   }
-  .spatial-table-control-separator {
-    margin:0 1px !important;
-  }
+  .spatial-table-control-separator { margin:0 1px !important; }
 }
 
 @container notebook-page (max-width:390px) {
   #notebookDock .spatial-object-table > .spatial-table-controls,
   .spatial-shape-toolbar,
   .grid-text-object-toolbar {
-    max-width:calc(100cqw - 18px) !important;
+    max-width:min(225px,calc(100cqw - 18px)) !important;
   }
   .notebook-paper-head { padding-inline:16px !important; }
 }
