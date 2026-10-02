@@ -1,0 +1,43 @@
+/* Final quarantine for retired split/reference Binder chrome. */
+#notebookDock .notebook-binder-top-tabs,
+#notebookDock .notebook-binder-side-rail,
+#notebookDock .notebook-binder-tabs,
+#notebookDock .notebook-binder-tabs-final,
+#notebookDock .notebook-binder-paper-layers,
+#notebookDock .notebook-binder-page-layers,
+#notebookDock .notebook-paper-active-tab,
+#notebookDock .notebook-paper-peek,
+#notebookDock .notebook-reference-page,
+#notebookDock .notebook-reference-scroller,
+#notebookDock .notebook-peer-local-actions,
+#notebookDock .notebook-binder-page-actions,
+#notebookDock .notebook-reference-actions,
+#notebookDock .notebook-split-page-actions,
+#notebookDock .notebook-spread-toggle,
+#notebookDock [data-notebook-spread-toggle],
+#notebookDock .notebook-peer-swap,
+#notebookDock .notebook-reference-swap,
+#notebookDock [data-notebook-swap],
+#notebookDock [data-peer-swap] {
+  display:none !important;
+}
+
+/* Exactly one clean top tab strip and one clean physical paper stack. */
+#notebookDock .notebook-binder-tabs-clean {
+  position:relative;
+  z-index:35;
+}
+#notebookDock .notebook-binder-layers-clean {
+  pointer-events:none;
+}
+#notebookDock .notebook-binder-layer-clean {
+  pointer-events:auto;
+}
+
+/* Retired pair/split styling must not squeeze the live sheet. */
+#notebookDock .notebook-shell[data-binder-open-count] .notebook-page {
+  flex:0 0 auto;
+}
+#notebookDock .notebook-page-pair {
+  display:contents !important;
+}
