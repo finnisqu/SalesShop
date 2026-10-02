@@ -6,14 +6,120 @@
 #notebookDock .notebook-binder-tabs,
 #notebookDock .notebook-binder-tabs-final,
 #notebookDock .notebook-paper-peek,
-#notebookDock .notebook-paper-active-tab {
+#notebookDock .notebook-paper-active-tab,
+#notebookDock .notebook-binder-page-layers,
+#notebookDock .notebook-binder-paper-layers {
   display:none !important;
   visibility:hidden !important;
   pointer-events:none !important;
 }
 
-/* Keep the physical paper slivers, but don't let them read like another tab rail. */
-#notebookDock .notebook-binder-page-layer {
-  border-width:0 1px !important;
-  box-shadow:0 2px 6px rgba(0,0,0,.035) !important;
+/* Two obvious tab banks: three-page capacity on each side with a binder-like center gap. */
+#notebookDock .notebook-binder-top-tabs {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr) !important;
+  align-items:end !important;
+  gap:0 !important;
+  padding:3px 6px 0 !important;
+}
+#notebookDock .notebook-binder-top-tabs::before,
+#notebookDock .notebook-binder-top-tabs::after {
+  display:none !important;
+}
+#notebookDock .notebook-binder-tab-bank {
+  display:flex;
+  align-items:flex-end;
+  gap:2px;
+  min-width:0;
+  height:100%;
+}
+#notebookDock .notebook-binder-tab-bank-left {
+  justify-content:flex-start;
+}
+#notebookDock .notebook-binder-tab-bank-right {
+  justify-content:flex-end;
+}
+#notebookDock .notebook-binder-tab-spine {
+  position:relative;
+  align-self:stretch;
+  display:block;
+  width:34px;
+  pointer-events:none;
+}
+#notebookDock .notebook-binder-tab-spine::before {
+  content:'';
+  position:absolute;
+  left:50%;
+  top:5px;
+  bottom:4px;
+  width:1px;
+  background:color-mix(in srgb,var(--border-strong) 52%,transparent);
+  box-shadow:-4px 0 9px color-mix(in srgb,var(--border) 14%,transparent),4px 0 9px color-mix(in srgb,var(--border) 14%,transparent);
+}
+#notebookDock .notebook-binder-top-tab {
+  flex:0 1 102px !important;
+  width:min(102px,31.5%) !important;
+  min-width:48px !important;
+  max-width:102px !important;
+  height:23px !important;
+  padding:0 7px !important;
+  border-radius:6px 6px 0 0 !important;
+}
+#notebookDock .notebook-binder-top-tab-label {
+  font-size:7.5px !important;
+}
+
+/* Physical paper stack: these are full sheets behind the live page. The live paper naturally
+   covers them, leaving only the offset colored edge exposed. No labels or hover bubbles. */
+#notebookDock .notebook-shell {
+  position:relative;
+}
+#notebookDock .notebook-binder-underlays {
+  position:absolute;
+  inset:0;
+  z-index:1;
+  overflow:visible;
+  pointer-events:none;
+}
+#notebookDock .notebook-binder-underlay {
+  position:absolute;
+  box-sizing:border-box;
+  display:block;
+  margin:0;
+  padding:0;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 25%,var(--border));
+  border-radius:7px;
+  background:var(--underlay-paper,var(--paper));
+  box-shadow:0 3px 10px rgba(0,0,0,.055);
+  color:transparent;
+  overflow:hidden;
+  pointer-events:auto;
+  cursor:pointer;
+  transition:transform .13s cubic-bezier(.2,.75,.25,1),box-shadow .13s ease,filter .13s ease;
+}
+#notebookDock .notebook-binder-underlay[data-paper-color="warm"] { --underlay-paper:var(--paper); }
+#notebookDock .notebook-binder-underlay[data-paper-color="blue"] { --underlay-paper:#f1f8fb; }
+#notebookDock .notebook-binder-underlay[data-paper-color="neutral"] { --underlay-paper:#f7f7f3; }
+html[data-theme="dark"] #notebookDock .notebook-binder-underlay[data-paper-color="warm"] { --underlay-paper:#29271f; }
+html[data-theme="dark"] #notebookDock .notebook-binder-underlay[data-paper-color="blue"] { --underlay-paper:#222b30; }
+html[data-theme="dark"] #notebookDock .notebook-binder-underlay[data-paper-color="neutral"] { --underlay-paper:#25282a; }
+#notebookDock .notebook-binder-underlay-left:hover {
+  transform:translateX(-4px);
+  box-shadow:-4px 4px 14px rgba(0,0,0,.075);
+}
+#notebookDock .notebook-binder-underlay-right:hover {
+  transform:translateX(4px);
+  box-shadow:4px 4px 14px rgba(0,0,0,.075);
+}
+
+/* The live sheet/spread must stay physically above its underlays. */
+#notebookDock .notebook-shell > .notebook-page,
+#notebookDock .notebook-page-pair {
+  position:relative;
+  z-index:10 !important;
+}
+#notebookDock .notebook-page-pair > .notebook-page,
+#notebookDock .notebook-page-pair > .notebook-reference-page {
+  position:relative;
+  z-index:10 !important;
 }
