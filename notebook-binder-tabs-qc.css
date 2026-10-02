@@ -1,0 +1,19 @@
+/* Top tab bar is the only Binder tab navigation. */
+#notebookDock .notebook-binder-side-rail,
+#notebookDock .notebook-binder-side-rail-left,
+#notebookDock .notebook-binder-side-rail-right,
+#notebookDock .notebook-binder-side-tab,
+#notebookDock .notebook-binder-tabs,
+#notebookDock .notebook-binder-tabs-final,
+#notebookDock .notebook-paper-peek,
+#notebookDock .notebook-paper-active-tab {
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+/* Keep the physical paper slivers, but don't let them read like another tab rail. */
+#notebookDock .notebook-binder-page-layer {
+  border-width:0 1px !important;
+  box-shadow:0 2px 6px rgba(0,0,0,.035) !important;
+}
