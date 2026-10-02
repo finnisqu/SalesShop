@@ -1,0 +1,250 @@
+/* Final physical notebook paper behavior. */
+
+/* Dot-grid: only a tiny opacity increase over the existing lattice. */
+.notebook-page.paper-grid[data-grid-paper="dots"] .notebook-page-body {
+  background-image:radial-gradient(
+    circle at 0 0,
+    color-mix(in srgb,var(--paper-line) 78%,var(--paper-muted)) 0,
+    color-mix(in srgb,var(--paper-line) 78%,var(--paper-muted)) .65px,
+    transparent .85px
+  ) !important;
+}
+.notebook-reference-page.reference-grid.reference-grid-dots .notebook-reference-body {
+  background-image:radial-gradient(circle,color-mix(in srgb,var(--paper-line) 78%,transparent) .75px,transparent .9px) !important;
+}
+
+/* Paper color belongs to page identity. These local variables follow the page through Swap. */
+html:not([data-theme="dark"]) .notebook-page[data-page-paper-color="warm"],
+html:not([data-theme="dark"]) .notebook-reference-page[data-page-paper-color="warm"] {
+  --paper:#fff9df;
+  --paper-line:rgba(116,102,60,.16);
+  --paper-muted:#94896c;
+}
+html[data-theme="dark"] .notebook-page[data-page-paper-color="warm"],
+html[data-theme="dark"] .notebook-reference-page[data-page-paper-color="warm"] {
+  --paper:#29271f;
+  --paper-line:rgba(225,210,155,.10);
+  --paper-muted:#a99f82;
+}
+html:not([data-theme="dark"]) .notebook-page[data-page-paper-color="blue"],
+html:not([data-theme="dark"]) .notebook-reference-page[data-page-paper-color="blue"] {
+  --paper:#f1f8fb;
+  --paper-line:rgba(74,114,136,.13);
+  --paper-muted:#7e97a5;
+}
+html[data-theme="dark"] .notebook-page[data-page-paper-color="blue"],
+html[data-theme="dark"] .notebook-reference-page[data-page-paper-color="blue"] {
+  --paper:#222b30;
+  --paper-line:rgba(173,211,229,.10);
+  --paper-muted:#92aab5;
+}
+html:not([data-theme="dark"]) .notebook-page[data-page-paper-color="neutral"],
+html:not([data-theme="dark"]) .notebook-reference-page[data-page-paper-color="neutral"] {
+  --paper:#f7f7f3;
+  --paper-line:rgba(90,94,97,.12);
+  --paper-muted:#898d91;
+}
+html[data-theme="dark"] .notebook-page[data-page-paper-color="neutral"],
+html[data-theme="dark"] .notebook-reference-page[data-page-paper-color="neutral"] {
+  --paper:#25282a;
+  --paper-line:rgba(220,224,226,.085);
+  --paper-muted:#9ba0a4;
+}
+
+.notebook-page[data-page-paper-color],
+.notebook-reference-page[data-page-paper-color],
+.notebook-reference-page[data-page-paper-color] .notebook-reference-head,
+.notebook-reference-page[data-page-paper-color] .notebook-reference-body {
+  background-color:var(--paper) !important;
+}
+
+/* Per-page paper colors in Style. */
+.page-paper-swatch {
+  width:14px;
+  height:10px;
+  display:block;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 30%,var(--border));
+  border-radius:2px;
+}
+html:not([data-theme="dark"]) .page-paper-swatch.swatch-warm { background:#fff9df; }
+html[data-theme="dark"] .page-paper-swatch.swatch-warm { background:#29271f; }
+html:not([data-theme="dark"]) .page-paper-swatch.swatch-blue { background:#f1f8fb; }
+html[data-theme="dark"] .page-paper-swatch.swatch-blue { background:#222b30; }
+html:not([data-theme="dark"]) .page-paper-swatch.swatch-neutral { background:#f7f7f3; }
+html[data-theme="dark"] .page-paper-swatch.swatch-neutral { background:#25282a; }
+
+/* Favorites live directly beneath the month grid and above the selected-day details. */
+.notebook-history-calendar-shell {
+  grid-template-rows:auto auto minmax(112px,42%) auto auto minmax(92px,1fr) !important;
+}
+@media (max-height:720px) {
+  .notebook-history-calendar-shell {
+    grid-template-rows:auto auto minmax(90px,34%) auto auto minmax(84px,1fr) !important;
+  }
+}
+@media (max-height:560px) {
+  .notebook-history-calendar-shell {
+    grid-template-rows:auto auto minmax(72px,29%) auto auto minmax(72px,1fr) !important;
+  }
+}
+
+/* Retire the two old role-tabs. The final layer creates exactly one tab for the active/front sheet. */
+.notebook-paper-peek { display:none !important; }
+.notebook-paper-active-tab {
+  position:absolute;
+  z-index:12;
+  top:86px;
+  width:30px;
+  height:104px;
+  display:grid;
+  place-items:center;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 30%,var(--border));
+  color:var(--paper-muted);
+  padding:0;
+  box-shadow:0 6px 15px rgba(0,0,0,.09);
+  cursor:ew-resize;
+  user-select:none;
+  touch-action:none;
+  opacity:.88;
+  transition:opacity .1s ease,box-shadow .1s ease;
+}
+.notebook-paper-active-tab span {
+  writing-mode:vertical-rl;
+  text-orientation:mixed;
+  font:700 6.5px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.notebook-paper-active-tab:hover,
+.notebook-page-pair.active-paper-tab-dragging .notebook-paper-active-tab {
+  opacity:1;
+  box-shadow:0 8px 18px rgba(0,0,0,.13);
+}
+.notebook-paper-active-tab-current {
+  left:-1px;
+  right:auto;
+  border-right-width:0;
+  border-radius:6px 0 0 6px;
+}
+.notebook-paper-active-tab-reference {
+  right:-1px;
+  left:auto;
+  border-left-width:0;
+  border-radius:0 6px 6px 0;
+}
+
+/* The tab is literally a chip cut from the same paper color as its page. */
+html:not([data-theme="dark"]) .notebook-paper-active-tab[data-paper-color="warm"] { background:#fff9df; color:#94896c; }
+html[data-theme="dark"] .notebook-paper-active-tab[data-paper-color="warm"] { background:#29271f; color:#a99f82; }
+html:not([data-theme="dark"]) .notebook-paper-active-tab[data-paper-color="blue"] { background:#f1f8fb; color:#7e97a5; }
+html[data-theme="dark"] .notebook-paper-active-tab[data-paper-color="blue"] { background:#222b30; color:#92aab5; }
+html:not([data-theme="dark"]) .notebook-paper-active-tab[data-paper-color="neutral"] { background:#f7f7f3; color:#898d91; }
+html[data-theme="dark"] .notebook-paper-active-tab[data-paper-color="neutral"] { background:#25282a; color:#9ba0a4; }
+
+/* Resolved Stack always has one top sheet and one tucked sheet. */
+.notebook-page-pair[data-paper-resolved-layout="stack"] {
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  margin:0 !important;
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  grid-template-rows:1fr !important;
+  overflow:visible !important;
+  padding:0 !important;
+}
+.notebook-page-pair[data-paper-resolved-layout="stack"] > .notebook-page,
+.notebook-page-pair[data-paper-resolved-layout="stack"] > .notebook-reference-page {
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:calc(100% - 30px) !important;
+  min-width:0 !important;
+  max-width:none !important;
+  margin:0 !important;
+}
+.notebook-page-pair[data-paper-resolved-layout="stack"][data-paper-front="current"] > .notebook-page {
+  z-index:5 !important;
+  transform:translateX(0) !important;
+  box-shadow:0 12px 30px rgba(0,0,0,.14) !important;
+}
+.notebook-page-pair[data-paper-resolved-layout="stack"][data-paper-front="current"] > .notebook-reference-page {
+  z-index:2 !important;
+  transform:translateX(30px) translateY(4px) !important;
+}
+.notebook-page-pair[data-paper-resolved-layout="stack"][data-paper-front="reference"] > .notebook-page {
+  z-index:2 !important;
+  transform:translateX(0) translateY(4px) !important;
+}
+.notebook-page-pair[data-paper-resolved-layout="stack"][data-paper-front="reference"] > .notebook-reference-page {
+  z-index:5 !important;
+  transform:translateX(30px) !important;
+  box-shadow:0 12px 30px rgba(0,0,0,.14) !important;
+}
+
+/* Drag the ACTIVE/top page inward. The page itself follows the tab; release past the threshold snaps Split. */
+.notebook-page-pair.active-paper-tab-dragging[data-paper-resolved-layout="stack"][data-paper-drag-role="current"] > .notebook-page {
+  transform:translateX(var(--active-paper-inward,0px)) !important;
+  transition:none !important;
+}
+.notebook-page-pair.active-paper-tab-dragging[data-paper-resolved-layout="stack"][data-paper-drag-role="reference"] > .notebook-reference-page {
+  transform:translateX(calc(30px - var(--active-paper-inward,0px))) !important;
+  transition:none !important;
+}
+.notebook-page-pair.active-paper-tab-dragging[data-paper-resolved-layout="stack"][data-paper-drag-role="current"] > .notebook-paper-active-tab {
+  transform:translateX(var(--active-paper-inward,0px));
+}
+.notebook-page-pair.active-paper-tab-dragging[data-paper-resolved-layout="stack"][data-paper-drag-role="reference"] > .notebook-paper-active-tab {
+  transform:translateX(calc(-1 * var(--active-paper-inward,0px)));
+}
+
+/* Split snaps the two original sheets back to their remembered left/right positions. */
+.notebook-page-pair[data-paper-resolved-layout="split"] {
+  width:min(1500px,calc(100% - 20px)) !important;
+  max-width:none !important;
+  margin:0 auto !important;
+  display:grid !important;
+  grid-template-columns:minmax(360px,1fr) minmax(360px,1fr) !important;
+  grid-template-rows:1fr !important;
+  gap:10px !important;
+  overflow-x:auto !important;
+  padding:0 0 2px !important;
+}
+.notebook-page-pair[data-paper-resolved-layout="split"] > .notebook-page,
+.notebook-page-pair[data-paper-resolved-layout="split"] > .notebook-reference-page {
+  grid-row:1 !important;
+  width:100% !important;
+  min-width:360px !important;
+  transform:none !important;
+  z-index:2 !important;
+}
+.notebook-page-pair[data-paper-resolved-layout="split"] > .notebook-page { grid-column:1 !important; }
+.notebook-page-pair[data-paper-resolved-layout="split"] > .notebook-reference-page { grid-column:2 !important; }
+
+/* Reverse gesture: from Split, pull the active outer tab outward to layer that same sheet on top. */
+.notebook-page-pair.active-paper-tab-dragging[data-paper-resolved-layout="split"][data-paper-drag-role="current"] > .notebook-page {
+  transform:translateX(calc(-1 * var(--active-paper-outward,0px))) !important;
+  transition:none !important;
+}
+.notebook-page-pair.active-paper-tab-dragging[data-paper-resolved-layout="split"][data-paper-drag-role="reference"] > .notebook-reference-page {
+  transform:translateX(var(--active-paper-outward,0px)) !important;
+  transition:none !important;
+}
+.notebook-page-pair.active-paper-tab-dragging[data-paper-resolved-layout="split"][data-paper-drag-role="current"] > .notebook-paper-active-tab {
+  transform:translateX(calc(-1 * var(--active-paper-outward,0px)));
+}
+.notebook-page-pair.active-paper-tab-dragging[data-paper-resolved-layout="split"][data-paper-drag-role="reference"] > .notebook-paper-active-tab {
+  transform:translateX(var(--active-paper-outward,0px));
+}
+
+@media (max-width:780px) {
+  .notebook-page-pair[data-paper-resolved-layout="split"] {
+    grid-template-columns:minmax(320px,1fr) minmax(320px,1fr) !important;
+  }
+  .notebook-page-pair[data-paper-resolved-layout="split"] > .notebook-page,
+  .notebook-page-pair[data-paper-resolved-layout="split"] > .notebook-reference-page {
+    min-width:320px !important;
+  }
+}
+
+/* Float remains deliberately one sheet; no side tab is rendered there. */
+body.notebook-floating-mode .notebook-paper-active-tab { display:none !important; }
