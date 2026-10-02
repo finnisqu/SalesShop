@@ -33,18 +33,14 @@ function notebookTableSizeControl(controls,object) {
   /* Title/Header are table-structure choices too. Keep them out of the main strip and with the
      row/column controls inside this one compact 2x2-grid menu. */
   const rowRoles = $('.spatial-table-row-role-controls',controls);
+  const rowRoleDivider = rowRoles?.nextElementSibling?.classList?.contains('spatial-table-control-separator')
+    ? rowRoles.nextElementSibling
+    : null;
   if (rowRoles) {
     const roleDivider = document.createElement('span');
     roleDivider.className = 'spatial-table-size-panel-divider';
     panel.append(roleDivider,rowRoles);
-
-    /* The semantic-row layer inserts a separator immediately after these controls. Once the
-       controls live in this popover, that separator no longer belongs in the main toolbar. */
-    const oldDivider = [...controls.children].find(el=>
-      el.classList?.contains('spatial-table-control-separator') &&
-      (el.previousElementSibling === control || el.previousElementSibling === rowRoles)
-    );
-    oldDivider?.remove();
+    rowRoleDivider?.remove();
   }
 
   control.append(trigger,panel);
