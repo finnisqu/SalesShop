@@ -1,0 +1,66 @@
+/* Final visual fixes for spatial attachments, Binder rails, and Medium presentation. */
+
+#notebookDock .notebook-shell {
+  overflow:visible !important;
+}
+
+/* Spatial/image attachments should render as actual notebook objects, not bare filenames. */
+#notebookDock .notebook-spatial-attachment-preview {
+  margin:0;
+  padding:0;
+  display:inline-flex;
+  flex-direction:column;
+  gap:3px;
+  max-width:220px;
+  vertical-align:top;
+}
+#notebookDock .notebook-spatial-attachment-image {
+  display:block;
+  max-width:220px;
+  max-height:180px;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:3px;
+  box-shadow:0 1px 0 color-mix(in srgb,var(--paper-muted) 18%,transparent);
+}
+#notebookDock .notebook-spatial-attachment-preview figcaption {
+  max-width:220px;
+  color:var(--paper-muted);
+  font:9px/1.25 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#notebookDock .grid-history-entry .notebook-spatial-attachment-image {
+  max-width:112px;
+  max-height:82px;
+}
+#notebookDock .grid-history-entry .notebook-spatial-attachment-preview figcaption {
+  max-width:112px;
+}
+#notebookDock .grid-note.has-spatial-image-attachment {
+  max-width:228px !important;
+  line-height:normal !important;
+}
+
+/* Open Binder tabs remain visible even when only one sheet is mounted. */
+#notebookDock .notebook-binder-side-rail {
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  overflow:visible !important;
+  pointer-events:auto !important;
+}
+#notebookDock .notebook-binder-side-tab.current-page-tab {
+  cursor:default !important;
+}
+#notebookDock .notebook-binder-side-tab.current-page-tab:hover {
+  opacity:1 !important;
+}
+
+/* Medium toolbar follows the same centered footprint as its single visible paper. */
+#notebookDock .notebook-shell.notebook-width-medium .notebook-toolbar {
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
