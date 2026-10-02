@@ -34,6 +34,23 @@ init();
     document.head.appendChild(link);
   }
 
+  const loadTabQc=()=>{
+    if (!document.querySelector('link[data-binder-tabs-qc]')) {
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href='notebook-binder-tabs-qc.css';
+      link.dataset.binderTabsQc='';
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector('script[data-binder-tabs-qc]')) {
+      const script=document.createElement('script');
+      script.src='js/notebook-binder-tabs-qc.js';
+      script.async=false;
+      script.dataset.binderTabsQc='';
+      document.body.appendChild(script);
+    }
+  };
+
   const loadVisualFixes=()=>{
     if (!document.querySelector('link[data-binder-visual-fixes]')) {
       const link=document.createElement('link');
@@ -42,13 +59,23 @@ init();
       link.dataset.binderVisualFixes='';
       document.head.appendChild(link);
     }
-    if (!document.querySelector('script[data-binder-visual-fixes]')) {
-      const script=document.createElement('script');
-      script.src='js/notebook-binder-visual-fixes.js';
-      script.async=false;
-      script.dataset.binderVisualFixes='';
-      document.body.appendChild(script);
+
+    const existingVisual=document.querySelector('script[data-binder-visual-fixes]');
+    if (existingVisual) {
+      if (existingVisual.dataset.loaded==='1') loadTabQc();
+      else existingVisual.addEventListener('load',loadTabQc,{once:true});
+      return;
     }
+
+    const visual=document.createElement('script');
+    visual.src='js/notebook-binder-visual-fixes.js';
+    visual.async=false;
+    visual.dataset.binderVisualFixes='';
+    visual.addEventListener('load',()=>{
+      visual.dataset.loaded='1';
+      loadTabQc();
+    },{once:true});
+    document.body.appendChild(visual);
   };
 
   const existing=document.querySelector('script[data-binder-fluid-qc]');
