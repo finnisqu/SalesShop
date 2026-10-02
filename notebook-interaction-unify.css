@@ -1,0 +1,264 @@
+/* Unified notebook interaction visuals: compact quick functions, action flyouts, grouped direction,
+   and a simplified Grid-range creation control. Loaded last among notebook UI layers. */
+
+/* --- Generic compact vertical flyout language --------------------------------------------- */
+.spatial-function-control,
+.notebook-action-flyout,
+.grid-create-control {
+  position:relative !important;
+  overflow:visible !important;
+}
+
+.spatial-function-control {
+  width:18px;
+  min-width:18px;
+  height:16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.spatial-function-trigger,
+.notebook-action-trigger,
+.grid-create-trigger {
+  display:grid !important;
+  place-items:center !important;
+  padding:0 !important;
+  line-height:1 !important;
+}
+.spatial-function-trigger {
+  width:16px !important;
+  min-width:16px !important;
+  height:16px !important;
+  min-height:16px !important;
+  font:700 7px/1 Georgia,serif !important;
+}
+
+.spatial-function-panel,
+.notebook-action-panel,
+.grid-create-panel {
+  position:absolute;
+  z-index:90;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(2px) scale(.97);
+  transition:opacity .08s ease,transform .08s ease;
+}
+.spatial-function-panel,
+.notebook-action-panel {
+  left:0;
+  bottom:19px;
+}
+.spatial-function-control.flyout-open > .spatial-function-panel,
+.spatial-function-control:focus-within > .spatial-function-panel,
+.notebook-action-flyout.flyout-open > .notebook-action-panel,
+.notebook-action-flyout:focus-within > .notebook-action-panel,
+.grid-create-control.flyout-open > .grid-create-panel,
+.grid-create-control:focus-within > .grid-create-panel {
+  opacity:.96;
+  pointer-events:auto;
+  transform:translateY(0) scale(1);
+}
+
+.spatial-function-panel button,
+.notebook-action-panel button,
+.grid-create-panel button {
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent) !important;
+  border-radius:4px !important;
+  background:color-mix(in srgb,var(--paper) 97%,var(--panel)) !important;
+  color:var(--paper-muted) !important;
+  box-shadow:0 3px 9px rgba(0,0,0,.08) !important;
+}
+.spatial-function-panel button:hover,
+.notebook-action-panel button:hover,
+.grid-create-panel button:hover {
+  color:var(--paper-ink) !important;
+  background:color-mix(in srgb,var(--paper) 88%,var(--paper-muted)) !important;
+}
+
+.spatial-function-panel button {
+  width:18px !important;
+  min-width:18px !important;
+  height:18px !important;
+  min-height:18px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  font-size:7px !important;
+  line-height:1 !important;
+}
+.spatial-function-control.flyout-down > .spatial-function-panel {
+  bottom:auto !important;
+  top:19px !important;
+}
+
+/* --- Promote / Link as one compact contextual action ------------------------------------- */
+.notebook-action-flyout {
+  width:18px;
+  min-width:18px;
+  height:16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.notebook-action-trigger {
+  width:16px !important;
+  min-width:16px !important;
+  height:16px !important;
+  min-height:16px !important;
+}
+.notebook-action-glyph,
+.notebook-action-glyph svg {
+  width:10px;
+  height:10px;
+  display:block;
+}
+.notebook-action-glyph svg {
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.35;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.82;
+}
+.notebook-action-panel {
+  min-width:38px;
+  align-items:stretch;
+}
+.notebook-action-panel .notebook-action-option {
+  width:38px !important;
+  min-width:38px !important;
+  height:18px !important;
+  min-height:18px !important;
+  padding:0 4px !important;
+  display:grid !important;
+  place-items:center !important;
+  font-size:6.5px !important;
+  line-height:1 !important;
+  white-space:nowrap;
+}
+.notebook-action-flyout.flyout-down > .notebook-action-panel {
+  bottom:auto !important;
+  top:19px !important;
+}
+
+/* A Promote/Link-only popover becomes a single tiny toolbar trigger instead of a wide card. */
+.selection-popover.compact-action-toolbar.spatial-selection-popover {
+  width:20px !important;
+  min-width:20px !important;
+  height:20px !important;
+  padding:1px !important;
+  overflow:visible !important;
+}
+
+/* --- Table toolbar coordination ------------------------------------------------------------ */
+/* A table chooses one vertical direction as a unit. JS applies flyout-down to every member when
+   any palette needs the lower side, so the visual flow never alternates up/down in one toolbar. */
+.spatial-table-controls.table-flyouts-down {
+  overflow:visible !important;
+}
+
+/* Keep the quick-function and action controls centered in the same 16px rhythm as the existing
+   alignment / number / fill / structure slots. */
+.spatial-table-controls .spatial-function-control,
+.spatial-table-controls .notebook-action-flyout {
+  flex:0 0 18px;
+  align-self:center;
+}
+
+/* --- Grid range creation ------------------------------------------------------------------ */
+.grid-cell-selection-toolbar.grid-create-control {
+  width:18px !important;
+  min-width:18px !important;
+  height:18px !important;
+  min-height:18px !important;
+  padding:0 !important;
+  gap:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+}
+.grid-cell-selection-toolbar.grid-create-control > .grid-create-trigger {
+  width:18px !important;
+  min-width:18px !important;
+  height:18px !important;
+  min-height:18px !important;
+  padding:0 !important;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent) !important;
+  border-radius:4px !important;
+  background:color-mix(in srgb,var(--paper) 97%,var(--panel)) !important;
+  color:var(--paper-muted) !important;
+  box-shadow:0 3px 9px rgba(0,0,0,.08) !important;
+  font-size:11px !important;
+  font-weight:500 !important;
+}
+.grid-create-panel {
+  left:0;
+  bottom:21px;
+}
+.grid-create-panel button {
+  width:20px !important;
+  min-width:20px !important;
+  height:20px !important;
+  min-height:20px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+}
+.grid-create-control.flyout-down > .grid-create-panel {
+  bottom:auto !important;
+  top:21px !important;
+}
+.grid-create-table-icon,
+.grid-create-shape-icon {
+  position:relative;
+  display:block;
+  width:11px;
+  height:10px;
+  border:1px solid currentColor;
+  border-radius:1px;
+  opacity:.82;
+}
+.grid-create-table-icon::before,
+.grid-create-table-icon::after {
+  content:'';
+  position:absolute;
+  background:currentColor;
+  opacity:.8;
+}
+.grid-create-table-icon::before {
+  left:50%; top:0; bottom:0; width:1px; transform:translateX(-.5px);
+}
+.grid-create-table-icon::after {
+  left:0; right:0; top:50%; height:1px; transform:translateY(-.5px);
+}
+.grid-create-shape-icon {
+  background:transparent;
+}
+
+/* Make sure Grid selection UI itself sits above page objects but never steals events outside its
+   tiny trigger/palette. */
+.grid-cell-selection { z-index:24; }
+.grid-cell-selection-toolbar.grid-create-control { z-index:70; }
+
+/* --- Contextual text toolbars --------------------------------------------------------------- */
+/* Existing rich/text toolbars keep their familiar formatting buttons, but Promote/Link now occupy
+   one compact action slot that uses the same vertical palette as tables. */
+.rich-selection-toolbar,
+.rich-selection-popover,
+.grid-editor-selection-tools,
+.grid-text-object-toolbar {
+  overflow:visible !important;
+}
+.rich-selection-toolbar .notebook-action-flyout,
+.rich-selection-popover .notebook-action-flyout,
+.grid-editor-selection-tools .notebook-action-flyout,
+.grid-text-object-toolbar .notebook-action-flyout {
+  display:inline-flex;
+  vertical-align:middle;
+}
