@@ -1,12 +1,27 @@
 /* Dual Binder tab rails + final selection polish. */
 
-/* The Binder now reserves a narrow physical tab reveal on both outside edges. */
+/* The Binder reserves only enough outside room to expose the tabs. Most of each tab visually tucks
+   underneath the sheet edge so it reads like a real divider tab instead of detached navigation. */
 .notebook-shell.notebook-binder-mode {
   --binder-tab-reveal:20px;
   --binder-tab-height:58px;
+  --binder-edge-space:24px;
+  --binder-gutter:24px !important;
 }
 .notebook-shell.notebook-binder-mode .notebook-page-pair {
+  width:calc(100% - (var(--binder-edge-space) * 2)) !important;
+  margin-left:var(--binder-edge-space) !important;
+  margin-right:var(--binder-edge-space) !important;
   overflow:visible !important;
+}
+.notebook-shell.notebook-binder-mode.notebook-width-medium .notebook-page-pair {
+  width:min(1120px,calc(100% - (var(--binder-edge-space) * 2))) !important;
+  max-width:1120px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.notebook-shell.notebook-binder-mode.notebook-width-full .notebook-page-pair {
+  max-width:1500px !important;
 }
 
 /* Retire the older one-sided rail. */
@@ -168,6 +183,7 @@ html[data-theme="dark"] .spatial-table td.spreadsheet-range-cell:not(.spreadshee
   .notebook-shell.notebook-binder-mode {
     --binder-tab-reveal:18px;
     --binder-tab-height:54px;
+    --binder-edge-space:21px;
   }
   .notebook-binder-side-tab-label { font-size:5.1px; }
 }
