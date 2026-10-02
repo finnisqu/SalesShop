@@ -1,0 +1,98 @@
+/* Binder fluidity + Grid stability QC. */
+
+/* Keep scrollbar geometry reserved even when the thumb is not currently needed. */
+#notebookDock .notebook-page,
+#notebookDock .notebook-reference-scroller,
+#notebookDock .notebook-entries,
+#notebookDock .grid-history-rail {
+  scrollbar-gutter:stable !important;
+}
+
+/* Prevent browser anchoring/animated focus scrolling from nudging a spatial sheet side-to-side. */
+#notebookDock .notebook-page.paper-grid,
+#notebookDock .notebook-page.paper-grid .notebook-page-body,
+#notebookDock .notebook-page.paper-grid .grid-notebook-canvas {
+  overflow-anchor:none !important;
+  scroll-behavior:auto !important;
+}
+
+/* The elastic Grid canvas itself carries the ruling too, so expanding content never outruns the
+   visible graph paper at the right/bottom edge. */
+#notebookDock .notebook-page.paper-grid[data-grid-paper="grid"] .grid-notebook-canvas {
+  background-image:
+    repeating-linear-gradient(to bottom,transparent 0,transparent 27px,var(--paper-line) 27px,var(--paper-line) 28px),
+    repeating-linear-gradient(to right,transparent 0,transparent 27px,var(--paper-line) 27px,var(--paper-line) 28px) !important;
+  background-position:0 0,0 0 !important;
+  background-attachment:local !important;
+}
+#notebookDock .notebook-page.paper-grid[data-grid-paper="dots"] .grid-notebook-canvas {
+  /* Dot paper remains owned by the existing page style; the sizing fix keeps its parent large enough. */
+  background-position:0 0 !important;
+}
+
+/* Open-but-hidden Binder pages appear as quiet physical sheets behind the single visible paper. */
+.notebook-binder-paper-layers {
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  overflow:visible;
+}
+.notebook-binder-paper-layer {
+  position:absolute;
+  display:block;
+  box-sizing:border-box;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 22%,var(--border));
+  border-radius:7px;
+  background:var(--layer-paper,var(--paper));
+  box-shadow:-2px 4px 10px rgba(0,0,0,.045);
+  opacity:.72;
+}
+#notebookDock .notebook-shell[data-binder-visible-count="1"] > .notebook-page,
+#notebookDock .notebook-shell[data-binder-visible-count="1"] .notebook-page:not(.notebook-reference-page) {
+  position:relative;
+  z-index:2;
+}
+
+/* Rails are always above those rear sheets and continue to kiss the actual visible paper edge. */
+#notebookDock .notebook-binder-side-rail {
+  z-index:46 !important;
+}
+
+/* Favorite tabs read as deliberate binder dividers without becoming loud. */
+.notebook-binder-side-tab.favorite-page-tab {
+  border-color:color-mix(in srgb,var(--tab-notebook) 52%,var(--paper-muted)) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--tab-notebook) 18%,transparent),0 3px 9px rgba(0,0,0,.075) !important;
+}
+.notebook-binder-side-tab.favorite-page-tab .notebook-binder-side-tab-label {
+  font-weight:800 !important;
+  color:color-mix(in srgb,var(--paper-ink) 78%,var(--paper-muted)) !important;
+}
+.notebook-binder-side-tab.favorite-page-tab::after {
+  content:'★';
+  position:absolute;
+  top:3px;
+  left:50%;
+  transform:translateX(-50%);
+  font:700 6px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--tab-notebook);
+  opacity:.78;
+}
+.notebook-binder-side-tab.favorite-page-tab .notebook-binder-side-tab-label {
+  max-height:38px !important;
+  margin-top:6px;
+}
+
+/* The former live-history badge no longer belongs in the fluid Binder model. */
+#notebookDock .notebook-current-worked,
+#notebookDock .notebook-current-worked-today,
+#notebookDock .notebook-working-badge,
+#notebookDock [data-notebook-worked-today] {
+  display:none !important;
+}
+
+/* Single-sheet Binder tabs must remain visible even though the second sheet is not mounted. */
+#notebookDock .notebook-shell[data-binder-open-count]:not([data-binder-open-count="1"]) .notebook-binder-side-rail {
+  display:flex !important;
+  visibility:visible !important;
+}
