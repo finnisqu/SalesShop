@@ -1,0 +1,75 @@
+/* Final Binder display-mode + Grid-origin QC. */
+
+/* The retired Binder spine is the lingering vertical line beside the left paper stack. */
+#notebookDock .notebook-shell.notebook-binder-mode .notebook-page-pair::before {
+  display:none !important;
+  content:none !important;
+  background:none !important;
+  box-shadow:none !important;
+}
+
+/* Single mode keeps the entire open-page Binder visible, but all tabs belong to one left bank. */
+#notebookDock .notebook-binder-top-tabs[data-display-mode="single"] {
+  grid-template-columns:minmax(0,1fr) !important;
+}
+#notebookDock .notebook-binder-top-tabs[data-display-mode="single"] .notebook-binder-tab-bank-left {
+  justify-content:flex-start !important;
+}
+#notebookDock .notebook-binder-top-tabs[data-display-mode="single"] .notebook-binder-tab-bank-right,
+#notebookDock .notebook-binder-top-tabs[data-display-mode="single"] .notebook-binder-tab-spine {
+  display:none !important;
+}
+
+/* Single/Double is always part of the expanded Position menu. */
+#notebookDock .notebook-position-control .notebook-spread-toggle {
+  display:grid !important;
+  place-items:center !important;
+}
+#notebookDock .notebook-position-control:hover .notebook-spread-toggle,
+#notebookDock .notebook-position-control:focus-within .notebook-spread-toggle,
+#notebookDock .notebook-position-control.position-click-collapsed:hover .notebook-spread-toggle {
+  opacity:.68 !important;
+  pointer-events:auto !important;
+}
+#notebookDock .notebook-position-control .notebook-spread-toggle:hover:not(:disabled) {
+  opacity:1 !important;
+}
+#notebookDock .notebook-position-control .notebook-spread-toggle:disabled {
+  opacity:.2 !important;
+  pointer-events:none !important;
+}
+
+/* Spatial pages use one origin. Old archive/workspace offsets must not survive into the final Grid. */
+#notebookDock .notebook-page.paper-grid .grid-notebook-canvas {
+  --grid-workspace-left:0px !important;
+  --grid-archive-width:0px !important;
+}
+#notebookDock .notebook-page.paper-grid .grid-history-rail {
+  display:none !important;
+}
+
+/* The visible lattice uses the exact same live rhythm as spatial pointer/selection geometry.
+   This replaces the late hard-coded 28px QC background that drifted when notebook font size changed. */
+#notebookDock .notebook-page.paper-grid[data-grid-paper="grid"] .notebook-page-body {
+  background-image:none !important;
+}
+#notebookDock .notebook-page.paper-grid[data-grid-paper="grid"] .grid-notebook-canvas {
+  background-image:
+    linear-gradient(to right,var(--paper-line) 1px,transparent 1px),
+    linear-gradient(to bottom,var(--paper-line) 1px,transparent 1px) !important;
+  background-size:var(--notebook-row-size) var(--notebook-row-size) !important;
+  background-position:0 0 !important;
+  background-origin:border-box !important;
+  background-attachment:local !important;
+}
+#notebookDock .notebook-page.paper-grid[data-grid-paper="dots"] .grid-notebook-canvas {
+  background-size:var(--notebook-row-size) var(--notebook-row-size) !important;
+  background-position:0 0 !important;
+}
+
+/* Selection/object geometry must inherit the same rhythm without an extra inset. */
+#notebookDock .grid-cell-selection,
+#notebookDock .grid-cell-selection-toolbar,
+#notebookDock .notebook-spatial-object {
+  transform:none !important;
+}
