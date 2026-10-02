@@ -105,13 +105,13 @@ function showCellFunctionPalette(td,object) {
   const wrapRect=wrap.getBoundingClientRect();
   const cellRect=td.getBoundingClientRect();
   const center=(cellRect.left+cellRect.right)/2-wrapRect.left;
-  const top=cellRect.top-wrapRect.top;
-  palette.style.left=`${Math.round(center)}px`;
-  palette.style.top=`${Math.round(top)}px`;
-
   const page=wrap.closest('.notebook-page');
   const pageRect=page?.getBoundingClientRect();
-  if (pageRect && cellRect.top-pageRect.top<72) palette.classList.add('flyout-down');
+  const flyDown=!!(pageRect && cellRect.top-pageRect.top<72);
+  const top=(flyDown ? cellRect.bottom : cellRect.top)-wrapRect.top;
+  palette.style.left=`${Math.round(center)}px`;
+  palette.style.top=`${Math.round(top)}px`;
+  palette.classList.toggle('flyout-down',flyDown);
 
   $$('[data-cell-function]',palette).forEach(button=>{
     button.addEventListener('mousedown',event=>event.preventDefault());
