@@ -1,0 +1,147 @@
+/* Final object-toolbar placement and compact table sizing. */
+
+/* Keep floating strips centered over their object by default, but allow JS to nudge them back
+   inside the visible notebook page when an object sits near an edge. */
+#notebookDock .spatial-object-table > .spatial-table-controls,
+.spatial-shape-toolbar,
+.grid-text-object-toolbar {
+  transform:translateX(calc(-50% + var(--toolbar-edge-shift,0px))) translateY(2px) !important;
+}
+#notebookDock .spatial-object-table.format-open > .spatial-table-controls,
+.notebook-spatial-object.format-open > .spatial-shape-toolbar,
+.grid-note.text-format-open > .grid-text-object-toolbar {
+  transform:translateX(calc(-50% + var(--toolbar-edge-shift,0px))) translateY(0) !important;
+}
+
+/* One compact 2x2 grid button owns table size. Rows/columns rise into a small palette above it. */
+.spatial-table-size-control {
+  position:relative;
+  flex:0 0 16px;
+  width:16px;
+  height:16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+}
+.spatial-table-size-trigger {
+  width:16px !important;
+  min-width:16px !important;
+  height:16px !important;
+  min-height:16px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+}
+.spatial-table-size-grid {
+  position:relative;
+  width:10px;
+  height:10px;
+  display:block;
+  border:1px solid currentColor;
+  border-radius:1px;
+  opacity:.82;
+}
+.spatial-table-size-grid::before,
+.spatial-table-size-grid::after {
+  content:'';
+  position:absolute;
+  background:currentColor;
+  opacity:.82;
+}
+.spatial-table-size-grid::before {
+  left:50%; top:0; bottom:0; width:1px; transform:translateX(-.5px);
+}
+.spatial-table-size-grid::after {
+  left:0; right:0; top:50%; height:1px; transform:translateY(-.5px);
+}
+
+.spatial-table-size-panel {
+  position:absolute;
+  z-index:70;
+  left:50%;
+  bottom:calc(100% + 5px);
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:2px;
+  padding:3px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent);
+  border-radius:5px;
+  background:color-mix(in srgb,var(--paper) 97%,var(--panel));
+  box-shadow:0 4px 12px rgba(0,0,0,.09);
+  opacity:0;
+  pointer-events:none;
+  transform:translateX(-50%) translateY(2px) scale(.98);
+  transition:opacity .08s ease,transform .08s ease;
+}
+.spatial-table-size-control:hover > .spatial-table-size-panel,
+.spatial-table-size-control:focus-within > .spatial-table-size-panel,
+.spatial-table-size-control.size-open > .spatial-table-size-panel {
+  opacity:.98;
+  pointer-events:auto;
+  transform:translateX(-50%) translateY(0) scale(1);
+}
+.spatial-table-size-panel .spatial-table-dimension-stepper {
+  width:max-content;
+  min-width:51px;
+  margin:0 !important;
+  background:transparent;
+}
+
+/* Delete is the terminal action, never stranded in the middle as other controls are appended. */
+.spatial-table-delete-at-end {
+  order:999 !important;
+  margin-left:1px !important;
+}
+.spatial-table-delete-at-end + * { order:1000; }
+
+/* Move handles are top-center in the calm state, matching the original paper-object metaphor. */
+.grid-grab-handle,
+.spatial-object-drag-handle {
+  left:50% !important;
+  right:auto !important;
+  top:-11px !important;
+  width:24px !important;
+  height:10px !important;
+  transform:translateX(-50%) !important;
+  flex-direction:row !important;
+}
+.spatial-drag-dots {
+  flex-direction:row !important;
+}
+
+/* Once formatting is open, the top-center real estate belongs to the toolbar. Move shifts to the
+   right edge and becomes vertical, remaining available without colliding with formatting. */
+.grid-note.text-format-open > .grid-grab-handle,
+.notebook-spatial-object.format-open > .spatial-object-drag-handle {
+  left:auto !important;
+  right:-15px !important;
+  top:50% !important;
+  width:10px !important;
+  height:24px !important;
+  transform:translateY(-50%) !important;
+  flex-direction:column !important;
+}
+.notebook-spatial-object.format-open > .spatial-object-drag-handle .spatial-drag-dots {
+  flex-direction:column !important;
+}
+
+/* The direct X stays visually separate from the top-center move handle. */
+#notebookDock .notebook-spatial-object.spatial-object-hover-ui > .spatial-object-delete {
+  right:-5px !important;
+}
+
+@container notebook-page (max-width:560px) {
+  /* Wrapped strips still use the same edge offset and grow upward from their object. */
+  #notebookDock .spatial-object-table > .spatial-table-controls,
+  .spatial-shape-toolbar,
+  .grid-text-object-toolbar {
+    transform:translateX(calc(-50% + var(--toolbar-edge-shift,0px))) translateY(2px) !important;
+  }
+  #notebookDock .spatial-object-table.format-open > .spatial-table-controls,
+  .notebook-spatial-object.format-open > .spatial-shape-toolbar,
+  .grid-note.text-format-open > .grid-text-object-toolbar {
+    transform:translateX(calc(-50% + var(--toolbar-edge-shift,0px))) translateY(0) !important;
+  }
+}
