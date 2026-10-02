@@ -89,6 +89,59 @@
   background:transparent;
 }
 
+/* Merge is an icon-only action; Split remains text because it describes the reverse operation. */
+.spatial-table-merge-button.spatial-table-merge-icon-button {
+  width:16px !important;
+  min-width:16px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+}
+.spatial-table-merge-glyph {
+  position:relative;
+  width:12px;
+  height:10px;
+  display:block;
+}
+.spatial-table-merge-glyph i {
+  position:absolute;
+  top:2px;
+  width:4px;
+  height:6px;
+  border:1px solid currentColor;
+  border-radius:1px;
+  opacity:.82;
+}
+.spatial-table-merge-glyph i:first-child { left:0; }
+.spatial-table-merge-glyph i:nth-child(2) { right:0; }
+.spatial-table-merge-glyph b {
+  position:absolute;
+  left:4px;
+  right:4px;
+  top:4px;
+  height:2px;
+  border-top:1px solid currentColor;
+}
+.spatial-table-merge-glyph b::before,
+.spatial-table-merge-glyph b::after {
+  content:'';
+  position:absolute;
+  top:-2px;
+  width:3px;
+  height:3px;
+  border-top:1px solid currentColor;
+}
+.spatial-table-merge-glyph b::before {
+  left:-1px;
+  border-left:1px solid currentColor;
+  transform:rotate(-45deg);
+}
+.spatial-table-merge-glyph b::after {
+  right:-1px;
+  border-right:1px solid currentColor;
+  transform:rotate(45deg);
+}
+
 /* Delete is the terminal action, never stranded in the middle as other controls are appended. */
 .spatial-table-delete-at-end {
   order:999 !important;
@@ -143,5 +196,67 @@
   .notebook-spatial-object.format-open > .spatial-shape-toolbar,
   .grid-note.text-format-open > .grid-text-object-toolbar {
     transform:translateX(calc(-50% + var(--toolbar-edge-shift,0px))) translateY(0) !important;
+  }
+}
+
+/* The notebook shell—not the browser viewport—controls when its main toolbar needs another row.
+   This catches a resized floating pad like the one in the screenshot. */
+.notebook-shell {
+  container-type:inline-size;
+  container-name:notebook-shell;
+}
+
+@container notebook-shell (max-width:470px) {
+  .notebook-toolbar {
+    grid-template-columns:minmax(0,1fr) auto !important;
+    grid-template-rows:24px 24px !important;
+    height:auto !important;
+    min-height:52px !important;
+    align-items:center !important;
+    gap:2px 4px !important;
+    padding:1px 2px 4px !important;
+  }
+  .notebook-toolbar-left {
+    grid-column:1 !important;
+    grid-row:1 !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:2px !important;
+    min-width:0 !important;
+    overflow:visible !important;
+  }
+  .notebook-position-control,
+  .notebook-width-controls {
+    grid-column:2 !important;
+    grid-row:1 !important;
+    justify-self:end !important;
+  }
+  .notebook-toolbar-actions {
+    grid-column:1 / -1 !important;
+    grid-row:2 !important;
+    justify-self:stretch !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    gap:2px !important;
+    min-width:0 !important;
+  }
+  .notebook-toolbar-button,
+  .notebook-history-button {
+    padding-inline:5px !important;
+  }
+}
+
+@container notebook-shell (max-width:340px) {
+  .notebook-toolbar {
+    grid-template-columns:1fr auto !important;
+    gap:1px 2px !important;
+  }
+  .notebook-toolbar-actions {
+    gap:1px !important;
+  }
+  .notebook-toolbar-button,
+  .notebook-history-button {
+    padding-inline:4px !important;
   }
 }
