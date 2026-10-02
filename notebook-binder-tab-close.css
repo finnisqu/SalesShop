@@ -163,6 +163,7 @@ html[data-theme="dark"] #notebookDock .notebook-single-style-menu .swatch-neutra
 
 @container notebook-shell (max-width:430px) {
   #notebookDock .notebook-paper-head {
+    min-height:72px;
     padding-right:84px !important;
     gap:5px;
   }
@@ -182,14 +183,17 @@ html[data-theme="dark"] #notebookDock .notebook-single-style-menu .swatch-neutra
     height:13px;
   }
   #notebookDock .notebook-page-header {
-    position:static !important;
-    order:3;
-    width:min(52%,180px) !important;
-    max-width:52% !important;
-    margin-left:auto;
+    position:absolute !important;
+    left:20px !important;
+    right:84px !important;
+    top:39px !important;
+    width:auto !important;
+    max-width:none !important;
+    min-width:0 !important;
+    text-align:left;
   }
   #notebookDock .notebook-date {
-    max-width:50%;
+    max-width:calc(100% - 90px);
   }
   #notebookDock .notebook-single-style-menu {
     top:29px;
