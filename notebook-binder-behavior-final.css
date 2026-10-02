@@ -1,0 +1,186 @@
+/* Final Binder behavior/paper polish. */
+
+.notebook-shell {
+  position:relative;
+}
+
+/* Tabs sit directly outside the paper edge, never over it. Their inner border kisses the sheet. */
+.notebook-binder-side-rail {
+  position:absolute !important;
+  z-index:42 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:4px !important;
+  transform:none !important;
+  pointer-events:auto !important;
+}
+.notebook-binder-side-rail-left {
+  transform:translateX(-100%) !important;
+}
+.notebook-binder-side-rail-right {
+  transform:none !important;
+}
+.notebook-binder-side-tab {
+  width:19px !important;
+  min-width:19px !important;
+  height:56px !important;
+  min-height:56px !important;
+  border-radius:0 !important;
+  box-shadow:0 3px 8px rgba(0,0,0,.06) !important;
+}
+.notebook-binder-side-rail-left .notebook-binder-side-tab {
+  border-radius:6px 0 0 6px !important;
+  border-right-width:0 !important;
+}
+.notebook-binder-side-rail-right .notebook-binder-side-tab {
+  border-radius:0 6px 6px 0 !important;
+  border-left-width:0 !important;
+}
+.notebook-binder-side-tab.on-this-side,
+.notebook-binder-side-rail-left .notebook-binder-side-tab.on-this-side,
+.notebook-binder-side-rail-right .notebook-binder-side-tab.on-this-side {
+  transform:none !important;
+  opacity:1 !important;
+  box-shadow:0 4px 10px rgba(0,0,0,.085) !important;
+}
+.notebook-binder-side-tab.on-other-side {
+  opacity:.34 !important;
+}
+.notebook-binder-side-tab:hover {
+  opacity:.92 !important;
+  transform:none !important;
+}
+
+/* Hidden open pages keep their tabs even when only one sheet is physically visible. The sheet uses
+   ordinary Notebook width instead of staying compressed to a half-Binder footprint. */
+#notebookDock .notebook-shell[data-binder-visible-count="1"].notebook-width-full > .notebook-page,
+#notebookDock .notebook-shell[data-binder-visible-count="1"].notebook-width-full .notebook-page:not(.notebook-reference-page) {
+  width:calc(100% - 40px) !important;
+  max-width:none !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+#notebookDock .notebook-shell[data-binder-visible-count="1"].notebook-width-medium > .notebook-page,
+#notebookDock .notebook-shell[data-binder-visible-count="1"].notebook-width-medium .notebook-page:not(.notebook-reference-page) {
+  width:min(900px,calc(100% - 96px)) !important;
+  max-width:900px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+/* Medium means both the paper and the global toolbar come inward together on a single visible sheet. */
+#notebookDock .notebook-shell[data-binder-visible-count="1"].notebook-width-medium .notebook-toolbar {
+  width:min(900px,calc(100% - 96px)) !important;
+  max-width:900px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+#notebookDock .notebook-shell[data-binder-visible-count="1"].notebook-width-full .notebook-toolbar {
+  width:100% !important;
+  max-width:none !important;
+  margin-inline:0 !important;
+}
+
+/* The page-local controls are one calm row whenever the sheet has enough room. */
+#notebookDock .notebook-shell .notebook-binder-local-actions.binder-grid,
+#notebookDock .notebook-shell .notebook-peer-local-actions.notebook-binder-local-actions.binder-grid {
+  width:auto !important;
+  max-width:none !important;
+  height:23px !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  grid-template-columns:none !important;
+  grid-template-rows:none !important;
+  gap:3px !important;
+}
+#notebookDock .notebook-shell .notebook-binder-local-actions.binder-grid .notebook-binder-grid-button,
+#notebookDock .notebook-shell .notebook-binder-local-actions.binder-grid .notebook-binder-style {
+  width:23px !important;
+  min-width:23px !important;
+  height:23px !important;
+  min-height:23px !important;
+}
+
+/* Each sheet is its own responsive container. Only compressed papers use the 2x2 pad. */
+#notebookDock .notebook-page,
+#notebookDock .notebook-reference-page {
+  container-type:inline-size;
+  container-name:binder-paper;
+}
+@container binder-paper (max-width:430px) {
+  #notebookDock .notebook-binder-local-actions.binder-grid,
+  #notebookDock .notebook-peer-local-actions.notebook-binder-local-actions.binder-grid {
+    width:49px !important;
+    max-width:49px !important;
+    height:auto !important;
+    display:grid !important;
+    grid-template-columns:23px 23px !important;
+    grid-template-rows:23px 23px !important;
+    gap:3px !important;
+  }
+}
+body.notebook-floating-mode #notebookDock .notebook-binder-local-actions.binder-grid,
+body.notebook-floating-mode #notebookDock .notebook-peer-local-actions.notebook-binder-local-actions.binder-grid,
+body.notebook-docked-mode #notebookDock .notebook-binder-local-actions.binder-grid,
+body.notebook-docked-mode #notebookDock .notebook-peer-local-actions.notebook-binder-local-actions.binder-grid,
+#notebookDock .notebook-width-dock-left .notebook-binder-local-actions.binder-grid {
+  width:49px !important;
+  max-width:49px !important;
+  height:auto !important;
+  display:grid !important;
+  grid-template-columns:23px 23px !important;
+  grid-template-rows:23px 23px !important;
+  gap:3px !important;
+}
+
+/* If the left full renderer has no page title/header, its date is the title. */
+#notebookDock .notebook-page.binder-date-title-fallback .notebook-date {
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  font:700 15px/1.15 Georgia,serif !important;
+  color:var(--paper-ink) !important;
+  margin:0 !important;
+}
+#notebookDock .notebook-page.binder-date-title-fallback .notebook-page-header:empty {
+  display:none !important;
+}
+
+/* A quiet paper-opening motion makes a tab switch feel like turning/opening a sheet instead of a
+   hard software rerender. Use translate rather than transform so physical side-placement rules win. */
+.binder-sheet-opening {
+  animation-duration:180ms;
+  animation-timing-function:cubic-bezier(.2,.72,.25,1);
+  animation-fill-mode:both;
+  animation-delay:18ms;
+  will-change:translate,opacity,filter;
+}
+.binder-sheet-opening-left {
+  animation-name:binder-paper-open-left;
+}
+.binder-sheet-opening-right {
+  animation-name:binder-paper-open-right;
+}
+@keyframes binder-paper-open-left {
+  0% { opacity:.76; translate:-10px 0; filter:brightness(.985); }
+  58% { opacity:1; translate:1px 0; filter:brightness(1); }
+  100% { opacity:1; translate:0 0; filter:none; }
+}
+@keyframes binder-paper-open-right {
+  0% { opacity:.76; translate:10px 0; filter:brightness(.985); }
+  58% { opacity:1; translate:-1px 0; filter:brightness(1); }
+  100% { opacity:1; translate:0 0; filter:none; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .binder-sheet-opening { animation:none !important; }
+}
+
+@media (max-width:640px) {
+  #notebookDock .notebook-shell[data-binder-visible-count="1"].notebook-width-medium .notebook-toolbar,
+  #notebookDock .notebook-shell[data-binder-visible-count="1"].notebook-width-medium .notebook-page {
+    width:calc(100% - 38px) !important;
+    max-width:none !important;
+  }
+}
