@@ -1,0 +1,85 @@
+/* Small hover-close affordance for the clean Binder tabs. */
+#notebookDock .notebook-binder-tab-clean {
+  display:block;
+  padding:0 !important;
+}
+#notebookDock .notebook-binder-tab-open {
+  width:100%;
+  height:100%;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 8px;
+  border:0;
+  border-radius:inherit;
+  background:transparent;
+  color:inherit;
+  cursor:pointer;
+  transition:padding-right .1s ease;
+}
+#notebookDock .notebook-binder-tab-clean.active .notebook-binder-tab-open {
+  cursor:default;
+}
+#notebookDock .notebook-binder-tab-label {
+  display:block;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:700 8px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+#notebookDock .notebook-binder-tab-close {
+  position:absolute;
+  z-index:3;
+  right:3px;
+  top:50%;
+  width:17px;
+  height:17px;
+  min-width:17px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:4px;
+  background:transparent;
+  color:currentColor;
+  font:500 12px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(-50%);
+  transition:opacity .1s ease,background .1s ease,color .1s ease;
+}
+#notebookDock .notebook-binder-tab-clean:hover .notebook-binder-tab-close,
+#notebookDock .notebook-binder-tab-clean:focus-within .notebook-binder-tab-close {
+  opacity:.62;
+  pointer-events:auto;
+}
+#notebookDock .notebook-binder-tab-clean:hover .notebook-binder-tab-open,
+#notebookDock .notebook-binder-tab-clean:focus-within .notebook-binder-tab-open {
+  padding-right:23px;
+}
+#notebookDock .notebook-binder-tab-close:hover,
+#notebookDock .notebook-binder-tab-close:focus-visible {
+  opacity:1 !important;
+  background:color-mix(in srgb,currentColor 9%,transparent);
+  outline:none;
+}
+#notebookDock .notebook-binder-tab-clean.favorite::before {
+  position:absolute;
+  z-index:2;
+  left:5px;
+  top:50%;
+  margin:0;
+  transform:translateY(-50%);
+}
+#notebookDock .notebook-binder-tab-clean.favorite .notebook-binder-tab-open {
+  padding-left:18px;
+}
+@media (max-width:720px) {
+  #notebookDock .notebook-binder-tab-label { font-size:7px; }
+  #notebookDock .notebook-binder-tab-close { right:2px;width:15px;height:15px;min-width:15px; }
+  #notebookDock .notebook-binder-tab-clean:hover .notebook-binder-tab-open,
+  #notebookDock .notebook-binder-tab-clean:focus-within .notebook-binder-tab-open { padding-right:19px; }
+}
