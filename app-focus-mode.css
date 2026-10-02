@@ -1,4 +1,5 @@
-/* App-level distraction-free fullscreen. */
+/* App-level distraction-free fullscreen. Native fullscreen removes browser chrome while the
+   SalesShop navigation/search/New/theme row deliberately remains available. */
 .focus-mode-button {
   display:grid;
   place-items:center;
@@ -15,7 +16,7 @@
 }
 
 body.app-focus-mode .app-header {
-  display:none !important;
+  display:flex !important;
 }
 body.app-focus-mode .app-shell {
   height:100dvh !important;
@@ -29,44 +30,18 @@ body.app-focus-mode .utility-corner {
   display:none !important;
 }
 
+/* The normal Focus button remains in the visible top row, so a second floating Exit control would
+   only duplicate/cover useful chrome. Escape and the active Focus button both exit fullscreen. */
 .focus-mode-exit {
-  position:fixed;
-  z-index:260;
-  top:8px;
-  right:8px;
-  height:27px;
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  border:1px solid color-mix(in srgb,var(--border-strong) 78%,transparent);
-  border-radius:6px;
-  background:color-mix(in srgb,var(--bg) 88%,transparent);
-  color:var(--muted);
-  padding:0 7px;
-  box-shadow:0 5px 16px rgba(0,0,0,.12);
-  backdrop-filter:blur(6px);
-  font-size:7px;
-  font-weight:700;
-  opacity:.58;
-  transition:opacity .1s ease,color .1s ease,background .1s ease;
-}
-.focus-mode-exit[hidden] { display:none !important; }
-.focus-mode-exit:hover {
-  opacity:1;
-  color:var(--ink);
-  background:var(--panel);
-}
-.focus-mode-exit svg {
-  width:13px;
-  height:13px;
+  display:none !important;
 }
 
-/* Focus mode gives the actual work surface every available pixel. */
+/* Focus mode gives the actual work surface the viewport freed by the browser chrome without
+   changing SalesShop's own application navigation. */
 body.app-focus-mode .view.active,
 body.app-focus-mode .notebook-dock {
   padding-top:4px;
 }
 body.app-focus-mode.notebook-floating-mode .notebook-dock {
-  max-height:calc(100dvh - 12px) !important;
-  top:6px !important;
+  max-height:calc(100dvh - 62px) !important;
 }
