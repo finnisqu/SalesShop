@@ -24,155 +24,48 @@ function init() {
 
 init();
 
-/* Final notebook/Binder QC is intentionally loaded after the full legacy override stack. */
-(function loadBinderFluidQc(){
-  if (!document.querySelector('link[data-binder-fluid-qc]')) {
+/* Notebook finalization.
+   Keep the useful fluid/spatial fixes, then finish with ONE Binder owner.
+   The old tabs-QC -> mode-QC -> split-selection -> navigation-final chain is retired. */
+(function loadNotebookFinalLayers(){
+  const BUILD='20261002-1620-binder-clean';
+  const withBuild=path=>`${path}?v=${BUILD}`;
+
+  const ensureStyle=(key,path)=>{
+    if (document.querySelector(`link[data-${key}]`)) return;
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='notebook-binder-fluid-qc.css';
-    link.dataset.binderFluidQc='';
+    link.href=withBuild(path);
+    link.dataset[key.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]='';
+    link.setAttribute(`data-${key}`,'');
     document.head.appendChild(link);
-  }
-
-  const loadNavigationFinal=()=>{
-    if (!document.querySelector('link[data-notebook-navigation-final]')) {
-      const link=document.createElement('link');
-      link.rel='stylesheet';
-      link.href='notebook-navigation-final.css';
-      link.dataset.notebookNavigationFinal='';
-      document.head.appendChild(link);
-    }
-    if (!document.querySelector('script[data-notebook-navigation-final]')) {
-      const script=document.createElement('script');
-      script.src='js/notebook-navigation-final.js';
-      script.async=false;
-      script.dataset.notebookNavigationFinal='';
-      document.body.appendChild(script);
-    }
   };
 
-  const loadFinalBinderSelection=()=>{
-    if (!document.querySelector('link[data-binder-selection-final]')) {
-      const link=document.createElement('link');
-      link.rel='stylesheet';
-      link.href='notebook-binder-selection-final.css';
-      link.dataset.binderSelectionFinal='';
-      document.head.appendChild(link);
-    }
-
-    const existingSelection=document.querySelector('script[data-binder-selection-final]');
-    if (existingSelection) {
-      if (existingSelection.dataset.loaded==='1') loadNavigationFinal();
-      else existingSelection.addEventListener('load',loadNavigationFinal,{once:true});
+  const loadScript=(key,path,next)=>{
+    const selector=`script[data-${key}]`;
+    const existing=document.querySelector(selector);
+    if (existing) {
+      if (existing.dataset.loaded==='1') next?.();
+      else if (next) existing.addEventListener('load',next,{once:true});
       return;
     }
-
-    const selection=document.createElement('script');
-    selection.src='js/notebook-binder-selection-final.js';
-    selection.async=false;
-    selection.dataset.binderSelectionFinal='';
-    selection.addEventListener('load',()=>{
-      selection.dataset.loaded='1';
-      loadNavigationFinal();
+    const script=document.createElement('script');
+    script.src=withBuild(path);
+    script.async=false;
+    script.setAttribute(`data-${key}`,'');
+    script.addEventListener('load',()=>{
+      script.dataset.loaded='1';
+      next?.();
     },{once:true});
-    document.body.appendChild(selection);
+    document.body.appendChild(script);
   };
 
-  const loadModeQc=()=>{
-    if (!document.querySelector('link[data-binder-mode-qc]')) {
-      const link=document.createElement('link');
-      link.rel='stylesheet';
-      link.href='notebook-binder-mode-qc.css';
-      link.dataset.binderModeQc='';
-      document.head.appendChild(link);
-    }
-
-    const existingMode=document.querySelector('script[data-binder-mode-qc]');
-    if (existingMode) {
-      if (existingMode.dataset.loaded==='1') loadFinalBinderSelection();
-      else existingMode.addEventListener('load',loadFinalBinderSelection,{once:true});
-      return;
-    }
-
-    const mode=document.createElement('script');
-    mode.src='js/notebook-binder-mode-qc.js';
-    mode.async=false;
-    mode.dataset.binderModeQc='';
-    mode.addEventListener('load',()=>{
-      mode.dataset.loaded='1';
-      loadFinalBinderSelection();
-    },{once:true});
-    document.body.appendChild(mode);
-  };
-
-  const loadTabQc=()=>{
-    if (!document.querySelector('link[data-binder-tabs-qc]')) {
-      const link=document.createElement('link');
-      link.rel='stylesheet';
-      link.href='notebook-binder-tabs-qc.css';
-      link.dataset.binderTabsQc='';
-      document.head.appendChild(link);
-    }
-
-    const existingTabs=document.querySelector('script[data-binder-tabs-qc]');
-    if (existingTabs) {
-      if (existingTabs.dataset.loaded==='1') loadModeQc();
-      else existingTabs.addEventListener('load',loadModeQc,{once:true});
-      return;
-    }
-
-    const tabs=document.createElement('script');
-    tabs.src='js/notebook-binder-tabs-qc.js';
-    tabs.async=false;
-    tabs.dataset.binderTabsQc='';
-    tabs.addEventListener('load',()=>{
-      tabs.dataset.loaded='1';
-      loadModeQc();
-    },{once:true});
-    document.body.appendChild(tabs);
-  };
-
-  const loadVisualFixes=()=>{
-    if (!document.querySelector('link[data-binder-visual-fixes]')) {
-      const link=document.createElement('link');
-      link.rel='stylesheet';
-      link.href='notebook-binder-visual-fixes.css';
-      link.dataset.binderVisualFixes='';
-      document.head.appendChild(link);
-    }
-
-    const existingVisual=document.querySelector('script[data-binder-visual-fixes]');
-    if (existingVisual) {
-      if (existingVisual.dataset.loaded==='1') loadTabQc();
-      else existingVisual.addEventListener('load',loadTabQc,{once:true});
-      return;
-    }
-
-    const visual=document.createElement('script');
-    visual.src='js/notebook-binder-visual-fixes.js';
-    visual.async=false;
-    visual.dataset.binderVisualFixes='';
-    visual.addEventListener('load',()=>{
-      visual.dataset.loaded='1';
-      loadTabQc();
-    },{once:true});
-    document.body.appendChild(visual);
-  };
-
-  const existing=document.querySelector('script[data-binder-fluid-qc]');
-  if (existing) {
-    if (existing.dataset.loaded==='1') loadVisualFixes();
-    else existing.addEventListener('load',loadVisualFixes,{once:true});
-    return;
-  }
-
-  const script=document.createElement('script');
-  script.src='js/notebook-binder-fluid-qc.js';
-  script.async=false;
-  script.dataset.binderFluidQc='';
-  script.addEventListener('load',()=>{
-    script.dataset.loaded='1';
-    loadVisualFixes();
-  },{once:true});
-  document.body.appendChild(script);
+  ensureStyle('binder-fluid-qc','notebook-binder-fluid-qc.css');
+  loadScript('binder-fluid-qc','js/notebook-binder-fluid-qc.js',()=>{
+    ensureStyle('binder-visual-fixes','notebook-binder-visual-fixes.css');
+    loadScript('binder-visual-fixes','js/notebook-binder-visual-fixes.js',()=>{
+      ensureStyle('binder-single-clean','notebook-binder-single-clean.css');
+      loadScript('binder-single-clean','js/notebook-binder-single-clean.js');
+    });
+  });
 })();
