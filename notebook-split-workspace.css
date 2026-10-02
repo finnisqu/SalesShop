@@ -1,0 +1,223 @@
+/* Split notebook workspace: aligned Grid lattice + per-sheet two-row toolbars. */
+
+/* The spatial canvas, spatial objects, and selection math all use the canvas origin. Keep the
+   visible Grid/Dot lattice on that same origin instead of the older 20px text inset. */
+.notebook-page.paper-grid[data-grid-paper="grid"] .notebook-page-body {
+  background-position:0 0,0 0 !important;
+}
+.notebook-page.paper-grid[data-grid-paper="dots"] .notebook-page-body {
+  background-position:0 0 !important;
+}
+.notebook-page.paper-grid .grid-notebook-canvas {
+  margin-left:0 !important;
+  transform:none !important;
+}
+
+/* True Split turns the single global strip into two compact page toolbars around one shared
+   presentation control. Each side deliberately has two physical rows. */
+.notebook-toolbar.notebook-toolbar-split {
+  box-sizing:border-box;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr) !important;
+  grid-template-rows:52px !important;
+  align-items:center !important;
+  gap:8px !important;
+  width:min(1500px,calc(100% - 20px)) !important;
+  height:56px !important;
+  min-height:56px !important;
+  margin:0 auto !important;
+  padding:1px 0 3px !important;
+}
+.notebook-toolbar.notebook-toolbar-split > .notebook-split-tools-current {
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+.notebook-toolbar.notebook-toolbar-split > .notebook-position-control,
+.notebook-toolbar.notebook-toolbar-split > [data-notebook-width-controls] {
+  grid-column:2 !important;
+  grid-row:1 !important;
+  align-self:start !important;
+  justify-self:center !important;
+  margin-top:1px !important;
+}
+.notebook-toolbar.notebook-toolbar-split > .notebook-split-tools-reference {
+  grid-column:3 !important;
+  grid-row:1 !important;
+}
+.notebook-split-tools {
+  min-width:0;
+  height:51px;
+  display:grid;
+  grid-template-rows:24px 24px;
+  gap:2px;
+  align-items:center;
+}
+.notebook-split-toolbar-row {
+  min-width:0;
+  height:24px;
+  display:flex;
+  align-items:center;
+  gap:3px;
+  overflow:visible;
+}
+.notebook-split-tools-current .notebook-split-toolbar-row {
+  justify-content:flex-start;
+}
+.notebook-split-tools-reference .notebook-split-toolbar-row {
+  justify-content:flex-end;
+}
+
+/* Undo/font/capture controls no longer inherit viewport rules that hide them when a half-sheet is
+   narrow. The two-row structure is already doing the compression work. */
+.notebook-toolbar-split .notebook-toolbar-left,
+.notebook-toolbar-split .notebook-toolbar-actions {
+  display:flex !important;
+  align-items:center !important;
+  justify-self:auto !important;
+  min-width:0 !important;
+  height:24px !important;
+  gap:3px !important;
+  overflow:visible !important;
+}
+.notebook-toolbar-split .notebook-toolbar-left {
+  justify-content:flex-start !important;
+}
+.notebook-toolbar-split .notebook-toolbar-actions {
+  justify-content:flex-start !important;
+  flex-wrap:nowrap !important;
+}
+.notebook-toolbar-split .notebook-toolbar-date {
+  display:none !important;
+}
+.notebook-toolbar-split .notebook-page-meta-button,
+.notebook-toolbar-split .notebook-history-button,
+.notebook-toolbar-split .notebook-toolbar-button,
+.notebook-toolbar-split .notebook-tool,
+.notebook-toolbar-split .notebook-icon-tool,
+.notebook-toolbar-split .notebook-font-control,
+.notebook-toolbar-split .notebook-capture-tools {
+  flex:0 0 auto;
+}
+
+/* Reference's own paper actions move out of its title row and become its primary toolbar row. */
+.notebook-toolbar-split .notebook-reference-actions {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:3px !important;
+  padding:0 !important;
+  margin:0 !important;
+}
+.notebook-toolbar-split .notebook-reference-actions button {
+  height:23px !important;
+  min-height:23px !important;
+  border-color:var(--border) !important;
+  background:transparent !important;
+  color:var(--muted) !important;
+}
+.notebook-toolbar-split .notebook-reference-actions button:hover,
+.notebook-toolbar-split .notebook-reference-actions button.active {
+  color:var(--ink) !important;
+  border-color:var(--border-strong) !important;
+  background:var(--panel-soft) !important;
+}
+.notebook-toolbar-split .notebook-reference-meta-button.active {
+  color:var(--tab-notebook) !important;
+}
+
+/* A small Reference-only Style menu keeps paper identity obvious without opening Current's broader
+   notebook Style menu. */
+.notebook-reference-toolbar-style {
+  position:relative;
+  flex:0 0 auto;
+}
+.notebook-reference-toolbar-style-button {
+  height:23px !important;
+  padding:0 7px !important;
+  border:1px solid var(--border) !important;
+  border-radius:5px !important;
+  background:transparent !important;
+  color:var(--muted) !important;
+  font-size:8px !important;
+  font-weight:600 !important;
+}
+.notebook-reference-toolbar-style-button:hover,
+.notebook-reference-toolbar-style.open > .notebook-reference-toolbar-style-button {
+  color:var(--ink) !important;
+  border-color:var(--border-strong) !important;
+  background:var(--panel-soft) !important;
+}
+.notebook-reference-toolbar-style-menu {
+  position:absolute;
+  z-index:150;
+  right:0;
+  top:calc(100% + 4px);
+  display:none;
+  min-width:104px;
+  padding:3px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:var(--panel);
+  box-shadow:var(--shadow);
+}
+.notebook-reference-toolbar-style.open .notebook-reference-toolbar-style-menu {
+  display:grid;
+  gap:1px;
+}
+.notebook-reference-toolbar-style-choice {
+  height:25px;
+  display:grid;
+  grid-template-columns:17px 1fr;
+  align-items:center;
+  gap:5px;
+  border:1px solid transparent;
+  border-radius:4px;
+  background:transparent;
+  color:var(--muted);
+  padding:0 5px;
+  text-align:left;
+  font-size:7px;
+  font-weight:650;
+  cursor:pointer;
+}
+.notebook-reference-toolbar-style-choice:hover,
+.notebook-reference-toolbar-style-choice.active {
+  color:var(--ink);
+  border-color:var(--border);
+  background:var(--panel-soft);
+}
+.notebook-reference-toolbar-swatch {
+  width:14px;
+  height:10px;
+  display:block;
+  border:1px solid color-mix(in srgb,var(--muted) 32%,var(--border));
+  border-radius:2px;
+}
+html:not([data-theme="dark"]) .notebook-reference-toolbar-swatch.swatch-warm { background:#fff9df; }
+html[data-theme="dark"] .notebook-reference-toolbar-swatch.swatch-warm { background:#29271f; }
+html:not([data-theme="dark"]) .notebook-reference-toolbar-swatch.swatch-blue { background:#f1f8fb; }
+html[data-theme="dark"] .notebook-reference-toolbar-swatch.swatch-blue { background:#222b30; }
+html:not([data-theme="dark"]) .notebook-reference-toolbar-swatch.swatch-neutral { background:#f7f7f3; }
+html[data-theme="dark"] .notebook-reference-toolbar-swatch.swatch-neutral { background:#25282a; }
+
+/* With actions living above the right sheet, its compact paper header can focus purely on identity. */
+.notebook-page-pair[data-paper-resolved-layout="split"] .notebook-reference-head {
+  padding-right:14px !important;
+}
+
+@media (max-width:900px) {
+  .notebook-toolbar.notebook-toolbar-split {
+    gap:5px !important;
+    grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr) !important;
+  }
+  .notebook-toolbar-split .notebook-toolbar-left,
+  .notebook-toolbar-split .notebook-toolbar-actions,
+  .notebook-toolbar-split .notebook-reference-actions {
+    gap:2px !important;
+  }
+  .notebook-toolbar-split .notebook-tool,
+  .notebook-toolbar-split .notebook-toolbar-button,
+  .notebook-toolbar-split .notebook-history-button {
+    padding-inline:5px !important;
+  }
+}
