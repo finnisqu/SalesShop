@@ -1,0 +1,213 @@
+/* Final table QC visuals: centered controls, paperless structure flyout, edge-aware menus,
+   compact merge glyph, and dark-mode-safe cell fills. */
+
+/* Keep all compact toolbar controls visually centered inside their hit areas. */
+.spatial-align-choice,
+.spatial-number-format-choice,
+.spatial-fill-choice,
+.spatial-flyout-current,
+.spatial-table-size-trigger,
+.spatial-table-dimension-stepper button,
+.spatial-table-row-role,
+.spatial-table-merge-button {
+  display:grid !important;
+  place-items:center !important;
+  text-align:center !important;
+  line-height:1 !important;
+}
+.spatial-align-glyph,
+.spatial-fill-choice > span,
+.spatial-flyout-current-fill > span {
+  margin:auto !important;
+}
+
+/* Structure palette: Title/Header first, then dimensions. No large outer card—each control floats
+   on the paper like the alignment / number / fill flyouts. */
+.spatial-table-size-panel {
+  min-width:64px !important;
+  padding:0 !important;
+  gap:3px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+.spatial-table-size-panel-divider {
+  display:none !important;
+}
+.spatial-table-size-panel .spatial-table-row-role-controls {
+  order:-10;
+  width:64px !important;
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:3px !important;
+}
+.spatial-table-size-panel .spatial-table-row-role,
+.spatial-table-size-panel .spatial-table-dimension-stepper {
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent) !important;
+  border-radius:4px !important;
+  background:color-mix(in srgb,var(--paper) 97%,var(--panel)) !important;
+  color:var(--paper-muted) !important;
+  box-shadow:0 3px 9px rgba(0,0,0,.08) !important;
+}
+.spatial-table-size-panel .spatial-table-row-role {
+  width:100% !important;
+  min-width:0 !important;
+  height:18px !important;
+  padding:0 3px !important;
+  font-size:6.5px !important;
+}
+.spatial-table-size-panel .spatial-table-row-role.active {
+  color:var(--paper-ink) !important;
+  background:color-mix(in srgb,var(--paper-muted) 10%,var(--paper)) !important;
+}
+.spatial-table-size-panel .spatial-table-dimension-stepper {
+  width:64px !important;
+  min-width:64px !important;
+  height:18px !important;
+  padding:0 2px !important;
+  margin:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:1px !important;
+}
+.spatial-table-size-panel .spatial-table-dimension-stepper button {
+  width:13px !important;
+  min-width:13px !important;
+  height:15px !important;
+  min-height:15px !important;
+  padding:0 !important;
+  font-size:8px !important;
+}
+.spatial-table-size-panel .spatial-table-count {
+  min-width:12px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  font-size:6.5px !important;
+  line-height:1 !important;
+}
+
+/* Dimension icon = literal tiny divided rectangle; columns is rows rotated 90 degrees. */
+.spatial-table-dimension-icon {
+  position:relative !important;
+  width:11px !important;
+  height:10px !important;
+  margin:0 2px 0 0 !important;
+  border:1px solid currentColor !important;
+  border-radius:1px !important;
+  background:none !important;
+  opacity:.76 !important;
+  flex:0 0 11px !important;
+}
+.spatial-table-dimension-icon::after {
+  content:'';
+  position:absolute;
+  background:currentColor;
+  opacity:.82;
+}
+.spatial-table-dimension-icon.cols::after {
+  top:1px;
+  bottom:1px;
+  left:50%;
+  width:1px;
+  transform:translateX(-.5px);
+}
+.spatial-table-dimension-icon.rows::after {
+  left:1px;
+  right:1px;
+  top:50%;
+  height:1px;
+  transform:translateY(-.5px);
+}
+
+/* Smaller, simpler inward-corners Merge icon. */
+.spatial-table-merge-button.spatial-table-merge-icon-button {
+  width:14px !important;
+  min-width:14px !important;
+  height:16px !important;
+  padding:0 !important;
+}
+.spatial-table-merge-glyph.inward.compact,
+.spatial-table-merge-glyph.inward.compact svg {
+  width:10px !important;
+  height:10px !important;
+}
+.spatial-table-merge-glyph.inward.compact svg {
+  stroke-width:1.25 !important;
+  opacity:.82 !important;
+}
+
+/* The vertical palettes use canonical geometry and can flip below the toolbar near the notebook top. */
+.spatial-align-control.flyout-down[data-active-align] .spatial-align-choice,
+.spatial-number-format-control.flyout-down[data-active-number-format] .spatial-number-format-choice,
+.spatial-fill-control.flyout-down[data-active-fill] .spatial-fill-choice {
+  bottom:auto !important;
+}
+.spatial-align-control.flyout-down[data-active-align] .spatial-align-choice[data-table-align="left"] { top:19px !important; }
+.spatial-align-control.flyout-down[data-active-align] .spatial-align-choice[data-table-align="center"] { top:37px !important; }
+.spatial-align-control.flyout-down[data-active-align] .spatial-align-choice[data-table-align="right"] { top:55px !important; }
+
+.spatial-number-format-control.flyout-down[data-active-number-format] .spatial-number-format-choice[data-number-format="none"] { top:19px !important; }
+.spatial-number-format-control.flyout-down[data-active-number-format] .spatial-number-format-choice[data-number-format="currency"] { top:37px !important; }
+.spatial-number-format-control.flyout-down[data-active-number-format] .spatial-number-format-choice[data-number-format="percent"] { top:55px !important; }
+.spatial-number-format-control.flyout-down[data-active-number-format] .spatial-number-format-choice[data-number-format="decimal"] { top:73px !important; }
+
+.spatial-fill-control.flyout-down[data-active-fill] .spatial-fill-choice[data-cell-fill="none"] { top:19px !important; }
+.spatial-fill-control.flyout-down[data-active-fill] .spatial-fill-choice[data-cell-fill="yellow"] { top:37px !important; }
+.spatial-fill-control.flyout-down[data-active-fill] .spatial-fill-choice[data-cell-fill="mint"] { top:55px !important; }
+.spatial-fill-control.flyout-down[data-active-fill] .spatial-fill-choice[data-cell-fill="blue"] { top:73px !important; }
+.spatial-fill-control.flyout-down[data-active-fill] .spatial-fill-choice[data-cell-fill="rose"] { top:91px !important; }
+
+.spatial-table-size-control.flyout-down > .spatial-table-size-panel {
+  bottom:auto !important;
+  top:calc(100% + 5px) !important;
+}
+
+/* Keep resting and flyout contents centered rather than inheriting older flex alignment. */
+.spatial-align-choice,
+.spatial-number-format-choice,
+.spatial-fill-choice {
+  padding:0 !important;
+}
+.spatial-number-format-choice,
+.spatial-flyout-current-number {
+  font-variant-numeric:tabular-nums;
+}
+
+/* Toasts follow the top edge of the notebook dock, including Float mode. */
+#toast.toast {
+  top:var(--notebook-toast-top,62px) !important;
+  left:var(--notebook-toast-left,50%) !important;
+}
+
+/* Dark theme uses darker paper fills so notebook ink remains legible after theme switching. */
+html[data-theme="dark"] .spatial-table td[data-cell-fill="yellow"],
+html[data-theme="dark"] .spatial-table td.spatial-table-cell-selected[data-cell-fill="yellow"] {
+  background:color-mix(in srgb,#b99a3f 28%,var(--paper)) !important;
+  color:var(--paper-ink) !important;
+}
+html[data-theme="dark"] .spatial-table td[data-cell-fill="mint"],
+html[data-theme="dark"] .spatial-table td.spatial-table-cell-selected[data-cell-fill="mint"] {
+  background:color-mix(in srgb,#4e9564 28%,var(--paper)) !important;
+  color:var(--paper-ink) !important;
+}
+html[data-theme="dark"] .spatial-table td[data-cell-fill="blue"],
+html[data-theme="dark"] .spatial-table td.spatial-table-cell-selected[data-cell-fill="blue"] {
+  background:color-mix(in srgb,#4d7fa3 30%,var(--paper)) !important;
+  color:var(--paper-ink) !important;
+}
+html[data-theme="dark"] .spatial-table td[data-cell-fill="rose"],
+html[data-theme="dark"] .spatial-table td.spatial-table-cell-selected[data-cell-fill="rose"] {
+  background:color-mix(in srgb,#a55c68 28%,var(--paper)) !important;
+  color:var(--paper-ink) !important;
+}
+html[data-theme="dark"] .spatial-fill-choice.fill-yellow > span,
+html[data-theme="dark"] .spatial-flyout-current-fill.fill-yellow > span { background:#6d5c2d !important; }
+html[data-theme="dark"] .spatial-fill-choice.fill-mint > span,
+html[data-theme="dark"] .spatial-flyout-current-fill.fill-mint > span { background:#365f42 !important; }
+html[data-theme="dark"] .spatial-fill-choice.fill-blue > span,
+html[data-theme="dark"] .spatial-flyout-current-fill.fill-blue > span { background:#36546a !important; }
+html[data-theme="dark"] .spatial-fill-choice.fill-rose > span,
+html[data-theme="dark"] .spatial-flyout-current-fill.fill-rose > span { background:#6a3c44 !important; }
