@@ -119,6 +119,14 @@ function showCellFunctionPalette(td,object) {
       event.preventDefault();
       event.stopPropagation();
       activeSpatialTableSelection={objectId:object.id,start:{...target},end:{...target}};
+      /* If the palette was opened by typing '=', the click-based function workflow owns the cell
+         now, so remove the temporary literal before entering source-pick mode. */
+      if (String(td.textContent||'').trim()==='=') {
+        td.textContent='';
+        object.cells[target.r] ||= [];
+        object.cells[target.r][target.c]='';
+        save();
+      }
       beginNotebookFunctionPick?.(object,button.dataset.cellFunction);
       removeCellFunctionPalette();
     };
@@ -126,8 +134,9 @@ function showCellFunctionPalette(td,object) {
   wrap.appendChild(palette);
 }
 
-/* Typing = into an empty table cell is shorthand for “start a function here”. It opens the same
-   three lightweight functions directly over that result cell rather than moving the table toolbar. */
+/* Typing = into an empty table cell now does two things at once: the character is inserted normally
+   so direct formulas remain possible, and the lightweight function palette opens above the cell.
+   The user can click a function or simply keep typing, e.g. =SUM(B2:B8). */
 if (!window.__salesShopEqualsFunctionPalette) {
   window.__salesShopEqualsFunctionPalette=true;
   document.addEventListener('keydown',event=>{
@@ -138,10 +147,11 @@ if (!window.__salesShopEqualsFunctionPalette) {
     const wrap=td.closest('.spatial-object-table');
     const object=spatialObjectById?.(wrap?.dataset.spatialObjectId);
     if (!object) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
     cancelNotebookFunctionPick?.();
-    showCellFunctionPalette(td,object);
+    setTimeout(()=>{
+      if (!td.isConnected || !String(td.textContent||'').trim().startsWith('=')) return;
+      showCellFunctionPalette(td,object);
+    },0);
   },true);
 
   document.addEventListener('pointerdown',event=>{
