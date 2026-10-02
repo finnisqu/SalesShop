@@ -1,0 +1,201 @@
+/* Physical-paper treatment for Current + Reference notebook work. */
+
+/* In two-page mode, Current uses the same compact title block as Reference. */
+.notebook-has-reference .notebook-page-pair > .notebook-page .notebook-paper-head,
+.notebook-has-reference .notebook-reference-head {
+  box-sizing:border-box;
+  min-height:58px !important;
+  padding:11px 14px 8px !important;
+  border-bottom:1px solid color-mix(in srgb,var(--paper-muted) 16%,transparent);
+  background:color-mix(in srgb,var(--paper) 97%,var(--panel));
+}
+.notebook-has-reference .notebook-page-pair > .notebook-page .notebook-paper-head {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+  gap:2px !important;
+}
+.notebook-has-reference .notebook-page-pair > .notebook-page .notebook-paper-head::before {
+  content:'CURRENT';
+  display:block;
+  color:var(--paper-muted);
+  font:700 6.5px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.08em;
+}
+.notebook-has-reference .notebook-page-pair > .notebook-page .notebook-date,
+.notebook-has-reference .notebook-reference-date {
+  position:static !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:var(--paper-ink) !important;
+  font:700 15px/1.15 Georgia,serif !important;
+  white-space:nowrap;
+}
+.notebook-has-reference .notebook-page-pair > .notebook-page .notebook-page-header,
+.notebook-has-reference .notebook-reference-page-header {
+  position:static !important;
+  width:min(100%,460px) !important;
+  min-width:0 !important;
+  min-height:12px !important;
+  margin:1px 0 0 !important;
+  padding:0 !important;
+  border:0 !important;
+  color:var(--paper-muted) !important;
+  font:600 8px/1.25 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+  text-align:left !important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  opacity:1 !important;
+}
+.notebook-has-reference .notebook-page-pair > .notebook-page .notebook-working-page-badge {
+  display:none !important;
+}
+.notebook-reference-page-header[contenteditable="true"]:hover,
+.notebook-reference-page-header[contenteditable="true"]:focus {
+  outline:0;
+  box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--paper-muted) 24%,transparent);
+}
+
+/* Reference editing is deliberately frictionless. */
+.notebook-reference-page [contenteditable="true"] {
+  pointer-events:auto !important;
+  cursor:text;
+  outline:0;
+}
+.notebook-reference-entry-text[contenteditable="true"]:focus,
+.notebook-reference-shape-text[contenteditable="true"]:focus,
+.notebook-reference-table td[contenteditable="true"]:focus {
+  background:color-mix(in srgb,var(--tab-notebook) 5%,transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 25%,transparent);
+}
+.notebook-reference-table td[contenteditable="true"] { cursor:text; }
+
+/* Paper edges. Wide layouts remain true side-by-side sheets. */
+.notebook-page-pair {
+  position:relative;
+  isolation:isolate;
+}
+.notebook-page-pair > .notebook-page,
+.notebook-reference-page {
+  transition:transform .15s ease,box-shadow .15s ease,opacity .15s ease;
+}
+.notebook-has-reference .notebook-page-pair > .notebook-page {
+  box-shadow:0 8px 24px rgba(0,0,0,.075);
+}
+.notebook-reference-page {
+  box-shadow:0 8px 24px rgba(0,0,0,.075);
+}
+.notebook-paper-peek {
+  display:none;
+  position:absolute;
+  z-index:9;
+  width:30px;
+  height:104px;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 28%,var(--border));
+  background:color-mix(in srgb,var(--paper) 96%,var(--panel));
+  color:var(--paper-muted);
+  padding:0;
+  cursor:pointer;
+  box-shadow:0 5px 13px rgba(0,0,0,.08);
+}
+.notebook-paper-peek span {
+  display:block;
+  writing-mode:vertical-rl;
+  text-orientation:mixed;
+  font:700 6.5px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.notebook-paper-peek:hover {
+  color:var(--paper-ink);
+  border-color:color-mix(in srgb,var(--paper-muted) 48%,var(--border-strong));
+}
+
+/* When there isn't room for two useful sheets, overlap them like papers on a desk instead of
+   shrinking both or forcing a cramped horizontal split. */
+@container notebook-shell (max-width:980px) {
+  .notebook-has-reference .notebook-page-pair {
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    margin:0 !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:1fr !important;
+    overflow:visible !important;
+    padding:0 !important;
+  }
+  .notebook-has-reference .notebook-page-pair > .notebook-page,
+  .notebook-has-reference .notebook-reference-page {
+    grid-column:1 !important;
+    grid-row:1 !important;
+    width:calc(100% - 30px) !important;
+    min-width:0 !important;
+    max-width:none !important;
+    margin:0 !important;
+  }
+  .notebook-page-pair[data-paper-front="current"] > .notebook-page {
+    z-index:4;
+    transform:translateX(0);
+    box-shadow:0 12px 30px rgba(0,0,0,.14);
+  }
+  .notebook-page-pair[data-paper-front="current"] > .notebook-reference-page {
+    z-index:2;
+    transform:translateX(30px) translateY(4px);
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+  }
+  .notebook-page-pair[data-paper-front="reference"] > .notebook-page {
+    z-index:2;
+    transform:translateX(0) translateY(4px);
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+  }
+  .notebook-page-pair[data-paper-front="reference"] > .notebook-reference-page {
+    z-index:4;
+    transform:translateX(30px);
+    box-shadow:0 12px 30px rgba(0,0,0,.14);
+  }
+  .notebook-paper-peek { display:grid;place-items:center;top:86px; }
+  .notebook-page-pair[data-paper-front="current"] .notebook-paper-peek-reference {
+    right:0;
+    border-left:0;
+    border-radius:0 6px 6px 0;
+  }
+  .notebook-page-pair[data-paper-front="current"] .notebook-paper-peek-current { display:none; }
+  .notebook-page-pair[data-paper-front="reference"] .notebook-paper-peek-current {
+    left:0;
+    border-right:0;
+    border-radius:6px 0 0 6px;
+  }
+  .notebook-page-pair[data-paper-front="reference"] .notebook-paper-peek-reference { display:none; }
+}
+
+/* Float is one sheet only. The pinned Reference remains available via a quiet Swap control. */
+.notebook-floating-reference-swap {
+  position:absolute;
+  right:12px;
+  top:11px;
+  z-index:8;
+  height:23px;
+  min-width:40px;
+  display:grid;
+  place-items:center;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 23%,transparent);
+  border-radius:5px;
+  background:color-mix(in srgb,var(--paper) 94%,transparent);
+  color:var(--paper-muted);
+  padding:0 7px;
+  font:700 6.8px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  cursor:pointer;
+}
+.notebook-floating-reference-swap:hover {
+  color:var(--paper-ink);
+  border-color:color-mix(in srgb,var(--paper-muted) 46%,transparent);
+  background:color-mix(in srgb,var(--paper-muted) 7%,var(--paper));
+}
+body.notebook-floating-mode .notebook-page-pair,
+body.notebook-floating-mode .notebook-reference-page,
+body.notebook-floating-mode .notebook-paper-peek {
+  display:none !important;
+}
