@@ -21,7 +21,6 @@
   <link rel="stylesheet" href="notebook-fontscale.css" />
   <link rel="stylesheet" href="notebook-pagestate.css" />
   <link rel="stylesheet" href="notebook-toolbar-polish.css" />
-  <link rel="stylesheet" href="notebook-softlock.css" />
   <link rel="stylesheet" href="notebook-spatial.css" />
   <link rel="stylesheet" href="notebook-spatial-tools.css" />
   <link rel="stylesheet" href="notebook-table-advanced.css" />
@@ -40,16 +39,12 @@
   <link rel="stylesheet" href="notebook-spreadsheet-selection.css" />
   <link rel="stylesheet" href="notebook-structural-qc.css" />
   <link rel="stylesheet" href="notebook-history-calendar.css" />
-  <link rel="stylesheet" href="notebook-reference-view.css" />
-  <link rel="stylesheet" href="notebook-paper-stack.css" />
-  <link rel="stylesheet" href="notebook-page-workflow.css" />
-  <link rel="stylesheet" href="notebook-page-workflow-qc.css" />
-  <link rel="stylesheet" href="notebook-paper-physical-final.css" />
-  <link rel="stylesheet" href="notebook-split-workspace.css" />
-  <link rel="stylesheet" href="notebook-peer-pages.css" />
-  <link rel="stylesheet" href="notebook-binder-final.css" />
-  <link rel="stylesheet" href="notebook-binder-rails.css" />
-  <link rel="stylesheet" href="notebook-binder-behavior-final.css" />
+
+  <!-- Clean notebook metadata / spatial / Binder stack. Retired split/reference layers are not loaded. -->
+  <link rel="stylesheet" href="notebook-page-metadata-clean.css?v=20261002-1710-cleanup" />
+  <link rel="stylesheet" href="notebook-spatial-extras-clean.css?v=20261002-1710-cleanup" />
+  <link rel="stylesheet" href="notebook-binder-single-clean.css?v=20261002-1710-cleanup" />
+
   <link rel="stylesheet" href="memory-explorer.css" />
   <link rel="stylesheet" href="app-navigator.css" />
   <link rel="stylesheet" href="app-focus-mode.css" />
@@ -121,7 +116,6 @@
   <script src="js/notebook-pagestate.js"></script>
   <script src="js/notebook-pagestate-polish.js"></script>
   <script src="js/notebook-toolbar-polish.js"></script>
-  <script src="js/notebook-softlock.js"></script>
   <script src="js/notebook-spatial.js"></script>
   <script src="js/notebook-spatial-polish.js"></script>
   <script src="js/notebook-spatial-tools.js"></script>
@@ -146,21 +140,16 @@
   <script src="js/notebook-structural-qc.js"></script>
   <script src="js/notebook-history-calendar.js"></script>
   <script src="js/notebook-history-calendar-qc.js"></script>
-  <script src="js/notebook-reference-view.js"></script>
-  <script src="js/notebook-paper-stack.js"></script>
-  <script src="js/notebook-page-workflow.js"></script>
-  <script src="js/notebook-page-workflow-qc.js"></script>
-  <script src="js/notebook-paper-physical-final.js"></script>
-  <script src="js/notebook-split-workspace.js"></script>
-  <script src="js/notebook-peer-pages.js"></script>
-  <script src="js/notebook-binder-final.js"></script>
-  <script src="js/notebook-binder-qc.js"></script>
-  <script src="js/notebook-binder-rails.js"></script>
-  <script src="js/notebook-binder-behavior-final.js"></script>
+
+  <script src="js/notebook-page-metadata-clean.js?v=20261002-1710-cleanup"></script>
+  <script src="js/notebook-spatial-extras-clean.js?v=20261002-1710-cleanup"></script>
+  <script src="js/notebook-binder-single-clean.js?v=20261002-1710-cleanup"></script>
+  <script src="js/notebook-binder-canonical-roster.js?v=20261002-1710-cleanup"></script>
+
   <script src="js/quotes.js"></script>
   <script src="js/memory.js"></script>
   <script src="js/app-navigator.js"></script>
   <script src="js/app-focus-mode.js"></script>
-  <script src="js/init.js"></script>
+  <script src="js/init.js?v=20261002-1710-cleanup"></script>
 </body>
 </html>
