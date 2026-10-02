@@ -1,0 +1,73 @@
+/* Sheets-style notebook table selection: quiet range wash, distinct active cell, tiny fill handle. */
+
+/* Selection mode is not text-edit mode. */
+.spatial-table td[contenteditable="false"] {
+  cursor:default;
+  caret-color:transparent;
+  user-select:none;
+}
+.spatial-table td.spreadsheet-cell-editing {
+  cursor:text;
+  caret-color:auto;
+  user-select:text;
+}
+
+/* The old generic selected-cell treatment is deliberately subdued. */
+.spatial-table td.spatial-table-cell-selected {
+  background:color-mix(in srgb,var(--tab-notebook) 4%,var(--paper)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 16%,transparent) !important;
+}
+.spatial-table td.spreadsheet-range-cell {
+  background:color-mix(in srgb,var(--tab-notebook) 5%,var(--paper)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 15%,transparent) !important;
+}
+.spatial-table td.spreadsheet-active-cell {
+  background:var(--paper) !important;
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tab-notebook) 62%,var(--paper-ink)) !important;
+  position:relative;
+}
+.spatial-table td.spreadsheet-cell-editing {
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tab-notebook) 72%,var(--paper-ink)) !important;
+}
+
+/* Formula inspection remains distinguishable from ordinary range selection. */
+.spatial-table td.notebook-formula-source-preview:not(.spreadsheet-active-cell) {
+  background:color-mix(in srgb,var(--tab-notebook) 8%,var(--paper)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 26%,transparent) !important;
+}
+
+/* Fill-drag destination preview: slightly more visible than a selected range, still very quiet. */
+.spatial-table td.spreadsheet-fill-preview {
+  background:color-mix(in srgb,var(--tab-notebook) 8%,var(--paper)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-notebook) 28%,transparent) !important;
+}
+
+.spreadsheet-fill-handle {
+  position:absolute;
+  z-index:38;
+  width:7px;
+  height:7px;
+  min-width:7px;
+  min-height:7px;
+  padding:0;
+  margin:0;
+  border:1px solid color-mix(in srgb,var(--paper) 82%,transparent);
+  border-radius:1.5px;
+  background:color-mix(in srgb,var(--tab-notebook) 72%,var(--paper-ink));
+  box-shadow:0 1px 3px rgba(0,0,0,.14);
+  transform:translate(-50%,-50%);
+  cursor:crosshair;
+  opacity:.82;
+}
+.spreadsheet-fill-handle:hover,
+.spreadsheet-fill-dragging > .spreadsheet-fill-handle {
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1.12);
+}
+
+html[data-theme="dark"] .spatial-table td.spreadsheet-active-cell {
+  background:color-mix(in srgb,var(--paper) 96%,var(--panel)) !important;
+}
+html[data-theme="dark"] .spatial-table td.spreadsheet-range-cell {
+  background:color-mix(in srgb,var(--tab-notebook) 7%,var(--paper)) !important;
+}
