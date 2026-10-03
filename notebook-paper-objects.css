@@ -1,0 +1,228 @@
+/* Paper-native spatial objects: Post-it notes and hand-drawn annotation styling.
+   Geometry stays on the notebook lattice; the visible objects deliberately feel less mechanical. */
+
+/* --- Create flyout ---------------------------------------------------------------------- */
+#notebookDock .grid-create-postit-icon {
+  position:relative;
+  display:block;
+  width:11px;
+  height:11px;
+  border:1px solid rgba(92,76,34,.34);
+  border-radius:1px 2px 2px 1px;
+  background:#f0dc78;
+  box-shadow:1px 1px 0 rgba(58,48,24,.16);
+  transform:rotate(-2deg);
+}
+#notebookDock .grid-create-postit-icon::after {
+  content:'';
+  position:absolute;
+  left:1px;
+  right:1px;
+  top:1px;
+  height:1px;
+  background:rgba(255,255,255,.48);
+}
+#notebookDock .paper-annotation-icon {
+  border-radius:3px 5px 2px 4px / 4px 2px 5px 3px;
+  transform:rotate(-1deg);
+}
+
+/* --- Pencil annotation language --------------------------------------------------------- */
+#notebookDock .spatial-object-box {
+  border:0 !important;
+  background:transparent !important;
+  pointer-events:auto !important;
+}
+#notebookDock .spatial-object-box::before,
+#notebookDock .spatial-object-box::after {
+  content:'';
+  position:absolute;
+  pointer-events:none;
+  border:1px solid color-mix(in srgb,var(--paper-ink) 54%,var(--paper-muted));
+  border-radius:5px 3px 6px 4px / 3px 6px 4px 5px;
+}
+#notebookDock .spatial-object-box::before {
+  inset:1px 2px 2px 1px;
+  transform:rotate(-.12deg);
+  opacity:.88;
+}
+#notebookDock .spatial-object-box::after {
+  inset:2px 1px 1px 2px;
+  transform:rotate(.16deg);
+  opacity:.20;
+}
+
+#notebookDock .spatial-object-oval {
+  border:0 !important;
+  background:transparent !important;
+  pointer-events:auto !important;
+  cursor:default;
+}
+#notebookDock .spatial-object-oval::before,
+#notebookDock .spatial-object-oval::after {
+  content:'';
+  position:absolute;
+  pointer-events:none;
+  border:1px solid color-mix(in srgb,var(--paper-ink) 54%,var(--paper-muted));
+  border-radius:50% 48% 51% 49% / 47% 52% 48% 53%;
+}
+#notebookDock .spatial-object-oval::before {
+  inset:1px;
+  transform:rotate(-.18deg);
+  opacity:.88;
+}
+#notebookDock .spatial-object-oval::after {
+  inset:2px 1px 1px 2px;
+  transform:rotate(.22deg);
+  opacity:.18;
+}
+
+#notebookDock .spatial-object-cloud .spatial-cloud-svg path:not(.spatial-pencil-echo) {
+  fill:color-mix(in srgb,var(--paper) 2%,transparent) !important;
+  stroke:color-mix(in srgb,var(--paper-ink) 52%,var(--paper-muted)) !important;
+  stroke-width:1.05 !important;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+#notebookDock .spatial-object-cloud .spatial-cloud-svg .spatial-pencil-echo {
+  fill:none !important;
+  stroke:color-mix(in srgb,var(--paper-ink) 34%,var(--paper-muted)) !important;
+  stroke-width:.75 !important;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.22;
+  transform:translate(.65px,.45px);
+  transform-box:fill-box;
+}
+
+/* Keep annotation ink softer than table geometry. */
+#notebookDock .paper-annotation-toolbar button {
+  min-width:27px;
+}
+#notebookDock .spatial-object-box > .spatial-shape-text,
+#notebookDock .spatial-object-cloud > .spatial-shape-text,
+#notebookDock .spatial-object-oval > .spatial-shape-text {
+  inset:5px 7px;
+  color:color-mix(in srgb,var(--paper-ink) 88%,var(--paper-muted));
+}
+#notebookDock .spatial-object-oval > .spatial-shape-text {
+  inset:12% 12%;
+  text-align:center;
+}
+
+/* --- Post-it note ----------------------------------------------------------------------- */
+#notebookDock .spatial-object-postit {
+  z-index:8;
+  border:0 !important;
+  background:transparent !important;
+  pointer-events:auto !important;
+  cursor:default;
+  isolation:isolate;
+}
+#notebookDock .spatial-postit-paper {
+  --postit-paper:#f1de80;
+  --postit-ink:#413825;
+  position:absolute;
+  inset:0;
+  box-sizing:border-box;
+  overflow:hidden;
+  border:1px solid rgba(96,78,35,.18);
+  border-radius:2px 2px 4px 1px;
+  background:
+    linear-gradient(to bottom,rgba(255,255,255,.18),transparent 10px),
+    var(--postit-paper);
+  color:var(--postit-ink);
+  box-shadow:
+    0 1px 1px rgba(60,49,25,.13),
+    2px 7px 13px rgba(31,27,19,.14);
+  transform:rotate(var(--postit-rotation,-.36deg));
+  transform-origin:50% 12%;
+}
+#notebookDock .spatial-postit-paper::after {
+  content:'';
+  position:absolute;
+  left:7%;
+  right:7%;
+  bottom:-4px;
+  height:7px;
+  border-radius:50%;
+  background:rgba(69,54,21,.09);
+  filter:blur(3px);
+  pointer-events:none;
+}
+#notebookDock .spatial-object-postit[data-postit-color="blue"] .spatial-postit-paper {
+  --postit-paper:#cfe4ed;
+  --postit-ink:#293b43;
+}
+#notebookDock .spatial-object-postit[data-postit-color="mint"] .spatial-postit-paper {
+  --postit-paper:#d3e7c7;
+  --postit-ink:#30402d;
+}
+#notebookDock .spatial-object-postit[data-postit-color="rose"] .spatial-postit-paper {
+  --postit-paper:#ebc9cd;
+  --postit-ink:#493135;
+}
+
+#notebookDock .spatial-postit-text {
+  inset:10px 11px 9px !important;
+  min-height:calc(100% - 19px) !important;
+  color:var(--postit-ink) !important;
+  caret-color:var(--postit-ink) !important;
+  font-family:Georgia,"Times New Roman",serif !important;
+  font-size:calc(var(--notebook-font-size) + 1px) !important;
+  line-height:1.38 !important;
+  letter-spacing:.003em;
+  overflow:auto;
+  scrollbar-width:none;
+}
+#notebookDock .spatial-postit-text::-webkit-scrollbar { display:none; }
+#notebookDock .spatial-postit-text:empty::before {
+  color:var(--postit-ink) !important;
+  opacity:.28;
+}
+
+/* Controls stay crisp and unrotated around the slightly crooked paper. */
+#notebookDock .spatial-object-postit > .spatial-object-format-toggle,
+#notebookDock .spatial-object-postit > .spatial-object-drag-handle,
+#notebookDock .spatial-object-postit > .spatial-postit-toolbar,
+#notebookDock .spatial-object-postit > .spatial-resize-handle {
+  transform:none;
+}
+#notebookDock .spatial-object-postit > .spatial-resize-n { transform:translateX(-50%); }
+#notebookDock .spatial-object-postit > .spatial-resize-s { transform:translateX(-50%); }
+#notebookDock .spatial-object-postit > .spatial-resize-e { transform:translateY(-50%); }
+#notebookDock .spatial-object-postit > .spatial-resize-w { transform:translateY(-50%); }
+
+/* Post-it palette: color only, plus deliberate delete. */
+#notebookDock .spatial-postit-toolbar .spatial-postit-color {
+  width:18px !important;
+  min-width:18px !important;
+  height:18px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+}
+#notebookDock .postit-color-swatch {
+  display:block;
+  width:10px;
+  height:10px;
+  border:1px solid rgba(70,60,40,.20);
+  border-radius:1px 2px 2px 1px;
+  box-shadow:1px 1px 0 rgba(0,0,0,.08);
+  transform:rotate(-2deg);
+}
+#notebookDock .postit-color-swatch.swatch-yellow { background:#f1de80; }
+#notebookDock .postit-color-swatch.swatch-blue { background:#cfe4ed; }
+#notebookDock .postit-color-swatch.swatch-mint { background:#d3e7c7; }
+#notebookDock .postit-color-swatch.swatch-rose { background:#ebc9cd; }
+#notebookDock .spatial-postit-color.active {
+  border-color:color-mix(in srgb,var(--paper-ink) 32%,var(--paper-muted)) !important;
+  background:color-mix(in srgb,var(--paper-muted) 9%,var(--paper)) !important;
+}
+
+/* A selected Post-it gets a very quiet outline around its logical footprint, not a hard box around
+   the paper itself. */
+#notebookDock .spatial-object-postit.is-selected {
+  outline-color:color-mix(in srgb,var(--paper-ink) 22%,transparent);
+  outline-offset:4px;
+}
