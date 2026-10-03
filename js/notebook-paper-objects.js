@@ -3,11 +3,25 @@
    skeleton while paper objects are allowed to feel looser and more physical on top of it. */
 
 const NOTEBOOK_POSTIT_COLORS = new Set(['yellow','blue','mint','rose']);
+const NOTEBOOK_ANNOTATION_TYPES = new Set(['box','cloud','oval','arrow','stop']);
+const NOTEBOOK_ANNOTATION_STYLES = new Set(['pencil','sticky']);
 let paperObjectPendingFocusId = null;
 
 function paperObjectStampRotation(id='') {
   const sum=String(id).split('').reduce((total,char)=>total+char.charCodeAt(0),0);
-  return (((sum % 7)-3)*0.18).toFixed(2);
+  return (((sum % 9)-4)*0.24).toFixed(2);
+}
+
+function paperAnnotationStyle(object) {
+  if (!object) return 'pencil';
+  if (NOTEBOOK_ANNOTATION_STYLES.has(object.annotationStyle)) return object.annotationStyle;
+  return (object.type==='arrow' || object.type==='stop') ? 'sticky' : 'pencil';
+}
+
+function paperAnnotationTone(object) {
+  if (object?.type==='stop') return 'red';
+  if (object?.type==='arrow') return 'yellow';
+  return object?.annotationTone || 'yellow';
 }
 
 /* --- Creation --------------------------------------------------------------------------- */
@@ -38,8 +52,8 @@ createSpatialObject = function(type,bounds) {
   renderAll();
 };
 
-/* The Grid marquee remains a single compact + flyout. Post-it joins Table and Shape rather than
-   creating another permanent toolbar. */
+/* The Grid marquee remains a single compact + flyout. Post-it joins Table and Annotation rather
+   than creating another permanent toolbar. */
 if (typeof drawSpatialSelection==='function') {
   const _paperObjectsDrawSpatialSelection=drawSpatialSelection;
   drawSpatialSelection=function(canvas,bounds,{toolbar=false}={}) {
@@ -71,9 +85,14 @@ if (typeof drawSpatialSelection==='function') {
 
 /* --- Annotation family ------------------------------------------------------------------ */
 setSpatialShapeType=function(object,type) {
-  if (!object || !['box','cloud','oval'].includes(type) || object.type===type) return;
+  if (!object || !NOTEBOOK_ANNOTATION_TYPES.has(type) || object.type===type) return;
   notebookPushUndoCheckpoint?.();
   object.type=type;
+  if ((type==='arrow' || type==='stop') && !NOTEBOOK_ANNOTATION_STYLES.has(object.annotationStyle)) {
+    object.annotationStyle='sticky';
+  }
+  if (type==='stop') object.annotationTone='red';
+  else if (type==='arrow' && !object.annotationTone) object.annotationTone='yellow';
   object.updatedAt=new Date().toISOString();
   selectedSpatialObjectId=object.id;
   if (typeof openSpatialFormatObjectId!=='undefined') openSpatialFormatObjectId=object.id;
@@ -81,19 +100,45 @@ setSpatialShapeType=function(object,type) {
   renderAll();
 };
 
+function setPaperAnnotationStyle(object,style) {
+  if (!object || !NOTEBOOK_ANNOTATION_STYLES.has(style) || paperAnnotationStyle(object)===style) return;
+  notebookPushUndoCheckpoint?.();
+  object.annotationStyle=style;
+  object.updatedAt=new Date().toISOString();
+  selectedSpatialObjectId=object.id;
+  if (typeof openSpatialFormatObjectId!=='undefined') openSpatialFormatObjectId=object.id;
+  save();
+  renderAll();
+}
+
+function paperAnnotationShapeButton(type,label,title,object) {
+  return `<button type="button" data-shape-type="${type}" class="${object.type===type?'active':''}" title="${title}">${label}</button>`;
+}
+
 spatialShapeToolbar=function(object) {
   const toolbar=document.createElement('div');
+  const style=paperAnnotationStyle(object);
   toolbar.className='spatial-shape-toolbar spatial-object-format-toolbar paper-annotation-toolbar';
   toolbar.innerHTML=`
-    <button type="button" data-shape-type="box" class="${object.type==='box'?'active':''}" title="Sketch box">Box</button>
-    <button type="button" data-shape-type="cloud" class="${object.type==='cloud'?'active':''}" title="Cloud callout">Cloud</button>
-    <button type="button" data-shape-type="oval" class="${object.type==='oval'?'active':''}" title="Oval callout">Oval</button>
+    ${paperAnnotationShapeButton('box','Box','Sketch box',object)}
+    ${paperAnnotationShapeButton('cloud','Cloud','Cloud callout',object)}
+    ${paperAnnotationShapeButton('oval','Oval','Oval callout',object)}
+    ${paperAnnotationShapeButton('arrow','Arrow','Pointed arrow label',object)}
+    ${paperAnnotationShapeButton('stop','Stop','Red stop-sign annotation',object)}
+    <span class="spatial-table-control-separator"></span>
+    <button type="button" data-annotation-style="pencil" class="paper-annotation-style ${style==='pencil'?'active':''}" title="Pencil outline">Pencil</button>
+    <button type="button" data-annotation-style="sticky" class="paper-annotation-style ${style==='sticky'?'active':''}" title="Sticky annotation">Sticker</button>
     <span class="spatial-table-control-separator"></span>
     <button type="button" data-shape-delete class="notebook-toolbar-delete" title="Delete annotation" aria-label="Delete annotation">×</button>`;
   $$('[data-shape-type]',toolbar).forEach(button=>button.onclick=event=>{
     event.preventDefault();
     event.stopPropagation();
     setSpatialShapeType(object,button.dataset.shapeType);
+  });
+  $$('[data-annotation-style]',toolbar).forEach(button=>button.onclick=event=>{
+    event.preventDefault();
+    event.stopPropagation();
+    setPaperAnnotationStyle(object,button.dataset.annotationStyle);
   });
   $('[data-shape-delete]',toolbar).onclick=event=>{
     event.preventDefault();
@@ -151,13 +196,13 @@ installSpatialObjectHoverUI=function(object,canvas) {
   const escaped=(window.CSS&&CSS.escape)?CSS.escape(object.id):object.id;
   const wrap=canvas?.querySelector?.(`[data-spatial-object-id="${escaped}"]`);
   if (!wrap) return;
-  if (object.type==='oval' && !$('.spatial-shape-toolbar',wrap)) wrap.appendChild(spatialShapeToolbar(object));
+  if (NOTEBOOK_ANNOTATION_TYPES.has(object.type) && !$('.spatial-shape-toolbar',wrap)) wrap.appendChild(spatialShapeToolbar(object));
   if (object.type==='postit' && !$('.spatial-postit-toolbar',wrap)) wrap.appendChild(paperPostitToolbar(object));
 };
 
 /* --- Text ------------------------------------------------------------------------------- */
 enhanceSpatialShapeText=function(object,wrap) {
-  if (!object || !['box','cloud','oval','postit'].includes(object.type) || !wrap) return;
+  if (!object || !(NOTEBOOK_ANNOTATION_TYPES.has(object.type) || object.type==='postit') || !wrap) return;
   let host=wrap;
   if (object.type==='postit') {
     host=$('.spatial-postit-paper',wrap);
@@ -194,11 +239,11 @@ const _paperObjectsInstallShapeResizeHandles=installShapeResizeHandles;
 installShapeResizeHandles=function(object,wrap) {
   if (!object || !wrap) return;
   if (object.type==='box' || object.type==='cloud') return _paperObjectsInstallShapeResizeHandles(object,wrap);
-  if (!['oval','postit'].includes(object.type) || $('.spatial-resize-handle',wrap)) return;
+  if (!['oval','arrow','stop','postit'].includes(object.type) || $('.spatial-resize-handle',wrap)) return;
   const editable=typeof isCurrentNotebookPageEditable!=='function' || isCurrentNotebookPageEditable();
   if (!editable) return;
 
-  const minCols=object.type==='postit'?3:2;
+  const minCols=object.type==='postit'?3:(object.type==='arrow'?3:2);
   const minRows=object.type==='postit'?3:2;
   ['n','e','s','w'].forEach(direction=>{
     const handle=document.createElement('button');
@@ -285,7 +330,11 @@ renderSpatialObject=function(object,canvas) {
     enhanceSpatialShapeText(object,wrap);
   }
 
-  if (object.type==='oval') enhanceSpatialShapeText(object,wrap);
+  if (NOTEBOOK_ANNOTATION_TYPES.has(object.type)) {
+    wrap.dataset.annotationStyle=paperAnnotationStyle(object);
+    wrap.dataset.annotationTone=paperAnnotationTone(object);
+    enhanceSpatialShapeText(object,wrap);
+  }
 
   if (object.type==='cloud') {
     const svg=$('.spatial-cloud-svg',wrap);
