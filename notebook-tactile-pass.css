@@ -1,0 +1,258 @@
+/* SalesShop Notebook — tactile paper / workspace pass
+   Visual-only layer. Keeps paper interactions and data behavior untouched.
+   Goal: make the Notebook read as a physical working surface instead of a styled text box. */
+
+:root {
+  --notebook-work-surface:#dedbd2;
+  --notebook-work-surface-ink:rgba(66,57,43,.055);
+  --notebook-work-surface-light:rgba(255,255,255,.34);
+  --notebook-page-edge:rgba(112,92,48,.22);
+  --notebook-page-edge-soft:rgba(112,92,48,.11);
+  --notebook-page-contact:rgba(52,43,27,.16);
+  --notebook-page-lift:rgba(52,43,27,.10);
+  --notebook-fiber-dark:rgba(72,56,27,.016);
+  --notebook-fiber-light:rgba(255,255,255,.20);
+}
+
+html[data-theme="dark"] {
+  --notebook-work-surface:#151719;
+  --notebook-work-surface-ink:rgba(255,255,255,.018);
+  --notebook-work-surface-light:rgba(255,255,255,.025);
+  --notebook-page-edge:rgba(229,214,157,.15);
+  --notebook-page-edge-soft:rgba(229,214,157,.075);
+  --notebook-page-contact:rgba(0,0,0,.46);
+  --notebook-page-lift:rgba(0,0,0,.28);
+  --notebook-fiber-dark:rgba(0,0,0,.055);
+  --notebook-fiber-light:rgba(255,245,204,.018);
+}
+
+/* --------------------------------------------------------------------------
+   1. WORK SURFACE
+   The notebook now sits on a quiet matte work surface instead of flat app bg.
+   The texture is deliberately low-frequency and low-contrast so it disappears
+   while writing, but becomes perceptible around the sheet edges.
+   -------------------------------------------------------------------------- */
+#notebookDock.notebook-dock {
+  position:relative;
+  background-color:var(--notebook-work-surface) !important;
+  background-image:
+    radial-gradient(ellipse at 22% 0%, var(--notebook-work-surface-light), transparent 42%),
+    radial-gradient(ellipse at 78% 100%, color-mix(in srgb,var(--notebook-work-surface-ink) 70%,transparent), transparent 46%),
+    repeating-linear-gradient(7deg, transparent 0 5px, var(--notebook-work-surface-ink) 5px 6px, transparent 6px 13px),
+    repeating-linear-gradient(97deg, transparent 0 17px, color-mix(in srgb,var(--notebook-work-surface-light) 36%,transparent) 17px 18px, transparent 18px 31px);
+  background-size:auto,auto,31px 31px,43px 43px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb,var(--notebook-work-surface-light) 58%,transparent),
+    inset 0 12px 28px rgba(38,31,21,.035);
+}
+
+html[data-theme="dark"] #notebookDock.notebook-dock {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025),
+    inset 0 14px 30px rgba(0,0,0,.13);
+}
+
+/* Keep the toolbar visually part of the workbench rather than a floating SaaS bar. */
+#notebookDock .notebook-toolbar {
+  position:relative;
+  z-index:32;
+  text-shadow:0 1px 0 color-mix(in srgb,var(--notebook-work-surface-light) 48%,transparent);
+}
+
+/* --------------------------------------------------------------------------
+   2. THE SHEET
+   A thin edge, contact shadow and paper-fiber layers make the active sheet feel
+   like a physical object. Sharper corners intentionally move away from bubbly UI.
+   -------------------------------------------------------------------------- */
+#notebookDock .notebook-page {
+  background-color:var(--paper) !important;
+  background-image:
+    linear-gradient(90deg,
+      rgba(92,72,31,.022) 0,
+      transparent 1.3%,
+      transparent 97.8%,
+      rgba(92,72,31,.032) 100%),
+    linear-gradient(180deg,
+      rgba(255,255,255,.20) 0,
+      transparent 2.8%,
+      transparent 96.5%,
+      rgba(83,61,23,.024) 100%),
+    repeating-linear-gradient(3deg,
+      transparent 0 3px,
+      var(--notebook-fiber-dark) 3px 4px,
+      transparent 4px 9px),
+    repeating-linear-gradient(93deg,
+      transparent 0 8px,
+      var(--notebook-fiber-light) 8px 9px,
+      transparent 9px 17px),
+    radial-gradient(circle at 14% 19%, rgba(93,70,26,.018) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 71% 63%, rgba(255,255,255,.16) 0 1px, transparent 1.35px);
+  background-size:auto,auto,19px 19px,29px 29px,53px 47px,61px 59px;
+  border:1px solid var(--notebook-page-edge) !important;
+  border-radius:2px !important;
+  box-shadow:
+    0 1px 0 var(--notebook-page-contact),
+    0 3px 5px rgba(52,43,27,.055),
+    0 12px 25px var(--notebook-page-lift),
+    inset 1px 0 0 rgba(255,255,255,.30),
+    inset -1px 0 0 rgba(92,72,31,.025) !important;
+}
+
+html[data-theme="dark"] #notebookDock .notebook-page {
+  background-image:
+    linear-gradient(90deg, rgba(0,0,0,.09), transparent 1.5%, transparent 98%, rgba(0,0,0,.12)),
+    linear-gradient(180deg, rgba(255,247,211,.018), transparent 4%, transparent 97%, rgba(0,0,0,.08)),
+    repeating-linear-gradient(4deg, transparent 0 4px, var(--notebook-fiber-dark) 4px 5px, transparent 5px 11px),
+    repeating-linear-gradient(94deg, transparent 0 10px, var(--notebook-fiber-light) 10px 11px, transparent 11px 20px),
+    radial-gradient(circle at 17% 21%, rgba(255,241,187,.022) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 74% 61%, rgba(0,0,0,.075) 0 1px, transparent 1.5px);
+  box-shadow:
+    0 1px 0 rgba(0,0,0,.55),
+    0 5px 9px rgba(0,0,0,.20),
+    0 17px 34px var(--notebook-page-lift),
+    inset 1px 0 0 rgba(255,245,196,.025),
+    inset -1px 0 0 rgba(0,0,0,.12) !important;
+}
+
+/* A narrow physical edge catches light independently of the printed page body. */
+#notebookDock .notebook-page::after {
+  content:'';
+  position:absolute;
+  z-index:29;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.28),
+    inset 0 -1px 0 var(--notebook-page-edge-soft),
+    inset -1px 0 0 var(--notebook-page-edge-soft);
+  opacity:.78;
+}
+
+html[data-theme="dark"] #notebookDock .notebook-page::after {
+  box-shadow:
+    inset 0 1px 0 rgba(255,244,196,.035),
+    inset 0 -1px 0 rgba(0,0,0,.20),
+    inset -1px 0 0 rgba(0,0,0,.18);
+}
+
+/* Preserve existing writing/object stacking above the physical sheet treatment. */
+#notebookDock .notebook-paper-head,
+#notebookDock .notebook-page-body {
+  position:relative;
+  z-index:1;
+}
+
+/* --------------------------------------------------------------------------
+   3. PRINTED RULING
+   Lines/grids should feel printed into the paper rather than digital overlays.
+   -------------------------------------------------------------------------- */
+#notebookDock .notebook-page.paper-lines .notebook-page-body,
+#notebookDock .notebook-page.paper-grid .notebook-page-body,
+#notebookDock .notebook-page.paper-cornell .notebook-page-body,
+#notebookDock .notebook-page.paper-dots .notebook-page-body {
+  background-color:transparent !important;
+}
+
+#notebookDock .notebook-page.paper-lines .notebook-page-body {
+  background-image:repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 27px,
+    color-mix(in srgb,var(--paper-line) 88%,rgba(101,86,55,.06)) 27px,
+    color-mix(in srgb,var(--paper-line) 88%,rgba(101,86,55,.06)) 28px
+  ) !important;
+}
+
+#notebookDock .notebook-page.paper-grid .notebook-page-body,
+#notebookDock .notebook-page.paper-grid .grid-notebook-canvas {
+  background-image:
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent 27px,
+      color-mix(in srgb,var(--paper-line) 91%,rgba(101,86,55,.055)) 27px,
+      color-mix(in srgb,var(--paper-line) 91%,rgba(101,86,55,.055)) 28px),
+    repeating-linear-gradient(to right,
+      transparent 0,
+      transparent 27px,
+      color-mix(in srgb,var(--paper-line) 91%,rgba(101,86,55,.055)) 27px,
+      color-mix(in srgb,var(--paper-line) 91%,rgba(101,86,55,.055)) 28px) !important;
+}
+
+/* Cornell gets a slightly stronger cue divider, like a ruled notebook sheet. */
+#notebookDock .notebook-page.paper-cornell .notebook-page-body {
+  background-image:
+    linear-gradient(to right,
+      transparent calc(26% - .5px),
+      color-mix(in srgb,var(--paper-muted) 31%,transparent) 26%,
+      transparent calc(26% + .5px)),
+    repeating-linear-gradient(to bottom,
+      transparent 0,
+      transparent 27px,
+      color-mix(in srgb,var(--paper-line) 88%,rgba(101,86,55,.055)) 27px,
+      color-mix(in srgb,var(--paper-line) 88%,rgba(101,86,55,.055)) 28px) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. BINDER LAYERS / TABS
+   Make the sheets behind the active page read as stacked stock, not rounded cards.
+   -------------------------------------------------------------------------- */
+#notebookDock .notebook-binder-layer-clean {
+  border-radius:2px !important;
+  border-color:var(--notebook-page-edge-soft) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18),
+    0 3px 7px rgba(52,43,27,.08) !important;
+}
+
+#notebookDock .notebook-binder-tab-clean {
+  border-radius:3px 3px 0 0 !important;
+  box-shadow:0 -1px 2px rgba(52,43,27,.035) !important;
+}
+
+#notebookDock .notebook-binder-tab-clean.active {
+  box-shadow:0 -2px 5px rgba(52,43,27,.06) !important;
+}
+
+/* Page controls should feel stamped onto the page edge, not like pill buttons. */
+#notebookDock .notebook-single-page-action,
+#notebookDock .notebook-single-style-menu,
+#notebookDock .notebook-single-style-menu button {
+  border-radius:3px !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. FOCUS MODE
+   Give the full notebook a little more breathing room so the work surface can
+   show around the page and the physical sheet is easier to perceive.
+   -------------------------------------------------------------------------- */
+.workspace-body.notebook-focus #notebookDock.notebook-dock {
+  padding:13px 19px 19px !important;
+}
+
+.workspace-body.notebook-focus #notebookDock .notebook-page {
+  box-shadow:
+    0 1px 0 var(--notebook-page-contact),
+    0 5px 9px rgba(52,43,27,.065),
+    0 19px 38px var(--notebook-page-lift),
+    inset 1px 0 0 rgba(255,255,255,.28),
+    inset -1px 0 0 rgba(92,72,31,.025) !important;
+}
+
+html[data-theme="dark"] .workspace-body.notebook-focus #notebookDock .notebook-page {
+  box-shadow:
+    0 1px 0 rgba(0,0,0,.62),
+    0 6px 12px rgba(0,0,0,.25),
+    0 22px 42px rgba(0,0,0,.34),
+    inset 1px 0 0 rgba(255,245,196,.025),
+    inset -1px 0 0 rgba(0,0,0,.13) !important;
+}
+
+@media (max-width:760px) {
+  #notebookDock.notebook-dock {
+    background-size:auto,auto,23px 23px,31px 31px;
+  }
+  .workspace-body.notebook-focus #notebookDock.notebook-dock {
+    padding:8px !important;
+  }
+}
