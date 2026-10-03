@@ -1,0 +1,244 @@
+/* Final paper behavior visuals: nested creation flyouts, click-through selection, and rotation. */
+
+/* A selected area is a visual hint, never a blocker for writing. */
+#notebookDock .grid-cell-selection { pointer-events:none !important; }
+
+/* --- Nested create menu --------------------------------------------------------------- */
+#notebookDock .paper-create-nested .paper-create-main-panel {
+  overflow:visible !important;
+}
+#notebookDock .paper-create-family {
+  position:relative;
+  display:grid;
+  place-items:center;
+}
+#notebookDock .paper-create-family-trigger {
+  position:relative;
+}
+#notebookDock .paper-create-family-trigger::after {
+  content:'›';
+  position:absolute;
+  right:-6px;
+  top:50%;
+  translate:0 -50%;
+  color:var(--paper-muted);
+  font:600 8px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  opacity:.55;
+  pointer-events:none;
+}
+#notebookDock .paper-create-submenu {
+  position:absolute;
+  z-index:110;
+  left:calc(100% + 7px);
+  top:0;
+  display:flex;
+  flex-direction:row;
+  gap:2px;
+  padding:0;
+  opacity:0;
+  pointer-events:none;
+  transform:translateX(-2px) scale(.98);
+  transform-origin:left center;
+  transition:opacity .08s ease,transform .08s ease;
+}
+#notebookDock .paper-create-family:hover > .paper-create-submenu,
+#notebookDock .paper-create-family:focus-within > .paper-create-submenu {
+  opacity:.98;
+  pointer-events:auto;
+  transform:translateX(0) scale(1);
+}
+#notebookDock .paper-create-family.submenu-left > .paper-create-submenu {
+  left:auto;
+  right:calc(100% + 7px);
+  transform-origin:right center;
+}
+#notebookDock .paper-create-submenu button {
+  width:20px !important;
+  min-width:20px !important;
+  height:20px !important;
+  min-height:20px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  border:1px solid color-mix(in srgb,var(--paper-muted) 24%,transparent) !important;
+  border-radius:4px !important;
+  background:color-mix(in srgb,var(--paper) 97%,var(--panel)) !important;
+  color:var(--paper-muted) !important;
+  box-shadow:0 3px 9px rgba(0,0,0,.08) !important;
+}
+#notebookDock .paper-create-submenu button:hover,
+#notebookDock .paper-create-submenu button:focus-visible {
+  color:var(--paper-ink) !important;
+  background:color-mix(in srgb,var(--paper) 88%,var(--paper-muted)) !important;
+  outline:0;
+}
+
+#notebookDock .paper-create-family-icon,
+#notebookDock .paper-create-shape-icon {
+  position:relative;
+  display:block;
+  width:11px;
+  height:10px;
+  color:currentColor;
+}
+#notebookDock .paper-create-family-icon.sticker {
+  border:1px solid currentColor;
+  border-radius:1px 2px 3px 1px;
+  background:color-mix(in srgb,#f0dc78 72%,var(--paper));
+  transform:rotate(-3deg);
+}
+#notebookDock .paper-create-family-icon.sticker::after {
+  content:'';
+  position:absolute;
+  right:0;
+  bottom:0;
+  width:3px;
+  height:3px;
+  border-left:1px solid currentColor;
+  border-top:1px solid currentColor;
+  opacity:.45;
+}
+#notebookDock .paper-create-family-icon.pencil::before,
+#notebookDock .paper-create-family-icon.pencil::after {
+  content:'';
+  position:absolute;
+  left:0;
+  right:0;
+  top:4px;
+  height:1px;
+  border-radius:2px;
+  background:currentColor;
+  transform:rotate(-8deg);
+}
+#notebookDock .paper-create-family-icon.pencil::after {
+  top:6px;
+  left:2px;
+  opacity:.35;
+  transform:rotate(-5deg);
+}
+#notebookDock .paper-create-shape-icon.box {
+  border:1px solid currentColor;
+  border-radius:3px 2px 4px 2px;
+  transform:rotate(-2deg);
+}
+#notebookDock .paper-create-shape-icon.oval {
+  border:1px solid currentColor;
+  border-radius:50%;
+  transform:rotate(-4deg);
+}
+#notebookDock .paper-create-shape-icon.cloud::before {
+  content:'☁';
+  position:absolute;
+  inset:-3px 0 0;
+  display:grid;
+  place-items:center;
+  font-size:12px;
+  line-height:1;
+}
+#notebookDock .paper-create-shape-icon.arrow {
+  width:12px;
+  clip-path:polygon(0 15%,72% 15%,100% 50%,72% 85%,0 85%,8% 50%);
+  background:currentColor;
+  opacity:.82;
+}
+#notebookDock .paper-create-shape-icon.stop {
+  width:10px;
+  height:10px;
+  clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);
+  background:#bf5753;
+}
+
+/* --- Rotation --------------------------------------------------------- */
+#notebookDock .paper-object-rotate-handle {
+  position:absolute;
+  z-index:24;
+  right:3px;
+  top:-16px;
+  width:13px;
+  height:13px;
+  min-width:13px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:color-mix(in srgb,var(--paper) 86%,transparent);
+  color:var(--paper-muted);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--paper-muted) 18%,transparent);
+  opacity:0;
+  pointer-events:none;
+  cursor:grab;
+  font:500 9px/1 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  transition:opacity .08s ease,background .08s ease,color .08s ease;
+}
+#notebookDock .paper-object-rotate-handle:hover,
+#notebookDock .paper-object-rotate-handle:active {
+  color:var(--paper-ink);
+  background:var(--paper);
+  cursor:grabbing;
+}
+#notebookDock .notebook-spatial-object:hover > .paper-object-rotate-handle,
+#notebookDock .notebook-spatial-object.is-selected > .paper-object-rotate-handle,
+#notebookDock .grid-note.notebook-spatial-image-object:hover > .paper-object-rotate-handle,
+#notebookDock .grid-note.notebook-spatial-image-object.is-selected > .paper-object-rotate-handle {
+  opacity:.52;
+  pointer-events:auto;
+}
+#notebookDock .paper-object-rotate-handle:focus-visible {
+  opacity:1;
+  pointer-events:auto;
+  outline:1px solid color-mix(in srgb,var(--tab-notebook) 70%,var(--paper-ink));
+  outline-offset:1px;
+}
+
+/* Rotate only the physical mark/paper, not its logical hitbox/toolbars. */
+#notebookDock .spatial-object-box::before {
+  transform:rotate(calc(var(--annotation-rotation,0deg) - .42deg)) skewX(.12deg) !important;
+}
+#notebookDock .spatial-object-box::after {
+  transform:rotate(calc(var(--annotation-rotation,0deg) + .52deg)) skewY(-.12deg) !important;
+}
+#notebookDock .spatial-object-oval::before {
+  transform:rotate(calc(var(--annotation-rotation,0deg) - .58deg)) !important;
+}
+#notebookDock .spatial-object-oval::after {
+  transform:rotate(calc(var(--annotation-rotation,0deg) + .72deg)) !important;
+}
+#notebookDock .spatial-object-arrow::before,
+#notebookDock .spatial-object-stop::before {
+  transform:rotate(calc(var(--annotation-rotation,0deg) - .48deg)) !important;
+}
+#notebookDock .spatial-object-arrow::after,
+#notebookDock .spatial-object-stop::after {
+  transform:rotate(calc(var(--annotation-rotation,0deg) + .34deg)) !important;
+}
+#notebookDock .notebook-spatial-object[data-annotation-style="sticky"]::before {
+  transform:rotate(calc(var(--annotation-rotation,0deg) - .36deg)) !important;
+}
+#notebookDock .notebook-spatial-object[data-annotation-style="sticky"]::after {
+  transform:rotate(calc(var(--annotation-rotation,0deg) + .32deg)) !important;
+}
+#notebookDock .spatial-object-cloud .spatial-cloud-svg {
+  transform:rotate(var(--annotation-rotation,0deg));
+  transform-origin:50% 50%;
+}
+#notebookDock .notebook-spatial-object[data-annotation-style] > .spatial-shape-text {
+  transform:rotate(var(--annotation-rotation,0deg));
+  transform-origin:50% 50%;
+}
+
+/* Post-it already owns a physical-paper rotation variable; the handle simply makes it editable. */
+#notebookDock .spatial-postit-paper {
+  transform:rotate(var(--postit-rotation,-.48deg)) !important;
+}
+
+/* Images behave like loose paper/photo inserts while their grid-note hitbox stays stable. */
+#notebookDock .notebook-spatial-attachment-preview {
+  transform:rotate(var(--image-rotation,0deg));
+  transform-origin:50% 50%;
+  transition:transform .04s linear;
+}
+#notebookDock .grid-note.notebook-spatial-image-object > .paper-object-rotate-handle {
+  right:4px;
+  top:-16px;
+}
