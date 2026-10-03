@@ -11,7 +11,7 @@
   border-radius:1px 2px 2px 1px;
   background:#f0dc78;
   box-shadow:1px 1px 0 rgba(58,48,24,.16);
-  transform:rotate(-2deg);
+  transform:rotate(-3deg);
 }
 #notebookDock .grid-create-postit-icon::after {
   content:'';
@@ -24,90 +24,217 @@
 }
 #notebookDock .paper-annotation-icon {
   border-radius:3px 5px 2px 4px / 4px 2px 5px 3px;
-  transform:rotate(-1deg);
+  transform:rotate(-2deg);
 }
 
-/* --- Pencil annotation language --------------------------------------------------------- */
-#notebookDock .spatial-object-box {
-  border:0 !important;
-  background:transparent !important;
-  pointer-events:auto !important;
-}
-#notebookDock .spatial-object-box::before,
-#notebookDock .spatial-object-box::after {
-  content:'';
-  position:absolute;
-  pointer-events:none;
-  border:1px solid color-mix(in srgb,var(--paper-ink) 54%,var(--paper-muted));
-  border-radius:5px 3px 6px 4px / 3px 6px 4px 5px;
-}
-#notebookDock .spatial-object-box::before {
-  inset:1px 2px 2px 1px;
-  transform:rotate(-.12deg);
-  opacity:.88;
-}
-#notebookDock .spatial-object-box::after {
-  inset:2px 1px 1px 2px;
-  transform:rotate(.16deg);
-  opacity:.20;
-}
-
-#notebookDock .spatial-object-oval {
+/* --- Annotation family ----------------------------------------------------------------- */
+#notebookDock .spatial-object-box,
+#notebookDock .spatial-object-oval,
+#notebookDock .spatial-object-arrow,
+#notebookDock .spatial-object-stop {
+  --annotation-paper:#f0dd82;
+  --annotation-ink:#4a4028;
   border:0 !important;
   background:transparent !important;
   pointer-events:auto !important;
   cursor:default;
+  isolation:isolate;
 }
+#notebookDock .spatial-object-stop {
+  --annotation-paper:#c85e58;
+  --annotation-ink:#fff8ec;
+}
+
+/* Pencil box: deliberately imperfect double graphite line. */
+#notebookDock .spatial-object-box::before,
+#notebookDock .spatial-object-box::after {
+  content:'';
+  position:absolute;
+  z-index:0;
+  pointer-events:none;
+  border:1px solid color-mix(in srgb,var(--paper-ink) 55%,var(--paper-muted));
+  border-radius:6px 3px 7px 4px / 3px 7px 4px 6px;
+}
+#notebookDock .spatial-object-box::before {
+  inset:1px 3px 2px 1px;
+  transform:rotate(-.42deg) skewX(.12deg);
+  opacity:.9;
+}
+#notebookDock .spatial-object-box::after {
+  inset:3px 1px 1px 2px;
+  transform:rotate(.52deg) skewY(-.12deg);
+  opacity:.27;
+}
+
+/* Pencil oval: enough asymmetry to read as hand-drawn without becoming novelty UI. */
 #notebookDock .spatial-object-oval::before,
 #notebookDock .spatial-object-oval::after {
   content:'';
   position:absolute;
+  z-index:0;
   pointer-events:none;
-  border:1px solid color-mix(in srgb,var(--paper-ink) 54%,var(--paper-muted));
-  border-radius:50% 48% 51% 49% / 47% 52% 48% 53%;
+  border:1px solid color-mix(in srgb,var(--paper-ink) 55%,var(--paper-muted));
+  border-radius:52% 46% 53% 48% / 45% 54% 47% 55%;
 }
 #notebookDock .spatial-object-oval::before {
-  inset:1px;
-  transform:rotate(-.18deg);
-  opacity:.88;
+  inset:1px 2px 2px 1px;
+  transform:rotate(-.58deg);
+  opacity:.9;
 }
 #notebookDock .spatial-object-oval::after {
-  inset:2px 1px 1px 2px;
-  transform:rotate(.22deg);
-  opacity:.18;
+  inset:3px 1px 1px 3px;
+  transform:rotate(.72deg);
+  opacity:.24;
 }
 
+/* Arrow and stop-sign use clipped paper silhouettes. In Pencil mode, a paper-colored inner shape
+   cuts an intentionally uneven line out of the graphite outer shape. */
+#notebookDock .spatial-object-arrow::before,
+#notebookDock .spatial-object-arrow::after,
+#notebookDock .spatial-object-stop::before,
+#notebookDock .spatial-object-stop::after {
+  content:'';
+  position:absolute;
+  z-index:0;
+  pointer-events:none;
+}
+#notebookDock .spatial-object-arrow::before,
+#notebookDock .spatial-object-arrow::after {
+  clip-path:polygon(0 6%,76% 6%,100% 50%,76% 94%,0 94%,4% 50%);
+}
+#notebookDock .spatial-object-stop::before,
+#notebookDock .spatial-object-stop::after {
+  clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);
+}
+#notebookDock .spatial-object-arrow[data-annotation-style="pencil"]::before,
+#notebookDock .spatial-object-stop[data-annotation-style="pencil"]::before {
+  inset:0;
+  background:color-mix(in srgb,var(--paper-ink) 55%,var(--paper-muted));
+  transform:rotate(-.48deg);
+  opacity:.88;
+}
+#notebookDock .spatial-object-arrow[data-annotation-style="pencil"]::after,
+#notebookDock .spatial-object-stop[data-annotation-style="pencil"]::after {
+  inset:2px 3px 2px 2px;
+  background:var(--paper);
+  transform:rotate(.34deg);
+}
+
+/* Sticky material turns the same annotation family into classic office-note callouts. */
+#notebookDock .spatial-object-box[data-annotation-style="sticky"]::before,
+#notebookDock .spatial-object-oval[data-annotation-style="sticky"]::before {
+  inset:1px;
+  border:1px solid color-mix(in srgb,var(--annotation-ink) 22%,transparent);
+  background:
+    linear-gradient(to bottom,rgba(255,255,255,.18),transparent 9px),
+    var(--annotation-paper);
+  box-shadow:1px 4px 8px rgba(38,31,19,.14);
+  opacity:1;
+}
+#notebookDock .spatial-object-box[data-annotation-style="sticky"]::after,
+#notebookDock .spatial-object-oval[data-annotation-style="sticky"]::after {
+  border:0;
+  inset:auto 7% -3px 9%;
+  height:6px;
+  background:rgba(64,49,19,.10);
+  border-radius:50%;
+  filter:blur(3px);
+  transform:none;
+  opacity:1;
+}
+#notebookDock .spatial-object-arrow[data-annotation-style="sticky"]::before,
+#notebookDock .spatial-object-stop[data-annotation-style="sticky"]::before {
+  inset:0;
+  background:
+    linear-gradient(to bottom,rgba(255,255,255,.18),transparent 11px),
+    var(--annotation-paper);
+  filter:drop-shadow(1px 5px 5px rgba(38,31,19,.15));
+  transform:rotate(-.36deg);
+  opacity:1;
+}
+#notebookDock .spatial-object-arrow[data-annotation-style="sticky"]::after,
+#notebookDock .spatial-object-stop[data-annotation-style="sticky"]::after {
+  inset:2px;
+  background:transparent;
+  border:1px solid color-mix(in srgb,var(--annotation-ink) 18%,transparent);
+  transform:rotate(.32deg);
+  opacity:.85;
+}
+
+/* Cloud keeps SVG geometry but gets the same pencil-vs-sticky material choice. */
+#notebookDock .spatial-object-cloud {
+  --annotation-paper:#f0dd82;
+  --annotation-ink:#4a4028;
+  pointer-events:auto !important;
+  cursor:default;
+}
 #notebookDock .spatial-object-cloud .spatial-cloud-svg path:not(.spatial-pencil-echo) {
   fill:color-mix(in srgb,var(--paper) 2%,transparent) !important;
-  stroke:color-mix(in srgb,var(--paper-ink) 52%,var(--paper-muted)) !important;
-  stroke-width:1.05 !important;
+  stroke:color-mix(in srgb,var(--paper-ink) 53%,var(--paper-muted)) !important;
+  stroke-width:1.08 !important;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
 #notebookDock .spatial-object-cloud .spatial-cloud-svg .spatial-pencil-echo {
   fill:none !important;
-  stroke:color-mix(in srgb,var(--paper-ink) 34%,var(--paper-muted)) !important;
-  stroke-width:.75 !important;
+  stroke:color-mix(in srgb,var(--paper-ink) 38%,var(--paper-muted)) !important;
+  stroke-width:.78 !important;
   stroke-linecap:round;
   stroke-linejoin:round;
-  opacity:.22;
-  transform:translate(.65px,.45px);
+  opacity:.28;
+  transform:translate(1.15px,.8px) rotate(.25deg);
   transform-box:fill-box;
+  transform-origin:center;
+}
+#notebookDock .spatial-object-cloud[data-annotation-style="sticky"] .spatial-cloud-svg path:not(.spatial-pencil-echo) {
+  fill:var(--annotation-paper) !important;
+  stroke:color-mix(in srgb,var(--annotation-ink) 28%,transparent) !important;
+  stroke-width:.9 !important;
+  filter:drop-shadow(1px 4px 4px rgba(38,31,19,.12));
+}
+#notebookDock .spatial-object-cloud[data-annotation-style="sticky"] .spatial-cloud-svg .spatial-pencil-echo {
+  stroke:rgba(255,255,255,.35) !important;
+  stroke-width:.7 !important;
+  opacity:.45;
+  transform:translate(-.7px,-.5px);
 }
 
-/* Keep annotation ink softer than table geometry. */
-#notebookDock .paper-annotation-toolbar button {
-  min-width:27px;
+/* Annotation tool strip stays compact enough to test several shapes/materials at once. */
+#notebookDock .paper-annotation-toolbar button:not(.notebook-toolbar-delete) {
+  min-width:24px;
+  padding-inline:4px;
+  font-size:6.5px !important;
 }
-#notebookDock .spatial-object-box > .spatial-shape-text,
-#notebookDock .spatial-object-cloud > .spatial-shape-text,
-#notebookDock .spatial-object-oval > .spatial-shape-text {
-  inset:5px 7px;
-  color:color-mix(in srgb,var(--paper-ink) 88%,var(--paper-muted));
+#notebookDock .paper-annotation-toolbar .paper-annotation-style {
+  min-width:34px;
+}
+
+/* More breathing room: text should never collide with a decorative border or pointed edge. */
+#notebookDock .spatial-object-box > .spatial-shape-text {
+  inset:10px 13px;
+}
+#notebookDock .spatial-object-cloud > .spatial-shape-text {
+  inset:12px 15px;
 }
 #notebookDock .spatial-object-oval > .spatial-shape-text {
-  inset:12% 12%;
+  inset:16% 17%;
   text-align:center;
+}
+#notebookDock .spatial-object-arrow > .spatial-shape-text {
+  inset:11px 22% 11px 14px;
+}
+#notebookDock .spatial-object-stop > .spatial-shape-text {
+  inset:18% 20%;
+  text-align:center;
+}
+#notebookDock .notebook-spatial-object[data-annotation-style="sticky"] > .spatial-shape-text {
+  color:var(--annotation-ink);
+  caret-color:var(--annotation-ink);
+}
+#notebookDock .spatial-object-stop[data-annotation-style="sticky"] > .spatial-shape-text {
+  color:#fff8ec;
+  caret-color:#fff8ec;
+  font-weight:600;
 }
 
 /* --- Post-it note ----------------------------------------------------------------------- */
@@ -127,7 +254,7 @@
   box-sizing:border-box;
   overflow:hidden;
   border:1px solid rgba(96,78,35,.18);
-  border-radius:2px 2px 4px 1px;
+  border-radius:2px 2px 5px 1px;
   background:
     linear-gradient(to bottom,rgba(255,255,255,.18),transparent 10px),
     var(--postit-paper);
@@ -135,7 +262,7 @@
   box-shadow:
     0 1px 1px rgba(60,49,25,.13),
     2px 7px 13px rgba(31,27,19,.14);
-  transform:rotate(var(--postit-rotation,-.36deg));
+  transform:rotate(var(--postit-rotation,-.48deg));
   transform-origin:50% 12%;
 }
 #notebookDock .spatial-postit-paper::after {
@@ -164,8 +291,8 @@
 }
 
 #notebookDock .spatial-postit-text {
-  inset:10px 11px 9px !important;
-  min-height:calc(100% - 19px) !important;
+  inset:12px 13px 11px !important;
+  min-height:calc(100% - 23px) !important;
   color:var(--postit-ink) !important;
   caret-color:var(--postit-ink) !important;
   font-family:Georgia,"Times New Roman",serif !important;
@@ -209,7 +336,7 @@
   border:1px solid rgba(70,60,40,.20);
   border-radius:1px 2px 2px 1px;
   box-shadow:1px 1px 0 rgba(0,0,0,.08);
-  transform:rotate(-2deg);
+  transform:rotate(-3deg);
 }
 #notebookDock .postit-color-swatch.swatch-yellow { background:#f1de80; }
 #notebookDock .postit-color-swatch.swatch-blue { background:#cfe4ed; }
@@ -220,9 +347,9 @@
   background:color-mix(in srgb,var(--paper-muted) 9%,var(--paper)) !important;
 }
 
-/* A selected Post-it gets a very quiet outline around its logical footprint, not a hard box around
-   the paper itself. */
-#notebookDock .spatial-object-postit.is-selected {
-  outline-color:color-mix(in srgb,var(--paper-ink) 22%,transparent);
+/* Selected paper objects use a quiet logical footprint, not another heavy digital box. */
+#notebookDock .spatial-object-postit.is-selected,
+#notebookDock .notebook-spatial-object[data-annotation-style].is-selected {
+  outline-color:color-mix(in srgb,var(--paper-ink) 20%,transparent);
   outline-offset:4px;
 }
