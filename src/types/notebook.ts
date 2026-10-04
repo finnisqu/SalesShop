@@ -1,4 +1,5 @@
-export type PaperStyle = 'lined' | 'grid' | 'blank';
+export type PaperStyle = 'lined' | 'grid' | 'blank' | 'cornell' | 'dotted' | 'two-column';
+export type PageTone = 'cream' | 'white' | 'blue' | 'green' | 'rose';
 export type InkTool = 'pen' | 'marker' | 'highlighter';
 export type InkInteractionTool = 'eraser' | 'lasso';
 export type ActiveNotebookTool = 'select' | 'text' | InkTool | InkInteractionTool;
@@ -113,6 +114,8 @@ export interface NotebookEntry {
   strokes: InkStroke[];
   objects: NotebookObject[];
   paperStyle: PaperStyle;
+  tone: PageTone;
+  favorite: boolean;
   createdAt: string;
   updatedAt: string;
 }
