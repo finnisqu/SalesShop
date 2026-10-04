@@ -1,0 +1,287 @@
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useNotebookStore } from '../store/notebookStore';
+import type { NotebookEntry, NotebookObject, NotebookObjectFrame } from '../types/notebook';
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+interface NotebookObjectLayerProps {
+  entry: NotebookEntry;
+}
+
+interface InteractionState {
+  kind: 'move' | 'resize' | 'rotate';
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startFrame: NotebookObjectFrame;
+  startAngle?: number;
+  centerX?: number;
+  centerY?: number;
+}
+
+function frameOf(object: NotebookObject): NotebookObjectFrame {
+  return {
+    x: object.x,
+    y: object.y,
+    width: object.width,
+    height: object.height,
+    rotation: object.rotation,
+    zIndex: object.zIndex,
+  };
+}
+
+function futureObjectLabel(object: NotebookObject) {
+  if (object.type === 'post-it') return 'Post-it';
+  if (object.type === 'image') return 'Image';
+  if (object.type === 'spreadsheet') return 'Spreadsheet';
+  if (object.type === 'shape') return 'Shape';
+  if (object.type === 'business-card') return 'Business card';
+  if (object.type === 'paper-scrap') return 'Paper scrap';
+  if (object.type === 'attachment') return object.name || 'Attachment';
+  return 'Object';
+}
+
+function ObjectFrame({ entryId, object, selected }: { entryId: string; object: NotebookObject; selected: boolean }) {
+  const selectObject = useNotebookStore((state) => state.selectObject);
+  const updateObjectFrame = useNotebookStore((state) => state.updateObjectFrame);
+  const updatePaperCardText = useNotebookStore((state) => state.updatePaperCardText);
+  const deleteObject = useNotebookStore((state) => state.deleteObject);
+  const initialFrame = frameOf(object);
+  const [draftFrame, setDraftFrame] = useState(initialFrame);
+  const draftFrameRef = useRef(initialFrame);
+  const interactionRef = useRef<InteractionState | null>(null);
+
+  const setFrame = (frame: NotebookObjectFrame) => {
+    draftFrameRef.current = frame;
+    setDraftFrame(frame);
+  };
+
+  useEffect(() => {
+    if (!interactionRef.current) {
+      const frame = frameOf(object);
+      draftFrameRef.current = frame;
+      setDraftFrame(frame);
+    }
+  }, [object.x, object.y, object.width, object.height, object.rotation, object.zIndex]);
+
+  const layerRect = (target: HTMLElement) => target.closest('.notebook-object-layer')?.getBoundingClientRect() ?? null;
+
+  const beginMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectObject(object.id);
+    event.currentTarget.setPointerCapture(event.pointerId);
+    interactionRef.current = {
+      kind: 'move',
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startFrame: draftFrameRef.current,
+    };
+  };
+
+  const beginResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectObject(object.id);
+    event.currentTarget.setPointerCapture(event.pointerId);
+    interactionRef.current = {
+      kind: 'resize',
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startFrame: draftFrameRef.current,
+    };
+  };
+
+  const beginRotate = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectObject(object.id);
+    const frameRect = event.currentTarget.closest('.notebook-object-frame')?.getBoundingClientRect();
+    if (!frameRect) return;
+    const centerX = frameRect.left + frameRect.width / 2;
+    const centerY = frameRect.top + frameRect.height / 2;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    interactionRef.current = {
+      kind: 'rotate',
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startFrame: draftFrameRef.current,
+      centerX,
+      centerY,
+      startAngle: Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI,
+    };
+  };
+
+  const continueInteraction = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const interaction = interactionRef.current;
+    if (!interaction || interaction.pointerId !== event.pointerId) return;
+    event.preventDefault();
+
+    if (interaction.kind === 'rotate') {
+      const currentAngle = Math.atan2(
+        event.clientY - (interaction.centerY ?? 0),
+        event.clientX - (interaction.centerX ?? 0),
+      ) * 180 / Math.PI;
+      const rotation = interaction.startFrame.rotation + currentAngle - (interaction.startAngle ?? currentAngle);
+      setFrame({ ...interaction.startFrame, rotation: Math.round(rotation * 10) / 10 });
+      return;
+    }
+
+    const rect = layerRect(event.currentTarget);
+    if (!rect) return;
+    const dx = (event.clientX - interaction.startClientX) / rect.width * 100;
+    const dy = (event.clientY - interaction.startClientY) / rect.height * 100;
+
+    if (interaction.kind === 'move') {
+      setFrame({
+        ...interaction.startFrame,
+        x: clamp(interaction.startFrame.x + dx, 0, 100 - interaction.startFrame.width),
+        y: clamp(interaction.startFrame.y + dy, 0, 100 - interaction.startFrame.height),
+      });
+      return;
+    }
+
+    setFrame({
+      ...interaction.startFrame,
+      width: clamp(interaction.startFrame.width + dx, 9, 100 - interaction.startFrame.x),
+      height: clamp(interaction.startFrame.height + dy, 6, 100 - interaction.startFrame.y),
+    });
+  };
+
+  const finishInteraction = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const interaction = interactionRef.current;
+    if (!interaction || interaction.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    updateObjectFrame(entryId, object.id, draftFrameRef.current);
+    interactionRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const interactionHandlers = {
+    onPointerMove: continueInteraction,
+    onPointerUp: finishInteraction,
+    onPointerCancel: finishInteraction,
+  };
+
+  return (
+    <div
+      className={`notebook-object-frame ${selected ? 'is-selected' : ''}`}
+      style={{
+        left: `${draftFrame.x}%`,
+        top: `${draftFrame.y}%`,
+        width: `${draftFrame.width}%`,
+        height: `${draftFrame.height}%`,
+        transform: `rotate(${draftFrame.rotation}deg)`,
+        zIndex: selected ? 1000 : draftFrame.zIndex,
+      }}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+        selectObject(object.id);
+      }}
+      data-object-type={object.type}
+    >
+      {object.type === 'paper-card' ? (
+        <div className={`paper-card-object tone-${object.tone}`}>
+          <textarea
+            value={object.text}
+            onChange={(event) => updatePaperCardText(entryId, object.id, event.target.value)}
+            onPointerDown={(event) => event.stopPropagation()}
+            aria-label="Paper card text"
+          />
+        </div>
+      ) : (
+        <div className="future-object-placeholder">{futureObjectLabel(object)}</div>
+      )}
+
+      {selected && (
+        <>
+          <button
+            className="object-handle object-move-handle"
+            type="button"
+            aria-label="Move object"
+            title="Move"
+            onPointerDown={beginMove}
+            {...interactionHandlers}
+          >
+            ⋮⋮
+          </button>
+          <button
+            className="object-handle object-rotate-handle"
+            type="button"
+            aria-label="Rotate object"
+            title="Rotate"
+            onPointerDown={beginRotate}
+            {...interactionHandlers}
+          >
+            ↻
+          </button>
+          <button
+            className="object-handle object-resize-handle"
+            type="button"
+            aria-label="Resize object"
+            title="Resize"
+            onPointerDown={beginResize}
+            {...interactionHandlers}
+          />
+          <button
+            className="object-delete-button"
+            type="button"
+            aria-label="Delete object"
+            title="Delete"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              deleteObject(entryId, object.id);
+            }}
+          >
+            ×
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
+  const activeTool = useNotebookStore((state) => state.activeTool);
+  const selectedObjectId = useNotebookStore((state) => state.selectedObjectId);
+  const selectObject = useNotebookStore((state) => state.selectObject);
+  const deleteObject = useNotebookStore((state) => state.deleteObject);
+  const selectionEnabled = activeTool === 'select';
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!selectionEnabled || !selectedObjectId || (event.key !== 'Delete' && event.key !== 'Backspace')) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.matches('input, textarea, [contenteditable="true"]')) return;
+      event.preventDefault();
+      deleteObject(entry.id, selectedObjectId);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [deleteObject, entry.id, selectedObjectId, selectionEnabled]);
+
+  return (
+    <div
+      className={`notebook-object-layer ${selectionEnabled ? 'is-selecting' : ''}`}
+      onPointerDown={(event) => {
+        if (selectionEnabled && event.target === event.currentTarget) selectObject(null);
+      }}
+      aria-label="Notebook objects"
+    >
+      {entry.objects.map((object) => (
+        <ObjectFrame
+          key={object.id}
+          entryId={entry.id}
+          object={object}
+          selected={selectionEnabled && selectedObjectId === object.id}
+        />
+      ))}
+    </div>
+  );
+}

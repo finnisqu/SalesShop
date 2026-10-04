@@ -1,0 +1,182 @@
+.tool-divider {
+  width: 1px;
+  height: 20px;
+  background: #c8c4b9;
+  margin: 0 2px;
+}
+
+.object-add-button {
+  color: #575146;
+  border-color: #c9c3ad;
+  background: rgba(255, 250, 229, .42);
+}
+
+.notebook-object-layer {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+}
+
+.notebook-object-layer.is-selecting {
+  pointer-events: auto;
+}
+
+.notebook-object-frame {
+  position: absolute;
+  transform-origin: center center;
+  pointer-events: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.notebook-object-layer.is-selecting .notebook-object-frame {
+  pointer-events: auto;
+}
+
+.notebook-object-frame.is-selected {
+  outline: 1px solid rgba(65, 91, 125, .58);
+  outline-offset: 3px;
+}
+
+.paper-card-object {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(95, 82, 55, .22);
+  border-radius: 1px;
+  background-color: #fffdf0;
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0, transparent 24px, rgba(94, 109, 126, .09) 24px, rgba(94, 109, 126, .09) 25px),
+    linear-gradient(90deg, rgba(115, 94, 49, .025), transparent 7%, transparent 94%, rgba(115, 94, 49, .03));
+  box-shadow:
+    0 1px 0 rgba(58, 49, 33, .12),
+    0 4px 9px rgba(58, 49, 33, .11),
+    inset 0 1px rgba(255, 255, 255, .65);
+}
+
+.paper-card-object.tone-cream { background-color: #fffbe7; }
+.paper-card-object.tone-white { background-color: #fffef8; }
+.paper-card-object.tone-blue { background-color: #f2f8fa; }
+
+.paper-card-object textarea {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  border: 0;
+  outline: 0;
+  padding: 14px 15px;
+  background: transparent;
+  color: #39342a;
+  font: 14px/25px Georgia, "Times New Roman", serif;
+  user-select: text;
+}
+
+.future-object-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(86, 80, 67, .36);
+  background: rgba(255, 253, 240, .82);
+  color: #797164;
+  font-size: 10px;
+}
+
+.object-handle,
+.object-delete-button {
+  position: absolute;
+  z-index: 8;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(74, 82, 91, .36);
+  border-radius: 50%;
+  background: #f7f5ec;
+  color: #56606b;
+  box-shadow: 0 2px 5px rgba(42, 38, 31, .13);
+  font: 11px/1 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  touch-action: none;
+}
+
+.object-handle:hover,
+.object-delete-button:hover {
+  background: #fffdf5;
+  color: #252b31;
+}
+
+.object-move-handle {
+  left: 50%;
+  top: -14px;
+  transform: translateX(-50%);
+  cursor: grab;
+  border-radius: 4px;
+  width: 28px;
+  font-size: 9px;
+  letter-spacing: -2px;
+}
+.object-move-handle:active { cursor: grabbing; }
+
+.object-rotate-handle {
+  left: -14px;
+  top: -14px;
+  cursor: grab;
+}
+.object-rotate-handle:active { cursor: grabbing; }
+
+.object-resize-handle {
+  right: -8px;
+  bottom: -8px;
+  width: 15px;
+  height: 15px;
+  border-radius: 2px;
+  cursor: nwse-resize;
+}
+.object-resize-handle::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+}
+
+.object-delete-button {
+  right: -14px;
+  top: -14px;
+  color: #96645b;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .object-handle,
+  .object-delete-button {
+    width: 30px;
+    height: 30px;
+  }
+  .object-move-handle {
+    top: -19px;
+    width: 38px;
+  }
+  .object-rotate-handle {
+    left: -19px;
+    top: -19px;
+  }
+  .object-delete-button {
+    right: -19px;
+    top: -19px;
+  }
+  .object-resize-handle {
+    right: -11px;
+    bottom: -11px;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 580px) {
+  .tool-divider { display: none; }
+  .object-add-button { padding-inline: 5px; }
+}

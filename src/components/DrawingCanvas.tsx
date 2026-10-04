@@ -51,7 +51,7 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
   );
 
   const draftPath = draft ? svgPath(outlineFor(draft)) : '';
-  const drawingEnabled = activeTool !== 'text';
+  const drawingEnabled = activeTool === 'pen' || activeTool === 'marker' || activeTool === 'highlighter';
 
   const pointFromEvent = (event: ReactPointerEvent<SVGSVGElement>): InkPoint => {
     const rect = event.currentTarget.getBoundingClientRect();

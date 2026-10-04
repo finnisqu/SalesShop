@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
+import './object-layer.css';
 import { DrawingCanvas } from './components/DrawingCanvas';
+import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { Sidebar } from './components/Sidebar';
 import { TextEditor } from './components/TextEditor';
 import { Toolbar } from './components/Toolbar';
@@ -66,6 +68,7 @@ function App() {
               <div className="paper-writing-surface">
                 <TextEditor key={`text-${entry.id}`} entry={entry} />
                 <DrawingCanvas key={`ink-${entry.id}`} entry={entry} />
+                <NotebookObjectLayer key={`objects-${entry.id}`} entry={entry} />
               </div>
             </article>
           </div>

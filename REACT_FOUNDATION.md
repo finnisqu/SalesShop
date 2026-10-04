@@ -25,7 +25,7 @@ The React foundation deliberately separates:
 - Perfect Freehand
 - plain CSS for the SalesShop tactile design language
 
-## Implemented in this first foundation batch
+## Implemented foundation
 
 - Vite + React + TypeScript app shell
 - tactile SalesShop notebook workspace
@@ -36,8 +36,37 @@ The React foundation deliberately separates:
 - Pointer Events so Apple Pencil pressure can flow into stroke data
 - lined, grid, and blank paper
 - localStorage repository boundary
-- stable UUID-based page/stroke IDs
-- schema-versioned notebook document (`schemaVersion: 1`)
+- stable UUID-based page/stroke/object IDs
+- schema-versioned notebook document
+- automatic schema v1 -> v2 migration preserving existing ProtoBook data
+- canonical spatial `NotebookObject` union
+- shared selection state
+- shared move / resize / rotate object frame behavior
+- Delete / Backspace object deletion outside editable fields
+- first paper-card object used to validate the shared object mechanics
+
+## Notebook object model
+
+Spatial objects share one physical frame:
+
+- `id`
+- `x`, `y`, `width`, `height` as normalized page percentages
+- `rotation`
+- `zIndex`
+- timestamps
+
+Current canonical object types reserve clean seams for:
+
+- paper card
+- Post-it
+- image
+- spreadsheet
+- shape / annotation
+- business card
+- paper scrap
+- attachment
+
+The transform system is deliberately object-agnostic so new stationery and embedded engines inherit the same selection, positioning, resize, and rotation behavior.
 
 ## Intentional differences from the early setup guide
 
@@ -46,19 +75,18 @@ The React foundation deliberately separates:
 3. Storage is behind a repository interface so Supabase can replace localStorage later.
 4. The Notebook keeps text and ink as layered content instead of forcing a hard text/draw page mode.
 5. Styling stays native CSS rather than introducing Tailwind during the migration; we can revisit that later if it solves a real problem.
+6. Spatial object transforms preview in component state and persist at gesture completion, avoiding localStorage writes on every pointer movement.
 
 ## Next batches
 
-1. Validate/build this foundation and fix migration-QC issues.
-2. Introduce canonical `NotebookObject` types and spatial object placement.
-3. Add Univer as the spreadsheet object engine and retire custom spreadsheet internals.
-4. Add Rough.js annotations and richer ink tools (eraser, lasso, selection).
-5. Rebuild Post-its, images, business cards, paper scraps, and attachments as React objects.
-6. Port Binder/page metadata and favorite/color behavior.
-7. Port Board and Quotes to React components.
-8. Add service/repository/event boundaries for CRM domain objects.
-9. Introduce Supabase Postgres/Auth/Storage behind repository adapters.
-10. Add integration providers (Gmail, Calendar, Slack, Drive, CAD Lite, etc.).
+1. Rebuild Post-its, images, business cards, paper scraps, attachments, and annotation shapes on the shared object frame.
+2. Add Univer as the spreadsheet object engine and retire custom spreadsheet internals.
+3. Add Rough.js annotations and richer ink tools (eraser, lasso, selection).
+4. Port Binder/page metadata and favorite/color behavior.
+5. Port Board and Quotes to React components.
+6. Add service/repository/event boundaries for CRM domain objects.
+7. Introduce Supabase Postgres/Auth/Storage behind repository adapters.
+8. Add integration providers (Gmail, Calendar, Slack, Drive, CAD Lite, etc.).
 
 ## Apple Pencil direction
 
