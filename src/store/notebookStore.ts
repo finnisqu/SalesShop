@@ -2,12 +2,23 @@ import { create } from 'zustand';
 import { localNotebookRepository } from '../data/notebookRepository';
 import type {
   ActiveNotebookTool,
+  AttachmentObject,
+  BusinessCardField,
+  BusinessCardObject,
+  ImageObject,
   InkStroke,
   NotebookDocument,
   NotebookEntry,
+  NotebookObject,
   NotebookObjectFrame,
   PaperCardObject,
+  PaperScrapObject,
+  PaperScrapVariant,
   PaperStyle,
+  PostItObject,
+  PostItTone,
+  ShapeKind,
+  ShapeObject,
 } from '../types/notebook';
 
 interface NotebookState {
@@ -27,9 +38,18 @@ interface NotebookState {
   setPaperStyle: (id: string, style: PaperStyle) => void;
   setActiveTool: (tool: ActiveNotebookTool) => void;
   createPaperCard: (entryId: string) => void;
+  createPostIt: (entryId: string, tone?: PostItTone) => void;
+  createBusinessCard: (entryId: string) => void;
+  createPaperScrap: (entryId: string, variant?: PaperScrapVariant) => void;
+  createShape: (entryId: string, shape?: ShapeKind) => void;
+  createImage: (entryId: string, src: string, alt: string) => void;
+  createAttachment: (entryId: string, name: string, mimeType?: string, size?: number) => void;
   selectObject: (objectId: string | null) => void;
   updateObjectFrame: (entryId: string, objectId: string, frame: Partial<NotebookObjectFrame>) => void;
-  updatePaperCardText: (entryId: string, objectId: string, text: string) => void;
+  updateTextObject: (entryId: string, objectId: string, text: string) => void;
+  updatePostItTone: (entryId: string, objectId: string, tone: PostItTone) => void;
+  updateBusinessCardField: (entryId: string, objectId: string, field: BusinessCardField, value: string) => void;
+  updateImageCaption: (entryId: string, objectId: string, caption: string) => void;
   deleteObject: (entryId: string, objectId: string) => void;
 }
 
@@ -61,6 +81,18 @@ function updateEntryObjects(
   updater: (entry: NotebookEntry) => NotebookEntry,
 ) {
   return entries.map((entry) => (entry.id === entryId ? updater(entry) : entry));
+}
+
+function nextZ(entry: NotebookEntry) {
+  return Math.max(0, ...entry.objects.map((object) => object.zIndex)) + 1;
+}
+
+function addObject(entries: NotebookEntry[], entryId: string, object: NotebookObject, timestamp: string) {
+  return updateEntryObjects(entries, entryId, (entry) => ({
+    ...entry,
+    objects: [...entry.objects, object],
+    updatedAt: timestamp,
+  }));
 }
 
 export const useNotebookStore = create<NotebookState>((set, get) => ({
@@ -165,17 +197,156 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       width: 27,
       height: 14,
       rotation: -1.2,
-      zIndex: Math.max(0, ...entry.objects.map((object) => object.zIndex)) + 1,
+      zIndex: nextZ(entry),
       createdAt: timestamp,
       updatedAt: timestamp,
     };
-    const entries = updateEntryObjects(get().entries, entryId, (candidate) => ({
-      ...candidate,
-      objects: [...candidate.objects, card],
-      updatedAt: timestamp,
-    }));
+    const entries = addObject(get().entries, entryId, card, timestamp);
     persist(entries, get().activeEntryId);
     set({ entries, selectedObjectId: card.id, activeTool: 'select' });
+  },
+
+  createPostIt: (entryId, tone = 'yellow') => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    if (!entry) return;
+    const timestamp = now();
+    const note: PostItObject = {
+      id: id('object'),
+      type: 'post-it',
+      text: 'Quick note…',
+      tone,
+      x: 58,
+      y: 15,
+      width: 21,
+      height: 18,
+      rotation: 1.4,
+      zIndex: nextZ(entry),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const entries = addObject(get().entries, entryId, note, timestamp);
+    persist(entries, get().activeEntryId);
+    set({ entries, selectedObjectId: note.id, activeTool: 'select' });
+  },
+
+  createBusinessCard: (entryId) => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    if (!entry) return;
+    const timestamp = now();
+    const card: BusinessCardObject = {
+      id: id('object'),
+      type: 'business-card',
+      name: 'Contact name',
+      company: 'Company',
+      title: 'Title',
+      email: '',
+      phone: '',
+      x: 18,
+      y: 40,
+      width: 34,
+      height: 18,
+      rotation: -0.6,
+      zIndex: nextZ(entry),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const entries = addObject(get().entries, entryId, card, timestamp);
+    persist(entries, get().activeEntryId);
+    set({ entries, selectedObjectId: card.id, activeTool: 'select' });
+  },
+
+  createPaperScrap: (entryId, variant = 'plain') => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    if (!entry) return;
+    const timestamp = now();
+    const scrap: PaperScrapObject = {
+      id: id('object'),
+      type: 'paper-scrap',
+      text: variant === 'index' ? 'Index card note' : 'Loose thought…',
+      variant,
+      x: variant === 'index' ? 52 : 20,
+      y: variant === 'index' ? 42 : 64,
+      width: variant === 'index' ? 32 : 29,
+      height: variant === 'index' ? 16 : 18,
+      rotation: variant === 'torn' ? -2.1 : 0.8,
+      zIndex: nextZ(entry),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const entries = addObject(get().entries, entryId, scrap, timestamp);
+    persist(entries, get().activeEntryId);
+    set({ entries, selectedObjectId: scrap.id, activeTool: 'select' });
+  },
+
+  createShape: (entryId, shape = 'box') => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    if (!entry) return;
+    const timestamp = now();
+    const annotation: ShapeObject = {
+      id: id('object'),
+      type: 'shape',
+      shape,
+      style: 'pencil',
+      x: 55,
+      y: 64,
+      width: shape === 'arrow' ? 27 : 24,
+      height: shape === 'arrow' ? 8 : 14,
+      rotation: shape === 'arrow' ? -4 : 0.5,
+      zIndex: nextZ(entry),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const entries = addObject(get().entries, entryId, annotation, timestamp);
+    persist(entries, get().activeEntryId);
+    set({ entries, selectedObjectId: annotation.id, activeTool: 'select' });
+  },
+
+  createImage: (entryId, src, alt) => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    if (!entry) return;
+    const timestamp = now();
+    const image: ImageObject = {
+      id: id('object'),
+      type: 'image',
+      src,
+      alt,
+      caption: '',
+      x: 20,
+      y: 28,
+      width: 35,
+      height: 25,
+      rotation: -0.4,
+      zIndex: nextZ(entry),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const entries = addObject(get().entries, entryId, image, timestamp);
+    persist(entries, get().activeEntryId);
+    set({ entries, selectedObjectId: image.id, activeTool: 'select' });
+  },
+
+  createAttachment: (entryId, name, mimeType, size) => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    if (!entry) return;
+    const timestamp = now();
+    const attachment: AttachmentObject = {
+      id: id('object'),
+      type: 'attachment',
+      name,
+      mimeType,
+      size,
+      x: 58,
+      y: 38,
+      width: 30,
+      height: 10,
+      rotation: 0.7,
+      zIndex: nextZ(entry),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const entries = addObject(get().entries, entryId, attachment, timestamp);
+    persist(entries, get().activeEntryId);
+    set({ entries, selectedObjectId: attachment.id, activeTool: 'select' });
   },
 
   selectObject: (selectedObjectId) => set({ selectedObjectId }),
@@ -193,13 +364,60 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     set({ entries });
   },
 
-  updatePaperCardText: (entryId, objectId, text) => {
+  updateTextObject: (entryId, objectId, text) => {
+    const timestamp = now();
+    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+      ...entry,
+      objects: entry.objects.map((object) => {
+        if (object.id !== objectId) return object;
+        if (object.type === 'paper-card' || object.type === 'post-it' || object.type === 'paper-scrap') {
+          return { ...object, text, updatedAt: timestamp };
+        }
+        return object;
+      }),
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries });
+  },
+
+  updatePostItTone: (entryId, objectId, tone) => {
     const timestamp = now();
     const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
       ...entry,
       objects: entry.objects.map((object) =>
-        object.id === objectId && object.type === 'paper-card'
-          ? { ...object, text, updatedAt: timestamp }
+        object.id === objectId && object.type === 'post-it'
+          ? { ...object, tone, updatedAt: timestamp }
+          : object,
+      ),
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries });
+  },
+
+  updateBusinessCardField: (entryId, objectId, field, value) => {
+    const timestamp = now();
+    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+      ...entry,
+      objects: entry.objects.map((object) =>
+        object.id === objectId && object.type === 'business-card'
+          ? { ...object, [field]: value, updatedAt: timestamp }
+          : object,
+      ),
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries });
+  },
+
+  updateImageCaption: (entryId, objectId, caption) => {
+    const timestamp = now();
+    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+      ...entry,
+      objects: entry.objects.map((object) =>
+        object.id === objectId && object.type === 'image'
+          ? { ...object, caption, updatedAt: timestamp }
           : object,
       ),
       updatedAt: timestamp,
