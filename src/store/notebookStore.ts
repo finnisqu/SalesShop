@@ -11,6 +11,7 @@ import type {
   NotebookEntry,
   NotebookObject,
   NotebookObjectFrame,
+  PageTone,
   PaperCardObject,
   PaperScrapObject,
   PaperScrapVariant,
@@ -30,8 +31,11 @@ interface NotebookState {
   hydrated: boolean;
   hydrate: () => void;
   createEntry: () => void;
+  duplicateEntry: (id: string) => void;
   selectEntry: (id: string) => void;
   deleteEntry: (id: string) => void;
+  toggleFavorite: (id: string) => void;
+  setPageTone: (id: string, tone: PageTone) => void;
   updateContent: (id: string, contentHtml: string) => void;
   renameEntry: (id: string, title: string) => void;
   addStroke: (id: string, stroke: InkStroke) => void;
@@ -70,6 +74,28 @@ function newEntry(): NotebookEntry {
     strokes: [],
     objects: [],
     paperStyle: 'lined',
+    tone: 'cream',
+    favorite: false,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
+  const timestamp = now();
+  const clone = structuredClone(source);
+  return {
+    ...clone,
+    id: id('page'),
+    title: `${source.title || 'Untitled page'} copy`,
+    favorite: false,
+    strokes: clone.strokes.map((stroke) => ({ ...stroke, id: id('stroke') })),
+    objects: clone.objects.map((object) => ({
+      ...object,
+      id: id('object'),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })),
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -126,6 +152,17 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     set({ entries, activeEntryId: entry.id, selectedObjectId: null });
   },
 
+  duplicateEntry: (entryId) => {
+    const source = get().entries.find((entry) => entry.id === entryId);
+    if (!source) return;
+    const duplicate = duplicateEntryModel(source);
+    const sourceIndex = get().entries.findIndex((entry) => entry.id === entryId);
+    const entries = [...get().entries];
+    entries.splice(sourceIndex + 1, 0, duplicate);
+    persist(entries, duplicate.id);
+    set({ entries, activeEntryId: duplicate.id, selectedObjectId: null });
+  },
+
   selectEntry: (activeEntryId) => {
     persist(get().entries, activeEntryId);
     set({ activeEntryId, selectedObjectId: null });
@@ -137,6 +174,24 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const activeEntryId = get().activeEntryId === entryId ? entries[0].id : get().activeEntryId;
     persist(entries, activeEntryId);
     set({ entries, activeEntryId, selectedObjectId: null });
+  },
+
+  toggleFavorite: (entryId) => {
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
+      ...entry,
+      favorite: !entry.favorite,
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries });
+  },
+
+  setPageTone: (entryId, tone) => {
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, tone, updatedAt: timestamp }));
+    persist(entries, get().activeEntryId);
+    set({ entries });
   },
 
   updateContent: (entryId, contentHtml) => {
