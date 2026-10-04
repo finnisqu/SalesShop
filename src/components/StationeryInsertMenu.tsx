@@ -29,6 +29,7 @@ export function StationeryInsertMenu({ entryId }: StationeryInsertMenuProps) {
   const createShape = useNotebookStore((state) => state.createShape);
   const createImage = useNotebookStore((state) => state.createImage);
   const createAttachment = useNotebookStore((state) => state.createAttachment);
+  const createSpreadsheet = useNotebookStore((state) => state.createSpreadsheet);
 
   const close = () => {
     if (menuRef.current) menuRef.current.open = false;
@@ -76,7 +77,8 @@ export function StationeryInsertMenu({ entryId }: StationeryInsertMenuProps) {
         <button type="button" onClick={() => { createPaperScrap(entryId, 'index'); close(); }}>Index card</button>
         <button type="button" onClick={() => { createPaperScrap(entryId, 'torn'); close(); }}>Torn note</button>
 
-        <div className="insert-menu-heading">Sales</div>
+        <div className="insert-menu-heading">Work</div>
+        <button type="button" onClick={() => { createSpreadsheet(entryId); close(); }}>Spreadsheet</button>
         <button type="button" onClick={() => { createBusinessCard(entryId); close(); }}>Business card</button>
         <button type="button" onClick={() => imageInputRef.current?.click()}>Photo / image</button>
         <button type="button" onClick={() => attachmentInputRef.current?.click()}>Attachment</button>
@@ -87,21 +89,8 @@ export function StationeryInsertMenu({ entryId }: StationeryInsertMenuProps) {
         <button type="button" onClick={() => insertShape('cloud')}>Cloud</button>
       </div>
 
-      <input
-        ref={imageInputRef}
-        className="visually-hidden-file"
-        type="file"
-        accept="image/*"
-        onChange={onImageSelected}
-        tabIndex={-1}
-      />
-      <input
-        ref={attachmentInputRef}
-        className="visually-hidden-file"
-        type="file"
-        onChange={onAttachmentSelected}
-        tabIndex={-1}
-      />
+      <input ref={imageInputRef} className="visually-hidden-file" type="file" accept="image/*" onChange={onImageSelected} tabIndex={-1} />
+      <input ref={attachmentInputRef} className="visually-hidden-file" type="file" onChange={onAttachmentSelected} tabIndex={-1} />
     </details>
   );
 }
