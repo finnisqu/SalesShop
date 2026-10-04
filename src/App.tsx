@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import './object-layer.css';
+import './spreadsheet-object.css';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { Sidebar } from './components/Sidebar';
