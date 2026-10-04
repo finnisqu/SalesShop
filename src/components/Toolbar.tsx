@@ -1,5 +1,6 @@
 import { useNotebookStore } from '../store/notebookStore';
 import type { ActiveNotebookTool, PaperStyle } from '../types/notebook';
+import { StationeryInsertMenu } from './StationeryInsertMenu';
 
 interface ToolbarProps {
   entryId: string;
@@ -11,7 +12,6 @@ export function Toolbar({ entryId, paperStyle }: ToolbarProps) {
   const setActiveTool = useNotebookStore((state) => state.setActiveTool);
   const clearInk = useNotebookStore((state) => state.clearInk);
   const setPaperStyle = useNotebookStore((state) => state.setPaperStyle);
-  const createPaperCard = useNotebookStore((state) => state.createPaperCard);
 
   const tools: ReadonlyArray<[ActiveNotebookTool, string]> = [
     ['select', 'Select'],
@@ -37,11 +37,7 @@ export function Toolbar({ entryId, paperStyle }: ToolbarProps) {
       </div>
 
       <div className="tool-divider" aria-hidden="true" />
-
-      <button className="tool-button object-add-button" onClick={() => createPaperCard(entryId)}>
-        + Card
-      </button>
-
+      <StationeryInsertMenu entryId={entryId} />
       <div className="tool-spacer" />
 
       <select
