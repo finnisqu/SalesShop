@@ -26,11 +26,13 @@ export function Sidebar() {
           return (
             <button
               key={entry.id}
-              className={`page-tab ${active ? 'active' : ''}`}
+              className={`page-tab tone-${entry.tone} ${active ? 'active' : ''} ${entry.favorite ? 'is-favorite' : ''}`}
               onClick={() => selectEntry(entry.id)}
+              title={entry.favorite ? `${entry.title} · Favorite` : entry.title}
             >
               <span className="page-tab-title">{entry.title}</span>
-              <span className="page-tab-preview">{text || 'Blank sheet'}</span>
+              <span className="page-tab-preview">{text || `${entry.paperStyle.replace('-', ' ')} sheet`}</span>
+              <span className="page-tab-favorite" aria-hidden="true">★</span>
               <span
                 className="page-tab-delete"
                 role="button"
