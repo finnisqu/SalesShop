@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
-import type { NotebookEntry, NotebookObject, NotebookObjectFrame } from '../types/notebook';
+import type {
+  BusinessCardField,
+  NotebookEntry,
+  NotebookObject,
+  NotebookObjectFrame,
+  PostItTone,
+  ShapeObject,
+} from '../types/notebook';
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const POST_IT_TONES: PostItTone[] = ['yellow', 'pink', 'blue', 'green'];
 
 interface NotebookObjectLayerProps {
   entry: NotebookEntry;
@@ -30,21 +38,184 @@ function frameOf(object: NotebookObject): NotebookObjectFrame {
   };
 }
 
-function futureObjectLabel(object: NotebookObject) {
-  if (object.type === 'post-it') return 'Post-it';
-  if (object.type === 'image') return 'Image';
-  if (object.type === 'spreadsheet') return 'Spreadsheet';
-  if (object.type === 'shape') return 'Shape';
-  if (object.type === 'business-card') return 'Business card';
-  if (object.type === 'paper-scrap') return 'Paper scrap';
-  if (object.type === 'attachment') return object.name || 'Attachment';
-  return 'Object';
+function formatBytes(bytes?: number) {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function stopPointer(event: ReactPointerEvent<HTMLElement>) {
+  event.stopPropagation();
+}
+
+function ShapeArtwork({ object }: { object: ShapeObject }) {
+  if (object.shape === 'arrow') {
+    return (
+      <svg className="shape-artwork" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 6 22 C 28 18, 55 23, 84 18" />
+        <path d="M 72 8 L 86 18 L 73 30" />
+      </svg>
+    );
+  }
+
+  if (object.shape === 'cloud') {
+    return (
+      <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M18 45 C4 39 8 24 22 23 C20 10 38 5 47 17 C57 4 78 10 78 24 C95 23 99 41 84 47 C69 54 35 54 18 45 Z" />
+      </svg>
+    );
+  }
+
+  if (object.shape === 'oval') {
+    return (
+      <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
+        <ellipse cx="50" cy="30" rx="44" ry="24" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M7 7 C33 5 69 8 94 6 C96 23 93 43 95 54 C67 56 36 53 6 55 C5 39 8 22 7 7 Z" />
+    </svg>
+  );
+}
+
+function ObjectContent({ entryId, object, selected }: { entryId: string; object: NotebookObject; selected: boolean }) {
+  const updateTextObject = useNotebookStore((state) => state.updateTextObject);
+  const updatePostItTone = useNotebookStore((state) => state.updatePostItTone);
+  const updateBusinessCardField = useNotebookStore((state) => state.updateBusinessCardField);
+  const updateImageCaption = useNotebookStore((state) => state.updateImageCaption);
+
+  if (object.type === 'paper-card') {
+    return (
+      <div className={`paper-card-object tone-${object.tone}`}>
+        <textarea
+          value={object.text}
+          onChange={(event) => updateTextObject(entryId, object.id, event.target.value)}
+          onPointerDown={stopPointer}
+          aria-label="Paper card text"
+        />
+      </div>
+    );
+  }
+
+  if (object.type === 'post-it') {
+    return (
+      <div className={`post-it-object tone-${object.tone}`}>
+        <div className="post-it-fold" aria-hidden="true" />
+        <textarea
+          value={object.text}
+          onChange={(event) => updateTextObject(entryId, object.id, event.target.value)}
+          onPointerDown={stopPointer}
+          aria-label="Post-it text"
+        />
+        {selected && (
+          <div className="post-it-tones" onPointerDown={stopPointer} aria-label="Post-it color">
+            {POST_IT_TONES.map((tone) => (
+              <button
+                key={tone}
+                type="button"
+                className={`tone-dot tone-${tone} ${object.tone === tone ? 'active' : ''}`}
+                onClick={() => updatePostItTone(entryId, object.id, tone)}
+                aria-label={`${tone} Post-it`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (object.type === 'business-card') {
+    const field = (name: BusinessCardField, className: string, placeholder: string) => (
+      <input
+        className={className}
+        value={object[name] ?? ''}
+        placeholder={placeholder}
+        onChange={(event) => updateBusinessCardField(entryId, object.id, name, event.target.value)}
+        onPointerDown={stopPointer}
+      />
+    );
+    return (
+      <div className="business-card-object">
+        <div className="business-card-rule" aria-hidden="true" />
+        <div className="business-card-fields">
+          {field('name', 'business-card-name', 'Contact name')}
+          {field('title', 'business-card-title', 'Title')}
+          {field('company', 'business-card-company', 'Company')}
+          <div className="business-card-contact-row">
+            {field('email', 'business-card-contact', 'email@company.com')}
+            {field('phone', 'business-card-contact', '(555) 555-5555')}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (object.type === 'paper-scrap') {
+    return (
+      <div className={`paper-scrap-object variant-${object.variant}`}>
+        <textarea
+          value={object.text}
+          onChange={(event) => updateTextObject(entryId, object.id, event.target.value)}
+          onPointerDown={stopPointer}
+          aria-label="Paper scrap text"
+        />
+      </div>
+    );
+  }
+
+  if (object.type === 'image') {
+    return (
+      <figure className="image-object">
+        <div className="image-mat">
+          <img src={object.src} alt={object.alt} draggable={false} />
+        </div>
+        <input
+          value={object.caption ?? ''}
+          placeholder="Add a caption…"
+          onChange={(event) => updateImageCaption(entryId, object.id, event.target.value)}
+          onPointerDown={stopPointer}
+          aria-label="Image caption"
+        />
+      </figure>
+    );
+  }
+
+  if (object.type === 'attachment') {
+    const extension = object.name.includes('.') ? object.name.split('.').pop()?.toUpperCase() : 'FILE';
+    return (
+      <div className="attachment-object">
+        <div className="attachment-icon">{extension?.slice(0, 4) || 'FILE'}</div>
+        <div className="attachment-copy">
+          <strong>{object.name}</strong>
+          <span>{[object.mimeType, formatBytes(object.size)].filter(Boolean).join(' · ') || 'Local attachment reference'}</span>
+        </div>
+        <div className="attachment-clip" aria-hidden="true">⌇</div>
+      </div>
+    );
+  }
+
+  if (object.type === 'shape') {
+    return (
+      <div className={`shape-object shape-${object.shape}`}>
+        <ShapeArtwork object={object} />
+      </div>
+    );
+  }
+
+  if (object.type === 'spreadsheet') {
+    return <div className="future-object-placeholder">Spreadsheet · Univer next</div>;
+  }
+
+  return <div className="future-object-placeholder">Notebook object</div>;
 }
 
 function ObjectFrame({ entryId, object, selected }: { entryId: string; object: NotebookObject; selected: boolean }) {
   const selectObject = useNotebookStore((state) => state.selectObject);
   const updateObjectFrame = useNotebookStore((state) => state.updateObjectFrame);
-  const updatePaperCardText = useNotebookStore((state) => state.updatePaperCardText);
   const deleteObject = useNotebookStore((state) => state.deleteObject);
   const initialFrame = frameOf(object);
   const [draftFrame, setDraftFrame] = useState(initialFrame);
@@ -185,18 +356,7 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
       }}
       data-object-type={object.type}
     >
-      {object.type === 'paper-card' ? (
-        <div className={`paper-card-object tone-${object.tone}`}>
-          <textarea
-            value={object.text}
-            onChange={(event) => updatePaperCardText(entryId, object.id, event.target.value)}
-            onPointerDown={(event) => event.stopPropagation()}
-            aria-label="Paper card text"
-          />
-        </div>
-      ) : (
-        <div className="future-object-placeholder">{futureObjectLabel(object)}</div>
-      )}
+      <ObjectContent entryId={entryId} object={object} selected={selected} />
 
       {selected && (
         <>
