@@ -1,17 +1,19 @@
 import { useNotebookStore } from '../store/notebookStore';
-import type { ActiveNotebookTool, PaperStyle } from '../types/notebook';
+import type { ActiveNotebookTool, NotebookEntry, PageTone, PaperStyle } from '../types/notebook';
 import { StationeryInsertMenu } from './StationeryInsertMenu';
 
 interface ToolbarProps {
-  entryId: string;
-  paperStyle: PaperStyle;
+  entry: NotebookEntry;
 }
 
-export function Toolbar({ entryId, paperStyle }: ToolbarProps) {
+export function Toolbar({ entry }: ToolbarProps) {
   const activeTool = useNotebookStore((state) => state.activeTool);
   const setActiveTool = useNotebookStore((state) => state.setActiveTool);
   const clearInk = useNotebookStore((state) => state.clearInk);
   const setPaperStyle = useNotebookStore((state) => state.setPaperStyle);
+  const setPageTone = useNotebookStore((state) => state.setPageTone);
+  const toggleFavorite = useNotebookStore((state) => state.toggleFavorite);
+  const duplicateEntry = useNotebookStore((state) => state.duplicateEntry);
 
   const tools: ReadonlyArray<[ActiveNotebookTool, string]> = [
     ['select', 'Select'],
@@ -40,23 +42,52 @@ export function Toolbar({ entryId, paperStyle }: ToolbarProps) {
       </div>
 
       <div className="tool-divider" aria-hidden="true" />
-      <StationeryInsertMenu entryId={entryId} />
+      <StationeryInsertMenu entryId={entry.id} />
       <div className="tool-spacer" />
 
       <span className="pencil-mode-hint" title="On touch devices, finger gestures navigate while Pencil writes">Pencil writes · finger moves</span>
 
       <select
         className="paper-select"
-        value={paperStyle}
-        onChange={(event) => setPaperStyle(entryId, event.target.value as PaperStyle)}
+        value={entry.paperStyle}
+        onChange={(event) => setPaperStyle(entry.id, event.target.value as PaperStyle)}
         aria-label="Paper style"
       >
         <option value="lined">Lined</option>
         <option value="grid">Grid</option>
+        <option value="dotted">Dotted</option>
+        <option value="cornell">Cornell</option>
+        <option value="two-column">Two column</option>
         <option value="blank">Blank</option>
       </select>
 
-      <button className="tool-button quiet" onClick={() => clearInk(entryId)}>
+      <div className="page-meta-controls" aria-label="Page options">
+        <button
+          className={`tool-button page-favorite-button ${entry.favorite ? 'is-favorite' : ''}`}
+          onClick={() => toggleFavorite(entry.id)}
+          aria-pressed={entry.favorite}
+          title={entry.favorite ? 'Remove from favorites' : 'Favorite page'}
+        >
+          {entry.favorite ? '★' : '☆'}
+        </button>
+        <select
+          className="paper-select page-tone-select"
+          value={entry.tone}
+          onChange={(event) => setPageTone(entry.id, event.target.value as PageTone)}
+          aria-label="Paper tone"
+        >
+          <option value="cream">Cream</option>
+          <option value="white">White</option>
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+          <option value="rose">Rose</option>
+        </select>
+        <button className="tool-button page-duplicate-button" onClick={() => duplicateEntry(entry.id)} title="Duplicate page">
+          Duplicate
+        </button>
+      </div>
+
+      <button className="tool-button quiet" onClick={() => clearInk(entry.id)}>
         Clear ink
       </button>
     </div>
