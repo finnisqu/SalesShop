@@ -1,6 +1,9 @@
 export type PaperStyle = 'lined' | 'grid' | 'blank';
 export type InkTool = 'pen' | 'marker' | 'highlighter';
 export type ActiveNotebookTool = 'select' | 'text' | InkTool;
+export type PostItTone = 'yellow' | 'pink' | 'blue' | 'green';
+export type ShapeKind = 'box' | 'oval' | 'arrow' | 'cloud';
+export type PaperScrapVariant = 'plain' | 'index' | 'torn';
 
 export interface InkPoint {
   x: number;
@@ -39,13 +42,14 @@ export interface PaperCardObject extends NotebookObjectBase {
 export interface PostItObject extends NotebookObjectBase {
   type: 'post-it';
   text: string;
-  tone: 'yellow' | 'pink' | 'blue' | 'green';
+  tone: PostItTone;
 }
 
 export interface ImageObject extends NotebookObjectBase {
   type: 'image';
   src: string;
   alt: string;
+  caption?: string;
 }
 
 export interface SpreadsheetObject extends NotebookObjectBase {
@@ -55,7 +59,7 @@ export interface SpreadsheetObject extends NotebookObjectBase {
 
 export interface ShapeObject extends NotebookObjectBase {
   type: 'shape';
-  shape: 'box' | 'oval' | 'arrow' | 'cloud';
+  shape: ShapeKind;
   style: 'pencil' | 'sticker';
   text?: string;
 }
@@ -72,13 +76,14 @@ export interface BusinessCardObject extends NotebookObjectBase {
 export interface PaperScrapObject extends NotebookObjectBase {
   type: 'paper-scrap';
   text: string;
-  variant: 'plain' | 'index' | 'torn';
+  variant: PaperScrapVariant;
 }
 
 export interface AttachmentObject extends NotebookObjectBase {
   type: 'attachment';
   name: string;
   mimeType?: string;
+  size?: number;
   url?: string;
 }
 
@@ -96,6 +101,8 @@ export type NotebookObjectFrame = Pick<
   NotebookObjectBase,
   'x' | 'y' | 'width' | 'height' | 'rotation' | 'zIndex'
 >;
+
+export type BusinessCardField = 'name' | 'company' | 'title' | 'email' | 'phone';
 
 export interface NotebookEntry {
   id: string;
