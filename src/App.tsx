@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import './object-layer.css';
 import './spreadsheet-object.css';
+import './binder-page.css';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { Sidebar } from './components/Sidebar';
@@ -45,10 +46,10 @@ function App() {
         <Sidebar />
 
         <section className="binder-stage">
-          <Toolbar entryId={entry.id} paperStyle={entry.paperStyle} />
+          <Toolbar entry={entry} />
 
           <div className="desk-surface">
-            <article className={`paper-sheet paper-${entry.paperStyle}`}>
+            <article className={`paper-sheet paper-${entry.paperStyle} tone-${entry.tone}`}>
               <div className="paper-edge" aria-hidden="true" />
               <header className="paper-heading">
                 <input
@@ -57,12 +58,19 @@ function App() {
                   onChange={(event) => renameEntry(entry.id, event.target.value)}
                   aria-label="Page title"
                 />
-                <div className="paper-date">
-                  {new Date(entry.updatedAt).toLocaleDateString(undefined, {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                <div className="paper-meta-line">
+                  {entry.favorite && <span className="paper-favorite-mark" title="Favorite page">★</span>}
+                  <span>
+                    {new Date(entry.updatedAt).toLocaleDateString(undefined, {
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </span>
+                  <span className="paper-meta-separator">·</span>
+                  <span className="paper-meta-extra">{entry.paperStyle.replace('-', ' ')}</span>
+                  <span className="paper-meta-separator paper-meta-extra">·</span>
+                  <span className="paper-meta-extra">Created {new Date(entry.createdAt).toLocaleDateString()}</span>
                 </div>
               </header>
 
