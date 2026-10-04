@@ -19,6 +19,7 @@ import type {
   PostItTone,
   ShapeKind,
   ShapeObject,
+  SpreadsheetObject,
 } from '../types/notebook';
 
 interface NotebookState {
@@ -44,12 +45,14 @@ interface NotebookState {
   createShape: (entryId: string, shape?: ShapeKind) => void;
   createImage: (entryId: string, src: string, alt: string) => void;
   createAttachment: (entryId: string, name: string, mimeType?: string, size?: number) => void;
+  createSpreadsheet: (entryId: string) => void;
   selectObject: (objectId: string | null) => void;
   updateObjectFrame: (entryId: string, objectId: string, frame: Partial<NotebookObjectFrame>) => void;
   updateTextObject: (entryId: string, objectId: string, text: string) => void;
   updatePostItTone: (entryId: string, objectId: string, tone: PostItTone) => void;
   updateBusinessCardField: (entryId: string, objectId: string, field: BusinessCardField, value: string) => void;
   updateImageCaption: (entryId: string, objectId: string, caption: string) => void;
+  updateSpreadsheetData: (entryId: string, objectId: string, workbookData: unknown) => void;
   deleteObject: (entryId: string, objectId: string) => void;
 }
 
@@ -75,7 +78,7 @@ function persist(entries: NotebookEntry[], activeEntryId: string | null) {
   localNotebookRepository.save(document);
 }
 
-function updateEntryObjects(
+function mapEntry(
   entries: NotebookEntry[],
   entryId: string,
   updater: (entry: NotebookEntry) => NotebookEntry,
@@ -87,8 +90,8 @@ function nextZ(entry: NotebookEntry) {
   return Math.max(0, ...entry.objects.map((object) => object.zIndex)) + 1;
 }
 
-function addObject(entries: NotebookEntry[], entryId: string, object: NotebookObject, timestamp: string) {
-  return updateEntryObjects(entries, entryId, (entry) => ({
+function appendObject(entries: NotebookEntry[], entryId: string, object: NotebookObject, timestamp: string) {
+  return mapEntry(entries, entryId, (entry) => ({
     ...entry,
     objects: [...entry.objects, object],
     updatedAt: timestamp,
@@ -113,7 +116,6 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       });
       return;
     }
-
     const first = newEntry();
     persist([first], first.id);
     set({ entries: [first], activeEntryId: first.id, selectedObjectId: null, hydrated: true });
@@ -140,43 +142,44 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   },
 
   updateContent: (entryId, contentHtml) => {
-    const entries = get().entries.map((entry) =>
-      entry.id === entryId ? { ...entry, contentHtml, updatedAt: now() } : entry,
-    );
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, contentHtml, updatedAt: timestamp }));
     persist(entries, get().activeEntryId);
     set({ entries });
   },
 
   renameEntry: (entryId, title) => {
-    const entries = get().entries.map((entry) =>
-      entry.id === entryId ? { ...entry, title: title || 'Untitled page', updatedAt: now() } : entry,
-    );
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
+      ...entry,
+      title: title || 'Untitled page',
+      updatedAt: timestamp,
+    }));
     persist(entries, get().activeEntryId);
     set({ entries });
   },
 
   addStroke: (entryId, stroke) => {
-    const entries = get().entries.map((entry) =>
-      entry.id === entryId
-        ? { ...entry, strokes: [...entry.strokes, stroke], updatedAt: now() }
-        : entry,
-    );
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
+      ...entry,
+      strokes: [...entry.strokes, stroke],
+      updatedAt: timestamp,
+    }));
     persist(entries, get().activeEntryId);
     set({ entries });
   },
 
   clearInk: (entryId) => {
-    const entries = get().entries.map((entry) =>
-      entry.id === entryId ? { ...entry, strokes: [], updatedAt: now() } : entry,
-    );
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, strokes: [], updatedAt: timestamp }));
     persist(entries, get().activeEntryId);
     set({ entries });
   },
 
   setPaperStyle: (entryId, paperStyle) => {
-    const entries = get().entries.map((entry) =>
-      entry.id === entryId ? { ...entry, paperStyle, updatedAt: now() } : entry,
-    );
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, paperStyle, updatedAt: timestamp }));
     persist(entries, get().activeEntryId);
     set({ entries });
   },
@@ -187,177 +190,126 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
     const timestamp = now();
-    const card: PaperCardObject = {
-      id: id('object'),
-      type: 'paper-card',
-      text: 'New card',
-      tone: 'cream',
-      x: 18,
-      y: 16,
-      width: 27,
-      height: 14,
-      rotation: -1.2,
-      zIndex: nextZ(entry),
-      createdAt: timestamp,
-      updatedAt: timestamp,
+    const object: PaperCardObject = {
+      id: id('object'), type: 'paper-card', text: 'New card', tone: 'cream',
+      x: 18, y: 16, width: 27, height: 14, rotation: -1.2, zIndex: nextZ(entry),
+      createdAt: timestamp, updatedAt: timestamp,
     };
-    const entries = addObject(get().entries, entryId, card, timestamp);
+    const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: card.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
   },
 
   createPostIt: (entryId, tone = 'yellow') => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
     const timestamp = now();
-    const note: PostItObject = {
-      id: id('object'),
-      type: 'post-it',
-      text: 'Quick note…',
-      tone,
-      x: 58,
-      y: 15,
-      width: 21,
-      height: 18,
-      rotation: 1.4,
-      zIndex: nextZ(entry),
-      createdAt: timestamp,
-      updatedAt: timestamp,
+    const object: PostItObject = {
+      id: id('object'), type: 'post-it', text: 'Quick note…', tone,
+      x: 58, y: 15, width: 21, height: 18, rotation: 1.4, zIndex: nextZ(entry),
+      createdAt: timestamp, updatedAt: timestamp,
     };
-    const entries = addObject(get().entries, entryId, note, timestamp);
+    const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: note.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
   },
 
   createBusinessCard: (entryId) => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
     const timestamp = now();
-    const card: BusinessCardObject = {
-      id: id('object'),
-      type: 'business-card',
-      name: 'Contact name',
-      company: 'Company',
-      title: 'Title',
-      email: '',
-      phone: '',
-      x: 18,
-      y: 40,
-      width: 34,
-      height: 18,
-      rotation: -0.6,
-      zIndex: nextZ(entry),
-      createdAt: timestamp,
-      updatedAt: timestamp,
+    const object: BusinessCardObject = {
+      id: id('object'), type: 'business-card', name: 'Contact name', company: 'Company', title: 'Title', email: '', phone: '',
+      x: 18, y: 40, width: 34, height: 18, rotation: -0.6, zIndex: nextZ(entry),
+      createdAt: timestamp, updatedAt: timestamp,
     };
-    const entries = addObject(get().entries, entryId, card, timestamp);
+    const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: card.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
   },
 
   createPaperScrap: (entryId, variant = 'plain') => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
     const timestamp = now();
-    const scrap: PaperScrapObject = {
-      id: id('object'),
-      type: 'paper-scrap',
-      text: variant === 'index' ? 'Index card note' : 'Loose thought…',
-      variant,
+    const object: PaperScrapObject = {
+      id: id('object'), type: 'paper-scrap', text: variant === 'index' ? 'Index card note' : 'Loose thought…', variant,
       x: variant === 'index' ? 52 : 20,
       y: variant === 'index' ? 42 : 64,
       width: variant === 'index' ? 32 : 29,
       height: variant === 'index' ? 16 : 18,
       rotation: variant === 'torn' ? -2.1 : 0.8,
-      zIndex: nextZ(entry),
-      createdAt: timestamp,
-      updatedAt: timestamp,
+      zIndex: nextZ(entry), createdAt: timestamp, updatedAt: timestamp,
     };
-    const entries = addObject(get().entries, entryId, scrap, timestamp);
+    const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: scrap.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
   },
 
   createShape: (entryId, shape = 'box') => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
     const timestamp = now();
-    const annotation: ShapeObject = {
-      id: id('object'),
-      type: 'shape',
-      shape,
-      style: 'pencil',
-      x: 55,
-      y: 64,
-      width: shape === 'arrow' ? 27 : 24,
-      height: shape === 'arrow' ? 8 : 14,
-      rotation: shape === 'arrow' ? -4 : 0.5,
-      zIndex: nextZ(entry),
-      createdAt: timestamp,
-      updatedAt: timestamp,
+    const object: ShapeObject = {
+      id: id('object'), type: 'shape', shape, style: 'pencil',
+      x: 55, y: 64, width: shape === 'arrow' ? 27 : 24, height: shape === 'arrow' ? 8 : 14,
+      rotation: shape === 'arrow' ? -4 : 0.5, zIndex: nextZ(entry),
+      createdAt: timestamp, updatedAt: timestamp,
     };
-    const entries = addObject(get().entries, entryId, annotation, timestamp);
+    const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: annotation.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
   },
 
   createImage: (entryId, src, alt) => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
     const timestamp = now();
-    const image: ImageObject = {
-      id: id('object'),
-      type: 'image',
-      src,
-      alt,
-      caption: '',
-      x: 20,
-      y: 28,
-      width: 35,
-      height: 25,
-      rotation: -0.4,
-      zIndex: nextZ(entry),
-      createdAt: timestamp,
-      updatedAt: timestamp,
+    const object: ImageObject = {
+      id: id('object'), type: 'image', src, alt, caption: '',
+      x: 20, y: 28, width: 35, height: 25, rotation: -0.4, zIndex: nextZ(entry),
+      createdAt: timestamp, updatedAt: timestamp,
     };
-    const entries = addObject(get().entries, entryId, image, timestamp);
+    const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: image.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
   },
 
   createAttachment: (entryId, name, mimeType, size) => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
     const timestamp = now();
-    const attachment: AttachmentObject = {
-      id: id('object'),
-      type: 'attachment',
-      name,
-      mimeType,
-      size,
-      x: 58,
-      y: 38,
-      width: 30,
-      height: 10,
-      rotation: 0.7,
-      zIndex: nextZ(entry),
-      createdAt: timestamp,
-      updatedAt: timestamp,
+    const object: AttachmentObject = {
+      id: id('object'), type: 'attachment', name, mimeType, size,
+      x: 58, y: 38, width: 30, height: 10, rotation: 0.7, zIndex: nextZ(entry),
+      createdAt: timestamp, updatedAt: timestamp,
     };
-    const entries = addObject(get().entries, entryId, attachment, timestamp);
+    const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: attachment.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+  },
+
+  createSpreadsheet: (entryId) => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    if (!entry) return;
+    const timestamp = now();
+    const object: SpreadsheetObject = {
+      id: id('object'), type: 'spreadsheet', workbookData: undefined,
+      x: 10, y: 24, width: 72, height: 34, rotation: 0, zIndex: nextZ(entry),
+      createdAt: timestamp, updatedAt: timestamp,
+    };
+    const entries = appendObject(get().entries, entryId, object, timestamp);
+    persist(entries, get().activeEntryId);
+    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
   },
 
   selectObject: (selectedObjectId) => set({ selectedObjectId }),
 
   updateObjectFrame: (entryId, objectId, frame) => {
     const timestamp = now();
-    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
-      objects: entry.objects.map((object) =>
-        object.id === objectId ? { ...object, ...frame, updatedAt: timestamp } : object,
-      ),
+      objects: entry.objects.map((object) => object.id === objectId ? { ...object, ...frame, updatedAt: timestamp } : object),
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
@@ -366,7 +318,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
 
   updateTextObject: (entryId, objectId, text) => {
     const timestamp = now();
-    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
       objects: entry.objects.map((object) => {
         if (object.id !== objectId) return object;
@@ -383,13 +335,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
 
   updatePostItTone: (entryId, objectId, tone) => {
     const timestamp = now();
-    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
-      objects: entry.objects.map((object) =>
-        object.id === objectId && object.type === 'post-it'
-          ? { ...object, tone, updatedAt: timestamp }
-          : object,
-      ),
+      objects: entry.objects.map((object) => object.id === objectId && object.type === 'post-it'
+        ? { ...object, tone, updatedAt: timestamp }
+        : object),
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
@@ -398,13 +348,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
 
   updateBusinessCardField: (entryId, objectId, field, value) => {
     const timestamp = now();
-    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
-      objects: entry.objects.map((object) =>
-        object.id === objectId && object.type === 'business-card'
-          ? { ...object, [field]: value, updatedAt: timestamp }
-          : object,
-      ),
+      objects: entry.objects.map((object) => object.id === objectId && object.type === 'business-card'
+        ? { ...object, [field]: value, updatedAt: timestamp }
+        : object),
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
@@ -413,13 +361,24 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
 
   updateImageCaption: (entryId, objectId, caption) => {
     const timestamp = now();
-    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
-      objects: entry.objects.map((object) =>
-        object.id === objectId && object.type === 'image'
-          ? { ...object, caption, updatedAt: timestamp }
-          : object,
-      ),
+      objects: entry.objects.map((object) => object.id === objectId && object.type === 'image'
+        ? { ...object, caption, updatedAt: timestamp }
+        : object),
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries });
+  },
+
+  updateSpreadsheetData: (entryId, objectId, workbookData) => {
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
+      ...entry,
+      objects: entry.objects.map((object) => object.id === objectId && object.type === 'spreadsheet'
+        ? { ...object, workbookData, updatedAt: timestamp }
+        : object),
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
@@ -428,7 +387,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
 
   deleteObject: (entryId, objectId) => {
     const timestamp = now();
-    const entries = updateEntryObjects(get().entries, entryId, (entry) => ({
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
       objects: entry.objects.filter((object) => object.id !== objectId),
       updatedAt: timestamp,
