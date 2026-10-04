@@ -1,6 +1,7 @@
 export type PaperStyle = 'lined' | 'grid' | 'blank';
 export type InkTool = 'pen' | 'marker' | 'highlighter';
-export type ActiveNotebookTool = 'select' | 'text' | InkTool;
+export type InkInteractionTool = 'eraser' | 'lasso';
+export type ActiveNotebookTool = 'select' | 'text' | InkTool | InkInteractionTool;
 export type PostItTone = 'yellow' | 'pink' | 'blue' | 'green';
 export type ShapeKind = 'box' | 'oval' | 'arrow' | 'cloud';
 export type PaperScrapVariant = 'plain' | 'index' | 'torn';
@@ -17,6 +18,7 @@ export interface InkStroke {
   color: string;
   size: number;
   opacity: number;
+  input?: 'pen' | 'mouse';
   points: InkPoint[];
 }
 

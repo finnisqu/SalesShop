@@ -6,8 +6,8 @@ import type {
   NotebookObject,
   NotebookObjectFrame,
   PostItTone,
-  ShapeObject,
 } from '../types/notebook';
+import { RoughShapeArtwork } from './RoughShapeArtwork';
 import { SpreadsheetObjectEditor } from './SpreadsheetObjectEditor';
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -48,36 +48,6 @@ function formatBytes(bytes?: number) {
 
 function stopPointer(event: ReactPointerEvent<HTMLElement>) {
   event.stopPropagation();
-}
-
-function ShapeArtwork({ object }: { object: ShapeObject }) {
-  if (object.shape === 'arrow') {
-    return (
-      <svg className="shape-artwork" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M 6 22 C 28 18, 55 23, 84 18" />
-        <path d="M 72 8 L 86 18 L 73 30" />
-      </svg>
-    );
-  }
-  if (object.shape === 'cloud') {
-    return (
-      <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M18 45 C4 39 8 24 22 23 C20 10 38 5 47 17 C57 4 78 10 78 24 C95 23 99 41 84 47 C69 54 35 54 18 45 Z" />
-      </svg>
-    );
-  }
-  if (object.shape === 'oval') {
-    return (
-      <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
-        <ellipse cx="50" cy="30" rx="44" ry="24" />
-      </svg>
-    );
-  }
-  return (
-    <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M7 7 C33 5 69 8 94 6 C96 23 93 43 95 54 C67 56 36 53 6 55 C5 39 8 22 7 7 Z" />
-    </svg>
-  );
 }
 
 function ObjectContent({ entryId, object, selected }: { entryId: string; object: NotebookObject; selected: boolean }) {
@@ -163,7 +133,7 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
   }
 
   if (object.type === 'shape') {
-    return <div className={`shape-object shape-${object.shape}`}><ShapeArtwork object={object} /></div>;
+    return <div className={`shape-object shape-${object.shape}`}><RoughShapeArtwork object={object} /></div>;
   }
 
   if (object.type === 'spreadsheet') {

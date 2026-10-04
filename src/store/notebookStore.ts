@@ -35,6 +35,8 @@ interface NotebookState {
   updateContent: (id: string, contentHtml: string) => void;
   renameEntry: (id: string, title: string) => void;
   addStroke: (id: string, stroke: InkStroke) => void;
+  deleteStrokes: (id: string, strokeIds: string[]) => void;
+  moveStrokes: (id: string, strokeIds: string[], dx: number, dy: number) => void;
   clearInk: (id: string) => void;
   setPaperStyle: (id: string, style: PaperStyle) => void;
   setActiveTool: (tool: ActiveNotebookTool) => void;
@@ -78,11 +80,7 @@ function persist(entries: NotebookEntry[], activeEntryId: string | null) {
   localNotebookRepository.save(document);
 }
 
-function mapEntry(
-  entries: NotebookEntry[],
-  entryId: string,
-  updater: (entry: NotebookEntry) => NotebookEntry,
-) {
+function mapEntry(entries: NotebookEntry[], entryId: string, updater: (entry: NotebookEntry) => NotebookEntry) {
   return entries.map((entry) => (entry.id === entryId ? updater(entry) : entry));
 }
 
@@ -164,6 +162,34 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
       strokes: [...entry.strokes, stroke],
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries });
+  },
+
+  deleteStrokes: (entryId, strokeIds) => {
+    if (!strokeIds.length) return;
+    const selected = new Set(strokeIds);
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
+      ...entry,
+      strokes: entry.strokes.filter((stroke) => !selected.has(stroke.id)),
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries });
+  },
+
+  moveStrokes: (entryId, strokeIds, dx, dy) => {
+    if (!strokeIds.length || (!dx && !dy)) return;
+    const selected = new Set(strokeIds);
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
+      ...entry,
+      strokes: entry.strokes.map((stroke) => selected.has(stroke.id)
+        ? { ...stroke, points: stroke.points.map((point) => ({ ...point, x: point.x + dx, y: point.y + dy })) }
+        : stroke),
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);

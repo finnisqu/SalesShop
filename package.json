@@ -17,6 +17,7 @@
     "perfect-freehand": "^1.2.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "roughjs": "^4.6.6",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

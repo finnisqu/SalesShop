@@ -19,6 +19,8 @@ export function Toolbar({ entryId, paperStyle }: ToolbarProps) {
     ['pen', 'Pen'],
     ['marker', 'Marker'],
     ['highlighter', 'Highlighter'],
+    ['eraser', 'Eraser'],
+    ['lasso', 'Lasso'],
   ];
 
   return (
@@ -30,6 +32,7 @@ export function Toolbar({ entryId, paperStyle }: ToolbarProps) {
             className={`tool-button ${activeTool === tool ? 'active' : ''}`}
             onClick={() => setActiveTool(tool)}
             aria-pressed={activeTool === tool}
+            title={tool === 'eraser' ? 'Stroke eraser' : tool === 'lasso' ? 'Select and move handwriting' : undefined}
           >
             {label}
           </button>
@@ -39,6 +42,8 @@ export function Toolbar({ entryId, paperStyle }: ToolbarProps) {
       <div className="tool-divider" aria-hidden="true" />
       <StationeryInsertMenu entryId={entryId} />
       <div className="tool-spacer" />
+
+      <span className="pencil-mode-hint" title="On touch devices, finger gestures navigate while Pencil writes">Pencil writes · finger moves</span>
 
       <select
         className="paper-select"
