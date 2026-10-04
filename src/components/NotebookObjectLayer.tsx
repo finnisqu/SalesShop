@@ -8,6 +8,7 @@ import type {
   PostItTone,
   ShapeObject,
 } from '../types/notebook';
+import { SpreadsheetObjectEditor } from './SpreadsheetObjectEditor';
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const POST_IT_TONES: PostItTone[] = ['yellow', 'pink', 'blue', 'green'];
@@ -58,7 +59,6 @@ function ShapeArtwork({ object }: { object: ShapeObject }) {
       </svg>
     );
   }
-
   if (object.shape === 'cloud') {
     return (
       <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
@@ -66,7 +66,6 @@ function ShapeArtwork({ object }: { object: ShapeObject }) {
       </svg>
     );
   }
-
   if (object.shape === 'oval') {
     return (
       <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
@@ -74,7 +73,6 @@ function ShapeArtwork({ object }: { object: ShapeObject }) {
       </svg>
     );
   }
-
   return (
     <svg className="shape-artwork" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
       <path d="M7 7 C33 5 69 8 94 6 C96 23 93 43 95 54 C67 56 36 53 6 55 C5 39 8 22 7 7 Z" />
@@ -87,16 +85,12 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
   const updatePostItTone = useNotebookStore((state) => state.updatePostItTone);
   const updateBusinessCardField = useNotebookStore((state) => state.updateBusinessCardField);
   const updateImageCaption = useNotebookStore((state) => state.updateImageCaption);
+  const updateSpreadsheetData = useNotebookStore((state) => state.updateSpreadsheetData);
 
   if (object.type === 'paper-card') {
     return (
       <div className={`paper-card-object tone-${object.tone}`}>
-        <textarea
-          value={object.text}
-          onChange={(event) => updateTextObject(entryId, object.id, event.target.value)}
-          onPointerDown={stopPointer}
-          aria-label="Paper card text"
-        />
+        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} onPointerDown={stopPointer} aria-label="Paper card text" />
       </div>
     );
   }
@@ -105,22 +99,11 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
     return (
       <div className={`post-it-object tone-${object.tone}`}>
         <div className="post-it-fold" aria-hidden="true" />
-        <textarea
-          value={object.text}
-          onChange={(event) => updateTextObject(entryId, object.id, event.target.value)}
-          onPointerDown={stopPointer}
-          aria-label="Post-it text"
-        />
+        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} onPointerDown={stopPointer} aria-label="Post-it text" />
         {selected && (
           <div className="post-it-tones" onPointerDown={stopPointer} aria-label="Post-it color">
             {POST_IT_TONES.map((tone) => (
-              <button
-                key={tone}
-                type="button"
-                className={`tone-dot tone-${tone} ${object.tone === tone ? 'active' : ''}`}
-                onClick={() => updatePostItTone(entryId, object.id, tone)}
-                aria-label={`${tone} Post-it`}
-              />
+              <button key={tone} type="button" className={`tone-dot tone-${tone} ${object.tone === tone ? 'active' : ''}`} onClick={() => updatePostItTone(entryId, object.id, tone)} aria-label={`${tone} Post-it`} />
             ))}
           </div>
         )}
@@ -130,13 +113,7 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
 
   if (object.type === 'business-card') {
     const field = (name: BusinessCardField, className: string, placeholder: string) => (
-      <input
-        className={className}
-        value={object[name] ?? ''}
-        placeholder={placeholder}
-        onChange={(event) => updateBusinessCardField(entryId, object.id, name, event.target.value)}
-        onPointerDown={stopPointer}
-      />
+      <input className={className} value={object[name] ?? ''} placeholder={placeholder} onChange={(event) => updateBusinessCardField(entryId, object.id, name, event.target.value)} onPointerDown={stopPointer} />
     );
     return (
       <div className="business-card-object">
@@ -157,12 +134,7 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
   if (object.type === 'paper-scrap') {
     return (
       <div className={`paper-scrap-object variant-${object.variant}`}>
-        <textarea
-          value={object.text}
-          onChange={(event) => updateTextObject(entryId, object.id, event.target.value)}
-          onPointerDown={stopPointer}
-          aria-label="Paper scrap text"
-        />
+        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} onPointerDown={stopPointer} aria-label="Paper scrap text" />
       </div>
     );
   }
@@ -170,16 +142,8 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
   if (object.type === 'image') {
     return (
       <figure className="image-object">
-        <div className="image-mat">
-          <img src={object.src} alt={object.alt} draggable={false} />
-        </div>
-        <input
-          value={object.caption ?? ''}
-          placeholder="Add a caption…"
-          onChange={(event) => updateImageCaption(entryId, object.id, event.target.value)}
-          onPointerDown={stopPointer}
-          aria-label="Image caption"
-        />
+        <div className="image-mat"><img src={object.src} alt={object.alt} draggable={false} /></div>
+        <input value={object.caption ?? ''} placeholder="Add a caption…" onChange={(event) => updateImageCaption(entryId, object.id, event.target.value)} onPointerDown={stopPointer} aria-label="Image caption" />
       </figure>
     );
   }
@@ -199,15 +163,18 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
   }
 
   if (object.type === 'shape') {
-    return (
-      <div className={`shape-object shape-${object.shape}`}>
-        <ShapeArtwork object={object} />
-      </div>
-    );
+    return <div className={`shape-object shape-${object.shape}`}><ShapeArtwork object={object} /></div>;
   }
 
   if (object.type === 'spreadsheet') {
-    return <div className="future-object-placeholder">Spreadsheet · Univer next</div>;
+    return (
+      <SpreadsheetObjectEditor
+        objectId={object.id}
+        workbookData={object.workbookData}
+        interactive={selected}
+        onSnapshotChange={(snapshot) => updateSpreadsheetData(entryId, object.id, snapshot)}
+      />
+    );
   }
 
   return <div className="future-object-placeholder">Notebook object</div>;
@@ -242,13 +209,7 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
     event.stopPropagation();
     selectObject(object.id);
     event.currentTarget.setPointerCapture(event.pointerId);
-    interactionRef.current = {
-      kind: 'move',
-      pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startFrame: draftFrameRef.current,
-    };
+    interactionRef.current = { kind: 'move', pointerId: event.pointerId, startClientX: event.clientX, startClientY: event.clientY, startFrame: draftFrameRef.current };
   };
 
   const beginResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -256,13 +217,7 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
     event.stopPropagation();
     selectObject(object.id);
     event.currentTarget.setPointerCapture(event.pointerId);
-    interactionRef.current = {
-      kind: 'resize',
-      pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startFrame: draftFrameRef.current,
-    };
+    interactionRef.current = { kind: 'resize', pointerId: event.pointerId, startClientX: event.clientX, startClientY: event.clientY, startFrame: draftFrameRef.current };
   };
 
   const beginRotate = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -275,13 +230,8 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
     const centerY = frameRect.top + frameRect.height / 2;
     event.currentTarget.setPointerCapture(event.pointerId);
     interactionRef.current = {
-      kind: 'rotate',
-      pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startFrame: draftFrameRef.current,
-      centerX,
-      centerY,
+      kind: 'rotate', pointerId: event.pointerId, startClientX: event.clientX, startClientY: event.clientY,
+      startFrame: draftFrameRef.current, centerX, centerY,
       startAngle: Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI,
     };
   };
@@ -292,10 +242,7 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
     event.preventDefault();
 
     if (interaction.kind === 'rotate') {
-      const currentAngle = Math.atan2(
-        event.clientY - (interaction.centerY ?? 0),
-        event.clientX - (interaction.centerX ?? 0),
-      ) * 180 / Math.PI;
+      const currentAngle = Math.atan2(event.clientY - (interaction.centerY ?? 0), event.clientX - (interaction.centerX ?? 0)) * 180 / Math.PI;
       const rotation = interaction.startFrame.rotation + currentAngle - (interaction.startAngle ?? currentAngle);
       setFrame({ ...interaction.startFrame, rotation: Math.round(rotation * 10) / 10 });
       return;
@@ -307,19 +254,11 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
     const dy = (event.clientY - interaction.startClientY) / rect.height * 100;
 
     if (interaction.kind === 'move') {
-      setFrame({
-        ...interaction.startFrame,
-        x: clamp(interaction.startFrame.x + dx, 0, 100 - interaction.startFrame.width),
-        y: clamp(interaction.startFrame.y + dy, 0, 100 - interaction.startFrame.height),
-      });
+      setFrame({ ...interaction.startFrame, x: clamp(interaction.startFrame.x + dx, 0, 100 - interaction.startFrame.width), y: clamp(interaction.startFrame.y + dy, 0, 100 - interaction.startFrame.height) });
       return;
     }
 
-    setFrame({
-      ...interaction.startFrame,
-      width: clamp(interaction.startFrame.width + dx, 9, 100 - interaction.startFrame.x),
-      height: clamp(interaction.startFrame.height + dy, 6, 100 - interaction.startFrame.y),
-    });
+    setFrame({ ...interaction.startFrame, width: clamp(interaction.startFrame.width + dx, 9, 100 - interaction.startFrame.x), height: clamp(interaction.startFrame.height + dy, 6, 100 - interaction.startFrame.y) });
   };
 
   const finishInteraction = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -328,79 +267,25 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
     event.preventDefault();
     updateObjectFrame(entryId, object.id, draftFrameRef.current);
     interactionRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
-  const interactionHandlers = {
-    onPointerMove: continueInteraction,
-    onPointerUp: finishInteraction,
-    onPointerCancel: finishInteraction,
-  };
+  const interactionHandlers = { onPointerMove: continueInteraction, onPointerUp: finishInteraction, onPointerCancel: finishInteraction };
 
   return (
     <div
       className={`notebook-object-frame ${selected ? 'is-selected' : ''}`}
-      style={{
-        left: `${draftFrame.x}%`,
-        top: `${draftFrame.y}%`,
-        width: `${draftFrame.width}%`,
-        height: `${draftFrame.height}%`,
-        transform: `rotate(${draftFrame.rotation}deg)`,
-        zIndex: selected ? 1000 : draftFrame.zIndex,
-      }}
-      onPointerDown={(event) => {
-        event.stopPropagation();
-        selectObject(object.id);
-      }}
+      style={{ left: `${draftFrame.x}%`, top: `${draftFrame.y}%`, width: `${draftFrame.width}%`, height: `${draftFrame.height}%`, transform: `rotate(${draftFrame.rotation}deg)`, zIndex: selected ? 1000 : draftFrame.zIndex }}
+      onPointerDown={(event) => { event.stopPropagation(); selectObject(object.id); }}
       data-object-type={object.type}
     >
       <ObjectContent entryId={entryId} object={object} selected={selected} />
-
       {selected && (
         <>
-          <button
-            className="object-handle object-move-handle"
-            type="button"
-            aria-label="Move object"
-            title="Move"
-            onPointerDown={beginMove}
-            {...interactionHandlers}
-          >
-            ⋮⋮
-          </button>
-          <button
-            className="object-handle object-rotate-handle"
-            type="button"
-            aria-label="Rotate object"
-            title="Rotate"
-            onPointerDown={beginRotate}
-            {...interactionHandlers}
-          >
-            ↻
-          </button>
-          <button
-            className="object-handle object-resize-handle"
-            type="button"
-            aria-label="Resize object"
-            title="Resize"
-            onPointerDown={beginResize}
-            {...interactionHandlers}
-          />
-          <button
-            className="object-delete-button"
-            type="button"
-            aria-label="Delete object"
-            title="Delete"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation();
-              deleteObject(entryId, object.id);
-            }}
-          >
-            ×
-          </button>
+          <button className="object-handle object-move-handle" type="button" aria-label="Move object" title="Move" onPointerDown={beginMove} {...interactionHandlers}>⋮⋮</button>
+          <button className="object-handle object-rotate-handle" type="button" aria-label="Rotate object" title="Rotate" onPointerDown={beginRotate} {...interactionHandlers}>↻</button>
+          <button className="object-handle object-resize-handle" type="button" aria-label="Resize object" title="Resize" onPointerDown={beginResize} {...interactionHandlers} />
+          <button className="object-delete-button" type="button" aria-label="Delete object" title="Delete" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); deleteObject(entryId, object.id); }}>×</button>
         </>
       )}
     </div>
@@ -418,7 +303,7 @@ export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!selectionEnabled || !selectedObjectId || (event.key !== 'Delete' && event.key !== 'Backspace')) return;
       const target = event.target as HTMLElement | null;
-      if (target?.matches('input, textarea, [contenteditable="true"]')) return;
+      if (target?.matches('input, textarea, [contenteditable="true"]') || target?.closest('.spreadsheet-object-editor')) return;
       event.preventDefault();
       deleteObject(entry.id, selectedObjectId);
     };
@@ -427,20 +312,9 @@ export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
   }, [deleteObject, entry.id, selectedObjectId, selectionEnabled]);
 
   return (
-    <div
-      className={`notebook-object-layer ${selectionEnabled ? 'is-selecting' : ''}`}
-      onPointerDown={(event) => {
-        if (selectionEnabled && event.target === event.currentTarget) selectObject(null);
-      }}
-      aria-label="Notebook objects"
-    >
+    <div className={`notebook-object-layer ${selectionEnabled ? 'is-selecting' : ''}`} onPointerDown={(event) => { if (selectionEnabled && event.target === event.currentTarget) selectObject(null); }} aria-label="Notebook objects">
       {entry.objects.map((object) => (
-        <ObjectFrame
-          key={object.id}
-          entryId={entry.id}
-          object={object}
-          selected={selectionEnabled && selectedObjectId === object.id}
-        />
+        <ObjectFrame key={object.id} entryId={entry.id} object={object} selected={selectionEnabled && selectedObjectId === object.id} />
       ))}
     </div>
   );
