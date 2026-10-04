@@ -1,4 +1,4 @@
-import type { NotebookDocument, NotebookEntry } from '../types/notebook';
+import type { NotebookDocument, NotebookEntry, PageTone, PaperStyle } from '../types/notebook';
 
 const STORAGE_KEY = 'salesshop-react-notebook-v1';
 
@@ -7,13 +7,18 @@ export interface NotebookRepository {
   save(document: NotebookDocument): void;
 }
 
-function migrateEntry(entry: NotebookEntry | (Omit<NotebookEntry, 'objects'> & { objects?: unknown })):
-  NotebookEntry {
+const PAPER_STYLES: PaperStyle[] = ['lined', 'grid', 'blank', 'cornell', 'dotted', 'two-column'];
+const PAGE_TONES: PageTone[] = ['cream', 'white', 'blue', 'green', 'rose'];
+
+function migrateEntry(entry: Partial<NotebookEntry> & Pick<NotebookEntry, 'id' | 'title' | 'contentHtml' | 'createdAt' | 'updatedAt'>): NotebookEntry {
   return {
     ...entry,
     strokes: Array.isArray(entry.strokes) ? entry.strokes : [],
-    objects: Array.isArray(entry.objects) ? entry.objects as NotebookEntry['objects'] : [],
-  };
+    objects: Array.isArray(entry.objects) ? entry.objects : [],
+    paperStyle: PAPER_STYLES.includes(entry.paperStyle as PaperStyle) ? entry.paperStyle as PaperStyle : 'lined',
+    tone: PAGE_TONES.includes(entry.tone as PageTone) ? entry.tone as PageTone : 'cream',
+    favorite: Boolean(entry.favorite),
+  } as NotebookEntry;
 }
 
 function migrateDocument(raw: unknown): NotebookDocument | null {
@@ -25,15 +30,7 @@ function migrateDocument(raw: unknown): NotebookDocument | null {
   };
   if (!Array.isArray(candidate.entries)) return null;
 
-  if (candidate.schemaVersion === 2) {
-    return {
-      schemaVersion: 2,
-      entries: candidate.entries.map((entry) => migrateEntry(entry as NotebookEntry)),
-      activeEntryId: candidate.activeEntryId ?? null,
-    };
-  }
-
-  if (candidate.schemaVersion === 1) {
+  if (candidate.schemaVersion === 2 || candidate.schemaVersion === 1) {
     return {
       schemaVersion: 2,
       entries: candidate.entries.map((entry) => migrateEntry(entry as NotebookEntry)),
