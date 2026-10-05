@@ -84,11 +84,13 @@ Deno.serve(async (req) => {
     if (!membership) return json({ error: 'Workspace access denied.' }, 403);
 
     if (action === 'get') {
-      const { data, error } = await admin
+      let shareQuery = admin
         .from('quote_shares')
         .select('*')
         .eq('organization_id', organizationId)
-        .eq('quote_id', quoteId)
+        .eq('quote_id', quoteId);
+      if (body.revision !== undefined) shareQuery = shareQuery.eq('revision', body.revision);
+      const { data, error } = await shareQuery
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
