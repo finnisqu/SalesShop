@@ -12,6 +12,7 @@ import {
   type QuotePricingMode,
   type QuoteStatus,
 } from '../types/quote';
+import { QuoteSignatureDialog } from './QuoteSignatureDialog';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const lineKinds: Array<[QuoteLineKind, string]> = [
@@ -222,7 +223,7 @@ function CustomerPreview({ quote }: { quote: Quote }) {
 
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
-      <footer>Prepared with SalesShop · Signature workflow will attach to this accepted revision.</footer>
+      <footer>{quote.status === 'Signed' ? 'Accepted electronically with SalesShop.' : 'Prepared with SalesShop · Electronic acceptance is available for this quote.'}</footer>
     </article>
   );
 }
@@ -236,6 +237,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const setCustomerColumns = useQuoteStore((state) => state.setCustomerColumns);
   const recordSent = useQuoteStore((state) => state.recordSent);
   const createRevision = useQuoteStore((state) => state.createRevision);
+  const [signatureOpen, setSignatureOpen] = useState(false);
 
   const selectProject = (projectId: string) => {
     const project = projects.find((candidate) => candidate.id === projectId);
@@ -246,6 +248,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   };
 
   const canRevise = quote.status !== 'Draft' && quote.status !== 'Ready' && quote.status !== 'Signed';
+  const canSign = quote.status !== 'Signed' && quote.status !== 'Declined' && quote.status !== 'Expired';
 
   return (
     <section className={`quotes-workbench view-${mode}`}>
@@ -263,6 +266,8 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
             ))}
           </div>
           {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="quote-send-button" onClick={() => recordSent(quote.id)}>Send</button>}
+          {canSign && <button type="button" className="quote-sign-button" onClick={() => setSignatureOpen(true)}>Sign now</button>}
+          {quote.status === 'Signed' && <button type="button" className="quote-signature-receipt-button" onClick={() => setSignatureOpen(true)}>✓ View signature</button>}
           {canRevise && <button type="button" className="quote-revision-button" onClick={() => createRevision(quote.id)}>Create revision</button>}
         </div>
       </header>
@@ -271,7 +276,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
         {mode !== 'customer' && (
           <div className="quote-editor-pane">
             <section className="quote-details-grid">
-              <label><span>Status</span><select value={quote.status} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status}>{status}</option>)}</select></label>
+              <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={status === 'Signed' && quote.status !== 'Signed'}>{status}</option>)}</select></label>
               <label><span>Quote date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
               <label><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Optional: Option A, VE alternate…" /></label>
               <label><span>Project</span><select value={quote.projectId ?? ''} onChange={(event) => selectProject(event.target.value)}><option value="">Unlinked</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
@@ -324,6 +329,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
 
         {mode !== 'edit' && <div className="quote-preview-pane"><CustomerPreview quote={quote} /></div>}
       </div>
+      {signatureOpen && <QuoteSignatureDialog quote={quote} onClose={() => setSignatureOpen(false)} />}
     </section>
   );
 }
