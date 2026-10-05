@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { localQuoteRepository } from '../data/quoteRepository';
+import { supabase } from '../lib/supabase';
 import {
   applyQuoteSent,
   applyQuoteStatusChange,
@@ -7,24 +8,29 @@ import {
   recordQuoteLinked,
   recordRevisionCreated,
 } from '../services/quoteCrmService';
-import type {
-  Quote,
-  QuoteCustomerColumns,
-  QuoteDocument,
-  QuoteLine,
-  QuoteLineKind,
-  QuotePatch,
-  QuoteRevisionSnapshot,
-  QuoteSection,
-  QuoteStatus,
+import { syncNormalizedQuotes } from '../services/normalizedQuoteSync';
+import {
+  isDraftQuoteNumber,
+  type CommercialDocumentType,
+  type Quote,
+  type QuoteCustomerColumns,
+  type QuoteDocument,
+  type QuoteLine,
+  type QuoteLineKind,
+  type QuotePatch,
+  type QuoteRevisionSnapshot,
+  type QuoteSection,
+  type QuoteStatus,
 } from '../types/quote';
+import { useAuthStore } from './authStore';
 
 interface QuoteState {
   quotes: Quote[];
   activeQuoteId: string | null;
   hydrated: boolean;
   hydrate: () => void;
-  createQuote: (prefill?: Partial<Pick<Quote, 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>>) => string;
+  createQuote: (prefill?: Partial<Pick<Quote, 'documentType' | 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>>) => string;
+  createChangeOrder: (sourceQuoteId: string) => string | null;
   selectQuote: (quoteId: string) => void;
   updateQuote: (quoteId: string, patch: QuotePatch) => void;
   deleteQuote: (quoteId: string) => void;
@@ -35,7 +41,7 @@ interface QuoteState {
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   deleteSection: (quoteId: string, sectionId: string) => void;
   setCustomerColumns: (quoteId: string, patch: Partial<QuoteCustomerColumns>) => void;
-  recordSent: (quoteId: string) => void;
+  recordSent: (quoteId: string) => Promise<void>;
   createRevision: (quoteId: string) => void;
 }
 
@@ -47,11 +53,6 @@ function localDateKey(date = new Date()) {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
-}
-
-function generateQuoteNumber(quotes: Quote[], date: string) {
-  const sameDay = quotes.filter((quote) => quote.originalQuoteDate === date).length + 1;
-  return `Q-${date.replaceAll('-', '')}-${String(sameDay).padStart(3, '0')}`;
 }
 
 function newLine(kind: QuoteLineKind = 'item', sectionId?: string): QuoteLine {
@@ -77,12 +78,14 @@ function newLine(kind: QuoteLineKind = 'item', sectionId?: string): QuoteLine {
   };
 }
 
-function newQuote(quotes: Quote[], prefill: Partial<Pick<Quote, 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>> = {}): Quote {
+function newQuote(prefill: Partial<Pick<Quote, 'documentType' | 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>> = {}): Quote {
   const timestamp = now();
   const date = localDateKey();
+  const id = uid('quote');
   return {
-    id: uid('quote'),
-    quoteNumber: generateQuoteNumber(quotes, date),
+    id,
+    quoteNumber: `DRAFT-${id}`,
+    documentType: prefill.documentType ?? 'quote',
     originalQuoteDate: date,
     quoteDate: date,
     revision: 0,
@@ -106,7 +109,7 @@ function newQuote(quotes: Quote[], prefill: Partial<Pick<Quote, 'title' | 'proje
 }
 
 function seedDocument(): QuoteDocument {
-  const quote = newQuote([], { title: 'Blue Jay Park', companyName: 'BAR Construction' });
+  const quote = newQuote({ title: 'Blue Jay Park', companyName: 'BAR Construction' });
   quote.lines = [
     { ...newLine('item'), description: 'Quartz countertops', amount: 14500 },
     { ...newLine('scope'), description: 'Includes standard fabrication and installation.' },
@@ -126,6 +129,9 @@ function snapshot(quote: Quote, status: QuoteStatus = quote.status): QuoteRevisi
     quoteDate: quote.quoteDate,
     capturedAt: now(),
     status,
+    documentType: quote.documentType,
+    parentQuoteId: quote.parentQuoteId,
+    changeOrderNumber: quote.changeOrderNumber,
     title: quote.title,
     projectId: quote.projectId,
     companyId: quote.companyId,
@@ -139,6 +145,61 @@ function snapshot(quote: Quote, status: QuoteStatus = quote.status): QuoteRevisi
     customerColumns: { ...quote.customerColumns },
     customerNotes: quote.customerNotes,
   };
+}
+
+function localBaseNumber(quotes: Quote[], date: string) {
+  const prefix = `Q-${date.replaceAll('-', '')}-`;
+  const max = quotes.reduce((highest, quote) => {
+    if (quote.documentType === 'change-order' || !quote.quoteNumber.startsWith(prefix)) return highest;
+    const match = quote.quoteNumber.match(/^Q-\d{8}-(\d+)$/);
+    return match ? Math.max(highest, Number(match[1])) : highest;
+  }, 0);
+  return `${prefix}${String(max + 1).padStart(3, '0')}`;
+}
+
+function localCommercialIdentity(quote: Quote, quotes: Quote[]) {
+  if (!isDraftQuoteNumber(quote.quoteNumber)) {
+    return { quoteNumber: quote.quoteNumber, changeOrderNumber: quote.changeOrderNumber };
+  }
+
+  if (quote.documentType === 'change-order') {
+    const parent = quote.parentQuoteId ? quotes.find((candidate) => candidate.id === quote.parentQuoteId) : undefined;
+    if (!parent || isDraftQuoteNumber(parent.quoteNumber)) {
+      throw new Error('The original agreement must be sent before its Change Order can be sent.');
+    }
+    const next = quotes.reduce((highest, candidate) => candidate.parentQuoteId === parent.id
+      ? Math.max(highest, candidate.changeOrderNumber ?? 0)
+      : highest, 0) + 1;
+    return { quoteNumber: `${parent.quoteNumber}-CO${String(next).padStart(2, '0')}`, changeOrderNumber: next };
+  }
+
+  return { quoteNumber: localBaseNumber(quotes, localDateKey()), changeOrderNumber: undefined };
+}
+
+async function assignCommercialIdentity(quote: Quote, document: QuoteDocument) {
+  if (!isDraftQuoteNumber(quote.quoteNumber)) {
+    return { quoteNumber: quote.quoteNumber, changeOrderNumber: quote.changeOrderNumber };
+  }
+
+  const auth = useAuthStore.getState();
+  if (!supabase || auth.mode !== 'cloud' || !auth.organizationId) {
+    return localCommercialIdentity(quote, document.quotes);
+  }
+
+  // Ensure this draft and its parent relationship exist before the atomic allocator runs.
+  await syncNormalizedQuotes(auth.organizationId, document);
+  const { data, error } = await supabase.rpc('assign_commercial_document_number', {
+    p_organization_id: auth.organizationId,
+    p_quote_id: quote.id,
+  });
+  if (error) throw error;
+  const result = data as { quote_number?: unknown; change_order_number?: unknown } | null;
+  const quoteNumber = result?.quote_number ? String(result.quote_number) : '';
+  if (!quoteNumber) throw new Error('SalesShop could not assign an official document number.');
+  const changeOrderNumber = result?.change_order_number === null || result?.change_order_number === undefined
+    ? undefined
+    : Number(result.change_order_number);
+  return { quoteNumber, changeOrderNumber };
 }
 
 export const useQuoteStore = create<QuoteState>((set, get) => ({
@@ -163,13 +224,41 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   createQuote: (prefill = {}) => {
-    const quote = newQuote(get().quotes, prefill);
+    const quote = newQuote(prefill);
     const quotes = [quote, ...get().quotes];
     persist(quotes, quote.id);
     set({ quotes, activeQuoteId: quote.id });
     recordQuoteCreated(quote);
     if (quote.projectId) recordQuoteLinked(quote);
     return quote.id;
+  },
+
+  createChangeOrder: (sourceQuoteId) => {
+    const source = get().quotes.find((quote) => quote.id === sourceQuoteId);
+    if (!source) return null;
+    const parentId = source.documentType === 'change-order' ? source.parentQuoteId : source.id;
+    const parent = parentId ? get().quotes.find((quote) => quote.id === parentId) : undefined;
+    if (!parent || parent.status !== 'Signed') return null;
+
+    const changeOrder = newQuote({
+      documentType: 'change-order',
+      title: `${parent.title} · Change Order`,
+      projectId: parent.projectId,
+      companyId: parent.companyId,
+      companyName: parent.companyName,
+      contactId: parent.contactId,
+      contactName: parent.contactName,
+      contactEmail: parent.contactEmail,
+    });
+    changeOrder.parentQuoteId = parent.id;
+    changeOrder.address = parent.address;
+    changeOrder.lines = [{ ...newLine('item'), description: 'Change order scope' }];
+
+    const quotes = [changeOrder, ...get().quotes];
+    persist(quotes, changeOrder.id);
+    set({ quotes, activeQuoteId: changeOrder.id });
+    recordQuoteCreated(changeOrder);
+    return changeOrder.id;
   },
 
   selectQuote: (activeQuoteId) => {
@@ -182,21 +271,26 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if (!current) return;
 
     if (patch.status === 'Sent' && current.status !== 'Sent') {
-      get().recordSent(quoteId);
+      void get().recordSent(quoteId);
       return;
+    }
+
+    const safePatch = { ...patch };
+    if (safePatch.documentType && (current.status !== 'Draft' && current.status !== 'Ready' || current.documentType === 'change-order')) {
+      safePatch.documentType = current.documentType;
     }
 
     const timestamp = now();
     let updated: Quote = {
       ...current,
-      ...patch,
-      title: patch.title?.trim() || current.title,
+      ...safePatch,
+      title: safePatch.title?.trim() || current.title,
       updatedAt: timestamp,
     };
 
-    if (patch.status && patch.status !== current.status) {
-      if (patch.status === 'Viewed') updated = { ...updated, viewedAt: timestamp };
-      if (patch.status === 'Signed') updated = { ...updated, signedAt: timestamp };
+    if (safePatch.status && safePatch.status !== current.status) {
+      if (safePatch.status === 'Viewed') updated = { ...updated, viewedAt: timestamp };
+      if (safePatch.status === 'Signed') updated = { ...updated, signedAt: timestamp };
       const identity = applyQuoteStatusChange(updated, current.status);
       updated = { ...updated, ...identity };
     }
@@ -205,14 +299,15 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     persist(quotes, get().activeQuoteId);
     set({ quotes });
 
-    if (Object.prototype.hasOwnProperty.call(patch, 'projectId') && patch.projectId && patch.projectId !== current.projectId) {
+    if (Object.prototype.hasOwnProperty.call(safePatch, 'projectId') && safePatch.projectId && safePatch.projectId !== current.projectId) {
       recordQuoteLinked(updated);
     }
   },
 
   deleteQuote: (quoteId) => {
+    if (get().quotes.some((quote) => quote.parentQuoteId === quoteId)) return;
     let quotes = get().quotes.filter((quote) => quote.id !== quoteId);
-    if (!quotes.length) quotes = [newQuote([])];
+    if (!quotes.length) quotes = [newQuote()];
     const activeQuoteId = get().activeQuoteId === quoteId ? quotes[0].id : get().activeQuoteId;
     persist(quotes, activeQuoteId);
     set({ quotes, activeQuoteId });
@@ -298,13 +393,30 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes });
   },
 
-  recordSent: (quoteId) => {
+  recordSent: async (quoteId) => {
+    const initial = get().quotes.find((quote) => quote.id === quoteId);
+    if (!initial || (initial.status !== 'Draft' && initial.status !== 'Ready')) return;
+
+    const identity = await assignCommercialIdentity(initial, {
+      schemaVersion: 2,
+      quotes: get().quotes,
+      activeQuoteId: get().activeQuoteId,
+    });
+
     const current = get().quotes.find((quote) => quote.id === quoteId);
-    if (!current) return;
+    if (!current || (current.status !== 'Draft' && current.status !== 'Ready')) return;
+
     const timestamp = now();
-    let sentQuote: Quote = { ...current, status: 'Sent', sentAt: timestamp, updatedAt: timestamp };
-    const identity = applyQuoteSent(sentQuote);
-    sentQuote = { ...sentQuote, ...identity };
+    let sentQuote: Quote = {
+      ...current,
+      quoteNumber: identity.quoteNumber,
+      changeOrderNumber: identity.changeOrderNumber,
+      status: 'Sent',
+      sentAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const crmIdentity = applyQuoteSent(sentQuote);
+    sentQuote = { ...sentQuote, ...crmIdentity };
     const alreadyCaptured = current.history.some((item) => item.revision === current.revision);
     sentQuote = {
       ...sentQuote,
@@ -313,6 +425,15 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quotes = get().quotes.map((quote) => quote.id === quoteId ? sentQuote : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes });
+
+    const auth = useAuthStore.getState();
+    if (supabase && auth.mode === 'cloud' && auth.organizationId) {
+      await syncNormalizedQuotes(auth.organizationId, {
+        schemaVersion: 2,
+        quotes,
+        activeQuoteId: get().activeQuoteId,
+      });
+    }
   },
 
   createRevision: (quoteId) => {
