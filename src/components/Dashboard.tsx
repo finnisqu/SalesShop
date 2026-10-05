@@ -25,6 +25,7 @@ export function Dashboard() {
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
   const hydrateSignatures = useSignatureStore((state) => state.hydrate);
   const projects = useCrmStore((state) => state.projects);
+  const activities = useCrmStore((state) => state.activities);
   const quotes = useQuoteStore((state) => state.quotes);
   const signatures = useSignatureStore((state) => state.signatures);
   const openQuote = useNavigationStore((state) => state.openQuote);
@@ -37,8 +38,8 @@ export function Dashboard() {
   }, [hydrateCrm, hydrateQuotes, hydrateSignatures]);
 
   const metrics = useMemo(
-    () => buildDashboardMetrics(quotes, signatures, projects),
-    [quotes, signatures, projects],
+    () => buildDashboardMetrics(quotes, signatures, projects, activities),
+    [quotes, signatures, projects, activities],
   );
   const quotesById = useMemo(() => new Map(quotes.map((quote) => [quote.id, quote])), [quotes]);
   const largestStage = Math.max(1, ...metrics.pipelineByStage.map((stage) => stage.value));

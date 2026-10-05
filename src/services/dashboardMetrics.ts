@@ -1,4 +1,4 @@
-import type { Project, ProjectStage } from '../types/crm';
+import type { Activity, Project, ProjectStage } from '../types/crm';
 import type { Quote } from '../types/quote';
 import type { SignatureRecord } from '../types/signature';
 
@@ -35,9 +35,16 @@ export function buildDashboardMetrics(
   quotes: Quote[],
   signatures: SignatureRecord[],
   projects: Project[],
+  activities: Activity[],
 ): DashboardMetrics {
-  const sentQuotes = quotes.filter(quoteHasBeenSent);
+  const sentQuoteIds = new Set<string>();
+  activities.forEach((activity) => {
+    if (activity.type === 'quote-sent' && activity.quoteId) sentQuoteIds.add(activity.quoteId);
+  });
+  quotes.filter(quoteHasBeenSent).forEach((quote) => sentQuoteIds.add(quote.id));
+
   const signedQuoteIds = new Set(signatures.map((signature) => signature.quoteId));
+  const signedSentQuotes = [...signedQuoteIds].filter((quoteId) => sentQuoteIds.has(quoteId)).length;
   const signaturesReceived = signatures.length;
   const acceptedValue = signatures.reduce((sum, signature) => sum + signature.acceptedSnapshot.acceptedTotal, 0);
 
@@ -60,9 +67,9 @@ export function buildDashboardMetrics(
     .slice(0, 6);
 
   return {
-    quotesSent: sentQuotes.length,
+    quotesSent: sentQuoteIds.size,
     signaturesReceived,
-    closeRate: sentQuotes.length ? signedQuoteIds.size / sentQuotes.length : 0,
+    closeRate: sentQuoteIds.size ? signedSentQuotes / sentQuoteIds.size : 0,
     openPipeline,
     acceptedValue,
     pendingSignatures,
