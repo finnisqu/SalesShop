@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type DragEvent, type FormEvent } from 'react';
+import '../project-activity.css';
 import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -9,6 +10,15 @@ const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD
 function formatDate(value?: string) {
   if (!value) return '';
   return new Date(`${value}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function formatActivityTime(value: string) {
+  const date = new Date(value);
+  const today = new Date();
+  const sameDay = date.toDateString() === today.toDateString();
+  return sameDay
+    ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 function ProjectCard({ project, onOpen, onDragStart }: {
@@ -38,6 +48,8 @@ function ProjectCard({ project, onOpen, onDragStart }: {
 function ProjectEditor({ project, onClose }: { project: Project; onClose: () => void }) {
   const updateProject = useCrmStore((state) => state.updateProject);
   const deleteProject = useCrmStore((state) => state.deleteProject);
+  const activities = useCrmStore((state) => state.activities);
+  const openQuote = useNavigationStore((state) => state.openQuote);
   const [draft, setDraft] = useState({
     name: project.name,
     companyName: project.companyName ?? '',
@@ -59,6 +71,11 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
       lastTouchpoint: project.lastTouchpoint ?? '',
     });
   }, [project]);
+
+  const projectActivities = useMemo(() => activities
+    .filter((activity) => activity.projectId === project.id)
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+    .slice(0, 10), [activities, project.id]);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -97,6 +114,33 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
           <label><span>Next action</span><textarea value={draft.nextAction} onChange={(event) => setDraft({ ...draft, nextAction: event.target.value })} placeholder="What should happen next?" /></label>
 
           <ProjectNotebookLinks project={project} />
+
+          <section className="project-activity-panel" aria-label="Project activity">
+            <header>
+              <div><span className="board-eyebrow">Automatic breadcrumbs</span><h3>Activity</h3></div>
+              <span>{projectActivities.length ? `${projectActivities.length} recent` : 'No activity yet'}</span>
+            </header>
+            <div className="project-activity-list">
+              {projectActivities.map((activity) => (
+                <button
+                  key={activity.id}
+                  type="button"
+                  className={`project-activity-row activity-${activity.type}`}
+                  onClick={() => activity.quoteId ? openQuote(activity.quoteId) : undefined}
+                  disabled={!activity.quoteId}
+                  title={activity.quoteId ? 'Open quote' : undefined}
+                >
+                  <span className="activity-dot" aria-hidden="true" />
+                  <span className="activity-copy">
+                    <strong>{activity.summary}</strong>
+                    {activity.metadata?.source && <small>{activity.metadata.source === 'quote' ? 'From quote workflow' : 'Board update'}</small>}
+                  </span>
+                  <time>{formatActivityTime(activity.occurredAt)}</time>
+                </button>
+              ))}
+              {!projectActivities.length && <div className="project-activity-empty">Quote sends, signatures, and stage changes will appear here automatically.</div>}
+            </div>
+          </section>
 
           <div className="editor-actions">
             <button type="button" className="danger-button" onClick={() => {
