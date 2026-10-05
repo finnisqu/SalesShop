@@ -5,9 +5,11 @@ import './binder-page.css';
 import './board.css';
 import './board-groups.css';
 import './notebook-project-links.css';
+import './quotes.css';
 import { Board } from './components/Board';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
+import { Quotes } from './components/Quotes';
 import { Sidebar } from './components/Sidebar';
 import { TextEditor } from './components/TextEditor';
 import { Toolbar } from './components/Toolbar';
@@ -46,7 +48,7 @@ function App() {
         <nav className="app-tabs" aria-label="SalesShop sections">
           <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
-          <button className="app-tab" disabled title="Migrates in a later batch">Quotes</button>
+          <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
         <div className="migration-chip">React foundation</div>
@@ -54,6 +56,8 @@ function App() {
 
       {view === 'board' ? (
         <Board />
+      ) : view === 'quotes' ? (
+        <Quotes />
       ) : (
         <main className="notebook-workspace">
           <Sidebar />
