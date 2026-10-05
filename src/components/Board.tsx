@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type DragEvent, type FormEvent } from 'react';
+import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { useCrmStore } from '../store/crmStore';
+import { useNavigationStore } from '../store/navigationStore';
 import { PROJECT_STAGES, type Project, type ProjectPatch, type ProjectStage } from '../types/crm';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -15,15 +17,8 @@ function ProjectCard({ project, onOpen, onDragStart }: {
   onDragStart: (event: DragEvent<HTMLElement>) => void;
 }) {
   return (
-    <article
-      className="project-card"
-      draggable
-      onDragStart={onDragStart}
-      onDoubleClick={onOpen}
-      tabIndex={0}
-      onKeyDown={(event) => { if (event.key === 'Enter') onOpen(); }}
-      title="Double-click to edit"
-    >
+    <article className="project-card" draggable onDragStart={onDragStart} onDoubleClick={onOpen} tabIndex={0}
+      onKeyDown={(event) => { if (event.key === 'Enter') onOpen(); }} title="Double-click to edit">
       <div className="project-card-pin" aria-hidden="true" />
       <div className="project-card-company">{project.companyName || 'Unassigned company'}</div>
       <h3>{project.name}</h3>
@@ -84,62 +79,33 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
     <div className="project-editor-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <aside className="project-editor" aria-label="Edit project">
         <header>
-          <div>
-            <span className="board-eyebrow">Project card</span>
-            <h2>{project.name}</h2>
-          </div>
+          <div><span className="board-eyebrow">Project card</span><h2>{project.name}</h2></div>
           <button type="button" className="editor-close" onClick={onClose} aria-label="Close editor">×</button>
         </header>
 
         <form onSubmit={submit}>
-          <label>
-            <span>Project name</span>
-            <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} autoFocus />
-          </label>
-          <label>
-            <span>Company</span>
-            <input value={draft.companyName} onChange={(event) => setDraft({ ...draft, companyName: event.target.value })} placeholder="Optional" />
-          </label>
+          <label><span>Project name</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} autoFocus /></label>
+          <label><span>Company</span><input value={draft.companyName} onChange={(event) => setDraft({ ...draft, companyName: event.target.value })} placeholder="Optional" /></label>
           <div className="editor-two-up">
-            <label>
-              <span>Stage</span>
-              <select value={draft.stage} onChange={(event) => setDraft({ ...draft, stage: event.target.value as ProjectStage })}>
-                {PROJECT_STAGES.map((stage) => <option key={stage}>{stage}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>Amount</span>
-              <input type="number" min="0" step="1" value={draft.amount} onChange={(event) => setDraft({ ...draft, amount: event.target.value })} placeholder="$0" />
-            </label>
+            <label><span>Stage</span><select value={draft.stage} onChange={(event) => setDraft({ ...draft, stage: event.target.value as ProjectStage })}>{PROJECT_STAGES.map((stage) => <option key={stage}>{stage}</option>)}</select></label>
+            <label><span>Amount</span><input type="number" min="0" step="1" value={draft.amount} onChange={(event) => setDraft({ ...draft, amount: event.target.value })} placeholder="$0" /></label>
           </div>
           <div className="editor-two-up">
-            <label>
-              <span>Due date</span>
-              <input type="date" value={draft.dueDate} onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })} />
-            </label>
-            <label>
-              <span>Last touch</span>
-              <input type="date" value={draft.lastTouchpoint} onChange={(event) => setDraft({ ...draft, lastTouchpoint: event.target.value })} />
-            </label>
+            <label><span>Due date</span><input type="date" value={draft.dueDate} onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })} /></label>
+            <label><span>Last touch</span><input type="date" value={draft.lastTouchpoint} onChange={(event) => setDraft({ ...draft, lastTouchpoint: event.target.value })} /></label>
           </div>
-          <label>
-            <span>Next action</span>
-            <textarea value={draft.nextAction} onChange={(event) => setDraft({ ...draft, nextAction: event.target.value })} placeholder="What should happen next?" />
-          </label>
+          <label><span>Next action</span><textarea value={draft.nextAction} onChange={(event) => setDraft({ ...draft, nextAction: event.target.value })} placeholder="What should happen next?" /></label>
+
+          <ProjectNotebookLinks project={project} />
 
           <div className="editor-actions">
-            <button
-              type="button"
-              className="danger-button"
-              onClick={() => {
-                if (window.confirm(`Delete ${project.name}?`)) {
-                  deleteProject(project.id);
-                  onClose();
-                }
-              }}
-            >
-              Delete
-            </button>
+            <button type="button" className="danger-button" onClick={() => {
+              if (window.confirm(`Delete ${project.name}?`)) {
+                detachNotebookPagesForProject(project.id);
+                deleteProject(project.id);
+                onClose();
+              }
+            }}>Delete</button>
             <div className="editor-action-spacer" />
             <button type="button" className="secondary-button" onClick={onClose}>Cancel</button>
             <button type="submit" className="primary-button">Save project</button>
@@ -156,12 +122,20 @@ export function Board() {
   const projects = useCrmStore((state) => state.projects);
   const createProject = useCrmStore((state) => state.createProject);
   const moveProject = useCrmStore((state) => state.moveProject);
+  const focusedProjectId = useNavigationStore((state) => state.focusedProjectId);
+  const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragStage, setDragStage] = useState<ProjectStage | null>(null);
 
   useEffect(() => { hydrate(); }, [hydrate]);
+  useEffect(() => {
+    if (focusedProjectId && projects.some((project) => project.id === focusedProjectId)) {
+      setEditingId(focusedProjectId);
+      clearFocusedProject();
+    }
+  }, [focusedProjectId, projects, clearFocusedProject]);
 
   const projectsByStage = useMemo(() => {
     const grouped = new Map<ProjectStage, Project[]>();
@@ -176,18 +150,14 @@ export function Board() {
   const quickAdd = (event: FormEvent) => {
     event.preventDefault();
     const projectId = createProject(newName);
-    if (projectId) {
-      setNewName('');
-      setEditingId(projectId);
-    }
+    if (projectId) { setNewName(''); setEditingId(projectId); }
   };
 
   const dropOnStage = (event: DragEvent<HTMLElement>, stage: ProjectStage) => {
     event.preventDefault();
     const projectId = draggedId || event.dataTransfer.getData('text/plain');
     if (projectId) moveProject(projectId, stage);
-    setDraggedId(null);
-    setDragStage(null);
+    setDraggedId(null); setDragStage(null);
   };
 
   if (!hydrated) return <div className="board-loading">Opening project board…</div>;
@@ -195,17 +165,10 @@ export function Board() {
   return (
     <main className="board-view">
       <section className="board-header-panel">
-        <div>
-          <span className="board-eyebrow">Sales pipeline</span>
-          <h1>Projects</h1>
-          <p>Start with a name. Add detail only when it becomes useful.</p>
-        </div>
+        <div><span className="board-eyebrow">Sales pipeline</span><h1>Projects</h1><p>Start with a name. Add detail only when it becomes useful.</p></div>
         <form className="board-quick-add" onSubmit={quickAdd}>
           <label htmlFor="new-project-name">Quick project</label>
-          <div>
-            <input id="new-project-name" value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Type a project name…" />
-            <button type="submit" disabled={!newName.trim()}>Add</button>
-          </div>
+          <div><input id="new-project-name" value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Type a project name…" /><button type="submit" disabled={!newName.trim()}>Add</button></div>
         </form>
       </section>
 
@@ -214,33 +177,19 @@ export function Board() {
           const stageProjects = projectsByStage.get(stage) ?? [];
           const stageTotal = stageProjects.reduce((sum, project) => sum + (project.amount ?? 0), 0);
           return (
-            <section
-              key={stage}
-              className={`board-column ${dragStage === stage ? 'is-drag-over' : ''}`}
+            <section key={stage} className={`board-column ${dragStage === stage ? 'is-drag-over' : ''}`}
               onDragOver={(event) => { event.preventDefault(); setDragStage(stage); }}
               onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragStage(null); }}
-              onDrop={(event) => dropOnStage(event, stage)}
-            >
+              onDrop={(event) => dropOnStage(event, stage)}>
               <header className="board-column-header">
-                <div>
-                  <h2>{stage}</h2>
-                  <span>{stageProjects.length} {stageProjects.length === 1 ? 'project' : 'projects'}</span>
-                </div>
+                <div><h2>{stage}</h2><span>{stageProjects.length} {stageProjects.length === 1 ? 'project' : 'projects'}</span></div>
                 {stageTotal > 0 && <strong>{money.format(stageTotal)}</strong>}
               </header>
               <div className="board-column-rule" aria-hidden="true" />
               <div className="board-card-stack">
                 {stageProjects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    onOpen={() => setEditingId(project.id)}
-                    onDragStart={(event) => {
-                      setDraggedId(project.id);
-                      event.dataTransfer.effectAllowed = 'move';
-                      event.dataTransfer.setData('text/plain', project.id);
-                    }}
-                  />
+                  <ProjectCard key={project.id} project={project} onOpen={() => setEditingId(project.id)}
+                    onDragStart={(event) => { setDraggedId(project.id); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', project.id); }} />
                 ))}
                 {!stageProjects.length && <div className="board-empty-card">Drop a project here</div>}
               </div>
@@ -248,7 +197,6 @@ export function Board() {
           );
         })}
       </section>
-
       {editingProject && <ProjectEditor project={editingProject} onClose={() => setEditingId(null)} />}
     </main>
   );
