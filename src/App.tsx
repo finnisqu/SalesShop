@@ -3,6 +3,7 @@ import './object-layer.css';
 import './spreadsheet-object.css';
 import './binder-page.css';
 import './board.css';
+import './board-groups.css';
 import { Board } from './components/Board';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
