@@ -4,6 +4,7 @@ import './spreadsheet-object.css';
 import './binder-page.css';
 import './board.css';
 import './board-groups.css';
+import './accounts.css';
 import './notebook-project-links.css';
 import './quotes.css';
 import { Board } from './components/Board';

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type DragEvent, type FormEvent } from 'react';
 import '../project-activity.css';
+import { AccountsBoard } from './AccountsBoard';
 import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -168,6 +169,7 @@ export function Board() {
   const moveProject = useCrmStore((state) => state.moveProject);
   const focusedProjectId = useNavigationStore((state) => state.focusedProjectId);
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
+  const [boardMode, setBoardMode] = useState<'projects' | 'accounts'>('projects');
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -176,6 +178,7 @@ export function Board() {
   useEffect(() => { hydrate(); }, [hydrate]);
   useEffect(() => {
     if (focusedProjectId && projects.some((project) => project.id === focusedProjectId)) {
+      setBoardMode('projects');
       setEditingId(focusedProjectId);
       clearFocusedProject();
     }
@@ -204,12 +207,17 @@ export function Board() {
     setDraggedId(null); setDragStage(null);
   };
 
-  if (!hydrated) return <div className="board-loading">Opening project board…</div>;
+  if (!hydrated) return <div className="board-loading">Opening sales boards…</div>;
+  if (boardMode === 'accounts') return <AccountsBoard onShowProjects={() => setBoardMode('projects')} />;
 
   return (
     <main className="board-view">
       <section className="board-header-panel">
-        <div><span className="board-eyebrow">Sales pipeline</span><h1>Projects</h1><p>Start with a name. Add detail only when it becomes useful.</p></div>
+        <div><span className="board-eyebrow">Sales pipeline</span><h1>Projects</h1><p>What work are we trying to win, perform, or finish?</p></div>
+        <div className="board-view-toggle" aria-label="Board type">
+          <button type="button" className="active">Projects</button>
+          <button type="button" onClick={() => setBoardMode('accounts')}>Accounts</button>
+        </div>
         <form className="board-quick-add" onSubmit={quickAdd}>
           <label htmlFor="new-project-name">Quick project</label>
           <div><input id="new-project-name" value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Type a project name…" /><button type="submit" disabled={!newName.trim()}>Add</button></div>

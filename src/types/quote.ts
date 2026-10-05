@@ -37,7 +37,9 @@ export interface QuoteRevisionSnapshot {
   status: QuoteStatus;
   title: string;
   projectId?: string;
+  companyId?: string;
   companyName?: string;
+  contactId?: string;
   contactName?: string;
   contactEmail?: string;
   address?: string;
@@ -57,7 +59,9 @@ export interface Quote {
   status: QuoteStatus;
   title: string;
   projectId?: string;
+  companyId?: string;
   companyName?: string;
+  contactId?: string;
   contactName?: string;
   contactEmail?: string;
   address?: string;
@@ -75,7 +79,7 @@ export interface Quote {
 }
 
 export interface QuoteDocument {
-  schemaVersion: 1;
+  schemaVersion: 2;
   quotes: Quote[];
   activeQuoteId: string | null;
 }
@@ -83,7 +87,9 @@ export interface QuoteDocument {
 export type QuotePatch = Partial<Pick<Quote,
   | 'title'
   | 'projectId'
+  | 'companyId'
   | 'companyName'
+  | 'contactId'
   | 'contactName'
   | 'contactEmail'
   | 'address'

@@ -2,8 +2,16 @@ import { useCrmStore } from '../store/crmStore';
 import { displayQuoteNumber, quoteTotal, type Quote, type QuoteStatus } from '../types/quote';
 import type { Project, ProjectStage } from '../types/crm';
 
-const CLOSED_STAGES = new Set<ProjectStage>(['Closed Won', 'Closed Lost', 'Discarded']);
+const CLOSED_STAGES = new Set<ProjectStage>(['Closed Won', 'Completed', 'Closed Lost', 'Discarded']);
 const EARLY_STAGES = new Set<ProjectStage>(['Discovery', 'Intent to Bid', 'Bid Development']);
+
+export interface QuoteIdentitySync {
+  projectId?: string;
+  companyId?: string;
+  contactId?: string;
+}
+
+const clean = (value?: string) => value?.trim().toLowerCase();
 
 function amountText(quote: Quote) {
   const total = quoteTotal(quote);
@@ -16,6 +24,29 @@ function getCrm() {
   return useCrmStore.getState();
 }
 
+function resolveIdentity(quote: Quote) {
+  let crm = getCrm();
+  const linkedCompany = quote.companyId ? crm.companies.find((company) => company.id === quote.companyId) : undefined;
+  const existingCompany = linkedCompany && (!clean(quote.companyName) || clean(linkedCompany.name) === clean(quote.companyName))
+    ? linkedCompany.id
+    : undefined;
+  const companyId = existingCompany ?? crm.resolveCompany(quote.companyName);
+
+  crm = getCrm();
+  const linkedContact = quote.contactId ? crm.contacts.find((contact) => contact.id === quote.contactId) : undefined;
+  const contactStillMatches = linkedContact &&
+    (!clean(quote.contactEmail) || clean(linkedContact.email) === clean(quote.contactEmail)) &&
+    (!clean(quote.contactName) || clean(linkedContact.name) === clean(quote.contactName));
+  const contactId = contactStillMatches ? linkedContact.id : crm.resolveContact({
+    companyId,
+    name: quote.contactName,
+    email: quote.contactEmail,
+    source: 'quote',
+    quoteId: quote.id,
+  });
+  return { companyId, contactId };
+}
+
 function existingProject(quote: Quote): Project | undefined {
   const crm = getCrm();
   if (quote.projectId) {
@@ -23,21 +54,20 @@ function existingProject(quote: Quote): Project | undefined {
     if (direct) return direct;
   }
 
-  const title = quote.title.trim().toLowerCase();
+  const title = clean(quote.title);
   if (!title) return undefined;
-  const company = quote.companyName?.trim().toLowerCase();
-  const candidates = crm.projects.filter((project) => project.name.trim().toLowerCase() === title);
+  const company = clean(quote.companyName);
+  const candidates = crm.projects.filter((project) => clean(project.name) === title);
   if (!candidates.length) return undefined;
   if (company) {
-    const companyMatch = candidates.find((project) => project.companyName?.trim().toLowerCase() === company);
+    const companyMatch = candidates.find((project) => clean(project.companyName) === company);
     if (companyMatch) return companyMatch;
   }
   return candidates.length === 1 ? candidates[0] : undefined;
 }
 
 function syncQuoteDetails(projectId: string, quote: Quote) {
-  const crm = getCrm();
-  crm.updateProject(projectId, {
+  getCrm().updateProject(projectId, {
     ...(quote.companyName?.trim() ? { companyName: quote.companyName } : {}),
     amount: quoteTotal(quote),
     lastTouchpoint: new Date().toISOString().slice(0, 10),
@@ -66,8 +96,7 @@ function moveForSentQuote(projectId: string, quote: Quote) {
 }
 
 export function recordQuoteCreated(quote: Quote) {
-  const crm = getCrm();
-  crm.recordActivity({
+  getCrm().recordActivity({
     type: 'quote-created',
     summary: `Quote ${displayQuoteNumber(quote)} created`,
     quoteId: quote.id,
@@ -85,22 +114,25 @@ export function recordQuoteLinked(quote: Quote) {
     summary: `Quote ${displayQuoteNumber(quote)} linked${project ? ` to ${project.name}` : ''}`,
     quoteId: quote.id,
     projectId: quote.projectId,
+    companyId: project?.companyId,
     metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision },
   });
 }
 
 export function recordRevisionCreated(quote: Quote) {
-  const crm = getCrm();
-  crm.recordActivity({
+  getCrm().recordActivity({
     type: 'quote-revision-created',
     summary: `${displayQuoteNumber(quote)} revision created${quote.revisionLabel ? ` · ${quote.revisionLabel}` : ''}`,
     quoteId: quote.id,
     projectId: quote.projectId,
+    companyId: quote.companyId,
+    contactId: quote.contactId,
     metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision, amount: quoteTotal(quote) },
   });
 }
 
-export function applyQuoteSent(quote: Quote): string {
+export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
+  const identity = resolveIdentity(quote);
   let crm = getCrm();
   let project = existingProject(quote);
   let projectId = project?.id;
@@ -123,21 +155,24 @@ export function applyQuoteSent(quote: Quote): string {
     project = getCrm().projects.find((candidate) => candidate.id === projectId);
   }
 
+  const companyId = project?.companyId ?? identity.companyId;
   crm = getCrm();
   crm.recordActivity({
     type: 'quote-sent',
     summary: `Quote ${displayQuoteNumber(quote)} sent${amountText(quote)}`,
     quoteId: quote.id,
     projectId,
-    companyId: project?.companyId,
+    companyId,
+    contactId: identity.contactId,
     metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision, amount: quoteTotal(quote) },
   });
 
-  return projectId ?? quote.projectId ?? '';
+  return { projectId: projectId ?? quote.projectId, companyId, contactId: identity.contactId };
 }
 
-export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus): string | undefined {
-  if (quote.status === previousStatus) return quote.projectId;
+export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus): QuoteIdentitySync {
+  if (quote.status === previousStatus) return { projectId: quote.projectId, companyId: quote.companyId, contactId: quote.contactId };
+  const identity = resolveIdentity(quote);
   const crm = getCrm();
 
   if (quote.status === 'Viewed') {
@@ -146,9 +181,11 @@ export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus
       summary: `Quote ${displayQuoteNumber(quote)} viewed`,
       quoteId: quote.id,
       projectId: quote.projectId,
+      companyId: identity.companyId,
+      contactId: identity.contactId,
       metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision },
     });
-    return quote.projectId;
+    return { projectId: quote.projectId, ...identity };
   }
 
   if (quote.status === 'Signed') {
@@ -162,20 +199,24 @@ export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus
         quoteId: quote.id,
         quoteNumber: displayQuoteNumber(quote),
       }) ?? undefined;
+      project = projectId ? getCrm().projects.find((candidate) => candidate.id === projectId) : undefined;
     } else {
       syncQuoteDetails(projectId, quote);
       getCrm().moveProject(projectId, 'Closed Won', {
         source: 'quote', quoteId: quote.id, quoteNumber: displayQuoteNumber(quote),
       });
     }
+    const companyId = project?.companyId ?? identity.companyId;
     getCrm().recordActivity({
       type: 'quote-signed',
       summary: `Quote ${displayQuoteNumber(quote)} signed${amountText(quote)}`,
       quoteId: quote.id,
       projectId,
+      companyId,
+      contactId: identity.contactId,
       metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision, amount: quoteTotal(quote) },
     });
-    return projectId;
+    return { projectId, companyId, contactId: identity.contactId };
   }
 
   if (quote.status === 'Declined' || quote.status === 'Expired') {
@@ -184,9 +225,11 @@ export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus
       summary: `Quote ${displayQuoteNumber(quote)} ${quote.status.toLowerCase()}`,
       quoteId: quote.id,
       projectId: quote.projectId,
+      companyId: identity.companyId,
+      contactId: identity.contactId,
       metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision },
     });
   }
 
-  return quote.projectId;
+  return { projectId: quote.projectId, ...identity };
 }

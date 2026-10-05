@@ -5,11 +5,27 @@ export const PROJECT_STAGES = [
   'Bid Sent',
   'Negotiation',
   'Closed Won',
+  'Completed',
   'Closed Lost',
   'Discarded',
 ] as const;
 
 export type ProjectStage = (typeof PROJECT_STAGES)[number];
+
+export const ACCOUNT_STAGES = [
+  'Discovery',
+  'Outreach',
+  'Connected',
+  'Quoted',
+  'Won',
+  'Active',
+  'Cold',
+  'Lost',
+  'Non-Customer',
+] as const;
+
+export type AccountStage = (typeof ACCOUNT_STAGES)[number];
+export type CompanyKind = 'customer' | 'non-customer';
 
 export const ACTIVITY_TYPES = [
   'project-created',
@@ -22,6 +38,7 @@ export const ACTIVITY_TYPES = [
   'quote-signed',
   'quote-declined',
   'quote-expired',
+  'contact-created',
 ] as const;
 
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
@@ -29,6 +46,18 @@ export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 export interface Company {
   id: string;
   name: string;
+  kind: CompanyKind;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Contact {
+  id: string;
+  companyId?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  title?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -62,14 +91,16 @@ export interface Activity {
   summary: string;
   projectId?: string;
   companyId?: string;
+  contactId?: string;
   quoteId?: string;
   occurredAt: string;
   metadata?: ActivityMetadata;
 }
 
 export interface CrmDocument {
-  schemaVersion: 2;
+  schemaVersion: 3;
   companies: Company[];
+  contacts: Contact[];
   projects: Project[];
   activities: Activity[];
 }
@@ -88,6 +119,18 @@ export interface StageChangeContext {
   quoteId?: string;
   quoteNumber?: string;
 }
+
+export interface ContactInput {
+  companyId?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  title?: string;
+  source?: 'manual' | 'quote' | 'system';
+  quoteId?: string;
+}
+
+export type CompanyPatch = Partial<Pick<Company, 'name' | 'kind'>>;
 
 export type ProjectPatch = Partial<Pick<
   Project,

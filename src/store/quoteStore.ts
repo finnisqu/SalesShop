@@ -24,7 +24,7 @@ interface QuoteState {
   activeQuoteId: string | null;
   hydrated: boolean;
   hydrate: () => void;
-  createQuote: (prefill?: Partial<Pick<Quote, 'title' | 'projectId' | 'companyName' | 'contactName' | 'contactEmail'>>) => string;
+  createQuote: (prefill?: Partial<Pick<Quote, 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>>) => string;
   selectQuote: (quoteId: string) => void;
   updateQuote: (quoteId: string, patch: QuotePatch) => void;
   deleteQuote: (quoteId: string) => void;
@@ -77,7 +77,7 @@ function newLine(kind: QuoteLineKind = 'item', sectionId?: string): QuoteLine {
   };
 }
 
-function newQuote(quotes: Quote[], prefill: Partial<Pick<Quote, 'title' | 'projectId' | 'companyName' | 'contactName' | 'contactEmail'>> = {}): Quote {
+function newQuote(quotes: Quote[], prefill: Partial<Pick<Quote, 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>> = {}): Quote {
   const timestamp = now();
   const date = localDateKey();
   return {
@@ -89,7 +89,9 @@ function newQuote(quotes: Quote[], prefill: Partial<Pick<Quote, 'title' | 'proje
     status: 'Draft',
     title: prefill.title?.trim() || 'Untitled quote',
     projectId: prefill.projectId,
+    companyId: prefill.companyId,
     companyName: prefill.companyName,
+    contactId: prefill.contactId,
     contactName: prefill.contactName,
     contactEmail: prefill.contactEmail,
     sections: [],
@@ -110,11 +112,11 @@ function seedDocument(): QuoteDocument {
     { ...newLine('scope'), description: 'Includes standard fabrication and installation.' },
   ];
   quote.customerNotes = 'Final material selection and field measurements to be confirmed before production.';
-  return { schemaVersion: 1, quotes: [quote], activeQuoteId: quote.id };
+  return { schemaVersion: 2, quotes: [quote], activeQuoteId: quote.id };
 }
 
 function persist(quotes: Quote[], activeQuoteId: string | null) {
-  localQuoteRepository.save({ schemaVersion: 1, quotes, activeQuoteId });
+  localQuoteRepository.save({ schemaVersion: 2, quotes, activeQuoteId });
 }
 
 function snapshot(quote: Quote, status: QuoteStatus = quote.status): QuoteRevisionSnapshot {
@@ -126,7 +128,9 @@ function snapshot(quote: Quote, status: QuoteStatus = quote.status): QuoteRevisi
     status,
     title: quote.title,
     projectId: quote.projectId,
+    companyId: quote.companyId,
     companyName: quote.companyName,
+    contactId: quote.contactId,
     contactName: quote.contactName,
     contactEmail: quote.contactEmail,
     address: quote.address,
@@ -193,8 +197,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if (patch.status && patch.status !== current.status) {
       if (patch.status === 'Viewed') updated = { ...updated, viewedAt: timestamp };
       if (patch.status === 'Signed') updated = { ...updated, signedAt: timestamp };
-      const projectId = applyQuoteStatusChange(updated, current.status);
-      if (projectId && projectId !== updated.projectId) updated = { ...updated, projectId };
+      const identity = applyQuoteStatusChange(updated, current.status);
+      updated = { ...updated, ...identity };
     }
 
     const quotes = get().quotes.map((quote) => quote.id === quoteId ? updated : quote);
@@ -299,8 +303,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if (!current) return;
     const timestamp = now();
     let sentQuote: Quote = { ...current, status: 'Sent', sentAt: timestamp, updatedAt: timestamp };
-    const projectId = applyQuoteSent(sentQuote);
-    if (projectId) sentQuote = { ...sentQuote, projectId };
+    const identity = applyQuoteSent(sentQuote);
+    sentQuote = { ...sentQuote, ...identity };
     const alreadyCaptured = current.history.some((item) => item.revision === current.revision);
     sentQuote = {
       ...sentQuote,

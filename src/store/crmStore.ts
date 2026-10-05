@@ -4,6 +4,10 @@ import type {
   Activity,
   ActivityInput,
   Company,
+  CompanyKind,
+  CompanyPatch,
+  Contact,
+  ContactInput,
   CreateProjectDetails,
   CrmDocument,
   Project,
@@ -14,10 +18,15 @@ import type {
 
 interface CrmState {
   companies: Company[];
+  contacts: Contact[];
   projects: Project[];
   activities: Activity[];
   hydrated: boolean;
   hydrate: () => void;
+  resolveCompany: (name?: string, kind?: CompanyKind) => string | undefined;
+  updateCompany: (companyId: string, patch: CompanyPatch) => void;
+  createContact: (input: ContactInput) => string | null;
+  resolveContact: (input: ContactInput) => string | undefined;
   createProject: (name: string, stage?: ProjectStage, details?: CreateProjectDetails) => string | null;
   updateProject: (projectId: string, patch: ProjectPatch, context?: StageChangeContext) => void;
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
@@ -28,12 +37,12 @@ interface CrmState {
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 const now = () => new Date().toISOString();
 
-function persist(companies: Company[], projects: Project[], activities: Activity[]) {
-  const document: CrmDocument = { schemaVersion: 2, companies, projects, activities };
+function persist(companies: Company[], contacts: Contact[], projects: Project[], activities: Activity[]) {
+  const document: CrmDocument = { schemaVersion: 3, companies, contacts, projects, activities };
   localCrmRepository.save(document);
 }
 
-function ensureCompany(companies: Company[], companyName: string | undefined, timestamp: string) {
+function ensureCompany(companies: Company[], companyName: string | undefined, timestamp: string, kind: CompanyKind = 'customer') {
   const cleanName = companyName?.trim();
   if (!cleanName) return { companies, companyId: undefined, companyName: undefined };
   const existing = companies.find((company) => company.name.toLowerCase() === cleanName.toLowerCase());
@@ -41,6 +50,7 @@ function ensureCompany(companies: Company[], companyName: string | undefined, ti
   const company: Company = {
     id: id('company'),
     name: cleanName,
+    kind,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -55,6 +65,7 @@ function stageSummary(from: ProjectStage, to: ProjectStage, context?: StageChang
 
 export const useCrmStore = create<CrmState>((set, get) => ({
   companies: [],
+  contacts: [],
   projects: [],
   activities: [],
   hydrated: false,
@@ -62,7 +73,74 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   hydrate: () => {
     if (get().hydrated) return;
     const document = localCrmRepository.load();
-    set({ companies: document.companies, projects: document.projects, activities: document.activities, hydrated: true });
+    set({
+      companies: document.companies,
+      contacts: document.contacts,
+      projects: document.projects,
+      activities: document.activities,
+      hydrated: true,
+    });
+  },
+
+  resolveCompany: (name, kind = 'customer') => {
+    const timestamp = now();
+    const ensured = ensureCompany(get().companies, name, timestamp, kind);
+    if (ensured.companies !== get().companies) {
+      persist(ensured.companies, get().contacts, get().projects, get().activities);
+      set({ companies: ensured.companies });
+    }
+    return ensured.companyId;
+  },
+
+  updateCompany: (companyId, patch) => {
+    const timestamp = now();
+    const companies = get().companies.map((company) => company.id === companyId
+      ? { ...company, ...patch, name: patch.name?.trim() || company.name, updatedAt: timestamp }
+      : company);
+    persist(companies, get().contacts, get().projects, get().activities);
+    set({ companies });
+  },
+
+  createContact: (input) => {
+    const cleanName = input.name?.trim() || input.email?.trim();
+    if (!cleanName) return null;
+    const timestamp = now();
+    const contact: Contact = {
+      id: id('contact'),
+      companyId: input.companyId,
+      name: cleanName,
+      email: input.email?.trim() || undefined,
+      phone: input.phone?.trim() || undefined,
+      title: input.title?.trim() || undefined,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    const contacts = [...get().contacts, contact];
+    const activity: Activity = {
+      id: id('activity'),
+      type: 'contact-created',
+      summary: `${contact.name} added as a contact`,
+      companyId: contact.companyId,
+      contactId: contact.id,
+      quoteId: input.quoteId,
+      occurredAt: timestamp,
+      metadata: { source: input.source ?? 'manual' },
+    };
+    const activities = [...get().activities, activity];
+    persist(get().companies, contacts, get().projects, activities);
+    set({ contacts, activities });
+    return contact.id;
+  },
+
+  resolveContact: (input) => {
+    const cleanEmail = input.email?.trim().toLowerCase();
+    const cleanName = input.name?.trim().toLowerCase();
+    const existing = get().contacts.find((contact) => {
+      if (cleanEmail && contact.email?.trim().toLowerCase() === cleanEmail) return true;
+      return Boolean(cleanName && contact.name.trim().toLowerCase() === cleanName && contact.companyId === input.companyId);
+    });
+    if (existing) return existing.id;
+    return get().createContact(input) ?? undefined;
   },
 
   recordActivity: (input) => {
@@ -72,7 +150,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       occurredAt: input.occurredAt ?? now(),
     };
     const activities = [...get().activities, activity];
-    persist(get().companies, get().projects, activities);
+    persist(get().companies, get().contacts, get().projects, activities);
     set({ activities });
     return activity.id;
   },
@@ -105,7 +183,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       metadata: { source: details.source ?? 'manual', quoteNumber: details.quoteNumber, amount: project.amount, toStage: stage },
     };
     const activities = [...get().activities, activity];
-    persist(ensured.companies, projects, activities);
+    persist(ensured.companies, get().contacts, projects, activities);
     set({ companies: ensured.companies, projects, activities });
     return project.id;
   },
@@ -140,14 +218,14 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         type: 'project-stage-changed',
         summary: stageSummary(current.stage, patch.stage, context),
         projectId,
-        companyId: current.companyId,
+        companyId: normalizedCompany?.companyId ?? current.companyId,
         quoteId: context?.quoteId,
         occurredAt: timestamp,
         metadata: { source: context?.source ?? 'manual', quoteNumber: context?.quoteNumber, fromStage: current.stage, toStage: patch.stage },
       }];
     }
 
-    persist(companies, projects, activities);
+    persist(companies, get().contacts, projects, activities);
     set({ companies, projects, activities });
   },
 
@@ -169,13 +247,13 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       metadata: { source: context?.source ?? 'manual', quoteNumber: context?.quoteNumber, fromStage: current.stage, toStage: stage },
     };
     const activities = [...get().activities, activity];
-    persist(get().companies, projects, activities);
+    persist(get().companies, get().contacts, projects, activities);
     set({ projects, activities });
   },
 
   deleteProject: (projectId) => {
     const projects = get().projects.filter((project) => project.id !== projectId);
-    persist(get().companies, projects, get().activities);
+    persist(get().companies, get().contacts, projects, get().activities);
     set({ projects });
   },
 }));

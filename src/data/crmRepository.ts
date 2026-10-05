@@ -1,4 +1,4 @@
-import type { Activity, Company, CrmDocument, Project, ProjectStage } from '../types/crm';
+import type { Activity, Company, Contact, CrmDocument, Project, ProjectStage } from '../types/crm';
 import { ACTIVITY_TYPES, PROJECT_STAGES } from '../types/crm';
 
 const STORAGE_KEY = 'salesshop-react-crm-v1';
@@ -14,12 +14,12 @@ const activityTypeSet = new Set<string>(ACTIVITY_TYPES);
 function seedDocument(): CrmDocument {
   const timestamp = new Date().toISOString();
   const companies: Company[] = [
-    { id: 'company_abc', name: 'ABC Construction', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'company_greystone', name: 'Greystone Builders', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'company_choate', name: 'Choate Construction', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'company_dhi', name: 'D.R. Horton (DHI Communities)', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'company_bar', name: 'BAR Construction', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'company_raywest', name: 'RAYWEST DESIGNBUILD', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'company_abc', name: 'ABC Construction', kind: 'customer', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'company_greystone', name: 'Greystone Builders', kind: 'customer', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'company_choate', name: 'Choate Construction', kind: 'customer', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'company_dhi', name: 'D.R. Horton (DHI Communities)', kind: 'customer', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'company_bar', name: 'BAR Construction', kind: 'customer', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'company_raywest', name: 'RAYWEST DESIGNBUILD', kind: 'customer', createdAt: timestamp, updatedAt: timestamp },
   ];
 
   const projects: Project[] = [
@@ -32,7 +32,7 @@ function seedDocument(): CrmDocument {
     { id: 'project_twin_lakes', name: 'Twin Lakes IL', companyId: 'company_choate', companyName: 'Choate Construction', stage: 'Discarded', amount: 100000, createdAt: timestamp, updatedAt: timestamp },
   ];
 
-  return { schemaVersion: 2, companies, projects, activities: [] };
+  return { schemaVersion: 3, companies, contacts: [], projects, activities: [] };
 }
 
 function normalizeProject(raw: Partial<Project>, timestamp: string): Project | null {
@@ -53,6 +53,20 @@ function normalizeProject(raw: Partial<Project>, timestamp: string): Project | n
   };
 }
 
+function normalizeContact(raw: Partial<Contact>, timestamp: string): Contact | null {
+  if (!raw.id || !raw.name) return null;
+  return {
+    id: raw.id,
+    companyId: raw.companyId,
+    name: raw.name,
+    email: raw.email,
+    phone: raw.phone,
+    title: raw.title,
+    createdAt: raw.createdAt ?? timestamp,
+    updatedAt: raw.updatedAt ?? timestamp,
+  };
+}
+
 function normalizeActivity(raw: Partial<Activity>): Activity | null {
   if (!raw.id || !raw.summary || !raw.occurredAt || !activityTypeSet.has(String(raw.type))) return null;
   return {
@@ -61,6 +75,7 @@ function normalizeActivity(raw: Partial<Activity>): Activity | null {
     summary: raw.summary,
     projectId: raw.projectId,
     companyId: raw.companyId,
+    contactId: raw.contactId,
     quoteId: raw.quoteId,
     occurredAt: raw.occurredAt,
     metadata: raw.metadata,
@@ -69,19 +84,27 @@ function normalizeActivity(raw: Partial<Activity>): Activity | null {
 
 function normalize(raw: unknown): CrmDocument | null {
   if (!raw || typeof raw !== 'object') return null;
-  const candidate = raw as Partial<CrmDocument> & { schemaVersion?: number; activities?: unknown[] };
+  const candidate = raw as Partial<CrmDocument> & { contacts?: unknown[]; activities?: unknown[] };
   if (!Array.isArray(candidate.projects) || !Array.isArray(candidate.companies)) return null;
   const timestamp = new Date().toISOString();
   const companies = candidate.companies
     .filter((company): company is Company => Boolean(company && company.id && company.name))
-    .map((company) => ({ ...company, createdAt: company.createdAt ?? timestamp, updatedAt: company.updatedAt ?? timestamp }));
+    .map((company) => ({
+      ...company,
+      kind: company.kind === 'non-customer' ? 'non-customer' as const : 'customer' as const,
+      createdAt: company.createdAt ?? timestamp,
+      updatedAt: company.updatedAt ?? timestamp,
+    }));
+  const contacts = Array.isArray(candidate.contacts)
+    ? candidate.contacts.map((contact) => normalizeContact(contact as Contact, timestamp)).filter((contact): contact is Contact => Boolean(contact))
+    : [];
   const projects = candidate.projects
     .map((project) => normalizeProject(project, timestamp))
     .filter((project): project is Project => Boolean(project));
   const activities = Array.isArray(candidate.activities)
     ? candidate.activities.map((activity) => normalizeActivity(activity as Activity)).filter((activity): activity is Activity => Boolean(activity))
     : [];
-  return { schemaVersion: 2, companies, projects, activities };
+  return { schemaVersion: 3, companies, contacts, projects, activities };
 }
 
 export const localCrmRepository: CrmRepository = {
