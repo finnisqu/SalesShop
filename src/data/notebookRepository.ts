@@ -18,6 +18,7 @@ function migrateEntry(entry: Partial<NotebookEntry> & Pick<NotebookEntry, 'id' |
     paperStyle: PAPER_STYLES.includes(entry.paperStyle as PaperStyle) ? entry.paperStyle as PaperStyle : 'lined',
     tone: PAGE_TONES.includes(entry.tone as PageTone) ? entry.tone as PageTone : 'cream',
     favorite: Boolean(entry.favorite),
+    context: entry.context && typeof entry.context === 'object' ? entry.context : {},
   } as NotebookEntry;
 }
 
@@ -30,9 +31,9 @@ function migrateDocument(raw: unknown): NotebookDocument | null {
   };
   if (!Array.isArray(candidate.entries)) return null;
 
-  if (candidate.schemaVersion === 2 || candidate.schemaVersion === 1) {
+  if (candidate.schemaVersion === 3 || candidate.schemaVersion === 2 || candidate.schemaVersion === 1) {
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       entries: candidate.entries.map((entry) => migrateEntry(entry as NotebookEntry)),
       activeEntryId: candidate.activeEntryId ?? null,
     };
