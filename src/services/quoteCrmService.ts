@@ -17,8 +17,22 @@ function getCrm() {
 }
 
 function existingProject(quote: Quote): Project | undefined {
-  if (!quote.projectId) return undefined;
-  return getCrm().projects.find((project) => project.id === quote.projectId);
+  const crm = getCrm();
+  if (quote.projectId) {
+    const direct = crm.projects.find((project) => project.id === quote.projectId);
+    if (direct) return direct;
+  }
+
+  const title = quote.title.trim().toLowerCase();
+  if (!title) return undefined;
+  const company = quote.companyName?.trim().toLowerCase();
+  const candidates = crm.projects.filter((project) => project.name.trim().toLowerCase() === title);
+  if (!candidates.length) return undefined;
+  if (company) {
+    const companyMatch = candidates.find((project) => project.companyName?.trim().toLowerCase() === company);
+    if (companyMatch) return companyMatch;
+  }
+  return candidates.length === 1 ? candidates[0] : undefined;
 }
 
 function syncQuoteDetails(projectId: string, quote: Quote) {
@@ -106,6 +120,7 @@ export function applyQuoteSent(quote: Quote): string {
   } else {
     syncQuoteDetails(projectId, quote);
     moveForSentQuote(projectId, quote);
+    project = getCrm().projects.find((candidate) => candidate.id === projectId);
   }
 
   crm = getCrm();
@@ -137,8 +152,8 @@ export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus
   }
 
   if (quote.status === 'Signed') {
-    let projectId = quote.projectId;
     let project = existingProject(quote);
+    let projectId = project?.id;
     if (!projectId || !project) {
       projectId = crm.createProject(quote.title, 'Closed Won', {
         companyName: quote.companyName,
