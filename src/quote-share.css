@@ -1,0 +1,90 @@
+.quote-share-control {
+  position: fixed;
+  right: 26px;
+  bottom: 24px;
+  z-index: 85;
+  font-family: inherit;
+}
+
+.quote-share-launcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(55, 48, 39, 0.3);
+  background: #f4eddc;
+  color: #322d26;
+  padding: 10px 15px;
+  border-radius: 5px;
+  box-shadow: 0 5px 14px rgba(57, 49, 39, 0.17);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quote-share-launcher:hover { transform: translateY(-1px); }
+.quote-share-launcher span { font-size: 16px; }
+
+.quote-share-panel {
+  position: absolute;
+  right: 0;
+  bottom: 48px;
+  width: min(390px, calc(100vw - 34px));
+  background: #f8f3e8;
+  border: 1px solid rgba(64, 55, 44, 0.28);
+  box-shadow: 0 16px 42px rgba(48, 40, 31, 0.25);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.quote-share-panel > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 15px 16px 13px;
+  border-bottom: 1px solid rgba(68, 58, 45, 0.17);
+  background: rgba(255,255,255,0.3);
+}
+
+.quote-share-panel > header div { display: flex; flex-direction: column; gap: 2px; }
+.quote-share-panel > header span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.65; }
+.quote-share-panel > header strong { font-size: 15px; }
+.quote-share-panel > header button { border: 0; background: transparent; font-size: 22px; cursor: pointer; color: inherit; }
+
+.quote-share-message,
+.quote-share-empty,
+.quote-share-active { margin: 0; padding: 16px; }
+.quote-share-empty strong { display: block; margin-bottom: 5px; }
+.quote-share-empty p { margin: 0 0 13px; font-size: 13px; line-height: 1.45; color: #655c50; }
+.quote-share-empty > button,
+.quote-share-primary-actions button,
+.quote-share-secondary-actions button {
+  border: 1px solid rgba(61, 52, 42, 0.28);
+  background: #fffaf0;
+  color: #342f28;
+  border-radius: 4px;
+  padding: 8px 11px;
+  cursor: pointer;
+  font: inherit;
+}
+.quote-share-empty > button,
+.quote-share-primary-actions .primary { background: #3d493f; color: white; border-color: #3d493f; }
+.quote-share-empty button:disabled,
+.quote-share-active button:disabled { opacity: 0.55; cursor: default; }
+
+.quote-share-status-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 13px; font-size: 11px; color: #74695b; }
+.quote-share-status { padding: 3px 7px; border: 1px solid rgba(60,52,42,.2); border-radius: 999px; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; color: #4f594e; background: rgba(91,112,91,.08); }
+.quote-share-status.status-signed { color: #2f6544; background: rgba(55,130,80,.1); }
+.quote-share-status.status-revoked { color: #8a4d48; background: rgba(145,65,55,.08); }
+
+.quote-share-url { display: flex; flex-direction: column; gap: 5px; }
+.quote-share-url span { font-size: 11px; font-weight: 700; color: #62594e; }
+.quote-share-url input { width: 100%; box-sizing: border-box; border: 1px solid rgba(56,49,40,.22); background: rgba(255,255,255,.62); border-radius: 3px; padding: 9px; font: 12px/1.25 ui-monospace, SFMono-Regular, Menlo, monospace; color: #4b453d; }
+.quote-share-primary-actions { display: flex; gap: 8px; margin: 9px 0 11px; }
+.quote-share-active small { display: block; color: #776e62; margin-top: 5px; }
+.quote-share-secondary-actions { border-top: 1px solid rgba(65,55,43,.14); margin-top: 14px; padding-top: 12px; display: flex; justify-content: flex-end; gap: 7px; }
+.quote-share-secondary-actions button { font-size: 12px; padding: 6px 9px; background: transparent; }
+.quote-share-error { margin: 0 16px 16px; border-left: 3px solid #9b4d45; background: rgba(155,77,69,.08); padding: 9px 10px; font-size: 12px; color: #783e39; }
+
+@media (max-width: 700px) {
+  .quote-share-control { right: 14px; bottom: 14px; }
+  .quote-share-panel { bottom: 46px; }
+}
