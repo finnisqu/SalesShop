@@ -8,10 +8,15 @@ import {
   type CloudDocumentSavedDetail,
 } from '../data/cloudAwareStorage';
 import type { CrmDocument } from '../types/crm';
+import type { QuoteDocument } from '../types/quote';
+import type { SignatureDocument } from '../types/signature';
 import { loadNormalizedCrm, syncNormalizedCrm } from './normalizedCrmSync';
+import { loadNormalizedQuotes, syncNormalizedQuotes } from './normalizedQuoteSync';
+import { loadNormalizedSignatures, syncNormalizedSignatures } from './normalizedSignatureSync';
 
-const ORG_DOCUMENT_KEYS: CloudDocumentKey[] = ['quotes', 'signatures'];
 const CRM_DOCUMENT_KEY: CloudDocumentKey = 'crm';
+const QUOTES_DOCUMENT_KEY: CloudDocumentKey = 'quotes';
+const SIGNATURES_DOCUMENT_KEY: CloudDocumentKey = 'signatures';
 const PRIVATE_DOCUMENT_KEY: CloudDocumentKey = 'notebook';
 const CACHE_SCOPE_KEY = 'salesshop-cloud-cache-scope-v1';
 const pending = new Map<CloudDocumentKey, number>();
@@ -24,6 +29,14 @@ interface CacheScope {
 
 function emptyCrmDocument(): CrmDocument {
   return { schemaVersion: 3, companies: [], contacts: [], projects: [], activities: [] };
+}
+
+function emptyQuoteDocument(): QuoteDocument {
+  return { schemaVersion: 2, quotes: [], activeQuoteId: null };
+}
+
+function emptySignatureDocument(): SignatureDocument {
+  return { schemaVersion: 1, signatures: [] };
 }
 
 function readCacheScope(): CacheScope | null {
@@ -41,17 +54,6 @@ function readCacheScope(): CacheScope | null {
 
 function writeCacheScope(scope: CacheScope) {
   localStorage.setItem(CACHE_SCOPE_KEY, JSON.stringify(scope));
-}
-
-async function upsertOrgDocument(orgId: string, userId: string, key: CloudDocumentKey, document: unknown) {
-  if (!supabase) return;
-  const { error } = await supabase.from('org_documents').upsert({
-    organization_id: orgId,
-    document_key: key,
-    document,
-    updated_by: userId,
-  }, { onConflict: 'organization_id,document_key' });
-  if (error) throw error;
 }
 
 async function upsertPrivateDocument(userId: string, document: unknown) {
@@ -79,49 +81,54 @@ export async function hydrateCloudDocuments(orgId: string, userId: string) {
   const canSeedOrgFromLocal = !previousScope || previousScope.organizationId === orgId;
   const canSeedNotebookFromLocal = !previousScope || previousScope.userId === userId;
 
-  // CRM now uses normalized tables. The old org_documents.crm row is retained only as a rollback backup.
+  // CRM uses normalized tables. The old org_documents.crm row is rollback-only.
   const normalizedCrm = await loadNormalizedCrm(orgId);
   if (normalizedCrm) {
     writeLocalDocument(CRM_DOCUMENT_KEY, normalizedCrm, false);
   } else if (canSeedOrgFromLocal) {
-    const localCrm = readLocalDocument(CRM_DOCUMENT_KEY);
-    if (localCrm !== null) {
-      await syncNormalizedCrm(orgId, localCrm as CrmDocument);
+    const localCrm = readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument | null;
+    if (localCrm?.schemaVersion === 3) {
+      await syncNormalizedCrm(orgId, localCrm);
     } else {
-      // Cloud mode should never fall through to the repository's local demo seed.
       writeLocalDocument(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
     }
   } else {
-    // A different account/workspace must receive an explicitly empty cache, not another shop's local data.
     writeLocalDocument(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
   }
 
-  const { data: orgRows, error: orgError } = await supabase
-    .from('org_documents')
-    .select('document_key,document')
-    .eq('organization_id', orgId)
-    .in('document_key', ORG_DOCUMENT_KEYS);
-  if (orgError) throw orgError;
-
-  const cloudOrgDocuments = new Map<string, unknown>(
-    (orgRows ?? []).map((row) => [String(row.document_key), row.document]),
-  );
-
-  for (const key of ORG_DOCUMENT_KEYS) {
-    if (cloudOrgDocuments.has(key)) {
-      writeLocalDocument(key, cloudOrgDocuments.get(key), false);
-      continue;
-    }
-
-    if (!canSeedOrgFromLocal) {
-      removeLocalDocument(key);
-      continue;
-    }
-
-    const local = readLocalDocument(key);
-    if (local !== null) await upsertOrgDocument(orgId, userId, key, local);
+  // Quotes use normalized current rows + immutable revision snapshots.
+  const localQuotes = readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument | null;
+  const preferredActiveQuoteId = localQuotes?.schemaVersion === 2 ? localQuotes.activeQuoteId : null;
+  const normalizedQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
+  if (normalizedQuotes) {
+    writeLocalDocument(QUOTES_DOCUMENT_KEY, normalizedQuotes, false);
+  } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2) {
+    await syncNormalizedQuotes(orgId, localQuotes);
+    const seededQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
+    writeLocalDocument(QUOTES_DOCUMENT_KEY, seededQuotes ?? emptyQuoteDocument(), false);
+  } else {
+    // Authenticated cloud workspaces never fall through to the Blue Jay Park demo seed.
+    writeLocalDocument(QUOTES_DOCUMENT_KEY, emptyQuoteDocument(), false);
   }
 
+  // Signatures are immutable business records. Existing cloud records always win.
+  const normalizedSignatures = await loadNormalizedSignatures(orgId);
+  if (normalizedSignatures) {
+    writeLocalDocument(SIGNATURES_DOCUMENT_KEY, normalizedSignatures, false);
+  } else if (canSeedOrgFromLocal) {
+    const localSignatures = readLocalDocument(SIGNATURES_DOCUMENT_KEY) as SignatureDocument | null;
+    if (localSignatures?.schemaVersion === 1) {
+      await syncNormalizedSignatures(orgId, localSignatures);
+      const seededSignatures = await loadNormalizedSignatures(orgId);
+      writeLocalDocument(SIGNATURES_DOCUMENT_KEY, seededSignatures ?? emptySignatureDocument(), false);
+    } else {
+      writeLocalDocument(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument(), false);
+    }
+  } else {
+    writeLocalDocument(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument(), false);
+  }
+
+  // Notebook remains intentionally private and document-shaped.
   const { data: notebookRow, error: notebookError } = await supabase
     .from('private_documents')
     .select('document')
@@ -159,7 +166,9 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
         ? upsertPrivateDocument(userId, detail.document)
         : detail.key === CRM_DOCUMENT_KEY
           ? syncNormalizedCrm(orgId, detail.document as CrmDocument)
-          : upsertOrgDocument(orgId, userId, detail.key, detail.document);
+          : detail.key === QUOTES_DOCUMENT_KEY
+            ? syncNormalizedQuotes(orgId, detail.document as QuoteDocument)
+            : syncNormalizedSignatures(orgId, detail.document as SignatureDocument);
       void operation.catch((error: unknown) => {
         const message = error instanceof Error ? error.message : 'Cloud sync failed.';
         onError?.(message);
