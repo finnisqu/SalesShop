@@ -177,39 +177,76 @@ async function deleteStaleRows(
   if (deleteError) throw deleteError;
 }
 
+async function serverOutcomeGuards(organizationId: string) {
+  const guards = new Map<string, { revision: number; status: QuoteStatus; viewedAt?: string; signedAt?: string }>();
+  if (!supabase) return guards;
+  const { data, error } = await supabase
+    .from('quotes')
+    .select('id,revision,status,viewed_at,signed_at')
+    .eq('organization_id', organizationId);
+  if (error) throw error;
+  (data ?? []).forEach((row) => guards.set(String(row.id), {
+    revision: Number(row.revision) || 0,
+    status: String(row.status) as QuoteStatus,
+    viewedAt: valueOrUndefined(row.viewed_at),
+    signedAt: valueOrUndefined(row.signed_at),
+  }));
+  return guards;
+}
+
 export async function syncNormalizedQuotes(organizationId: string, document: QuoteDocument) {
   if (!supabase) return;
   if (document.schemaVersion !== 2) throw new Error('Unsupported Quote document schema.');
 
-  const quotes = document.quotes.map((quote, sortOrder) => ({
-    organization_id: organizationId,
-    id: quote.id,
-    quote_number: quote.quoteNumber,
-    original_quote_date: quote.originalQuoteDate,
-    quote_date: quote.quoteDate,
-    revision: quote.revision,
-    revision_label: quote.revisionLabel ?? null,
-    status: quote.status,
-    title: quote.title,
-    project_id: quote.projectId ?? null,
-    company_id: quote.companyId ?? null,
-    company_name: quote.companyName ?? null,
-    contact_id: quote.contactId ?? null,
-    contact_name: quote.contactName ?? null,
-    contact_email: quote.contactEmail ?? null,
-    address: quote.address ?? null,
-    customer_quantity: quote.customerColumns.quantity,
-    customer_rate: quote.customerColumns.rate,
-    customer_line_amount: quote.customerColumns.lineAmount,
-    customer_notes: quote.customerNotes,
-    internal_notes: quote.internalNotes,
-    sent_at: quote.sentAt ?? null,
-    viewed_at: quote.viewedAt ?? null,
-    signed_at: quote.signedAt ?? null,
-    sort_order: sortOrder,
-    created_at: quote.createdAt,
-    updated_at: quote.updatedAt,
-  }));
+  // Customer actions happen server-side. Preserve those outcomes when an older
+  // open SalesShop tab later saves its local cache.
+  const guards = await serverOutcomeGuards(organizationId);
+  const quotes = document.quotes.map((quote, sortOrder) => {
+    const server = guards.get(quote.id);
+    let status = quote.status;
+    let viewedAt = quote.viewedAt;
+    let signedAt = quote.signedAt;
+    if (server && server.revision === quote.revision) {
+      if (server.status === 'Signed' && quote.status !== 'Signed') {
+        status = 'Signed';
+        signedAt = server.signedAt ?? signedAt;
+        viewedAt = server.viewedAt ?? viewedAt;
+      } else if (server.status === 'Viewed' && quote.status === 'Sent') {
+        status = 'Viewed';
+        viewedAt = server.viewedAt ?? viewedAt;
+      }
+    }
+
+    return {
+      organization_id: organizationId,
+      id: quote.id,
+      quote_number: quote.quoteNumber,
+      original_quote_date: quote.originalQuoteDate,
+      quote_date: quote.quoteDate,
+      revision: quote.revision,
+      revision_label: quote.revisionLabel ?? null,
+      status,
+      title: quote.title,
+      project_id: quote.projectId ?? null,
+      company_id: quote.companyId ?? null,
+      company_name: quote.companyName ?? null,
+      contact_id: quote.contactId ?? null,
+      contact_name: quote.contactName ?? null,
+      contact_email: quote.contactEmail ?? null,
+      address: quote.address ?? null,
+      customer_quantity: quote.customerColumns.quantity,
+      customer_rate: quote.customerColumns.rate,
+      customer_line_amount: quote.customerColumns.lineAmount,
+      customer_notes: quote.customerNotes,
+      internal_notes: quote.internalNotes,
+      sent_at: quote.sentAt ?? null,
+      viewed_at: viewedAt ?? null,
+      signed_at: signedAt ?? null,
+      sort_order: sortOrder,
+      created_at: quote.createdAt,
+      updated_at: quote.updatedAt,
+    };
+  });
 
   const sections = document.quotes.flatMap((quote) => quote.sections.map((section, sortOrder) => ({
     organization_id: organizationId,
