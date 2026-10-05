@@ -107,6 +107,10 @@ export type NotebookObjectFrame = Pick<
 
 export type BusinessCardField = 'name' | 'company' | 'title' | 'email' | 'phone';
 
+export interface NotebookContext {
+  projectId?: string;
+}
+
 export interface NotebookEntry {
   id: string;
   title: string;
@@ -116,12 +120,13 @@ export interface NotebookEntry {
   paperStyle: PaperStyle;
   tone: PageTone;
   favorite: boolean;
+  context: NotebookContext;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface NotebookDocument {
-  schemaVersion: 2;
+  schemaVersion: 3;
   entries: NotebookEntry[];
   activeEntryId: string | null;
 }
