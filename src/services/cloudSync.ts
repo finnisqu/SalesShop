@@ -47,7 +47,8 @@ function starterQuoteDocument(): QuoteDocument {
     activeQuoteId: quoteId,
     quotes: [{
       id: quoteId,
-      quoteNumber: `Q-${date.replaceAll('-', '')}-001`,
+      quoteNumber: `DRAFT-${quoteId}`,
+      documentType: 'quote',
       originalQuoteDate: date,
       quoteDate: date,
       revision: 0,
