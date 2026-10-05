@@ -1,0 +1,44 @@
+/*
+ * Subtle board meta-group cues.
+ * Cards remain neutral paper; only the column tray, border, and header rule shift.
+ * Stage order is defined by PROJECT_STAGES in src/types/crm.ts.
+ */
+
+/* Discovery → Intent to Bid → Bid Development */
+.board-column:nth-child(-n + 3) {
+  border-color: rgba(145, 122, 67, .23);
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.19), transparent 12%, transparent 88%, rgba(99,77,35,.022)),
+    #e7e0cf;
+}
+.board-column:nth-child(-n + 3) .board-column-rule {
+  background: linear-gradient(90deg, rgba(157, 128, 58, .42), rgba(157, 128, 58, .08));
+}
+
+/* Bid Sent → Negotiation → Closed Won */
+.board-column:nth-child(n + 4):nth-child(-n + 6) {
+  border-color: rgba(87, 116, 108, .22);
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.19), transparent 12%, transparent 88%, rgba(49,84,77,.018)),
+    #dfe3db;
+}
+.board-column:nth-child(n + 4):nth-child(-n + 6) .board-column-rule {
+  background: linear-gradient(90deg, rgba(79, 111, 102, .38), rgba(79, 111, 102, .07));
+}
+
+/* Closed Lost → Discarded */
+.board-column:nth-child(n + 7) {
+  border-color: rgba(122, 94, 90, .20);
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.16), transparent 12%, transparent 88%, rgba(86,56,54,.016)),
+    #e1dcda;
+}
+.board-column:nth-child(n + 7) .board-column-rule {
+  background: linear-gradient(90deg, rgba(125, 91, 86, .32), rgba(125, 91, 86, .06));
+}
+
+/* Keep drag feedback stronger than the passive grouping cue. */
+.board-column.is-drag-over {
+  background: #eee7cf;
+  border-color: rgba(174, 145, 54, .36);
+}
