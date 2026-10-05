@@ -1,6 +1,6 @@
 import { useCrmStore } from '../store/crmStore';
-import { displayQuoteNumber, quoteTotal, type Quote, type QuoteStatus } from '../types/quote';
-import type { Project, ProjectStage } from '../types/crm';
+import { commercialDocumentLabel, displayQuoteNumber, quoteTotal, type Quote, type QuoteStatus } from '../types/quote';
+import type { ActivityType, Project, ProjectStage } from '../types/crm';
 
 const CLOSED_STAGES = new Set<ProjectStage>(['Closed Won', 'Completed', 'Closed Lost', 'Discarded']);
 const EARLY_STAGES = new Set<ProjectStage>(['Discovery', 'Intent to Bid', 'Bid Development']);
@@ -12,10 +12,21 @@ export interface QuoteIdentitySync {
 }
 
 const clean = (value?: string) => value?.trim().toLowerCase();
+const isChangeOrder = (quote: Quote) => quote.documentType === 'change-order';
 
 function amountText(quote: Quote) {
   const total = quoteTotal(quote);
   return total ? ` · ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(total)}` : '';
+}
+
+function metadata(quote: Quote) {
+  return {
+    quoteNumber: displayQuoteNumber(quote),
+    revision: quote.revision,
+    amount: quoteTotal(quote),
+    documentType: quote.documentType,
+    parentQuoteId: quote.parentQuoteId,
+  };
 }
 
 function getCrm() {
@@ -74,6 +85,11 @@ function syncQuoteDetails(projectId: string, quote: Quote) {
   });
 }
 
+function touchProject(projectId?: string) {
+  if (!projectId) return;
+  getCrm().updateProject(projectId, { lastTouchpoint: new Date().toISOString().slice(0, 10) });
+}
+
 function moveForSentQuote(projectId: string, quote: Quote) {
   const crm = getCrm();
   const project = crm.projects.find((candidate) => candidate.id === projectId);
@@ -95,44 +111,65 @@ function moveForSentQuote(projectId: string, quote: Quote) {
   }
 }
 
-export function recordQuoteCreated(quote: Quote) {
+function recordCommercialActivity(quote: Quote, type: ActivityType, summary: string, identity: QuoteIdentitySync = {}) {
   getCrm().recordActivity({
-    type: 'quote-created',
-    summary: `Quote ${displayQuoteNumber(quote)} created`,
+    type,
+    summary,
     quoteId: quote.id,
-    projectId: quote.projectId,
-    metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision, amount: quoteTotal(quote) },
+    projectId: identity.projectId ?? quote.projectId,
+    companyId: identity.companyId ?? quote.companyId,
+    contactId: identity.contactId ?? quote.contactId,
+    metadata: metadata(quote),
   });
 }
 
+export function recordQuoteCreated(quote: Quote) {
+  if (isChangeOrder(quote)) {
+    recordCommercialActivity(quote, 'change-order-created', 'Change Order draft created');
+    return;
+  }
+  recordCommercialActivity(quote, 'quote-created', `${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} created`);
+}
+
 export function recordQuoteLinked(quote: Quote) {
-  if (!quote.projectId) return;
+  if (!quote.projectId || isChangeOrder(quote)) return;
   const crm = getCrm();
   const project = crm.projects.find((candidate) => candidate.id === quote.projectId);
   crm.recordActivity({
     type: 'quote-linked',
-    summary: `Quote ${displayQuoteNumber(quote)} linked${project ? ` to ${project.name}` : ''}`,
+    summary: `${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} linked${project ? ` to ${project.name}` : ''}`,
     quoteId: quote.id,
     projectId: quote.projectId,
     companyId: project?.companyId,
-    metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision },
+    metadata: metadata(quote),
   });
 }
 
 export function recordRevisionCreated(quote: Quote) {
-  getCrm().recordActivity({
-    type: 'quote-revision-created',
-    summary: `${displayQuoteNumber(quote)} revision created${quote.revisionLabel ? ` · ${quote.revisionLabel}` : ''}`,
-    quoteId: quote.id,
-    projectId: quote.projectId,
-    companyId: quote.companyId,
-    contactId: quote.contactId,
-    metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision, amount: quoteTotal(quote) },
-  });
+  recordCommercialActivity(
+    quote,
+    isChangeOrder(quote) ? 'change-order-revision-created' : 'quote-revision-created',
+    `${displayQuoteNumber(quote)} revision created${quote.revisionLabel ? ` · ${quote.revisionLabel}` : ''}`,
+  );
 }
 
 export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
   const identity = resolveIdentity(quote);
+
+  if (isChangeOrder(quote)) {
+    const project = existingProject(quote);
+    const projectId = project?.id ?? quote.projectId;
+    const companyId = project?.companyId ?? identity.companyId ?? quote.companyId;
+    touchProject(projectId);
+    recordCommercialActivity(
+      quote,
+      'change-order-sent',
+      `Change Order ${displayQuoteNumber(quote)} sent${amountText(quote)}`,
+      { projectId, companyId, contactId: identity.contactId ?? quote.contactId },
+    );
+    return { projectId, companyId, contactId: identity.contactId ?? quote.contactId };
+  }
+
   let crm = getCrm();
   let project = existingProject(quote);
   let projectId = project?.id;
@@ -156,16 +193,12 @@ export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
   }
 
   const companyId = project?.companyId ?? identity.companyId;
-  crm = getCrm();
-  crm.recordActivity({
-    type: 'quote-sent',
-    summary: `Quote ${displayQuoteNumber(quote)} sent${amountText(quote)}`,
-    quoteId: quote.id,
-    projectId,
-    companyId,
-    contactId: identity.contactId,
-    metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision, amount: quoteTotal(quote) },
-  });
+  recordCommercialActivity(
+    quote,
+    'quote-sent',
+    `${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} sent${amountText(quote)}`,
+    { projectId, companyId, contactId: identity.contactId },
+  );
 
   return { projectId: projectId ?? quote.projectId, companyId, contactId: identity.contactId };
 }
@@ -173,22 +206,31 @@ export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
 export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus): QuoteIdentitySync {
   if (quote.status === previousStatus) return { projectId: quote.projectId, companyId: quote.companyId, contactId: quote.contactId };
   const identity = resolveIdentity(quote);
-  const crm = getCrm();
 
   if (quote.status === 'Viewed') {
-    crm.recordActivity({
-      type: 'quote-viewed',
-      summary: `Quote ${displayQuoteNumber(quote)} viewed`,
-      quoteId: quote.id,
-      projectId: quote.projectId,
-      companyId: identity.companyId,
-      contactId: identity.contactId,
-      metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision },
-    });
+    const type: ActivityType = isChangeOrder(quote) ? 'change-order-viewed' : 'quote-viewed';
+    recordCommercialActivity(
+      quote,
+      type,
+      `${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} viewed`,
+      { projectId: quote.projectId, ...identity },
+    );
     return { projectId: quote.projectId, ...identity };
   }
 
+  if (quote.status === 'Signed' && isChangeOrder(quote)) {
+    touchProject(quote.projectId);
+    recordCommercialActivity(
+      quote,
+      'change-order-signed',
+      `Change Order ${displayQuoteNumber(quote)} signed${amountText(quote)}`,
+      { projectId: quote.projectId, companyId: identity.companyId ?? quote.companyId, contactId: identity.contactId ?? quote.contactId },
+    );
+    return { projectId: quote.projectId, companyId: identity.companyId ?? quote.companyId, contactId: identity.contactId ?? quote.contactId };
+  }
+
   if (quote.status === 'Signed') {
+    const crm = getCrm();
     let project = existingProject(quote);
     let projectId = project?.id;
     if (!projectId || !project) {
@@ -207,28 +249,25 @@ export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus
       });
     }
     const companyId = project?.companyId ?? identity.companyId;
-    getCrm().recordActivity({
-      type: 'quote-signed',
-      summary: `Quote ${displayQuoteNumber(quote)} signed${amountText(quote)}`,
-      quoteId: quote.id,
-      projectId,
-      companyId,
-      contactId: identity.contactId,
-      metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision, amount: quoteTotal(quote) },
-    });
+    recordCommercialActivity(
+      quote,
+      'quote-signed',
+      `${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} signed${amountText(quote)}`,
+      { projectId, companyId, contactId: identity.contactId },
+    );
     return { projectId, companyId, contactId: identity.contactId };
   }
 
   if (quote.status === 'Declined' || quote.status === 'Expired') {
-    crm.recordActivity({
-      type: quote.status === 'Declined' ? 'quote-declined' : 'quote-expired',
-      summary: `Quote ${displayQuoteNumber(quote)} ${quote.status.toLowerCase()}`,
-      quoteId: quote.id,
-      projectId: quote.projectId,
-      companyId: identity.companyId,
-      contactId: identity.contactId,
-      metadata: { quoteNumber: displayQuoteNumber(quote), revision: quote.revision },
-    });
+    const type: ActivityType = isChangeOrder(quote)
+      ? quote.status === 'Declined' ? 'change-order-declined' : 'change-order-expired'
+      : quote.status === 'Declined' ? 'quote-declined' : 'quote-expired';
+    recordCommercialActivity(
+      quote,
+      type,
+      `${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} ${quote.status.toLowerCase()}`,
+      { projectId: quote.projectId, ...identity },
+    );
   }
 
   return { projectId: quote.projectId, ...identity };
