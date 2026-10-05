@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
+import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { syncNormalizedCrm } from './normalizedCrmSync';
 import { syncNormalizedQuotes } from './normalizedQuoteSync';
 
 export interface QuoteShare {
@@ -55,8 +57,18 @@ async function prepareCurrentRevision(quoteId: string) {
     if (!quote) throw new Error('Quote could not be prepared for sharing.');
   }
 
-  // Do not rely on the normal 500ms cloud debounce here. A customer link must
-  // never be issued before this exact sent revision is durably frozen in Supabase.
+  // Do not rely on the normal cloud debounce here. A customer link must never
+  // be issued before the exact revision AND its CRM identity are durable.
+  const crm = useCrmStore.getState();
+  crm.hydrate();
+  const hydratedCrm = useCrmStore.getState();
+  await syncNormalizedCrm(organizationId, {
+    schemaVersion: 3,
+    companies: hydratedCrm.companies,
+    contacts: hydratedCrm.contacts,
+    projects: hydratedCrm.projects,
+    activities: hydratedCrm.activities,
+  });
   await syncNormalizedQuotes(organizationId, {
     schemaVersion: 2,
     quotes: state.quotes,
