@@ -9,8 +9,17 @@ export interface QuoteRepository {
 function normalizeQuote(raw: Quote): Quote {
   return {
     ...raw,
+    documentType: raw.documentType ?? 'quote',
+    parentQuoteId: raw.parentQuoteId,
+    changeOrderNumber: raw.changeOrderNumber,
     companyId: raw.companyId,
     contactId: raw.contactId,
+    history: (raw.history ?? []).map((revision) => ({
+      ...revision,
+      documentType: revision.documentType ?? raw.documentType ?? 'quote',
+      parentQuoteId: revision.parentQuoteId ?? raw.parentQuoteId,
+      changeOrderNumber: revision.changeOrderNumber ?? raw.changeOrderNumber,
+    })),
   };
 }
 
