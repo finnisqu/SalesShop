@@ -7,7 +7,9 @@ import './board-groups.css';
 import './accounts.css';
 import './notebook-project-links.css';
 import './quotes.css';
+import './dashboard.css';
 import { Board } from './components/Board';
+import { Dashboard } from './components/Dashboard';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { Quotes } from './components/Quotes';
@@ -50,6 +52,7 @@ function App() {
           <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
+          <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Dashboard</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
         <div className="migration-chip">React foundation</div>
@@ -59,6 +62,8 @@ function App() {
         <Board />
       ) : view === 'quotes' ? (
         <Quotes />
+      ) : view === 'dashboard' ? (
+        <Dashboard />
       ) : (
         <main className="notebook-workspace">
           <Sidebar />

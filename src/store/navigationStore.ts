@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { useNotebookStore } from './notebookStore';
 import { useQuoteStore } from './quoteStore';
 
-export type AppView = 'notebook' | 'board' | 'quotes';
+export type AppView = 'notebook' | 'board' | 'quotes' | 'dashboard';
 
 interface NavigationState {
   view: AppView;
