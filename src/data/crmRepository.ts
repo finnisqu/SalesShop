@@ -1,5 +1,5 @@
-import type { Company, CrmDocument, Project, ProjectStage } from '../types/crm';
-import { PROJECT_STAGES } from '../types/crm';
+import type { Activity, Company, CrmDocument, Project, ProjectStage } from '../types/crm';
+import { ACTIVITY_TYPES, PROJECT_STAGES } from '../types/crm';
 
 const STORAGE_KEY = 'salesshop-react-crm-v1';
 
@@ -9,6 +9,7 @@ export interface CrmRepository {
 }
 
 const stageSet = new Set<string>(PROJECT_STAGES);
+const activityTypeSet = new Set<string>(ACTIVITY_TYPES);
 
 function seedDocument(): CrmDocument {
   const timestamp = new Date().toISOString();
@@ -31,7 +32,7 @@ function seedDocument(): CrmDocument {
     { id: 'project_twin_lakes', name: 'Twin Lakes IL', companyId: 'company_choate', companyName: 'Choate Construction', stage: 'Discarded', amount: 100000, createdAt: timestamp, updatedAt: timestamp },
   ];
 
-  return { schemaVersion: 1, companies, projects };
+  return { schemaVersion: 2, companies, projects, activities: [] };
 }
 
 function normalizeProject(raw: Partial<Project>, timestamp: string): Project | null {
@@ -52,9 +53,23 @@ function normalizeProject(raw: Partial<Project>, timestamp: string): Project | n
   };
 }
 
+function normalizeActivity(raw: Partial<Activity>): Activity | null {
+  if (!raw.id || !raw.summary || !raw.occurredAt || !activityTypeSet.has(String(raw.type))) return null;
+  return {
+    id: raw.id,
+    type: raw.type as Activity['type'],
+    summary: raw.summary,
+    projectId: raw.projectId,
+    companyId: raw.companyId,
+    quoteId: raw.quoteId,
+    occurredAt: raw.occurredAt,
+    metadata: raw.metadata,
+  };
+}
+
 function normalize(raw: unknown): CrmDocument | null {
   if (!raw || typeof raw !== 'object') return null;
-  const candidate = raw as Partial<CrmDocument>;
+  const candidate = raw as Partial<CrmDocument> & { schemaVersion?: number; activities?: unknown[] };
   if (!Array.isArray(candidate.projects) || !Array.isArray(candidate.companies)) return null;
   const timestamp = new Date().toISOString();
   const companies = candidate.companies
@@ -63,7 +78,10 @@ function normalize(raw: unknown): CrmDocument | null {
   const projects = candidate.projects
     .map((project) => normalizeProject(project, timestamp))
     .filter((project): project is Project => Boolean(project));
-  return { schemaVersion: 1, companies, projects };
+  const activities = Array.isArray(candidate.activities)
+    ? candidate.activities.map((activity) => normalizeActivity(activity as Activity)).filter((activity): activity is Activity => Boolean(activity))
+    : [];
+  return { schemaVersion: 2, companies, projects, activities };
 }
 
 export const localCrmRepository: CrmRepository = {
