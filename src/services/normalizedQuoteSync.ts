@@ -1,13 +1,15 @@
 import { supabase } from '../lib/supabase';
-import type {
-  Quote,
-  QuoteDocument,
-  QuoteLine,
-  QuoteLineKind,
-  QuotePricingMode,
-  QuoteRevisionSnapshot,
-  QuoteSection,
-  QuoteStatus,
+import {
+  isDraftQuoteNumber,
+  type CommercialDocumentType,
+  type Quote,
+  type QuoteDocument,
+  type QuoteLine,
+  type QuoteLineKind,
+  type QuotePricingMode,
+  type QuoteRevisionSnapshot,
+  type QuoteSection,
+  type QuoteStatus,
 } from '../types/quote';
 
 type QuoteTable = 'quotes' | 'quote_sections' | 'quote_lines' | 'quote_revisions';
@@ -99,6 +101,9 @@ export async function loadNormalizedQuotes(
   const quotes: Quote[] = quoteRows.map((row) => ({
     id: String(row.id),
     quoteNumber: String(row.quote_number),
+    documentType: String(row.document_type ?? 'quote') as CommercialDocumentType,
+    parentQuoteId: valueOrUndefined(row.parent_quote_id),
+    changeOrderNumber: numericOrUndefined(row.change_order_number),
     originalQuoteDate: String(row.original_quote_date),
     quoteDate: String(row.quote_date),
     revision: Number(row.revision) || 0,
@@ -177,17 +182,32 @@ async function deleteStaleRows(
   if (deleteError) throw deleteError;
 }
 
+interface ServerQuoteGuard {
+  revision: number;
+  status: QuoteStatus;
+  quoteNumber: string;
+  documentType: CommercialDocumentType;
+  parentQuoteId?: string;
+  changeOrderNumber?: number;
+  viewedAt?: string;
+  signedAt?: string;
+}
+
 async function serverOutcomeGuards(organizationId: string) {
-  const guards = new Map<string, { revision: number; status: QuoteStatus; viewedAt?: string; signedAt?: string }>();
+  const guards = new Map<string, ServerQuoteGuard>();
   if (!supabase) return guards;
   const { data, error } = await supabase
     .from('quotes')
-    .select('id,revision,status,viewed_at,signed_at')
+    .select('id,revision,status,quote_number,document_type,parent_quote_id,change_order_number,viewed_at,signed_at')
     .eq('organization_id', organizationId);
   if (error) throw error;
   (data ?? []).forEach((row) => guards.set(String(row.id), {
     revision: Number(row.revision) || 0,
     status: String(row.status) as QuoteStatus,
+    quoteNumber: String(row.quote_number),
+    documentType: String(row.document_type ?? 'quote') as CommercialDocumentType,
+    parentQuoteId: valueOrUndefined(row.parent_quote_id),
+    changeOrderNumber: numericOrUndefined(row.change_order_number),
     viewedAt: valueOrUndefined(row.viewed_at),
     signedAt: valueOrUndefined(row.signed_at),
   }));
@@ -198,14 +218,28 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   if (!supabase) return;
   if (document.schemaVersion !== 2) throw new Error('Unsupported Quote document schema.');
 
-  // Customer actions happen server-side. Preserve those outcomes when an older
-  // open SalesShop tab later saves its local cache.
+  // Customer actions and official numbering happen server-side. Preserve those
+  // outcomes when an older open SalesShop tab later saves its local cache.
   const guards = await serverOutcomeGuards(organizationId);
   const quotes = document.quotes.map((quote, sortOrder) => {
     const server = guards.get(quote.id);
     let status = quote.status;
+    let quoteNumber = quote.quoteNumber;
+    let documentType = quote.documentType;
+    let parentQuoteId = quote.parentQuoteId;
+    let changeOrderNumber = quote.changeOrderNumber;
     let viewedAt = quote.viewedAt;
     let signedAt = quote.signedAt;
+
+    if (server && !isDraftQuoteNumber(server.quoteNumber)) {
+      // Once assigned, a commercial-document identity is immutable from normal
+      // local cache sync. New revisions retain the same base document number.
+      quoteNumber = server.quoteNumber;
+      documentType = server.documentType;
+      parentQuoteId = server.parentQuoteId;
+      changeOrderNumber = server.changeOrderNumber;
+    }
+
     if (server && server.revision === quote.revision) {
       if (server.status === 'Signed' && quote.status !== 'Signed') {
         status = 'Signed';
@@ -220,7 +254,10 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     return {
       organization_id: organizationId,
       id: quote.id,
-      quote_number: quote.quoteNumber,
+      quote_number: quoteNumber,
+      document_type: documentType,
+      parent_quote_id: parentQuoteId ?? null,
+      change_order_number: changeOrderNumber ?? null,
       original_quote_date: quote.originalQuoteDate,
       quote_date: quote.quoteDate,
       revision: quote.revision,
