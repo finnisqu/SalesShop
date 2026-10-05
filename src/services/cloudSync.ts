@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import {
   CLOUD_DOCUMENT_SAVED_EVENT,
   readLocalDocument,
+  removeLocalDocument,
   writeLocalDocument,
   type CloudDocumentKey,
   type CloudDocumentSavedDetail,
@@ -9,17 +10,40 @@ import {
 
 const ORG_DOCUMENT_KEYS: CloudDocumentKey[] = ['crm', 'quotes', 'signatures'];
 const PRIVATE_DOCUMENT_KEY: CloudDocumentKey = 'notebook';
+const CACHE_SCOPE_KEY = 'salesshop-cloud-cache-scope-v1';
 const pending = new Map<CloudDocumentKey, number>();
 let activeCleanup: (() => void) | null = null;
+
+interface CacheScope {
+  userId: string;
+  organizationId: string;
+}
+
+function readCacheScope(): CacheScope | null {
+  try {
+    const raw = localStorage.getItem(CACHE_SCOPE_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<CacheScope>;
+    return value.userId && value.organizationId
+      ? { userId: value.userId, organizationId: value.organizationId }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCacheScope(scope: CacheScope) {
+  localStorage.setItem(CACHE_SCOPE_KEY, JSON.stringify(scope));
+}
 
 async function upsertOrgDocument(orgId: string, userId: string, key: CloudDocumentKey, document: unknown) {
   if (!supabase) return;
   const { error } = await supabase.from('org_documents').upsert({
-    org_id: orgId,
+    organization_id: orgId,
     document_key: key,
     document,
     updated_by: userId,
-  }, { onConflict: 'org_id,document_key' });
+  }, { onConflict: 'organization_id,document_key' });
   if (error) throw error;
 }
 
@@ -44,10 +68,14 @@ export async function ensureCurrentWorkspace() {
 export async function hydrateCloudDocuments(orgId: string, userId: string) {
   if (!supabase) return;
 
+  const previousScope = readCacheScope();
+  const canSeedOrgFromLocal = !previousScope || previousScope.organizationId === orgId;
+  const canSeedNotebookFromLocal = !previousScope || previousScope.userId === userId;
+
   const { data: orgRows, error: orgError } = await supabase
     .from('org_documents')
     .select('document_key,document')
-    .eq('org_id', orgId)
+    .eq('organization_id', orgId)
     .in('document_key', ORG_DOCUMENT_KEYS);
   if (orgError) throw orgError;
 
@@ -60,6 +88,12 @@ export async function hydrateCloudDocuments(orgId: string, userId: string) {
       writeLocalDocument(key, cloudOrgDocuments.get(key), false);
       continue;
     }
+
+    if (!canSeedOrgFromLocal) {
+      removeLocalDocument(key);
+      continue;
+    }
+
     const local = readLocalDocument(key);
     if (local !== null) await upsertOrgDocument(orgId, userId, key, local);
   }
@@ -74,10 +108,14 @@ export async function hydrateCloudDocuments(orgId: string, userId: string) {
 
   if (notebookRow?.document !== undefined) {
     writeLocalDocument(PRIVATE_DOCUMENT_KEY, notebookRow.document, false);
-  } else {
+  } else if (canSeedNotebookFromLocal) {
     const localNotebook = readLocalDocument(PRIVATE_DOCUMENT_KEY);
     if (localNotebook !== null) await upsertPrivateDocument(userId, localNotebook);
+  } else {
+    removeLocalDocument(PRIVATE_DOCUMENT_KEY);
   }
+
+  writeCacheScope({ userId, organizationId: orgId });
 }
 
 export function startCloudSync(orgId: string, userId: string, onError?: (message: string) => void) {

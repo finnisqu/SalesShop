@@ -30,3 +30,7 @@ export function writeLocalDocument(key: CloudDocumentKey, document: unknown, not
     detail: { key, document },
   }));
 }
+
+export function removeLocalDocument(key: CloudDocumentKey) {
+  localStorage.removeItem(LOCAL_STORAGE_KEYS[key]);
+}

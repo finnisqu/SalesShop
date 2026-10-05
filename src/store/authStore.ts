@@ -28,6 +28,10 @@ function messageFrom(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong.';
 }
 
+function reloadForIdentityBoundary() {
+  if (typeof window !== 'undefined') window.location.reload();
+}
+
 async function applySession(session: Session | null) {
   stopCloudSync();
 
@@ -119,6 +123,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       return false;
     }
     await applySession(data.session);
+    reloadForIdentityBoundary();
     return true;
   },
 
@@ -136,6 +141,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     if (data.session) {
       await applySession(data.session);
+      reloadForIdentityBoundary();
     } else {
       set({
         busy: false,
@@ -159,6 +165,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       error: null,
       notice: null,
     });
+    reloadForIdentityBoundary();
   },
 
   clearMessage: () => set({ error: null, notice: null }),
