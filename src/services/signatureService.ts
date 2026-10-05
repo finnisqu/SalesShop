@@ -1,7 +1,6 @@
-import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSignatureStore } from '../store/signatureStore';
-import { displayQuoteNumber, type Quote } from '../types/quote';
+import type { Quote } from '../types/quote';
 import type { SignatureInput, SignatureRecord } from '../types/signature';
 
 function getQuote(quoteId: string): Quote | undefined {
@@ -26,24 +25,6 @@ export function completeQuoteSignature(quoteId: string, input: SignatureInput): 
   if (quote.status !== 'Signed') {
     useQuoteStore.getState().updateQuote(quoteId, { status: 'Signed' });
   }
-
-  const acceptedQuote = getQuote(quoteId) ?? quote;
-  const crm = useCrmStore.getState();
-  crm.hydrate();
-  useCrmStore.getState().recordActivity({
-    type: 'quote-signed',
-    summary: `Signature received from ${signature.signerName} for ${displayQuoteNumber(acceptedQuote)}`,
-    quoteId: acceptedQuote.id,
-    projectId: acceptedQuote.projectId,
-    companyId: acceptedQuote.companyId,
-    contactId: acceptedQuote.contactId,
-    metadata: {
-      source: 'quote',
-      quoteNumber: displayQuoteNumber(acceptedQuote),
-      revision: acceptedQuote.revision,
-      amount: signature.acceptedSnapshot.acceptedTotal,
-    },
-  });
 
   return signature;
 }
