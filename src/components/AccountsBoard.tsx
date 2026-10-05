@@ -1,7 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { inferAccountHealth } from '../services/accountHealth';
 import { useCrmStore } from '../store/crmStore';
-import { ACCOUNT_STAGES, type Company } from '../types/crm';
+import { ACCOUNT_STAGES, type AccountStage, type Company } from '../types/crm';
+
+type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
 
 function formatDate(value?: string) {
   if (!value) return 'No activity yet';
@@ -103,7 +105,8 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const accountsByStage = useMemo(() => {
-    const grouped = new Map(ACCOUNT_STAGES.map((stage) => [stage, [] as Array<{ company: Company; health: ReturnType<typeof inferAccountHealth> }> ]));
+    const grouped = new Map<AccountStage, AccountRow[]>();
+    ACCOUNT_STAGES.forEach((stage) => grouped.set(stage, []));
     companies.forEach((company) => {
       const health = inferAccountHealth(company, contacts, projects, activities);
       grouped.get(health.stage)?.push({ company, health });
