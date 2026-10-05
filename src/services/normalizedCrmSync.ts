@@ -111,7 +111,7 @@ async function upsertRows(table: CrmTable, rows: Record<string, unknown>[]) {
   if (error) throw error;
 }
 
-async function deleteStaleRows(table: CrmTable, organizationId: string, localIds: string[]) {
+async function deleteStaleRows(table: Exclude<CrmTable, 'activities'>, organizationId: string, localIds: string[]) {
   if (!supabase) return;
   const { data, error } = await supabase
     .from(table)
@@ -131,6 +131,22 @@ async function deleteStaleRows(table: CrmTable, organizationId: string, localIds
     .eq('organization_id', organizationId)
     .in('id', staleIds);
   if (deleteError) throw deleteError;
+}
+
+async function serverProjectGuards(organizationId: string) {
+  const guards = new Map<string, { stage: ProjectStage; amount?: number; lastTouchpoint?: string }>();
+  if (!supabase) return guards;
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id,stage,amount,last_touchpoint')
+    .eq('organization_id', organizationId);
+  if (error) throw error;
+  (data ?? []).forEach((row) => guards.set(String(row.id), {
+    stage: String(row.stage) as ProjectStage,
+    amount: numericOrUndefined(row.amount),
+    lastTouchpoint: valueOrUndefined(row.last_touchpoint),
+  }));
+  return guards;
 }
 
 export async function syncNormalizedCrm(organizationId: string, document: CrmDocument) {
@@ -158,20 +174,40 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
     created_at: contact.createdAt,
     updated_at: contact.updatedAt,
   }));
-  const projects = document.projects.map((project, sortOrder) => ({
-    organization_id: organizationId,
-    id: project.id,
-    company_id: project.companyId ?? null,
-    name: project.name,
-    stage: project.stage,
-    due_date: project.dueDate ?? null,
-    amount: project.amount ?? null,
-    next_action: project.nextAction ?? null,
-    last_touchpoint: project.lastTouchpoint ?? null,
-    sort_order: sortOrder,
-    created_at: project.createdAt,
-    updated_at: project.updatedAt,
-  }));
+
+  // A public signature can advance a Project while a salesperson still has an
+  // older browser cache open. Closed Won/Completed customer outcomes are never
+  // silently moved backward by that stale cache.
+  const projectGuards = await serverProjectGuards(organizationId);
+  const projects = document.projects.map((project, sortOrder) => {
+    const server = projectGuards.get(project.id);
+    let stage = project.stage;
+    let amount = project.amount;
+    let lastTouchpoint = project.lastTouchpoint;
+    if (server?.stage === 'Completed' && project.stage !== 'Completed') {
+      stage = 'Completed';
+      amount = server.amount ?? amount;
+      lastTouchpoint = server.lastTouchpoint ?? lastTouchpoint;
+    } else if (server?.stage === 'Closed Won' && project.stage !== 'Closed Won' && project.stage !== 'Completed') {
+      stage = 'Closed Won';
+      amount = server.amount ?? amount;
+      lastTouchpoint = server.lastTouchpoint ?? lastTouchpoint;
+    }
+    return {
+      organization_id: organizationId,
+      id: project.id,
+      company_id: project.companyId ?? null,
+      name: project.name,
+      stage,
+      due_date: project.dueDate ?? null,
+      amount: amount ?? null,
+      next_action: project.nextAction ?? null,
+      last_touchpoint: lastTouchpoint ?? null,
+      sort_order: sortOrder,
+      created_at: project.createdAt,
+      updated_at: project.updatedAt,
+    };
+  });
   const activities = document.activities.map((activity, sortOrder) => ({
     organization_id: organizationId,
     id: activity.id,
@@ -192,8 +228,8 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
   await upsertRows('projects', projects);
   await upsertRows('activities', activities);
 
-  // Reconcile deletions only after surviving rows have had their relationships updated.
-  await deleteStaleRows('activities', organizationId, document.activities.map((activity) => activity.id));
+  // Activities are append-only breadcrumbs. Customer View/Sign events can be
+  // created server-side and must survive an older client's later sync.
   await deleteStaleRows('projects', organizationId, document.projects.map((project) => project.id));
   await deleteStaleRows('contacts', organizationId, document.contacts.map((contact) => contact.id));
   await deleteStaleRows('companies', organizationId, document.companies.map((company) => company.id));
