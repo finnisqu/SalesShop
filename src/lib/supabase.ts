@@ -7,8 +7,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const DEFAULT_SUPABASE_URL = 'https://pvchgibllozuwickhfqz.supabase.co';
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_lq79tQrf8RDCkGVv0powYQ_y9sfzRy7';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
-const supabaseKey = (
+export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
+export const supabaseKey = (
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
   ?? import.meta.env.VITE_SUPABASE_ANON_KEY
 )?.trim() || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
