@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { useNotebookStore } from './notebookStore';
 
-export type AppView = 'notebook' | 'board';
+export type AppView = 'notebook' | 'board' | 'quotes';
 
 interface NavigationState {
   view: AppView;
@@ -15,7 +15,7 @@ interface NavigationState {
 export const useNavigationStore = create<NavigationState>((set) => ({
   view: 'notebook',
   focusedProjectId: null,
-  setView: (view) => set({ view, focusedProjectId: view === 'board' ? undefined : null } as Partial<NavigationState>),
+  setView: (view) => set({ view, focusedProjectId: null }),
   openProject: (projectId) => set({ view: 'board', focusedProjectId: projectId }),
   openNotebookPage: (pageId) => {
     useNotebookStore.getState().selectEntry(pageId);

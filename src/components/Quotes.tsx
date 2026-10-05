@@ -1,0 +1,365 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useCrmStore } from '../store/crmStore';
+import { useQuoteStore } from '../store/quoteStore';
+import {
+  displayQuoteNumber,
+  QUOTE_STATUSES,
+  quoteLineTotal,
+  quoteTotal,
+  type Quote,
+  type QuoteLine,
+  type QuoteLineKind,
+  type QuotePricingMode,
+  type QuoteStatus,
+} from '../types/quote';
+
+const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+const lineKinds: Array<[QuoteLineKind, string]> = [
+  ['item', 'Line'],
+  ['allowance', 'Allowance'],
+  ['discount', 'Discount'],
+  ['tax', 'Tax'],
+  ['scope', 'Scope'],
+  ['warranty', 'Warranty'],
+  ['note', 'Note'],
+];
+
+type QuoteViewMode = 'edit' | 'split' | 'customer';
+
+function numberValue(value: string) {
+  return value.trim() === '' ? undefined : Number(value);
+}
+
+function isTextLine(line: QuoteLine) {
+  return line.kind === 'note' || line.kind === 'scope' || line.kind === 'warranty';
+}
+
+function LineEditor({ quote, line }: { quote: Quote; line: QuoteLine }) {
+  const updateLine = useQuoteStore((state) => state.updateLine);
+  const deleteLine = useQuoteStore((state) => state.deleteLine);
+  const textLine = isTextLine(line);
+
+  return (
+    <div className={`quote-line-editor kind-${line.kind}`}>
+      <button
+        type="button"
+        className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`}
+        onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })}
+        title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}
+      >
+        {line.customerVisible ? '●' : '○'}
+      </button>
+
+      <div className="quote-line-main">
+        <div className="quote-line-topline">
+          <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>
+          <select
+            value={line.sectionId ?? ''}
+            onChange={(event) => updateLine(quote.id, line.id, { sectionId: event.target.value || undefined })}
+            aria-label="Quote section"
+          >
+            <option value="">No section</option>
+            {quote.sections.map((section) => <option key={section.id} value={section.id}>{section.title}</option>)}
+          </select>
+        </div>
+        <textarea
+          value={line.description}
+          onChange={(event) => updateLine(quote.id, line.id, { description: event.target.value })}
+          rows={textLine ? 2 : 1}
+          aria-label="Line description"
+        />
+      </div>
+
+      {!textLine && (
+        <div className="quote-line-pricing">
+          <select
+            value={line.pricingMode}
+            onChange={(event) => updateLine(quote.id, line.id, { pricingMode: event.target.value as QuotePricingMode })}
+            aria-label="Pricing mode"
+          >
+            <option value="direct">Amount</option>
+            <option value="quantity-rate">Qty × Rate</option>
+            <option value="none">No price</option>
+          </select>
+
+          {line.pricingMode === 'direct' && (
+            <label className="quote-money-input">
+              <span>$</span>
+              <input
+                type="number"
+                step="0.01"
+                value={line.amount ?? ''}
+                onChange={(event) => updateLine(quote.id, line.id, { amount: numberValue(event.target.value) })}
+                aria-label="Line amount"
+              />
+            </label>
+          )}
+
+          {line.pricingMode === 'quantity-rate' && (
+            <div className="quote-qty-rate">
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Qty"
+                value={line.quantity ?? ''}
+                onChange={(event) => updateLine(quote.id, line.id, { quantity: numberValue(event.target.value) })}
+                aria-label="Quantity"
+              />
+              <span>×</span>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Rate"
+                value={line.rate ?? ''}
+                onChange={(event) => updateLine(quote.id, line.id, { rate: numberValue(event.target.value) })}
+                aria-label="Rate"
+              />
+            </div>
+          )}
+
+          {line.pricingMode !== 'none' && <strong>{money.format(quoteLineTotal(line))}</strong>}
+          <label className="quote-total-toggle" title="Include this amount in quote total">
+            <input
+              type="checkbox"
+              checked={line.includeInTotal}
+              onChange={(event) => updateLine(quote.id, line.id, { includeInTotal: event.target.checked })}
+            />
+            Total
+          </label>
+        </div>
+      )}
+
+      <button type="button" className="quote-line-delete" onClick={() => deleteLine(quote.id, line.id)} title="Delete row">×</button>
+    </div>
+  );
+}
+
+function SectionEditor({ quote, sectionId }: { quote: Quote; sectionId: string }) {
+  const section = quote.sections.find((candidate) => candidate.id === sectionId);
+  const updateSection = useQuoteStore((state) => state.updateSection);
+  const deleteSection = useQuoteStore((state) => state.deleteSection);
+  if (!section) return null;
+
+  return (
+    <div className="quote-section-editor">
+      <button
+        type="button"
+        className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`}
+        onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })}
+        title={section.customerVisible ? 'Section visible to customer' : 'Section hidden from customer'}
+      >
+        {section.customerVisible ? '●' : '○'}
+      </button>
+      <input value={section.title} onChange={(event) => updateSection(quote.id, section.id, { title: event.target.value })} />
+      <button type="button" onClick={() => deleteSection(quote.id, section.id)} title="Remove section">×</button>
+    </div>
+  );
+}
+
+function CustomerPreview({ quote }: { quote: Quote }) {
+  const visibleSections = quote.sections.filter((section) => section.customerVisible);
+  const visibleLines = quote.lines.filter((line) => line.customerVisible);
+  const renderLines = (lines: QuoteLine[]) => lines.map((line) => {
+    const priced = line.pricingMode !== 'none';
+    return (
+      <div key={line.id} className={`customer-quote-row kind-${line.kind}`}>
+        <div className="customer-line-description">{line.description || '—'}</div>
+        {quote.customerColumns.quantity && <div>{line.pricingMode === 'quantity-rate' ? line.quantity ?? '' : ''}</div>}
+        {quote.customerColumns.rate && <div>{line.pricingMode === 'quantity-rate' && line.rate !== undefined ? money.format(line.rate) : ''}</div>}
+        {quote.customerColumns.lineAmount && <div className="customer-line-amount">{priced ? money.format(quoteLineTotal(line)) : ''}</div>}
+      </div>
+    );
+  });
+
+  const looseLines = visibleLines.filter((line) => !line.sectionId || !visibleSections.some((section) => section.id === line.sectionId));
+
+  return (
+    <article className="customer-quote-paper">
+      <header className="customer-quote-letterhead">
+        <div>
+          <span className="customer-company-placeholder">YOUR COMPANY</span>
+          <strong>QUOTE</strong>
+        </div>
+        <dl>
+          <div><dt>Quote</dt><dd>{displayQuoteNumber(quote)}</dd></div>
+          <div><dt>Date</dt><dd>{quote.quoteDate}</dd></div>
+        </dl>
+      </header>
+
+      <section className="customer-quote-recipient">
+        <div>
+          <span>Prepared for</span>
+          <strong>{quote.companyName || quote.contactName || 'Customer'}</strong>
+          {quote.contactName && quote.companyName && <p>{quote.contactName}</p>}
+          {quote.address && <p>{quote.address}</p>}
+        </div>
+        <div>
+          <span>Project</span>
+          <strong>{quote.title}</strong>
+          {quote.revisionLabel && <p>{quote.revisionLabel}</p>}
+        </div>
+      </section>
+
+      <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}>
+        <div className="customer-quote-row customer-quote-table-head">
+          <div>Description</div>
+          {quote.customerColumns.quantity && <div>Qty</div>}
+          {quote.customerColumns.rate && <div>Rate</div>}
+          {quote.customerColumns.lineAmount && <div>Amount</div>}
+        </div>
+        {renderLines(looseLines)}
+        {visibleSections.map((section) => {
+          const sectionLines = visibleLines.filter((line) => line.sectionId === section.id);
+          if (!sectionLines.length) return null;
+          return (
+            <div className="customer-quote-section" key={section.id}>
+              <h3>{section.title}</h3>
+              {renderLines(sectionLines)}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
+      {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
+      <footer>Prepared with SalesShop · Signature workflow will attach to this accepted revision.</footer>
+    </article>
+  );
+}
+
+function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteViewMode; onModeChange: (mode: QuoteViewMode) => void }) {
+  const projects = useCrmStore((state) => state.projects);
+  const updateQuote = useQuoteStore((state) => state.updateQuote);
+  const deleteQuote = useQuoteStore((state) => state.deleteQuote);
+  const addLine = useQuoteStore((state) => state.addLine);
+  const addSection = useQuoteStore((state) => state.addSection);
+  const setCustomerColumns = useQuoteStore((state) => state.setCustomerColumns);
+  const recordSent = useQuoteStore((state) => state.recordSent);
+  const createRevision = useQuoteStore((state) => state.createRevision);
+
+  const selectProject = (projectId: string) => {
+    const project = projects.find((candidate) => candidate.id === projectId);
+    updateQuote(quote.id, {
+      projectId: project?.id,
+      companyName: project?.companyName || quote.companyName,
+    });
+  };
+
+  const canRevise = quote.status !== 'Draft' && quote.status !== 'Ready' && quote.status !== 'Signed';
+
+  return (
+    <section className={`quotes-workbench view-${mode}`}>
+      <header className="quote-workbench-header">
+        <div>
+          <span className="quote-number">{displayQuoteNumber(quote)}</span>
+          <input className="quote-title-input" value={quote.title} onChange={(event) => updateQuote(quote.id, { title: event.target.value })} />
+        </div>
+        <div className="quote-header-actions">
+          <div className="quote-view-switch" aria-label="Quote view">
+            {(['edit', 'split', 'customer'] as const).map((viewMode) => (
+              <button type="button" key={viewMode} className={mode === viewMode ? 'active' : ''} onClick={() => onModeChange(viewMode)}>
+                {viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}
+              </button>
+            ))}
+          </div>
+          {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="quote-send-button" onClick={() => recordSent(quote.id)}>Send</button>}
+          {canRevise && <button type="button" className="quote-revision-button" onClick={() => createRevision(quote.id)}>Create revision</button>}
+        </div>
+      </header>
+
+      <div className="quote-workbench-body">
+        {mode !== 'customer' && (
+          <div className="quote-editor-pane">
+            <section className="quote-details-grid">
+              <label><span>Status</span><select value={quote.status} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status}>{status}</option>)}</select></label>
+              <label><span>Quote date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
+              <label><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Optional: Option A, VE alternate…" /></label>
+              <label><span>Project</span><select value={quote.projectId ?? ''} onChange={(event) => selectProject(event.target.value)}><option value="">Unlinked</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
+              <label><span>Company / customer</span><input value={quote.companyName ?? ''} onChange={(event) => updateQuote(quote.id, { companyName: event.target.value })} placeholder="Optional" /></label>
+              <label><span>Contact</span><input value={quote.contactName ?? ''} onChange={(event) => updateQuote(quote.id, { contactName: event.target.value })} placeholder="Optional" /></label>
+              <label><span>Email</span><input type="email" value={quote.contactEmail ?? ''} onChange={(event) => updateQuote(quote.id, { contactEmail: event.target.value })} placeholder="Optional" /></label>
+              <label><span>Project address</span><input value={quote.address ?? ''} onChange={(event) => updateQuote(quote.id, { address: event.target.value })} placeholder="Optional" /></label>
+            </section>
+
+            <section className="quote-customer-controls">
+              <div><span className="quote-control-heading">Customer columns</span><small>Keep the sent quote minimal or expose pricing detail.</small></div>
+              <label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label>
+              <label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label>
+              <label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label>
+            </section>
+
+            <section className="quote-lines-editor">
+              <header><div><span className="quote-control-heading">Quote content</span><small>Structure is optional. Add only what helps this quote.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
+              {quote.sections.map((section) => <SectionEditor key={section.id} quote={quote} sectionId={section.id} />)}
+              {quote.lines.map((line) => <LineEditor key={line.id} quote={quote} line={line} />)}
+              <div className="quote-add-row">
+                <button type="button" onClick={() => addLine(quote.id, 'item')}>+ Line</button>
+                <button type="button" onClick={() => addSection(quote.id)}>+ Section</button>
+                <button type="button" onClick={() => addLine(quote.id, 'scope')}>+ Scope</button>
+                <button type="button" onClick={() => addLine(quote.id, 'warranty')}>+ Warranty</button>
+                <button type="button" onClick={() => addLine(quote.id, 'tax')}>+ Tax</button>
+                <button type="button" onClick={() => addLine(quote.id, 'allowance')}>+ Allowance</button>
+                <button type="button" onClick={() => addLine(quote.id, 'discount')}>+ Discount</button>
+                <button type="button" onClick={() => addLine(quote.id, 'note')}>+ Note</button>
+              </div>
+            </section>
+
+            <section className="quote-notes-grid">
+              <label><span>Customer notes</span><textarea value={quote.customerNotes} onChange={(event) => updateQuote(quote.id, { customerNotes: event.target.value })} placeholder="Appears on customer quote" /></label>
+              <label className="internal-notes"><span>Internal notes · private</span><textarea value={quote.internalNotes} onChange={(event) => updateQuote(quote.id, { internalNotes: event.target.value })} placeholder="Pricing thoughts, negotiation notes, reminders…" /></label>
+            </section>
+
+            {quote.history.length > 0 && (
+              <section className="quote-history">
+                <span className="quote-control-heading">Sent history</span>
+                {quote.history.map((revision) => (
+                  <div key={`${revision.revision}-${revision.capturedAt}`}><strong>{quote.quoteNumber}{revision.revision ? `-R${revision.revision}` : ''}</strong><span>{revision.label || revision.status}</span><time>{revision.quoteDate}</time></div>
+                ))}
+              </section>
+            )}
+
+            <button type="button" className="quote-delete-button" onClick={() => { if (window.confirm(`Delete ${displayQuoteNumber(quote)}?`)) deleteQuote(quote.id); }}>Delete quote</button>
+          </div>
+        )}
+
+        {mode !== 'edit' && <div className="quote-preview-pane"><CustomerPreview quote={quote} /></div>}
+      </div>
+    </section>
+  );
+}
+
+export function Quotes() {
+  const hydrate = useQuoteStore((state) => state.hydrate);
+  const hydrated = useQuoteStore((state) => state.hydrated);
+  const quotes = useQuoteStore((state) => state.quotes);
+  const activeQuoteId = useQuoteStore((state) => state.activeQuoteId);
+  const selectQuote = useQuoteStore((state) => state.selectQuote);
+  const createQuote = useQuoteStore((state) => state.createQuote);
+  const hydrateCrm = useCrmStore((state) => state.hydrate);
+  const [mode, setMode] = useState<QuoteViewMode>('split');
+
+  useEffect(() => { hydrate(); hydrateCrm(); }, [hydrate, hydrateCrm]);
+  const quote = quotes.find((candidate) => candidate.id === activeQuoteId) ?? quotes[0] ?? null;
+  const sortedQuotes = useMemo(() => [...quotes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [quotes]);
+
+  if (!hydrated || !quote) return <div className="quotes-loading">Opening quotes…</div>;
+
+  return (
+    <main className="quotes-view">
+      <aside className="quotes-sidebar">
+        <header><div><span>Sales documents</span><strong>Quotes</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>
+        <div className="quote-list">
+          {sortedQuotes.map((item) => (
+            <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''}`} onClick={() => selectQuote(item.id)}>
+              <span>{displayQuoteNumber(item)}</span>
+              <strong>{item.title}</strong>
+              <small>{item.companyName || 'No customer'} · {item.status}</small>
+              <b>{money.format(quoteTotal(item))}</b>
+            </button>
+          ))}
+        </div>
+      </aside>
+      <QuoteEditor quote={quote} mode={mode} onModeChange={setMode} />
+    </main>
+  );
+}
