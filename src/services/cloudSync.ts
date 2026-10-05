@@ -31,8 +31,46 @@ function emptyCrmDocument(): CrmDocument {
   return { schemaVersion: 3, companies: [], contacts: [], projects: [], activities: [] };
 }
 
-function emptyQuoteDocument(): QuoteDocument {
-  return { schemaVersion: 2, quotes: [], activeQuoteId: null };
+function localDateKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function starterQuoteDocument(): QuoteDocument {
+  const timestamp = new Date().toISOString();
+  const date = localDateKey();
+  const quoteId = `quote_${crypto.randomUUID()}`;
+  return {
+    schemaVersion: 2,
+    activeQuoteId: quoteId,
+    quotes: [{
+      id: quoteId,
+      quoteNumber: `Q-${date.replaceAll('-', '')}-001`,
+      originalQuoteDate: date,
+      quoteDate: date,
+      revision: 0,
+      status: 'Draft',
+      title: 'Untitled quote',
+      sections: [],
+      lines: [{
+        id: `line_${crypto.randomUUID()}`,
+        kind: 'item',
+        description: 'New line item',
+        pricingMode: 'direct',
+        amount: 0,
+        customerVisible: true,
+        includeInTotal: true,
+      }],
+      customerColumns: { quantity: false, rate: false, lineAmount: true },
+      customerNotes: '',
+      internalNotes: '',
+      history: [],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }],
+  };
 }
 
 function emptySignatureDocument(): SignatureDocument {
@@ -102,13 +140,15 @@ export async function hydrateCloudDocuments(orgId: string, userId: string) {
   const normalizedQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
   if (normalizedQuotes) {
     writeLocalDocument(QUOTES_DOCUMENT_KEY, normalizedQuotes, false);
-  } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2) {
+  } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2 && localQuotes.quotes.length) {
     await syncNormalizedQuotes(orgId, localQuotes);
     const seededQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
-    writeLocalDocument(QUOTES_DOCUMENT_KEY, seededQuotes ?? emptyQuoteDocument(), false);
+    writeLocalDocument(QUOTES_DOCUMENT_KEY, seededQuotes ?? localQuotes, false);
   } else {
-    // Authenticated cloud workspaces never fall through to the Blue Jay Park demo seed.
-    writeLocalDocument(QUOTES_DOCUMENT_KEY, emptyQuoteDocument(), false);
+    // A real cloud shop starts clean, never with the Blue Jay Park demo quote.
+    const starter = starterQuoteDocument();
+    await syncNormalizedQuotes(orgId, starter);
+    writeLocalDocument(QUOTES_DOCUMENT_KEY, starter, false);
   }
 
   // Signatures are immutable business records. Existing cloud records always win.
