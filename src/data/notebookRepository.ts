@@ -24,21 +24,16 @@ function migrateEntry(entry: Partial<NotebookEntry> & Pick<NotebookEntry, 'id' |
 
 function migrateDocument(raw: unknown): NotebookDocument | null {
   if (!raw || typeof raw !== 'object') return null;
-  const candidate = raw as {
-    schemaVersion?: number;
-    entries?: unknown[];
-    activeEntryId?: string | null;
-  };
+  const candidate = raw as { schemaVersion?: number; entries?: unknown[]; activeEntryId?: string | null; };
   if (!Array.isArray(candidate.entries)) return null;
 
   if (candidate.schemaVersion === 3 || candidate.schemaVersion === 2 || candidate.schemaVersion === 1) {
     return {
-      schemaVersion: 3,
+      schemaVersion: 2,
       entries: candidate.entries.map((entry) => migrateEntry(entry as NotebookEntry)),
       activeEntryId: candidate.activeEntryId ?? null,
     };
   }
-
   return null;
 }
 
@@ -54,8 +49,5 @@ export const localNotebookRepository: NotebookRepository = {
       return null;
     }
   },
-
-  save(document) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(document));
-  },
+  save(document) { localStorage.setItem(STORAGE_KEY, JSON.stringify(document)); },
 };
