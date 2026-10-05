@@ -22,6 +22,10 @@ interface CacheScope {
   organizationId: string;
 }
 
+function emptyCrmDocument(): CrmDocument {
+  return { schemaVersion: 3, companies: [], contacts: [], projects: [], activities: [] };
+}
+
 function readCacheScope(): CacheScope | null {
   try {
     const raw = localStorage.getItem(CACHE_SCOPE_KEY);
@@ -81,9 +85,15 @@ export async function hydrateCloudDocuments(orgId: string, userId: string) {
     writeLocalDocument(CRM_DOCUMENT_KEY, normalizedCrm, false);
   } else if (canSeedOrgFromLocal) {
     const localCrm = readLocalDocument(CRM_DOCUMENT_KEY);
-    if (localCrm !== null) await syncNormalizedCrm(orgId, localCrm as CrmDocument);
+    if (localCrm !== null) {
+      await syncNormalizedCrm(orgId, localCrm as CrmDocument);
+    } else {
+      // Cloud mode should never fall through to the repository's local demo seed.
+      writeLocalDocument(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
+    }
   } else {
-    removeLocalDocument(CRM_DOCUMENT_KEY);
+    // A different account/workspace must receive an explicitly empty cache, not another shop's local data.
+    writeLocalDocument(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
   }
 
   const { data: orgRows, error: orgError } = await supabase
