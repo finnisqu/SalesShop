@@ -7,8 +7,11 @@ import {
   type CloudDocumentKey,
   type CloudDocumentSavedDetail,
 } from '../data/cloudAwareStorage';
+import type { CrmDocument } from '../types/crm';
+import { loadNormalizedCrm, syncNormalizedCrm } from './normalizedCrmSync';
 
-const ORG_DOCUMENT_KEYS: CloudDocumentKey[] = ['crm', 'quotes', 'signatures'];
+const ORG_DOCUMENT_KEYS: CloudDocumentKey[] = ['quotes', 'signatures'];
+const CRM_DOCUMENT_KEY: CloudDocumentKey = 'crm';
 const PRIVATE_DOCUMENT_KEY: CloudDocumentKey = 'notebook';
 const CACHE_SCOPE_KEY = 'salesshop-cloud-cache-scope-v1';
 const pending = new Map<CloudDocumentKey, number>();
@@ -72,6 +75,17 @@ export async function hydrateCloudDocuments(orgId: string, userId: string) {
   const canSeedOrgFromLocal = !previousScope || previousScope.organizationId === orgId;
   const canSeedNotebookFromLocal = !previousScope || previousScope.userId === userId;
 
+  // CRM now uses normalized tables. The old org_documents.crm row is retained only as a rollback backup.
+  const normalizedCrm = await loadNormalizedCrm(orgId);
+  if (normalizedCrm) {
+    writeLocalDocument(CRM_DOCUMENT_KEY, normalizedCrm, false);
+  } else if (canSeedOrgFromLocal) {
+    const localCrm = readLocalDocument(CRM_DOCUMENT_KEY);
+    if (localCrm !== null) await syncNormalizedCrm(orgId, localCrm as CrmDocument);
+  } else {
+    removeLocalDocument(CRM_DOCUMENT_KEY);
+  }
+
   const { data: orgRows, error: orgError } = await supabase
     .from('org_documents')
     .select('document_key,document')
@@ -133,7 +147,9 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
       pending.delete(detail.key);
       const operation = detail.key === PRIVATE_DOCUMENT_KEY
         ? upsertPrivateDocument(userId, detail.document)
-        : upsertOrgDocument(orgId, userId, detail.key, detail.document);
+        : detail.key === CRM_DOCUMENT_KEY
+          ? syncNormalizedCrm(orgId, detail.document as CrmDocument)
+          : upsertOrgDocument(orgId, userId, detail.key, detail.document);
       void operation.catch((error: unknown) => {
         const message = error instanceof Error ? error.message : 'Cloud sync failed.';
         onError?.(message);
