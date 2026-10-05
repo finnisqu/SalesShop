@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import { localQuoteRepository } from '../data/quoteRepository';
+import {
+  applyQuoteSent,
+  applyQuoteStatusChange,
+  recordQuoteCreated,
+  recordQuoteLinked,
+  recordRevisionCreated,
+} from '../services/quoteCrmService';
 import type {
   Quote,
   QuoteCustomerColumns,
@@ -156,6 +163,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quotes = [quote, ...get().quotes];
     persist(quotes, quote.id);
     set({ quotes, activeQuoteId: quote.id });
+    recordQuoteCreated(quote);
+    if (quote.projectId) recordQuoteLinked(quote);
     return quote.id;
   },
 
@@ -165,12 +174,36 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   updateQuote: (quoteId, patch) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current) return;
+
+    if (patch.status === 'Sent' && current.status !== 'Sent') {
+      get().recordSent(quoteId);
+      return;
+    }
+
     const timestamp = now();
-    const quotes = get().quotes.map((quote) => quote.id === quoteId
-      ? { ...quote, ...patch, title: patch.title?.trim() || quote.title, updatedAt: timestamp }
-      : quote);
+    let updated: Quote = {
+      ...current,
+      ...patch,
+      title: patch.title?.trim() || current.title,
+      updatedAt: timestamp,
+    };
+
+    if (patch.status && patch.status !== current.status) {
+      if (patch.status === 'Viewed') updated = { ...updated, viewedAt: timestamp };
+      if (patch.status === 'Signed') updated = { ...updated, signedAt: timestamp };
+      const projectId = applyQuoteStatusChange(updated, current.status);
+      if (projectId && projectId !== updated.projectId) updated = { ...updated, projectId };
+    }
+
+    const quotes = get().quotes.map((quote) => quote.id === quoteId ? updated : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes });
+
+    if (Object.prototype.hasOwnProperty.call(patch, 'projectId') && patch.projectId && patch.projectId !== current.projectId) {
+      recordQuoteLinked(updated);
+    }
   },
 
   deleteQuote: (quoteId) => {
@@ -262,41 +295,44 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   recordSent: (quoteId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current) return;
     const timestamp = now();
-    const quotes = get().quotes.map((quote) => {
-      if (quote.id !== quoteId) return quote;
-      const sentQuote = { ...quote, status: 'Sent' as const, sentAt: timestamp, updatedAt: timestamp };
-      const alreadyCaptured = quote.history.some((item) => item.revision === quote.revision);
-      return {
-        ...sentQuote,
-        history: alreadyCaptured ? quote.history : [...quote.history, snapshot(sentQuote, 'Sent')],
-      };
-    });
+    let sentQuote: Quote = { ...current, status: 'Sent', sentAt: timestamp, updatedAt: timestamp };
+    const projectId = applyQuoteSent(sentQuote);
+    if (projectId) sentQuote = { ...sentQuote, projectId };
+    const alreadyCaptured = current.history.some((item) => item.revision === current.revision);
+    sentQuote = {
+      ...sentQuote,
+      history: alreadyCaptured ? current.history : [...current.history, snapshot(sentQuote, 'Sent')],
+    };
+    const quotes = get().quotes.map((quote) => quote.id === quoteId ? sentQuote : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes });
   },
 
   createRevision: (quoteId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current) return;
     const timestamp = now();
     const date = localDateKey();
-    const quotes = get().quotes.map((quote) => {
-      if (quote.id !== quoteId) return quote;
-      const alreadyCaptured = quote.history.some((item) => item.revision === quote.revision);
-      const history = alreadyCaptured ? quote.history : [...quote.history, snapshot(quote)];
-      return {
-        ...quote,
-        revision: quote.revision + 1,
-        revisionLabel: '',
-        quoteDate: date,
-        status: 'Draft' as const,
-        history,
-        sentAt: undefined,
-        viewedAt: undefined,
-        signedAt: undefined,
-        updatedAt: timestamp,
-      };
-    });
+    const alreadyCaptured = current.history.some((item) => item.revision === current.revision);
+    const history = alreadyCaptured ? current.history : [...current.history, snapshot(current)];
+    const revised: Quote = {
+      ...current,
+      revision: current.revision + 1,
+      revisionLabel: '',
+      quoteDate: date,
+      status: 'Draft',
+      history,
+      sentAt: undefined,
+      viewedAt: undefined,
+      signedAt: undefined,
+      updatedAt: timestamp,
+    };
+    const quotes = get().quotes.map((quote) => quote.id === quoteId ? revised : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes });
+    recordRevisionCreated(revised);
   },
 }));
