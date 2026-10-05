@@ -80,7 +80,13 @@ async function prepareCurrentRevision(quoteId: string) {
 
 export async function getQuoteShare(quoteId: string) {
   const { organizationId } = requireCloudContext();
-  const response = await invoke({ action: 'get', organizationId, quoteId });
+  const quote = useQuoteStore.getState().quotes.find((candidate) => candidate.id === quoteId);
+  const response = await invoke({
+    action: 'get',
+    organizationId,
+    quoteId,
+    revision: quote?.revision,
+  });
   return response.share;
 }
 
