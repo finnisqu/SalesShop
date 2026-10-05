@@ -1,7 +1,6 @@
+import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
 import type { Activity, Company, Contact, CrmDocument, Project, ProjectStage } from '../types/crm';
 import { ACTIVITY_TYPES, PROJECT_STAGES } from '../types/crm';
-
-const STORAGE_KEY = 'salesshop-react-crm-v1';
 
 export interface CrmRepository {
   load(): CrmDocument;
@@ -109,20 +108,11 @@ function normalize(raw: unknown): CrmDocument | null {
 
 export const localCrmRepository: CrmRepository = {
   load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        const seeded = seedDocument();
-        this.save(seeded);
-        return seeded;
-      }
-      const normalized = normalize(JSON.parse(raw));
-      if (normalized) {
-        this.save(normalized);
-        return normalized;
-      }
-    } catch {
-      // Fall through to a clean seed document.
+    const raw = readLocalDocument('crm');
+    const normalized = normalize(raw);
+    if (normalized) {
+      this.save(normalized);
+      return normalized;
     }
     const seeded = seedDocument();
     this.save(seeded);
@@ -130,6 +120,6 @@ export const localCrmRepository: CrmRepository = {
   },
 
   save(document) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(document));
+    writeLocalDocument('crm', document);
   },
 };

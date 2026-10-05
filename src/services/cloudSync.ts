@@ -1,0 +1,118 @@
+import { supabase } from '../lib/supabase';
+import {
+  CLOUD_DOCUMENT_SAVED_EVENT,
+  readLocalDocument,
+  writeLocalDocument,
+  type CloudDocumentKey,
+  type CloudDocumentSavedDetail,
+} from '../data/cloudAwareStorage';
+
+const ORG_DOCUMENT_KEYS: CloudDocumentKey[] = ['crm', 'quotes', 'signatures'];
+const PRIVATE_DOCUMENT_KEY: CloudDocumentKey = 'notebook';
+const pending = new Map<CloudDocumentKey, number>();
+let activeCleanup: (() => void) | null = null;
+
+async function upsertOrgDocument(orgId: string, userId: string, key: CloudDocumentKey, document: unknown) {
+  if (!supabase) return;
+  const { error } = await supabase.from('org_documents').upsert({
+    org_id: orgId,
+    document_key: key,
+    document,
+    updated_by: userId,
+  }, { onConflict: 'org_id,document_key' });
+  if (error) throw error;
+}
+
+async function upsertPrivateDocument(userId: string, document: unknown) {
+  if (!supabase) return;
+  const { error } = await supabase.from('private_documents').upsert({
+    owner_id: userId,
+    document_key: PRIVATE_DOCUMENT_KEY,
+    document,
+  }, { onConflict: 'owner_id,document_key' });
+  if (error) throw error;
+}
+
+export async function ensureCurrentWorkspace() {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data, error } = await supabase.rpc('ensure_current_workspace');
+  if (error) throw error;
+  if (typeof data !== 'string' || !data) throw new Error('SalesShop could not resolve a workspace.');
+  return data;
+}
+
+export async function hydrateCloudDocuments(orgId: string, userId: string) {
+  if (!supabase) return;
+
+  const { data: orgRows, error: orgError } = await supabase
+    .from('org_documents')
+    .select('document_key,document')
+    .eq('org_id', orgId)
+    .in('document_key', ORG_DOCUMENT_KEYS);
+  if (orgError) throw orgError;
+
+  const cloudOrgDocuments = new Map<string, unknown>(
+    (orgRows ?? []).map((row) => [String(row.document_key), row.document]),
+  );
+
+  for (const key of ORG_DOCUMENT_KEYS) {
+    if (cloudOrgDocuments.has(key)) {
+      writeLocalDocument(key, cloudOrgDocuments.get(key), false);
+      continue;
+    }
+    const local = readLocalDocument(key);
+    if (local !== null) await upsertOrgDocument(orgId, userId, key, local);
+  }
+
+  const { data: notebookRow, error: notebookError } = await supabase
+    .from('private_documents')
+    .select('document')
+    .eq('owner_id', userId)
+    .eq('document_key', PRIVATE_DOCUMENT_KEY)
+    .maybeSingle();
+  if (notebookError) throw notebookError;
+
+  if (notebookRow?.document !== undefined) {
+    writeLocalDocument(PRIVATE_DOCUMENT_KEY, notebookRow.document, false);
+  } else {
+    const localNotebook = readLocalDocument(PRIVATE_DOCUMENT_KEY);
+    if (localNotebook !== null) await upsertPrivateDocument(userId, localNotebook);
+  }
+}
+
+export function startCloudSync(orgId: string, userId: string, onError?: (message: string) => void) {
+  stopCloudSync();
+  if (!supabase || typeof window === 'undefined') return;
+
+  const handler = (event: Event) => {
+    const detail = (event as CustomEvent<CloudDocumentSavedDetail>).detail;
+    if (!detail?.key) return;
+    const previous = pending.get(detail.key);
+    if (previous) window.clearTimeout(previous);
+
+    const delay = detail.key === 'notebook' ? 1200 : 500;
+    const timer = window.setTimeout(() => {
+      pending.delete(detail.key);
+      const operation = detail.key === PRIVATE_DOCUMENT_KEY
+        ? upsertPrivateDocument(userId, detail.document)
+        : upsertOrgDocument(orgId, userId, detail.key, detail.document);
+      void operation.catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Cloud sync failed.';
+        onError?.(message);
+      });
+    }, delay);
+    pending.set(detail.key, timer);
+  };
+
+  window.addEventListener(CLOUD_DOCUMENT_SAVED_EVENT, handler);
+  activeCleanup = () => window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT, handler);
+}
+
+export function stopCloudSync() {
+  activeCleanup?.();
+  activeCleanup = null;
+  if (typeof window !== 'undefined') {
+    pending.forEach((timer) => window.clearTimeout(timer));
+  }
+  pending.clear();
+}

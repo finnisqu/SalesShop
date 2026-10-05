@@ -1,6 +1,5 @@
+import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
 import type { Quote, QuoteDocument } from '../types/quote';
-
-const STORAGE_KEY = 'salesshop-react-quotes-v1';
 
 export interface QuoteRepository {
   load(): QuoteDocument | null;
@@ -29,18 +28,12 @@ function normalizeDocument(value: unknown): QuoteDocument | null {
 
 export const localQuoteRepository: QuoteRepository = {
   load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      const normalized = normalizeDocument(JSON.parse(raw));
-      if (normalized) this.save(normalized);
-      return normalized;
-    } catch {
-      return null;
-    }
+    const normalized = normalizeDocument(readLocalDocument('quotes'));
+    if (normalized) this.save(normalized);
+    return normalized;
   },
 
   save(document) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(document));
+    writeLocalDocument('quotes', document);
   },
 };

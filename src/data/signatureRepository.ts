@@ -1,6 +1,5 @@
+import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
 import type { SignatureDocument, SignatureRecord } from '../types/signature';
-
-const STORAGE_KEY = 'salesshop-react-signatures-v1';
 
 export interface SignatureRepository {
   load(): SignatureDocument;
@@ -30,23 +29,19 @@ function normalizeRecord(raw: Partial<SignatureRecord>): SignatureRecord | null 
 
 export const localSignatureRepository: SignatureRepository = {
   load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { schemaVersion: 1, signatures: [] };
-      const parsed = JSON.parse(raw) as { schemaVersion?: number; signatures?: unknown[] };
-      if (parsed.schemaVersion !== 1 || !Array.isArray(parsed.signatures)) return { schemaVersion: 1, signatures: [] };
-      return {
-        schemaVersion: 1,
-        signatures: parsed.signatures
-          .map((item) => normalizeRecord(item as Partial<SignatureRecord>))
-          .filter((item): item is SignatureRecord => Boolean(item)),
-      };
-    } catch {
+    const parsed = readLocalDocument('signatures') as { schemaVersion?: number; signatures?: unknown[] } | null;
+    if (!parsed || parsed.schemaVersion !== 1 || !Array.isArray(parsed.signatures)) {
       return { schemaVersion: 1, signatures: [] };
     }
+    return {
+      schemaVersion: 1,
+      signatures: parsed.signatures
+        .map((item) => normalizeRecord(item as Partial<SignatureRecord>))
+        .filter((item): item is SignatureRecord => Boolean(item)),
+    };
   },
 
   save(document) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(document));
+    writeLocalDocument('signatures', document);
   },
 };

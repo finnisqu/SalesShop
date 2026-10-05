@@ -8,6 +8,7 @@ import './accounts.css';
 import './notebook-project-links.css';
 import './quotes.css';
 import './dashboard.css';
+import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
 import { Dashboard } from './components/Dashboard';
 import { DrawingCanvas } from './components/DrawingCanvas';
@@ -55,7 +56,10 @@ function App() {
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Dashboard</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
-        <div className="migration-chip">React foundation</div>
+        <div className="app-account-zone">
+          <div className="migration-chip">React foundation</div>
+          <AuthStatus />
+        </div>
       </header>
 
       {view === 'board' ? (
