@@ -38,6 +38,13 @@ export const ACTIVITY_TYPES = [
   'quote-signed',
   'quote-declined',
   'quote-expired',
+  'change-order-created',
+  'change-order-sent',
+  'change-order-revision-created',
+  'change-order-viewed',
+  'change-order-signed',
+  'change-order-declined',
+  'change-order-expired',
   'contact-created',
 ] as const;
 
@@ -80,6 +87,8 @@ export interface ActivityMetadata {
   quoteNumber?: string;
   revision?: number;
   amount?: number;
+  documentType?: 'quote' | 'pricing-schedule' | 'change-order';
+  parentQuoteId?: string;
   fromStage?: ProjectStage;
   toStage?: ProjectStage;
   source?: 'manual' | 'quote' | 'system';
