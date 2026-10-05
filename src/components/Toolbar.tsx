@@ -1,10 +1,10 @@
+import { setNotebookProject } from '../services/notebookProjectContext';
+import { useCrmStore } from '../store/crmStore';
 import { useNotebookStore } from '../store/notebookStore';
 import type { ActiveNotebookTool, NotebookEntry, PageTone, PaperStyle } from '../types/notebook';
 import { StationeryInsertMenu } from './StationeryInsertMenu';
 
-interface ToolbarProps {
-  entry: NotebookEntry;
-}
+interface ToolbarProps { entry: NotebookEntry; }
 
 export function Toolbar({ entry }: ToolbarProps) {
   const activeTool = useNotebookStore((state) => state.activeTool);
@@ -14,28 +14,21 @@ export function Toolbar({ entry }: ToolbarProps) {
   const setPageTone = useNotebookStore((state) => state.setPageTone);
   const toggleFavorite = useNotebookStore((state) => state.toggleFavorite);
   const duplicateEntry = useNotebookStore((state) => state.duplicateEntry);
+  const projects = useCrmStore((state) => state.projects);
+  const sortedProjects = [...projects].sort((a, b) => a.name.localeCompare(b.name));
 
   const tools: ReadonlyArray<[ActiveNotebookTool, string]> = [
-    ['select', 'Select'],
-    ['text', 'Text'],
-    ['pen', 'Pen'],
-    ['marker', 'Marker'],
-    ['highlighter', 'Highlighter'],
-    ['eraser', 'Eraser'],
-    ['lasso', 'Lasso'],
+    ['select', 'Select'], ['text', 'Text'], ['pen', 'Pen'], ['marker', 'Marker'],
+    ['highlighter', 'Highlighter'], ['eraser', 'Eraser'], ['lasso', 'Lasso'],
   ];
 
   return (
     <div className="paper-toolbar" aria-label="Notebook tools">
       <div className="tool-group">
         {tools.map(([tool, label]) => (
-          <button
-            key={tool}
-            className={`tool-button ${activeTool === tool ? 'active' : ''}`}
-            onClick={() => setActiveTool(tool)}
-            aria-pressed={activeTool === tool}
-            title={tool === 'eraser' ? 'Stroke eraser' : tool === 'lasso' ? 'Select and move handwriting' : undefined}
-          >
+          <button key={tool} className={`tool-button ${activeTool === tool ? 'active' : ''}`}
+            onClick={() => setActiveTool(tool)} aria-pressed={activeTool === tool}
+            title={tool === 'eraser' ? 'Stroke eraser' : tool === 'lasso' ? 'Select and move handwriting' : undefined}>
             {label}
           </button>
         ))}
@@ -45,51 +38,37 @@ export function Toolbar({ entry }: ToolbarProps) {
       <StationeryInsertMenu entryId={entry.id} />
       <div className="tool-spacer" />
 
+      <div className="project-context-control" title="Attach this notebook page to a project">
+        <span>Project</span>
+        <select className="paper-select project-context-select" value={entry.context?.projectId ?? ''}
+          onChange={(event) => setNotebookProject(entry.id, event.target.value || undefined)} aria-label="Linked project">
+          <option value="">Unlinked</option>
+          {sortedProjects.map((project) => (
+            <option key={project.id} value={project.id}>{project.name}{project.companyName ? ` · ${project.companyName}` : ''}</option>
+          ))}
+        </select>
+      </div>
+
       <span className="pencil-mode-hint" title="On touch devices, finger gestures navigate while Pencil writes">Pencil writes · finger moves</span>
 
-      <select
-        className="paper-select"
-        value={entry.paperStyle}
-        onChange={(event) => setPaperStyle(entry.id, event.target.value as PaperStyle)}
-        aria-label="Paper style"
-      >
-        <option value="lined">Lined</option>
-        <option value="grid">Grid</option>
-        <option value="dotted">Dotted</option>
-        <option value="cornell">Cornell</option>
-        <option value="two-column">Two column</option>
-        <option value="blank">Blank</option>
+      <select className="paper-select" value={entry.paperStyle}
+        onChange={(event) => setPaperStyle(entry.id, event.target.value as PaperStyle)} aria-label="Paper style">
+        <option value="lined">Lined</option><option value="grid">Grid</option><option value="dotted">Dotted</option>
+        <option value="cornell">Cornell</option><option value="two-column">Two column</option><option value="blank">Blank</option>
       </select>
 
       <div className="page-meta-controls" aria-label="Page options">
-        <button
-          className={`tool-button page-favorite-button ${entry.favorite ? 'is-favorite' : ''}`}
-          onClick={() => toggleFavorite(entry.id)}
-          aria-pressed={entry.favorite}
-          title={entry.favorite ? 'Remove from favorites' : 'Favorite page'}
-        >
-          {entry.favorite ? '★' : '☆'}
-        </button>
-        <select
-          className="paper-select page-tone-select"
-          value={entry.tone}
-          onChange={(event) => setPageTone(entry.id, event.target.value as PageTone)}
-          aria-label="Paper tone"
-        >
-          <option value="cream">Cream</option>
-          <option value="white">White</option>
-          <option value="blue">Blue</option>
-          <option value="green">Green</option>
-          <option value="rose">Rose</option>
+        <button className={`tool-button page-favorite-button ${entry.favorite ? 'is-favorite' : ''}`}
+          onClick={() => toggleFavorite(entry.id)} aria-pressed={entry.favorite}
+          title={entry.favorite ? 'Remove from favorites' : 'Favorite page'}>{entry.favorite ? '★' : '☆'}</button>
+        <select className="paper-select page-tone-select" value={entry.tone}
+          onChange={(event) => setPageTone(entry.id, event.target.value as PageTone)} aria-label="Paper tone">
+          <option value="cream">Cream</option><option value="white">White</option><option value="blue">Blue</option>
+          <option value="green">Green</option><option value="rose">Rose</option>
         </select>
-        <button className="tool-button page-duplicate-button" onClick={() => duplicateEntry(entry.id)} title="Duplicate page">
-          Duplicate
-        </button>
+        <button className="tool-button page-duplicate-button" onClick={() => duplicateEntry(entry.id)} title="Duplicate page">Duplicate</button>
       </div>
-
-      <button className="tool-button quiet" onClick={() => clearInk(entry.id)}>
-        Clear ink
-      </button>
+      <button className="tool-button quiet" onClick={() => clearInk(entry.id)}>Clear ink</button>
     </div>
   );
 }
