@@ -150,7 +150,6 @@ export function QuoteShareControl() {
                       </label>
                       <div className="quote-share-primary-actions">
                         <button type="button" className="primary" onClick={() => void copy()}>{copied ? 'Copied ✓' : 'Copy link'}</button>
-                        <button type="button" onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}>Open</button>
                       </div>
                     </>
                   )}
