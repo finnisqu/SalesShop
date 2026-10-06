@@ -91,6 +91,25 @@ export function QuoteShareControl() {
     }
   };
 
+  const nativeShare = async () => {
+    if (!share) return;
+    const url = quoteShareUrl(share);
+    if (!navigator.share) {
+      await copy();
+      return;
+    }
+    try {
+      await navigator.share({
+        title: `${displayQuoteNumber(quote)} · ${quote.title}`,
+        text: `Review ${displayQuoteNumber(quote)} from SalesShop.`,
+        url,
+      });
+    } catch (reason) {
+      if (reason instanceof DOMException && reason.name === 'AbortError') return;
+      setError(reason instanceof Error ? reason.message : 'Could not open the share sheet.');
+    }
+  };
+
   const cloudReady = mode === 'cloud' && Boolean(organizationId);
   const url = share ? quoteShareUrl(share) : '';
   const active = share?.status === 'active' || share?.status === 'signed';
@@ -149,7 +168,8 @@ export function QuoteShareControl() {
                         <input readOnly value={url} onFocus={(event) => event.currentTarget.select()} />
                       </label>
                       <div className="quote-share-primary-actions">
-                        <button type="button" className="primary" onClick={() => void copy()}>{copied ? 'Copied ✓' : 'Copy link'}</button>
+                        <button type="button" className="primary" onClick={() => void nativeShare()}>Share…</button>
+                        <button type="button" onClick={() => void copy()}>{copied ? 'Copied ✓' : 'Copy link'}</button>
                       </div>
                     </>
                   )}
