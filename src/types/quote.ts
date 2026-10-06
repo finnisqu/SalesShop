@@ -275,7 +275,8 @@ export type QuotePatch = Partial<Pick<Quote,
 
 export function roundCurrency(value: number) {
   if (!Number.isFinite(value)) return 0;
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  const magnitude = Math.round((Math.abs(value) + Number.EPSILON) * 100) / 100;
+  return value < 0 ? -magnitude : magnitude;
 }
 
 export function quoteLineTotal(line: QuoteLine) {
