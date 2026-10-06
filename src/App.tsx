@@ -9,6 +9,7 @@ import './notebook-project-links.css';
 import './quotes.css';
 import './dashboard.css';
 import './company-settings.css';
+import './rate-book.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
@@ -19,6 +20,7 @@ import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
 import { QuoteShareControl } from './components/QuoteShareControl';
 import { Quotes } from './components/Quotes';
+import { RateBook } from './components/RateBook';
 import { Sidebar } from './components/Sidebar';
 import { TextEditor } from './components/TextEditor';
 import { Toolbar } from './components/Toolbar';
@@ -61,6 +63,7 @@ function App() {
           <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
+          <button className={`app-tab ${view === 'rate-book' ? 'active' : ''}`} onClick={() => setView('rate-book')}>Rates</button>
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Dashboard</button>
           <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
@@ -77,6 +80,8 @@ function App() {
         <Board />
       ) : view === 'quotes' ? (
         <Quotes />
+      ) : view === 'rate-book' ? (
+        <RateBook />
       ) : view === 'dashboard' ? (
         <Dashboard />
       ) : view === 'settings' ? (
