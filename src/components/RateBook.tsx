@@ -23,6 +23,7 @@ import {
   type RateBookPricingBehavior,
   type RateBookUnit,
 } from '../types/rateBook';
+import { MaterialRateBook } from './MaterialRateBook';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 type CategoryFilter = 'all' | RateBookCategory;
@@ -294,8 +295,6 @@ export function RateBook() {
   const addItem = useRateBookStore((state) => state.addItem);
   const updateItem = useRateBookStore((state) => state.updateItem);
   const updatePricing = useRateBookStore((state) => state.updatePricing);
-  const stockMaterials = useCompanySettingsStore((state) => state.settings.stockMaterials);
-  const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
@@ -311,8 +310,7 @@ export function RateBook() {
 
   useEffect(() => {
     hydrate();
-    void hydrateSettings();
-  }, [hydrate, hydrateSettings]);
+  }, [hydrate]);
 
   useEffect(() => {
     try {
@@ -338,7 +336,7 @@ export function RateBook() {
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return items
-      .filter((item) => category === 'all' || item.category === category)
+      .filter((item) => category === 'all' ? item.category !== 'material' : item.category === category)
       .filter((item) => showInactive || item.active)
       .filter((item) => !needle || `${item.name} ${item.code ?? ''} ${item.notes ?? ''}`.toLowerCase().includes(needle))
       .sort((a, b) => RATE_BOOK_CATEGORIES.indexOf(a.category) - RATE_BOOK_CATEGORIES.indexOf(b.category) || a.name.localeCompare(b.name));
@@ -349,12 +347,14 @@ export function RateBook() {
     const activeCodes = new Map<string, string[]>();
     const today = new Date().toISOString().slice(0, 10);
     items.forEach((item) => {
+      if (item.category === 'material') return;
       if (item.active && item.code?.trim()) {
         const code = normalized(item.code);
         activeCodes.set(code, [...(activeCodes.get(code) ?? []), item.id]);
       }
     });
     items.forEach((item) => {
+      if (item.category === 'material') return;
       const issues: string[] = [];
       const code = item.code?.trim() ? normalized(item.code) : '';
       if (item.active && code && (activeCodes.get(code)?.length ?? 0) > 1) issues.push(`Duplicate active code: ${item.code}`);
@@ -373,35 +373,20 @@ export function RateBook() {
   const visibleColumns = useMemo(() => SHEET_COLUMNS.filter((column) => !hiddenColumns.has(column.key)), [hiddenColumns]);
   const editableVisibleColumns = useMemo(() => visibleColumns.filter((column) => isEditableColumn(column.key)), [visibleColumns]);
   const sheetMinWidth = 44 + visibleColumns.reduce((total, column) => total + columnWidths[column.key], 0);
-  const activeCount = items.filter((item) => item.active).length;
-  const referenceOnlyCount = items.filter((item) => item.active && item.pricingBehavior !== 'suggested').length;
-  const overrideCount = items.filter((item) => item.active && item.divisionOverrides.length).length;
-  const historyCount = items.reduce((total, item) => total + item.history.length, 0);
-  const issueRows = items.filter((item) => issuesById.has(item.id));
+  const nonMaterialItems = items.filter((item) => item.category !== 'material');
+  const activeCount = nonMaterialItems.filter((item) => item.active).length;
+  const referenceOnlyCount = nonMaterialItems.filter((item) => item.active && item.pricingBehavior !== 'suggested').length;
+  const overrideCount = nonMaterialItems.filter((item) => item.active && item.divisionOverrides.length).length;
+  const historyCount = nonMaterialItems.reduce((total, item) => total + item.history.length, 0);
+  const issueRows = nonMaterialItems.filter((item) => issuesById.has(item.id));
   const issueCount = [...issuesById.values()].reduce((total, issues) => total + issues.length, 0);
-  const availableStock = stockMaterials.filter((material) => material.active && !items.some((item) => item.stockMaterialId === material.id));
   const allVisibleSelected = filtered.length > 0 && filtered.every((item) => selectedIds.has(item.id));
   const selectedVisible = filtered.filter((item) => selectedIds.has(item.id));
 
   const addCurrent = () => {
-    const nextCategory: RateBookCategory = category === 'all' ? 'material' : category;
+    const nextCategory: RateBookCategory = category === 'all' || category === 'material' ? 'fabrication-install' : category;
     const id = addItem(nextCategory);
     setCategory(nextCategory);
-    setExpandedId(id);
-  };
-
-  const addStockMaterial = (stockId: string) => {
-    const stock = stockMaterials.find((material) => material.id === stockId);
-    if (!stock) return;
-    const id = addItem('material', {
-      name: stock.name,
-      stockMaterialId: stock.id,
-      internalCost: stock.internalCost,
-      unit: stock.unit,
-      notes: stock.notes,
-      pricingBehavior: 'cost-reference',
-    });
-    setCategory('material');
     setExpandedId(id);
   };
 
@@ -435,7 +420,7 @@ export function RateBook() {
 
   const changeBulkField = (field: BulkField) => {
     setBulkField(field);
-    if (field === 'category') setBulkValue('material');
+    if (field === 'category') setBulkValue('fabrication-install');
     else if (field === 'unit') setBulkValue('sf');
     else if (field === 'pricingBehavior') setBulkValue('suggested');
     else if (field === 'active') setBulkValue('true');
@@ -450,7 +435,7 @@ export function RateBook() {
     }
     if (column === 'category') {
       const next = parseCategory(rawValue);
-      if (next) updateItem(id, { category: next });
+      if (next && next !== 'material') updateItem(id, { category: next });
       return;
     }
     if (column === 'item') {
@@ -491,7 +476,7 @@ export function RateBook() {
     ids.forEach((id) => {
       if (bulkField === 'internalCost') updatePricing(id, { internalCost: numberValue(bulkValue) });
       else if (bulkField === 'sellRate') updatePricing(id, { sellRate: numberValue(bulkValue) });
-      else if (bulkField === 'category') updateItem(id, { category: bulkValue as RateBookCategory });
+      else if (bulkField === 'category' && bulkValue !== 'material') updateItem(id, { category: bulkValue as RateBookCategory });
       else if (bulkField === 'unit') updateItem(id, { unit: bulkValue as RateBookUnit });
       else if (bulkField === 'pricingBehavior') updatePricing(id, { pricingBehavior: bulkValue as RateBookPricingBehavior });
       else updateItem(id, { active: bulkValue === 'true' });
@@ -582,7 +567,7 @@ export function RateBook() {
 
     const targetIds = filtered.slice(startRow).map((item) => item.id);
     while (targetIds.length < matrix.length) {
-      const nextCategory: RateBookCategory = category === 'all' ? 'material' : category;
+      const nextCategory: RateBookCategory = category === 'all' || category === 'material' ? 'fabrication-install' : category;
       targetIds.push(addItem(nextCategory));
     }
 
@@ -641,15 +626,15 @@ export function RateBook() {
           <h1>Rate Book</h1>
           <p>Company costs and suggested rates are references—not rules. Salespeople can override them, use cost only, or bypass the Rate Book entirely on a quote.</p>
         </div>
-        <button type="button" className="rate-book-add" onClick={addCurrent}>+ Rate row</button>
+        {category !== 'material' && <button type="button" className="rate-book-add" onClick={addCurrent}>+ Rate row</button>}
       </header>
 
-      <section className="rate-book-stats" aria-label="Rate Book summary">
+      {category !== 'material' && <section className="rate-book-stats" aria-label="Rate Book summary">
         <div><span>Active</span><strong>{activeCount}</strong></div>
         <div><span>Reference/manual</span><strong>{referenceOnlyCount}</strong></div>
         <div><span>Division overrides</span><strong>{overrideCount}</strong></div>
         <div><span>Price versions</span><strong>{historyCount}</strong></div>
-      </section>
+      </section>}
 
       <section className="rate-book-controls">
         <div className="rate-book-category-switch" role="tablist" aria-label="Rate Book categories">
@@ -657,104 +642,99 @@ export function RateBook() {
           {RATE_BOOK_CATEGORIES.map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{RATE_BOOK_CATEGORY_LABELS[item]}</button>)}
         </div>
         <div className="rate-book-filter-row">
-          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search rates…" aria-label="Search Rate Book" />
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={category === 'material' ? 'Search colors, brands, material types…' : 'Search rates…'} aria-label="Search Rate Book" />
           <label><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Show inactive</label>
-          <details className="rate-book-column-menu">
+          {category !== 'material' && <details className="rate-book-column-menu">
             <summary>Columns</summary>
             <div>
               <strong>Show / hide</strong>
               {SHEET_COLUMNS.map((column) => <label key={column.key}><input type="checkbox" checked={!hiddenColumns.has(column.key)} disabled={column.lockVisible} onChange={() => toggleColumn(column.key)} /> {column.label}</label>)}
               <button type="button" onClick={() => { setHiddenColumns(new Set()); setColumnWidths(DEFAULT_COLUMN_WIDTHS); }}>Reset grid</button>
             </div>
-          </details>
+          </details>}
         </div>
       </section>
 
-      <div className="rate-book-sheet-notice" role="status">{sheetNotice}</div>
+      {category === 'material' ? (
+        <MaterialRateBook query={query} showInactive={showInactive} />
+      ) : (
+        <>
+          <div className="rate-book-sheet-notice" role="status">{sheetNotice}</div>
 
-      {issueCount > 0 && (
-        <section className="rate-book-qc-banner">
-          <div><strong>{issueRows.length} row{issueRows.length === 1 ? '' : 's'} to review</strong><span>{issueCount} Rate Book check{issueCount === 1 ? '' : 's'} · warnings do not block editing or quoting.</span></div>
-          <div className="rate-book-qc-examples">
-            {issueRows.slice(0, 3).map((item) => <span key={item.id}><b>{item.name}</b> · {issuesById.get(item.id)?.[0]}</span>)}
-            {issueRows.length > 3 && <span>+ {issueRows.length - 3} more row{issueRows.length - 3 === 1 ? '' : 's'}</span>}
-          </div>
-        </section>
-      )}
-
-      {selectedIds.size > 0 && (
-        <section className="rate-book-bulk-bar" aria-label="Bulk edit selected Rate Book rows">
-          <strong>{selectedIds.size} row{selectedIds.size === 1 ? '' : 's'} selected</strong>
-          <select value={bulkField} onChange={(event) => changeBulkField(event.target.value as BulkField)} aria-label="Bulk edit field">
-            <option value="internalCost">Cost</option><option value="sellRate">Suggested sell</option><option value="category">Category</option><option value="unit">Unit</option><option value="pricingBehavior">Pricing behavior</option><option value="active">Active state</option>
-          </select>
-          {bulkField === 'internalCost' || bulkField === 'sellRate' ? (
-            <input type="number" step="0.01" value={bulkValue} onChange={(event) => setBulkValue(event.target.value)} placeholder="Blank clears value" aria-label="Bulk value" />
-          ) : bulkField === 'category' ? (
-            <select value={bulkValue || 'material'} onChange={(event) => setBulkValue(event.target.value)}>{RATE_BOOK_CATEGORIES.map((value) => <option value={value} key={value}>{RATE_BOOK_CATEGORY_LABELS[value]}</option>)}</select>
-          ) : bulkField === 'unit' ? (
-            <select value={bulkValue || 'sf'} onChange={(event) => setBulkValue(event.target.value)}>{RATE_BOOK_UNITS.map((value) => <option value={value} key={value}>{RATE_BOOK_UNIT_LABELS[value]}</option>)}</select>
-          ) : bulkField === 'pricingBehavior' ? (
-            <select value={bulkValue || 'suggested'} onChange={(event) => setBulkValue(event.target.value)}>{RATE_BOOK_PRICING_BEHAVIORS.map((value) => <option value={value} key={value}>{RATE_BOOK_PRICING_BEHAVIOR_LABELS[value]}</option>)}</select>
-          ) : (
-            <select value={bulkValue || 'true'} onChange={(event) => setBulkValue(event.target.value)}><option value="true">Active</option><option value="false">Inactive</option></select>
+          {issueCount > 0 && (
+            <section className="rate-book-qc-banner">
+              <div><strong>{issueRows.length} row{issueRows.length === 1 ? '' : 's'} to review</strong><span>{issueCount} Rate Book check{issueCount === 1 ? '' : 's'} · warnings do not block editing or quoting.</span></div>
+              <div className="rate-book-qc-examples">
+                {issueRows.slice(0, 3).map((item) => <span key={item.id}><b>{item.name}</b> · {issuesById.get(item.id)?.[0]}</span>)}
+                {issueRows.length > 3 && <span>+ {issueRows.length - 3} more row{issueRows.length - 3 === 1 ? '' : 's'}</span>}
+              </div>
+            </section>
           )}
-          <button type="button" className="primary" onClick={applyBulkEdit}>Apply to selected</button>
-          <button type="button" onClick={() => fillDownSelected(columnForBulkField(bulkField))}>Fill down</button>
-          <button type="button" onClick={() => void copySelectedRows()}>Copy rows</button>
-          <button type="button" onClick={() => { setSelectedIds(new Set()); setLastSelectedId(null); }}>Clear selection</button>
-        </section>
-      )}
 
-      {category === 'material' && (
-        <section className="rate-book-material-source">
-          <div><strong>Stock material library</strong><small>Bring an existing company color into the Rate Book as a cost-reference row.</small></div>
-          <select value="" disabled={!availableStock.length} onChange={(event) => { if (event.target.value) addStockMaterial(event.target.value); }}>
-            <option value="">{availableStock.length ? 'Add stocked material…' : 'All active stock colors are linked'}</option>
-            {availableStock.map((material) => <option value={material.id} key={material.id}>{material.name} · {material.materialType}</option>)}
-          </select>
-        </section>
-      )}
+          {selectedIds.size > 0 && (
+            <section className="rate-book-bulk-bar" aria-label="Bulk edit selected Rate Book rows">
+              <strong>{selectedIds.size} row{selectedIds.size === 1 ? '' : 's'} selected</strong>
+              <select value={bulkField} onChange={(event) => changeBulkField(event.target.value as BulkField)} aria-label="Bulk edit field">
+                <option value="internalCost">Cost</option><option value="sellRate">Suggested sell</option><option value="category">Category</option><option value="unit">Unit</option><option value="pricingBehavior">Pricing behavior</option><option value="active">Active state</option>
+              </select>
+              {bulkField === 'internalCost' || bulkField === 'sellRate' ? (
+                <input type="number" step="0.01" value={bulkValue} onChange={(event) => setBulkValue(event.target.value)} placeholder="Blank clears value" aria-label="Bulk value" />
+              ) : bulkField === 'category' ? (
+                <select value={bulkValue || 'fabrication-install'} onChange={(event) => setBulkValue(event.target.value)}>{RATE_BOOK_CATEGORIES.filter((value) => value !== 'material').map((value) => <option value={value} key={value}>{RATE_BOOK_CATEGORY_LABELS[value]}</option>)}</select>
+              ) : bulkField === 'unit' ? (
+                <select value={bulkValue || 'sf'} onChange={(event) => setBulkValue(event.target.value)}>{RATE_BOOK_UNITS.map((value) => <option value={value} key={value}>{RATE_BOOK_UNIT_LABELS[value]}</option>)}</select>
+              ) : bulkField === 'pricingBehavior' ? (
+                <select value={bulkValue || 'suggested'} onChange={(event) => setBulkValue(event.target.value)}>{RATE_BOOK_PRICING_BEHAVIORS.map((value) => <option value={value} key={value}>{RATE_BOOK_PRICING_BEHAVIOR_LABELS[value]}</option>)}</select>
+              ) : (
+                <select value={bulkValue || 'true'} onChange={(event) => setBulkValue(event.target.value)}><option value="true">Active</option><option value="false">Inactive</option></select>
+              )}
+              <button type="button" className="primary" onClick={applyBulkEdit}>Apply to selected</button>
+              <button type="button" onClick={() => fillDownSelected(columnForBulkField(bulkField))}>Fill down</button>
+              <button type="button" onClick={() => void copySelectedRows()}>Copy rows</button>
+              <button type="button" onClick={() => { setSelectedIds(new Set()); setLastSelectedId(null); }}>Clear selection</button>
+            </section>
+          )}
 
-      <section className="rate-book-sheet-shell">
-        <div className="rate-book-sheet-scroll">
-          <table className="rate-book-sheet" style={{ minWidth: sheetMinWidth }}>
-            <colgroup>
-              <col style={{ width: 44 }} />
-              {visibleColumns.map((column) => <col key={column.key} style={{ width: columnWidths[column.key] }} />)}
-            </colgroup>
-            <thead><tr>
-              <th className="rate-book-row-header-cell"><button type="button" onClick={toggleAllVisible} title={allVisibleSelected ? 'Clear visible row selection' : 'Select all visible rows'}>{allVisibleSelected ? '✓' : '#'}</button></th>
-              {visibleColumns.map((column) => (
-                <th key={column.key} title="Drag the right edge to resize. Right-click to hide this column." onContextMenu={(event) => { if (!column.lockVisible) { event.preventDefault(); toggleColumn(column.key); } }}>
-                  <span>{column.label}</span>
-                  <span className="rate-book-column-resizer" role="separator" aria-orientation="vertical" onPointerDown={(event) => startResize(column, event)} />
-                </th>
-              ))}
-            </tr></thead>
-            <tbody>
-              {filtered.map((item, index) => <RateBookSheetRow
-                item={item}
-                rowNumber={index + 1}
-                columns={visibleColumns}
-                key={item.id}
-                expanded={expandedId === item.id}
-                selected={selectedIds.has(item.id)}
-                issues={issuesById.get(item.id) ?? []}
-                onToggle={() => setExpandedId((current) => current === item.id ? null : item.id)}
-                onSelect={(event) => toggleRowSelection(item.id, event.shiftKey)}
-                onCellKeyDown={handleCellKeyDown}
-                onCellPaste={handleCellPaste}
-              />)}
-              {!filtered.length && <tr><td colSpan={visibleColumns.length + 1}><div className="rate-book-empty"><strong>No matching rate rows</strong><span>Add a row or change the filters above.</span></div></td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
+          <section className="rate-book-sheet-shell">
+            <div className="rate-book-sheet-scroll">
+              <table className="rate-book-sheet" style={{ minWidth: sheetMinWidth }}>
+                <colgroup>
+                  <col style={{ width: 44 }} />
+                  {visibleColumns.map((column) => <col key={column.key} style={{ width: columnWidths[column.key] }} />)}
+                </colgroup>
+                <thead><tr>
+                  <th className="rate-book-row-header-cell"><button type="button" onClick={toggleAllVisible} title={allVisibleSelected ? 'Clear visible row selection' : 'Select all visible rows'}>{allVisibleSelected ? '✓' : '#'}</button></th>
+                  {visibleColumns.map((column) => (
+                    <th key={column.key} title="Drag the right edge to resize. Right-click to hide this column." onContextMenu={(event) => { if (!column.lockVisible) { event.preventDefault(); toggleColumn(column.key); } }}>
+                      <span>{column.label}</span>
+                      <span className="rate-book-column-resizer" role="separator" aria-orientation="vertical" onPointerDown={(event) => startResize(column, event)} />
+                    </th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {filtered.map((item, index) => <RateBookSheetRow
+                    item={item}
+                    rowNumber={index + 1}
+                    columns={visibleColumns}
+                    key={item.id}
+                    expanded={expandedId === item.id}
+                    selected={selectedIds.has(item.id)}
+                    issues={issuesById.get(item.id) ?? []}
+                    onToggle={() => setExpandedId((current) => current === item.id ? null : item.id)}
+                    onSelect={(event) => toggleRowSelection(item.id, event.shiftKey)}
+                    onCellKeyDown={handleCellKeyDown}
+                    onCellPaste={handleCellPaste}
+                  />)}
+                  {!filtered.length && <tr><td colSpan={visibleColumns.length + 1}><div className="rate-book-empty"><strong>No matching rate rows</strong><span>Add a row or change the filters above.</span></div></td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
 
       <footer className="rate-book-footnote">
-        <strong>Pricing rule:</strong> Rate Book → context-adjusted reference → quote snapshot → salesperson chooses the actual customer price.
-        <span> Blank cost/sell means “not set”; $0 is preserved as an explicit zero. Included / No Charge / TBD remain customer-document price states and are not silently converted into $0 here.</span>
+        {category === 'material' ? <><strong>Material pricing rule:</strong> material cost → standard builder level → all-in customer $/SF → quote snapshot → salesperson may change the quote rate.</> : <><strong>Pricing rule:</strong> Rate Book → context-adjusted reference → quote snapshot → salesperson chooses the actual customer price.<span> Blank cost/sell means “not set”; $0 is preserved as an explicit zero. Included / No Charge / TBD remain customer-document price states and are not silently converted into $0 here.</span></>}
       </footer>
     </main>
   );
