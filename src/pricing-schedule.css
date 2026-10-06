@@ -228,12 +228,100 @@
   cursor: pointer;
 }
 
+.pricing-schedule-route-header {
+  padding-bottom: 2px;
+}
+
+.pricing-schedule-route-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.pricing-schedule-route-card {
+  display: grid;
+  gap: 5px;
+  min-height: 94px;
+  text-align: left;
+  padding: 13px 14px;
+  border: 1px solid rgba(58, 51, 43, .14);
+  border-radius: 6px;
+  background: rgba(252, 250, 244, .6);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pricing-schedule-route-card:hover {
+  background: rgba(255, 255, 255, .84);
+}
+
+.pricing-schedule-route-card.active {
+  border-color: rgba(73, 91, 71, .36);
+  background: rgba(242, 247, 239, .82);
+  box-shadow: inset 0 0 0 1px rgba(73, 91, 71, .08);
+}
+
+.pricing-schedule-route-card span {
+  color: var(--ink-muted, #746e64);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.pricing-schedule-route-card small {
+  color: #46634a;
+  font-weight: 700;
+}
+
+.pricing-rate-customer-head,
+.pricing-rate-customer-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.05fr) minmax(220px, 2fr) minmax(105px, .7fr);
+  gap: 12px;
+  align-items: center;
+  padding: 8px 11px;
+}
+
+.pricing-rate-customer-head {
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-muted, #756f65);
+  border-bottom: 1px solid rgba(64, 57, 49, .1);
+}
+
+.pricing-rate-customer-row {
+  border-bottom: 1px solid rgba(64, 57, 49, .07);
+  font-size: 12px;
+}
+
+.pricing-rate-customer-row:last-child {
+  border-bottom: 0;
+}
+
+.pricing-rate-customer-row > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.pricing-rate-customer-row small,
+.pricing-rate-customer-details {
+  color: var(--ink-muted, #746e64);
+}
+
+.pricing-rate-customer-row > strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .public-customer-paper .pricing-schedule-customer-table {
   margin-top: 18px;
 }
 
 .public-customer-paper .pricing-schedule-customer-row,
-.public-customer-paper .pricing-schedule-customer-head {
+.public-customer-paper .pricing-schedule-customer-head,
+.public-customer-paper .pricing-rate-customer-row,
+.public-customer-paper .pricing-rate-customer-head {
   font-size: 11px;
 }
 
@@ -260,6 +348,14 @@
     flex-direction: column;
   }
 
+  .pricing-schedule-route-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-schedule-route-card {
+    min-height: 0;
+  }
+
   .pricing-schedule-workbook-host {
     height: 520px;
   }
@@ -282,5 +378,16 @@
   .pricing-schedule-customer-head > :first-child,
   .pricing-schedule-customer-row > :first-child {
     display: none;
+  }
+
+  .pricing-rate-customer-head,
+  .pricing-rate-customer-row {
+    grid-template-columns: minmax(120px, 1fr) 90px;
+  }
+
+  .pricing-rate-customer-head > :nth-child(2),
+  .pricing-rate-customer-row > :nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 }
