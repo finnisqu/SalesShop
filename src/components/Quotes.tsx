@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import {
+  commercialDocumentLabel,
   displayQuoteNumber,
   QUOTE_STATUSES,
   quoteLineTotal,
   quoteTotal,
+  type CommercialDocumentType,
   type Quote,
   type QuoteLine,
   type QuoteLineKind,
   type QuotePricingMode,
   type QuoteStatus,
 } from '../types/quote';
+import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteSignatureDialog } from './QuoteSignatureDialog';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -173,16 +176,17 @@ function CustomerPreview({ quote }: { quote: Quote }) {
   });
 
   const looseLines = visibleLines.filter((line) => !line.sectionId || !visibleSections.some((section) => section.id === line.sectionId));
+  const documentLabel = commercialDocumentLabel(quote);
 
   return (
     <article className="customer-quote-paper">
       <header className="customer-quote-letterhead">
         <div>
           <span className="customer-company-placeholder">YOUR COMPANY</span>
-          <strong>QUOTE</strong>
+          <strong>{documentLabel.toUpperCase()}</strong>
         </div>
         <dl>
-          <div><dt>Quote</dt><dd>{displayQuoteNumber(quote)}</dd></div>
+          <div><dt>Document</dt><dd>{displayQuoteNumber(quote)}</dd></div>
           <div><dt>Date</dt><dd>{quote.quoteDate}</dd></div>
         </dl>
       </header>
@@ -223,13 +227,14 @@ function CustomerPreview({ quote }: { quote: Quote }) {
 
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
-      <footer>{quote.status === 'Signed' ? 'Accepted electronically with SalesShop.' : 'Prepared with SalesShop · Electronic acceptance is available for this quote.'}</footer>
+      <footer>{quote.status === 'Signed' ? 'Accepted electronically with SalesShop.' : `Prepared with SalesShop · Electronic acceptance is available for this ${documentLabel.toLowerCase()}.`}</footer>
     </article>
   );
 }
 
 function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteViewMode; onModeChange: (mode: QuoteViewMode) => void }) {
   const projects = useCrmStore((state) => state.projects);
+  const quotes = useQuoteStore((state) => state.quotes);
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const deleteQuote = useQuoteStore((state) => state.deleteQuote);
   const addLine = useQuoteStore((state) => state.addLine);
@@ -237,7 +242,10 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const setCustomerColumns = useQuoteStore((state) => state.setCustomerColumns);
   const recordSent = useQuoteStore((state) => state.recordSent);
   const createRevision = useQuoteStore((state) => state.createRevision);
+  const createChangeOrder = useQuoteStore((state) => state.createChangeOrder);
   const [signatureOpen, setSignatureOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
 
   const selectProject = (projectId: string) => {
     const project = projects.find((candidate) => candidate.id === projectId);
@@ -247,8 +255,24 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     });
   };
 
+  const send = async () => {
+    setSending(true);
+    setSendError('');
+    try {
+      await recordSent(quote.id);
+    } catch (reason) {
+      setSendError(reason instanceof Error ? reason.message : 'The document could not be sent.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   const canRevise = quote.status !== 'Draft' && quote.status !== 'Ready' && quote.status !== 'Signed';
   const canSign = quote.status !== 'Signed' && quote.status !== 'Declined' && quote.status !== 'Expired';
+  const parent = quote.parentQuoteId ? quotes.find((candidate) => candidate.id === quote.parentQuoteId) : null;
+  const hasChangeOrders = quotes.some((candidate) => candidate.parentQuoteId === quote.id);
+  const canCreateChangeOrder = quote.status === 'Signed';
+  const documentLabel = commercialDocumentLabel(quote);
 
   return (
     <section className={`quotes-workbench view-${mode}`}>
@@ -256,6 +280,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
         <div>
           <span className="quote-number">{displayQuoteNumber(quote)}</span>
           <input className="quote-title-input" value={quote.title} onChange={(event) => updateQuote(quote.id, { title: event.target.value })} />
+          {quote.documentType === 'change-order' && parent && <small>Changes original agreement {displayQuoteNumber(parent)}</small>}
         </div>
         <div className="quote-header-actions">
           <div className="quote-view-switch" aria-label="Quote view">
@@ -265,19 +290,38 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
               </button>
             ))}
           </div>
-          {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="quote-send-button" onClick={() => recordSent(quote.id)}>Send</button>}
+          {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="quote-send-button" disabled={sending} onClick={() => void send()}>{sending ? 'Sending…' : `Send ${documentLabel}`}</button>}
+          <QuoteShareControl />
           {canSign && <button type="button" className="quote-sign-button" onClick={() => setSignatureOpen(true)}>Sign now</button>}
           {quote.status === 'Signed' && <button type="button" className="quote-signature-receipt-button" onClick={() => setSignatureOpen(true)}>✓ View signature</button>}
           {canRevise && <button type="button" className="quote-revision-button" onClick={() => createRevision(quote.id)}>Create revision</button>}
+          {canCreateChangeOrder && <button type="button" className="quote-revision-button" onClick={() => createChangeOrder(quote.id)}>+ Change Order</button>}
         </div>
       </header>
+
+      {sendError && <div className="quote-share-error" role="alert">{sendError}</div>}
 
       <div className="quote-workbench-body">
         {mode !== 'customer' && (
           <div className="quote-editor-pane">
             <section className="quote-details-grid">
-              <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={status === 'Signed' && quote.status !== 'Signed'}>{status}</option>)}</select></label>
-              <label><span>Quote date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
+              <label>
+                <span>Document type</span>
+                {quote.documentType === 'change-order' ? (
+                  <input value="Change Order" disabled />
+                ) : (
+                  <select
+                    value={quote.documentType}
+                    disabled={quote.status !== 'Draft' && quote.status !== 'Ready'}
+                    onChange={(event) => updateQuote(quote.id, { documentType: event.target.value as CommercialDocumentType })}
+                  >
+                    <option value="quote">Quote</option>
+                    <option value="pricing-schedule">Pricing Schedule</option>
+                  </select>
+                )}
+              </label>
+              <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={(status === 'Signed' && quote.status !== 'Signed') || (status === 'Sent' && quote.status !== 'Sent')}>{status}</option>)}</select></label>
+              <label><span>Document date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
               <label><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Optional: Option A, VE alternate…" /></label>
               <label><span>Project</span><select value={quote.projectId ?? ''} onChange={(event) => selectProject(event.target.value)}><option value="">Unlinked</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
               <label><span>Company / customer</span><input value={quote.companyName ?? ''} onChange={(event) => updateQuote(quote.id, { companyName: event.target.value })} placeholder="Optional" /></label>
@@ -287,14 +331,14 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
             </section>
 
             <section className="quote-customer-controls">
-              <div><span className="quote-control-heading">Customer columns</span><small>Keep the sent quote minimal or expose pricing detail.</small></div>
+              <div><span className="quote-control-heading">Customer columns</span><small>Keep the sent document minimal or expose pricing detail.</small></div>
               <label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label>
               <label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label>
               <label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label>
             </section>
 
             <section className="quote-lines-editor">
-              <header><div><span className="quote-control-heading">Quote content</span><small>Structure is optional. Add only what helps this quote.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
+              <header><div><span className="quote-control-heading">{documentLabel} content</span><small>Structure is optional. Add only what helps this document.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
               {quote.sections.map((section) => <SectionEditor key={section.id} quote={quote} sectionId={section.id} />)}
               {quote.lines.map((line) => <LineEditor key={line.id} quote={quote} line={line} />)}
               <div className="quote-add-row">
@@ -310,7 +354,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
             </section>
 
             <section className="quote-notes-grid">
-              <label><span>Customer notes</span><textarea value={quote.customerNotes} onChange={(event) => updateQuote(quote.id, { customerNotes: event.target.value })} placeholder="Appears on customer quote" /></label>
+              <label><span>Customer notes</span><textarea value={quote.customerNotes} onChange={(event) => updateQuote(quote.id, { customerNotes: event.target.value })} placeholder="Appears on customer document" /></label>
               <label className="internal-notes"><span>Internal notes · private</span><textarea value={quote.internalNotes} onChange={(event) => updateQuote(quote.id, { internalNotes: event.target.value })} placeholder="Pricing thoughts, negotiation notes, reminders…" /></label>
             </section>
 
@@ -323,7 +367,8 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
               </section>
             )}
 
-            <button type="button" className="quote-delete-button" onClick={() => { if (window.confirm(`Delete ${displayQuoteNumber(quote)}?`)) deleteQuote(quote.id); }}>Delete quote</button>
+            {hasChangeOrders && <small>This agreement has Change Orders attached and cannot be deleted.</small>}
+            <button type="button" className="quote-delete-button" disabled={hasChangeOrders} onClick={() => { if (window.confirm(`Delete ${displayQuoteNumber(quote)}?`)) deleteQuote(quote.id); }}>Delete {documentLabel.toLowerCase()}</button>
           </div>
         )}
 
@@ -353,13 +398,13 @@ export function Quotes() {
   return (
     <main className="quotes-view">
       <aside className="quotes-sidebar">
-        <header><div><span>Sales documents</span><strong>Quotes</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>
+        <header><div><span>Commercial documents</span><strong>Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>
         <div className="quote-list">
           {sortedQuotes.map((item) => (
             <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''}`} onClick={() => selectQuote(item.id)}>
               <span>{displayQuoteNumber(item)}</span>
               <strong>{item.title}</strong>
-              <small>{item.companyName || 'No customer'} · {item.status}</small>
+              <small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.status}</small>
               <b>{money.format(quoteTotal(item))}</b>
             </button>
           ))}
