@@ -1,0 +1,583 @@
+/* Mobile visual-system pass: compact notebook controls + shared mobile page hierarchy.
+   Imported after the existing mobile layers so this file is intentionally authoritative. */
+
+/* ------------------------------
+   Notebook toolbar
+------------------------------ */
+.paper-toolbar {
+  position: relative;
+  z-index: 45;
+  overflow: visible;
+}
+
+.notebook-toolbar-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.notebook-toolbar-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(91, 83, 68, .17);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .44);
+  color: #656158;
+  padding: 0;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .5);
+}
+
+.notebook-toolbar-icon:hover,
+.notebook-toolbar-icon:focus-visible {
+  border-color: rgba(127, 108, 54, .34);
+  background: #fffdf5;
+  color: #34322d;
+  outline: none;
+}
+
+.notebook-toolbar-icon.active,
+.notebook-toolbar-icon[aria-expanded="true"] {
+  border-color: #b8aa72;
+  background: #fbf5d9;
+  color: #34312a;
+  box-shadow: inset 0 -2px #c4a640, 0 1px 4px rgba(54, 46, 34, .08);
+}
+
+.notebook-toolbar-icon svg,
+.object-add-button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.notebook-toolbar-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 120;
+  width: min(340px, calc(100vw - 24px));
+  padding: 10px;
+  border: 1px solid rgba(83, 74, 58, .18);
+  border-radius: 10px;
+  background: rgba(250, 247, 237, .985);
+  color: #39362f;
+  box-shadow: 0 14px 34px rgba(53, 45, 34, .18), 0 2px 6px rgba(53, 45, 34, .08);
+  backdrop-filter: blur(18px);
+}
+
+.drawing-tools-popover { left: 0; }
+.page-options-popover { right: 0; width: min(370px, calc(100vw - 24px)); }
+
+.notebook-toolbar-popover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+  padding: 0 2px 8px;
+  border-bottom: 1px solid rgba(83, 74, 58, .11);
+}
+
+.notebook-toolbar-popover-heading > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.notebook-toolbar-popover-heading span,
+.notebook-page-field > span {
+  color: #878075;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+
+.notebook-toolbar-popover-heading strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-popover-close {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #7c776e;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.notebook-popover-close:hover,
+.notebook-popover-close:focus-visible {
+  background: rgba(91, 83, 68, .08);
+  outline: none;
+}
+
+.drawing-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.drawing-tool-choice {
+  min-width: 0;
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  border: 1px solid rgba(91, 83, 68, .13);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .42);
+  color: #676158;
+  padding: 7px 4px;
+}
+
+.drawing-tool-choice svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.drawing-tool-choice span {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 9px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawing-tool-choice.active {
+  border-color: #b9aa70;
+  background: #fff7d7;
+  color: #39342a;
+  box-shadow: inset 0 -2px #c4a640;
+}
+
+.notebook-input-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 2px;
+  min-height: 34px !important;
+  padding: 2px !important;
+  border-radius: 8px;
+}
+
+.notebook-input-toggle > span { display: none; }
+
+.notebook-input-toggle button {
+  width: 30px;
+  min-width: 30px;
+  min-height: 28px !important;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0 !important;
+  border-radius: 6px !important;
+  font-size: 0 !important;
+}
+
+.notebook-input-toggle button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.notebook-page-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.notebook-page-field {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.notebook-page-field.project-field { grid-column: 1 / -1; }
+
+.notebook-page-field .paper-select {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  border-color: rgba(91, 83, 68, .17);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .65);
+  padding-inline: 8px;
+  color: #47433b;
+  font-size: 11px;
+}
+
+.notebook-page-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.notebook-page-action {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgba(91, 83, 68, .14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .42);
+  color: #625d54;
+  padding: 6px;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.notebook-page-action svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.notebook-page-action.active {
+  border-color: #b9aa70;
+  background: #fff7d7;
+  color: #3c372e;
+}
+
+.notebook-page-action.danger { color: #8d645b; }
+
+.paper-toolbar .insert-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.paper-toolbar .object-add-button {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  display: grid;
+  place-items: center;
+  list-style: none;
+  border: 1px solid rgba(91, 83, 68, .17);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .44);
+  color: #656158;
+  padding: 0;
+  font-size: 0;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .5);
+}
+
+.paper-toolbar .object-add-button::-webkit-details-marker { display: none; }
+.paper-toolbar .insert-menu[open] > .object-add-button {
+  border-color: #b8aa72;
+  background: #fbf5d9;
+  color: #34312a;
+  box-shadow: inset 0 -2px #c4a640;
+}
+
+.paper-toolbar .insert-menu-panel {
+  z-index: 125;
+  max-height: min(60vh, 430px);
+  overflow-y: auto;
+  border-radius: 9px;
+  box-shadow: 0 14px 34px rgba(53, 45, 34, .18), 0 2px 6px rgba(53, 45, 34, .08);
+}
+
+/* ------------------------------
+   Customer-document data semantics
+------------------------------ */
+.customer-document-brand-details {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  font-style: normal;
+}
+
+.customer-document-brand a,
+.customer-document-brand .brand-detail {
+  width: fit-content;
+  max-width: 100%;
+  color: #756f65;
+  font-size: 9px;
+  line-height: 1.35;
+  text-decoration: none;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.customer-document-brand a:hover,
+.customer-document-brand a:focus-visible {
+  color: #3f3b34;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  outline: none;
+}
+
+.customer-document-brand-contact {
+  margin-top: 2px;
+  color: #756f65;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.customer-document-brand-contact a { display: inline; }
+
+/* ------------------------------
+   Mobile hierarchy + spacing system
+------------------------------ */
+@media (max-width: 700px) {
+  :root {
+    --mobile-page-gutter: 12px;
+    --mobile-title-size: 27px;
+    --mobile-eyebrow-size: 9px;
+    --mobile-control-height: 42px;
+  }
+
+  .app-header {
+    gap: 0 8px;
+  }
+
+  .app-tabs {
+    height: 44px;
+  }
+
+  .app-tab {
+    height: 44px;
+    min-width: 68px;
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  /* Consistent page typography across Board, Dashboard, Settings, Quotes, and Notebook. */
+  .board-header-panel h1,
+  .dashboard-heading h1,
+  .company-settings-header h1,
+  .paper-title,
+  .quote-title-input {
+    color: #34322d;
+    font-family: Georgia, "Times New Roman", serif !important;
+    font-size: var(--mobile-title-size) !important;
+    font-weight: 700 !important;
+    line-height: 1.08 !important;
+    letter-spacing: -.025em;
+  }
+
+  .board-eyebrow,
+  .dashboard-eyebrow,
+  .quote-number,
+  .company-settings-header .board-eyebrow {
+    color: #807a6d;
+    font-size: var(--mobile-eyebrow-size) !important;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .leadership-dashboard,
+  .company-settings-view {
+    padding: 14px var(--mobile-page-gutter) calc(28px + env(safe-area-inset-bottom));
+  }
+
+  .dashboard-heading,
+  .company-settings-header {
+    width: 100%;
+    max-width: none;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 12px;
+  }
+
+  .dashboard-heading h1,
+  .company-settings-header h1 {
+    margin: 3px 0 5px;
+  }
+
+  .dashboard-heading p,
+  .company-settings-header p {
+    margin: 0;
+    color: #716d63;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .dashboard-heading-note,
+  .company-settings-save-state {
+    width: fit-content;
+    padding: 5px 8px;
+    border: 1px solid rgba(81, 78, 67, .14);
+    border-radius: 999px;
+    background: rgba(248, 245, 235, .48);
+    color: #777267;
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .company-settings-save-state { padding-top: 5px; }
+
+  .board-header-panel {
+    gap: 9px;
+    padding: 13px var(--mobile-page-gutter) 12px;
+  }
+
+  .board-header-panel h1 { margin: 0; }
+
+  .board-view-toggle button,
+  .board-quick-add input,
+  .board-quick-add button {
+    min-height: var(--mobile-control-height);
+  }
+
+  .board-view-toggle button { font-size: 11px; }
+  .board-quick-add label { font-size: var(--mobile-eyebrow-size); letter-spacing: .12em; }
+
+  .quotes-sidebar > header {
+    min-height: 46px;
+    padding: 7px var(--mobile-page-gutter);
+  }
+
+  .quotes-sidebar > header strong {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px !important;
+    font-weight: 700;
+    letter-spacing: -.015em;
+  }
+
+  .quotes-sidebar > header button {
+    min-height: 36px;
+    border-radius: 5px;
+  }
+
+  .quote-list { padding-inline: var(--mobile-page-gutter); }
+
+  .quote-workbench-header {
+    padding: 10px var(--mobile-page-gutter) 9px;
+  }
+
+  .quote-title-input {
+    width: 100%;
+    padding: 1px 0;
+  }
+
+  .quote-header-actions {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .paper-toolbar {
+    height: 48px !important;
+    flex: 0 0 48px !important;
+    gap: 6px;
+    padding: 0 10px;
+    overflow: visible !important;
+    background: rgba(236, 234, 227, .98);
+    box-shadow: inset 0 1px rgba(255, 255, 255, .5), 0 2px 7px rgba(55, 48, 36, .05);
+  }
+
+  .paper-toolbar .tool-spacer { flex: 1; min-width: 4px; }
+
+  .paper-title {
+    width: 100%;
+    min-height: 34px;
+  }
+
+  .paper-heading {
+    min-height: 76px;
+    padding: 15px 14px 8px;
+  }
+
+  .notebook-toolbar-icon,
+  .paper-toolbar .object-add-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+
+  .notebook-input-toggle {
+    min-height: 36px !important;
+  }
+
+  .notebook-input-toggle button {
+    width: 31px;
+    min-width: 31px;
+    height: 30px;
+  }
+
+  .drawing-tools-popover {
+    left: -2px;
+  }
+
+  .page-options-popover {
+    right: -2px;
+  }
+
+  .drawing-tool-choice {
+    min-height: 62px;
+  }
+
+  .company-settings-card,
+  .dashboard-kpi,
+  .dashboard-panel,
+  .quote-details-grid,
+  .quote-lines-editor,
+  .quote-notes-grid,
+  .pricing-schedule-summary-card {
+    border-radius: 6px;
+  }
+
+  .company-settings-card > header strong,
+  .dashboard-kpi > span {
+    font-size: 12px;
+  }
+
+  .company-settings-card > header small,
+  .dashboard-kpi small {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .customer-document-brand a,
+  .customer-document-brand .brand-detail,
+  .customer-document-brand-contact {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 380px) {
+  .app-tab {
+    min-width: 62px;
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+
+  .drawing-tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .notebook-page-actions {
+    grid-template-columns: 1fr;
+  }
+}
