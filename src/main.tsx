@@ -12,6 +12,7 @@ import './quote-crm-fields.css';
 import './customer-document-brand.css';
 import './account-forecast.css';
 import './mobile.css';
+import './mobile-demo-polish.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
