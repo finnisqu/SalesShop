@@ -1,5 +1,6 @@
 export type PaperStyle = 'lined' | 'grid' | 'blank' | 'cornell' | 'dotted' | 'two-column';
 export type PageTone = 'cream' | 'white' | 'blue' | 'green' | 'rose';
+export type PaperTexture = 'classic' | 'clean' | 'fibrous' | 'kraft';
 export type InkTool = 'pen' | 'marker' | 'highlighter';
 export type InkInteractionTool = 'eraser' | 'lasso';
 export type ActiveNotebookTool = 'select' | 'text' | InkTool | InkInteractionTool;
@@ -32,10 +33,14 @@ export interface NotebookEntry {
   objects: NotebookObject[];
   paperStyle: PaperStyle;
   tone: PageTone;
+  texture: PaperTexture;
   favorite: boolean;
+  openAtStart: boolean;
+  hidden: boolean;
+  deletionLocked: boolean;
   context?: NotebookContext;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface NotebookDocument { schemaVersion: 2; entries: NotebookEntry[]; activeEntryId: string | null; }
+export interface NotebookDocument { schemaVersion: 3; entries: NotebookEntry[]; activeEntryId: string | null; }

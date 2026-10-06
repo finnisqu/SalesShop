@@ -16,6 +16,7 @@ import type {
   PaperScrapObject,
   PaperScrapVariant,
   PaperStyle,
+  PaperTexture,
   PostItObject,
   PostItTone,
   ShapeKind,
@@ -29,13 +30,19 @@ interface NotebookState {
   activeTool: ActiveNotebookTool;
   selectedObjectId: string | null;
   hydrated: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
   hydrate: () => void;
   createEntry: () => void;
   duplicateEntry: (id: string) => void;
   selectEntry: (id: string) => void;
   deleteEntry: (id: string) => void;
   toggleFavorite: (id: string) => void;
+  toggleOpenAtStart: (id: string) => void;
+  toggleHidden: (id: string) => void;
+  toggleDeletionLocked: (id: string) => void;
   setPageTone: (id: string, tone: PageTone) => void;
+  setPageTexture: (id: string, texture: PaperTexture) => void;
   updateContent: (id: string, contentHtml: string) => void;
   renameEntry: (id: string, title: string) => void;
   addStroke: (id: string, stroke: InkStroke) => void;
@@ -60,10 +67,53 @@ interface NotebookState {
   updateImageCaption: (entryId: string, objectId: string, caption: string) => void;
   updateSpreadsheetData: (entryId: string, objectId: string, workbookData: unknown) => void;
   deleteObject: (entryId: string, objectId: string) => void;
+  undo: () => void;
+  redo: () => void;
 }
+
+interface HistorySnapshot {
+  entries: NotebookEntry[];
+  activeEntryId: string | null;
+}
+
+const HISTORY_LIMIT = 80;
+let past: HistorySnapshot[] = [];
+let future: HistorySnapshot[] = [];
+let lastCheckpointKey = '';
+let lastCheckpointAt = 0;
 
 const now = () => new Date().toISOString();
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
+
+function snapshot(state: Pick<NotebookState, 'entries' | 'activeEntryId'>): HistorySnapshot {
+  return {
+    entries: structuredClone(state.entries),
+    activeEntryId: state.activeEntryId,
+  };
+}
+
+function resetHistory() {
+  past = [];
+  future = [];
+  lastCheckpointKey = '';
+  lastCheckpointAt = 0;
+}
+
+function checkpoint(state: NotebookState, key: string, coalesceMs = 0) {
+  const timestamp = Date.now();
+  const coalescing = coalesceMs > 0 && lastCheckpointKey === key && timestamp - lastCheckpointAt <= coalesceMs;
+  if (!coalescing) {
+    past.push(snapshot(state));
+    if (past.length > HISTORY_LIMIT) past.shift();
+    future = [];
+  }
+  lastCheckpointKey = key;
+  lastCheckpointAt = timestamp;
+}
+
+function historyFlags() {
+  return { canUndo: past.length > 0, canRedo: future.length > 0 };
+}
 
 function newEntry(): NotebookEntry {
   const timestamp = now();
@@ -75,7 +125,11 @@ function newEntry(): NotebookEntry {
     objects: [],
     paperStyle: 'lined',
     tone: 'cream',
+    texture: 'classic',
     favorite: false,
+    openAtStart: false,
+    hidden: false,
+    deletionLocked: true,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -89,6 +143,9 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
     id: id('page'),
     title: `${source.title || 'Untitled page'} copy`,
     favorite: false,
+    openAtStart: false,
+    hidden: false,
+    deletionLocked: true,
     strokes: clone.strokes.map((stroke) => ({ ...stroke, id: id('stroke') })),
     objects: clone.objects.map((object) => ({
       ...object,
@@ -102,7 +159,7 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
 }
 
 function persist(entries: NotebookEntry[], activeEntryId: string | null) {
-  const document: NotebookDocument = { schemaVersion: 2, entries, activeEntryId };
+  const document: NotebookDocument = { schemaVersion: 3, entries, activeEntryId };
   localNotebookRepository.save(document);
 }
 
@@ -122,86 +179,149 @@ function appendObject(entries: NotebookEntry[], entryId: string, object: Noteboo
   }));
 }
 
+function nextVisibleEntry(entries: NotebookEntry[], excludingId?: string) {
+  return entries.find((entry) => entry.id !== excludingId && !entry.hidden)
+    ?? entries.find((entry) => entry.id !== excludingId)
+    ?? null;
+}
+
 export const useNotebookStore = create<NotebookState>((set, get) => ({
   entries: [],
   activeEntryId: null,
-  activeTool: 'pen',
+  activeTool: 'select',
   selectedObjectId: null,
   hydrated: false,
+  canUndo: false,
+  canRedo: false,
 
   hydrate: () => {
+    resetHistory();
     const stored = localNotebookRepository.load();
     if (stored?.entries.length) {
+      const startEntry = stored.entries.find((entry) => entry.favorite && entry.openAtStart);
+      const fallback = stored.entries.find((entry) => entry.id === stored.activeEntryId) ?? stored.entries[0];
       set({
         entries: stored.entries,
-        activeEntryId: stored.activeEntryId ?? stored.entries[0].id,
+        activeEntryId: startEntry?.id ?? fallback.id,
+        activeTool: 'select',
         selectedObjectId: null,
         hydrated: true,
+        ...historyFlags(),
       });
       return;
     }
     const first = newEntry();
     persist([first], first.id);
-    set({ entries: [first], activeEntryId: first.id, selectedObjectId: null, hydrated: true });
+    set({ entries: [first], activeEntryId: first.id, activeTool: 'select', selectedObjectId: null, hydrated: true, ...historyFlags() });
   },
 
   createEntry: () => {
+    checkpoint(get(), 'page:create');
     const entry = newEntry();
     const entries = [entry, ...get().entries];
     persist(entries, entry.id);
-    set({ entries, activeEntryId: entry.id, selectedObjectId: null });
+    set({ entries, activeEntryId: entry.id, selectedObjectId: null, activeTool: 'select', ...historyFlags() });
   },
 
   duplicateEntry: (entryId) => {
     const source = get().entries.find((entry) => entry.id === entryId);
     if (!source) return;
+    checkpoint(get(), `page:duplicate:${entryId}`);
     const duplicate = duplicateEntryModel(source);
     const sourceIndex = get().entries.findIndex((entry) => entry.id === entryId);
     const entries = [...get().entries];
     entries.splice(sourceIndex + 1, 0, duplicate);
     persist(entries, duplicate.id);
-    set({ entries, activeEntryId: duplicate.id, selectedObjectId: null });
+    set({ entries, activeEntryId: duplicate.id, selectedObjectId: null, activeTool: 'select', ...historyFlags() });
   },
 
   selectEntry: (activeEntryId) => {
     persist(get().entries, activeEntryId);
-    set({ activeEntryId, selectedObjectId: null });
+    set({ activeEntryId, selectedObjectId: null, activeTool: 'select' });
   },
 
   deleteEntry: (entryId) => {
+    const target = get().entries.find((entry) => entry.id === entryId);
+    if (!target || target.deletionLocked) return;
+    checkpoint(get(), `page:delete:${entryId}`);
     let entries = get().entries.filter((entry) => entry.id !== entryId);
     if (!entries.length) entries = [newEntry()];
-    const activeEntryId = get().activeEntryId === entryId ? entries[0].id : get().activeEntryId;
+    const replacement = nextVisibleEntry(entries);
+    const activeEntryId = get().activeEntryId === entryId ? (replacement?.id ?? entries[0].id) : get().activeEntryId;
     persist(entries, activeEntryId);
-    set({ entries, activeEntryId, selectedObjectId: null });
+    set({ entries, activeEntryId, selectedObjectId: null, activeTool: 'select', ...historyFlags() });
   },
 
   toggleFavorite: (entryId) => {
+    checkpoint(get(), `page:favorite:${entryId}`);
     const timestamp = now();
-    const entries = mapEntry(get().entries, entryId, (entry) => ({
+    const entries = mapEntry(get().entries, entryId, (entry) => {
+      const favorite = !entry.favorite;
+      return { ...entry, favorite, openAtStart: favorite ? entry.openAtStart : false, updatedAt: timestamp };
+    });
+    persist(entries, get().activeEntryId);
+    set({ entries, ...historyFlags() });
+  },
+
+  toggleOpenAtStart: (entryId) => {
+    const target = get().entries.find((entry) => entry.id === entryId);
+    if (!target?.favorite) return;
+    checkpoint(get(), `page:start:${entryId}`);
+    const timestamp = now();
+    const enable = !target.openAtStart;
+    const entries = get().entries.map((entry) => ({
       ...entry,
-      favorite: !entry.favorite,
-      updatedAt: timestamp,
+      openAtStart: entry.id === entryId ? enable : false,
+      updatedAt: entry.id === entryId || entry.openAtStart ? timestamp : entry.updatedAt,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
+  },
+
+  toggleHidden: (entryId) => {
+    checkpoint(get(), `page:hidden:${entryId}`);
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, hidden: !entry.hidden, updatedAt: timestamp }));
+    persist(entries, get().activeEntryId);
+    set({ entries, ...historyFlags() });
+  },
+
+  toggleDeletionLocked: (entryId) => {
+    checkpoint(get(), `page:delete-lock:${entryId}`);
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, deletionLocked: !entry.deletionLocked, updatedAt: timestamp }));
+    persist(entries, get().activeEntryId);
+    set({ entries, ...historyFlags() });
   },
 
   setPageTone: (entryId, tone) => {
+    checkpoint(get(), `page:tone:${entryId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, tone, updatedAt: timestamp }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
+  },
+
+  setPageTexture: (entryId, texture) => {
+    checkpoint(get(), `page:texture:${entryId}`);
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, texture, updatedAt: timestamp }));
+    persist(entries, get().activeEntryId);
+    set({ entries, ...historyFlags() });
   },
 
   updateContent: (entryId, contentHtml) => {
+    const existing = get().entries.find((entry) => entry.id === entryId);
+    if (!existing || existing.contentHtml === contentHtml) return;
+    checkpoint(get(), `content:${entryId}`, 900);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, contentHtml, updatedAt: timestamp }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   renameEntry: (entryId, title) => {
+    checkpoint(get(), `title:${entryId}`, 900);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -209,10 +329,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   addStroke: (entryId, stroke) => {
+    checkpoint(get(), `ink:add:${entryId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -220,11 +341,12 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   deleteStrokes: (entryId, strokeIds) => {
     if (!strokeIds.length) return;
+    checkpoint(get(), `ink:delete:${entryId}`);
     const selected = new Set(strokeIds);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
@@ -233,11 +355,12 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   moveStrokes: (entryId, strokeIds, dx, dy) => {
     if (!strokeIds.length || (!dx && !dy)) return;
+    checkpoint(get(), `ink:move:${entryId}`);
     const selected = new Set(strokeIds);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
@@ -248,28 +371,33 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   clearInk: (entryId) => {
+    const target = get().entries.find((entry) => entry.id === entryId);
+    if (!target?.strokes.length) return;
+    checkpoint(get(), `ink:clear:${entryId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, strokes: [], updatedAt: timestamp }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   setPaperStyle: (entryId, paperStyle) => {
+    checkpoint(get(), `page:paper:${entryId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({ ...entry, paperStyle, updatedAt: timestamp }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
-  setActiveTool: (activeTool) => set({ activeTool }),
+  setActiveTool: (activeTool) => set({ activeTool: activeTool === 'text' ? 'select' : activeTool }),
 
   createPaperCard: (entryId) => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
+    checkpoint(get(), `object:create:${entryId}`);
     const timestamp = now();
     const object: PaperCardObject = {
       id: id('object'), type: 'paper-card', text: 'New card', tone: 'cream',
@@ -278,12 +406,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
   },
 
   createPostIt: (entryId, tone = 'yellow') => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
+    checkpoint(get(), `object:create:${entryId}`);
     const timestamp = now();
     const object: PostItObject = {
       id: id('object'), type: 'post-it', text: 'Quick note…', tone,
@@ -292,12 +421,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
   },
 
   createBusinessCard: (entryId) => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
+    checkpoint(get(), `object:create:${entryId}`);
     const timestamp = now();
     const object: BusinessCardObject = {
       id: id('object'), type: 'business-card', name: 'Contact name', company: 'Company', title: 'Title', email: '', phone: '',
@@ -306,12 +436,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
   },
 
   createPaperScrap: (entryId, variant = 'plain') => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
+    checkpoint(get(), `object:create:${entryId}`);
     const timestamp = now();
     const object: PaperScrapObject = {
       id: id('object'), type: 'paper-scrap', text: variant === 'index' ? 'Index card note' : 'Loose thought…', variant,
@@ -324,12 +455,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
   },
 
   createShape: (entryId, shape = 'box') => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
+    checkpoint(get(), `object:create:${entryId}`);
     const timestamp = now();
     const object: ShapeObject = {
       id: id('object'), type: 'shape', shape, style: 'pencil',
@@ -339,12 +471,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
   },
 
   createImage: (entryId, src, alt) => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
+    checkpoint(get(), `object:create:${entryId}`);
     const timestamp = now();
     const object: ImageObject = {
       id: id('object'), type: 'image', src, alt, caption: '',
@@ -353,12 +486,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
   },
 
   createAttachment: (entryId, name, mimeType, size) => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
+    checkpoint(get(), `object:create:${entryId}`);
     const timestamp = now();
     const object: AttachmentObject = {
       id: id('object'), type: 'attachment', name, mimeType, size,
@@ -367,12 +501,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
   },
 
   createSpreadsheet: (entryId) => {
     const entry = get().entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
+    checkpoint(get(), `object:create:${entryId}`);
     const timestamp = now();
     const object: SpreadsheetObject = {
       id: id('object'), type: 'spreadsheet', workbookData: undefined,
@@ -381,12 +516,13 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     };
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: object.id, activeTool: 'select' });
+    set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
   },
 
   selectObject: (selectedObjectId) => set({ selectedObjectId }),
 
   updateObjectFrame: (entryId, objectId, frame) => {
+    checkpoint(get(), `object:frame:${entryId}:${objectId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -394,10 +530,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   updateTextObject: (entryId, objectId, text) => {
+    checkpoint(get(), `object:text:${entryId}:${objectId}`, 900);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -411,10 +548,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   updatePostItTone: (entryId, objectId, tone) => {
+    checkpoint(get(), `object:tone:${entryId}:${objectId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -424,10 +562,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   updateBusinessCardField: (entryId, objectId, field, value) => {
+    checkpoint(get(), `object:business:${entryId}:${objectId}:${field}`, 900);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -437,10 +576,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   updateImageCaption: (entryId, objectId, caption) => {
+    checkpoint(get(), `object:caption:${entryId}:${objectId}`, 900);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -450,10 +590,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   updateSpreadsheetData: (entryId, objectId, workbookData) => {
+    checkpoint(get(), `object:sheet:${entryId}:${objectId}`, 1200);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -463,10 +604,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries });
+    set({ entries, ...historyFlags() });
   },
 
   deleteObject: (entryId, objectId) => {
+    checkpoint(get(), `object:delete:${entryId}:${objectId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
       ...entry,
@@ -474,6 +616,38 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       updatedAt: timestamp,
     }));
     persist(entries, get().activeEntryId);
-    set({ entries, selectedObjectId: get().selectedObjectId === objectId ? null : get().selectedObjectId });
+    set({ entries, selectedObjectId: get().selectedObjectId === objectId ? null : get().selectedObjectId, ...historyFlags() });
+  },
+
+  undo: () => {
+    const previous = past.pop();
+    if (!previous) return;
+    future.push(snapshot(get()));
+    if (future.length > HISTORY_LIMIT) future.shift();
+    persist(previous.entries, previous.activeEntryId);
+    lastCheckpointKey = '';
+    set({
+      entries: previous.entries,
+      activeEntryId: previous.activeEntryId,
+      selectedObjectId: null,
+      activeTool: 'select',
+      ...historyFlags(),
+    });
+  },
+
+  redo: () => {
+    const next = future.pop();
+    if (!next) return;
+    past.push(snapshot(get()));
+    if (past.length > HISTORY_LIMIT) past.shift();
+    persist(next.entries, next.activeEntryId);
+    lastCheckpointKey = '';
+    set({
+      entries: next.entries,
+      activeEntryId: next.activeEntryId,
+      selectedObjectId: null,
+      activeTool: 'select',
+      ...historyFlags(),
+    });
   },
 }));

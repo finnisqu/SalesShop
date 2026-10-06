@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import type { Editor } from '@tiptap/react';
 import './object-layer.css';
 import './spreadsheet-object.css';
 import './binder-page.css';
+import './notebook-patch.css';
 import './board.css';
 import './board-groups.css';
 import './accounts.css';
@@ -46,6 +48,7 @@ function App() {
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
   const renameEntry = useNotebookStore((state) => state.renameEntry);
   const projects = useCrmStore((state) => state.projects);
+  const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
 
   useEffect(() => {
     hydrate();
@@ -95,15 +98,18 @@ function App() {
         <main className="notebook-workspace">
           <Sidebar />
           <section className="binder-stage">
-            <Toolbar entry={entry} />
+            <Toolbar entry={entry} editor={notebookEditor} />
             <div className="desk-surface">
-              <article className={`paper-sheet paper-${entry.paperStyle} tone-${entry.tone}`}>
+              <article className={`paper-sheet paper-${entry.paperStyle} tone-${entry.tone} texture-${entry.texture}`}>
                 <div className="paper-edge" aria-hidden="true" />
                 <header className="paper-heading">
                   <input className="paper-title" value={entry.title}
                     onChange={(event) => renameEntry(entry.id, event.target.value)} aria-label="Page title" />
                   <div className="paper-meta-line">
                     {entry.favorite && <span className="paper-favorite-mark" title="Favorite page">★</span>}
+                    {entry.openAtStart && <span className="paper-start-mark" title="Favorite opens at start">⌂</span>}
+                    {entry.hidden && <span className="paper-hidden-mark" title="Hidden private sheet">◌</span>}
+                    {entry.deletionLocked && <span className="paper-lock-mark" title="Deletion locked">▣</span>}
                     <span>{new Date(entry.updatedAt).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
                     <span className="paper-meta-separator">·</span>
                     <span className="paper-meta-extra">{entry.paperStyle.replace('-', ' ')}</span>
@@ -121,7 +127,7 @@ function App() {
                   </div>
                 </header>
                 <div className="paper-writing-surface">
-                  <TextEditor key={`text-${entry.id}`} entry={entry} />
+                  <TextEditor key={`text-${entry.id}`} entry={entry} onEditorReady={setNotebookEditor} />
                   <DrawingCanvas key={`ink-${entry.id}`} entry={entry} />
                   <NotebookObjectLayer key={`objects-${entry.id}`} entry={entry} />
                 </div>

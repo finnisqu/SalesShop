@@ -60,7 +60,7 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
   if (object.type === 'paper-card') {
     return (
       <div className={`paper-card-object tone-${object.tone}`}>
-        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} onPointerDown={stopPointer} aria-label="Paper card text" />
+        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} aria-label="Paper card text" />
       </div>
     );
   }
@@ -69,9 +69,9 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
     return (
       <div className={`post-it-object tone-${object.tone}`}>
         <div className="post-it-fold" aria-hidden="true" />
-        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} onPointerDown={stopPointer} aria-label="Post-it text" />
+        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} aria-label="Post-it text" />
         {selected && (
-          <div className="post-it-tones" onPointerDown={stopPointer} aria-label="Post-it color">
+          <div className="post-it-tones" aria-label="Post-it color">
             {POST_IT_TONES.map((tone) => (
               <button key={tone} type="button" className={`tone-dot tone-${tone} ${object.tone === tone ? 'active' : ''}`} onClick={() => updatePostItTone(entryId, object.id, tone)} aria-label={`${tone} Post-it`} />
             ))}
@@ -83,7 +83,7 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
 
   if (object.type === 'business-card') {
     const field = (name: BusinessCardField, className: string, placeholder: string) => (
-      <input className={className} value={object[name] ?? ''} placeholder={placeholder} onChange={(event) => updateBusinessCardField(entryId, object.id, name, event.target.value)} onPointerDown={stopPointer} />
+      <input className={className} value={object[name] ?? ''} placeholder={placeholder} onChange={(event) => updateBusinessCardField(entryId, object.id, name, event.target.value)} />
     );
     return (
       <div className="business-card-object">
@@ -104,7 +104,7 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
   if (object.type === 'paper-scrap') {
     return (
       <div className={`paper-scrap-object variant-${object.variant}`}>
-        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} onPointerDown={stopPointer} aria-label="Paper scrap text" />
+        <textarea value={object.text} onChange={(event) => updateTextObject(entryId, object.id, event.target.value)} aria-label="Paper scrap text" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
     return (
       <figure className="image-object">
         <div className="image-mat"><img src={object.src} alt={object.alt} draggable={false} /></div>
-        <input value={object.caption ?? ''} placeholder="Add a caption…" onChange={(event) => updateImageCaption(entryId, object.id, event.target.value)} onPointerDown={stopPointer} aria-label="Image caption" />
+        <input value={object.caption ?? ''} placeholder="Add a caption…" onChange={(event) => updateImageCaption(entryId, object.id, event.target.value)} aria-label="Image caption" />
       </figure>
     );
   }
@@ -267,7 +267,7 @@ export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
   const selectedObjectId = useNotebookStore((state) => state.selectedObjectId);
   const selectObject = useNotebookStore((state) => state.selectObject);
   const deleteObject = useNotebookStore((state) => state.deleteObject);
-  const selectionEnabled = activeTool === 'select';
+  const selectionEnabled = activeTool === 'select' || activeTool === 'text';
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

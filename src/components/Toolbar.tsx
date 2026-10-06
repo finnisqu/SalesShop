@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
+import type { Editor } from '@tiptap/react';
 import { setNotebookProject } from '../services/notebookProjectContext';
 import { useCrmStore } from '../store/crmStore';
 import { useNotebookInputStore } from '../store/notebookInputStore';
 import { useNotebookStore } from '../store/notebookStore';
-import type { ActiveNotebookTool, NotebookEntry, PageTone, PaperStyle } from '../types/notebook';
+import type { ActiveNotebookTool, NotebookEntry, PageTone, PaperStyle, PaperTexture } from '../types/notebook';
 import { StationeryInsertMenu } from './StationeryInsertMenu';
 
-interface ToolbarProps { entry: NotebookEntry; }
+interface ToolbarProps { entry: NotebookEntry; editor?: Editor | null; }
 type ToolbarMenu = 'drawing' | 'page' | null;
 
-type IconName = ActiveNotebookTool | 'tools' | 'settings' | 'pencil-input' | 'finger-input' | 'favorite' | 'duplicate' | 'clear';
+type IconName = ActiveNotebookTool | 'tools' | 'settings' | 'pencil-input' | 'finger-input' | 'favorite' | 'duplicate' | 'clear' | 'undo' | 'redo';
 
 function ToolbarIcon({ name }: { name: IconName }) {
   switch (name) {
@@ -41,10 +42,14 @@ function ToolbarIcon({ name }: { name: IconName }) {
       return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1.5" /><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" /></svg>;
     case 'clear':
       return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V4.5h6V7M8 10v8M12 10v8M16 10v8M6.5 7l.8 13h9.4l.8-13" /></svg>;
+    case 'undo':
+      return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16" /><path d="M5 11.5h7.5c4.2 0 6.5 2.1 6.5 6" /></svg>;
+    case 'redo':
+      return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 4.5 4.5L15 16" /><path d="M19 11.5h-7.5c-4.2 0-6.5 2.1-6.5 6" /></svg>;
   }
 }
 
-export function Toolbar({ entry }: ToolbarProps) {
+export function Toolbar({ entry, editor }: ToolbarProps) {
   const activeTool = useNotebookStore((state) => state.activeTool);
   const setActiveTool = useNotebookStore((state) => state.setActiveTool);
   const clearInk = useNotebookStore((state) => state.clearInk);
@@ -52,15 +57,24 @@ export function Toolbar({ entry }: ToolbarProps) {
   const setPageTone = useNotebookStore((state) => state.setPageTone);
   const toggleFavorite = useNotebookStore((state) => state.toggleFavorite);
   const duplicateEntry = useNotebookStore((state) => state.duplicateEntry);
+  const setPageTexture = useNotebookStore((state) => state.setPageTexture);
+  const toggleOpenAtStart = useNotebookStore((state) => state.toggleOpenAtStart);
+  const toggleHidden = useNotebookStore((state) => state.toggleHidden);
+  const toggleDeletionLocked = useNotebookStore((state) => state.toggleDeletionLocked);
+  const undo = useNotebookStore((state) => state.undo);
+  const redo = useNotebookStore((state) => state.redo);
+  const canUndo = useNotebookStore((state) => state.canUndo);
+  const canRedo = useNotebookStore((state) => state.canRedo);
   const inputMode = useNotebookInputStore((state) => state.inputMode);
   const setInputMode = useNotebookInputStore((state) => state.setInputMode);
   const projects = useCrmStore((state) => state.projects);
   const sortedProjects = [...projects].sort((a, b) => a.name.localeCompare(b.name));
   const [openMenu, setOpenMenu] = useState<ToolbarMenu>(null);
+  const [, setEditorRevision] = useState(0);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   const tools: ReadonlyArray<[ActiveNotebookTool, string]> = [
-    ['select', 'Select'], ['text', 'Text'], ['pen', 'Pen'], ['marker', 'Marker'],
+    ['select', 'Select + text'], ['pen', 'Pen'], ['marker', 'Marker'],
     ['highlighter', 'Highlighter'], ['eraser', 'Eraser'], ['lasso', 'Lasso'],
   ];
   const activeToolLabel = tools.find(([tool]) => tool === activeTool)?.[1] ?? 'Drawing tools';
@@ -78,8 +92,40 @@ export function Toolbar({ entry }: ToolbarProps) {
     };
   }, [openMenu]);
 
+  useEffect(() => {
+    if (!editor) return;
+    const refresh = () => setEditorRevision((value) => value + 1);
+    editor.on('selectionUpdate', refresh);
+    editor.on('transaction', refresh);
+    return () => {
+      editor.off('selectionUpdate', refresh);
+      editor.off('transaction', refresh);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    const onShortcut = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      if ((event.target as HTMLElement | null)?.closest('.spreadsheet-object-editor')) return;
+      const key = event.key.toLowerCase();
+      const wantsUndo = key === 'z' && !event.shiftKey;
+      const wantsRedo = key === 'y' || (key === 'z' && event.shiftKey);
+      if (!wantsUndo && !wantsRedo) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (wantsUndo) undo();
+      else redo();
+    };
+    document.addEventListener('keydown', onShortcut, true);
+    return () => document.removeEventListener('keydown', onShortcut, true);
+  }, [redo, undo]);
+
   return (
     <div className="paper-toolbar" aria-label="Notebook tools" ref={toolbarRef}>
+      <div className="notebook-history-tools" aria-label="Undo and redo">
+        <button type="button" className="notebook-toolbar-icon" onClick={undo} disabled={!canUndo} title="Undo · Ctrl/Cmd+Z" aria-label="Undo"><ToolbarIcon name="undo" /></button>
+        <button type="button" className="notebook-toolbar-icon" onClick={redo} disabled={!canRedo} title="Redo · Ctrl/Cmd+Y" aria-label="Redo"><ToolbarIcon name="redo" /></button>
+      </div>
       <div className="notebook-toolbar-menu">
         <button type="button" className={`notebook-toolbar-icon ${openMenu === 'drawing' ? 'active' : ''}`}
           onClick={() => setOpenMenu((current) => current === 'drawing' ? null : 'drawing')}
@@ -105,6 +151,15 @@ export function Toolbar({ entry }: ToolbarProps) {
       </div>
 
       <StationeryInsertMenu entryId={entry.id} />
+
+      <div className="rich-text-tools" aria-label="Rich text formatting">
+        <button type="button" className={editor?.isActive('bold') ? 'active' : ''} disabled={!editor} onMouseDown={(event) => event.preventDefault()} onClick={() => editor?.chain().focus().toggleBold().run()} title="Bold"><strong>B</strong></button>
+        <button type="button" className={editor?.isActive('italic') ? 'active' : ''} disabled={!editor} onMouseDown={(event) => event.preventDefault()} onClick={() => editor?.chain().focus().toggleItalic().run()} title="Italic"><em>I</em></button>
+        <button type="button" className={editor?.isActive('heading', { level: 2 }) ? 'active' : ''} disabled={!editor} onMouseDown={(event) => event.preventDefault()} onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} title="Heading">H2</button>
+        <button type="button" className={editor?.isActive('bulletList') ? 'active' : ''} disabled={!editor} onMouseDown={(event) => event.preventDefault()} onClick={() => editor?.chain().focus().toggleBulletList().run()} title="Bulleted list">•≡</button>
+        <button type="button" className={editor?.isActive('orderedList') ? 'active' : ''} disabled={!editor} onMouseDown={(event) => event.preventDefault()} onClick={() => editor?.chain().focus().toggleOrderedList().run()} title="Numbered list">1≡</button>
+        <button type="button" className={editor?.isActive('blockquote') ? 'active' : ''} disabled={!editor} onMouseDown={(event) => event.preventDefault()} onClick={() => editor?.chain().focus().toggleBlockquote().run()} title="Quote">“</button>
+      </div>
 
       <div className="ink-input-toggle notebook-input-toggle" aria-label="Drawing input">
         <span>Draw</span>
@@ -154,11 +209,32 @@ export function Toolbar({ entry }: ToolbarProps) {
                   <option value="green">Green</option><option value="rose">Rose</option>
                 </select>
               </label>
+              <label className="notebook-page-field"><span>Texture</span>
+                <select className="paper-select page-texture-select" value={entry.texture}
+                  onChange={(event) => setPageTexture(entry.id, event.target.value as PaperTexture)} aria-label="Paper texture pack">
+                  <option value="classic">Classic</option><option value="clean">Clean</option>
+                  <option value="fibrous">Fibrous</option><option value="kraft">Kraft</option>
+                </select>
+              </label>
             </div>
             <div className="notebook-page-actions">
               <button type="button" className={`notebook-page-action ${entry.favorite ? 'active' : ''}`}
                 onClick={() => toggleFavorite(entry.id)} aria-pressed={entry.favorite}>
                 <ToolbarIcon name="favorite" />{entry.favorite ? 'Favorited' : 'Favorite'}
+              </button>
+              {entry.favorite && (
+                <button type="button" className={`notebook-page-action ${entry.openAtStart ? 'active' : ''}`}
+                  onClick={() => toggleOpenAtStart(entry.id)} aria-pressed={entry.openAtStart}>
+                  {entry.openAtStart ? '✓ ' : ''}Open favorite at start
+                </button>
+              )}
+              <button type="button" className={`notebook-page-action ${entry.hidden ? 'active' : ''}`}
+                onClick={() => toggleHidden(entry.id)} aria-pressed={entry.hidden}>
+                {entry.hidden ? 'Show in binder' : 'Hide private sheet'}
+              </button>
+              <button type="button" className={`notebook-page-action ${entry.deletionLocked ? 'active' : ''}`}
+                onClick={() => toggleDeletionLocked(entry.id)} aria-pressed={entry.deletionLocked}>
+                {entry.deletionLocked ? '🔒 Deletion locked' : '🔓 Deletion unlocked'}
               </button>
               <button type="button" className="notebook-page-action" onClick={() => { duplicateEntry(entry.id); setOpenMenu(null); }}>
                 <ToolbarIcon name="duplicate" />Duplicate
