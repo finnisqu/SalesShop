@@ -38,6 +38,7 @@ export interface SupplierImportCandidate {
   changeSummary: string[];
   warnings: string[];
   reviewDecision?: SupplierImportReviewDecision;
+  attentionReasons?: string[];
   variantDecisions?: Record<string, SupplierImportReviewDecision>;
   priceDecisions?: Record<string, SupplierImportReviewDecision>;
   priceEvidence?: Record<string, SupplierImportPriceEvidence>;

@@ -49,18 +49,40 @@ function inferredEvidence(candidate: SupplierImportCandidate): Record<string, Su
   return evidence;
 }
 
+function inferAttentionReasons(candidate: SupplierImportCandidate) {
+  const reasons: string[] = [];
+  if (candidate.status === 'possible-duplicate') reasons.push('Possible duplicate or ambiguous catalog identity.');
+  if (candidate.confidence === 'low') reasons.push('Parser confidence is low.');
+  if (candidate.matchBasis === 'name') reasons.push('Existing catalog match relies on the product name rather than SKU identity.');
+  if (!(candidate.material.variants ?? []).length) reasons.push('No physical specifications were detected.');
+  if ((candidate.material.variants ?? []).some((variant) => !variant.purchaseOptions.length)) {
+    reasons.push('One or more physical specifications have no supplier price program.');
+  }
+  reasons.push(...candidate.warnings);
+  return [...new Set(reasons)];
+}
+
+function normalizeDecision(value: SupplierImportReviewDecision | undefined, defaultValue: SupplierImportReviewDecision) {
+  return !value || value === 'pending' ? defaultValue : value;
+}
+
 function normalizeCandidate(raw: SupplierImportCandidate): SupplierImportCandidate {
+  const attentionReasons = inferAttentionReasons(raw);
+  const defaultDecision: SupplierImportReviewDecision = attentionReasons.length ? 'needs-review' : 'approved';
   const variantDecisions = { ...(raw.variantDecisions ?? {}) };
   const priceDecisions = { ...(raw.priceDecisions ?? {}) };
+
   (raw.material.variants ?? []).forEach((variant) => {
-    if (!variantDecisions[variant.id]) variantDecisions[variant.id] = 'pending';
+    variantDecisions[variant.id] = normalizeDecision(variantDecisions[variant.id], 'approved');
     variant.purchaseOptions.forEach((option) => {
-      if (!priceDecisions[option.id]) priceDecisions[option.id] = 'pending';
+      priceDecisions[option.id] = normalizeDecision(priceDecisions[option.id], 'approved');
     });
   });
+
   return {
     ...raw,
-    reviewDecision: raw.reviewDecision ?? 'pending',
+    reviewDecision: normalizeDecision(raw.reviewDecision, defaultDecision),
+    attentionReasons,
     variantDecisions,
     priceDecisions,
     priceEvidence: { ...inferredEvidence(raw), ...(raw.priceEvidence ?? {}) },
@@ -114,21 +136,20 @@ function updateHistory(history: SupplierImportSession[], session: SupplierImport
 }
 
 function summarizeDecision(values: SupplierImportReviewDecision[]): SupplierImportReviewDecision {
-  if (!values.length) return 'pending';
-  if (values.every((value) => value === 'approved')) return 'approved';
+  if (!values.length) return 'approved';
   if (values.every((value) => value === 'ignored')) return 'ignored';
-  if (values.some((value) => value === 'needs-review')) return 'needs-review';
-  return 'pending';
+  if (values.some((value) => value === 'needs-review' || value === 'pending')) return 'needs-review';
+  return 'approved';
 }
 
 function recomputeCandidate(candidate: SupplierImportCandidate): SupplierImportCandidate {
   const variants = candidate.material.variants ?? [];
   const variantDecisions = { ...(candidate.variantDecisions ?? {}) };
   variants.forEach((variant) => {
-    const priceValues = variant.purchaseOptions.map((option) => candidate.priceDecisions?.[option.id] ?? 'pending');
+    const priceValues = variant.purchaseOptions.map((option) => candidate.priceDecisions?.[option.id] ?? 'approved');
     if (priceValues.length) variantDecisions[variant.id] = summarizeDecision(priceValues);
   });
-  const reviewDecision = summarizeDecision(variants.map((variant) => variantDecisions[variant.id] ?? 'pending'));
+  const reviewDecision = summarizeDecision(variants.map((variant) => variantDecisions[variant.id] ?? 'approved'));
   return { ...candidate, variantDecisions, reviewDecision };
 }
 

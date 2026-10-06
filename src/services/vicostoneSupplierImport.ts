@@ -414,7 +414,7 @@ function compareCandidate(material: StockMaterial, catalog: StockMaterial[], par
 }
 
 export async function stageVicostoneFabricatorPdf(file: File, catalog: StockMaterial[], effectiveDate?: string): Promise<SupplierImportSession> {
-  if (!file.name.toLowerCase().endsWith('.pdf')) throw new Error('Vicostone importer v1 expects a PDF price sheet.');
+  if (!file.name.toLowerCase().endsWith('.pdf')) throw new Error('Vicostone importer v2 expects a PDF price sheet.');
   const { pages, pageCount } = await extractPdfLines(file);
   const allText = pages.flat().map((line) => line.text).join('\n');
   if (!/umistone\.com/i.test(allText) || !/FABRICATOR/i.test(allText) || !/Bundle \(8\+ slabs\)/i.test(allText)) {
