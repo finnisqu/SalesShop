@@ -5,6 +5,8 @@ import type {
   PricingPlan,
   PricingPlanTakeoff,
   PricingRateItem,
+  PricingRateKind,
+  PricingRatePriceMode,
   PricingScheduleBuilderData,
   PricingScheduleItem,
 } from '../types/quote';
@@ -42,13 +44,22 @@ export function createPricingScheduleBuilderData(): PricingScheduleBuilderData {
   };
 }
 
-export function createPricingRateItem(productType: PricingBuilderProductType = 'Countertops'): PricingRateItem {
+export function createPricingRateItem(
+  productType: PricingBuilderProductType = 'Countertops',
+  kind: PricingRateKind = 'add-on',
+): PricingRateItem {
   return {
     id: uid('rate'),
     productType,
+    kind,
     name: productType,
+    materialType: kind === 'material-level' ? 'Granite' : undefined,
+    level: kind === 'material-level' ? 'Level 1' : undefined,
+    colors: [],
     unit: productType === 'Countertops' || productType === 'Backsplash' ? 'sf' : 'each',
     rate: undefined,
+    priceMode: 'priced',
+    customerVisible: true,
   };
 }
 
@@ -103,6 +114,68 @@ function normalized(value?: string) {
   return value?.trim().toLowerCase() ?? '';
 }
 
+function priceMode(rate: PricingRateItem): PricingRatePriceMode {
+  return rate.priceMode ?? 'priced';
+}
+
+export function rateItemNumericRate(rate?: PricingRateItem) {
+  if (!rate) return undefined;
+  const mode = priceMode(rate);
+  if (mode === 'no-charge' || mode === 'included') return 0;
+  if (mode === 'tbd') return undefined;
+  return typeof rate.rate === 'number' && Number.isFinite(rate.rate) ? rate.rate : undefined;
+}
+
+export function rateItemPriceLabel(rate: PricingRateItem) {
+  const mode = priceMode(rate);
+  if (mode === 'no-charge') return 'NC';
+  if (mode === 'included') return 'Included';
+  if (mode === 'tbd') return 'TBD';
+  return undefined;
+}
+
+function unitLabel(rate: PricingRateItem) {
+  if (rate.unit === 'sf') return '/ SF';
+  if (rate.unit === 'each') return '/ EA';
+  return 'Flat';
+}
+
+export function deriveRateSheetCustomerItems(builder?: PricingScheduleBuilderData): PricingScheduleItem[] {
+  if (!builder) return [];
+  return builder.rates
+    .filter((rate) => rate.customerVisible !== false)
+    .map((rate, index) => {
+      const numericRate = rateItemNumericRate(rate);
+      const label = rateItemPriceLabel(rate);
+      const material = rate.kind === 'material-level';
+      return {
+        sourceRow: index + 1,
+        series: material ? rate.materialType : rate.productType,
+        itemType: material ? (rate.level || 'Material level') : 'Add-on',
+        description: rate.description?.trim() || rate.name,
+        customerPrice: label ? undefined : numericRate,
+        displayType: material ? 'rate-level' : 'rate-add-on',
+        groupLabel: material ? `${rate.materialType || 'Material'} Levels` : 'Sinks & Add-ons',
+        priceLabel: label,
+        unitLabel: unitLabel(rate),
+        colors: material ? (rate.colors ?? []).filter(Boolean) : undefined,
+      } satisfies PricingScheduleItem;
+    });
+}
+
+export function rateSheetHealth(builder?: PricingScheduleBuilderData) {
+  if (!builder) return ['Add at least one Rate Book item.'];
+  const visible = builder.rates.filter((rate) => rate.customerVisible !== false);
+  const warnings: string[] = [];
+  if (!visible.length) warnings.push('Add at least one customer-visible Rate Book item.');
+  visible.forEach((rate) => {
+    if (!rate.name.trim()) warnings.push('A Rate Book item is missing its name.');
+    if (rate.kind === 'material-level' && !rate.level?.trim()) warnings.push(`${rate.name || 'A material'} is missing its level.`);
+    if (priceMode(rate) === 'priced' && rateItemNumericRate(rate) === undefined) warnings.push(`${rate.name || 'A Rate Book item'} is missing its price.`);
+  });
+  return [...new Set(warnings)];
+}
+
 function scopeRank(scope: string, room: string) {
   const s = normalized(scope);
   const r = normalized(room);
@@ -139,12 +212,13 @@ function addCharge(
   takeoff: PricingPlanTakeoff,
   productType: PricingBuilderProductType,
   quantity: number,
-  unitLabel: string,
+  unitLabelValue: string,
   label: string,
 ): PricingCalculationLine | null {
   if (!quantity) return null;
   const { rate } = rateFor(builder, option, takeoff.room, productType);
-  const numericRate = typeof rate?.rate === 'number' && Number.isFinite(rate.rate) ? rate.rate : undefined;
+  const numericRate = rateItemNumericRate(rate);
+  const mode = rate ? priceMode(rate) : undefined;
   return {
     id: `${takeoff.id}-${productType}-${label}`,
     label,
@@ -152,10 +226,12 @@ function addCharge(
     productType,
     productName: rate?.name,
     quantity,
-    unit: unitLabel,
+    unit: unitLabelValue,
     rate: numericRate,
     amount: numericRate === undefined ? undefined : quantity * numericRate,
-    warning: rate ? (numericRate === undefined ? `${rate.name} has no rate.` : undefined) : `No ${productType} rate is assigned for ${takeoff.room}.`,
+    warning: rate
+      ? (numericRate === undefined ? `${rate.name} is ${mode === 'tbd' ? 'TBD' : 'missing a rate'}.` : undefined)
+      : `No ${productType} rate is assigned for ${takeoff.room}.`,
   };
 }
 
@@ -220,6 +296,7 @@ export function deriveBuilderCustomerItems(builder?: PricingScheduleBuilderData)
     optionCode: calculation.option.code || undefined,
     description: calculation.option.description?.trim() || calculation.option.name || undefined,
     customerPrice: calculation.total,
+    displayType: 'schedule-item',
   }));
 }
 
