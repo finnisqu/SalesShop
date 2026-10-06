@@ -23,6 +23,9 @@
   user-select: none;
 }
 
+/* Old nth-child widths belong to the first fixed grid. The colgroup now owns width. */
+.rate-book-sheet thead th { width: auto !important; }
+
 .rate-book-sheet th > span:first-child {
   display: block;
   overflow: hidden;
@@ -101,7 +104,7 @@
   color: #4d473c;
 }
 
-.rate-book-sheet tr.is-selected > td:not(.rate-book-detail-row) {
+.rate-book-sheet tr.is-selected > td {
   background: rgba(240, 231, 195, .64);
 }
 
