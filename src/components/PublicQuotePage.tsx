@@ -7,6 +7,7 @@ import {
 } from '../services/publicQuoteShareService';
 import { commercialDocumentLabel } from '../types/quote';
 import type { SignatureMethod, SignatureStroke } from '../types/signature';
+import { DocumentBrand } from './CustomerDocumentBrand';
 import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
 import '../quotes.css';
 import '../signature.css';
@@ -70,11 +71,14 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
   const { quote } = data;
   const documentLabel = commercialDocumentLabel(quote);
   const pricingSchedule = quote.documentType === 'pricing-schedule';
+  const scheduleItems = quote.pricingSchedule?.customerItems ?? [];
+  const rateSheet = scheduleItems.some((item) => item.displayType === 'rate-level' || item.displayType === 'rate-add-on');
+  const brand = data.organization ?? { name: data.organizationName };
 
   return (
     <article className="customer-quote-paper public-customer-paper">
       <header className="customer-quote-letterhead">
-        <div><span className="customer-company-placeholder">{data.organizationName}</span><strong>{documentLabel.toUpperCase()}</strong></div>
+        <div><DocumentBrand brand={brand} /><strong>{documentLabel.toUpperCase()}</strong></div>
         <dl><div><dt>Document</dt><dd>{quote.quoteNumber}</dd></div><div><dt>Date</dt><dd>{formatDate(quote.quoteDate)}</dd></div></dl>
       </header>
 
@@ -85,16 +89,18 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
           {quote.contactName && quote.companyName && <p>{quote.contactName}</p>}
           {quote.address && <p>{quote.address}</p>}
         </div>
-        <div><span>Project</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div>
+        <div><span>{rateSheet ? 'Account / pricing agreement' : 'Project'}</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div>
       </section>
 
       {pricingSchedule ? (
         <>
           <div className="pricing-schedule-contract-intro">
-            <strong>Contract pricing schedule</strong>
-            <p>Pricing below applies to the listed plans, options, and configurations.</p>
+            <strong>{rateSheet ? 'Builder rate sheet' : 'Contract pricing schedule'}</strong>
+            <p>{rateSheet
+              ? 'Pricing below establishes the material levels, approved selections, sinks, and recurring add-on rates for this account.'
+              : 'Pricing below applies to the listed plans, options, and configurations.'}</p>
           </div>
-          <PricingScheduleCustomerTable items={quote.pricingSchedule?.customerItems ?? []} />
+          <PricingScheduleCustomerTable items={scheduleItems} />
         </>
       ) : <StandardQuoteBody data={data} />}
 
@@ -207,7 +213,7 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
       </header>
       <div className="signature-identity-grid">
         <label><span>Full name</span><input value={signerName} onChange={(event) => setSignerName(event.target.value)} autoComplete="name" /></label>
-        <label><span>Email</span><input type="email" value={signerEmail} onChange={(event) => setSignerEmail(event.target.value)} autoComplete="email" placeholder="Optional" /></label>
+        <label><span>Email</span><input type="email" value={signerEmail} onChange={(event) => setSignerEmail(event.target.value)} autoComplete="email" /></label>
       </div>
       <div className="signature-method-switch">
         <button type="button" className={method === 'drawn' ? 'active' : ''} onClick={() => setMethod('drawn')}>Draw signature</button>
