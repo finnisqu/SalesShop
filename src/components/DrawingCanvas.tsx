@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { getStroke } from 'perfect-freehand';
 import './ink-tools.css';
+import { useNotebookInputStore } from '../store/notebookInputStore';
 import { useNotebookStore } from '../store/notebookStore';
 import type { InkPoint, InkStroke, InkTool, NotebookEntry } from '../types/notebook';
 
@@ -133,6 +134,7 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
   const addStroke = useNotebookStore((state) => state.addStroke);
   const deleteStrokes = useNotebookStore((state) => state.deleteStrokes);
   const moveStrokes = useNotebookStore((state) => state.moveStrokes);
+  const inputMode = useNotebookInputStore((state) => state.inputMode);
 
   const [draft, setDraft] = useState<InkStroke | null>(null);
   const [lassoPoints, setLassoPoints] = useState<InkPoint[]>([]);
@@ -159,6 +161,7 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
 
   const drawingEnabled = activeTool === 'pen' || activeTool === 'marker' || activeTool === 'highlighter';
   const inkInteractionEnabled = drawingEnabled || activeTool === 'eraser' || activeTool === 'lasso';
+  const touchInkEnabled = inputMode === 'finger';
 
   useEffect(() => {
     if (activeTool !== 'lasso') {
@@ -214,8 +217,10 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
     if (changed) setErasedPreviewIds(Array.from(erasedIdsRef.current));
   };
 
+  const touchAllowed = (event: ReactPointerEvent<SVGSVGElement>) => event.pointerType !== 'touch' || touchInkEnabled;
+
   const beginGesture = (event: ReactPointerEvent<SVGSVGElement>) => {
-    if (!inkInteractionEnabled || event.pointerType === 'touch') return;
+    if (!inkInteractionEnabled || !touchAllowed(event)) return;
     const point = primaryPoint(event);
 
     if (activeTool === 'lasso' && baseSelectionBounds) {
@@ -268,7 +273,7 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
 
   const continueGesture = (event: ReactPointerEvent<SVGSVGElement>) => {
     const gesture = gestureRef.current;
-    if (!gesture || event.pointerType === 'touch') return;
+    if (!gesture || !touchAllowed(event)) return;
     const points = pointsFromEvent(event);
     if (!points.length) return;
     event.preventDefault();
@@ -304,7 +309,7 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
   const finishGesture = (event: ReactPointerEvent<SVGSVGElement>) => {
     const gesture = gestureRef.current;
     if (!gesture) return;
-    if (event.pointerType !== 'touch') event.preventDefault();
+    event.preventDefault();
 
     if (gesture === 'draw') {
       const completed = draftRef.current;
@@ -342,7 +347,7 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
 
   return (
     <svg
-      className={`ink-layer ${inkInteractionEnabled ? 'is-active' : ''} tool-${activeTool}`}
+      className={`ink-layer ${inkInteractionEnabled ? 'is-active' : ''} ${touchInkEnabled ? 'touch-ink-enabled' : ''} tool-${activeTool}`}
       viewBox={`0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}`}
       preserveAspectRatio="none"
       onPointerDown={beginGesture}
