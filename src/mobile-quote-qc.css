@@ -1,0 +1,67 @@
+/* Small mobile QC follow-up after the shared mobile visual-system pass.
+   Keep this file narrow: quote-card spacing, iOS date containment, and header action sizing. */
+
+@media (max-width: 700px) {
+  /* Give the horizontal quote cards enough room for eyebrow, title, metadata, and value. */
+  .quotes-sidebar {
+    max-height: 132px;
+    flex-basis: 132px;
+  }
+
+  .quote-list {
+    padding-top: 6px;
+    padding-bottom: 8px;
+  }
+
+  .quote-list-item {
+    min-width: 176px;
+    min-height: 78px;
+    padding: 8px 10px 25px;
+  }
+
+  .quote-list-item > span {
+    font-size: 8px;
+    line-height: 1.2;
+  }
+
+  .quote-list-item > strong {
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.22;
+  }
+
+  .quote-list-item > small {
+    margin-top: 5px;
+    font-size: 8.5px;
+    line-height: 1.2;
+  }
+
+  .quote-list-item > b {
+    left: 10px;
+    bottom: 7px;
+    font-size: 9.5px;
+    line-height: 1.1;
+  }
+
+  /* Mobile Safari gives date controls an intrinsic minimum width. Allow the field
+     to shrink with the single-column quote form instead of escaping the card. */
+  .quote-details-grid label {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .quote-details-grid input[type="date"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Search and quick-create should read as a matched pair in the app header. */
+  .global-search-launcher,
+  .quick-create-launcher {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    flex: 0 0 38px;
+  }
+}
