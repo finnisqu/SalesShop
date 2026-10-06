@@ -9,14 +9,14 @@ function getQuote(quoteId: string): Quote | undefined {
   return useQuoteStore.getState().quotes.find((quote) => quote.id === quoteId);
 }
 
-export function completeQuoteSignature(quoteId: string, input: SignatureInput): SignatureRecord | null {
+export async function completeQuoteSignature(quoteId: string, input: SignatureInput): Promise<SignatureRecord | null> {
   let quote = getQuote(quoteId);
   if (!quote) return null;
 
   if (quote.status === 'Draft' || quote.status === 'Ready') {
-    useQuoteStore.getState().recordSent(quoteId);
+    await useQuoteStore.getState().recordSent(quoteId);
     quote = getQuote(quoteId);
-    if (!quote) return null;
+    if (!quote || quote.status === 'Draft' || quote.status === 'Ready') return null;
   }
 
   useSignatureStore.getState().hydrate();
