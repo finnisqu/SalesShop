@@ -6,12 +6,13 @@ import type {
 import type {
   SupplierImportCandidate,
   SupplierImportConfidence,
+  SupplierImportParser,
   SupplierImportSession,
   SupplierImportSource,
 } from '../types/supplierImport';
 
-const PARSER_ID = 'vicostone-umi-fabricator-pdf';
-const PARSER_VERSION = 2;
+export const VICOSTONE_PARSER_ID = 'vicostone-umi-fabricator-pdf';
+export const VICOSTONE_PARSER_VERSION = 2;
 const PRICE_EPSILON = 0.015;
 
 interface PositionedText {
@@ -482,8 +483,8 @@ export async function stageVicostoneFabricatorPdf(file: File, catalog: StockMate
 
   const materials = [...accumulators.values()].map((entry) => ({ material: finalizeMaterial(entry.material), warnings: [...new Set(entry.warnings)] }));
   const source: SupplierImportSource = {
-    parserId: PARSER_ID,
-    parserVersion: PARSER_VERSION,
+    parserId: VICOSTONE_PARSER_ID,
+    parserVersion: VICOSTONE_PARSER_VERSION,
     supplier: 'UMI',
     brand: 'Vicostone',
     fileName: file.name,
@@ -508,3 +509,13 @@ export async function stageVicostoneFabricatorPdf(file: File, catalog: StockMate
     candidates,
   };
 }
+
+
+export const vicostoneSupplierParser: SupplierImportParser = {
+  id: VICOSTONE_PARSER_ID,
+  version: VICOSTONE_PARSER_VERSION,
+  label: 'Vicostone / UMI Fabricator PDF',
+  explicitListingsOnly: true,
+  accepts: (file) => file.name.toLowerCase().endsWith('.pdf'),
+  stage: (file, context) => stageVicostoneFabricatorPdf(file, context.catalog, context.effectiveDate),
+};

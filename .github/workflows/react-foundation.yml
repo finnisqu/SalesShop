@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - architecture/react-foundation
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -34,6 +31,8 @@ jobs:
         if: github.event_name != 'pull_request'
         id: pages
         uses: actions/configure-pages@v5
+      - name: Supplier importer regression tests
+        run: npm test
       - name: Typecheck and build
         run: npm run build
         env:

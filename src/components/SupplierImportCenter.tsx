@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { fetchSupplierImportPublicationHistory, publishSupplierImport, type SupplierImportPublicationHistoryRow } from '../services/supplierImportPublisher';
-import { stageVicostoneFabricatorPdf } from '../services/vicostoneSupplierImport';
+import { stageSupplierImport } from '../services/supplierImportParsers';
+import { VICOSTONE_PARSER_ID } from '../services/vicostoneSupplierImport';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useSupplierImportStore } from '../store/supplierImportStore';
 import { materialPurchaseCostPerSf, type MaterialVariant } from '../types/settings';
@@ -309,7 +310,10 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
     setParsing(true);
     setError(null);
     try {
-      const next = await stageVicostoneFabricatorPdf(file, settings.stockMaterials, effectiveDateDraft || undefined);
+      const next = await stageSupplierImport(VICOSTONE_PARSER_ID, file, {
+        catalog: settings.stockMaterials,
+        effectiveDate: effectiveDateDraft || undefined,
+      });
       setSession(next);
       setFilter('all');
       setQuery('');

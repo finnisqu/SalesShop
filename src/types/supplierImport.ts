@@ -63,3 +63,18 @@ export interface SupplierImportSession {
   candidates: SupplierImportCandidate[];
   publication?: SupplierImportPublication;
 }
+
+
+export interface SupplierImportParserContext {
+  catalog: StockMaterial[];
+  effectiveDate?: string;
+}
+
+export interface SupplierImportParser {
+  id: string;
+  version: number;
+  label: string;
+  explicitListingsOnly: true;
+  accepts: (file: File) => boolean;
+  stage: (file: File, context: SupplierImportParserContext) => Promise<SupplierImportSession>;
+}
