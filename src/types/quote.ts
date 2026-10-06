@@ -49,6 +49,17 @@ export interface QuoteSection {
   customerVisible: boolean;
 }
 
+export interface QuoteLineMaterialReference {
+  materialId: string;
+  variantId?: string;
+  purchaseOptionId?: string;
+  stockProgram: boolean;
+  pricingSource: 'stock-level' | 'non-stock-stock-equivalent' | 'non-stock-guide';
+  sourceCostPerSf?: number;
+  guideRate?: number;
+  stockEquivalentLevel?: string;
+}
+
 export interface QuoteLine {
   id: string;
   sectionId?: string;
@@ -60,6 +71,7 @@ export interface QuoteLine {
   amount?: number;
   customerVisible: boolean;
   includeInTotal: boolean;
+  materialReference?: QuoteLineMaterialReference;
 }
 
 export type PricingScheduleColumnMapping = Partial<Record<PricingScheduleField, number>>;
