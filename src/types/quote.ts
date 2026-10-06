@@ -30,6 +30,7 @@ export type PricingSchedulePublishSource = 'rate-sheet' | 'builder' | 'workbook'
 export type PricingRateKind = 'material-level' | 'add-on';
 export type PricingRatePriceMode = 'priced' | 'included' | 'no-charge' | 'tbd';
 export type PricingMaterialType = 'Granite' | 'Quartz' | 'Marble' | 'Quartzite' | 'Other';
+export type PricingDetailsLayout = 'inline' | 'list';
 
 export type QuoteLineKind = 'item' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
 export type QuotePricingMode = 'direct' | 'quantity-rate' | 'none';
@@ -83,6 +84,8 @@ export interface PricingScheduleItem {
   priceLabel?: string;
   unitLabel?: string;
   colors?: string[];
+  details?: string[];
+  detailsLayout?: PricingDetailsLayout;
 }
 
 export interface PricingRateItem {
@@ -96,8 +99,12 @@ export interface PricingRateItem {
   level?: string;
   description?: string;
   colors?: string[];
+  colorsText?: string;
+  colorIds?: string[];
   priceMode?: PricingRatePriceMode;
   customerVisible?: boolean;
+  showLevelOnCustomer?: boolean;
+  detailsLayout?: PricingDetailsLayout;
 }
 
 export interface PricingOptionRule {
@@ -124,6 +131,7 @@ export interface PricingPlan {
   name: string;
   description?: string;
   notes?: string;
+  excludedOptionIds?: string[];
 }
 
 export interface PricingPlanTakeoff {
