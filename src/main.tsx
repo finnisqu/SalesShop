@@ -24,6 +24,9 @@ import './mobile-pricing-containment.css';
 import './mobile-document-navigation.css';
 import './material-reference-variants.css';
 import './material-stock-program.css';
+import './board-scroll-controls.css';
+import './quote-line-reorder.css';
+import './rates-usability.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
