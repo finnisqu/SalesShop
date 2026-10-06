@@ -190,6 +190,7 @@ export function Board() {
   const createProject = useCrmStore((state) => state.createProject);
   const moveProject = useCrmStore((state) => state.moveProject);
   const focusedProjectId = useNavigationStore((state) => state.focusedProjectId);
+  const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
   const [newName, setNewName] = useState('');
@@ -212,6 +213,9 @@ export function Board() {
       clearFocusedProject();
     }
   }, [focusedProjectId, projects, clearFocusedProject]);
+  useEffect(() => {
+    if (focusedCompanyId) setBoardMode('accounts');
+  }, [focusedCompanyId]);
 
   useEffect(() => {
     if (!hydrated || boardMode !== 'projects' || !mobileInteraction) return;
