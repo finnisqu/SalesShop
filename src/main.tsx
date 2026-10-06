@@ -18,6 +18,7 @@ import './global-search.css';
 import './quick-create.css';
 import './mobile-ui-unification.css';
 import './mobile-quote-qc.css';
+import './quote-document-setup.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
