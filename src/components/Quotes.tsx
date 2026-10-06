@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type TouchEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type TouchEvent } from 'react';
 import { createPricingScheduleData } from '../services/pricingSchedule';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -50,13 +50,56 @@ function isPricingSwipeBlocked(target: EventTarget | null) {
   ));
 }
 
-function LineEditor({ quote, line }: { quote: Quote; line: QuoteLine }) {
+function LineEditor({
+  quote,
+  line,
+  dragActive,
+  dragging,
+  onDragStart,
+  onDrop,
+  onDragEnd,
+  onMoveBy,
+}: {
+  quote: Quote;
+  line: QuoteLine;
+  dragActive: boolean;
+  dragging: boolean;
+  onDragStart: (lineId: string) => void;
+  onDrop: (lineId: string) => void;
+  onDragEnd: () => void;
+  onMoveBy: (lineId: string, direction: -1 | 1) => void;
+}) {
   const updateLine = useQuoteStore((state) => state.updateLine);
   const deleteLine = useQuoteStore((state) => state.deleteLine);
   const textLine = isTextLine(line);
 
+  const beginDrag = (event: DragEvent<HTMLButtonElement>) => {
+    onDragStart(line.id);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', line.id);
+  };
+
   return (
-    <div className={`quote-line-editor kind-${line.kind}`}>
+    <div
+      className={`quote-line-editor kind-${line.kind} ${dragging ? 'is-dragging' : ''}`}
+      data-quote-line-id={line.id}
+      onDragOver={(event) => { if (dragActive) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; } }}
+      onDrop={(event) => { if (dragActive) { event.preventDefault(); onDrop(line.id); } }}
+    >
+      <button
+        type="button"
+        className="quote-line-drag-handle"
+        draggable
+        onDragStart={beginDrag}
+        onDragEnd={onDragEnd}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowUp') { event.preventDefault(); onMoveBy(line.id, -1); }
+          if (event.key === 'ArrowDown') { event.preventDefault(); onMoveBy(line.id, 1); }
+        }}
+        aria-label={`Reorder ${line.description || 'quote line'}`}
+        aria-keyshortcuts="ArrowUp ArrowDown"
+        title="Drag to reorder. With this handle focused, ↑ / ↓ also moves the row."
+      ><span aria-hidden="true">⋮⋮</span></button>
       <button type="button" className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`} onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })} title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}>{line.customerVisible ? '●' : '○'}</button>
       <div className="quote-line-main">
         <div className="quote-line-topline">
@@ -125,6 +168,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
+  const [draggingLineId, setDraggingLineId] = useState<string | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const pricingSchedule = quote.documentType === 'pricing-schedule';
   const effectiveMode: QuoteViewMode = pricingSchedule && mode === 'split' ? 'edit' : mode;
@@ -133,6 +177,31 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const setDocumentType = (documentType: CommercialDocumentType) => {
     updateQuote(quote.id, { documentType, ...(documentType === 'pricing-schedule' && !quote.pricingSchedule ? { pricingSchedule: createPricingScheduleData(quote.id) } : {}) });
     onModeChange('edit');
+  };
+
+  const reorderLine = (lineId: string, targetLineId: string) => {
+    if (lineId === targetLineId) return;
+    const fromIndex = quote.lines.findIndex((line) => line.id === lineId);
+    const originalTargetIndex = quote.lines.findIndex((line) => line.id === targetLineId);
+    if (fromIndex < 0 || originalTargetIndex < 0) return;
+    const lines = [...quote.lines];
+    const [moved] = lines.splice(fromIndex, 1);
+    const targetIndex = lines.findIndex((line) => line.id === targetLineId);
+    if (!moved || targetIndex < 0) return;
+    const insertAt = fromIndex < originalTargetIndex ? targetIndex + 1 : targetIndex;
+    lines.splice(insertAt, 0, moved);
+    updateQuote(quote.id, { lines });
+  };
+
+  const moveLineBy = (lineId: string, direction: -1 | 1) => {
+    const fromIndex = quote.lines.findIndex((line) => line.id === lineId);
+    const targetIndex = fromIndex + direction;
+    if (fromIndex < 0 || targetIndex < 0 || targetIndex >= quote.lines.length) return;
+    const lines = [...quote.lines];
+    const [moved] = lines.splice(fromIndex, 1);
+    if (!moved) return;
+    lines.splice(targetIndex, 0, moved);
+    updateQuote(quote.id, { lines });
   };
 
   const beginPricingSwipe = (event: TouchEvent<HTMLDivElement>) => {
@@ -257,7 +326,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
               <label className="quote-revision-label-field"><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Option A, VE alternate…" /></label>
               <QuoteCrmFields quote={quote} />
             </section>
-            {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><QuickMaterialQuote quote={quote} /><section className="quote-customer-controls"><div><span className="quote-control-heading">Customer columns</span><small>Keep the sent document minimal or expose pricing detail.</small></div><label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label><label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label><label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label></section><section className="quote-lines-editor"><header><div><span className="quote-control-heading">{documentLabel} content</span><small>Structure is optional. Add only what helps this document.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>{quote.sections.map((section) => <SectionEditor key={section.id} quote={quote} sectionId={section.id} />)}{quote.lines.map((line) => <LineEditor key={line.id} quote={quote} line={line} />)}<div className="quote-add-row"><button type="button" onClick={() => addLine(quote.id, 'item')}>+ Line</button><button type="button" onClick={() => addSection(quote.id)}>+ Section</button><button type="button" onClick={() => addLine(quote.id, 'scope')}>+ Scope</button><button type="button" onClick={() => addLine(quote.id, 'warranty')}>+ Warranty</button><button type="button" onClick={() => addLine(quote.id, 'tax')}>+ Tax</button><button type="button" onClick={() => addLine(quote.id, 'allowance')}>+ Allowance</button><button type="button" onClick={() => addLine(quote.id, 'discount')}>+ Discount</button><button type="button" onClick={() => addLine(quote.id, 'note')}>+ Note</button></div></section></>}
+            {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><QuickMaterialQuote quote={quote} /><section className="quote-customer-controls"><div><span className="quote-control-heading">Customer columns</span><small>Keep the sent document minimal or expose pricing detail.</small></div><label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label><label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label><label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label></section><section className="quote-lines-editor"><header><div><span className="quote-control-heading">{documentLabel} content</span><small>Drag the handles to set row order. Customer view follows the same line order.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>{quote.sections.map((section) => <SectionEditor key={section.id} quote={quote} sectionId={section.id} />)}{quote.lines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} onMoveBy={moveLineBy} />)}<div className="quote-add-row"><button type="button" onClick={() => addLine(quote.id, 'item')}>+ Line</button><button type="button" onClick={() => addSection(quote.id)}>+ Section</button><button type="button" onClick={() => addLine(quote.id, 'scope')}>+ Scope</button><button type="button" onClick={() => addLine(quote.id, 'warranty')}>+ Warranty</button><button type="button" onClick={() => addLine(quote.id, 'tax')}>+ Tax</button><button type="button" onClick={() => addLine(quote.id, 'allowance')}>+ Allowance</button><button type="button" onClick={() => addLine(quote.id, 'discount')}>+ Discount</button><button type="button" onClick={() => addLine(quote.id, 'note')}>+ Note</button></div></section></>}
             <section className="quote-notes-grid"><label><span>Customer notes</span><textarea value={quote.customerNotes} onChange={(event) => updateQuote(quote.id, { customerNotes: event.target.value })} placeholder="Appears on customer document" /></label><label className="internal-notes"><span>Internal notes · private</span><textarea value={quote.internalNotes} onChange={(event) => updateQuote(quote.id, { internalNotes: event.target.value })} placeholder="Pricing thoughts, negotiation notes, reminders…" /></label></section>
             {quote.history.length > 0 && <section className="quote-history"><span className="quote-control-heading">Sent history</span>{quote.history.map((revision) => <div key={`${revision.revision}-${revision.capturedAt}`}><strong>{quote.quoteNumber}{revision.revision ? `-R${revision.revision}` : ''}</strong><span>{revision.label || revision.status}</span><time>{revision.quoteDate}</time></div>)}</section>}
             {hasChangeOrders && <small>This agreement has Change Orders attached and cannot be deleted.</small>}
