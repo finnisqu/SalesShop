@@ -25,7 +25,11 @@ export const PRICING_BUILDER_PRODUCT_TYPES = [
 ] as const;
 export type PricingBuilderProductType = (typeof PRICING_BUILDER_PRODUCT_TYPES)[number];
 export type PricingBuilderUnit = 'sf' | 'each' | 'flat';
-export type PricingSchedulePublishSource = 'builder' | 'workbook';
+export type PricingScheduleRoute = 'rate-sheet' | 'plan-builder' | 'workbook';
+export type PricingSchedulePublishSource = 'rate-sheet' | 'builder' | 'workbook';
+export type PricingRateKind = 'material-level' | 'add-on';
+export type PricingRatePriceMode = 'priced' | 'included' | 'no-charge' | 'tbd';
+export type PricingMaterialType = 'Granite' | 'Quartz' | 'Marble' | 'Quartzite' | 'Other';
 
 export type QuoteLineKind = 'item' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
 export type QuotePricingMode = 'direct' | 'quantity-rate' | 'none';
@@ -74,6 +78,11 @@ export interface PricingScheduleItem {
   optionCode?: string;
   description?: string;
   customerPrice?: number;
+  displayType?: 'schedule-item' | 'rate-level' | 'rate-add-on';
+  groupLabel?: string;
+  priceLabel?: string;
+  unitLabel?: string;
+  colors?: string[];
 }
 
 export interface PricingRateItem {
@@ -82,6 +91,13 @@ export interface PricingRateItem {
   name: string;
   unit: PricingBuilderUnit;
   rate?: number;
+  kind?: PricingRateKind;
+  materialType?: PricingMaterialType;
+  level?: string;
+  description?: string;
+  colors?: string[];
+  priceMode?: PricingRatePriceMode;
+  customerVisible?: boolean;
 }
 
 export interface PricingOptionRule {
@@ -132,6 +148,7 @@ export interface PricingScheduleBuilderData {
 }
 
 export interface PricingScheduleData {
+  route?: PricingScheduleRoute;
   publishSource?: PricingSchedulePublishSource;
   builder?: PricingScheduleBuilderData;
   workbookData?: unknown;
