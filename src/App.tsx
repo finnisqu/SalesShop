@@ -60,10 +60,10 @@ function App() {
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Dashboard</button>
+          <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
         <div className="app-account-zone">
-          <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')} title="Company settings">Settings</button>
           <div className="migration-chip">React foundation</div>
           <AuthStatus />
         </div>
