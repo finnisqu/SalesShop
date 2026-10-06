@@ -54,6 +54,9 @@ export interface Company {
   id: string;
   name: string;
   kind: CompanyKind;
+  annualUnits?: number;
+  averageUnitValue?: number;
+  expectedSharePct?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -139,7 +142,7 @@ export interface ContactInput {
   quoteId?: string;
 }
 
-export type CompanyPatch = Partial<Pick<Company, 'name' | 'kind'>>;
+export type CompanyPatch = Partial<Pick<Company, 'name' | 'kind' | 'annualUnits' | 'averageUnitValue' | 'expectedSharePct'>>;
 
 export type ProjectPatch = Partial<Pick<
   Project,
@@ -147,3 +150,15 @@ export type ProjectPatch = Partial<Pick<
 >>;
 
 export type ActivityInput = Omit<Activity, 'id' | 'occurredAt'> & { occurredAt?: string };
+
+export function companyAnnualPotential(company: Pick<Company, 'annualUnits' | 'averageUnitValue'>) {
+  if (company.annualUnits === undefined || company.averageUnitValue === undefined) return undefined;
+  return company.annualUnits * company.averageUnitValue;
+}
+
+export function companyEstimatedAnnualWork(company: Pick<Company, 'annualUnits' | 'averageUnitValue' | 'expectedSharePct'>) {
+  const potential = companyAnnualPotential(company);
+  if (potential === undefined) return undefined;
+  const share = company.expectedSharePct === undefined ? 100 : Math.min(100, Math.max(0, company.expectedSharePct));
+  return potential * (share / 100);
+}
