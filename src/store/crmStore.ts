@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { localCrmRepository } from '../data/crmRepository';
+import { supabase } from '../lib/supabase';
+import { deleteNormalizedProject } from '../services/normalizedCrmSync';
 import type {
   Activity,
   ActivityInput,
@@ -15,6 +17,7 @@ import type {
   ProjectStage,
   StageChangeContext,
 } from '../types/crm';
+import { useAuthStore } from './authStore';
 
 interface CrmState {
   companies: Company[];
@@ -40,6 +43,16 @@ const now = () => new Date().toISOString();
 function persist(companies: Company[], contacts: Contact[], projects: Project[], activities: Activity[]) {
   const document: CrmDocument = { schemaVersion: 3, companies, contacts, projects, activities };
   localCrmRepository.save(document);
+}
+
+function cloudOrganizationId() {
+  const auth = useAuthStore.getState();
+  return supabase && auth.mode === 'cloud' ? auth.organizationId : null;
+}
+
+function reportCloudDeleteError(error: unknown) {
+  const message = error instanceof Error ? error.message : 'Cloud delete failed.';
+  useAuthStore.setState({ error: `Cloud sync: ${message}` });
 }
 
 function ensureCompany(companies: Company[], companyName: string | undefined, timestamp: string, kind: CompanyKind = 'customer') {
@@ -252,8 +265,10 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   },
 
   deleteProject: (projectId) => {
+    const organizationId = cloudOrganizationId();
     const projects = get().projects.filter((project) => project.id !== projectId);
     persist(get().companies, get().contacts, projects, get().activities);
     set({ projects });
+    if (organizationId) void deleteNormalizedProject(organizationId, projectId).catch(reportCloudDeleteError);
   },
 }));
