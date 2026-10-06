@@ -153,6 +153,9 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
 function ObjectFrame({ entryId, object, selected }: { entryId: string; object: NotebookObject; selected: boolean }) {
   const selectObject = useNotebookStore((state) => state.selectObject);
   const updateObjectFrame = useNotebookStore((state) => state.updateObjectFrame);
+  const duplicateObject = useNotebookStore((state) => state.duplicateObject);
+  const toggleObjectLocked = useNotebookStore((state) => state.toggleObjectLocked);
+  const moveObjectLayer = useNotebookStore((state) => state.moveObjectLayer);
   const deleteObject = useNotebookStore((state) => state.deleteObject);
   const initialFrame = frameOf(object);
   const [draftFrame, setDraftFrame] = useState(initialFrame);
@@ -175,6 +178,7 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
   const layerRect = (target: HTMLElement) => target.closest('.notebook-object-layer')?.getBoundingClientRect() ?? null;
 
   const beginMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (object.locked) return;
     event.preventDefault();
     event.stopPropagation();
     selectObject(object.id);
@@ -183,6 +187,7 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
   };
 
   const beginResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (object.locked) return;
     event.preventDefault();
     event.stopPropagation();
     selectObject(object.id);
@@ -191,6 +196,7 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
   };
 
   const beginRotate = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (object.locked) return;
     event.preventDefault();
     event.stopPropagation();
     selectObject(object.id);
@@ -252,10 +258,27 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
       <ObjectContent entryId={entryId} object={object} selected={selected} />
       {selected && (
         <>
-          <button className="object-handle object-move-handle" type="button" aria-label="Move object" title="Move" onPointerDown={beginMove} {...interactionHandlers}>⋮⋮</button>
-          <button className="object-handle object-rotate-handle" type="button" aria-label="Rotate object" title="Rotate" onPointerDown={beginRotate} {...interactionHandlers}>↻</button>
-          <button className="object-handle object-resize-handle" type="button" aria-label="Resize object" title="Resize" onPointerDown={beginResize} {...interactionHandlers} />
-          <button className="object-delete-button" type="button" aria-label="Delete object" title="Delete" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); deleteObject(entryId, object.id); }}>×</button>
+          {!object.locked && (
+            <>
+              <button className="object-handle object-move-handle" type="button" aria-label="Move object" title="Move" onPointerDown={beginMove} {...interactionHandlers}>⋮⋮</button>
+              <button className="object-handle object-rotate-handle" type="button" aria-label="Rotate object" title="Rotate" onPointerDown={beginRotate} {...interactionHandlers}>↻</button>
+              <button className="object-handle object-resize-handle" type="button" aria-label="Resize object" title="Resize" onPointerDown={beginResize} {...interactionHandlers} />
+            </>
+          )}
+          <div className={`object-context-bar ${object.locked ? 'is-locked' : ''}`} onPointerDown={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => duplicateObject(entryId, object.id)} title="Duplicate object">Duplicate</button>
+            <button type="button" className={object.locked ? 'active' : ''} onClick={() => toggleObjectLocked(entryId, object.id)} title={object.locked ? 'Unlock object' : 'Lock object'}>
+              {object.locked ? 'Unlock' : 'Lock'}
+            </button>
+            {!object.locked && (
+              <>
+                <button type="button" onClick={() => moveObjectLayer(entryId, object.id, 'backward')} title="Send one layer backward">Back</button>
+                <button type="button" onClick={() => moveObjectLayer(entryId, object.id, 'forward')} title="Bring one layer forward">Forward</button>
+                <button type="button" className="danger" onClick={() => deleteObject(entryId, object.id)} title="Delete object">Delete</button>
+              </>
+            )}
+          </div>
+          {object.locked && <span className="object-locked-badge" aria-label="Object locked" title="Object locked">Locked</span>}
         </>
       )}
     </div>

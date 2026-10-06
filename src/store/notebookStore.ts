@@ -35,6 +35,7 @@ interface NotebookState {
   hydrate: () => void;
   createEntry: () => void;
   duplicateEntry: (id: string) => void;
+  reorderEntry: (sourceId: string, targetId: string, placement: 'before' | 'after') => void;
   selectEntry: (id: string) => void;
   deleteEntry: (id: string) => void;
   toggleFavorite: (id: string) => void;
@@ -66,6 +67,9 @@ interface NotebookState {
   updateBusinessCardField: (entryId: string, objectId: string, field: BusinessCardField, value: string) => void;
   updateImageCaption: (entryId: string, objectId: string, caption: string) => void;
   updateSpreadsheetData: (entryId: string, objectId: string, workbookData: unknown) => void;
+  duplicateObject: (entryId: string, objectId: string) => void;
+  toggleObjectLocked: (entryId: string, objectId: string) => void;
+  moveObjectLayer: (entryId: string, objectId: string, direction: 'forward' | 'backward') => void;
   deleteObject: (entryId: string, objectId: string) => void;
   undo: () => void;
   redo: () => void;
@@ -233,6 +237,20 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     entries.splice(sourceIndex + 1, 0, duplicate);
     persist(entries, duplicate.id);
     set({ entries, activeEntryId: duplicate.id, selectedObjectId: null, activeTool: 'select', ...historyFlags() });
+  },
+
+  reorderEntry: (sourceId, targetId, placement) => {
+    if (sourceId === targetId) return;
+    const sourceIndex = get().entries.findIndex((entry) => entry.id === sourceId);
+    if (sourceIndex < 0 || !get().entries.some((entry) => entry.id === targetId)) return;
+    checkpoint(get(), 'page:reorder');
+    const entries = [...get().entries];
+    const [source] = entries.splice(sourceIndex, 1);
+    const targetIndex = entries.findIndex((entry) => entry.id === targetId);
+    const insertAt = Math.max(0, targetIndex + (placement === 'after' ? 1 : 0));
+    entries.splice(insertAt, 0, source);
+    persist(entries, get().activeEntryId);
+    set({ entries, ...historyFlags() });
   },
 
   selectEntry: (activeEntryId) => {
@@ -522,6 +540,8 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   selectObject: (selectedObjectId) => set({ selectedObjectId }),
 
   updateObjectFrame: (entryId, objectId, frame) => {
+    const target = get().entries.find((entry) => entry.id === entryId)?.objects.find((object) => object.id === objectId);
+    if (!target || target.locked) return;
     checkpoint(get(), `object:frame:${entryId}:${objectId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
@@ -607,7 +627,72 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     set({ entries, ...historyFlags() });
   },
 
+  duplicateObject: (entryId, objectId) => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    const source = entry?.objects.find((object) => object.id === objectId);
+    if (!entry || !source) return;
+    checkpoint(get(), `object:duplicate:${entryId}:${objectId}`);
+    const timestamp = now();
+    const duplicate = {
+      ...structuredClone(source),
+      id: id('object'),
+      x: Math.min(100 - source.width, source.x + 3),
+      y: Math.min(100 - source.height, source.y + 3),
+      zIndex: nextZ(entry),
+      locked: false,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    } as NotebookObject;
+    const entries = appendObject(get().entries, entryId, duplicate, timestamp);
+    persist(entries, get().activeEntryId);
+    set({ entries, selectedObjectId: duplicate.id, ...historyFlags() });
+  },
+
+  toggleObjectLocked: (entryId, objectId) => {
+    const target = get().entries.find((entry) => entry.id === entryId)?.objects.find((object) => object.id === objectId);
+    if (!target) return;
+    checkpoint(get(), `object:lock:${entryId}:${objectId}`);
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (entry) => ({
+      ...entry,
+      objects: entry.objects.map((object) => object.id === objectId
+        ? { ...object, locked: !object.locked, updatedAt: timestamp }
+        : object),
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries, ...historyFlags() });
+  },
+
+  moveObjectLayer: (entryId, objectId, direction) => {
+    const entry = get().entries.find((candidate) => candidate.id === entryId);
+    const target = entry?.objects.find((object) => object.id === objectId);
+    if (!entry || !target || target.locked) return;
+    const candidates = entry.objects
+      .filter((object) => object.id !== objectId)
+      .sort((a, b) => a.zIndex - b.zIndex);
+    const neighbor = direction === 'forward'
+      ? candidates.find((object) => object.zIndex > target.zIndex)
+      : [...candidates].reverse().find((object) => object.zIndex < target.zIndex);
+    if (!neighbor) return;
+    checkpoint(get(), `object:layer:${entryId}:${objectId}`);
+    const timestamp = now();
+    const entries = mapEntry(get().entries, entryId, (current) => ({
+      ...current,
+      objects: current.objects.map((object) => {
+        if (object.id === objectId) return { ...object, zIndex: neighbor.zIndex, updatedAt: timestamp };
+        if (object.id === neighbor.id) return { ...object, zIndex: target.zIndex, updatedAt: timestamp };
+        return object;
+      }),
+      updatedAt: timestamp,
+    }));
+    persist(entries, get().activeEntryId);
+    set({ entries, ...historyFlags() });
+  },
+
   deleteObject: (entryId, objectId) => {
+    const target = get().entries.find((entry) => entry.id === entryId)?.objects.find((object) => object.id === objectId);
+    if (!target || target.locked) return;
     checkpoint(get(), `object:delete:${entryId}:${objectId}`);
     const timestamp = now();
     const entries = mapEntry(get().entries, entryId, (entry) => ({
