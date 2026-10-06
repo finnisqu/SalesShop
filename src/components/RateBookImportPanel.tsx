@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPricingRateItem } from '../services/pricingScheduleBuilder';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useRateBookStore } from '../store/rateBookStore';
 import {
   RATE_BOOK_CATEGORIES,
   RATE_BOOK_CATEGORY_LABELS,
+  RATE_BOOK_PRICING_BEHAVIOR_LABELS,
   RATE_BOOK_UNIT_LABELS,
+  resolveRateBookValues,
   type RateBookCategory,
+  type RateBookDivision,
   type RateBookItem,
 } from '../types/rateBook';
 import type { PricingBuilderProductType, PricingRateItem } from '../types/quote';
-import { createPricingRateItem } from '../services/pricingScheduleBuilder';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 type CategoryFilter = 'all' | RateBookCategory;
@@ -35,20 +38,30 @@ function productTypeFor(item: RateBookItem): PricingBuilderProductType {
 }
 
 function matchesExisting(item: RateBookItem, rates: PricingRateItem[]) {
-  return rates.some((rate) => normalized(rate.name) === normalized(item.name)
-    && rate.unit === item.unit
-    && rate.rate === item.sellRate);
+  return rates.some((rate) => rate.sourceRateBookItemId === item.id
+    || (normalized(rate.name) === normalized(item.name) && rate.unit === item.unit));
 }
 
-function snapshotRate(item: RateBookItem, stockMaterials: ReturnType<typeof useCompanySettingsStore.getState>['settings']['stockMaterials']) {
+function snapshotRate(
+  item: RateBookItem,
+  division: RateBookDivision | undefined,
+  stockMaterials: ReturnType<typeof useCompanySettingsStore.getState>['settings']['stockMaterials'],
+) {
   if (!supportedUnit(item)) return null;
   const material = item.category === 'material';
   const stock = item.stockMaterialId ? stockMaterials.find((candidate) => candidate.id === item.stockMaterialId) : undefined;
+  const resolved = resolveRateBookValues(item, division);
   const rate = createPricingRateItem(productTypeFor(item), material ? 'material-level' : 'add-on');
   rate.name = item.name;
   rate.unit = item.unit;
-  rate.rate = item.sellRate;
-  rate.priceMode = item.sellRate === undefined ? 'tbd' : 'priced';
+  rate.internalCost = resolved.internalCost;
+  rate.suggestedRate = resolved.sellRate;
+  rate.sourceRateBookItemId = item.id;
+  rate.sourceRateBookEffectiveDate = item.effectiveDate;
+  rate.sourcePricingBehavior = item.pricingBehavior;
+  rate.pricingDivision = division;
+  rate.rate = item.pricingBehavior === 'suggested' ? resolved.sellRate : undefined;
+  rate.priceMode = rate.rate === undefined ? 'tbd' : 'priced';
   rate.customerVisible = true;
 
   if (material) {
@@ -66,9 +79,11 @@ function snapshotRate(item: RateBookItem, stockMaterials: ReturnType<typeof useC
 
 export function RateBookImportPanel({
   existingRates,
+  division,
   onImport,
 }: {
   existingRates: PricingRateItem[];
+  division?: RateBookDivision;
   onImport: (rates: PricingRateItem[]) => void;
 }) {
   const items = useRateBookStore((state) => state.items);
@@ -111,12 +126,12 @@ export function RateBookImportPanel({
     const snapshots = [...selected]
       .map((id) => activeItems.find((item) => item.id === id))
       .filter((item): item is RateBookItem => Boolean(item))
-      .map((item) => snapshotRate(item, stockMaterials))
+      .map((item) => snapshotRate(item, division, stockMaterials))
       .filter((rate): rate is PricingRateItem => Boolean(rate));
     if (!snapshots.length) return;
     onImport(snapshots);
     setSelected(new Set());
-    setMessage(`${snapshots.length} rate${snapshots.length === 1 ? '' : 's'} copied. These are now schedule-specific snapshots.`);
+    setMessage(`${snapshots.length} rate${snapshots.length === 1 ? '' : 's'} copied as editable ${division ?? 'base'} snapshot${snapshots.length === 1 ? '' : 's'}.`);
     setOpen(false);
   };
 
@@ -125,7 +140,7 @@ export function RateBookImportPanel({
       <header>
         <div>
           <span className="quote-control-heading">Company Rate Book</span>
-          <small>Copy standard company rates into this Pricing Schedule. Changes here will not change the master Rate Book.</small>
+          <small>{division ? `${division} overrides are applied where available.` : 'Using base company costs and suggestions.'} Imported rows remain fully editable.</small>
         </div>
         <button type="button" onClick={() => { setOpen((value) => !value); setMessage(''); }}>
           {open ? 'Close Rate Book' : '+ Add from Rate Book'}
@@ -140,9 +155,7 @@ export function RateBookImportPanel({
             <div className="pricing-rate-import-categories" role="tablist" aria-label="Rate Book categories">
               <button type="button" className={category === 'all' ? 'active' : ''} onClick={() => setCategory('all')}>All</button>
               {RATE_BOOK_CATEGORIES.map((item) => (
-                <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>
-                  {RATE_BOOK_CATEGORY_LABELS[item]}
-                </button>
+                <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{RATE_BOOK_CATEGORY_LABELS[item]}</button>
               ))}
             </div>
             <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search company rates…" aria-label="Search company Rate Book" />
@@ -154,18 +167,19 @@ export function RateBookImportPanel({
               const supported = supportedUnit(item);
               const alreadyAdded = matchesExisting(item, existingRates);
               const disabled = !supported || alreadyAdded;
+              const resolved = resolveRateBookValues(item, division);
               return (
                 <label className={`pricing-rate-import-row ${disabled ? 'is-disabled' : ''}`} key={item.id}>
                   <input type="checkbox" checked={selected.has(item.id)} disabled={disabled} onChange={() => toggle(item.id)} />
                   <div>
                     <strong>{item.name}</strong>
-                    <span>{RATE_BOOK_CATEGORY_LABELS[item.category]}{item.code ? ` · ${item.code}` : ''}</span>
+                    <span>{RATE_BOOK_CATEGORY_LABELS[item.category]}{item.code ? ` · ${item.code}` : ''} · {RATE_BOOK_PRICING_BEHAVIOR_LABELS[item.pricingBehavior]}</span>
                   </div>
                   <div className="pricing-rate-import-price">
-                    <strong>{item.sellRate === undefined ? 'TBD' : money.format(item.sellRate)}</strong>
-                    <span>{RATE_BOOK_UNIT_LABELS[item.unit]}</span>
+                    <strong>{resolved.sellRate === undefined ? 'No suggestion' : money.format(resolved.sellRate)}</strong>
+                    <span>{resolved.internalCost === undefined ? 'Cost —' : `Cost ${money.format(resolved.internalCost)}`} · {RATE_BOOK_UNIT_LABELS[item.unit]}</span>
                   </div>
-                  <small>{alreadyAdded ? 'Already in schedule' : supported ? 'Copy snapshot' : `${RATE_BOOK_UNIT_LABELS[item.unit]} import coming next`}</small>
+                  <small>{alreadyAdded ? 'Already in schedule' : supported ? (item.pricingBehavior === 'suggested' ? 'Copies suggested sell' : 'Copies as TBD / editable') : `${RATE_BOOK_UNIT_LABELS[item.unit]} import coming next`}</small>
                 </label>
               );
             })}
