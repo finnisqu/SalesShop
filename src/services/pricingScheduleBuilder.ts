@@ -56,10 +56,13 @@ export function createPricingRateItem(
     materialType: kind === 'material-level' ? 'Granite' : undefined,
     level: kind === 'material-level' ? 'Level 1' : undefined,
     colors: [],
+    colorsText: '',
     unit: productType === 'Countertops' || productType === 'Backsplash' ? 'sf' : 'each',
     rate: undefined,
     priceMode: 'priced',
     customerVisible: true,
+    showLevelOnCustomer: kind === 'material-level' ? false : undefined,
+    detailsLayout: kind === 'material-level' ? 'list' : 'inline',
   };
 }
 
@@ -90,6 +93,7 @@ export function createPricingPlan(): PricingPlan {
     name: 'New plan',
     description: '',
     notes: '',
+    excludedOptionIds: [],
   };
 }
 
@@ -112,6 +116,23 @@ export function takeoffSquareFeet(takeoff: PricingPlanTakeoff) {
 
 function normalized(value?: string) {
   return value?.trim().toLowerCase() ?? '';
+}
+
+export function parsePricingDetailLines(value?: string) {
+  if (!value) return [];
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+export function rateColorsText(rate: PricingRateItem) {
+  if (rate.colorsText !== undefined) return rate.colorsText;
+  return (rate.colors ?? []).join('\n');
+}
+
+export function planOptionEnabled(plan: PricingPlan, option: PricingOptionPackage) {
+  return !plan.excludedOptionIds?.includes(option.id);
 }
 
 function priceMode(rate: PricingRateItem): PricingRatePriceMode {
@@ -148,17 +169,21 @@ export function deriveRateSheetCustomerItems(builder?: PricingScheduleBuilderDat
       const numericRate = rateItemNumericRate(rate);
       const label = rateItemPriceLabel(rate);
       const material = rate.kind === 'material-level';
+      const details = material
+        ? parsePricingDetailLines(rateColorsText(rate))
+        : parsePricingDetailLines(rate.description);
       return {
         sourceRow: index + 1,
-        series: material ? rate.materialType : rate.productType,
-        itemType: material ? (rate.level || 'Material level') : 'Add-on',
-        description: rate.description?.trim() || rate.name,
+        itemType: material && rate.showLevelOnCustomer !== false ? (rate.level || undefined) : undefined,
+        description: rate.name,
         customerPrice: label ? undefined : numericRate,
         displayType: material ? 'rate-level' : 'rate-add-on',
         groupLabel: material ? `${rate.materialType || 'Material'} Levels` : 'Sinks & Add-ons',
         priceLabel: label,
         unitLabel: unitLabel(rate),
-        colors: material ? (rate.colors ?? []).filter(Boolean) : undefined,
+        colors: material ? details : undefined,
+        details,
+        detailsLayout: rate.detailsLayout ?? (material ? 'list' : 'inline'),
       } satisfies PricingScheduleItem;
     });
 }
@@ -169,8 +194,8 @@ export function rateSheetHealth(builder?: PricingScheduleBuilderData) {
   const warnings: string[] = [];
   if (!visible.length) warnings.push('Add at least one customer-visible Rate Book item.');
   visible.forEach((rate) => {
-    if (!rate.name.trim()) warnings.push('A Rate Book item is missing its name.');
-    if (rate.kind === 'material-level' && !rate.level?.trim()) warnings.push(`${rate.name || 'A material'} is missing its level.`);
+    if (!rate.name.trim()) warnings.push('A Rate Book item is missing its customer label / item name.');
+    if (rate.kind === 'material-level' && rate.showLevelOnCustomer !== false && !rate.level?.trim()) warnings.push(`${rate.name || 'A material'} is set to show Level but has no level value.`);
     if (priceMode(rate) === 'priced' && rateItemNumericRate(rate) === undefined) warnings.push(`${rate.name || 'A Rate Book item'} is missing its price.`);
   });
   return [...new Set(warnings)];
@@ -282,7 +307,9 @@ export function calculatePlanOption(
 }
 
 export function pricingBuilderMatrix(builder: PricingScheduleBuilderData) {
-  return builder.plans.flatMap((plan) => builder.options.map((option) => calculatePlanOption(builder, plan, option)));
+  return builder.plans.flatMap((plan) => builder.options
+    .filter((option) => planOptionEnabled(plan, option))
+    .map((option) => calculatePlanOption(builder, plan, option)));
 }
 
 export function deriveBuilderCustomerItems(builder?: PricingScheduleBuilderData): PricingScheduleItem[] {
@@ -309,9 +336,11 @@ export function pricingBuilderHealth(builder?: PricingScheduleBuilderData) {
   builder.plans.forEach((plan) => {
     if (!plan.planNumber.trim() && !plan.name.trim()) warnings.push('A plan is missing both its number and name.');
     if (!builder.takeoffs.some((takeoff) => takeoff.planId === plan.id)) warnings.push(`${plan.planNumber || plan.name || 'A plan'} has no takeoff rows.`);
+    if (!builder.options.some((option) => planOptionEnabled(plan, option))) warnings.push(`${plan.planNumber || plan.name || 'A plan'} has no available option packages.`);
   });
   builder.options.forEach((option) => {
-    if (!option.rules.length && !option.flatAdjustment) warnings.push(`${option.code || option.name} has no pricing rules.`);
+    const used = builder.plans.some((plan) => planOptionEnabled(plan, option));
+    if (used && !option.rules.length && !option.flatAdjustment) warnings.push(`${option.code || option.name} has no pricing rules.`);
   });
   pricingBuilderMatrix(builder).forEach((calculation) => warnings.push(...calculation.warnings));
   return [...new Set(warnings)];
