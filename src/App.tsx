@@ -8,8 +8,10 @@ import './accounts.css';
 import './notebook-project-links.css';
 import './quotes.css';
 import './dashboard.css';
+import './company-settings.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
+import { CompanySettings } from './components/CompanySettings';
 import { Dashboard } from './components/Dashboard';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
@@ -18,6 +20,7 @@ import { Quotes } from './components/Quotes';
 import { Sidebar } from './components/Sidebar';
 import { TextEditor } from './components/TextEditor';
 import { Toolbar } from './components/Toolbar';
+import { useCompanySettingsStore } from './store/companySettingsStore';
 import { useCrmStore } from './store/crmStore';
 import { useNavigationStore } from './store/navigationStore';
 import { useNotebookStore } from './store/notebookStore';
@@ -28,6 +31,7 @@ function App() {
   const openProject = useNavigationStore((state) => state.openProject);
   const hydrate = useNotebookStore((state) => state.hydrate);
   const hydrateCrm = useCrmStore((state) => state.hydrate);
+  const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
   const hydrated = useNotebookStore((state) => state.hydrated);
   const entries = useNotebookStore((state) => state.entries);
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
@@ -37,7 +41,8 @@ function App() {
   useEffect(() => {
     hydrate();
     hydrateCrm();
-  }, [hydrate, hydrateCrm]);
+    void hydrateSettings();
+  }, [hydrate, hydrateCrm, hydrateSettings]);
 
   const entry = entries.find((candidate) => candidate.id === activeEntryId) ?? null;
   const linkedProject = entry?.context?.projectId
@@ -58,6 +63,7 @@ function App() {
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
         <div className="app-account-zone">
+          <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')} title="Company settings">Settings</button>
           <div className="migration-chip">React foundation</div>
           <AuthStatus />
         </div>
@@ -69,6 +75,8 @@ function App() {
         <Quotes />
       ) : view === 'dashboard' ? (
         <Dashboard />
+      ) : view === 'settings' ? (
+        <CompanySettings />
       ) : (
         <main className="notebook-workspace">
           <Sidebar />
