@@ -13,7 +13,6 @@ import type {
 
 const CRM_TABLES = ['activities', 'projects', 'contacts', 'companies'] as const;
 type CrmTable = (typeof CRM_TABLES)[number];
-
 type DbRow = Record<string, unknown>;
 
 function valueOrUndefined(value: unknown) {
@@ -24,6 +23,14 @@ function numericOrUndefined(value: unknown) {
   if (value === null || value === undefined || value === '') return undefined;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : undefined;
+}
+
+function atLeastAsNew(localValue: string, serverValue?: string) {
+  if (!serverValue) return true;
+  const localTime = Date.parse(localValue);
+  const serverTime = Date.parse(serverValue);
+  if (!Number.isFinite(localTime) || !Number.isFinite(serverTime)) return localValue >= serverValue;
+  return localTime >= serverTime;
 }
 
 async function selectRows(table: CrmTable, organizationId: string) {
@@ -111,37 +118,33 @@ async function upsertRows(table: CrmTable, rows: Record<string, unknown>[]) {
   if (error) throw error;
 }
 
-async function deleteStaleRows(table: Exclude<CrmTable, 'activities'>, organizationId: string, localIds: string[]) {
-  if (!supabase) return;
-  const { data, error } = await supabase
-    .from(table)
-    .select('id')
-    .eq('organization_id', organizationId);
-  if (error) throw error;
-
-  const keep = new Set(localIds);
-  const staleIds = (data ?? [])
-    .map((row) => String(row.id))
-    .filter((id) => !keep.has(id));
-  if (!staleIds.length) return;
-
-  const { error: deleteError } = await supabase
-    .from(table)
-    .delete()
-    .eq('organization_id', organizationId)
-    .in('id', staleIds);
-  if (deleteError) throw deleteError;
+interface ServerCrmGuards {
+  companies: Map<string, string>;
+  contacts: Map<string, string>;
+  projects: Map<string, { updatedAt: string; stage: ProjectStage; amount?: number; lastTouchpoint?: string }>;
 }
 
-async function serverProjectGuards(organizationId: string) {
-  const guards = new Map<string, { stage: ProjectStage; amount?: number; lastTouchpoint?: string }>();
+async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards> {
+  const guards: ServerCrmGuards = {
+    companies: new Map(),
+    contacts: new Map(),
+    projects: new Map(),
+  };
   if (!supabase) return guards;
-  const { data, error } = await supabase
-    .from('projects')
-    .select('id,stage,amount,last_touchpoint')
-    .eq('organization_id', organizationId);
-  if (error) throw error;
-  (data ?? []).forEach((row) => guards.set(String(row.id), {
+
+  const [companies, contacts, projects] = await Promise.all([
+    supabase.from('companies').select('id,updated_at').eq('organization_id', organizationId),
+    supabase.from('contacts').select('id,updated_at').eq('organization_id', organizationId),
+    supabase.from('projects').select('id,updated_at,stage,amount,last_touchpoint').eq('organization_id', organizationId),
+  ]);
+  if (companies.error) throw companies.error;
+  if (contacts.error) throw contacts.error;
+  if (projects.error) throw projects.error;
+
+  (companies.data ?? []).forEach((row) => guards.companies.set(String(row.id), String(row.updated_at)));
+  (contacts.data ?? []).forEach((row) => guards.contacts.set(String(row.id), String(row.updated_at)));
+  (projects.data ?? []).forEach((row) => guards.projects.set(String(row.id), {
+    updatedAt: String(row.updated_at),
     stage: String(row.stage) as ProjectStage,
     amount: numericOrUndefined(row.amount),
     lastTouchpoint: valueOrUndefined(row.last_touchpoint),
@@ -153,61 +156,75 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
   if (!supabase) return;
   if (document.schemaVersion !== 3) throw new Error('Unsupported CRM document schema.');
 
-  const companies = document.companies.map((company, sortOrder) => ({
-    organization_id: organizationId,
-    id: company.id,
-    name: company.name,
-    kind: company.kind,
-    sort_order: sortOrder,
-    created_at: company.createdAt,
-    updated_at: company.updatedAt,
-  }));
-  const contacts = document.contacts.map((contact, sortOrder) => ({
-    organization_id: organizationId,
-    id: contact.id,
-    company_id: contact.companyId ?? null,
-    name: contact.name,
-    email: contact.email ?? null,
-    phone: contact.phone ?? null,
-    title: contact.title ?? null,
-    sort_order: sortOrder,
-    created_at: contact.createdAt,
-    updated_at: contact.updatedAt,
-  }));
+  // Every browser starts from a snapshot. Treat Supabase as the shared source of
+  // truth: a stale snapshot may add its own new records, but it cannot overwrite
+  // records another salesperson has updated more recently and it never infers
+  // deletion merely because a server row is missing from this browser's cache.
+  const guards = await serverCrmGuards(organizationId);
 
-  // A public signature can advance a Project while a salesperson still has an
-  // older browser cache open. Closed Won/Completed customer outcomes are never
-  // silently moved backward by that stale cache.
-  const projectGuards = await serverProjectGuards(organizationId);
-  const projects = document.projects.map((project, sortOrder) => {
-    const server = projectGuards.get(project.id);
-    let stage = project.stage;
-    let amount = project.amount;
-    let lastTouchpoint = project.lastTouchpoint;
-    if (server?.stage === 'Completed' && project.stage !== 'Completed') {
-      stage = 'Completed';
-      amount = server.amount ?? amount;
-      lastTouchpoint = server.lastTouchpoint ?? lastTouchpoint;
-    } else if (server?.stage === 'Closed Won' && project.stage !== 'Closed Won' && project.stage !== 'Completed') {
-      stage = 'Closed Won';
-      amount = server.amount ?? amount;
-      lastTouchpoint = server.lastTouchpoint ?? lastTouchpoint;
-    }
-    return {
+  const companies = document.companies
+    .filter((company) => atLeastAsNew(company.updatedAt, guards.companies.get(company.id)))
+    .map((company, sortOrder) => ({
       organization_id: organizationId,
-      id: project.id,
-      company_id: project.companyId ?? null,
-      name: project.name,
-      stage,
-      due_date: project.dueDate ?? null,
-      amount: amount ?? null,
-      next_action: project.nextAction ?? null,
-      last_touchpoint: lastTouchpoint ?? null,
+      id: company.id,
+      name: company.name,
+      kind: company.kind,
       sort_order: sortOrder,
-      created_at: project.createdAt,
-      updated_at: project.updatedAt,
-    };
-  });
+      created_at: company.createdAt,
+      updated_at: company.updatedAt,
+    }));
+
+  const contacts = document.contacts
+    .filter((contact) => atLeastAsNew(contact.updatedAt, guards.contacts.get(contact.id)))
+    .map((contact, sortOrder) => ({
+      organization_id: organizationId,
+      id: contact.id,
+      company_id: contact.companyId ?? null,
+      name: contact.name,
+      email: contact.email ?? null,
+      phone: contact.phone ?? null,
+      title: contact.title ?? null,
+      sort_order: sortOrder,
+      created_at: contact.createdAt,
+      updated_at: contact.updatedAt,
+    }));
+
+  const projects = document.projects
+    .filter((project) => atLeastAsNew(project.updatedAt, guards.projects.get(project.id)?.updatedAt))
+    .map((project, sortOrder) => {
+      const server = guards.projects.get(project.id);
+      let stage = project.stage;
+      let amount = project.amount;
+      let lastTouchpoint = project.lastTouchpoint;
+      // Customer acceptance is authoritative even when a local clock happens to
+      // be ahead. Never regress these terminal customer/business outcomes.
+      if (server?.stage === 'Completed' && project.stage !== 'Completed') {
+        stage = 'Completed';
+        amount = server.amount ?? amount;
+        lastTouchpoint = server.lastTouchpoint ?? lastTouchpoint;
+      } else if (server?.stage === 'Closed Won' && project.stage !== 'Closed Won' && project.stage !== 'Completed') {
+        stage = 'Closed Won';
+        amount = server.amount ?? amount;
+        lastTouchpoint = server.lastTouchpoint ?? lastTouchpoint;
+      }
+      return {
+        organization_id: organizationId,
+        id: project.id,
+        company_id: project.companyId ?? null,
+        name: project.name,
+        stage,
+        due_date: project.dueDate ?? null,
+        amount: amount ?? null,
+        next_action: project.nextAction ?? null,
+        last_touchpoint: lastTouchpoint ?? null,
+        sort_order: sortOrder,
+        created_at: project.createdAt,
+        updated_at: project.updatedAt,
+      };
+    });
+
+  // Activities are append-only breadcrumbs. Upserting known IDs is idempotent,
+  // while server-created customer events remain untouched if this browser never saw them.
   const activities = document.activities.map((activity, sortOrder) => ({
     organization_id: organizationId,
     id: activity.id,
@@ -222,15 +239,18 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
     sort_order: sortOrder,
   }));
 
-  // Parent records first so foreign-key relationships are always valid.
   await upsertRows('companies', companies);
   await upsertRows('contacts', contacts);
   await upsertRows('projects', projects);
   await upsertRows('activities', activities);
+}
 
-  // Activities are append-only breadcrumbs. Customer View/Sign events can be
-  // created server-side and must survive an older client's later sync.
-  await deleteStaleRows('projects', organizationId, document.projects.map((project) => project.id));
-  await deleteStaleRows('contacts', organizationId, document.contacts.map((contact) => contact.id));
-  await deleteStaleRows('companies', organizationId, document.companies.map((company) => company.id));
+export async function deleteNormalizedProject(organizationId: string, projectId: string) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('organization_id', organizationId)
+    .eq('id', projectId);
+  if (error) throw error;
 }
