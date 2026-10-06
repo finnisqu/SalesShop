@@ -27,6 +27,7 @@ import './material-stock-program.css';
 import './board-scroll-controls.css';
 import './quote-line-reorder.css';
 import './rates-usability.css';
+import './rates-workspace-unification.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
