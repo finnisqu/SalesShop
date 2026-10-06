@@ -1,0 +1,291 @@
+.rates-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  padding: 22px;
+  background: #d9d4c8;
+  color: #353129;
+}
+
+.rates-workspace-header {
+  max-width: 1480px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 auto 14px;
+}
+
+.rates-workspace-header > div:first-child { min-width: 0; display: grid; gap: 5px; }
+.rates-workspace-header h1 { margin: 0; font: 700 38px/1 Georgia, 'Times New Roman', serif; }
+.rates-workspace-header p { margin: 0; color: #746e64; font-size: 12px; line-height: 1.4; }
+
+.rates-mode-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rates-mode-badge {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(72, 66, 55, .13);
+  border-radius: 999px;
+  background: rgba(244, 241, 233, .72);
+  color: #777065;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.rates-mode-badge.is-editing {
+  border-color: rgba(164, 134, 52, .3);
+  background: #f8efd0;
+  color: #67572f;
+}
+
+.rates-edit-button,
+.rates-done-button {
+  min-height: 40px;
+  padding: 0 15px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.rates-edit-button {
+  border: 1px solid #aa965e;
+  background: #e7d58b;
+  color: #413a2a;
+  box-shadow: 0 2px 5px rgba(59, 49, 31, .07);
+}
+
+.rates-done-button {
+  border: 1px solid #9b927f;
+  background: #f7f3e9;
+  color: #514b42;
+}
+
+.rates-reference-controls {
+  max-width: 1480px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto 10px;
+}
+
+.rates-reference-tabs {
+  min-width: 0;
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid rgba(61, 54, 45, .17);
+  border-radius: 7px;
+  background: rgba(226, 221, 209, .9);
+  overflow-x: auto;
+}
+
+.rates-reference-tabs button {
+  min-height: 36px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #6d665c;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.rates-reference-tabs button.active {
+  background: #fff9e8;
+  color: #37322a;
+  box-shadow: 0 1px 3px rgba(51, 43, 32, .09), inset 0 -2px #c2a541;
+}
+
+.rates-reference-controls input[type='search'] {
+  width: min(420px, 36vw);
+  min-width: 220px;
+  min-height: 42px;
+  margin-left: auto;
+  border: 1px solid rgba(62, 55, 45, .18);
+  border-radius: 5px;
+  outline: 0;
+  background: rgba(255, 253, 247, .9);
+  color: #4a453d;
+  padding: 0 11px;
+  font-size: 11px;
+}
+
+.rates-reference-controls input[type='search']:focus {
+  border-color: #aa975e;
+  box-shadow: 0 0 0 2px rgba(184, 159, 83, .11);
+}
+
+.rates-reference-card {
+  max-width: 1480px;
+  margin: 0 auto 18px;
+  border: 1px solid rgba(58, 51, 43, .16);
+  background: #f6f2e8;
+  box-shadow: 0 4px 14px rgba(52, 44, 35, .05);
+}
+
+.rates-reference-card > header {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(70, 62, 51, .1);
+  background: rgba(236, 231, 219, .72);
+}
+
+.rates-reference-card > header > div { display: grid; gap: 2px; }
+.rates-reference-card > header strong { color: #454038; font-size: 12px; }
+.rates-reference-card > header small,
+.rates-reference-card > header > span { color: #81796d; font-size: 9px; }
+
+.rates-reference-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rates-reference-table {
+  width: 100%;
+  min-width: 910px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+  font-size: 11px;
+}
+
+.rates-reference-table th {
+  height: 32px;
+  padding: 0 10px;
+  border-right: 1px solid rgba(70, 62, 51, .08);
+  border-bottom: 1px solid rgba(70, 62, 51, .11);
+  background: #e9e4d8;
+  color: #756e63;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: .05em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rates-reference-table td {
+  min-height: 45px;
+  padding: 9px 10px;
+  border-right: 1px solid rgba(70, 62, 51, .07);
+  border-bottom: 1px solid rgba(70, 62, 51, .09);
+  background: rgba(255, 253, 247, .86);
+  color: #514b42;
+  vertical-align: middle;
+}
+
+.rates-reference-table tbody tr:hover td { background: #fffaf0; }
+.rates-reference-table .number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rates-reference-item,
+.rates-reference-sell { min-width: 150px; }
+.rates-reference-item strong,
+.rates-reference-item small,
+.rates-reference-sell strong,
+.rates-reference-sell small { display: block; }
+.rates-reference-item strong { color: #3f3a33; font-size: 11px; }
+.rates-reference-item small,
+.rates-reference-sell small { margin-top: 2px; color: #8a8275; font-size: 8px; }
+.rates-reference-sell strong { color: #4e5948; font-size: 11px; font-variant-numeric: tabular-nums; }
+
+.rates-material-reference-table { min-width: 1180px; }
+.rates-program-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #eee9df;
+  color: #766e61;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.rates-program-pill.is-stock { background: #e3eadc; color: #52634a; }
+.rates-product-links { min-width: 130px; white-space: nowrap; }
+.rates-product-links a {
+  display: inline-block;
+  margin: 2px 5px 2px 0;
+  color: #6d613c;
+  font-size: 9px;
+  font-weight: 750;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(109, 97, 60, .3);
+}
+.rates-reference-empty { padding: 30px; color: #827a6e; text-align: center; }
+
+.rates-editor-host {
+  max-width: 100%;
+  margin: 0 -22px -22px;
+}
+
+.rates-editor-host .rate-book-view {
+  padding-top: 4px;
+}
+
+.rates-editor-host .rate-book-header {
+  display: none;
+}
+
+/* Numeric steppers are visual noise in pricing tables; values remain keyboard editable. */
+.rate-book-view input[type='number'],
+.material-rate-book input[type='number'],
+.quote-lines-editor input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.rate-book-view input[type='number']::-webkit-inner-spin-button,
+.rate-book-view input[type='number']::-webkit-outer-spin-button,
+.material-rate-book input[type='number']::-webkit-inner-spin-button,
+.material-rate-book input[type='number']::-webkit-outer-spin-button,
+.quote-lines-editor input[type='number']::-webkit-inner-spin-button,
+.quote-lines-editor input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .rates-workspace {
+    padding: 14px 10px calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .rates-workspace-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .rates-workspace-header h1 { font-size: 26px; }
+  .rates-mode-actions { justify-content: space-between; }
+  .rates-edit-button,
+  .rates-done-button { min-height: 44px; }
+
+  .rates-reference-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rates-reference-tabs { width: 100%; box-sizing: border-box; }
+  .rates-reference-controls input[type='search'] { width: 100%; min-width: 0; min-height: 44px; font-size: 16px; }
+  .rates-reference-card > header { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .rates-editor-host { margin: 0 -10px -72px; }
+}
