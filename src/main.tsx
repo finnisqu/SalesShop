@@ -23,6 +23,7 @@ import './quote-document-setup.css';
 import './mobile-pricing-containment.css';
 import './mobile-document-navigation.css';
 import './material-reference-variants.css';
+import './material-stock-program.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
