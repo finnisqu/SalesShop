@@ -1,5 +1,6 @@
 import type { IWorkbookData } from '@univerjs/core';
 import { LocaleType } from '@univerjs/core';
+import { createPricingScheduleBuilderData, deriveBuilderCustomerItems, pricingBuilderHealth } from './pricingScheduleBuilder';
 import type {
   PricingScheduleColumnMapping,
   PricingScheduleData,
@@ -79,6 +80,8 @@ export function createPricingScheduleData(quoteId: string): PricingScheduleData 
   const columns: PricingScheduleColumnMapping = {};
   STARTER_COLUMNS.forEach((column, index) => { columns[column.field] = index; });
   return {
+    publishSource: 'builder',
+    builder: createPricingScheduleBuilderData(),
     workbookData,
     mapping: { sheetId, headerRow: 1, firstDataRow: 2, columns },
     customerItems: [],
@@ -235,19 +238,39 @@ export function derivePricingScheduleItems(value: unknown, mapping?: PricingSche
 export function mergePricingScheduleData(quoteId: string, current: PricingScheduleData | undefined, patch: Partial<PricingScheduleData>): PricingScheduleData {
   const workbookData = patch.workbookData ?? current?.workbookData ?? createBlankPricingScheduleWorkbook(quoteId);
   const mapping = patch.mapping !== undefined ? patch.mapping : current?.mapping;
-  return { ...current, ...patch, workbookData, mapping, customerItems: derivePricingScheduleItems(workbookData, mapping) };
+  const builder = patch.builder !== undefined ? patch.builder : current?.builder;
+  const publishSource = patch.publishSource ?? current?.publishSource ?? (builder ? 'builder' : 'workbook');
+  const workbookItems = derivePricingScheduleItems(workbookData, mapping);
+  const builderItems = deriveBuilderCustomerItems(builder);
+  return {
+    ...current,
+    ...patch,
+    publishSource,
+    builder,
+    workbookData,
+    mapping,
+    customerItems: publishSource === 'builder' ? builderItems : workbookItems,
+  };
 }
 
 export function validatePricingScheduleForSend(data?: PricingScheduleData) {
-  if (!data?.workbookData) throw new Error('Add or import the pricing workbook before sending this schedule.');
-  if (!data.mapping?.sheetId) throw new Error('Map the pricing workbook before sending this schedule.');
-  if (data.mapping.columns.description === undefined || data.mapping.columns.customerPrice === undefined) throw new Error('Map at least Description and Customer price before sending this schedule.');
-  if (!data.customerItems.length) throw new Error('The mapped pricing schedule does not contain any customer rows.');
+  if (!data) throw new Error('Configure the pricing schedule before sending.');
+  const source = data.publishSource ?? (data.builder ? 'builder' : 'workbook');
+  if (source === 'builder') {
+    const health = pricingBuilderHealth(data.builder);
+    if (health.length) throw new Error(`Structured Builder needs review: ${health[0]}`);
+    if (!data.customerItems.length) throw new Error('The Structured Builder has not generated any customer pricing rows.');
+  } else {
+    if (!data.workbookData) throw new Error('Add or import the pricing workbook before sending this schedule.');
+    if (!data.mapping?.sheetId) throw new Error('Map the pricing workbook before sending this schedule.');
+    if (data.mapping.columns.description === undefined || data.mapping.columns.customerPrice === undefined) throw new Error('Map at least Description and Customer price before sending this schedule.');
+    if (!data.customerItems.length) throw new Error('The mapped pricing schedule does not contain any customer rows.');
+  }
   const incomplete = data.customerItems.filter((item) => !item.description?.trim() || item.customerPrice === undefined);
   if (incomplete.length) {
     const rows = incomplete.slice(0, 4).map((item) => item.sourceRow).join(', ');
     const suffix = incomplete.length > 4 ? ', …' : '';
-    throw new Error(`Complete Description and Customer price on mapped workbook row${incomplete.length === 1 ? '' : 's'} ${rows}${suffix} before sending.`);
+    throw new Error(`Complete Description and Customer price on published schedule row${incomplete.length === 1 ? '' : 's'} ${rows}${suffix} before sending.`);
   }
 }
 
