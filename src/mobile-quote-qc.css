@@ -77,15 +77,38 @@
     max-inline-size: 100%;
   }
 
+  /* iOS Safari applies its own centered, partially-native paint to date fields even after
+     width constraints. Keep the native date picker behavior but fully own the visible field. */
   .quote-details-grid input[type="date"] {
     display: block;
     min-inline-size: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    border: 1px solid #c9c1b2;
+    border-radius: 2px;
+    background: rgba(255, 252, 244, .9);
+    color: #3e3a33;
+    padding: 0 14px;
+    text-align: left;
   }
 
-  .quote-details-grid input[type="date"]::-webkit-date-and-time-value,
+  .quote-details-grid input[type="date"]::-webkit-date-and-time-value {
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    text-align: left;
+  }
+
   .quote-details-grid input[type="date"]::-webkit-datetime-edit {
     min-width: 0;
     max-width: 100%;
+    padding: 0;
+    text-align: left;
+  }
+
+  .quote-details-grid input[type="date"]::-webkit-calendar-picker-indicator {
+    margin-left: auto;
+    opacity: .62;
   }
 
   /* Search and quick-create should read as a matched pair in the app header. */
