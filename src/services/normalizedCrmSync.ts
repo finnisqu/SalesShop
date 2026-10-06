@@ -60,6 +60,9 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
     id: String(row.id),
     name: String(row.name),
     kind: (row.kind === 'non-customer' ? 'non-customer' : 'customer') as CompanyKind,
+    annualUnits: numericOrUndefined(row.annual_units),
+    averageUnitValue: numericOrUndefined(row.average_unit_value),
+    expectedSharePct: numericOrUndefined(row.expected_share_pct),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   }));
@@ -156,10 +159,6 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
   if (!supabase) return;
   if (document.schemaVersion !== 3) throw new Error('Unsupported CRM document schema.');
 
-  // Every browser starts from a snapshot. Treat Supabase as the shared source of
-  // truth: a stale snapshot may add its own new records, but it cannot overwrite
-  // records another salesperson has updated more recently and it never infers
-  // deletion merely because a server row is missing from this browser's cache.
   const guards = await serverCrmGuards(organizationId);
 
   const companies = document.companies
@@ -169,6 +168,9 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
       id: company.id,
       name: company.name,
       kind: company.kind,
+      annual_units: company.annualUnits ?? null,
+      average_unit_value: company.averageUnitValue ?? null,
+      expected_share_pct: company.expectedSharePct ?? null,
       sort_order: sortOrder,
       created_at: company.createdAt,
       updated_at: company.updatedAt,
@@ -196,8 +198,6 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
       let stage = project.stage;
       let amount = project.amount;
       let lastTouchpoint = project.lastTouchpoint;
-      // Customer acceptance is authoritative even when a local clock happens to
-      // be ahead. Never regress these terminal customer/business outcomes.
       if (server?.stage === 'Completed' && project.stage !== 'Completed') {
         stage = 'Completed';
         amount = server.amount ?? amount;
@@ -223,8 +223,6 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
       };
     });
 
-  // Activities are append-only breadcrumbs. Upserting known IDs is idempotent,
-  // while server-created customer events remain untouched if this browser never saw them.
   const activities = document.activities.map((activity, sortOrder) => ({
     organization_id: organizationId,
     id: activity.id,
