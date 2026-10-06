@@ -1,4 +1,5 @@
 import { supabaseKey, supabaseUrl } from '../lib/supabase';
+import type { CommercialDocumentType } from '../types/quote';
 import type { SignatureMethod, SignatureStroke } from '../types/signature';
 
 export interface PublicQuoteSection {
@@ -23,6 +24,7 @@ export interface PublicQuoteLine {
 export interface PublicQuotePayload {
   quoteId: string;
   quoteNumber: string;
+  documentType: CommercialDocumentType;
   revision: number;
   revisionLabel?: string;
   quoteDate: string;
@@ -71,7 +73,7 @@ async function publicCall(body: Record<string, unknown>) {
     body: JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({})) as PublicQuoteResponse & { error?: string };
-  if (!response.ok) throw new Error(data.error || `Quote link request failed (${response.status}).`);
+  if (!response.ok) throw new Error(data.error || `Document link request failed (${response.status}).`);
   return data;
 }
 
