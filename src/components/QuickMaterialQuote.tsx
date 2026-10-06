@@ -74,7 +74,7 @@ export function QuickMaterialQuote({ quote }: { quote: Quote }) {
         </div>
         <button type="button" disabled={!material || sf === undefined || resolved?.customerRate === undefined} onClick={addMaterialLine}>+ Add to quote{lineTotal === undefined ? '' : ` · ${money.format(lineTotal)}`}</button>
       </div>
-      {material && <footer><span>{material.brand ? `${material.brand} · ` : ''}{money.format(material.internalCost ?? 0)}/SF material cost</span><span>Sinks and special add-ons remain separate.</span></footer>}
+      {material && <footer><span>{material.brand ? `${material.brand} · ` : ''}{material.internalCost === undefined ? 'Material cost not set' : `${money.format(material.internalCost)}/SF material cost`}</span><span>Sinks and special add-ons remain separate.</span></footer>}
     </section>
   );
 }
