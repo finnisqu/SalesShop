@@ -17,6 +17,7 @@ import {
 } from '../types/quote';
 import { PricingScheduleCustomerPreview } from './PricingScheduleCustomerPreview';
 import { PricingScheduleWorkbook } from './PricingScheduleWorkbook';
+import { QuoteCrmFields } from './QuoteCrmFields';
 import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteSignatureDialog } from './QuoteSignatureDialog';
 
@@ -237,7 +238,6 @@ function CustomerPreview({ quote }: { quote: Quote }) {
 }
 
 function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteViewMode; onModeChange: (mode: QuoteViewMode) => void }) {
-  const projects = useCrmStore((state) => state.projects);
   const quotes = useQuoteStore((state) => state.quotes);
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const deleteQuote = useQuoteStore((state) => state.deleteQuote);
@@ -254,11 +254,6 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const pricingSchedule = quote.documentType === 'pricing-schedule';
   const effectiveMode: QuoteViewMode = pricingSchedule && mode === 'split' ? 'edit' : mode;
   const viewModes: QuoteViewMode[] = pricingSchedule ? ['edit', 'workbook', 'customer'] : ['edit', 'split', 'customer'];
-
-  const selectProject = (projectId: string) => {
-    const project = projects.find((candidate) => candidate.id === projectId);
-    updateQuote(quote.id, { projectId: project?.id, companyName: project?.companyName || quote.companyName });
-  };
 
   const setDocumentType = (documentType: CommercialDocumentType) => {
     updateQuote(quote.id, {
@@ -294,7 +289,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
       <header className="quote-workbench-header">
         <div>
           <span className="quote-number">{displayQuoteNumber(quote)}</span>
-          <input className="quote-title-input" value={quote.title} onChange={(event) => updateQuote(quote.id, { title: event.target.value })} />
+          <input className="quote-title-input" value={quote.title} onChange={(event) => updateQuote(quote.id, { title: event.target.value, projectId: undefined })} />
           {quote.documentType === 'change-order' && parent && <small>Changes original agreement {displayQuoteNumber(parent)}</small>}
         </div>
         <div className="quote-header-actions">
@@ -333,19 +328,15 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
               </label>
               <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={(status === 'Signed' && quote.status !== 'Signed') || (status === 'Sent' && quote.status !== 'Sent')}>{status}</option>)}</select></label>
               <label><span>Document date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
-              <label><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Optional: Option A, VE alternate…" /></label>
-              <label><span>Project</span><select value={quote.projectId ?? ''} onChange={(event) => selectProject(event.target.value)}><option value="">Unlinked</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
-              <label><span>Company / customer</span><input value={quote.companyName ?? ''} onChange={(event) => updateQuote(quote.id, { companyName: event.target.value })} placeholder="Optional" /></label>
-              <label><span>Contact</span><input value={quote.contactName ?? ''} onChange={(event) => updateQuote(quote.id, { contactName: event.target.value })} placeholder="Optional" /></label>
-              <label><span>Email</span><input type="email" value={quote.contactEmail ?? ''} onChange={(event) => updateQuote(quote.id, { contactEmail: event.target.value })} placeholder="Optional" /></label>
-              <label><span>Project address</span><input value={quote.address ?? ''} onChange={(event) => updateQuote(quote.id, { address: event.target.value })} placeholder="Optional" /></label>
+              <label><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Option A, VE alternate…" /></label>
+              <QuoteCrmFields quote={quote} />
             </section>
 
             {pricingSchedule ? (
               <section className="pricing-schedule-summary-card">
-                <div><span className="quote-control-heading">Pricing workbook</span><p>{quote.pricingSchedule?.sourceFileName || 'Blank SalesShop workbook'} · {quote.pricingSchedule?.customerItems.length ?? 0} mapped customer rows</p></div>
-                <small>Build or import the detailed price book in the Workbook tab. Only mapped commercial fields are published; takeoff/calculation columns stay internal.</small>
-                <div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open workbook</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div>
+                <div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div>
+                <small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small>
+                <div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div>
               </section>
             ) : (
               <>
