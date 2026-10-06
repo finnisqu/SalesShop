@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import '../project-activity.css';
 import { AccountsBoard } from './AccountsBoard';
+import { BoardScrollControls } from './BoardScrollControls';
 import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
 import {
   isMobileBoardInteraction,
@@ -308,6 +309,7 @@ export function Board() {
           );
         })}
       </section>
+      <BoardScrollControls boardRef={boardRef} />
       {editingProject && <ProjectEditor project={editingProject} onClose={() => setEditingId(null)} />}
     </main>
   );
