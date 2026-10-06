@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { inferAccountHealth } from '../services/accountHealth';
+import { buildCrmIntegrityReport } from '../services/crmIdentity';
 import {
   isMobileBoardInteraction,
   rememberMobileBoardStage,
@@ -8,6 +9,7 @@ import {
 } from '../lib/mobileBoardState';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
+import { useQuoteStore } from '../store/quoteStore';
 import {
   ACCOUNT_STAGES,
   companyAnnualPotential,
@@ -16,6 +18,7 @@ import {
   type Company,
 } from '../types/crm';
 import { BoardScrollControls } from './BoardScrollControls';
+import { CrmCleanupPanel } from './CrmCleanupPanel';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
 
@@ -41,6 +44,7 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
   const createContact = useCrmStore((state) => state.createContact);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [alias, setAlias] = useState('');
 
   const companyContacts = contacts.filter((contact) => contact.companyId === company.id);
   const companyProjects = projects.filter((project) => project.companyId === company.id);
@@ -81,6 +85,26 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
             <option value="non-customer">Non-customer relationship</option>
           </select>
         </label>
+
+        <section className="account-editor-section account-alias-section">
+          <header><strong>Known aliases</strong><span>{company.aliases?.length ?? 0}</span></header>
+          <p className="account-forecast-help">Exact aliases resolve back to this account when a salesperson types an alternate company name on a quote.</p>
+          <div className="account-alias-list">
+            {(company.aliases ?? []).map((item) => (
+              <span className="account-alias-chip" key={item}>{item}<button type="button" aria-label={`Remove alias ${item}`} onClick={() => updateCompany(company.id, { aliases: (company.aliases ?? []).filter((candidate) => candidate !== item) })}>×</button></span>
+            ))}
+          </div>
+          <form className="account-alias-add" onSubmit={(event) => {
+            event.preventDefault();
+            const clean = alias.trim();
+            if (!clean) return;
+            updateCompany(company.id, { aliases: [...(company.aliases ?? []), clean] });
+            setAlias('');
+          }}>
+            <input value={alias} onChange={(event) => setAlias(event.target.value)} placeholder="Add alternate company name…" />
+            <button type="submit" disabled={!alias.trim()}>Add alias</button>
+          </form>
+        </section>
 
         {company.kind === 'customer' && (
           <section className="account-editor-section account-volume-section">
@@ -143,11 +167,23 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
   const contacts = useCrmStore((state) => state.contacts);
   const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
+  const quotes = useQuoteStore((state) => state.quotes);
+  const hydrateQuotes = useQuoteStore((state) => state.hydrate);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const clearFocusedCompany = useNavigationStore((state) => state.clearFocusedCompany);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [cleanupOpen, setCleanupOpen] = useState(false);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
+
+  useEffect(() => {
+    hydrateQuotes();
+  }, [hydrateQuotes]);
+
+  const integrityReport = useMemo(
+    () => buildCrmIntegrityReport(companies, contacts, projects, quotes),
+    [companies, contacts, projects, quotes],
+  );
 
   const accountsByStage = useMemo(() => {
     const grouped = new Map<AccountStage, AccountRow[]>();
@@ -182,7 +218,12 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
           <button type="button" onClick={onShowProjects}>Projects</button>
           <button type="button" className="active">Accounts</button>
         </div>
-        <div className="accounts-inference-note"><strong>Auto-inferred</strong><span>Each card explains why.</span></div>
+        <div className="accounts-header-actions">
+          <div className="accounts-inference-note"><strong>Auto-inferred</strong><span>Each card explains why.</span></div>
+          <button type="button" className={`accounts-cleanup-button ${integrityReport.issueCount ? 'has-issues' : ''}`} onClick={() => setCleanupOpen(true)}>
+            CRM cleanup{integrityReport.issueCount ? ` · ${integrityReport.issueCount}` : ''}
+          </button>
+        </div>
       </section>
 
       <section
@@ -244,6 +285,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
       </section>
       <BoardScrollControls boardRef={boardRef} />
       {editingCompany && <AccountEditor company={editingCompany} onClose={() => setEditingId(null)} />}
+      {cleanupOpen && <CrmCleanupPanel onClose={() => setCleanupOpen(false)} />}
     </main>
   );
 }

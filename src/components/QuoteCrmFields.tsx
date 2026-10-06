@@ -84,11 +84,11 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
     })), [projects, projectQuery, quote.id, quote.companyName, updateQuote]);
 
   const companySuggestions = useMemo(() => recentFirst(companies)
-    .filter((company) => matches(company.name, quote.companyName ?? ''))
+    .filter((company) => matches([company.name, ...(company.aliases ?? [])].join(' '), quote.companyName ?? ''))
     .map((company): Suggestion => ({
       id: company.id,
       primary: company.name,
-      secondary: company.kind === 'non-customer' ? 'Non-customer relationship' : 'Customer / prospect',
+      secondary: [company.kind === 'non-customer' ? 'Non-customer relationship' : 'Customer / prospect', company.aliases?.length ? `aka ${company.aliases.slice(0, 2).join(', ')}` : ''].filter(Boolean).join(' · '),
       onChoose: () => updateQuote(quote.id, {
         companyId: company.id,
         companyName: company.name,

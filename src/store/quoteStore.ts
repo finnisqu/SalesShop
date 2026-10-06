@@ -22,6 +22,7 @@ import {
   syncNormalizedQuotes,
 } from '../services/normalizedQuoteSync';
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
+import { relinkQuotesForCompany, relinkQuotesForContact } from '../services/crmIdentity';
 import {
   isDraftQuoteNumber,
   type Quote,
@@ -33,6 +34,7 @@ import {
   type QuoteSection,
   type QuoteStatus,
 } from '../types/quote';
+import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
 
 interface QuoteState {
@@ -47,6 +49,10 @@ interface QuoteState {
   deleteQuote: (quoteId: string) => void;
   restoreQuote: (quoteId: string) => void;
   touchQuote: (quoteId: string) => void;
+  relinkCompanyIdentity: (primary: Pick<Company, 'id' | 'name'>, duplicateId: string) => void;
+  relinkContactIdentity: (primary: Pick<Contact, 'id' | 'name' | 'email'>, duplicateId: string) => void;
+  linkQuoteCompany: (quoteId: string, company: Pick<Company, 'id' | 'name'>) => void;
+  linkQuoteContact: (quoteId: string, contact: Pick<Contact, 'id' | 'name' | 'email'>) => void;
   addLine: (quoteId: string, kind?: QuoteLineKind, sectionId?: string) => string;
   updateLine: (quoteId: string, lineId: string, patch: Partial<Omit<QuoteLine, 'id'>>) => void;
   deleteLine: (quoteId: string, lineId: string) => void;
@@ -341,6 +347,53 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if (!current) return;
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId ? { ...quote, updatedAt: timestamp } : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes });
+  },
+
+  relinkCompanyIdentity: (primary, duplicateId) => {
+    const timestamp = now();
+    const quotes = relinkQuotesForCompany(get().quotes, { ...primary, kind: 'customer', createdAt: timestamp, updatedAt: timestamp }, duplicateId, timestamp);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes });
+  },
+
+  relinkContactIdentity: (primary, duplicateId) => {
+    const timestamp = now();
+    const quotes = relinkQuotesForContact(get().quotes, { ...primary, createdAt: timestamp, updatedAt: timestamp }, duplicateId, timestamp);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes });
+  },
+
+  linkQuoteCompany: (quoteId, company) => {
+    const timestamp = now();
+    const quotes = get().quotes.map((quote) => {
+      if (quote.id !== quoteId) return quote;
+      const editable = !quote.archivedAt && (quote.status === 'Draft' || quote.status === 'Ready');
+      return {
+        ...quote,
+        companyId: company.id,
+        companyName: editable ? company.name : quote.companyName,
+        updatedAt: timestamp,
+      };
+    });
+    persist(quotes, get().activeQuoteId);
+    set({ quotes });
+  },
+
+  linkQuoteContact: (quoteId, contact) => {
+    const timestamp = now();
+    const quotes = get().quotes.map((quote) => {
+      if (quote.id !== quoteId) return quote;
+      const editable = !quote.archivedAt && (quote.status === 'Draft' || quote.status === 'Ready');
+      return {
+        ...quote,
+        contactId: contact.id,
+        contactName: editable ? contact.name : quote.contactName,
+        contactEmail: editable ? (contact.email ?? quote.contactEmail) : quote.contactEmail,
+        updatedAt: timestamp,
+      };
+    });
     persist(quotes, get().activeQuoteId);
     set({ quotes });
   },

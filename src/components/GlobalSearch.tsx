@@ -88,8 +88,11 @@ export function GlobalSearch() {
         id: `company:${company.id}`,
         kind: 'Account',
         title: company.name,
-        detail: company.kind === 'non-customer' ? 'Non-customer relationship' : 'Customer / prospect',
-        searchText: [company.name, company.kind].join(' '),
+        detail: [
+          company.kind === 'non-customer' ? 'Non-customer relationship' : 'Customer / prospect',
+          company.aliases?.length ? `aka ${company.aliases.slice(0, 2).join(', ')}` : '',
+        ].filter(Boolean).join(' · '),
+        searchText: [company.name, ...(company.aliases ?? []), company.kind].join(' '),
         open: () => openCompany(company.id),
         quickQuote: company.kind === 'customer' ? () => quoteFromCompany(company.id, company.name) : undefined,
       })),

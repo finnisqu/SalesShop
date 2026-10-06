@@ -62,6 +62,7 @@ function normalizeContact(raw: Partial<Contact>, timestamp: string): Contact | n
     email: raw.email,
     phone: raw.phone,
     title: raw.title,
+    identityExclusions: Array.isArray(raw.identityExclusions) ? raw.identityExclusions.filter((id): id is string => typeof id === 'string' && Boolean(id)) : [],
     createdAt: raw.createdAt ?? timestamp,
     updatedAt: raw.updatedAt ?? timestamp,
   };
@@ -92,6 +93,8 @@ function normalize(raw: unknown): CrmDocument | null {
     .map((company) => ({
       ...company,
       kind: company.kind === 'non-customer' ? 'non-customer' as const : 'customer' as const,
+      aliases: Array.isArray(company.aliases) ? company.aliases.filter((alias): alias is string => typeof alias === 'string' && Boolean(alias.trim())) : [],
+      identityExclusions: Array.isArray(company.identityExclusions) ? company.identityExclusions.filter((id): id is string => typeof id === 'string' && Boolean(id)) : [],
       createdAt: company.createdAt ?? timestamp,
       updatedAt: company.updatedAt ?? timestamp,
     }));

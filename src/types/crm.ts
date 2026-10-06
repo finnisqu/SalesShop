@@ -53,6 +53,8 @@ export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 export interface Company {
   id: string;
   name: string;
+  aliases?: string[];
+  identityExclusions?: string[];
   kind: CompanyKind;
   annualUnits?: number;
   averageUnitValue?: number;
@@ -65,6 +67,7 @@ export interface Contact {
   id: string;
   companyId?: string;
   name: string;
+  identityExclusions?: string[];
   email?: string;
   phone?: string;
   title?: string;
@@ -143,7 +146,9 @@ export interface ContactInput {
   quoteId?: string;
 }
 
-export type CompanyPatch = Partial<Pick<Company, 'name' | 'kind' | 'annualUnits' | 'averageUnitValue' | 'expectedSharePct'>>;
+export type CompanyPatch = Partial<Pick<Company, 'name' | 'aliases' | 'identityExclusions' | 'kind' | 'annualUnits' | 'averageUnitValue' | 'expectedSharePct'>>;
+
+export type ContactPatch = Partial<Pick<Contact, 'companyId' | 'name' | 'email' | 'phone' | 'title' | 'identityExclusions'>>;
 
 export type ProjectPatch = Partial<Pick<
   Project,

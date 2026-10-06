@@ -57,7 +57,7 @@ function resolveIdentity(quote: Quote) {
   return { companyId, contactId };
 }
 
-function existingProject(quote: Quote): Project | undefined {
+function existingProject(quote: Quote, resolvedCompanyId?: string): Project | undefined {
   const crm = getCrm();
   if (quote.projectId) {
     const direct = crm.projects.find((project) => project.id === quote.projectId);
@@ -68,6 +68,10 @@ function existingProject(quote: Quote): Project | undefined {
   const company = clean(quote.companyName);
   const candidates = crm.projects.filter((project) => clean(project.name) === title);
   if (!candidates.length) return undefined;
+  if (resolvedCompanyId) {
+    const companyIdMatch = candidates.find((project) => project.companyId === resolvedCompanyId);
+    if (companyIdMatch) return companyIdMatch;
+  }
   if (company) {
     const companyMatch = candidates.find((project) => clean(project.companyName) === company);
     if (companyMatch) return companyMatch;
@@ -144,7 +148,7 @@ export function recordRevisionCreated(quote: Quote) {
 export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
   const identity = resolveIdentity(quote);
   if (isChangeOrder(quote)) {
-    const project = existingProject(quote);
+    const project = existingProject(quote, identity.companyId);
     const projectId = project?.id ?? quote.projectId;
     const companyId = project?.companyId ?? identity.companyId ?? quote.companyId;
     touchProject(projectId);
@@ -153,7 +157,7 @@ export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
   }
 
   let crm = getCrm();
-  let project = existingProject(quote);
+  let project = existingProject(quote, identity.companyId);
   let projectId = project?.id;
   const targetStage: ProjectStage = quote.revision > 0 ? 'Negotiation' : 'Bid Sent';
   if (!projectId) {
@@ -195,7 +199,7 @@ export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus
 
   if (quote.status === 'Signed') {
     const crm = getCrm();
-    let project = existingProject(quote);
+    let project = existingProject(quote, identity.companyId);
     let projectId = project?.id;
     if (!projectId || !project) {
       projectId = crm.createProject(quote.title, 'Closed Won', {

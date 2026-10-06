@@ -8,6 +8,8 @@ interface SignatureState {
   hydrated: boolean;
   hydrate: () => void;
   createSignature: (quote: Quote, input: SignatureInput) => SignatureRecord;
+  relinkCompanyIdentity: (primaryId: string, duplicateId: string) => void;
+  relinkContactIdentity: (primaryId: string, duplicateId: string) => void;
 }
 
 const id = () => `signature_${crypto.randomUUID()}`;
@@ -52,5 +54,21 @@ export const useSignatureStore = create<SignatureState>((set, get) => ({
     persist(signatures);
     set({ signatures });
     return record;
+  },
+
+  relinkCompanyIdentity: (primaryId, duplicateId) => {
+    const signatures = get().signatures.map((record) => record.companyId === duplicateId
+      ? { ...record, companyId: primaryId }
+      : record);
+    persist(signatures);
+    set({ signatures });
+  },
+
+  relinkContactIdentity: (primaryId, duplicateId) => {
+    const signatures = get().signatures.map((record) => record.contactId === duplicateId
+      ? { ...record, contactId: primaryId }
+      : record);
+    persist(signatures);
+    set({ signatures });
   },
 }));

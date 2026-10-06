@@ -2,6 +2,13 @@ import { create } from 'zustand';
 import { localCrmRepository } from '../data/crmRepository';
 import { supabase } from '../lib/supabase';
 import { applyProjectStageTransition } from '../services/boardIntegrity';
+import {
+  companyIdentityMatches,
+  contactIdentityMatches,
+  mergeCompanyCrmDocument,
+  mergeContactCrmDocument,
+  normalizeCompanyIdentity,
+} from '../services/crmIdentity';
 import { deleteNormalizedProject } from '../services/normalizedCrmSync';
 import type {
   Activity,
@@ -11,6 +18,7 @@ import type {
   CompanyPatch,
   Contact,
   ContactInput,
+  ContactPatch,
   CreateProjectDetails,
   CrmDocument,
   Project,
@@ -29,7 +37,12 @@ interface CrmState {
   hydrate: () => void;
   resolveCompany: (name?: string, kind?: CompanyKind) => string | undefined;
   updateCompany: (companyId: string, patch: CompanyPatch) => void;
+  mergeCompanyRecords: (primaryId: string, duplicateId: string) => void;
   createContact: (input: ContactInput) => string | null;
+  updateContact: (contactId: string, patch: ContactPatch) => void;
+  mergeContactRecords: (primaryId: string, duplicateId: string) => void;
+  relinkProjectCompany: (projectId: string, companyId: string) => void;
+  relinkContactCompany: (contactId: string, companyId?: string) => void;
   resolveContact: (input: ContactInput) => string | undefined;
   createProject: (name: string, stage?: ProjectStage, details?: CreateProjectDetails) => string | null;
   updateProject: (projectId: string, patch: ProjectPatch, context?: StageChangeContext) => void;
@@ -59,8 +72,9 @@ function reportCloudDeleteError(error: unknown) {
 function ensureCompany(companies: Company[], companyName: string | undefined, timestamp: string, kind: CompanyKind = 'customer') {
   const cleanName = companyName?.trim();
   if (!cleanName) return { companies, companyId: undefined, companyName: undefined };
-  const existing = companies.find((company) => company.name.toLowerCase() === cleanName.toLowerCase());
-  if (existing) return { companies, companyId: existing.id, companyName: existing.name };
+  const matches = companyIdentityMatches(companies, cleanName);
+  if (matches.length === 1) return { companies, companyId: matches[0].id, companyName: matches[0].name };
+  if (matches.length > 1) return { companies, companyId: undefined, companyName: cleanName };
   const company: Company = {
     id: id('company'),
     name: cleanName,
@@ -108,11 +122,41 @@ export const useCrmStore = create<CrmState>((set, get) => ({
 
   updateCompany: (companyId, patch) => {
     const timestamp = now();
-    const companies = get().companies.map((company) => company.id === companyId
-      ? { ...company, ...patch, name: patch.name?.trim() || company.name, updatedAt: timestamp }
-      : company);
+    const companies = get().companies.map((company) => {
+      if (company.id !== companyId) return company;
+      const nextName = patch.name?.trim() || company.name;
+      const aliases = [...(patch.aliases ?? company.aliases ?? [])];
+      if (normalizeCompanyIdentity(nextName) !== normalizeCompanyIdentity(company.name)) aliases.push(company.name);
+      const seen = new Set<string>();
+      const normalizedAliases = aliases.filter((alias) => {
+        const clean = alias.trim();
+        const key = normalizeCompanyIdentity(clean);
+        if (!key || key === normalizeCompanyIdentity(nextName) || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).map((alias) => alias.trim());
+      return { ...company, ...patch, name: nextName, aliases: normalizedAliases, updatedAt: timestamp };
+    });
     persist(companies, get().contacts, get().projects, get().activities);
     set({ companies });
+  },
+
+  mergeCompanyRecords: (primaryId, duplicateId) => {
+    const timestamp = now();
+    const document = mergeCompanyCrmDocument({
+      schemaVersion: 3,
+      companies: get().companies,
+      contacts: get().contacts,
+      projects: get().projects,
+      activities: get().activities,
+    }, primaryId, duplicateId, timestamp);
+    persist(document.companies, document.contacts, document.projects, document.activities);
+    set({
+      companies: document.companies,
+      contacts: document.contacts,
+      projects: document.projects,
+      activities: document.activities,
+    });
   },
 
   createContact: (input) => {
@@ -146,15 +190,62 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     return contact.id;
   },
 
+  updateContact: (contactId, patch) => {
+    const timestamp = now();
+    const contacts = get().contacts.map((contact) => contact.id === contactId
+      ? {
+          ...contact,
+          ...patch,
+          name: patch.name?.trim() || contact.name,
+          email: patch.email?.trim() || (patch.email === '' ? undefined : contact.email),
+          phone: patch.phone?.trim() || (patch.phone === '' ? undefined : contact.phone),
+          title: patch.title?.trim() || (patch.title === '' ? undefined : contact.title),
+          updatedAt: timestamp,
+        }
+      : contact);
+    persist(get().companies, contacts, get().projects, get().activities);
+    set({ contacts });
+  },
+
   resolveContact: (input) => {
-    const cleanEmail = input.email?.trim().toLowerCase();
-    const cleanName = input.name?.trim().toLowerCase();
-    const existing = get().contacts.find((contact) => {
-      if (cleanEmail && contact.email?.trim().toLowerCase() === cleanEmail) return true;
-      return Boolean(cleanName && contact.name.trim().toLowerCase() === cleanName && contact.companyId === input.companyId);
-    });
-    if (existing) return existing.id;
+    const matches = contactIdentityMatches(get().contacts, input);
+    if (matches.length === 1) return matches[0].id;
+    if (matches.length > 1) return undefined;
     return get().createContact(input) ?? undefined;
+  },
+
+  mergeContactRecords: (primaryId, duplicateId) => {
+    const timestamp = now();
+    const document = mergeContactCrmDocument({
+      schemaVersion: 3,
+      companies: get().companies,
+      contacts: get().contacts,
+      projects: get().projects,
+      activities: get().activities,
+    }, primaryId, duplicateId, timestamp);
+    persist(document.companies, document.contacts, document.projects, document.activities);
+    set({ contacts: document.contacts, activities: document.activities });
+  },
+
+  relinkProjectCompany: (projectId, companyId) => {
+    const company = get().companies.find((candidate) => candidate.id === companyId);
+    if (!company) return;
+    const timestamp = now();
+    const projects = get().projects.map((project) => project.id === projectId
+      ? { ...project, companyId: company.id, companyName: company.name, updatedAt: timestamp }
+      : project);
+    persist(get().companies, get().contacts, projects, get().activities);
+    set({ projects });
+  },
+
+  relinkContactCompany: (contactId, companyId) => {
+    if (companyId && !get().companies.some((company) => company.id === companyId)) return;
+    const timestamp = now();
+    const contacts = get().contacts.map((contact) => contact.id === contactId
+      ? { ...contact, companyId, updatedAt: timestamp }
+      : contact);
+    persist(get().companies, contacts, get().projects, get().activities);
+    set({ contacts });
   },
 
   recordActivity: (input) => {
