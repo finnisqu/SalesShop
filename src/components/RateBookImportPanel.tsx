@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPricingRateItem } from '../services/pricingScheduleBuilder';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
+import { useQuoteStore } from '../store/quoteStore';
 import { useRateBookStore } from '../store/rateBookStore';
 import {
   RATE_BOOK_CATEGORIES,
@@ -91,6 +92,10 @@ export function RateBookImportPanel({
   const hydrated = useRateBookStore((state) => state.hydrated);
   const stockMaterials = useCompanySettingsStore((state) => state.settings.stockMaterials);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
+  const quotes = useQuoteStore((state) => state.quotes);
+  const activeQuoteId = useQuoteStore((state) => state.activeQuoteId);
+  const activeQuote = quotes.find((quote) => quote.id === activeQuoteId);
+  const pricingContext = division ?? activeQuote?.pricingDivision;
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [query, setQuery] = useState('');
@@ -126,12 +131,12 @@ export function RateBookImportPanel({
     const snapshots = [...selected]
       .map((id) => activeItems.find((item) => item.id === id))
       .filter((item): item is RateBookItem => Boolean(item))
-      .map((item) => snapshotRate(item, division, stockMaterials))
+      .map((item) => snapshotRate(item, pricingContext, stockMaterials))
       .filter((rate): rate is PricingRateItem => Boolean(rate));
     if (!snapshots.length) return;
     onImport(snapshots);
     setSelected(new Set());
-    setMessage(`${snapshots.length} rate${snapshots.length === 1 ? '' : 's'} copied as editable ${division ?? 'base'} snapshot${snapshots.length === 1 ? '' : 's'}.`);
+    setMessage(`${snapshots.length} rate${snapshots.length === 1 ? '' : 's'} copied as editable ${pricingContext ?? 'base'} snapshot${snapshots.length === 1 ? '' : 's'}.`);
     setOpen(false);
   };
 
@@ -140,7 +145,7 @@ export function RateBookImportPanel({
       <header>
         <div>
           <span className="quote-control-heading">Company Rate Book</span>
-          <small>{division ? `${division} overrides are applied where available.` : 'Using base company costs and suggestions.'} Imported rows remain fully editable.</small>
+          <small>{pricingContext ? `${pricingContext} overrides are applied where available.` : 'Using base company costs and suggestions.'} Imported rows remain fully editable.</small>
         </div>
         <button type="button" onClick={() => { setOpen((value) => !value); setMessage(''); }}>
           {open ? 'Close Rate Book' : '+ Add from Rate Book'}
@@ -167,7 +172,7 @@ export function RateBookImportPanel({
               const supported = supportedUnit(item);
               const alreadyAdded = matchesExisting(item, existingRates);
               const disabled = !supported || alreadyAdded;
-              const resolved = resolveRateBookValues(item, division);
+              const resolved = resolveRateBookValues(item, pricingContext);
               return (
                 <label className={`pricing-rate-import-row ${disabled ? 'is-disabled' : ''}`} key={item.id}>
                   <input type="checkbox" checked={selected.has(item.id)} disabled={disabled} onChange={() => toggle(item.id)} />
