@@ -67,6 +67,12 @@
     overflow: hidden;
   }
 
+  /* Keep the core document/customer flow together, then treat Revision / Option as
+     the optional qualifier at the end of the mobile details list. */
+  .quote-details-grid > label:nth-child(4) {
+    order: 20;
+  }
+
   .quote-details-grid input,
   .quote-details-grid select {
     width: 100%;
