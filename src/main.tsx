@@ -9,6 +9,7 @@ import './pricing-schedule-builder.css';
 import './pricing-rate-sheet.css';
 import './pricing-schedule-refinements.css';
 import './quote-crm-fields.css';
+import './customer-document-brand.css';
 import './account-forecast.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
