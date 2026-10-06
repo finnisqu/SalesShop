@@ -6,6 +6,7 @@ import { PublicQuotePage } from './components/PublicQuotePage';
 import './index.css';
 import './auth.css';
 import './pricing-schedule-builder.css';
+import './pricing-rate-sheet.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
