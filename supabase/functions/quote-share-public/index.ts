@@ -46,6 +46,13 @@ type ScheduleItem = {
   optionCode?: string;
   description?: string;
   customerPrice?: number;
+  displayType?: string;
+  groupLabel?: string;
+  priceLabel?: string;
+  unitLabel?: string;
+  colors?: string[];
+  details?: string[];
+  detailsLayout?: string;
 };
 
 type Snapshot = {
@@ -149,7 +156,7 @@ Deno.serve(async (req) => {
     const [revisionResult, quoteResult, orgResult, signatureResult] = await Promise.all([
       admin.from('quote_revisions').select('snapshot').eq('organization_id', share.organization_id).eq('quote_id', share.quote_id).eq('revision', share.revision).single(),
       admin.from('quotes').select('*').eq('organization_id', share.organization_id).eq('id', share.quote_id).single(),
-      admin.from('organizations').select('name').eq('id', share.organization_id).single(),
+      admin.from('organizations').select('name,address,phone,email,website,logo_url,quote_contact_name,quote_contact_phone').eq('id', share.organization_id).single(),
       admin.from('signatures').select('*').eq('organization_id', share.organization_id).eq('quote_id', share.quote_id).eq('revision', share.revision).maybeSingle(),
     ]);
     if (revisionResult.error) throw revisionResult.error;
@@ -299,8 +306,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    const organization = {
+      name: String(orgResult.data.name),
+      address: orgResult.data.address ? String(orgResult.data.address) : undefined,
+      phone: orgResult.data.phone ? String(orgResult.data.phone) : undefined,
+      email: orgResult.data.email ? String(orgResult.data.email) : undefined,
+      website: orgResult.data.website ? String(orgResult.data.website) : undefined,
+      logoUrl: orgResult.data.logo_url ? String(orgResult.data.logo_url) : undefined,
+      contactName: orgResult.data.quote_contact_name ? String(orgResult.data.quote_contact_name) : undefined,
+      contactPhone: orgResult.data.quote_contact_phone ? String(orgResult.data.quote_contact_phone) : undefined,
+    };
+
     return json({
-      organizationName: String(orgResult.data.name),
+      organizationName: organization.name,
+      organization,
       quote: safeQuote,
       share: {
         status: body.action === 'sign' || signature ? 'signed' : String(share.status),
