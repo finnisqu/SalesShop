@@ -13,6 +13,7 @@ import './rate-book.css';
 import './rate-book-spreadsheet-qc.css';
 import './material-level-guide.css';
 import './supplier-import.css';
+import './supplier-import-v2.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';

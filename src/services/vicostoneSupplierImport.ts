@@ -11,7 +11,7 @@ import type {
 } from '../types/supplierImport';
 
 const PARSER_ID = 'vicostone-umi-fabricator-pdf';
-const PARSER_VERSION = 1;
+const PARSER_VERSION = 2;
 const PRICE_EPSILON = 0.015;
 
 interface PositionedText {
@@ -493,6 +493,7 @@ export async function stageVicostoneFabricatorPdf(file: File, catalog: StockMate
     priceListLabel: priceListLabelFromText(allText),
     effectiveDate: effectiveDate || undefined,
     supplierRules: supplierRulesFromText(allText),
+    rulesReferenceOnly: true,
   };
 
   const candidates = materials
@@ -500,7 +501,7 @@ export async function stageVicostoneFabricatorPdf(file: File, catalog: StockMate
     .sort((a, b) => a.material.supplierGroup?.localeCompare(b.material.supplierGroup ?? '') || a.material.name.localeCompare(b.material.name));
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: `supplier-import-${crypto.randomUUID()}`,
     createdAt: new Date().toISOString(),
     source,
