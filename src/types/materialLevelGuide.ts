@@ -1,4 +1,5 @@
 export type MaterialLevelPricingMode = 'fixed' | 'multiplier';
+export type NonStockPricingMode = 'multiplier' | 'margin';
 
 export interface MaterialLevelRule {
   id: string;
@@ -15,20 +16,31 @@ export interface MaterialLevelGuideVersion {
   recordedAt: string;
   note?: string;
   rules: MaterialLevelRule[];
+  nonStockPricingMode?: NonStockPricingMode;
+  nonStockMultiplier?: number;
+  nonStockMarginPct?: number;
 }
 
 export interface MaterialLevelGuideDocument {
-  schemaVersion: 1;
+  schemaVersion: 2;
   id: string;
   name: string;
   note?: string;
   rules: MaterialLevelRule[];
+  nonStockPricingMode: NonStockPricingMode;
+  nonStockMultiplier?: number;
+  nonStockMarginPct?: number;
   history: MaterialLevelGuideVersion[];
   updatedAt: string;
 }
 
 export interface ResolvedMaterialLevel {
   rule: MaterialLevelRule;
+  customerRate?: number;
+  basis: string;
+}
+
+export interface ResolvedNonStockPrice {
   customerRate?: number;
   basis: string;
 }
@@ -78,5 +90,26 @@ export function resolveMaterialLevel(
     basis: rule.pricingMode === 'multiplier'
       ? `${rule.multiplier ?? 0}× material cost`
       : materialLevelCostBand(rules, rule),
+  };
+}
+
+export function resolveNonStockMaterialPrice(
+  guide: Pick<MaterialLevelGuideDocument, 'nonStockPricingMode' | 'nonStockMultiplier' | 'nonStockMarginPct'>,
+  materialCost?: number,
+): ResolvedNonStockPrice {
+  if (materialCost === undefined) return { basis: 'Needs material cost' };
+  if (guide.nonStockPricingMode === 'margin') {
+    const margin = guide.nonStockMarginPct;
+    if (margin === undefined || margin < 0 || margin >= 100) return { basis: 'Set target margin' };
+    return {
+      customerRate: materialCost / (1 - margin / 100),
+      basis: `${margin}% gross margin target`,
+    };
+  }
+
+  const multiplier = guide.nonStockMultiplier;
+  return {
+    customerRate: multiplier === undefined ? undefined : materialCost * multiplier,
+    basis: multiplier === undefined ? 'Set multiplier' : `${multiplier}× material cost`,
   };
 }
