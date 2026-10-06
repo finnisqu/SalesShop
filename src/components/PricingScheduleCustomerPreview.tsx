@@ -1,4 +1,5 @@
 import { commercialDocumentLabel, displayQuoteNumber, type Quote } from '../types/quote';
+import { CustomerDocumentBrand } from './CustomerDocumentBrand';
 import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
 import '../pricing-schedule.css';
 
@@ -11,7 +12,7 @@ export function PricingScheduleCustomerPreview({ quote }: { quote: Quote }) {
     <article className="customer-quote-paper pricing-schedule-customer-preview">
       <header className="customer-quote-letterhead">
         <div>
-          <span className="customer-company-placeholder">YOUR COMPANY</span>
+          <CustomerDocumentBrand />
           <strong>{documentLabel.toUpperCase()}</strong>
         </div>
         <dl>
