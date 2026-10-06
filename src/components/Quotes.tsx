@@ -138,6 +138,11 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const hasChangeOrders = quotes.some((candidate) => candidate.parentQuoteId === quote.id);
   const canCreateChangeOrder = quote.status === 'Signed';
   const documentLabel = commercialDocumentLabel(quote);
+  const setupTypeLabel = quote.documentType === 'quote' ? 'Quick Quote' : quote.documentType === 'pricing-schedule' ? 'Pricing Schedule' : 'Change Order';
+  const setupDateLabel = quote.quoteDate
+    ? new Date(`${quote.quoteDate}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : 'No date';
+  const documentTypeLocked = quote.status !== 'Draft' && quote.status !== 'Ready';
 
   return (
     <section className={`quotes-workbench view-${effectiveMode}`}>
@@ -147,10 +152,33 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
         {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingScheduleWorkbook quote={quote} /></div> : effectiveMode !== 'customer' ? (
           <div className="quote-editor-pane">
             <section className="quote-details-grid">
-              <label><span>Document type</span>{quote.documentType === 'change-order' ? <input value="Change Order" disabled /> : <select value={quote.documentType} disabled={quote.status !== 'Draft' && quote.status !== 'Ready'} onChange={(event) => setDocumentType(event.target.value as CommercialDocumentType)}><option value="quote">Quote</option><option value="pricing-schedule">Pricing Schedule</option></select>}</label>
-              <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={(status === 'Signed' && quote.status !== 'Signed') || (status === 'Sent' && quote.status !== 'Sent')}>{status}</option>)}</select></label>
-              <label><span>Document date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
-              <label><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Option A, VE alternate…" /></label>
+              <details className="quote-document-setup">
+                <summary>
+                  <span className="quote-document-setup-heading">Document setup</span>
+                  <span className="quote-document-setup-summary">{setupTypeLabel} · {quote.status} · {setupDateLabel}</span>
+                  <span className="quote-document-setup-chevron" aria-hidden="true">⌄</span>
+                </summary>
+                <div className="quote-document-setup-body">
+                  <div className="quote-document-type-row">
+                    <span>Document type</span>
+                    <div className="quote-document-type-switch" role="group" aria-label="Document type">
+                      {quote.documentType === 'change-order' ? (
+                        <button type="button" className="active" disabled>Change Order</button>
+                      ) : (
+                        <>
+                          <button type="button" className={quote.documentType === 'quote' ? 'active' : ''} disabled={documentTypeLocked} onClick={() => setDocumentType('quote')}>Quick Quote</button>
+                          <button type="button" className={quote.documentType === 'pricing-schedule' ? 'active' : ''} disabled={documentTypeLocked} onClick={() => setDocumentType('pricing-schedule')}>Pricing Schedule</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="quote-document-meta-fields">
+                    <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={(status === 'Signed' && quote.status !== 'Signed') || (status === 'Sent' && quote.status !== 'Sent')}>{status}</option>)}</select></label>
+                    <label><span>Document date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
+                  </div>
+                </div>
+              </details>
+              <label className="quote-revision-label-field"><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Option A, VE alternate…" /></label>
               <QuoteCrmFields quote={quote} />
             </section>
             {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-customer-controls"><div><span className="quote-control-heading">Customer columns</span><small>Keep the sent document minimal or expose pricing detail.</small></div><label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label><label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label><label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label></section><section className="quote-lines-editor"><header><div><span className="quote-control-heading">{documentLabel} content</span><small>Structure is optional. Add only what helps this document.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>{quote.sections.map((section) => <SectionEditor key={section.id} quote={quote} sectionId={section.id} />)}{quote.lines.map((line) => <LineEditor key={line.id} quote={quote} line={line} />)}<div className="quote-add-row"><button type="button" onClick={() => addLine(quote.id, 'item')}>+ Line</button><button type="button" onClick={() => addSection(quote.id)}>+ Section</button><button type="button" onClick={() => addLine(quote.id, 'scope')}>+ Scope</button><button type="button" onClick={() => addLine(quote.id, 'warranty')}>+ Warranty</button><button type="button" onClick={() => addLine(quote.id, 'tax')}>+ Tax</button><button type="button" onClick={() => addLine(quote.id, 'allowance')}>+ Allowance</button><button type="button" onClick={() => addLine(quote.id, 'discount')}>+ Discount</button><button type="button" onClick={() => addLine(quote.id, 'note')}>+ Note</button></div></section></>}
