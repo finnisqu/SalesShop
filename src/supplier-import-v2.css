@@ -353,3 +353,102 @@
   .supplier-import-advanced-review-list header { align-items: stretch; flex-direction: column; }
   .supplier-import-review-select { width: 100%; }
 }
+
+
+/* v2.1 expanded-spec layout containment */
+.supplier-import-candidate-details {
+  min-width: 0;
+}
+
+.supplier-import-variant-list {
+  grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+  align-items: start;
+}
+
+.supplier-import-variant {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.supplier-import-variant > header {
+  min-width: 0;
+}
+
+.supplier-import-variant > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.supplier-import-variant > header strong,
+.supplier-import-variant > header span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.supplier-import-program-clean {
+  min-width: 0;
+  grid-template-columns:
+    minmax(72px, 1fr)
+    minmax(58px, .7fr)
+    minmax(88px, .9fr)
+    minmax(116px, 1.15fr);
+  gap: 8px;
+  min-height: 38px;
+  padding: 5px 9px;
+  box-sizing: border-box;
+}
+
+.supplier-import-program-clean > * {
+  min-width: 0;
+}
+
+.supplier-import-program-clean > strong,
+.supplier-import-program-clean > span {
+  line-height: 1.25;
+}
+
+.supplier-import-program-clean > .supplier-import-price-value {
+  justify-items: end;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.supplier-import-program-clean .supplier-import-source-note {
+  max-width: 100%;
+  white-space: normal;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.supplier-import-detail-row > td {
+  overflow: hidden;
+}
+
+@media (max-width: 1120px) {
+  .supplier-import-variant-list {
+    grid-template-columns: repeat(auto-fit, minmax(390px, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .supplier-import-variant-list {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-import-program-clean {
+    grid-template-columns: minmax(82px, 1fr) minmax(64px, .75fr) minmax(92px, 1fr);
+  }
+
+  .supplier-import-program-clean > .supplier-import-price-value:last-child {
+    grid-column: 1 / -1;
+    justify-items: start;
+    text-align: left;
+    padding-top: 2px;
+  }
+
+  .supplier-import-program-clean > .supplier-import-price-value:last-child .supplier-import-source-note {
+    text-align: left;
+  }
+}
