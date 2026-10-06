@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
-import { materialLevelCostBand, resolveMaterialLevel, type MaterialLevelPricingMode } from '../types/materialLevelGuide';
+import {
+  materialLevelCostBand,
+  resolveMaterialLevel,
+  resolveNonStockMaterialPrice,
+  type MaterialLevelPricingMode,
+  type NonStockPricingMode,
+} from '../types/materialLevelGuide';
 import type { PricingMaterialType } from '../types/quote';
 import {
   materialPurchaseCostPerSf,
@@ -145,6 +151,7 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
   const captureVersion = useMaterialLevelGuideStore((state) => state.captureVersion);
   const restoreVersion = useMaterialLevelGuideStore((state) => state.restoreVersion);
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
+  const [programFilter, setProgramFilter] = useState<'all' | 'stock' | 'non-stock'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | PricingMaterialType>('all');
   const [supplierFilter, setSupplierFilter] = useState('all');
   const [finishFilter, setFinishFilter] = useState('all');
@@ -169,13 +176,14 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
     const needle = query.trim().toLowerCase();
     return settings.stockMaterials
       .filter((material) => showInactive || material.active)
+      .filter((material) => programFilter === 'all' || (programFilter === 'stock' ? material.stockProgram : !material.stockProgram))
       .filter((material) => typeFilter === 'all' || material.materialType === typeFilter)
       .filter((material) => supplierFilter === 'all' || material.supplier === supplierFilter)
       .filter((material) => finishFilter === 'all' || (material.variants ?? []).some((variant) => variant.finish === finishFilter))
       .filter((material) => thicknessFilter === 'all' || (material.variants ?? []).some((variant) => variant.thickness === thicknessFilter))
-      .filter((material) => !needle || `${material.name} ${material.supplier ?? ''} ${material.brand ?? ''} ${material.collection ?? ''} ${material.supplierGroup ?? ''} ${material.sku ?? ''} ${material.materialType} ${(material.features ?? []).join(' ')} ${(material.variants ?? []).flatMap((variant) => [variant.sku, variant.thickness, variant.finish, variant.formatName, variant.availabilityNote, ...(variant.features ?? [])]).join(' ')} ${material.notes ?? ''}`.toLowerCase().includes(needle))
-      .sort((a, b) => (a.supplier ?? '').localeCompare(b.supplier ?? '') || a.materialType.localeCompare(b.materialType) || a.name.localeCompare(b.name));
-  }, [settings.stockMaterials, query, showInactive, typeFilter, supplierFilter, finishFilter, thicknessFilter]);
+      .filter((material) => !needle || `${material.stockProgram ? 'stock program' : 'non-stock'} ${material.name} ${material.supplier ?? ''} ${material.brand ?? ''} ${material.collection ?? ''} ${material.supplierGroup ?? ''} ${material.sku ?? ''} ${material.materialType} ${(material.features ?? []).join(' ')} ${(material.variants ?? []).flatMap((variant) => [variant.sku, variant.thickness, variant.finish, variant.formatName, variant.availabilityNote, ...(variant.features ?? [])]).join(' ')} ${material.notes ?? ''}`.toLowerCase().includes(needle))
+      .sort((a, b) => Number(b.stockProgram) - Number(a.stockProgram) || (a.supplier ?? '').localeCompare(b.supplier ?? '') || a.materialType.localeCompare(b.materialType) || a.name.localeCompare(b.name));
+  }, [settings.stockMaterials, query, showInactive, programFilter, typeFilter, supplierFilter, finishFilter, thicknessFilter]);
 
   if (!hydrated) return <div className="material-rate-loading">Opening material guide…</div>;
 
@@ -184,13 +192,13 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
       <section className="material-level-guide-card">
         <header className="material-level-guide-header">
           <div>
-            <span className="board-eyebrow">Builder pricing logic</span>
+            <span className="board-eyebrow">Builder pricing guide</span>
             <input className="material-level-guide-title" value={guide.name} onChange={(event) => updateGuide({ name: event.target.value })} aria-label="Guide name" />
-            <p>These are <strong>final customer countertop $/SF rates</strong>—material, shop, and standard install are already included. Sinks and special add-ons stay separate.</p>
+            <p><strong>Only STOCK program colors use Levels.</strong> The Level prices are a fast selling guide for the colors World Stone intentionally promotes. Non-stock colors use the separate multiplier / margin reference below. Quick Quote can still assume a stock-equivalent Level price for speed, but it flags the material as non-stock.</p>
           </div>
           <div className="material-level-guide-actions">
             <button type="button" onClick={() => {
-              const note = window.prompt('Version note', 'Builder level guide checkpoint');
+              const note = window.prompt('Version note', 'Builder pricing guide checkpoint');
               if (note !== null) captureVersion(note);
             }}>Save version</button>
             <button type="button" onClick={() => addRule()}>+ Level</button>
@@ -204,9 +212,20 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
           </label>
         )}
 
+        <div className="material-nonstock-guide">
+          <div className="material-nonstock-guide-copy"><span className="board-eyebrow">Non-stock reference</span><strong>Normal non-stock pricing</strong><small>This is the pricing guide for supplier-catalog colors outside the STOCK program. It does not override a salesperson's final quote.</small></div>
+          <label><span>Method</span><select value={guide.nonStockPricingMode} onChange={(event) => updateGuide({ nonStockPricingMode: event.target.value as NonStockPricingMode })}><option value="multiplier">Material cost multiplier</option><option value="margin">Target gross margin</option></select></label>
+          {guide.nonStockPricingMode === 'multiplier' ? (
+            <label><span>Multiplier</span><div className="material-guide-number"><input type="number" min="0" step="0.01" value={guide.nonStockMultiplier ?? ''} onChange={(event) => updateGuide({ nonStockMultiplier: numberValue(event.target.value) })} /><b>× cost</b></div></label>
+          ) : (
+            <label><span>Target margin</span><div className="material-guide-number"><input type="number" min="0" max="99.9" step="0.1" value={guide.nonStockMarginPct ?? ''} onChange={(event) => updateGuide({ nonStockMarginPct: numberValue(event.target.value) })} /><b>%</b></div></label>
+          )}
+          <div className="material-nonstock-guide-example"><span>Example at $20/SF cost</span><strong>{(() => { const result = resolveNonStockMaterialPrice(guide, 20); return result.customerRate === undefined ? '—' : `${money.format(result.customerRate)}/SF`; })()}</strong><small>{resolveNonStockMaterialPrice(guide, 20).basis}</small></div>
+        </div>
+
         <div className="material-level-sheet-scroll">
           <table className="material-level-sheet">
-            <thead><tr><th>On</th><th>Level</th><th>Material cost ceiling</th><th>Pricing rule</th><th>Standard customer $/SF</th><th>Meaning</th><th /></tr></thead>
+            <thead><tr><th>On</th><th>Level</th><th>Material cost ceiling</th><th>Pricing method</th><th>Standard customer $/SF</th><th>Meaning</th><th /></tr></thead>
             <tbody>
               {orderedRules.map((rule) => (
                 <tr key={rule.id} className={rule.active ? '' : 'is-inactive'}>
@@ -233,44 +252,49 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
 
       <section className="material-catalog-card">
         <header className="material-catalog-header">
-          <div><span className="board-eyebrow">Material reference</span><strong>Color → physical variant → supplier price program</strong><small>A color is the identity. Thickness, finish, slab/sheet size and special features live on variants. Bundle, half-slab and special-order pricing live below the variant.</small></div>
+          <div><span className="board-eyebrow">Material reference</span><strong>Supplier catalog → STOCK program → pricing guide</strong><small>Maintain the full supplier catalog here, then explicitly choose which colors belong to your STOCK program. Thickness, finish, slab/sheet size and special features live on variants; supplier purchase programs live below each variant.</small></div>
           <button type="button" onClick={() => { const id = addStockMaterial(); setExpandedMaterialId(id); }}>+ Material</button>
         </header>
 
         <div className="material-reference-filters">
+          <label><span>Program</span><select value={programFilter} onChange={(event) => setProgramFilter(event.target.value as 'all' | 'stock' | 'non-stock')}><option value="all">All colors</option><option value="stock">STOCK program</option><option value="non-stock">Non-stock</option></select></label>
           <label><span>Material</span><select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as 'all' | PricingMaterialType)}><option value="all">All materials</option>{materialTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
           <label><span>Supplier</span><select value={supplierFilter} onChange={(event) => setSupplierFilter(event.target.value)}><option value="all">All suppliers</option>{suppliers.map((supplier) => <option key={supplier}>{supplier}</option>)}</select></label>
           <label><span>Finish</span><select value={finishFilter} onChange={(event) => setFinishFilter(event.target.value)}><option value="all">All finishes</option>{finishes.map((finish) => <option key={finish}>{finish}</option>)}</select></label>
           <label><span>Thickness</span><select value={thicknessFilter} onChange={(event) => setThicknessFilter(event.target.value)}><option value="all">All thicknesses</option>{thicknesses.map((thickness) => <option key={thickness}>{thickness}</option>)}</select></label>
-          <button type="button" onClick={() => { setTypeFilter('all'); setSupplierFilter('all'); setFinishFilter('all'); setThicknessFilter('all'); }}>Clear filters</button>
+          <button type="button" onClick={() => { setProgramFilter('all'); setTypeFilter('all'); setSupplierFilter('all'); setFinishFilter('all'); setThicknessFilter('all'); }}>Clear filters</button>
         </div>
 
         <div className="material-catalog-scroll">
           <table className="material-catalog-sheet material-reference-sheet">
-            <thead><tr><th>On</th><th>Type</th><th>Level</th><th>Supplier</th><th>Brand</th><th>Color</th><th>Group</th><th>Default spec</th><th>Standard builder</th><th>Features</th><th /></tr></thead>
+            <thead><tr><th>On</th><th>Type</th><th>Program</th><th>Level</th><th>Supplier</th><th>Brand</th><th>Color</th><th>Group</th><th>Default spec</th><th>Pricing guide</th><th>Features</th><th /></tr></thead>
             <tbody>
               {materials.map((material) => {
                 const reference = resolveStockMaterialCostReference(material);
-                const resolved = resolveMaterialLevel(guide.rules, reference.costPerSf, material.builderLevelId);
-                const validForced = material.builderLevelId && guide.rules.some((rule) => rule.id === material.builderLevelId);
+                const stockResolved = resolveMaterialLevel(guide.rules, reference.costPerSf, material.stockProgram ? material.builderLevelId : undefined);
+                const nonStockResolved = resolveNonStockMaterialPrice(guide, reference.costPerSf);
+                const validForced = material.stockProgram && material.builderLevelId && guide.rules.some((rule) => rule.id === material.builderLevelId);
                 const expanded = expandedMaterialId === material.id;
+                const pricingRate = material.stockProgram ? stockResolved?.customerRate : nonStockResolved.customerRate;
+                const pricingLabel = material.stockProgram ? stockResolved?.rule.label : nonStockResolved.basis;
                 return (
                   <>
-                    <tr key={material.id} className={`${material.active ? '' : 'is-inactive'} ${expanded ? 'is-expanded' : ''}`}>
+                    <tr key={material.id} className={`${material.active ? '' : 'is-inactive'} ${expanded ? 'is-expanded' : ''} ${material.stockProgram ? 'is-stock-program' : 'is-non-stock-program'}`}>
                       <td className="material-level-on"><input type="checkbox" checked={material.active} onChange={(event) => updateStockMaterial(material.id, { active: event.target.checked })} /></td>
                       <td><select value={material.materialType} onChange={(event) => updateStockMaterial(material.id, { materialType: event.target.value as PricingMaterialType })}>{materialTypes.map((type) => <option key={type}>{type}</option>)}</select></td>
-                      <td><select value={validForced ? material.builderLevelId : 'auto'} onChange={(event) => updateStockMaterial(material.id, { builderLevelId: event.target.value === 'auto' ? undefined : event.target.value })}><option value="auto">Auto{resolved ? ` · ${resolved.rule.label}` : ''}</option>{orderedRules.filter((rule) => rule.active).map((rule) => <option value={rule.id} key={rule.id}>{rule.label}</option>)}</select></td>
+                      <td className="material-program-cell"><select value={material.stockProgram ? 'stock' : 'non-stock'} onChange={(event) => updateStockMaterial(material.id, { stockProgram: event.target.value === 'stock' })}><option value="stock">STOCK</option><option value="non-stock">Non-stock</option></select></td>
+                      <td>{material.stockProgram ? <select value={validForced ? material.builderLevelId : 'auto'} onChange={(event) => updateStockMaterial(material.id, { builderLevelId: event.target.value === 'auto' ? undefined : event.target.value })}><option value="auto">Auto{stockResolved ? ` · ${stockResolved.rule.label}` : ''}</option>{orderedRules.filter((rule) => rule.active).map((rule) => <option value={rule.id} key={rule.id}>{rule.label}</option>)}</select> : <span className="material-no-level">Not level-priced</span>}</td>
                       <td><input value={material.supplier ?? ''} onChange={(event) => updateStockMaterial(material.id, { supplier: event.target.value })} placeholder="UMI, MSI, Hallmark…" /></td>
                       <td><input value={material.brand ?? ''} onChange={(event) => updateStockMaterial(material.id, { brand: event.target.value })} placeholder="Vicostone, Corian…" /></td>
                       <td className="material-color-cell"><input value={material.name} onChange={(event) => updateStockMaterial(material.id, { name: event.target.value })} /></td>
                       <td><input value={material.supplierGroup ?? ''} onChange={(event) => updateStockMaterial(material.id, { supplierGroup: event.target.value })} placeholder="Group 3, F…" /></td>
                       <td className="material-default-spec"><strong>{variantSpec(reference.variant)}</strong><small>{reference.variant ? `${availabilityLabel(reference.variant.availability)}${reference.variant.availabilityNote ? ` · ${reference.variant.availabilityNote}` : ''}` : reference.costPerSf !== undefined ? `${money.format(reference.costPerSf)}/SF legacy cost` : 'Add variant details'}</small></td>
-                      <td className="material-standard-rate">{resolved?.customerRate === undefined ? <span>—</span> : <strong>{money.format(resolved.customerRate)}/SF</strong>}<small>{resolved?.rule.label ?? 'Needs default $/SF cost'}</small></td>
+                      <td className={`material-standard-rate ${material.stockProgram ? 'is-stock' : 'is-non-stock'}`}>{pricingRate === undefined ? <span>—</span> : <strong>{money.format(pricingRate)}/SF</strong>}<small>{pricingLabel ?? 'Needs default $/SF cost'}</small></td>
                       <td><input value={tagText(material.features)} onChange={(event) => updateStockMaterial(material.id, { features: tagsFromText(event.target.value) })} placeholder="Bookmatch, Full body…" /></td>
                       <td className="material-reference-details"><button type="button" onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}>{expanded ? 'Close' : 'Details'}</button></td>
                     </tr>
                     {expanded && (
-                      <tr className="material-reference-expanded-row" key={`${material.id}-details`}><td colSpan={11}>
+                      <tr className="material-reference-expanded-row" key={`${material.id}-details`}><td colSpan={12}>
                         <section className="material-reference-detail-panel">
                           <div className="material-reference-meta">
                             <label><span>Collection / series</span><input value={material.collection ?? ''} onChange={(event) => updateStockMaterial(material.id, { collection: event.target.value })} placeholder="Collection or supplier series" /></label>
@@ -284,14 +308,14 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
                             {(material.variants ?? []).map((variant) => <MaterialVariantEditor materialId={material.id} variant={variant} key={variant.id} />)}
                             {!(material.variants ?? []).length && <div className="material-variant-empty"><strong>Legacy material row</strong><span>{material.internalCost !== undefined ? `${money.format(material.internalCost)}/${material.unit.toUpperCase()} is still usable for quoting.` : 'No cost reference is set.'} Add a physical variant to capture slab size, finish, features and supplier pricing programs.</span><button type="button" onClick={() => addMaterialVariant(material.id)}>Create first variant</button></div>}
                           </div>
-                          <footer className="material-reference-admin"><span>Default variant + default supplier price program drives the quick-quote cost reference. Salespeople can still override the final quote rate.</span><button type="button" className="danger" onClick={() => { if (window.confirm(`Delete ${material.name}?`)) deleteStockMaterial(material.id); }}>Delete material</button></footer>
+                          <footer className="material-reference-admin"><span>{material.stockProgram ? 'This color is in the STOCK program, so its default cost reference resolves to a Level guide price.' : `This color is non-stock, so its normal guide uses ${nonStockResolved.basis}. Quick Quote may still assume its stock-equivalent Level price and will flag it as non-stock.`}</span><button type="button" className="danger" onClick={() => { if (window.confirm(`Delete ${material.name}?`)) deleteStockMaterial(material.id); }}>Delete material</button></footer>
                         </section>
                       </td></tr>
                     )}
                   </>
                 );
               })}
-              {!materials.length && <tr><td colSpan={11}><div className="rate-book-empty"><strong>No matching materials</strong><span>Add a material or change the filters above.</span></div></td></tr>}
+              {!materials.length && <tr><td colSpan={12}><div className="rate-book-empty"><strong>No matching materials</strong><span>Add a material or change the filters above.</span></div></td></tr>}
             </tbody>
           </table>
         </div>
