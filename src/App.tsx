@@ -14,6 +14,7 @@ import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
 import { Dashboard } from './components/Dashboard';
 import { DrawingCanvas } from './components/DrawingCanvas';
+import { GlobalSearch } from './components/GlobalSearch';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuoteShareControl } from './components/QuoteShareControl';
 import { Quotes } from './components/Quotes';
@@ -63,6 +64,7 @@ function App() {
           <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
+        <GlobalSearch />
         <div className="app-account-zone">
           <div className="migration-chip">React foundation</div>
           <AuthStatus />
