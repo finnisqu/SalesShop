@@ -8,6 +8,7 @@ import {
   createPricingScheduleBuilderData,
   createPricingTakeoff,
   deriveBuilderCustomerItems,
+  planOptionEnabled,
   pricingBuilderHealth,
   pricingBuilderMatrix,
   takeoffSquareFeet,
@@ -77,6 +78,14 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
     ...builder,
     takeoffs: builder.takeoffs.map((takeoff) => takeoff.id === id ? { ...takeoff, ...patch } : takeoff),
   });
+
+  const togglePlanOption = (plan: PricingPlan, option: PricingOptionPackage, enabled: boolean) => {
+    const excluded = new Set(plan.excludedOptionIds ?? []);
+    if (enabled) excluded.delete(option.id);
+    else excluded.add(option.id);
+    updatePlan(plan.id, { excludedOptionIds: [...excluded] });
+    if (!enabled && selectedCell?.planId === plan.id && selectedCell.optionId === option.id) setSelectedCell(null);
+  };
 
   const warnings = useMemo(() => pricingBuilderHealth(builder), [builder]);
   const matrix = useMemo(() => pricingBuilderMatrix(builder), [builder]);
@@ -156,7 +165,7 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
       {tab === 'options' && (
         <section className="pricing-builder-panel">
           <header className="pricing-builder-panel-heading">
-            <div><strong>Option Packages</strong><small>Define a package once, then SalesShop applies it across every plan takeoff.</small></div>
+            <div><strong>Option Packages</strong><small>Define a package once, then choose which plans actually offer it.</small></div>
             <button type="button" onClick={addOption}>+ Option</button>
           </header>
           <div className="pricing-builder-option-list">
@@ -188,7 +197,7 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
                 </div>
               </article>
             ))}
-            {!builder.options.length && <div className="pricing-builder-empty">Create Base, Quartz Kitchen, No Backsplash, or whatever packages this builder requires.</div>}
+            {!builder.options.length && <div className="pricing-builder-empty">Create Base, Quartz Kitchen, Double Bowl, or whatever packages this builder requires.</div>}
           </div>
         </section>
       )}
@@ -210,6 +219,21 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
                   <label><span>Plan name</span><input value={selectedPlan.name} onChange={(event) => updatePlan(selectedPlan.id, { name: event.target.value })} /></label>
                   <label className="wide"><span>Description</span><input value={selectedPlan.description ?? ''} onChange={(event) => updatePlan(selectedPlan.id, { description: event.target.value })} /></label>
                 </div>
+
+                <section className="pricing-builder-plan-options">
+                  <header><div><strong>Available options</strong><small>Only checked packages appear for this plan on the customer schedule.</small></div><span>{builder.options.filter((option) => planOptionEnabled(selectedPlan, option)).length}/{builder.options.length} offered</span></header>
+                  <div className="pricing-builder-plan-option-grid">
+                    {builder.options.map((option) => (
+                      <label key={option.id} className={planOptionEnabled(selectedPlan, option) ? 'is-enabled' : ''}>
+                        <input type="checkbox" checked={planOptionEnabled(selectedPlan, option)} onChange={(event) => togglePlanOption(selectedPlan, option, event.target.checked)} />
+                        <strong>{option.code || '—'}</strong>
+                        <span>{option.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {!builder.options.length && <div className="pricing-builder-empty">Add option packages first, then choose which ones this plan offers.</div>}
+                </section>
+
                 <div className="pricing-builder-takeoff-table">
                   <div className="pricing-builder-takeoff-row is-head"><span>Room</span><span>Piece</span><span>L</span><span>W</span><span>SF</span><span>Kitchen sinks</span><span>Vanity bowls</span><span>Supports</span><span /></div>
                   {builder.takeoffs.filter((takeoff) => takeoff.planId === selectedPlan.id).map((takeoff) => (
@@ -236,7 +260,7 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
       {tab === 'matrix' && (
         <section className="pricing-builder-matrix-layout">
           <div className="pricing-builder-matrix-main">
-            <header className="pricing-builder-panel-heading"><div><strong>Calculated Plan × Option Matrix</strong><small>Click any price to see exactly how SalesShop calculated it.</small></div><div className="pricing-builder-quick-actions"><button type="button" onClick={addPlan}>+ Plan</button><button type="button" onClick={addOption}>+ Option</button><button type="button" onClick={addRate}>+ Rate</button></div></header>
+            <header className="pricing-builder-panel-heading"><div><strong>Calculated Plan × Option Matrix</strong><small>Not every option has to apply to every plan. Click an offered price to audit its math.</small></div><div className="pricing-builder-quick-actions"><button type="button" onClick={addPlan}>+ Plan</button><button type="button" onClick={addOption}>+ Option</button><button type="button" onClick={addRate}>+ Rate</button></div></header>
             {builder.plans.length && builder.options.length ? (
               <div className="pricing-builder-matrix-scroll">
                 <div className="pricing-builder-matrix" style={{ gridTemplateColumns: `minmax(180px, 1.4fr) repeat(${builder.options.length}, minmax(128px, 1fr))` }}>
@@ -245,7 +269,8 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
                   {builder.plans.flatMap((plan) => [
                     <div className="pricing-builder-matrix-plan" key={`${plan.id}-label`}><strong>{plan.planNumber || '—'}</strong><span>{plan.name}</span></div>,
                     ...builder.options.map((option) => {
-                      const calculation = matrix.find((item) => item.plan.id === plan.id && item.option.id === option.id)!;
+                      if (!planOptionEnabled(plan, option)) return <div className="pricing-builder-matrix-cell is-not-offered" key={`${plan.id}-${option.id}`}>Not offered</div>;
+                      const calculation = matrix.find((item) => item.plan.id === plan.id && item.option.id === option.id) ?? calculatePlanOption(builder, plan, option);
                       return <button type="button" className={`pricing-builder-matrix-cell ${calculation.total === undefined ? 'has-warning' : ''}`} key={`${plan.id}-${option.id}`} onClick={() => setSelectedCell({ planId: plan.id, optionId: option.id })}>{calculation.total === undefined ? 'Review' : money.format(calculation.total)}</button>;
                     }),
                   ])}
@@ -254,7 +279,7 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
             ) : <div className="pricing-builder-empty">Add at least one plan and one option to generate the price matrix.</div>}
 
             <section className="pricing-builder-published-preview">
-              <header><strong>Published schedule</strong><small>The matrix above is converted into the same customer-safe contract rows used by secure links and signatures.</small></header>
+              <header><strong>Published schedule</strong><small>Only plan/package combinations marked available are converted into customer contract rows.</small></header>
               <PricingScheduleCustomerTable items={deriveBuilderCustomerItems(builder)} compact />
             </section>
           </div>
@@ -272,7 +297,7 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
             ) : (
               <>
                 <header><strong>Schedule Health</strong><small>Resolve these before Send.</small></header>
-                {warnings.length ? warnings.slice(0, 12).map((warning) => <div className="pricing-builder-warning" key={warning}>{warning}</div>) : <div className="pricing-builder-health-good">✓ All calculated schedule cells are complete.</div>}
+                {warnings.length ? warnings.slice(0, 12).map((warning) => <div className="pricing-builder-warning" key={warning}>{warning}</div>) : <div className="pricing-builder-health-good">✓ All offered schedule cells are complete.</div>}
                 {warnings.length > 12 && <small>+ {warnings.length - 12} more warnings</small>}
               </>
             )}
