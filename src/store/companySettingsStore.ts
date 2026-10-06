@@ -317,7 +317,7 @@ export const useCompanySettingsStore = create<CompanySettingsState>((set, get) =
   deleteMaterialPurchaseOption: (materialId, variantId, optionId) => {
     persistMaterialUpdate(set, get, (materials) => materials.map((material) => {
       if (material.id !== materialId) return material;
-      const variants = (material.variants ?? []).map((variant) => {
+      const variants: MaterialVariant[] = (material.variants ?? []).map((variant): MaterialVariant => {
         if (variant.id !== variantId) return variant;
         let purchaseOptions = (variant.purchaseOptions ?? []).filter((option) => option.id !== optionId);
         if (purchaseOptions.length && !purchaseOptions.some((option) => option.default)) purchaseOptions = purchaseOptions.map((option, index) => index === 0 ? { ...option, default: true } : option);
