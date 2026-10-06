@@ -10,6 +10,7 @@ import './quotes.css';
 import './dashboard.css';
 import './company-settings.css';
 import './rate-book.css';
+import './rate-book-spreadsheet-qc.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
