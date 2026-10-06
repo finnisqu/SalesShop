@@ -18,6 +18,16 @@ export const PRICING_SCHEDULE_FIELD_LABELS: Record<PricingScheduleField, string>
   customerPrice: 'Customer price',
 };
 
+const STARTER_COLUMNS: Array<{ field: PricingScheduleField; label: string; width: number }> = [
+  { field: 'series', label: 'Series', width: 95 },
+  { field: 'itemType', label: 'Base / Option', width: 105 },
+  { field: 'planNumber', label: 'Plan #', width: 90 },
+  { field: 'planName', label: 'Plan Name', width: 145 },
+  { field: 'optionCode', label: 'Option Code', width: 115 },
+  { field: 'description', label: 'Description', width: 300 },
+  { field: 'customerPrice', label: 'Customer Price', width: 120 },
+];
+
 type Cell = { v?: unknown; f?: string };
 type Sheet = {
   id?: string;
@@ -36,6 +46,8 @@ function workbook(value: unknown) {
 
 export function createBlankPricingScheduleWorkbook(quoteId: string): IWorkbookData {
   const sheetId = `schedule_sheet_${crypto.randomUUID()}`;
+  const headerCells = Object.fromEntries(STARTER_COLUMNS.map((column, index) => [String(index), { v: column.label }]));
+  const columnData = Object.fromEntries(STARTER_COLUMNS.map((column, index) => [String(index), { w: column.width }]));
   return {
     id: `schedule_workbook_${quoteId}`,
     name: 'Pricing Schedule',
@@ -52,9 +64,9 @@ export function createBlankPricingScheduleWorkbook(quoteId: string): IWorkbookDa
         defaultColumnWidth: 100,
         defaultRowHeight: 23,
         mergeData: [],
-        cellData: {},
+        cellData: { '0': headerCells },
         rowData: {},
-        columnData: {},
+        columnData,
       },
     },
     resources: [],
@@ -62,7 +74,15 @@ export function createBlankPricingScheduleWorkbook(quoteId: string): IWorkbookDa
 }
 
 export function createPricingScheduleData(quoteId: string): PricingScheduleData {
-  return { workbookData: createBlankPricingScheduleWorkbook(quoteId), customerItems: [] };
+  const workbookData = createBlankPricingScheduleWorkbook(quoteId);
+  const sheetId = pricingScheduleSheets(workbookData)[0]?.id ?? '';
+  const columns: PricingScheduleColumnMapping = {};
+  STARTER_COLUMNS.forEach((column, index) => { columns[column.field] = index; });
+  return {
+    workbookData,
+    mapping: { sheetId, headerRow: 1, firstDataRow: 2, columns },
+    customerItems: [],
+  };
 }
 
 export function pricingScheduleSheets(value: unknown) {
@@ -223,6 +243,12 @@ export function validatePricingScheduleForSend(data?: PricingScheduleData) {
   if (!data.mapping?.sheetId) throw new Error('Map the pricing workbook before sending this schedule.');
   if (data.mapping.columns.description === undefined || data.mapping.columns.customerPrice === undefined) throw new Error('Map at least Description and Customer price before sending this schedule.');
   if (!data.customerItems.length) throw new Error('The mapped pricing schedule does not contain any customer rows.');
+  const incomplete = data.customerItems.filter((item) => !item.description?.trim() || item.customerPrice === undefined);
+  if (incomplete.length) {
+    const rows = incomplete.slice(0, 4).map((item) => item.sourceRow).join(', ');
+    const suffix = incomplete.length > 4 ? ', …' : '';
+    throw new Error(`Complete Description and Customer price on mapped workbook row${incomplete.length === 1 ? '' : 's'} ${rows}${suffix} before sending.`);
+  }
 }
 
 function excelScalar(value: unknown): string | number | boolean | null {
