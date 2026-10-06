@@ -7,9 +7,11 @@ import {
 } from '../services/publicQuoteShareService';
 import { commercialDocumentLabel } from '../types/quote';
 import type { SignatureMethod, SignatureStroke } from '../types/signature';
+import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
 import '../quotes.css';
 import '../signature.css';
 import '../public-quote.css';
+import '../pricing-schedule.css';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
@@ -26,13 +28,11 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
+function StandardQuoteBody({ data }: { data: PublicQuoteResponse }) {
   const { quote } = data;
   const sections = quote.sections;
   const lines = quote.lines;
-  const documentLabel = commercialDocumentLabel(quote);
   const loose = lines.filter((line) => !line.sectionId || !sections.some((section) => section.id === line.sectionId));
-
   const renderLines = (items: PublicQuoteLine[]) => items.map((line) => {
     const amount = displayLineAmount(line);
     return (
@@ -46,32 +46,7 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
   });
 
   return (
-    <article className="customer-quote-paper public-customer-paper">
-      <header className="customer-quote-letterhead">
-        <div>
-          <span className="customer-company-placeholder">{data.organizationName}</span>
-          <strong>{documentLabel.toUpperCase()}</strong>
-        </div>
-        <dl>
-          <div><dt>Document</dt><dd>{quote.quoteNumber}</dd></div>
-          <div><dt>Date</dt><dd>{formatDate(quote.quoteDate)}</dd></div>
-        </dl>
-      </header>
-
-      <section className="customer-quote-recipient">
-        <div>
-          <span>Prepared for</span>
-          <strong>{quote.companyName || quote.contactName || 'Customer'}</strong>
-          {quote.contactName && quote.companyName && <p>{quote.contactName}</p>}
-          {quote.address && <p>{quote.address}</p>}
-        </div>
-        <div>
-          <span>Project</span>
-          <strong>{quote.title}</strong>
-          {quote.revisionLabel && <p>{quote.revisionLabel}</p>}
-        </div>
-      </section>
-
+    <>
       <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}>
         <div className="customer-quote-row customer-quote-table-head">
           <div>Description</div>
@@ -86,8 +61,43 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
           return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{renderLines(sectionLines)}</div>;
         })}
       </div>
-
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quote.acceptedTotal)}</strong></div>
+    </>
+  );
+}
+
+function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
+  const { quote } = data;
+  const documentLabel = commercialDocumentLabel(quote);
+  const pricingSchedule = quote.documentType === 'pricing-schedule';
+
+  return (
+    <article className="customer-quote-paper public-customer-paper">
+      <header className="customer-quote-letterhead">
+        <div><span className="customer-company-placeholder">{data.organizationName}</span><strong>{documentLabel.toUpperCase()}</strong></div>
+        <dl><div><dt>Document</dt><dd>{quote.quoteNumber}</dd></div><div><dt>Date</dt><dd>{formatDate(quote.quoteDate)}</dd></div></dl>
+      </header>
+
+      <section className="customer-quote-recipient">
+        <div>
+          <span>Prepared for</span>
+          <strong>{quote.companyName || quote.contactName || 'Customer'}</strong>
+          {quote.contactName && quote.companyName && <p>{quote.contactName}</p>}
+          {quote.address && <p>{quote.address}</p>}
+        </div>
+        <div><span>Project</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div>
+      </section>
+
+      {pricingSchedule ? (
+        <>
+          <div className="pricing-schedule-contract-intro">
+            <strong>Contract pricing schedule</strong>
+            <p>Pricing below applies to the listed plans, options, and configurations.</p>
+          </div>
+          <PricingScheduleCustomerTable items={quote.pricingSchedule?.customerItems ?? []} />
+        </>
+      ) : <StandardQuoteBody data={data} />}
+
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
       <footer>{data.signature ? 'Accepted electronically with SalesShop.' : `Secure ${documentLabel.toLowerCase()} prepared with SalesShop.`}</footer>
     </article>
@@ -97,6 +107,7 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
 function SignatureReceipt({ data }: { data: PublicQuoteResponse }) {
   const signature = data.signature;
   if (!signature) return null;
+  const pricingSchedule = data.quote.documentType === 'pricing-schedule';
   return (
     <section className="public-acceptance-card">
       <div className="signature-success-mark">✓</div>
@@ -107,13 +118,11 @@ function SignatureReceipt({ data }: { data: PublicQuoteResponse }) {
       </div>
       <dl>
         <div><dt>Document</dt><dd>{data.quote.quoteNumber}</dd></div>
-        <div><dt>Accepted total</dt><dd>{money.format(data.quote.acceptedTotal)}</dd></div>
+        {pricingSchedule ? <div><dt>Pricing rows</dt><dd>{data.quote.pricingSchedule?.customerItems.length ?? 0}</dd></div> : <div><dt>Accepted total</dt><dd>{money.format(data.quote.acceptedTotal)}</dd></div>}
         <div><dt>Revision</dt><dd>{data.quote.revisionLabel || (data.quote.revision ? `R${data.quote.revision}` : 'Original')}</dd></div>
       </dl>
       <div className="public-receipt-signature">
-        {signature.method === 'typed' ? (
-          <span className="typed-signature">{signature.signatureText || signature.signerName}</span>
-        ) : (
+        {signature.method === 'typed' ? <span className="typed-signature">{signature.signatureText || signature.signerName}</span> : (
           <svg viewBox="0 0 600 180" aria-label={`Signature of ${signature.signerName}`}>
             {signature.strokes.map((stroke) => <polyline key={stroke.id} points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
           </svg>
@@ -136,6 +145,7 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
   const [error, setError] = useState('');
   const padRef = useRef<SVGSVGElement | null>(null);
   const documentLabel = commercialDocumentLabel(data.quote);
+  const pricingSchedule = data.quote.documentType === 'pricing-schedule';
 
   const pointFromEvent = (event: ReactPointerEvent<SVGSVGElement>) => {
     const rect = padRef.current?.getBoundingClientRect();
@@ -168,11 +178,7 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
     const cleanName = signerName.trim();
     if (!cleanName) { setError('Enter your full name.'); return; }
     if (!consented) { setError('Confirm acceptance before signing.'); return; }
-    if (method === 'drawn' && !strokes.some((stroke) => stroke.points.length > 1)) {
-      setError('Add your signature above, or choose Type name.');
-      return;
-    }
-
+    if (method === 'drawn' && !strokes.some((stroke) => stroke.points.length > 1)) { setError('Add your signature above, or choose Type name.'); return; }
     setBusy(true);
     try {
       const next = await signPublicQuote(token, {
@@ -197,7 +203,7 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
       <header>
         <span>Electronic acceptance</span>
         <h2>Accept this {documentLabel.toLowerCase()}</h2>
-        <p>Sign below to approve {data.quote.quoteNumber} for {money.format(data.quote.acceptedTotal)}.</p>
+        <p>{pricingSchedule ? `Sign below to accept pricing schedule ${data.quote.quoteNumber}.` : `Sign below to approve ${data.quote.quoteNumber} for ${money.format(data.quote.acceptedTotal)}.`}</p>
       </header>
       <div className="signature-identity-grid">
         <label><span>Full name</span><input value={signerName} onChange={(event) => setSignerName(event.target.value)} autoComplete="name" /></label>
@@ -209,23 +215,17 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
       </div>
       {method === 'drawn' ? (
         <div className="signature-pad-wrap">
-          <svg ref={padRef} className="signature-pad" viewBox="0 0 600 180" onPointerDown={pointerDown} onPointerMove={pointerMove}
-            onPointerUp={() => setActiveStrokeId(null)} onPointerCancel={() => setActiveStrokeId(null)} onPointerLeave={() => setActiveStrokeId(null)}>
+          <svg ref={padRef} className="signature-pad" viewBox="0 0 600 180" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={() => setActiveStrokeId(null)} onPointerCancel={() => setActiveStrokeId(null)} onPointerLeave={() => setActiveStrokeId(null)}>
             <line x1="24" y1="148" x2="576" y2="148" className="signature-baseline" />
             {strokes.map((stroke) => <polyline key={stroke.id} points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
           </svg>
           <div className="signature-pad-footer"><span>Sign above</span><button type="button" onClick={() => setStrokes([])}>Clear</button></div>
         </div>
-      ) : (
-        <div className="typed-signature-preview">{signerName || 'Your Name'}</div>
-      )}
-      <label className="signature-consent">
-        <input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)} />
-        <span>{data.consentText}</span>
-      </label>
+      ) : <div className="typed-signature-preview">{signerName || 'Your Name'}</div>}
+      <label className="signature-consent"><input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)} /><span>{data.consentText}</span></label>
       {error && <div className="signature-error" role="alert">{error}</div>}
       <button type="button" className="public-accept-button" disabled={busy} onClick={() => void complete()}>
-        {busy ? 'Recording acceptance…' : `Accept & Sign · ${money.format(data.quote.acceptedTotal)}`}
+        {busy ? 'Recording acceptance…' : pricingSchedule ? 'Accept & Sign Pricing Schedule' : `Accept & Sign · ${money.format(data.quote.acceptedTotal)}`}
       </button>
       <small className="public-security-note">Your signature is attached to this exact numbered document and revision and recorded with the acceptance time.</small>
     </section>
