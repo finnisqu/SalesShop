@@ -25,6 +25,14 @@ function numericOrUndefined(value: unknown) {
   return Number.isFinite(numeric) ? numeric : undefined;
 }
 
+function atLeastAsNew(localValue: string, serverValue?: string) {
+  if (!serverValue) return true;
+  const localTime = Date.parse(localValue);
+  const serverTime = Date.parse(serverValue);
+  if (!Number.isFinite(localTime) || !Number.isFinite(serverTime)) return localValue >= serverValue;
+  return localTime >= serverTime;
+}
+
 async function selectRows(table: QuoteTable, organizationId: string, orderColumn: string) {
   if (!supabase) return [] as DbRow[];
   const { data, error } = await supabase
@@ -156,32 +164,6 @@ async function insertRevisionSnapshots(rows: Record<string, unknown>[]) {
   if (error) throw error;
 }
 
-async function deleteStaleRows(
-  table: Exclude<QuoteTable, 'quote_revisions'>,
-  organizationId: string,
-  localIds: string[],
-) {
-  if (!supabase) return;
-  const { data, error } = await supabase
-    .from(table)
-    .select('id')
-    .eq('organization_id', organizationId);
-  if (error) throw error;
-
-  const keep = new Set(localIds);
-  const staleIds = (data ?? [])
-    .map((row) => String(row.id))
-    .filter((id) => !keep.has(id));
-  if (!staleIds.length) return;
-
-  const { error: deleteError } = await supabase
-    .from(table)
-    .delete()
-    .eq('organization_id', organizationId)
-    .in('id', staleIds);
-  if (deleteError) throw deleteError;
-}
-
 interface ServerQuoteGuard {
   revision: number;
   status: QuoteStatus;
@@ -191,14 +173,15 @@ interface ServerQuoteGuard {
   changeOrderNumber?: number;
   viewedAt?: string;
   signedAt?: string;
+  updatedAt: string;
 }
 
-async function serverOutcomeGuards(organizationId: string) {
+async function serverQuoteGuards(organizationId: string) {
   const guards = new Map<string, ServerQuoteGuard>();
   if (!supabase) return guards;
   const { data, error } = await supabase
     .from('quotes')
-    .select('id,revision,status,quote_number,document_type,parent_quote_id,change_order_number,viewed_at,signed_at')
+    .select('id,revision,status,quote_number,document_type,parent_quote_id,change_order_number,viewed_at,signed_at,updated_at')
     .eq('organization_id', organizationId);
   if (error) throw error;
   (data ?? []).forEach((row) => guards.set(String(row.id), {
@@ -210,6 +193,7 @@ async function serverOutcomeGuards(organizationId: string) {
     changeOrderNumber: numericOrUndefined(row.change_order_number),
     viewedAt: valueOrUndefined(row.viewed_at),
     signedAt: valueOrUndefined(row.signed_at),
+    updatedAt: String(row.updated_at),
   }));
   return guards;
 }
@@ -218,10 +202,15 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   if (!supabase) return;
   if (document.schemaVersion !== 2) throw new Error('Unsupported Quote document schema.');
 
-  // Customer actions and official numbering happen server-side. Preserve those
-  // outcomes when an older open SalesShop tab later saves its local cache.
-  const guards = await serverOutcomeGuards(organizationId);
-  const quotes = document.quotes.map((quote, sortOrder) => {
+  // Each salesperson works from a local snapshot. Only push documents that are
+  // at least as new as the server version. Missing local IDs never imply deletion;
+  // explicit delete actions handle that, so one salesperson cannot erase a quote
+  // another salesperson created after this browser hydrated.
+  const guards = await serverQuoteGuards(organizationId);
+  const acceptedQuotes = document.quotes.filter((quote) => atLeastAsNew(quote.updatedAt, guards.get(quote.id)?.updatedAt));
+  const acceptedIds = new Set(acceptedQuotes.map((quote) => quote.id));
+
+  const quotes = acceptedQuotes.map((quote, sortOrder) => {
     const server = guards.get(quote.id);
     let status = quote.status;
     let quoteNumber = quote.quoteNumber;
@@ -232,8 +221,6 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     let signedAt = quote.signedAt;
 
     if (server && !isDraftQuoteNumber(server.quoteNumber)) {
-      // Once assigned, a commercial-document identity is immutable from normal
-      // local cache sync. New revisions retain the same base document number.
       quoteNumber = server.quoteNumber;
       documentType = server.documentType;
       parentQuoteId = server.parentQuoteId;
@@ -285,7 +272,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     };
   });
 
-  const sections = document.quotes.flatMap((quote) => quote.sections.map((section, sortOrder) => ({
+  const sections = acceptedQuotes.flatMap((quote) => quote.sections.map((section, sortOrder) => ({
     organization_id: organizationId,
     id: section.id,
     quote_id: quote.id,
@@ -294,7 +281,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     sort_order: sortOrder,
   })));
 
-  const lines = document.quotes.flatMap((quote) => quote.lines.map((line, sortOrder) => ({
+  const lines = acceptedQuotes.flatMap((quote) => quote.lines.map((line, sortOrder) => ({
     organization_id: organizationId,
     id: line.id,
     quote_id: quote.id,
@@ -310,24 +297,52 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     sort_order: sortOrder,
   })));
 
-  const revisions = document.quotes.flatMap((quote) => quote.history.map((revision) => ({
-    organization_id: organizationId,
-    quote_id: quote.id,
-    revision: revision.revision,
-    label: revision.label ?? null,
-    quote_date: revision.quoteDate,
-    captured_at: revision.capturedAt,
-    status: revision.status,
-    title: revision.title,
-    snapshot: revision,
-  })));
+  const revisions = document.quotes
+    .filter((quote) => acceptedIds.has(quote.id))
+    .flatMap((quote) => quote.history.map((revision) => ({
+      organization_id: organizationId,
+      quote_id: quote.id,
+      revision: revision.revision,
+      label: revision.label ?? null,
+      quote_date: revision.quoteDate,
+      captured_at: revision.capturedAt,
+      status: revision.status,
+      title: revision.title,
+      snapshot: revision,
+    })));
 
   await upsertRows('quotes', quotes);
   await upsertRows('quote_sections', sections);
   await upsertRows('quote_lines', lines);
   await insertRevisionSnapshots(revisions);
+}
 
-  await deleteStaleRows('quote_lines', organizationId, lines.map((line) => line.id));
-  await deleteStaleRows('quote_sections', organizationId, sections.map((section) => section.id));
-  await deleteStaleRows('quotes', organizationId, document.quotes.map((quote) => quote.id));
+export async function deleteNormalizedQuote(organizationId: string, quoteId: string) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('quotes')
+    .delete()
+    .eq('organization_id', organizationId)
+    .eq('id', quoteId);
+  if (error) throw error;
+}
+
+export async function deleteNormalizedQuoteLine(organizationId: string, lineId: string) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('quote_lines')
+    .delete()
+    .eq('organization_id', organizationId)
+    .eq('id', lineId);
+  if (error) throw error;
+}
+
+export async function deleteNormalizedQuoteSection(organizationId: string, sectionId: string) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('quote_sections')
+    .delete()
+    .eq('organization_id', organizationId)
+    .eq('id', sectionId);
+  if (error) throw error;
 }
