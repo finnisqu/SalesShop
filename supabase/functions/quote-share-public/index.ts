@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const CONSENT_TEXT = 'I agree to the quote shown and intend this electronic signature to confirm acceptance of this quote and revision.';
+const CONSENT_TEXT = 'I agree to the commercial document shown and intend this electronic signature to confirm acceptance of this document and revision.';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -63,7 +63,7 @@ function lineTotal(line: SnapshotLine) {
   return line.kind === 'discount' ? -Math.abs(raw) : raw;
 }
 
-function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string) {
+function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentType: string) {
   const allLines = Array.isArray(snapshot.lines) ? snapshot.lines : [];
   const total = allLines.reduce((sum, line) => sum + lineTotal(line), 0);
   const revision = Number(snapshot.revision) || 0;
@@ -71,6 +71,7 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string) {
   return {
     quoteId: '',
     quoteNumber,
+    documentType,
     revision,
     revisionLabel: snapshot.label,
     quoteDate: snapshot.quoteDate,
@@ -128,10 +129,10 @@ Deno.serve(async (req) => {
       .eq('public_token', body.token)
       .maybeSingle();
     if (shareError) throw shareError;
-    if (!share) return json({ error: 'This quote link is not valid.' }, 404);
-    if (share.status === 'revoked') return json({ error: 'This quote link has been revoked.' }, 410);
+    if (!share) return json({ error: 'This document link is not valid.' }, 404);
+    if (share.status === 'revoked') return json({ error: 'This document link has been revoked.' }, 410);
     if (share.expires_at && new Date(share.expires_at).getTime() < Date.now() && share.status !== 'signed') {
-      return json({ error: 'This quote link has expired.' }, 410);
+      return json({ error: 'This document link has expired.' }, 410);
     }
 
     const [revisionResult, quoteResult, orgResult, signatureResult] = await Promise.all([
@@ -145,8 +146,11 @@ Deno.serve(async (req) => {
     if (orgResult.error) throw orgResult.error;
     if (signatureResult.error) throw signatureResult.error;
 
+    const documentType = String(quoteResult.data.document_type ?? 'quote');
+    const changeOrder = documentType === 'change-order';
+    const documentName = changeOrder ? 'Change Order' : documentType === 'pricing-schedule' ? 'Pricing Schedule' : 'Quote';
     const snapshot = revisionResult.data.snapshot as Snapshot;
-    const safeQuote = buildSafeQuote(snapshot, String(quoteResult.data.quote_number));
+    const safeQuote = buildSafeQuote(snapshot, String(quoteResult.data.quote_number), documentType);
     safeQuote.quoteId = String(share.quote_id);
     let signature = safeSignature(signatureResult.data as Record<string, unknown> | null);
     const now = new Date();
@@ -167,20 +171,20 @@ Deno.serve(async (req) => {
         await admin.from('activities').insert({
           organization_id: share.organization_id,
           id: `activity_${crypto.randomUUID()}`,
-          type: 'quote-viewed',
-          summary: `Quote ${safeQuote.quoteNumber} viewed`,
+          type: changeOrder ? 'change-order-viewed' : 'quote-viewed',
+          summary: `${documentName} ${safeQuote.quoteNumber} viewed`,
           project_id: quoteResult.data.project_id,
           company_id: quoteResult.data.company_id,
           contact_id: quoteResult.data.contact_id,
           quote_id: share.quote_id,
           occurred_at: nowIso,
-          metadata: { quoteNumber: safeQuote.quoteNumber, revision: share.revision },
+          metadata: { quoteNumber: safeQuote.quoteNumber, revision: share.revision, documentType, parentQuoteId: quoteResult.data.parent_quote_id },
         });
       }
     }
 
     if (body.action === 'sign' && !signature) {
-      if (share.status !== 'active') return json({ error: 'This quote is no longer available for signature.' }, 409);
+      if (share.status !== 'active') return json({ error: 'This document is no longer available for signature.' }, 409);
       const signerName = body.signerName?.trim() ?? '';
       const signerEmail = body.signerEmail?.trim() || null;
       const method = body.method === 'typed' ? 'typed' : 'drawn';
@@ -237,43 +241,51 @@ Deno.serve(async (req) => {
       if (quoteResult.data.project_id) {
         const { data: project } = await admin.from('projects').select('id, name, stage')
           .eq('organization_id', share.organization_id).eq('id', quoteResult.data.project_id).maybeSingle();
-        if (project && project.stage !== 'Closed Won' && project.stage !== 'Completed') {
-          previousStage = String(project.stage);
-          const { error: projectError } = await admin.from('projects').update({
-            stage: 'Closed Won',
-            amount: safeQuote.acceptedTotal,
-            last_touchpoint: nowIso.slice(0, 10),
-            updated_at: nowIso,
-          }).eq('organization_id', share.organization_id).eq('id', project.id);
-          if (projectError) throw projectError;
-          projectStageChanged = true;
+        if (project) {
+          if (changeOrder) {
+            const { error: touchError } = await admin.from('projects').update({
+              last_touchpoint: nowIso.slice(0, 10),
+              updated_at: nowIso,
+            }).eq('organization_id', share.organization_id).eq('id', project.id);
+            if (touchError) throw touchError;
+          } else if (project.stage !== 'Closed Won' && project.stage !== 'Completed') {
+            previousStage = String(project.stage);
+            const { error: projectError } = await admin.from('projects').update({
+              stage: 'Closed Won',
+              amount: safeQuote.acceptedTotal,
+              last_touchpoint: nowIso.slice(0, 10),
+              updated_at: nowIso,
+            }).eq('organization_id', share.organization_id).eq('id', project.id);
+            if (projectError) throw projectError;
+            projectStageChanged = true;
 
-          await admin.from('activities').insert({
-            organization_id: share.organization_id,
-            id: `activity_${crypto.randomUUID()}`,
-            type: 'project-stage-changed',
-            summary: `${project.name} moved from ${previousStage} to Closed Won`,
-            project_id: project.id,
-            company_id: quoteResult.data.company_id,
-            contact_id: quoteResult.data.contact_id,
-            quote_id: share.quote_id,
-            occurred_at: nowIso,
-            metadata: { fromStage: previousStage, toStage: 'Closed Won', quoteNumber: safeQuote.quoteNumber },
-          });
+            await admin.from('activities').insert({
+              organization_id: share.organization_id,
+              id: `activity_${crypto.randomUUID()}`,
+              type: 'project-stage-changed',
+              summary: `${project.name} moved from ${previousStage} to Closed Won`,
+              project_id: project.id,
+              company_id: quoteResult.data.company_id,
+              contact_id: quoteResult.data.contact_id,
+              quote_id: share.quote_id,
+              occurred_at: nowIso,
+              metadata: { fromStage: previousStage, toStage: 'Closed Won', quoteNumber: safeQuote.quoteNumber },
+            });
+          }
         }
       }
 
       await admin.from('activities').insert({
         organization_id: share.organization_id,
         id: `activity_${crypto.randomUUID()}`,
-        type: 'quote-signed',
-        summary: `Quote ${safeQuote.quoteNumber} signed · ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(safeQuote.acceptedTotal)}`,
+        type: changeOrder ? 'change-order-signed' : 'quote-signed',
+        summary: `${documentName} ${safeQuote.quoteNumber} signed · ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(safeQuote.acceptedTotal)}`,
         project_id: quoteResult.data.project_id,
         company_id: quoteResult.data.company_id,
         contact_id: quoteResult.data.contact_id,
         quote_id: share.quote_id,
         occurred_at: nowIso,
-        metadata: { quoteNumber: safeQuote.quoteNumber, revision: share.revision, amount: safeQuote.acceptedTotal, projectStageChanged },
+        metadata: { quoteNumber: safeQuote.quoteNumber, revision: share.revision, amount: safeQuote.acceptedTotal, documentType, parentQuoteId: quoteResult.data.parent_quote_id, projectStageChanged },
       });
     }
 
@@ -290,6 +302,6 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error(error);
-    return json({ error: error instanceof Error ? error.message : 'Quote request failed.' }, 500);
+    return json({ error: error instanceof Error ? error.message : 'Document request failed.' }, 500);
   }
 });
