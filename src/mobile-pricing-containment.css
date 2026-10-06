@@ -1,0 +1,142 @@
+/* Mobile pricing-schedule containment.
+   Keep the Quotes page viewport-width while allowing only the spreadsheet surface to own horizontal movement. */
+
+@media (max-width: 700px) {
+  .pricing-schedule-editor-pane,
+  .pricing-schedule-workspace,
+  .pricing-schedule-workspace-header,
+  .pricing-schedule-route-grid,
+  .pricing-schedule-spreadsheet-toolbar,
+  .pricing-schedule-workbook-layout,
+  .pricing-schedule-mapping-panel,
+  .pricing-schedule-mapped-preview {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .pricing-schedule-editor-pane,
+  .pricing-schedule-workspace {
+    overflow-x: hidden;
+  }
+
+  /* Workbook mode gets a deliberate two-row command area instead of a long strip. */
+  .view-workbook .quote-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: visible;
+  }
+
+  .view-workbook .quote-view-switch {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .view-workbook .quote-view-switch button {
+    min-width: 0;
+    padding-inline: 7px;
+  }
+
+  .view-workbook .quote-send-button {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .pricing-schedule-route-grid {
+    overflow: hidden;
+  }
+
+  .pricing-schedule-route-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .pricing-schedule-route-card strong {
+    max-width: 100%;
+  }
+
+  .pricing-schedule-spreadsheet-toolbar {
+    overflow: hidden;
+  }
+
+  .pricing-schedule-spreadsheet-toolbar > div:first-child {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .pricing-schedule-spreadsheet-toolbar small {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  /* Action buttons should fit the phone instead of forming another sideways toolbar. */
+  .pricing-schedule-workbook-actions {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .pricing-schedule-workbook-actions button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding-inline: 8px;
+    white-space: normal;
+    line-height: 1.15;
+  }
+
+  .pricing-schedule-published-pill {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+
+  .pricing-schedule-workbook-layout {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  /* Univer may advertise a desktop-sized intrinsic surface. Isolate it from parent sizing;
+     its own sheet viewport remains responsible for horizontal sheet navigation. */
+  .pricing-schedule-workbook-host {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    contain: inline-size;
+  }
+
+  .pricing-schedule-univer-mount {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .pricing-schedule-mapping-panel {
+    overflow: hidden;
+  }
+
+  /* If customer preview tables are wider than the phone, keep that movement local. */
+  .pricing-schedule-mapped-preview {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+}
