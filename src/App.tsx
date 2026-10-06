@@ -22,7 +22,7 @@ import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
 import { QuoteShareControl } from './components/QuoteShareControl';
 import { Quotes } from './components/Quotes';
-import { RateBook } from './components/RateBook';
+import { RatesWorkspace } from './components/RatesWorkspace';
 import { Sidebar } from './components/Sidebar';
 import { TextEditor } from './components/TextEditor';
 import { Toolbar } from './components/Toolbar';
@@ -83,7 +83,7 @@ function App() {
       ) : view === 'quotes' ? (
         <Quotes />
       ) : view === 'rate-book' ? (
-        <RateBook />
+        <RatesWorkspace />
       ) : view === 'dashboard' ? (
         <Dashboard />
       ) : view === 'settings' ? (
