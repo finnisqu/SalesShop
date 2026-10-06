@@ -8,10 +8,14 @@ import {
   recordQuoteLinked,
   recordRevisionCreated,
 } from '../services/quoteCrmService';
-import { syncNormalizedQuotes } from '../services/normalizedQuoteSync';
+import {
+  deleteNormalizedQuote,
+  deleteNormalizedQuoteLine,
+  deleteNormalizedQuoteSection,
+  syncNormalizedQuotes,
+} from '../services/normalizedQuoteSync';
 import {
   isDraftQuoteNumber,
-  type CommercialDocumentType,
   type Quote,
   type QuoteCustomerColumns,
   type QuoteDocument,
@@ -53,6 +57,16 @@ function localDateKey(date = new Date()) {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+function cloudOrganizationId() {
+  const auth = useAuthStore.getState();
+  return supabase && auth.mode === 'cloud' ? auth.organizationId : null;
+}
+
+function reportCloudDeleteError(error: unknown) {
+  const message = error instanceof Error ? error.message : 'Cloud delete failed.';
+  useAuthStore.setState({ error: `Cloud sync: ${message}` });
 }
 
 function newLine(kind: QuoteLineKind = 'item', sectionId?: string): QuoteLine {
@@ -276,7 +290,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     }
 
     const safePatch = { ...patch };
-    if (safePatch.documentType && (current.status !== 'Draft' && current.status !== 'Ready' || current.documentType === 'change-order')) {
+    if (safePatch.documentType && ((current.status !== 'Draft' && current.status !== 'Ready') || current.documentType === 'change-order')) {
       safePatch.documentType = current.documentType;
     }
 
@@ -306,11 +320,13 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
 
   deleteQuote: (quoteId) => {
     if (get().quotes.some((quote) => quote.parentQuoteId === quoteId)) return;
+    const organizationId = cloudOrganizationId();
     let quotes = get().quotes.filter((quote) => quote.id !== quoteId);
     if (!quotes.length) quotes = [newQuote()];
     const activeQuoteId = get().activeQuoteId === quoteId ? quotes[0].id : get().activeQuoteId;
     persist(quotes, activeQuoteId);
     set({ quotes, activeQuoteId });
+    if (organizationId) void deleteNormalizedQuote(organizationId, quoteId).catch(reportCloudDeleteError);
   },
 
   addLine: (quoteId, kind = 'item', sectionId) => {
@@ -338,12 +354,14 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   deleteLine: (quoteId, lineId) => {
+    const organizationId = cloudOrganizationId();
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? { ...quote, lines: quote.lines.filter((line) => line.id !== lineId), updatedAt: timestamp }
       : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes });
+    if (organizationId) void deleteNormalizedQuoteLine(organizationId, lineId).catch(reportCloudDeleteError);
   },
 
   addSection: (quoteId) => {
@@ -371,6 +389,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   deleteSection: (quoteId, sectionId) => {
+    const organizationId = cloudOrganizationId();
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? {
@@ -382,6 +401,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes });
+    if (organizationId) void deleteNormalizedQuoteSection(organizationId, sectionId).catch(reportCloudDeleteError);
   },
 
   setCustomerColumns: (quoteId, patch) => {
