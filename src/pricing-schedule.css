@@ -1,0 +1,286 @@
+.pricing-schedule-workspace {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.pricing-schedule-workspace-header,
+.pricing-schedule-mapped-preview > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pricing-schedule-workspace-header > div:first-child,
+.pricing-schedule-mapped-preview > header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.pricing-schedule-workspace-header small,
+.pricing-schedule-mapped-preview small,
+.pricing-schedule-mapping-panel small {
+  color: var(--ink-muted, #777066);
+}
+
+.pricing-schedule-workbook-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.pricing-schedule-workbook-actions button,
+.pricing-schedule-mapping-panel button {
+  border: 1px solid rgba(66, 59, 51, .18);
+  background: rgba(255, 255, 255, .65);
+  border-radius: 5px;
+  padding: 7px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pricing-schedule-workbook-actions button:hover,
+.pricing-schedule-mapping-panel button:hover {
+  background: rgba(255, 255, 255, .95);
+}
+
+.pricing-schedule-message {
+  border-left: 3px solid rgba(73, 91, 71, .55);
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, .42);
+  font-size: 13px;
+}
+
+.pricing-schedule-workbook-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+  min-height: 620px;
+}
+
+.pricing-schedule-workbook-host {
+  min-width: 0;
+  height: 620px;
+  overflow: hidden;
+  border: 1px solid rgba(58, 51, 43, .16);
+  background: white;
+  box-shadow: 0 4px 16px rgba(57, 50, 42, .07);
+}
+
+.pricing-schedule-univer-mount {
+  width: 100%;
+  height: 100%;
+}
+
+.pricing-schedule-mapping-panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(58, 51, 43, .15);
+  background: rgba(250, 248, 242, .88);
+  box-shadow: 0 3px 12px rgba(57, 50, 42, .05);
+}
+
+.pricing-schedule-mapping-panel > header {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(58, 51, 43, .12);
+}
+
+.pricing-schedule-mapping-panel label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.pricing-schedule-mapping-panel label > span {
+  color: var(--ink-muted, #6e685f);
+  font-weight: 650;
+}
+
+.pricing-schedule-mapping-panel select,
+.pricing-schedule-mapping-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(58, 51, 43, .18);
+  border-radius: 4px;
+  padding: 7px 8px;
+  background: rgba(255, 255, 255, .9);
+  font: inherit;
+}
+
+.pricing-schedule-row-map {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.pricing-schedule-field-map {
+  display: grid;
+  gap: 8px;
+}
+
+.pricing-schedule-publish-note {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 3px 7px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(58, 51, 43, .12);
+}
+
+.pricing-schedule-publish-note strong {
+  font-size: 24px;
+}
+
+.pricing-schedule-publish-note small {
+  grid-column: 1 / -1;
+}
+
+.pricing-schedule-mapped-preview {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.pricing-schedule-customer-table {
+  display: grid;
+  gap: 16px;
+}
+
+.pricing-schedule-customer-group {
+  border: 1px solid rgba(64, 57, 49, .14);
+  background: rgba(255, 255, 255, .48);
+}
+
+.pricing-schedule-customer-group > header {
+  padding: 9px 11px;
+  font-weight: 750;
+  background: rgba(77, 72, 61, .065);
+  border-bottom: 1px solid rgba(64, 57, 49, .12);
+}
+
+.pricing-schedule-customer-head,
+.pricing-schedule-customer-row {
+  display: grid;
+  grid-template-columns: minmax(76px, .7fr) minmax(80px, .75fr) minmax(92px, .9fr) minmax(180px, 2.3fr) minmax(90px, .8fr);
+  gap: 8px;
+  align-items: center;
+  padding: 7px 11px;
+}
+
+.pricing-schedule-customer-head {
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-muted, #756f65);
+  border-bottom: 1px solid rgba(64, 57, 49, .1);
+}
+
+.pricing-schedule-customer-row {
+  font-size: 12px;
+  border-bottom: 1px solid rgba(64, 57, 49, .07);
+}
+
+.pricing-schedule-customer-row:last-child {
+  border-bottom: 0;
+}
+
+.pricing-schedule-customer-row strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pricing-schedule-customer-table.is-compact {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.pricing-schedule-empty-customer {
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed rgba(64, 57, 49, .22);
+  color: var(--ink-muted, #756f65);
+}
+
+.pricing-schedule-summary-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(58, 51, 43, .14);
+  background: rgba(252, 250, 244, .72);
+}
+
+.pricing-schedule-summary-card .pricing-schedule-summary-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pricing-schedule-summary-card button {
+  border: 1px solid rgba(58, 51, 43, .18);
+  border-radius: 4px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, .76);
+  cursor: pointer;
+}
+
+.public-customer-paper .pricing-schedule-customer-table {
+  margin-top: 18px;
+}
+
+.public-customer-paper .pricing-schedule-customer-row,
+.public-customer-paper .pricing-schedule-customer-head {
+  font-size: 11px;
+}
+
+@media (max-width: 1050px) {
+  .pricing-schedule-workbook-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-schedule-mapping-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pricing-schedule-mapping-panel > header,
+  .pricing-schedule-field-map,
+  .pricing-schedule-publish-note {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .pricing-schedule-workspace-header,
+  .pricing-schedule-mapped-preview > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pricing-schedule-workbook-host {
+    height: 520px;
+  }
+
+  .pricing-schedule-mapping-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-schedule-mapping-panel > header,
+  .pricing-schedule-field-map,
+  .pricing-schedule-publish-note {
+    grid-column: auto;
+  }
+
+  .pricing-schedule-customer-head,
+  .pricing-schedule-customer-row {
+    grid-template-columns: 70px 70px 1fr 86px;
+  }
+
+  .pricing-schedule-customer-head > :first-child,
+  .pricing-schedule-customer-row > :first-child {
+    display: none;
+  }
+}
