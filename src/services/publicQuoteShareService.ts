@@ -1,5 +1,5 @@
 import { supabaseKey, supabaseUrl } from '../lib/supabase';
-import type { CommercialDocumentType } from '../types/quote';
+import type { CommercialDocumentType, PricingScheduleItem } from '../types/quote';
 import type { SignatureMethod, SignatureStroke } from '../types/signature';
 
 export interface PublicQuoteSection {
@@ -37,6 +37,7 @@ export interface PublicQuotePayload {
   lines: PublicQuoteLine[];
   customerColumns: { quantity: boolean; rate: boolean; lineAmount: boolean };
   customerNotes: string;
+  pricingSchedule?: { customerItems: PricingScheduleItem[] };
   acceptedTotal: number;
 }
 
@@ -66,10 +67,7 @@ export interface PublicQuoteResponse {
 async function publicCall(body: Record<string, unknown>) {
   const response = await fetch(`${supabaseUrl}/functions/v1/quote-share-public`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: supabaseKey,
-    },
+    headers: { 'Content-Type': 'application/json', apikey: supabaseKey },
     body: JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({})) as PublicQuoteResponse & { error?: string };
