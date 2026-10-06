@@ -20,6 +20,7 @@ import {
   type Quote,
 } from '../types/quote';
 import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
+import { RateBookImportPanel } from './RateBookImportPanel';
 
 const MATERIAL_TYPES: PricingMaterialType[] = ['Granite', 'Quartz', 'Marble', 'Quartzite', 'Other'];
 const PRICE_MODES: Array<{ value: PricingRatePriceMode; label: string }> = [
@@ -100,6 +101,10 @@ export function PricingRateSheet({ quote }: { quote: Quote }) {
     saveBuilder({ ...builder, rates: [...builder.rates, rate] });
   };
 
+  const importMasterRates = (rates: PricingRateItem[]) => {
+    saveBuilder({ ...builder, rates: [...builder.rates, ...rates] });
+  };
+
   const addStockColor = (rate: PricingRateItem, stockId: string) => {
     const stock = stockMaterials.find((material) => material.id === stockId);
     if (!stock) return;
@@ -130,16 +135,18 @@ export function PricingRateSheet({ quote }: { quote: Quote }) {
 
       <section className="pricing-builder-panel rate-book-name-panel">
         <label className="pricing-builder-name-field">
-          <span>Rate Book name</span>
+          <span>Customer Rate Book name</span>
           <input value={builder.rateBookName} onChange={(event) => saveBuilder({ ...builder, rateBookName: event.target.value })} placeholder="DeVane Builders 2026" />
         </label>
-        <small>This same Rate Book can be reused by the Plan Builder route if this account later needs plan-level pricing.</small>
+        <small>This Pricing Schedule keeps its own editable snapshot. Copy standard rates from the company Rate Book below, then tailor them for this customer without changing company defaults.</small>
       </section>
+
+      <RateBookImportPanel existingRates={builder.rates} onImport={importMasterRates} />
 
       <section className="pricing-builder-panel">
         <header className="pricing-builder-panel-heading pricing-rate-section-heading">
           <button type="button" className="pricing-clean-collapse" onClick={() => setMaterialsCollapsed((value) => !value)} aria-expanded={!materialsCollapsed}>{materialsCollapsed ? '▸' : '▾'}</button>
-          <div><strong>Material levels</strong><small>Type or paste approved colors freely, or choose stocked colors from Company Settings.</small></div>
+          <div><strong>Material levels</strong><small>Type or paste approved colors freely, choose stocked colors, or copy material rates from the company Rate Book.</small></div>
           <button type="button" onClick={addMaterialLevel}>+ Material level</button>
         </header>
         {!materialsCollapsed && <div className="pricing-rate-level-list">
@@ -176,7 +183,7 @@ export function PricingRateSheet({ quote }: { quote: Quote }) {
               </article>
             );
           })}
-          {!materials.length && <div className="pricing-builder-empty">Add Level 1 Granite, Level 2 Quartz, or whatever groups this builder buys from.</div>}
+          {!materials.length && <div className="pricing-builder-empty">Add Level 1 Granite, Level 2 Quartz, or copy company material rates above.</div>}
         </div>}
       </section>
 
@@ -199,7 +206,7 @@ export function PricingRateSheet({ quote }: { quote: Quote }) {
               <div className="pricing-rate-addon-actions"><label title="Customer visible"><input type="checkbox" checked={rate.customerVisible !== false} onChange={(event) => updateRate(rate.id, { customerVisible: event.target.checked })} /> Show</label><button type="button" className="pricing-builder-delete" onClick={() => removeRate(rate.id)}>×</button></div>
             </div>
           ))}
-          {!addOns.length && <div className="pricing-builder-empty">Add standard sinks, upgraded edges, brackets, handling charges, cutouts, or other recurring terms.</div>}
+          {!addOns.length && <div className="pricing-builder-empty">Copy standard company sinks, fabrication, installation, and add-ons above, or add a customer-specific row here.</div>}
         </div>}
       </section>
 
