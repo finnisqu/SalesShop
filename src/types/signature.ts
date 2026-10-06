@@ -2,6 +2,7 @@ import {
   displayQuoteNumber,
   quoteTotal,
   type CommercialDocumentType,
+  type PricingScheduleItem,
   type Quote,
   type QuoteCustomerColumns,
   type QuoteLine,
@@ -41,6 +42,7 @@ export interface AcceptedQuoteSnapshot {
   lines: QuoteLine[];
   customerColumns: QuoteCustomerColumns;
   customerNotes: string;
+  pricingSchedule?: { customerItems: PricingScheduleItem[] };
   acceptedTotal: number;
 }
 
@@ -98,6 +100,9 @@ export function buildAcceptedQuoteSnapshot(quote: Quote): AcceptedQuoteSnapshot 
     lines: structuredClone(quote.lines.filter((line) => line.customerVisible)),
     customerColumns: { ...quote.customerColumns },
     customerNotes: quote.customerNotes,
+    pricingSchedule: quote.documentType === 'pricing-schedule'
+      ? { customerItems: structuredClone(quote.pricingSchedule?.customerItems ?? []) }
+      : undefined,
     acceptedTotal: quoteTotal(quote),
   };
 }
