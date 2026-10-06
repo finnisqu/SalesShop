@@ -6,7 +6,7 @@ const now = () => new Date().toISOString();
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
 function persist(entries: NotebookEntry[], activeEntryId: string | null) {
-  localNotebookRepository.save({ schemaVersion: 2, entries, activeEntryId });
+  localNotebookRepository.save({ schemaVersion: 3, entries, activeEntryId });
 }
 
 export function setNotebookProject(entryId: string, projectId?: string) {
@@ -34,14 +34,18 @@ export function createProjectNotebookPage(projectId: string, title: string) {
     objects: [],
     paperStyle: 'lined',
     tone: 'cream',
+    texture: 'classic',
     favorite: false,
+    openAtStart: false,
+    hidden: false,
+    deletionLocked: true,
     context: { projectId },
     createdAt: timestamp,
     updatedAt: timestamp,
   };
   const entries = [entry, ...state.entries];
   persist(entries, entry.id);
-  useNotebookStore.setState({ entries, activeEntryId: entry.id, selectedObjectId: null });
+  useNotebookStore.setState({ entries, activeEntryId: entry.id, selectedObjectId: null, activeTool: 'select' });
   return entry.id;
 }
 
