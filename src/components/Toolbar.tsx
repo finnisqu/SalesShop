@@ -1,5 +1,6 @@
 import { setNotebookProject } from '../services/notebookProjectContext';
 import { useCrmStore } from '../store/crmStore';
+import { useNotebookInputStore } from '../store/notebookInputStore';
 import { useNotebookStore } from '../store/notebookStore';
 import type { ActiveNotebookTool, NotebookEntry, PageTone, PaperStyle } from '../types/notebook';
 import { StationeryInsertMenu } from './StationeryInsertMenu';
@@ -14,6 +15,8 @@ export function Toolbar({ entry }: ToolbarProps) {
   const setPageTone = useNotebookStore((state) => state.setPageTone);
   const toggleFavorite = useNotebookStore((state) => state.toggleFavorite);
   const duplicateEntry = useNotebookStore((state) => state.duplicateEntry);
+  const inputMode = useNotebookInputStore((state) => state.inputMode);
+  const setInputMode = useNotebookInputStore((state) => state.setInputMode);
   const projects = useCrmStore((state) => state.projects);
   const sortedProjects = [...projects].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -49,7 +52,15 @@ export function Toolbar({ entry }: ToolbarProps) {
         </select>
       </div>
 
-      <span className="pencil-mode-hint" title="On touch devices, finger gestures navigate while Pencil writes">Pencil writes · finger moves</span>
+      <div className="ink-input-toggle" aria-label="Drawing input">
+        <span>Draw</span>
+        <button type="button" className={inputMode === 'pencil' ? 'active' : ''}
+          onClick={() => setInputMode('pencil')} aria-pressed={inputMode === 'pencil'}
+          title="Only pen or stylus draws; finger gestures can move the page">Pencil</button>
+        <button type="button" className={inputMode === 'finger' ? 'active' : ''}
+          onClick={() => setInputMode('finger')} aria-pressed={inputMode === 'finger'}
+          title="Draw with a finger or pen">Finger</button>
+      </div>
 
       <select className="paper-select" value={entry.paperStyle}
         onChange={(event) => setPaperStyle(entry.id, event.target.value as PaperStyle)} aria-label="Paper style">
