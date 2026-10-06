@@ -128,6 +128,13 @@
   box-shadow: 0 0 0 2px rgba(184, 159, 83, .11);
 }
 
+/* Reference and Edit are mutually exclusive modes. Keep both mounted so each
+   mode preserves its local controls, but never render both surfaces at once. */
+.rates-editor-host.is-hidden,
+.rates-reference-host.is-hidden {
+  display: none !important;
+}
+
 .rates-reference-card {
   max-width: 1480px;
   margin: 0 auto 18px;
@@ -243,6 +250,18 @@
 
 .rates-editor-host .rate-book-header {
   display: none;
+}
+
+/* The outer Rates workspace owns category navigation and summary metrics.
+   Suppress the legacy RateBook copies while embedded so there is only one
+   tab bar and Materials cannot replace the persistent summary strip. */
+.rates-editor-host .rate-book-category-switch,
+.rates-editor-host .rate-book-stats {
+  display: none !important;
+}
+
+.rates-editor-host .rate-book-controls {
+  padding-top: 0;
 }
 
 /* Numeric steppers are visual noise in pricing tables; values remain keyboard editable. */
