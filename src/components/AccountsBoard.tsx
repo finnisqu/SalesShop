@@ -15,6 +15,7 @@ import {
   type AccountStage,
   type Company,
 } from '../types/crm';
+import { BoardScrollControls } from './BoardScrollControls';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
 
@@ -241,6 +242,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
           );
         })}
       </section>
+      <BoardScrollControls boardRef={boardRef} />
       {editingCompany && <AccountEditor company={editingCompany} onClose={() => setEditingId(null)} />}
     </main>
   );
