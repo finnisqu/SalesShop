@@ -45,6 +45,7 @@ export interface StockMaterial {
   supplierGroup?: string;
   sku?: string;
   materialType: PricingMaterialType;
+  stockProgram: boolean;
   internalCost?: number;
   unit: StockMaterialUnit;
   builderLevelId?: string;
