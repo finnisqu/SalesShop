@@ -37,14 +37,30 @@ export function buildDashboardMetrics(
   projects: Project[],
   activities: Activity[],
 ): DashboardMetrics {
+  // Change Orders are modifications to business already won. They can require
+  // signatures and contribute accepted value, but they must not inflate the
+  // number of new Quotes sent or the sales close-rate denominator/numerator.
+  const salesDocuments = quotes.filter((quote) => quote.documentType !== 'change-order');
+  const salesDocumentIds = new Set(salesDocuments.map((quote) => quote.id));
+
   const sentQuoteIds = new Set<string>();
   activities.forEach((activity) => {
     if (activity.type === 'quote-sent' && activity.quoteId) sentQuoteIds.add(activity.quoteId);
   });
-  quotes.filter(quoteHasBeenSent).forEach((quote) => sentQuoteIds.add(quote.id));
+  salesDocuments.filter(quoteHasBeenSent).forEach((quote) => sentQuoteIds.add(quote.id));
 
-  const signedQuoteIds = new Set(signatures.map((signature) => signature.quoteId));
+  const signedQuoteIds = new Set(
+    signatures
+      .filter((signature) => {
+        if (salesDocumentIds.has(signature.quoteId)) return true;
+        return signature.acceptedSnapshot.documentType !== 'change-order';
+      })
+      .map((signature) => signature.quoteId),
+  );
   const signedSentQuotes = [...signedQuoteIds].filter((quoteId) => sentQuoteIds.has(quoteId)).length;
+
+  // These two metrics intentionally include COs: they answer how many customer
+  // commitments were signed and the total value represented by those signatures.
   const signaturesReceived = signatures.length;
   const acceptedValue = signatures.reduce((sum, signature) => sum + signature.acceptedSnapshot.acceptedTotal, 0);
 
@@ -58,8 +74,9 @@ export function buildDashboardMetrics(
   });
 
   const openPipeline = pipelineByStage.reduce((sum, stage) => sum + stage.value, 0);
+  const allSignedDocumentIds = new Set(signatures.map((signature) => signature.quoteId));
   const pendingSignatures = quotes
-    .filter((quote) => (quote.status === 'Sent' || quote.status === 'Viewed') && !signedQuoteIds.has(quote.id))
+    .filter((quote) => (quote.status === 'Sent' || quote.status === 'Viewed') && !allSignedDocumentIds.has(quote.id))
     .sort((a, b) => (b.sentAt ?? b.updatedAt).localeCompare(a.sentAt ?? a.updatedAt));
 
   const recentSignatures = [...signatures]
