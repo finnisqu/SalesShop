@@ -1,4 +1,12 @@
-import { displayQuoteNumber, quoteTotal, type Quote, type QuoteCustomerColumns, type QuoteLine, type QuoteSection } from './quote';
+import {
+  displayQuoteNumber,
+  quoteTotal,
+  type CommercialDocumentType,
+  type Quote,
+  type QuoteCustomerColumns,
+  type QuoteLine,
+  type QuoteSection,
+} from './quote';
 
 export type SignatureMethod = 'drawn' | 'typed';
 
@@ -15,6 +23,9 @@ export interface SignatureStroke {
 export interface AcceptedQuoteSnapshot {
   quoteId: string;
   quoteNumber: string;
+  documentType?: CommercialDocumentType;
+  parentQuoteId?: string;
+  changeOrderNumber?: number;
   revision: number;
   revisionLabel?: string;
   quoteDate: string;
@@ -69,6 +80,9 @@ export function buildAcceptedQuoteSnapshot(quote: Quote): AcceptedQuoteSnapshot 
   return {
     quoteId: quote.id,
     quoteNumber: displayQuoteNumber(quote),
+    documentType: quote.documentType,
+    parentQuoteId: quote.parentQuoteId,
+    changeOrderNumber: quote.changeOrderNumber,
     revision: quote.revision,
     revisionLabel: quote.revisionLabel,
     quoteDate: quote.quoteDate,
