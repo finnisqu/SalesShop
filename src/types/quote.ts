@@ -150,6 +150,7 @@ export type QuotePatch = Partial<Pick<Quote,
   | 'status'
   | 'customerNotes'
   | 'internalNotes'
+  | 'pricingSchedule'
 >>;
 
 export function quoteLineTotal(line: QuoteLine) {
