@@ -68,7 +68,11 @@ export function StationeryInsertMenu({ entryId }: StationeryInsertMenuProps) {
 
   return (
     <details className="insert-menu" ref={menuRef}>
-      <summary className="tool-button object-add-button">+ Insert</summary>
+      <summary className="tool-button object-add-button" title="Insert stationery or file" aria-label="Insert stationery or file">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </summary>
       <div className="insert-menu-panel">
         <div className="insert-menu-heading">Paper</div>
         <button type="button" onClick={() => { createPaperCard(entryId); close(); }}>Paper card</button>
