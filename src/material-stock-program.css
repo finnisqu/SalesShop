@@ -1,0 +1,265 @@
+/* STOCK-program pricing semantics.
+   Supplier catalog is broad; only explicit STOCK colors use the Level guide. */
+
+.material-nonstock-guide {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.6fr) minmax(180px, .8fr) minmax(150px, .7fr) minmax(180px, .8fr);
+  gap: 9px;
+  align-items: end;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(63, 56, 46, .1);
+  background: rgba(246, 240, 221, .7);
+}
+
+.material-nonstock-guide-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.material-nonstock-guide-copy strong {
+  color: #494238;
+  font: 700 14px/1.2 Georgia, 'Times New Roman', serif;
+}
+
+.material-nonstock-guide-copy small {
+  color: #766e62;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.material-nonstock-guide > label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.material-nonstock-guide > label > span,
+.material-nonstock-guide-example > span {
+  color: #776e5d;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.material-nonstock-guide select,
+.material-guide-number {
+  width: 100%;
+  min-width: 0;
+  height: 35px;
+  box-sizing: border-box;
+  border: 1px solid rgba(68, 60, 49, .15);
+  border-radius: 3px;
+  background: #fffdf6;
+}
+
+.material-nonstock-guide select {
+  padding: 0 8px;
+  color: #514b42;
+  font-size: 10px;
+}
+
+.material-guide-number {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.material-guide-number input {
+  min-width: 0;
+  height: 33px;
+  border: 0;
+  background: transparent;
+  padding: 0 8px;
+  color: #413c34;
+  outline: 0;
+}
+
+.material-guide-number b {
+  padding-right: 8px;
+  color: #81796b;
+  font-size: 9px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.material-nonstock-guide-example {
+  min-height: 35px;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: 0 9px;
+  border-left: 2px solid rgba(174, 132, 52, .28);
+}
+
+.material-nonstock-guide-example strong {
+  color: #705826;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.material-nonstock-guide-example small {
+  color: #81796b;
+  font-size: 8px;
+}
+
+/* Five catalog filters plus the clear button. */
+.material-reference-filters {
+  grid-template-columns: repeat(5, minmax(125px, 1fr)) auto;
+}
+
+/* Program column added after material type. */
+.material-reference-sheet {
+  min-width: 1740px;
+}
+
+.material-reference-sheet th:nth-child(1) { width: 44px; }
+.material-reference-sheet th:nth-child(2) { width: 104px; }
+.material-reference-sheet th:nth-child(3) { width: 104px; }
+.material-reference-sheet th:nth-child(4) { width: 132px; }
+.material-reference-sheet th:nth-child(5) { width: 128px; }
+.material-reference-sheet th:nth-child(6) { width: 128px; }
+.material-reference-sheet th:nth-child(7) { width: 190px; }
+.material-reference-sheet th:nth-child(8) { width: 90px; }
+.material-reference-sheet th:nth-child(9) { width: 280px; }
+.material-reference-sheet th:nth-child(10) { width: 175px; }
+.material-reference-sheet th:nth-child(11) { width: 220px; }
+.material-reference-sheet th:nth-child(12) { width: 78px; }
+
+.material-program-cell select {
+  font-weight: 850;
+  letter-spacing: .025em;
+}
+
+.material-reference-sheet tr.is-stock-program .material-program-cell select {
+  color: #3f5c3d;
+  background: rgba(226, 238, 220, .75);
+}
+
+.material-reference-sheet tr.is-non-stock-program .material-program-cell select {
+  color: #7b6338;
+  background: rgba(247, 237, 210, .72);
+}
+
+.material-no-level {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 7px;
+  color: #938775;
+  font-size: 8.5px;
+  font-style: italic;
+}
+
+.material-standard-rate.is-non-stock strong {
+  color: #765c28;
+}
+
+.material-standard-rate.is-non-stock {
+  background: rgba(252, 246, 226, .68) !important;
+}
+
+.quick-material-level-chip.is-stock,
+.quick-material-program-status.is-stock {
+  background: #dfe9d9;
+  color: #4b5f47;
+}
+
+.quick-material-level-chip.is-non-stock,
+.quick-material-program-status.is-non-stock {
+  background: #f1e2b9;
+  color: #765820;
+}
+
+.quick-material-rate.is-non-stock strong {
+  color: #755922;
+}
+
+.quick-material-program-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 7.5px;
+  font-weight: 900;
+  letter-spacing: .045em;
+}
+
+.quote-material-reference-flag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #f1e2b9;
+  color: #765820;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1000px) {
+  .material-nonstock-guide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .material-nonstock-guide-copy {
+    grid-column: 1 / -1;
+  }
+
+  .material-reference-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .material-nonstock-guide {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .material-nonstock-guide-copy {
+    grid-column: auto;
+  }
+
+  .material-nonstock-guide select,
+  .material-guide-number {
+    height: 42px;
+    font-size: 16px;
+  }
+
+  .material-guide-number input {
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .material-nonstock-guide-example {
+    min-height: 42px;
+  }
+
+  .material-reference-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .material-reference-filters > button {
+    grid-column: 1 / -1;
+  }
+
+  .quick-material-program-status {
+    min-height: 22px;
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 460px) {
+  .material-reference-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .material-reference-filters > button {
+    grid-column: auto;
+  }
+}
