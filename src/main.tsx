@@ -11,6 +11,7 @@ import './pricing-schedule-refinements.css';
 import './quote-crm-fields.css';
 import './customer-document-brand.css';
 import './account-forecast.css';
+import './mobile.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
