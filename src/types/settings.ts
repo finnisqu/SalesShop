@@ -49,6 +49,9 @@ export interface StockMaterial {
   internalCost?: number;
   unit: StockMaterialUnit;
   builderLevelId?: string;
+  slabImageUrl?: string;
+  closeUpImageUrl?: string;
+  productUrl?: string;
   features?: string[];
   variants?: MaterialVariant[];
   notes?: string;
