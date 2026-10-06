@@ -1,6 +1,12 @@
 import type { IWorkbookData } from '@univerjs/core';
 import { LocaleType } from '@univerjs/core';
-import { createPricingScheduleBuilderData, deriveBuilderCustomerItems, pricingBuilderHealth } from './pricingScheduleBuilder';
+import {
+  createPricingScheduleBuilderData,
+  deriveBuilderCustomerItems,
+  deriveRateSheetCustomerItems,
+  pricingBuilderHealth,
+  rateSheetHealth,
+} from './pricingScheduleBuilder';
 import type {
   PricingScheduleColumnMapping,
   PricingScheduleData,
@@ -80,7 +86,8 @@ export function createPricingScheduleData(quoteId: string): PricingScheduleData 
   const columns: PricingScheduleColumnMapping = {};
   STARTER_COLUMNS.forEach((column, index) => { columns[column.field] = index; });
   return {
-    publishSource: 'builder',
+    route: 'rate-sheet',
+    publishSource: 'rate-sheet',
     builder: createPricingScheduleBuilderData(),
     workbookData,
     mapping: { sheetId, headerRow: 1, firstDataRow: 2, columns },
@@ -229,6 +236,7 @@ export function derivePricingScheduleItems(value: unknown, mapping?: PricingSche
       optionCode: mappedText(value, mapping, row, 'optionCode'),
       description: mappedText(value, mapping, row, 'description'),
       customerPrice: mappedNumber(value, mapping, row, 'customerPrice'),
+      displayType: 'schedule-item',
     };
     if (item.series || item.itemType || item.planNumber || item.planName || item.optionCode || item.description || item.customerPrice !== undefined) items.push(item);
   }
@@ -239,38 +247,55 @@ export function mergePricingScheduleData(quoteId: string, current: PricingSchedu
   const workbookData = patch.workbookData ?? current?.workbookData ?? createBlankPricingScheduleWorkbook(quoteId);
   const mapping = patch.mapping !== undefined ? patch.mapping : current?.mapping;
   const builder = patch.builder !== undefined ? patch.builder : current?.builder;
-  const publishSource = patch.publishSource ?? current?.publishSource ?? (builder ? 'builder' : 'workbook');
+  const route = patch.route ?? current?.route ?? (current?.publishSource === 'workbook' ? 'workbook' : current?.publishSource === 'builder' ? 'plan-builder' : 'rate-sheet');
+  const publishSource = patch.publishSource ?? current?.publishSource ?? (route === 'workbook' ? 'workbook' : route === 'plan-builder' ? 'builder' : 'rate-sheet');
   const workbookItems = derivePricingScheduleItems(workbookData, mapping);
   const builderItems = deriveBuilderCustomerItems(builder);
+  const rateSheetItems = deriveRateSheetCustomerItems(builder);
+  const customerItems = publishSource === 'workbook'
+    ? workbookItems
+    : publishSource === 'builder'
+      ? builderItems
+      : rateSheetItems;
   return {
     ...current,
     ...patch,
+    route,
     publishSource,
     builder,
     workbookData,
     mapping,
-    customerItems: publishSource === 'builder' ? builderItems : workbookItems,
+    customerItems,
   };
 }
 
 export function validatePricingScheduleForSend(data?: PricingScheduleData) {
   if (!data) throw new Error('Configure the pricing schedule before sending.');
-  const source = data.publishSource ?? (data.builder ? 'builder' : 'workbook');
-  if (source === 'builder') {
+  const source = data.publishSource ?? (data.route === 'workbook' ? 'workbook' : data.route === 'plan-builder' ? 'builder' : 'rate-sheet');
+  if (source === 'rate-sheet') {
+    const health = rateSheetHealth(data.builder);
+    if (health.length) throw new Error(`Simple Rate Sheet needs review: ${health[0]}`);
+    if (!data.customerItems.length) throw new Error('The Rate Sheet does not contain any customer-visible pricing.');
+  } else if (source === 'builder') {
     const health = pricingBuilderHealth(data.builder);
-    if (health.length) throw new Error(`Structured Builder needs review: ${health[0]}`);
-    if (!data.customerItems.length) throw new Error('The Structured Builder has not generated any customer pricing rows.');
+    if (health.length) throw new Error(`Plan Pricing needs review: ${health[0]}`);
+    if (!data.customerItems.length) throw new Error('The Plan Builder has not generated any customer pricing rows.');
   } else {
     if (!data.workbookData) throw new Error('Add or import the pricing workbook before sending this schedule.');
     if (!data.mapping?.sheetId) throw new Error('Map the pricing workbook before sending this schedule.');
     if (data.mapping.columns.description === undefined || data.mapping.columns.customerPrice === undefined) throw new Error('Map at least Description and Customer price before sending this schedule.');
     if (!data.customerItems.length) throw new Error('The mapped pricing schedule does not contain any customer rows.');
   }
-  const incomplete = data.customerItems.filter((item) => !item.description?.trim() || item.customerPrice === undefined);
+
+  const incomplete = data.customerItems.filter((item) => {
+    if (!item.description?.trim()) return true;
+    if (source === 'rate-sheet') return item.customerPrice === undefined && !item.priceLabel?.trim();
+    return item.customerPrice === undefined;
+  });
   if (incomplete.length) {
     const rows = incomplete.slice(0, 4).map((item) => item.sourceRow).join(', ');
     const suffix = incomplete.length > 4 ? ', …' : '';
-    throw new Error(`Complete Description and Customer price on published schedule row${incomplete.length === 1 ? '' : 's'} ${rows}${suffix} before sending.`);
+    throw new Error(`Complete the published pricing on row${incomplete.length === 1 ? '' : 's'} ${rows}${suffix} before sending.`);
   }
 }
 
