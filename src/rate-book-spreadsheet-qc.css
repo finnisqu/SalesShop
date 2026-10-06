@@ -87,6 +87,7 @@
   width: 100%;
   height: 100%;
   min-height: 32px;
+  position: relative;
   border: 0;
   background: transparent;
   color: #8a8276;
@@ -111,6 +112,24 @@
 .rate-book-sheet tr.is-selected > td input:not([type='checkbox']),
 .rate-book-sheet tr.is-selected > td select {
   background: rgba(255, 253, 246, .5);
+}
+
+.rate-book-sheet tr.has-rate-warning > td:not(.rate-book-row-header) {
+  box-shadow: inset 0 1px rgba(174, 126, 51, .18), inset 0 -1px rgba(174, 126, 51, .14);
+}
+
+.rate-book-row-warning {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #d8ae58;
+  color: #43382a;
+  font: 850 8px/1 inherit;
 }
 
 .rate-book-filter-row {
@@ -187,6 +206,41 @@
   font: 750 10px/1 inherit;
 }
 
+.rate-book-sheet-notice {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  margin: -2px 0 9px;
+  padding: 6px 9px;
+  border: 1px solid rgba(75, 87, 68, .13);
+  background: rgba(237, 241, 231, .64);
+  color: #686b61;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.rate-book-qc-banner {
+  display: grid;
+  grid-template-columns: minmax(190px, .65fr) minmax(280px, 1.35fr);
+  gap: 12px;
+  margin-bottom: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(164, 119, 47, .23);
+  border-left: 3px solid #c2964c;
+  background: rgba(249, 238, 211, .7);
+  color: #5e5547;
+}
+
+.rate-book-qc-banner > div:first-child,
+.rate-book-qc-examples {
+  display: grid;
+  gap: 3px;
+}
+
+.rate-book-qc-banner strong { font-size: 11px; }
+.rate-book-qc-banner span { font-size: 9px; line-height: 1.35; }
+.rate-book-qc-examples b { font-weight: 800; }
+
 .rate-book-bulk-bar {
   display: flex;
   align-items: center;
@@ -223,9 +277,19 @@
 .rate-book-bulk-bar button { flex: 0 0 auto; }
 .rate-book-bulk-bar button.primary { background: #dfca72; border-color: #b59b3e; color: #3f392e; }
 
+.rate-book-sheet [data-rate-cell='true']:focus {
+  outline: 0;
+}
+
 .rate-book-footnote {
+  display: block;
   margin-top: 12px;
   margin-bottom: 24px;
+  line-height: 1.45;
+}
+
+.rate-book-footnote span {
+  color: #81796d;
 }
 
 @media (min-width: 701px) {
@@ -259,6 +323,14 @@
     left: 0;
     right: auto;
     width: min(280px, calc(100vw - 24px));
+  }
+
+  .rate-book-sheet-notice {
+    font-size: 9px;
+  }
+
+  .rate-book-qc-banner {
+    grid-template-columns: 1fr;
   }
 
   .rate-book-bulk-bar {
