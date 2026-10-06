@@ -5,7 +5,7 @@ interface MaterialLevelGuideState {
   guide: MaterialLevelGuideDocument;
   hydrated: boolean;
   hydrate: () => void;
-  updateGuide: (patch: Partial<Pick<MaterialLevelGuideDocument, 'name' | 'note'>>) => void;
+  updateGuide: (patch: Partial<Pick<MaterialLevelGuideDocument, 'name' | 'note' | 'nonStockPricingMode' | 'nonStockMultiplier' | 'nonStockMarginPct'>>) => void;
   updateRule: (id: string, patch: Partial<Omit<MaterialLevelRule, 'id'>>) => void;
   addRule: () => string;
   removeRule: (id: string) => void;
@@ -31,16 +31,22 @@ const BASELINE_RULES: MaterialLevelRule[] = [
 function baselineGuide(): MaterialLevelGuideDocument {
   const rules = structuredClone(BASELINE_RULES);
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: 'standard-builder-level-guide',
-    name: 'Standard Builder Level Guide',
-    note: 'Baseline supplied before the most recent quartz tariff increase. Keep material costs current and review the guide as pricing changes.',
+    name: 'Standard Builder Pricing Guide',
+    note: 'Levels are the guide for STOCK program colors. Non-stock materials use the separate multiplier or margin reference, while Quick Quote may show the stock-equivalent price as a fast assumption.',
     rules,
+    nonStockPricingMode: 'multiplier',
+    nonStockMultiplier: 2.2,
+    nonStockMarginPct: 55,
     history: [{
       id: 'guide_version_baseline',
       recordedAt: SEED_TIME,
       note: 'Pre-tariff builder baseline supplied in SalesShop.',
       rules: structuredClone(rules),
+      nonStockPricingMode: 'multiplier',
+      nonStockMultiplier: 2.2,
+      nonStockMarginPct: 55,
     }],
     updatedAt: SEED_TIME,
   };
@@ -66,6 +72,9 @@ function normalizeVersion(raw: Partial<MaterialLevelGuideVersion>): MaterialLeve
     recordedAt: raw.recordedAt || new Date().toISOString(),
     note: raw.note,
     rules: raw.rules.map((rule, index) => normalizeRule(rule, index)),
+    nonStockPricingMode: raw.nonStockPricingMode === 'margin' ? 'margin' : raw.nonStockPricingMode === 'multiplier' ? 'multiplier' : undefined,
+    nonStockMultiplier: typeof raw.nonStockMultiplier === 'number' ? raw.nonStockMultiplier : undefined,
+    nonStockMarginPct: typeof raw.nonStockMarginPct === 'number' ? raw.nonStockMarginPct : undefined,
   };
 }
 
@@ -82,11 +91,14 @@ function readLocal(): MaterialLevelGuideDocument {
       ? parsed.history.map((version) => normalizeVersion(version)).filter((version): version is MaterialLevelGuideVersion => Boolean(version))
       : baseline.history;
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: parsed.id || baseline.id,
       name: parsed.name || baseline.name,
       note: parsed.note ?? baseline.note,
       rules,
+      nonStockPricingMode: parsed.nonStockPricingMode === 'margin' ? 'margin' : 'multiplier',
+      nonStockMultiplier: typeof parsed.nonStockMultiplier === 'number' ? parsed.nonStockMultiplier : baseline.nonStockMultiplier,
+      nonStockMarginPct: typeof parsed.nonStockMarginPct === 'number' ? parsed.nonStockMarginPct : baseline.nonStockMarginPct,
       history: history.length ? history : baseline.history,
       updatedAt: parsed.updatedAt || baseline.updatedAt,
     };
@@ -151,6 +163,9 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
       recordedAt: new Date().toISOString(),
       note: note?.trim() || 'Manual guide checkpoint',
       rules: structuredClone(get().guide.rules),
+      nonStockPricingMode: get().guide.nonStockPricingMode,
+      nonStockMultiplier: get().guide.nonStockMultiplier,
+      nonStockMarginPct: get().guide.nonStockMarginPct,
     };
     const guide = { ...get().guide, history: [version, ...get().guide.history], updatedAt: new Date().toISOString() };
     persist(guide);
@@ -160,7 +175,15 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
   restoreVersion: (versionId) => {
     const version = get().guide.history.find((candidate) => candidate.id === versionId);
     if (!version) return;
-    const guide = { ...get().guide, rules: structuredClone(version.rules), updatedAt: new Date().toISOString() };
+    const current = get().guide;
+    const guide: MaterialLevelGuideDocument = {
+      ...current,
+      rules: structuredClone(version.rules),
+      nonStockPricingMode: version.nonStockPricingMode ?? current.nonStockPricingMode,
+      nonStockMultiplier: version.nonStockMultiplier ?? current.nonStockMultiplier,
+      nonStockMarginPct: version.nonStockMarginPct ?? current.nonStockMarginPct,
+      updatedAt: new Date().toISOString(),
+    };
     persist(guide);
     set({ guide });
   },
