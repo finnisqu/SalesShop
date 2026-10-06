@@ -14,6 +14,7 @@ import {
   deleteNormalizedQuoteSection,
   syncNormalizedQuotes,
 } from '../services/normalizedQuoteSync';
+import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import {
   isDraftQuoteNumber,
   type Quote,
@@ -158,6 +159,7 @@ function snapshot(quote: Quote, status: QuoteStatus = quote.status): QuoteRevisi
     lines: structuredClone(quote.lines),
     customerColumns: { ...quote.customerColumns },
     customerNotes: quote.customerNotes,
+    pricingSchedule: quote.pricingSchedule ? structuredClone(quote.pricingSchedule) : undefined,
   };
 }
 
@@ -416,6 +418,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   recordSent: async (quoteId) => {
     const initial = get().quotes.find((quote) => quote.id === quoteId);
     if (!initial || (initial.status !== 'Draft' && initial.status !== 'Ready')) return;
+    if (initial.documentType === 'pricing-schedule') validatePricingScheduleForSend(initial.pricingSchedule);
 
     const identity = await assignCommercialIdentity(initial, {
       schemaVersion: 2,
