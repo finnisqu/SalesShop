@@ -20,14 +20,17 @@ import {
   type PricingScheduleData,
   type PricingScheduleField,
   type PricingScheduleMapping,
+  type PricingScheduleRoute,
   type Quote,
 } from '../types/quote';
+import { PricingRateSheet } from './PricingRateSheet';
 import { PricingScheduleBuilder } from './PricingScheduleBuilder';
 import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
 import '../pricing-schedule.css';
 
 const SAVE_DEBOUNCE_MS = 500;
-type WorkspaceMode = 'builder' | 'spreadsheet';
+
+type WorkspaceMode = PricingScheduleRoute;
 
 function positiveInteger(value: string, fallback: number) {
   const parsed = Number(value);
@@ -44,13 +47,26 @@ function baseMapping(schedule: PricingScheduleData): PricingScheduleMapping {
   };
 }
 
+function initialMode(schedule: PricingScheduleData): WorkspaceMode {
+  if (schedule.route) return schedule.route;
+  if (schedule.publishSource === 'workbook') return 'workbook';
+  if (schedule.publishSource === 'builder') return 'plan-builder';
+  return 'rate-sheet';
+}
+
+const ROUTES: Array<{ id: WorkspaceMode; title: string; description: string }> = [
+  { id: 'rate-sheet', title: 'Simple Rates', description: 'Material levels, approved colors, sinks and add-ons.' },
+  { id: 'plan-builder', title: 'Plan Pricing', description: 'Rate Book + plan takeoffs + reusable option packages.' },
+  { id: 'workbook', title: 'Spreadsheet', description: 'Advanced or builder-required workbook and mapping.' },
+];
+
 export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const schedule = quote.pricingSchedule ?? createPricingScheduleData(quote.id);
   const scheduleRef = useRef(schedule);
   const hostRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [mode, setMode] = useState<WorkspaceMode>(schedule.publishSource === 'workbook' ? 'spreadsheet' : 'builder');
+  const [mode, setMode] = useState<WorkspaceMode>(initialMode(schedule));
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -64,6 +80,15 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
     updateQuote(quote.id, { pricingSchedule: next });
   };
 
+  const selectRoute = (route: WorkspaceMode) => {
+    setMode(route);
+    setMessage('');
+    saveSchedule({
+      route,
+      publishSource: route === 'workbook' ? 'workbook' : route === 'plan-builder' ? 'builder' : 'rate-sheet',
+    });
+  };
+
   const sheets = useMemo(() => pricingScheduleSheets(schedule.workbookData), [schedule.workbookData]);
   const columnOptions = useMemo(
     () => pricingScheduleColumnOptions(schedule.workbookData, schedule.mapping),
@@ -71,7 +96,7 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   );
 
   useEffect(() => {
-    if (mode !== 'spreadsheet') return;
+    if (mode !== 'workbook') return;
     const host = hostRef.current;
     const workbookData = scheduleRef.current.workbookData;
     if (!host || !workbookData) return;
@@ -119,7 +144,7 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
 
   const setMapping = (patch: Partial<PricingScheduleMapping>) => {
     const current = baseMapping(scheduleRef.current);
-    saveSchedule({ publishSource: 'workbook', mapping: { ...current, ...patch, columns: patch.columns ?? current.columns } });
+    saveSchedule({ route: 'workbook', publishSource: 'workbook', mapping: { ...current, ...patch, columns: patch.columns ?? current.columns } });
   };
 
   const setColumn = (field: PricingScheduleField, value: string) => {
@@ -136,18 +161,8 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
       setMessage('I could not confidently identify the commercial columns. Map them manually below.');
       return;
     }
-    saveSchedule({ publishSource: 'workbook', mapping });
-    setMessage('Headers mapped. Spreadsheet is now the published source; unmapped columns remain internal.');
-  };
-
-  const publishWorkbook = () => {
-    saveSchedule({ publishSource: 'workbook' });
-    setMessage('Spreadsheet is now the published source for the customer schedule.');
-  };
-
-  const publishBuilder = () => {
-    saveSchedule({ publishSource: 'builder' });
-    setMessage('Structured Builder is now the published source for the customer schedule.');
+    saveSchedule({ route: 'workbook', publishSource: 'workbook', mapping });
+    setMessage('Headers mapped. Unmapped workbook columns remain internal.');
   };
 
   const importFile = async (file: File) => {
@@ -157,15 +172,16 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
       const workbookData = await importExcelPricingWorkbook(file);
       const mapping = autoDetectPricingScheduleMapping(workbookData);
       saveSchedule({
+        route: 'workbook',
         publishSource: 'workbook',
         workbookData,
         mapping,
         sourceFileName: file.name,
         importedAt: new Date().toISOString(),
       });
-      setMode('spreadsheet');
+      setMode('workbook');
       setMessage(mapping
-        ? 'Workbook imported, commercial columns auto-mapped, and Spreadsheet set as the published source.'
+        ? 'Workbook imported and commercial columns auto-mapped.'
         : 'Workbook imported. Map the customer-facing columns below.');
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : 'The workbook could not be imported.');
@@ -177,35 +193,43 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
 
   return (
     <div className="pricing-schedule-workspace">
-      <header className="pricing-schedule-workspace-header pricing-schedule-mode-header">
+      <header className="pricing-schedule-workspace-header pricing-schedule-route-header">
         <div>
-          <span className="quote-control-heading">Pricing Schedule workspace</span>
-          <small>{schedule.customerItems.length} published customer row{schedule.customerItems.length === 1 ? '' : 's'} · source: {schedule.publishSource === 'workbook' ? 'Spreadsheet' : 'Structured Builder'}</small>
-        </div>
-        <div className="pricing-schedule-mode-switch" aria-label="Pricing Schedule workspace mode">
-          <button type="button" className={mode === 'builder' ? 'active' : ''} onClick={() => setMode('builder')}>Builder</button>
-          <button type="button" className={mode === 'spreadsheet' ? 'active' : ''} onClick={() => setMode('spreadsheet')}>Spreadsheet</button>
+          <span className="quote-control-heading">How does this customer price work?</span>
+          <small>Choose the lightest workflow that matches the builder. You can change routes while the document is still a draft.</small>
         </div>
       </header>
 
+      <div className="pricing-schedule-route-grid" aria-label="Pricing Schedule route">
+        {ROUTES.map((route) => (
+          <button type="button" key={route.id} className={`pricing-schedule-route-card ${mode === route.id ? 'active' : ''}`} onClick={() => selectRoute(route.id)}>
+            <strong>{route.title}</strong>
+            <span>{route.description}</span>
+            {mode === route.id && <small>✓ Published route</small>}
+          </button>
+        ))}
+      </div>
+
       {message && <div className="pricing-schedule-message">{message}</div>}
 
-      {mode === 'builder' ? (
+      {mode === 'rate-sheet' && <PricingRateSheet quote={quote} />}
+
+      {mode === 'plan-builder' && (
         <>
           <div className="pricing-schedule-source-banner">
-            <div><strong>Structured Builder</strong><span>Recommended for repeatable builder/community pricing.</span></div>
-            {schedule.publishSource === 'builder'
-              ? <strong className="is-published">✓ Published source</strong>
-              : <button type="button" onClick={publishBuilder}>Publish Builder</button>}
+            <div><strong>Plan Pricing</strong><span>Use the shared Rate Book to calculate plan and option prices from takeoffs.</span></div>
+            <strong className="is-published">✓ Published route</strong>
           </div>
           <PricingScheduleBuilder quote={quote} />
         </>
-      ) : (
+      )}
+
+      {mode === 'workbook' && (
         <>
           <header className="pricing-schedule-workspace-header pricing-schedule-spreadsheet-toolbar">
             <div>
               <span className="quote-control-heading">Advanced spreadsheet</span>
-              <small>{schedule.sourceFileName || 'Built in SalesShop'} · import builder templates or do custom calculations here.</small>
+              <small>{schedule.sourceFileName || 'Built in SalesShop'} · import a builder template or do custom calculations here.</small>
             </div>
             <div className="pricing-schedule-workbook-actions">
               <input ref={fileRef} type="file" accept=".xlsx" hidden onChange={(event) => {
@@ -215,7 +239,7 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
               <button type="button" onClick={() => fileRef.current?.click()} disabled={importing}>{importing ? 'Importing…' : 'Import .xlsx'}</button>
               <button type="button" onClick={() => void exportExcelPricingWorkbook(scheduleRef.current.workbookData, scheduleRef.current.sourceFileName || `${quote.title}.xlsx`)}>Export .xlsx</button>
               <button type="button" onClick={autoMap}>Auto-map headers</button>
-              {schedule.publishSource === 'workbook' ? <strong className="pricing-schedule-published-pill">✓ Published</strong> : <button type="button" onClick={publishWorkbook}>Publish Spreadsheet</button>}
+              <strong className="pricing-schedule-published-pill">✓ Published</strong>
             </div>
           </header>
 
@@ -232,13 +256,13 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
               <div className="pricing-schedule-field-map">
                 {PRICING_SCHEDULE_FIELDS.map((field) => <label key={field}><span>{PRICING_SCHEDULE_FIELD_LABELS[field]}</span><select value={schedule.mapping?.columns[field] ?? ''} onChange={(event) => setColumn(field, event.target.value)}><option value="">Not mapped</option>{columnOptions.map((option) => <option value={option.index} key={`${field}-${option.index}`}>{option.label}</option>)}</select></label>)}
               </div>
-              <div className="pricing-schedule-publish-note"><strong>{schedule.publishSource === 'workbook' ? schedule.customerItems.length : '—'}</strong><span>published rows</span><small>Description + Customer price are required before Send.</small></div>
+              <div className="pricing-schedule-publish-note"><strong>{schedule.customerItems.length}</strong><span>published rows</span><small>Description + Customer price are required before Send.</small></div>
             </aside>
           </div>
 
           <section className="pricing-schedule-mapped-preview">
-            <header><div><span className="quote-control-heading">Spreadsheet publish preview</span><small>Switching the published source to Spreadsheet makes these mapped rows contractual.</small></div></header>
-            <PricingScheduleCustomerTable items={schedule.publishSource === 'workbook' ? schedule.customerItems : mergePricingScheduleData(quote.id, schedule, { publishSource: 'workbook' }).customerItems} compact />
+            <header><div><span className="quote-control-heading">Spreadsheet publish preview</span><small>These mapped rows become the contractual customer schedule.</small></div></header>
+            <PricingScheduleCustomerTable items={schedule.customerItems} compact />
           </section>
         </>
       )}
