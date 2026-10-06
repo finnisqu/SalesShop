@@ -26,6 +26,8 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const padRef = useRef<SVGSVGElement | null>(null);
+  const isPricingSchedule = quote.documentType === 'pricing-schedule';
+  const documentLabel = commercialDocumentLabel(quote);
 
   useEffect(() => { hydrate(); }, [hydrate]);
 
@@ -57,12 +59,8 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
     if (!activeStrokeId || method !== 'drawn' || !(event.buttons & 1 || event.pointerType === 'touch' || event.pointerType === 'pen')) return;
     const point = pointFromEvent(event);
     if (!point) return;
-    setStrokes((current) => current.map((stroke) => stroke.id === activeStrokeId
-      ? { ...stroke, points: [...stroke.points, point] }
-      : stroke));
+    setStrokes((current) => current.map((stroke) => activeStrokeId === stroke.id ? { ...stroke, points: [...stroke.points, point] } : stroke));
   };
-
-  const finishStroke = () => setActiveStrokeId(null);
 
   const complete = async () => {
     setError('');
@@ -73,7 +71,6 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
       setError('Add a signature in the signature box, or choose Type name.');
       return;
     }
-
     setBusy(true);
     try {
       const record = await completeQuoteSignature(quote.id, {
@@ -94,12 +91,12 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
 
   return (
     <div className="signature-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="signature-dialog" role="dialog" aria-modal="true" aria-label={`${commercialDocumentLabel(quote)} signature`}>
+      <section className="signature-dialog" role="dialog" aria-modal="true" aria-label={`${documentLabel} signature`}>
         <header className="signature-dialog-header">
           <div>
             <span className="signature-eyebrow">Electronic acceptance</span>
             <h2>{displayQuoteNumber(quote)}</h2>
-            <p>{quote.title} · {money.format(quoteTotal(quote))}</p>
+            <p>{quote.title}{isPricingSchedule ? ` · ${quote.pricingSchedule?.customerItems.length ?? 0} pricing rows` : ` · ${money.format(quoteTotal(quote))}`}</p>
           </div>
           <button type="button" className="signature-close" onClick={onClose} aria-label="Close">×</button>
         </header>
@@ -115,7 +112,11 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
             <div className="signature-receipt-card">
               <dl>
                 <div><dt>Document</dt><dd>{signature.acceptedSnapshot.quoteNumber}</dd></div>
-                <div><dt>Accepted total</dt><dd>{money.format(signature.acceptedSnapshot.acceptedTotal)}</dd></div>
+                {signature.acceptedSnapshot.documentType === 'pricing-schedule' ? (
+                  <div><dt>Pricing rows</dt><dd>{signature.acceptedSnapshot.pricingSchedule?.customerItems.length ?? 0}</dd></div>
+                ) : (
+                  <div><dt>Accepted total</dt><dd>{money.format(signature.acceptedSnapshot.acceptedTotal)}</dd></div>
+                )}
                 <div><dt>Revision</dt><dd>{signature.acceptedSnapshot.revisionLabel || (signature.acceptedSnapshot.revision ? `R${signature.acceptedSnapshot.revision}` : 'Original')}</dd></div>
               </dl>
               <div className="signature-receipt-signature">
@@ -123,9 +124,7 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
                   <span className="typed-signature">{signature.signatureText || signature.signerName}</span>
                 ) : (
                   <svg viewBox="0 0 600 180" aria-label={`Signature of ${signature.signerName}`}>
-                    {signature.strokes.map((stroke) => (
-                      <polyline key={stroke.id} points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')} />
-                    ))}
+                    {signature.strokes.map((stroke) => <polyline key={stroke.id} points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
                   </svg>
                 )}
               </div>
@@ -135,20 +134,15 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
           </div>
         ) : (
           <div className="signature-form">
-            {(quote.status === 'Draft' || quote.status === 'Ready') && (
-              <div className="signature-info">Signing in person will assign the official number, send, and accept this {commercialDocumentLabel(quote).toLowerCase()} in one step.</div>
-            )}
-
+            {(quote.status === 'Draft' || quote.status === 'Ready') && <div className="signature-info">Signing in person will assign the official number, send, and accept this {documentLabel.toLowerCase()} in one step.</div>}
             <div className="signature-identity-grid">
               <label><span>Full name</span><input value={signerName} onChange={(event) => setSignerName(event.target.value)} autoFocus /></label>
               <label><span>Email</span><input type="email" value={signerEmail} onChange={(event) => setSignerEmail(event.target.value)} placeholder="Optional" /></label>
             </div>
-
             <div className="signature-method-switch" aria-label="Signature method">
               <button type="button" className={method === 'drawn' ? 'active' : ''} onClick={() => setMethod('drawn')}>Draw signature</button>
               <button type="button" className={method === 'typed' ? 'active' : ''} onClick={() => setMethod('typed')}>Type name</button>
             </div>
-
             {method === 'drawn' ? (
               <div className="signature-pad-wrap">
                 <svg
@@ -157,32 +151,26 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
                   viewBox="0 0 600 180"
                   onPointerDown={pointerDown}
                   onPointerMove={pointerMove}
-                  onPointerUp={finishStroke}
-                  onPointerCancel={finishStroke}
-                  onPointerLeave={finishStroke}
+                  onPointerUp={() => setActiveStrokeId(null)}
+                  onPointerCancel={() => setActiveStrokeId(null)}
+                  onPointerLeave={() => setActiveStrokeId(null)}
                 >
                   <line x1="24" y1="148" x2="576" y2="148" className="signature-baseline" />
-                  {strokes.map((stroke) => (
-                    <polyline key={stroke.id} points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')} />
-                  ))}
+                  {strokes.map((stroke) => <polyline key={stroke.id} points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
                 </svg>
                 <div className="signature-pad-footer"><span>Sign above</span><button type="button" onClick={() => setStrokes([])}>Clear</button></div>
               </div>
-            ) : (
-              <div className="typed-signature-preview">{signerName || 'Your Name'}</div>
-            )}
+            ) : <div className="typed-signature-preview">{signerName || 'Your Name'}</div>}
 
             <label className="signature-consent">
               <input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)} />
               <span>{CONSENT_TEXT}</span>
             </label>
-
             {error && <div className="signature-error" role="alert">{error}</div>}
-
             <div className="signature-actions">
               <button type="button" className="signature-secondary" onClick={onClose} disabled={busy}>Cancel</button>
               <button type="button" className="signature-primary" onClick={() => void complete()} disabled={busy}>
-                {busy ? 'Recording acceptance…' : `Accept & Sign · ${money.format(quoteTotal(quote))}`}
+                {busy ? 'Recording acceptance…' : isPricingSchedule ? 'Accept & Sign Pricing Schedule' : `Accept & Sign · ${money.format(quoteTotal(quote))}`}
               </button>
             </div>
             <small className="signature-prototype-note">Acceptance is tied to this exact numbered document and revision.</small>
