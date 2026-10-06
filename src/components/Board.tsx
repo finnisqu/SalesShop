@@ -1,12 +1,20 @@
-import { useEffect, useMemo, useState, type DragEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import '../project-activity.css';
 import { AccountsBoard } from './AccountsBoard';
 import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
+import {
+  isMobileBoardInteraction,
+  rememberMobileBoardStage,
+  rememberMobileColumnScroll,
+  restoreMobileBoardState,
+} from '../lib/mobileBoardState';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { PROJECT_STAGES, type Project, type ProjectPatch, type ProjectStage } from '../types/crm';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const PROJECT_BOARD_POSITION_KEY = 'salesshop-mobile-board-projects-v1';
+const BOARD_MODE_KEY = 'salesshop-board-mode-v1';
 
 function formatDate(value?: string) {
   if (!value) return '';
@@ -22,14 +30,28 @@ function formatActivityTime(value: string) {
     : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function ProjectCard({ project, onOpen, onDragStart }: {
+function initialBoardMode(): 'projects' | 'accounts' {
+  if (typeof window === 'undefined') return 'projects';
+  return window.sessionStorage.getItem(BOARD_MODE_KEY) === 'accounts' ? 'accounts' : 'projects';
+}
+
+function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
   project: Project;
   onOpen: () => void;
   onDragStart: (event: DragEvent<HTMLElement>) => void;
+  mobileInteraction: boolean;
 }) {
   return (
-    <article className="project-card" draggable onDragStart={onDragStart} onDoubleClick={onOpen} tabIndex={0}
-      onKeyDown={(event) => { if (event.key === 'Enter') onOpen(); }} title="Double-click to edit">
+    <article
+      className="project-card"
+      draggable={!mobileInteraction}
+      onDragStart={mobileInteraction ? undefined : onDragStart}
+      onClick={mobileInteraction ? onOpen : undefined}
+      onDoubleClick={mobileInteraction ? undefined : onOpen}
+      tabIndex={0}
+      onKeyDown={(event) => { if (event.key === 'Enter') onOpen(); }}
+      title={mobileInteraction ? 'Tap to edit' : 'Double-click to edit'}
+    >
       <div className="project-card-pin" aria-hidden="true" />
       <div className="project-card-company">{project.companyName || 'Unassigned company'}</div>
       <h3>{project.name}</h3>
@@ -169,11 +191,18 @@ export function Board() {
   const moveProject = useCrmStore((state) => state.moveProject);
   const focusedProjectId = useNavigationStore((state) => state.focusedProjectId);
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
-  const [boardMode, setBoardMode] = useState<'projects' | 'accounts'>('projects');
+  const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragStage, setDragStage] = useState<ProjectStage | null>(null);
+  const boardRef = useRef<HTMLElement | null>(null);
+  const mobileInteraction = isMobileBoardInteraction();
+
+  const setBoardMode = (mode: 'projects' | 'accounts') => {
+    setBoardModeState(mode);
+    if (typeof window !== 'undefined') window.sessionStorage.setItem(BOARD_MODE_KEY, mode);
+  };
 
   useEffect(() => { hydrate(); }, [hydrate]);
   useEffect(() => {
@@ -183,6 +212,12 @@ export function Board() {
       clearFocusedProject();
     }
   }, [focusedProjectId, projects, clearFocusedProject]);
+
+  useEffect(() => {
+    if (!hydrated || boardMode !== 'projects' || !mobileInteraction) return;
+    const frame = window.requestAnimationFrame(() => restoreMobileBoardState(PROJECT_BOARD_POSITION_KEY, boardRef.current));
+    return () => window.cancelAnimationFrame(frame);
+  }, [hydrated, boardMode, mobileInteraction, projects.length]);
 
   const projectsByStage = useMemo(() => {
     const grouped = new Map<ProjectStage, Project[]>();
@@ -224,24 +259,44 @@ export function Board() {
         </form>
       </section>
 
-      <section className="project-board" aria-label="Project pipeline board">
-        {PROJECT_STAGES.map((stage) => {
+      <section
+        ref={boardRef}
+        className="project-board"
+        aria-label="Project pipeline board"
+        onScroll={(event) => rememberMobileBoardStage(PROJECT_BOARD_POSITION_KEY, event.currentTarget)}
+      >
+        {PROJECT_STAGES.map((stage, stageIndex) => {
           const stageProjects = projectsByStage.get(stage) ?? [];
           const stageTotal = stageProjects.reduce((sum, project) => sum + (project.amount ?? 0), 0);
           return (
-            <section key={stage} className={`board-column ${dragStage === stage ? 'is-drag-over' : ''}`}
+            <section
+              key={stage}
+              data-board-stage={stage}
+              className={`board-column ${dragStage === stage ? 'is-drag-over' : ''}`}
               onDragOver={(event) => { event.preventDefault(); setDragStage(stage); }}
               onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragStage(null); }}
-              onDrop={(event) => dropOnStage(event, stage)}>
+              onDrop={(event) => dropOnStage(event, stage)}
+            >
               <header className="board-column-header">
                 <div><h2>{stage}</h2><span>{stageProjects.length} {stageProjects.length === 1 ? 'project' : 'projects'}</span></div>
-                {stageTotal > 0 && <strong>{money.format(stageTotal)}</strong>}
+                <div className="board-column-trailing">
+                  {stageTotal > 0 && <strong>{money.format(stageTotal)}</strong>}
+                  <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {PROJECT_STAGES.length}</span>
+                </div>
               </header>
               <div className="board-column-rule" aria-hidden="true" />
-              <div className="board-card-stack">
+              <div
+                className="board-card-stack"
+                onScroll={(event) => rememberMobileColumnScroll(PROJECT_BOARD_POSITION_KEY, stage, event.currentTarget.scrollTop)}
+              >
                 {stageProjects.map((project) => (
-                  <ProjectCard key={project.id} project={project} onOpen={() => setEditingId(project.id)}
-                    onDragStart={(event) => { setDraggedId(project.id); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', project.id); }} />
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    mobileInteraction={mobileInteraction}
+                    onOpen={() => setEditingId(project.id)}
+                    onDragStart={(event) => { setDraggedId(project.id); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', project.id); }}
+                  />
                 ))}
                 {!stageProjects.length && <div className="board-empty-card">Drop a project here</div>}
               </div>
