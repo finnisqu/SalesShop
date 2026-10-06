@@ -16,6 +16,7 @@ import './mobile-demo-polish.css';
 import './mobile-board-carousel.css';
 import './global-search.css';
 import './quick-create.css';
+import './mobile-ui-unification.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
