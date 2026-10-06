@@ -1,5 +1,11 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { inferAccountHealth } from '../services/accountHealth';
+import {
+  isMobileBoardInteraction,
+  rememberMobileBoardStage,
+  rememberMobileColumnScroll,
+  restoreMobileBoardState,
+} from '../lib/mobileBoardState';
 import { useCrmStore } from '../store/crmStore';
 import {
   ACCOUNT_STAGES,
@@ -12,6 +18,7 @@ import {
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const ACCOUNT_BOARD_POSITION_KEY = 'salesshop-mobile-board-accounts-v1';
 
 function formatDate(value?: string) {
   if (!value) return 'No activity yet';
@@ -135,6 +142,8 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
   const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const boardRef = useRef<HTMLElement | null>(null);
+  const mobileInteraction = isMobileBoardInteraction();
 
   const accountsByStage = useMemo(() => {
     const grouped = new Map<AccountStage, AccountRow[]>();
@@ -146,6 +155,12 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
     grouped.forEach((items) => items.sort((a, b) => a.company.name.localeCompare(b.company.name)));
     return grouped;
   }, [companies, contacts, projects, activities]);
+
+  useEffect(() => {
+    if (!mobileInteraction) return;
+    const frame = window.requestAnimationFrame(() => restoreMobileBoardState(ACCOUNT_BOARD_POSITION_KEY, boardRef.current));
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileInteraction, companies.length]);
 
   const editingCompany = companies.find((company) => company.id === editingId) ?? null;
 
@@ -160,21 +175,43 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
         <div className="accounts-inference-note"><strong>Auto-inferred</strong><span>Each card explains why.</span></div>
       </section>
 
-      <section className="project-board account-board" aria-label="Account relationship board">
-        {ACCOUNT_STAGES.map((stage) => {
+      <section
+        ref={boardRef}
+        className="project-board account-board"
+        aria-label="Account relationship board"
+        onScroll={(event) => rememberMobileBoardStage(ACCOUNT_BOARD_POSITION_KEY, event.currentTarget)}
+      >
+        {ACCOUNT_STAGES.map((stage, stageIndex) => {
           const accounts = accountsByStage.get(stage) ?? [];
           return (
-            <section className={`board-column account-column account-stage-${stage.toLowerCase().replaceAll(' ', '-')}`} key={stage}>
+            <section
+              className={`board-column account-column account-stage-${stage.toLowerCase().replaceAll(' ', '-')}`}
+              data-board-stage={stage}
+              key={stage}
+            >
               <header className="board-column-header">
                 <div><h2>{stage}</h2><span>{accounts.length} {accounts.length === 1 ? 'account' : 'accounts'}</span></div>
+                <div className="board-column-trailing">
+                  <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {ACCOUNT_STAGES.length}</span>
+                </div>
               </header>
               <div className="board-column-rule" />
-              <div className="board-card-stack">
+              <div
+                className="board-card-stack"
+                onScroll={(event) => rememberMobileColumnScroll(ACCOUNT_BOARD_POSITION_KEY, stage, event.currentTarget.scrollTop)}
+              >
                 {accounts.map(({ company, health }) => {
                   const expectedAnnualWork = companyEstimatedAnnualWork(company);
                   return (
-                    <article className="project-card account-card" key={company.id} onDoubleClick={() => setEditingId(company.id)} tabIndex={0}
-                      onKeyDown={(event) => { if (event.key === 'Enter') setEditingId(company.id); }}>
+                    <article
+                      className="project-card account-card"
+                      key={company.id}
+                      onClick={mobileInteraction ? () => setEditingId(company.id) : undefined}
+                      onDoubleClick={mobileInteraction ? undefined : () => setEditingId(company.id)}
+                      tabIndex={0}
+                      onKeyDown={(event) => { if (event.key === 'Enter') setEditingId(company.id); }}
+                      title={mobileInteraction ? 'Tap to open' : 'Double-click to open'}
+                    >
                       <div className="project-card-company">{health.stage}</div>
                       <h3>{company.name}</h3>
                       <div className="account-card-stats">
@@ -185,7 +222,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                       {expectedAnnualWork !== undefined && <div className="account-card-annual-value"><span>Expected annual work</span><strong>{money.format(expectedAnnualWork)}</strong></div>}
                       <p className="account-card-reason">{health.reason}</p>
                       <div className="project-last-touch">{formatDate(health.lastActivityAt)}</div>
-                      <button type="button" className="project-card-open" onClick={() => setEditingId(company.id)}>Open</button>
+                      <button type="button" className="project-card-open" onClick={(event) => { event.stopPropagation(); setEditingId(company.id); }}>Open</button>
                     </article>
                   );
                 })}
