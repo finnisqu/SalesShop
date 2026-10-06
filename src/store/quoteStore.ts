@@ -300,7 +300,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     let updated: Quote = {
       ...current,
       ...safePatch,
-      title: safePatch.title?.trim() || current.title,
+      title: safePatch.title !== undefined ? safePatch.title : current.title,
       updatedAt: timestamp,
     };
 
