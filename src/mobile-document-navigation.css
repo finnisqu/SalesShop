@@ -1,0 +1,143 @@
+.quote-document-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quote-action-icon {
+  display: none;
+}
+
+.quote-action-label {
+  display: inline;
+}
+
+@media (max-width: 700px) {
+  /* Treat the three document views as one mobile pager rather than a toolbar that grows
+     around each label. The buttons remain explicit controls; Pricing Schedules can also
+     move between these views with a horizontal swipe on non-interactive content. */
+  .quote-header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    margin-top: 7px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .quote-header-actions > * {
+    min-width: 0;
+    flex: none;
+  }
+
+  .quote-view-switch {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .quote-view-switch button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .quote-document-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .quote-document-actions > .quote-send-button,
+  .quote-document-actions > .quote-sign-button,
+  .quote-document-actions > .quote-signature-receipt-button,
+  .quote-document-actions > .quote-revision-button,
+  .quote-document-actions .quote-share-launcher {
+    width: 100%;
+    min-width: 0;
+    height: 66px;
+    min-height: 66px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 5px;
+    border-radius: 8px;
+    font-size: 10px;
+    line-height: 1.05;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .quote-action-icon {
+    display: block;
+    flex: 0 0 auto;
+    font-size: 19px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .quote-action-label {
+    display: -webkit-box;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 10px;
+    line-height: 1.08;
+    text-align: center;
+    white-space: normal;
+  }
+
+  /* Share is part of the same action strip on mobile instead of floating over the form. */
+  .quote-document-actions > .quote-share-control {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    min-width: 0;
+    z-index: 85;
+  }
+
+  .quote-document-actions .quote-share-launcher {
+    gap: 3px;
+    box-shadow: none;
+    font-size: 10px;
+  }
+
+  .quote-document-actions .quote-share-launcher span {
+    font-size: 19px;
+    line-height: 1;
+  }
+
+  .quote-document-actions .quote-share-panel {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: min(72dvh, 620px);
+    overflow-y: auto;
+  }
+
+  .quote-workbench-body.is-swipeable {
+    touch-action: pan-y;
+  }
+
+  .quote-workbench-body.is-swipeable > .quote-editor-pane,
+  .quote-workbench-body.is-swipeable > .quote-preview-pane {
+    animation: quote-mobile-page-in 160ms ease-out;
+  }
+
+  @keyframes quote-mobile-page-in {
+    from { opacity: .72; transform: translateX(8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+}
