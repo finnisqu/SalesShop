@@ -1,0 +1,31 @@
+.customer-document-brand {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 9px;
+  align-items: start;
+}
+
+.customer-document-brand img {
+  width: 82px;
+  max-height: 48px;
+  object-fit: contain;
+  object-position: left top;
+}
+
+.customer-document-brand > div {
+  display: grid;
+  gap: 1px;
+}
+
+.customer-document-brand strong {
+  font-size: 13px;
+  letter-spacing: .02em;
+}
+
+.customer-document-brand span,
+.customer-document-brand small {
+  font-size: 9px;
+  line-height: 1.35;
+  color: #756f65;
+  white-space: pre-line;
+}
