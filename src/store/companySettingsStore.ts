@@ -25,6 +25,7 @@ interface CompanySettingsState {
   addMaterialPurchaseOption: (materialId: string, variantId: string) => string;
   updateMaterialPurchaseOption: (materialId: string, variantId: string, optionId: string, patch: Partial<MaterialPurchaseOption>) => void;
   deleteMaterialPurchaseOption: (materialId: string, variantId: string, optionId: string) => void;
+  acceptPublishedStockMaterials: (materials: StockMaterial[]) => void;
 }
 
 const LOCAL_KEY = 'salesshop-company-settings-v1';
@@ -45,6 +46,9 @@ function normalizePurchaseOption(raw: Partial<MaterialPurchaseOption>, index: nu
     costPerSf: typeof raw.costPerSf === 'number' ? raw.costPerSf : undefined,
     costPerUnit: typeof raw.costPerUnit === 'number' ? raw.costPerUnit : undefined,
     notes: raw.notes,
+    supplierNotes: raw.supplierNotes,
+    source: raw.source && typeof raw.source === 'object' ? raw.source : undefined,
+    priceHistory: Array.isArray(raw.priceHistory) ? raw.priceHistory : [],
   };
 }
 
@@ -317,9 +321,15 @@ export const useCompanySettingsStore = create<CompanySettingsState>((set, get) =
         if (variant.id !== variantId) return variant;
         let purchaseOptions = (variant.purchaseOptions ?? []).filter((option) => option.id !== optionId);
         if (purchaseOptions.length && !purchaseOptions.some((option) => option.default)) purchaseOptions = purchaseOptions.map((option, index) => index === 0 ? { ...option, default: true } : option);
-        return { ...variant, purchaseOptions };
+        return { ...material, variants };
       });
       return { ...material, variants };
     }));
+  },
+
+  acceptPublishedStockMaterials: (materials) => {
+    const settings = { ...get().settings, stockMaterials: normalizeMaterials(materials) };
+    writeLocal(settings);
+    set({ settings, saving: false, error: null });
   },
 }));

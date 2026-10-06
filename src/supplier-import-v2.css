@@ -452,3 +452,197 @@
     text-align: left;
   }
 }
+
+
+/* Importer v3 — controlled publishing */
+.supplier-import-publish-bar button:not(:disabled) {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #9f873f;
+  border-radius: 4px;
+  background: #ead77e;
+  color: #40371f;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.supplier-import-publish-error {
+  color: #8b4f45 !important;
+  font-weight: 750;
+}
+
+.supplier-import-cloud-history {
+  background: rgba(239, 244, 235, .58);
+  border-color: rgba(77, 106, 69, .16);
+}
+
+.supplier-import-publish-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(52, 47, 39, .34);
+  backdrop-filter: blur(2px);
+}
+
+.supplier-import-publish-preview {
+  width: min(760px, calc(100vw - 32px));
+  max-height: min(760px, calc(100dvh - 40px));
+  overflow: auto;
+  border: 1px solid rgba(61, 54, 45, .2);
+  border-radius: 7px;
+  background: #f7f3e8;
+  box-shadow: 0 22px 60px rgba(40, 34, 27, .25);
+}
+
+.supplier-import-publish-preview > header {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 15px;
+  border-bottom: 1px solid rgba(61, 54, 45, .12);
+  background: #efe9dc;
+}
+
+.supplier-import-publish-preview > header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.supplier-import-publish-preview h3 {
+  margin: 0;
+  color: #40382e;
+  font: 700 19px/1.15 Georgia, 'Times New Roman', serif;
+}
+
+.supplier-import-publish-preview > header button,
+.supplier-import-publish-preview > footer button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(61, 54, 45, .2);
+  border-radius: 4px;
+  background: #fffdf7;
+  color: #554d42;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.supplier-import-publish-preview-counts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 14px;
+  border: 1px solid rgba(61, 54, 45, .13);
+  background: rgba(255, 253, 247, .7);
+}
+
+.supplier-import-publish-preview-counts > div {
+  min-width: 0;
+  min-height: 68px;
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  text-align: center;
+  border-right: 1px solid rgba(61, 54, 45, .1);
+}
+
+.supplier-import-publish-preview-counts > div:last-child { border-right: 0; }
+
+.supplier-import-publish-preview-counts span {
+  color: #7a7165;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.supplier-import-publish-preview-counts strong {
+  color: #403930;
+  font: 700 22px/1 Georgia, 'Times New Roman', serif;
+}
+
+.supplier-import-publish-safeguards {
+  display: grid;
+  gap: 7px;
+  margin: 0 14px 14px;
+  padding: 12px 13px;
+  border: 1px solid rgba(82, 88, 68, .14);
+  background: rgba(239, 243, 232, .72);
+}
+
+.supplier-import-publish-safeguards strong {
+  margin-bottom: 2px;
+  color: #4c4c40;
+  font-size: 10px;
+}
+
+.supplier-import-publish-safeguards span {
+  position: relative;
+  padding-left: 14px;
+  color: #68685c;
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+
+.supplier-import-publish-safeguards span::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #63785a;
+  font-weight: 900;
+}
+
+.supplier-import-publish-preview > .supplier-import-error {
+  margin: 0 14px 14px;
+}
+
+.supplier-import-publish-preview > footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(61, 54, 45, .1);
+  background: rgba(235, 230, 219, .65);
+}
+
+.supplier-import-publish-preview > footer button.primary {
+  border-color: #9e853b;
+  background: #ead477;
+  color: #3e351e;
+}
+
+.supplier-import-publish-preview button:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+@media (max-width: 700px) {
+  .supplier-import-publish-preview-overlay {
+    padding: 8px;
+  }
+
+  .supplier-import-publish-preview {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .supplier-import-publish-preview-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .supplier-import-publish-preview-counts > div {
+    border-bottom: 1px solid rgba(61, 54, 45, .1);
+  }
+
+  .supplier-import-publish-preview > footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .supplier-import-publish-preview > footer button {
+    min-height: 44px;
+  }
+}

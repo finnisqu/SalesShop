@@ -18,6 +18,7 @@ interface SupplierImportState {
   setPriceDecision: (candidateId: string, optionId: string, decision: SupplierImportReviewDecision) => void;
   setCandidateNote: (candidateId: string, note: string) => void;
   openHistorySession: (sessionId: string) => void;
+  markPublished: (publication: SupplierImportSession['publication']) => void;
   clearSession: () => void;
 }
 
@@ -99,6 +100,7 @@ function normalizeSession(raw: unknown): SupplierImportSession | null {
     createdAt: value.createdAt,
     source: { ...value.source, rulesReferenceOnly: true },
     candidates: value.candidates.map((candidate) => normalizeCandidate(candidate)),
+    publication: value.publication,
   };
 }
 
@@ -234,6 +236,10 @@ export const useSupplierImportStore = create<SupplierImportState>((set, get) => 
     if (!session) return;
     writeState(session, get().history);
     set({ session });
+  },
+  markPublished: (publication) => {
+    if (!publication) return;
+    mutateCurrent(set, get, (current) => ({ ...current, publication }));
   },
   clearSession: () => {
     writeState(null, get().history);

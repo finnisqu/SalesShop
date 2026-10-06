@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { fetchSupplierImportPublicationHistory, publishSupplierImport, type SupplierImportPublicationHistoryRow } from '../services/supplierImportPublisher';
 import { stageVicostoneFabricatorPdf } from '../services/vicostoneSupplierImport';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useSupplierImportStore } from '../store/supplierImportStore';
@@ -174,7 +175,29 @@ function SessionHistory({ currentId }: { currentId?: string }) {
           );
         })}
       </div>
-      <small className="supplier-import-history-note">The five most recent review sessions are kept in this browser while publishing remains disabled.</small>
+      <small className="supplier-import-history-note">The five most recent staging/review sessions are kept in this browser. Published events are stored separately in the shared cloud audit.</small>
+    </details>
+  );
+}
+
+function PublishedHistory({ rows }: { rows: SupplierImportPublicationHistoryRow[] }) {
+  if (!rows.length) return null;
+  return (
+    <details className="supplier-import-history supplier-import-cloud-history">
+      <summary>Published history · {rows.length} recent publication{rows.length === 1 ? '' : 's'}</summary>
+      <div className="supplier-import-history-list">
+        {rows.map((row) => (
+          <div className="supplier-import-history-row" key={row.id}>
+            <div>
+              <strong>{row.brand || row.supplier} · {row.priceListLabel || row.sourceFileName}</strong>
+              <span>{new Date(row.publishedAt).toLocaleString()} · Parser {row.parserVersion}{row.effectiveDate ? ` · effective ${row.effectiveDate}` : ''}</span>
+              <small>{row.summary.publishedCount ?? 0} published · {row.summary.newCount ?? 0} new · {row.summary.updatedCount ?? 0} updated · {row.summary.ignoredCount ?? 0} ignored</small>
+            </div>
+            <span className="supplier-import-current-chip">Published</span>
+          </div>
+        ))}
+      </div>
+      <small className="supplier-import-history-note">This audit history is stored in the shared SalesShop cloud workspace.</small>
     </details>
   );
 }
@@ -182,6 +205,7 @@ function SessionHistory({ currentId }: { currentId?: string }) {
 function SupplierImportCenter({ onClose }: { onClose: () => void }) {
   const settings = useCompanySettingsStore((state) => state.settings);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
+  const acceptPublishedStockMaterials = useCompanySettingsStore((state) => state.acceptPublishedStockMaterials);
   const session = useSupplierImportStore((state) => state.session);
   const hydrated = useSupplierImportStore((state) => state.hydrated);
   const hydrate = useSupplierImportStore((state) => state.hydrate);
@@ -189,6 +213,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
   const setEffectiveDate = useSupplierImportStore((state) => state.setEffectiveDate);
   const setCandidateDecision = useSupplierImportStore((state) => state.setCandidateDecision);
   const clearSession = useSupplierImportStore((state) => state.clearSession);
+  const markPublished = useSupplierImportStore((state) => state.markPublished);
   const [file, setFile] = useState<File | null>(null);
   const [effectiveDateDraft, setEffectiveDateDraft] = useState('');
   const [parsing, setParsing] = useState(false);
@@ -197,16 +222,23 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [reviewMode, setReviewMode] = useState(false);
+  const [publishPreviewOpen, setPublishPreviewOpen] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishedHistory, setPublishedHistory] = useState<SupplierImportPublicationHistoryRow[]>([]);
 
   useEffect(() => {
     hydrate();
     void hydrateSettings();
+    void fetchSupplierImportPublicationHistory().then(setPublishedHistory).catch(() => undefined);
   }, [hydrate, hydrateSettings]);
 
   useEffect(() => {
     setEffectiveDateDraft(session?.source.effectiveDate ?? '');
     setReviewMode(false);
     setExpandedId(null);
+    setPublishPreviewOpen(false);
+    setPublishError(null);
   }, [session?.id, session?.source.effectiveDate]);
 
   const counts = useMemo(() => {
@@ -234,6 +266,43 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
       return `${material.name} ${material.sku ?? ''} ${material.supplierGroup ?? ''} ${candidate.status} ${candidate.changeSummary.join(' ')} ${candidate.reviewNote ?? ''}`.toLowerCase().includes(needle);
     });
   }, [session, filter, query, reviewMode]);
+
+  const publishPreview = useMemo(() => {
+    const candidates = session?.candidates ?? [];
+    const ready = candidates.filter((candidate) => reviewDecision(candidate) === 'approved');
+    return {
+      publishedCount: ready.length,
+      newCount: ready.filter((candidate) => candidate.status === 'new').length,
+      updatedCount: ready.filter((candidate) => candidate.status === 'changed').length,
+      unchangedCount: ready.filter((candidate) => candidate.status === 'unchanged').length,
+      ignoredCount: candidates.filter((candidate) => reviewDecision(candidate) === 'ignored').length,
+    };
+  }, [session]);
+
+  const publishReadyRecords = async () => {
+    if (!session || publishing || session.publication) return;
+    setPublishing(true);
+    setPublishError(null);
+    try {
+      const result = await publishSupplierImport(session);
+      acceptPublishedStockMaterials(result.stockMaterials);
+      markPublished({
+        id: result.publicationId,
+        publishedAt: result.publishedAt,
+        publishedCount: result.publishedCount,
+        newCount: result.newCount,
+        updatedCount: result.updatedCount,
+        unchangedCount: result.unchangedCount,
+        ignoredCount: result.ignoredCount,
+      });
+      setPublishPreviewOpen(false);
+      setPublishedHistory(await fetchSupplierImportPublicationHistory());
+    } catch (reason) {
+      setPublishError(reason instanceof Error ? reason.message : 'The supplier import could not be published.');
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   const parseFile = async () => {
     if (!file || parsing) return;
@@ -263,7 +332,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
             <p>Clean supplier data is ready automatically. Management is interrupted only when SalesShop sees something that deserves judgment.</p>
           </div>
           <div className="supplier-import-header-actions">
-            <span className="supplier-import-review-badge">Importer v2.1 · review by exception</span>
+            <span className="supplier-import-review-badge">Importer v3 · controlled publishing</span>
             <button type="button" onClick={onClose}>Close</button>
           </div>
         </header>
@@ -294,12 +363,13 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
           </section>
 
           <SessionHistory currentId={session?.id} />
+          <PublishedHistory rows={publishedHistory} />
 
           {!hydrated ? <div className="supplier-import-empty">Opening staging area…</div> : !session ? (
             <section className="supplier-import-empty supplier-import-empty-state">
               <strong>No staged supplier sheet</strong>
               <span>Choose the Vicostone fabricator PDF above. SalesShop will read it locally and compare explicit supplier listings against the current Material Catalog.</span>
-              <small>Nothing is written to the live catalog during Importer v2.1.</small>
+              <small>Stage and review first. Only a deliberate Publish action can change the Material Catalog.</small>
             </section>
           ) : (
             <>
@@ -328,7 +398,9 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
                   <span>{readiness.attention ? `${readiness.attention} need management attention` : 'No exceptions need management review'}</span>
                   {readiness.ignored > 0 && <span>{readiness.ignored} ignored</span>}
                 </div>
-                {reviewMode ? (
+                {session.publication ? (
+                  <span className="supplier-import-ready-mark">✓ Published {new Date(session.publication.publishedAt).toLocaleString()}</span>
+                ) : reviewMode ? (
                   <button type="button" onClick={() => { setReviewMode(false); setExpandedId(null); }}>Exit issue review</button>
                 ) : readiness.attention > 0 ? (
                   <button type="button" className="primary" onClick={() => { setReviewMode(true); setFilter('all'); setExpandedId(null); }}>Review {readiness.attention} issue{readiness.attention === 1 ? '' : 's'}</button>
@@ -399,11 +471,50 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
 
               <footer className="supplier-import-publish-bar">
                 <div>
-                  <strong>Publish remains locked while we validate review-by-exception.</strong>
-                  <span>{readiness.ready} ready · {readiness.attention} need attention · {readiness.ignored} ignored. The next publishing batch can operate on Ready records without asking management to approve clean data one row at a time.</span>
+                  <strong>{session.publication ? 'This staged supplier sheet has been published.' : readiness.attention ? 'Resolve the exceptions before publishing.' : 'Ready records can now be published to the Material Catalog.'}</strong>
+                  <span>{readiness.ready} ready · {readiness.attention} need attention · {readiness.ignored} ignored. New supplier colors publish as Non-stock; STOCK status, Levels, images, URLs, preferred defaults and management notes on existing colors are preserved.</span>
+                  {publishError && <span className="supplier-import-publish-error">{publishError}</span>}
                 </div>
-                <button type="button" disabled>Publish to Material Catalog</button>
+                <button
+                  type="button"
+                  disabled={Boolean(session.publication) || readiness.attention > 0 || readiness.ready === 0}
+                  onClick={() => { setPublishError(null); setPublishPreviewOpen(true); }}
+                >{session.publication ? 'Published' : 'Publish to Material Catalog'}</button>
               </footer>
+
+              {publishPreviewOpen && !session.publication && (
+                <div className="supplier-import-publish-preview-overlay" role="dialog" aria-modal="true" aria-label="Publish supplier import">
+                  <section className="supplier-import-publish-preview">
+                    <header>
+                      <div><span className="board-eyebrow">Final publish preview</span><h3>{session.source.brand} · {session.source.priceListLabel || session.source.fileName}</h3></div>
+                      <button type="button" onClick={() => setPublishPreviewOpen(false)} disabled={publishing}>Close</button>
+                    </header>
+                    <div className="supplier-import-publish-preview-counts">
+                      <div><span>Ready</span><strong>{publishPreview.publishedCount}</strong></div>
+                      <div><span>New colors</span><strong>{publishPreview.newCount}</strong></div>
+                      <div><span>Existing updates</span><strong>{publishPreview.updatedCount}</strong></div>
+                      <div><span>Unchanged</span><strong>{publishPreview.unchangedCount}</strong></div>
+                      <div><span>Ignored</span><strong>{publishPreview.ignoredCount}</strong></div>
+                    </div>
+                    <div className="supplier-import-publish-safeguards">
+                      <strong>What publishing will do</strong>
+                      <span>New colors enter the supplier catalog as <b>Non-stock</b>.</span>
+                      <span>Matching supplier specs and prices update; newly listed explicit specs/programs are added.</span>
+                      <span>Existing specs absent from this sheet are preserved—not deleted.</span>
+                      <span>STOCK status, Level assignment, slab/close-up images, product URL, preferred defaults and management notes remain untouched.</span>
+                      <span>Supplier rules stay reference-only and never generate hypothetical variants.</span>
+                      <span>A permanent Supabase audit records the source sheet and before/after catalog data.</span>
+                    </div>
+                    {publishError && <div className="supplier-import-error">{publishError}</div>}
+                    <footer>
+                      <button type="button" onClick={() => setPublishPreviewOpen(false)} disabled={publishing}>Cancel</button>
+                      <button type="button" className="primary" onClick={() => void publishReadyRecords()} disabled={publishing}>
+                        {publishing ? 'Publishing…' : `Publish ${publishPreview.publishedCount} Ready Record${publishPreview.publishedCount === 1 ? '' : 's'}`}
+                      </button>
+                    </footer>
+                  </section>
+                </div>
+              )}
             </>
           )}
         </div>

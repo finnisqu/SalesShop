@@ -45,10 +45,21 @@ export interface SupplierImportCandidate {
   reviewNote?: string;
 }
 
+export interface SupplierImportPublication {
+  id: string;
+  publishedAt: string;
+  publishedCount: number;
+  newCount: number;
+  updatedCount: number;
+  unchangedCount: number;
+  ignoredCount: number;
+}
+
 export interface SupplierImportSession {
   schemaVersion: 2;
   id: string;
   createdAt: string;
   source: SupplierImportSource;
   candidates: SupplierImportCandidate[];
+  publication?: SupplierImportPublication;
 }

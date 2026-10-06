@@ -4,6 +4,30 @@ export type StockMaterialUnit = 'sf' | 'slab' | 'each';
 export type MaterialFormatKind = 'slab' | 'sheet' | 'half-slab' | 'half-sheet' | 'other';
 export type MaterialPurchaseUnit = 'sf' | 'slab' | 'sheet' | 'half-slab' | 'half-sheet' | 'each';
 export type MaterialAvailability = 'stock' | 'high' | 'medium' | 'low' | 'eta' | 'special-order' | 'discontinued' | 'unknown';
+export type MaterialPriceProvenance = 'supplier-listed' | 'derived-from-listed-unit' | 'manual';
+
+export interface MaterialPriceSource {
+  kind: 'supplier-import' | 'manual';
+  publicationId?: string;
+  supplier?: string;
+  brand?: string;
+  sourceFileName?: string;
+  priceListLabel?: string;
+  effectiveDate?: string;
+  recordedAt: string;
+  provenance?: MaterialPriceProvenance;
+  parserId?: string;
+  parserVersion?: number;
+}
+
+export interface MaterialPriceVersion {
+  id: string;
+  costPerSf?: number;
+  costPerUnit?: number;
+  recordedAt: string;
+  effectiveDate?: string;
+  source?: MaterialPriceSource;
+}
 
 export interface MaterialPurchaseOption {
   id: string;
@@ -15,6 +39,9 @@ export interface MaterialPurchaseOption {
   costPerSf?: number;
   costPerUnit?: number;
   notes?: string;
+  supplierNotes?: string;
+  source?: MaterialPriceSource;
+  priceHistory?: MaterialPriceVersion[];
 }
 
 export interface MaterialVariant {
