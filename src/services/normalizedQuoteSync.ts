@@ -7,6 +7,7 @@ import {
   type QuoteDocument,
   type QuoteLine,
   type QuoteLineKind,
+  type QuoteLineMaterialReference,
   type QuotePricingMode,
   type QuoteRevisionSnapshot,
   type QuoteSection,
@@ -24,6 +25,10 @@ function numericOrUndefined(value: unknown) {
   if (value === null || value === undefined || value === '') return undefined;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : undefined;
+}
+
+function materialReferenceOrUndefined(value: unknown): QuoteLineMaterialReference | undefined {
+  return value && typeof value === 'object' ? value as QuoteLineMaterialReference : undefined;
 }
 
 function pricingScheduleOrUndefined(value: unknown): PricingScheduleData | undefined {
@@ -80,6 +85,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     amount: numericOrUndefined(row.amount),
     customerVisible: Boolean(row.customer_visible),
     includeInTotal: Boolean(row.include_in_total),
+    materialReference: materialReferenceOrUndefined(row.material_reference),
   }));
   const revisionsByQuote = groupByQuote<QuoteRevisionSnapshot>(revisionRows, (row) => {
     const snapshot = row.snapshot;
@@ -270,6 +276,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     amount: line.amount ?? null,
     customer_visible: line.customerVisible,
     include_in_total: line.includeInTotal,
+    material_reference: line.materialReference ?? null,
     sort_order: sortOrder,
   })));
 
