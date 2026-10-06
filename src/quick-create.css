@@ -1,0 +1,151 @@
+.quick-create-launcher {
+  display: none;
+}
+
+.quick-create-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(34, 31, 26, .28);
+  backdrop-filter: blur(3px);
+}
+
+.quick-create-sheet {
+  width: min(560px, 100%);
+  max-height: min(84dvh, 760px);
+  overflow: auto;
+  border: 1px solid rgba(88, 75, 54, .16);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background: #f8f4e8;
+  box-shadow: 0 -18px 54px rgba(45, 38, 27, .22);
+  padding: 7px 10px calc(14px + env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling: touch;
+}
+
+.quick-create-handle {
+  width: 34px;
+  height: 4px;
+  margin: 2px auto 6px;
+  border-radius: 999px;
+  background: rgba(87, 78, 65, .23);
+}
+
+.quick-create-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 4px 10px;
+}
+
+.quick-create-header > div { display: grid; gap: 2px; }
+.quick-create-header span { color: #898176; font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.quick-create-header strong { color: #302d27; font-size: 19px; }
+.quick-create-header button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #6f685e;
+  font-size: 27px;
+}
+
+.quick-create-options { display: grid; gap: 7px; }
+
+.quick-create-option {
+  width: 100%;
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(94, 81, 60, .13);
+  border-radius: 9px;
+  background: rgba(255, 253, 245, .72);
+  color: #3d3932;
+  text-align: left;
+}
+
+.quick-create-option-primary {
+  border-color: rgba(169, 135, 47, .36);
+  background: #fffaf0;
+  box-shadow: 0 2px 10px rgba(91, 72, 27, .08);
+}
+
+.quick-create-option.compact { min-height: 61px; }
+.quick-create-option > span:nth-child(2) { min-width: 0; display: grid; gap: 3px; }
+.quick-create-option strong { font-size: 14px; }
+.quick-create-option small { color: #81786c; font-size: 10px; line-height: 1.3; }
+.quick-create-option b { color: #a0998d; font-size: 23px; font-weight: 400; }
+
+.quick-create-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(90, 78, 57, .13);
+  border-radius: 8px;
+  background: rgba(238, 232, 215, .72);
+  color: #5b5244;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.quick-create-option-primary .quick-create-icon {
+  background: #ded09c;
+  color: #4f431f;
+}
+
+.quick-create-divider {
+  height: 1px;
+  margin: 3px 5px;
+  background: rgba(92, 80, 60, .12);
+}
+
+.quick-create-name-form { display: grid; gap: 14px; padding: 5px 3px 2px; }
+.quick-create-name-form label { display: grid; gap: 6px; }
+.quick-create-name-form label > span { color: #777065; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.quick-create-name-form input {
+  width: 100%;
+  height: 50px;
+  border: 1px solid rgba(85, 73, 54, .18);
+  border-radius: 8px;
+  padding: 0 13px;
+  background: #fffdf7;
+  color: #312e29;
+  outline: 0;
+  font: inherit;
+  font-size: 16px;
+}
+.quick-create-name-form input:focus { border-color: rgba(168, 133, 45, .56); box-shadow: 0 0 0 3px rgba(187, 150, 52, .10); }
+.quick-create-name-form > div { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+.quick-create-name-form button { min-height: 46px; border-radius: 8px; font: inherit; font-size: 12px; font-weight: 800; }
+.quick-create-secondary { border: 1px solid rgba(84, 73, 55, .15); background: rgba(255,255,255,.5); color: #665f54; }
+.quick-create-primary { border: 1px solid #b49543; background: #d4bd74; color: #3d331a; }
+.quick-create-primary:disabled { opacity: .45; }
+
+@media (max-width: 700px) {
+  .quick-create-launcher {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(80, 74, 64, .14);
+    border-radius: 999px;
+    background: #d7c27b;
+    color: #40361e;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba(61, 51, 29, .12);
+  }
+
+  .quick-create-sheet { width: 100%; }
+}
