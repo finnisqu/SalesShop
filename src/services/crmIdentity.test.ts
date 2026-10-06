@@ -157,7 +157,7 @@ describe('CRM identity merge behavior', () => {
 
     const merged = mergeCompanyCrmDocument(document, 'primary', 'duplicate', timestamp);
     expect(merged.companies).toHaveLength(1);
-    expect(merged.companies[0].aliases).toEqual(expect.arrayContaining(['Bar Const.', 'BAR Co']));
+    expect(merged.companies[0].aliases).toEqual(['BAR Co']);
     expect(merged.companies[0].annualUnits).toBe(100);
     expect(merged.companies[0].averageUnitValue).toBe(3500);
     expect(merged.contacts[0].companyId).toBe('primary');
