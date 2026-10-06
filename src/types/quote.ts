@@ -15,6 +15,18 @@ export const PRICING_SCHEDULE_FIELDS = [
 ] as const;
 export type PricingScheduleField = (typeof PRICING_SCHEDULE_FIELDS)[number];
 
+export const PRICING_BUILDER_PRODUCT_TYPES = [
+  'Countertops',
+  'Backsplash',
+  'Kitchen Sink',
+  'Vanity Sink',
+  'Support',
+  'Other',
+] as const;
+export type PricingBuilderProductType = (typeof PRICING_BUILDER_PRODUCT_TYPES)[number];
+export type PricingBuilderUnit = 'sf' | 'each' | 'flat';
+export type PricingSchedulePublishSource = 'builder' | 'workbook';
+
 export type QuoteLineKind = 'item' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
 export type QuotePricingMode = 'direct' | 'quantity-rate' | 'none';
 
@@ -64,7 +76,64 @@ export interface PricingScheduleItem {
   customerPrice?: number;
 }
 
+export interface PricingRateItem {
+  id: string;
+  productType: PricingBuilderProductType;
+  name: string;
+  unit: PricingBuilderUnit;
+  rate?: number;
+}
+
+export interface PricingOptionRule {
+  id: string;
+  scope: string;
+  productType: PricingBuilderProductType;
+  rateItemId: string;
+}
+
+export interface PricingOptionPackage {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  isBase?: boolean;
+  flatAdjustment?: number;
+  rules: PricingOptionRule[];
+}
+
+export interface PricingPlan {
+  id: string;
+  series?: string;
+  planNumber: string;
+  name: string;
+  description?: string;
+  notes?: string;
+}
+
+export interface PricingPlanTakeoff {
+  id: string;
+  planId: string;
+  room: string;
+  piece?: string;
+  length?: number;
+  width?: number;
+  squareFeet?: number;
+  kitchenSinks?: number;
+  vanityBowls?: number;
+  supports?: number;
+}
+
+export interface PricingScheduleBuilderData {
+  rateBookName: string;
+  rates: PricingRateItem[];
+  options: PricingOptionPackage[];
+  plans: PricingPlan[];
+  takeoffs: PricingPlanTakeoff[];
+}
+
 export interface PricingScheduleData {
+  publishSource?: PricingSchedulePublishSource;
+  builder?: PricingScheduleBuilderData;
   workbookData?: unknown;
   mapping?: PricingScheduleMapping;
   customerItems: PricingScheduleItem[];
