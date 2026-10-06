@@ -7,6 +7,7 @@ import {
   restoreMobileBoardState,
 } from '../lib/mobileBoardState';
 import { useCrmStore } from '../store/crmStore';
+import { useNavigationStore } from '../store/navigationStore';
 import {
   ACCOUNT_STAGES,
   companyAnnualPotential,
@@ -141,6 +142,8 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
   const contacts = useCrmStore((state) => state.contacts);
   const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
+  const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
+  const clearFocusedCompany = useNavigationStore((state) => state.clearFocusedCompany);
   const [editingId, setEditingId] = useState<string | null>(null);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
@@ -161,6 +164,12 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
     const frame = window.requestAnimationFrame(() => restoreMobileBoardState(ACCOUNT_BOARD_POSITION_KEY, boardRef.current));
     return () => window.cancelAnimationFrame(frame);
   }, [mobileInteraction, companies.length]);
+
+  useEffect(() => {
+    if (!focusedCompanyId) return;
+    if (companies.some((company) => company.id === focusedCompanyId)) setEditingId(focusedCompanyId);
+    clearFocusedCompany();
+  }, [focusedCompanyId, companies, clearFocusedCompany]);
 
   const editingCompany = companies.find((company) => company.id === editingId) ?? null;
 
