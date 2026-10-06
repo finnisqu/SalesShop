@@ -5,6 +5,7 @@ import '../pricing-schedule.css';
 export function PricingScheduleCustomerPreview({ quote }: { quote: Quote }) {
   const documentLabel = commercialDocumentLabel(quote);
   const items = quote.pricingSchedule?.customerItems ?? [];
+  const rateSheet = items.some((item) => item.displayType === 'rate-level' || item.displayType === 'rate-add-on');
 
   return (
     <article className="customer-quote-paper pricing-schedule-customer-preview">
@@ -27,15 +28,17 @@ export function PricingScheduleCustomerPreview({ quote }: { quote: Quote }) {
           {quote.address && <p>{quote.address}</p>}
         </div>
         <div>
-          <span>Project</span>
+          <span>Project / account</span>
           <strong>{quote.title}</strong>
           {quote.revisionLabel && <p>{quote.revisionLabel}</p>}
         </div>
       </section>
 
       <div className="pricing-schedule-contract-intro">
-        <strong>Contract pricing schedule</strong>
-        <p>Pricing below applies to the listed plans, options, and configurations. Internal estimating and takeoff details are not included in this customer copy.</p>
+        <strong>{rateSheet ? 'Builder rate sheet' : 'Contract pricing schedule'}</strong>
+        <p>{rateSheet
+          ? 'Pricing below establishes the material levels, approved selections, sinks, and recurring add-on rates for this account.'
+          : 'Pricing below applies to the listed plans, options, and configurations. Internal estimating and takeoff details are not included in this customer copy.'}</p>
       </div>
 
       <PricingScheduleCustomerTable items={items} />
