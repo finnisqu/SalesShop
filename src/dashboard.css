@@ -1,5 +1,10 @@
 .leadership-dashboard {
-  min-height: calc(100vh - 58px);
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 28px 30px 44px;
   background: #d8d3c8;
   color: #2f302c;
@@ -293,6 +298,10 @@
 }
 
 @media (max-width: 620px) {
+  .leadership-dashboard {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+
   .dashboard-heading {
     align-items: flex-start;
     flex-direction: column;
