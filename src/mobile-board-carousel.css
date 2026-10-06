@@ -1,0 +1,75 @@
+/* iPhone board carousel: horizontal stage paging with independent vertical column scrolling. */
+
+@media (max-width: 700px) {
+  .board-view {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .project-board,
+  .account-board {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: stretch;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 10px;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .project-board::-webkit-scrollbar,
+  .account-board::-webkit-scrollbar {
+    display: none;
+  }
+
+  .board-column,
+  .account-column {
+    width: calc(100vw - 30px);
+    min-width: calc(100vw - 30px);
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    flex: 0 0 calc(100vw - 30px);
+    overflow: hidden;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .board-column-header {
+    flex: 0 0 auto;
+    min-height: 56px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .board-column-rule {
+    flex: 0 0 auto;
+  }
+
+  .board-card-stack {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .project-card,
+  .account-card,
+  .board-empty-card {
+    flex: 0 0 auto;
+  }
+
+  /* Keep vertical browsing feeling anchored even with a slightly diagonal thumb gesture. */
+  .board-card-stack {
+    scroll-behavior: smooth;
+  }
+}
