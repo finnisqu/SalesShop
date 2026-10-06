@@ -20,6 +20,7 @@ import './mobile-ui-unification.css';
 import './mobile-quote-qc.css';
 import './quote-document-setup.css';
 import './mobile-pricing-containment.css';
+import './mobile-document-navigation.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
