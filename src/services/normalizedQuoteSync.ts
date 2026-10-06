@@ -37,6 +37,24 @@ function pricingScheduleOrUndefined(value: unknown): PricingScheduleData | undef
   return { ...schedule, customerItems: Array.isArray(schedule.customerItems) ? schedule.customerItems : [] };
 }
 
+function stripPrivateMaterialReferences(snapshot: QuoteRevisionSnapshot): QuoteRevisionSnapshot {
+  return {
+    ...snapshot,
+    lines: snapshot.lines.map((line) => ({
+      id: line.id,
+      sectionId: line.sectionId,
+      kind: line.kind,
+      description: line.description,
+      pricingMode: line.pricingMode,
+      quantity: line.quantity,
+      rate: line.rate,
+      amount: line.amount,
+      customerVisible: line.customerVisible,
+      includeInTotal: line.includeInTotal,
+    })),
+  };
+}
+
 function atLeastAsNew(localValue: string, serverValue?: string) {
   if (!serverValue) return true;
   const localTime = Date.parse(localValue);
@@ -295,7 +313,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
         captured_at: revision.capturedAt,
         status: revision.status,
         title: revision.title,
-        snapshot: frozen,
+        snapshot: stripPrivateMaterialReferences(frozen),
       };
     }));
 
