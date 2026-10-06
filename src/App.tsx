@@ -12,6 +12,7 @@ import './company-settings.css';
 import './rate-book.css';
 import './rate-book-spreadsheet-qc.css';
 import './material-level-guide.css';
+import './supplier-import.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
@@ -24,6 +25,7 @@ import { QuoteShareControl } from './components/QuoteShareControl';
 import { Quotes } from './components/Quotes';
 import { RatesWorkspace } from './components/RatesWorkspace';
 import { Sidebar } from './components/Sidebar';
+import { SupplierImportLauncher } from './components/SupplierImportCenter';
 import { TextEditor } from './components/TextEditor';
 import { Toolbar } from './components/Toolbar';
 import { useCompanySettingsStore } from './store/companySettingsStore';
@@ -128,6 +130,7 @@ function App() {
         </main>
       )}
       {view === 'quotes' && <QuoteShareControl />}
+      {view === 'rate-book' && <SupplierImportLauncher />}
     </div>
   );
 }
