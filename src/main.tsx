@@ -7,6 +7,7 @@ import './index.css';
 import './auth.css';
 import './pricing-schedule-builder.css';
 import './pricing-rate-sheet.css';
+import './pricing-rate-book-import.css';
 import './pricing-schedule-refinements.css';
 import './quote-crm-fields.css';
 import './customer-document-brand.css';
