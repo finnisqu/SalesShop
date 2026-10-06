@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ClipboardEvent as ReactClipboardEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useRateBookStore } from '../store/rateBookStore';
 import {
@@ -20,6 +28,9 @@ const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD
 type CategoryFilter = 'all' | RateBookCategory;
 type SheetColumnKey = 'active' | 'category' | 'item' | 'code' | 'cost' | 'sell' | 'unit' | 'behavior' | 'margin' | 'effective' | 'context';
 type BulkField = 'internalCost' | 'sellRate' | 'category' | 'unit' | 'pricingBehavior' | 'active';
+type RateCellElement = HTMLInputElement | HTMLSelectElement;
+type RateCellKeyboardEvent = ReactKeyboardEvent<RateCellElement>;
+type RateCellClipboardEvent = ReactClipboardEvent<RateCellElement>;
 
 interface SheetColumn {
   key: SheetColumnKey;
@@ -43,12 +54,13 @@ const SHEET_COLUMNS: SheetColumn[] = [
   { key: 'context', label: 'Context', width: 86, minWidth: 74 },
 ];
 
+const EDITABLE_COLUMN_KEYS: SheetColumnKey[] = ['active', 'category', 'item', 'code', 'cost', 'sell', 'unit', 'behavior', 'effective'];
 const DEFAULT_COLUMN_WIDTHS = Object.fromEntries(SHEET_COLUMNS.map((column) => [column.key, column.width])) as Record<SheetColumnKey, number>;
 const GRID_PREFS_KEY = 'salesshop-rate-book-grid-v1';
 
 function numberValue(value: string) {
   if (!value.trim()) return undefined;
-  const parsed = Number(value);
+  const parsed = Number(value.replaceAll(',', '').replace('$', '').trim());
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
@@ -62,12 +74,84 @@ function marginLabel(item: RateBookItem) {
   return `${margin.toFixed(1)}%`;
 }
 
+function normalized(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function parseCategory(value: string): RateBookCategory | undefined {
+  const needle = normalized(value);
+  return RATE_BOOK_CATEGORIES.find((category) => normalized(category) === needle || normalized(RATE_BOOK_CATEGORY_LABELS[category]) === needle)
+    ?? (needle === 'fabrication' || needle === 'install' || needle === 'fabrication & installation' ? 'fabrication-install' : undefined)
+    ?? (needle === 'sinks' ? 'sink' : undefined)
+    ?? (needle === 'addons' || needle === 'add ons' || needle === 'add-ons' ? 'add-on' : undefined)
+    ?? (needle === 'materials' ? 'material' : undefined);
+}
+
+function parseUnit(value: string): RateBookUnit | undefined {
+  const needle = normalized(value).replaceAll('.', '');
+  if (needle === 'sf' || needle === 'sq ft' || needle === 'sqft' || needle === 'square foot' || needle === 'square feet') return 'sf';
+  if (needle === 'lf' || needle === 'lin ft' || needle === 'linear foot' || needle === 'linear feet') return 'lf';
+  if (needle === 'ea' || needle === 'each' || needle === 'unit') return 'each';
+  if (needle === 'flat' || needle === 'lot') return 'flat';
+  if (needle === 'slab' || needle === 'slabs') return 'slab';
+  return RATE_BOOK_UNITS.find((unit) => normalized(RATE_BOOK_UNIT_LABELS[unit]) === needle);
+}
+
+function parseBehavior(value: string): RateBookPricingBehavior | undefined {
+  const needle = normalized(value);
+  if (needle === 'suggested' || needle === 'suggest' || needle === 'suggested price' || needle === 'suggest sell price') return 'suggested';
+  if (needle === 'cost' || needle === 'cost reference' || needle === 'cost reference only' || needle === 'reference') return 'cost-reference';
+  if (needle === 'manual' || needle === 'manual pricing') return 'manual';
+  return RATE_BOOK_PRICING_BEHAVIORS.find((behavior) => normalized(RATE_BOOK_PRICING_BEHAVIOR_LABELS[behavior]) === needle);
+}
+
+function parseActive(value: string): boolean | undefined {
+  const needle = normalized(value);
+  if (['1', 'true', 'yes', 'y', 'on', 'active', 'x', '✓'].includes(needle)) return true;
+  if (['0', 'false', 'no', 'n', 'off', 'inactive'].includes(needle)) return false;
+  return undefined;
+}
+
+function parseDate(value: string): string | undefined {
+  const text = value.trim();
+  if (!text) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const match = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/);
+  if (!match) return undefined;
+  const year = match[3].length === 2 ? `20${match[3]}` : match[3];
+  return `${year}-${match[1].padStart(2, '0')}-${match[2].padStart(2, '0')}`;
+}
+
+function isEditableColumn(key: SheetColumnKey): boolean {
+  return EDITABLE_COLUMN_KEYS.includes(key);
+}
+
+function columnForBulkField(field: BulkField): SheetColumnKey {
+  if (field === 'internalCost') return 'cost';
+  if (field === 'sellRate') return 'sell';
+  if (field === 'pricingBehavior') return 'behavior';
+  return field;
+}
+
+function valueForCell(item: RateBookItem, key: SheetColumnKey): string {
+  if (key === 'active') return item.active ? 'true' : 'false';
+  if (key === 'category') return item.category;
+  if (key === 'item') return item.name;
+  if (key === 'code') return item.code ?? '';
+  if (key === 'cost') return item.internalCost === undefined ? '' : String(item.internalCost);
+  if (key === 'sell') return item.sellRate === undefined ? '' : String(item.sellRate);
+  if (key === 'unit') return item.unit;
+  if (key === 'behavior') return item.pricingBehavior;
+  if (key === 'margin') return marginLabel(item);
+  if (key === 'effective') return item.effectiveDate ?? '';
+  return '';
+}
+
 function RateBookDetails({ item }: { item: RateBookItem }) {
   const setDivisionOverride = useRateBookStore((state) => state.setDivisionOverride);
   const setCurrentHistoryNote = useRateBookStore((state) => state.setCurrentHistoryNote);
   const updateItem = useRateBookStore((state) => state.updateItem);
   const duplicateItem = useRateBookStore((state) => state.duplicateItem);
-  const deleteItem = useRateBookStore((state) => state.deleteItem);
   const stockMaterials = useCompanySettingsStore((state) => state.settings.stockMaterials);
   const stockMaterial = item.stockMaterialId ? stockMaterials.find((candidate) => candidate.id === item.stockMaterialId) : undefined;
   const currentHistory = item.history.find((version) => version.effectiveDate === item.effectiveDate);
@@ -114,7 +198,15 @@ function RateBookDetails({ item }: { item: RateBookItem }) {
       <section className="rate-book-row-admin">
         <label><span>Internal notes</span><input value={item.notes ?? ''} onChange={(event) => updateItem(item.id, { notes: event.target.value })} placeholder={stockMaterial ? `Linked to ${stockMaterial.name}` : 'Optional private note'} /></label>
         {stockMaterial && <span className="rate-book-stock-link">Stock color · {stockMaterial.materialType}</span>}
-        <div><button type="button" onClick={() => duplicateItem(item.id)}>Duplicate</button><button type="button" className="danger" onClick={() => { if (window.confirm(`Delete ${item.name}?`)) deleteItem(item.id); }}>Delete</button></div>
+        <div>
+          <button type="button" onClick={() => duplicateItem(item.id)}>Duplicate</button>
+          <button type="button" className="danger" onClick={() => {
+            const verb = item.active ? 'Archive' : 'Restore';
+            if (!item.active || window.confirm(`Archive ${item.name}? Existing quote snapshots will stay unchanged.`)) updateItem(item.id, { active: !item.active });
+            if (!item.active) return;
+            void verb;
+          }}>{item.active ? 'Archive' : 'Restore'}</button>
+        </div>
       </section>
     </div>
   );
@@ -126,42 +218,55 @@ function RateBookSheetRow({
   columns,
   expanded,
   selected,
+  issues,
   onToggle,
   onSelect,
+  onCellKeyDown,
+  onCellPaste,
 }: {
   item: RateBookItem;
   rowNumber: number;
   columns: SheetColumn[];
   expanded: boolean;
   selected: boolean;
+  issues: string[];
   onToggle: () => void;
   onSelect: (event: ReactMouseEvent<HTMLButtonElement>) => void;
+  onCellKeyDown: (event: RateCellKeyboardEvent) => void;
+  onCellPaste: (event: RateCellClipboardEvent) => void;
 }) {
   const updateItem = useRateBookStore((state) => state.updateItem);
   const updatePricing = useRateBookStore((state) => state.updatePricing);
+  const cellProps = (column: SheetColumnKey) => ({
+    'data-rate-cell': 'true',
+    'data-rate-id': item.id,
+    'data-column': column,
+    onKeyDown: onCellKeyDown,
+    onPaste: onCellPaste,
+  });
 
   const renderCell = (column: SheetColumn) => {
     switch (column.key) {
       case 'active':
-        return <td className="rate-book-check" key={column.key}><input type="checkbox" checked={item.active} onChange={(event) => updateItem(item.id, { active: event.target.checked })} aria-label={`${item.name} active`} /></td>;
+        return <td className="rate-book-check" key={column.key}><input {...cellProps(column.key)} type="checkbox" checked={item.active} onChange={(event) => updateItem(item.id, { active: event.target.checked })} aria-label={`${item.name} active`} /></td>;
       case 'category':
-        return <td key={column.key}><select value={item.category} onChange={(event) => updateItem(item.id, { category: event.target.value as RateBookCategory })}>{RATE_BOOK_CATEGORIES.map((category) => <option value={category} key={category}>{RATE_BOOK_CATEGORY_LABELS[category]}</option>)}</select></td>;
+        return <td key={column.key}><select {...cellProps(column.key)} value={item.category} onChange={(event) => updateItem(item.id, { category: event.target.value as RateBookCategory })}>{RATE_BOOK_CATEGORIES.map((category) => <option value={category} key={category}>{RATE_BOOK_CATEGORY_LABELS[category]}</option>)}</select></td>;
       case 'item':
-        return <td className="rate-book-item-cell" key={column.key}><input value={item.name} onChange={(event) => updateItem(item.id, { name: event.target.value })} /></td>;
+        return <td className="rate-book-item-cell" key={column.key}><input {...cellProps(column.key)} value={item.name} onChange={(event) => updateItem(item.id, { name: event.target.value })} /></td>;
       case 'code':
-        return <td key={column.key}><input value={item.code ?? ''} onChange={(event) => updateItem(item.id, { code: event.target.value })} placeholder="—" /></td>;
+        return <td key={column.key}><input {...cellProps(column.key)} value={item.code ?? ''} onChange={(event) => updateItem(item.id, { code: event.target.value })} placeholder="—" /></td>;
       case 'cost':
-        return <td className="number" key={column.key}><input type="number" step="0.01" value={item.internalCost ?? ''} onChange={(event) => updatePricing(item.id, { internalCost: numberValue(event.target.value) })} placeholder="—" /></td>;
+        return <td className="number" key={column.key}><input {...cellProps(column.key)} type="number" step="0.01" value={item.internalCost ?? ''} onChange={(event) => updatePricing(item.id, { internalCost: numberValue(event.target.value) })} placeholder="—" /></td>;
       case 'sell':
-        return <td className="number" key={column.key}><input type="number" step="0.01" value={item.sellRate ?? ''} onChange={(event) => updatePricing(item.id, { sellRate: numberValue(event.target.value) })} placeholder="—" /></td>;
+        return <td className="number" key={column.key}><input {...cellProps(column.key)} type="number" step="0.01" value={item.sellRate ?? ''} onChange={(event) => updatePricing(item.id, { sellRate: numberValue(event.target.value) })} placeholder="—" /></td>;
       case 'unit':
-        return <td key={column.key}><select value={item.unit} onChange={(event) => updateItem(item.id, { unit: event.target.value as RateBookUnit })}>{RATE_BOOK_UNITS.map((unit) => <option value={unit} key={unit}>{RATE_BOOK_UNIT_LABELS[unit]}</option>)}</select></td>;
+        return <td key={column.key}><select {...cellProps(column.key)} value={item.unit} onChange={(event) => updateItem(item.id, { unit: event.target.value as RateBookUnit })}>{RATE_BOOK_UNITS.map((unit) => <option value={unit} key={unit}>{RATE_BOOK_UNIT_LABELS[unit]}</option>)}</select></td>;
       case 'behavior':
-        return <td key={column.key}><select value={item.pricingBehavior} onChange={(event) => updatePricing(item.id, { pricingBehavior: event.target.value as RateBookPricingBehavior })}>{RATE_BOOK_PRICING_BEHAVIORS.map((behavior) => <option value={behavior} key={behavior}>{RATE_BOOK_PRICING_BEHAVIOR_LABELS[behavior]}</option>)}</select></td>;
+        return <td key={column.key}><select {...cellProps(column.key)} value={item.pricingBehavior} onChange={(event) => updatePricing(item.id, { pricingBehavior: event.target.value as RateBookPricingBehavior })}>{RATE_BOOK_PRICING_BEHAVIORS.map((behavior) => <option value={behavior} key={behavior}>{RATE_BOOK_PRICING_BEHAVIOR_LABELS[behavior]}</option>)}</select></td>;
       case 'margin':
         return <td className="rate-book-margin-cell" key={column.key}>{marginLabel(item)}</td>;
       case 'effective':
-        return <td key={column.key}><input type="date" value={item.effectiveDate ?? ''} onChange={(event) => updatePricing(item.id, { effectiveDate: event.target.value || undefined })} /></td>;
+        return <td key={column.key}><input {...cellProps(column.key)} type="date" value={item.effectiveDate ?? ''} onChange={(event) => updatePricing(item.id, { effectiveDate: event.target.value || undefined })} /></td>;
       case 'context':
         return <td className="rate-book-detail-cell" key={column.key}><button type="button" onClick={onToggle}>{expanded ? 'Close' : 'Details'}</button></td>;
     }
@@ -169,8 +274,12 @@ function RateBookSheetRow({
 
   return (
     <>
-      <tr className={`${item.active ? '' : 'is-inactive'} ${expanded ? 'is-expanded' : ''} ${selected ? 'is-selected' : ''}`}>
-        <td className="rate-book-row-header"><button type="button" className={selected ? 'is-selected' : ''} onClick={onSelect} title="Select row. Shift-click to select a range.">{selected ? '✓' : rowNumber}</button></td>
+      <tr className={`${item.active ? '' : 'is-inactive'} ${expanded ? 'is-expanded' : ''} ${selected ? 'is-selected' : ''} ${issues.length ? 'has-rate-warning' : ''}`}>
+        <td className="rate-book-row-header">
+          <button type="button" className={selected ? 'is-selected' : ''} onClick={onSelect} title={issues.length ? issues.join('\n') : 'Select row. Shift-click to select a range.'}>
+            {selected ? '✓' : rowNumber}{issues.length ? <span className="rate-book-row-warning">!</span> : null}
+          </button>
+        </td>
         {columns.map(renderCell)}
       </tr>
       {expanded && <tr className="rate-book-detail-row"><td colSpan={columns.length + 1}><RateBookDetails item={item} /></td></tr>}
@@ -198,6 +307,7 @@ export function RateBook() {
   const [hiddenColumns, setHiddenColumns] = useState<Set<SheetColumnKey>>(new Set());
   const [columnWidths, setColumnWidths] = useState<Record<SheetColumnKey, number>>(DEFAULT_COLUMN_WIDTHS);
   const [gridPrefsLoaded, setGridPrefsLoaded] = useState(false);
+  const [sheetNotice, setSheetNotice] = useState('Paste a tabular block from Excel or Sheets into any editable cell. Enter moves down; Ctrl/Cmd+D fills selected rows from the first selected row.');
 
   useEffect(() => {
     hydrate();
@@ -234,14 +344,44 @@ export function RateBook() {
       .sort((a, b) => RATE_BOOK_CATEGORIES.indexOf(a.category) - RATE_BOOK_CATEGORIES.indexOf(b.category) || a.name.localeCompare(b.name));
   }, [items, category, query, showInactive]);
 
+  const issuesById = useMemo(() => {
+    const map = new Map<string, string[]>();
+    const activeCodes = new Map<string, string[]>();
+    const today = new Date().toISOString().slice(0, 10);
+    items.forEach((item) => {
+      if (item.active && item.code?.trim()) {
+        const code = normalized(item.code);
+        activeCodes.set(code, [...(activeCodes.get(code) ?? []), item.id]);
+      }
+    });
+    items.forEach((item) => {
+      const issues: string[] = [];
+      const code = item.code?.trim() ? normalized(item.code) : '';
+      if (item.active && code && (activeCodes.get(code)?.length ?? 0) > 1) issues.push(`Duplicate active code: ${item.code}`);
+      if (item.pricingBehavior === 'suggested' && item.sellRate === undefined) issues.push('Suggest sell price is selected but no suggested sell value is entered.');
+      if (item.pricingBehavior === 'cost-reference' && item.internalCost === undefined) issues.push('Cost reference has no internal cost entered.');
+      if (item.sellRate !== undefined && item.internalCost !== undefined && item.sellRate < item.internalCost) issues.push('Suggested sell is below internal cost.');
+      if ((item.internalCost ?? 0) < 0 || (item.sellRate ?? 0) < 0) issues.push('Negative rate detected; valid for credits, but worth reviewing.');
+      if (item.effectiveDate && item.effectiveDate > today) issues.push('Future-effective row is currently treated as the active master value.');
+      const dates = item.history.map((version) => version.effectiveDate);
+      if (new Set(dates).size !== dates.length) issues.push('More than one history version uses the same effective date.');
+      if (issues.length) map.set(item.id, issues);
+    });
+    return map;
+  }, [items]);
+
   const visibleColumns = useMemo(() => SHEET_COLUMNS.filter((column) => !hiddenColumns.has(column.key)), [hiddenColumns]);
+  const editableVisibleColumns = useMemo(() => visibleColumns.filter((column) => isEditableColumn(column.key)), [visibleColumns]);
   const sheetMinWidth = 44 + visibleColumns.reduce((total, column) => total + columnWidths[column.key], 0);
   const activeCount = items.filter((item) => item.active).length;
   const referenceOnlyCount = items.filter((item) => item.active && item.pricingBehavior !== 'suggested').length;
   const overrideCount = items.filter((item) => item.active && item.divisionOverrides.length).length;
   const historyCount = items.reduce((total, item) => total + item.history.length, 0);
+  const issueRows = items.filter((item) => issuesById.has(item.id));
+  const issueCount = [...issuesById.values()].reduce((total, issues) => total + issues.length, 0);
   const availableStock = stockMaterials.filter((material) => material.active && !items.some((item) => item.stockMaterialId === material.id));
   const allVisibleSelected = filtered.length > 0 && filtered.every((item) => selectedIds.has(item.id));
+  const selectedVisible = filtered.filter((item) => selectedIds.has(item.id));
 
   const addCurrent = () => {
     const nextCategory: RateBookCategory = category === 'all' ? 'material' : category;
@@ -302,6 +442,49 @@ export function RateBook() {
     else setBulkValue('');
   };
 
+  const applyCellValue = (id: string, column: SheetColumnKey, rawValue: string) => {
+    if (column === 'active') {
+      const active = parseActive(rawValue);
+      if (active !== undefined) updateItem(id, { active });
+      return;
+    }
+    if (column === 'category') {
+      const next = parseCategory(rawValue);
+      if (next) updateItem(id, { category: next });
+      return;
+    }
+    if (column === 'item') {
+      updateItem(id, { name: rawValue });
+      return;
+    }
+    if (column === 'code') {
+      updateItem(id, { code: rawValue.trim() || undefined });
+      return;
+    }
+    if (column === 'cost') {
+      updatePricing(id, { internalCost: numberValue(rawValue) });
+      return;
+    }
+    if (column === 'sell') {
+      updatePricing(id, { sellRate: numberValue(rawValue) });
+      return;
+    }
+    if (column === 'unit') {
+      const next = parseUnit(rawValue);
+      if (next) updateItem(id, { unit: next });
+      return;
+    }
+    if (column === 'behavior') {
+      const next = parseBehavior(rawValue);
+      if (next) updatePricing(id, { pricingBehavior: next });
+      return;
+    }
+    if (column === 'effective') {
+      const next = parseDate(rawValue);
+      if (next) updatePricing(id, { effectiveDate: next });
+    }
+  };
+
   const applyBulkEdit = () => {
     const ids = [...selectedIds];
     if (!ids.length) return;
@@ -313,6 +496,110 @@ export function RateBook() {
       else if (bulkField === 'pricingBehavior') updatePricing(id, { pricingBehavior: bulkValue as RateBookPricingBehavior });
       else updateItem(id, { active: bulkValue === 'true' });
     });
+    setSheetNotice(`Updated ${ids.length} selected row${ids.length === 1 ? '' : 's'}.`);
+  };
+
+  const fillDownSelected = (column: SheetColumnKey) => {
+    if (!isEditableColumn(column) || selectedVisible.length < 2) {
+      setSheetNotice('Select at least two visible rows before using Fill down.');
+      return;
+    }
+    const source = selectedVisible[0];
+    const value = valueForCell(source, column);
+    selectedVisible.slice(1).forEach((item) => applyCellValue(item.id, column, value));
+    setSheetNotice(`Filled ${selectedVisible.length - 1} row${selectedVisible.length === 2 ? '' : 's'} from ${source.name}.`);
+  };
+
+  const copySelectedRows = async () => {
+    if (!selectedVisible.length) return;
+    const copyColumns = visibleColumns.filter((column) => column.key !== 'context');
+    const text = selectedVisible.map((item) => copyColumns.map((column) => valueForCell(item, column.key)).join('\t')).join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      setSheetNotice(`Copied ${selectedVisible.length} row${selectedVisible.length === 1 ? '' : 's'} as tabular data.`);
+    } catch {
+      setSheetNotice('Clipboard access was blocked by the browser.');
+    }
+  };
+
+  const focusCell = (rowId: string, column: SheetColumnKey) => {
+    window.requestAnimationFrame(() => {
+      const cells = Array.from(document.querySelectorAll<RateCellElement>('[data-rate-cell="true"]'));
+      const target = cells.find((cell) => cell.dataset.rateId === rowId && cell.dataset.column === column);
+      target?.focus();
+      if (target instanceof HTMLInputElement && target.type !== 'checkbox') target.select();
+    });
+  };
+
+  const handleCellKeyDown = (event: RateCellKeyboardEvent) => {
+    const rowId = event.currentTarget.dataset.rateId;
+    const column = event.currentTarget.dataset.column as SheetColumnKey | undefined;
+    if (!rowId || !column) return;
+
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      fillDownSelected(column);
+      return;
+    }
+
+    if (event.key === 'Escape' && selectedIds.size) {
+      setSelectedIds(new Set());
+      setLastSelectedId(null);
+      return;
+    }
+
+    if (event.key !== 'Enter' || event.metaKey || event.ctrlKey || event.altKey) return;
+    event.preventDefault();
+    const rowIndex = filtered.findIndex((item) => item.id === rowId);
+    if (rowIndex < 0) return;
+    const targetIndex = rowIndex + (event.shiftKey ? -1 : 1);
+    const target = filtered[targetIndex];
+    if (target) focusCell(target.id, column);
+  };
+
+  const handleCellPaste = (event: RateCellClipboardEvent) => {
+    const rowId = event.currentTarget.dataset.rateId;
+    const column = event.currentTarget.dataset.column as SheetColumnKey | undefined;
+    if (!rowId || !column || !isEditableColumn(column)) return;
+    const text = event.clipboardData.getData('text/plain');
+    const multiCell = text.includes('\t') || text.includes('\n') || text.includes('\r');
+
+    if (!multiCell && selectedIds.size > 1 && selectedIds.has(rowId)) {
+      event.preventDefault();
+      selectedVisible.forEach((item) => applyCellValue(item.id, column, text));
+      setSheetNotice(`Pasted one value into ${selectedVisible.length} selected rows.`);
+      return;
+    }
+    if (!multiCell) return;
+
+    event.preventDefault();
+    const rows = text.replaceAll('\r', '').split('\n');
+    if (rows.length && rows[rows.length - 1] === '') rows.pop();
+    const matrix = rows.map((row) => row.split('\t'));
+    const startRow = filtered.findIndex((item) => item.id === rowId);
+    const startColumn = editableVisibleColumns.findIndex((item) => item.key === column);
+    if (startRow < 0 || startColumn < 0) return;
+
+    const targetIds = filtered.slice(startRow).map((item) => item.id);
+    while (targetIds.length < matrix.length) {
+      const nextCategory: RateBookCategory = category === 'all' ? 'material' : category;
+      targetIds.push(addItem(nextCategory));
+    }
+
+    let cellCount = 0;
+    matrix.forEach((pasteRow, rowOffset) => {
+      const id = targetIds[rowOffset];
+      pasteRow.forEach((value, columnOffset) => {
+        const targetColumn = editableVisibleColumns[startColumn + columnOffset];
+        if (!targetColumn) return;
+        applyCellValue(id, targetColumn.key, value);
+        cellCount += 1;
+      });
+    });
+    const pastedIds = new Set(targetIds.slice(0, matrix.length));
+    setSelectedIds(pastedIds);
+    setLastSelectedId(targetIds[Math.max(0, matrix.length - 1)] ?? null);
+    setSheetNotice(`Pasted ${cellCount} cell${cellCount === 1 ? '' : 's'} across ${matrix.length} row${matrix.length === 1 ? '' : 's'}. Blank cost/sell cells clear values; 0 stays an explicit $0.`);
   };
 
   const toggleColumn = (key: SheetColumnKey) => {
@@ -383,6 +670,18 @@ export function RateBook() {
         </div>
       </section>
 
+      <div className="rate-book-sheet-notice" role="status">{sheetNotice}</div>
+
+      {issueCount > 0 && (
+        <section className="rate-book-qc-banner">
+          <div><strong>{issueRows.length} row{issueRows.length === 1 ? '' : 's'} to review</strong><span>{issueCount} Rate Book check{issueCount === 1 ? '' : 's'} · warnings do not block editing or quoting.</span></div>
+          <div className="rate-book-qc-examples">
+            {issueRows.slice(0, 3).map((item) => <span key={item.id}><b>{item.name}</b> · {issuesById.get(item.id)?.[0]}</span>)}
+            {issueRows.length > 3 && <span>+ {issueRows.length - 3} more row{issueRows.length - 3 === 1 ? '' : 's'}</span>}
+          </div>
+        </section>
+      )}
+
       {selectedIds.size > 0 && (
         <section className="rate-book-bulk-bar" aria-label="Bulk edit selected Rate Book rows">
           <strong>{selectedIds.size} row{selectedIds.size === 1 ? '' : 's'} selected</strong>
@@ -401,6 +700,8 @@ export function RateBook() {
             <select value={bulkValue || 'true'} onChange={(event) => setBulkValue(event.target.value)}><option value="true">Active</option><option value="false">Inactive</option></select>
           )}
           <button type="button" className="primary" onClick={applyBulkEdit}>Apply to selected</button>
+          <button type="button" onClick={() => fillDownSelected(columnForBulkField(bulkField))}>Fill down</button>
+          <button type="button" onClick={() => void copySelectedRows()}>Copy rows</button>
           <button type="button" onClick={() => { setSelectedIds(new Set()); setLastSelectedId(null); }}>Clear selection</button>
         </section>
       )}
@@ -432,14 +733,29 @@ export function RateBook() {
               ))}
             </tr></thead>
             <tbody>
-              {filtered.map((item, index) => <RateBookSheetRow item={item} rowNumber={index + 1} columns={visibleColumns} key={item.id} expanded={expandedId === item.id} selected={selectedIds.has(item.id)} onToggle={() => setExpandedId((current) => current === item.id ? null : item.id)} onSelect={(event) => toggleRowSelection(item.id, event.shiftKey)} />)}
+              {filtered.map((item, index) => <RateBookSheetRow
+                item={item}
+                rowNumber={index + 1}
+                columns={visibleColumns}
+                key={item.id}
+                expanded={expandedId === item.id}
+                selected={selectedIds.has(item.id)}
+                issues={issuesById.get(item.id) ?? []}
+                onToggle={() => setExpandedId((current) => current === item.id ? null : item.id)}
+                onSelect={(event) => toggleRowSelection(item.id, event.shiftKey)}
+                onCellKeyDown={handleCellKeyDown}
+                onCellPaste={handleCellPaste}
+              />)}
               {!filtered.length && <tr><td colSpan={visibleColumns.length + 1}><div className="rate-book-empty"><strong>No matching rate rows</strong><span>Add a row or change the filters above.</span></div></td></tr>}
             </tbody>
           </table>
         </div>
       </section>
 
-      <footer className="rate-book-footnote"><strong>Pricing rule:</strong> Rate Book → context-adjusted reference → quote snapshot → salesperson chooses the actual customer price.</footer>
+      <footer className="rate-book-footnote">
+        <strong>Pricing rule:</strong> Rate Book → context-adjusted reference → quote snapshot → salesperson chooses the actual customer price.
+        <span> Blank cost/sell means “not set”; $0 is preserved as an explicit zero. Included / No Charge / TBD remain customer-document price states and are not silently converted into $0 here.</span>
+      </footer>
     </main>
   );
 }
