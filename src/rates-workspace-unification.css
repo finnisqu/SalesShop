@@ -146,6 +146,18 @@
   margin-top: 0;
 }
 
+/* The RateBook component can run as a standalone full-height view, where it owns
+   vertical scrolling. Inside RatesWorkspace the outer workspace already owns that
+   scroll, so the embedded editor must not create a second always-visible scrollbar. */
+.rates-editor-host .rate-book-view {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: visible;
+  scrollbar-gutter: auto;
+  overscroll-behavior: auto;
+}
+
 @media (max-width: 980px) {
   .rates-reference-controls {
     align-items: stretch;
