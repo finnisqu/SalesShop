@@ -11,8 +11,21 @@
   gap: 16px;
 }
 
-.rate-book-name-panel .pricing-builder-name-field {
-  margin: 0;
+.rate-book-name-panel .pricing-builder-name-field { margin: 0; }
+
+.pricing-rate-section-heading {
+  display: grid !important;
+  grid-template-columns: 28px minmax(0,1fr) auto;
+  align-items: center !important;
+}
+
+.pricing-clean-collapse {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 3px !important;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--ink-muted, #746e64);
 }
 
 .pricing-rate-level-list,
@@ -30,6 +43,19 @@
   background: rgba(255, 255, 255, .5);
 }
 
+.pricing-rate-level-card.is-collapsed { padding: 8px 12px; }
+
+.pricing-rate-card-summary {
+  display: grid;
+  grid-template-columns: 26px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.pricing-rate-card-summary > div { display: grid; gap: 1px; }
+.pricing-rate-card-summary small { color: var(--ink-muted, #746e64); }
+.pricing-rate-card-summary > label { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-muted, #746e64); }
+
 .pricing-rate-level-main {
   display: grid;
   grid-template-columns: 125px 110px minmax(180px, 1.35fr) 145px 90px 125px;
@@ -38,14 +64,18 @@
 }
 
 .pricing-rate-level-main label,
-.pricing-rate-colors {
+.pricing-rate-colors,
+.pricing-rate-stock-picker,
+.pricing-rate-presentation-controls label {
   display: grid;
   gap: 4px;
   font-size: 11px;
 }
 
 .pricing-rate-level-main label > span,
-.pricing-rate-colors > span {
+.pricing-rate-colors > span,
+.pricing-rate-stock-picker > span,
+.pricing-rate-presentation-controls label > span {
   color: var(--ink-muted, #746e64);
   font-weight: 650;
 }
@@ -53,6 +83,8 @@
 .pricing-rate-level-main input,
 .pricing-rate-level-main select,
 .pricing-rate-colors textarea,
+.pricing-rate-stock-picker select,
+.pricing-rate-presentation-controls select,
 .pricing-rate-addon-row input,
 .pricing-rate-addon-row select {
   box-sizing: border-box;
@@ -66,8 +98,31 @@
 
 .pricing-rate-colors textarea {
   resize: vertical;
-  min-height: 72px;
+  min-height: 108px;
+  white-space: pre-wrap;
 }
+
+.pricing-rate-colors small { color: var(--ink-muted, #746e64); font-size: 10px; }
+.pricing-rate-stock-picker { max-width: 420px; }
+
+.pricing-rate-presentation-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 8px 10px;
+  background: rgba(68, 63, 56, .035);
+  border: 1px solid rgba(58, 51, 43, .08);
+}
+
+.pricing-rate-presentation-controls > label:first-child {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 7px;
+}
+
+.pricing-rate-presentation-controls > label:first-child input { width: auto; }
 
 .pricing-rate-level-footer {
   display: flex;
@@ -78,21 +133,8 @@
   font-size: 11px;
 }
 
-.pricing-rate-level-footer > span {
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-}
-
-.pricing-rate-level-footer label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--ink-muted, #746e64);
-}
-
-.pricing-rate-level-footer button {
-  margin-left: auto;
-}
+.pricing-rate-level-footer > span { font-weight: 750; font-variant-numeric: tabular-nums; }
+.pricing-rate-level-footer button { margin-left: auto; }
 
 .pricing-rate-addon-row {
   display: grid;
@@ -118,10 +160,13 @@
   color: var(--ink-muted, #746e64);
 }
 
-.pricing-rate-addon-actions label {
-  display: flex;
-  align-items: center;
-  gap: 3px;
+.pricing-rate-addon-actions label { display: flex; align-items: center; gap: 3px; }
+
+.pricing-rate-detail-list {
+  margin: 0;
+  padding-left: 17px;
+  display: grid;
+  gap: 2px;
 }
 
 .pricing-builder-health {
@@ -131,54 +176,22 @@
   border: 1px solid rgba(58, 51, 43, .13);
 }
 
-.pricing-builder-health > header {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.pricing-builder-health ul {
-  margin: 0;
-  padding-left: 20px;
-  font-size: 12px;
-}
-
-.pricing-builder-health p {
-  margin: 0;
-  font-size: 12px;
-}
-
-.pricing-builder-health.has-warnings {
-  background: rgba(238, 219, 176, .2);
-  border-left: 3px solid rgba(158, 112, 47, .55);
-}
-
-.pricing-builder-health.is-clear {
-  background: rgba(198, 222, 196, .22);
-  border-left: 3px solid rgba(74, 115, 73, .5);
-}
+.pricing-builder-health > header { display: flex; justify-content: space-between; gap: 10px; }
+.pricing-builder-health ul { margin: 0; padding-left: 20px; font-size: 12px; }
+.pricing-builder-health p { margin: 0; font-size: 12px; }
+.pricing-builder-health.has-warnings { background: rgba(238, 219, 176, .2); border-left: 3px solid rgba(158, 112, 47, .55); }
+.pricing-builder-health.is-clear { background: rgba(198, 222, 196, .22); border-left: 3px solid rgba(74, 115, 73, .5); }
 
 @media (max-width: 1180px) {
-  .pricing-rate-level-main {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .pricing-rate-addon-row {
-    grid-template-columns: 120px 1fr 1.3fr 80px 130px 110px 82px;
-  }
+  .pricing-rate-level-main { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pricing-rate-addon-row { grid-template-columns: 120px 1fr 1.3fr 80px 130px 110px 82px; }
 }
 
 @media (max-width: 850px) {
-  .rate-book-name-panel {
-    grid-template-columns: 1fr;
-  }
-
+  .rate-book-name-panel { grid-template-columns: 1fr; }
   .pricing-rate-level-main,
-  .pricing-rate-addon-row {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .pricing-rate-addon-row.is-head {
-    display: none;
-  }
+  .pricing-rate-addon-row { grid-template-columns: 1fr 1fr; }
+  .pricing-rate-addon-row.is-head { display: none; }
+  .pricing-rate-section-heading { grid-template-columns: 28px 1fr; }
+  .pricing-rate-section-heading > button:last-child { grid-column: 2; justify-self: start; }
 }
