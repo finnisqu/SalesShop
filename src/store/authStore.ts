@@ -32,6 +32,14 @@ function reloadForIdentityBoundary() {
   if (typeof window !== 'undefined') window.location.reload();
 }
 
+function browserTimezone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
 async function applySession(session: Session | null) {
   stopCloudSync();
 
@@ -133,7 +141,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { shop_name: shopName.trim() || 'My Shop' } },
+      options: {
+        data: {
+          shop_name: shopName.trim() || 'My Shop',
+          shop_timezone: browserTimezone(),
+        },
+      },
     });
     if (error) {
       set({ busy: false, error: error.message });
