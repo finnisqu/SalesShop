@@ -53,7 +53,7 @@ export function QuickMaterialQuote({ quote }: { quote: Quote }) {
     setQuantity('');
   };
 
-  if (!availableMaterials.length) return null;
+  if (quote.documentType !== 'quote' || !availableMaterials.length) return null;
 
   return (
     <section className="quick-material-quote">
