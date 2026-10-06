@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { AuthGate } from './components/AuthGate';
 import { PublicQuotePage } from './components/PublicQuotePage';
+import { appRelativePath } from './lib/appUrl';
 import './index.css';
 import './auth.css';
 import './pricing-schedule-builder.css';
@@ -27,9 +28,8 @@ import './material-stock-program.css';
 import './board-scroll-controls.css';
 import './quote-line-reorder.css';
 import './rates-usability.css';
-import './rates-workspace-unification.css';
 
-const isPublicQuote = window.location.pathname.startsWith('/q/');
+const isPublicQuote = appRelativePath().startsWith('/q/');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

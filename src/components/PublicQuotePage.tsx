@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { appRelativePath } from '../lib/appUrl';
 import {
   signPublicQuote,
   viewPublicQuote,
@@ -240,7 +241,8 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
 
 export function PublicQuotePage() {
   const token = useMemo(() => {
-    const raw = window.location.pathname.startsWith('/q/') ? window.location.pathname.slice(3) : '';
+    const path = appRelativePath();
+    const raw = path.startsWith('/q/') ? path.slice(3) : '';
     try { return decodeURIComponent(raw); } catch { return raw; }
   }, []);
   const [data, setData] = useState<PublicQuoteResponse | null>(null);

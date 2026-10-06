@@ -1,3 +1,4 @@
+import { appAbsoluteUrl } from '../lib/appUrl';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { useCrmStore } from '../store/crmStore';
@@ -110,5 +111,5 @@ export async function revokeQuoteShare(quoteId: string, shareId?: string) {
 }
 
 export function quoteShareUrl(share: Pick<QuoteShare, 'token'>) {
-  return `${window.location.origin}/q/${encodeURIComponent(share.token)}`;
+  return appAbsoluteUrl(`/q/${encodeURIComponent(share.token)}`);
 }
