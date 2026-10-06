@@ -89,24 +89,35 @@
     background: rgba(255, 252, 244, .9);
     color: #3e3a33;
     padding: 0 14px;
+    line-height: 42px;
     text-align: left;
   }
 
   .quote-details-grid input[type="date"]::-webkit-date-and-time-value {
     min-width: 0;
     max-width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
     margin: 0;
+    padding: 0;
+    line-height: normal;
     text-align: left;
   }
 
   .quote-details-grid input[type="date"]::-webkit-datetime-edit {
     min-width: 0;
     max-width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
     padding: 0;
+    line-height: normal;
     text-align: left;
   }
 
   .quote-details-grid input[type="date"]::-webkit-calendar-picker-indicator {
+    align-self: center;
     margin-left: auto;
     opacity: .62;
   }
