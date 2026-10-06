@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 
 export function CompanySettings() {
@@ -6,15 +5,6 @@ export function CompanySettings() {
   const update = useCompanySettingsStore((state) => state.update);
   const saving = useCompanySettingsStore((state) => state.saving);
   const error = useCompanySettingsStore((state) => state.error);
-  const materialSummary = useMemo(() => {
-    const active = settings.stockMaterials.filter((material) => material.active);
-    return {
-      activeColors: active.length,
-      stockColors: active.filter((material) => material.stockProgram).length,
-      variants: active.reduce((total, material) => total + (material.variants?.filter((variant) => variant.active !== false).length ?? 0), 0),
-      suppliers: new Set(active.map((material) => material.supplier?.trim()).filter(Boolean)).size,
-    };
-  }, [settings.stockMaterials]);
 
   return (
     <main className="company-settings-view">
@@ -47,20 +37,6 @@ export function CompanySettings() {
             <label><span>Contact phone</span><input value={settings.quoteContactPhone} onChange={(event) => update({ quoteContactPhone: event.target.value })} /></label>
           </div>
         </article>
-      </section>
-
-      <section className="company-settings-card company-stock-library">
-        <header className="company-settings-stock-header">
-          <div><strong>Material catalog</strong><small>Material pricing is managed in <b>Rate Book → Materials</b>. Supplier catalogs can be broad; the STOCK program is the smaller set of colors that receives your Level pricing guide.</small></div>
-          <div><span>{materialSummary.stockColors} STOCK · {materialSummary.activeColors} active</span></div>
-        </header>
-        <div className="company-settings-fields company-material-summary">
-          <div><span>Active colors</span><strong>{materialSummary.activeColors}</strong></div>
-          <div><span>STOCK program</span><strong>{materialSummary.stockColors}</strong></div>
-          <div><span>Physical variants</span><strong>{materialSummary.variants}</strong></div>
-          <div><span>Suppliers</span><strong>{materialSummary.suppliers}</strong></div>
-          <p>Company Settings owns your organization identity. The Rate Book owns supplier material intelligence and the deliberate STOCK-program selection, so salespeople have one authoritative pricing reference.</p>
-        </div>
       </section>
     </main>
   );
