@@ -1,0 +1,204 @@
+.quote-document-setup {
+  grid-column: 1 / -1;
+  min-width: 0;
+  border: 1px solid rgba(91, 78, 58, .16);
+  border-radius: 5px;
+  background: rgba(226, 222, 211, .62);
+  overflow: hidden;
+}
+
+.quote-document-setup > summary {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  box-sizing: border-box;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.quote-document-setup > summary::-webkit-details-marker {
+  display: none;
+}
+
+.quote-document-setup[open] > summary {
+  border-bottom: 1px solid rgba(91, 78, 58, .12);
+  background: rgba(255, 252, 244, .28);
+}
+
+.quote-document-setup-heading {
+  flex: 0 0 auto;
+  color: #5d574d;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+
+.quote-document-setup-summary {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: #817a6f;
+  font-size: 9px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-document-setup-chevron {
+  flex: 0 0 auto;
+  color: #827b6e;
+  font-size: 12px;
+  line-height: 1;
+  transition: transform 140ms ease;
+}
+
+.quote-document-setup[open] .quote-document-setup-chevron {
+  transform: rotate(180deg);
+}
+
+.quote-document-setup-body {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+}
+
+.quote-document-type-row {
+  min-width: 0;
+}
+
+.quote-document-type-row > span {
+  display: block;
+  margin: 0 0 4px 1px;
+  color: #80786b;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.quote-document-type-switch {
+  width: min(360px, 100%);
+  min-width: 0;
+  display: flex;
+  padding: 2px;
+  box-sizing: border-box;
+  border: 1px solid #c6beaf;
+  border-radius: 4px;
+  background: #dcd7cd;
+}
+
+.quote-document-type-switch button {
+  min-width: 0;
+  flex: 1 1 0;
+  height: 31px;
+  border: 0;
+  border-radius: 3px;
+  padding: 0 10px;
+  background: transparent;
+  color: #7c756a;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.quote-document-type-switch button.active {
+  background: #fffaf0;
+  color: #443f36;
+  box-shadow: 0 1px 2px rgba(57, 49, 36, .10), inset 0 -2px #c4a640;
+}
+
+.quote-document-type-switch button:disabled {
+  cursor: default;
+}
+
+.quote-document-type-switch button:not(.active):disabled {
+  opacity: .48;
+}
+
+.quote-document-meta-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* Revision is an optional qualifier, not part of the normal customer/project flow. */
+.quote-revision-label-field {
+  order: 20;
+}
+
+@media (max-width: 700px) {
+  /* The earlier mobile ordering rule targeted the fourth raw grid child. The new setup
+     wrapper changes that child index, so reset it and order Revision by its semantic class. */
+  .quote-details-grid > label:nth-child(4) {
+    order: 0;
+  }
+
+  .quote-revision-label-field {
+    order: 20;
+  }
+
+  .quote-document-setup {
+    border-radius: 8px;
+    background: rgba(222, 218, 208, .72);
+    box-shadow: inset 0 1px rgba(255, 255, 255, .35);
+  }
+
+  .quote-document-setup > summary {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .quote-document-setup-heading {
+    font-size: 9px;
+  }
+
+  .quote-document-setup-summary {
+    font-size: 10px;
+  }
+
+  .quote-document-setup-body {
+    gap: 11px;
+    padding: 10px 10px 11px;
+    background: rgba(246, 242, 233, .42);
+  }
+
+  .quote-document-type-row > span {
+    font-size: 8px;
+  }
+
+  .quote-document-type-switch {
+    width: 100%;
+    height: var(--document-command-height, 42px);
+    padding: 2px;
+    border-radius: var(--document-command-radius, 7px);
+    background: rgba(226, 222, 211, .9);
+  }
+
+  .quote-document-type-switch button {
+    height: 36px;
+    border-radius: 5px;
+    font-size: 11px;
+  }
+
+  .quote-document-type-switch button.active {
+    background: var(--document-command-active, #fff8e5);
+  }
+
+  .quote-document-meta-fields {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 390px) {
+  .quote-document-setup-summary {
+    font-size: 9px;
+  }
+
+  .quote-document-meta-fields {
+    grid-template-columns: 1fr;
+  }
+}
