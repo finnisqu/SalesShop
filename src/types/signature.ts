@@ -1,6 +1,6 @@
 import {
   displayQuoteNumber,
-  quoteTotal,
+  quoteLineTotal,
   type CommercialDocumentType,
   type PricingScheduleItem,
   type Quote,
@@ -79,30 +79,38 @@ export interface SignatureInput {
 }
 
 export function buildAcceptedQuoteSnapshot(quote: Quote): AcceptedQuoteSnapshot {
+  const frozen = quote.history.find((revision) => revision.revision === quote.revision);
+  const documentType = frozen?.documentType ?? quote.documentType;
+  const sections = frozen?.sections ?? quote.sections;
+  const lines = frozen?.lines ?? quote.lines;
+  const customerColumns = frozen?.customerColumns ?? quote.customerColumns;
+  const customerNotes = frozen?.customerNotes ?? quote.customerNotes;
+  const scheduleItems = frozen?.pricingSchedule?.customerItems ?? quote.pricingSchedule?.customerItems ?? [];
+
   return {
     quoteId: quote.id,
     quoteNumber: displayQuoteNumber(quote),
-    documentType: quote.documentType,
-    parentQuoteId: quote.parentQuoteId,
-    changeOrderNumber: quote.changeOrderNumber,
-    revision: quote.revision,
-    revisionLabel: quote.revisionLabel,
-    quoteDate: quote.quoteDate,
-    title: quote.title,
-    projectId: quote.projectId,
-    companyId: quote.companyId,
-    companyName: quote.companyName,
-    contactId: quote.contactId,
-    contactName: quote.contactName,
-    contactEmail: quote.contactEmail,
-    address: quote.address,
-    sections: structuredClone(quote.sections.filter((section) => section.customerVisible)),
-    lines: structuredClone(quote.lines.filter((line) => line.customerVisible)),
-    customerColumns: { ...quote.customerColumns },
-    customerNotes: quote.customerNotes,
-    pricingSchedule: quote.documentType === 'pricing-schedule'
-      ? { customerItems: structuredClone(quote.pricingSchedule?.customerItems ?? []) }
+    documentType,
+    parentQuoteId: frozen?.parentQuoteId ?? quote.parentQuoteId,
+    changeOrderNumber: frozen?.changeOrderNumber ?? quote.changeOrderNumber,
+    revision: frozen?.revision ?? quote.revision,
+    revisionLabel: frozen?.label ?? quote.revisionLabel,
+    quoteDate: frozen?.quoteDate ?? quote.quoteDate,
+    title: frozen?.title ?? quote.title,
+    projectId: frozen?.projectId ?? quote.projectId,
+    companyId: frozen?.companyId ?? quote.companyId,
+    companyName: frozen?.companyName ?? quote.companyName,
+    contactId: frozen?.contactId ?? quote.contactId,
+    contactName: frozen?.contactName ?? quote.contactName,
+    contactEmail: frozen?.contactEmail ?? quote.contactEmail,
+    address: frozen?.address ?? quote.address,
+    sections: structuredClone(sections.filter((section) => section.customerVisible)),
+    lines: structuredClone(lines.filter((line) => line.customerVisible)),
+    customerColumns: { ...customerColumns },
+    customerNotes,
+    pricingSchedule: documentType === 'pricing-schedule'
+      ? { customerItems: structuredClone(scheduleItems) }
       : undefined,
-    acceptedTotal: quoteTotal(quote),
+    acceptedTotal: lines.reduce((total, line) => total + quoteLineTotal(line), 0),
   };
 }
