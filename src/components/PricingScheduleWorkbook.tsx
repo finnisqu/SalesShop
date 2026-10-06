@@ -27,20 +27,19 @@ import '../pricing-schedule.css';
 
 const SAVE_DEBOUNCE_MS = 500;
 
-function numberInput(value: string, fallback: number) {
+function positiveInteger(value: string, fallback: number) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : fallback;
 }
 
-function makeMapping(schedule: PricingScheduleData, patch: Partial<PricingScheduleMapping>) {
+function baseMapping(schedule: PricingScheduleData): PricingScheduleMapping {
   const sheets = pricingScheduleSheets(schedule.workbookData);
-  const current = schedule.mapping ?? {
+  return schedule.mapping ?? {
     sheetId: sheets[0]?.id ?? '',
     headerRow: 1,
     firstDataRow: 2,
     columns: {},
   };
-  return { ...current, ...patch, columns: patch.columns ?? current.columns };
 }
 
 export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
@@ -70,9 +69,8 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
 
   useEffect(() => {
     const host = hostRef.current;
-    if (!host) return;
-    const workbookData = scheduleRef.current.workbookData ?? createPricingScheduleData(quote.id).workbookData;
-    if (!workbookData) return;
+    const workbookData = scheduleRef.current.workbookData;
+    if (!host || !workbookData) return;
 
     const container = document.createElement('div');
     container.className = 'pricing-schedule-univer-mount';
@@ -87,9 +85,9 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
           header: false,
           toolbar: true,
           formulaBar: true,
-          footer: true,
+          footer: { sheetBar: true, statisticBar: true, menus: true, zoomSlider: true },
           contextMenu: true,
-          disableAutoFocus: false,
+          disableAutoFocus: true,
         }),
       ],
     });
@@ -104,9 +102,7 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
 
     return () => {
       window.clearTimeout(saveTimer);
-      const snapshot = workbook.save();
-      const current = scheduleRef.current;
-      const next = mergePricingScheduleData(quote.id, current, { workbookData: snapshot });
+      const next = mergePricingScheduleData(quote.id, scheduleRef.current, { workbookData: workbook.save() });
       scheduleRef.current = next;
       updateQuote(quote.id, { pricingSchedule: next });
       commandSubscription.dispose();
@@ -118,11 +114,12 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   }, [quote.id, quote.pricingSchedule?.importedAt]);
 
   const setMapping = (patch: Partial<PricingScheduleMapping>) => {
-    saveSchedule({ mapping: makeMapping(scheduleRef.current, patch) });
+    const current = baseMapping(scheduleRef.current);
+    saveSchedule({ mapping: { ...current, ...patch, columns: patch.columns ?? current.columns } });
   };
 
   const setColumn = (field: PricingScheduleField, value: string) => {
-    const mapping = makeMapping(scheduleRef.current, {});
+    const mapping = baseMapping(scheduleRef.current);
     const columns = { ...mapping.columns };
     if (value === '') delete columns[field];
     else columns[field] = Number(value);
@@ -162,17 +159,6 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
     }
   };
 
-  const exportWorkbook = async () => {
-    try {
-      await exportExcelPricingWorkbook(
-        scheduleRef.current.workbookData,
-        scheduleRef.current.sourceFileName || `${quote.title || 'pricing-schedule'}.xlsx`,
-      );
-    } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : 'The workbook could not be exported.');
-    }
-  };
-
   return (
     <div className="pricing-schedule-workspace">
       <header className="pricing-schedule-workspace-header">
@@ -181,18 +167,12 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
           <small>{schedule.sourceFileName || 'Built in SalesShop'} · {schedule.customerItems.length} mapped customer row{schedule.customerItems.length === 1 ? '' : 's'}</small>
         </div>
         <div className="pricing-schedule-workbook-actions">
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            hidden
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void importFile(file);
-            }}
-          />
+          <input ref={fileRef} type="file" accept=".xlsx" hidden onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void importFile(file);
+          }} />
           <button type="button" onClick={() => fileRef.current?.click()} disabled={importing}>{importing ? 'Importing…' : 'Import .xlsx'}</button>
-          <button type="button" onClick={() => void exportWorkbook()}>Export .xlsx</button>
+          <button type="button" onClick={() => void exportExcelPricingWorkbook(scheduleRef.current.workbookData, scheduleRef.current.sourceFileName || `${quote.title}.xlsx`)}>Export .xlsx</button>
           <button type="button" onClick={autoMap}>Auto-map headers</button>
         </div>
       </header>
@@ -201,45 +181,18 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
 
       <div className="pricing-schedule-workbook-layout">
         <div ref={hostRef} className="pricing-schedule-workbook-host" aria-label="Pricing schedule workbook" />
-
         <aside className="pricing-schedule-mapping-panel">
-          <header>
-            <strong>Publish mapping</strong>
-            <small>Only mapped fields become customer contract data. Everything else stays internal.</small>
-          </header>
-
-          <label>
-            <span>Sheet</span>
-            <select
-              value={schedule.mapping?.sheetId ?? sheets[0]?.id ?? ''}
-              onChange={(event) => setMapping({ sheetId: event.target.value })}
-            >
-              {sheets.map((sheet) => <option key={sheet.id} value={sheet.id}>{sheet.name}</option>)}
-            </select>
-          </label>
+          <header><strong>Publish mapping</strong><small>Only mapped fields become customer contract data. Everything else stays internal.</small></header>
+          <label><span>Sheet</span><select value={schedule.mapping?.sheetId ?? sheets[0]?.id ?? ''} onChange={(event) => setMapping({ sheetId: event.target.value })}>{sheets.map((sheet) => <option key={sheet.id} value={sheet.id}>{sheet.name}</option>)}</select></label>
           <div className="pricing-schedule-row-map">
-            <label><span>Header row</span><input type="number" min="1" value={schedule.mapping?.headerRow ?? 1} onChange={(event) => setMapping({ headerRow: numberInput(event.target.value, 1) })} /></label>
-            <label><span>First data row</span><input type="number" min="1" value={schedule.mapping?.firstDataRow ?? 2} onChange={(event) => setMapping({ firstDataRow: numberInput(event.target.value, 2) })} /></label>
-            <label><span>Last data row</span><input type="number" min="1" value={schedule.mapping?.lastDataRow ?? ''} placeholder="Auto" onChange={(event) => setMapping({ lastDataRow: event.target.value ? numberInput(event.target.value, 2) : undefined })} /></label>
+            <label><span>Header row</span><input type="number" min="1" value={schedule.mapping?.headerRow ?? 1} onChange={(event) => setMapping({ headerRow: positiveInteger(event.target.value, 1) })} /></label>
+            <label><span>First data row</span><input type="number" min="1" value={schedule.mapping?.firstDataRow ?? 2} onChange={(event) => setMapping({ firstDataRow: positiveInteger(event.target.value, 2) })} /></label>
+            <label><span>Last data row</span><input type="number" min="1" value={schedule.mapping?.lastDataRow ?? ''} placeholder="Auto" onChange={(event) => setMapping({ lastDataRow: event.target.value ? positiveInteger(event.target.value, 2) : undefined })} /></label>
           </div>
-
           <div className="pricing-schedule-field-map">
-            {PRICING_SCHEDULE_FIELDS.map((field) => (
-              <label key={field}>
-                <span>{PRICING_SCHEDULE_FIELD_LABELS[field]}</span>
-                <select value={schedule.mapping?.columns[field] ?? ''} onChange={(event) => setColumn(field, event.target.value)}>
-                  <option value="">Not mapped</option>
-                  {columnOptions.map((option) => <option value={option.index} key={`${field}-${option.index}`}>{option.label}</option>)}
-                </select>
-              </label>
-            ))}
+            {PRICING_SCHEDULE_FIELDS.map((field) => <label key={field}><span>{PRICING_SCHEDULE_FIELD_LABELS[field]}</span><select value={schedule.mapping?.columns[field] ?? ''} onChange={(event) => setColumn(field, event.target.value)}><option value="">Not mapped</option>{columnOptions.map((option) => <option value={option.index} key={`${field}-${option.index}`}>{option.label}</option>)}</select></label>)}
           </div>
-
-          <div className="pricing-schedule-publish-note">
-            <strong>{schedule.customerItems.length}</strong>
-            <span>customer rows</span>
-            <small>Description + Customer price are required before Send.</small>
-          </div>
+          <div className="pricing-schedule-publish-note"><strong>{schedule.customerItems.length}</strong><span>customer rows</span><small>Description + Customer price are required before Send.</small></div>
         </aside>
       </div>
 
