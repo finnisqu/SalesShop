@@ -14,6 +14,7 @@ import './account-forecast.css';
 import './mobile.css';
 import './mobile-demo-polish.css';
 import './mobile-board-carousel.css';
+import './global-search.css';
 
 const isPublicQuote = window.location.pathname.startsWith('/q/');
 
