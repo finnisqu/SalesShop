@@ -16,6 +16,7 @@ import { Dashboard } from './components/Dashboard';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
+import { QuickCreate } from './components/QuickCreate';
 import { QuoteShareControl } from './components/QuoteShareControl';
 import { Quotes } from './components/Quotes';
 import { Sidebar } from './components/Sidebar';
@@ -65,6 +66,7 @@ function App() {
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
         <GlobalSearch />
+        <QuickCreate />
         <div className="app-account-zone">
           <div className="migration-chip">React foundation</div>
           <AuthStatus />
