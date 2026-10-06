@@ -21,6 +21,15 @@ function priceText(item: PricingScheduleItem) {
   return `${money.format(item.customerPrice)}${item.unitLabel ? ` ${item.unitLabel}` : ''}`;
 }
 
+function itemDetails(item: PricingScheduleItem) {
+  const details = item.details?.length ? item.details : item.colors ?? [];
+  if (!details.length) return <span>—</span>;
+  if (item.detailsLayout === 'list') {
+    return <ul className="pricing-rate-detail-list">{details.map((detail, index) => <li key={`${detail}-${index}`}>{detail}</li>)}</ul>;
+  }
+  return <span>{details.join(' · ')}</span>;
+}
+
 function RateSheetTable({ items, compact }: PricingScheduleCustomerTableProps) {
   const groups = new Map<string, PricingScheduleItem[]>();
   items.forEach((item) => {
@@ -37,12 +46,10 @@ function RateSheetTable({ items, compact }: PricingScheduleCustomerTableProps) {
           {rows.map((item) => (
             <div className="pricing-rate-customer-row" key={`${item.sourceRow}-${item.description ?? ''}`}>
               <div>
-                <strong>{item.description || item.itemType || '—'}</strong>
-                {item.series && <small>{item.itemType && item.description !== item.itemType ? `${item.itemType} · ` : ''}{item.series}</small>}
+                <strong>{item.description || '—'}</strong>
+                {item.itemType && <small>{item.itemType}</small>}
               </div>
-              <div className="pricing-rate-customer-details">
-                {item.colors?.length ? <span>{item.colors.join(' · ')}</span> : <span>{item.optionCode || '—'}</span>}
-              </div>
+              <div className="pricing-rate-customer-details">{itemDetails(item)}</div>
               <strong>{priceText(item)}</strong>
             </div>
           ))}
