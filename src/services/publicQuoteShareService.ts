@@ -52,8 +52,20 @@ export interface PublicSignaturePayload {
   acceptedSnapshot: PublicQuotePayload;
 }
 
+export interface PublicOrganizationBranding {
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logoUrl?: string;
+  contactName?: string;
+  contactPhone?: string;
+}
+
 export interface PublicQuoteResponse {
   organizationName: string;
+  organization?: PublicOrganizationBranding;
   quote: PublicQuotePayload;
   share: {
     status: 'active' | 'signed';
