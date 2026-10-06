@@ -60,6 +60,9 @@ async function invoke(body: Record<string, unknown>): Promise<ShareResponse> {
 
 async function prepareCurrentRevision(quoteId: string) {
   const { organizationId } = requireCloudContext();
+  const client = supabase;
+  if (!client) throw new Error('Supabase is not configured.');
+
   let state = useQuoteStore.getState();
   let quote = state.quotes.find((candidate) => candidate.id === quoteId);
   if (!quote) throw new Error('Commercial document not found.');
@@ -102,7 +105,7 @@ async function prepareCurrentRevision(quoteId: string) {
     activeQuoteId: state.activeQuoteId,
   });
 
-  const { data: frozenRevision, error: freezeError } = await supabase
+  const { data: frozenRevision, error: freezeError } = await client
     .from('quote_revisions')
     .select('revision')
     .eq('organization_id', organizationId)
