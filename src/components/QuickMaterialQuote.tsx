@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import { useQuoteStore } from '../store/quoteStore';
-import { resolveMaterialLevel } from '../types/materialLevelGuide';
+import { resolveMaterialLevel, resolveNonStockMaterialPrice } from '../types/materialLevelGuide';
 import type { Quote } from '../types/quote';
 import {
   defaultMaterialPurchaseOption,
@@ -51,16 +51,25 @@ export function QuickMaterialQuote({ quote }: { quote: Quote }) {
 
   const availableMaterials = useMemo(() => materials
     .filter((material) => material.active)
-    .sort((a, b) => (a.supplier ?? '').localeCompare(b.supplier ?? '') || a.materialType.localeCompare(b.materialType) || a.name.localeCompare(b.name)), [materials]);
+    .sort((a, b) => Number(b.stockProgram) - Number(a.stockProgram) || (a.supplier ?? '').localeCompare(b.supplier ?? '') || a.materialType.localeCompare(b.materialType) || a.name.localeCompare(b.name)), [materials]);
   const material = availableMaterials.find((candidate) => candidate.id === materialId);
   const activeVariants = (material?.variants ?? []).filter((variant) => variant.active !== false);
   const variant = activeVariants.find((candidate) => candidate.id === variantId) ?? (material ? defaultMaterialVariant(material) : undefined);
   const activePurchaseOptions = (variant?.purchaseOptions ?? []).filter((option) => option.active !== false);
   const purchaseOption = activePurchaseOptions.find((candidate) => candidate.id === purchaseOptionId) ?? defaultMaterialPurchaseOption(variant);
   const reference = material ? resolveStockMaterialCostReference(material, variant?.id, purchaseOption?.id) : undefined;
-  const resolved = material ? resolveMaterialLevel(guide.rules, reference?.costPerSf, material.builderLevelId) : undefined;
+  const stockEquivalent = material ? resolveMaterialLevel(guide.rules, reference?.costPerSf, material.stockProgram ? material.builderLevelId : undefined) : undefined;
+  const nonStockGuide = material ? resolveNonStockMaterialPrice(guide, reference?.costPerSf) : undefined;
+  const quoteRate = material?.stockProgram
+    ? stockEquivalent?.customerRate
+    : stockEquivalent?.customerRate ?? nonStockGuide?.customerRate;
+  const pricingSource = material?.stockProgram
+    ? 'stock-level' as const
+    : stockEquivalent?.customerRate !== undefined
+      ? 'non-stock-stock-equivalent' as const
+      : 'non-stock-guide' as const;
   const sf = numberValue(quantity);
-  const lineTotal = sf !== undefined && resolved?.customerRate !== undefined ? sf * resolved.customerRate : undefined;
+  const lineTotal = sf !== undefined && quoteRate !== undefined ? sf * quoteRate : undefined;
 
   const chooseMaterial = (id: string) => {
     setMaterialId(id);
@@ -74,19 +83,30 @@ export function QuickMaterialQuote({ quote }: { quote: Quote }) {
   };
 
   const addMaterialLine = () => {
-    if (!material || sf === undefined || resolved?.customerRate === undefined) return;
+    if (!material || sf === undefined || quoteRate === undefined) return;
     const lineId = addLine(quote.id, 'item');
-    const levelLabel = resolved.rule.label;
     const spec = variant ? [variant.thickness, variant.finish].filter(Boolean).join(' ') : '';
-    const description = [material.name, spec, levelLabel, material.materialType].filter(Boolean).join(' · ');
+    const description = material.stockProgram
+      ? [material.name, spec, stockEquivalent?.rule.label, material.materialType].filter(Boolean).join(' · ')
+      : [material.name, spec, material.materialType].filter(Boolean).join(' · ');
     updateLine(quote.id, lineId, {
       description,
       pricingMode: 'quantity-rate',
       quantity: sf,
-      rate: resolved.customerRate,
+      rate: quoteRate,
       amount: undefined,
       customerVisible: true,
       includeInTotal: true,
+      materialReference: {
+        materialId: material.id,
+        variantId: variant?.id,
+        purchaseOptionId: purchaseOption?.id,
+        stockProgram: material.stockProgram,
+        pricingSource,
+        sourceCostPerSf: reference?.costPerSf,
+        guideRate: nonStockGuide?.customerRate,
+        stockEquivalentLevel: stockEquivalent?.rule.label,
+      },
     });
     setQuantity('');
   };
@@ -96,27 +116,32 @@ export function QuickMaterialQuote({ quote }: { quote: Quote }) {
   return (
     <section className="quick-material-quote">
       <header>
-        <div><span className="quote-control-heading">Quick material</span><small>Choose the actual material spec. SalesShop uses its supplier cost reference to find the standard builder level, then you can change the quote rate anytime.</small></div>
-        {resolved && <span className="quick-material-level-chip">{resolved.rule.label}</span>}
+        <div><span className="quote-control-heading">Quick material</span><small>STOCK colors use the Level guide. Non-stock colors are clearly flagged; Quick Quote still assumes the stock-equivalent Level price for speed while showing the normal non-stock formula reference.</small></div>
+        {material && <span className={`quick-material-level-chip ${material.stockProgram ? 'is-stock' : 'is-non-stock'}`}>{material.stockProgram ? stockEquivalent?.rule.label ?? 'STOCK' : 'NON-STOCK'}</span>}
       </header>
       <div className="quick-material-fields">
         <label className="quick-material-select"><span>Material</span><select value={materialId} onChange={(event) => chooseMaterial(event.target.value)}><option value="">Choose color…</option>{availableMaterials.map((item) => {
           const itemReference = resolveStockMaterialCostReference(item);
-          const level = resolveMaterialLevel(guide.rules, itemReference.costPerSf, item.builderLevelId);
+          const level = resolveMaterialLevel(guide.rules, itemReference.costPerSf, item.stockProgram ? item.builderLevelId : undefined);
           const source = item.brand || item.supplier;
-          return <option value={item.id} key={item.id}>{item.name}{level ? ` · ${level.rule.label}` : ''} · {item.materialType}{source ? ` · ${source}` : ''}</option>;
+          return <option value={item.id} key={item.id}>{item.name} · {item.stockProgram ? `STOCK${level ? ` · ${level.rule.label}` : ''}` : 'NON-STOCK'} · {item.materialType}{source ? ` · ${source}` : ''}</option>;
         })}</select></label>
         {material && activeVariants.length > 0 && <label className="quick-material-variant"><span>Spec</span><select value={variant?.id ?? ''} onChange={(event) => chooseVariant(event.target.value)}>{activeVariants.map((item) => <option value={item.id} key={item.id}>{variantLabel(item)}</option>)}</select></label>}
         {variant && activePurchaseOptions.length > 1 && <label className="quick-material-program"><span>Cost reference</span><select value={purchaseOption?.id ?? ''} onChange={(event) => setPurchaseOptionId(event.target.value)}>{activePurchaseOptions.map((item) => <option value={item.id} key={item.id}>{item.label}{item.minQuantity ? ` · ${item.minQuantity}+` : ''}</option>)}</select></label>}
         <label><span>Square feet</span><input type="number" inputMode="decimal" step="0.01" min="0" value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="45" /></label>
-        <div className="quick-material-rate">
-          <span>Standard builder</span>
-          <strong>{resolved?.customerRate === undefined ? '—' : `${money.format(resolved.customerRate)}/SF`}</strong>
-          <small>{resolved ? `${resolved.basis} · final countertop rate` : 'This spec needs an SF cost or assigned fixed level'}</small>
+        <div className={`quick-material-rate ${material && !material.stockProgram ? 'is-non-stock' : ''}`}>
+          <span>{material?.stockProgram === false ? 'Quick quote assumption' : 'Standard builder'}</span>
+          <strong>{quoteRate === undefined ? '—' : `${money.format(quoteRate)}/SF`}</strong>
+          <small>{material?.stockProgram === false
+            ? stockEquivalent?.customerRate !== undefined
+              ? `Assumes ${stockEquivalent.rule.label} STOCK-program price · normal non-stock guide ${nonStockGuide?.customerRate === undefined ? '—' : `${money.format(nonStockGuide.customerRate)}/SF`} (${nonStockGuide?.basis ?? 'not set'})`
+              : `No stock-equivalent Level available · using non-stock guide ${nonStockGuide?.basis ?? 'not set'}`
+            : stockEquivalent ? `${stockEquivalent.basis} · final countertop rate` : 'This STOCK spec needs an SF cost or assigned Level'}</small>
         </div>
-        <button type="button" disabled={!material || sf === undefined || resolved?.customerRate === undefined} onClick={addMaterialLine}>+ Add to quote{lineTotal === undefined ? '' : ` · ${money.format(lineTotal)}`}</button>
+        <button type="button" disabled={!material || sf === undefined || quoteRate === undefined} onClick={addMaterialLine}>+ Add to quote{lineTotal === undefined ? '' : ` · ${money.format(lineTotal)}`}</button>
       </div>
       {material && <footer>
+        <span className={material.stockProgram ? 'quick-material-program-status is-stock' : 'quick-material-program-status is-non-stock'}>{material.stockProgram ? 'STOCK PROGRAM' : 'NON-STOCK MATERIAL'}</span>
         <span>{materialLabel(material, variant, purchaseOption)}</span>
         <span>{reference?.costPerSf === undefined ? 'Material cost not set' : `${money.format(reference.costPerSf)}/SF effective material cost`}</span>
         {variant?.features?.length ? <span>{variant.features.join(' · ')}</span> : null}
