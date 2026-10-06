@@ -45,16 +45,18 @@ async function prepareCurrentRevision(quoteId: string) {
   const { organizationId } = requireCloudContext();
   let state = useQuoteStore.getState();
   let quote = state.quotes.find((candidate) => candidate.id === quoteId);
-  if (!quote) throw new Error('Quote not found.');
+  if (!quote) throw new Error('Commercial document not found.');
   if (quote.status === 'Declined' || quote.status === 'Expired') {
-    throw new Error(`${quote.status} quotes cannot be shared. Create or reopen a revision first.`);
+    throw new Error(`${quote.status} documents cannot be shared. Create or reopen a revision first.`);
   }
 
   if (quote.status === 'Draft' || quote.status === 'Ready') {
-    state.recordSent(quoteId);
+    await state.recordSent(quoteId);
     state = useQuoteStore.getState();
     quote = state.quotes.find((candidate) => candidate.id === quoteId);
-    if (!quote) throw new Error('Quote could not be prepared for sharing.');
+    if (!quote || quote.status === 'Draft' || quote.status === 'Ready') {
+      throw new Error('The document could not be prepared for sharing.');
+    }
   }
 
   // Do not rely on the normal cloud debounce here. A customer link must never
