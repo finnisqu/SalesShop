@@ -1,6 +1,6 @@
 import {
   displayQuoteNumber,
-  quoteLineTotal,
+  quoteLinesTotal,
   type CommercialDocumentType,
   type PricingScheduleItem,
   type Quote,
@@ -111,6 +111,6 @@ export function buildAcceptedQuoteSnapshot(quote: Quote): AcceptedQuoteSnapshot 
     pricingSchedule: documentType === 'pricing-schedule'
       ? { customerItems: structuredClone(scheduleItems) }
       : undefined,
-    acceptedTotal: lines.reduce((total, line) => total + quoteLineTotal(line), 0),
+    acceptedTotal: frozen?.customerTotal ?? quoteLinesTotal(lines),
   };
 }
