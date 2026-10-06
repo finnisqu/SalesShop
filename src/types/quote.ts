@@ -265,6 +265,7 @@ export type QuotePatch = Partial<Pick<Quote,
   | 'quoteDate'
   | 'revisionLabel'
   | 'status'
+  | 'lines'
   | 'customerNotes'
   | 'internalNotes'
   | 'pricingSchedule'
