@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { RATE_BOOK_DIVISIONS, type RateBookDivision } from '../types/rateBook';
 import type { Quote } from '../types/quote';
 
 interface Suggestion {
@@ -121,6 +122,13 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
   return (
     <>
       <EntityField label="Project" value={quote.title} suggestions={projectSuggestions} onChange={(value) => updateQuote(quote.id, { title: value, projectId: undefined })} />
+      <label>
+        <span>Division / pricing context</span>
+        <select value={quote.pricingDivision ?? ''} onChange={(event) => updateQuote(quote.id, { pricingDivision: (event.target.value || undefined) as RateBookDivision | undefined })}>
+          <option value="">Base company rates</option>
+          {RATE_BOOK_DIVISIONS.map((division) => <option value={division} key={division}>{division}</option>)}
+        </select>
+      </label>
       <EntityField label="Company / customer" value={quote.companyName ?? ''} suggestions={companySuggestions} onChange={(value) => updateQuote(quote.id, { companyName: value, companyId: undefined, projectId: undefined })} />
       <EntityField label="Contact" value={quote.contactName ?? ''} suggestions={contactSuggestions} onChange={(value) => updateQuote(quote.id, { contactName: value, contactId: undefined })} />
       <label><span>Email</span><input type="email" value={quote.contactEmail ?? ''} onChange={(event) => updateQuote(quote.id, { contactEmail: event.target.value })} /></label>
