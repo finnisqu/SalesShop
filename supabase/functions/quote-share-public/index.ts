@@ -37,6 +37,17 @@ type SnapshotLine = {
   includeInTotal: boolean;
 };
 
+type ScheduleItem = {
+  sourceRow: number;
+  series?: string;
+  itemType?: string;
+  planNumber?: string;
+  planName?: string;
+  optionCode?: string;
+  description?: string;
+  customerPrice?: number;
+};
+
 type Snapshot = {
   revision: number;
   label?: string;
@@ -53,6 +64,7 @@ type Snapshot = {
   lines?: SnapshotLine[];
   customerColumns?: { quantity: boolean; rate: boolean; lineAmount: boolean };
   customerNotes?: string;
+  pricingSchedule?: { customerItems?: ScheduleItem[] };
 };
 
 function lineTotal(line: SnapshotLine) {
@@ -68,6 +80,9 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentTyp
   const total = allLines.reduce((sum, line) => sum + lineTotal(line), 0);
   const revision = Number(snapshot.revision) || 0;
   const quoteNumber = revision > 0 ? `${baseQuoteNumber}-R${revision}` : baseQuoteNumber;
+  const customerItems = Array.isArray(snapshot.pricingSchedule?.customerItems)
+    ? snapshot.pricingSchedule.customerItems
+    : [];
   return {
     quoteId: '',
     quoteNumber,
@@ -87,6 +102,7 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentTyp
     lines: allLines.filter((line) => line.customerVisible),
     customerColumns: snapshot.customerColumns ?? { quantity: false, rate: false, lineAmount: true },
     customerNotes: snapshot.customerNotes ?? '',
+    pricingSchedule: documentType === 'pricing-schedule' ? { customerItems } : undefined,
     acceptedTotal: total,
   };
 }
@@ -124,16 +140,11 @@ Deno.serve(async (req) => {
     };
     if (!body.action || !body.token) return json({ error: 'Invalid share request.' }, 400);
 
-    const { data: share, error: shareError } = await admin.from('quote_shares')
-      .select('*')
-      .eq('public_token', body.token)
-      .maybeSingle();
+    const { data: share, error: shareError } = await admin.from('quote_shares').select('*').eq('public_token', body.token).maybeSingle();
     if (shareError) throw shareError;
     if (!share) return json({ error: 'This document link is not valid.' }, 404);
     if (share.status === 'revoked') return json({ error: 'This document link has been revoked.' }, 410);
-    if (share.expires_at && new Date(share.expires_at).getTime() < Date.now() && share.status !== 'signed') {
-      return json({ error: 'This document link has expired.' }, 410);
-    }
+    if (share.expires_at && new Date(share.expires_at).getTime() < Date.now() && share.status !== 'signed') return json({ error: 'This document link has expired.' }, 410);
 
     const [revisionResult, quoteResult, orgResult, signatureResult] = await Promise.all([
       admin.from('quote_revisions').select('snapshot').eq('organization_id', share.organization_id).eq('quote_id', share.quote_id).eq('revision', share.revision).single(),
@@ -148,13 +159,13 @@ Deno.serve(async (req) => {
 
     const documentType = String(quoteResult.data.document_type ?? 'quote');
     const changeOrder = documentType === 'change-order';
-    const documentName = changeOrder ? 'Change Order' : documentType === 'pricing-schedule' ? 'Pricing Schedule' : 'Quote';
+    const pricingSchedule = documentType === 'pricing-schedule';
+    const documentName = changeOrder ? 'Change Order' : pricingSchedule ? 'Pricing Schedule' : 'Quote';
     const snapshot = revisionResult.data.snapshot as Snapshot;
     const safeQuote = buildSafeQuote(snapshot, String(quoteResult.data.quote_number), documentType);
     safeQuote.quoteId = String(share.quote_id);
     let signature = safeSignature(signatureResult.data as Record<string, unknown> | null);
-    const now = new Date();
-    const nowIso = now.toISOString();
+    const nowIso = new Date().toISOString();
 
     if (body.action === 'view') {
       const firstView = !share.first_viewed_at;
@@ -191,11 +202,8 @@ Deno.serve(async (req) => {
       const strokes = Array.isArray(body.strokes) ? body.strokes : [];
       if (!signerName) return json({ error: 'Enter the signer name.' }, 400);
       if (!body.consented) return json({ error: 'Acceptance must be confirmed before signing.' }, 400);
-      if (method === 'drawn' && !strokes.some((stroke) => Array.isArray(stroke.points) && stroke.points.length > 1)) {
-        return json({ error: 'Add a signature or choose Type name.' }, 400);
-      }
+      if (method === 'drawn' && !strokes.some((stroke) => Array.isArray(stroke.points) && stroke.points.length > 1)) return json({ error: 'Add a signature or choose Type name.' }, 400);
 
-      const acceptedSnapshot = { ...safeQuote };
       const signatureRow = {
         organization_id: share.organization_id,
         id: `signature_${crypto.randomUUID()}`,
@@ -212,25 +220,19 @@ Deno.serve(async (req) => {
         strokes: method === 'drawn' ? strokes : [],
         consent_text: CONSENT_TEXT,
         accepted_at: nowIso,
-        accepted_snapshot: acceptedSnapshot,
+        accepted_snapshot: { ...safeQuote },
       };
 
       const { data: createdSignature, error: signError } = await admin.from('signatures').insert(signatureRow).select('*').single();
       if (signError) {
         if (signError.code === '23505') {
-          const { data: existing } = await admin.from('signatures').select('*')
-            .eq('organization_id', share.organization_id).eq('quote_id', share.quote_id).eq('revision', share.revision).single();
+          const { data: existing } = await admin.from('signatures').select('*').eq('organization_id', share.organization_id).eq('quote_id', share.quote_id).eq('revision', share.revision).single();
           signature = safeSignature(existing as Record<string, unknown>);
-        } else {
-          throw signError;
-        }
-      } else {
-        signature = safeSignature(createdSignature as Record<string, unknown>);
-      }
+        } else throw signError;
+      } else signature = safeSignature(createdSignature as Record<string, unknown>);
 
       await admin.from('quote_shares').update({ status: 'signed', signed_at: nowIso, last_viewed_at: nowIso })
         .eq('organization_id', share.organization_id).eq('id', share.id);
-
       if (Number(quoteResult.data.revision) === Number(share.revision)) {
         await admin.from('quotes').update({ status: 'Signed', signed_at: nowIso, updated_at: nowIso })
           .eq('organization_id', share.organization_id).eq('id', share.quote_id);
@@ -239,26 +241,24 @@ Deno.serve(async (req) => {
       let projectStageChanged = false;
       let previousStage: string | null = null;
       if (quoteResult.data.project_id) {
-        const { data: project } = await admin.from('projects').select('id, name, stage')
-          .eq('organization_id', share.organization_id).eq('id', quoteResult.data.project_id).maybeSingle();
+        const { data: project } = await admin.from('projects').select('id, name, stage').eq('organization_id', share.organization_id).eq('id', quoteResult.data.project_id).maybeSingle();
         if (project) {
           if (changeOrder) {
-            const { error: touchError } = await admin.from('projects').update({
-              last_touchpoint: nowIso.slice(0, 10),
-              updated_at: nowIso,
-            }).eq('organization_id', share.organization_id).eq('id', project.id);
+            const { error: touchError } = await admin.from('projects').update({ last_touchpoint: nowIso.slice(0, 10), updated_at: nowIso })
+              .eq('organization_id', share.organization_id).eq('id', project.id);
             if (touchError) throw touchError;
           } else if (project.stage !== 'Closed Won' && project.stage !== 'Completed') {
             previousStage = String(project.stage);
-            const { error: projectError } = await admin.from('projects').update({
+            const projectUpdate: Record<string, unknown> = {
               stage: 'Closed Won',
-              amount: safeQuote.acceptedTotal,
               last_touchpoint: nowIso.slice(0, 10),
               updated_at: nowIso,
-            }).eq('organization_id', share.organization_id).eq('id', project.id);
+            };
+            if (!pricingSchedule) projectUpdate.amount = safeQuote.acceptedTotal;
+            const { error: projectError } = await admin.from('projects').update(projectUpdate)
+              .eq('organization_id', share.organization_id).eq('id', project.id);
             if (projectError) throw projectError;
             projectStageChanged = true;
-
             await admin.from('activities').insert({
               organization_id: share.organization_id,
               id: `activity_${crypto.randomUUID()}`,
@@ -275,17 +275,27 @@ Deno.serve(async (req) => {
         }
       }
 
+      const valueText = pricingSchedule
+        ? ''
+        : ` · ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(safeQuote.acceptedTotal)}`;
       await admin.from('activities').insert({
         organization_id: share.organization_id,
         id: `activity_${crypto.randomUUID()}`,
         type: changeOrder ? 'change-order-signed' : 'quote-signed',
-        summary: `${documentName} ${safeQuote.quoteNumber} signed · ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(safeQuote.acceptedTotal)}`,
+        summary: `${documentName} ${safeQuote.quoteNumber} signed${valueText}`,
         project_id: quoteResult.data.project_id,
         company_id: quoteResult.data.company_id,
         contact_id: quoteResult.data.contact_id,
         quote_id: share.quote_id,
         occurred_at: nowIso,
-        metadata: { quoteNumber: safeQuote.quoteNumber, revision: share.revision, amount: safeQuote.acceptedTotal, documentType, parentQuoteId: quoteResult.data.parent_quote_id, projectStageChanged },
+        metadata: {
+          quoteNumber: safeQuote.quoteNumber,
+          revision: share.revision,
+          ...(pricingSchedule ? {} : { amount: safeQuote.acceptedTotal }),
+          documentType,
+          parentQuoteId: quoteResult.data.parent_quote_id,
+          projectStageChanged,
+        },
       });
     }
 
