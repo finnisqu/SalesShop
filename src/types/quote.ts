@@ -4,6 +4,17 @@ export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
 export const COMMERCIAL_DOCUMENT_TYPES = ['quote', 'pricing-schedule', 'change-order'] as const;
 export type CommercialDocumentType = (typeof COMMERCIAL_DOCUMENT_TYPES)[number];
 
+export const PRICING_SCHEDULE_FIELDS = [
+  'series',
+  'itemType',
+  'planNumber',
+  'planName',
+  'optionCode',
+  'description',
+  'customerPrice',
+] as const;
+export type PricingScheduleField = (typeof PRICING_SCHEDULE_FIELDS)[number];
+
 export type QuoteLineKind = 'item' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
 export type QuotePricingMode = 'direct' | 'quantity-rate' | 'none';
 
@@ -32,6 +43,35 @@ export interface QuoteLine {
   includeInTotal: boolean;
 }
 
+export type PricingScheduleColumnMapping = Partial<Record<PricingScheduleField, number>>;
+
+export interface PricingScheduleMapping {
+  sheetId: string;
+  headerRow: number;
+  firstDataRow: number;
+  lastDataRow?: number;
+  columns: PricingScheduleColumnMapping;
+}
+
+export interface PricingScheduleItem {
+  sourceRow: number;
+  series?: string;
+  itemType?: string;
+  planNumber?: string;
+  planName?: string;
+  optionCode?: string;
+  description?: string;
+  customerPrice?: number;
+}
+
+export interface PricingScheduleData {
+  workbookData?: unknown;
+  mapping?: PricingScheduleMapping;
+  customerItems: PricingScheduleItem[];
+  sourceFileName?: string;
+  importedAt?: string;
+}
+
 export interface QuoteRevisionSnapshot {
   revision: number;
   label?: string;
@@ -53,6 +93,7 @@ export interface QuoteRevisionSnapshot {
   lines: QuoteLine[];
   customerColumns: QuoteCustomerColumns;
   customerNotes: string;
+  pricingSchedule?: PricingScheduleData;
 }
 
 export interface Quote {
@@ -79,6 +120,7 @@ export interface Quote {
   customerColumns: QuoteCustomerColumns;
   customerNotes: string;
   internalNotes: string;
+  pricingSchedule?: PricingScheduleData;
   history: QuoteRevisionSnapshot[];
   sentAt?: string;
   viewedAt?: string;
