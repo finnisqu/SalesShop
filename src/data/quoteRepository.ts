@@ -1,9 +1,17 @@
 import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
-import type { Quote, QuoteDocument } from '../types/quote';
+import type { PricingScheduleData, Quote, QuoteDocument } from '../types/quote';
 
 export interface QuoteRepository {
   load(): QuoteDocument | null;
   save(document: QuoteDocument): void;
+}
+
+function normalizePricingSchedule(value?: PricingScheduleData): PricingScheduleData | undefined {
+  if (!value) return undefined;
+  return {
+    ...value,
+    customerItems: Array.isArray(value.customerItems) ? value.customerItems : [],
+  };
 }
 
 function normalizeQuote(raw: Quote): Quote {
@@ -14,11 +22,13 @@ function normalizeQuote(raw: Quote): Quote {
     changeOrderNumber: raw.changeOrderNumber,
     companyId: raw.companyId,
     contactId: raw.contactId,
+    pricingSchedule: normalizePricingSchedule(raw.pricingSchedule),
     history: (raw.history ?? []).map((revision) => ({
       ...revision,
       documentType: revision.documentType ?? raw.documentType ?? 'quote',
       parentQuoteId: revision.parentQuoteId ?? raw.parentQuoteId,
       changeOrderNumber: revision.changeOrderNumber ?? raw.changeOrderNumber,
+      pricingSchedule: normalizePricingSchedule(revision.pricingSchedule),
     })),
   };
 }
