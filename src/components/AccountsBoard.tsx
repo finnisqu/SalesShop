@@ -1,13 +1,27 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { inferAccountHealth } from '../services/accountHealth';
 import { useCrmStore } from '../store/crmStore';
-import { ACCOUNT_STAGES, type AccountStage, type Company } from '../types/crm';
+import {
+  ACCOUNT_STAGES,
+  companyAnnualPotential,
+  companyEstimatedAnnualWork,
+  type AccountStage,
+  type Company,
+} from '../types/crm';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
+
+const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 function formatDate(value?: string) {
   if (!value) return 'No activity yet';
   return new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function numericValue(value: string) {
+  if (!value.trim()) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function AccountEditor({ company, onClose }: { company: Company; onClose: () => void }) {
@@ -27,6 +41,8 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
     .slice(0, 8);
   const health = inferAccountHealth(company, contacts, projects, activities);
+  const annualPotential = companyAnnualPotential(company);
+  const annualWork = companyEstimatedAnnualWork(company);
 
   const addContact = (event: FormEvent) => {
     event.preventDefault();
@@ -56,6 +72,22 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
             <option value="non-customer">Non-customer relationship</option>
           </select>
         </label>
+
+        {company.kind === 'customer' && (
+          <section className="account-editor-section account-volume-section">
+            <header><strong>Annual account forecast</strong><span>Relationship-level</span></header>
+            <p className="account-forecast-help">Use this for recurring builder volume that is bigger than any one project or community.</p>
+            <div className="account-forecast-inputs">
+              <label><span>Homes / units per year</span><input type="number" min="0" step="1" value={company.annualUnits ?? ''} onChange={(event) => updateCompany(company.id, { annualUnits: numericValue(event.target.value) })} placeholder="100" /></label>
+              <label><span>Typical revenue / unit</span><div className="account-money-input"><span>$</span><input type="number" min="0" step="100" value={company.averageUnitValue ?? ''} onChange={(event) => updateCompany(company.id, { averageUnitValue: numericValue(event.target.value) })} placeholder="3500" /></div></label>
+              <label><span>Expected share of work</span><div className="account-percent-input"><input type="number" min="0" max="100" step="5" value={company.expectedSharePct ?? ''} onChange={(event) => updateCompany(company.id, { expectedSharePct: numericValue(event.target.value) })} placeholder="100" /><span>%</span></div></label>
+            </div>
+            <div className="account-forecast-results">
+              <div><span>Annual builder opportunity</span><strong>{annualPotential === undefined ? '—' : money.format(annualPotential)}</strong></div>
+              <div><span>Expected annual work</span><strong>{annualWork === undefined ? '—' : money.format(annualWork)}</strong></div>
+            </div>
+          </section>
+        )}
 
         <section className="account-editor-section">
           <header><strong>Contacts</strong><span>{companyContacts.length}</span></header>
@@ -138,20 +170,25 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
               </header>
               <div className="board-column-rule" />
               <div className="board-card-stack">
-                {accounts.map(({ company, health }) => (
-                  <article className="project-card account-card" key={company.id} onDoubleClick={() => setEditingId(company.id)} tabIndex={0}
-                    onKeyDown={(event) => { if (event.key === 'Enter') setEditingId(company.id); }}>
-                    <div className="project-card-company">{health.stage}</div>
-                    <h3>{company.name}</h3>
-                    <div className="account-card-stats">
-                      <span>{health.openProjectCount} open</span>
-                      <span>{health.contactCount} contacts</span>
-                    </div>
-                    <p className="account-card-reason">{health.reason}</p>
-                    <div className="project-last-touch">{formatDate(health.lastActivityAt)}</div>
-                    <button type="button" className="project-card-open" onClick={() => setEditingId(company.id)}>Open</button>
-                  </article>
-                ))}
+                {accounts.map(({ company, health }) => {
+                  const expectedAnnualWork = companyEstimatedAnnualWork(company);
+                  return (
+                    <article className="project-card account-card" key={company.id} onDoubleClick={() => setEditingId(company.id)} tabIndex={0}
+                      onKeyDown={(event) => { if (event.key === 'Enter') setEditingId(company.id); }}>
+                      <div className="project-card-company">{health.stage}</div>
+                      <h3>{company.name}</h3>
+                      <div className="account-card-stats">
+                        <span>{health.openProjectCount} open</span>
+                        <span>{health.contactCount} contacts</span>
+                        {company.annualUnits !== undefined && <span>{company.annualUnits} units/yr</span>}
+                      </div>
+                      {expectedAnnualWork !== undefined && <div className="account-card-annual-value"><span>Expected annual work</span><strong>{money.format(expectedAnnualWork)}</strong></div>}
+                      <p className="account-card-reason">{health.reason}</p>
+                      <div className="project-last-touch">{formatDate(health.lastActivityAt)}</div>
+                      <button type="button" className="project-card-open" onClick={() => setEditingId(company.id)}>Open</button>
+                    </article>
+                  );
+                })}
                 {!accounts.length && <div className="board-empty-card">No accounts here</div>}
               </div>
             </section>
