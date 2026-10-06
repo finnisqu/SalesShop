@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type TouchEvent } from 'react';
 import { createPricingScheduleData } from '../services/pricingSchedule';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -41,6 +41,12 @@ function numberValue(value: string) {
 
 function isTextLine(line: QuoteLine) {
   return line.kind === 'note' || line.kind === 'scope' || line.kind === 'warranty';
+}
+
+function isPricingSwipeBlocked(target: EventTarget | null) {
+  return target instanceof Element && Boolean(target.closest(
+    'input, textarea, select, button, a, [contenteditable="true"], .pricing-schedule-workbook-host, .pricing-schedule-workbook-actions, .pricing-schedule-route-grid, .quote-crm-suggestions',
+  ));
 }
 
 function LineEditor({ quote, line }: { quote: Quote; line: QuoteLine }) {
@@ -118,13 +124,38 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const pricingSchedule = quote.documentType === 'pricing-schedule';
   const effectiveMode: QuoteViewMode = pricingSchedule && mode === 'split' ? 'edit' : mode;
   const viewModes: QuoteViewMode[] = pricingSchedule ? ['edit', 'workbook', 'customer'] : ['edit', 'split', 'customer'];
 
   const setDocumentType = (documentType: CommercialDocumentType) => {
     updateQuote(quote.id, { documentType, ...(documentType === 'pricing-schedule' && !quote.pricingSchedule ? { pricingSchedule: createPricingScheduleData(quote.id) } : {}) });
-    if (documentType === 'pricing-schedule') onModeChange('workbook');
+    onModeChange('edit');
+  };
+
+  const beginPricingSwipe = (event: TouchEvent<HTMLDivElement>) => {
+    if (!pricingSchedule || event.touches.length !== 1 || isPricingSwipeBlocked(event.target)) {
+      swipeStart.current = null;
+      return;
+    }
+    const touch = event.touches[0];
+    swipeStart.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const finishPricingSwipe = (event: TouchEvent<HTMLDivElement>) => {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!pricingSchedule || !start || event.changedTouches.length !== 1) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 64 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    const pages: QuoteViewMode[] = ['edit', 'workbook', 'customer'];
+    const currentIndex = pages.indexOf(effectiveMode);
+    if (currentIndex < 0) return;
+    const nextIndex = Math.max(0, Math.min(pages.length - 1, currentIndex + (dx < 0 ? 1 : -1)));
+    if (nextIndex !== currentIndex) onModeChange(pages[nextIndex]);
   };
 
   const send = async () => {
@@ -146,9 +177,53 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
 
   return (
     <section className={`quotes-workbench view-${effectiveMode}`}>
-      <header className="quote-workbench-header"><div><span className="quote-number">{displayQuoteNumber(quote)}</span><input className="quote-title-input" value={quote.title} onChange={(event) => updateQuote(quote.id, { title: event.target.value, projectId: undefined })} />{quote.documentType === 'change-order' && parent && <small>Changes original agreement {displayQuoteNumber(parent)}</small>}</div><div className="quote-header-actions"><div className="quote-view-switch" aria-label="Document view">{viewModes.map((viewMode) => <button type="button" key={viewMode} className={effectiveMode === viewMode ? 'active' : ''} onClick={() => onModeChange(viewMode)}>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</button>)}</div>{(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="quote-send-button" disabled={sending} onClick={() => void send()}>{sending ? 'Sending…' : `Send ${documentLabel}`}</button>}<QuoteShareControl />{canSign && <button type="button" className="quote-sign-button" onClick={() => setSignatureOpen(true)}>Sign now</button>}{quote.status === 'Signed' && <button type="button" className="quote-signature-receipt-button" onClick={() => setSignatureOpen(true)}>✓ View signature</button>}{canRevise && <button type="button" className="quote-revision-button" onClick={() => createRevision(quote.id)}>Create revision</button>}{canCreateChangeOrder && <button type="button" className="quote-revision-button" onClick={() => createChangeOrder(quote.id)}>+ Change Order</button>}</div></header>
+      <header className="quote-workbench-header">
+        <div>
+          <span className="quote-number">{displayQuoteNumber(quote)}</span>
+          <input className="quote-title-input" value={quote.title} onChange={(event) => updateQuote(quote.id, { title: event.target.value, projectId: undefined })} />
+          {quote.documentType === 'change-order' && parent && <small>Changes original agreement {displayQuoteNumber(parent)}</small>}
+        </div>
+        <div className="quote-header-actions">
+          <div className="quote-view-switch" aria-label="Document view">
+            {viewModes.map((viewMode) => <button type="button" key={viewMode} className={effectiveMode === viewMode ? 'active' : ''} onClick={() => onModeChange(viewMode)}>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</button>)}
+          </div>
+          <div className="quote-document-actions">
+            {(quote.status === 'Draft' || quote.status === 'Ready') && (
+              <button type="button" className="quote-send-button quote-action-button" disabled={sending} onClick={() => void send()}>
+                <span className="quote-action-icon" aria-hidden="true">↑</span>
+                <span className="quote-action-label">{sending ? 'Sending…' : `Send ${documentLabel}`}</span>
+              </button>
+            )}
+            <QuoteShareControl />
+            {canSign && (
+              <button type="button" className="quote-sign-button quote-action-button" onClick={() => setSignatureOpen(true)}>
+                <span className="quote-action-icon" aria-hidden="true">✎</span>
+                <span className="quote-action-label">Sign now</span>
+              </button>
+            )}
+            {quote.status === 'Signed' && (
+              <button type="button" className="quote-signature-receipt-button quote-action-button" onClick={() => setSignatureOpen(true)}>
+                <span className="quote-action-icon" aria-hidden="true">✓</span>
+                <span className="quote-action-label">View signature</span>
+              </button>
+            )}
+            {canRevise && (
+              <button type="button" className="quote-revision-button quote-action-button" onClick={() => createRevision(quote.id)}>
+                <span className="quote-action-icon" aria-hidden="true">↻</span>
+                <span className="quote-action-label">Create revision</span>
+              </button>
+            )}
+            {canCreateChangeOrder && (
+              <button type="button" className="quote-revision-button quote-action-button" onClick={() => createChangeOrder(quote.id)}>
+                <span className="quote-action-icon" aria-hidden="true">+</span>
+                <span className="quote-action-label">Change Order</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
       {sendError && <div className="quote-share-error" role="alert">{sendError}</div>}
-      <div className="quote-workbench-body">
+      <div className={`quote-workbench-body ${pricingSchedule ? 'is-swipeable' : ''}`} onTouchStart={beginPricingSwipe} onTouchEnd={finishPricingSwipe} onTouchCancel={() => { swipeStart.current = null; }}>
         {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingScheduleWorkbook quote={quote} /></div> : effectiveMode !== 'customer' ? (
           <div className="quote-editor-pane">
             <section className="quote-details-grid">
@@ -208,7 +283,13 @@ export function Quotes() {
   useEffect(() => { hydrate(); hydrateCrm(); }, [hydrate, hydrateCrm]);
   const quote = quotes.find((candidate) => candidate.id === activeQuoteId) ?? quotes[0] ?? null;
   const sortedQuotes = useMemo(() => [...quotes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [quotes]);
-  useEffect(() => { if (quote?.documentType === 'pricing-schedule' && mode === 'split') setMode('edit'); if (quote?.documentType !== 'pricing-schedule' && mode === 'workbook') setMode('edit'); }, [quote?.id, quote?.documentType, mode]);
+  useEffect(() => {
+    if (quote?.documentType === 'pricing-schedule') setMode('edit');
+  }, [quote?.id, quote?.documentType]);
+  useEffect(() => {
+    if (quote?.documentType === 'pricing-schedule' && mode === 'split') setMode('edit');
+    if (quote?.documentType !== 'pricing-schedule' && mode === 'workbook') setMode('edit');
+  }, [quote?.documentType, mode]);
   if (!hydrated || !quote) return <div className="quotes-loading">Opening quotes…</div>;
   return <main className="quotes-view"><aside className="quotes-sidebar"><header><div><span>Commercial documents</span><strong>Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header><div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside><QuoteEditor quote={quote} mode={mode} onModeChange={setMode} /></main>;
 }
