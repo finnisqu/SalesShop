@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import {
   isDraftQuoteNumber,
   type CommercialDocumentType,
+  type PricingScheduleData,
   type Quote,
   type QuoteDocument,
   type QuoteLine,
@@ -25,6 +26,12 @@ function numericOrUndefined(value: unknown) {
   return Number.isFinite(numeric) ? numeric : undefined;
 }
 
+function pricingScheduleOrUndefined(value: unknown): PricingScheduleData | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const schedule = value as PricingScheduleData;
+  return { ...schedule, customerItems: Array.isArray(schedule.customerItems) ? schedule.customerItems : [] };
+}
+
 function atLeastAsNew(localValue: string, serverValue?: string) {
   if (!serverValue) return true;
   const localTime = Date.parse(localValue);
@@ -35,11 +42,7 @@ function atLeastAsNew(localValue: string, serverValue?: string) {
 
 async function selectRows(table: QuoteTable, organizationId: string, orderColumn: string) {
   if (!supabase) return [] as DbRow[];
-  const { data, error } = await supabase
-    .from(table)
-    .select('*')
-    .eq('organization_id', organizationId)
-    .order(orderColumn, { ascending: true });
+  const { data, error } = await supabase.from(table).select('*').eq('organization_id', organizationId).order(orderColumn, { ascending: true });
   if (error) throw error;
   return (data ?? []) as DbRow[];
 }
@@ -48,34 +51,24 @@ function groupByQuote<T>(rows: DbRow[], mapper: (row: DbRow) => T) {
   const grouped = new Map<string, T[]>();
   rows.forEach((row) => {
     const quoteId = String(row.quote_id);
-    const current = grouped.get(quoteId) ?? [];
-    current.push(mapper(row));
-    grouped.set(quoteId, current);
+    grouped.set(quoteId, [...(grouped.get(quoteId) ?? []), mapper(row)]);
   });
   return grouped;
 }
 
-export async function loadNormalizedQuotes(
-  organizationId: string,
-  preferredActiveQuoteId: string | null = null,
-): Promise<QuoteDocument | null> {
+export async function loadNormalizedQuotes(organizationId: string, preferredActiveQuoteId: string | null = null): Promise<QuoteDocument | null> {
   if (!supabase) return null;
-
   const [quoteRows, sectionRows, lineRows, revisionRows] = await Promise.all([
     selectRows('quotes', organizationId, 'sort_order'),
     selectRows('quote_sections', organizationId, 'sort_order'),
     selectRows('quote_lines', organizationId, 'sort_order'),
     selectRows('quote_revisions', organizationId, 'revision'),
   ]);
-
   if (!quoteRows.length) return null;
 
   const sectionsByQuote = groupByQuote<QuoteSection>(sectionRows, (row) => ({
-    id: String(row.id),
-    title: String(row.title),
-    customerVisible: Boolean(row.customer_visible),
+    id: String(row.id), title: String(row.title), customerVisible: Boolean(row.customer_visible),
   }));
-
   const linesByQuote = groupByQuote<QuoteLine>(lineRows, (row) => ({
     id: String(row.id),
     sectionId: valueOrUndefined(row.section_id),
@@ -88,10 +81,12 @@ export async function loadNormalizedQuotes(
     customerVisible: Boolean(row.customer_visible),
     includeInTotal: Boolean(row.include_in_total),
   }));
-
   const revisionsByQuote = groupByQuote<QuoteRevisionSnapshot>(revisionRows, (row) => {
     const snapshot = row.snapshot;
-    if (snapshot && typeof snapshot === 'object') return snapshot as QuoteRevisionSnapshot;
+    if (snapshot && typeof snapshot === 'object') {
+      const revision = snapshot as QuoteRevisionSnapshot;
+      return { ...revision, pricingSchedule: pricingScheduleOrUndefined(revision.pricingSchedule) };
+    }
     return {
       revision: Number(row.revision) || 0,
       label: valueOrUndefined(row.label),
@@ -128,12 +123,11 @@ export async function loadNormalizedQuotes(
     sections: sectionsByQuote.get(String(row.id)) ?? [],
     lines: linesByQuote.get(String(row.id)) ?? [],
     customerColumns: {
-      quantity: Boolean(row.customer_quantity),
-      rate: Boolean(row.customer_rate),
-      lineAmount: Boolean(row.customer_line_amount),
+      quantity: Boolean(row.customer_quantity), rate: Boolean(row.customer_rate), lineAmount: Boolean(row.customer_line_amount),
     },
     customerNotes: String(row.customer_notes ?? ''),
     internalNotes: String(row.internal_notes ?? ''),
+    pricingSchedule: pricingScheduleOrUndefined(row.pricing_schedule),
     history: revisionsByQuote.get(String(row.id)) ?? [],
     sentAt: valueOrUndefined(row.sent_at),
     viewedAt: valueOrUndefined(row.viewed_at),
@@ -145,7 +139,6 @@ export async function loadNormalizedQuotes(
   const activeQuoteId = preferredActiveQuoteId && quotes.some((quote) => quote.id === preferredActiveQuoteId)
     ? preferredActiveQuoteId
     : quotes[0]?.id ?? null;
-
   return { schemaVersion: 2, quotes, activeQuoteId };
 }
 
@@ -158,8 +151,7 @@ async function upsertRows(table: Exclude<QuoteTable, 'quote_revisions'>, rows: R
 async function insertRevisionSnapshots(rows: Record<string, unknown>[]) {
   if (!supabase || !rows.length) return;
   const { error } = await supabase.from('quote_revisions').upsert(rows, {
-    onConflict: 'organization_id,quote_id,revision',
-    ignoreDuplicates: true,
+    onConflict: 'organization_id,quote_id,revision', ignoreDuplicates: true,
   });
   if (error) throw error;
 }
@@ -201,11 +193,6 @@ async function serverQuoteGuards(organizationId: string) {
 export async function syncNormalizedQuotes(organizationId: string, document: QuoteDocument) {
   if (!supabase) return;
   if (document.schemaVersion !== 2) throw new Error('Unsupported Quote document schema.');
-
-  // Each salesperson works from a local snapshot. Only push documents that are
-  // at least as new as the server version. Missing local IDs never imply deletion;
-  // explicit delete actions handle that, so one salesperson cannot erase a quote
-  // another salesperson created after this browser hydrated.
   const guards = await serverQuoteGuards(organizationId);
   const acceptedQuotes = document.quotes.filter((quote) => atLeastAsNew(quote.updatedAt, guards.get(quote.id)?.updatedAt));
   const acceptedIds = new Set(acceptedQuotes.map((quote) => quote.id));
@@ -219,25 +206,19 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     let changeOrderNumber = quote.changeOrderNumber;
     let viewedAt = quote.viewedAt;
     let signedAt = quote.signedAt;
-
     if (server && !isDraftQuoteNumber(server.quoteNumber)) {
       quoteNumber = server.quoteNumber;
       documentType = server.documentType;
       parentQuoteId = server.parentQuoteId;
       changeOrderNumber = server.changeOrderNumber;
     }
-
     if (server && server.revision === quote.revision) {
       if (server.status === 'Signed' && quote.status !== 'Signed') {
-        status = 'Signed';
-        signedAt = server.signedAt ?? signedAt;
-        viewedAt = server.viewedAt ?? viewedAt;
+        status = 'Signed'; signedAt = server.signedAt ?? signedAt; viewedAt = server.viewedAt ?? viewedAt;
       } else if (server.status === 'Viewed' && quote.status === 'Sent') {
-        status = 'Viewed';
-        viewedAt = server.viewedAt ?? viewedAt;
+        status = 'Viewed'; viewedAt = server.viewedAt ?? viewedAt;
       }
     }
-
     return {
       organization_id: organizationId,
       id: quote.id,
@@ -263,6 +244,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
       customer_line_amount: quote.customerColumns.lineAmount,
       customer_notes: quote.customerNotes,
       internal_notes: quote.internalNotes,
+      pricing_schedule: quote.pricingSchedule ?? null,
       sent_at: quote.sentAt ?? null,
       viewed_at: viewedAt ?? null,
       signed_at: signedAt ?? null,
@@ -273,14 +255,8 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   });
 
   const sections = acceptedQuotes.flatMap((quote) => quote.sections.map((section, sortOrder) => ({
-    organization_id: organizationId,
-    id: section.id,
-    quote_id: quote.id,
-    title: section.title,
-    customer_visible: section.customerVisible,
-    sort_order: sortOrder,
+    organization_id: organizationId, id: section.id, quote_id: quote.id, title: section.title, customer_visible: section.customerVisible, sort_order: sortOrder,
   })));
-
   const lines = acceptedQuotes.flatMap((quote) => quote.lines.map((line, sortOrder) => ({
     organization_id: organizationId,
     id: line.id,
@@ -299,17 +275,22 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
 
   const revisions = document.quotes
     .filter((quote) => acceptedIds.has(quote.id))
-    .flatMap((quote) => quote.history.map((revision) => ({
-      organization_id: organizationId,
-      quote_id: quote.id,
-      revision: revision.revision,
-      label: revision.label ?? null,
-      quote_date: revision.quoteDate,
-      captured_at: revision.capturedAt,
-      status: revision.status,
-      title: revision.title,
-      snapshot: revision,
-    })));
+    .flatMap((quote) => quote.history.map((revision) => {
+      const frozen: QuoteRevisionSnapshot = revision.pricingSchedule || revision.revision !== quote.revision
+        ? revision
+        : { ...revision, pricingSchedule: quote.pricingSchedule ? structuredClone(quote.pricingSchedule) : undefined };
+      return {
+        organization_id: organizationId,
+        quote_id: quote.id,
+        revision: revision.revision,
+        label: revision.label ?? null,
+        quote_date: revision.quoteDate,
+        captured_at: revision.capturedAt,
+        status: revision.status,
+        title: revision.title,
+        snapshot: frozen,
+      };
+    }));
 
   await upsertRows('quotes', quotes);
   await upsertRows('quote_sections', sections);
@@ -319,30 +300,18 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
 
 export async function deleteNormalizedQuote(organizationId: string, quoteId: string) {
   if (!supabase) return;
-  const { error } = await supabase
-    .from('quotes')
-    .delete()
-    .eq('organization_id', organizationId)
-    .eq('id', quoteId);
+  const { error } = await supabase.from('quotes').delete().eq('organization_id', organizationId).eq('id', quoteId);
   if (error) throw error;
 }
 
 export async function deleteNormalizedQuoteLine(organizationId: string, lineId: string) {
   if (!supabase) return;
-  const { error } = await supabase
-    .from('quote_lines')
-    .delete()
-    .eq('organization_id', organizationId)
-    .eq('id', lineId);
+  const { error } = await supabase.from('quote_lines').delete().eq('organization_id', organizationId).eq('id', lineId);
   if (error) throw error;
 }
 
 export async function deleteNormalizedQuoteSection(organizationId: string, sectionId: string) {
   if (!supabase) return;
-  const { error } = await supabase
-    .from('quote_sections')
-    .delete()
-    .eq('organization_id', organizationId)
-    .eq('id', sectionId);
+  const { error } = await supabase.from('quote_sections').delete().eq('organization_id', organizationId).eq('id', sectionId);
   if (error) throw error;
 }
