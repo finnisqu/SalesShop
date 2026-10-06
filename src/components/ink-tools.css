@@ -2,6 +2,10 @@
   touch-action: pan-x pan-y !important;
 }
 
+.ink-layer.is-active.touch-ink-enabled {
+  touch-action: none !important;
+}
+
 .ink-layer.tool-pen,
 .ink-layer.tool-marker,
 .ink-layer.tool-highlighter,
@@ -46,11 +50,43 @@
   letter-spacing: .02em;
 }
 
-.pencil-mode-hint {
-  color: #9a968c;
-  font-size: 8px;
-  letter-spacing: .02em;
-  white-space: nowrap;
+.ink-input-toggle {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  padding: 3px;
+  border: 1px solid rgba(77, 70, 59, .16);
+  border-radius: 6px;
+  background: rgba(255,255,255,.45);
+}
+
+.ink-input-toggle > span {
+  padding: 0 5px 0 3px;
+  color: #8b867d;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.ink-input-toggle button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 4px;
+  padding: 0 9px;
+  background: transparent;
+  color: #6e695f;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ink-input-toggle button.active {
+  background: #fffdf6;
+  color: #34312b;
+  box-shadow: 0 1px 4px rgba(50,43,34,.12);
 }
 
 .rough-shape-artwork {
@@ -58,13 +94,13 @@
 }
 
 @media (pointer: coarse) {
-  .pencil-mode-hint {
-    display: inline;
+  .ink-input-toggle {
+    display: inline-flex;
   }
 }
 
 @media (pointer: fine) {
-  .pencil-mode-hint {
+  .ink-input-toggle {
     display: none;
   }
 }
@@ -76,5 +112,15 @@
   }
   .paper-toolbar .tool-group::-webkit-scrollbar {
     display: none;
+  }
+
+  .ink-input-toggle {
+    min-height: 38px;
+  }
+
+  .ink-input-toggle button {
+    min-height: 32px;
+    padding-inline: 10px;
+    font-size: 11px;
   }
 }
