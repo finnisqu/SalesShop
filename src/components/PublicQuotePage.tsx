@@ -5,6 +5,7 @@ import {
   type PublicQuoteLine,
   type PublicQuoteResponse,
 } from '../services/publicQuoteShareService';
+import { commercialDocumentLabel } from '../types/quote';
 import type { SignatureMethod, SignatureStroke } from '../types/signature';
 import '../quotes.css';
 import '../signature.css';
@@ -29,6 +30,7 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
   const { quote } = data;
   const sections = quote.sections;
   const lines = quote.lines;
+  const documentLabel = commercialDocumentLabel(quote);
   const loose = lines.filter((line) => !line.sectionId || !sections.some((section) => section.id === line.sectionId));
 
   const renderLines = (items: PublicQuoteLine[]) => items.map((line) => {
@@ -48,10 +50,10 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
       <header className="customer-quote-letterhead">
         <div>
           <span className="customer-company-placeholder">{data.organizationName}</span>
-          <strong>QUOTE</strong>
+          <strong>{documentLabel.toUpperCase()}</strong>
         </div>
         <dl>
-          <div><dt>Quote</dt><dd>{quote.quoteNumber}</dd></div>
+          <div><dt>Document</dt><dd>{quote.quoteNumber}</dd></div>
           <div><dt>Date</dt><dd>{formatDate(quote.quoteDate)}</dd></div>
         </dl>
       </header>
@@ -87,7 +89,7 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
 
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quote.acceptedTotal)}</strong></div>
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
-      <footer>{data.signature ? 'Accepted electronically with SalesShop.' : 'Secure quote prepared with SalesShop.'}</footer>
+      <footer>{data.signature ? 'Accepted electronically with SalesShop.' : `Secure ${documentLabel.toLowerCase()} prepared with SalesShop.`}</footer>
     </article>
   );
 }
@@ -104,7 +106,7 @@ function SignatureReceipt({ data }: { data: PublicQuoteResponse }) {
         <p>{new Date(signature.acceptedAt).toLocaleString()}{signature.signerEmail ? ` · ${signature.signerEmail}` : ''}</p>
       </div>
       <dl>
-        <div><dt>Quote</dt><dd>{data.quote.quoteNumber}</dd></div>
+        <div><dt>Document</dt><dd>{data.quote.quoteNumber}</dd></div>
         <div><dt>Accepted total</dt><dd>{money.format(data.quote.acceptedTotal)}</dd></div>
         <div><dt>Revision</dt><dd>{data.quote.revisionLabel || (data.quote.revision ? `R${data.quote.revision}` : 'Original')}</dd></div>
       </dl>
@@ -133,6 +135,7 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const padRef = useRef<SVGSVGElement | null>(null);
+  const documentLabel = commercialDocumentLabel(data.quote);
 
   const pointFromEvent = (event: ReactPointerEvent<SVGSVGElement>) => {
     const rect = padRef.current?.getBoundingClientRect();
@@ -193,7 +196,7 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
     <section className="public-sign-card">
       <header>
         <span>Electronic acceptance</span>
-        <h2>Accept this quote</h2>
+        <h2>Accept this {documentLabel.toLowerCase()}</h2>
         <p>Sign below to approve {data.quote.quoteNumber} for {money.format(data.quote.acceptedTotal)}.</p>
       </header>
       <div className="signature-identity-grid">
@@ -224,7 +227,7 @@ function AcceptanceForm({ token, data, onSigned }: { token: string; data: Public
       <button type="button" className="public-accept-button" disabled={busy} onClick={() => void complete()}>
         {busy ? 'Recording acceptance…' : `Accept & Sign · ${money.format(data.quote.acceptedTotal)}`}
       </button>
-      <small className="public-security-note">Your signature is attached to this exact quote revision and recorded with the acceptance time.</small>
+      <small className="public-security-note">Your signature is attached to this exact numbered document and revision and recorded with the acceptance time.</small>
     </section>
   );
 }
@@ -239,29 +242,29 @@ export function PublicQuotePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) { setError('This quote link is not valid.'); setLoading(false); return; }
+    if (!token) { setError('This document link is not valid.'); setLoading(false); return; }
     let cancelled = false;
     void viewPublicQuote(token)
       .then((value) => { if (!cancelled) setData(value); })
-      .catch((reason: unknown) => { if (!cancelled) setError(reason instanceof Error ? reason.message : 'This quote could not be opened.'); })
+      .catch((reason: unknown) => { if (!cancelled) setError(reason instanceof Error ? reason.message : 'This document could not be opened.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [token]);
 
-  if (loading) return <main className="public-quote-shell"><div className="public-quote-state"><span className="public-brand-mark">S</span><strong>Opening secure quote…</strong></div></main>;
-  if (error || !data) return <main className="public-quote-shell"><div className="public-quote-state error"><span className="public-brand-mark">S</span><h1>Quote unavailable</h1><p>{error || 'This quote link is not available.'}</p></div></main>;
+  if (loading) return <main className="public-quote-shell"><div className="public-quote-state"><span className="public-brand-mark">S</span><strong>Opening secure document…</strong></div></main>;
+  if (error || !data) return <main className="public-quote-shell"><div className="public-quote-state error"><span className="public-brand-mark">S</span><h1>Document unavailable</h1><p>{error || 'This document link is not available.'}</p></div></main>;
 
   return (
     <main className="public-quote-shell">
       <header className="public-quote-header">
-        <div className="public-brand"><span className="public-brand-mark">S</span><div><strong>{data.organizationName}</strong><small>Secure quote</small></div></div>
+        <div className="public-brand"><span className="public-brand-mark">S</span><div><strong>{data.organizationName}</strong><small>Secure {commercialDocumentLabel(data.quote).toLowerCase()}</small></div></div>
         <div className={`public-share-state ${data.signature ? 'signed' : ''}`}>{data.signature ? '✓ Accepted' : 'Secure customer copy'}</div>
       </header>
       <div className="public-quote-content">
         <QuoteDocument data={data} />
         {data.signature ? <SignatureReceipt data={data} /> : <AcceptanceForm token={token} data={data} onSigned={setData} />}
       </div>
-      <footer className="public-page-footer">Protected customer quote · SalesShop</footer>
+      <footer className="public-page-footer">Protected customer document · SalesShop</footer>
     </main>
   );
 }
