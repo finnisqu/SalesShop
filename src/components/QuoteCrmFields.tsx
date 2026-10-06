@@ -65,6 +65,7 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
   const companies = useCrmStore((state) => state.companies);
   const contacts = useCrmStore((state) => state.contacts);
   const updateQuote = useQuoteStore((state) => state.updateQuote);
+  const linkedProject = quote.projectId ? projects.find((project) => project.id === quote.projectId) : undefined;
 
   const projectSuggestions = useMemo(() => recentFirst(projects)
     .filter((project) => matches(`${project.name} ${project.companyName ?? ''}`, quote.title))
@@ -86,8 +87,12 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
       id: company.id,
       primary: company.name,
       secondary: company.kind === 'non-customer' ? 'Non-customer relationship' : 'Customer / prospect',
-      onChoose: () => updateQuote(quote.id, { companyId: company.id, companyName: company.name }),
-    })), [companies, quote.id, quote.companyName, updateQuote]);
+      onChoose: () => updateQuote(quote.id, {
+        companyId: company.id,
+        companyName: company.name,
+        projectId: linkedProject?.companyId === company.id ? quote.projectId : undefined,
+      }),
+    })), [companies, quote.id, quote.companyName, quote.projectId, linkedProject, updateQuote]);
 
   const contactSuggestions = useMemo(() => recentFirst(contacts)
     .filter((contact) => {
@@ -96,6 +101,7 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
     })
     .map((contact): Suggestion => {
       const company = contact.companyId ? companies.find((candidate) => candidate.id === contact.companyId) : undefined;
+      const companyId = company?.id ?? quote.companyId;
       return {
         id: contact.id,
         primary: contact.name,
@@ -104,16 +110,17 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
           contactId: contact.id,
           contactName: contact.name,
           contactEmail: contact.email ?? quote.contactEmail,
-          companyId: company?.id ?? quote.companyId,
+          companyId,
           companyName: company?.name ?? quote.companyName,
+          projectId: linkedProject && companyId && linkedProject.companyId !== companyId ? undefined : quote.projectId,
         }),
       };
-    }), [contacts, companies, quote.id, quote.companyId, quote.companyName, quote.contactName, quote.contactEmail, updateQuote]);
+    }), [contacts, companies, quote.id, quote.companyId, quote.companyName, quote.contactName, quote.contactEmail, quote.projectId, linkedProject, updateQuote]);
 
   return (
     <>
       <EntityField label="Project" value={quote.title} suggestions={projectSuggestions} onChange={(value) => updateQuote(quote.id, { title: value, projectId: undefined })} />
-      <EntityField label="Company / customer" value={quote.companyName ?? ''} suggestions={companySuggestions} onChange={(value) => updateQuote(quote.id, { companyName: value, companyId: undefined })} />
+      <EntityField label="Company / customer" value={quote.companyName ?? ''} suggestions={companySuggestions} onChange={(value) => updateQuote(quote.id, { companyName: value, companyId: undefined, projectId: undefined })} />
       <EntityField label="Contact" value={quote.contactName ?? ''} suggestions={contactSuggestions} onChange={(value) => updateQuote(quote.id, { contactName: value, contactId: undefined })} />
       <label><span>Email</span><input type="email" value={quote.contactEmail ?? ''} onChange={(event) => updateQuote(quote.id, { contactEmail: event.target.value })} /></label>
       <label><span>Project address</span><input value={quote.address ?? ''} onChange={(event) => updateQuote(quote.id, { address: event.target.value })} /></label>
