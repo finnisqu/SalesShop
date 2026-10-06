@@ -66,9 +66,10 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
   const contacts = useCrmStore((state) => state.contacts);
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const linkedProject = quote.projectId ? projects.find((project) => project.id === quote.projectId) : undefined;
+  const projectQuery = !quote.projectId && quote.title.trim().toLowerCase() === 'untitled quote' ? '' : quote.title;
 
   const projectSuggestions = useMemo(() => recentFirst(projects)
-    .filter((project) => matches(`${project.name} ${project.companyName ?? ''}`, quote.title))
+    .filter((project) => matches(`${project.name} ${project.companyName ?? ''}`, projectQuery))
     .map((project): Suggestion => ({
       id: project.id,
       primary: project.name,
@@ -79,7 +80,7 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
         companyId: project.companyId,
         companyName: project.companyName ?? quote.companyName,
       }),
-    })), [projects, quote.id, quote.title, quote.companyName, updateQuote]);
+    })), [projects, projectQuery, quote.id, quote.companyName, updateQuote]);
 
   const companySuggestions = useMemo(() => recentFirst(companies)
     .filter((company) => matches(company.name, quote.companyName ?? ''))
