@@ -5,9 +5,11 @@ export type StockMaterialUnit = 'sf' | 'slab' | 'each';
 export interface StockMaterial {
   id: string;
   name: string;
+  brand?: string;
   materialType: PricingMaterialType;
   internalCost?: number;
   unit: StockMaterialUnit;
+  builderLevelId?: string;
   notes?: string;
   active: boolean;
 }
