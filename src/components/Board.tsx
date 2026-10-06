@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import '../project-activity.css';
+import '../board-integrity.css';
+import { projectAttentionFlags } from '../services/boardIntegrity';
 import { AccountsBoard } from './AccountsBoard';
 import { BoardScrollControls } from './BoardScrollControls';
 import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
@@ -42,6 +44,7 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
   onDragStart: (event: DragEvent<HTMLElement>) => void;
   mobileInteraction: boolean;
 }) {
+  const attention = projectAttentionFlags(project).slice(0, 2);
   return (
     <article
       className="project-card"
@@ -63,6 +66,9 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
         </div>
       )}
       {project.nextAction && <div className="project-next-action">→ {project.nextAction}</div>}
+      {attention.length > 0 && <div className="project-attention-flags" aria-label="Project attention">
+        {attention.map((flag) => <span key={flag.kind} className={`attention-${flag.kind}`}>{flag.label}</span>)}
+      </div>}
       {project.lastTouchpoint && <div className="project-last-touch">Last touch {formatDate(project.lastTouchpoint)}</div>}
       <button type="button" className="project-card-open" onClick={(event) => { event.stopPropagation(); onOpen(); }}>Edit</button>
     </article>

@@ -109,12 +109,13 @@ Deno.serve(async (req) => {
 
     const { data: quote, error: quoteError } = await admin
       .from('quotes')
-      .select('id, revision, status')
+      .select('id, revision, status, archived_at')
       .eq('organization_id', organizationId)
       .eq('id', quoteId)
       .maybeSingle();
     if (quoteError) throw quoteError;
     if (!quote) return json({ error: 'Quote not found.' }, 404);
+    if (quote.archived_at) return json({ error: 'Archived documents cannot create customer links. Restore the document first.' }, 409);
     const revision = body.revision ?? Number(quote.revision) ?? 0;
     if (revision !== Number(quote.revision)) return json({ error: 'Only the current quote revision can be shared.' }, 409);
 

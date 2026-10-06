@@ -72,19 +72,28 @@ type Snapshot = {
   customerColumns?: { quantity: boolean; rate: boolean; lineAmount: boolean };
   customerNotes?: string;
   pricingSchedule?: { customerItems?: ScheduleItem[] };
+  customerTotal?: number;
 };
+
+function roundCurrency(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
 
 function lineTotal(line: SnapshotLine) {
   if (!line.includeInTotal || line.pricingMode === 'none') return 0;
   const raw = line.pricingMode === 'quantity-rate'
     ? Number(line.quantity ?? 0) * Number(line.rate ?? 0)
     : Number(line.amount ?? 0);
-  return line.kind === 'discount' ? -Math.abs(raw) : raw;
+  return roundCurrency(line.kind === 'discount' ? -Math.abs(raw) : raw);
 }
 
 function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentType: string) {
   const allLines = Array.isArray(snapshot.lines) ? snapshot.lines : [];
-  const total = allLines.reduce((sum, line) => sum + lineTotal(line), 0);
+  const calculatedTotal = roundCurrency(allLines.reduce((sum, line) => sum + lineTotal(line), 0));
+  const total = typeof snapshot.customerTotal === 'number' && Number.isFinite(snapshot.customerTotal)
+    ? roundCurrency(snapshot.customerTotal)
+    : calculatedTotal;
   const revision = Number(snapshot.revision) || 0;
   const quoteNumber = revision > 0 ? `${baseQuoteNumber}-R${revision}` : baseQuoteNumber;
   const customerItems = Array.isArray(snapshot.pricingSchedule?.customerItems)
@@ -163,6 +172,10 @@ Deno.serve(async (req) => {
     if (quoteResult.error) throw quoteResult.error;
     if (orgResult.error) throw orgResult.error;
     if (signatureResult.error) throw signatureResult.error;
+
+    if (quoteResult.data.archived_at && share.status !== 'signed') {
+      return json({ error: 'This document has been archived and is no longer available.' }, 410);
+    }
 
     const documentType = String(quoteResult.data.document_type ?? 'quote');
     const changeOrder = documentType === 'change-order';
@@ -258,6 +271,7 @@ Deno.serve(async (req) => {
             previousStage = String(project.stage);
             const projectUpdate: Record<string, unknown> = {
               stage: 'Closed Won',
+              stage_changed_at: nowIso,
               last_touchpoint: nowIso.slice(0, 10),
               updated_at: nowIso,
             };

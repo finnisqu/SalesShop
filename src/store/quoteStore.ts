@@ -9,6 +9,13 @@ import {
   recordRevisionCreated,
 } from '../services/quoteCrmService';
 import {
+  canPermanentlyDeleteQuote,
+  createQuoteRevisionSnapshot,
+  quoteCanCreateRevision,
+  quoteIsCommerciallyEditable,
+  sanitizeQuotePatchForStatus,
+} from '../services/quoteIntegrity';
+import {
   deleteNormalizedQuote,
   deleteNormalizedQuoteLine,
   deleteNormalizedQuoteSection,
@@ -23,7 +30,6 @@ import {
   type QuoteLine,
   type QuoteLineKind,
   type QuotePatch,
-  type QuoteRevisionSnapshot,
   type QuoteSection,
   type QuoteStatus,
 } from '../types/quote';
@@ -39,6 +45,8 @@ interface QuoteState {
   selectQuote: (quoteId: string) => void;
   updateQuote: (quoteId: string, patch: QuotePatch) => void;
   deleteQuote: (quoteId: string) => void;
+  restoreQuote: (quoteId: string) => void;
+  touchQuote: (quoteId: string) => void;
   addLine: (quoteId: string, kind?: QuoteLineKind, sectionId?: string) => string;
   updateLine: (quoteId: string, lineId: string, patch: Partial<Omit<QuoteLine, 'id'>>) => void;
   deleteLine: (quoteId: string, lineId: string) => void;
@@ -135,32 +143,6 @@ function seedDocument(): QuoteDocument {
 
 function persist(quotes: Quote[], activeQuoteId: string | null) {
   localQuoteRepository.save({ schemaVersion: 2, quotes, activeQuoteId });
-}
-
-function snapshot(quote: Quote, status: QuoteStatus = quote.status): QuoteRevisionSnapshot {
-  return {
-    revision: quote.revision,
-    label: quote.revisionLabel,
-    quoteDate: quote.quoteDate,
-    capturedAt: now(),
-    status,
-    documentType: quote.documentType,
-    parentQuoteId: quote.parentQuoteId,
-    changeOrderNumber: quote.changeOrderNumber,
-    title: quote.title,
-    projectId: quote.projectId,
-    companyId: quote.companyId,
-    companyName: quote.companyName,
-    contactId: quote.contactId,
-    contactName: quote.contactName,
-    contactEmail: quote.contactEmail,
-    address: quote.address,
-    sections: structuredClone(quote.sections),
-    lines: structuredClone(quote.lines),
-    customerColumns: { ...quote.customerColumns },
-    customerNotes: quote.customerNotes,
-    pricingSchedule: quote.pricingSchedule ? structuredClone(quote.pricingSchedule) : undefined,
-  };
 }
 
 function localBaseNumber(quotes: Quote[], date: string) {
@@ -291,7 +273,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       return;
     }
 
-    const safePatch = { ...patch };
+    const safePatch = sanitizeQuotePatchForStatus(current, patch);
     if (safePatch.documentType && ((current.status !== 'Draft' && current.status !== 'Ready') || current.documentType === 'change-order')) {
       safePatch.documentType = current.documentType;
     }
@@ -321,7 +303,21 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   deleteQuote: (quoteId) => {
-    if (get().quotes.some((quote) => quote.parentQuoteId === quoteId)) return;
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current) return;
+
+    if (!canPermanentlyDeleteQuote(current, get().quotes)) {
+      const timestamp = now();
+      const quotes = get().quotes.map((quote) => quote.id === quoteId
+        ? { ...quote, archivedAt: timestamp, updatedAt: timestamp }
+        : quote);
+      const visible = quotes.find((quote) => !quote.archivedAt && quote.id !== quoteId);
+      const activeQuoteId = get().activeQuoteId === quoteId ? (visible?.id ?? quoteId) : get().activeQuoteId;
+      persist(quotes, activeQuoteId);
+      set({ quotes, activeQuoteId });
+      return;
+    }
+
     const organizationId = cloudOrganizationId();
     let quotes = get().quotes.filter((quote) => quote.id !== quoteId);
     if (!quotes.length) quotes = [newQuote()];
@@ -331,7 +327,27 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if (organizationId) void deleteNormalizedQuote(organizationId, quoteId).catch(reportCloudDeleteError);
   },
 
+  restoreQuote: (quoteId) => {
+    const timestamp = now();
+    const quotes = get().quotes.map((quote) => quote.id === quoteId
+      ? { ...quote, archivedAt: undefined, updatedAt: timestamp }
+      : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes });
+  },
+
+  touchQuote: (quoteId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current) return;
+    const timestamp = now();
+    const quotes = get().quotes.map((quote) => quote.id === quoteId ? { ...quote, updatedAt: timestamp } : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes });
+  },
+
   addLine: (quoteId, kind = 'item', sectionId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return '';
     const line = newLine(kind, sectionId);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
@@ -343,6 +359,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   updateLine: (quoteId, lineId, patch) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return;
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? {
@@ -356,6 +374,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   deleteLine: (quoteId, lineId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return;
     const organizationId = cloudOrganizationId();
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
@@ -367,6 +387,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   addSection: (quoteId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return '';
     const section: QuoteSection = { id: uid('section'), title: 'New section', customerVisible: true };
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
@@ -378,6 +400,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   updateSection: (quoteId, sectionId, patch) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return;
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? {
@@ -391,6 +415,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   deleteSection: (quoteId, sectionId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return;
     const organizationId = cloudOrganizationId();
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
@@ -407,6 +433,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   setCustomerColumns: (quoteId, patch) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return;
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? { ...quote, customerColumns: { ...quote.customerColumns, ...patch }, updatedAt: timestamp }
@@ -443,7 +471,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const alreadyCaptured = current.history.some((item) => item.revision === current.revision);
     sentQuote = {
       ...sentQuote,
-      history: alreadyCaptured ? current.history : [...current.history, snapshot(sentQuote, 'Sent')],
+      history: alreadyCaptured ? current.history : [...current.history, createQuoteRevisionSnapshot(sentQuote, timestamp, 'Sent')],
     };
     const quotes = get().quotes.map((quote) => quote.id === quoteId ? sentQuote : quote);
     persist(quotes, get().activeQuoteId);
@@ -464,8 +492,9 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if (!current) return;
     const timestamp = now();
     const date = localDateKey();
+    if (!quoteCanCreateRevision(current)) return;
     const alreadyCaptured = current.history.some((item) => item.revision === current.revision);
-    const history = alreadyCaptured ? current.history : [...current.history, snapshot(current)];
+    const history = alreadyCaptured ? current.history : [...current.history, createQuoteRevisionSnapshot(current, timestamp)];
     const revised: Quote = {
       ...current,
       revision: current.revision + 1,

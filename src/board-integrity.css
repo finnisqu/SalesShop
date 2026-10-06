@@ -1,0 +1,33 @@
+.project-attention-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.project-attention-flags span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 2px 6px;
+  border: 1px solid rgba(125, 109, 73, .2);
+  border-radius: 999px;
+  background: rgba(248, 244, 227, .72);
+  color: #796f5b;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .025em;
+}
+
+.project-attention-flags .attention-overdue {
+  border-color: rgba(145, 88, 76, .24);
+  background: rgba(247, 230, 226, .76);
+  color: #8c5a51;
+}
+
+.project-attention-flags .attention-awaiting-response,
+.project-attention-flags .attention-won-no-next-action {
+  border-color: rgba(154, 127, 50, .28);
+  background: rgba(248, 239, 198, .72);
+  color: #79652d;
+}

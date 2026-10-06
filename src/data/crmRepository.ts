@@ -22,13 +22,13 @@ function seedDocument(): CrmDocument {
   ];
 
   const projects: Project[] = [
-    { id: 'project_riverwalk', name: 'Riverwalk Apartments', companyId: 'company_abc', companyName: 'ABC Construction', stage: 'Bid Development', amount: 486000, nextAction: 'Finish quartz alternate', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'project_oak_grove', name: 'Oak Grove Phase II', companyId: 'company_greystone', companyName: 'Greystone Builders', stage: 'Bid Sent', amount: 382000, nextAction: 'Follow up with Sarah', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'project_hampton', name: 'Hampton Inn Greenville', companyId: 'company_choate', companyName: 'Choate Construction', stage: 'Bid Development', nextAction: 'Verify room count', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'project_collins', name: 'Collins Ridge', companyId: 'company_dhi', companyName: 'D.R. Horton (DHI Communities)', stage: 'Negotiation', amount: 521297.06, lastTouchpoint: '2026-10-01', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'project_blue_jay', name: 'Blue Jay Park', companyId: 'company_bar', companyName: 'BAR Construction', stage: 'Bid Sent', amount: 14540, lastTouchpoint: '2026-09-30', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'project_burrito', name: 'Burrito Shak - Kannapolis', companyId: 'company_raywest', companyName: 'RAYWEST DESIGNBUILD', stage: 'Closed Won', amount: 7239, lastTouchpoint: '2026-09-23', createdAt: timestamp, updatedAt: timestamp },
-    { id: 'project_twin_lakes', name: 'Twin Lakes IL', companyId: 'company_choate', companyName: 'Choate Construction', stage: 'Discarded', amount: 100000, createdAt: timestamp, updatedAt: timestamp },
+    { id: 'project_riverwalk', name: 'Riverwalk Apartments', companyId: 'company_abc', companyName: 'ABC Construction', stage: 'Bid Development', stageChangedAt: timestamp, amount: 486000, nextAction: 'Finish quartz alternate', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'project_oak_grove', name: 'Oak Grove Phase II', companyId: 'company_greystone', companyName: 'Greystone Builders', stage: 'Bid Sent', stageChangedAt: timestamp, amount: 382000, nextAction: 'Follow up with Sarah', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'project_hampton', name: 'Hampton Inn Greenville', companyId: 'company_choate', companyName: 'Choate Construction', stage: 'Bid Development', stageChangedAt: timestamp, nextAction: 'Verify room count', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'project_collins', name: 'Collins Ridge', companyId: 'company_dhi', companyName: 'D.R. Horton (DHI Communities)', stage: 'Negotiation', stageChangedAt: timestamp, amount: 521297.06, lastTouchpoint: '2026-10-01', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'project_blue_jay', name: 'Blue Jay Park', companyId: 'company_bar', companyName: 'BAR Construction', stage: 'Bid Sent', stageChangedAt: timestamp, amount: 14540, lastTouchpoint: '2026-09-30', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'project_burrito', name: 'Burrito Shak - Kannapolis', companyId: 'company_raywest', companyName: 'RAYWEST DESIGNBUILD', stage: 'Closed Won', stageChangedAt: timestamp, amount: 7239, lastTouchpoint: '2026-09-23', createdAt: timestamp, updatedAt: timestamp },
+    { id: 'project_twin_lakes', name: 'Twin Lakes IL', companyId: 'company_choate', companyName: 'Choate Construction', stage: 'Discarded', stageChangedAt: timestamp, amount: 100000, createdAt: timestamp, updatedAt: timestamp },
   ];
 
   return { schemaVersion: 3, companies, contacts: [], projects, activities: [] };
@@ -43,6 +43,7 @@ function normalizeProject(raw: Partial<Project>, timestamp: string): Project | n
     companyId: raw.companyId,
     companyName: raw.companyName,
     stage,
+    stageChangedAt: raw.stageChangedAt ?? raw.updatedAt ?? raw.createdAt ?? timestamp,
     dueDate: raw.dueDate,
     amount: typeof raw.amount === 'number' ? raw.amount : undefined,
     nextAction: raw.nextAction,

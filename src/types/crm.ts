@@ -78,6 +78,7 @@ export interface Project {
   companyId?: string;
   companyName?: string;
   stage: ProjectStage;
+  stageChangedAt?: string;
   dueDate?: string;
   amount?: number;
   nextAction?: string;

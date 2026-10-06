@@ -209,6 +209,7 @@ export interface QuoteRevisionSnapshot {
   customerColumns: QuoteCustomerColumns;
   customerNotes: string;
   pricingSchedule?: PricingScheduleData;
+  customerTotal: number;
 }
 
 export interface Quote {
@@ -241,6 +242,7 @@ export interface Quote {
   sentAt?: string;
   viewedAt?: string;
   signedAt?: string;
+  archivedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -271,16 +273,26 @@ export type QuotePatch = Partial<Pick<Quote,
   | 'pricingSchedule'
 >>;
 
+export function roundCurrency(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 export function quoteLineTotal(line: QuoteLine) {
   if (!line.includeInTotal || line.pricingMode === 'none') return 0;
   const raw = line.pricingMode === 'quantity-rate'
     ? (line.quantity ?? 0) * (line.rate ?? 0)
     : (line.amount ?? 0);
-  return line.kind === 'discount' ? -Math.abs(raw) : raw;
+  const signed = line.kind === 'discount' ? -Math.abs(raw) : raw;
+  return roundCurrency(signed);
+}
+
+export function quoteLinesTotal(lines: QuoteLine[]) {
+  return roundCurrency(lines.reduce((total, line) => total + quoteLineTotal(line), 0));
 }
 
 export function quoteTotal(quote: Quote) {
-  return quote.lines.reduce((total, line) => total + quoteLineTotal(line), 0);
+  return quoteLinesTotal(quote.lines);
 }
 
 export function isDraftQuoteNumber(value: string) {

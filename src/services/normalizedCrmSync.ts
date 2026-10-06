@@ -87,6 +87,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
       companyId,
       companyName: companyId ? companyNames.get(companyId) : undefined,
       stage: String(row.stage) as ProjectStage,
+      stageChangedAt: valueOrUndefined(row.stage_changed_at),
       dueDate: valueOrUndefined(row.due_date),
       amount: numericOrUndefined(row.amount),
       nextAction: valueOrUndefined(row.next_action),
@@ -124,7 +125,7 @@ async function upsertRows(table: CrmTable, rows: Record<string, unknown>[]) {
 interface ServerCrmGuards {
   companies: Map<string, string>;
   contacts: Map<string, string>;
-  projects: Map<string, { updatedAt: string; stage: ProjectStage; amount?: number; lastTouchpoint?: string }>;
+  projects: Map<string, { updatedAt: string; stage: ProjectStage; stageChangedAt?: string; amount?: number; lastTouchpoint?: string }>;
 }
 
 async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards> {
@@ -138,7 +139,7 @@ async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards>
   const [companies, contacts, projects] = await Promise.all([
     supabase.from('companies').select('id,updated_at').eq('organization_id', organizationId),
     supabase.from('contacts').select('id,updated_at').eq('organization_id', organizationId),
-    supabase.from('projects').select('id,updated_at,stage,amount,last_touchpoint').eq('organization_id', organizationId),
+    supabase.from('projects').select('id,updated_at,stage,stage_changed_at,amount,last_touchpoint').eq('organization_id', organizationId),
   ]);
   if (companies.error) throw companies.error;
   if (contacts.error) throw contacts.error;
@@ -149,6 +150,7 @@ async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards>
   (projects.data ?? []).forEach((row) => guards.projects.set(String(row.id), {
     updatedAt: String(row.updated_at),
     stage: String(row.stage) as ProjectStage,
+    stageChangedAt: valueOrUndefined(row.stage_changed_at),
     amount: numericOrUndefined(row.amount),
     lastTouchpoint: valueOrUndefined(row.last_touchpoint),
   }));
@@ -197,14 +199,17 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
       const server = guards.projects.get(project.id);
       let stage = project.stage;
       let amount = project.amount;
+      let stageChangedAt = project.stageChangedAt;
       let lastTouchpoint = project.lastTouchpoint;
       if (server?.stage === 'Completed' && project.stage !== 'Completed') {
         stage = 'Completed';
         amount = server.amount ?? amount;
+        stageChangedAt = server.stageChangedAt ?? stageChangedAt;
         lastTouchpoint = server.lastTouchpoint ?? lastTouchpoint;
       } else if (server?.stage === 'Closed Won' && project.stage !== 'Closed Won' && project.stage !== 'Completed') {
         stage = 'Closed Won';
         amount = server.amount ?? amount;
+        stageChangedAt = server.stageChangedAt ?? stageChangedAt;
         lastTouchpoint = server.lastTouchpoint ?? lastTouchpoint;
       }
       return {
@@ -213,6 +218,7 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
         company_id: project.companyId ?? null,
         name: project.name,
         stage,
+        stage_changed_at: stageChangedAt ?? project.updatedAt,
         due_date: project.dueDate ?? null,
         amount: amount ?? null,
         next_action: project.nextAction ?? null,

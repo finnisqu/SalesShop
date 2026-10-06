@@ -1,5 +1,5 @@
 import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
-import type { PricingScheduleData, Quote, QuoteDocument } from '../types/quote';
+import { quoteLinesTotal, type PricingScheduleData, type Quote, type QuoteDocument } from '../types/quote';
 
 export interface QuoteRepository {
   load(): QuoteDocument | null;
@@ -29,7 +29,9 @@ function normalizeQuote(raw: Quote): Quote {
       parentQuoteId: revision.parentQuoteId ?? raw.parentQuoteId,
       changeOrderNumber: revision.changeOrderNumber ?? raw.changeOrderNumber,
       pricingSchedule: normalizePricingSchedule(revision.pricingSchedule),
+      customerTotal: typeof revision.customerTotal === 'number' ? revision.customerTotal : quoteLinesTotal(revision.lines ?? []),
     })),
+    archivedAt: raw.archivedAt,
   };
 }
 

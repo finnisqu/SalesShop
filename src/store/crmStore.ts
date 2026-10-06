@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { localCrmRepository } from '../data/crmRepository';
 import { supabase } from '../lib/supabase';
+import { applyProjectStageTransition } from '../services/boardIntegrity';
 import { deleteNormalizedProject } from '../services/normalizedCrmSync';
 import type {
   Activity,
@@ -179,6 +180,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       companyId: ensured.companyId,
       companyName: ensured.companyName,
       stage,
+      stageChangedAt: timestamp,
       amount: typeof details.amount === 'number' && Number.isFinite(details.amount) ? details.amount : undefined,
       lastTouchpoint: details.lastTouchpoint,
       createdAt: timestamp,
@@ -212,11 +214,17 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     }
 
     const current = get().projects.find((project) => project.id === projectId);
+    const stageTransition = current && patch.stage
+      ? applyProjectStageTransition(current, patch.stage, get().activities, timestamp)
+      : null;
+    const effectiveStage = stageTransition?.project.stage ?? patch.stage;
     const projects = get().projects.map((project) => {
       if (project.id !== projectId) return project;
       return {
         ...project,
         ...patch,
+        ...(effectiveStage ? { stage: effectiveStage } : {}),
+        ...(stageTransition?.changed ? { stageChangedAt: timestamp } : {}),
         ...(normalizedCompany ?? {}),
         name: patch.name?.trim() || project.name,
         amount: typeof patch.amount === 'number' && Number.isFinite(patch.amount) ? patch.amount : patch.amount,
@@ -225,16 +233,16 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     });
 
     let activities = get().activities;
-    if (current && patch.stage && patch.stage !== current.stage) {
+    if (current && stageTransition?.changed) {
       activities = [...activities, {
         id: id('activity'),
         type: 'project-stage-changed',
-        summary: stageSummary(current.stage, patch.stage, context),
+        summary: stageSummary(current.stage, stageTransition.project.stage, context),
         projectId,
         companyId: normalizedCompany?.companyId ?? current.companyId,
         quoteId: context?.quoteId,
         occurredAt: timestamp,
-        metadata: { source: context?.source ?? 'manual', quoteNumber: context?.quoteNumber, fromStage: current.stage, toStage: patch.stage },
+        metadata: { source: context?.source ?? 'manual', quoteNumber: context?.quoteNumber, fromStage: current.stage, toStage: stageTransition.project.stage },
       }];
     }
 
@@ -244,20 +252,22 @@ export const useCrmStore = create<CrmState>((set, get) => ({
 
   moveProject: (projectId, stage, context) => {
     const current = get().projects.find((project) => project.id === projectId);
-    if (!current || current.stage === stage) return;
+    if (!current) return;
     const timestamp = now();
+    const transition = applyProjectStageTransition(current, stage, get().activities, timestamp);
+    if (!transition.changed) return;
     const projects = get().projects.map((project) =>
-      project.id === projectId ? { ...project, stage, updatedAt: timestamp } : project,
+      project.id === projectId ? transition.project : project,
     );
     const activity: Activity = {
       id: id('activity'),
       type: 'project-stage-changed',
-      summary: stageSummary(current.stage, stage, context),
+      summary: stageSummary(current.stage, transition.project.stage, context),
       projectId,
       companyId: current.companyId,
       quoteId: context?.quoteId,
       occurredAt: timestamp,
-      metadata: { source: context?.source ?? 'manual', quoteNumber: context?.quoteNumber, fromStage: current.stage, toStage: stage },
+      metadata: { source: context?.source ?? 'manual', quoteNumber: context?.quoteNumber, fromStage: current.stage, toStage: transition.project.stage },
     };
     const activities = [...get().activities, activity];
     persist(get().companies, get().contacts, projects, activities);

@@ -66,6 +66,7 @@ async function prepareCurrentRevision(quoteId: string) {
   let state = useQuoteStore.getState();
   let quote = state.quotes.find((candidate) => candidate.id === quoteId);
   if (!quote) throw new Error('Commercial document not found.');
+  if (quote.archivedAt) throw new Error('Archived documents cannot be shared. Restore the document first.');
   if (quote.status === 'Declined' || quote.status === 'Expired') {
     throw new Error(`${quote.status} documents cannot be shared. Create or reopen a revision first.`);
   }
@@ -82,7 +83,7 @@ async function prepareCurrentRevision(quoteId: string) {
   // Sharing is an explicit write intent. Refresh the local edit timestamp before
   // the durability sync so a previously interrupted number-assignment/send flow
   // cannot leave a legitimate Sent revision behind a newer server clock value.
-  useQuoteStore.getState().updateQuote(quoteId, {});
+  useQuoteStore.getState().touchQuote(quoteId);
   state = useQuoteStore.getState();
   quote = state.quotes.find((candidate) => candidate.id === quoteId);
   if (!quote) throw new Error('Commercial document not found.');

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type TouchEvent } from 'react';
 import { createPricingScheduleData } from '../services/pricingSchedule';
+import {
+  canPermanentlyDeleteQuote,
+  quoteCanCreateRevision,
+  quoteIsCommerciallyEditable,
+} from '../services/quoteIntegrity';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import {
@@ -165,12 +170,14 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const recordSent = useQuoteStore((state) => state.recordSent);
   const createRevision = useQuoteStore((state) => state.createRevision);
   const createChangeOrder = useQuoteStore((state) => state.createChangeOrder);
+  const restoreQuote = useQuoteStore((state) => state.restoreQuote);
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
   const [draggingLineId, setDraggingLineId] = useState<string | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const pricingSchedule = quote.documentType === 'pricing-schedule';
+  const commerciallyEditable = quoteIsCommerciallyEditable(quote);
   const effectiveMode: QuoteViewMode = pricingSchedule && mode === 'split' ? 'edit' : mode;
   const viewModes: QuoteViewMode[] = pricingSchedule ? ['edit', 'workbook', 'customer'] : ['edit', 'split', 'customer'];
 
@@ -233,8 +240,8 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     try { await recordSent(quote.id); } catch (reason) { setSendError(reason instanceof Error ? reason.message : 'The document could not be sent.'); } finally { setSending(false); }
   };
 
-  const canRevise = quote.status !== 'Draft' && quote.status !== 'Ready' && quote.status !== 'Signed';
-  const canSign = quote.status !== 'Signed' && quote.status !== 'Declined' && quote.status !== 'Expired';
+  const canRevise = !quote.archivedAt && quoteCanCreateRevision(quote);
+  const canSign = !quote.archivedAt && quote.status !== 'Signed' && quote.status !== 'Declined' && quote.status !== 'Expired';
   const parent = quote.parentQuoteId ? quotes.find((candidate) => candidate.id === quote.parentQuoteId) : null;
   const hasChangeOrders = quotes.some((candidate) => candidate.parentQuoteId === quote.id);
   const canCreateChangeOrder = quote.status === 'Signed';
@@ -243,14 +250,15 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const setupDateLabel = quote.quoteDate
     ? new Date(`${quote.quoteDate}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     : 'No date';
-  const documentTypeLocked = quote.status !== 'Draft' && quote.status !== 'Ready';
+  const documentTypeLocked = !commerciallyEditable;
+  const permanentDelete = canPermanentlyDeleteQuote(quote, quotes);
 
   return (
     <section className={`quotes-workbench view-${effectiveMode}`}>
       <header className="quote-workbench-header">
         <div>
           <span className="quote-number">{displayQuoteNumber(quote)}</span>
-          <input className="quote-title-input" value={quote.title} onChange={(event) => updateQuote(quote.id, { title: event.target.value, projectId: undefined })} />
+          <input className="quote-title-input" value={quote.title} readOnly={!commerciallyEditable} onChange={(event) => updateQuote(quote.id, { title: event.target.value, projectId: undefined })} />
           {quote.documentType === 'change-order' && parent && <small>Changes original agreement {displayQuoteNumber(parent)}</small>}
         </div>
         <div className="quote-header-actions">
@@ -292,6 +300,16 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
           </div>
         </div>
       </header>
+      {quote.archivedAt ? (
+        <div className="quote-integrity-banner is-archived">
+          <div><strong>Archived business record</strong><span>This document is retained for audit/history and cannot be edited or shared while archived.</span></div>
+          <button type="button" onClick={() => restoreQuote(quote.id)}>Restore</button>
+        </div>
+      ) : !commerciallyEditable ? (
+        <div className="quote-integrity-banner">
+          <div><strong>Frozen revision</strong><span>Customer-facing content is locked. Create a revision to make commercial changes without altering what was previously sent.</span></div>
+        </div>
+      ) : null}
       {sendError && <div className="quote-share-error" role="alert">{sendError}</div>}
       <div className={`quote-workbench-body ${pricingSchedule ? 'is-swipeable' : ''}`} onTouchStart={beginPricingSwipe} onTouchEnd={finishPricingSwipe} onTouchCancel={() => { swipeStart.current = null; }}>
         {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingScheduleWorkbook quote={quote} /></div> : effectiveMode !== 'customer' ? (
@@ -329,8 +347,11 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
             {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><QuickMaterialQuote quote={quote} /><section className="quote-customer-controls"><div><span className="quote-control-heading">Customer columns</span><small>Keep the sent document minimal or expose pricing detail.</small></div><label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label><label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label><label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label></section><section className="quote-lines-editor"><header><div><span className="quote-control-heading">{documentLabel} content</span><small>Drag the handles to set row order. Customer view follows the same line order.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>{quote.sections.map((section) => <SectionEditor key={section.id} quote={quote} sectionId={section.id} />)}{quote.lines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} onMoveBy={moveLineBy} />)}<div className="quote-add-row"><button type="button" onClick={() => addLine(quote.id, 'item')}>+ Line</button><button type="button" onClick={() => addSection(quote.id)}>+ Section</button><button type="button" onClick={() => addLine(quote.id, 'scope')}>+ Scope</button><button type="button" onClick={() => addLine(quote.id, 'warranty')}>+ Warranty</button><button type="button" onClick={() => addLine(quote.id, 'tax')}>+ Tax</button><button type="button" onClick={() => addLine(quote.id, 'allowance')}>+ Allowance</button><button type="button" onClick={() => addLine(quote.id, 'discount')}>+ Discount</button><button type="button" onClick={() => addLine(quote.id, 'note')}>+ Note</button></div></section></>}
             <section className="quote-notes-grid"><label><span>Customer notes</span><textarea value={quote.customerNotes} onChange={(event) => updateQuote(quote.id, { customerNotes: event.target.value })} placeholder="Appears on customer document" /></label><label className="internal-notes"><span>Internal notes · private</span><textarea value={quote.internalNotes} onChange={(event) => updateQuote(quote.id, { internalNotes: event.target.value })} placeholder="Pricing thoughts, negotiation notes, reminders…" /></label></section>
             {quote.history.length > 0 && <section className="quote-history"><span className="quote-control-heading">Sent history</span>{quote.history.map((revision) => <div key={`${revision.revision}-${revision.capturedAt}`}><strong>{quote.quoteNumber}{revision.revision ? `-R${revision.revision}` : ''}</strong><span>{revision.label || revision.status}</span><time>{revision.quoteDate}</time></div>)}</section>}
-            {hasChangeOrders && <small>This agreement has Change Orders attached and cannot be deleted.</small>}
-            <button type="button" className="quote-delete-button" disabled={hasChangeOrders} onClick={() => { if (window.confirm(`Delete ${displayQuoteNumber(quote)}?`)) deleteQuote(quote.id); }}>Delete {documentLabel.toLowerCase()}</button>
+            {hasChangeOrders && permanentDelete && <small>This agreement has Change Orders attached and cannot be permanently deleted.</small>}
+            {!quote.archivedAt && <button type="button" className="quote-delete-button" onClick={() => {
+              const action = permanentDelete ? 'Delete' : 'Archive';
+              if (window.confirm(`${action} ${displayQuoteNumber(quote)}?${permanentDelete ? '' : ' The business record and revisions will be retained.'}`)) deleteQuote(quote.id);
+            }}>{permanentDelete ? `Delete ${documentLabel.toLowerCase()}` : `Archive ${documentLabel.toLowerCase()}`}</button>}
           </div>
         ) : null}
         {effectiveMode === 'customer' && <div className="quote-preview-pane"><CustomerPreview quote={quote} /></div>}
@@ -350,9 +371,14 @@ export function Quotes() {
   const createQuote = useQuoteStore((state) => state.createQuote);
   const hydrateCrm = useCrmStore((state) => state.hydrate);
   const [mode, setMode] = useState<QuoteViewMode>('split');
+  const [showArchived, setShowArchived] = useState(false);
   useEffect(() => { hydrate(); hydrateCrm(); }, [hydrate, hydrateCrm]);
   const quote = quotes.find((candidate) => candidate.id === activeQuoteId) ?? quotes[0] ?? null;
-  const sortedQuotes = useMemo(() => [...quotes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [quotes]);
+  const archivedCount = quotes.filter((item) => Boolean(item.archivedAt)).length;
+  const sortedQuotes = useMemo(() => quotes
+    .filter((item) => showArchived || !item.archivedAt || item.id === quote?.id)
+    .slice()
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [quotes, quote?.id, showArchived]);
   useEffect(() => {
     if (quote?.documentType === 'pricing-schedule') setMode('edit');
   }, [quote?.id, quote?.documentType]);
@@ -361,5 +387,5 @@ export function Quotes() {
     if (quote?.documentType !== 'pricing-schedule' && mode === 'workbook') setMode('edit');
   }, [quote?.documentType, mode]);
   if (!hydrated || !quote) return <div className="quotes-loading">Opening quotes…</div>;
-  return <main className="quotes-view"><aside className="quotes-sidebar"><header><div><span>Commercial documents</span><strong>Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header><div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside><QuoteEditor quote={quote} mode={mode} onModeChange={setMode} /></main>;
+  return <main className="quotes-view"><aside className="quotes-sidebar"><header><div><span>Commercial documents</span><strong>Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside><QuoteEditor quote={quote} mode={mode} onModeChange={setMode} /></main>;
 }

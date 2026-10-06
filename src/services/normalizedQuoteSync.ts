@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import {
   isDraftQuoteNumber,
+  quoteLinesTotal,
   type CommercialDocumentType,
   type PricingScheduleData,
   type Quote,
@@ -37,23 +38,6 @@ function pricingScheduleOrUndefined(value: unknown): PricingScheduleData | undef
   return { ...schedule, customerItems: Array.isArray(schedule.customerItems) ? schedule.customerItems : [] };
 }
 
-function stripPrivateMaterialReferences(snapshot: QuoteRevisionSnapshot): QuoteRevisionSnapshot {
-  return {
-    ...snapshot,
-    lines: snapshot.lines.map((line) => ({
-      id: line.id,
-      sectionId: line.sectionId,
-      kind: line.kind,
-      description: line.description,
-      pricingMode: line.pricingMode,
-      quantity: line.quantity,
-      rate: line.rate,
-      amount: line.amount,
-      customerVisible: line.customerVisible,
-      includeInTotal: line.includeInTotal,
-    })),
-  };
-}
 
 function atLeastAsNew(localValue: string, serverValue?: string) {
   if (!serverValue) return true;
@@ -109,7 +93,13 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     const snapshot = row.snapshot;
     if (snapshot && typeof snapshot === 'object') {
       const revision = snapshot as QuoteRevisionSnapshot;
-      return { ...revision, pricingSchedule: pricingScheduleOrUndefined(revision.pricingSchedule) };
+      return {
+        ...revision,
+        pricingSchedule: pricingScheduleOrUndefined(revision.pricingSchedule),
+        customerTotal: typeof revision.customerTotal === 'number'
+          ? revision.customerTotal
+          : quoteLinesTotal(revision.lines ?? []),
+      };
     }
     return {
       revision: Number(row.revision) || 0,
@@ -122,6 +112,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
       lines: [],
       customerColumns: { quantity: false, rate: false, lineAmount: true },
       customerNotes: '',
+      customerTotal: 0,
     };
   });
 
@@ -144,6 +135,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     contactName: valueOrUndefined(row.contact_name),
     contactEmail: valueOrUndefined(row.contact_email),
     address: valueOrUndefined(row.address),
+    pricingDivision: valueOrUndefined(row.pricing_division) as Quote['pricingDivision'],
     sections: sectionsByQuote.get(String(row.id)) ?? [],
     lines: linesByQuote.get(String(row.id)) ?? [],
     customerColumns: {
@@ -156,6 +148,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     sentAt: valueOrUndefined(row.sent_at),
     viewedAt: valueOrUndefined(row.viewed_at),
     signedAt: valueOrUndefined(row.signed_at),
+    archivedAt: valueOrUndefined(row.archived_at),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   }));
@@ -263,6 +256,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
       contact_name: quote.contactName ?? null,
       contact_email: quote.contactEmail ?? null,
       address: quote.address ?? null,
+      pricing_division: quote.pricingDivision ?? null,
       customer_quantity: quote.customerColumns.quantity,
       customer_rate: quote.customerColumns.rate,
       customer_line_amount: quote.customerColumns.lineAmount,
@@ -272,6 +266,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
       sent_at: quote.sentAt ?? null,
       viewed_at: viewedAt ?? null,
       signed_at: signedAt ?? null,
+      archived_at: quote.archivedAt ?? null,
       sort_order: sortOrder,
       created_at: quote.createdAt,
       updated_at: quote.updatedAt,
@@ -313,7 +308,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
         captured_at: revision.capturedAt,
         status: revision.status,
         title: revision.title,
-        snapshot: stripPrivateMaterialReferences(frozen),
+        snapshot: structuredClone(frozen),
       };
     }));
 
