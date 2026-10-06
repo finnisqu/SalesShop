@@ -33,10 +33,26 @@ function requireCloudContext() {
   return { organizationId: auth.organizationId };
 }
 
+async function edgeFunctionErrorMessage(error: unknown) {
+  const fallback = error instanceof Error ? error.message : 'Customer link request failed.';
+  if (!error || typeof error !== 'object' || !('context' in error)) return fallback;
+  const context = (error as { context?: unknown }).context;
+  if (!(context instanceof Response)) return fallback;
+
+  try {
+    const payload = await context.clone().json() as { error?: unknown; message?: unknown };
+    if (typeof payload.error === 'string' && payload.error.trim()) return payload.error;
+    if (typeof payload.message === 'string' && payload.message.trim()) return payload.message;
+  } catch {
+    // Keep the SDK message when the response body is not JSON.
+  }
+  return fallback;
+}
+
 async function invoke(body: Record<string, unknown>): Promise<ShareResponse> {
   if (!supabase) throw new Error('Supabase is not configured.');
   const { data, error } = await supabase.functions.invoke('quote-share-admin', { body });
-  if (error) throw error;
+  if (error) throw new Error(await edgeFunctionErrorMessage(error));
   const response = data as ShareResponse;
   if (response?.error) throw new Error(response.error);
   return response;
@@ -60,6 +76,14 @@ async function prepareCurrentRevision(quoteId: string) {
     }
   }
 
+  // Sharing is an explicit write intent. Refresh the local edit timestamp before
+  // the durability sync so a previously interrupted number-assignment/send flow
+  // cannot leave a legitimate Sent revision behind a newer server clock value.
+  useQuoteStore.getState().updateQuote(quoteId, {});
+  state = useQuoteStore.getState();
+  quote = state.quotes.find((candidate) => candidate.id === quoteId);
+  if (!quote) throw new Error('Commercial document not found.');
+
   // Do not rely on the normal cloud debounce here. A customer link must never
   // be issued before the exact revision AND its CRM identity are durable.
   const crm = useCrmStore.getState();
@@ -77,6 +101,18 @@ async function prepareCurrentRevision(quoteId: string) {
     quotes: state.quotes,
     activeQuoteId: state.activeQuoteId,
   });
+
+  const { data: frozenRevision, error: freezeError } = await supabase
+    .from('quote_revisions')
+    .select('revision')
+    .eq('organization_id', organizationId)
+    .eq('quote_id', quoteId)
+    .eq('revision', quote.revision)
+    .maybeSingle();
+  if (freezeError) throw freezeError;
+  if (!frozenRevision) {
+    throw new Error('SalesShop could not freeze this quote revision for sharing. Please try again after cloud sync finishes.');
+  }
 
   return { quote, organizationId };
 }
