@@ -12,6 +12,7 @@ type SearchResult = {
   detail?: string;
   searchText: string;
   open: () => void;
+  quickQuote?: () => void;
 };
 
 function plainText(html: string) {
@@ -39,6 +40,7 @@ export function GlobalSearch() {
   const entries = useNotebookStore((state) => state.entries);
   const quotes = useQuoteStore((state) => state.quotes);
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
+  const createQuote = useQuoteStore((state) => state.createQuote);
 
   const openProject = useNavigationStore((state) => state.openProject);
   const openCompany = useNavigationStore((state) => state.openCompany);
@@ -63,6 +65,15 @@ export function GlobalSearch() {
 
   const allResults = useMemo<SearchResult[]>(() => {
     const companyNames = new Map(companies.map((company) => [company.id, company.name]));
+    const quoteFromProject = (projectId: string, title: string, companyId?: string, companyName?: string) => {
+      const quoteId = createQuote({ title, projectId, companyId, companyName });
+      openQuote(quoteId);
+    };
+    const quoteFromCompany = (companyId: string, companyName: string) => {
+      const quoteId = createQuote({ title: 'Untitled quote', companyId, companyName });
+      openQuote(quoteId);
+    };
+
     return [
       ...projects.map((project): SearchResult => ({
         id: `project:${project.id}`,
@@ -71,6 +82,7 @@ export function GlobalSearch() {
         detail: [project.companyName, project.stage].filter(Boolean).join(' · '),
         searchText: [project.name, project.companyName, project.stage, project.nextAction].filter(Boolean).join(' '),
         open: () => openProject(project.id),
+        quickQuote: () => quoteFromProject(project.id, project.name, project.companyId, project.companyName),
       })),
       ...companies.map((company): SearchResult => ({
         id: `company:${company.id}`,
@@ -79,6 +91,7 @@ export function GlobalSearch() {
         detail: company.kind === 'non-customer' ? 'Non-customer relationship' : 'Customer / prospect',
         searchText: [company.name, company.kind].join(' '),
         open: () => openCompany(company.id),
+        quickQuote: company.kind === 'customer' ? () => quoteFromCompany(company.id, company.name) : undefined,
       })),
       ...contacts.map((contact): SearchResult => ({
         id: `contact:${contact.id}`,
@@ -105,7 +118,7 @@ export function GlobalSearch() {
         open: () => openNotebookPage(entry.id),
       })),
     ];
-  }, [projects, companies, contacts, quotes, entries, openProject, openCompany, openQuote, openNotebookPage, setView]);
+  }, [projects, companies, contacts, quotes, entries, createQuote, openProject, openCompany, openQuote, openNotebookPage, setView]);
 
   const results = useMemo(() => {
     const clean = query.trim().toLowerCase();
@@ -120,6 +133,12 @@ export function GlobalSearch() {
 
   const choose = (result: SearchResult) => {
     result.open();
+    setOpen(false);
+    setQuery('');
+  };
+
+  const chooseQuickQuote = (result: SearchResult) => {
+    result.quickQuote?.();
     setOpen(false);
     setQuery('');
   };
@@ -163,14 +182,17 @@ export function GlobalSearch() {
               </div>
             )}
             {results.map((result) => (
-              <button key={result.id} type="button" className="global-search-result" onClick={() => choose(result)}>
-                <span className={`global-search-kind kind-${result.kind.toLowerCase()}`}>{result.kind}</span>
-                <span className="global-search-result-copy">
-                  <strong>{result.title}</strong>
-                  {result.detail && <small>{result.detail}</small>}
-                </span>
-                <span className="global-search-arrow" aria-hidden="true">›</span>
-              </button>
+              <div key={result.id} className="global-search-result-row">
+                <button type="button" className="global-search-result" onClick={() => choose(result)}>
+                  <span className={`global-search-kind kind-${result.kind.toLowerCase()}`}>{result.kind}</span>
+                  <span className="global-search-result-copy">
+                    <strong>{result.title}</strong>
+                    {result.detail && <small>{result.detail}</small>}
+                  </span>
+                  <span className="global-search-arrow" aria-hidden="true">›</span>
+                </button>
+                {result.quickQuote && <button type="button" className="global-search-quick-quote" onClick={() => chooseQuickQuote(result)}>+ Quote</button>}
+              </div>
             ))}
           </div>
         </section>
