@@ -10,6 +10,7 @@ export function CompanySettings() {
     const active = settings.stockMaterials.filter((material) => material.active);
     return {
       activeColors: active.length,
+      stockColors: active.filter((material) => material.stockProgram).length,
       variants: active.reduce((total, material) => total + (material.variants?.filter((variant) => variant.active !== false).length ?? 0), 0),
       suppliers: new Set(active.map((material) => material.supplier?.trim()).filter(Boolean)).size,
     };
@@ -50,14 +51,15 @@ export function CompanySettings() {
 
       <section className="company-settings-card company-stock-library">
         <header className="company-settings-stock-header">
-          <div><strong>Material catalog</strong><small>Material pricing is now managed in <b>Rate Book → Materials</b>, where supplier, level, thickness, surface finish, slab/sheet size, special features, availability, and purchase programs stay together.</small></div>
-          <div><span>{materialSummary.activeColors} active colors</span></div>
+          <div><strong>Material catalog</strong><small>Material pricing is managed in <b>Rate Book → Materials</b>. Supplier catalogs can be broad; the STOCK program is the smaller set of colors that receives your Level pricing guide.</small></div>
+          <div><span>{materialSummary.stockColors} STOCK · {materialSummary.activeColors} active</span></div>
         </header>
         <div className="company-settings-fields company-material-summary">
           <div><span>Active colors</span><strong>{materialSummary.activeColors}</strong></div>
+          <div><span>STOCK program</span><strong>{materialSummary.stockColors}</strong></div>
           <div><span>Physical variants</span><strong>{materialSummary.variants}</strong></div>
           <div><span>Suppliers</span><strong>{materialSummary.suppliers}</strong></div>
-          <p>Company Settings owns your organization identity. The Rate Book owns material and pricing intelligence, so salespeople have one authoritative place to maintain it.</p>
+          <p>Company Settings owns your organization identity. The Rate Book owns supplier material intelligence and the deliberate STOCK-program selection, so salespeople have one authoritative pricing reference.</p>
         </div>
       </section>
     </main>
