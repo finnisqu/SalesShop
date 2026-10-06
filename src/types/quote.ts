@@ -1,3 +1,5 @@
+import type { RateBookDivision, RateBookPricingBehavior } from './rateBook';
+
 export const QUOTE_STATUSES = ['Draft', 'Ready', 'Sent', 'Viewed', 'Signed', 'Declined', 'Expired'] as const;
 export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
 
@@ -105,6 +107,12 @@ export interface PricingRateItem {
   customerVisible?: boolean;
   showLevelOnCustomer?: boolean;
   detailsLayout?: PricingDetailsLayout;
+  sourceRateBookItemId?: string;
+  sourceRateBookEffectiveDate?: string;
+  sourcePricingBehavior?: RateBookPricingBehavior;
+  pricingDivision?: RateBookDivision;
+  internalCost?: number;
+  suggestedRate?: number;
 }
 
 export interface PricingOptionRule {
@@ -183,6 +191,7 @@ export interface QuoteRevisionSnapshot {
   contactName?: string;
   contactEmail?: string;
   address?: string;
+  pricingDivision?: RateBookDivision;
   sections: QuoteSection[];
   lines: QuoteLine[];
   customerColumns: QuoteCustomerColumns;
@@ -209,6 +218,7 @@ export interface Quote {
   contactName?: string;
   contactEmail?: string;
   address?: string;
+  pricingDivision?: RateBookDivision;
   sections: QuoteSection[];
   lines: QuoteLine[];
   customerColumns: QuoteCustomerColumns;
@@ -239,6 +249,7 @@ export type QuotePatch = Partial<Pick<Quote,
   | 'contactName'
   | 'contactEmail'
   | 'address'
+  | 'pricingDivision'
   | 'quoteDate'
   | 'revisionLabel'
   | 'status'
