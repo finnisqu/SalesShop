@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
@@ -123,6 +124,61 @@ export function GlobalSearch() {
     setQuery('');
   };
 
+  const searchOverlay = open && typeof document !== 'undefined'
+    ? createPortal(
+      <div
+        className="global-search-backdrop"
+        role="presentation"
+        onPointerDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}
+      >
+        <section className="global-search-sheet" role="dialog" aria-modal="true" aria-label="Search SalesShop">
+          <header className="global-search-header">
+            <div className="global-search-input-wrap">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.25" /><path d="M15.2 15.2 20 20" /></svg>
+              <input
+                ref={inputRef}
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search SalesShop…"
+                autoComplete="off"
+                enterKeyHint="search"
+                aria-label="Search SalesShop"
+              />
+            </div>
+            <button type="button" className="global-search-close" onClick={() => setOpen(false)} aria-label="Close search">×</button>
+          </header>
+
+          <div className="global-search-results">
+            {!query.trim() && (
+              <div className="global-search-empty">
+                <strong>Find anything</strong>
+                <span>Projects, accounts, contacts, quotes, and notebook pages.</span>
+              </div>
+            )}
+            {query.trim() && !results.length && (
+              <div className="global-search-empty">
+                <strong>No matches</strong>
+                <span>Try a customer, project, contact, quote number, or note title.</span>
+              </div>
+            )}
+            {results.map((result) => (
+              <button key={result.id} type="button" className="global-search-result" onClick={() => choose(result)}>
+                <span className={`global-search-kind kind-${result.kind.toLowerCase()}`}>{result.kind}</span>
+                <span className="global-search-result-copy">
+                  <strong>{result.title}</strong>
+                  {result.detail && <small>{result.detail}</small>}
+                </span>
+                <span className="global-search-arrow" aria-hidden="true">›</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>,
+      document.body,
+    )
+    : null;
+
   return (
     <>
       <button
@@ -137,54 +193,7 @@ export function GlobalSearch() {
           <path d="M15.2 15.2 20 20" />
         </svg>
       </button>
-
-      {open && (
-        <div className="global-search-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
-          <section className="global-search-sheet" role="dialog" aria-modal="true" aria-label="Search SalesShop">
-            <header className="global-search-header">
-              <div className="global-search-input-wrap">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.25" /><path d="M15.2 15.2 20 20" /></svg>
-                <input
-                  ref={inputRef}
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search SalesShop…"
-                  autoComplete="off"
-                  enterKeyHint="search"
-                  aria-label="Search SalesShop"
-                />
-              </div>
-              <button type="button" className="global-search-close" onClick={() => setOpen(false)} aria-label="Close search">×</button>
-            </header>
-
-            <div className="global-search-results">
-              {!query.trim() && (
-                <div className="global-search-empty">
-                  <strong>Find anything</strong>
-                  <span>Projects, accounts, contacts, quotes, and notebook pages.</span>
-                </div>
-              )}
-              {query.trim() && !results.length && (
-                <div className="global-search-empty">
-                  <strong>No matches</strong>
-                  <span>Try a customer, project, contact, quote number, or note title.</span>
-                </div>
-              )}
-              {results.map((result) => (
-                <button key={result.id} type="button" className="global-search-result" onClick={() => choose(result)}>
-                  <span className={`global-search-kind kind-${result.kind.toLowerCase()}`}>{result.kind}</span>
-                  <span className="global-search-result-copy">
-                    <strong>{result.title}</strong>
-                    {result.detail && <small>{result.detail}</small>}
-                  </span>
-                  <span className="global-search-arrow" aria-hidden="true">›</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
+      {searchOverlay}
     </>
   );
 }
