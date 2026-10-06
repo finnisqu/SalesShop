@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import '../signature.css';
 import { completeQuoteSignature } from '../services/signatureService';
 import { useSignatureStore } from '../store/signatureStore';
-import { displayQuoteNumber, quoteTotal, type Quote } from '../types/quote';
+import { commercialDocumentLabel, displayQuoteNumber, quoteTotal, type Quote } from '../types/quote';
 import type { SignatureMethod, SignatureStroke } from '../types/signature';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-const CONSENT_TEXT = 'I agree to the quote shown and intend this electronic signature to confirm acceptance of this quote and revision.';
+const CONSENT_TEXT = 'I agree to the commercial document shown and intend this electronic signature to confirm acceptance of this document and revision.';
 
 function formatAcceptedAt(value: string) {
   return new Date(value).toLocaleString(undefined, {
@@ -23,6 +23,7 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
   const [consented, setConsented] = useState(false);
   const [strokes, setStrokes] = useState<SignatureStroke[]>([]);
   const [activeStrokeId, setActiveStrokeId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const padRef = useRef<SVGSVGElement | null>(null);
 
@@ -63,7 +64,7 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
 
   const finishStroke = () => setActiveStrokeId(null);
 
-  const complete = () => {
+  const complete = async () => {
     setError('');
     const cleanName = signerName.trim();
     if (!cleanName) { setError('Enter the signer name.'); return; }
@@ -73,20 +74,27 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
       return;
     }
 
-    const record = completeQuoteSignature(quote.id, {
-      signerName: cleanName,
-      signerEmail: signerEmail.trim() || undefined,
-      method,
-      signatureText: method === 'typed' ? cleanName : undefined,
-      strokes,
-      consentText: CONSENT_TEXT,
-    });
-    if (!record) setError('The signature could not be recorded.');
+    setBusy(true);
+    try {
+      const record = await completeQuoteSignature(quote.id, {
+        signerName: cleanName,
+        signerEmail: signerEmail.trim() || undefined,
+        method,
+        signatureText: method === 'typed' ? cleanName : undefined,
+        strokes,
+        consentText: CONSENT_TEXT,
+      });
+      if (!record) setError('The signature could not be recorded.');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'The signature could not be recorded.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="signature-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="signature-dialog" role="dialog" aria-modal="true" aria-label="Quote signature">
+      <section className="signature-dialog" role="dialog" aria-modal="true" aria-label={`${commercialDocumentLabel(quote)} signature`}>
         <header className="signature-dialog-header">
           <div>
             <span className="signature-eyebrow">Electronic acceptance</span>
@@ -106,7 +114,7 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
             </div>
             <div className="signature-receipt-card">
               <dl>
-                <div><dt>Quote</dt><dd>{signature.acceptedSnapshot.quoteNumber}</dd></div>
+                <div><dt>Document</dt><dd>{signature.acceptedSnapshot.quoteNumber}</dd></div>
                 <div><dt>Accepted total</dt><dd>{money.format(signature.acceptedSnapshot.acceptedTotal)}</dd></div>
                 <div><dt>Revision</dt><dd>{signature.acceptedSnapshot.revisionLabel || (signature.acceptedSnapshot.revision ? `R${signature.acceptedSnapshot.revision}` : 'Original')}</dd></div>
               </dl>
@@ -128,7 +136,7 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
         ) : (
           <div className="signature-form">
             {(quote.status === 'Draft' || quote.status === 'Ready') && (
-              <div className="signature-info">Signing in person will send and accept this quote in one step.</div>
+              <div className="signature-info">Signing in person will assign the official number, send, and accept this {commercialDocumentLabel(quote).toLowerCase()} in one step.</div>
             )}
 
             <div className="signature-identity-grid">
@@ -172,10 +180,12 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
             {error && <div className="signature-error" role="alert">{error}</div>}
 
             <div className="signature-actions">
-              <button type="button" className="signature-secondary" onClick={onClose}>Cancel</button>
-              <button type="button" className="signature-primary" onClick={complete}>Accept & Sign · {money.format(quoteTotal(quote))}</button>
+              <button type="button" className="signature-secondary" onClick={onClose} disabled={busy}>Cancel</button>
+              <button type="button" className="signature-primary" onClick={() => void complete()} disabled={busy}>
+                {busy ? 'Recording acceptance…' : `Accept & Sign · ${money.format(quoteTotal(quote))}`}
+              </button>
             </div>
-            <small className="signature-prototype-note">Prototype acceptance is stored locally. Public signing links, server-side audit records, and document delivery come with the backend phase.</small>
+            <small className="signature-prototype-note">Acceptance is tied to this exact numbered document and revision.</small>
           </div>
         )}
       </section>
