@@ -3,7 +3,7 @@ import type { StockMaterial } from './settings';
 export type SupplierImportStatus = 'new' | 'changed' | 'unchanged' | 'possible-duplicate';
 export type SupplierImportConfidence = 'high' | 'medium' | 'low';
 export type SupplierImportReviewDecision = 'pending' | 'approved' | 'needs-review' | 'ignored';
-export type SupplierImportPriceProvenance = 'supplier-listed' | 'derived-from-listed-unit';
+export type SupplierImportPriceProvenance = 'supplier-listed' | 'derived-from-listed-unit' | 'manual';
 
 export interface SupplierImportSource {
   parserId: string;
@@ -26,6 +26,13 @@ export interface SupplierImportPriceEvidence {
   costPerSfListed: boolean;
   costPerUnitListed: boolean;
   note: string;
+  supplier?: string;
+  brand?: string;
+  sourceFileName?: string;
+  sourcePageSheet?: string;
+  sourceReference?: string;
+  priceListLabel?: string;
+  effectiveDate?: string;
 }
 
 export interface SupplierImportCandidate {
@@ -34,7 +41,7 @@ export interface SupplierImportCandidate {
   status: SupplierImportStatus;
   confidence: SupplierImportConfidence;
   existingMaterialId?: string;
-  matchBasis?: 'sku' | 'variant-sku' | 'name';
+  matchBasis?: 'sku' | 'variant-sku' | 'identity' | 'name';
   changeSummary: string[];
   warnings: string[];
   reviewDecision?: SupplierImportReviewDecision;
@@ -132,13 +139,14 @@ export interface SupplierImportMappingDraft {
 export interface SupplierImportProfile {
   id: string;
   label: string;
-  supplier: string;
-  brand: string;
-  materialType: StockMaterial['materialType'];
+  supplier?: string;
+  brand?: string;
+  materialType?: StockMaterial['materialType'];
   parserId: string;
   fileTypeLabel: string;
   accept: string;
   description: string;
+  supportsEffectiveDateOverride?: boolean;
 }
 
 export interface SupplierImportParserContext {
