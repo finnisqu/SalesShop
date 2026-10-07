@@ -1,10 +1,14 @@
-import type {
-  MaterialAvailability,
+import {
+  MATERIAL_FAMILIES,
+  materialFamilyForType,
+  resolvedMaterialFamily,
+  type MaterialAvailability,
   MaterialFormatKind,
   MaterialPurchaseOption,
   MaterialPurchaseUnit,
   MaterialVariant,
-  StockMaterial,
+  type MaterialFamily,
+  type StockMaterial,
 } from '../types/settings';
 import type {
   SupplierImportCandidate,
@@ -16,11 +20,12 @@ import type {
 } from '../types/supplierImport';
 
 export const SALESSHOP_TEMPLATE_PARSER_ID = 'salesshop-material-template-xlsx';
-export const SALESSHOP_TEMPLATE_PARSER_VERSION = 1;
-export const SALESSHOP_TEMPLATE_VERSION = '1.0';
+export const SALESSHOP_TEMPLATE_PARSER_VERSION = 2;
+export const SALESSHOP_TEMPLATE_VERSION = '1.1';
+export const SALESSHOP_TEMPLATE_LEGACY_VERSION = '1.0';
 export const SALESSHOP_TEMPLATE_SCHEMA_NAME = 'SalesShop Material Import';
 
-export const SALESSHOP_TEMPLATE_HEADERS = [
+export const SALESSHOP_TEMPLATE_HEADERS_V1_0 = [
   'Include',
   'Supplier / Importer',
   'Brand / Manufacturer',
@@ -67,18 +72,70 @@ export const SALESSHOP_TEMPLATE_HEADERS = [
   'Validation Detail',
 ] as const;
 
-const MATERIAL_TYPES = new Set(['Granite', 'Quartz', 'Marble', 'Quartzite', 'Porcelain', 'Solid Surface', 'Other']);
+export const SALESSHOP_TEMPLATE_HEADERS = [
+  'Include',
+  'Supplier / Importer',
+  'Brand / Manufacturer',
+  'Material Family',
+  'Material Type',
+  'Color / Product Name',
+  'Collection / Series',
+  'Supplier Group',
+  'Material SKU',
+  'Material Features',
+  'Material Notes',
+  'Variant SKU',
+  'Thickness',
+  'Finish',
+  'Format Name',
+  'Format Kind',
+  'Length In',
+  'Width In',
+  'Area SF Listed',
+  'Area SF Calc',
+  'Availability',
+  'Availability Note / ETA',
+  'Variant Features',
+  'Variant Notes',
+  'Default Variant',
+  'Purchase Program',
+  'Min Quantity',
+  'Pricing Basis',
+  'Cost / SF Listed',
+  'Cost / Unit Listed',
+  'Effective Cost / SF',
+  'Default Purchase',
+  'Purchase Notes',
+  'Supplier Notes / Rules',
+  'Effective Date',
+  'Source File',
+  'Source Page / Sheet',
+  'Source Reference / Original Label',
+  'Price Provenance',
+  'Active',
+  'Material Key',
+  'Variant Key',
+  'Purchase Key',
+  'Validation Status',
+  'Validation Detail',
+] as const;
+
+const MATERIAL_TYPES = new Set([
+  'Granite', 'Quartzite', 'Marble', 'Dolomite', 'Soapstone', 'Onyx', 'Travertine', 'Limestone', 'Natural Stone',
+  'Quartz', 'Sintered Stone', 'Porcelain', 'Solid Surface', 'Terrazzo', 'Other',
+]);
 const FORMAT_KINDS = new Set<MaterialFormatKind>(['slab', 'sheet', 'half-slab', 'half-sheet', 'other']);
 const AVAILABILITY = new Set<MaterialAvailability>(['stock', 'high', 'medium', 'low', 'eta', 'special-order', 'discontinued', 'unknown']);
 const PRICING_BASIS = new Set<MaterialPurchaseUnit>(['sf', 'slab', 'sheet', 'half-slab', 'half-sheet', 'each']);
 const PRICE_PROVENANCE = new Set<SupplierImportPriceProvenance>(['supplier-listed', 'derived-from-listed-unit', 'manual']);
 
-type RowValues = Record<(typeof SALESSHOP_TEMPLATE_HEADERS)[number], string>;
+type RowValues = Record<string, string>;
 
 interface ParsedTemplateRow {
   rowNumber: number;
   supplier: string;
   brand: string;
+  materialFamily: MaterialFamily;
   materialType: StockMaterial['materialType'];
   name: string;
   collection?: string;
@@ -210,8 +267,13 @@ function optionIdentity(option: MaterialPurchaseOption) {
   return normalized(option.label);
 }
 
-function materialIdentity(material: Pick<StockMaterial, 'brand' | 'materialType' | 'name'>) {
-  return [normalized(material.brand), normalized(material.materialType), normalized(material.name)].join('|');
+function materialIdentity(material: Pick<StockMaterial, 'brand' | 'materialFamily' | 'materialType' | 'name'>) {
+  return [
+    normalized(material.brand),
+    normalized(resolvedMaterialFamily(material)),
+    normalized(material.materialType),
+    normalized(material.name),
+  ].join('|');
 }
 
 function skuSet(material: StockMaterial) {
@@ -360,6 +422,7 @@ function compareSupplierOwnedFields(incoming: StockMaterial, existing: StockMate
   const scalarChecks: Array<[string, string | undefined, string | undefined]> = [
     ['Supplier', existing.supplier, incoming.supplier],
     ['Brand', existing.brand, incoming.brand],
+    ['Material family', resolvedMaterialFamily(existing), incoming.materialFamily],
     ['Collection', existing.collection, incoming.collection],
     ['Supplier group', existing.supplierGroup, incoming.supplierGroup],
     ['Material SKU', existing.sku, incoming.sku],
@@ -493,17 +556,17 @@ function readMeta(rows: WorksheetRows) {
   return values;
 }
 
-function assertHeaders(rows: WorksheetRows) {
-  const actual = SALESSHOP_TEMPLATE_HEADERS.map((_, index) => cellText(rows[0]?.[index]));
-  const mismatches = SALESSHOP_TEMPLATE_HEADERS.flatMap((expected, index) => actual[index] === expected ? [] : [`${excelColumn(index + 1)}: expected "${expected}", found "${actual[index] || 'blank'}"`]);
+function assertHeaders(rows: WorksheetRows, headers: readonly string[], version: string) {
+  const actual = headers.map((_, index) => cellText(rows[0]?.[index]));
+  const mismatches = headers.flatMap((expected, index) => actual[index] === expected ? [] : [`${excelColumn(index + 1)}: expected "${expected}", found "${actual[index] || 'blank'}"`]);
   if (mismatches.length) {
-    throw new Error(`IMPORT_ROWS does not match SalesShop Material Import Template v${SALESSHOP_TEMPLATE_VERSION}. ${mismatches.slice(0, 3).join('; ')}${mismatches.length > 3 ? `; +${mismatches.length - 3} more` : ''}. Nothing was staged.`);
+    throw new Error(`IMPORT_ROWS does not match SalesShop Material Import Template v${version}. ${mismatches.slice(0, 3).join('; ')}${mismatches.length > 3 ? `; +${mismatches.length - 3} more` : ''}. Nothing was staged.`);
   }
 }
 
-function readRow(rows: WorksheetRows, rowNumber: number): RowValues {
+function readRow(rows: WorksheetRows, rowNumber: number, headers: readonly string[]): RowValues {
   const source = rows[rowNumber - 1] ?? [];
-  return Object.fromEntries(SALESSHOP_TEMPLATE_HEADERS.map((header, index) => [header, cellText(source[index])])) as RowValues;
+  return Object.fromEntries(headers.map((header, index) => [header, cellText(source[index])])) as RowValues;
 }
 
 function ruleText(rows: WorksheetRows | undefined) {
@@ -528,6 +591,7 @@ function parseTemplateRow(
   rowNumber: number,
   meta: Map<string, string>,
   fallbackEffectiveDate?: string,
+  requireExplicitFamily = true,
 ): { row?: ParsedTemplateRow; errors: string[] } {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -539,6 +603,7 @@ function parseTemplateRow(
   const supplier = values['Supplier / Importer'].trim();
   const brand = values['Brand / Manufacturer'].trim();
   const materialType = values['Material Type'].trim();
+  const materialFamilyValue = (values['Material Family'] ?? '').trim();
   const purchaseLabel = values['Purchase Program'].trim();
   const pricingBasis = values['Pricing Basis'].trim();
   const costPerSf = parseNumber(values['Cost / SF Listed']);
@@ -554,6 +619,15 @@ function parseTemplateRow(
   if (!supplier) errors.push('Supplier / Importer is required');
   if (!brand) errors.push('Brand / Manufacturer is required');
   if (!MATERIAL_TYPES.has(materialType)) errors.push(`Material Type "${materialType || 'blank'}" is not a supported SalesShop value`);
+  const derivedFamily = MATERIAL_TYPES.has(materialType)
+    ? materialFamilyForType(materialType as StockMaterial['materialType'])
+    : 'Other';
+  const materialFamily = (materialFamilyValue || derivedFamily) as MaterialFamily;
+  if (requireExplicitFamily && !materialFamilyValue) errors.push('Material Family is required in v1.1 templates');
+  if (materialFamilyValue && !MATERIAL_FAMILIES.includes(materialFamily as MaterialFamily)) errors.push(`Material Family "${materialFamilyValue}" is not supported`);
+  if (materialFamilyValue && MATERIAL_FAMILIES.includes(materialFamily as MaterialFamily) && materialFamily !== derivedFamily) {
+    errors.push(`Material Family "${materialFamily}" does not match Material Type "${materialType}"`);
+  }
   if (!purchaseLabel) errors.push('Purchase Program is required');
   if (!PRICING_BASIS.has(pricingBasis as MaterialPurchaseUnit)) errors.push(`Pricing Basis "${pricingBasis || 'blank'}" is not supported`);
   if (costPerSf === undefined && costPerUnit === undefined) errors.push('Cost / SF Listed or Cost / Unit Listed is required');
@@ -612,6 +686,7 @@ function parseTemplateRow(
       rowNumber,
       supplier,
       brand,
+      materialFamily,
       materialType: materialType as StockMaterial['materialType'],
       name,
       collection: values['Collection / Series'].trim() || undefined,
@@ -687,8 +762,9 @@ export async function stageSalesShopMaterialTemplate(
   if (!metaSheet || !importSheet) throw new Error('SalesShop could not read this .xlsx workbook as a valid Material Import Template. META or IMPORT_ROWS is missing. Use SalesShop Material Import Template v1.0. Nothing was staged.');
 
   const meta = readMeta(metaSheet);
-  if (meta.get('TemplateVersion') !== SALESSHOP_TEMPLATE_VERSION) {
-    throw new Error(`Unsupported template version "${meta.get('TemplateVersion') || 'blank'}". SalesShop currently expects v${SALESSHOP_TEMPLATE_VERSION}. Nothing was staged.`);
+  const templateVersion = meta.get('TemplateVersion') || '';
+  if (![SALESSHOP_TEMPLATE_LEGACY_VERSION, SALESSHOP_TEMPLATE_VERSION].includes(templateVersion)) {
+    throw new Error(`Unsupported template version "${templateVersion || 'blank'}". SalesShop supports v${SALESSHOP_TEMPLATE_LEGACY_VERSION} and v${SALESSHOP_TEMPLATE_VERSION}. Nothing was staged.`);
   }
   if (meta.get('SchemaName') !== SALESSHOP_TEMPLATE_SCHEMA_NAME || meta.get('ImportMode') !== 'SupplierCatalog') {
     throw new Error('This workbook is not a SalesShop Material Import SupplierCatalog workbook. Nothing was staged.');
@@ -696,12 +772,21 @@ export async function stageSalesShopMaterialTemplate(
   if ((meta.get('Currency') || 'USD').toUpperCase() !== 'USD') {
     throw new Error(`Currency "${meta.get('Currency')}" is not supported yet. Material imports currently require USD. Nothing was staged.`);
   }
-  assertHeaders(importSheet);
+  const templateHeaders = templateVersion === SALESSHOP_TEMPLATE_LEGACY_VERSION
+    ? SALESSHOP_TEMPLATE_HEADERS_V1_0
+    : SALESSHOP_TEMPLATE_HEADERS;
+  assertHeaders(importSheet, templateHeaders, templateVersion);
 
   const parsedRows: ParsedTemplateRow[] = [];
   const rowErrors: string[] = [];
   for (let rowNumber = 2; rowNumber <= importSheet.length; rowNumber += 1) {
-    const result = parseTemplateRow(readRow(importSheet, rowNumber), rowNumber, meta, fallbackEffectiveDate);
+    const result = parseTemplateRow(
+      readRow(importSheet, rowNumber, templateHeaders),
+      rowNumber,
+      meta,
+      fallbackEffectiveDate,
+      templateVersion !== SALESSHOP_TEMPLATE_LEGACY_VERSION,
+    );
     if (result.errors.length) rowErrors.push(`Row ${rowNumber}: ${result.errors.join('; ')}`);
     if (result.row) parsedRows.push(result.row);
   }
@@ -714,7 +799,7 @@ export async function stageSalesShopMaterialTemplate(
   const accumulators = new Map<string, MaterialAccumulator>();
 
   parsedRows.forEach((row) => {
-    const key = [normalized(row.brand), normalized(row.materialType), normalized(row.name)].join('|');
+    const key = [normalized(row.brand), normalized(row.materialFamily), normalized(row.materialType), normalized(row.name)].join('|');
     let accumulator = accumulators.get(key);
     if (!accumulator) {
       accumulator = {
@@ -723,6 +808,7 @@ export async function stageSalesShopMaterialTemplate(
           name: row.name,
           supplier: row.supplier,
           brand: row.brand,
+          materialFamily: row.materialFamily,
           collection: row.collection,
           supplierGroup: row.supplierGroup,
           sku: row.materialSku,
@@ -809,7 +895,7 @@ export async function stageSalesShopMaterialTemplate(
 export const salesShopMaterialTemplateParser: SupplierImportParser = {
   id: SALESSHOP_TEMPLATE_PARSER_ID,
   version: SALESSHOP_TEMPLATE_PARSER_VERSION,
-  label: 'SalesShop Material Import Template v1.0',
+  label: 'SalesShop Material Import Template v1.1',
   explicitListingsOnly: true,
   accepts: (file) => file.name.toLowerCase().endsWith('.xlsx'),
   stage: (file, context) => stageSalesShopMaterialTemplate(file, context.catalog, context.effectiveDate),
