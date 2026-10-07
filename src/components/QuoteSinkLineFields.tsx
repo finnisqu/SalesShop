@@ -19,12 +19,6 @@ import type { QuoteLine } from '../types/quote';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-function displayDate(value?: string) {
-  if (!value) return undefined;
-  const date = new Date(`${value.slice(0, 10)}T12:00:00`);
-  if (Number.isNaN(date.valueOf())) return value;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 function searchText(model: SinkModel, variant: SinkVariant) {
   return [
@@ -183,7 +177,6 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
     );
   }
 
-  const sourceDate = snapshot ? displayDate(snapshot.effectiveDate) : undefined;
 
   return (
     <div className="quote-sink-selection quote-database-result">
@@ -203,12 +196,6 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
           snapshot.variantCode,
         ].filter(Boolean).join(' · ')}</small>}
       </div>
-
-      {snapshot && <div className="quote-sink-price-reference">
-        <span>Catalog price</span>
-        <strong>{snapshot.sellPrice === undefined ? 'Unpriced' : money.format(snapshot.sellPrice)}</strong>
-        <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
-      </div>}
 
       {snapshot && (!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
       {snapshot && comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
