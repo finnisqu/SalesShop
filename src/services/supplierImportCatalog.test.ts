@@ -309,8 +309,8 @@ describe('supplier parser contract', () => {
     expect(parser.explicitListingsOnly).toBe(true);
   });
 
-  it('registers Vicostone / UMI as the first reusable v4 import profile', () => {
-    expect(supplierImportProfiles).toHaveLength(1);
+  it('registers Vicostone / UMI as a reusable v4 import profile', () => {
+    expect(supplierImportProfiles.some((profile) => profile.id === 'vicostone-via-umi')).toBe(true);
     const profile = getSupplierImportProfile('vicostone-via-umi');
     expect(profile).toMatchObject({
       supplier: 'UMI',
