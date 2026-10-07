@@ -58,6 +58,16 @@ function StandardQuoteBody({ data }: { data: PublicQuoteResponse }) {
         </div>
         {renderLines(loose)}
         {sections.map((section) => {
+          if ((section.customerDisplayMode ?? 'detail') === 'summary') {
+            return <div className="customer-quote-section is-summary" key={section.id}>
+              <div className="customer-quote-row customer-area-summary-row">
+                <div className="customer-line-description">{section.title}</div>
+                {quote.customerColumns.quantity && <div />}
+                {quote.customerColumns.rate && <div />}
+                {quote.customerColumns.lineAmount && <div className="customer-line-amount">{money.format(section.customerTotal ?? 0)}</div>}
+              </div>
+            </div>;
+          }
           const sectionLines = lines.filter((line) => line.sectionId === section.id);
           if (!sectionLines.length) return null;
           return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{renderLines(sectionLines)}</div>;
