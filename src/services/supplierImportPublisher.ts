@@ -26,6 +26,7 @@ export interface SupplierImportPublicationHistoryRow {
   priceListLabel?: string;
   effectiveDate?: string;
   parserVersion: number;
+  supplierRules?: string[];
   summary: {
     publishedCount?: number;
     newCount?: number;
@@ -126,7 +127,7 @@ export async function fetchSupplierImportPublicationHistory(limit = 8): Promise<
 
   const { data, error } = await supabase
     .from('supplier_import_publications')
-    .select('id,supplier,brand,source_file_name,price_list_label,effective_date,parser_version,summary,published_at')
+    .select('id,supplier,brand,source_file_name,price_list_label,effective_date,parser_version,source,summary,published_at')
     .eq('organization_id', auth.organizationId)
     .order('published_at', { ascending: false })
     .limit(limit);
@@ -140,6 +141,9 @@ export async function fetchSupplierImportPublicationHistory(limit = 8): Promise<
     priceListLabel: row.price_list_label ? String(row.price_list_label) : undefined,
     effectiveDate: row.effective_date ? String(row.effective_date) : undefined,
     parserVersion: Number(row.parser_version ?? 1),
+    supplierRules: Array.isArray((row.source as { supplierRules?: unknown } | null)?.supplierRules)
+      ? ((row.source as { supplierRules: unknown[] }).supplierRules.filter((value): value is string => typeof value === 'string'))
+      : [],
     summary: (row.summary && typeof row.summary === 'object' ? row.summary : {}) as SupplierImportPublicationHistoryRow['summary'],
     publishedAt: String(row.published_at),
   }));
