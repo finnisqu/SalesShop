@@ -123,7 +123,6 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
   return (
     <div className="quote-rate-selection quote-database-result">
       <div className="quote-rate-selection-main">
-        <span>Rate</span>
         <strong>{snapshot.name}</strong>
         <small>{[snapshot.code, RATE_BOOK_CATEGORY_LABELS[snapshot.category], unit].filter(Boolean).join(' · ')}</small>
       </div>
