@@ -36,26 +36,30 @@ function priceLabel(item: RateBookItem, quote: Quote) {
   return item.pricingBehavior === 'manual' ? 'Manual price' : 'No current rate';
 }
 
-export function QuoteRateLineFields({ quote, line, editSignal = 0 }: { quote: Quote; line: QuoteLine; editSignal?: number }) {
+export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: QuoteLine }) {
   const items = useRateBookStore((state) => state.items);
   const hydrate = useRateBookStore((state) => state.hydrate);
   const updateLine = useQuoteStore((state) => state.updateLine);
   const snapshot = line.rateReference?.snapshot;
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(!snapshot);
-  const lastEditSignal = useRef(editSignal);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { hydrate(); }, [hydrate]);
+
   useEffect(() => {
-    if (editSignal === lastEditSignal.current) return;
-    lastEditSignal.current = editSignal;
-    setSearch('');
-    setSearching(true);
-  }, [editSignal]);
+    if (!searching) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (pickerRef.current?.contains(event.target as Node)) return;
+      setSearching(false);
+      setSearch('');
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [searching]);
 
   useEffect(() => {
     const collapse = () => {
-      if (!snapshot) return;
       setSearching(false);
       setSearch('');
     };
@@ -105,9 +109,9 @@ export function QuoteRateLineFields({ quote, line, editSignal = 0 }: { quote: Qu
     apply(selectedItem);
   };
 
-  if (searching || !snapshot) {
+  if (searching) {
     return (
-      <div className="quote-rate-picker">
+      <div className="quote-rate-picker quote-catalog-popover" ref={pickerRef}>
         {snapshot && <div className="quote-picker-current">
           <div>
             <span>Current rate</span>
@@ -143,27 +147,34 @@ export function QuoteRateLineFields({ quote, line, editSignal = 0 }: { quote: Qu
     );
   }
 
-  const unit = RATE_BOOK_UNIT_LABELS[snapshot.unit];
-  const sourceDate = displayDate(snapshot.effectiveDate);
+  const unit = snapshot ? RATE_BOOK_UNIT_LABELS[snapshot.unit] : undefined;
+  const sourceDate = snapshot ? displayDate(snapshot.effectiveDate) : undefined;
 
   return (
     <div className="quote-rate-selection quote-database-result">
       <div className="quote-rate-selection-main">
-        <strong>{snapshot.name}</strong>
-        <small>{[snapshot.code, RATE_BOOK_CATEGORY_LABELS[snapshot.category], unit].filter(Boolean).join(' · ')}</small>
+        <div className="quote-product-name-row">
+          <strong>{snapshot?.name ?? 'Choose rate'}</strong>
+          <button type="button" className="quote-product-pencil" onClick={() => {
+            window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
+            setSearch('');
+            setSearching(true);
+          }} title="Change rate" aria-label="Change rate">✎</button>
+        </div>
+        {snapshot && <small>{[snapshot.code, RATE_BOOK_CATEGORY_LABELS[snapshot.category], unit].filter(Boolean).join(' · ')}</small>}
       </div>
 
-      <div className="quote-rate-reference">
+      {snapshot && <div className="quote-rate-reference">
         <span>{snapshot.pricingBehavior === 'cost-reference' ? 'Internal cost' : 'Quoted rate'}</span>
         <strong>{snapshot.pricingBehavior === 'cost-reference'
           ? snapshot.internalCost === undefined ? '—' : `${money.format(snapshot.internalCost)}/${unit}`
           : snapshot.sellRate === undefined ? 'Manual' : `${money.format(snapshot.sellRate)}/${unit}`}</strong>
         <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
-      </div>
+      </div>}
 
-      {snapshot.pricingBehavior === 'cost-reference' && <span className="quote-source-status">Internal only</span>}
-      {!selectedItem && <span className="quote-source-status is-warning">Source unavailable</span>}
-      {comparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
+      {snapshot?.pricingBehavior === 'cost-reference' && <span className="quote-source-status">Internal only</span>}
+      {snapshot && !selectedItem && <span className="quote-source-status is-warning">Source unavailable</span>}
+      {snapshot && comparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
     </div>
   );
 }
