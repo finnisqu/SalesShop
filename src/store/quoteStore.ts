@@ -484,7 +484,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       ? {
           ...quote,
           sections: quote.sections.filter((section) => section.id !== sectionId),
-          lines: quote.lines.map((line) => line.sectionId === sectionId ? { ...line, sectionId: undefined } : line),
+          lines: quote.lines.map((line) => line.sectionId === sectionId ? { ...line, sectionId: undefined, quantitySource: undefined } : line),
           updatedAt: timestamp,
         }
       : quote);
