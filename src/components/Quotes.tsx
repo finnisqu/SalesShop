@@ -320,18 +320,17 @@ function LineEditor({
 
         {catalogLine && line.pricingMode !== 'none' && <strong className="quote-line-resting-total">{pricingComplete ? money.format(quoteLineAmount(line)) : '—'}</strong>}
 
-        {catalogLine && !pricingEditing && (
-          <div className="quote-line-resting-pricing">
+        {catalogLine && (
+          <div className={`quote-line-resting-pricing ${pricingEditing ? 'is-open' : ''}`}>
             <div className="quote-pricing-passive">
               <span>{pricingSummary}</span>
               <button ref={pricingButtonRef} type="button" onClick={openPricingEditor} title="Edit pricing" aria-label="Edit pricing">✎</button>
             </div>
-            {reminders.length > 0 && <div className="quote-line-reminders">{reminders.map((label) => <span key={label}>{label}</span>)}</div>}
           </div>
         )}
 
-        {catalogLine && pricingEditing && reminders.length > 0 && (
-          <div className="quote-line-reminders quote-line-reminders-open">{reminders.map((label) => <span key={label}>{label}</span>)}</div>
+        {catalogLine && reminders.length > 0 && (
+          <div className="quote-line-reminders quote-line-reminders-overlay">{reminders.map((label) => <span key={label}>{label}</span>)}</div>
         )}
 
         <textarea value={line.description} onChange={(event) => updateLine(quote.id, line.id, { description: event.target.value })} rows={textLine ? 2 : 1} aria-label="Line description" />
