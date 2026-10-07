@@ -184,7 +184,7 @@ const LEGACY_SINK_PRODUCT_IDS = new Set([
   'rate_sink_3218_ada',
 ]);
 
-function migrateLegacySinkProducts(items: RateBookItem[]) {
+export function migrateLegacySinkProducts(items: RateBookItem[]) {
   const legacyNote = 'Legacy sink product migrated to the Sinks catalog. Kept inactive so historical Rate Book references remain readable.';
   let next = items.map((item) => {
     if (!LEGACY_SINK_PRODUCT_IDS.has(item.id)) return item;
