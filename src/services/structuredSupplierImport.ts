@@ -149,10 +149,21 @@ export function suggestSupplierImportMapping(headers: string[]): Partial<Record<
   const claimed = new Set<string>();
   const result: Partial<Record<SupplierImportMappingField, string>> = {};
 
+  // Claim exact header matches first so a broad alias such as "SF" cannot steal
+  // a more specific column like "Price per SF" from the pricing field.
   supplierImportMappingFields.forEach((definition) => {
     const aliases = definition.aliases.map(normalizeHeader);
     const exact = normalized.find(({ header, normalized: candidate }) => !claimed.has(header) && aliases.includes(candidate));
-    const fuzzy = exact ?? normalized.find(({ header, normalized: candidate }) => !claimed.has(header)
+    if (exact) {
+      result[definition.field] = exact.header;
+      claimed.add(exact.header);
+    }
+  });
+
+  supplierImportMappingFields.forEach((definition) => {
+    if (result[definition.field]) return;
+    const aliases = definition.aliases.map(normalizeHeader).filter((alias) => alias.length >= 4);
+    const fuzzy = normalized.find(({ header, normalized: candidate }) => !claimed.has(header)
       && aliases.some((alias) => candidate.includes(alias) || alias.includes(candidate)));
     if (fuzzy) {
       result[definition.field] = fuzzy.header;
