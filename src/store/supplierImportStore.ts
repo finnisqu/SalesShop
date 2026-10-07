@@ -160,19 +160,17 @@ function recomputeCandidate(candidate: SupplierImportCandidate): SupplierImportC
     const priceValues = variant.purchaseOptions.map((option) => candidate.priceDecisions?.[option.id] ?? 'approved');
     if (priceValues.length) variantDecisions[variant.id] = summarizeDecision(priceValues);
   });
-  const unresolvedBlockingIssue = (candidate.validationIssues ?? []).some(
-    (issue) => issue.severity === 'blocking' && (issue.resolution ?? 'unresolved') === 'unresolved',
-  );
+  const updated = { ...candidate, variantDecisions };
+  const attentionReasons = inferAttentionReasons(updated);
   const variantDecision = summarizeDecision(variants.map((variant) => variantDecisions[variant.id] ?? 'approved'));
-  const reviewDecision = unresolvedBlockingIssue
-    ? 'needs-review'
-    : candidate.reviewDecision === 'ignored'
-      ? 'ignored'
+  const reviewDecision = candidate.reviewDecision === 'ignored'
+    ? 'ignored'
+    : attentionReasons.length
+      ? 'needs-review'
       : variantDecision;
   return {
-    ...candidate,
-    variantDecisions,
-    attentionReasons: inferAttentionReasons(candidate),
+    ...updated,
+    attentionReasons,
     reviewDecision,
   };
 }
