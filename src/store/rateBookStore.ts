@@ -65,14 +65,8 @@ function makeDefault(item: Omit<RateBookItem, 'pricingBehavior' | 'divisionOverr
 const DEFAULT_ITEMS: RateBookItem[] = [
   makeDefault({ id: 'rate_fabrication', category: 'fabrication-install', name: 'Fabrication', code: 'FAB', unit: 'sf', sellRate: 14.5, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
   makeDefault({ id: 'rate_install', category: 'fabrication-install', name: 'Installation', code: 'INSTALL', unit: 'sf', internalCost: 5, pricingBehavior: 'cost-reference', divisionOverrides: [{ division: 'Multifamily', internalCost: 4 }], active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
-  makeDefault({ id: 'rate_sink_3218_single', category: 'sink', name: 'Kitchen 3218 Single', code: '3218-S', unit: 'each', sellRate: 220, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
-  makeDefault({ id: 'rate_sink_3218_5050', category: 'sink', name: 'Kitchen 3218 50/50', code: '3218-5050', unit: 'each', sellRate: 220, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
-  makeDefault({ id: 'rate_sink_3218_6040', category: 'sink', name: 'Kitchen 3218 60/40', code: '3218-6040', unit: 'each', sellRate: 220, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
-  makeDefault({ id: 'rate_sink_1714_oval', category: 'sink', name: 'Oval Vanity 1714', code: '1714-O', unit: 'each', sellRate: 75, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
-  makeDefault({ id: 'rate_sink_1813_rect', category: 'sink', name: 'Rectangular Vanity 1813', code: '1813-R', unit: 'each', sellRate: 95, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
-  makeDefault({ id: 'rate_sink_1714_ada', category: 'sink', name: 'ADA Oval 1714', code: '1714-ADA', unit: 'each', sellRate: 85, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
-  makeDefault({ id: 'rate_sink_1813_ada', category: 'sink', name: 'ADA Rectangular 1813', code: '1813-ADA', unit: 'each', sellRate: 105, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
-  makeDefault({ id: 'rate_sink_3218_ada', category: 'sink', name: 'ADA Kitchen 3218 Single', code: '3218-ADA', unit: 'each', sellRate: 245, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
+  makeDefault({ id: 'rate_sink_cutout', category: 'sink', name: 'Sink Cutout', code: 'SINK-CUT', unit: 'each', pricingBehavior: 'manual', active: true, effectiveDate: SEED_DATE, notes: 'Service rate only. Sink products are managed in the Sinks catalog.', createdAt: SEED_TIME, updatedAt: SEED_TIME }),
+  makeDefault({ id: 'rate_sink_customer_install', category: 'sink', name: 'Install Customer-Provided Sink', code: 'SINK-INSTALL-CUST', unit: 'each', pricingBehavior: 'manual', active: true, effectiveDate: SEED_DATE, notes: 'Installation labor/service for a sink supplied by the customer.', createdAt: SEED_TIME, updatedAt: SEED_TIME }),
   makeDefault({ id: 'rate_trip', category: 'add-on', name: 'Trip Fee', code: 'TRIP', unit: 'flat', sellRate: 150, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
   makeDefault({ id: 'rate_full_splash', category: 'add-on', name: 'Full Height Splash', code: 'FHS', unit: 'sf', sellRate: 35, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
   makeDefault({ id: 'rate_miter', category: 'add-on', name: 'Miter', code: 'MITER', unit: 'sf', sellRate: 50, active: true, effectiveDate: SEED_DATE, createdAt: SEED_TIME, updatedAt: SEED_TIME }),
@@ -179,12 +173,40 @@ function normalizeItem(raw: Partial<RateBookItem>): RateBookItem {
   return item;
 }
 
+const LEGACY_SINK_PRODUCT_IDS = new Set([
+  'rate_sink_3218_single',
+  'rate_sink_3218_5050',
+  'rate_sink_3218_6040',
+  'rate_sink_1714_oval',
+  'rate_sink_1813_rect',
+  'rate_sink_1714_ada',
+  'rate_sink_1813_ada',
+  'rate_sink_3218_ada',
+]);
+
+function migrateLegacySinkProducts(items: RateBookItem[]) {
+  const legacyNote = 'Legacy sink product migrated to the Sinks catalog. Kept inactive so historical Rate Book references remain readable.';
+  let next = items.map((item) => {
+    if (!LEGACY_SINK_PRODUCT_IDS.has(item.id)) return item;
+    const notes = item.notes?.includes('Legacy sink product migrated')
+      ? item.notes
+      : [item.notes, legacyNote].filter(Boolean).join(' ');
+    return { ...item, active: false, notes };
+  });
+  DEFAULT_ITEMS.filter((item) => item.category === 'sink').forEach((service) => {
+    if (!next.some((item) => item.id === service.id)) next = [...next, structuredClone(service)];
+  });
+  return next;
+}
+
 function readLocal(): RateBookItem[] {
   try {
     const raw = localStorage.getItem(LOCAL_KEY);
     if (!raw) return cloneDefaults();
     const parsed = JSON.parse(raw) as { items?: unknown[] };
-    return Array.isArray(parsed.items) ? parsed.items.map((item) => normalizeItem(item as Partial<RateBookItem>)) : cloneDefaults();
+    return Array.isArray(parsed.items)
+      ? migrateLegacySinkProducts(parsed.items.map((item) => normalizeItem(item as Partial<RateBookItem>)))
+      : cloneDefaults();
   } catch {
     return cloneDefaults();
   }
@@ -221,7 +243,7 @@ export const useRateBookStore = create<RateBookState>((set, get) => ({
     const item: RateBookItem = {
       id,
       category,
-      name: seed.name ?? (category === 'material' ? 'New material' : category === 'sink' ? 'New sink' : category === 'fabrication-install' ? 'New service' : 'New add-on'),
+      name: seed.name ?? (category === 'material' ? 'New material' : category === 'sink' ? 'New sink service' : category === 'fabrication-install' ? 'New service' : 'New add-on'),
       code: seed.code,
       unit: seed.unit ?? (category === 'sink' ? 'each' : category === 'add-on' ? 'flat' : 'sf'),
       internalCost: seed.internalCost,
