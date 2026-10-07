@@ -191,7 +191,6 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
         <div className="quote-material-results">
           {results.map((material) => {
             const reference = resolveStockMaterialCostReference(material);
-            const source = [material.brand, material.supplier].filter(Boolean).join(' · ');
             return (
               <button type="button" key={material.id} onClick={() => applyMaterial(material)}>
                 <span><strong>{[material.brand, material.name].filter(Boolean).join(' ')}</strong><small>{[material.materialType, material.supplier].filter(Boolean).join(' · ')}</small></span>
