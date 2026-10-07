@@ -19,6 +19,7 @@ import './supplier-import.css';
 import './supplier-import-v2.css';
 import './sinks-workspace.css';
 import './quote-sink-lines.css';
+import './quote-area-scope.css';
 import './catalog-workspace.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
