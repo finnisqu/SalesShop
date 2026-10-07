@@ -31,7 +31,22 @@ export type PricingScheduleRoute = 'rate-sheet' | 'plan-builder' | 'workbook';
 export type PricingSchedulePublishSource = 'rate-sheet' | 'builder' | 'workbook';
 export type PricingRateKind = 'material-level' | 'add-on';
 export type PricingRatePriceMode = 'priced' | 'included' | 'no-charge' | 'tbd';
-export type PricingMaterialType = 'Granite' | 'Quartz' | 'Marble' | 'Quartzite' | 'Porcelain' | 'Solid Surface' | 'Other';
+export type PricingMaterialType =
+  | 'Granite'
+  | 'Quartzite'
+  | 'Marble'
+  | 'Dolomite'
+  | 'Soapstone'
+  | 'Onyx'
+  | 'Travertine'
+  | 'Limestone'
+  | 'Natural Stone'
+  | 'Quartz'
+  | 'Sintered Stone'
+  | 'Porcelain'
+  | 'Solid Surface'
+  | 'Terrazzo'
+  | 'Other';
 export type PricingDetailsLayout = 'inline' | 'list';
 
 export type QuoteLineKind = 'item' | 'material' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
