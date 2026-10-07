@@ -76,9 +76,10 @@ Supplier records support:
 - warehouses / branches / showrooms
 - editable working rules
 - source price-list rules
-- activity timeline
-- commercial commitments
+- notes / activity timeline
 - supplier merge
+
+Commercial commitments are intentionally **not part of the salesperson-facing Materials UI**. For now, pricing promises, potential reductions, and negotiation context belong in supplier Notes / Activity. A more structured commitments workflow may return later for a dedicated purchasing/inventory role.
 
 Supplier rename and merge must keep material supplier labels and pricing-publication history synchronized.
 
@@ -91,7 +92,11 @@ Run this checklist before a major Quotes integration change, before merging arch
 - [ ] Search by color, brand, supplier, family, and material type.
 - [ ] Filter by Material Family and Material Type.
 - [ ] Open a material and verify variants, thickness, finish, format, availability, and purchase programs.
+- [ ] Confirm the Catalog scan order reads Brand → Name → Type and Variants is the far-right action.
+- [ ] Click the material name and confirm it opens/closes Variants.
+- [ ] Pin and unpin a variant from the expanded row; confirm the clicked row/button stays in the same viewport position.
 - [ ] Compare at least two materials and confirm displayed supplier costs match the selected variant/program.
+- [ ] Confirm pinned cards show Brand + Type without redundant Material Family when Type is known.
 - [ ] Confirm same-name colors from different brands remain separate.
 - [ ] Enter edit mode, make a harmless test change, save/exit, refresh, and confirm persistence.
 - [ ] Verify inactive variants/purchase programs are not accidentally used as defaults.
@@ -126,14 +131,16 @@ Run this checklist before a major Quotes integration change, before merging arch
 - [ ] Add/edit/delete a warehouse/location.
 - [ ] Add/edit/delete a curated supplier rule.
 - [ ] Confirm imported source rules remain visible separately from curated editable rules.
-- [ ] Log an activity and confirm it appears in the timeline alongside pricing publications.
-- [ ] Add a commercial commitment and change its status.
-- [ ] Merge only a safe duplicate; verify contacts, locations, rules, activity, commitments, materials, and pricing history remain under the kept supplier.
+- [ ] Log a note/activity and confirm it appears in the timeline alongside pricing publications.
+- [ ] Record a pricing conversation or potential reduction as a normal supplier note and confirm it is easy to find later.
+- [ ] Merge only a safe duplicate; verify contacts, locations, rules, activity, materials, and pricing history remain under the kept supplier.
 
 ### Navigation / persistence
 - [ ] Refresh while on **Materials** and confirm SalesShop returns to Materials.
 - [ ] Refresh while on **Materials → Suppliers** and confirm the Suppliers subtab remains selected.
 - [ ] Confirm the selected supplier is remembered.
+- [ ] Verify mobile Catalog keeps Brand / Name / Type / Cost / Variants readable without requiring desktop-width scanning.
+- [ ] Verify expanded mobile variants remain readable and Pin stays at the far right/top action position.
 - [ ] Verify mobile layout still allows independent supplier-navigation and record scrolling without page-level overflow regressions.
 
 ## Automated regression coverage
