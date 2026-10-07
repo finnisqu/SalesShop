@@ -64,6 +64,41 @@ export interface QuoteSection {
   customerVisible: boolean;
 }
 
+export interface QuoteMaterialCostSnapshot {
+  capturedAt: string;
+  materialId: string;
+  materialName: string;
+  brand?: string;
+  supplier?: string;
+  materialFamily?: string;
+  materialType: PricingMaterialType;
+  stockProgram: boolean;
+  variantId?: string;
+  variantLabel?: string;
+  thickness?: string;
+  finish?: string;
+  formatName?: string;
+  formatKind?: string;
+  lengthIn?: number;
+  widthIn?: number;
+  areaSf?: number;
+  availability?: string;
+  purchaseOptionId?: string;
+  purchaseOptionLabel?: string;
+  purchaseMinQuantity?: number;
+  pricingBasis?: string;
+  costPerSf?: number;
+  slabCost?: number;
+  sourcePublicationId?: string;
+  sourcePriceListLabel?: string;
+  sourceEffectiveDate?: string;
+  sourceFileName?: string;
+  sourcePageSheet?: string;
+  sourceReference?: string;
+  sourceRecordedAt?: string;
+  sourceProvenance?: string;
+}
+
 export interface QuoteLineMaterialReference {
   materialId?: string;
   customMaterialName?: string;
@@ -80,6 +115,7 @@ export interface QuoteLineMaterialReference {
   slabMultiplier?: number;
   slabCount?: number;
   customerPricePerSlab?: number;
+  snapshot?: QuoteMaterialCostSnapshot;
 }
 
 export interface QuoteLine {
