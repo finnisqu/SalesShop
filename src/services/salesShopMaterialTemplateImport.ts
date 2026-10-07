@@ -699,7 +699,7 @@ export async function stageSalesShopMaterialTemplate(
 
   const metaSheet = workbookRows.META;
   const importSheet = workbookRows.IMPORT_ROWS;
-  if (!metaSheet || !importSheet) throw new Error('This workbook is missing META or IMPORT_ROWS. Use SalesShop Material Import Template v1.0. Nothing was staged.');
+  if (!metaSheet || !importSheet) throw new Error('SalesShop could not read this .xlsx workbook as a valid Material Import Template. META or IMPORT_ROWS is missing. Use SalesShop Material Import Template v1.0. Nothing was staged.');
 
   const meta = readMeta(metaSheet);
   if (meta.get('TemplateVersion') !== SALESSHOP_TEMPLATE_VERSION) {
