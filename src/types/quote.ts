@@ -4,6 +4,11 @@ import type {
   RateBookPricingBehavior,
   RateBookUnit,
 } from './rateBook';
+import type {
+  SinkCategory,
+  SinkConfiguration,
+  SinkMountType,
+} from './sink';
 
 export const QUOTE_STATUSES = ['Draft', 'Ready', 'Sent', 'Viewed', 'Signed', 'Declined', 'Expired'] as const;
 export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
@@ -54,7 +59,7 @@ export type PricingMaterialType =
   | 'Other';
 export type PricingDetailsLayout = 'inline' | 'list';
 
-export type QuoteLineKind = 'item' | 'material' | 'rate' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
+export type QuoteLineKind = 'item' | 'material' | 'sink' | 'rate' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
 export type QuotePricingMode = 'direct' | 'quantity-rate' | 'slab-multiplier' | 'none';
 
 export interface QuoteCustomerColumns {
@@ -125,6 +130,35 @@ export interface QuoteLineRateReference {
   snapshot?: QuoteRateSnapshot;
 }
 
+export interface QuoteSinkSnapshot {
+  capturedAt: string;
+  sinkModelId: string;
+  sinkModelName: string;
+  modelCode?: string;
+  brand?: string;
+  supplier?: string;
+  category: SinkCategory;
+  widthIn?: number;
+  depthIn?: number;
+  mountType?: SinkMountType;
+  material?: string;
+  variantId: string;
+  variantLabel: string;
+  variantCode?: string;
+  configuration: SinkConfiguration;
+  ada: boolean;
+  internalCost?: number;
+  sellPrice?: number;
+  effectiveDate?: string;
+  sourceUpdatedAt?: string;
+}
+
+export interface QuoteLineSinkReference {
+  sinkModelId?: string;
+  variantId?: string;
+  snapshot?: QuoteSinkSnapshot;
+}
+
 export interface QuoteLineMaterialReference {
   materialId?: string;
   customMaterialName?: string;
@@ -157,6 +191,7 @@ export interface QuoteLine {
   customerVisible: boolean;
   includeInTotal: boolean;
   materialReference?: QuoteLineMaterialReference;
+  sinkReference?: QuoteLineSinkReference;
   rateReference?: QuoteLineRateReference;
 }
 
