@@ -37,23 +37,23 @@ export function DocumentBrand({ brand }: { brand: CustomerDocumentBrandData }) {
 
   return (
     <div className="customer-document-brand">
-      {brand.logoUrl && <img src={brand.logoUrl} alt={`${brand.name || 'Company'} logo`} />}
-      <div>
+      <div className="customer-document-brand-heading">
+        {brand.logoUrl && <img src={brand.logoUrl} alt={`${brand.name || 'Company'} logo`} />}
         <strong>{brand.name || 'YOUR COMPANY'}</strong>
-        <address className="customer-document-brand-details">
-          {address && <a href={mapHref(address)} className="brand-detail brand-address" aria-label={`Open ${address} in Maps`}>{address}</a>}
-          {phone && <a href={phoneHref(phone)} className="brand-detail brand-phone" aria-label={`Call ${phone}`}>{phone}</a>}
-          {email && <a href={`mailto:${email}`} className="brand-detail brand-email" aria-label={`Email ${email}`}>{email}</a>}
-          {website && <a href={websiteHref(website)} className="brand-detail brand-website" target="_blank" rel="noreferrer" aria-label={`Open ${website}`}>{website}</a>}
-        </address>
-        {(contactName || contactPhone) && (
-          <small className="customer-document-brand-contact">
-            {contactName && <span>{contactName}</span>}
-            {contactName && contactPhone && <span aria-hidden="true"> · </span>}
-            {contactPhone && <a href={phoneHref(contactPhone)} aria-label={`Call ${contactPhone}`}>{contactPhone}</a>}
-          </small>
-        )}
       </div>
+      <address className="customer-document-brand-details">
+        {address && <a href={mapHref(address)} className="brand-detail brand-address" aria-label={`Open ${address} in Maps`}>{address}</a>}
+        {phone && <a href={phoneHref(phone)} className="brand-detail brand-phone" aria-label={`Call ${phone}`}>{phone}</a>}
+        {email && <a href={`mailto:${email}`} className="brand-detail brand-email" aria-label={`Email ${email}`}>{email}</a>}
+        {website && <a href={websiteHref(website)} className="brand-detail brand-website" target="_blank" rel="noreferrer" aria-label={`Open ${website}`}>{website}</a>}
+      </address>
+      {(contactName || contactPhone) && (
+        <small className="customer-document-brand-contact">
+          {contactName && <span>{contactName}</span>}
+          {contactName && contactPhone && <span aria-hidden="true"> · </span>}
+          {contactPhone && <a href={phoneHref(contactPhone)} aria-label={`Call ${contactPhone}`}>{contactPhone}</a>}
+        </small>
+      )}
     </div>
   );
 }
