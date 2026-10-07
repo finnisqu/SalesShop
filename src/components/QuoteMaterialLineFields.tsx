@@ -10,7 +10,6 @@ import { useQuoteStore } from '../store/quoteStore';
 import type { QuoteLine, QuoteLineMaterialReference } from '../types/quote';
 import {
   defaultMaterialPurchaseOption,
-  defaultMaterialVariant,
   resolveStockMaterialCostReference,
   type MaterialVariant,
   type StockMaterial,
@@ -19,7 +18,7 @@ import {
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 function variantLabel(variant?: MaterialVariant) {
-  if (!variant) return 'Default spec';
+  if (!variant) return 'Variant required';
   const dimensions = variant.lengthIn && variant.widthIn ? `${variant.lengthIn}×${variant.widthIn}` : undefined;
   return [variant.thickness, variant.finish, variant.formatName, dimensions].filter(Boolean).join(' · ') || 'Standard spec';
 }
@@ -63,6 +62,8 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   const updateLine = useQuoteStore((state) => state.updateLine);
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(!line.materialReference?.materialId && !line.materialReference?.customMaterialName);
+  const [pendingMaterialId, setPendingMaterialId] = useState<string | null>(null);
+  const [pendingVariantId, setPendingVariantId] = useState<string | null>(null);
 
   useEffect(() => {
     void hydrateSettings();
@@ -73,19 +74,27 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
     () => materials.filter((material) => material.active),
     [materials],
   );
+
   const selectedMaterial = line.materialReference?.materialId
     ? activeMaterials.find((material) => material.id === line.materialReference?.materialId)
     : undefined;
-  const selectedVariant = selectedMaterial
-    ? line.materialReference?.variantId
-      ? (selectedMaterial.variants ?? []).find((variant) => variant.active !== false && variant.id === line.materialReference?.variantId)
-      : defaultMaterialVariant(selectedMaterial)
+  const selectedVariant = selectedMaterial && line.materialReference?.variantId
+    ? (selectedMaterial.variants ?? []).find((variant) => variant.active !== false && variant.id === line.materialReference?.variantId)
     : undefined;
-  const selectedPurchaseOption = selectedVariant
-    ? line.materialReference?.purchaseOptionId
-      ? (selectedVariant.purchaseOptions ?? []).find((option) => option.active !== false && option.id === line.materialReference?.purchaseOptionId)
-      : defaultMaterialPurchaseOption(selectedVariant)
+  const selectedPurchaseOption = selectedVariant && line.materialReference?.purchaseOptionId
+    ? (selectedVariant.purchaseOptions ?? []).find((option) => option.active !== false && option.id === line.materialReference?.purchaseOptionId)
+    : selectedVariant
+      ? defaultMaterialPurchaseOption(selectedVariant)
+      : undefined;
+
+  const pendingMaterial = pendingMaterialId
+    ? activeMaterials.find((material) => material.id === pendingMaterialId)
     : undefined;
+  const pendingVariants = (pendingMaterial?.variants ?? []).filter((variant) => variant.active !== false);
+  const pendingVariant = pendingVariantId
+    ? pendingVariants.find((variant) => variant.id === pendingVariantId)
+    : undefined;
+  const pendingOptions = (pendingVariant?.purchaseOptions ?? []).filter((option) => option.active !== false);
 
   const results = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -98,9 +107,10 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       .slice(0, 10);
   }, [activeMaterials, search]);
 
-  const applyMaterial = (material: StockMaterial, variantId?: string, purchaseOptionId?: string, keepSearching = false) => {
-    const reference = resolveStockMaterialCostReference(material, variantId, purchaseOptionId);
-    const variant = reference.variant ?? defaultMaterialVariant(material);
+  const applyMaterial = (material: StockMaterial, variantId: string, purchaseOptionId?: string) => {
+    const variant = (material.variants ?? []).find((candidate) => candidate.active !== false && candidate.id === variantId);
+    if (!variant) return;
+    const reference = resolveStockMaterialCostReference(material, variant.id, purchaseOptionId);
     const purchaseOption = reference.purchaseOption ?? defaultMaterialPurchaseOption(variant);
     const current = line.materialReference;
     const slabMode = line.pricingMode === 'slab-multiplier';
@@ -113,7 +123,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
 
     const materialReference: QuoteLineMaterialReference = {
       materialId: material.id,
-      variantId: variant?.id,
+      variantId: variant.id,
       purchaseOptionId: purchaseOption?.id,
       stockProgram: material.stockProgram,
       pricingSource: slabMode ? 'slab-multiplier' : 'manual-line-rate',
@@ -133,7 +143,29 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       amount: slabMode ? slabPricing?.customerTotal : line.amount,
     });
     setSearch('');
-    if (!keepSearching) setSearching(false);
+    setPendingMaterialId(null);
+    setPendingVariantId(null);
+    setSearching(false);
+  };
+
+  const chooseMaterial = (material: StockMaterial) => {
+    setPendingMaterialId(material.id);
+    setPendingVariantId(null);
+  };
+
+  const chooseVariant = (variant: MaterialVariant) => {
+    if (!pendingMaterial) return;
+    const options = (variant.purchaseOptions ?? []).filter((option) => option.active !== false);
+    if (options.length > 1) {
+      setPendingVariantId(variant.id);
+      return;
+    }
+    applyMaterial(pendingMaterial, variant.id, options[0]?.id);
+  };
+
+  const choosePurchaseOption = (purchaseOptionId: string) => {
+    if (!pendingMaterial || !pendingVariant) return;
+    applyMaterial(pendingMaterial, pendingVariant.id, purchaseOptionId);
   };
 
   const applyCustom = () => {
@@ -153,28 +185,15 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       amount: slabMode ? undefined : line.amount,
     });
     setSearch('');
+    setPendingMaterialId(null);
+    setPendingVariantId(null);
     setSearching(false);
   };
 
-  const selectVariant = (variantId: string) => {
-    if (!selectedMaterial) return;
-    const variant = (selectedMaterial.variants ?? []).find((candidate) => candidate.id === variantId && candidate.active !== false);
-    const option = defaultMaterialPurchaseOption(variant);
-    applyMaterial(selectedMaterial, variant?.id, option?.id, true);
-  };
-
-  const selectPurchaseOption = (purchaseOptionId: string) => {
-    if (!selectedMaterial || !selectedVariant) return;
-    applyMaterial(selectedMaterial, selectedVariant.id, purchaseOptionId, true);
-  };
-
   const snapshot = line.materialReference?.snapshot;
-  const activeVariants = (selectedMaterial?.variants ?? []).filter((variant) => variant.active !== false);
-  const activeOptions = (selectedVariant?.purchaseOptions ?? []).filter((option) => option.active !== false);
-  const currentReference = selectedMaterial
-    && (!line.materialReference?.variantId || selectedVariant)
+  const currentReference = selectedMaterial && selectedVariant
     && (!line.materialReference?.purchaseOptionId || selectedPurchaseOption)
-      ? resolveStockMaterialCostReference(selectedMaterial, selectedVariant?.id, selectedPurchaseOption?.id)
+      ? resolveStockMaterialCostReference(selectedMaterial, selectedVariant.id, selectedPurchaseOption?.id)
       : undefined;
   const currentSnapshot = selectedMaterial && currentReference
     ? createQuoteMaterialCostSnapshot(selectedMaterial, currentReference)
@@ -198,45 +217,71 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
               snapshot?.purchaseOptionLabel ?? selectedPurchaseOption?.label,
             ].filter(Boolean).join(' · ') || 'Custom quote material'}</small>
           </div>
-          {snapshotComparison?.changed && currentReference && (
-            <button type="button" onClick={() => applyMaterial(selectedMaterial!, currentReference.variant?.id, currentReference.purchaseOption?.id)}>Update snapshot</button>
+          {snapshotComparison?.changed && currentReference && selectedMaterial && selectedVariant && (
+            <button type="button" onClick={() => applyMaterial(selectedMaterial, selectedVariant.id, currentReference.purchaseOption?.id)}>Update snapshot</button>
           )}
         </div>}
-        {selectedMaterial && (activeVariants.length > 1 || activeOptions.length > 1) && <div className="quote-picker-options">
-          {activeVariants.length > 1 && <label><span>Variant</span><select value={selectedVariant?.id ?? ''} onChange={(event) => selectVariant(event.target.value)}>
-            {activeVariants.map((variant) => <option key={variant.id} value={variant.id}>{variantLabel(variant)}</option>)}
-          </select></label>}
-          {selectedVariant && activeOptions.length > 1 && <label><span>Cost program</span><select value={selectedPurchaseOption?.id ?? ''} onChange={(event) => selectPurchaseOption(event.target.value)}>
-            {activeOptions.map((option) => <option key={option.id} value={option.id}>{option.label}{option.minQuantity ? ` · ${option.minQuantity}+` : ''}</option>)}
-          </select></label>}
-        </div>}
-        <div className="quote-material-search-row">
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search Materials database…"
-            aria-label="Search material database"
-          />
-          {(selectedMaterial || line.materialReference?.customMaterialName) && <button type="button" onClick={() => setSearching(false)}>Cancel</button>}
-        </div>
-        <div className="quote-material-results">
-          {results.map((material) => {
-            const reference = resolveStockMaterialCostReference(material);
-            return (
-              <button type="button" key={material.id} onClick={() => applyMaterial(material)}>
-                <span><strong>{[material.brand, material.name].filter(Boolean).join(' ')}</strong><small>{[material.materialType, material.supplier].filter(Boolean).join(' · ')}</small></span>
-                <span><b>{variantLabel(reference.variant)}</b><small>{reference.slabCost === undefined ? 'No slab price' : `${money.format(reference.slabCost)}/slab`}</small></span>
-              </button>
-            );
-          })}
-          {search.trim() && (
-            <button type="button" className="quote-material-custom-result" onClick={applyCustom}>
-              <span><strong>Use “{search.trim()}”</strong><small>Custom material for this quote</small></span>
-              <span><b>Not in database</b><small>Does not create a catalog record</small></span>
-            </button>
-          )}
-          {!results.length && !search.trim() && <div className="quote-material-empty">No active materials are available.</div>}
-        </div>
+
+        {pendingMaterial ? (
+          <div className="quote-material-choice-step">
+            <div className="quote-material-choice-heading">
+              <button type="button" onClick={() => { setPendingMaterialId(null); setPendingVariantId(null); }}>← Materials</button>
+              <div>
+                <span>{pendingVariant ? 'Choose cost program' : 'Choose variant'}</span>
+                <strong>{[pendingMaterial.brand, pendingMaterial.name].filter(Boolean).join(' ')}</strong>
+              </div>
+            </div>
+            {!pendingVariant ? (
+              <div className="quote-material-variant-choices">
+                {pendingVariants.map((variant) => {
+                  const reference = resolveStockMaterialCostReference(pendingMaterial, variant.id, defaultMaterialPurchaseOption(variant)?.id);
+                  return <button type="button" key={variant.id} onClick={() => chooseVariant(variant)}>
+                    <span><strong>{variantLabel(variant)}</strong><small>{variant.sku || 'No SKU'}</small></span>
+                    <span><b>{reference.costPerSf === undefined ? 'Cost —' : `${money.format(reference.costPerSf)}/SF`}</b><small>{reference.slabCost === undefined ? 'No slab cost' : `${money.format(reference.slabCost)}/slab`}</small></span>
+                  </button>;
+                })}
+                {!pendingVariants.length && <div className="quote-material-empty">This material has no active variants. Add a variant in Catalog before quoting it.</div>}
+              </div>
+            ) : (
+              <div className="quote-material-variant-choices">
+                {pendingOptions.map((option) => {
+                  const reference = resolveStockMaterialCostReference(pendingMaterial, pendingVariant.id, option.id);
+                  return <button type="button" key={option.id} onClick={() => choosePurchaseOption(option.id)}>
+                    <span><strong>{option.label}</strong><small>{option.minQuantity ? `${option.minQuantity}+ minimum` : 'Standard purchase program'}</small></span>
+                    <span><b>{reference.costPerSf === undefined ? 'Cost —' : `${money.format(reference.costPerSf)}/SF`}</b><small>{reference.slabCost === undefined ? 'No slab cost' : `${money.format(reference.slabCost)}/slab`}</small></span>
+                  </button>;
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="quote-material-search-row">
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search Materials database…"
+                aria-label="Search material database"
+              />
+              {(snapshot || selectedMaterial || line.materialReference?.customMaterialName) && <button type="button" onClick={() => setSearching(false)}>Cancel</button>}
+            </div>
+            <div className="quote-material-results">
+              {results.map((material) => (
+                <button type="button" key={material.id} onClick={() => chooseMaterial(material)}>
+                  <span><strong>{[material.brand, material.name].filter(Boolean).join(' ')}</strong><small>{[material.materialType, material.supplier].filter(Boolean).join(' · ')}</small></span>
+                  <span><b>{(material.variants ?? []).filter((variant) => variant.active !== false).length} variant{(material.variants ?? []).filter((variant) => variant.active !== false).length === 1 ? '' : 's'}</b><small>Choose next</small></span>
+                </button>
+              ))}
+              {search.trim() && (
+                <button type="button" className="quote-material-custom-result" onClick={applyCustom}>
+                  <span><strong>Use “{search.trim()}”</strong><small>Custom material for this quote</small></span>
+                  <span><b>Not in database</b><small>No catalog variant required</small></span>
+                </button>
+              )}
+              {!results.length && !search.trim() && <div className="quote-material-empty">No active materials are available.</div>}
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -249,10 +294,10 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   const quotedType = snapshot?.materialType ?? selectedMaterial?.materialType;
   const quotedVariantLabel = snapshot?.variantLabel ?? variantLabel(selectedVariant);
   const quotedPurchaseLabel = snapshot?.purchaseOptionLabel ?? selectedPurchaseOption?.label;
+
   return (
     <div className="quote-material-selection quote-database-result">
       <div className="quote-material-selection-main">
-        <span>Material</span>
         <strong>{[quotedBrand, quotedName].filter(Boolean).join(' ')}</strong>
         <small>{[
           quotedVariantLabel,
@@ -262,16 +307,19 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       </div>
 
       {(snapshot || selectedMaterial) && <div className="quote-material-cost-reference">
-        <span>Source cost</span>
-        <strong>{quotedCostPerSf === undefined ? '—' : `${money.format(quotedCostPerSf)}/SF`}</strong>
+        <strong>{quotedCostPerSf === undefined ? 'Cost —' : `Cost ${money.format(quotedCostPerSf)}/SF`}</strong>
         <small>{quotedSlabCost === undefined ? 'No slab cost' : `${money.format(quotedSlabCost)}/slab`}</small>
       </div>}
 
       {snapshot && !selectedMaterial && snapshot.materialId && <span className="quote-source-status is-warning">Source unavailable</span>}
       {snapshotComparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
-      {!snapshot && selectedMaterial && currentReference && <span className="quote-source-status">Snapshot needed</span>}
 
-      <button type="button" className="quote-material-change quote-database-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
+      <button type="button" className="quote-material-change quote-database-change" onClick={() => {
+        setSearch('');
+        setPendingMaterialId(selectedMaterial?.id ?? null);
+        setPendingVariantId(null);
+        setSearching(true);
+      }}>Change</button>
     </div>
   );
 }
