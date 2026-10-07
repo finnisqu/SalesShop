@@ -216,6 +216,14 @@ describe('SalesShop canonical material template importer', () => {
     });
   });
 
+  it('returns a useful workbook-read error instead of leaking a parser TypeError', async () => {
+    const badFile = new File([new Uint8Array([1, 2, 3, 4, 5])], 'broken.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    await expect(stageSalesShopMaterialTemplate(badFile, []))
+      .rejects.toThrow(/could not read this \.xlsx workbook/i);
+  });
+
   it('rejects an unsupported workbook version before staging anything', async () => {
     const file = await makeTemplateFile([baseRow], { templateVersion: '2.0' });
     await expect(stageSalesShopMaterialTemplate(file, []))
