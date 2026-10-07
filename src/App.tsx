@@ -30,7 +30,6 @@ import { Quotes } from './components/Quotes';
 import { MaterialsWorkspace } from './components/MaterialsWorkspace';
 import { RatesWorkspace } from './components/RatesWorkspace';
 import { Sidebar } from './components/Sidebar';
-import { SupplierImportLauncher } from './components/SupplierImportCenter';
 import { TextEditor } from './components/TextEditor';
 import { Toolbar } from './components/Toolbar';
 import { useCompanySettingsStore } from './store/companySettingsStore';
@@ -142,7 +141,6 @@ function App() {
         </main>
       )}
       {view === 'quotes' && <QuoteShareControl />}
-      {view === 'materials' && <SupplierImportLauncher />}
     </div>
   );
 }
