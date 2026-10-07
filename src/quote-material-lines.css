@@ -471,3 +471,123 @@
     grid-column: 3 / 5;
   }
 }
+
+
+/* Quote-time material snapshots: old quotes retain the exact pricing context used when priced. */
+.quote-material-snapshot-meta {
+  min-width: 145px;
+  max-width: 260px;
+  display: grid;
+  gap: 1px;
+  padding: 4px 6px;
+  border-left: 2px solid rgba(108, 126, 91, .26);
+  background: rgba(235, 240, 229, .42);
+}
+
+.quote-material-snapshot-meta > span {
+  overflow: hidden;
+  color: #5f6658;
+  font-size: 7.7px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-snapshot-meta > small {
+  overflow: hidden;
+  color: #8b8579;
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-catalog-state {
+  min-width: 155px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid rgba(91, 78, 58, .1);
+  border-radius: 3px;
+  background: #f5f1e8;
+}
+
+.quote-material-catalog-state > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-material-catalog-state strong {
+  color: #665f54;
+  font-size: 7.7px;
+  white-space: nowrap;
+}
+
+.quote-material-catalog-state small {
+  color: #8b8376;
+  font-size: 7px;
+  white-space: nowrap;
+}
+
+.quote-material-catalog-state button {
+  flex: 0 0 auto;
+  min-height: 26px;
+  margin-left: auto;
+  border: 1px solid rgba(100, 122, 83, .24);
+  border-radius: 3px;
+  background: #edf3e8;
+  padding: 0 7px;
+  color: #53694a;
+  font-size: 7.3px;
+  font-weight: 800;
+}
+
+.quote-material-catalog-state.is-changed {
+  border-color: rgba(175, 135, 43, .22);
+  background: #fff5d5;
+}
+
+.quote-material-catalog-state.is-changed strong {
+  color: #795f1f;
+}
+
+.quote-material-catalog-state.is-unavailable {
+  display: grid;
+  gap: 1px;
+  border-color: rgba(158, 94, 77, .18);
+  background: #f8e8e2;
+}
+
+.quote-material-catalog-state.is-unavailable strong {
+  color: #805044;
+}
+
+.quote-material-catalog-state.is-legacy {
+  border-style: dashed;
+}
+
+.view-split .quote-material-snapshot-meta,
+.view-split .quote-material-catalog-state {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+@media (max-width: 700px) {
+  .quote-material-snapshot-meta,
+  .quote-material-catalog-state {
+    grid-column: 1 / -1;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .quote-material-catalog-state {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quote-material-catalog-state button {
+    min-height: 38px;
+    margin-left: 0;
+  }
+}
