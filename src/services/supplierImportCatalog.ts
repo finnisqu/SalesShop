@@ -75,6 +75,8 @@ function priceChanged(existing: MaterialPurchaseOption | undefined, incoming: Ma
 
 function sourceFor(
   session: SupplierImportSession,
+  candidate: SupplierImportCandidate,
+  evidence: SupplierImportCandidate['priceEvidence'][string] | undefined,
   publicationId: string,
   provenance: SupplierImportPriceProvenance,
   recordedAt: string,
@@ -82,11 +84,13 @@ function sourceFor(
   return {
     kind: 'supplier-import',
     publicationId,
-    supplier: session.source.supplier,
-    brand: session.source.brand,
-    sourceFileName: session.source.fileName,
-    priceListLabel: session.source.priceListLabel,
-    effectiveDate: session.source.effectiveDate,
+    supplier: evidence?.supplier ?? candidate.material.supplier ?? session.source.supplier,
+    brand: evidence?.brand ?? candidate.material.brand ?? session.source.brand,
+    sourceFileName: evidence?.sourceFileName ?? session.source.fileName,
+    sourcePageSheet: evidence?.sourcePageSheet,
+    sourceReference: evidence?.sourceReference,
+    priceListLabel: evidence?.priceListLabel ?? session.source.priceListLabel,
+    effectiveDate: evidence?.effectiveDate ?? session.source.effectiveDate,
     recordedAt,
     provenance,
     parserId: session.source.parserId,
@@ -121,7 +125,7 @@ function mergePurchaseOption(
   const evidence = candidate.priceEvidence?.[incoming.id];
   const provenance: SupplierImportPriceProvenance = evidence?.effectiveCostPerSf
     ?? (incoming.costPerSf !== undefined ? 'supplier-listed' : 'derived-from-listed-unit');
-  const source = sourceFor(session, publicationId, provenance, recordedAt);
+  const source = sourceFor(session, candidate, evidence, publicationId, provenance, recordedAt);
   const changed = priceChanged(existing, incoming);
 
   return {
@@ -185,7 +189,7 @@ function mergeVariant(
     availabilityNote: incoming.availabilityNote ?? existing?.availabilityNote,
     features: unionStrings(existing?.features, incoming.features),
     purchaseOptions,
-    notes: existing?.notes,
+    notes: existing?.notes ?? incoming.notes,
   } satisfies MaterialVariant;
 }
 
@@ -223,7 +227,7 @@ function mergeMaterial(
       slabImageUrl: undefined,
       closeUpImageUrl: undefined,
       productUrl: undefined,
-      notes: undefined,
+      notes: incoming.notes,
       active: true,
       variants,
     } satisfies StockMaterial;
