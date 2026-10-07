@@ -361,6 +361,7 @@
 
 .customer-area-summary-row {
   min-height: 42px;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   background: #fafaf8;
 }
 
