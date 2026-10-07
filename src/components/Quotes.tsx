@@ -477,6 +477,10 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const createRevision = useQuoteStore((state) => state.createRevision);
   const createChangeOrder = useQuoteStore((state) => state.createChangeOrder);
   const restoreQuote = useQuoteStore((state) => state.restoreQuote);
+  const undoQuote = useQuoteStore((state) => state.undoQuote);
+  const redoQuote = useQuoteStore((state) => state.redoQuote);
+  const undoDepth = useQuoteStore((state) => state.undoStacks[quote.id]?.length ?? 0);
+  const redoDepth = useQuoteStore((state) => state.redoStacks[quote.id]?.length ?? 0);
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
@@ -486,6 +490,18 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const commerciallyEditable = quoteIsCommerciallyEditable(quote);
   const effectiveMode: QuoteViewMode = pricingSchedule && mode === 'split' ? 'edit' : mode;
   const viewModes: QuoteViewMode[] = pricingSchedule ? ['edit', 'workbook', 'customer'] : ['edit', 'split', 'customer'];
+
+  useEffect(() => {
+    const handleHistoryShortcut = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'z') return;
+      if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      event.preventDefault();
+      if (event.shiftKey) redoQuote(quote.id);
+      else undoQuote(quote.id);
+    };
+    window.addEventListener('keydown', handleHistoryShortcut);
+    return () => window.removeEventListener('keydown', handleHistoryShortcut);
+  }, [quote.id, undoQuote, redoQuote]);
 
   const setDocumentType = (documentType: CommercialDocumentType) => {
     updateQuote(quote.id, { documentType, ...(documentType === 'pricing-schedule' && !quote.pricingSchedule ? { pricingSchedule: createPricingScheduleData(quote.id) } : {}) });
@@ -583,6 +599,10 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
           {quote.documentType === 'change-order' && parent && <small>Changes original agreement {displayQuoteNumber(parent)}</small>}
         </div>
         <div className="quote-header-actions">
+          <div className="quote-undo-redo" aria-label="Quote edit history">
+            <button type="button" disabled={!commerciallyEditable || undoDepth === 0} onClick={() => undoQuote(quote.id)} title="Undo last quote edit">↶</button>
+            <button type="button" disabled={!commerciallyEditable || redoDepth === 0} onClick={() => redoQuote(quote.id)} title="Redo quote edit">↷</button>
+          </div>
           <div className="quote-view-switch" aria-label="Document view">
             {viewModes.map((viewMode) => <button type="button" key={viewMode} className={effectiveMode === viewMode ? 'active' : ''} onClick={() => onModeChange(viewMode)}>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</button>)}
           </div>
