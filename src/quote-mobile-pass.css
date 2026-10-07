@@ -794,3 +794,582 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ------------------------------
+   Immersive mobile Quotes shell
+------------------------------ */
+.quote-mobile-commandbar,
+.quote-mobile-navigator-backdrop {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .sales-app.view-quotes {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .sales-app.view-quotes > .app-header {
+    display: none;
+  }
+
+  .sales-app.view-quotes .quotes-view {
+    height: 100dvh;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .sales-app.view-quotes .quotes-sidebar {
+    display: none;
+  }
+
+  .sales-app.view-quotes .quotes-workbench {
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+
+  .sales-app.view-quotes .quote-workbench-header {
+    display: none;
+  }
+
+  .sales-app.view-quotes .quote-mobile-commandbar {
+    position: relative;
+    z-index: 170;
+    min-height: 50px;
+    height: 50px;
+    flex: 0 0 50px;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto 40px;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(87, 76, 58, .18);
+    background: rgba(246, 243, 235, .97);
+    box-shadow: 0 2px 7px rgba(49, 43, 34, .08);
+  }
+
+  .quote-mobile-nav-button,
+  .quote-mobile-view-button,
+  .quote-mobile-more-button {
+    height: 40px;
+    min-height: 40px;
+    border: 1px solid rgba(91, 78, 58, .15);
+    border-radius: 7px;
+    background: rgba(255, 252, 244, .8);
+    color: #5f584d;
+  }
+
+  .quote-mobile-nav-button,
+  .quote-mobile-more-button {
+    width: 40px;
+    padding: 0;
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .quote-mobile-view-button {
+    min-width: 68px;
+    padding: 0 9px;
+    font-size: 9px;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .025em;
+  }
+
+  .quote-mobile-view-button.active,
+  .quote-mobile-more-button.active {
+    border-color: rgba(166, 137, 63, .30);
+    background: #fff6da;
+    color: #4e4430;
+  }
+
+  .quote-mobile-current-document {
+    min-width: 0;
+    display: grid;
+    gap: 1px;
+    padding: 0 4px;
+  }
+
+  .quote-mobile-current-document span {
+    overflow: hidden;
+    color: #948a7a;
+    font-size: 6.5px;
+    font-weight: 850;
+    letter-spacing: .065em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  .quote-mobile-current-document strong {
+    overflow: hidden;
+    color: #3f3a32;
+    font: 700 13px/1.1 Georgia, serif;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quote-mobile-menu {
+    position: absolute;
+    z-index: 210;
+    top: calc(100% + 4px);
+    right: 6px;
+    max-height: min(76dvh, 650px);
+    overflow-y: auto;
+    border: 1px solid rgba(91, 78, 58, .20);
+    border-radius: 8px;
+    background: #fffaf0;
+    box-shadow: 0 16px 38px rgba(49, 40, 29, .24);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quote-mobile-view-menu {
+    width: min(260px, calc(100vw - 18px));
+    padding: 6px;
+  }
+
+  .quote-mobile-view-menu > button {
+    width: 100%;
+    min-height: 48px;
+    display: grid;
+    gap: 2px;
+    border: 0;
+    border-radius: 5px;
+    padding: 7px 9px;
+    background: transparent;
+    color: #514b42;
+    text-align: left;
+  }
+
+  .quote-mobile-view-menu > button.active {
+    background: #f1ead7;
+    box-shadow: inset 3px 0 #b9a052;
+  }
+
+  .quote-mobile-view-menu > button strong {
+    font-size: 11px;
+  }
+
+  .quote-mobile-view-menu > button small {
+    color: #918779;
+    font-size: 8px;
+  }
+
+  .quote-mobile-tools-menu {
+    width: min(350px, calc(100vw - 12px));
+    padding: 8px;
+  }
+
+  .quote-mobile-menu-heading {
+    display: block;
+    margin: 0 0 5px;
+    color: #8f8576;
+    font-size: 6.5px;
+    font-weight: 900;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+  }
+
+  .quote-mobile-menu-section + .quote-mobile-menu-section {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(91, 78, 58, .10);
+  }
+
+  .quote-mobile-tool-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .quote-mobile-tool-grid button {
+    min-width: 0;
+    min-height: 52px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 5px;
+    background: rgba(247, 243, 234, .72);
+    color: #5e574d;
+  }
+
+  .quote-mobile-tool-grid button > span {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .quote-mobile-tool-grid button > small {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 6.8px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quote-mobile-tool-grid button:disabled {
+    opacity: .30;
+  }
+
+  .quote-mobile-setup-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .quote-mobile-setup-grid button {
+    min-width: 0;
+    min-height: 48px;
+    display: grid;
+    align-content: center;
+    gap: 2px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 5px;
+    padding: 6px;
+    background: rgba(247, 243, 234, .72);
+    color: #5a5348;
+    text-align: left;
+  }
+
+  .quote-mobile-setup-grid strong {
+    font-size: 8px;
+  }
+
+  .quote-mobile-setup-grid small {
+    overflow: hidden;
+    color: #928879;
+    font-size: 6.2px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quote-mobile-zoom-row {
+    display: grid;
+    grid-template-columns: 42px 1fr 42px;
+    gap: 4px;
+  }
+
+  .quote-mobile-zoom-row button {
+    min-height: 40px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 5px;
+    background: rgba(247, 243, 234, .72);
+    color: #5a5348;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .quote-mobile-document-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .quote-mobile-document-actions > button,
+  .quote-mobile-document-actions .quote-share-launcher {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    border: 1px solid rgba(91, 78, 58, .14);
+    border-radius: 6px;
+    padding: 7px 8px;
+    background: #f7f1e4;
+    color: #50493e;
+    box-shadow: none;
+    font-size: 9px;
+    font-weight: 850;
+  }
+
+  .quote-mobile-document-actions > button.is-send {
+    background: #dfc96f;
+    border-color: #aa934a;
+    color: #3e3628;
+  }
+
+  .quote-mobile-document-actions > button.is-sign {
+    background: #6d886f;
+    border-color: #5c765e;
+    color: white;
+  }
+
+  .quote-mobile-tools-menu .quote-share-control {
+    position: static;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    width: 100%;
+  }
+
+  .quote-mobile-tools-menu .quote-share-launcher {
+    display: flex;
+    min-height: 44px;
+    transform: none;
+  }
+
+  .quote-mobile-tools-menu .quote-share-panel {
+    position: fixed;
+    z-index: 260;
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: min(76dvh, 640px);
+  }
+
+  /* The quote sheet begins immediately below the compact toolbar. */
+  .sales-app.view-quotes .quote-workbench-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .sales-app.view-quotes .quote-editor-pane,
+  .sales-app.view-quotes .quote-preview-pane {
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-quotes .quote-editor-pane {
+    padding-top: 5px;
+  }
+
+  /* Keep the old setup popovers, but remove the three permanent setup cards. */
+  .sales-app.view-quotes .quote-configuration-strip {
+    min-height: 0;
+    height: 0;
+    margin: 0 auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .sales-app.view-quotes .quote-configuration-strip > button {
+    display: none;
+  }
+
+  .sales-app.view-quotes .quote-config-popover,
+  .sales-app.view-quotes .quote-config-popover.is-project {
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    width: auto;
+    z-index: 190;
+  }
+
+  .sales-app.view-quotes .quote-lines-editor {
+    margin-top: 0;
+  }
+
+  /* Navigator: app destinations + quote switching replace global nav + carousel. */
+  .sales-app.view-quotes .quote-mobile-navigator-backdrop {
+    position: fixed;
+    z-index: 500;
+    inset: 0;
+    display: block;
+    background: rgba(44, 39, 32, .28);
+    backdrop-filter: blur(2px);
+  }
+
+  .quote-mobile-navigator {
+    width: min(92vw, 390px);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid rgba(79, 68, 52, .20);
+    background: #eee8dc;
+    box-shadow: 14px 0 36px rgba(42, 35, 26, .25);
+  }
+
+  .quote-mobile-navigator > header {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 10px 8px 13px;
+    border-bottom: 1px solid rgba(91, 78, 58, .12);
+  }
+
+  .quote-mobile-navigator > header > div {
+    min-width: 0;
+    display: grid;
+    gap: 1px;
+  }
+
+  .quote-mobile-navigator > header span {
+    color: #8e8578;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .quote-mobile-navigator > header strong {
+    color: #433e35;
+    font: 700 17px Georgia, serif;
+  }
+
+  .quote-mobile-navigator > header > button {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(255, 252, 244, .65);
+    color: #70675a;
+    font-size: 22px;
+  }
+
+  .quote-mobile-app-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid rgba(91, 78, 58, .10);
+  }
+
+  .quote-mobile-app-nav button {
+    min-height: 42px;
+    border: 1px solid rgba(91, 78, 58, .10);
+    border-radius: 5px;
+    background: rgba(250, 247, 239, .64);
+    color: #6c6458;
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  .quote-mobile-app-nav button.active {
+    border-color: rgba(163, 136, 67, .24);
+    background: #fff5d9;
+    color: #52462d;
+  }
+
+  .quote-mobile-document-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 10px 7px;
+  }
+
+  .quote-mobile-document-heading > div {
+    display: grid;
+    gap: 1px;
+  }
+
+  .quote-mobile-document-heading strong {
+    color: #514a3f;
+    font-size: 10px;
+  }
+
+  .quote-mobile-document-heading small {
+    color: #93897a;
+    font-size: 7px;
+  }
+
+  .quote-mobile-document-heading > button {
+    min-width: 68px;
+    min-height: 38px;
+    border: 1px solid #aaa18f;
+    border-radius: 6px;
+    background: #f7f0df;
+    color: #514a3f;
+    font-size: 9px;
+    font-weight: 850;
+  }
+
+  .quote-mobile-archive-toggle {
+    margin: 0 10px 6px;
+    min-height: 34px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 5px;
+    background: rgba(247, 243, 234, .65);
+    color: #81776a;
+    font-size: 8px;
+  }
+
+  .quote-mobile-document-list {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 8px calc(12px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quote-mobile-document-list > button {
+    width: 100%;
+    min-height: 68px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    border: 1px solid rgba(100, 87, 65, .15);
+    border-radius: 5px;
+    padding: 8px 9px;
+    background: #f1ebdd;
+    color: #4c463d;
+    text-align: left;
+  }
+
+  .quote-mobile-document-list > button.active {
+    border-color: #9c8959;
+    background: #fff7e5;
+    box-shadow: inset 3px 0 #bca354;
+  }
+
+  .quote-mobile-document-list > button > div {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  .quote-mobile-document-list span {
+    color: #928878;
+    font-size: 6px;
+    font-weight: 850;
+    letter-spacing: .06em;
+  }
+
+  .quote-mobile-document-list strong {
+    overflow: hidden;
+    font: 700 12px Georgia, serif;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quote-mobile-document-list small {
+    overflow: hidden;
+    color: #91877a;
+    font-size: 7px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quote-mobile-document-list b {
+    color: #5d5549;
+    font: 700 9px Georgia, serif;
+    white-space: nowrap;
+  }
+
+  /* No duplicate floating Share launcher in immersive Quotes. */
+  .sales-app.view-quotes > .quote-share-control {
+    display: none !important;
+  }
+
+  /* Split still works, but the compact toolbar remains fixed above it. */
+  .sales-app.view-quotes .view-split .quote-workbench-body {
+    min-height: 0;
+  }
+}
