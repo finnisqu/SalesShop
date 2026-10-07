@@ -287,8 +287,8 @@ export function MaterialsWorkspace() {
                     const expanded = expandedMaterialId === material.id;
                     const hasPinnedVariant = activeVariants.some((variant) => pinnedKeys.has(pinKey(material.id, variant.id)));
                     return (
-                      <>
-                        <tr key={material.id} className={`${expanded ? 'is-expanded' : ''} ${hasPinnedVariant ? 'has-pinned-variant' : ''}`}>
+                      <Fragment key={material.id}>
+                        <tr className={`${expanded ? 'is-expanded' : ''} ${hasPinnedVariant ? 'has-pinned-variant' : ''}`}>
                           <td className="rates-reference-item"><strong>{material.name}</strong><small>{material.brand || material.collection || material.sku || '—'}</small></td>
                           <td><span className={`rates-program-pill ${material.stockProgram ? 'is-stock' : ''}`}>{material.stockProgram ? 'STOCK' : 'Non-stock'}</span></td>
                           <td>{material.supplier || '—'}</td>
@@ -335,7 +335,7 @@ export function MaterialsWorkspace() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                   {!materials.length && <tr><td colSpan={8}><div className="rates-reference-empty">No active materials match the current search and filters.</div></td></tr>}
