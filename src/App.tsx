@@ -18,6 +18,7 @@ import './material-level-guide.css';
 import './supplier-import.css';
 import './supplier-import-v2.css';
 import './sinks-workspace.css';
+import './quote-sink-lines.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
