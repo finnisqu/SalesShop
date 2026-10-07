@@ -13,6 +13,7 @@ import {
 } from '../services/quoteRateSnapshot';
 import { useQuoteStore } from '../store/quoteStore';
 import { useRateBookStore } from '../store/rateBookStore';
+import { compatibleAreaScopeFields } from '../services/quoteAreaScope';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const allowedCategories: RateBookCategory[] = ['fabrication-install', 'sink', 'add-on'];
@@ -63,7 +64,12 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
 
   const apply = (item: RateBookItem) => {
     const nextSnapshot = createQuoteRateSnapshot(item, quote.pricingDivision);
-    updateLine(quote.id, line.id, rateSnapshotLinePatch(nextSnapshot));
+    const patch = rateSnapshotLinePatch(nextSnapshot);
+    const nextLine = { ...line, ...patch } as QuoteLine;
+    const quantitySource = line.quantitySource && compatibleAreaScopeFields(nextLine).includes(line.quantitySource.field)
+      ? line.quantitySource
+      : undefined;
+    updateLine(quote.id, line.id, { ...patch, quantitySource });
     setSearching(false);
     setSearch('');
   };
