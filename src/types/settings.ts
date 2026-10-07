@@ -1,5 +1,20 @@
 import type { PricingMaterialType } from './quote';
 
+export const MATERIAL_FAMILIES = ['Natural Stone', 'Engineered Surfaces', 'Other'] as const;
+export type MaterialFamily = (typeof MATERIAL_FAMILIES)[number];
+
+export const MATERIAL_TYPES_BY_FAMILY: Record<MaterialFamily, readonly PricingMaterialType[]> = {
+  'Natural Stone': ['Granite', 'Quartzite', 'Marble', 'Dolomite', 'Soapstone', 'Onyx', 'Travertine', 'Limestone', 'Natural Stone'],
+  'Engineered Surfaces': ['Quartz', 'Sintered Stone', 'Porcelain', 'Solid Surface', 'Terrazzo'],
+  Other: ['Other'],
+};
+
+export function materialFamilyForType(materialType: PricingMaterialType): MaterialFamily {
+  if (MATERIAL_TYPES_BY_FAMILY['Natural Stone'].includes(materialType)) return 'Natural Stone';
+  if (MATERIAL_TYPES_BY_FAMILY['Engineered Surfaces'].includes(materialType)) return 'Engineered Surfaces';
+  return 'Other';
+}
+
 export type StockMaterialUnit = 'sf' | 'slab' | 'each';
 export type MaterialFormatKind = 'slab' | 'sheet' | 'half-slab' | 'half-sheet' | 'other';
 export type MaterialPurchaseUnit = 'sf' | 'slab' | 'sheet' | 'half-slab' | 'half-sheet' | 'each';
@@ -73,6 +88,7 @@ export interface StockMaterial {
   collection?: string;
   supplierGroup?: string;
   sku?: string;
+  materialFamily?: MaterialFamily;
   materialType: PricingMaterialType;
   stockProgram: boolean;
   internalCost?: number;
@@ -85,6 +101,10 @@ export interface StockMaterial {
   variants?: MaterialVariant[];
   notes?: string;
   active: boolean;
+}
+
+export function resolvedMaterialFamily(material: Pick<StockMaterial, 'materialFamily' | 'materialType'>): MaterialFamily {
+  return material.materialFamily ?? materialFamilyForType(material.materialType);
 }
 
 export interface ResolvedMaterialCostReference {
