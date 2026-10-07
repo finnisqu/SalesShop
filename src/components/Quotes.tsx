@@ -361,14 +361,6 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
   const deleteSection = useQuoteStore((state) => state.deleteSection);
   const [scopeOpen, setScopeOpen] = useState(false);
   const scopeHostRef = useRef<HTMLDivElement>(null);
-  if (!section) return null;
-
-  const summary = areaScopeSummary(section);
-  const updateScopeField = (field: QuoteAreaScopeField, value: number | undefined) => {
-    const nextScope = { ...(section.scope ?? {}), [field]: value };
-    updateSection(quote.id, section.id, { scope: nextScope });
-  };
-  const fields: QuoteAreaScopeField[] = QUOTE_AREA_SCOPE_VISIBLE_FIELDS;
 
   useEffect(() => {
     if (!scopeOpen) return;
@@ -378,6 +370,15 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
     document.addEventListener('pointerdown', closeOnOutside);
     return () => document.removeEventListener('pointerdown', closeOnOutside);
   }, [scopeOpen]);
+
+  if (!section) return null;
+
+  const summary = areaScopeSummary(section);
+  const updateScopeField = (field: QuoteAreaScopeField, value: number | undefined) => {
+    const nextScope = { ...(section.scope ?? {}), [field]: value };
+    updateSection(quote.id, section.id, { scope: nextScope });
+  };
+  const fields: QuoteAreaScopeField[] = QUOTE_AREA_SCOPE_VISIBLE_FIELDS;
 
   return (
     <div className="quote-area-header" ref={scopeHostRef}>
