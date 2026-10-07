@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:materials": "vitest run src/types/settings.test.ts src/services/salesShopMaterialTemplateImport.test.ts src/services/supplierImportCatalog.test.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
