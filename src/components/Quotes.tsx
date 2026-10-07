@@ -22,7 +22,6 @@ import {
   displayQuoteNumber,
   QUOTE_STATUSES,
   quoteLineAmount,
-  quoteLineTotal,
   quoteLinesTotal,
   quoteTotal,
   type CommercialDocumentType,
