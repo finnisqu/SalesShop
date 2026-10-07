@@ -445,3 +445,77 @@
     margin-bottom: 72px;
   }
 }
+
+
+/* First-class Materials actions + ordered comparison tray. */
+.materials-workspace .supplier-import-launcher.is-toolbar {
+  position: static;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(88, 76, 54, .24);
+  border-radius: 5px;
+  background: #f7f3e9;
+  color: #574f43;
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+
+.materials-workspace .supplier-import-launcher.is-toolbar:hover {
+  background: #fff9e7;
+  border-color: #aa965e;
+}
+
+.materials-comparison-card {
+  transition: opacity .12s ease, transform .12s ease, box-shadow .12s ease;
+}
+
+.materials-comparison-card.is-dragging {
+  opacity: .52;
+  transform: scale(.985);
+  box-shadow: 0 7px 18px rgba(50, 42, 31, .12);
+}
+
+.materials-comparison-card > span {
+  padding-left: 25px;
+}
+
+.materials-card-drag-handle {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #938876;
+  font: 900 15px/1 system-ui, sans-serif;
+  cursor: grab;
+  touch-action: none;
+}
+
+.materials-card-drag-handle:hover,
+.materials-card-drag-handle:focus-visible {
+  outline: 0;
+  background: rgba(185, 157, 69, .13);
+  color: #65572e;
+}
+
+.materials-card-drag-handle:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 700px) {
+  .materials-workspace .supplier-import-launcher.is-toolbar {
+    min-height: 44px;
+  }
+}
