@@ -115,6 +115,33 @@ function quoteLineReminderLabels(line: QuoteLine, pricingComplete: boolean, scop
   return [...new Set(reminders)];
 }
 
+function quoteIssueGuide(reminders: string[], line: QuoteLine, areaTitle?: string) {
+  if (reminders.includes('Price')) {
+    return {
+      title: 'Pricing needs attention',
+      body: line.pricingMode === 'slab-multiplier'
+        ? 'Finish the slab cost, multiplier, and slab count. This reminder does not block the quote.'
+        : 'Finish the quantity/rate or amount for this line. This reminder does not block the quote.',
+    };
+  }
+  if (reminders.includes('Scope')) {
+    return {
+      title: 'Area quantity changed',
+      body: `${areaTitle || 'This area'} has a newer takeoff quantity. Update this line if you want it to follow the current Area Scope; otherwise its captured quantity stays frozen.`,
+    };
+  }
+  if (reminders.includes('Cost')) {
+    return {
+      title: 'Internal cost is missing',
+      body: 'Customer pricing can still be quoted. Add or update the private source cost when you want complete margin coverage.',
+    };
+  }
+  return {
+    title: 'Review this line',
+    body: 'There is a quote reminder attached to this line.',
+  };
+}
+
 function LineEditor({
   quote,
   line,
@@ -123,6 +150,10 @@ function LineEditor({
   onDragStart,
   onDrop,
   onDragEnd,
+  issueGuide,
+  issuePosition,
+  issueTotal,
+  onDismissIssue,
 }: {
   quote: Quote;
   line: QuoteLine;
@@ -131,6 +162,10 @@ function LineEditor({
   onDragStart: (lineId: string) => void;
   onDrop: (lineId: string) => void;
   onDragEnd: () => void;
+  issueGuide?: { title: string; body: string };
+  issuePosition?: number;
+  issueTotal?: number;
+  onDismissIssue?: () => void;
 }) {
   const updateLine = useQuoteStore((state) => state.updateLine);
   const deleteLine = useQuoteStore((state) => state.deleteLine);
@@ -254,7 +289,7 @@ function LineEditor({
   return (
     <div
       ref={lineRef}
-      className={`quote-line-editor kind-${line.kind} ${databaseSelected ? 'has-database-selection' : ''} ${pricingEditing ? 'is-line-editing' : ''} ${dragging ? 'is-dragging' : ''}`}
+      className={`quote-line-editor kind-${line.kind} ${databaseSelected ? 'has-database-selection' : ''} ${pricingEditing ? 'is-line-editing' : ''} ${issueGuide ? 'has-active-issue-guide' : ''} ${dragging ? 'is-dragging' : ''}`}
       data-quote-line-id={line.id}
       draggable={!pricingEditing}
       onDragStart={beginDrag}
@@ -361,6 +396,13 @@ function LineEditor({
       )}
 
       <button type="button" className="quote-line-delete" onClick={() => deleteLine(quote.id, line.id)} title="Delete row">×</button>
+
+      {issueGuide && <aside className="quote-issue-coachmark" role="status" aria-live="polite">
+        <span className="quote-issue-coachmark-kicker">Next issue{issuePosition && issueTotal ? ` · ${issuePosition}/${issueTotal}` : ''}</span>
+        <strong>{issueGuide.title}</strong>
+        <p>{issueGuide.body}</p>
+        <button type="button" onClick={onDismissIssue} aria-label="Dismiss issue helper" title="Dismiss">×</button>
+      </aside>}
     </div>
   );
 }
@@ -509,6 +551,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const [draggingSectionId, setDraggingSectionId] = useState<string | null>(null);
   const [metaPanel, setMetaPanel] = useState<'document' | 'project' | 'visibility' | null>(null);
   const [issueCursor, setIssueCursor] = useState(0);
+  const [activeIssueLineId, setActiveIssueLineId] = useState<string | null>(null);
   const metaHostRef = useRef<HTMLElement>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const pricingSchedule = quote.documentType === 'pricing-schedule';
@@ -554,19 +597,28 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
 
   useEffect(() => {
     setIssueCursor(0);
+    setActiveIssueLineId(null);
     setMetaPanel(null);
   }, [quote.id]);
 
+  useEffect(() => {
+    if (activeIssueLineId && !issueLineIds.includes(activeIssueLineId)) setActiveIssueLineId(null);
+  }, [activeIssueLineId, issueLineIds]);
+
   const collapseAll = () => {
     setMetaPanel(null);
+    setActiveIssueLineId(null);
     window.dispatchEvent(new Event('sales-shop:quote-collapse-all'));
   };
 
   const focusNextIssue = () => {
     if (!issueLineIds.length) return;
-    const lineId = issueLineIds[issueCursor % issueLineIds.length];
+    const issueIndex = issueCursor % issueLineIds.length;
+    const lineId = issueLineIds[issueIndex];
     setIssueCursor((current) => current + 1);
-    collapseAll();
+    setMetaPanel(null);
+    setActiveIssueLineId(lineId);
+    window.dispatchEvent(new Event('sales-shop:quote-collapse-all'));
     window.setTimeout(() => {
       document.querySelector(`[data-quote-line-id="${lineId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       window.dispatchEvent(new CustomEvent('sales-shop:quote-focus-line', { detail: { lineId } }));
@@ -767,7 +819,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
             </section>
             {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-lines-editor">
   <header><div><span className="quote-control-heading">{documentLabel} areas & scope</span><small>Organize the job by Kitchen, Bath, Unit Type, Clubhouse, or any other pricing area.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
-  {generalLines.length > 0 && <div className="quote-area-card quote-area-general" onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, undefined); setDraggingLineId(null); } }}><div className="quote-area-general-header"><div><span>General</span><small>Rows not assigned to a specific area</small></div><strong>{money.format(quoteLinesTotal(generalLines))}</strong></div><div className="quote-area-lines">{generalLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} />)}</div></div>}
+  {generalLines.length > 0 && <div className="quote-area-card quote-area-general" onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, undefined); setDraggingLineId(null); } }}><div className="quote-area-general-header"><div><span>General</span><small>Rows not assigned to a specific area</small></div><strong>{money.format(quoteLinesTotal(generalLines))}</strong></div><div className="quote-area-lines">{generalLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} issueGuide={activeIssueLineId === line.id ? quoteIssueGuide(quoteLineReminderLabels(line, quoteLinePricingComplete(line, guideMultiplier), Boolean(resolveLineAreaScopeState(quote, line)?.changed)), line, line.sectionId ? quote.sections.find((section) => section.id === line.sectionId)?.title : 'General') : undefined} issuePosition={activeIssueLineId === line.id ? issueLineIds.indexOf(line.id) + 1 : undefined} issueTotal={activeIssueLineId === line.id ? issueLineIds.length : undefined} onDismissIssue={() => setActiveIssueLineId(null)} />)}</div></div>}
   {quote.sections.map((section) => {
     const areaLines = linesForArea(section.id);
     return <div
@@ -801,7 +853,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     >
       <AreaEditor quote={quote} sectionId={section.id} lines={areaLines} onAddLine={addAreaLine} />
       <div className="quote-area-lines">
-        {areaLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} />)}
+        {areaLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} issueGuide={activeIssueLineId === line.id ? quoteIssueGuide(quoteLineReminderLabels(line, quoteLinePricingComplete(line, guideMultiplier), Boolean(resolveLineAreaScopeState(quote, line)?.changed)), line, line.sectionId ? quote.sections.find((section) => section.id === line.sectionId)?.title : 'General') : undefined} issuePosition={activeIssueLineId === line.id ? issueLineIds.indexOf(line.id) + 1 : undefined} issueTotal={activeIssueLineId === line.id ? issueLineIds.length : undefined} onDismissIssue={() => setActiveIssueLineId(null)} />)}
         {!areaLines.length && <div className="quote-area-empty">No scope yet. Add a material, priced line, or scope note for this area.</div>}
       </div>
     </div>;
