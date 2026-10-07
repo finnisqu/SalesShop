@@ -1,0 +1,126 @@
+import { useMemo, useState } from 'react';
+import { useNavigationStore, type AppView, type CatalogSection } from '../store/navigationStore';
+import { useNotebookStore } from '../store/notebookStore';
+import { AuthStatus } from './AuthGate';
+import { GlobalSearch } from './GlobalSearch';
+import { QuickCreate } from './QuickCreate';
+
+const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
+  { view: 'notebook', label: 'Notebook', short: 'Notebook' },
+  { view: 'board', label: 'Board', short: 'Board' },
+  { view: 'quotes', label: 'Quotes', short: 'Quotes' },
+  { view: 'catalog', label: 'Catalog', short: 'Catalog' },
+  { view: 'dashboard', label: 'Dashboard', short: 'Dashboard' },
+  { view: 'settings', label: 'Settings', short: 'Settings' },
+];
+
+const CATALOG_SECTIONS: Array<{ id: CatalogSection; label: string }> = [
+  { id: 'materials', label: 'Materials' },
+  { id: 'sinks', label: 'Sinks' },
+  { id: 'other', label: 'Other' },
+  { id: 'rates', label: 'Rates' },
+  { id: 'suppliers', label: 'Suppliers' },
+];
+
+function viewLabel(view: AppView) {
+  return APP_DESTINATIONS.find((item) => item.view === view)?.label ?? 'SalesShop';
+}
+
+function catalogLabel(section: CatalogSection) {
+  return CATALOG_SECTIONS.find((item) => item.id === section)?.label ?? 'Catalog';
+}
+
+export function MobileAppChrome() {
+  const view = useNavigationStore((state) => state.view);
+  const setView = useNavigationStore((state) => state.setView);
+  const catalogSection = useNavigationStore((state) => state.catalogSection);
+  const setCatalogSection = useNavigationStore((state) => state.setCatalogSection);
+
+  const entries = useNotebookStore((state) => state.entries);
+  const activeEntryId = useNotebookStore((state) => state.activeEntryId);
+  const selectEntry = useNotebookStore((state) => state.selectEntry);
+  const createEntry = useNotebookStore((state) => state.createEntry);
+
+  const [open, setOpen] = useState(false);
+
+  const activeEntry = entries.find((entry) => entry.id === activeEntryId) ?? null;
+  const visibleEntries = useMemo(
+    () => entries
+      .filter((entry) => !entry.hidden || entry.id === activeEntryId)
+      .sort((a, b) => Number(b.favorite) - Number(a.favorite) || b.updatedAt.localeCompare(a.updatedAt)),
+    [entries, activeEntryId],
+  );
+
+  if (view === 'quotes') return null;
+
+  const contextTitle = view === 'notebook'
+    ? activeEntry?.title || 'Notebook'
+    : view === 'catalog'
+      ? `Catalog · ${catalogLabel(catalogSection)}`
+      : viewLabel(view);
+
+  const chooseView = (next: AppView) => {
+    setOpen(false);
+    setView(next);
+  };
+
+  return (
+    <>
+      <header className="mobile-app-commandbar">
+        <button type="button" className="mobile-app-menu-button" onClick={() => setOpen(true)} aria-label="Open SalesShop navigation">☰</button>
+        <div className="mobile-app-current">
+          <span>SalesShop</span>
+          <strong>{contextTitle}</strong>
+        </div>
+        <GlobalSearch />
+        <QuickCreate />
+      </header>
+
+      {open && <div className="mobile-app-drawer-backdrop" onPointerDown={() => setOpen(false)}>
+        <aside className="mobile-app-drawer" onPointerDown={(event) => event.stopPropagation()}>
+          <header>
+            <div><span>SalesShop</span><strong>{viewLabel(view)}</strong></div>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close navigation">×</button>
+          </header>
+
+          <nav className="mobile-app-drawer-nav" aria-label="SalesShop sections">
+            {APP_DESTINATIONS.map((item) => (
+              <button type="button" key={item.view} className={view === item.view ? 'active' : ''} onClick={() => chooseView(item.view)}>
+                {item.short}
+              </button>
+            ))}
+          </nav>
+
+          {view === 'notebook' && <section className="mobile-app-context-section">
+            <header>
+              <div><strong>Notebook pages</strong><small>{visibleEntries.length} visible</small></div>
+              <button type="button" onClick={() => { createEntry(); setOpen(false); }}>+ New</button>
+            </header>
+            <div className="mobile-notebook-page-list">
+              {visibleEntries.map((entry) => (
+                <button type="button" key={entry.id} className={entry.id === activeEntryId ? 'active' : ''} onClick={() => { selectEntry(entry.id); setOpen(false); }}>
+                  <span>{entry.favorite ? '★' : 'PAGE'}</span>
+                  <strong>{entry.title || 'Untitled page'}</strong>
+                  <small>{new Date(entry.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small>
+                </button>
+              ))}
+            </div>
+          </section>}
+
+          {view === 'catalog' && <section className="mobile-app-context-section">
+            <header><div><strong>Catalog sections</strong><small>Source of truth</small></div></header>
+            <div className="mobile-catalog-section-list">
+              {CATALOG_SECTIONS.map((item) => (
+                <button type="button" key={item.id} className={catalogSection === item.id ? 'active' : ''} onClick={() => { setCatalogSection(item.id); setOpen(false); }}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </section>}
+
+          <footer><AuthStatus /></footer>
+        </aside>
+      </div>}
+    </>
+  );
+}
