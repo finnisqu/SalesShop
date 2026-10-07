@@ -16,7 +16,7 @@ import { SupplierImportLauncher } from './SupplierImportCenter';
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const PIN_STORAGE_KEY = 'salesshop-material-comparison-v1';
 
-type MaterialSort = 'stock-supplier' | 'name' | 'supplier' | 'type' | 'cost-asc' | 'cost-desc';
+type MaterialSort = 'stock-brand' | 'name' | 'brand' | 'type' | 'cost-asc' | 'cost-desc';
 type ProgramFilter = 'all' | 'stock' | 'non-stock';
 
 function moneyPerSf(value?: number) {
@@ -84,10 +84,10 @@ export function MaterialsWorkspace() {
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
   const [programFilter, setProgramFilter] = useState<ProgramFilter>('all');
   const [materialTypeFilter, setMaterialTypeFilter] = useState('all');
-  const [supplierFilter, setSupplierFilter] = useState('all');
+  const [brandFilter, setBrandFilter] = useState('all');
   const [finishFilter, setFinishFilter] = useState('all');
   const [thicknessFilter, setThicknessFilter] = useState('all');
-  const [sort, setSort] = useState<MaterialSort>('stock-supplier');
+  const [sort, setSort] = useState<MaterialSort>('stock-brand');
   const [pinnedKeys, setPinnedKeys] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(PIN_STORAGE_KEY);
@@ -111,7 +111,7 @@ export function MaterialsWorkspace() {
   }, [pinnedKeys]);
 
   const materialTypes = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.materialType))].sort(), [settings.stockMaterials]);
-  const suppliers = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.supplier?.trim()).filter((value): value is string => Boolean(value)))].sort(), [settings.stockMaterials]);
+  const brands = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.brand?.trim()).filter((value): value is string => Boolean(value)))].sort(), [settings.stockMaterials]);
   const finishes = useMemo(() => [...new Set(settings.stockMaterials.flatMap((material) => (material.variants ?? []).map((variant) => variant.finish?.trim()).filter((value): value is string => Boolean(value))))].sort(), [settings.stockMaterials]);
   const thicknesses = useMemo(() => [...new Set(settings.stockMaterials.flatMap((material) => (material.variants ?? []).map((variant) => variant.thickness?.trim()).filter((value): value is string => Boolean(value))))].sort(), [settings.stockMaterials]);
 
@@ -121,20 +121,20 @@ export function MaterialsWorkspace() {
       .filter((material) => material.active)
       .filter((material) => programFilter === 'all' || (programFilter === 'stock' ? material.stockProgram : !material.stockProgram))
       .filter((material) => materialTypeFilter === 'all' || material.materialType === materialTypeFilter)
-      .filter((material) => supplierFilter === 'all' || material.supplier === supplierFilter)
+      .filter((material) => brandFilter === 'all' || material.brand === brandFilter)
       .filter((material) => finishFilter === 'all' || (material.variants ?? []).some((variant) => variant.finish === finishFilter))
       .filter((material) => thicknessFilter === 'all' || (material.variants ?? []).some((variant) => variant.thickness === thicknessFilter))
       .filter((material) => !needle || `${material.name} ${material.supplier ?? ''} ${material.brand ?? ''} ${material.collection ?? ''} ${material.sku ?? ''} ${material.materialType} ${(material.features ?? []).join(' ')} ${(material.variants ?? []).flatMap((variant) => [variant.sku, variant.thickness, variant.finish, variant.formatName, variant.availabilityNote, ...(variant.features ?? [])]).join(' ')}`.toLowerCase().includes(needle));
 
     return rows.sort((a, b) => {
       if (sort === 'name') return a.name.localeCompare(b.name);
-      if (sort === 'supplier') return (a.supplier ?? '').localeCompare(b.supplier ?? '') || a.name.localeCompare(b.name);
+      if (sort === 'brand') return (a.brand ?? a.supplier ?? '').localeCompare(b.brand ?? b.supplier ?? '') || a.name.localeCompare(b.name);
       if (sort === 'type') return a.materialType.localeCompare(b.materialType) || a.name.localeCompare(b.name);
       if (sort === 'cost-asc') return compareOptionalNumbers(resolveStockMaterialCostReference(a).costPerSf, resolveStockMaterialCostReference(b).costPerSf) || a.name.localeCompare(b.name);
       if (sort === 'cost-desc') return compareOptionalNumbers(resolveStockMaterialCostReference(b).costPerSf, resolveStockMaterialCostReference(a).costPerSf) || a.name.localeCompare(b.name);
-      return Number(b.stockProgram) - Number(a.stockProgram) || (a.supplier ?? '').localeCompare(b.supplier ?? '') || a.name.localeCompare(b.name);
+      return Number(b.stockProgram) - Number(a.stockProgram) || (a.brand ?? a.supplier ?? '').localeCompare(b.brand ?? b.supplier ?? '') || a.name.localeCompare(b.name);
     });
-  }, [settings.stockMaterials, query, programFilter, materialTypeFilter, supplierFilter, finishFilter, thicknessFilter, sort]);
+  }, [settings.stockMaterials, query, programFilter, materialTypeFilter, brandFilter, finishFilter, thicknessFilter, sort]);
 
   const pinnedKeySet = useMemo(() => new Set(pinnedKeys), [pinnedKeys]);
 
@@ -152,14 +152,14 @@ export function MaterialsWorkspace() {
 
   const activeFilterCount = Number(programFilter !== 'all')
     + Number(materialTypeFilter !== 'all')
-    + Number(supplierFilter !== 'all')
+    + Number(brandFilter !== 'all')
     + Number(finishFilter !== 'all')
     + Number(thicknessFilter !== 'all');
 
   const clearFilters = () => {
     setProgramFilter('all');
     setMaterialTypeFilter('all');
-    setSupplierFilter('all');
+    setBrandFilter('all');
     setFinishFilter('all');
     setThicknessFilter('all');
   };
@@ -238,7 +238,7 @@ export function MaterialsWorkspace() {
                 <div className="rates-filter-popover">
                   <label><span>Program</span><select value={programFilter} onChange={(event) => setProgramFilter(event.target.value as ProgramFilter)}><option value="all">All programs</option><option value="stock">STOCK only</option><option value="non-stock">Non-stock only</option></select></label>
                   <label><span>Material type</span><select value={materialTypeFilter} onChange={(event) => setMaterialTypeFilter(event.target.value)}><option value="all">All types</option>{materialTypes.map((type) => <option value={type} key={type}>{type}</option>)}</select></label>
-                  <label><span>Supplier</span><select value={supplierFilter} onChange={(event) => setSupplierFilter(event.target.value)}><option value="all">All suppliers</option>{suppliers.map((supplier) => <option value={supplier} key={supplier}>{supplier}</option>)}</select></label>
+                  <label><span>Brand</span><select value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}><option value="all">All brands</option>{brands.map((brand) => <option value={brand} key={brand}>{brand}</option>)}</select></label>
                   <label><span>Finish</span><select value={finishFilter} onChange={(event) => setFinishFilter(event.target.value)}><option value="all">All finishes</option>{finishes.map((finish) => <option value={finish} key={finish}>{finish}</option>)}</select></label>
                   <label><span>Thickness</span><select value={thicknessFilter} onChange={(event) => setThicknessFilter(event.target.value)}><option value="all">All thicknesses</option>{thicknesses.map((thickness) => <option value={thickness} key={thickness}>{thickness}</option>)}</select></label>
                   <button type="button" onClick={clearFilters} disabled={!activeFilterCount}>Clear filters</button>
@@ -247,9 +247,9 @@ export function MaterialsWorkspace() {
               <label className="rates-sort-control">
                 <span>Sort</span>
                 <select value={sort} onChange={(event) => setSort(event.target.value as MaterialSort)} aria-label="Sort material library">
-                  <option value="stock-supplier">STOCK / supplier</option>
+                  <option value="stock-brand">STOCK / brand</option>
                   <option value="name">Color A–Z</option>
-                  <option value="supplier">Supplier A–Z</option>
+                  <option value="brand">Brand A–Z</option>
                   <option value="type">Material type</option>
                   <option value="cost-asc">Cost / SF · low to high</option>
                   <option value="cost-desc">Cost / SF · high to low</option>
@@ -356,7 +356,7 @@ export function MaterialsWorkspace() {
                         }}
                       >⠿</button>
                       <button type="button" className="materials-unpin" onClick={() => togglePin(material.id, variant.id)} aria-label={`Unpin ${material.name} ${variantSpec(variant)}`}>×</button>
-                      <span>{material.supplier || 'Unknown supplier'} · {material.materialType}</span>
+                      <span>{material.brand || material.supplier || 'Unknown brand'} · {material.materialType}</span>
                       <strong>{material.name}</strong>
                       <b>{variantSpec(variant)}</b>
                       <dl>
@@ -382,7 +382,7 @@ export function MaterialsWorkspace() {
             </header>
             <div className="rates-reference-table-wrap">
               <table className="rates-reference-table materials-reference-table">
-                <thead><tr><th>Color</th><th>Program</th><th>Supplier</th><th>Type</th><th>Default cost</th><th>Default spec</th><th>Variants</th><th>Product</th></tr></thead>
+                <thead><tr><th>Color</th><th>Program</th><th>Brand</th><th>Type</th><th>Default cost</th><th>Default spec</th><th>Variants</th><th>Product</th></tr></thead>
                 <tbody>
                   {materials.map((material) => {
                     const reference = resolveStockMaterialCostReference(material);
@@ -393,9 +393,9 @@ export function MaterialsWorkspace() {
                     return (
                       <Fragment key={material.id}>
                         <tr className={`${expanded ? 'is-expanded' : ''} ${hasPinnedVariant ? 'has-pinned-variant' : ''}`}>
-                          <td className="rates-reference-item"><strong>{material.name}</strong><small>{material.brand || material.collection || material.sku || '—'}</small></td>
+                          <td className="rates-reference-item"><strong>{material.name}</strong><small>{material.collection || material.sku || '—'}</small></td>
                           <td><span className={`rates-program-pill ${material.stockProgram ? 'is-stock' : ''}`}>{material.stockProgram ? 'STOCK' : 'Non-stock'}</span></td>
-                          <td>{material.supplier || '—'}</td>
+                          <td><strong>{material.brand || material.supplier || '—'}</strong></td>
                           <td>{material.materialType}</td>
                           <td className="number"><strong>{moneyPerSf(reference.costPerSf)}</strong><small className="materials-cell-note">{reference.purchaseOption?.label || (reference.basis === 'legacy' ? 'Legacy cost' : 'No default price')}</small></td>
                           <td className="materials-default-spec"><strong>{variantSpec(reference.variant)}</strong><small>{reference.variant ? `${variantSize(reference.variant)}${materialVariantAreaSf(reference.variant) ? ` · ${materialVariantAreaSf(reference.variant)?.toFixed(2)} SF` : ''}` : 'No structured slab size'}</small></td>
