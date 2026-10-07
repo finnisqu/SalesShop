@@ -812,3 +812,254 @@
     min-height: 34px;
   }
 }
+
+
+/* Quote Area Rate Book lines */
+.quote-area-add-rate,
+.quote-add-row .quote-add-rate {
+  border-color: rgba(88, 112, 142, .24) !important;
+  background: #edf2f7 !important;
+  color: #52677d !important;
+}
+
+.quote-rate-picker,
+.quote-rate-selection {
+  margin-bottom: 5px;
+}
+
+.quote-rate-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px;
+}
+
+.quote-rate-search-row input {
+  width: 100%;
+  min-width: 0;
+  height: 31px;
+  border: 1px solid #c9c1b2;
+  border-radius: 3px;
+  background: #fffaf0;
+  padding: 0 8px;
+  color: #443f37;
+  font-size: 9px;
+}
+
+.quote-rate-search-row button,
+.quote-rate-change,
+.quote-rate-change-state button {
+  min-height: 29px;
+  border: 1px solid rgba(91,78,58,.14);
+  border-radius: 3px;
+  background: #f5f0e5;
+  padding: 0 8px;
+  color: #655e52;
+  font-size: 7.6px;
+  font-weight: 800;
+}
+
+.quote-rate-results {
+  display: grid;
+  max-height: 230px;
+  overflow-y: auto;
+  margin-top: 4px;
+  border: 1px solid rgba(91,78,58,.12);
+  background: #fffdf7;
+}
+
+.quote-rate-results > button {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 7px 8px;
+  border: 0;
+  border-bottom: 1px solid rgba(91,78,58,.08);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.quote-rate-results > button:last-child { border-bottom: 0; }
+.quote-rate-results > button:hover { background: #f7f2e6; }
+
+.quote-rate-results > button > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-rate-results > button > span:last-child {
+  text-align: right;
+}
+
+.quote-rate-results strong {
+  overflow: hidden;
+  color: #49433a;
+  font-size: 8.8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-rate-results b {
+  color: #52677d;
+  font-size: 8px;
+}
+
+.quote-rate-results small,
+.quote-rate-empty {
+  color: #8b8376;
+  font-size: 7.2px;
+}
+
+.quote-rate-empty {
+  padding: 12px 9px;
+}
+
+.quote-rate-selection {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 5px 6px;
+  border-left: 2px solid rgba(83,103,125,.28);
+  background: rgba(235,240,246,.44);
+}
+
+.quote-rate-selection-main {
+  min-width: 145px;
+  flex: 1 1 170px;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-rate-selection-main > span,
+.quote-rate-reference > span {
+  color: #7c8792;
+  font-size: 6.7px;
+  font-weight: 850;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.quote-rate-selection-main strong {
+  color: #42484e;
+  font-size: 8.8px;
+}
+
+.quote-rate-selection-main small,
+.quote-rate-reference small,
+.quote-rate-cost-note small,
+.quote-rate-change-state small {
+  color: #85898b;
+  font-size: 7px;
+  line-height: 1.25;
+}
+
+.quote-rate-reference {
+  min-width: 112px;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-rate-reference strong {
+  color: #4f5f70;
+  font-size: 8.2px;
+}
+
+.quote-rate-cost-note {
+  min-width: 170px;
+  display: grid;
+  gap: 1px;
+  padding: 4px 6px;
+  border: 1px dashed rgba(118,96,63,.18);
+  background: #f4efe5;
+}
+
+.quote-rate-cost-note strong {
+  color: #71644e;
+  font-size: 7.6px;
+}
+
+.quote-rate-change-state {
+  min-width: 175px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid rgba(91,78,58,.11);
+  background: #f6f2e9;
+}
+
+.quote-rate-change-state > div,
+.quote-rate-change-state.is-unavailable {
+  display: grid;
+  gap: 1px;
+}
+
+.quote-rate-change-state strong {
+  color: #655f55;
+  font-size: 7.6px;
+}
+
+.quote-rate-change-state.is-changed {
+  border-color: rgba(174,135,43,.22);
+  background: #fff5d7;
+}
+
+.quote-rate-change-state.is-changed strong { color: #775f20; }
+
+.quote-rate-change-state.is-unavailable {
+  border-color: rgba(157,94,78,.18);
+  background: #f8e8e3;
+}
+
+.quote-rate-change-state button {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.quote-rate-change {
+  margin-left: auto;
+}
+
+.quote-line-editor.kind-rate {
+  background: rgba(233,239,246,.32);
+}
+
+@media (max-width: 650px) {
+  .quote-rate-results {
+    max-height: 260px;
+  }
+
+  .quote-rate-results > button {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-rate-results > button > span:last-child {
+    text-align: left;
+  }
+
+  .quote-rate-selection {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .quote-rate-selection-main,
+  .quote-rate-reference,
+  .quote-rate-cost-note,
+  .quote-rate-change-state {
+    min-width: 0;
+  }
+
+  .quote-rate-change-state {
+    align-items: stretch;
+  }
+
+  .quote-rate-change-state button,
+  .quote-rate-change {
+    min-height: 36px;
+    margin-left: 0;
+  }
+}
