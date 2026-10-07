@@ -284,7 +284,7 @@ function LineEditor({
       </div>
 
       {!textLine && showPricingEditor && (
-        <div className={`quote-line-pricing is-editing ${manualCostLine ? 'has-internal-cost' : ''}`}>
+        <div className={`quote-line-pricing is-editing ${manualCostLine ? 'has-internal-cost' : ''}`} onFocusCapture={() => setPricingEditing(true)}>
           <select value={line.pricingMode} onChange={(event) => changePricingMode(event.target.value as QuotePricingMode)} aria-label="Pricing mode">
             {materialLine && <option value="quantity-rate">Qty × Rate</option>}
             {materialLine && <option value="slab-multiplier">Slab × Mult.</option>}
