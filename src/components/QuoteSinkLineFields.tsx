@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   compareQuoteSinkSnapshot,
   createQuoteSinkSnapshot,
@@ -57,15 +57,22 @@ function priceLabel(variant: SinkVariant) {
   return variant.sellPrice === undefined ? 'Unpriced' : money.format(variant.sellPrice);
 }
 
-export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: QuoteLine }) {
+export function QuoteSinkLineFields({ quoteId, line, editSignal = 0 }: { quoteId: string; line: QuoteLine; editSignal?: number }) {
   const models = useSinkCatalogStore((state) => state.models);
   const hydrate = useSinkCatalogStore((state) => state.hydrate);
   const updateLine = useQuoteStore((state) => state.updateLine);
   const snapshot = line.sinkReference?.snapshot;
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(!snapshot);
+  const lastEditSignal = useRef(editSignal);
 
   useEffect(() => { void hydrate(); }, [hydrate]);
+  useEffect(() => {
+    if (editSignal === lastEditSignal.current) return;
+    lastEditSignal.current = editSignal;
+    setSearch('');
+    setSearching(true);
+  }, [editSignal]);
 
   const activeModels = useMemo(() => models.filter((model) => model.active), [models]);
   const selectedModel = line.sinkReference?.sinkModelId
@@ -175,8 +182,6 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
 
       {(!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
       {comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
-
-      <button type="button" className="quote-sink-change quote-database-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
     </div>
   );
 }
