@@ -10,6 +10,7 @@ import {
   type QuoteLineKind,
   type QuoteLineMaterialReference,
   type QuoteLineRateReference,
+  type QuoteLineSinkReference,
   type QuotePricingMode,
   type QuoteRevisionSnapshot,
   type QuoteSection,
@@ -35,6 +36,10 @@ function materialReferenceOrUndefined(value: unknown): QuoteLineMaterialReferenc
 
 function rateReferenceOrUndefined(value: unknown): QuoteLineRateReference | undefined {
   return value && typeof value === 'object' ? value as QuoteLineRateReference : undefined;
+}
+
+function sinkReferenceOrUndefined(value: unknown): QuoteLineSinkReference | undefined {
+  return value && typeof value === 'object' ? value as QuoteLineSinkReference : undefined;
 }
 
 function pricingScheduleOrUndefined(value: unknown): PricingScheduleData | undefined {
@@ -94,6 +99,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     customerVisible: Boolean(row.customer_visible),
     includeInTotal: Boolean(row.include_in_total),
     materialReference: materialReferenceOrUndefined(row.material_reference),
+    sinkReference: sinkReferenceOrUndefined(row.sink_reference),
     rateReference: rateReferenceOrUndefined(row.rate_reference),
   }));
   const revisionsByQuote = groupByQuote<QuoteRevisionSnapshot>(revisionRows, (row) => {
@@ -298,6 +304,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     customer_visible: line.customerVisible,
     include_in_total: line.includeInTotal,
     material_reference: line.materialReference ?? null,
+    sink_reference: line.sinkReference ?? null,
     rate_reference: line.rateReference ?? null,
     sort_order: sortOrder,
   })));
