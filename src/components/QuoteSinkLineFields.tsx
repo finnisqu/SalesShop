@@ -57,26 +57,30 @@ function priceLabel(variant: SinkVariant) {
   return variant.sellPrice === undefined ? 'Unpriced' : money.format(variant.sellPrice);
 }
 
-export function QuoteSinkLineFields({ quoteId, line, editSignal = 0 }: { quoteId: string; line: QuoteLine; editSignal?: number }) {
+export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: QuoteLine }) {
   const models = useSinkCatalogStore((state) => state.models);
   const hydrate = useSinkCatalogStore((state) => state.hydrate);
   const updateLine = useQuoteStore((state) => state.updateLine);
   const snapshot = line.sinkReference?.snapshot;
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(!snapshot);
-  const lastEditSignal = useRef(editSignal);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { void hydrate(); }, [hydrate]);
+
   useEffect(() => {
-    if (editSignal === lastEditSignal.current) return;
-    lastEditSignal.current = editSignal;
-    setSearch('');
-    setSearching(true);
-  }, [editSignal]);
+    if (!searching) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (pickerRef.current?.contains(event.target as Node)) return;
+      setSearching(false);
+      setSearch('');
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [searching]);
 
   useEffect(() => {
     const collapse = () => {
-      if (!snapshot) return;
       setSearching(false);
       setSearch('');
     };
@@ -133,9 +137,9 @@ export function QuoteSinkLineFields({ quoteId, line, editSignal = 0 }: { quoteId
     setSearching(false);
   };
 
-  if (searching || !snapshot) {
+  if (searching) {
     return (
-      <div className="quote-sink-picker">
+      <div className="quote-sink-picker quote-catalog-popover" ref={pickerRef}>
         {snapshot && <div className="quote-picker-current">
           <div>
             <span>Current sink</span>
@@ -179,28 +183,35 @@ export function QuoteSinkLineFields({ quoteId, line, editSignal = 0 }: { quoteId
     );
   }
 
-  const sourceDate = displayDate(snapshot.effectiveDate);
+  const sourceDate = snapshot ? displayDate(snapshot.effectiveDate) : undefined;
 
   return (
     <div className="quote-sink-selection quote-database-result">
       <div className="quote-sink-selection-main">
-        <strong>{[snapshot.brand, snapshot.sinkModelName].filter(Boolean).join(' ')}</strong>
-        <small>{[
+        <div className="quote-product-name-row">
+          <strong>{snapshot ? [snapshot.brand, snapshot.sinkModelName].filter(Boolean).join(' ') : 'Choose sink'}</strong>
+          <button type="button" className="quote-product-pencil" onClick={() => {
+            window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
+            setSearch('');
+            setSearching(true);
+          }} title="Change sink" aria-label="Change sink">✎</button>
+        </div>
+        {snapshot && <small>{[
           snapshot.variantLabel,
           SINK_CONFIGURATION_LABELS[snapshot.configuration],
           snapshot.ada ? 'ADA' : undefined,
           snapshot.variantCode,
-        ].filter(Boolean).join(' · ')}</small>
+        ].filter(Boolean).join(' · ')}</small>}
       </div>
 
-      <div className="quote-sink-price-reference">
+      {snapshot && <div className="quote-sink-price-reference">
         <span>Catalog price</span>
         <strong>{snapshot.sellPrice === undefined ? 'Unpriced' : money.format(snapshot.sellPrice)}</strong>
         <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
-      </div>
+      </div>}
 
-      {(!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
-      {comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
+      {snapshot && (!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
+      {snapshot && comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
     </div>
   );
 }
