@@ -67,7 +67,7 @@ type Snapshot = {
   contactName?: string;
   contactEmail?: string;
   address?: string;
-  sections?: Array<{ id: string; title: string; customerVisible: boolean }>;
+  sections?: Array<{ id: string; title: string; customerVisible: boolean; customerDisplayMode?: 'detail' | 'summary'; customerTotal?: number }>;
   lines?: SnapshotLine[];
   customerColumns?: { quantity: boolean; rate: boolean; lineAmount: boolean };
   customerNotes?: string;
@@ -103,23 +103,45 @@ function safePublicLine(line: SnapshotLine) {
   };
 }
 
-function safePublicSection(section: { id?: unknown; title?: unknown; customerVisible?: unknown }) {
+function safePublicSection(
+  section: { id?: unknown; title?: unknown; customerVisible?: unknown; customerDisplayMode?: unknown; customerTotal?: unknown },
+  calculatedTotal?: number,
+) {
+  const customerDisplayMode = section.customerDisplayMode === 'summary' ? 'summary' : 'detail';
+  const existingTotal = typeof section.customerTotal === 'number' && Number.isFinite(section.customerTotal)
+    ? roundCurrency(section.customerTotal)
+    : undefined;
   return {
     id: String(section.id ?? ''),
     title: String(section.title ?? ''),
     customerVisible: Boolean(section.customerVisible),
+    customerDisplayMode,
+    customerTotal: customerDisplayMode === 'summary'
+      ? roundCurrency(calculatedTotal ?? existingTotal ?? 0)
+      : undefined,
   };
 }
 
 function safeAcceptedSnapshot(value: unknown) {
   if (!value || typeof value !== 'object') return value;
   const snapshot = value as Record<string, unknown>;
-  const lines = Array.isArray(snapshot.lines)
-    ? (snapshot.lines as SnapshotLine[]).filter((line) => line?.customerVisible !== false).map(safePublicLine)
+  const allLines = Array.isArray(snapshot.lines) ? snapshot.lines as SnapshotLine[] : [];
+  const rawSections = Array.isArray(snapshot.sections)
+    ? snapshot.sections as Array<{ id?: unknown; title?: unknown; customerVisible?: unknown; customerDisplayMode?: unknown; customerTotal?: unknown }>
     : [];
-  const sections = Array.isArray(snapshot.sections)
-    ? (snapshot.sections as Array<{ id?: unknown; title?: unknown; customerVisible?: unknown }>).map(safePublicSection)
-    : [];
+  const summarySectionIds = new Set(rawSections
+    .filter((section) => section.customerDisplayMode === 'summary')
+    .map((section) => String(section.id ?? '')));
+  const lines = allLines
+    .filter((line) => line?.customerVisible !== false && !summarySectionIds.has(String(line.sectionId ?? '')))
+    .map(safePublicLine);
+  const sections = rawSections.map((section) => {
+    const id = String(section.id ?? '');
+    const sectionTotal = allLines
+      .filter((line) => String(line.sectionId ?? '') === id)
+      .reduce((sum, line) => sum + lineTotal(line), 0);
+    return safePublicSection(section, sectionTotal);
+  });
   const {
     projectId: _projectId,
     companyId: _companyId,
@@ -152,8 +174,17 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentTyp
     contactName: snapshot.contactName,
     contactEmail: snapshot.contactEmail,
     address: snapshot.address,
-    sections: (snapshot.sections ?? []).filter((section) => section.customerVisible).map(safePublicSection),
-    lines: allLines.filter((line) => line.customerVisible).map(safePublicLine),
+    sections: (snapshot.sections ?? []).filter((section) => section.customerVisible).map((section) => {
+      const sectionTotal = allLines
+        .filter((line) => line.sectionId === section.id)
+        .reduce((sum, line) => sum + lineTotal(line), 0);
+      return safePublicSection(section, sectionTotal);
+    }),
+    lines: allLines.filter((line) => {
+      if (!line.customerVisible) return false;
+      const section = (snapshot.sections ?? []).find((candidate) => candidate.id === line.sectionId);
+      return !section || section.customerDisplayMode !== 'summary';
+    }).map(safePublicLine),
     customerColumns: snapshot.customerColumns ?? { quantity: false, rate: false, lineAmount: true },
     customerNotes: snapshot.customerNotes ?? '',
     pricingSchedule: documentType === 'pricing-schedule' ? { customerItems } : undefined,
