@@ -573,3 +573,242 @@
   .customer-quote-paper { min-height: 760px; padding: 26px 22px 30px; }
   .customer-quote-recipient { grid-template-columns: 1fr; gap: 12px; }
 }
+
+
+/* Quote Areas & Scope workspace */
+.quote-area-card {
+  margin: 9px;
+  border: 1px solid rgba(91,78,58,.13);
+  background: rgba(255,252,244,.62);
+  box-shadow: 0 1px 3px rgba(52,45,35,.03);
+}
+
+.quote-area-card + .quote-area-card {
+  margin-top: 11px;
+}
+
+.quote-area-header {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: 24px minmax(160px, 1fr) auto auto 26px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(91,78,58,.10);
+  background: #ded8c8;
+}
+
+.quote-area-title {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-area-title > span,
+.quote-area-summary > span {
+  color: #8a8173;
+  font-size: 6.8px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.quote-area-title input {
+  min-width: 0;
+  height: 27px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  outline: 0;
+  background: transparent;
+  color: #464137;
+  font: 700 12px Georgia, serif;
+}
+
+.quote-area-title input:focus {
+  border-bottom-color: #9f8e63;
+}
+
+.quote-area-summary {
+  min-width: 100px;
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+
+.quote-area-summary strong {
+  color: #514b40;
+  font: 700 10px Georgia, serif;
+}
+
+.quote-area-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.quote-area-actions button {
+  min-height: 27px;
+  border: 1px solid #c2b9a8;
+  border-radius: 2px;
+  padding: 0 7px;
+  background: #f7f1e4;
+  color: #655e52;
+  font-size: 7.5px;
+  font-weight: 750;
+}
+
+.quote-area-actions button:hover {
+  border-color: #a89568;
+  background: #fff8e9;
+}
+
+.quote-area-add-material {
+  border-color: rgba(102,127,83,.24) !important;
+  background: #edf3e7 !important;
+  color: #53684a !important;
+}
+
+.quote-area-remove {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: #a0907d;
+  font-size: 15px;
+}
+
+.quote-area-lines {
+  min-width: 0;
+}
+
+.quote-area-lines .quote-line-editor:last-child {
+  border-bottom: 0;
+}
+
+.quote-area-empty {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 10px 40px;
+  color: #938b7e;
+  font: italic 9px/1.35 Georgia, serif;
+  background: rgba(249,246,239,.64);
+}
+
+.quote-area-general {
+  border-style: dashed;
+  background: rgba(242,239,231,.58);
+}
+
+.quote-area-general-header {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(91,78,58,.09);
+  background: rgba(223,219,209,.52);
+}
+
+.quote-area-general-header > div {
+  display: grid;
+  gap: 1px;
+}
+
+.quote-area-general-header span {
+  color: #5b554b;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.quote-area-general-header small {
+  color: #958c7f;
+  font: italic 8px Georgia, serif;
+}
+
+.quote-area-general-header strong {
+  color: #5c554b;
+  font: 700 10px Georgia, serif;
+}
+
+.quote-add-row .quote-add-area {
+  border-color: rgba(141,116,52,.28);
+  background: #fff4cb;
+  color: #705b23;
+}
+
+@media (max-width: 900px) {
+  .quote-area-header {
+    grid-template-columns: 22px minmax(0, 1fr) auto 24px;
+  }
+
+  .quote-area-summary {
+    min-width: 84px;
+  }
+
+  .quote-area-actions {
+    grid-column: 2 / 4;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .quote-area-remove {
+    grid-column: 4;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 650px) {
+  .quote-area-card {
+    margin: 8px 7px;
+  }
+
+  .quote-area-header {
+    grid-template-columns: 22px minmax(0, 1fr) 24px;
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .quote-area-title input {
+    font-size: 13px;
+  }
+
+  .quote-area-summary {
+    grid-column: 2;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .quote-area-actions {
+    grid-column: 1 / -1;
+    gap: 5px;
+  }
+
+  .quote-area-actions button {
+    flex: 1 1 86px;
+    min-height: 34px;
+  }
+
+  .quote-area-remove {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .quote-area-empty {
+    min-height: 60px;
+    padding: 12px 16px;
+  }
+
+  .quote-area-general-header {
+    align-items: flex-start;
+  }
+
+  .quote-add-row .quote-add-area {
+    flex-basis: 100%;
+    min-height: 34px;
+  }
+}
