@@ -324,7 +324,7 @@ function LineEditor({
               {!line.customerVisible && <path className="quote-line-eye-slash" d="M4 4l16 16" />}
             </svg>
           </button>}
-        </div>
+        </div>}
 
         {materialLine && <QuoteMaterialLineFields quoteId={quote.id} line={line} />}
         {sinkLine && <QuoteSinkLineFields quoteId={quote.id} line={line} />}
