@@ -107,15 +107,24 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
     setSearching(false);
   };
 
-  const chooseVariant = (variantId: string) => {
-    if (!selectedModel) return;
-    const variant = selectedModel.variants.find((candidate) => candidate.id === variantId && candidate.active);
-    if (variant) apply(selectedModel, variant);
-  };
-
   if (searching || !snapshot) {
     return (
       <div className="quote-sink-picker">
+        {snapshot && <div className="quote-picker-current">
+          <div>
+            <span>Current sink</span>
+            <strong>{[snapshot.brand, snapshot.sinkModelName, snapshot.variantLabel].filter(Boolean).join(' · ')}</strong>
+            <small>{[
+              SINK_CONFIGURATION_LABELS[snapshot.configuration],
+              snapshot.ada ? 'ADA' : undefined,
+              snapshot.variantCode,
+              snapshot.sellPrice === undefined ? 'Unpriced' : money.format(snapshot.sellPrice),
+            ].filter(Boolean).join(' · ')}</small>
+          </div>
+          {comparison?.changed && currentSnapshot && selectedModel && selectedVariant && (
+            <button type="button" onClick={() => apply(selectedModel, selectedVariant)}>Update snapshot</button>
+          )}
+        </div>}
         <div className="quote-sink-search-row">
           <input
             value={search}
@@ -144,38 +153,15 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
     );
   }
 
-  const activeVariants = (selectedModel?.variants ?? []).filter((variant) => variant.active);
   const sourceDate = displayDate(snapshot.effectiveDate);
 
   return (
-    <div className="quote-sink-selection">
+    <div className="quote-sink-selection quote-database-result">
       <div className="quote-sink-selection-main">
-        <span>Sink catalog</span>
+        <span>Sink</span>
         <strong>{[snapshot.brand, snapshot.sinkModelName].filter(Boolean).join(' ')}</strong>
         <small>{[
-          snapshot.modelCode,
-          SINK_CATEGORY_LABELS[snapshot.category],
-          snapshot.widthIn && snapshot.depthIn ? `${snapshot.widthIn} × ${snapshot.depthIn} in` : undefined,
-        ].filter(Boolean).join(' · ')}</small>
-      </div>
-
-      {selectedModel && activeVariants.length > 1 && (
-        <label className="quote-sink-variant-select">
-          <span>Variant</span>
-          <select value={selectedVariant?.id ?? snapshot.variantId} onChange={(event) => chooseVariant(event.target.value)}>
-            {activeVariants.map((variant) => (
-              <option key={variant.id} value={variant.id}>
-                {variant.label}{variant.ada ? ' · ADA' : ''}{variant.sellPrice === undefined ? ' · Unpriced' : ` · ${money.format(variant.sellPrice)}`}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-
-      <div className="quote-sink-reference">
-        <span>Quoted product</span>
-        <strong>{snapshot.variantLabel}</strong>
-        <small>{[
+          snapshot.variantLabel,
           SINK_CONFIGURATION_LABELS[snapshot.configuration],
           snapshot.ada ? 'ADA' : undefined,
           snapshot.variantCode,
@@ -183,38 +169,16 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
       </div>
 
       <div className="quote-sink-price-reference">
-        <span>Catalog snapshot</span>
+        <span>Catalog price</span>
         <strong>{snapshot.sellPrice === undefined ? 'Unpriced' : money.format(snapshot.sellPrice)}</strong>
-        <small>{snapshot.internalCost === undefined ? 'Private cost —' : `Private cost ${money.format(snapshot.internalCost)}`}{sourceDate ? ` · effective ${sourceDate}` : ''}</small>
+        <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
       </div>
 
-      {!selectedModel || !selectedVariant ? (
-        <div className="quote-sink-change-state is-unavailable">
-          <strong>Catalog variant unavailable</strong>
-          <small>The quoted sink snapshot is retained and unchanged.</small>
-        </div>
-      ) : null}
+      {(!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
+      {comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
+      {snapshot.sellPrice === undefined && <span className="quote-source-status is-warning">Price needed</span>}
 
-      {comparison?.changed && currentSnapshot && selectedModel && selectedVariant && (
-        <div className="quote-sink-change-state is-changed">
-          <div>
-            <strong>Sink catalog changed</strong>
-            <small>{currentSnapshot.sellPrice === undefined
-              ? 'Current variant is unpriced.'
-              : `Current sell price ${money.format(currentSnapshot.sellPrice)}.`}</small>
-          </div>
-          <button type="button" onClick={() => apply(selectedModel, selectedVariant)}>Update quote snapshot</button>
-        </div>
-      )}
-
-      {snapshot.sellPrice === undefined && (
-        <div className="quote-sink-change-state is-unpriced">
-          <strong>Catalog price not set</strong>
-          <small>Enter a customer rate on this quote or price the variant in Sinks before sending.</small>
-        </div>
-      )}
-
-      <button type="button" className="quote-sink-change" onClick={() => { setSearch(''); setSearching(true); }}>Change sink</button>
+      <button type="button" className="quote-sink-change quote-database-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
     </div>
   );
 }
