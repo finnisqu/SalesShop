@@ -492,6 +492,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const addLine = useQuoteStore((state) => state.addLine);
   const updateLine = useQuoteStore((state) => state.updateLine);
   const addSection = useQuoteStore((state) => state.addSection);
+  const reorderSection = useQuoteStore((state) => state.reorderSection);
   const setCustomerColumns = useQuoteStore((state) => state.setCustomerColumns);
   const recordSent = useQuoteStore((state) => state.recordSent);
   const createRevision = useQuoteStore((state) => state.createRevision);
@@ -591,18 +592,6 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     const insertAt = fromIndex < originalTargetIndex ? targetIndex + 1 : targetIndex;
     lines.splice(insertAt, 0, moved);
     updateQuote(quote.id, { lines });
-  };
-
-  const reorderSection = (sectionId: string, targetSectionId: string) => {
-    if (sectionId === targetSectionId) return;
-    const sections = [...quote.sections];
-    const fromIndex = sections.findIndex((section) => section.id === sectionId);
-    const targetIndex = sections.findIndex((section) => section.id === targetSectionId);
-    if (fromIndex < 0 || targetIndex < 0) return;
-    const [moved] = sections.splice(fromIndex, 1);
-    if (!moved) return;
-    sections.splice(targetIndex, 0, moved);
-    updateQuote(quote.id, { sections });
   };
 
   const beginPricingSwipe = (event: TouchEvent<HTMLDivElement>) => {
@@ -799,7 +788,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
       onDrop={(event) => {
         if (draggingSectionId) {
           event.preventDefault();
-          reorderSection(draggingSectionId, section.id);
+          reorderSection(quote.id, draggingSectionId, section.id);
           setDraggingSectionId(null);
           return;
         }
