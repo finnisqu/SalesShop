@@ -82,6 +82,22 @@ export type SupplierImportMappingField =
   | 'availability'
   | 'availabilityNote';
 
+export type SupplierImportRegionKind = 'tabular' | 'grouped-price-matrix' | 'record-block' | 'unknown';
+
+export interface SupplierImportDetectedRegion {
+  id: string;
+  label: string;
+  kind: SupplierImportRegionKind;
+  confidence: SupplierImportConfidence;
+  rangeA1: string;
+  startRow: number;
+  endRow: number;
+  startColumn: number;
+  endColumn: number;
+  headerRow?: number;
+  notes: string[];
+}
+
 export interface SupplierImportStructuredPreview {
   fileName: string;
   fileType: 'csv' | 'xlsx';
@@ -90,6 +106,10 @@ export interface SupplierImportStructuredPreview {
   headers: string[];
   rows: string[][];
   totalRows: number;
+  sourceRows: string[][];
+  sourceRowCount: number;
+  sourceColumnCount: number;
+  detectedRegions: SupplierImportDetectedRegion[];
 }
 
 export interface SupplierImportMappingDraft {
@@ -98,6 +118,8 @@ export interface SupplierImportMappingDraft {
   materialType: StockMaterial['materialType'];
   sourceFileType: 'csv' | 'xlsx';
   sheetName?: string;
+  sourceRangeA1?: string;
+  regionKind?: SupplierImportRegionKind;
   columns: Partial<Record<SupplierImportMappingField, string>>;
   defaults: {
     thickness?: string;
