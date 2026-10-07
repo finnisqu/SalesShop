@@ -166,7 +166,7 @@ describe('SalesShop canonical material template importer', () => {
     });
   });
 
-  it('uses canonical Supplier + Brand + Type + Color identity when SKU is absent', async () => {
+  it('uses canonical Brand + Type + Color identity when SKU is absent', async () => {
     const withoutSku = {
       ...baseRow,
       'Material SKU': '',
@@ -187,6 +187,91 @@ describe('SalesShop canonical material template importer', () => {
     expect(session.candidates[0].matchBasis).toBe('identity');
     expect(session.candidates[0].confidence).toBe('high');
     expect(session.candidates[0].changeSummary.join(' ')).toMatch(/price/i);
+  });
+
+
+  it('treats a supplier change as an update to the same branded material', async () => {
+    const withoutSku = {
+      ...baseRow,
+      'Supplier / Importer': 'New Distributor',
+      'Material SKU': '',
+      'Variant SKU': '',
+    };
+    const existing = existingAkoya({
+      supplier: 'Old Distributor',
+      sku: undefined,
+      variants: [{
+        ...existingAkoya().variants![0],
+        sku: undefined,
+      }],
+    });
+
+    const session = await stageSalesShopMaterialTemplate(await makeTemplateFile([withoutSku]), [existing]);
+    const candidate = session.candidates[0];
+
+    expect(candidate.status).toBe('changed');
+    expect(candidate.matchBasis).toBe('identity');
+    expect(candidate.existingMaterialId).toBe(existing.id);
+    expect(candidate.changeSummary.join(' ')).toMatch(/Supplier Old Distributor → New Distributor/);
+  });
+
+  it('keeps the same color name in different brands as separate materials without duplicate warnings', async () => {
+    const vicostoneSparklingBlack: StockMaterial = {
+      ...existingAkoya({
+        id: 'vicostone-sparkling-black',
+        name: 'Sparkling Black',
+        sku: undefined,
+        variants: [{
+          ...existingAkoya().variants![0],
+          sku: undefined,
+        }],
+      }),
+      brand: 'Vicostone',
+      supplier: 'UMI',
+    };
+
+    const msiRow: TemplateRow = {
+      ...baseRow,
+      'Supplier / Importer': 'MSI',
+      'Brand / Manufacturer': 'MSI',
+      'Color / Product Name': 'Sparkling Black',
+      'Material SKU': '',
+      'Variant SKU': '',
+    };
+
+    const session = await stageSalesShopMaterialTemplate(await makeTemplateFile([msiRow]), [vicostoneSparklingBlack]);
+    const candidate = session.candidates[0];
+
+    expect(candidate.status).toBe('new');
+    expect(candidate.existingMaterialId).toBeUndefined();
+    expect(candidate.changeSummary).toEqual(['New supplier catalog color from validated SalesShop template']);
+  });
+
+  it('stages MSI and Vicostone Sparkling Black as two separate new materials in the same workbook', async () => {
+    const file = await makeTemplateFile([
+      {
+        ...baseRow,
+        'Supplier / Importer': 'MSI',
+        'Brand / Manufacturer': 'MSI',
+        'Color / Product Name': 'Sparkling Black',
+        'Material SKU': '',
+        'Variant SKU': '',
+      },
+      {
+        ...baseRow,
+        'Supplier / Importer': 'UMI',
+        'Brand / Manufacturer': 'Vicostone',
+        'Color / Product Name': 'Sparkling Black',
+        'Material SKU': '',
+        'Variant SKU': '',
+      },
+    ]);
+
+    const session = await stageSalesShopMaterialTemplate(file, []);
+
+    expect(session.candidates).toHaveLength(2);
+    expect(session.candidates.map((candidate) => candidate.material.brand).sort()).toEqual(['MSI', 'Vicostone']);
+    expect(session.candidates.every((candidate) => candidate.status === 'new')).toBe(true);
   });
 
   it('publishes row-level source provenance into price history metadata', async () => {
