@@ -103,6 +103,14 @@ function safePublicLine(line: SnapshotLine) {
   };
 }
 
+function safePublicSection(section: { id?: unknown; title?: unknown; customerVisible?: unknown }) {
+  return {
+    id: String(section.id ?? ''),
+    title: String(section.title ?? ''),
+    customerVisible: Boolean(section.customerVisible),
+  };
+}
+
 function safeAcceptedSnapshot(value: unknown) {
   if (!value || typeof value !== 'object') return value;
   const snapshot = value as Record<string, unknown>;
@@ -110,11 +118,7 @@ function safeAcceptedSnapshot(value: unknown) {
     ? (snapshot.lines as SnapshotLine[]).filter((line) => line?.customerVisible !== false).map(safePublicLine)
     : [];
   const sections = Array.isArray(snapshot.sections)
-    ? (snapshot.sections as Array<{ id?: unknown; title?: unknown; customerVisible?: unknown }>).map((section) => ({
-        id: String(section.id ?? ''),
-        title: String(section.title ?? ''),
-        customerVisible: Boolean(section.customerVisible),
-      }))
+    ? (snapshot.sections as Array<{ id?: unknown; title?: unknown; customerVisible?: unknown }>).map(safePublicSection)
     : [];
   const {
     projectId: _projectId,
@@ -148,7 +152,7 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentTyp
     contactName: snapshot.contactName,
     contactEmail: snapshot.contactEmail,
     address: snapshot.address,
-    sections: (snapshot.sections ?? []).filter((section) => section.customerVisible),
+    sections: (snapshot.sections ?? []).filter((section) => section.customerVisible).map(safePublicSection),
     lines: allLines.filter((line) => line.customerVisible).map(safePublicLine),
     customerColumns: snapshot.customerColumns ?? { quantity: false, rate: false, lineAmount: true },
     customerNotes: snapshot.customerNotes ?? '',
