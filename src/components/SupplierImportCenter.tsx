@@ -13,6 +13,7 @@ import type {
   SupplierImportReviewDecision,
   SupplierImportSession,
   SupplierImportStatus,
+  SupplierImportValidationIssue,
 } from '../types/supplierImport';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -72,6 +73,64 @@ function ReviewSelect({
   );
 }
 
+function ValidationIssueCard({
+  candidateId,
+  issue,
+}: {
+  candidateId: string;
+  issue: SupplierImportValidationIssue;
+}) {
+  const resolveValidationIssue = useSupplierImportStore((state) => state.resolveValidationIssue);
+  const ignoreValidationIssue = useSupplierImportStore((state) => state.ignoreValidationIssue);
+  const [selectedValue, setSelectedValue] = useState(issue.resolutionValue ?? issue.values?.[0] ?? '');
+  const resolved = issue.resolution === 'resolved';
+  const ignored = issue.resolution === 'ignored';
+  const unresolved = !resolved && !ignored;
+
+  return (
+    <article className={`supplier-import-validation-issue severity-${issue.severity} ${unresolved ? 'is-unresolved' : 'is-resolved'}`}>
+      <header>
+        <div>
+          <strong>{issue.scope === 'row' ? 'Row issue' : issue.scope === 'purchase' ? 'Purchase-program issue' : 'Material conflict'}</strong>
+          {issue.rowNumbers?.length ? <span>Source row{issue.rowNumbers.length === 1 ? '' : 's'} {issue.rowNumbers.join(', ')}</span> : null}
+        </div>
+        <span>{resolved ? 'Resolved' : ignored ? 'Ignored' : issue.severity === 'blocking' ? 'Must resolve' : 'Warning'}</span>
+      </header>
+      <p>{issue.message}</p>
+      {issue.field && issue.values?.length ? (
+        <div className="supplier-import-issue-resolution">
+          <label>
+            <span>Material-level value</span>
+            <select value={selectedValue} onChange={(event) => setSelectedValue(event.target.value)} disabled={!unresolved}>
+              {issue.values.map((value) => <option value={value} key={value}>{value}</option>)}
+              <option value="">Leave material-level field blank</option>
+            </select>
+          </label>
+          {unresolved && <button type="button" className="ready" onClick={() => resolveValidationIssue(candidateId, issue.id, selectedValue)}>Use this value</button>}
+          {resolved && <small>Using: {issue.resolutionValue || 'blank material-level field'}</small>}
+        </div>
+      ) : unresolved ? (
+        <div className="supplier-import-issue-resolution">
+          <span>This row/program was not staged into publishable pricing.</span>
+          <button type="button" onClick={() => ignoreValidationIssue(candidateId, issue.id)}>Accept skipped item</button>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function ValidationIssueList({ candidate }: { candidate: SupplierImportCandidate }) {
+  const issues = candidate.validationIssues ?? [];
+  if (!issues.length) return null;
+  const unresolved = issues.filter((issue) => issue.severity === 'blocking' && (issue.resolution ?? 'unresolved') === 'unresolved').length;
+  return (
+    <section className="supplier-import-validation-issues">
+      <header><strong>Staging issues</strong><span>{unresolved ? `${unresolved} must resolve before publishing` : 'All staging issues resolved'}</span></header>
+      <div>{issues.map((issue) => <ValidationIssueCard candidateId={candidate.id} issue={issue} key={issue.id} />)}</div>
+    </section>
+  );
+}
+
 function AdvancedReview({ candidate }: { candidate: SupplierImportCandidate }) {
   const setVariantDecision = useSupplierImportStore((state) => state.setVariantDecision);
   const setPriceDecision = useSupplierImportStore((state) => state.setPriceDecision);
@@ -105,6 +164,7 @@ function CandidateDetails({ candidate, reviewMode }: { candidate: SupplierImport
 
   return (
     <div className="supplier-import-candidate-details">
+      <ValidationIssueList candidate={candidate} />
       <div className="supplier-import-diff-panel">
         <div><strong>Comparison</strong>{candidate.changeSummary.map((change) => <span key={change}>{change}</span>)}</div>
         <div>
@@ -267,7 +327,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
       if (filter !== 'all' && filter !== 'warnings' && candidate.status !== filter) return false;
       if (!needle) return true;
       const material = candidate.material;
-      return `${material.name} ${material.sku ?? ''} ${material.supplierGroup ?? ''} ${candidate.status} ${candidate.changeSummary.join(' ')} ${candidate.reviewNote ?? ''}`.toLowerCase().includes(needle);
+      return `${material.name} ${material.sku ?? ''} ${material.supplierGroup ?? ''} ${candidate.status} ${candidate.changeSummary.join(' ')} ${candidate.validationIssues?.map((issue) => issue.message).join(' ') ?? ''} ${candidate.reviewNote ?? ''}`.toLowerCase().includes(needle);
     });
   }, [session, filter, query, reviewMode]);
 
@@ -453,7 +513,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
 
               <section className="supplier-import-review-card">
                 <header>
-                  <div><strong>{reviewMode ? 'Items needing attention' : 'Staged comparison'}</strong><small>{visibleCandidates.length} of {session.candidates.length} colors shown · STOCK selection and Level assignments remain untouched.</small></div>
+                  <div><strong>{reviewMode ? 'Items needing attention' : 'Staged comparison'}</strong><small>{visibleCandidates.length} of {session.candidates.length} colors shown · flagged rows/materials can be resolved without re-uploading · STOCK selection and Level assignments remain untouched.</small></div>
                   <span>Parser {session.source.parserVersion} · explicit listings only</span>
                 </header>
                 <div className="supplier-import-table-scroll">
@@ -480,8 +540,14 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
                               <td><span className={`supplier-import-confidence confidence-${candidate.confidence}`}>{candidate.confidence}</span></td>
                               <td className="supplier-import-row-actions">
                                 {reviewMode && <>
-                                  <button type="button" className="ready" onClick={() => setCandidateDecision(candidate.id, 'approved')}>Mark ready</button>
-                                  <button type="button" onClick={() => setCandidateDecision(candidate.id, 'ignored')}>Ignore</button>
+                                  <button
+                                    type="button"
+                                    className="ready"
+                                    disabled={(candidate.validationIssues ?? []).some((issue) => issue.severity === 'blocking' && (issue.resolution ?? 'unresolved') === 'unresolved')}
+                                    title={(candidate.validationIssues ?? []).some((issue) => issue.severity === 'blocking' && (issue.resolution ?? 'unresolved') === 'unresolved') ? 'Resolve the flagged staging issues first.' : undefined}
+                                    onClick={() => setCandidateDecision(candidate.id, 'approved')}
+                                  >Mark ready</button>
+                                  <button type="button" onClick={() => setCandidateDecision(candidate.id, 'ignored')}>Ignore material</button>
                                 </>}
                                 <button type="button" onClick={() => setExpandedId((current) => current === candidate.id ? null : candidate.id)}>{expanded ? 'Close' : 'Details'}</button>
                               </td>
