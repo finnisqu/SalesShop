@@ -80,9 +80,18 @@ export function QuoteSinkLineFields({ quoteId, line, editSignal = 0 }: { quoteId
       setSearching(false);
       setSearch('');
     };
+    const collapseLine = (event: Event) => {
+      const detail = (event as CustomEvent<{ lineId?: string }>).detail;
+      if (detail?.lineId !== line.id) return;
+      collapse();
+    };
     window.addEventListener('sales-shop:quote-collapse-all', collapse);
-    return () => window.removeEventListener('sales-shop:quote-collapse-all', collapse);
-  }, [snapshot]);
+    window.addEventListener('sales-shop:quote-collapse-line', collapseLine);
+    return () => {
+      window.removeEventListener('sales-shop:quote-collapse-all', collapse);
+      window.removeEventListener('sales-shop:quote-collapse-line', collapseLine);
+    };
+  }, [line.id, snapshot]);
 
   const activeModels = useMemo(() => models.filter((model) => model.active), [models]);
   const selectedModel = line.sinkReference?.sinkModelId
