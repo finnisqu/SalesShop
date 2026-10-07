@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import { useRateBookStore } from '../store/rateBookStore';
-import { resolveMaterialLevel, resolveNonStockMaterialPrice } from '../types/materialLevelGuide';
+import { resolveMaterialPricingRecommendation, resolveSlabPrice } from '../types/materialLevelGuide';
 import {
   RATE_BOOK_CATEGORY_LABELS,
   RATE_BOOK_PRICING_BEHAVIOR_LABELS,
@@ -143,9 +143,12 @@ export function RatesWorkspace() {
     const needle = query.trim().toLowerCase();
     const guideRate = (material: StockMaterial) => {
       const reference = resolveStockMaterialCostReference(material);
-      return material.stockProgram
-        ? resolveMaterialLevel(guide.rules, reference.costPerSf, material.builderLevelId)?.customerRate
-        : resolveNonStockMaterialPrice(guide, reference.costPerSf).customerRate;
+      const recommendation = resolveMaterialPricingRecommendation(
+        guide,
+        reference.costPerSf,
+        material.stockProgram ? material.builderLevelId : undefined,
+      );
+      return recommendation.mode === 'level' ? recommendation.level.customerRate : undefined;
     };
 
     const rows = settings.stockMaterials
@@ -294,17 +297,29 @@ export function RatesWorkspace() {
           </section>
         ) : (
           <section className="rates-reference-card rates-material-reference-card">
-            <header><div><strong>Material pricing reference</strong><small>{materialRows.length} active material{materialRows.length === 1 ? '' : 's'} shown</small></div><span>Levels apply only to STOCK colors.</span></header>
+            <header><div><strong>Material pricing reference</strong><small>{materialRows.length} active material{materialRows.length === 1 ? '' : 's'} shown</small></div><span>SalesShop suggests a Level through the standard guide; premium materials move to slab review.</span></header>
             <div className="rates-reference-table-wrap">
               <table className="rates-reference-table rates-material-reference-table">
                 <thead><tr><th>Color</th><th>Program</th><th>Supplier</th><th>Type</th><th>Cost reference</th><th>Pricing guide</th><th>Default spec</th><th>Product</th></tr></thead>
                 <tbody>
                   {materialRows.map((material) => {
                     const reference = resolveStockMaterialCostReference(material);
-                    const stockRate = resolveMaterialLevel(guide.rules, reference.costPerSf, material.stockProgram ? material.builderLevelId : undefined);
-                    const nonStockRate = resolveNonStockMaterialPrice(guide, reference.costPerSf);
-                    const customerRate = material.stockProgram ? stockRate?.customerRate : nonStockRate.customerRate;
-                    const guideLabel = material.stockProgram ? stockRate?.rule.label ?? 'Needs Level' : nonStockRate.basis;
+                    const recommendation = resolveMaterialPricingRecommendation(
+                      guide,
+                      reference.costPerSf,
+                      material.stockProgram ? material.builderLevelId : undefined,
+                    );
+                    const slabPricing = recommendation.mode === 'slab-review'
+                      ? resolveSlabPrice(guide, reference.costPerSf, reference.slabCost, 1)
+                      : undefined;
+                    const customerRate = recommendation.mode === 'level' ? recommendation.level.customerRate : undefined;
+                    const guideLabel = recommendation.mode === 'level'
+                      ? `${material.stockProgram && material.builderLevelId ? 'Assigned' : 'Suggested'} ${recommendation.level.rule.label}`
+                      : recommendation.mode === 'slab-review'
+                        ? reference.slabCost === undefined
+                          ? 'Slab review · needs full-slab cost'
+                          : `${guide.slabPricingMultiplier}× actual slab cost`
+                        : recommendation.basis;
                     const links = productLinks(material);
                     const variant = reference.variant;
                     const spec = variant ? [variant.thickness, variant.finish, variant.formatName].filter(Boolean).join(' · ') : 'No structured spec';
@@ -315,7 +330,9 @@ export function RatesWorkspace() {
                         <td>{material.supplier || '—'}</td>
                         <td>{material.materialType}</td>
                         <td className="number">{reference.costPerSf === undefined ? '—' : `${money.format(reference.costPerSf)}/SF`}</td>
-                        <td className="rates-reference-sell"><strong>{customerRate === undefined ? '—' : `${money.format(customerRate)}/SF`}</strong><small>{guideLabel}</small></td>
+                        <td className="rates-reference-sell"><strong>{recommendation.mode === 'slab-review'
+                          ? slabPricing?.customerPricePerSlab === undefined ? 'Slab review' : `${money.format(slabPricing.customerPricePerSlab)}/slab`
+                          : customerRate === undefined ? '—' : `${money.format(customerRate)}/SF`}</strong><small>{guideLabel}</small></td>
                         <td>{spec || 'No structured spec'}</td>
                         <td className="rates-product-links">{links.length ? links.map(([label, url]) => <a key={label} href={url} target="_blank" rel="noreferrer">{label}</a>) : <span>—</span>}</td>
                       </tr>

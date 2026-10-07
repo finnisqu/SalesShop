@@ -5,7 +5,7 @@ interface MaterialLevelGuideState {
   guide: MaterialLevelGuideDocument;
   hydrated: boolean;
   hydrate: () => void;
-  updateGuide: (patch: Partial<Pick<MaterialLevelGuideDocument, 'name' | 'note' | 'nonStockPricingMode' | 'nonStockMultiplier' | 'nonStockMarginPct'>>) => void;
+  updateGuide: (patch: Partial<Pick<MaterialLevelGuideDocument, 'name' | 'note' | 'slabPricingThresholdCostPerSf' | 'slabPricingMultiplier'>>) => void;
   updateRule: (id: string, patch: Partial<Omit<MaterialLevelRule, 'id'>>) => void;
   addRule: () => string;
   removeRule: (id: string) => void;
@@ -18,92 +18,134 @@ const SEED_TIME = '2026-10-06T15:52:00.000Z';
 const uid = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
 const BASELINE_RULES: MaterialLevelRule[] = [
-  { id: 'builder_level_1', label: 'Level 1', maxMaterialCost: 9, pricingMode: 'fixed', customerRate: 34, active: true },
-  { id: 'builder_level_2', label: 'Level 2', maxMaterialCost: 12, pricingMode: 'fixed', customerRate: 44, active: true },
-  { id: 'builder_level_3', label: 'Level 3', maxMaterialCost: 14, pricingMode: 'fixed', customerRate: 54, active: true },
-  { id: 'builder_level_4', label: 'Level 4', maxMaterialCost: 16, pricingMode: 'fixed', customerRate: 60, active: true },
-  { id: 'builder_level_5', label: 'Level 5', maxMaterialCost: 19, pricingMode: 'fixed', customerRate: 68, active: true },
-  { id: 'builder_level_6', label: 'Level 6', maxMaterialCost: 21, pricingMode: 'fixed', customerRate: 75, active: true },
-  { id: 'builder_level_7', label: 'Level 7', maxMaterialCost: 23, pricingMode: 'fixed', customerRate: 85, active: true },
-  { id: 'builder_level_premium', label: 'Premium / 23+', pricingMode: 'multiplier', multiplier: 2.2, active: true },
+  { id: 'builder_level_1', label: 'Level 1', maxMaterialCost: 9, customerRate: 34, active: true },
+  { id: 'builder_level_2', label: 'Level 2', maxMaterialCost: 12, customerRate: 44, active: true },
+  { id: 'builder_level_3', label: 'Level 3', maxMaterialCost: 14, customerRate: 54, active: true },
+  { id: 'builder_level_4', label: 'Level 4', maxMaterialCost: 16, customerRate: 60, active: true },
+  { id: 'builder_level_5', label: 'Level 5', maxMaterialCost: 19, customerRate: 68, active: true },
+  { id: 'builder_level_6', label: 'Level 6', maxMaterialCost: 21, customerRate: 75, active: true },
+  { id: 'builder_level_7', label: 'Level 7', maxMaterialCost: 23, customerRate: 85, active: true },
 ];
 
 function baselineGuide(): MaterialLevelGuideDocument {
   const rules = structuredClone(BASELINE_RULES);
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: 'standard-builder-level-guide',
     name: 'Standard Builder Pricing Guide',
-    note: 'Levels are the guide for STOCK program colors. Non-stock materials use the separate multiplier or margin reference, while Quick Quote may show the stock-equivalent price as a fast assumption.',
+    note: 'SalesShop suggests the standard Level from effective material cost. Above the normal Level range, review slab-based pricing using actual slabs purchased × the slab multiplier.',
     rules,
-    nonStockPricingMode: 'multiplier',
-    nonStockMultiplier: 2.2,
-    nonStockMarginPct: 55,
+    slabPricingThresholdCostPerSf: 23,
+    slabPricingMultiplier: 2.2,
     history: [{
-      id: 'guide_version_baseline',
+      id: 'guide_version_baseline_v3',
       recordedAt: SEED_TIME,
-      note: 'Pre-tariff builder baseline supplied in SalesShop.',
+      note: 'Standard builder Level guide with premium slab-review policy.',
       rules: structuredClone(rules),
-      nonStockPricingMode: 'multiplier',
-      nonStockMultiplier: 2.2,
-      nonStockMarginPct: 55,
+      slabPricingThresholdCostPerSf: 23,
+      slabPricingMultiplier: 2.2,
     }],
     updatedAt: SEED_TIME,
   };
 }
 
-function normalizeRule(raw: Partial<MaterialLevelRule>, index: number): MaterialLevelRule {
-  const pricingMode = raw.pricingMode === 'multiplier' ? 'multiplier' : 'fixed';
+function normalizeRule(raw: Record<string, unknown>, index: number): MaterialLevelRule | null {
+  const pricingMode = raw.pricingMode;
+  const maxMaterialCost = typeof raw.maxMaterialCost === 'number' && Number.isFinite(raw.maxMaterialCost)
+    ? raw.maxMaterialCost
+    : undefined;
+  const customerRate = typeof raw.customerRate === 'number' && Number.isFinite(raw.customerRate)
+    ? raw.customerRate
+    : undefined;
+
+  // v1/v2 allowed an open-ended multiplier row. That represented the old,
+  // incorrect "$/SF × 2.2" behavior and is intentionally not migrated as a Level.
+  if (pricingMode === 'multiplier' || maxMaterialCost === undefined || customerRate === undefined) return null;
+
   return {
-    id: raw.id || uid('material_level'),
-    label: raw.label || `Level ${index + 1}`,
-    maxMaterialCost: typeof raw.maxMaterialCost === 'number' ? raw.maxMaterialCost : undefined,
-    pricingMode,
-    customerRate: typeof raw.customerRate === 'number' ? raw.customerRate : undefined,
-    multiplier: typeof raw.multiplier === 'number' ? raw.multiplier : undefined,
-    active: raw.active ?? true,
+    id: typeof raw.id === 'string' && raw.id ? raw.id : uid('material_level'),
+    label: typeof raw.label === 'string' && raw.label ? raw.label : `Level ${index + 1}`,
+    maxMaterialCost,
+    customerRate,
+    active: typeof raw.active === 'boolean' ? raw.active : true,
   };
 }
 
-function normalizeVersion(raw: Partial<MaterialLevelGuideVersion>): MaterialLevelGuideVersion | null {
-  if (!Array.isArray(raw.rules)) return null;
+function normalizeRules(value: unknown) {
+  if (!Array.isArray(value)) return structuredClone(BASELINE_RULES);
+  const rules = value
+    .map((rule, index) => rule && typeof rule === 'object' ? normalizeRule(rule as Record<string, unknown>, index) : null)
+    .filter((rule): rule is MaterialLevelRule => Boolean(rule));
+  return rules.length ? rules : structuredClone(BASELINE_RULES);
+}
+
+function legacyPremiumMultiplier(value: unknown) {
+  if (!value || typeof value !== 'object') return undefined;
+  const parsed = value as Record<string, unknown>;
+  if (Array.isArray(parsed.rules)) {
+    const premium = parsed.rules.find((rule) =>
+      rule && typeof rule === 'object'
+      && (rule as Record<string, unknown>).pricingMode === 'multiplier'
+      && typeof (rule as Record<string, unknown>).multiplier === 'number',
+    ) as Record<string, unknown> | undefined;
+    if (premium && typeof premium.multiplier === 'number') return premium.multiplier;
+  }
+  if (typeof parsed.nonStockMultiplier === 'number') return parsed.nonStockMultiplier;
+  return undefined;
+}
+
+function normalizeVersion(raw: unknown, fallbackThreshold: number, fallbackMultiplier: number): MaterialLevelGuideVersion | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const parsed = raw as Record<string, unknown>;
+  const rules = normalizeRules(parsed.rules);
+  const maxLevelCost = Math.max(...rules.map((rule) => rule.maxMaterialCost));
   return {
-    id: raw.id || uid('guide_version'),
-    recordedAt: raw.recordedAt || new Date().toISOString(),
-    note: raw.note,
-    rules: raw.rules.map((rule, index) => normalizeRule(rule, index)),
-    nonStockPricingMode: raw.nonStockPricingMode === 'margin' ? 'margin' : raw.nonStockPricingMode === 'multiplier' ? 'multiplier' : undefined,
-    nonStockMultiplier: typeof raw.nonStockMultiplier === 'number' ? raw.nonStockMultiplier : undefined,
-    nonStockMarginPct: typeof raw.nonStockMarginPct === 'number' ? raw.nonStockMarginPct : undefined,
+    id: typeof parsed.id === 'string' && parsed.id ? parsed.id : uid('guide_version'),
+    recordedAt: typeof parsed.recordedAt === 'string' && parsed.recordedAt ? parsed.recordedAt : new Date().toISOString(),
+    note: typeof parsed.note === 'string' ? parsed.note : undefined,
+    rules,
+    slabPricingThresholdCostPerSf: typeof parsed.slabPricingThresholdCostPerSf === 'number'
+      ? parsed.slabPricingThresholdCostPerSf
+      : maxLevelCost || fallbackThreshold,
+    slabPricingMultiplier: typeof parsed.slabPricingMultiplier === 'number'
+      ? parsed.slabPricingMultiplier
+      : legacyPremiumMultiplier(parsed) ?? fallbackMultiplier,
   };
 }
 
 function readLocal(): MaterialLevelGuideDocument {
+  const baseline = baselineGuide();
   try {
     const raw = localStorage.getItem(LOCAL_KEY);
-    if (!raw) return baselineGuide();
-    const parsed = JSON.parse(raw) as Partial<MaterialLevelGuideDocument>;
-    const baseline = baselineGuide();
-    const rules = Array.isArray(parsed.rules) && parsed.rules.length
-      ? parsed.rules.map((rule, index) => normalizeRule(rule, index))
-      : baseline.rules;
+    if (!raw) return baseline;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const rules = normalizeRules(parsed.rules);
+    const highestLevelCost = Math.max(...rules.map((rule) => rule.maxMaterialCost));
+    const threshold = typeof parsed.slabPricingThresholdCostPerSf === 'number'
+      ? parsed.slabPricingThresholdCostPerSf
+      : highestLevelCost || baseline.slabPricingThresholdCostPerSf;
+    const multiplier = typeof parsed.slabPricingMultiplier === 'number'
+      ? parsed.slabPricingMultiplier
+      : legacyPremiumMultiplier(parsed) ?? baseline.slabPricingMultiplier;
     const history = Array.isArray(parsed.history)
-      ? parsed.history.map((version) => normalizeVersion(version)).filter((version): version is MaterialLevelGuideVersion => Boolean(version))
-      : baseline.history;
+      ? parsed.history
+          .map((version) => normalizeVersion(version, threshold, multiplier))
+          .filter((version): version is MaterialLevelGuideVersion => Boolean(version))
+      : [];
+
     return {
-      schemaVersion: 2,
-      id: parsed.id || baseline.id,
-      name: parsed.name || baseline.name,
-      note: parsed.note ?? baseline.note,
+      schemaVersion: 3,
+      id: typeof parsed.id === 'string' && parsed.id ? parsed.id : baseline.id,
+      name: typeof parsed.name === 'string' && parsed.name ? parsed.name : baseline.name,
+      note: typeof parsed.note === 'string' ? parsed.note : baseline.note,
       rules,
-      nonStockPricingMode: parsed.nonStockPricingMode === 'margin' ? 'margin' : 'multiplier',
-      nonStockMultiplier: typeof parsed.nonStockMultiplier === 'number' ? parsed.nonStockMultiplier : baseline.nonStockMultiplier,
-      nonStockMarginPct: typeof parsed.nonStockMarginPct === 'number' ? parsed.nonStockMarginPct : baseline.nonStockMarginPct,
+      slabPricingThresholdCostPerSf: threshold,
+      slabPricingMultiplier: multiplier,
       history: history.length ? history : baseline.history,
-      updatedAt: parsed.updatedAt || baseline.updatedAt,
+      updatedAt: typeof parsed.updatedAt === 'string' && parsed.updatedAt ? parsed.updatedAt : baseline.updatedAt,
     };
   } catch {
-    return baselineGuide();
+    return baseline;
   }
 }
 
@@ -140,9 +182,17 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
 
   addRule: () => {
     const id = uid('material_level');
+    const currentRules = [...get().guide.rules].sort((a, b) => a.maxMaterialCost - b.maxMaterialCost);
+    const previous = currentRules.at(-1);
     const guide = {
       ...get().guide,
-      rules: [...get().guide.rules, { id, label: `Level ${get().guide.rules.length + 1}`, pricingMode: 'fixed' as const, active: true }],
+      rules: [...get().guide.rules, {
+        id,
+        label: `Level ${get().guide.rules.length + 1}`,
+        maxMaterialCost: previous ? previous.maxMaterialCost + 2 : 10,
+        customerRate: previous ? previous.customerRate + 10 : 40,
+        active: true,
+      }],
       updatedAt: new Date().toISOString(),
     };
     persist(guide);
@@ -163,9 +213,8 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
       recordedAt: new Date().toISOString(),
       note: note?.trim() || 'Manual guide checkpoint',
       rules: structuredClone(get().guide.rules),
-      nonStockPricingMode: get().guide.nonStockPricingMode,
-      nonStockMultiplier: get().guide.nonStockMultiplier,
-      nonStockMarginPct: get().guide.nonStockMarginPct,
+      slabPricingThresholdCostPerSf: get().guide.slabPricingThresholdCostPerSf,
+      slabPricingMultiplier: get().guide.slabPricingMultiplier,
     };
     const guide = { ...get().guide, history: [version, ...get().guide.history], updatedAt: new Date().toISOString() };
     persist(guide);
@@ -179,9 +228,8 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
     const guide: MaterialLevelGuideDocument = {
       ...current,
       rules: structuredClone(version.rules),
-      nonStockPricingMode: version.nonStockPricingMode ?? current.nonStockPricingMode,
-      nonStockMultiplier: version.nonStockMultiplier ?? current.nonStockMultiplier,
-      nonStockMarginPct: version.nonStockMarginPct ?? current.nonStockMarginPct,
+      slabPricingThresholdCostPerSf: version.slabPricingThresholdCostPerSf,
+      slabPricingMultiplier: version.slabPricingMultiplier,
       updatedAt: new Date().toISOString(),
     };
     persist(guide);

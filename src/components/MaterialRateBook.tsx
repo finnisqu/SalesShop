@@ -3,10 +3,8 @@ import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import {
   materialLevelCostBand,
-  resolveMaterialLevel,
-  resolveNonStockMaterialPrice,
-  type MaterialLevelPricingMode,
-  type NonStockPricingMode,
+  resolveMaterialPricingRecommendation,
+  resolveSlabPrice,
 } from '../types/materialLevelGuide';
 import type { PricingMaterialType } from '../types/quote';
 import {
@@ -194,7 +192,7 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
           <div>
             <span className="board-eyebrow">Builder pricing guide</span>
             <input className="material-level-guide-title" value={guide.name} onChange={(event) => updateGuide({ name: event.target.value })} aria-label="Guide name" />
-            <p><strong>Only STOCK program colors use Levels.</strong> The Level prices are a fast selling guide for the colors World Stone intentionally promotes. Non-stock colors use the separate multiplier / margin reference below. Quick Quote can still assume a stock-equivalent Level price for speed, but it flags the material as non-stock.</p>
+            <p><strong>SalesShop suggests a standard Level from effective material cost.</strong> STOCK colors can keep a manager-assigned Level; non-stock colors show the same Level suggestion without silently assigning it. Above the normal Level range, SalesShop switches to slab-pricing review instead of multiplying finished square feet.</p>
           </div>
           <div className="material-level-guide-actions">
             <button type="button" onClick={() => {
@@ -212,28 +210,55 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
           </label>
         )}
 
-        <div className="material-nonstock-guide">
-          <div className="material-nonstock-guide-copy"><span className="board-eyebrow">Non-stock reference</span><strong>Normal non-stock pricing</strong><small>This is the pricing guide for supplier-catalog colors outside the STOCK program. It does not override a salesperson's final quote.</small></div>
-          <label><span>Method</span><select value={guide.nonStockPricingMode} onChange={(event) => updateGuide({ nonStockPricingMode: event.target.value as NonStockPricingMode })}><option value="multiplier">Material cost multiplier</option><option value="margin">Target gross margin</option></select></label>
-          {guide.nonStockPricingMode === 'multiplier' ? (
-            <label><span>Multiplier</span><div className="material-guide-number"><input type="number" min="0" step="0.01" value={guide.nonStockMultiplier ?? ''} onChange={(event) => updateGuide({ nonStockMultiplier: numberValue(event.target.value) })} /><b>× cost</b></div></label>
-          ) : (
-            <label><span>Target margin</span><div className="material-guide-number"><input type="number" min="0" max="99.9" step="0.1" value={guide.nonStockMarginPct ?? ''} onChange={(event) => updateGuide({ nonStockMarginPct: numberValue(event.target.value) })} /><b>%</b></div></label>
-          )}
-          <div className="material-nonstock-guide-example"><span>Example at $20/SF cost</span><strong>{(() => { const result = resolveNonStockMaterialPrice(guide, 20); return result.customerRate === undefined ? '—' : `${money.format(result.customerRate)}/SF`; })()}</strong><small>{resolveNonStockMaterialPrice(guide, 20).basis}</small></div>
+        <div className="material-slab-guide">
+          <div className="material-slab-guide-copy">
+            <span className="board-eyebrow">Above the Level guide</span>
+            <strong>Premium slab-pricing review</strong>
+            <small>The multiplier applies to the actual slabs purchased—not material $/SF and not finished job SF. If one slab covers the job, a 15 SF job and a 30 SF job can carry the same material price.</small>
+          </div>
+          <label>
+            <span>Level guide through</span>
+            <div className="material-guide-number">
+              <input type="number" min="0" step="0.01" value={guide.slabPricingThresholdCostPerSf} onChange={(event) => {
+                const value = numberValue(event.target.value);
+                if (value !== undefined) updateGuide({ slabPricingThresholdCostPerSf: value });
+              }} />
+              <b>$/SF cost</b>
+            </div>
+          </label>
+          <label>
+            <span>Slab multiplier</span>
+            <div className="material-guide-number">
+              <input type="number" min="0" step="0.01" value={guide.slabPricingMultiplier} onChange={(event) => {
+                const value = numberValue(event.target.value);
+                if (value !== undefined) updateGuide({ slabPricingMultiplier: value });
+              }} />
+              <b>× slab cost</b>
+            </div>
+          </label>
+          <div className="material-slab-guide-example">
+            <span>Quick-math example</span>
+            <strong>{money.format(1500 * guide.slabPricingMultiplier)}/slab</strong>
+            <small>{money.format(1500)} actual slab cost × {guide.slabPricingMultiplier}; fabrication/install room is carried by the slab margin.</small>
+          </div>
         </div>
 
         <div className="material-level-sheet-scroll">
-          <table className="material-level-sheet">
-            <thead><tr><th>On</th><th>Level</th><th>Material cost ceiling</th><th>Pricing method</th><th>Standard customer $/SF</th><th>Meaning</th><th /></tr></thead>
+          <table className="material-level-sheet material-level-sheet-v3">
+            <thead><tr><th>On</th><th>Level</th><th>Material cost ceiling</th><th>Standard customer $/SF</th><th>Meaning</th><th /></tr></thead>
             <tbody>
               {orderedRules.map((rule) => (
                 <tr key={rule.id} className={rule.active ? '' : 'is-inactive'}>
                   <td className="material-level-on"><input type="checkbox" checked={rule.active} onChange={(event) => updateRule(rule.id, { active: event.target.checked })} /></td>
                   <td><input value={rule.label} onChange={(event) => updateRule(rule.id, { label: event.target.value })} /></td>
-                  <td className="number"><label className="material-currency-cell"><span>$</span><input type="number" step="0.01" value={rule.maxMaterialCost ?? ''} placeholder="No ceiling" onChange={(event) => updateRule(rule.id, { maxMaterialCost: numberValue(event.target.value) })} /></label></td>
-                  <td><select value={rule.pricingMode} onChange={(event) => updateRule(rule.id, { pricingMode: event.target.value as MaterialLevelPricingMode })}><option value="fixed">Fixed final $/SF</option><option value="multiplier">Material cost multiplier</option></select></td>
-                  <td className="number">{rule.pricingMode === 'fixed' ? <label className="material-currency-cell"><span>$</span><input type="number" step="0.01" value={rule.customerRate ?? ''} onChange={(event) => updateRule(rule.id, { customerRate: numberValue(event.target.value) })} /></label> : <label className="material-multiplier-cell"><input type="number" step="0.01" value={rule.multiplier ?? ''} onChange={(event) => updateRule(rule.id, { multiplier: numberValue(event.target.value) })} /><span>× cost</span></label>}</td>
+                  <td className="number"><label className="material-currency-cell"><span>$</span><input type="number" step="0.01" value={rule.maxMaterialCost} onChange={(event) => {
+                    const value = numberValue(event.target.value);
+                    if (value !== undefined) updateRule(rule.id, { maxMaterialCost: value });
+                  }} /></label></td>
+                  <td className="number"><label className="material-currency-cell"><span>$</span><input type="number" step="0.01" value={rule.customerRate} onChange={(event) => {
+                    const value = numberValue(event.target.value);
+                    if (value !== undefined) updateRule(rule.id, { customerRate: value });
+                  }} /></label></td>
                   <td className="material-level-meaning">{materialLevelCostBand(guide.rules, rule)}</td>
                   <td><button type="button" className="material-level-remove" disabled={guide.rules.length <= 1} onClick={() => removeRule(rule.id)} title="Remove level">×</button></td>
                 </tr>
@@ -271,25 +296,49 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
             <tbody>
               {materials.map((material) => {
                 const reference = resolveStockMaterialCostReference(material);
-                const stockResolved = resolveMaterialLevel(guide.rules, reference.costPerSf, material.stockProgram ? material.builderLevelId : undefined);
-                const nonStockResolved = resolveNonStockMaterialPrice(guide, reference.costPerSf);
+                const recommendation = resolveMaterialPricingRecommendation(
+                  guide,
+                  reference.costPerSf,
+                  material.stockProgram ? material.builderLevelId : undefined,
+                );
+                const slabPricing = recommendation.mode === 'slab-review'
+                  ? resolveSlabPrice(guide, reference.costPerSf, reference.slabCost, 1)
+                  : undefined;
                 const validForced = material.stockProgram && material.builderLevelId && guide.rules.some((rule) => rule.id === material.builderLevelId);
                 const expanded = expandedMaterialId === material.id;
-                const pricingRate = material.stockProgram ? stockResolved?.customerRate : nonStockResolved.customerRate;
-                const pricingLabel = material.stockProgram ? stockResolved?.rule.label : nonStockResolved.basis;
+                const level = recommendation.mode === 'level' ? recommendation.level : undefined;
+                const pricingRate = level?.customerRate;
+                const pricingLabel = recommendation.mode === 'level'
+                  ? `${material.stockProgram && validForced ? 'Assigned' : 'Suggested'} ${recommendation.level.rule.label}`
+                  : recommendation.mode === 'slab-review'
+                    ? 'Slab pricing review'
+                    : recommendation.basis;
                 return (
                   <>
                     <tr key={material.id} className={`${material.active ? '' : 'is-inactive'} ${expanded ? 'is-expanded' : ''} ${material.stockProgram ? 'is-stock-program' : 'is-non-stock-program'}`}>
                       <td className="material-level-on"><input type="checkbox" checked={material.active} onChange={(event) => updateStockMaterial(material.id, { active: event.target.checked })} /></td>
                       <td><select value={material.materialType} onChange={(event) => updateStockMaterial(material.id, { materialType: event.target.value as PricingMaterialType })}>{materialTypes.map((type) => <option key={type}>{type}</option>)}</select></td>
                       <td className="material-program-cell"><select value={material.stockProgram ? 'stock' : 'non-stock'} onChange={(event) => updateStockMaterial(material.id, { stockProgram: event.target.value === 'stock' })}><option value="stock">STOCK</option><option value="non-stock">Non-stock</option></select></td>
-                      <td>{material.stockProgram ? <select value={validForced ? material.builderLevelId : 'auto'} onChange={(event) => updateStockMaterial(material.id, { builderLevelId: event.target.value === 'auto' ? undefined : event.target.value })}><option value="auto">Auto{stockResolved ? ` · ${stockResolved.rule.label}` : ''}</option>{orderedRules.filter((rule) => rule.active).map((rule) => <option value={rule.id} key={rule.id}>{rule.label}</option>)}</select> : <span className="material-no-level">Not level-priced</span>}</td>
+                      <td>{material.stockProgram ? <select value={validForced ? material.builderLevelId : 'auto'} onChange={(event) => updateStockMaterial(material.id, { builderLevelId: event.target.value === 'auto' ? undefined : event.target.value })}><option value="auto">Auto{level ? ` · ${level.rule.label}` : recommendation.mode === 'slab-review' ? ' · Slab review' : ''}</option>{orderedRules.filter((rule) => rule.active).map((rule) => <option value={rule.id} key={rule.id}>{rule.label}</option>)}</select> : <span className={`material-no-level ${recommendation.mode === 'slab-review' ? 'is-slab-review' : ''}`}>{level ? `Suggest ${level.rule.label}` : recommendation.mode === 'slab-review' ? 'Slab review' : 'Needs cost'}</span>}</td>
                       <td><input value={material.supplier ?? ''} onChange={(event) => updateStockMaterial(material.id, { supplier: event.target.value })} placeholder="UMI, MSI, Hallmark…" /></td>
                       <td><input value={material.brand ?? ''} onChange={(event) => updateStockMaterial(material.id, { brand: event.target.value })} placeholder="Vicostone, Corian…" /></td>
                       <td className="material-color-cell"><input value={material.name} onChange={(event) => updateStockMaterial(material.id, { name: event.target.value })} /></td>
                       <td><input value={material.supplierGroup ?? ''} onChange={(event) => updateStockMaterial(material.id, { supplierGroup: event.target.value })} placeholder="Group 3, F…" /></td>
                       <td className="material-default-spec"><strong>{variantSpec(reference.variant)}</strong><small>{reference.variant ? `${availabilityLabel(reference.variant.availability)}${reference.variant.availabilityNote ? ` · ${reference.variant.availabilityNote}` : ''}` : reference.costPerSf !== undefined ? `${money.format(reference.costPerSf)}/SF legacy cost` : 'Add variant details'}</small></td>
-                      <td className={`material-standard-rate ${material.stockProgram ? 'is-stock' : 'is-non-stock'}`}>{pricingRate === undefined ? <span>—</span> : <strong>{money.format(pricingRate)}/SF</strong>}<small>{pricingLabel ?? 'Needs default $/SF cost'}</small></td>
+                      <td className={`material-standard-rate ${recommendation.mode === 'slab-review' ? 'is-slab-review' : material.stockProgram ? 'is-stock' : 'is-non-stock'}`}>
+                        {recommendation.mode === 'slab-review'
+                          ? slabPricing?.customerPricePerSlab === undefined
+                            ? <strong>Slab review</strong>
+                            : <strong>{money.format(slabPricing.customerPricePerSlab)}/slab</strong>
+                          : pricingRate === undefined
+                            ? <span>—</span>
+                            : <strong>{money.format(pricingRate)}/SF</strong>}
+                        <small>{recommendation.mode === 'slab-review'
+                          ? reference.slabCost === undefined
+                            ? `Above ${guide.slabPricingThresholdCostPerSf.toFixed(2)}/SF · needs full-slab cost`
+                            : `${guide.slabPricingMultiplier}× ${money.format(reference.slabCost)} actual slab cost`
+                          : pricingLabel ?? 'Needs default $/SF cost'}</small>
+                      </td>
                       <td><input value={tagText(material.features)} onChange={(event) => updateStockMaterial(material.id, { features: tagsFromText(event.target.value) })} placeholder="Bookmatch, Full body…" /></td>
                       <td className="material-reference-details"><button type="button" onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}>{expanded ? 'Close' : 'Details'}</button></td>
                     </tr>
@@ -308,7 +357,13 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
                             {(material.variants ?? []).map((variant) => <MaterialVariantEditor materialId={material.id} variant={variant} key={variant.id} />)}
                             {!(material.variants ?? []).length && <div className="material-variant-empty"><strong>Legacy material row</strong><span>{material.internalCost !== undefined ? `${money.format(material.internalCost)}/${material.unit.toUpperCase()} is still usable for quoting.` : 'No cost reference is set.'} Add a physical variant to capture slab size, finish, features and supplier pricing programs.</span><button type="button" onClick={() => addMaterialVariant(material.id)}>Create first variant</button></div>}
                           </div>
-                          <footer className="material-reference-admin"><span>{material.stockProgram ? 'This color is in the STOCK program, so its default cost reference resolves to a Level guide price.' : `This color is non-stock, so its normal guide uses ${nonStockResolved.basis}. Quick Quote may still assume its stock-equivalent Level price and will flag it as non-stock.`}</span><button type="button" className="danger" onClick={() => { if (window.confirm(`Delete ${material.name}?`)) deleteStockMaterial(material.id); }}>Delete material</button></footer>
+                          <footer className="material-reference-admin"><span>{recommendation.mode === 'level'
+                            ? material.stockProgram
+                              ? `This STOCK color uses ${recommendation.level.rule.label} at ${money.format(recommendation.level.customerRate)}/SF. SalesShop's automatic suggestion is based on effective material cost; a manager can explicitly assign a different Level.`
+                              : `This non-stock color falls in ${recommendation.level.rule.label}. SalesShop suggests ${money.format(recommendation.level.customerRate)}/SF from the standard Level guide without silently assigning it to STOCK.`
+                            : recommendation.mode === 'slab-review'
+                              ? `This material is above the standard Level range. Premium quick-math uses actual full slabs purchased × ${guide.slabPricingMultiplier}; finished countertop SF is not the multiplier basis.`
+                              : 'Set an effective material cost before SalesShop can suggest a standard Level.'}</span><button type="button" className="danger" onClick={() => { if (window.confirm(`Delete ${material.name}?`)) deleteStockMaterial(material.id); }}>Delete material</button></footer>
                         </section>
                       </td></tr>
                     )}

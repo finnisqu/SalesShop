@@ -54,10 +54,14 @@ export interface QuoteLineMaterialReference {
   variantId?: string;
   purchaseOptionId?: string;
   stockProgram: boolean;
-  pricingSource: 'stock-level' | 'non-stock-stock-equivalent' | 'non-stock-guide';
+  pricingSource: 'stock-level' | 'non-stock-stock-equivalent' | 'non-stock-guide' | 'suggested-level' | 'slab-multiplier';
   sourceCostPerSf?: number;
   guideRate?: number;
   stockEquivalentLevel?: string;
+  sourceSlabCost?: number;
+  slabMultiplier?: number;
+  slabCount?: number;
+  customerPricePerSlab?: number;
 }
 
 export interface QuoteLine {

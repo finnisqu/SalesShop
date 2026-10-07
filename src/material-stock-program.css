@@ -263,3 +263,141 @@
     grid-column: auto;
   }
 }
+
+
+/* Pricing policy v3: standard Level suggestion first; slab multiplier only above the Level range. */
+.material-slab-guide {
+  display: grid;
+  grid-template-columns: minmax(300px, 1.65fr) minmax(155px, .7fr) minmax(155px, .7fr) minmax(220px, 1fr);
+  gap: 9px;
+  align-items: end;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(63, 56, 46, .1);
+  background: rgba(244, 237, 216, .76);
+}
+
+.material-slab-guide-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.material-slab-guide-copy strong {
+  color: #494238;
+  font: 700 14px/1.2 Georgia, 'Times New Roman', serif;
+}
+
+.material-slab-guide-copy small {
+  color: #766e62;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.material-slab-guide > label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.material-slab-guide > label > span,
+.material-slab-guide-example > span {
+  color: #776e5d;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.material-slab-guide-example {
+  min-height: 35px;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: 0 9px;
+  border-left: 2px solid rgba(151, 112, 42, .34);
+}
+
+.material-slab-guide-example strong {
+  color: #6d5426;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.material-slab-guide-example small {
+  color: #81796b;
+  font-size: 8px;
+  line-height: 1.3;
+}
+
+.material-level-sheet-v3 {
+  min-width: 780px;
+}
+
+.material-level-sheet-v3 th:nth-child(1) { width: 44px; text-align: center; }
+.material-level-sheet-v3 th:nth-child(2) { width: 130px; }
+.material-level-sheet-v3 th:nth-child(3) { width: 175px; }
+.material-level-sheet-v3 th:nth-child(4) { width: 190px; }
+.material-level-sheet-v3 th:nth-child(5) { width: 230px; }
+.material-level-sheet-v3 th:nth-child(6) { width: 46px; }
+
+.material-no-level.is-slab-review,
+.material-standard-rate.is-slab-review,
+.quick-material-rate.is-slab-review {
+  background: rgba(246, 233, 198, .72) !important;
+}
+
+.material-no-level.is-slab-review,
+.material-standard-rate.is-slab-review strong,
+.quick-material-rate.is-slab-review strong {
+  color: #785b24;
+  font-style: normal;
+}
+
+.quick-material-level-chip.is-slab-review,
+.quick-material-program-status.is-slab-review {
+  background: #ead8a6;
+  color: #6f531e;
+}
+
+.quick-material-rate.is-slab-review small {
+  white-space: normal;
+  line-height: 1.3;
+}
+
+@media (max-width: 1000px) {
+  .material-slab-guide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .material-slab-guide-copy {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .material-slab-guide {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .material-slab-guide-copy {
+    grid-column: auto;
+  }
+
+  .material-slab-guide .material-guide-number {
+    height: 42px;
+  }
+
+  .material-slab-guide .material-guide-number input {
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .material-slab-guide-example {
+    min-height: 48px;
+  }
+
+  .material-level-sheet-v3 {
+    min-width: 760px;
+  }
+}

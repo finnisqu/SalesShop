@@ -89,6 +89,7 @@ export interface ResolvedMaterialCostReference {
   variant?: MaterialVariant;
   purchaseOption?: MaterialPurchaseOption;
   costPerSf?: number;
+  slabCost?: number;
   basis: 'variant' | 'legacy' | 'none';
 }
 
@@ -122,6 +123,16 @@ export function materialPurchaseCostPerSf(variant?: MaterialVariant, option?: Ma
   return option.costPerUnit / area;
 }
 
+export function materialPurchaseSlabCost(variant?: MaterialVariant, option?: MaterialPurchaseOption): number | undefined {
+  if (!variant || !option || variant.formatKind !== 'slab') return undefined;
+  if (option.pricingBasis === 'slab' && typeof option.costPerUnit === 'number' && Number.isFinite(option.costPerUnit) && option.costPerUnit > 0) {
+    return option.costPerUnit;
+  }
+  const area = materialVariantAreaSf(variant);
+  if (!area || typeof option.costPerSf !== 'number' || !Number.isFinite(option.costPerSf) || option.costPerSf <= 0) return undefined;
+  return option.costPerSf * area;
+}
+
 export function resolveStockMaterialCostReference(material: StockMaterial, variantId?: string, purchaseOptionId?: string): ResolvedMaterialCostReference {
   const activeVariants = (material.variants ?? []).filter((variant) => variant.active !== false);
   const variant = (variantId ? activeVariants.find((candidate) => candidate.id === variantId) : undefined)
@@ -133,9 +144,10 @@ export function resolveStockMaterialCostReference(material: StockMaterial, varia
       ?? activeOptions.find((candidate) => candidate.default)
       ?? activeOptions[0];
     const costPerSf = materialPurchaseCostPerSf(variant, purchaseOption);
-    if (costPerSf !== undefined) return { variant, purchaseOption, costPerSf, basis: 'variant' };
+    const slabCost = materialPurchaseSlabCost(variant, purchaseOption);
+    if (costPerSf !== undefined) return { variant, purchaseOption, costPerSf, slabCost, basis: 'variant' };
     if (material.unit === 'sf' && material.internalCost !== undefined) return { variant, purchaseOption, costPerSf: material.internalCost, basis: 'legacy' };
-    return { variant, purchaseOption, basis: 'none' };
+    return { variant, purchaseOption, slabCost, basis: 'none' };
   }
   if (material.unit === 'sf' && material.internalCost !== undefined) return { costPerSf: material.internalCost, basis: 'legacy' };
   return { basis: 'none' };
