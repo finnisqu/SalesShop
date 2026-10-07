@@ -88,9 +88,18 @@ export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quo
       setPendingVariantId(null);
       setSearch('');
     };
+    const collapseLine = (event: Event) => {
+      const detail = (event as CustomEvent<{ lineId?: string }>).detail;
+      if (detail?.lineId !== line.id) return;
+      collapse();
+    };
     window.addEventListener('sales-shop:quote-collapse-all', collapse);
-    return () => window.removeEventListener('sales-shop:quote-collapse-all', collapse);
-  }, [line.materialReference?.materialId, line.materialReference?.customMaterialName]);
+    window.addEventListener('sales-shop:quote-collapse-line', collapseLine);
+    return () => {
+      window.removeEventListener('sales-shop:quote-collapse-all', collapse);
+      window.removeEventListener('sales-shop:quote-collapse-line', collapseLine);
+    };
+  }, [line.id, line.materialReference?.materialId, line.materialReference?.customMaterialName]);
 
   const activeMaterials = useMemo(
     () => materials.filter((material) => material.active),
