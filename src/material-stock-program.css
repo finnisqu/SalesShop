@@ -401,3 +401,175 @@
     min-width: 760px;
   }
 }
+
+
+/* Quote-time material pricing mode selector + slab multiplier calculator. */
+.quick-material-header {
+  align-items: center;
+}
+
+.quick-material-pricing-modes {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 2px;
+  border: 1px solid rgba(77, 86, 70, .16);
+  border-radius: 4px;
+  background: rgba(255, 253, 246, .62);
+}
+
+.quick-material-pricing-modes button {
+  min-height: 29px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #77756b;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.quick-material-pricing-modes button.active {
+  background: #e2eadc;
+  color: #455741;
+  box-shadow: inset 0 0 0 1px rgba(77, 98, 70, .14);
+}
+
+.quick-material-slab-fields {
+  grid-template-columns: minmax(210px, 1.35fr) minmax(120px, .85fr) minmax(120px, .8fr) minmax(105px, .62fr) minmax(90px, .5fr) minmax(165px, .95fr) auto;
+}
+
+.quick-material-slab-fields .quick-material-slab-material {
+  min-width: 210px;
+}
+
+.quick-material-custom-name {
+  min-width: 160px;
+}
+
+.quick-material-money-input,
+.quick-material-multiplier-input {
+  height: 38px;
+  display: grid;
+  align-items: center;
+  border: 1px solid rgba(73, 91, 67, .16);
+  border-radius: 3px;
+  background: rgba(255, 254, 249, .9);
+}
+
+.quick-material-money-input {
+  grid-template-columns: 20px minmax(0, 1fr);
+}
+
+.quick-material-multiplier-input {
+  grid-template-columns: minmax(0, 1fr) 20px;
+}
+
+.quick-material-money-input b,
+.quick-material-multiplier-input b {
+  color: #817b6d;
+  font-size: 9px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.quick-material-money-input input,
+.quick-material-multiplier-input input {
+  height: 36px !important;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 6px !important;
+}
+
+.quick-material-slab-result {
+  min-width: 165px;
+}
+
+.quick-material-slab-result strong {
+  color: #735923;
+  font-size: 16px;
+}
+
+.quick-material-slab-note {
+  margin: -2px 10px 8px;
+  padding: 7px 9px;
+  border-left: 2px solid rgba(160, 126, 54, .34);
+  background: rgba(249, 242, 219, .6);
+  color: #756d5d;
+  font-size: 8.5px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1180px) {
+  .quick-material-slab-fields {
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+  }
+
+  .quick-material-slab-fields .quick-material-slab-material,
+  .quick-material-slab-fields .quick-material-custom-name {
+    grid-column: span 2;
+  }
+
+  .quick-material-slab-result {
+    grid-column: span 2;
+  }
+
+  .quick-material-slab-fields > button {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .quick-material-header {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .quick-material-pricing-modes {
+    width: 100%;
+  }
+
+  .quick-material-pricing-modes button {
+    flex: 1;
+    min-height: 40px;
+    font-size: 10px;
+  }
+
+  .quick-material-slab-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quick-material-slab-fields .quick-material-slab-material,
+  .quick-material-slab-fields .quick-material-custom-name,
+  .quick-material-slab-result,
+  .quick-material-slab-fields > button {
+    grid-column: 1 / -1;
+  }
+
+  .quick-material-money-input,
+  .quick-material-multiplier-input {
+    height: 44px;
+  }
+
+  .quick-material-money-input input,
+  .quick-material-multiplier-input input {
+    height: 42px !important;
+    font-size: 16px;
+  }
+
+  .quick-material-slab-note {
+    margin: -2px 10px 10px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 430px) {
+  .quick-material-slab-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-material-slab-fields > label,
+  .quick-material-slab-result,
+  .quick-material-slab-fields > button {
+    grid-column: auto !important;
+  }
+}

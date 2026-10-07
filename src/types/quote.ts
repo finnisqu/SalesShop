@@ -50,7 +50,8 @@ export interface QuoteSection {
 }
 
 export interface QuoteLineMaterialReference {
-  materialId: string;
+  materialId?: string;
+  customMaterialName?: string;
   variantId?: string;
   purchaseOptionId?: string;
   stockProgram: boolean;
@@ -59,6 +60,8 @@ export interface QuoteLineMaterialReference {
   guideRate?: number;
   stockEquivalentLevel?: string;
   sourceSlabCost?: number;
+  catalogSlabCost?: number;
+  slabCostOverride?: boolean;
   slabMultiplier?: number;
   slabCount?: number;
   customerPricePerSlab?: number;
