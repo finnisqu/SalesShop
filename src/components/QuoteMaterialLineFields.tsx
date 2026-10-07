@@ -23,8 +23,12 @@ function variantLabel(variant?: MaterialVariant) {
   return [variant.thickness, variant.finish, variant.formatName, dimensions].filter(Boolean).join(' · ') || 'Standard spec';
 }
 
-function materialDescription(material: StockMaterial, variant?: MaterialVariant) {
+export function materialCustomerDescription(material: Pick<StockMaterial, 'brand' | 'name'>, variant?: Pick<MaterialVariant, 'thickness' | 'finish'>) {
   return [material.brand, material.name, variant?.thickness, variant?.finish].filter(Boolean).join(' · ');
+}
+
+function legacyMaterialDescription(material: StockMaterial, variant?: MaterialVariant) {
+  return [material.brand, material.name, variant?.thickness, variant?.finish, variant?.formatName].filter(Boolean).join(' · ');
 }
 
 function materialSearchText(material: StockMaterial) {
@@ -122,6 +126,14 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       ? defaultMaterialPurchaseOption(selectedVariant)
       : undefined;
 
+  useEffect(() => {
+    if (!selectedMaterial || !selectedVariant) return;
+    const legacy = legacyMaterialDescription(selectedMaterial, selectedVariant);
+    if (line.description !== legacy) return;
+    const safe = materialCustomerDescription(selectedMaterial, selectedVariant);
+    if (safe !== line.description) updateLine(quoteId, line.id, { description: safe });
+  }, [line.description, line.id, quoteId, selectedMaterial, selectedVariant, updateLine]);
+
   const pendingMaterial = pendingMaterialId
     ? activeMaterials.find((material) => material.id === pendingMaterialId)
     : undefined;
@@ -173,7 +185,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
     };
 
     updateLine(quoteId, line.id, {
-      description: materialDescription(material, variant),
+      description: materialCustomerDescription(material, variant),
       materialReference,
       amount: slabMode ? slabPricing?.customerTotal : line.amount,
     });
