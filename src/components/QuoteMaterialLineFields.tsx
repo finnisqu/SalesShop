@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { calculateQuoteSlabMultiplierPrice } from '../services/quoteSlabPricing';
+import {
+  compareQuoteMaterialSnapshot,
+  createQuoteMaterialCostSnapshot,
+} from '../services/quoteMaterialSnapshot';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -21,7 +25,14 @@ function variantLabel(variant?: MaterialVariant) {
 }
 
 function materialDescription(material: StockMaterial, variant?: MaterialVariant) {
-  return [material.name, variant?.thickness, variant?.finish, variant?.formatName].filter(Boolean).join(' · ');
+  return [material.brand, material.name, variant?.thickness, variant?.finish, variant?.formatName].filter(Boolean).join(' · ');
+}
+
+function displayDate(value?: string) {
+  if (!value) return undefined;
+  const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
+  if (Number.isNaN(date.valueOf())) return value;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function materialSearchText(material: StockMaterial) {
@@ -73,11 +84,14 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
     ? activeMaterials.find((material) => material.id === line.materialReference?.materialId)
     : undefined;
   const selectedVariant = selectedMaterial
-    ? resolveStockMaterialCostReference(
-        selectedMaterial,
-        line.materialReference?.variantId,
-        line.materialReference?.purchaseOptionId,
-      ).variant
+    ? line.materialReference?.variantId
+      ? (selectedMaterial.variants ?? []).find((variant) => variant.active !== false && variant.id === line.materialReference?.variantId)
+      : defaultMaterialVariant(selectedMaterial)
+    : undefined;
+  const selectedPurchaseOption = selectedVariant
+    ? line.materialReference?.purchaseOptionId
+      ? (selectedVariant.purchaseOptions ?? []).find((option) => option.active !== false && option.id === line.materialReference?.purchaseOptionId)
+      : defaultMaterialPurchaseOption(selectedVariant)
     : undefined;
 
   const results = useMemo(() => {
@@ -117,6 +131,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       slabMultiplier: slabMode ? multiplier : undefined,
       slabCount: slabMode ? slabCount : undefined,
       customerPricePerSlab: slabPricing?.customerPricePerSlab,
+      snapshot: createQuoteMaterialCostSnapshot(material, reference),
     };
 
     updateLine(quoteId, line.id, {
@@ -160,7 +175,8 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
     applyMaterial(selectedMaterial, selectedVariant.id, purchaseOptionId);
   };
 
-  if (searching || (!selectedMaterial && !line.materialReference?.customMaterialName)) {
+  const snapshot = line.materialReference?.snapshot;
+  if (searching || (!snapshot && !selectedMaterial && !line.materialReference?.customMaterialName)) {
     return (
       <div className="quote-material-picker">
         <div className="quote-material-search-row">
@@ -178,7 +194,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
             const source = [material.brand, material.supplier].filter(Boolean).join(' · ');
             return (
               <button type="button" key={material.id} onClick={() => applyMaterial(material)}>
-                <span><strong>{material.name}</strong><small>{[material.materialType, source].filter(Boolean).join(' · ')}</small></span>
+                <span><strong>{[material.brand, material.name].filter(Boolean).join(' ')}</strong><small>{[material.materialType, material.supplier].filter(Boolean).join(' · ')}</small></span>
                 <span><b>{variantLabel(reference.variant)}</b><small>{reference.slabCost === undefined ? 'No slab price' : `${money.format(reference.slabCost)}/slab`}</small></span>
               </button>
             );
@@ -198,20 +214,39 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   const activeVariants = (selectedMaterial?.variants ?? []).filter((variant) => variant.active !== false);
   const activeOptions = (selectedVariant?.purchaseOptions ?? []).filter((option) => option.active !== false);
   const currentReference = selectedMaterial
-    ? resolveStockMaterialCostReference(selectedMaterial, selectedVariant?.id, line.materialReference?.purchaseOptionId)
+    && (!line.materialReference?.variantId || selectedVariant)
+    && (!line.materialReference?.purchaseOptionId || selectedPurchaseOption)
+      ? resolveStockMaterialCostReference(selectedMaterial, selectedVariant?.id, selectedPurchaseOption?.id)
+      : undefined;
+  const currentSnapshot = selectedMaterial && currentReference
+    ? createQuoteMaterialCostSnapshot(selectedMaterial, currentReference)
+    : undefined;
+  const snapshotComparison = snapshot && currentSnapshot
+    ? compareQuoteMaterialSnapshot(snapshot, currentSnapshot)
     : undefined;
   const customName = line.materialReference?.customMaterialName;
+  const quotedCostPerSf = snapshot?.costPerSf ?? line.materialReference?.sourceCostPerSf;
+  const quotedSlabCost = snapshot?.slabCost ?? line.materialReference?.catalogSlabCost;
+  const quotedName = snapshot?.materialName ?? selectedMaterial?.name ?? customName ?? 'Custom material';
+  const quotedBrand = snapshot?.brand ?? selectedMaterial?.brand;
+  const quotedType = snapshot?.materialType ?? selectedMaterial?.materialType;
+  const quotedSupplier = snapshot?.supplier ?? selectedMaterial?.supplier;
+  const quotedVariantLabel = snapshot?.variantLabel ?? variantLabel(selectedVariant);
+  const quotedPurchaseLabel = snapshot?.purchaseOptionLabel ?? selectedPurchaseOption?.label;
+  const sourceDate = displayDate(snapshot?.sourceEffectiveDate);
+  const sourceLabel = snapshot?.sourcePriceListLabel ?? snapshot?.sourceFileName;
+
+  const refreshSnapshot = () => {
+    if (!selectedMaterial || !currentReference) return;
+    applyMaterial(selectedMaterial, currentReference.variant?.id, currentReference.purchaseOption?.id);
+  };
 
   return (
     <div className="quote-material-selection">
       <div className="quote-material-selection-main">
-        <span>Material</span>
-        <strong>{selectedMaterial?.name ?? customName ?? 'Custom material'}</strong>
-        <small>
-          {selectedMaterial
-            ? [selectedMaterial.materialType, selectedMaterial.brand || selectedMaterial.supplier].filter(Boolean).join(' · ')
-            : 'Custom quote material'}
-        </small>
+        <span>Quoted material</span>
+        <strong>{[quotedBrand, quotedName].filter(Boolean).join(' ')}</strong>
+        <small>{[quotedType, quotedSupplier].filter(Boolean).join(' · ') || 'Custom quote material'}</small>
       </div>
 
       {selectedMaterial && activeVariants.length > 0 && (
@@ -225,18 +260,52 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
 
       {selectedMaterial && selectedVariant && activeOptions.length > 1 && (
         <label>
-          <span>Cost reference</span>
-          <select value={currentReference?.purchaseOption?.id ?? ''} onChange={(event) => selectPurchaseOption(event.target.value)}>
+          <span>Cost program</span>
+          <select value={selectedPurchaseOption?.id ?? ''} onChange={(event) => selectPurchaseOption(event.target.value)}>
             {activeOptions.map((option) => <option key={option.id} value={option.id}>{option.label}{option.minQuantity ? ` · ${option.minQuantity}+` : ''}</option>)}
           </select>
         </label>
       )}
 
-      {selectedMaterial && (
+      {(snapshot || selectedMaterial) && (
         <div className="quote-material-cost-reference">
-          <span>Database</span>
-          <strong>{currentReference?.costPerSf === undefined ? '—' : `${money.format(currentReference.costPerSf)}/SF`}</strong>
-          <small>{currentReference?.slabCost === undefined ? 'No full-slab cost' : `${money.format(currentReference.slabCost)}/slab`}</small>
+          <span>{snapshot ? 'Quoted cost' : 'Legacy reference'}</span>
+          <strong>{quotedCostPerSf === undefined ? '—' : `${money.format(quotedCostPerSf)}/SF`}</strong>
+          <small>{quotedSlabCost === undefined ? 'No full-slab cost' : `${money.format(quotedSlabCost)}/slab`}</small>
+        </div>
+      )}
+
+      {snapshot && (
+        <div className="quote-material-snapshot-meta">
+          <span>{quotedVariantLabel || 'Default spec'}{quotedPurchaseLabel ? ` · ${quotedPurchaseLabel}` : ''}</span>
+          <small>{[sourceLabel, sourceDate ? `effective ${sourceDate}` : undefined].filter(Boolean).join(' · ') || `Captured ${displayDate(snapshot.capturedAt) ?? ''}`}</small>
+        </div>
+      )}
+
+      {snapshot && !selectedMaterial && snapshot.materialId && (
+        <div className="quote-material-catalog-state is-unavailable">
+          <strong>Catalog item unavailable</strong>
+          <small>The quote snapshot is retained and unchanged.</small>
+        </div>
+      )}
+
+      {snapshotComparison?.changed && currentSnapshot && (
+        <div className="quote-material-catalog-state is-changed">
+          <div>
+            <strong>Catalog pricing changed</strong>
+            <small>
+              Now {currentSnapshot.costPerSf === undefined ? '—' : `${money.format(currentSnapshot.costPerSf)}/SF`}
+              {currentSnapshot.slabCost === undefined ? '' : ` · ${money.format(currentSnapshot.slabCost)}/slab`}
+            </small>
+          </div>
+          <button type="button" onClick={refreshSnapshot}>Update quote snapshot</button>
+        </div>
+      )}
+
+      {!snapshot && selectedMaterial && currentReference && (
+        <div className="quote-material-catalog-state is-legacy">
+          <strong>Legacy material reference</strong>
+          <button type="button" onClick={refreshSnapshot}>Capture current snapshot</button>
         </div>
       )}
 
