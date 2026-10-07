@@ -342,9 +342,10 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       updated = { ...updated, ...identity };
     }
 
+    const history = historyPatch(get(), quoteId, current);
     const quotes = get().quotes.map((quote) => quote.id === quoteId ? updated : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    set({ quotes, ...history });
 
     if (Object.prototype.hasOwnProperty.call(safePatch, 'projectId') && safePatch.projectId && safePatch.projectId !== current.projectId) {
       recordQuoteLinked(updated);
@@ -445,18 +446,20 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return '';
     const line = newLine(kind, sectionId);
+    const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? { ...quote, lines: [...quote.lines, line], updatedAt: timestamp }
       : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    set({ quotes, ...history });
     return line.id;
   },
 
   updateLine: (quoteId, lineId, patch) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;
+    const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? {
@@ -466,19 +469,20 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
         }
       : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    set({ quotes, ...history });
   },
 
   deleteLine: (quoteId, lineId) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;
     const organizationId = cloudOrganizationId();
+    const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? { ...quote, lines: quote.lines.filter((line) => line.id !== lineId), updatedAt: timestamp }
       : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    set({ quotes, ...history });
     if (organizationId) void deleteNormalizedQuoteLine(organizationId, lineId).catch(reportCloudDeleteError);
   },
 
@@ -486,18 +490,20 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return '';
     const section: QuoteSection = { id: uid('section'), title: 'New area', customerVisible: true, customerDisplayMode: 'detail' };
+    const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? { ...quote, sections: [...quote.sections, section], updatedAt: timestamp }
       : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    set({ quotes, ...history });
     return section.id;
   },
 
   updateSection: (quoteId, sectionId, patch) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;
+    const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? {
@@ -507,13 +513,14 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
         }
       : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    set({ quotes, ...history });
   },
 
   deleteSection: (quoteId, sectionId) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;
     const organizationId = cloudOrganizationId();
+    const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? {
@@ -524,19 +531,20 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
         }
       : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    set({ quotes, ...history });
     if (organizationId) void deleteNormalizedQuoteSection(organizationId, sectionId).catch(reportCloudDeleteError);
   },
 
   setCustomerColumns: (quoteId, patch) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;
+    const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? { ...quote, customerColumns: { ...quote.customerColumns, ...patch }, updatedAt: timestamp }
       : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    set({ quotes, ...history });
   },
 
   recordSent: async (quoteId) => {
