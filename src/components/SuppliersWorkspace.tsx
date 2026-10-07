@@ -9,9 +9,14 @@ import {
   trackDiscoveredSupplier,
   upsertSupplierProfile,
 } from '../services/supplierProfiles';
+import {
+  fetchSupplierActivities,
+  fetchSupplierCommitments,
+} from '../services/supplierRelationship';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import type { StockMaterial } from '../types/settings';
-import type { SupplierProfile } from '../types/supplier';
+import type { SupplierActivity, SupplierCommitment, SupplierProfile } from '../types/supplier';
+import { SupplierRelationshipPanels } from './SupplierRelationshipPanels';
 
 type SupplierFreshness = 'missing' | 'stale' | 'due-soon' | 'current' | 'inactive';
 
@@ -89,6 +94,8 @@ export function SuppliersWorkspace() {
   const materials = useCompanySettingsStore((state) => state.settings.stockMaterials);
   const [profiles, setProfiles] = useState<SupplierProfile[]>([]);
   const [publications, setPublications] = useState<SupplierImportPublicationHistoryRow[]>([]);
+  const [activities, setActivities] = useState<SupplierActivity[]>([]);
+  const [commitments, setCommitments] = useState<SupplierCommitment[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -101,12 +108,16 @@ export function SuppliersWorkspace() {
   const refresh = async () => {
     setLoadError(null);
     try {
-      const [nextProfiles, nextPublications] = await Promise.all([
+      const [nextProfiles, nextPublications, nextActivities, nextCommitments] = await Promise.all([
         fetchSupplierProfiles(),
         fetchSupplierImportPublicationHistory(100),
+        fetchSupplierActivities(),
+        fetchSupplierCommitments(),
       ]);
       setProfiles(nextProfiles);
       setPublications(nextPublications);
+      setActivities(nextActivities);
+      setCommitments(nextCommitments);
       setDrafts(Object.fromEntries(nextProfiles.map((profile) => [profile.id, profile])));
     } catch (reason) {
       setLoadError(reason instanceof Error ? reason.message : 'Supplier data could not be loaded.');
@@ -288,12 +299,15 @@ export function SuppliersWorkspace() {
                 const expanded = expandedKey === supplier.key;
                 const draft = supplier.profile ? drafts[supplier.profile.id] ?? supplier.profile : undefined;
                 const latestRules = supplier.latestPublication?.supplierRules ?? [];
+                const supplierActivities = supplier.profile ? activities.filter((activity) => activity.supplierId === supplier.profile!.id) : [];
+                const supplierCommitments = supplier.profile ? commitments.filter((commitment) => commitment.supplierId === supplier.profile!.id) : [];
+                const openCommitmentCount = supplierCommitments.filter((commitment) => ['proposed', 'negotiating', 'confirmed'].includes(commitment.status)).length;
                 return (
                   <Fragment key={supplier.key}>
                     <tr className={`supplier-directory-row freshness-${supplier.freshness}`}>
                       <td>
                         <strong>{supplier.name}</strong>
-                        <small>{supplier.profile ? 'Tracked supplier' : 'Discovered from Materials / imports'}</small>
+                        <small>{supplier.profile ? 'Tracked supplier' : 'Discovered from Materials / imports'}{openCommitmentCount ? ` · ${openCommitmentCount} open commitment${openCommitmentCount === 1 ? '' : 's'}` : ''}</small>
                       </td>
                       <td>
                         <strong>{supplier.brands.length ? supplier.brands.slice(0, 3).join(', ') : '—'}</strong>
@@ -360,6 +374,27 @@ export function SuppliersWorkspace() {
                                 {!supplier.publications.length && <div className="supplier-directory-empty compact">No supplier pricing has been published yet. This supplier will remain flagged until the first price list is imported.</div>}
                               </div>
                             </section>
+                            {supplier.profile ? (
+                              <SupplierRelationshipPanels
+                                supplier={supplier.profile}
+                                activities={supplierActivities}
+                                commitments={supplierCommitments}
+                                publications={supplier.publications}
+                                onActivityCreated={(activity) => setActivities((current) => [activity, ...current])}
+                                onCommitmentChanged={(commitment) => setCommitments((current) => [
+                                  commitment,
+                                  ...current.filter((item) => item.id !== commitment.id),
+                                ])}
+                              />
+                            ) : (
+                              <section className="supplier-relationship-track-prompt">
+                                <strong>Track this supplier to use the relationship log.</strong>
+                                <span>Activity notes and commercial commitments attach to a durable supplier profile, so they stay separate from catalog data.</span>
+                                <button type="button" onClick={() => void trackSupplier(supplier)} disabled={savingId === supplier.key}>
+                                  {savingId === supplier.key ? 'Tracking…' : 'Track supplier'}
+                                </button>
+                              </section>
+                            )}
                           </div>
                         </td>
                       </tr>
