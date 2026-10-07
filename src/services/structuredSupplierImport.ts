@@ -252,7 +252,7 @@ function recordBlockRegions(rows: string[][], scanStartColumn: number): Supplier
 
   return blocks
     .filter((block) => block.end - block.start + 1 >= 3)
-    .map((block, blockIndex) => {
+    .map((block, blockIndex): SupplierImportDetectedRegion | undefined => {
       let startColumn = Number.POSITIVE_INFINITY;
       let endColumn = 0;
       let skuLike = 0;
