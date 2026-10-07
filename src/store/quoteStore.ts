@@ -450,7 +450,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   addSection: (quoteId) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return '';
-    const section: QuoteSection = { id: uid('section'), title: 'New area', customerVisible: true };
+    const section: QuoteSection = { id: uid('section'), title: 'New area', customerVisible: true, customerDisplayMode: 'detail' };
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? { ...quote, sections: [...quote.sections, section], updatedAt: timestamp }
