@@ -139,9 +139,10 @@ function safeAcceptedSnapshot(value: unknown) {
     .filter((section) => section.customerVisible !== false)
     .map((section) => {
       const id = String(section.id ?? '');
-      const sectionTotal = allLines
-        .filter((line) => String(line.sectionId ?? '') === id)
-        .reduce((sum, line) => sum + lineTotal(line), 0);
+      const sectionLines = allLines.filter((line) => String(line.sectionId ?? '') === id);
+      const sectionTotal = sectionLines.length
+        ? sectionLines.reduce((sum, line) => sum + lineTotal(line), 0)
+        : undefined;
       return safePublicSection(section, sectionTotal);
     });
   const {
