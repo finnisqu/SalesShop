@@ -24,6 +24,7 @@ import './quote-area-scope.css';
 import './quote-database-results.css';
 import './quote-clean-sheet.css';
 import './quote-select-leave.css';
+import './quote-popover-polish.css';
 import './catalog-workspace.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
