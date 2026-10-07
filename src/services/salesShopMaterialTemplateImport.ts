@@ -742,13 +742,15 @@ export async function stageSalesShopMaterialTemplate(
       const conflicts = [
         ['Supplier / Importer', accumulator.material.supplier, row.supplier],
         ['Collection / Series', accumulator.material.collection, row.collection],
-        ['Supplier Group', accumulator.material.supplierGroup, row.supplierGroup],
         ['Material SKU', accumulator.material.sku, row.materialSku],
       ].filter(([, current, incoming]) => current && incoming && normalized(current as string) !== normalized(incoming as string));
       if (conflicts.length) {
         throw new Error(`Row ${row.rowNumber}: ${row.name} repeats with conflicting ${conflicts.map(([label]) => label).join(', ')}. Nothing was staged.`);
       }
       accumulator.material.collection = accumulator.material.collection ?? row.collection;
+      // Supplier group may legitimately vary by physical variant / finish.
+      // Keep the first explicit material-level group; row-specific group evidence
+      // remains preserved in Source Reference and the explicit price data.
       accumulator.material.supplierGroup = accumulator.material.supplierGroup ?? row.supplierGroup;
       accumulator.material.sku = accumulator.material.sku ?? row.materialSku;
       accumulator.material.features = mergeFeatures(accumulator.material.features, row.materialFeatures);
