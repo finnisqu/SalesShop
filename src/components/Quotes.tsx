@@ -86,6 +86,7 @@ function LineEditor({
   const textLine = isTextLine(line);
   const materialLine = line.kind === 'material';
   const rateLine = line.kind === 'rate';
+  const manualCostLine = line.kind === 'item' && line.pricingMode !== 'none';
 
   const changePricingMode = (pricingMode: QuotePricingMode) => {
     if (pricingMode === 'slab-multiplier' && materialLine) {
@@ -191,6 +192,16 @@ function LineEditor({
             <input type="number" step="1" min="1" placeholder="Slabs" value={line.materialReference?.slabCount ?? ''} onChange={(event) => updateSlabField({ slabCount: numberValue(event.target.value) })} aria-label="Slab count" />
           </div>}
           {line.pricingMode !== 'none' && <strong>{money.format(quoteLineTotal(line))}</strong>}
+          {manualCostLine && (
+            <label className="quote-internal-cost-input" title="Private total internal cost for this line. Never shown to the customer.">
+              <span>Internal cost</span>
+              <span className="quote-internal-cost-money"><span>$</span><input type="number" min="0" step="0.01" placeholder="Cost" value={line.internalCost ?? ''} onChange={(event) => {
+                const value = numberValue(event.target.value);
+                updateLine(quote.id, line.id, { internalCost: value === undefined ? undefined : Math.max(0, value) });
+              }} aria-label="Private internal cost" /></span>
+              <small>Private total</small>
+            </label>
+          )}
           <label className="quote-total-toggle" title="Include this amount in quote total"><input type="checkbox" checked={line.includeInTotal} onChange={(event) => updateLine(quote.id, line.id, { includeInTotal: event.target.checked })} /> Total</label>
         </div>
       )}
