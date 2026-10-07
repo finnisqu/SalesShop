@@ -844,75 +844,122 @@ export async function stageSalesShopMaterialTemplate(
   assertHeaders(importSheet, templateHeaders, templateVersion);
 
   const parsedRows: ParsedTemplateRow[] = [];
-  const rowErrors: string[] = [];
+  const recoverableRowIssues: Array<{
+    key: string;
+    material: StockMaterial;
+    issue: SupplierImportValidationIssue;
+  }> = [];
+  const unrecoverableRowErrors: string[] = [];
+
   for (let rowNumber = 2; rowNumber <= importSheet.length; rowNumber += 1) {
+    const values = readRow(importSheet, rowNumber, templateHeaders);
     const result = parseTemplateRow(
-      readRow(importSheet, rowNumber, templateHeaders),
+      values,
       rowNumber,
       meta,
       fallbackEffectiveDate,
       templateVersion !== SALESSHOP_TEMPLATE_LEGACY_VERSION,
     );
-    if (result.errors.length) rowErrors.push(`Row ${rowNumber}: ${result.errors.join('; ')}`);
+    if (result.errors.length) {
+      const recoverable = recoverableRowIdentity(values);
+      if (recoverable) {
+        recoverableRowIssues.push({
+          ...recoverable,
+          issue: {
+            id: `issue-${safeId(`${recoverable.key}-row-${rowNumber}`)}`,
+            severity: 'blocking',
+            scope: 'row',
+            message: `Row ${rowNumber} was skipped because ${result.errors.join('; ')}. Fix the workbook and re-stage, or explicitly ignore this row issue to publish the other valid data.`,
+            rowNumbers: [rowNumber],
+            resolution: 'unresolved',
+          },
+        });
+      } else {
+        unrecoverableRowErrors.push(`Row ${rowNumber}: ${result.errors.join('; ')}`);
+      }
+    }
     if (result.row) parsedRows.push(result.row);
   }
 
-  if (rowErrors.length) {
-    throw new Error(`Template validation found ${rowErrors.length} blocking row error${rowErrors.length === 1 ? '' : 's'}. ${rowErrors.slice(0, 4).join(' | ')}${rowErrors.length > 4 ? ` | +${rowErrors.length - 4} more` : ''}. Nothing was staged.`);
+  if (unrecoverableRowErrors.length) {
+    throw new Error(`Template validation found ${unrecoverableRowErrors.length} row error${unrecoverableRowErrors.length === 1 ? '' : 's'} that cannot be attached to a safe material identity. ${unrecoverableRowErrors.slice(0, 4).join(' | ')}${unrecoverableRowErrors.length > 4 ? ` | +${unrecoverableRowErrors.length - 4} more` : ''}. Fix those identity rows and stage again.`);
   }
-  if (!parsedRows.length) throw new Error('No included material rows were found in IMPORT_ROWS. Nothing was staged.');
+  if (!parsedRows.length && !recoverableRowIssues.length) throw new Error('No included material rows were found in IMPORT_ROWS. Nothing was staged.');
+
+  const groupedRows = new Map<string, ParsedTemplateRow[]>();
+  parsedRows.forEach((row) => {
+    const key = [normalized(row.brand), normalized(row.materialFamily), normalized(row.materialType), normalized(row.name)].join('|');
+    groupedRows.set(key, [...(groupedRows.get(key) ?? []), row]);
+  });
 
   const accumulators = new Map<string, MaterialAccumulator>();
 
-  parsedRows.forEach((row) => {
-    const key = [normalized(row.brand), normalized(row.materialFamily), normalized(row.materialType), normalized(row.name)].join('|');
-    let accumulator = accumulators.get(key);
-    if (!accumulator) {
-      accumulator = {
-        material: {
-          id: `staged-material-${safeId(key)}`,
-          name: row.name,
-          supplier: row.supplier,
-          brand: row.brand,
-          materialFamily: row.materialFamily,
-          collection: row.collection,
-          supplierGroup: row.supplierGroup,
-          sku: row.materialSku,
-          materialType: row.materialType,
-          stockProgram: false,
-          unit: 'sf',
-          features: row.materialFeatures,
-          variants: [],
-          notes: row.materialNotes,
-          active: row.active,
-        },
-        warnings: [...row.warnings],
-        priceEvidence: {},
-      };
-      accumulators.set(key, accumulator);
-    } else {
-      const conflicts = [
-        ['Supplier / Importer', accumulator.material.supplier, row.supplier],
-        ['Collection / Series', accumulator.material.collection, row.collection],
-        ['Material SKU', accumulator.material.sku, row.materialSku],
-      ].filter(([, current, incoming]) => current && incoming && normalized(current as string) !== normalized(incoming as string));
-      if (conflicts.length) {
-        throw new Error(`Row ${row.rowNumber}: ${row.name} repeats with conflicting ${conflicts.map(([label]) => label).join(', ')}. Nothing was staged.`);
-      }
-      accumulator.material.collection = accumulator.material.collection ?? row.collection;
-      // Supplier group may legitimately vary by physical variant / finish.
-      // Keep the first explicit material-level group; row-specific group evidence
-      // remains preserved in Source Reference and the explicit price data.
-      accumulator.material.supplierGroup = accumulator.material.supplierGroup ?? row.supplierGroup;
-      accumulator.material.sku = accumulator.material.sku ?? row.materialSku;
-      accumulator.material.features = mergeFeatures(accumulator.material.features, row.materialFeatures);
-      accumulator.material.notes = accumulator.material.notes ?? row.materialNotes;
-      accumulator.material.active = accumulator.material.active || row.active;
-      accumulator.warnings.push(...row.warnings);
-    }
+  groupedRows.forEach((materialRows, key) => {
+    const first = materialRows[0];
+    const material: StockMaterial = {
+      id: `staged-material-${safeId(key)}`,
+      name: first.name,
+      supplier: first.supplier,
+      brand: first.brand,
+      materialFamily: first.materialFamily,
+      collection: first.collection,
+      supplierGroup: first.supplierGroup,
+      sku: first.materialSku,
+      materialType: first.materialType,
+      stockProgram: false,
+      unit: 'sf',
+      features: uniqueStrings(materialRows.flatMap((row) => row.materialFeatures)),
+      variants: [],
+      notes: materialRows.find((row) => row.materialNotes)?.materialNotes,
+      active: materialRows.some((row) => row.active),
+    };
+    const issues: SupplierImportValidationIssue[] = [];
 
-    const variant = ensureVariant(accumulator, row);
-    addPurchaseOption(accumulator, variant, row, meta.get('PriceListLabel') || undefined);
+    const materialFields: Array<{
+      field: NonNullable<SupplierImportValidationIssue['field']>;
+      label: string;
+      values: string[];
+    }> = [
+      { field: 'supplier', label: 'Supplier / Importer', values: uniqueStrings(materialRows.map((row) => row.supplier)) },
+      { field: 'collection', label: 'Collection / Series', values: uniqueStrings(materialRows.map((row) => row.collection ?? '')) },
+      { field: 'supplierGroup', label: 'Supplier Group', values: uniqueStrings(materialRows.map((row) => row.supplierGroup ?? '')) },
+      { field: 'sku', label: 'Material SKU', values: uniqueStrings(materialRows.map((row) => row.materialSku ?? '')) },
+    ];
+
+    materialFields.forEach(({ field, label, values }) => {
+      if (values.length <= 1) return;
+      issues.push(conflictIssue(material, field, label, materialRows, values));
+      if (field === 'supplier') material.supplier = undefined;
+      if (field === 'collection') material.collection = undefined;
+      if (field === 'supplierGroup') material.supplierGroup = undefined;
+      if (field === 'sku') material.sku = undefined;
+    });
+
+    const accumulator: MaterialAccumulator = {
+      material,
+      warnings: uniqueStrings(materialRows.flatMap((row) => row.warnings)),
+      issues,
+      priceEvidence: {},
+    };
+    materialRows.forEach((row) => {
+      const variant = ensureVariant(accumulator, row);
+      addPurchaseOption(accumulator, variant, row, meta.get('PriceListLabel') || undefined);
+    });
+    accumulators.set(key, accumulator);
+  });
+
+  recoverableRowIssues.forEach(({ key, material, issue }) => {
+    const accumulator = accumulators.get(key);
+    if (accumulator) {
+      accumulator.issues.push(issue);
+      return;
+    }
+    accumulators.set(key, {
+      material,
+      warnings: [],
+      issues: [issue],
+      priceEvidence: {},
+    });
   });
 
   const finalized = [...accumulators.values()].map(finalizeAccumulator);
@@ -922,6 +969,7 @@ export async function stageSalesShopMaterialTemplate(
       catalog,
       uniqueStrings(accumulator.warnings),
       accumulator.priceEvidence,
+      accumulator.issues,
     ))
     .sort((a, b) => (a.material.brand ?? '').localeCompare(b.material.brand ?? '') || a.material.name.localeCompare(b.material.name));
 
