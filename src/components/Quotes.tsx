@@ -384,6 +384,12 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
     return () => document.removeEventListener('pointerdown', closeOnOutside);
   }, [scopeOpen]);
 
+  useEffect(() => {
+    const collapse = () => setScopeOpen(false);
+    window.addEventListener('sales-shop:quote-collapse-all', collapse);
+    return () => window.removeEventListener('sales-shop:quote-collapse-all', collapse);
+  }, []);
+
   if (!section) return null;
 
   const summary = areaScopeSummary(section);
