@@ -1,0 +1,745 @@
+/* Quotes mobile UI pass — 2026-10-07
+   Keep the paper-first desktop design, but make the phone experience deliberate:
+   one horizontal document switcher, one command rail, compact Area headers,
+   thumb-sized edit controls, and viewport-safe popovers. */
+
+@media (max-width: 700px) {
+  /* ------------------------------
+     Page + quote switcher
+  ------------------------------ */
+  .quotes-view {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quotes-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-height: 148px;
+    flex-basis: 148px;
+    overflow: hidden;
+    border-right: 0;
+    border-bottom: 1px solid #bcb6a9;
+    box-shadow: 0 3px 9px rgba(51, 44, 33, .06);
+  }
+
+  .quotes-sidebar > header {
+    min-height: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    padding: 6px 9px 6px 11px;
+  }
+
+  .quotes-sidebar > header span {
+    display: none;
+  }
+
+  .quotes-sidebar > header strong {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .quotes-sidebar > header button {
+    min-width: 64px;
+    height: 34px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+
+  .quote-archive-filter {
+    flex: 0 0 auto;
+  }
+
+  .quote-list {
+    min-height: 0;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 8px 9px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quote-list::-webkit-scrollbar,
+  .quote-header-actions::-webkit-scrollbar,
+  .quote-area-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .quote-list-item {
+    min-width: 168px;
+    width: 168px;
+    min-height: 78px;
+    height: 78px;
+    flex: 0 0 168px;
+    margin: 0;
+    padding: 8px 9px 23px;
+    border-radius: 4px;
+    scroll-snap-align: start;
+  }
+
+  .quote-list-item > strong {
+    font-size: 12px;
+  }
+
+  .quote-list-item > small {
+    font-size: 8px;
+  }
+
+  /* ------------------------------
+     Workbench title + command rail
+  ------------------------------ */
+  .quotes-workbench {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .quote-workbench-header {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+    padding: 8px 8px 7px 10px;
+  }
+
+  .quote-number {
+    margin-bottom: 1px;
+    font-size: 7px;
+  }
+
+  .quote-title-input {
+    height: 30px;
+    padding: 0;
+    font-size: 18px;
+  }
+
+  .quote-header-actions {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 1px 1px 3px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+  }
+
+  .quote-header-actions > * {
+    flex: 0 0 auto;
+  }
+
+  .quote-undo-redo,
+  .quote-workspace-zoom {
+    height: 38px;
+    min-height: 38px;
+    box-sizing: border-box;
+    border-radius: 6px;
+  }
+
+  .quote-undo-redo button,
+  .quote-workspace-zoom button {
+    min-width: 34px;
+    width: 34px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .quote-workspace-zoom .quote-workspace-zoom-value {
+    min-width: 46px;
+    width: auto;
+    font-size: 8px;
+  }
+
+  .quote-view-switch {
+    height: 38px;
+    min-height: 38px;
+    border-radius: 6px;
+  }
+
+  .quote-view-switch button {
+    height: 32px;
+    min-height: 32px;
+    padding-inline: 10px;
+    font-size: 10px;
+  }
+
+  .quote-send-button,
+  .quote-revision-button,
+  .quote-sign-button,
+  .quote-signature-receipt-button {
+    height: 38px;
+    min-height: 38px;
+    border-radius: 6px;
+    padding-inline: 11px;
+    font-size: 10px;
+  }
+
+  /* ------------------------------
+     Editor padding + top configuration
+  ------------------------------ */
+  .quote-editor-pane {
+    min-width: 0;
+    padding: 8px 6px 42px;
+    overflow-x: hidden;
+  }
+
+  .quote-preview-pane {
+    min-width: 0;
+    padding: 10px 7px 38px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quote-configuration-strip {
+    width: 100%;
+    max-width: none;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
+    margin-bottom: 7px;
+    padding: 4px;
+  }
+
+  .quote-configuration-strip > button {
+    min-height: 43px;
+    padding: 4px 5px;
+  }
+
+  .quote-configuration-strip > button > span {
+    font-size: 6.5px;
+  }
+
+  .quote-configuration-strip > button > small {
+    font-size: 6.5px;
+  }
+
+  .quote-config-popover,
+  .quote-config-popover.is-project {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    width: auto;
+    max-width: none;
+    max-height: min(70svh, 520px);
+    overflow-y: auto;
+    padding: 9px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quote-project-details-grid {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .quote-project-details-grid input,
+  .quote-project-details-grid select,
+  .quote-document-meta-fields input,
+  .quote-document-meta-fields select {
+    min-height: 42px;
+    height: 42px;
+    font-size: 16px; /* Prevent iOS focus zoom. */
+  }
+
+  .quote-customer-visibility-options {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-customer-visibility-options label {
+    min-height: 42px;
+    font-size: 10px;
+  }
+
+  /* ------------------------------
+     Quote builder frame
+  ------------------------------ */
+  .quote-lines-editor {
+    width: 100%;
+    max-width: none;
+    margin-bottom: 8px;
+  }
+
+  .quote-lines-editor > header {
+    min-height: 44px;
+    gap: 7px;
+    padding: 7px 8px;
+  }
+
+  .quote-lines-editor > header > div {
+    min-width: 0;
+  }
+
+  .quote-lines-editor > header small {
+    max-width: 215px;
+    overflow: hidden;
+    font-size: 7px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quote-lines-editor > header > strong {
+    flex: 0 0 auto;
+    font-size: 12px;
+  }
+
+  /* ------------------------------
+     Areas: compact title row + one horizontal action rail
+  ------------------------------ */
+  .quote-area-card {
+    margin: 6px 4px;
+  }
+
+  .quote-area-card + .quote-area-card {
+    margin-top: 8px;
+  }
+
+  .quote-area-header,
+  .view-split .quote-area-header {
+    min-height: 0;
+    grid-template-columns: 20px minmax(0, 1fr) auto 28px;
+    grid-template-rows: auto auto;
+    column-gap: 5px;
+    row-gap: 4px;
+    padding: 6px 5px 5px;
+  }
+
+  .quote-area-header > .quote-visibility,
+  .view-split .quote-area-header > .quote-visibility,
+  .quote-general-header-spacer {
+    grid-column: 1;
+    grid-row: 1;
+    width: 20px;
+    height: 28px;
+    align-self: center;
+  }
+
+  .quote-area-title,
+  .view-split .quote-area-title {
+    grid-column: 2;
+    grid-row: 1;
+    padding-right: 0;
+  }
+
+  .quote-area-title input {
+    height: 26px;
+    font-size: 14px;
+  }
+
+  .quote-general-title > strong {
+    font-size: 14px;
+  }
+
+  .quote-general-title > small {
+    display: none;
+  }
+
+  .quote-area-summary,
+  .view-split .quote-area-summary {
+    grid-column: 3;
+    grid-row: 1;
+    min-width: 66px;
+    justify-self: end;
+    align-self: center;
+    margin: 0;
+    text-align: right;
+  }
+
+  .quote-area-summary > span {
+    font-size: 5.8px;
+  }
+
+  .quote-area-summary strong {
+    font-size: 10px;
+  }
+
+  .quote-area-remove,
+  .view-split .quote-area-remove,
+  .quote-general-header-end-spacer {
+    grid-column: 4;
+    grid-row: 1;
+    width: 28px;
+    height: 32px;
+    align-self: center;
+  }
+
+  .quote-area-actions,
+  .view-split .quote-area-actions,
+  .quote-general-header .quote-area-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 0 1px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+  }
+
+  .quote-area-actions button,
+  .view-split .quote-area-actions button {
+    min-width: 70px;
+    min-height: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    padding: 0 8px;
+    font-size: 7px;
+  }
+
+  .quote-area-drag-handle {
+    top: 18px;
+    left: -7px;
+    width: 18px;
+    min-width: 18px;
+    height: 28px;
+    transform: none;
+  }
+
+  .quote-area-scope-popover,
+  .quote-general-other-popover {
+    left: 5px;
+    right: 5px;
+    width: auto;
+    max-width: none;
+    max-height: min(65svh, 460px);
+    overflow-y: auto;
+    padding: 9px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quote-area-scope-popover .quote-area-scope-grid {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .quote-area-scope-grid input {
+    min-height: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+
+  .quote-general-other-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quote-general-other-grid > button {
+    min-height: 48px;
+  }
+
+  /* ------------------------------
+     Line items: preserve visual tracks, enlarge interaction targets
+  ------------------------------ */
+  .quote-line-editor.is-priced-line,
+  .view-split .quote-line-editor.is-priced-line,
+  .quote-line-editor.kind-scope,
+  .quote-line-editor.kind-warranty,
+  .quote-line-editor.kind-note {
+    padding: 6px 5px 6px 7px;
+  }
+
+  .quote-line-editor.is-priced-line > .quote-line-main,
+  .view-split .quote-line-editor.is-priced-line > .quote-line-main {
+    grid-template-columns: minmax(0, 1fr) minmax(116px, 138px) 72px;
+    column-gap: 5px;
+    row-gap: 4px;
+  }
+
+  .quote-line-editor.is-priced-line.has-database-selection .quote-database-result {
+    grid-template-columns: minmax(0, 1fr) minmax(116px, 138px);
+    gap: 5px;
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-main > textarea {
+    min-height: 30px;
+    height: 30px;
+    padding-block: 5px;
+    font-size: 11px;
+  }
+
+  .quote-material-selection-main > strong,
+  .quote-sink-selection-main > strong,
+  .quote-rate-selection-main > strong,
+  .quote-product-name-row > strong {
+    font-size: 10px;
+  }
+
+  .quote-material-selection-main > small,
+  .quote-sink-selection-main > small,
+  .quote-rate-selection-main > small {
+    font-size: 6.5px;
+  }
+
+  .quote-line-editor.is-priced-line .quote-material-cost-reference,
+  .quote-line-editor.is-priced-line .quote-sink-price-reference,
+  .quote-line-editor.is-priced-line .quote-rate-reference,
+  .quote-line-editor.is-priced-line .quote-pricing-passive {
+    min-height: 28px;
+    height: 28px;
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-resting-pricing {
+    min-height: 28px;
+  }
+
+  .quote-source-pencil,
+  .quote-pricing-passive > button,
+  .quote-product-pencil {
+    width: 28px;
+    min-width: 28px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-resting-total {
+    font-size: 11px;
+  }
+
+  .quote-line-delete {
+    width: 30px !important;
+    min-width: 30px;
+    height: 32px !important;
+    font-size: 18px;
+  }
+
+  .quote-line-eye {
+    width: 30px;
+    height: 30px;
+  }
+
+  .quote-line-eye svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .quote-line-reminders-overlay {
+    z-index: 130;
+  }
+
+  /* Catalog selection and price editors float within the phone viewport. */
+  .quote-catalog-popover,
+  .quote-pricing-popover,
+  .view-split .quote-pricing-popover {
+    left: 3px !important;
+    right: 3px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: min(64svh, 460px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quote-catalog-popover {
+    top: 34px;
+  }
+
+  .quote-pricing-popover {
+    top: calc(100% - 1px);
+    padding: 9px !important;
+  }
+
+  .quote-pricing-popover > select,
+  .quote-pricing-popover input,
+  .quote-pricing-popover .quote-money-input {
+    min-height: 40px;
+    font-size: 16px;
+  }
+
+  .quote-pricing-popover > select {
+    width: 104px;
+  }
+
+  .quote-pricing-popover .quote-qty-rate {
+    grid-template-columns: minmax(68px, 1fr) 14px minmax(78px, 1fr);
+  }
+
+  .quote-pricing-popover .quote-qty-rate input {
+    height: 40px;
+  }
+
+  .quote-area-quantity-link {
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .quote-area-quantity-link select {
+    min-height: 38px;
+  }
+
+  /* Helper sits close to the line without pushing anything around. */
+  .quote-issue-coachmark,
+  .view-split .quote-issue-coachmark {
+    left: 6px;
+    right: 6px;
+    width: auto;
+    max-width: none;
+    padding: 10px 34px 10px 11px;
+  }
+
+  .quote-issue-coachmark > strong {
+    font-size: 12px;
+  }
+
+  .quote-issue-coachmark > p {
+    font-size: 9px;
+  }
+
+  .quote-issue-coachmark > button {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* ------------------------------
+     Notes + private pricing
+  ------------------------------ */
+  .quote-notes-grid {
+    width: 100%;
+    max-width: none;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .quote-notes-grid label {
+    padding: 8px;
+  }
+
+  .quote-notes-grid textarea {
+    min-height: 70px;
+    font-size: 16px; /* Avoid iOS input zoom. */
+  }
+
+  .quote-internal-pricing {
+    width: 100%;
+    max-width: none;
+    margin-bottom: 8px;
+  }
+
+  .quote-internal-pricing > summary {
+    min-height: 46px;
+  }
+
+  /* ------------------------------
+     Customer preview
+  ------------------------------ */
+  .customer-quote-paper {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 24px 18px 28px;
+    box-sizing: border-box;
+    box-shadow: 0 3px 14px rgba(42, 37, 29, .13);
+  }
+
+  .customer-quote-letterhead {
+    gap: 12px;
+    padding-bottom: 18px;
+  }
+
+  .customer-quote-row {
+    gap: 7px;
+    padding-inline: 5px;
+  }
+
+  .columns-q1-r1-a1 .customer-quote-row {
+    grid-template-columns: minmax(0, 1fr) 42px 62px 72px;
+  }
+
+  .columns-q1-r0-a1 .customer-quote-row {
+    grid-template-columns: minmax(0, 1fr) 42px 72px;
+  }
+
+  .columns-q0-r1-a1 .customer-quote-row {
+    grid-template-columns: minmax(0, 1fr) 62px 72px;
+  }
+
+  .customer-quote-total {
+    gap: 14px;
+  }
+
+  .customer-quote-total strong {
+    min-width: 92px;
+  }
+}
+
+@media (max-width: 430px) {
+  .quote-list-item {
+    min-width: 156px;
+    width: 156px;
+    flex-basis: 156px;
+  }
+
+  .quote-configuration-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .quote-configuration-strip > button {
+    padding-inline: 3px;
+  }
+
+  .quote-configuration-strip > button > small {
+    display: none;
+  }
+
+  .quote-area-actions button,
+  .view-split .quote-area-actions button {
+    min-width: 66px;
+    padding-inline: 6px;
+  }
+
+  .quote-general-other-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-line-editor.is-priced-line > .quote-line-main,
+  .view-split .quote-line-editor.is-priced-line > .quote-line-main {
+    grid-template-columns: minmax(0, 1fr) minmax(104px, 124px) 66px;
+  }
+
+  .quote-line-editor.is-priced-line.has-database-selection .quote-database-result {
+    grid-template-columns: minmax(0, 1fr) minmax(104px, 124px);
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-resting-total {
+    font-size: 10px;
+  }
+
+  .quote-line-reminders-overlay {
+    transform: scale(.94);
+    transform-origin: left bottom;
+  }
+
+  .quote-pricing-popover {
+    flex-direction: column;
+  }
+
+  .quote-pricing-popover > select,
+  .quote-pricing-popover .quote-qty-rate-stack,
+  .quote-pricing-popover .quote-money-input {
+    width: 100%;
+  }
+
+  .customer-quote-paper {
+    padding-inline: 14px;
+  }
+
+  .customer-quote-letterhead {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
