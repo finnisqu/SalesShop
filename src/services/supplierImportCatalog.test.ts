@@ -8,6 +8,7 @@ import {
 } from './supplierImportCatalog';
 import { getSupplierImportParser, getSupplierImportProfile, supplierImportProfiles } from './supplierImportParsers';
 import { VICOSTONE_PARSER_ID } from './vicostoneSupplierImport';
+import { SALESSHOP_TEMPLATE_PARSER_ID } from './salesShopMaterialTemplateImport';
 
 const publishedAt = '2026-10-06T21:30:00.000Z';
 let idCounter = 0;
@@ -302,6 +303,15 @@ describe('supplier import publishing policy', () => {
 });
 
 describe('supplier parser contract', () => {
+  it('registers the canonical SalesShop material template as the primary v4 profile', () => {
+    expect(supplierImportProfiles[0]).toMatchObject({
+      id: 'salesshop-material-template',
+      parserId: SALESSHOP_TEMPLATE_PARSER_ID,
+      fileTypeLabel: 'Material Import Template (.xlsx)',
+    });
+    expect(getSupplierImportParser(SALESSHOP_TEMPLATE_PARSER_ID).label).toBe('SalesShop Material Import Template v1.0');
+  });
+
   it('registers Vicostone as an explicit-listings-only parser', () => {
     const parser = getSupplierImportParser(VICOSTONE_PARSER_ID);
     expect(parser.label).toBe('Vicostone / UMI Fabricator PDF');
