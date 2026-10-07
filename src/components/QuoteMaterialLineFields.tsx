@@ -98,7 +98,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       .slice(0, 10);
   }, [activeMaterials, search]);
 
-  const applyMaterial = (material: StockMaterial, variantId?: string, purchaseOptionId?: string) => {
+  const applyMaterial = (material: StockMaterial, variantId?: string, purchaseOptionId?: string, keepSearching = false) => {
     const reference = resolveStockMaterialCostReference(material, variantId, purchaseOptionId);
     const variant = reference.variant ?? defaultMaterialVariant(material);
     const purchaseOption = reference.purchaseOption ?? defaultMaterialPurchaseOption(variant);
@@ -133,7 +133,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       amount: slabMode ? slabPricing?.customerTotal : line.amount,
     });
     setSearch('');
-    setSearching(false);
+    if (!keepSearching) setSearching(false);
   };
 
   const applyCustom = () => {
@@ -160,12 +160,12 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
     if (!selectedMaterial) return;
     const variant = (selectedMaterial.variants ?? []).find((candidate) => candidate.id === variantId && candidate.active !== false);
     const option = defaultMaterialPurchaseOption(variant);
-    applyMaterial(selectedMaterial, variant?.id, option?.id);
+    applyMaterial(selectedMaterial, variant?.id, option?.id, true);
   };
 
   const selectPurchaseOption = (purchaseOptionId: string) => {
     if (!selectedMaterial || !selectedVariant) return;
-    applyMaterial(selectedMaterial, selectedVariant.id, purchaseOptionId);
+    applyMaterial(selectedMaterial, selectedVariant.id, purchaseOptionId, true);
   };
 
   const snapshot = line.materialReference?.snapshot;
@@ -202,10 +202,10 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
             <button type="button" onClick={() => applyMaterial(selectedMaterial!, currentReference.variant?.id, currentReference.purchaseOption?.id)}>Update snapshot</button>
           )}
         </div>}
-        {selectedMaterial && activeVariants.length > 1 && <div className="quote-picker-options">
-          <label><span>Variant</span><select value={selectedVariant?.id ?? ''} onChange={(event) => selectVariant(event.target.value)}>
+        {selectedMaterial && (activeVariants.length > 1 || activeOptions.length > 1) && <div className="quote-picker-options">
+          {activeVariants.length > 1 && <label><span>Variant</span><select value={selectedVariant?.id ?? ''} onChange={(event) => selectVariant(event.target.value)}>
             {activeVariants.map((variant) => <option key={variant.id} value={variant.id}>{variantLabel(variant)}</option>)}
-          </select></label>
+          </select></label>}
           {selectedVariant && activeOptions.length > 1 && <label><span>Cost program</span><select value={selectedPurchaseOption?.id ?? ''} onChange={(event) => selectPurchaseOption(event.target.value)}>
             {activeOptions.map((option) => <option key={option.id} value={option.id}>{option.label}{option.minQuantity ? ` · ${option.minQuantity}+` : ''}</option>)}
           </select></label>}
@@ -247,7 +247,6 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   const quotedName = snapshot?.materialName ?? selectedMaterial?.name ?? customName ?? 'Custom material';
   const quotedBrand = snapshot?.brand ?? selectedMaterial?.brand;
   const quotedType = snapshot?.materialType ?? selectedMaterial?.materialType;
-  const quotedSupplier = snapshot?.supplier ?? selectedMaterial?.supplier;
   const quotedVariantLabel = snapshot?.variantLabel ?? variantLabel(selectedVariant);
   const quotedPurchaseLabel = snapshot?.purchaseOptionLabel ?? selectedPurchaseOption?.label;
   return (
