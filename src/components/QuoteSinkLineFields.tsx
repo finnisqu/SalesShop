@@ -74,6 +74,16 @@ export function QuoteSinkLineFields({ quoteId, line, editSignal = 0 }: { quoteId
     setSearching(true);
   }, [editSignal]);
 
+  useEffect(() => {
+    const collapse = () => {
+      if (!snapshot) return;
+      setSearching(false);
+      setSearch('');
+    };
+    window.addEventListener('sales-shop:quote-collapse-all', collapse);
+    return () => window.removeEventListener('sales-shop:quote-collapse-all', collapse);
+  }, [snapshot]);
+
   const activeModels = useMemo(() => models.filter((model) => model.active), [models]);
   const selectedModel = line.sinkReference?.sinkModelId
     ? activeModels.find((model) => model.id === line.sinkReference?.sinkModelId)
