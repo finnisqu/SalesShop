@@ -6,6 +6,7 @@ import {
 } from '../services/quoteSinkSnapshot';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
+import { compatibleAreaScopeFields } from '../services/quoteAreaScope';
 import {
   SINK_CATEGORY_LABELS,
   SINK_CONFIGURATION_LABELS,
@@ -97,7 +98,11 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
   const apply = (model: SinkModel, variant: SinkVariant) => {
     const nextSnapshot = createQuoteSinkSnapshot(model, variant);
     const patch = sinkSnapshotLinePatch(nextSnapshot);
-    updateLine(quoteId, line.id, { ...patch, quantity: line.quantity ?? 1 });
+    const nextLine = { ...line, ...patch } as QuoteLine;
+    const quantitySource = line.quantitySource && compatibleAreaScopeFields(nextLine).includes(line.quantitySource.field)
+      ? line.quantitySource
+      : undefined;
+    updateLine(quoteId, line.id, { ...patch, quantity: line.quantity ?? 1, quantitySource });
     setSearch('');
     setSearching(false);
   };
