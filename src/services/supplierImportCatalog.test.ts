@@ -6,7 +6,7 @@ import {
   buildSupplierImportPublishPlan,
   validateStagedAgainstCatalog,
 } from './supplierImportCatalog';
-import { getSupplierImportParser } from './supplierImportParsers';
+import { getSupplierImportParser, getSupplierImportProfile, supplierImportProfiles } from './supplierImportParsers';
 import { VICOSTONE_PARSER_ID } from './vicostoneSupplierImport';
 
 const publishedAt = '2026-10-06T21:30:00.000Z';
@@ -307,5 +307,18 @@ describe('supplier parser contract', () => {
     expect(parser.label).toBe('Vicostone / UMI Fabricator PDF');
     expect(parser.version).toBe(2);
     expect(parser.explicitListingsOnly).toBe(true);
+  });
+
+  it('registers Vicostone / UMI as the first reusable v4 import profile', () => {
+    expect(supplierImportProfiles).toHaveLength(1);
+    const profile = getSupplierImportProfile('vicostone-via-umi');
+    expect(profile).toMatchObject({
+      supplier: 'UMI',
+      brand: 'Vicostone',
+      materialType: 'Quartz',
+      parserId: VICOSTONE_PARSER_ID,
+      fileTypeLabel: 'Fabricator PDF',
+    });
+    expect(getSupplierImportParser(profile.parserId).id).toBe(VICOSTONE_PARSER_ID);
   });
 });
