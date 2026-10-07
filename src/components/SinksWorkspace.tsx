@@ -37,7 +37,7 @@ function variantSubtitle(variant: SinkVariant) {
   ].filter(Boolean).join(' · ');
 }
 
-export function SinksWorkspace() {
+export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
   const models = useSinkCatalogStore((state) => state.models);
   const hydrated = useSinkCatalogStore((state) => state.hydrated);
   const saving = useSinkCatalogStore((state) => state.saving);
@@ -100,7 +100,7 @@ export function SinksWorkspace() {
   if (!hydrated) return <div className="sinks-loading">Opening Sinks…</div>;
 
   return (
-    <main className={`sinks-workspace ${editing ? 'is-editing' : 'is-reference'}`}>
+    <main className={`sinks-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
       <header className="sinks-workspace-header">
         <div>
           <span className="board-eyebrow">Product catalog</span>
