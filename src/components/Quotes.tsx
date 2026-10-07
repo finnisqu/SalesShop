@@ -171,6 +171,22 @@ function LineEditor({
     return () => document.removeEventListener('pointerdown', closeOnOutside);
   }, [pricingEditing, pricingComplete]);
 
+  useEffect(() => {
+    const collapse = () => setPricingEditing(false);
+    const focusLine = (event: Event) => {
+      const detail = (event as CustomEvent<{ lineId?: string }>).detail;
+      if (detail?.lineId !== line.id) return;
+      setPricingEditing(true);
+      setEditSignal((value) => value + 1);
+    };
+    window.addEventListener('sales-shop:quote-collapse-all', collapse);
+    window.addEventListener('sales-shop:quote-focus-line', focusLine);
+    return () => {
+      window.removeEventListener('sales-shop:quote-collapse-all', collapse);
+      window.removeEventListener('sales-shop:quote-focus-line', focusLine);
+    };
+  }, [line.id]);
+
   const openLineEditor = () => {
     setPricingEditing(true);
     setEditSignal((value) => value + 1);
@@ -224,7 +240,12 @@ function LineEditor({
     });
   };
 
-  const beginDrag = (event: DragEvent<HTMLButtonElement>) => {
+  const beginDrag = (event: DragEvent<HTMLDivElement>) => {
+    const target = event.target as Element;
+    if (target.closest('input, textarea, select, button, a, [contenteditable="true"]')) {
+      event.preventDefault();
+      return;
+    }
     onDragStart(line.id);
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', line.id);
@@ -235,24 +256,13 @@ function LineEditor({
       ref={lineRef}
       className={`quote-line-editor kind-${line.kind} ${databaseSelected ? 'has-database-selection' : ''} ${pricingEditing ? 'is-line-editing' : ''} ${dragging ? 'is-dragging' : ''}`}
       data-quote-line-id={line.id}
+      draggable={!pricingEditing}
+      onDragStart={beginDrag}
+      onDragEnd={onDragEnd}
+      title={pricingEditing ? undefined : 'Drag row to reorder'}
       onDragOver={(event) => { if (dragActive) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; } }}
       onDrop={(event) => { if (dragActive) { event.preventDefault(); onDrop(line.id); } }}
     >
-      <button
-        type="button"
-        className="quote-line-drag-handle"
-        draggable
-        onDragStart={beginDrag}
-        onDragEnd={onDragEnd}
-        onKeyDown={(event) => {
-          if (event.key === 'ArrowUp') { event.preventDefault(); onMoveBy(line.id, -1); }
-          if (event.key === 'ArrowDown') { event.preventDefault(); onMoveBy(line.id, 1); }
-        }}
-        aria-label={`Reorder ${line.description || 'quote line'}`}
-        aria-keyshortcuts="ArrowUp ArrowDown"
-        title="Drag to reorder. With this handle focused, ↑ / ↓ also moves the row."
-      ><span aria-hidden="true">⠿</span></button>
-
       {textLine && <button type="button" className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`} onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })} title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}>{line.customerVisible ? '●' : '○'}</button>}
 
       <div className="quote-line-main">
