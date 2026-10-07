@@ -163,11 +163,13 @@ function LineEditor({
   useEffect(() => {
     if (!pricingEditing || !pricingComplete) return;
     const closeOnOutside = (event: PointerEvent) => {
-      if (!lineRef.current?.contains(event.target as Node)) setPricingEditing(false);
+      if (lineRef.current?.contains(event.target as Node)) return;
+      setPricingEditing(false);
+      window.dispatchEvent(new CustomEvent('sales-shop:quote-collapse-line', { detail: { lineId: line.id } }));
     };
     document.addEventListener('pointerdown', closeOnOutside);
     return () => document.removeEventListener('pointerdown', closeOnOutside);
-  }, [pricingEditing, pricingComplete]);
+  }, [pricingEditing, pricingComplete, line.id]);
 
   useEffect(() => {
     const collapse = () => setPricingEditing(false);
