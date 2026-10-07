@@ -190,7 +190,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
         </div>
       ) : null}
 
-      {comparison?.changed && currentSnapshot && (
+      {comparison?.changed && currentSnapshot && selectedModel && selectedVariant && (
         <div className="quote-sink-change-state is-changed">
           <div>
             <strong>Sink catalog changed</strong>
