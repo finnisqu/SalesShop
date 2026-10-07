@@ -137,7 +137,7 @@ function CandidateDetails({ candidate, reviewMode }: { candidate: SupplierImport
                     <span>{option.minQuantity ? `${option.minQuantity}+` : 'Standard qty'}</span>
                     <span className="supplier-import-price-value">
                       {effective === undefined ? '—' : `${money.format(effective)}/SF`}
-                      <small className="supplier-import-source-note">{provenance === 'supplier-listed' ? 'listed' : 'derived from listed unit price'}</small>
+                      <small className="supplier-import-source-note">{provenance === 'supplier-listed' ? 'listed' : provenance === 'manual' ? 'manual' : 'derived from listed unit price'}</small>
                     </span>
                     <span className="supplier-import-price-value">
                       {option.costPerUnit === undefined ? '—' : `${money.format(option.costPerUnit)}/${option.pricingBasis.replace('-', ' ')}`}
@@ -435,7 +435,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
               <section className="supplier-import-session-summary">
                 <div className="supplier-import-source-meta">
                   <strong>{session.source.brand} · {session.source.supplier}</strong>
-                  <span>{session.source.fileName} · {formatBytes(session.source.fileSize)} · {session.source.pageCount} page{session.source.pageCount === 1 ? '' : 's'}</span>
+                  <span>{session.source.fileName} · {formatBytes(session.source.fileSize)}{session.source.parserId.includes('template') ? ' · canonical workbook' : ` · ${session.source.pageCount} page${session.source.pageCount === 1 ? '' : 's'}`}</span>
                   <span>{session.source.priceListLabel || 'Price-list date not detected'}{session.source.effectiveDate ? ` · effective ${session.source.effectiveDate}` : ' · effective date not confirmed'}</span>
                 </div>
                 <div className="supplier-import-counts supplier-import-change-counts">
