@@ -294,10 +294,9 @@ export function MaterialsWorkspace() {
                         setDraggingKey(null);
                       }}
                     >
-                      <span
+                      <button
+                        type="button"
                         className="materials-card-drag-handle"
-                        role="button"
-                        tabIndex={0}
                         draggable
                         title="Drag to reorder comparison cards"
                         aria-label={`Reorder ${material.name} ${variantSpec(variant)}`}
@@ -316,7 +315,7 @@ export function MaterialsWorkspace() {
                             nudgePinned(key, 1);
                           }
                         }}
-                      >⠿</span>
+                      >⠿</button>
                       <button type="button" className="materials-unpin" onClick={() => togglePin(material.id, variant.id)} aria-label={`Unpin ${material.name} ${variantSpec(variant)}`}>×</button>
                       <span>{material.supplier || 'Unknown supplier'} · {material.materialType}</span>
                       <strong>{material.name}</strong>
