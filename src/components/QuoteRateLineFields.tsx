@@ -154,7 +154,7 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
     <div className="quote-rate-selection quote-database-result">
       <div className="quote-rate-selection-main">
         <div className="quote-product-name-row">
-          <strong>{snapshot?.name ?? 'Choose rate'}</strong>
+          <strong>{snapshot?.name ?? 'Rate'}</strong>
           <button type="button" className="quote-product-pencil" onClick={() => {
             window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
             setSearch('');
@@ -164,13 +164,22 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
         {snapshot && <small>{[snapshot.code, RATE_BOOK_CATEGORY_LABELS[snapshot.category], unit].filter(Boolean).join(' · ')}</small>}
       </div>
 
-      {snapshot && <div className="quote-rate-reference">
-        <span>{snapshot.pricingBehavior === 'cost-reference' ? 'Internal cost' : 'Quoted rate'}</span>
-        <strong>{snapshot.pricingBehavior === 'cost-reference'
-          ? snapshot.internalCost === undefined ? '—' : `${money.format(snapshot.internalCost)}/${unit}`
-          : snapshot.sellRate === undefined ? 'Manual' : `${money.format(snapshot.sellRate)}/${unit}`}</strong>
-        <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
-      </div>}
+      <div className={`quote-rate-reference ${snapshot ? '' : 'is-empty'}`}>
+        {snapshot ? (
+          <>
+            <span>{snapshot.pricingBehavior === 'cost-reference' ? 'Internal cost' : 'Quoted rate'}</span>
+            <strong>{snapshot.pricingBehavior === 'cost-reference'
+              ? snapshot.internalCost === undefined ? '—' : `${money.format(snapshot.internalCost)}/${unit}`
+              : snapshot.sellRate === undefined ? 'Manual' : `${money.format(snapshot.sellRate)}/${unit}`}</strong>
+            <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
+          </>
+        ) : (
+          <>
+            <strong>Choose rate</strong>
+            <small>Rate Book</small>
+          </>
+        )}
+      </div>
 
       {snapshot?.pricingBehavior === 'cost-reference' && <span className="quote-source-status">Internal only</span>}
       {snapshot && !selectedItem && <span className="quote-source-status is-warning">Source unavailable</span>}
