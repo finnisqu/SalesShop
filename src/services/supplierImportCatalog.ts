@@ -55,6 +55,10 @@ function optionIdentity(option: MaterialPurchaseOption) {
   return normalized(option.label);
 }
 
+function materialIdentity(material: Pick<StockMaterial, 'brand' | 'materialType' | 'name'>) {
+  return [normalized(material.brand), normalized(material.materialType), normalized(material.name)].join('|');
+}
+
 function materialSkuSet(material: StockMaterial) {
   return new Set([
     material.sku,
@@ -283,6 +287,11 @@ export function validateStagedAgainstCatalog(session: SupplierImportSession, cat
     }
     if (candidate.status !== 'new') return;
 
+    const identityCollision = catalog.find((material) => materialIdentity(material) === materialIdentity(candidate.material));
+    if (identityCollision) {
+      throw new Error(`${candidate.material.brand || 'Unknown brand'} ${candidate.material.name} now matches an existing Material Catalog record by Brand / Type / Color. Refresh Rates and stage the supplier template again before publishing.`);
+    }
+
     const incomingSkus = materialSkuSet(candidate.material);
     if (!incomingSkus.size) return;
     const collision = catalog.find((material) => {
@@ -290,7 +299,7 @@ export function validateStagedAgainstCatalog(session: SupplierImportSession, cat
       return [...incomingSkus].some((sku) => existingSkus.has(sku));
     });
     if (collision) {
-      throw new Error(`${candidate.material.name} now overlaps ${collision.name} by SKU. Refresh Rates and stage the supplier sheet again before publishing.`);
+      throw new Error(`${candidate.material.name} now overlaps ${collision.name} by SKU. Refresh Rates and stage the supplier template again before publishing.`);
     }
   });
 }
