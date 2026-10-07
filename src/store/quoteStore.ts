@@ -60,6 +60,7 @@ interface QuoteState {
   deleteLine: (quoteId: string, lineId: string) => void;
   addSection: (quoteId: string) => string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
+  reorderSection: (quoteId: string, sectionId: string, targetSectionId: string) => void;
   deleteSection: (quoteId: string, sectionId: string) => void;
   setCustomerColumns: (quoteId: string, patch: Partial<QuoteCustomerColumns>) => void;
   recordSent: (quoteId: string) => Promise<void>;
@@ -511,6 +512,25 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
           sections: quote.sections.map((section) => section.id === sectionId ? { ...section, ...patch } : section),
           updatedAt: timestamp,
         }
+      : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes, ...history });
+  },
+
+  reorderSection: (quoteId, sectionId, targetSectionId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current) || sectionId === targetSectionId) return;
+    const sections = [...current.sections];
+    const fromIndex = sections.findIndex((section) => section.id === sectionId);
+    const targetIndex = sections.findIndex((section) => section.id === targetSectionId);
+    if (fromIndex < 0 || targetIndex < 0) return;
+    const [moved] = sections.splice(fromIndex, 1);
+    if (!moved) return;
+    sections.splice(targetIndex, 0, moved);
+    const history = historyPatch(get(), quoteId, current);
+    const timestamp = now();
+    const quotes = get().quotes.map((quote) => quote.id === quoteId
+      ? { ...quote, sections, updatedAt: timestamp }
       : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes, ...history });
