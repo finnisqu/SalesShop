@@ -21,7 +21,7 @@ type OverrideFilter = 'all' | 'has' | 'base';
 const CATEGORY_TABS: Array<[ReferenceCategory, string]> = [
   ['all', 'All Rates'],
   ['fabrication-install', 'Fab & Install'],
-  ['sink', 'Sinks'],
+  ['sink', 'Sink Services'],
   ['add-on', 'Add-ons'],
   ['material', 'Material Pricing'],
 ];
