@@ -174,7 +174,7 @@ function LineEditor({
         <textarea value={line.description} onChange={(event) => updateLine(quote.id, line.id, { description: event.target.value })} rows={textLine ? 2 : 1} aria-label="Line description" />
       </div>
       {!textLine && (
-        <div className="quote-line-pricing">
+        <div className={`quote-line-pricing ${manualCostLine ? 'has-internal-cost' : ''}`}>
           <select value={line.pricingMode} onChange={(event) => changePricingMode(event.target.value as QuotePricingMode)} aria-label="Pricing mode">
             {materialLine && <option value="quantity-rate">Qty × Rate</option>}
             {materialLine && <option value="slab-multiplier">Slab × Mult.</option>}
