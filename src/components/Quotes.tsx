@@ -193,10 +193,9 @@ function LineEditor({
       ><span aria-hidden="true">⋮⋮</span></button>
       {textLine && <button type="button" className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`} onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })} title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}>{line.customerVisible ? '●' : '○'}</button>}
       <div className="quote-line-main">
-        <div className="quote-line-topline">
-          {!databaseSelected && <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>}
-          <select value={line.sectionId ?? ''} onChange={(event) => updateLine(quote.id, line.id, { sectionId: event.target.value || undefined, quantitySource: undefined })} aria-label="Quote area"><option value="">General / no area</option>{quote.sections.map((section) => <option key={section.id} value={section.id}>{section.title}</option>)}</select>
-        </div>
+        {!databaseSelected && <div className="quote-line-topline">
+          <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>
+        </div>}
         {materialLine && <QuoteMaterialLineFields quoteId={quote.id} line={line} />}
         {sinkLine && <QuoteSinkLineFields quoteId={quote.id} line={line} />}
         {rateLine && <QuoteRateLineFields quote={quote} line={line} />}
@@ -261,8 +260,7 @@ function LineEditor({
               <small>Private total</small>
             </label>
           )}
-          <label className="quote-line-toggle" title="Show this line on the customer quote. Area total-only mode hides its detail while preserving this preference."><input type="checkbox" checked={line.customerVisible} onChange={(event) => updateLine(quote.id, line.id, { customerVisible: event.target.checked })} /> Show</label>
-          <label className="quote-line-toggle" title="Include this line's price in quote and area totals."><input type="checkbox" checked={line.includeInTotal} onChange={(event) => updateLine(quote.id, line.id, { includeInTotal: event.target.checked })} /> Include</label>
+
         </div>
       )}
       <button type="button" className="quote-line-delete" onClick={() => deleteLine(quote.id, line.id)} title="Delete row">×</button>
@@ -294,13 +292,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
         <button type="button" className={`quote-area-scope-toggle ${scopeOpen ? 'active' : ''}`} onClick={() => setScopeOpen((value) => !value)}>
           {summary ? `Scope · ${summary}` : 'Add area scope'}
         </button>
-        <label className="quote-area-customer-mode">
-          <span>Customer</span>
-          <select value={section.customerDisplayMode ?? 'detail'} onChange={(event) => updateSection(quote.id, section.id, { customerDisplayMode: event.target.value as 'detail' | 'summary' })}>
-            <option value="detail">Detailed lines</option>
-            <option value="summary">Area total only</option>
-          </select>
-        </label>
+
       </div>
       <div className="quote-area-summary"><span>{lines.length} item{lines.length === 1 ? '' : 's'}</span><strong>{money.format(quoteLinesTotal(lines))}</strong></div>
       <div className="quote-area-actions"><button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button><button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button><button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button><button type="button" onClick={() => onAddLine('item', section.id)}>+ Line</button><button type="button" onClick={() => onAddLine('scope', section.id)}>+ Scope</button></div>
