@@ -190,7 +190,11 @@ describe('SalesShop canonical material template importer', () => {
   });
 
   it('publishes row-level source provenance into price history metadata', async () => {
-    const session = await stageSalesShopMaterialTemplate(await makeTemplateFile([baseRow]), []);
+    const staged = await stageSalesShopMaterialTemplate(await makeTemplateFile([baseRow]), []);
+    const session = {
+      ...staged,
+      candidates: staged.candidates.map((candidate) => ({ ...candidate, reviewDecision: 'approved' as const })),
+    };
     const plan = buildSupplierImportPublishPlan(session, [], {
       publicationId: 'pub-template-1',
       publishedAt: '2026-10-07T12:00:00.000Z',
