@@ -4,6 +4,21 @@ export type SupplierImportStatus = 'new' | 'changed' | 'unchanged' | 'possible-d
 export type SupplierImportConfidence = 'high' | 'medium' | 'low';
 export type SupplierImportReviewDecision = 'pending' | 'approved' | 'needs-review' | 'ignored';
 export type SupplierImportPriceProvenance = 'supplier-listed' | 'derived-from-listed-unit' | 'manual';
+export type SupplierImportIssueSeverity = 'blocking' | 'warning';
+export type SupplierImportIssueScope = 'row' | 'material' | 'variant' | 'purchase';
+export type SupplierImportIssueResolution = 'unresolved' | 'resolved' | 'ignored';
+
+export interface SupplierImportValidationIssue {
+  id: string;
+  severity: SupplierImportIssueSeverity;
+  scope: SupplierImportIssueScope;
+  message: string;
+  field?: 'supplier' | 'collection' | 'supplierGroup' | 'sku';
+  rowNumbers?: number[];
+  values?: string[];
+  resolution?: SupplierImportIssueResolution;
+  resolutionValue?: string;
+}
 
 export interface SupplierImportSource {
   parserId: string;
@@ -46,6 +61,7 @@ export interface SupplierImportCandidate {
   warnings: string[];
   reviewDecision?: SupplierImportReviewDecision;
   attentionReasons?: string[];
+  validationIssues?: SupplierImportValidationIssue[];
   variantDecisions?: Record<string, SupplierImportReviewDecision>;
   priceDecisions?: Record<string, SupplierImportReviewDecision>;
   priceEvidence?: Record<string, SupplierImportPriceEvidence>;
