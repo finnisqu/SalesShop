@@ -80,10 +80,11 @@ function compareOptionalNumbers(left?: number, right?: number) {
   return left - right;
 }
 
-export function MaterialsWorkspace() {
+export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
   const settings = useCompanySettingsStore((state) => state.settings);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
   const [sectionView, setSectionView] = useState<'catalog' | 'suppliers'>(() => {
+    if (embedded) return 'catalog';
     try { return localStorage.getItem(MATERIALS_SECTION_KEY) === 'suppliers' ? 'suppliers' : 'catalog'; } catch { return 'catalog'; }
   });
   const [editing, setEditing] = useState(false);
@@ -120,8 +121,9 @@ export function MaterialsWorkspace() {
   }, [pinnedKeys]);
 
   useEffect(() => {
+    if (embedded) return;
     try { localStorage.setItem(MATERIALS_SECTION_KEY, sectionView); } catch { /* best-effort UI continuity */ }
-  }, [sectionView]);
+  }, [embedded, sectionView]);
 
   const materialTypes = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.materialType))].sort(), [settings.stockMaterials]);
   const brands = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.brand?.trim()).filter((value): value is string => Boolean(value)))].sort(), [settings.stockMaterials]);
@@ -226,7 +228,7 @@ export function MaterialsWorkspace() {
   };
 
   return (
-    <main className={`rates-workspace materials-workspace ${editing ? 'is-editing' : 'is-reference'}`}>
+    <main className={`rates-workspace materials-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
       <header className="rates-workspace-header">
         <div>
           <span className="board-eyebrow">Supplier material library</span>
@@ -256,7 +258,7 @@ export function MaterialsWorkspace() {
         </div>
       </header>
 
-      <nav className="materials-subtabs" aria-label="Materials workspace sections">
+      {!embedded && <nav className="materials-subtabs" aria-label="Materials workspace sections">
         <button
           type="button"
           className={sectionView === 'catalog' ? 'active' : ''}
@@ -267,7 +269,7 @@ export function MaterialsWorkspace() {
           className={sectionView === 'suppliers' ? 'active' : ''}
           onClick={() => { setEditing(false); setSectionView('suppliers'); }}
         >Suppliers</button>
-      </nav>
+      </nav>}
 
       {sectionView === 'catalog' && <section className="rates-reference-controls rates-shared-controls materials-controls">
         <div className="rates-reference-tools materials-reference-tools">
