@@ -470,7 +470,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
         <button type="button" onClick={() => onMoveArea?.(-1)} title="Move Area up" aria-label="Move Area up">↑</button>
         <button type="button" onClick={() => onMoveArea?.(1)} title="Move Area down" aria-label="Move Area down">↓</button>
       </div>
-      <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}` onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
+      <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`} onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
 
       <div className="quote-area-title">
         <div className="quote-area-kicker">
