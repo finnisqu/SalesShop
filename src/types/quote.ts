@@ -1,4 +1,9 @@
-import type { RateBookDivision, RateBookPricingBehavior } from './rateBook';
+import type {
+  RateBookCategory,
+  RateBookDivision,
+  RateBookPricingBehavior,
+  RateBookUnit,
+} from './rateBook';
 
 export const QUOTE_STATUSES = ['Draft', 'Ready', 'Sent', 'Viewed', 'Signed', 'Declined', 'Expired'] as const;
 export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
@@ -49,7 +54,7 @@ export type PricingMaterialType =
   | 'Other';
 export type PricingDetailsLayout = 'inline' | 'list';
 
-export type QuoteLineKind = 'item' | 'material' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
+export type QuoteLineKind = 'item' | 'material' | 'rate' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
 export type QuotePricingMode = 'direct' | 'quantity-rate' | 'slab-multiplier' | 'none';
 
 export interface QuoteCustomerColumns {
@@ -99,6 +104,27 @@ export interface QuoteMaterialCostSnapshot {
   sourceProvenance?: string;
 }
 
+export interface QuoteRateSnapshot {
+  capturedAt: string;
+  rateBookItemId: string;
+  category: RateBookCategory;
+  name: string;
+  code?: string;
+  unit: RateBookUnit;
+  pricingBehavior: RateBookPricingBehavior;
+  pricingDivision?: RateBookDivision;
+  internalCost?: number;
+  sellRate?: number;
+  effectiveDate?: string;
+  notes?: string;
+  sourceUpdatedAt?: string;
+}
+
+export interface QuoteLineRateReference {
+  rateBookItemId?: string;
+  snapshot?: QuoteRateSnapshot;
+}
+
 export interface QuoteLineMaterialReference {
   materialId?: string;
   customMaterialName?: string;
@@ -130,6 +156,7 @@ export interface QuoteLine {
   customerVisible: boolean;
   includeInTotal: boolean;
   materialReference?: QuoteLineMaterialReference;
+  rateReference?: QuoteLineRateReference;
 }
 
 export type PricingScheduleColumnMapping = Partial<Record<PricingScheduleField, number>>;
