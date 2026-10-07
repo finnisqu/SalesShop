@@ -182,6 +182,7 @@ function LineEditor({
   const rateLine = line.kind === 'rate';
   const manualCostLine = line.kind === 'item' && line.pricingMode !== 'none';
   const catalogLine = materialLine || sinkLine || rateLine;
+  const pricedLine = !textLine;
   const databaseSelected = Boolean(
     line.materialReference?.materialId
     || line.materialReference?.customMaterialName
@@ -197,7 +198,7 @@ function LineEditor({
   const pricingComplete = quoteLinePricingComplete(line, guideMultiplier);
   const pricingSummary = quoteLinePricingSummary(line, guideMultiplier);
   const reminders = quoteLineReminderLabels(line, pricingComplete, Boolean(quantityScopeState?.changed));
-  const showPricingEditor = catalogLine ? pricingEditing : !textLine;
+  const showPricingEditor = pricedLine && pricingEditing;
 
   useEffect(() => {
     if (!pricingEditing) return;
@@ -298,7 +299,7 @@ function LineEditor({
   return (
     <div
       ref={lineRef}
-      className={`quote-line-editor kind-${line.kind} ${catalogLine ? 'is-catalog-line' : ''} ${databaseSelected ? 'has-database-selection' : ''} ${pricingEditing ? 'is-line-editing' : ''} ${issueGuide ? 'has-active-issue-guide' : ''} ${dragging ? 'is-dragging' : ''}`}
+      className={`quote-line-editor kind-${line.kind} ${pricedLine ? 'is-priced-line' : ''} ${catalogLine ? 'is-catalog-line' : ''} ${databaseSelected ? 'has-database-selection' : ''} ${pricingEditing ? 'is-line-editing' : ''} ${issueGuide ? 'has-active-issue-guide' : ''} ${dragging ? 'is-dragging' : ''}`}
       data-quote-line-id={line.id}
       draggable={!pricingEditing}
       onDragStart={beginDrag}
@@ -307,20 +308,31 @@ function LineEditor({
       onDragOver={(event) => { if (dragActive) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; } }}
       onDrop={(event) => { if (dragActive) { event.preventDefault(); onDrop(line.id); } }}
     >
-      {textLine && <button type="button" className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`} onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })} title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}>{line.customerVisible ? '●' : '○'}</button>}
-
       <div className="quote-line-main">
         {!databaseSelected && <div className="quote-line-topline">
           <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>
-        </div>}
+          {textLine && <button
+            type="button"
+            className={`quote-line-eye ${line.customerVisible ? 'is-visible' : 'is-hidden'}`}
+            onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })}
+            title={line.customerVisible ? 'Shown on customer quote' : 'Hidden from customer quote'}
+            aria-label={line.customerVisible ? 'Hide from customer quote' : 'Show on customer quote'}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+              <circle cx="12" cy="12" r="2.7" />
+              {!line.customerVisible && <path className="quote-line-eye-slash" d="M4 4l16 16" />}
+            </svg>
+          </button>}
+        </div>
 
         {materialLine && <QuoteMaterialLineFields quoteId={quote.id} line={line} />}
         {sinkLine && <QuoteSinkLineFields quoteId={quote.id} line={line} />}
         {rateLine && <QuoteRateLineFields quote={quote} line={line} />}
 
-        {catalogLine && line.pricingMode !== 'none' && <strong className="quote-line-resting-total">{pricingComplete ? money.format(quoteLineAmount(line)) : '—'}</strong>}
+        {pricedLine && line.pricingMode !== 'none' && <strong className="quote-line-resting-total">{pricingComplete ? money.format(quoteLineAmount(line)) : '—'}</strong>}
 
-        {catalogLine && (
+        {pricedLine && (
           <div className={`quote-line-resting-pricing ${pricingEditing ? 'is-open' : ''}`}>
             <div className="quote-pricing-passive">
               <span>{pricingSummary}</span>
@@ -329,7 +341,7 @@ function LineEditor({
           </div>
         )}
 
-        {catalogLine && reminders.length > 0 && (
+        {pricedLine && reminders.length > 0 && (
           <div className="quote-line-reminders quote-line-reminders-overlay">{reminders.map((label) => <span key={label}>{label}</span>)}</div>
         )}
 
@@ -337,7 +349,7 @@ function LineEditor({
       </div>
 
       {!textLine && showPricingEditor && (
-        <div ref={catalogLine ? pricingPopoverRef : undefined} className={`quote-line-pricing is-editing ${catalogLine ? 'quote-pricing-popover' : ''} ${manualCostLine ? 'has-internal-cost' : ''}`} onFocusCapture={() => setPricingEditing(true)}>
+        <div ref={pricedLine ? pricingPopoverRef : undefined} className={`quote-line-pricing is-editing ${pricedLine ? 'quote-pricing-popover' : ''} ${manualCostLine ? 'has-internal-cost' : ''}`} onFocusCapture={() => setPricingEditing(true)}>
           <select value={line.pricingMode} onChange={(event) => changePricingMode(event.target.value as QuotePricingMode)} aria-label="Pricing mode">
             {materialLine && <option value="quantity-rate">Qty × Rate</option>}
             {materialLine && <option value="slab-multiplier">Slab × Mult.</option>}
