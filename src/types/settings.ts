@@ -12,6 +12,8 @@ export interface MaterialPriceSource {
   supplier?: string;
   brand?: string;
   sourceFileName?: string;
+  sourcePageSheet?: string;
+  sourceReference?: string;
   priceListLabel?: string;
   effectiveDate?: string;
   recordedAt: string;
