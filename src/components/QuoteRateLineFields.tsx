@@ -82,6 +82,18 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
   if (searching || !snapshot) {
     return (
       <div className="quote-rate-picker">
+        {snapshot && <div className="quote-picker-current">
+          <div>
+            <span>Current rate</span>
+            <strong>{snapshot.name}</strong>
+            <small>{[
+              snapshot.code,
+              RATE_BOOK_CATEGORY_LABELS[snapshot.category],
+              RATE_BOOK_UNIT_LABELS[snapshot.unit],
+            ].filter(Boolean).join(' · ')}</small>
+          </div>
+          {comparison?.changed && currentSnapshot && selectedItem && <button type="button" onClick={refresh}>Update snapshot</button>}
+        </div>}
         <div className="quote-rate-search-row">
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search Rates: fabrication, sink, splash…" aria-label="Search Rate Book" />
           {snapshot && <button type="button" onClick={() => setSearching(false)}>Cancel</button>}
@@ -109,45 +121,26 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
   const sourceDate = displayDate(snapshot.effectiveDate);
 
   return (
-    <div className="quote-rate-selection">
+    <div className="quote-rate-selection quote-database-result">
       <div className="quote-rate-selection-main">
-        <span>Rate Book</span>
+        <span>Rate</span>
         <strong>{snapshot.name}</strong>
         <small>{[snapshot.code, RATE_BOOK_CATEGORY_LABELS[snapshot.category], unit].filter(Boolean).join(' · ')}</small>
       </div>
+
       <div className="quote-rate-reference">
         <span>{snapshot.pricingBehavior === 'cost-reference' ? 'Internal cost' : 'Quoted rate'}</span>
         <strong>{snapshot.pricingBehavior === 'cost-reference'
           ? snapshot.internalCost === undefined ? '—' : `${money.format(snapshot.internalCost)}/${unit}`
           : snapshot.sellRate === undefined ? 'Manual' : `${money.format(snapshot.sellRate)}/${unit}`}</strong>
-        <small>{sourceDate ? `Effective ${sourceDate}` : 'Current Rate Book snapshot'}</small>
+        <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
       </div>
-      {snapshot.pricingBehavior === 'cost-reference' && (
-        <div className="quote-rate-cost-note">
-          <strong>Internal reference only</strong>
-          <small>Hidden from customer and excluded from quote total until you deliberately price it.</small>
-        </div>
-      )}
-      {snapshot && !selectedItem && (
-        <div className="quote-rate-change-state is-unavailable">
-          <strong>Rate Book item unavailable</strong>
-          <small>The quoted snapshot is retained.</small>
-        </div>
-      )}
-      {comparison?.changed && currentSnapshot && (
-        <div className="quote-rate-change-state is-changed">
-          <div>
-            <strong>Rate Book changed</strong>
-            <small>{currentSnapshot.sellRate !== undefined
-              ? `Now ${money.format(currentSnapshot.sellRate)}/${RATE_BOOK_UNIT_LABELS[currentSnapshot.unit]}`
-              : currentSnapshot.internalCost !== undefined
-                ? `Current cost ${money.format(currentSnapshot.internalCost)}/${RATE_BOOK_UNIT_LABELS[currentSnapshot.unit]}`
-                : 'Current rate needs review'}</small>
-          </div>
-          <button type="button" onClick={refresh}>Update quote snapshot</button>
-        </div>
-      )}
-      <button type="button" className="quote-rate-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
+
+      {snapshot.pricingBehavior === 'cost-reference' && <span className="quote-source-status">Internal only</span>}
+      {!selectedItem && <span className="quote-source-status is-warning">Source unavailable</span>}
+      {comparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
+
+      <button type="button" className="quote-rate-change quote-database-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
     </div>
   );
 }
