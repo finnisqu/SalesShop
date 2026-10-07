@@ -57,7 +57,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
   const updateLine = useQuoteStore((state) => state.updateLine);
   const snapshot = line.sinkReference?.snapshot;
   const [search, setSearch] = useState('');
-  const [searching, setSearching] = useState(false);
+  const [searching, setSearching] = useState(!snapshot);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { void hydrate(); }, [hydrate]);
