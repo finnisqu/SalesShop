@@ -333,6 +333,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
         <div className="quote-product-name-row">
           <strong>{[quotedBrand, quotedName].filter(Boolean).join(' ')}</strong>
           <button type="button" className="quote-product-pencil" onClick={() => {
+            window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
             setSearch('');
             setPendingMaterialId(null);
             setPendingVariantId(null);
