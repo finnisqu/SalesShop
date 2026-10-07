@@ -196,6 +196,49 @@ describe('quote revision snapshots', () => {
     expect(frozen.lines[0].sinkReference?.snapshot?.internalCost).toBe(110);
     expect(frozen.lines[0].sinkReference?.snapshot?.variantLabel).toBe('Standard 50/50');
   });
+
+  it('freezes area scope and line quantity provenance inside revisions', () => {
+    const subject = quote({
+      sections: [{
+        id: 'section-1',
+        title: 'Kitchen',
+        customerVisible: true,
+        scope: {
+          countertopSf: 62,
+          splashLf: 18,
+          kitchenSinkCount: 1,
+          cutoutCount: 2,
+        },
+      }],
+      lines: [line({
+        sectionId: 'section-1',
+        pricingMode: 'quantity-rate',
+        quantity: 62,
+        rate: 20,
+        amount: undefined,
+        quantitySource: {
+          kind: 'area-scope',
+          sectionId: 'section-1',
+          field: 'countertopSf',
+          capturedValue: 62,
+          appliedAt: '2026-10-07T18:40:00.000Z',
+        },
+      })],
+    });
+    const frozen = createQuoteRevisionSnapshot(subject, '2026-10-07T18:45:00.000Z', 'Sent');
+
+    subject.sections[0].scope!.countertopSf = 68;
+    subject.lines[0].quantity = 68;
+    subject.lines[0].quantitySource!.capturedValue = 68;
+
+    expect(frozen.customerTotal).toBe(1240);
+    expect(frozen.sections[0].scope?.countertopSf).toBe(62);
+    expect(frozen.sections[0].scope?.cutoutCount).toBe(2);
+    expect(frozen.lines[0].quantity).toBe(62);
+    expect(frozen.lines[0].quantitySource?.field).toBe('countertopSf');
+    expect(frozen.lines[0].quantitySource?.capturedValue).toBe(62);
+  });
+
 });
 
 describe('quote lifecycle integrity', () => {
