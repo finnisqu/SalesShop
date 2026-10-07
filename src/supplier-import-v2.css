@@ -1657,3 +1657,159 @@
   font-size: 10px;
   font-weight: 850;
 }
+
+
+/* Importer v4.3 — permissive staging with explicit issue resolution */
+.supplier-import-validation-issues {
+  margin-bottom: 10px;
+  border: 1px solid rgba(165, 121, 27, .22);
+  background: rgba(255, 248, 222, .58);
+}
+
+.supplier-import-validation-issues > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(165, 121, 27, .16);
+}
+
+.supplier-import-validation-issues > header strong {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+
+.supplier-import-validation-issues > header span {
+  color: #8b6a26;
+  font-size: 8.5px;
+  font-weight: 750;
+}
+
+.supplier-import-validation-issues > div {
+  display: grid;
+  gap: 7px;
+  padding: 8px;
+}
+
+.supplier-import-validation-issue {
+  padding: 9px 10px;
+  border: 1px solid rgba(61, 54, 45, .13);
+  background: #fffdf7;
+}
+
+.supplier-import-validation-issue.is-unresolved {
+  border-left: 4px solid #bd8230;
+  background: #fff8df;
+}
+
+.supplier-import-validation-issue.is-resolved {
+  border-left: 4px solid #6f9164;
+  background: #f1f6ed;
+}
+
+.supplier-import-validation-issue > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.supplier-import-validation-issue > header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.supplier-import-validation-issue > header strong {
+  font-size: 9.5px;
+}
+
+.supplier-import-validation-issue > header span,
+.supplier-import-validation-issue > p,
+.supplier-import-validation-issue small {
+  color: #756c60;
+  font-size: 8.5px;
+  line-height: 1.4;
+}
+
+.supplier-import-validation-issue > header > span {
+  flex: 0 0 auto;
+  color: #8a621e;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+}
+
+.supplier-import-validation-issue > p {
+  margin: 6px 0 0;
+}
+
+.supplier-import-issue-resolution {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.supplier-import-issue-resolution label {
+  min-width: min(360px, 100%);
+  display: grid;
+  gap: 3px;
+  flex: 1 1 280px;
+}
+
+.supplier-import-issue-resolution label > span {
+  color: #7c7367;
+  font-size: 7.5px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.supplier-import-issue-resolution select {
+  min-height: 31px;
+  width: 100%;
+  border: 1px solid rgba(61, 54, 45, .16);
+  border-radius: 4px;
+  background: #fffdf7;
+  color: #514a40;
+  padding: 0 8px;
+  font-size: 9px;
+}
+
+.supplier-import-issue-resolution button {
+  min-height: 31px;
+  padding: 0 10px;
+  border: 1px solid rgba(61, 54, 45, .18);
+  border-radius: 4px;
+  background: #fffdf7;
+  color: #514a40;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.supplier-import-issue-resolution button.ready {
+  border-color: rgba(75, 111, 65, .26);
+  background: #edf5e9;
+  color: #496342;
+}
+
+.supplier-import-row-actions button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .supplier-import-validation-issues > header,
+  .supplier-import-validation-issue > header,
+  .supplier-import-issue-resolution {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .supplier-import-issue-resolution label,
+  .supplier-import-issue-resolution button {
+    width: 100%;
+  }
+}
