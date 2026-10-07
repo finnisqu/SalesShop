@@ -1603,3 +1603,145 @@
     min-width: 38px;
   }
 }
+
+
+/* GENERAL mirrors named Area headers.
+   Common add actions live in the header; uncommon row types tuck into + OTHER. */
+.quote-general-header {
+  position: relative;
+}
+
+.quote-general-header-spacer {
+  grid-column: 1;
+  grid-row: 1;
+  width: 18px;
+  height: 18px;
+}
+
+.quote-general-title {
+  min-width: 0;
+}
+
+.quote-general-title > strong {
+  display: block;
+  overflow: hidden;
+  color: #484138;
+  font: 700 13px/1.05 Georgia, serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-general-title > small {
+  display: block;
+  margin-top: 1px;
+  overflow: hidden;
+  color: #918879;
+  font: italic 6.6px/1.2 Georgia, serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-general-header-end-spacer {
+  grid-column: 5;
+  grid-row: 1;
+  width: 18px;
+  height: 18px;
+}
+
+.quote-general-header .quote-area-actions > button.active {
+  border-color: rgba(139, 112, 53, .32);
+  background: #fff5d9;
+  color: #665426;
+}
+
+.quote-general-other-popover {
+  position: absolute;
+  z-index: 92;
+  top: calc(100% - 2px);
+  right: 26px;
+  width: min(360px, calc(100% - 38px));
+  display: grid;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid rgba(110, 92, 59, .22);
+  border-radius: 4px;
+  background: #fffaf0;
+  box-shadow: 0 12px 28px rgba(56, 46, 32, .18), 0 2px 6px rgba(56, 46, 32, .08);
+}
+
+.quote-general-other-popover::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 18px;
+  width: 9px;
+  height: 9px;
+  border-left: 1px solid rgba(110, 92, 59, .22);
+  border-top: 1px solid rgba(110, 92, 59, .22);
+  background: #fffaf0;
+  transform: rotate(45deg);
+}
+
+.quote-general-other-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.quote-general-other-grid > button {
+  min-width: 0;
+  min-height: 40px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  border: 1px solid rgba(91, 78, 58, .11);
+  border-radius: 3px;
+  padding: 6px 7px;
+  background: rgba(247, 243, 234, .74);
+  color: #5d5549;
+  text-align: left;
+}
+
+.quote-general-other-grid > button:hover,
+.quote-general-other-grid > button:focus-visible {
+  outline: 0;
+  border-color: rgba(155, 127, 62, .24);
+  background: #fff5dc;
+}
+
+.quote-general-other-grid > button strong {
+  color: #574f42;
+  font-size: 7.4px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.quote-general-other-grid > button small {
+  overflow: hidden;
+  color: #8f8576;
+  font-size: 6.5px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-area-general .quote-area-empty {
+  border-top: 1px solid rgba(91, 78, 58, .08);
+}
+
+/* The bottom add row is now intentionally only for creating a named Area. */
+.quote-add-row {
+  justify-content: flex-start;
+}
+
+@media (max-width: 650px) {
+  .quote-general-other-popover {
+    right: 8px;
+    width: calc(100% - 16px);
+  }
+
+  .quote-general-other-grid {
+    grid-template-columns: 1fr;
+  }
+}
