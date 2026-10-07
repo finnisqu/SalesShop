@@ -1,11 +1,14 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import {
+  MATERIAL_FAMILIES,
   defaultMaterialPurchaseOption,
   materialPurchaseCostPerSf,
   materialPurchaseSlabCost,
   materialVariantAreaSf,
   resolveStockMaterialCostReference,
+  resolvedMaterialFamily,
+  type MaterialFamily,
   type MaterialPurchaseOption,
   type MaterialVariant,
   type StockMaterial,
@@ -83,6 +86,7 @@ export function MaterialsWorkspace() {
   const [showInactive, setShowInactive] = useState(false);
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
   const [programFilter, setProgramFilter] = useState<ProgramFilter>('all');
+  const [materialFamilyFilter, setMaterialFamilyFilter] = useState<'all' | MaterialFamily>('all');
   const [materialTypeFilter, setMaterialTypeFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
   const [finishFilter, setFinishFilter] = useState('all');
@@ -120,21 +124,22 @@ export function MaterialsWorkspace() {
     const rows = settings.stockMaterials
       .filter((material) => material.active)
       .filter((material) => programFilter === 'all' || (programFilter === 'stock' ? material.stockProgram : !material.stockProgram))
+      .filter((material) => materialFamilyFilter === 'all' || resolvedMaterialFamily(material) === materialFamilyFilter)
       .filter((material) => materialTypeFilter === 'all' || material.materialType === materialTypeFilter)
       .filter((material) => brandFilter === 'all' || material.brand === brandFilter)
       .filter((material) => finishFilter === 'all' || (material.variants ?? []).some((variant) => variant.finish === finishFilter))
       .filter((material) => thicknessFilter === 'all' || (material.variants ?? []).some((variant) => variant.thickness === thicknessFilter))
-      .filter((material) => !needle || `${material.name} ${material.supplier ?? ''} ${material.brand ?? ''} ${material.collection ?? ''} ${material.sku ?? ''} ${material.materialType} ${(material.features ?? []).join(' ')} ${(material.variants ?? []).flatMap((variant) => [variant.sku, variant.thickness, variant.finish, variant.formatName, variant.availabilityNote, ...(variant.features ?? [])]).join(' ')}`.toLowerCase().includes(needle));
+      .filter((material) => !needle || `${material.name} ${material.supplier ?? ''} ${material.brand ?? ''} ${material.collection ?? ''} ${material.sku ?? ''} ${resolvedMaterialFamily(material)} ${material.materialType} ${(material.features ?? []).join(' ')} ${(material.variants ?? []).flatMap((variant) => [variant.sku, variant.thickness, variant.finish, variant.formatName, variant.availabilityNote, ...(variant.features ?? [])]).join(' ')}`.toLowerCase().includes(needle));
 
     return rows.sort((a, b) => {
       if (sort === 'name') return a.name.localeCompare(b.name);
       if (sort === 'brand') return (a.brand ?? a.supplier ?? '').localeCompare(b.brand ?? b.supplier ?? '') || a.name.localeCompare(b.name);
-      if (sort === 'type') return a.materialType.localeCompare(b.materialType) || a.name.localeCompare(b.name);
+      if (sort === 'type') return resolvedMaterialFamily(a).localeCompare(resolvedMaterialFamily(b)) || a.materialType.localeCompare(b.materialType) || a.name.localeCompare(b.name);
       if (sort === 'cost-asc') return compareOptionalNumbers(resolveStockMaterialCostReference(a).costPerSf, resolveStockMaterialCostReference(b).costPerSf) || a.name.localeCompare(b.name);
       if (sort === 'cost-desc') return compareOptionalNumbers(resolveStockMaterialCostReference(b).costPerSf, resolveStockMaterialCostReference(a).costPerSf) || a.name.localeCompare(b.name);
       return Number(b.stockProgram) - Number(a.stockProgram) || (a.brand ?? a.supplier ?? '').localeCompare(b.brand ?? b.supplier ?? '') || a.name.localeCompare(b.name);
     });
-  }, [settings.stockMaterials, query, programFilter, materialTypeFilter, brandFilter, finishFilter, thicknessFilter, sort]);
+  }, [settings.stockMaterials, query, programFilter, materialFamilyFilter, materialTypeFilter, brandFilter, finishFilter, thicknessFilter, sort]);
 
   const pinnedKeySet = useMemo(() => new Set(pinnedKeys), [pinnedKeys]);
 
@@ -151,6 +156,7 @@ export function MaterialsWorkspace() {
   }, [settings.stockMaterials, pinnedKeys]);
 
   const activeFilterCount = Number(programFilter !== 'all')
+    + Number(materialFamilyFilter !== 'all')
     + Number(materialTypeFilter !== 'all')
     + Number(brandFilter !== 'all')
     + Number(finishFilter !== 'all')
@@ -158,6 +164,7 @@ export function MaterialsWorkspace() {
 
   const clearFilters = () => {
     setProgramFilter('all');
+    setMaterialFamilyFilter('all');
     setMaterialTypeFilter('all');
     setBrandFilter('all');
     setFinishFilter('all');
@@ -237,6 +244,7 @@ export function MaterialsWorkspace() {
                 <summary>Filter{activeFilterCount ? ` · ${activeFilterCount}` : ''}</summary>
                 <div className="rates-filter-popover">
                   <label><span>Program</span><select value={programFilter} onChange={(event) => setProgramFilter(event.target.value as ProgramFilter)}><option value="all">All programs</option><option value="stock">STOCK only</option><option value="non-stock">Non-stock only</option></select></label>
+                  <label><span>Material family</span><select value={materialFamilyFilter} onChange={(event) => setMaterialFamilyFilter(event.target.value as 'all' | MaterialFamily)}><option value="all">All families</option>{MATERIAL_FAMILIES.map((family) => <option value={family} key={family}>{family}</option>)}</select></label>
                   <label><span>Material type</span><select value={materialTypeFilter} onChange={(event) => setMaterialTypeFilter(event.target.value)}><option value="all">All types</option>{materialTypes.map((type) => <option value={type} key={type}>{type}</option>)}</select></label>
                   <label><span>Brand</span><select value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}><option value="all">All brands</option>{brands.map((brand) => <option value={brand} key={brand}>{brand}</option>)}</select></label>
                   <label><span>Finish</span><select value={finishFilter} onChange={(event) => setFinishFilter(event.target.value)}><option value="all">All finishes</option>{finishes.map((finish) => <option value={finish} key={finish}>{finish}</option>)}</select></label>
@@ -356,7 +364,7 @@ export function MaterialsWorkspace() {
                         }}
                       >⠿</button>
                       <button type="button" className="materials-unpin" onClick={() => togglePin(material.id, variant.id)} aria-label={`Unpin ${material.name} ${variantSpec(variant)}`}>×</button>
-                      <span>{material.brand || material.supplier || 'Unknown brand'} · {material.materialType}</span>
+                      <span>{material.brand || material.supplier || 'Unknown brand'} · {resolvedMaterialFamily(material)} · {material.materialType}</span>
                       <strong>{material.name}</strong>
                       <b>{variantSpec(variant)}</b>
                       <dl>
@@ -396,7 +404,7 @@ export function MaterialsWorkspace() {
                           <td className="rates-reference-item"><strong>{material.name}</strong><small>{material.collection || material.sku || '—'}</small></td>
                           <td><span className={`rates-program-pill ${material.stockProgram ? 'is-stock' : ''}`}>{material.stockProgram ? 'STOCK' : 'Non-stock'}</span></td>
                           <td><strong>{material.brand || material.supplier || '—'}</strong></td>
-                          <td>{material.materialType}</td>
+                          <td><strong>{material.materialType}</strong><small className="materials-cell-note">{resolvedMaterialFamily(material)}</small></td>
                           <td className="number"><strong>{moneyPerSf(reference.costPerSf)}</strong><small className="materials-cell-note">{reference.purchaseOption?.label || (reference.basis === 'legacy' ? 'Legacy cost' : 'No default price')}</small></td>
                           <td className="materials-default-spec"><strong>{variantSpec(reference.variant)}</strong><small>{reference.variant ? `${variantSize(reference.variant)}${materialVariantAreaSf(reference.variant) ? ` · ${materialVariantAreaSf(reference.variant)?.toFixed(2)} SF` : ''}` : 'No structured slab size'}</small></td>
                           <td className="materials-variant-toggle-cell"><button type="button" className={expanded ? 'active' : ''} onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}>{expanded ? 'Hide variants' : `Variants · ${activeVariants.length}`}</button></td>
