@@ -49,7 +49,11 @@ export function compatibleAreaScopeFields(line: QuoteLine): QuoteAreaScopeField[
     const snapshot = line.rateReference?.snapshot;
     if (!snapshot) return QUOTE_AREA_SCOPE_VISIBLE_FIELDS.slice();
     if (snapshot.unit === 'sf') return ['countertopSf'];
-    if (snapshot.unit === 'each') return ['kitchenSinkCount', 'vanitySinkCount'];
+    if (snapshot.unit === 'each') {
+      const text = `${snapshot.name} ${snapshot.code ?? ''}`.toLowerCase();
+      if (text.includes('cutout')) return [];
+      if (text.includes('sink')) return ['kitchenSinkCount', 'vanitySinkCount'];
+    }
     return [];
   }
   if (line.pricingMode === 'quantity-rate') return QUOTE_AREA_SCOPE_VISIBLE_FIELDS.slice();
