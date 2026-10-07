@@ -269,10 +269,22 @@ function mergeMaterial(
   } satisfies StockMaterial;
 }
 
+function hasUnresolvedBlockingIssue(candidate: SupplierImportCandidate) {
+  return (candidate.validationIssues ?? []).some(
+    (issue) => issue.severity === 'blocking' && (issue.resolution ?? 'unresolved') === 'unresolved',
+  );
+}
+
 export function classifySupplierImportCandidates(session: SupplierImportSession) {
-  const ready = session.candidates.filter((candidate) => candidate.reviewDecision === 'approved');
-  const attention = session.candidates.filter((candidate) => candidate.reviewDecision === 'needs-review' || candidate.reviewDecision === 'pending' || !candidate.reviewDecision);
   const ignored = session.candidates.filter((candidate) => candidate.reviewDecision === 'ignored');
+  const ready = session.candidates.filter((candidate) => candidate.reviewDecision === 'approved' && !hasUnresolvedBlockingIssue(candidate));
+  const attention = session.candidates.filter((candidate) =>
+    candidate.reviewDecision !== 'ignored'
+    && (hasUnresolvedBlockingIssue(candidate)
+      || candidate.reviewDecision === 'needs-review'
+      || candidate.reviewDecision === 'pending'
+      || !candidate.reviewDecision),
+  );
   return { ready, attention, ignored };
 }
 
