@@ -176,9 +176,47 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   };
 
   const snapshot = line.materialReference?.snapshot;
+  const activeVariants = (selectedMaterial?.variants ?? []).filter((variant) => variant.active !== false);
+  const activeOptions = (selectedVariant?.purchaseOptions ?? []).filter((option) => option.active !== false);
+  const currentReference = selectedMaterial
+    && (!line.materialReference?.variantId || selectedVariant)
+    && (!line.materialReference?.purchaseOptionId || selectedPurchaseOption)
+      ? resolveStockMaterialCostReference(selectedMaterial, selectedVariant?.id, selectedPurchaseOption?.id)
+      : undefined;
+  const currentSnapshot = selectedMaterial && currentReference
+    ? createQuoteMaterialCostSnapshot(selectedMaterial, currentReference)
+    : undefined;
+  const snapshotComparison = snapshot && currentSnapshot
+    ? compareQuoteMaterialSnapshot(snapshot, currentSnapshot)
+    : undefined;
+
   if (searching || (!snapshot && !selectedMaterial && !line.materialReference?.customMaterialName)) {
     return (
       <div className="quote-material-picker">
+        {(snapshot || selectedMaterial || line.materialReference?.customMaterialName) && <div className="quote-picker-current">
+          <div>
+            <span>Current material</span>
+            <strong>{[
+              snapshot?.brand ?? selectedMaterial?.brand,
+              snapshot?.materialName ?? selectedMaterial?.name ?? line.materialReference?.customMaterialName,
+            ].filter(Boolean).join(' ')}</strong>
+            <small>{[
+              snapshot?.variantLabel ?? variantLabel(selectedVariant),
+              snapshot?.purchaseOptionLabel ?? selectedPurchaseOption?.label,
+            ].filter(Boolean).join(' · ') || 'Custom quote material'}</small>
+          </div>
+          {snapshotComparison?.changed && currentReference && (
+            <button type="button" onClick={() => applyMaterial(selectedMaterial!, currentReference.variant?.id, currentReference.purchaseOption?.id)}>Update snapshot</button>
+          )}
+        </div>}
+        {selectedMaterial && activeVariants.length > 1 && <div className="quote-picker-options">
+          <label><span>Variant</span><select value={selectedVariant?.id ?? ''} onChange={(event) => selectVariant(event.target.value)}>
+            {activeVariants.map((variant) => <option key={variant.id} value={variant.id}>{variantLabel(variant)}</option>)}
+          </select></label>
+          {selectedVariant && activeOptions.length > 1 && <label><span>Cost program</span><select value={selectedPurchaseOption?.id ?? ''} onChange={(event) => selectPurchaseOption(event.target.value)}>
+            {activeOptions.map((option) => <option key={option.id} value={option.id}>{option.label}{option.minQuantity ? ` · ${option.minQuantity}+` : ''}</option>)}
+          </select></label>}
+        </div>}
         <div className="quote-material-search-row">
           <input
             value={search}
@@ -210,19 +248,6 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
     );
   }
 
-  const activeVariants = (selectedMaterial?.variants ?? []).filter((variant) => variant.active !== false);
-  const activeOptions = (selectedVariant?.purchaseOptions ?? []).filter((option) => option.active !== false);
-  const currentReference = selectedMaterial
-    && (!line.materialReference?.variantId || selectedVariant)
-    && (!line.materialReference?.purchaseOptionId || selectedPurchaseOption)
-      ? resolveStockMaterialCostReference(selectedMaterial, selectedVariant?.id, selectedPurchaseOption?.id)
-      : undefined;
-  const currentSnapshot = selectedMaterial && currentReference
-    ? createQuoteMaterialCostSnapshot(selectedMaterial, currentReference)
-    : undefined;
-  const snapshotComparison = snapshot && currentSnapshot
-    ? compareQuoteMaterialSnapshot(snapshot, currentSnapshot)
-    : undefined;
   const customName = line.materialReference?.customMaterialName;
   const quotedCostPerSf = snapshot?.costPerSf ?? line.materialReference?.sourceCostPerSf;
   const quotedSlabCost = snapshot?.slabCost ?? line.materialReference?.catalogSlabCost;
@@ -241,74 +266,28 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   };
 
   return (
-    <div className="quote-material-selection">
+    <div className="quote-material-selection quote-database-result">
       <div className="quote-material-selection-main">
-        <span>Quoted material</span>
+        <span>Material</span>
         <strong>{[quotedBrand, quotedName].filter(Boolean).join(' ')}</strong>
-        <small>{[quotedType, quotedSupplier].filter(Boolean).join(' · ') || 'Custom quote material'}</small>
+        <small>{[
+          quotedVariantLabel,
+          quotedPurchaseLabel,
+          quotedType,
+        ].filter(Boolean).join(' · ') || 'Custom quote material'}</small>
       </div>
 
-      {selectedMaterial && activeVariants.length > 0 && (
-        <label>
-          <span>Slab / variant</span>
-          <select value={selectedVariant?.id ?? ''} onChange={(event) => selectVariant(event.target.value)}>
-            {activeVariants.map((variant) => <option key={variant.id} value={variant.id}>{variantLabel(variant)}</option>)}
-          </select>
-        </label>
-      )}
+      {(snapshot || selectedMaterial) && <div className="quote-material-cost-reference">
+        <span>Source cost</span>
+        <strong>{quotedCostPerSf === undefined ? '—' : `${money.format(quotedCostPerSf)}/SF`}</strong>
+        <small>{quotedSlabCost === undefined ? 'No slab cost' : `${money.format(quotedSlabCost)}/slab`}</small>
+      </div>}
 
-      {selectedMaterial && selectedVariant && activeOptions.length > 1 && (
-        <label>
-          <span>Cost program</span>
-          <select value={selectedPurchaseOption?.id ?? ''} onChange={(event) => selectPurchaseOption(event.target.value)}>
-            {activeOptions.map((option) => <option key={option.id} value={option.id}>{option.label}{option.minQuantity ? ` · ${option.minQuantity}+` : ''}</option>)}
-          </select>
-        </label>
-      )}
+      {snapshot && !selectedMaterial && snapshot.materialId && <span className="quote-source-status is-warning">Source unavailable</span>}
+      {snapshotComparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
+      {!snapshot && selectedMaterial && currentReference && <span className="quote-source-status">Snapshot needed</span>}
 
-      {(snapshot || selectedMaterial) && (
-        <div className="quote-material-cost-reference">
-          <span>{snapshot ? 'Quoted cost' : 'Legacy reference'}</span>
-          <strong>{quotedCostPerSf === undefined ? '—' : `${money.format(quotedCostPerSf)}/SF`}</strong>
-          <small>{quotedSlabCost === undefined ? 'No full-slab cost' : `${money.format(quotedSlabCost)}/slab`}</small>
-        </div>
-      )}
-
-      {snapshot && (
-        <div className="quote-material-snapshot-meta">
-          <span>{quotedVariantLabel || 'Default spec'}{quotedPurchaseLabel ? ` · ${quotedPurchaseLabel}` : ''}</span>
-          <small>{[sourceLabel, sourceDate ? `effective ${sourceDate}` : undefined].filter(Boolean).join(' · ') || `Captured ${displayDate(snapshot.capturedAt) ?? ''}`}</small>
-        </div>
-      )}
-
-      {snapshot && !selectedMaterial && snapshot.materialId && (
-        <div className="quote-material-catalog-state is-unavailable">
-          <strong>Catalog item unavailable</strong>
-          <small>The quote snapshot is retained and unchanged.</small>
-        </div>
-      )}
-
-      {snapshotComparison?.changed && currentSnapshot && (
-        <div className="quote-material-catalog-state is-changed">
-          <div>
-            <strong>Catalog pricing changed</strong>
-            <small>
-              Now {currentSnapshot.costPerSf === undefined ? '—' : `${money.format(currentSnapshot.costPerSf)}/SF`}
-              {currentSnapshot.slabCost === undefined ? '' : ` · ${money.format(currentSnapshot.slabCost)}/slab`}
-            </small>
-          </div>
-          <button type="button" onClick={refreshSnapshot}>Update quote snapshot</button>
-        </div>
-      )}
-
-      {!snapshot && selectedMaterial && currentReference && (
-        <div className="quote-material-catalog-state is-legacy">
-          <strong>Legacy material reference</strong>
-          <button type="button" onClick={refreshSnapshot}>Capture current snapshot</button>
-        </div>
-      )}
-
-      <button type="button" className="quote-material-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
+      <button type="button" className="quote-material-change quote-database-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
     </div>
   );
 }
