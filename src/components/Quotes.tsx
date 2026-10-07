@@ -465,6 +465,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
 
   return (
     <div className="quote-area-header">
+      <button type="button" className="quote-area-drag-handle" draggable title="Drag Area to reorder" aria-label="Drag Area to reorder"><span aria-hidden="true">⠿</span></button>
       <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`} onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
 
       <div className="quote-area-title">
@@ -513,7 +514,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
 }
 
 
-function GeneralAreaHeader({ lines, onAddLine }: { lines: QuoteLine[]; onAddLine: (kind: QuoteLineKind) => void }) {
+function GeneralAreaHeader({ lines, onAddLine, onAddArea }: { lines: QuoteLine[]; onAddLine: (kind: QuoteLineKind) => void; onAddArea: () => void }) {
   const [otherOpen, setOtherOpen] = useState(false);
   const otherButtonRef = useRef<HTMLButtonElement>(null);
   const otherPopoverRef = useRef<HTMLDivElement>(null);
@@ -559,6 +560,7 @@ function GeneralAreaHeader({ lines, onAddLine }: { lines: QuoteLine[]; onAddLine
       </div>
 
       <div className="quote-area-actions">
+        <button type="button" className="quote-area-add-area" onClick={onAddArea}>+ Area</button>
         <button type="button" className="quote-area-add-material" onClick={() => onAddLine('material')}>+ Material</button>
         <button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink')}>+ Sink</button>
         <button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate')}>+ Rate</button>
@@ -942,7 +944,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
             {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-lines-editor">
   <header><div><span className="quote-control-heading">{documentLabel} areas & scope</span><small>Organize the job by Kitchen, Bath, Unit Type, Clubhouse, or any other pricing area.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
   <div className="quote-area-card quote-area-general" onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, undefined); setDraggingLineId(null); } }}>
-    <GeneralAreaHeader lines={generalLines} onAddLine={(kind) => addLine(quote.id, kind)} />
+    <GeneralAreaHeader lines={generalLines} onAddLine={(kind) => addLine(quote.id, kind)} onAddArea={() => addSection(quote.id)} />
     <div className="quote-area-lines">
       {generalLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} issueGuide={activeIssueLineId === line.id ? quoteIssueGuide(quoteLineReminderLabels(line, quoteLinePricingComplete(line, guideMultiplier), Boolean(resolveLineAreaScopeState(quote, line)?.changed)), line, 'General') : undefined} issuePosition={activeIssueLineId === line.id ? issueLineIds.indexOf(line.id) + 1 : undefined} issueTotal={activeIssueLineId === line.id ? issueLineIds.length : undefined} onDismissIssue={() => setActiveIssueLineId(null)} />)}
       {!generalLines.length && <div className="quote-area-empty">General is ready for rows that do not belong to a named area.</div>}
@@ -953,10 +955,10 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     return <div
       className={`quote-area-card ${draggingSectionId === section.id ? 'is-area-dragging' : ''}`}
       key={section.id}
-      draggable={!draggingLineId}
+      draggable={false}
       onDragStart={(event) => {
         const target = event.target as Element;
-        if (!target.closest('.quote-area-header') || target.closest('input, textarea, select, button, a')) return;
+        if (!target.closest('.quote-area-drag-handle')) return;
         setDraggingSectionId(section.id);
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', section.id);
@@ -986,7 +988,6 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
       </div>
     </div>;
   })}
-  <div className="quote-add-row"><button type="button" className="quote-add-area" onClick={() => addSection(quote.id)}>+ Area</button></div>
 </section></>}
             <section className="quote-notes-grid"><label><span>Customer notes</span><textarea value={quote.customerNotes} onChange={(event) => updateQuote(quote.id, { customerNotes: event.target.value })} placeholder="Appears on customer document" /></label><label className="internal-notes"><span>Internal notes · private</span><textarea value={quote.internalNotes} onChange={(event) => updateQuote(quote.id, { internalNotes: event.target.value })} placeholder="Pricing thoughts, negotiation notes, reminders…" /></label></section>
             {!pricingSchedule && <QuoteInternalPricingSummary quote={quote} />}
