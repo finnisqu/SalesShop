@@ -16,6 +16,7 @@ import {
 } from '../services/quoteIntegrity';
 import { useCrmStore } from '../store/crmStore';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
+import { useNavigationStore, type AppView } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import {
   commercialDocumentLabel,
@@ -628,7 +629,7 @@ function CustomerPreview({ quote }: { quote: Quote }) {
   return quote.documentType === 'pricing-schedule' ? <PricingScheduleCustomerPreview quote={quote} /> : <StandardCustomerPreview quote={quote} />;
 }
 
-function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteViewMode; onModeChange: (mode: QuoteViewMode) => void }) {
+function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quote: Quote; mode: QuoteViewMode; onModeChange: (mode: QuoteViewMode) => void; onOpenMobileNavigator: () => void }) {
   const quotes = useQuoteStore((state) => state.quotes);
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const deleteQuote = useQuoteStore((state) => state.deleteQuote);
@@ -653,6 +654,8 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const [metaPanel, setMetaPanel] = useState<'document' | 'project' | 'visibility' | null>(null);
   const [issueCursor, setIssueCursor] = useState(0);
   const [activeIssueLineId, setActiveIssueLineId] = useState<string | null>(null);
+  const [mobileMenu, setMobileMenu] = useState<'view' | 'tools' | null>(null);
+  const mobileToolbarRef = useRef<HTMLElement>(null);
   const [workspaceZoom, setWorkspaceZoom] = useState(() => {
     const stored = Number(window.localStorage.getItem('sales-shop:quote-workspace-zoom'));
     return Number.isFinite(stored) && stored >= 80 && stored <= 160 ? stored : 100;
@@ -701,9 +704,19 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   }, [metaPanel]);
 
   useEffect(() => {
+    if (!mobileMenu) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!mobileToolbarRef.current?.contains(event.target as Node)) setMobileMenu(null);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [mobileMenu]);
+
+  useEffect(() => {
     setIssueCursor(0);
     setActiveIssueLineId(null);
     setMetaPanel(null);
+    setMobileMenu(null);
   }, [quote.id]);
 
   useEffect(() => {
@@ -822,6 +835,71 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
 
   return (
     <section className={`quotes-workbench view-${effectiveMode}`}>
+      <header className="quote-mobile-commandbar" ref={mobileToolbarRef}>
+        <button type="button" className="quote-mobile-nav-button" onClick={() => { setMobileMenu(null); onOpenMobileNavigator(); }} aria-label="Open SalesShop and quote navigation">☰</button>
+
+        <div className="quote-mobile-current-document">
+          <span>{displayQuoteNumber(quote)}</span>
+          <strong>{quote.title}</strong>
+        </div>
+
+        <button type="button" className={`quote-mobile-view-button ${mobileMenu === 'view' ? 'active' : ''}`} onClick={() => setMobileMenu((current) => current === 'view' ? null : 'view')}>
+          {effectiveMode === 'customer' ? 'Customer' : effectiveMode[0].toUpperCase() + effectiveMode.slice(1)} <span aria-hidden="true">⌄</span>
+        </button>
+
+        <button type="button" className={`quote-mobile-more-button ${mobileMenu === 'tools' ? 'active' : ''}`} onClick={() => setMobileMenu((current) => current === 'tools' ? null : 'tools')} aria-label="Quote tools">•••</button>
+
+        {mobileMenu === 'view' && <div className="quote-mobile-menu quote-mobile-view-menu">
+          <span className="quote-mobile-menu-heading">View</span>
+          {viewModes.map((viewMode) => <button type="button" key={viewMode} className={effectiveMode === viewMode ? 'active' : ''} onClick={() => { onModeChange(viewMode); setMobileMenu(null); }}>
+            <strong>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</strong>
+            <small>{viewMode === 'edit' ? 'Build the quote' : viewMode === 'split' ? 'Editor + customer sheet' : viewMode === 'workbook' ? 'Pricing workspace' : 'Customer document'}</small>
+          </button>)}
+        </div>}
+
+        {mobileMenu === 'tools' && <div className="quote-mobile-menu quote-mobile-tools-menu">
+          <div className="quote-mobile-menu-section">
+            <span className="quote-mobile-menu-heading">Editing</span>
+            <div className="quote-mobile-tool-grid">
+              <button type="button" disabled={!commerciallyEditable || undoDepth === 0} onClick={() => undoQuote(quote.id)}><span>↶</span><small>Undo</small></button>
+              <button type="button" disabled={!commerciallyEditable || redoDepth === 0} onClick={() => redoQuote(quote.id)}><span>↷</span><small>Redo</small></button>
+              <button type="button" onClick={() => { collapseAll(); setMobileMenu(null); }}><span>⌃</span><small>Collapse</small></button>
+              <button type="button" disabled={!issueLineIds.length} onClick={() => { focusNextIssue(); setMobileMenu(null); }}><span>!</span><small>Next issue{issueLineIds.length ? ` · ${issueLineIds.length}` : ''}</small></button>
+            </div>
+          </div>
+
+          <div className="quote-mobile-menu-section">
+            <span className="quote-mobile-menu-heading">Quote setup</span>
+            <div className="quote-mobile-setup-grid">
+              <button type="button" onClick={() => { setMetaPanel('document'); setMobileMenu(null); }}><strong>Document</strong><small>{setupTypeLabel} · {quote.status}</small></button>
+              <button type="button" onClick={() => { setMetaPanel('project'); setMobileMenu(null); }}><strong>Project</strong><small>{projectDetailsSummary || 'Customer & project'}</small></button>
+              {!pricingSchedule && <button type="button" onClick={() => { setMetaPanel('visibility'); setMobileMenu(null); }}><strong>Visibility</strong><small>{customerVisibilitySummary}</small></button>}
+            </div>
+          </div>
+
+          <div className="quote-mobile-menu-section quote-mobile-zoom-section">
+            <span className="quote-mobile-menu-heading">Workspace zoom</span>
+            <div className="quote-mobile-zoom-row">
+              <button type="button" disabled={workspaceZoom <= 80} onClick={() => adjustWorkspaceZoom(-1)}>−</button>
+              <button type="button" onClick={() => setWorkspaceZoom(100)}>{workspaceZoom}%</button>
+              <button type="button" disabled={workspaceZoom >= 160} onClick={() => adjustWorkspaceZoom(1)}>+</button>
+            </div>
+          </div>
+
+          <div className="quote-mobile-menu-section">
+            <span className="quote-mobile-menu-heading">Document actions</span>
+            <div className="quote-mobile-document-actions">
+              {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="is-send" disabled={sending} onClick={() => void send()}>{sending ? 'Sending…' : `Send ${documentLabel}`}</button>}
+              <QuoteShareControl />
+              {canSign && <button type="button" className="is-sign" onClick={() => { setSignatureOpen(true); setMobileMenu(null); }}>Sign now</button>}
+              {quote.status === 'Signed' && <button type="button" onClick={() => { setSignatureOpen(true); setMobileMenu(null); }}>View signature</button>}
+              {canRevise && <button type="button" onClick={() => { createRevision(quote.id); setMobileMenu(null); }}>Create revision</button>}
+              {canCreateChangeOrder && <button type="button" onClick={() => { createChangeOrder(quote.id); setMobileMenu(null); }}>Change Order</button>}
+            </div>
+          </div>
+        </div>}
+      </header>
+
       <header className="quote-workbench-header">
         <div>
           <span className="quote-number">{displayQuoteNumber(quote)}</span>
@@ -1021,6 +1099,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
 }
 
 export function Quotes() {
+  const setView = useNavigationStore((state) => state.setView);
   const hydrate = useQuoteStore((state) => state.hydrate);
   const hydrated = useQuoteStore((state) => state.hydrated);
   const quotes = useQuoteStore((state) => state.quotes);
@@ -1028,6 +1107,7 @@ export function Quotes() {
   const selectQuote = useQuoteStore((state) => state.selectQuote);
   const createQuote = useQuoteStore((state) => state.createQuote);
   const hydrateCrm = useCrmStore((state) => state.hydrate);
+  const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(false);
   const [mode, setMode] = useState<QuoteViewMode>(() => (
     typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 700px)').matches
       ? 'edit'
@@ -1049,5 +1129,48 @@ export function Quotes() {
     if (quote?.documentType !== 'pricing-schedule' && mode === 'workbook') setMode('edit');
   }, [quote?.documentType, mode]);
   if (!hydrated || !quote) return <div className="quotes-loading">Opening quotes…</div>;
-  return <main className="quotes-view"><aside className="quotes-sidebar"><header><div><span>Commercial documents</span><strong>Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside><QuoteEditor quote={quote} mode={mode} onModeChange={setMode} /></main>;
+
+  const appDestinations: Array<{ view: AppView; label: string }> = [
+    { view: 'notebook', label: 'Notebook' },
+    { view: 'board', label: 'Board' },
+    { view: 'quotes', label: 'Quotes' },
+    { view: 'catalog', label: 'Catalog' },
+    { view: 'dashboard', label: 'Dashboard' },
+    { view: 'settings', label: 'Settings' },
+  ];
+
+  return <main className="quotes-view">
+    {mobileNavigatorOpen && <div className="quote-mobile-navigator-backdrop" onPointerDown={() => setMobileNavigatorOpen(false)}>
+      <section className="quote-mobile-navigator" onPointerDown={(event) => event.stopPropagation()}>
+        <header>
+          <div><span>SalesShop</span><strong>Quotes & COs</strong></div>
+          <button type="button" onClick={() => setMobileNavigatorOpen(false)} aria-label="Close navigation">×</button>
+        </header>
+
+        <nav className="quote-mobile-app-nav" aria-label="SalesShop sections">
+          {appDestinations.map((destination) => <button type="button" key={destination.view} className={destination.view === 'quotes' ? 'active' : ''} onClick={() => {
+            setMobileNavigatorOpen(false);
+            setView(destination.view);
+          }}>{destination.label}</button>)}
+        </nav>
+
+        <div className="quote-mobile-document-heading">
+          <div><strong>Documents</strong><small>{sortedQuotes.length} shown</small></div>
+          <button type="button" onClick={() => { createQuote(); setMobileNavigatorOpen(false); }}>+ New</button>
+        </div>
+
+        {archivedCount > 0 && <button type="button" className="quote-mobile-archive-toggle" onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Show archived · ${archivedCount}`}</button>}
+
+        <div className="quote-mobile-document-list">
+          {sortedQuotes.map((item) => <button key={item.id} type="button" className={`${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => { selectQuote(item.id); setMobileNavigatorOpen(false); }}>
+            <div><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small></div>
+            <b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b>
+          </button>)}
+        </div>
+      </section>
+    </div>}
+
+    <aside className="quotes-sidebar"><header><div><span>Commercial documents</span><strong>Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside>
+    <QuoteEditor quote={quote} mode={mode} onModeChange={setMode} onOpenMobileNavigator={() => setMobileNavigatorOpen(true)} />
+  </main>;
 }
