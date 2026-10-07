@@ -433,7 +433,7 @@ function compareCandidate(
     return [...incomingSkus].some((sku) => existingSkus.has(sku));
   });
 
-  if (exactSku && !exactIdentity && materialIdentity(exactSku) !== identity) {
+  if (exactSku && (!exactIdentity || exactSku.id !== exactIdentity.id) && materialIdentity(exactSku) !== identity) {
     return {
       id: `candidate-${safeId(material.sku || identity)}`,
       material,
