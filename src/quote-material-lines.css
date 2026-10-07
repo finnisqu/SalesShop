@@ -309,3 +309,165 @@
     min-height: 38px;
   }
 }
+
+
+/* Split-view material rows: preserve the wide Edit layout, but turn the editor
+   half into a compact stacked card instead of squeezing every control inline. */
+.view-split .quote-line-editor.kind-material {
+  grid-template-columns: 26px 24px minmax(0, 1fr) 26px;
+  grid-template-rows: auto auto;
+  align-items: start;
+  column-gap: 7px;
+  row-gap: 4px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.view-split .quote-line-editor.kind-material > .quote-line-drag-handle {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.view-split .quote-line-editor.kind-material > .quote-visibility {
+  grid-column: 2;
+  grid-row: 1;
+  margin-top: 4px;
+}
+
+.view-split .quote-line-editor.kind-material > .quote-line-main {
+  grid-column: 3;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  padding-top: 0;
+}
+
+.view-split .quote-line-editor.kind-material > .quote-line-pricing {
+  grid-column: 3;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 7px 0 1px;
+  border-top: 1px solid rgba(91, 78, 58, .08);
+}
+
+.view-split .quote-line-editor.kind-material > .quote-line-delete {
+  grid-column: 4;
+  grid-row: 1;
+  align-self: start;
+  margin-top: 2px;
+}
+
+.view-split .quote-line-editor.kind-material .quote-line-topline {
+  margin-bottom: 5px;
+}
+
+.view-split .quote-material-selection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 7px;
+  align-items: end;
+  margin-bottom: 6px;
+}
+
+.view-split .quote-material-selection-main {
+  grid-column: 1;
+  min-width: 0;
+  max-width: none;
+}
+
+.view-split .quote-material-selection > .quote-material-change {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 58px;
+}
+
+.view-split .quote-material-selection > label {
+  min-width: 0;
+  width: 100%;
+}
+
+.view-split .quote-material-selection > label:nth-of-type(1) {
+  grid-column: 1 / -1;
+}
+
+.view-split .quote-material-selection > label:nth-of-type(2) {
+  grid-column: 1 / -1;
+}
+
+.view-split .quote-material-selection select {
+  width: 100%;
+  max-width: none;
+}
+
+.view-split .quote-material-cost-reference {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 2px;
+  background: rgba(228, 235, 222, .52);
+}
+
+.view-split .quote-material-cost-reference > span {
+  flex: 0 0 auto;
+}
+
+.view-split .quote-material-cost-reference strong,
+.view-split .quote-material-cost-reference small {
+  white-space: nowrap;
+}
+
+.view-split .quote-line-editor.kind-material .quote-line-main textarea {
+  min-height: 28px;
+  margin-top: 1px;
+  padding-top: 5px;
+}
+
+.view-split .quote-line-editor.kind-material .quote-line-pricing > select {
+  width: 96px;
+  flex: 0 0 96px;
+}
+
+.view-split .quote-line-editor.kind-material .quote-qty-rate {
+  grid-template-columns: minmax(54px, 68px) 12px minmax(64px, 82px);
+}
+
+.view-split .quote-line-editor.kind-material .quote-line-pricing > strong {
+  min-width: 74px;
+  margin-left: auto;
+  font-size: 10px;
+}
+
+.view-split .quote-line-editor.kind-material .quote-total-toggle {
+  flex: 0 0 auto;
+}
+
+.view-split .quote-line-editor.kind-material .quote-slab-line-pricing {
+  flex: 1 1 220px;
+  max-width: 270px;
+}
+
+.view-split .quote-material-picker {
+  margin-bottom: 6px;
+}
+
+.view-split .quote-material-results > button {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+}
+
+@media (max-width: 900px) {
+  .view-split .quote-line-editor.kind-material {
+    grid-template-columns: 28px 32px minmax(0, 1fr) 36px;
+  }
+
+  .view-split .quote-line-editor.kind-material > .quote-line-pricing {
+    grid-column: 3 / 5;
+  }
+}
