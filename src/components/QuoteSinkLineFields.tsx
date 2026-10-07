@@ -158,7 +158,6 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
   return (
     <div className="quote-sink-selection quote-database-result">
       <div className="quote-sink-selection-main">
-        <span>Sink</span>
         <strong>{[snapshot.brand, snapshot.sinkModelName].filter(Boolean).join(' ')}</strong>
         <small>{[
           snapshot.variantLabel,
