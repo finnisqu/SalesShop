@@ -175,7 +175,6 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
 
       {(!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
       {comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
-      {snapshot.sellPrice === undefined && <span className="quote-source-status is-warning">Price needed</span>}
 
       <button type="button" className="quote-sink-change quote-database-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
     </div>
