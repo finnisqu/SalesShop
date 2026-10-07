@@ -65,8 +65,8 @@ describe('structured supplier import mapping', () => {
     rows[12][0] = 'GROUP 0';
     rows[12][3] = '8.50';
     rows[12][4] = '9.50';
-    for (let row = 13; row <= 17; row += 1) {
-      rows[row][1] = `Quartz Color ${row}`;
+    for (let row = 12; row <= 17; row += 1) {
+      if (row > 12) rows[row][1] = `Quartz Color ${row}`;
       rows[row][7] = 'X';
       rows[row][12] = `Side Quartz ${row} 1.5CM`;
       rows[row][13] = `QSL-COLOR-${row}`;
