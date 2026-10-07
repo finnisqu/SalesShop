@@ -105,6 +105,25 @@ describe('quote revision snapshots', () => {
           sourceCostPerSf: 12.8,
           guideRate: 34,
           stockEquivalentLevel: 'Level 1',
+          snapshot: {
+            capturedAt: '2026-10-06T12:30:00.000Z',
+            materialId: 'material-1',
+            materialName: 'Arctic White',
+            brand: 'MSI',
+            supplier: 'MSI',
+            materialFamily: 'Engineered Surfaces',
+            materialType: 'Quartz',
+            stockProgram: true,
+            variantId: 'variant-1',
+            variantLabel: '3cm · Jumbo',
+            purchaseOptionId: 'price-1',
+            purchaseOptionLabel: 'Standard',
+            pricingBasis: 'slab',
+            costPerSf: 12.8,
+            slabCost: 751.1,
+            sourcePublicationId: 'pub-1',
+            sourceEffectiveDate: '2026-01-01',
+          },
         },
       })],
     });
@@ -112,6 +131,10 @@ describe('quote revision snapshots', () => {
 
     subject.lines[0].description = 'Changed later';
     subject.lines[0].amount = 999;
+    if (subject.lines[0].materialReference?.snapshot) {
+      subject.lines[0].materialReference.snapshot.costPerSf = 99;
+      subject.lines[0].materialReference.snapshot.materialName = 'Changed later';
+    }
     subject.sections[0].title = 'Changed later';
 
     expect(frozen.status).toBe('Sent');
@@ -119,6 +142,9 @@ describe('quote revision snapshots', () => {
     expect(frozen.pricingDivision).toBe('Commercial');
     expect(frozen.lines[0].description).toBe('Countertops');
     expect(frozen.lines[0].materialReference?.sourceCostPerSf).toBe(12.8);
+    expect(frozen.lines[0].materialReference?.snapshot?.materialName).toBe('Arctic White');
+    expect(frozen.lines[0].materialReference?.snapshot?.costPerSf).toBe(12.8);
+    expect(frozen.lines[0].materialReference?.snapshot?.sourceEffectiveDate).toBe('2026-01-01');
     expect(frozen.sections[0].title).toBe('Base');
   });
 });
