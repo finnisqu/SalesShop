@@ -4,7 +4,7 @@ export interface QuoteInternalPricingLineSummary {
   lineId: string;
   customerAmount: number;
   internalCost?: number;
-  costSource?: 'material-sf' | 'material-slab' | 'rate-unit' | 'rate-flat';
+  costSource?: 'manual-total' | 'material-sf' | 'material-slab' | 'rate-unit' | 'rate-flat';
   requiresCost: boolean;
 }
 
@@ -70,6 +70,12 @@ function rateInternalCost(line: QuoteLine) {
 }
 
 function internalCostForLine(line: QuoteLine) {
+  if (line.kind === 'item' && validNumber(line.internalCost)) {
+    return {
+      value: roundCurrency(line.internalCost ?? 0),
+      source: 'manual-total' as const,
+    };
+  }
   if (line.kind === 'material') return materialInternalCost(line);
   if (line.kind === 'rate') return rateInternalCost(line);
   return undefined;
