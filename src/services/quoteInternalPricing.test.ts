@@ -117,6 +117,38 @@ describe('quote internal pricing summary', () => {
     expect(summary.marginPercent).toBeUndefined();
   });
 
+  it('uses a manual total internal cost for ordinary priced lines', () => {
+    const summary = summarizeQuoteInternalPricing([
+      line({ id: 'manual', amount: 1200, internalCost: 700 }),
+    ]);
+
+    expect(summary.customerTotal).toBe(1200);
+    expect(summary.knownInternalCost).toBe(700);
+    expect(summary.grossSpread).toBe(500);
+    expect(summary.costedLineCount).toBe(1);
+    expect(summary.costRequiredLineCount).toBe(1);
+    expect(summary.complete).toBe(true);
+    expect(summary.marginPercent).toBe(41.7);
+    expect(summary.lines[0].costSource).toBe('manual-total');
+  });
+
+  it('keeps manual internal cost independent from customer quantity-rate math', () => {
+    const summary = summarizeQuoteInternalPricing([
+      line({
+        id: 'manual-qty',
+        pricingMode: 'quantity-rate',
+        quantity: 100,
+        rate: 12,
+        amount: undefined,
+        internalCost: 650,
+      }),
+    ]);
+
+    expect(summary.customerTotal).toBe(1200);
+    expect(summary.knownInternalCost).toBe(650);
+    expect(summary.marginPercent).toBe(45.8);
+  });
+
   it('can use quantity times material cost per square foot', () => {
     const summary = summarizeQuoteInternalPricing([
       line({
