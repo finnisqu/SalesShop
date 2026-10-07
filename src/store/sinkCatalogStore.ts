@@ -61,7 +61,7 @@ function seedVariant(
   };
 }
 
-const DEFAULT_MODELS: SinkModel[] = [
+export const SINK_CATALOG_SEED: SinkModel[] = [
   {
     id: 'sink_model_3218',
     name: 'Kitchen 3218',
@@ -119,7 +119,7 @@ const DEFAULT_MODELS: SinkModel[] = [
 ];
 
 function cloneDefaults() {
-  return structuredClone(DEFAULT_MODELS);
+  return structuredClone(SINK_CATALOG_SEED);
 }
 
 function numberOrUndefined(value: unknown) {
