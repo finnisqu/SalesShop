@@ -96,7 +96,8 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
 
   const apply = (model: SinkModel, variant: SinkVariant) => {
     const nextSnapshot = createQuoteSinkSnapshot(model, variant);
-    updateLine(quoteId, line.id, sinkSnapshotLinePatch(nextSnapshot));
+    const patch = sinkSnapshotLinePatch(nextSnapshot);
+    updateLine(quoteId, line.id, { ...patch, quantity: line.quantity ?? 1 });
     setSearch('');
     setSearching(false);
   };
