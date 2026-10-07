@@ -472,42 +472,74 @@
 }
 
 .materials-comparison-card {
-  transition: opacity .12s ease, transform .12s ease, box-shadow .12s ease;
+  transition: opacity .14s ease, transform .14s ease, box-shadow .14s ease, border-color .14s ease;
 }
 
 .materials-comparison-card.is-dragging {
-  opacity: .52;
-  transform: scale(.985);
-  box-shadow: 0 7px 18px rgba(50, 42, 31, .12);
+  z-index: 25;
+  opacity: .97;
+  border-color: rgba(147, 116, 34, .42);
+  box-shadow: 0 15px 30px rgba(50, 42, 31, .2);
+  transition: none;
+  user-select: none;
 }
 
-.materials-comparison-card > span {
-  padding-left: 25px;
+.materials-comparison-card.is-dragging,
+.materials-comparison-card.is-dragging * {
+  cursor: grabbing !important;
+}
+
+.materials-comparison-card.is-drop-before::before,
+.materials-comparison-card.is-drop-after::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  z-index: 30;
+  width: 3px;
+  border-radius: 999px;
+  background: #b39539;
+  box-shadow: 0 0 0 2px rgba(255, 249, 225, .9), 0 2px 7px rgba(91, 72, 24, .22);
+  pointer-events: none;
+}
+
+.materials-comparison-card.is-drop-before::before {
+  left: -6px;
+}
+
+.materials-comparison-card.is-drop-after::after {
+  right: -6px;
 }
 
 .materials-card-drag-handle {
   position: absolute;
-  top: 5px;
-  left: 5px;
-  width: 24px;
-  height: 24px;
+  top: 50%;
+  right: -8px;
+  left: auto;
+  width: 18px;
+  height: 34px;
   display: grid;
   place-items: center;
   padding: 0;
-  border: 0;
-  border-radius: 3px;
-  background: transparent;
-  color: #938876;
-  font: 900 15px/1 system-ui, sans-serif;
+  border: 1px solid rgba(122, 101, 47, .22);
+  border-radius: 5px;
+  background: #f4eedb;
+  color: #897a54;
+  box-shadow: 0 2px 5px rgba(52, 44, 35, .08);
+  font: 900 14px/1 system-ui, sans-serif;
   cursor: grab;
   touch-action: none;
+  transform: translateY(-50%);
+  z-index: 4;
 }
 
 .materials-card-drag-handle:hover,
 .materials-card-drag-handle:focus-visible {
   outline: 0;
-  background: rgba(185, 157, 69, .13);
+  border-color: rgba(153, 126, 48, .42);
+  background: #fff6d9;
   color: #65572e;
+  box-shadow: 0 3px 8px rgba(52, 44, 35, .12);
 }
 
 .materials-card-drag-handle:active {
