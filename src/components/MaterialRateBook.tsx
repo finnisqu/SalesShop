@@ -294,8 +294,8 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
         </div>
 
         <div className="material-catalog-scroll">
-          <table className="material-catalog-sheet material-reference-sheet">
-            <thead><tr><th>On</th><th>Type</th><th>Program</th><th>Level</th><th>Supplier</th><th>Brand</th><th>Color</th><th>Group</th><th>Default spec</th><th>Pricing guide</th><th>Features</th><th /></tr></thead>
+          <table className="material-catalog-sheet material-reference-sheet material-reference-sheet-compact">
+            <thead><tr><th>On</th><th>Type</th><th>Program</th><th>Brand</th><th>Color</th><th>Group</th><th>Default spec</th><th /></tr></thead>
             <tbody>
               {materials.map((material) => {
                 const reference = resolveStockMaterialCostReference(material);
@@ -304,51 +304,29 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
                   reference.costPerSf,
                   material.stockProgram ? material.builderLevelId : undefined,
                 );
-                const slabPricing = recommendation.mode === 'slab-review'
-                  ? resolveSlabPrice(guide, reference.costPerSf, reference.slabCost, 1)
-                  : undefined;
                 const validForced = material.stockProgram && material.builderLevelId && guide.rules.some((rule) => rule.id === material.builderLevelId);
                 const expanded = expandedMaterialId === material.id;
                 const level = recommendation.mode === 'level' ? recommendation.level : undefined;
-                const pricingRate = level?.customerRate;
-                const pricingLabel = recommendation.mode === 'level'
-                  ? `${material.stockProgram && validForced ? 'Assigned' : 'Suggested'} ${recommendation.level.rule.label}`
-                  : recommendation.mode === 'slab-review'
-                    ? 'Slab pricing review'
-                    : recommendation.basis;
                 return (
                   <>
                     <tr key={material.id} className={`${material.active ? '' : 'is-inactive'} ${expanded ? 'is-expanded' : ''} ${material.stockProgram ? 'is-stock-program' : 'is-non-stock-program'}`}>
                       <td className="material-level-on"><input type="checkbox" checked={material.active} onChange={(event) => updateStockMaterial(material.id, { active: event.target.checked })} /></td>
                       <td><select value={material.materialType} onChange={(event) => updateStockMaterial(material.id, { materialType: event.target.value as PricingMaterialType })}>{materialTypes.map((type) => <option key={type}>{type}</option>)}</select></td>
                       <td className="material-program-cell"><select value={material.stockProgram ? 'stock' : 'non-stock'} onChange={(event) => updateStockMaterial(material.id, { stockProgram: event.target.value === 'stock' })}><option value="stock">STOCK</option><option value="non-stock">Non-stock</option></select></td>
-                      <td>{material.stockProgram ? <select value={validForced ? material.builderLevelId : 'auto'} onChange={(event) => updateStockMaterial(material.id, { builderLevelId: event.target.value === 'auto' ? undefined : event.target.value })}><option value="auto">Auto{level ? ` · ${level.rule.label}` : recommendation.mode === 'slab-review' ? ' · Slab review' : ''}</option>{orderedRules.filter((rule) => rule.active).map((rule) => <option value={rule.id} key={rule.id}>{rule.label}</option>)}</select> : <span className={`material-no-level ${recommendation.mode === 'slab-review' ? 'is-slab-review' : ''}`}>{level ? `Suggest ${level.rule.label}` : recommendation.mode === 'slab-review' ? 'Slab review' : 'Needs cost'}</span>}</td>
-                      <td><input value={material.supplier ?? ''} onChange={(event) => updateStockMaterial(material.id, { supplier: event.target.value })} placeholder="UMI, MSI, Hallmark…" /></td>
                       <td><input value={material.brand ?? ''} onChange={(event) => updateStockMaterial(material.id, { brand: event.target.value })} placeholder="Vicostone, Corian…" /></td>
                       <td className="material-color-cell"><input value={material.name} onChange={(event) => updateStockMaterial(material.id, { name: event.target.value })} /></td>
                       <td><input value={material.supplierGroup ?? ''} onChange={(event) => updateStockMaterial(material.id, { supplierGroup: event.target.value })} placeholder="Group 3, F…" /></td>
                       <td className="material-default-spec"><strong>{variantSpec(reference.variant)}</strong><small>{reference.variant ? `${availabilityLabel(reference.variant.availability)}${reference.variant.availabilityNote ? ` · ${reference.variant.availabilityNote}` : ''}` : reference.costPerSf !== undefined ? `${money.format(reference.costPerSf)}/SF legacy cost` : 'Add variant details'}</small></td>
-                      <td className={`material-standard-rate ${recommendation.mode === 'slab-review' ? 'is-slab-review' : material.stockProgram ? 'is-stock' : 'is-non-stock'}`}>
-                        {recommendation.mode === 'slab-review'
-                          ? slabPricing?.customerPricePerSlab === undefined
-                            ? <strong>Slab review</strong>
-                            : <strong>{money.format(slabPricing.customerPricePerSlab)}/slab</strong>
-                          : pricingRate === undefined
-                            ? <span>—</span>
-                            : <strong>{money.format(pricingRate)}/SF</strong>}
-                        <small>{recommendation.mode === 'slab-review'
-                          ? reference.slabCost === undefined
-                            ? `Above ${guide.slabPricingThresholdCostPerSf.toFixed(2)}/SF · needs full-slab cost`
-                            : `${guide.slabPricingMultiplier}× ${money.format(reference.slabCost)} actual slab cost`
-                          : pricingLabel ?? 'Needs default $/SF cost'}</small>
-                      </td>
-                      <td><input value={tagText(material.features)} onChange={(event) => updateStockMaterial(material.id, { features: tagsFromText(event.target.value) })} placeholder="Bookmatch, Full body…" /></td>
                       <td className="material-reference-details"><button type="button" onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}>{expanded ? 'Close' : 'Details'}</button></td>
                     </tr>
                     {expanded && (
-                      <tr className="material-reference-expanded-row" key={`${material.id}-details`}><td colSpan={12}>
+                      <tr className="material-reference-expanded-row" key={`${material.id}-details`}><td colSpan={8}>
                         <section className="material-reference-detail-panel">
                           <div className="material-reference-meta">
+                            <label><span>Supplier / importer</span><input value={material.supplier ?? ''} onChange={(event) => updateStockMaterial(material.id, { supplier: event.target.value })} placeholder="UMI, MSI, Hallmark…" /></label>
+                            <label><span>STOCK pricing level</span>{material.stockProgram
+                              ? <select value={validForced ? material.builderLevelId : 'auto'} onChange={(event) => updateStockMaterial(material.id, { builderLevelId: event.target.value === 'auto' ? undefined : event.target.value })}><option value="auto">Auto{level ? ` · ${level.rule.label}` : recommendation.mode === 'slab-review' ? ' · Slab review' : ''}</option>{orderedRules.filter((rule) => rule.active).map((rule) => <option value={rule.id} key={rule.id}>{rule.label}</option>)}</select>
+                              : <div className={`material-detail-readout ${recommendation.mode === 'slab-review' ? 'is-slab-review' : ''}`}>{level ? `Suggested ${level.rule.label}` : recommendation.mode === 'slab-review' ? 'Slab pricing review' : 'Needs effective cost'}</div>}</label>
                             <label><span>Collection / series</span><input value={material.collection ?? ''} onChange={(event) => updateStockMaterial(material.id, { collection: event.target.value })} placeholder="Collection or supplier series" /></label>
                             <label><span>Base SKU / code</span><input value={material.sku ?? ''} onChange={(event) => updateStockMaterial(material.id, { sku: event.target.value })} placeholder="Color code" /></label>
                             <label className="wide"><span>Color-level special features</span><input value={tagText(material.features)} onChange={(event) => updateStockMaterial(material.id, { features: tagsFromText(event.target.value) })} placeholder="Bookmatched, Full body, Limited edition, Printed…" /></label>
@@ -373,7 +351,7 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
                   </>
                 );
               })}
-              {!materials.length && <tr><td colSpan={12}><div className="rate-book-empty"><strong>No matching materials</strong><span>Add a material or change the filters above.</span></div></td></tr>}
+              {!materials.length && <tr><td colSpan={8}><div className="rate-book-empty"><strong>No matching materials</strong><span>Add a material or change the filters above.</span></div></td></tr>}
             </tbody>
           </table>
         </div>
