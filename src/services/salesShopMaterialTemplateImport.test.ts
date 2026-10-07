@@ -57,7 +57,7 @@ async function makeTemplateFile(
   const meta = workbook.addWorksheet('META');
   [
     ['Key', 'Value'],
-    ['TemplateVersion', options.templateVersion ?? '1.0'],
+    ['TemplateVersion', options.templateVersion ?? '1.1'],
     ['SchemaName', 'SalesShop Material Import'],
     ['ImportMode', 'SupplierCatalog'],
     ['PriceListLabel', options.priceListLabel ?? 'October 2026'],
