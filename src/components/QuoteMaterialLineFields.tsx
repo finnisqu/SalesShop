@@ -24,7 +24,7 @@ function variantLabel(variant?: MaterialVariant) {
 }
 
 function materialDescription(material: StockMaterial, variant?: MaterialVariant) {
-  return [material.brand, material.name, variant?.thickness, variant?.finish, variant?.formatName].filter(Boolean).join(' · ');
+  return [material.brand, material.name, variant?.thickness, variant?.finish].filter(Boolean).join(' · ');
 }
 
 function materialSearchText(material: StockMaterial) {
@@ -54,7 +54,7 @@ function sameMoney(a?: number, b?: number) {
   return Math.abs(a - b) < 0.005;
 }
 
-export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quoteId: string; line: QuoteLine; editSignal?: number }) {
+export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; line: QuoteLine }) {
   const materials = useCompanySettingsStore((state) => state.settings.stockMaterials);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
   const guide = useMaterialLevelGuideStore((state) => state.guide);
@@ -64,7 +64,7 @@ export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quo
   const [searching, setSearching] = useState(!line.materialReference?.materialId && !line.materialReference?.customMaterialName);
   const [pendingMaterialId, setPendingMaterialId] = useState<string | null>(null);
   const [pendingVariantId, setPendingVariantId] = useState<string | null>(null);
-  const lastEditSignal = useRef(editSignal);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void hydrateSettings();
@@ -72,17 +72,21 @@ export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quo
   }, [hydrateSettings, hydrateGuide]);
 
   useEffect(() => {
-    if (editSignal === lastEditSignal.current) return;
-    lastEditSignal.current = editSignal;
-    setSearch('');
-    setPendingMaterialId(line.materialReference?.materialId ?? null);
-    setPendingVariantId(null);
-    setSearching(true);
-  }, [editSignal, line.materialReference?.materialId]);
+    if (!searching) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (pickerRef.current?.contains(event.target as Node)) return;
+      setSearching(false);
+      setSearch('');
+      setPendingMaterialId(null);
+      setPendingVariantId(null);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [searching]);
+
 
   useEffect(() => {
     const collapse = () => {
-      if (!line.materialReference?.materialId && !line.materialReference?.customMaterialName) return;
       setSearching(false);
       setPendingMaterialId(null);
       setPendingVariantId(null);
@@ -233,9 +237,9 @@ export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quo
     ? compareQuoteMaterialSnapshot(snapshot, currentSnapshot)
     : undefined;
 
-  if (searching || (!snapshot && !selectedMaterial && !line.materialReference?.customMaterialName)) {
+  if (searching) {
     return (
-      <div className="quote-material-picker">
+      <div className="quote-material-picker quote-catalog-popover" ref={pickerRef}>
         {(snapshot || selectedMaterial || line.materialReference?.customMaterialName) && <div className="quote-picker-current">
           <div>
             <span>Current material</span>
@@ -243,10 +247,7 @@ export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quo
               snapshot?.brand ?? selectedMaterial?.brand,
               snapshot?.materialName ?? selectedMaterial?.name ?? line.materialReference?.customMaterialName,
             ].filter(Boolean).join(' ')}</strong>
-            <small>{[
-              snapshot?.variantLabel ?? variantLabel(selectedVariant),
-              snapshot?.purchaseOptionLabel ?? selectedPurchaseOption?.label,
-            ].filter(Boolean).join(' · ') || 'Custom quote material'}</small>
+            <small>{snapshot?.variantLabel ?? variantLabel(selectedVariant)}</small>
           </div>
           {snapshotComparison?.changed && currentReference && selectedMaterial && selectedVariant && (
             <button type="button" onClick={() => applyMaterial(selectedMaterial, selectedVariant.id, currentReference.purchaseOption?.id)}>Update snapshot</button>
@@ -320,7 +321,7 @@ export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quo
   const customName = line.materialReference?.customMaterialName;
   const quotedCostPerSf = snapshot?.costPerSf ?? line.materialReference?.sourceCostPerSf;
   const quotedSlabCost = snapshot?.slabCost ?? line.materialReference?.catalogSlabCost;
-  const quotedName = snapshot?.materialName ?? selectedMaterial?.name ?? customName ?? 'Custom material';
+  const quotedName = snapshot?.materialName ?? selectedMaterial?.name ?? customName ?? 'Choose material';
   const quotedBrand = snapshot?.brand ?? selectedMaterial?.brand;
   const quotedType = snapshot?.materialType ?? selectedMaterial?.materialType;
   const quotedVariantLabel = snapshot?.variantLabel ?? variantLabel(selectedVariant);
@@ -329,12 +330,20 @@ export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quo
   return (
     <div className="quote-material-selection quote-database-result">
       <div className="quote-material-selection-main">
-        <strong>{[quotedBrand, quotedName].filter(Boolean).join(' ')}</strong>
-        <small>{[
+        <div className="quote-product-name-row">
+          <strong>{[quotedBrand, quotedName].filter(Boolean).join(' ')}</strong>
+          <button type="button" className="quote-product-pencil" onClick={() => {
+            setSearch('');
+            setPendingMaterialId(null);
+            setPendingVariantId(null);
+            setSearching(true);
+          }} title="Change material" aria-label="Change material">✎</button>
+        </div>
+        {(snapshot || selectedMaterial) && <small>{[
           quotedVariantLabel,
           quotedPurchaseLabel,
           quotedType,
-        ].filter(Boolean).join(' · ') || 'Custom quote material'}</small>
+        ].filter(Boolean).join(' · ')}</small>}
       </div>
 
       {(snapshot || selectedMaterial) && <div className="quote-material-cost-reference">
