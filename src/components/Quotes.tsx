@@ -336,7 +336,8 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
     return <div key={line.id} className={`customer-quote-row kind-${line.kind}`}><div className="customer-line-description">{line.description || '—'}</div>{quote.customerColumns.quantity && <div>{line.pricingMode === 'quantity-rate' ? line.quantity ?? '' : ''}</div>}{quote.customerColumns.rate && <div>{line.pricingMode === 'quantity-rate' && line.rate !== undefined ? money.format(line.rate) : ''}</div>}{quote.customerColumns.lineAmount && <div className="customer-line-amount">{priced ? money.format(quoteLineAmount(line)) : ''}</div>}</div>;
   });
   const renderAreaSummary = (title: string, total: number) => <div className="customer-quote-row customer-area-summary-row"><div className="customer-line-description">{title}</div><div className="customer-line-amount">{money.format(total)}</div></div>;
-  const looseLines = visibleLines.filter((line) => !line.sectionId || !visibleSections.some((section) => section.id === line.sectionId));
+  const allSectionIds = new Set(quote.sections.map((section) => section.id));
+  const looseLines = visibleLines.filter((line) => !line.sectionId || !allSectionIds.has(line.sectionId));
   const documentLabel = commercialDocumentLabel(quote);
   return (
     <article className="customer-quote-paper">
