@@ -490,26 +490,52 @@ function compareCandidate(
   };
 }
 
-function readMeta(worksheet: { rowCount: number; getRow: (row: number) => { getCell: (column: number) => { text: string } } }) {
+type WorksheetRows = unknown[][];
+
+function cellText(value: unknown) {
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value).trim();
+}
+
+function readMeta(rows: WorksheetRows) {
   const values = new Map<string, string>();
-  for (let row = 1; row <= Math.max(worksheet.rowCount, 20); row += 1) {
-    const key = worksheet.getRow(row).getCell(1).text.trim();
+  for (let row = 0; row < Math.max(rows.length, 20); row += 1) {
+    const key = cellText(rows[row]?.[0]);
     if (!key) continue;
-    values.set(key, worksheet.getRow(row).getCell(2).text.trim());
+    values.set(key, cellText(rows[row]?.[1]));
   }
   return values;
 }
 
-function assertHeaders(worksheet: { getRow: (row: number) => { getCell: (column: number) => { text: string } } }) {
-  const actual = SALESSHOP_TEMPLATE_HEADERS.map((_, index) => worksheet.getRow(1).getCell(index + 1).text.trim());
+function assertHeaders(rows: WorksheetRows) {
+  const actual = SALESSHOP_TEMPLATE_HEADERS.map((_, index) => cellText(rows[0]?.[index]));
   const mismatches = SALESSHOP_TEMPLATE_HEADERS.flatMap((expected, index) => actual[index] === expected ? [] : [`${excelColumn(index + 1)}: expected "${expected}", found "${actual[index] || 'blank'}"`]);
   if (mismatches.length) {
     throw new Error(`IMPORT_ROWS does not match SalesShop Material Import Template v${SALESSHOP_TEMPLATE_VERSION}. ${mismatches.slice(0, 3).join('; ')}${mismatches.length > 3 ? `; +${mismatches.length - 3} more` : ''}. Nothing was staged.`);
   }
 }
 
-function readRow(worksheet: { getRow: (row: number) => { getCell: (column: number) => { text: string } } }, rowNumber: number): RowValues {
-  return Object.fromEntries(SALESSHOP_TEMPLATE_HEADERS.map((header, index) => [header, worksheet.getRow(rowNumber).getCell(index + 1).text.trim()])) as RowValues;
+function readRow(rows: WorksheetRows, rowNumber: number): RowValues {
+  const source = rows[rowNumber - 1] ?? [];
+  return Object.fromEntries(SALESSHOP_TEMPLATE_HEADERS.map((header, index) => [header, cellText(source[index])])) as RowValues;
+}
+
+function ruleText(rows: WorksheetRows | undefined) {
+  if (!rows) return [];
+  const rules: string[] = [];
+  for (let row = 1; row < rows.length; row += 1) {
+    const source = rows[row] ?? [];
+    const include = cellText(source[0]);
+    const rule = cellText(source[6]);
+    if (!rule || !parseYesNo(include, true)) continue;
+    const scope = cellText(source[3]);
+    const scopeValue = cellText(source[4]);
+    const type = cellText(source[5]);
+    const prefix = [scope && scope !== 'Batch' ? scope : '', scopeValue, type && type !== 'Reference Only' ? type : ''].filter(Boolean).join(' · ');
+    rules.push(prefix ? `${prefix}: ${rule}` : rule);
+  }
+  return uniqueStrings(rules);
 }
 
 function parseTemplateRow(
@@ -640,22 +666,6 @@ function parseTemplateRow(
   };
 }
 
-function ruleText(worksheet: { rowCount: number; getRow: (row: number) => { getCell: (column: number) => { text: string } } } | undefined) {
-  if (!worksheet) return [];
-  const rules: string[] = [];
-  for (let row = 2; row <= worksheet.rowCount; row += 1) {
-    const include = worksheet.getRow(row).getCell(1).text.trim();
-    const text = worksheet.getRow(row).getCell(7).text.trim();
-    if (!text || !parseYesNo(include, true)) continue;
-    const scope = worksheet.getRow(row).getCell(4).text.trim();
-    const scopeValue = worksheet.getRow(row).getCell(5).text.trim();
-    const type = worksheet.getRow(row).getCell(6).text.trim();
-    const prefix = [scope && scope !== 'Batch' ? scope : '', scopeValue, type && type !== 'Reference Only' ? type : ''].filter(Boolean).join(' · ');
-    rules.push(prefix ? `${prefix}: ${text}` : text);
-  }
-  return uniqueStrings(rules);
-}
-
 export async function stageSalesShopMaterialTemplate(
   file: File,
   catalog: StockMaterial[],
@@ -663,13 +673,32 @@ export async function stageSalesShopMaterialTemplate(
 ): Promise<SupplierImportSession> {
   if (!file.name.toLowerCase().endsWith('.xlsx')) throw new Error('SalesShop Material Template importer expects an .xlsx workbook.');
 
-  const ExcelJS = await import('exceljs');
-  const workbook = new ExcelJS.Workbook();
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  await workbook.xlsx.load(bytes as never);
+  let workbookRows: Record<string, WorksheetRows>;
+  try {
+    const XLSX = await import('xlsx');
+    const workbook = XLSX.read(await file.arrayBuffer(), {
+      type: 'array',
+      cellDates: true,
+      cellFormula: true,
+      cellNF: true,
+    });
+    workbookRows = Object.fromEntries(workbook.SheetNames.map((sheetName) => {
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        raw: true,
+        defval: '',
+        blankrows: true,
+      }) as unknown[][];
+      return [sheetName, rows];
+    }));
+  } catch (reason) {
+    const detail = reason instanceof Error ? reason.message : String(reason);
+    throw new Error(`SalesShop could not read this .xlsx workbook. The file may be damaged or exported in an unsupported format. ${detail}`);
+  }
 
-  const metaSheet = workbook.getWorksheet('META');
-  const importSheet = workbook.getWorksheet('IMPORT_ROWS');
+  const metaSheet = workbookRows.META;
+  const importSheet = workbookRows.IMPORT_ROWS;
   if (!metaSheet || !importSheet) throw new Error('This workbook is missing META or IMPORT_ROWS. Use SalesShop Material Import Template v1.0. Nothing was staged.');
 
   const meta = readMeta(metaSheet);
@@ -686,7 +715,7 @@ export async function stageSalesShopMaterialTemplate(
 
   const parsedRows: ParsedTemplateRow[] = [];
   const rowErrors: string[] = [];
-  for (let rowNumber = 2; rowNumber <= importSheet.rowCount; rowNumber += 1) {
+  for (let rowNumber = 2; rowNumber <= importSheet.length; rowNumber += 1) {
     const result = parseTemplateRow(readRow(importSheet, rowNumber), rowNumber, meta, fallbackEffectiveDate);
     if (result.errors.length) rowErrors.push(`Row ${rowNumber}: ${result.errors.join('; ')}`);
     if (result.row) parsedRows.push(result.row);
@@ -772,7 +801,7 @@ export async function stageSalesShopMaterialTemplate(
     importedAt: new Date().toISOString(),
     priceListLabel: meta.get('PriceListLabel') || undefined,
     effectiveDate: effectiveDates.length === 1 ? effectiveDates[0] : normalizeDate(meta.get('DefaultEffectiveDate') ?? ''),
-    supplierRules: ruleText(workbook.getWorksheet('SOURCE_RULES')),
+    supplierRules: ruleText(workbookRows.SOURCE_RULES),
     rulesReferenceOnly: true,
   };
 
