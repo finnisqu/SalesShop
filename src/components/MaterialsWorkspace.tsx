@@ -19,6 +19,7 @@ import { SuppliersWorkspace } from './SuppliersWorkspace';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const PIN_STORAGE_KEY = 'salesshop-material-comparison-v1';
+const MATERIALS_SECTION_KEY = 'salesshop-materials-section-v1';
 
 type MaterialSort = 'stock-brand' | 'name' | 'brand' | 'type' | 'cost-asc' | 'cost-desc';
 type ProgramFilter = 'all' | 'stock' | 'non-stock';
@@ -82,7 +83,9 @@ function compareOptionalNumbers(left?: number, right?: number) {
 export function MaterialsWorkspace() {
   const settings = useCompanySettingsStore((state) => state.settings);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
-  const [sectionView, setSectionView] = useState<'catalog' | 'suppliers'>('catalog');
+  const [sectionView, setSectionView] = useState<'catalog' | 'suppliers'>(() => {
+    try { return localStorage.getItem(MATERIALS_SECTION_KEY) === 'suppliers' ? 'suppliers' : 'catalog'; } catch { return 'catalog'; }
+  });
   const [editing, setEditing] = useState(false);
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
@@ -115,6 +118,10 @@ export function MaterialsWorkspace() {
   useEffect(() => {
     localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(pinnedKeys));
   }, [pinnedKeys]);
+
+  useEffect(() => {
+    try { localStorage.setItem(MATERIALS_SECTION_KEY, sectionView); } catch { /* best-effort UI continuity */ }
+  }, [sectionView]);
 
   const materialTypes = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.materialType))].sort(), [settings.stockMaterials]);
   const brands = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.brand?.trim()).filter((value): value is string => Boolean(value)))].sort(), [settings.stockMaterials]);

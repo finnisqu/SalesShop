@@ -2,6 +2,8 @@ export interface SupplierProfile {
   id: string;
   name: string;
   active: boolean;
+  phone?: string;
+  website?: string;
   pricingCadenceMonths?: number;
   nextPricingReviewDate?: string;
   notes: string;
@@ -12,6 +14,8 @@ export interface SupplierProfile {
 export interface SupplierProfilePatch {
   name?: string;
   active?: boolean;
+  phone?: string;
+  website?: string;
   pricingCadenceMonths?: number;
   nextPricingReviewDate?: string;
   notes?: string;
@@ -69,6 +73,48 @@ export interface SupplierCommitment {
   status: SupplierCommitmentStatus;
   notes: string;
   sourceActivityId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+
+export interface SupplierContact {
+  id: string;
+  supplierId: string;
+  name: string;
+  title?: string;
+  email?: string;
+  phone?: string;
+  isPrimary: boolean;
+  notes: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SupplierLocation {
+  id: string;
+  supplierId: string;
+  label: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city?: string;
+  stateRegion?: string;
+  postalCode?: string;
+  phone?: string;
+  notes: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SupplierRule {
+  id: string;
+  supplierId: string;
+  ruleType: string;
+  ruleText: string;
+  sourceLabel?: string;
+  active: boolean;
+  notes: string;
+  sortOrder: number;
   createdAt?: string;
   updatedAt?: string;
 }

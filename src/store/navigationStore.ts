@@ -17,22 +17,45 @@ interface NavigationState {
   clearFocusedCompany: () => void;
 }
 
-export const useNavigationStore = create<NavigationState>((set) => ({
-  view: 'notebook',
-  focusedProjectId: null,
-  focusedCompanyId: null,
-  setView: (view) => set({ view, focusedProjectId: null, focusedCompanyId: null }),
-  openProject: (projectId) => set({ view: 'board', focusedProjectId: projectId, focusedCompanyId: null }),
-  openCompany: (companyId) => set({ view: 'board', focusedCompanyId: companyId, focusedProjectId: null }),
-  openNotebookPage: (pageId) => {
-    useNotebookStore.getState().selectEntry(pageId);
-    set({ view: 'notebook', focusedProjectId: null, focusedCompanyId: null });
-  },
-  openQuote: (quoteId) => {
-    useQuoteStore.getState().hydrate();
-    useQuoteStore.getState().selectQuote(quoteId);
-    set({ view: 'quotes', focusedProjectId: null, focusedCompanyId: null });
-  },
-  clearFocusedProject: () => set({ focusedProjectId: null }),
-  clearFocusedCompany: () => set({ focusedCompanyId: null }),
-}));
+const VIEW_STORAGE_KEY = 'salesshop-active-view-v1';
+const APP_VIEWS: AppView[] = ['notebook', 'board', 'quotes', 'rate-book', 'materials', 'dashboard', 'settings'];
+
+function initialView(): AppView {
+  try {
+    const stored = localStorage.getItem(VIEW_STORAGE_KEY) as AppView | null;
+    return stored && APP_VIEWS.includes(stored) ? stored : 'notebook';
+  } catch {
+    return 'notebook';
+  }
+}
+
+function rememberView(view: AppView) {
+  try { localStorage.setItem(VIEW_STORAGE_KEY, view); } catch { /* best-effort UI continuity */ }
+}
+
+export const useNavigationStore = create<NavigationState>((set) => {
+  const navigate = (view: AppView, patch: Partial<NavigationState> = {}) => {
+    rememberView(view);
+    set({ view, focusedProjectId: null, focusedCompanyId: null, ...patch });
+  };
+
+  return {
+    view: initialView(),
+    focusedProjectId: null,
+    focusedCompanyId: null,
+    setView: (view) => navigate(view),
+    openProject: (projectId) => navigate('board', { focusedProjectId: projectId }),
+    openCompany: (companyId) => navigate('board', { focusedCompanyId: companyId }),
+    openNotebookPage: (pageId) => {
+      useNotebookStore.getState().selectEntry(pageId);
+      navigate('notebook');
+    },
+    openQuote: (quoteId) => {
+      useQuoteStore.getState().hydrate();
+      useQuoteStore.getState().selectQuote(quoteId);
+      navigate('quotes');
+    },
+    clearFocusedProject: () => set({ focusedProjectId: null }),
+    clearFocusedCompany: () => set({ focusedCompanyId: null }),
+  };
+});

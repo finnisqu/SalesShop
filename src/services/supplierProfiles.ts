@@ -7,6 +7,8 @@ function rowToSupplier(row: Record<string, unknown>): SupplierProfile {
     id: String(row.id),
     name: String(row.name ?? ''),
     active: row.active !== false,
+    phone: row.phone ? String(row.phone) : undefined,
+    website: row.website ? String(row.website) : undefined,
     pricingCadenceMonths: typeof row.pricing_cadence_months === 'number'
       ? row.pricing_cadence_months
       : row.pricing_cadence_months == null
@@ -30,7 +32,7 @@ export async function fetchSupplierProfiles(): Promise<SupplierProfile[]> {
   if (!context) return [];
   const { data, error } = await supabase!
     .from('suppliers')
-    .select('id,name,active,pricing_cadence_months,next_pricing_review_date,notes,created_at,updated_at')
+    .select('id,name,active,phone,website,pricing_cadence_months,next_pricing_review_date,notes,created_at,updated_at')
     .eq('organization_id', context.organizationId)
     .order('name', { ascending: true });
   if (error) throw new Error(error.message);
@@ -47,13 +49,15 @@ export async function createSupplierProfile(name: string): Promise<SupplierProfi
     id: `supplier_${crypto.randomUUID()}`,
     name: trimmed,
     active: true,
+    phone: null,
+    website: null,
     pricing_cadence_months: 12,
     notes: '',
   };
   const { data, error } = await supabase!
     .from('suppliers')
     .insert(row)
-    .select('id,name,active,pricing_cadence_months,next_pricing_review_date,notes,created_at,updated_at')
+    .select('id,name,active,phone,website,pricing_cadence_months,next_pricing_review_date,notes,created_at,updated_at')
     .single();
   if (error) throw new Error(error.message);
   return rowToSupplier(data as Record<string, unknown>);
@@ -73,12 +77,14 @@ export async function upsertSupplierProfile(
       id: supplier.id,
       name: next.name.trim(),
       active: next.active,
+      phone: next.phone?.trim() || null,
+      website: next.website?.trim() || null,
       pricing_cadence_months: next.pricingCadenceMonths ?? null,
       next_pricing_review_date: next.nextPricingReviewDate || null,
       notes: next.notes,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'organization_id,id' })
-    .select('id,name,active,pricing_cadence_months,next_pricing_review_date,notes,created_at,updated_at')
+    .select('id,name,active,phone,website,pricing_cadence_months,next_pricing_review_date,notes,created_at,updated_at')
     .single();
   if (error) throw new Error(error.message);
   return rowToSupplier(data as Record<string, unknown>);
