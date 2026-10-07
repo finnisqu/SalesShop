@@ -73,6 +73,48 @@ function isPricingSwipeBlocked(target: EventTarget | null) {
   ));
 }
 
+
+function quoteLinePricingComplete(line: QuoteLine, guideMultiplier: number) {
+  if (line.pricingMode === 'none') return true;
+  if (line.pricingMode === 'direct') return Number.isFinite(line.amount);
+  if (line.pricingMode === 'quantity-rate') return Number.isFinite(line.quantity) && Number.isFinite(line.rate);
+  if (line.pricingMode === 'slab-multiplier') {
+    return Number.isFinite(line.materialReference?.sourceSlabCost)
+      && Number.isFinite(line.materialReference?.slabMultiplier ?? guideMultiplier)
+      && Number.isFinite(line.materialReference?.slabCount);
+  }
+  return false;
+}
+
+function quoteLinePricingSummary(line: QuoteLine, guideMultiplier: number) {
+  if (line.pricingMode === 'none') return 'No price';
+  if (line.pricingMode === 'direct') return line.amount === undefined ? 'Amount needed' : `Amount · ${money.format(line.amount)}`;
+  if (line.pricingMode === 'quantity-rate') {
+    const quantity = line.quantity ?? 0;
+    const rate = line.rate ?? 0;
+    return `${quantity} × ${money.format(rate)}`;
+  }
+  const slabCost = line.materialReference?.sourceSlabCost ?? line.materialReference?.catalogSlabCost ?? 0;
+  const multiplier = line.materialReference?.slabMultiplier ?? guideMultiplier;
+  const slabs = line.materialReference?.slabCount ?? 0;
+  return `${money.format(slabCost)}/slab × ${multiplier} × ${slabs} slab${slabs === 1 ? '' : 's'}`;
+}
+
+function quoteLineReminderLabels(line: QuoteLine, pricingComplete: boolean, scopeChanged: boolean) {
+  const reminders: string[] = [];
+  if (!pricingComplete && line.pricingMode !== 'none') reminders.push('Price');
+  if (line.kind === 'material' && line.materialReference?.snapshot) {
+    const hasCost = line.pricingMode === 'slab-multiplier'
+      ? line.materialReference.snapshot.slabCost !== undefined
+      : line.materialReference.snapshot.costPerSf !== undefined;
+    if (!hasCost) reminders.push('Cost');
+  }
+  if (line.kind === 'sink' && line.sinkReference?.snapshot?.internalCost === undefined) reminders.push('Cost');
+  if (line.kind === 'rate' && line.rateReference?.snapshot?.internalCost === undefined) reminders.push('Cost');
+  if (scopeChanged) reminders.push('Scope');
+  return [...new Set(reminders)];
+}
+
 function LineEditor({
   quote,
   line,
@@ -95,6 +137,9 @@ function LineEditor({
   const updateLine = useQuoteStore((state) => state.updateLine);
   const deleteLine = useQuoteStore((state) => state.deleteLine);
   const guideMultiplier = useMaterialLevelGuideStore((state) => state.guide.slabPricingMultiplier);
+  const lineRef = useRef<HTMLDivElement>(null);
+  const [pricingEditing, setPricingEditing] = useState(false);
+  const [editSignal, setEditSignal] = useState(0);
   const textLine = isTextLine(line);
   const materialLine = line.kind === 'material';
   const sinkLine = line.kind === 'sink';
@@ -112,7 +157,24 @@ function LineEditor({
   const availableScopeFields = compatibleScopeFields.filter((field) => scopeValue(areaSection?.scope, field) !== undefined);
   const quantityScopeState = resolveLineAreaScopeState(quote, line);
   const selectedQuantitySource = line.quantitySource?.kind === 'area-scope' ? line.quantitySource.field : '';
+  const pricingComplete = quoteLinePricingComplete(line, guideMultiplier);
+  const pricingSummary = quoteLinePricingSummary(line, guideMultiplier);
+  const reminders = quoteLineReminderLabels(line, pricingComplete, Boolean(quantityScopeState?.changed));
+  const showPricingEditor = !databaseSelected || pricingEditing || !pricingComplete;
 
+  useEffect(() => {
+    if (!pricingEditing || !pricingComplete) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!lineRef.current?.contains(event.target as Node)) setPricingEditing(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [pricingEditing, pricingComplete]);
+
+  const openLineEditor = () => {
+    setPricingEditing(true);
+    setEditSignal((value) => value + 1);
+  };
 
   const changePricingMode = (pricingMode: QuotePricingMode) => {
     if (pricingMode === 'slab-multiplier' && materialLine) {
@@ -154,9 +216,7 @@ function LineEditor({
     updateLine(quote.id, line.id, { pricingMode, quantitySource: pricingMode === 'quantity-rate' ? line.quantitySource : undefined });
   };
 
-  const updateSlabField = (
-    patch: Parameters<typeof slabReferencePatch>[2],
-  ) => {
+  const updateSlabField = (patch: Parameters<typeof slabReferencePatch>[2]) => {
     const next = slabReferencePatch(line, guideMultiplier, patch);
     updateLine(quote.id, line.id, {
       materialReference: next.materialReference,
@@ -172,7 +232,8 @@ function LineEditor({
 
   return (
     <div
-      className={`quote-line-editor kind-${line.kind} ${databaseSelected ? 'has-database-selection' : ''} ${dragging ? 'is-dragging' : ''}`}
+      ref={lineRef}
+      className={`quote-line-editor kind-${line.kind} ${databaseSelected ? 'has-database-selection' : ''} ${pricingEditing ? 'is-line-editing' : ''} ${dragging ? 'is-dragging' : ''}`}
       data-quote-line-id={line.id}
       onDragOver={(event) => { if (dragActive) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; } }}
       onDrop={(event) => { if (dragActive) { event.preventDefault(); onDrop(line.id); } }}
@@ -191,18 +252,39 @@ function LineEditor({
         aria-keyshortcuts="ArrowUp ArrowDown"
         title="Drag to reorder. With this handle focused, ↑ / ↓ also moves the row."
       ><span aria-hidden="true">⠿</span></button>
+
       {textLine && <button type="button" className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`} onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })} title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}>{line.customerVisible ? '●' : '○'}</button>}
+
       <div className="quote-line-main">
         {!databaseSelected && <div className="quote-line-topline">
           <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>
         </div>}
-        {materialLine && <QuoteMaterialLineFields quoteId={quote.id} line={line} />}
-        {sinkLine && <QuoteSinkLineFields quoteId={quote.id} line={line} />}
-        {rateLine && <QuoteRateLineFields quote={quote} line={line} />}
+
+        {materialLine && <QuoteMaterialLineFields quoteId={quote.id} line={line} editSignal={editSignal} />}
+        {sinkLine && <QuoteSinkLineFields quoteId={quote.id} line={line} editSignal={editSignal} />}
+        {rateLine && <QuoteRateLineFields quote={quote} line={line} editSignal={editSignal} />}
+
+        {databaseSelected && line.pricingMode !== 'none' && <strong className="quote-line-resting-total">{money.format(quoteLineAmount(line))}</strong>}
+
+        {databaseSelected && pricingComplete && !pricingEditing && (
+          <div className="quote-line-resting-pricing">
+            <div className="quote-pricing-passive">
+              <span>{pricingSummary}</span>
+              <button type="button" onClick={openLineEditor} title="Edit product and pricing" aria-label="Edit product and pricing">✎</button>
+            </div>
+            {reminders.length > 0 && <div className="quote-line-reminders">{reminders.map((label) => <span key={label}>{label}</span>)}</div>}
+          </div>
+        )}
+
+        {databaseSelected && (!pricingComplete || pricingEditing) && reminders.length > 0 && (
+          <div className="quote-line-reminders quote-line-reminders-open">{reminders.map((label) => <span key={label}>{label}</span>)}</div>
+        )}
+
         <textarea value={line.description} onChange={(event) => updateLine(quote.id, line.id, { description: event.target.value })} rows={textLine ? 2 : 1} aria-label="Line description" />
       </div>
-      {!textLine && (
-        <div className={`quote-line-pricing ${manualCostLine ? 'has-internal-cost' : ''}`}>
+
+      {!textLine && showPricingEditor && (
+        <div className={`quote-line-pricing is-editing ${manualCostLine ? 'has-internal-cost' : ''}`}>
           <select value={line.pricingMode} onChange={(event) => changePricingMode(event.target.value as QuotePricingMode)} aria-label="Pricing mode">
             {materialLine && <option value="quantity-rate">Qty × Rate</option>}
             {materialLine && <option value="slab-multiplier">Slab × Mult.</option>}
@@ -210,7 +292,9 @@ function LineEditor({
             {!materialLine && <option value="quantity-rate">Qty × Rate</option>}
             <option value="none">No price</option>
           </select>
+
           {line.pricingMode === 'direct' && <label className="quote-money-input"><span>$</span><input type="number" step="0.01" value={line.amount ?? ''} onChange={(event) => updateLine(quote.id, line.id, { amount: numberValue(event.target.value) })} aria-label="Line amount" /></label>}
+
           {line.pricingMode === 'quantity-rate' && <div className="quote-qty-rate-stack">
             <div className="quote-qty-rate"><input type="number" step="0.01" placeholder="Qty" value={line.quantity ?? ''} onChange={(event) => updateLine(quote.id, line.id, { quantity: numberValue(event.target.value), quantitySource: undefined })} aria-label="Quantity" /><span>×</span><input type="number" step="0.01" placeholder="Rate" value={line.rate ?? ''} onChange={(event) => updateLine(quote.id, line.id, { rate: numberValue(event.target.value) })} aria-label="Rate" /></div>
             {areaSection && (availableScopeFields.length > 0 || selectedQuantitySource) && <div className={`quote-area-quantity-link ${quantityScopeState?.changed ? 'is-changed' : ''}`}>
@@ -242,6 +326,7 @@ function LineEditor({
               {quantityScopeState?.changed && quantityScopeState.currentValue === undefined && <span className="quote-area-quantity-warning">Area value removed</span>}
             </div>}
           </div>}
+
           {materialLine && line.pricingMode === 'slab-multiplier' && <div className="quote-slab-line-pricing">
             <label><span>$</span><input type="number" step="0.01" min="0" placeholder="Slab cost" value={line.materialReference?.sourceSlabCost ?? ''} onChange={(event) => updateSlabField({ sourceSlabCost: numberValue(event.target.value) })} aria-label="Slab cost" /></label>
             <span>×</span>
@@ -249,7 +334,9 @@ function LineEditor({
             <span>×</span>
             <input type="number" step="1" min="1" placeholder="Slabs" value={line.materialReference?.slabCount ?? ''} onChange={(event) => updateSlabField({ slabCount: numberValue(event.target.value) })} aria-label="Slab count" />
           </div>}
+
           {line.pricingMode !== 'none' && <strong>{money.format(quoteLineAmount(line))}</strong>}
+
           {manualCostLine && (
             <label className="quote-internal-cost-input" title="Private total internal cost for this line. Never shown to the customer.">
               <span>Internal cost</span>
@@ -260,9 +347,9 @@ function LineEditor({
               <small>Private total</small>
             </label>
           )}
-
         </div>
       )}
+
       <button type="button" className="quote-line-delete" onClick={() => deleteLine(quote.id, line.id)} title="Delete row">×</button>
     </div>
   );
