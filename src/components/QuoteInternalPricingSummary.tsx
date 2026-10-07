@@ -61,7 +61,7 @@ export function QuoteInternalPricingSummary({ quote }: { quote: Quote }) {
       <header>
         <div>
           <span className="quote-control-heading">Internal pricing · private</span>
-          <small>Uses the frozen Material and Rate Book cost snapshots on this quote. Customer pricing is unchanged.</small>
+          <small>Uses private manual costs plus the frozen Material and Rate Book cost snapshots on this quote. Customer pricing is unchanged.</small>
         </div>
         <span className="quote-internal-private-badge">Not customer visible</span>
       </header>
