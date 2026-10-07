@@ -6,8 +6,7 @@ import {
   buildSupplierImportPublishPlan,
   validateStagedAgainstCatalog,
 } from './supplierImportCatalog';
-import { getSupplierImportParser, getSupplierImportProfile, supplierImportProfiles } from './supplierImportParsers';
-import { VICOSTONE_PARSER_ID } from './vicostoneSupplierImport';
+import { getSupplierImportParser, supplierImportProfiles } from './supplierImportParsers';
 import { SALESSHOP_TEMPLATE_PARSER_ID } from './salesShopMaterialTemplateImport';
 
 const publishedAt = '2026-10-06T21:30:00.000Z';
@@ -73,15 +72,15 @@ function session(candidates: SupplierImportCandidate[], overrides: Partial<Suppl
     id: 'session-1',
     createdAt: publishedAt,
     source: {
-      parserId: VICOSTONE_PARSER_ID,
-      parserVersion: 2,
+      parserId: SALESSHOP_TEMPLATE_PARSER_ID,
+      parserVersion: 1,
       supplier: 'UMI',
       brand: 'Vicostone',
-      fileName: 'vicostone.pdf',
+      fileName: 'SalesShop_Material_Import_Template_v1.0.xlsx',
       fileSize: 1234,
-      pageCount: 2,
+      pageCount: 1,
       importedAt: publishedAt,
-      priceListLabel: 'July 2026',
+      priceListLabel: 'October 2026',
       supplierRules: ['Special-order honed or brushed finish adds $2.00/SF.'],
       rulesReferenceOnly: true,
     },
@@ -310,25 +309,5 @@ describe('supplier parser contract', () => {
       fileTypeLabel: 'Material Import Template (.xlsx)',
     });
     expect(getSupplierImportParser(SALESSHOP_TEMPLATE_PARSER_ID).label).toBe('SalesShop Material Import Template v1.0');
-  });
-
-  it('registers Vicostone as an explicit-listings-only parser', () => {
-    const parser = getSupplierImportParser(VICOSTONE_PARSER_ID);
-    expect(parser.label).toBe('Vicostone / UMI Fabricator PDF');
-    expect(parser.version).toBe(2);
-    expect(parser.explicitListingsOnly).toBe(true);
-  });
-
-  it('registers Vicostone / UMI as a reusable v4 import profile', () => {
-    expect(supplierImportProfiles.some((profile) => profile.id === 'vicostone-via-umi')).toBe(true);
-    const profile = getSupplierImportProfile('vicostone-via-umi');
-    expect(profile).toMatchObject({
-      supplier: 'UMI',
-      brand: 'Vicostone',
-      materialType: 'Quartz',
-      parserId: VICOSTONE_PARSER_ID,
-      fileTypeLabel: 'Fabricator PDF',
-    });
-    expect(getSupplierImportParser(profile.parserId).id).toBe(VICOSTONE_PARSER_ID);
   });
 });
