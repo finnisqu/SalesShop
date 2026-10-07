@@ -229,3 +229,41 @@
     margin-bottom: 8px;
   }
 }
+
+
+/* Material pricing stays in Rates; supplier/material data lives in the Materials workspace. */
+.rates-material-pricing-table {
+  min-width: 760px;
+}
+
+.rates-material-pricing-footer {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(72, 63, 50, .1);
+  background: rgba(246, 239, 216, .72);
+}
+
+.rates-material-pricing-footer strong {
+  flex: 0 0 auto;
+  color: #654f27;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.rates-material-pricing-footer span {
+  color: #766b56;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+@media (max-width: 700px) {
+  .rates-material-pricing-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
