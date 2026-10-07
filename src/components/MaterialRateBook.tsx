@@ -132,7 +132,7 @@ function MaterialVariantEditor({ materialId, variant }: { materialId: string; va
   );
 }
 
-export function MaterialRateBook({ query, showInactive }: { query: string; showInactive: boolean }) {
+export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query: string; showInactive: boolean; mode?: 'all' | 'guide' | 'catalog' }) {
   const settings = useCompanySettingsStore((state) => state.settings);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
   const addStockMaterial = useCompanySettingsStore((state) => state.addStockMaterial);
@@ -187,7 +187,8 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
 
   return (
     <div className="material-rate-book">
-      <section className="material-level-guide-card">
+      {mode !== 'catalog' && (
+        <section className="material-level-guide-card">
         <header className="material-level-guide-header">
           <div>
             <span className="board-eyebrow">Builder pricing guide</span>
@@ -273,9 +274,11 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
             {guide.history.map((version) => <button type="button" key={version.id} onClick={() => { if (window.confirm(`Restore this ${new Date(version.recordedAt).toLocaleDateString()} guide version?`)) restoreVersion(version.id); }}><strong>{new Date(version.recordedAt).toLocaleDateString()}</strong><span>{version.note || 'Saved guide version'} · {version.rules.length} levels</span></button>)}
           </div>
         </details>
-      </section>
+        </section>
+      )}
 
-      <section className="material-catalog-card">
+      {mode !== 'guide' && (
+        <section className="material-catalog-card">
         <header className="material-catalog-header">
           <div><span className="board-eyebrow">Material reference</span><strong>Supplier catalog → STOCK program → pricing guide</strong><small>Maintain the full supplier catalog here, then explicitly choose which colors belong to your STOCK program. Thickness, finish, slab/sheet size and special features live on variants; supplier purchase programs live below each variant.</small></div>
           <button type="button" onClick={() => { const id = addStockMaterial(); setExpandedMaterialId(id); }}>+ Material</button>
@@ -374,7 +377,8 @@ export function MaterialRateBook({ query, showInactive }: { query: string; showI
             </tbody>
           </table>
         </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
