@@ -1,5 +1,4 @@
 import type { SupplierImportParser, SupplierImportParserContext, SupplierImportProfile, SupplierImportSession } from '../types/supplierImport';
-import { vicostoneSupplierParser } from './vicostoneSupplierImport';
 import {
   SALESSHOP_TEMPLATE_PARSER_ID,
   salesShopMaterialTemplateParser,
@@ -7,7 +6,6 @@ import {
 
 export const supplierImportParsers: readonly SupplierImportParser[] = [
   salesShopMaterialTemplateParser,
-  vicostoneSupplierParser,
 ];
 
 export const supplierImportProfiles: readonly SupplierImportProfile[] = [
@@ -19,18 +17,6 @@ export const supplierImportProfiles: readonly SupplierImportProfile[] = [
     accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx',
     description: 'Canonical SalesShop material-import workbook. Supplier interpretation happens before upload; SalesShop validates explicit normalized rows only.',
     supportsEffectiveDateOverride: false,
-  },
-  {
-    id: 'vicostone-via-umi',
-    label: 'Vicostone · via UMI',
-    supplier: 'UMI',
-    brand: 'Vicostone',
-    materialType: 'Quartz',
-    parserId: vicostoneSupplierParser.id,
-    fileTypeLabel: 'Fabricator PDF',
-    accept: 'application/pdf,.pdf',
-    description: 'Legacy direct import for the proven Vicostone / UMI fabricator PDF.',
-    supportsEffectiveDateOverride: true,
   },
 ];
 
