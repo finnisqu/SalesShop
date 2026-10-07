@@ -42,7 +42,7 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
   const updateLine = useQuoteStore((state) => state.updateLine);
   const snapshot = line.rateReference?.snapshot;
   const [search, setSearch] = useState('');
-  const [searching, setSearching] = useState(!snapshot);
+  const [searching, setSearching] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { hydrate(); }, [hydrate]);
@@ -174,10 +174,7 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
             <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
           </>
         ) : (
-          <>
-            <strong>Choose rate</strong>
-            <small>Rate Book</small>
-          </>
+          <strong>Choose rate</strong>
         )}
       </div>
 
