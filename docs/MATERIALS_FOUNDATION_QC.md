@@ -138,6 +138,10 @@ Run this checklist before a major Quotes integration change, before merging arch
 
 ## Automated regression coverage
 
+Run the focused Materials suite with:
+
+`npm run test:materials`
+
 The Vitest suite must protect at least these invariants:
 - canonical Brand + Family + Type + Color identity
 - same color name across different brands stays separate
