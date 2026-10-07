@@ -180,11 +180,23 @@ export function MaterialsWorkspace() {
     setThicknessFilter('all');
   };
 
-  const togglePin = (materialId: string, variantId: string) => {
+  const togglePin = (materialId: string, variantId: string, anchor?: HTMLElement | null) => {
     const key = pinKey(materialId, variantId);
+    const beforeTop = anchor?.getBoundingClientRect().top;
     setPinnedKeys((current) => current.includes(key)
       ? current.filter((candidate) => candidate !== key)
       : [...current, key]);
+
+    if (anchor && beforeTop !== undefined) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!anchor.isConnected) return;
+          const afterTop = anchor.getBoundingClientRect().top;
+          const delta = afterTop - beforeTop;
+          if (Math.abs(delta) > 0.5) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+        });
+      });
+    }
   };
 
   const reorderPinned = (sourceKey: string, targetKey: string, position: 'before' | 'after' = 'before') => {
@@ -394,7 +406,7 @@ export function MaterialsWorkspace() {
                         }}
                       >⠿</button>
                       <button type="button" className="materials-unpin" onClick={() => togglePin(material.id, variant.id)} aria-label={`Unpin ${material.name} ${variantSpec(variant)}`}>×</button>
-                      <span>{material.brand || material.supplier || 'Unknown brand'} · {resolvedMaterialFamily(material)} · {material.materialType}</span>
+                      <span>{material.brand || material.supplier || 'Unknown brand'} · {material.materialType || resolvedMaterialFamily(material)}</span>
                       <strong>{material.name}</strong>
                       <b>{variantSpec(variant)}</b>
                       <dl>
@@ -420,7 +432,7 @@ export function MaterialsWorkspace() {
             </header>
             <div className="rates-reference-table-wrap">
               <table className="rates-reference-table materials-reference-table">
-                <thead><tr><th>Color</th><th>Program</th><th>Brand</th><th>Type</th><th>Default cost</th><th>Default spec</th><th>Variants</th><th>Product</th></tr></thead>
+                <thead><tr><th>Brand</th><th>Name</th><th>Type</th><th>Program</th><th>Default cost</th><th>Default spec</th><th>Product</th><th>Variants</th></tr></thead>
                 <tbody>
                   {materials.map((material) => {
                     const reference = resolveStockMaterialCostReference(material);
@@ -431,14 +443,14 @@ export function MaterialsWorkspace() {
                     return (
                       <Fragment key={material.id}>
                         <tr className={`${expanded ? 'is-expanded' : ''} ${hasPinnedVariant ? 'has-pinned-variant' : ''}`}>
-                          <td className="rates-reference-item"><strong>{material.name}</strong><small>{material.collection || material.sku || '—'}</small></td>
-                          <td><span className={`rates-program-pill ${material.stockProgram ? 'is-stock' : ''}`}>{material.stockProgram ? 'STOCK' : 'Non-stock'}</span></td>
                           <td><strong>{material.brand || material.supplier || '—'}</strong></td>
-                          <td><strong>{material.materialType}</strong><small className="materials-cell-note">{resolvedMaterialFamily(material)}</small></td>
+                          <td className="rates-reference-item"><button type="button" className="materials-name-toggle" onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}><strong>{material.name}</strong></button><small>{material.collection || material.sku || '—'}</small></td>
+                          <td><strong>{material.materialType || resolvedMaterialFamily(material)}</strong></td>
+                          <td><span className={`rates-program-pill ${material.stockProgram ? 'is-stock' : ''}`}>{material.stockProgram ? 'STOCK' : 'Non-stock'}</span></td>
                           <td className="number"><strong>{moneyPerSf(reference.costPerSf)}</strong><small className="materials-cell-note">{reference.purchaseOption?.label || (reference.basis === 'legacy' ? 'Legacy cost' : 'No default price')}</small></td>
                           <td className="materials-default-spec"><strong>{variantSpec(reference.variant)}</strong><small>{reference.variant ? `${variantSize(reference.variant)}${materialVariantAreaSf(reference.variant) ? ` · ${materialVariantAreaSf(reference.variant)?.toFixed(2)} SF` : ''}` : 'No structured slab size'}</small></td>
-                          <td className="materials-variant-toggle-cell"><button type="button" className={expanded ? 'active' : ''} onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}>{expanded ? 'Hide variants' : `Variants · ${activeVariants.length}`}</button></td>
                           <td className="rates-product-links">{links.length ? links.map(([label, url]) => <a key={label} href={url} target="_blank" rel="noreferrer">{label}</a>) : <span>—</span>}</td>
+                          <td className="materials-variant-toggle-cell"><button type="button" className={expanded ? 'active' : ''} onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}>{expanded ? `Hide · ${activeVariants.length}` : `Variants · ${activeVariants.length}`}</button></td>
                         </tr>
                         {expanded && (
                           <tr key={`${material.id}-variants`} className="materials-variant-expanded-row">
@@ -452,7 +464,6 @@ export function MaterialsWorkspace() {
                                   const isPinned = pinnedKeySet.has(pinKey(material.id, variant.id));
                                   return (
                                     <article className={`materials-variant-line ${isPinned ? 'is-pinned' : ''}`} key={variant.id}>
-                                      <button type="button" className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`} onClick={() => togglePin(material.id, variant.id)}>{isPinned ? 'Pinned' : 'Pin'}</button>
                                       <div className="materials-variant-identity"><strong>{variantSpec(variant)}</strong><small>{variant.sku || 'No variant SKU'}{variant.default ? ' · Default spec' : ''}</small></div>
                                       <div><span>Size</span><strong>{variantSize(variant)}</strong><small>{area === undefined ? 'Area not available' : `${area.toFixed(2)} SF`}</small></div>
                                       <div><span>Availability</span><strong>{availabilityLabel(variant.availability)}</strong><small>{variant.availabilityNote || 'No ETA note'}</small></div>
@@ -469,6 +480,11 @@ export function MaterialsWorkspace() {
                                           );
                                         }) : <div className="is-empty"><span>No supplier price programs</span><strong>—</strong></div>}
                                       </div>
+                                      <button
+                                        type="button"
+                                        className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`}
+                                        onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}
+                                      >{isPinned ? 'Pinned' : 'Pin'}</button>
                                     </article>
                                   );
                                 })}
