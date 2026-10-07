@@ -15,6 +15,7 @@ import {
 } from '../types/settings';
 import { MaterialRateBook } from './MaterialRateBook';
 import { SupplierImportLauncher } from './SupplierImportCenter';
+import { SuppliersWorkspace } from './SuppliersWorkspace';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const PIN_STORAGE_KEY = 'salesshop-material-comparison-v1';
@@ -81,6 +82,7 @@ function compareOptionalNumbers(left?: number, right?: number) {
 export function MaterialsWorkspace() {
   const settings = useCompanySettingsStore((state) => state.settings);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
+  const [sectionView, setSectionView] = useState<'catalog' | 'suppliers'>('catalog');
   const [editing, setEditing] = useState(false);
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
@@ -210,26 +212,45 @@ export function MaterialsWorkspace() {
         <div>
           <span className="board-eyebrow">Supplier material library</span>
           <h1>Materials</h1>
-          <p>{editing
-            ? 'Maintain supplier colors, physical variants, slab sizes, purchase programs, and source costs.'
-            : 'Browse what we can buy, drill into slab variants, and compare real supplier costs without entering edit mode.'}</p>
+          <p>{sectionView === 'suppliers'
+            ? 'Track the vendors behind the catalog, pricing freshness, published price-list history, and purchasing relationship context.'
+            : editing
+              ? 'Maintain supplier colors, physical variants, slab sizes, purchase programs, and source costs.'
+              : 'Browse what we can buy, drill into slab variants, and compare real supplier costs without entering edit mode.'}</p>
         </div>
         <div className="rates-mode-actions">
-          {editing && (
+          {sectionView === 'catalog' && editing && (
             <label className="materials-show-inactive">
               <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />
               Show inactive
             </label>
           )}
-          <span className={`rates-mode-badge ${editing ? 'is-editing' : ''}`}>{editing ? 'Editing' : 'Reference mode'}</span>
+          <span className={`rates-mode-badge ${sectionView === 'catalog' && editing ? 'is-editing' : ''}`}>
+            {sectionView === 'suppliers' ? 'Supplier directory' : editing ? 'Editing' : 'Reference mode'}
+          </span>
           <SupplierImportLauncher placement="toolbar" />
-          <button type="button" className={editing ? 'rates-done-button' : 'rates-edit-button'} onClick={() => setEditing((value) => !value)}>
-            {editing ? 'Done editing' : 'Edit materials'}
-          </button>
+          {sectionView === 'catalog' && (
+            <button type="button" className={editing ? 'rates-done-button' : 'rates-edit-button'} onClick={() => setEditing((value) => !value)}>
+              {editing ? 'Done editing' : 'Edit materials'}
+            </button>
+          )}
         </div>
       </header>
 
-      <section className="rates-reference-controls rates-shared-controls materials-controls">
+      <nav className="materials-subtabs" aria-label="Materials workspace sections">
+        <button
+          type="button"
+          className={sectionView === 'catalog' ? 'active' : ''}
+          onClick={() => setSectionView('catalog')}
+        >Catalog</button>
+        <button
+          type="button"
+          className={sectionView === 'suppliers' ? 'active' : ''}
+          onClick={() => { setEditing(false); setSectionView('suppliers'); }}
+        >Suppliers</button>
+      </nav>
+
+      {sectionView === 'catalog' && <section className="rates-reference-controls rates-shared-controls materials-controls">
         <div className="rates-reference-tools materials-reference-tools">
           <input
             type="search"
@@ -266,9 +287,11 @@ export function MaterialsWorkspace() {
             </>
           )}
         </div>
-      </section>
+      </section>}
 
-      {editing ? (
+      {sectionView === 'suppliers' ? (
+        <SuppliersWorkspace />
+      ) : editing ? (
         <div className="materials-editor-host">
           <MaterialRateBook query={query} showInactive={showInactive} mode="catalog" />
         </div>
