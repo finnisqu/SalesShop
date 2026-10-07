@@ -57,7 +57,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
   const updateLine = useQuoteStore((state) => state.updateLine);
   const snapshot = line.sinkReference?.snapshot;
   const [search, setSearch] = useState('');
-  const [searching, setSearching] = useState(!snapshot);
+  const [searching, setSearching] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { void hydrate(); }, [hydrate]);
@@ -181,14 +181,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
   return (
     <div className="quote-sink-selection quote-database-result">
       <div className="quote-sink-selection-main">
-        <div className="quote-product-name-row">
-          <strong>{snapshot ? [snapshot.brand, snapshot.sinkModelName].filter(Boolean).join(' ') : 'Choose sink'}</strong>
-          <button type="button" className="quote-product-pencil" onClick={() => {
-            window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
-            setSearch('');
-            setSearching(true);
-          }} title="Change sink" aria-label="Change sink">✎</button>
-        </div>
+        <strong>{snapshot ? [snapshot.brand, snapshot.sinkModelName].filter(Boolean).join(' ') : 'Sink'}</strong>
         {snapshot && <small>{[
           snapshot.variantLabel,
           SINK_CONFIGURATION_LABELS[snapshot.configuration],
@@ -197,7 +190,25 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
         ].filter(Boolean).join(' · ')}</small>}
       </div>
 
-      {snapshot && (!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
+      <div className={`quote-sink-price-reference quote-source-edit-reference ${snapshot ? '' : 'is-empty'}`}>
+        <div className="quote-source-reference-copy">
+          {snapshot ? (
+            <>
+              <span>Internal cost</span>
+              <strong>{snapshot.internalCost === undefined ? 'Cost —' : `Cost ${money.format(snapshot.internalCost)}`}</strong>
+            </>
+          ) : (
+            <strong>Choose sink</strong>
+          )}
+        </div>
+        <button type="button" className="quote-source-pencil" onClick={() => {
+          window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
+          setSearch('');
+          setSearching(true);
+        }} title="Change sink" aria-label="Change sink">✎</button>
+      </div>
+
+      {snapshot && (!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>
       {snapshot && comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
     </div>
   );
