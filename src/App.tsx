@@ -35,7 +35,6 @@ import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
-import { QuoteShareControl } from './components/QuoteShareControl';
 import { Quotes } from './components/Quotes';
 import { CatalogWorkspace } from './components/CatalogWorkspace';
 import { Sidebar } from './components/Sidebar';
@@ -74,7 +73,7 @@ function App() {
   if (!hydrated || !entry) return <div className="loading-screen">Opening SalesShop…</div>;
 
   return (
-    <div className="sales-app">
+    <div className={`sales-app view-${view}`}>
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
         <nav className="app-tabs" aria-label="SalesShop sections">
@@ -146,7 +145,6 @@ function App() {
           </section>
         </main>
       )}
-      {view === 'quotes' && <QuoteShareControl />}
     </div>
   );
 }
