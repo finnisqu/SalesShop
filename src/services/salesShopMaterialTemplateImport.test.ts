@@ -195,7 +195,7 @@ describe('SalesShop canonical material template importer', () => {
   });
 
 
-  it('allows supplier group to vary across physical variants of the same material', async () => {
+  it('stages conflicting supplier groups as a resolvable material issue', async () => {
     const file = await makeTemplateFile([
       {
         ...baseRow,
@@ -217,10 +217,53 @@ describe('SalesShop canonical material template importer', () => {
     ]);
 
     const session = await stageSalesShopMaterialTemplate(file, []);
+    const candidate = session.candidates[0];
     expect(session.candidates).toHaveLength(1);
-    expect(session.candidates[0].material.supplierGroup).toBe('B');
-    expect(session.candidates[0].material.variants).toHaveLength(2);
-    expect(session.candidates[0].status).toBe('new');
+    expect(candidate.material.supplierGroup).toBeUndefined();
+    expect(candidate.material.variants).toHaveLength(2);
+    expect(candidate.status).toBe('new');
+    expect(candidate.validationIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        scope: 'material',
+        field: 'supplierGroup',
+        severity: 'blocking',
+        values: ['B', 'C'],
+        resolution: 'unresolved',
+      }),
+    ]));
+  });
+
+  it('stages conflicting collection values instead of rejecting the workbook', async () => {
+    const file = await makeTemplateFile([
+      {
+        ...baseRow,
+        'Color / Product Name': 'Aeris',
+        'Collection / Series': '2025 Builder Program',
+        'Format Name': 'Slab',
+      },
+      {
+        ...baseRow,
+        'Color / Product Name': 'Aeris',
+        'Collection / Series': '2025 Builder Program · Shower Walls',
+        'Supplier Group': 'Shower Group 1',
+        Thickness: '8mm',
+        'Format Name': 'Shower Wall 96x64',
+        'Purchase Program': 'Shower Wall',
+        'Cost / SF Listed': 5.5,
+        'Cost / Unit Listed': '',
+        'Default Variant': 'No',
+      },
+    ]);
+    const session = await stageSalesShopMaterialTemplate(file, []);
+    const candidate = session.candidates[0];
+    expect(candidate.material.collection).toBeUndefined();
+    expect(candidate.validationIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        field: 'collection',
+        values: ['2025 Builder Program', '2025 Builder Program · Shower Walls'],
+        resolution: 'unresolved',
+      }),
+    ]));
   });
 
   it('accepts Natural Stone as a safe fallback type when geology is unverified', async () => {
@@ -240,14 +283,28 @@ describe('SalesShop canonical material template importer', () => {
     });
   });
 
-  it('rejects a v1.1 family/type mismatch instead of accepting bad taxonomy', async () => {
+  it('stages a recognizable family/type mismatch as a row issue instead of rejecting the workbook', async () => {
     const file = await makeTemplateFile([{
       ...baseRow,
       'Material Family': 'Natural Stone',
       'Material Type': 'Quartz',
     }]);
-    await expect(stageSalesShopMaterialTemplate(file, []))
-      .rejects.toThrow(/does not match Material Type/i);
+    const session = await stageSalesShopMaterialTemplate(file, []);
+    expect(session.candidates).toHaveLength(1);
+    expect(session.candidates[0].material).toMatchObject({
+      brand: 'Vicostone',
+      materialFamily: 'Engineered Surfaces',
+      materialType: 'Quartz',
+      name: 'Akoya',
+    });
+    expect(session.candidates[0].material.variants).toHaveLength(0);
+    expect(session.candidates[0].validationIssues?.[0]).toMatchObject({
+      scope: 'row',
+      severity: 'blocking',
+      rowNumbers: [2],
+      resolution: 'unresolved',
+    });
+    expect(session.candidates[0].validationIssues?.[0].message).toMatch(/does not match Material Type/i);
   });
 
   it('keeps v1.0 templates backward compatible by deriving Material Family', async () => {
@@ -384,14 +441,22 @@ describe('SalesShop canonical material template importer', () => {
       .rejects.toThrow(/supports v1\.0 and v1\.1/i);
   });
 
-  it('rejects blocking included-row errors instead of silently skipping bad pricing', async () => {
+  it('stages recognizable bad pricing rows as blocking row issues', async () => {
     const file = await makeTemplateFile([{
       ...baseRow,
       'Cost / SF Listed': '',
       'Cost / Unit Listed': '',
     }]);
-    await expect(stageSalesShopMaterialTemplate(file, []))
-      .rejects.toThrow(/blocking row error/i);
+    const session = await stageSalesShopMaterialTemplate(file, []);
+    expect(session.candidates).toHaveLength(1);
+    expect(session.candidates[0].material.variants).toHaveLength(0);
+    expect(session.candidates[0].validationIssues?.[0]).toMatchObject({
+      scope: 'row',
+      severity: 'blocking',
+      rowNumbers: [2],
+      resolution: 'unresolved',
+    });
+    expect(session.candidates[0].validationIssues?.[0].message).toMatch(/Cost \/ SF Listed or Cost \/ Unit Listed is required/);
   });
 
   it('skips rows explicitly marked Include = No', async () => {
