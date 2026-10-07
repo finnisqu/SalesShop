@@ -282,6 +282,7 @@ export function MaterialsWorkspace() {
                     <article
                       className={`materials-comparison-card ${draggingKey === key ? 'is-dragging' : ''}`}
                       key={key}
+                      data-pin-key={key}
                       onDragOver={(event) => {
                         if (!draggingKey || draggingKey === key) return;
                         event.preventDefault();
@@ -306,6 +307,24 @@ export function MaterialsWorkspace() {
                           event.dataTransfer.setData('text/plain', key);
                         }}
                         onDragEnd={() => setDraggingKey(null)}
+                        onPointerDown={(event) => {
+                          if (event.pointerType === 'mouse') return;
+                          event.preventDefault();
+                          event.currentTarget.setPointerCapture(event.pointerId);
+                          setDraggingKey(key);
+                        }}
+                        onPointerMove={(event) => {
+                          if (event.pointerType === 'mouse' || draggingKey !== key) return;
+                          const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-pin-key]');
+                          const targetKey = target?.dataset.pinKey;
+                          if (targetKey && targetKey !== key) reorderPinned(key, targetKey);
+                        }}
+                        onPointerUp={(event) => {
+                          if (event.pointerType === 'mouse') return;
+                          if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+                          setDraggingKey(null);
+                        }}
+                        onPointerCancel={() => setDraggingKey(null)}
                         onKeyDown={(event) => {
                           if (event.key === 'ArrowLeft') {
                             event.preventDefault();
