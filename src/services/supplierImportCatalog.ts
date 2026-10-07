@@ -3,6 +3,7 @@ import type {
   MaterialPriceVersion,
   MaterialPurchaseOption,
   MaterialVariant,
+  resolvedMaterialFamily,
   StockMaterial,
 } from '../types/settings';
 import type {
@@ -55,8 +56,13 @@ function optionIdentity(option: MaterialPurchaseOption) {
   return normalized(option.label);
 }
 
-function materialIdentity(material: Pick<StockMaterial, 'brand' | 'materialType' | 'name'>) {
-  return [normalized(material.brand), normalized(material.materialType), normalized(material.name)].join('|');
+function materialIdentity(material: Pick<StockMaterial, 'brand' | 'materialFamily' | 'materialType' | 'name'>) {
+  return [
+    normalized(material.brand),
+    normalized(resolvedMaterialFamily(material)),
+    normalized(material.materialType),
+    normalized(material.name),
+  ].join('|');
 }
 
 function materialSkuSet(material: StockMaterial) {
@@ -243,6 +249,7 @@ function mergeMaterial(
     name: incoming.name,
     supplier: incoming.supplier ?? existing.supplier,
     brand: incoming.brand ?? existing.brand,
+    materialFamily: incoming.materialFamily ?? existing.materialFamily ?? resolvedMaterialFamily(existing),
     collection: incoming.collection ?? existing.collection,
     supplierGroup: incoming.supplierGroup ?? existing.supplierGroup,
     sku: incoming.sku ?? existing.sku,
@@ -289,7 +296,7 @@ export function validateStagedAgainstCatalog(session: SupplierImportSession, cat
 
     const identityCollision = catalog.find((material) => materialIdentity(material) === materialIdentity(candidate.material));
     if (identityCollision) {
-      throw new Error(`${candidate.material.brand || 'Unknown brand'} ${candidate.material.name} now matches an existing Material Catalog record by Brand / Type / Color. Refresh Rates and stage the supplier template again before publishing.`);
+      throw new Error(`${candidate.material.brand || 'Unknown brand'} ${candidate.material.name} now matches an existing Material Catalog record by Brand / Family / Type / Color. Refresh Rates and stage the supplier template again before publishing.`);
     }
 
     const incomingSkus = materialSkuSet(candidate.material);
