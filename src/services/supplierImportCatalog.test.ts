@@ -294,6 +294,24 @@ describe('supplier import publishing policy', () => {
     expect(plan.stockMaterials).toHaveLength(1);
   });
 
+  it('blocks publishing when a structured staging issue is still unresolved even if the candidate is marked Ready', () => {
+    const flagged = candidate({
+      reviewDecision: 'approved',
+      validationIssues: [{
+        id: 'issue-collection',
+        severity: 'blocking',
+        scope: 'material',
+        field: 'collection',
+        message: 'Collection has conflicting values.',
+        values: ['Builder', 'Shower Walls'],
+        rowNumbers: [2, 3],
+        resolution: 'unresolved',
+      }],
+    });
+    expect(() => assertSupplierImportPublishable(session([flagged])))
+      .toThrow(/Resolve the 1 item/);
+  });
+
   it('fails safely when a new staged Brand / Family / Type / Color identity appears in the live catalog', () => {
     const staged = material({ sku: undefined, variants: [] });
     const live = material({ id: 'live-identity', sku: undefined, variants: [] });
