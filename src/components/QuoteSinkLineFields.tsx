@@ -208,7 +208,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
         }} title="Change sink" aria-label="Change sink">✎</button>
       </div>
 
-      {snapshot && (!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>
+      {snapshot && (!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
       {snapshot && comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
     </div>
   );
