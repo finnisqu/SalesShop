@@ -123,7 +123,6 @@ function LineEditor({
   onDragStart,
   onDrop,
   onDragEnd,
-  onMoveBy,
 }: {
   quote: Quote;
   line: QuoteLine;
@@ -132,7 +131,6 @@ function LineEditor({
   onDragStart: (lineId: string) => void;
   onDrop: (lineId: string) => void;
   onDragEnd: () => void;
-  onMoveBy: (lineId: string, direction: -1 | 1) => void;
 }) {
   const updateLine = useQuoteStore((state) => state.updateLine);
   const deleteLine = useQuoteStore((state) => state.deleteLine);
@@ -593,21 +591,6 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     updateQuote(quote.id, { lines });
   };
 
-  const moveLineBy = (lineId: string, direction: -1 | 1) => {
-    const current = quote.lines.find((line) => line.id === lineId);
-    if (!current) return;
-    const siblings = quote.lines.filter((line) => line.sectionId === current.sectionId);
-    const siblingIndex = siblings.findIndex((line) => line.id === lineId);
-    const targetSibling = siblings[siblingIndex + direction];
-    if (!targetSibling) return;
-    const fromIndex = quote.lines.findIndex((line) => line.id === lineId);
-    const targetIndex = quote.lines.findIndex((line) => line.id === targetSibling.id);
-    if (fromIndex < 0 || targetIndex < 0) return;
-    const lines = [...quote.lines];
-    [lines[fromIndex], lines[targetIndex]] = [lines[targetIndex], lines[fromIndex]];
-    updateQuote(quote.id, { lines });
-  };
-
   const reorderSection = (sectionId: string, targetSectionId: string) => {
     if (sectionId === targetSectionId) return;
     const sections = [...quote.sections];
@@ -793,7 +776,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
             </section>
             {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-lines-editor">
   <header><div><span className="quote-control-heading">{documentLabel} areas & scope</span><small>Organize the job by Kitchen, Bath, Unit Type, Clubhouse, or any other pricing area.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
-  {generalLines.length > 0 && <div className="quote-area-card quote-area-general" onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, undefined); setDraggingLineId(null); } }}><div className="quote-area-general-header"><div><span>General</span><small>Rows not assigned to a specific area</small></div><strong>{money.format(quoteLinesTotal(generalLines))}</strong></div><div className="quote-area-lines">{generalLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} onMoveBy={moveLineBy} />)}</div></div>}
+  {generalLines.length > 0 && <div className="quote-area-card quote-area-general" onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, undefined); setDraggingLineId(null); } }}><div className="quote-area-general-header"><div><span>General</span><small>Rows not assigned to a specific area</small></div><strong>{money.format(quoteLinesTotal(generalLines))}</strong></div><div className="quote-area-lines">{generalLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} />)}</div></div>}
   {quote.sections.map((section) => {
     const areaLines = linesForArea(section.id);
     return <div
@@ -827,7 +810,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     >
       <AreaEditor quote={quote} sectionId={section.id} lines={areaLines} onAddLine={addAreaLine} />
       <div className="quote-area-lines">
-        {areaLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} onMoveBy={moveLineBy} />)}
+        {areaLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} />)}
         {!areaLines.length && <div className="quote-area-empty">No scope yet. Add a material, priced line, or scope note for this area.</div>}
       </div>
     </div>;
