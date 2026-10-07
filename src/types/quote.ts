@@ -87,10 +87,13 @@ export interface QuoteAreaScope {
   cutoutCount?: number;
 }
 
+export type QuoteSectionCustomerDisplay = 'detail' | 'summary';
+
 export interface QuoteSection {
   id: string;
   title: string;
   customerVisible: boolean;
+  customerDisplayMode?: QuoteSectionCustomerDisplay;
   scope?: QuoteAreaScope;
 }
 
@@ -429,13 +432,18 @@ export function roundCurrency(value: number) {
   return value < 0 ? -magnitude : magnitude;
 }
 
-export function quoteLineTotal(line: QuoteLine) {
-  if (!line.includeInTotal || line.pricingMode === 'none') return 0;
+export function quoteLineAmount(line: QuoteLine) {
+  if (line.pricingMode === 'none') return 0;
   const raw = line.pricingMode === 'quantity-rate'
     ? (line.quantity ?? 0) * (line.rate ?? 0)
     : (line.amount ?? 0);
   const signed = line.kind === 'discount' ? -Math.abs(raw) : raw;
   return roundCurrency(signed);
+}
+
+export function quoteLineTotal(line: QuoteLine) {
+  if (!line.includeInTotal) return 0;
+  return quoteLineAmount(line);
 }
 
 export function quoteLinesTotal(lines: QuoteLine[]) {
