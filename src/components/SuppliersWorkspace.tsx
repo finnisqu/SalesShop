@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   fetchSupplierImportPublicationHistory,
   type SupplierImportPublicationHistoryRow,
@@ -289,7 +289,7 @@ export function SuppliersWorkspace() {
                 const draft = supplier.profile ? drafts[supplier.profile.id] ?? supplier.profile : undefined;
                 const latestRules = supplier.latestPublication?.supplierRules ?? [];
                 return (
-                  <tbody className="supplier-directory-group" key={supplier.key}>
+                  <Fragment key={supplier.key}>
                     <tr className={`supplier-directory-row freshness-${supplier.freshness}`}>
                       <td>
                         <strong>{supplier.name}</strong>
@@ -364,7 +364,7 @@ export function SuppliersWorkspace() {
                         </td>
                       </tr>
                     )}
-                  </tbody>
+                  </Fragment>
                 );
               })}
               {!filtered.length && (
