@@ -545,3 +545,79 @@
     justify-self: end;
   }
 }
+
+
+/* Compact Materials edit index: keep the scan/edit row laptop-sized and move admin detail into Details. */
+.material-reference-sheet.material-reference-sheet-compact {
+  width: 100%;
+  min-width: 930px;
+  table-layout: fixed;
+}
+
+.material-reference-sheet-compact th:nth-child(1) { width: 42px; }
+.material-reference-sheet-compact th:nth-child(2) { width: 92px; }
+.material-reference-sheet-compact th:nth-child(3) { width: 112px; }
+.material-reference-sheet-compact th:nth-child(4) { width: 145px; }
+.material-reference-sheet-compact th:nth-child(5) { width: 170px; }
+.material-reference-sheet-compact th:nth-child(6) { width: 105px; }
+.material-reference-sheet-compact th:nth-child(7) { width: 210px; }
+.material-reference-sheet-compact th:nth-child(8) { width: 64px; }
+
+.material-reference-sheet-compact td {
+  min-width: 0;
+}
+
+.material-reference-sheet-compact td input,
+.material-reference-sheet-compact td select {
+  min-width: 0;
+  width: 100%;
+}
+
+.material-reference-sheet-compact .material-color-cell input {
+  font-weight: 750;
+}
+
+.material-reference-sheet-compact .material-reference-details button {
+  padding: 0 4px;
+}
+
+.material-reference-meta select,
+.material-detail-readout {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  box-sizing: border-box;
+  border: 1px solid rgba(68, 60, 49, .14);
+  border-radius: 3px;
+  background: rgba(255, 254, 249, .9);
+  color: #423d35;
+  padding: 0 8px;
+  outline: 0;
+  font-size: 10px;
+}
+
+.material-reference-meta select:focus {
+  border-color: #b89c38;
+  box-shadow: 0 0 0 1px rgba(184, 156, 56, .18);
+}
+
+.material-detail-readout {
+  display: flex;
+  align-items: center;
+  color: #70685c;
+}
+
+.material-detail-readout.is-slab-review {
+  background: rgba(246, 233, 198, .72);
+  color: #785b24;
+}
+
+@media (max-width: 1100px) {
+  .material-reference-sheet.material-reference-sheet-compact {
+    min-width: 860px;
+  }
+
+  .material-reference-sheet-compact th:nth-child(4) { width: 125px; }
+  .material-reference-sheet-compact th:nth-child(5) { width: 150px; }
+  .material-reference-sheet-compact th:nth-child(7) { width: 185px; }
+}
