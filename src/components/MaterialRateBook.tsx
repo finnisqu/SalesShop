@@ -7,17 +7,28 @@ import {
 } from '../types/materialLevelGuide';
 import type { PricingMaterialType } from '../types/quote';
 import {
+  MATERIAL_FAMILIES,
+  MATERIAL_TYPES_BY_FAMILY,
+  materialFamilyForType,
   materialPurchaseCostPerSf,
+  resolvedMaterialFamily,
   materialVariantAreaSf,
   resolveStockMaterialCostReference,
   type MaterialAvailability,
   type MaterialFormatKind,
+  type MaterialFamily,
   type MaterialPurchaseUnit,
   type MaterialVariant,
 } from '../types/settings';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-const materialTypes: PricingMaterialType[] = ['Granite', 'Quartz', 'Marble', 'Quartzite', 'Porcelain', 'Solid Surface', 'Other'];
+const materialTypes = Object.values(MATERIAL_TYPES_BY_FAMILY).flat() as PricingMaterialType[];
+
+function defaultTypeForFamily(family: MaterialFamily): PricingMaterialType {
+  if (family === 'Natural Stone') return 'Natural Stone';
+  if (family === 'Engineered Surfaces') return 'Quartz';
+  return 'Other';
+}
 const availabilityOptions: Array<[MaterialAvailability, string]> = [
   ['unknown', 'Not tracked'],
   ['stock', 'Stock'],
@@ -149,6 +160,7 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
   const restoreVersion = useMaterialLevelGuideStore((state) => state.restoreVersion);
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
   const [programFilter, setProgramFilter] = useState<'all' | 'stock' | 'non-stock'>('all');
+  const [familyFilter, setFamilyFilter] = useState<'all' | MaterialFamily>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | PricingMaterialType>('all');
   const [supplierFilter, setSupplierFilter] = useState('all');
   const [finishFilter, setFinishFilter] = useState('all');
@@ -174,13 +186,14 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
     return settings.stockMaterials
       .filter((material) => showInactive || material.active)
       .filter((material) => programFilter === 'all' || (programFilter === 'stock' ? material.stockProgram : !material.stockProgram))
+      .filter((material) => familyFilter === 'all' || resolvedMaterialFamily(material) === familyFilter)
       .filter((material) => typeFilter === 'all' || material.materialType === typeFilter)
       .filter((material) => supplierFilter === 'all' || material.supplier === supplierFilter)
       .filter((material) => finishFilter === 'all' || (material.variants ?? []).some((variant) => variant.finish === finishFilter))
       .filter((material) => thicknessFilter === 'all' || (material.variants ?? []).some((variant) => variant.thickness === thicknessFilter))
       .filter((material) => !needle || `${material.stockProgram ? 'stock program' : 'non-stock'} ${material.name} ${material.supplier ?? ''} ${material.brand ?? ''} ${material.collection ?? ''} ${material.supplierGroup ?? ''} ${material.sku ?? ''} ${material.materialType} ${(material.features ?? []).join(' ')} ${(material.variants ?? []).flatMap((variant) => [variant.sku, variant.thickness, variant.finish, variant.formatName, variant.availabilityNote, ...(variant.features ?? [])]).join(' ')} ${material.notes ?? ''}`.toLowerCase().includes(needle))
       .sort((a, b) => Number(b.stockProgram) - Number(a.stockProgram) || (a.supplier ?? '').localeCompare(b.supplier ?? '') || a.materialType.localeCompare(b.materialType) || a.name.localeCompare(b.name));
-  }, [settings.stockMaterials, query, showInactive, programFilter, typeFilter, supplierFilter, finishFilter, thicknessFilter]);
+  }, [settings.stockMaterials, query, showInactive, programFilter, familyFilter, typeFilter, supplierFilter, finishFilter, thicknessFilter]);
 
   if (!hydrated) return <div className="material-rate-loading">Opening material guide…</div>;
 
@@ -285,11 +298,12 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
 
         <div className="material-reference-filters">
           <label><span>Program</span><select value={programFilter} onChange={(event) => setProgramFilter(event.target.value as 'all' | 'stock' | 'non-stock')}><option value="all">All colors</option><option value="stock">STOCK program</option><option value="non-stock">Non-stock</option></select></label>
+          <label><span>Family</span><select value={familyFilter} onChange={(event) => setFamilyFilter(event.target.value as 'all' | MaterialFamily)}><option value="all">All families</option>{MATERIAL_FAMILIES.map((family) => <option key={family}>{family}</option>)}</select></label>
           <label><span>Material</span><select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as 'all' | PricingMaterialType)}><option value="all">All materials</option>{materialTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
           <label><span>Supplier</span><select value={supplierFilter} onChange={(event) => setSupplierFilter(event.target.value)}><option value="all">All suppliers</option>{suppliers.map((supplier) => <option key={supplier}>{supplier}</option>)}</select></label>
           <label><span>Finish</span><select value={finishFilter} onChange={(event) => setFinishFilter(event.target.value)}><option value="all">All finishes</option>{finishes.map((finish) => <option key={finish}>{finish}</option>)}</select></label>
           <label><span>Thickness</span><select value={thicknessFilter} onChange={(event) => setThicknessFilter(event.target.value)}><option value="all">All thicknesses</option>{thicknesses.map((thickness) => <option key={thickness}>{thickness}</option>)}</select></label>
-          <button type="button" onClick={() => { setProgramFilter('all'); setTypeFilter('all'); setSupplierFilter('all'); setFinishFilter('all'); setThicknessFilter('all'); }}>Clear filters</button>
+          <button type="button" onClick={() => { setProgramFilter('all'); setFamilyFilter('all'); setTypeFilter('all'); setSupplierFilter('all'); setFinishFilter('all'); setThicknessFilter('all'); }}>Clear filters</button>
         </div>
 
         <div className="material-catalog-scroll">
@@ -310,7 +324,10 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
                   <>
                     <tr key={material.id} className={`${material.active ? '' : 'is-inactive'} ${expanded ? 'is-expanded' : ''} ${material.stockProgram ? 'is-stock-program' : 'is-non-stock-program'}`}>
                       <td className="material-level-on"><input type="checkbox" checked={material.active} onChange={(event) => updateStockMaterial(material.id, { active: event.target.checked })} /></td>
-                      <td><select value={material.materialType} onChange={(event) => updateStockMaterial(material.id, { materialType: event.target.value as PricingMaterialType })}>{materialTypes.map((type) => <option key={type}>{type}</option>)}</select></td>
+                      <td><select value={material.materialType} onChange={(event) => {
+                        const materialType = event.target.value as PricingMaterialType;
+                        updateStockMaterial(material.id, { materialType, materialFamily: materialFamilyForType(materialType) });
+                      }}>{MATERIAL_TYPES_BY_FAMILY[resolvedMaterialFamily(material)].map((type) => <option key={type}>{type}</option>)}</select></td>
                       <td className="material-program-cell"><select value={material.stockProgram ? 'stock' : 'non-stock'} onChange={(event) => updateStockMaterial(material.id, { stockProgram: event.target.value === 'stock' })}><option value="stock">STOCK</option><option value="non-stock">Non-stock</option></select></td>
                       <td><input value={material.brand ?? ''} onChange={(event) => updateStockMaterial(material.id, { brand: event.target.value })} placeholder="Vicostone, Corian…" /></td>
                       <td className="material-color-cell"><input value={material.name} onChange={(event) => updateStockMaterial(material.id, { name: event.target.value })} /></td>
@@ -322,6 +339,13 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
                       <tr className="material-reference-expanded-row" key={`${material.id}-details`}><td colSpan={8}>
                         <section className="material-reference-detail-panel">
                           <div className="material-reference-meta">
+                            <label><span>Material family</span><select value={resolvedMaterialFamily(material)} onChange={(event) => {
+                              const materialFamily = event.target.value as MaterialFamily;
+                              const materialType = MATERIAL_TYPES_BY_FAMILY[materialFamily].includes(material.materialType)
+                                ? material.materialType
+                                : defaultTypeForFamily(materialFamily);
+                              updateStockMaterial(material.id, { materialFamily, materialType });
+                            }}>{MATERIAL_FAMILIES.map((family) => <option key={family}>{family}</option>)}</select></label>
                             <label><span>Supplier / importer</span><input value={material.supplier ?? ''} onChange={(event) => updateStockMaterial(material.id, { supplier: event.target.value })} placeholder="UMI, MSI, Hallmark…" /></label>
                             <label><span>STOCK pricing level</span>{material.stockProgram
                               ? <select value={validForced ? material.builderLevelId : 'auto'} onChange={(event) => updateStockMaterial(material.id, { builderLevelId: event.target.value === 'auto' ? undefined : event.target.value })}><option value="auto">Auto{level ? ` · ${level.rule.label}` : recommendation.mode === 'slab-review' ? ' · Slab review' : ''}</option>{orderedRules.filter((rule) => rule.active).map((rule) => <option value={rule.id} key={rule.id}>{rule.label}</option>)}</select>
