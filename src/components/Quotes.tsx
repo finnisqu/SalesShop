@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type TouchEvent } from 'react';
 import { createPricingScheduleData } from '../services/pricingSchedule';
 import {
+  QUOTE_AREA_SCOPE_META,
+  applyAreaScopeQuantity,
+  areaScopeSummary,
+  compatibleAreaScopeFields,
+  resolveLineAreaScopeState,
+  scopeValue,
+} from '../services/quoteAreaScope';
+import {
   canPermanentlyDeleteQuote,
   quoteCanCreateRevision,
   quoteIsCommerciallyEditable,
@@ -17,6 +25,7 @@ import {
   quoteTotal,
   type CommercialDocumentType,
   type Quote,
+  type QuoteAreaScopeField,
   type QuoteLine,
   type QuoteLineKind,
   type QuotePricingMode,
@@ -90,6 +99,12 @@ function LineEditor({
   const sinkLine = line.kind === 'sink';
   const rateLine = line.kind === 'rate';
   const manualCostLine = line.kind === 'item' && line.pricingMode !== 'none';
+  const areaSection = line.sectionId ? quote.sections.find((section) => section.id === line.sectionId) : undefined;
+  const compatibleScopeFields = areaSection ? compatibleAreaScopeFields(line) : [];
+  const availableScopeFields = compatibleScopeFields.filter((field) => scopeValue(areaSection?.scope, field) !== undefined);
+  const quantityScopeState = resolveLineAreaScopeState(quote, line);
+  const selectedQuantitySource = line.quantitySource?.kind === 'area-scope' ? line.quantitySource.field : '';
+
 
   const changePricingMode = (pricingMode: QuotePricingMode) => {
     if (pricingMode === 'slab-multiplier' && materialLine) {
@@ -170,7 +185,7 @@ function LineEditor({
       <div className="quote-line-main">
         <div className="quote-line-topline">
           <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>
-          <select value={line.sectionId ?? ''} onChange={(event) => updateLine(quote.id, line.id, { sectionId: event.target.value || undefined })} aria-label="Quote area"><option value="">General / no area</option>{quote.sections.map((section) => <option key={section.id} value={section.id}>{section.title}</option>)}</select>
+          <select value={line.sectionId ?? ''} onChange={(event) => updateLine(quote.id, line.id, { sectionId: event.target.value || undefined, quantitySource: undefined })} aria-label="Quote area"><option value="">General / no area</option>{quote.sections.map((section) => <option key={section.id} value={section.id}>{section.title}</option>)}</select>
         </div>
         {materialLine && <QuoteMaterialLineFields quoteId={quote.id} line={line} />}
         {sinkLine && <QuoteSinkLineFields quoteId={quote.id} line={line} />}
@@ -187,7 +202,37 @@ function LineEditor({
             <option value="none">No price</option>
           </select>
           {line.pricingMode === 'direct' && <label className="quote-money-input"><span>$</span><input type="number" step="0.01" value={line.amount ?? ''} onChange={(event) => updateLine(quote.id, line.id, { amount: numberValue(event.target.value) })} aria-label="Line amount" /></label>}
-          {line.pricingMode === 'quantity-rate' && <div className="quote-qty-rate"><input type="number" step="0.01" placeholder="Qty" value={line.quantity ?? ''} onChange={(event) => updateLine(quote.id, line.id, { quantity: numberValue(event.target.value) })} aria-label="Quantity" /><span>×</span><input type="number" step="0.01" placeholder="Rate" value={line.rate ?? ''} onChange={(event) => updateLine(quote.id, line.id, { rate: numberValue(event.target.value) })} aria-label="Rate" /></div>}
+          {line.pricingMode === 'quantity-rate' && <div className="quote-qty-rate-stack">
+            <div className="quote-qty-rate"><input type="number" step="0.01" placeholder="Qty" value={line.quantity ?? ''} onChange={(event) => updateLine(quote.id, line.id, { quantity: numberValue(event.target.value), quantitySource: undefined })} aria-label="Quantity" /><span>×</span><input type="number" step="0.01" placeholder="Rate" value={line.rate ?? ''} onChange={(event) => updateLine(quote.id, line.id, { rate: numberValue(event.target.value) })} aria-label="Rate" /></div>
+            {areaSection && (availableScopeFields.length > 0 || selectedQuantitySource) && <div className={`quote-area-quantity-link ${quantityScopeState?.changed ? 'is-changed' : ''}`}>
+              <label>
+                <span>Qty source</span>
+                <select value={selectedQuantitySource} onChange={(event) => {
+                  const field = event.target.value as QuoteAreaScopeField | '';
+                  if (!field) {
+                    updateLine(quote.id, line.id, { quantitySource: undefined });
+                    return;
+                  }
+                  const patch = applyAreaScopeQuantity(areaSection, field);
+                  if (patch) updateLine(quote.id, line.id, patch);
+                }} aria-label="Quantity source">
+                  <option value="">Manual</option>
+                  {compatibleScopeFields.map((field) => {
+                    const value = scopeValue(areaSection.scope, field);
+                    if (value === undefined && field !== selectedQuantitySource) return null;
+                    const meta = QUOTE_AREA_SCOPE_META[field];
+                    return <option key={field} value={field}>{meta.shortLabel}{value === undefined ? ' · missing' : ` · ${value} ${meta.unit}`}</option>;
+                  })}
+                </select>
+              </label>
+              {line.quantitySource && <small>{QUOTE_AREA_SCOPE_META[line.quantitySource.field].label} · captured {line.quantitySource.capturedValue} {QUOTE_AREA_SCOPE_META[line.quantitySource.field].unit}</small>}
+              {quantityScopeState?.changed && quantityScopeState.currentValue !== undefined && <button type="button" onClick={() => {
+                const patch = applyAreaScopeQuantity(areaSection, line.quantitySource!.field);
+                if (patch) updateLine(quote.id, line.id, patch);
+              }}>Update to {quantityScopeState.currentValue}</button>}
+              {quantityScopeState?.changed && quantityScopeState.currentValue === undefined && <span className="quote-area-quantity-warning">Area value removed</span>}
+            </div>}
+          </div>}
           {materialLine && line.pricingMode === 'slab-multiplier' && <div className="quote-slab-line-pricing">
             <label><span>$</span><input type="number" step="0.01" min="0" placeholder="Slab cost" value={line.materialReference?.sourceSlabCost ?? ''} onChange={(event) => updateSlabField({ sourceSlabCost: numberValue(event.target.value) })} aria-label="Slab cost" /></label>
             <span>×</span>
@@ -218,14 +263,51 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
   const section = quote.sections.find((candidate) => candidate.id === sectionId);
   const updateSection = useQuoteStore((state) => state.updateSection);
   const deleteSection = useQuoteStore((state) => state.deleteSection);
+  const [scopeOpen, setScopeOpen] = useState(() => Boolean(section && areaScopeSummary(section)));
   if (!section) return null;
-  return <div className="quote-area-header">
-    <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`} onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
-    <div className="quote-area-title"><span>Area</span><input value={section.title} onChange={(event) => updateSection(quote.id, section.id, { title: event.target.value })} /></div>
-    <div className="quote-area-summary"><span>{lines.length} item{lines.length === 1 ? '' : 's'}</span><strong>{money.format(quoteLinesTotal(lines))}</strong></div>
-    <div className="quote-area-actions"><button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button><button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button><button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button><button type="button" onClick={() => onAddLine('item', section.id)}>+ Line</button><button type="button" onClick={() => onAddLine('scope', section.id)}>+ Scope</button></div>
-    <button type="button" className="quote-area-remove" onClick={() => deleteSection(quote.id, section.id)} title="Remove area. Its rows will move to General.">×</button>
-  </div>;
+
+  const summary = areaScopeSummary(section);
+  const updateScopeField = (field: QuoteAreaScopeField, value: number | undefined) => {
+    const nextScope = { ...(section.scope ?? {}), [field]: value };
+    updateSection(quote.id, section.id, { scope: nextScope });
+  };
+
+  const fields: QuoteAreaScopeField[] = ['countertopSf', 'splashLf', 'fullHeightSplashSf', 'kitchenSinkCount', 'vanitySinkCount', 'cutoutCount'];
+
+  return <>
+    <div className="quote-area-header">
+      <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`} onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
+      <div className="quote-area-title">
+        <span>Area</span>
+        <input value={section.title} onChange={(event) => updateSection(quote.id, section.id, { title: event.target.value })} />
+        <button type="button" className={`quote-area-scope-toggle ${scopeOpen ? 'active' : ''}`} onClick={() => setScopeOpen((value) => !value)}>
+          {summary ? `Scope · ${summary}` : 'Add area scope'}
+        </button>
+      </div>
+      <div className="quote-area-summary"><span>{lines.length} item{lines.length === 1 ? '' : 's'}</span><strong>{money.format(quoteLinesTotal(lines))}</strong></div>
+      <div className="quote-area-actions"><button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button><button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button><button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button><button type="button" onClick={() => onAddLine('item', section.id)}>+ Line</button><button type="button" onClick={() => onAddLine('scope', section.id)}>+ Scope</button></div>
+      <button type="button" className="quote-area-remove" onClick={() => deleteSection(quote.id, section.id)} title="Remove area. Its rows will move to General.">×</button>
+    </div>
+    {scopeOpen && <div className="quote-area-scope-panel">
+      <div className="quote-area-scope-heading">
+        <div><strong>Area quantities</strong><small>Private takeoff-lite values. Quote rows only change when you explicitly link or update them.</small></div>
+        {summary && <span>{summary}</span>}
+      </div>
+      <div className="quote-area-scope-grid">
+        {fields.map((field) => {
+          const meta = QUOTE_AREA_SCOPE_META[field];
+          const integerField = field === 'kitchenSinkCount' || field === 'vanitySinkCount' || field === 'cutoutCount';
+          return <label key={field}>
+            <span>{meta.label}</span>
+            <div><input type="number" min="0" step={integerField ? '1' : '0.01'} value={section.scope?.[field] ?? ''} onChange={(event) => {
+              const next = numberValue(event.target.value);
+              updateScopeField(field, next === undefined ? undefined : Math.max(0, next));
+            }} /><b>{meta.unit}</b></div>
+          </label>;
+        })}
+      </div>
+    </div>}
+  </>;
 }
 
 function StandardCustomerPreview({ quote }: { quote: Quote }) {
@@ -359,7 +441,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const moveLineToArea = (lineId: string, sectionId?: string) => {
     const line = quote.lines.find((candidate) => candidate.id === lineId);
     if (!line || line.sectionId === sectionId) return;
-    updateLine(quote.id, lineId, { sectionId });
+    updateLine(quote.id, lineId, { sectionId, quantitySource: undefined });
   };
 
   return (
