@@ -8,7 +8,6 @@ import type {
 } from '../types/settings';
 import type {
   SupplierImportCandidate,
-  SupplierImportConfidence,
   SupplierImportParser,
   SupplierImportPriceEvidence,
   SupplierImportPriceProvenance,
@@ -73,7 +72,6 @@ const FORMAT_KINDS = new Set<MaterialFormatKind>(['slab', 'sheet', 'half-slab', 
 const AVAILABILITY = new Set<MaterialAvailability>(['stock', 'high', 'medium', 'low', 'eta', 'special-order', 'discontinued', 'unknown']);
 const PRICING_BASIS = new Set<MaterialPurchaseUnit>(['sf', 'slab', 'sheet', 'half-slab', 'half-sheet', 'each']);
 const PRICE_PROVENANCE = new Set<SupplierImportPriceProvenance>(['supplier-listed', 'derived-from-listed-unit', 'manual']);
-const PRICE_EPSILON = 0.015;
 
 type RowValues = Record<(typeof SALESSHOP_TEMPLATE_HEADERS)[number], string>;
 
@@ -159,6 +157,11 @@ function parseYesNo(value: string, fallback: boolean) {
   return fallback;
 }
 
+function validYesNo(value: string) {
+  const normalizedValue = value.trim().toLowerCase();
+  return !normalizedValue || ['yes', 'y', 'true', '1', 'no', 'n', 'false', '0'].includes(normalizedValue);
+}
+
 function parseNumber(value: string) {
   const cleaned = value.replace(/[$,%]/g, '').replace(/,/g, '').trim();
   if (!cleaned) return undefined;
@@ -170,9 +173,12 @@ function normalizeDate(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return iso[0];
+  if (iso) {
+    const parsedIso = new Date(`${iso[0]}T00:00:00Z`);
+    return Number.isNaN(parsedIso.valueOf()) ? undefined : iso[0];
+  }
   const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.valueOf())) return trimmed;
+  if (Number.isNaN(parsed.valueOf())) return undefined;
   return parsed.toISOString().slice(0, 10);
 }
 
@@ -530,6 +536,10 @@ function parseTemplateRow(
   const availability = values.Availability.trim();
   const provenance = values['Price Provenance'].trim() || 'supplier-listed';
 
+  if (!validYesNo(values.Include)) errors.push(`Include "${values.Include}" must be Yes or No`);
+  if (!validYesNo(values['Default Variant'])) errors.push(`Default Variant "${values['Default Variant']}" must be Yes or No`);
+  if (!validYesNo(values['Default Purchase'])) errors.push(`Default Purchase "${values['Default Purchase']}" must be Yes or No`);
+  if (!validYesNo(values.Active)) errors.push(`Active "${values.Active}" must be Yes or No`);
   if (!supplier) errors.push('Supplier / Importer is required');
   if (!brand) errors.push('Brand / Manufacturer is required');
   if (!MATERIAL_TYPES.has(materialType)) errors.push(`Material Type "${materialType || 'blank'}" is not a supported SalesShop value`);
@@ -545,6 +555,21 @@ function parseTemplateRow(
   const lengthIn = parseNumber(values['Length In']);
   const widthIn = parseNumber(values['Width In']);
   const listedArea = parseNumber(values['Area SF Listed']);
+  const minQuantity = parseNumber(values['Min Quantity']);
+  const numericChecks: Array<[string, string, number | undefined]> = [
+    ['Length In', values['Length In'], lengthIn],
+    ['Width In', values['Width In'], widthIn],
+    ['Area SF Listed', values['Area SF Listed'], listedArea],
+    ['Min Quantity', values['Min Quantity'], minQuantity],
+    ['Cost / SF Listed', values['Cost / SF Listed'], costPerSf],
+    ['Cost / Unit Listed', values['Cost / Unit Listed'], costPerUnit],
+  ];
+  numericChecks.forEach(([label, raw, parsed]) => {
+    if (raw.trim() && parsed === undefined) errors.push(`${label} "${raw}" is not a valid number`);
+  });
+  if (minQuantity !== undefined && minQuantity <= 0) errors.push('Min Quantity must be greater than zero');
+  if (values['Effective Date'].trim() && !normalizeDate(values['Effective Date'])) errors.push(`Effective Date "${values['Effective Date']}" is not a valid date`);
+
   const computedArea = lengthIn && widthIn ? Math.round(((lengthIn * widthIn) / 144) * 100) / 100 : undefined;
   if (listedArea && computedArea && Math.abs(listedArea - computedArea) > 1) {
     warnings.push(`Row ${rowNumber}: listed area ${listedArea.toFixed(2)} SF differs from dimensions-derived area ${computedArea.toFixed(2)} SF by more than 1 SF.`);
@@ -553,6 +578,12 @@ function parseTemplateRow(
 
   if (costPerSf === undefined && costPerUnit !== undefined && ['slab', 'sheet', 'half-slab', 'half-sheet'].includes(pricingBasis) && !areaSf) {
     errors.push('Unit pricing requires Area SF Listed or Length In + Width In so SalesShop can derive $/SF');
+  }
+  if (pricingBasis === 'sf' && costPerSf === undefined) {
+    errors.push('Pricing Basis sf requires Cost / SF Listed');
+  }
+  if (provenance === 'derived-from-listed-unit' && costPerUnit === undefined) {
+    errors.push('Price Provenance derived-from-listed-unit requires Cost / Unit Listed');
   }
 
   const effectiveDate = normalizeDate(values['Effective Date'])
@@ -591,7 +622,7 @@ function parseTemplateRow(
       variantNotes: values['Variant Notes'].trim() || undefined,
       defaultVariant: parseYesNo(values['Default Variant'], false),
       purchaseLabel,
-      minQuantity: parseNumber(values['Min Quantity']),
+      minQuantity,
       pricingBasis: pricingBasis as MaterialPurchaseUnit,
       costPerSf,
       costPerUnit,
