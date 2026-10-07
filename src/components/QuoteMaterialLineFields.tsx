@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateQuoteSlabMultiplierPrice } from '../services/quoteSlabPricing';
 import {
   compareQuoteMaterialSnapshot,
@@ -54,7 +54,7 @@ function sameMoney(a?: number, b?: number) {
   return Math.abs(a - b) < 0.005;
 }
 
-export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; line: QuoteLine }) {
+export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quoteId: string; line: QuoteLine; editSignal?: number }) {
   const materials = useCompanySettingsStore((state) => state.settings.stockMaterials);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
   const guide = useMaterialLevelGuideStore((state) => state.guide);
@@ -64,11 +64,21 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   const [searching, setSearching] = useState(!line.materialReference?.materialId && !line.materialReference?.customMaterialName);
   const [pendingMaterialId, setPendingMaterialId] = useState<string | null>(null);
   const [pendingVariantId, setPendingVariantId] = useState<string | null>(null);
+  const lastEditSignal = useRef(editSignal);
 
   useEffect(() => {
     void hydrateSettings();
     hydrateGuide();
   }, [hydrateSettings, hydrateGuide]);
+
+  useEffect(() => {
+    if (editSignal === lastEditSignal.current) return;
+    lastEditSignal.current = editSignal;
+    setSearch('');
+    setPendingMaterialId(line.materialReference?.materialId ?? null);
+    setPendingVariantId(null);
+    setSearching(true);
+  }, [editSignal, line.materialReference?.materialId]);
 
   const activeMaterials = useMemo(
     () => materials.filter((material) => material.active),
@@ -313,13 +323,6 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
 
       {snapshot && !selectedMaterial && snapshot.materialId && <span className="quote-source-status is-warning">Source unavailable</span>}
       {snapshotComparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
-
-      <button type="button" className="quote-material-change quote-database-change" onClick={() => {
-        setSearch('');
-        setPendingMaterialId(selectedMaterial?.id ?? null);
-        setPendingVariantId(null);
-        setSearching(true);
-      }}>Change</button>
     </div>
   );
 }
