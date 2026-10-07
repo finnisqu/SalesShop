@@ -89,6 +89,7 @@ function newLine(kind: QuoteLineKind = 'item', sectionId?: string): QuoteLine {
   const labels: Record<QuoteLineKind, string> = {
     item: 'New line item',
     material: 'Select material',
+    rate: 'Select rate',
     allowance: 'Allowance',
     discount: 'Discount',
     tax: 'Taxes',
@@ -97,15 +98,16 @@ function newLine(kind: QuoteLineKind = 'item', sectionId?: string): QuoteLine {
     warranty: 'Warranty',
   };
   const materialKind = kind === 'material';
+  const rateKind = kind === 'rate';
   return {
     id: uid('line'),
     sectionId,
     kind,
     description: labels[kind],
-    pricingMode: textKind ? 'none' : materialKind ? 'quantity-rate' : 'direct',
-    quantity: materialKind ? undefined : undefined,
-    rate: materialKind ? undefined : undefined,
-    amount: textKind || materialKind ? undefined : 0,
+    pricingMode: textKind ? 'none' : materialKind || rateKind ? 'quantity-rate' : 'direct',
+    quantity: undefined,
+    rate: undefined,
+    amount: textKind || materialKind || rateKind ? undefined : 0,
     customerVisible: true,
     includeInTotal: !textKind,
   };
