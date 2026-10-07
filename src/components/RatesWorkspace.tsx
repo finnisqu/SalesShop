@@ -51,7 +51,7 @@ function editorTabMatches(button: HTMLButtonElement, category: ReferenceCategory
   return text.startsWith('material');
 }
 
-export function RatesWorkspace() {
+export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
   const items = useRateBookStore((state) => state.items);
   const hydrated = useRateBookStore((state) => state.hydrated);
   const hydrateRates = useRateBookStore((state) => state.hydrate);
@@ -143,7 +143,7 @@ export function RatesWorkspace() {
   if (!hydrated) return <div className="rate-book-loading">Opening Rates…</div>;
 
   return (
-    <main className={`rates-workspace ${editing ? 'is-editing' : 'is-reference'}`}>
+    <main className={`rates-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
       <header className="rates-workspace-header">
         <div>
           <span className="board-eyebrow">Company pricing reference</span>
