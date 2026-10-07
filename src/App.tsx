@@ -17,6 +17,7 @@ import './rate-book-spreadsheet-qc.css';
 import './material-level-guide.css';
 import './supplier-import.css';
 import './supplier-import-v2.css';
+import './sinks-workspace.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
@@ -29,6 +30,7 @@ import { QuoteShareControl } from './components/QuoteShareControl';
 import { Quotes } from './components/Quotes';
 import { MaterialsWorkspace } from './components/MaterialsWorkspace';
 import { RatesWorkspace } from './components/RatesWorkspace';
+import { SinksWorkspace } from './components/SinksWorkspace';
 import { Sidebar } from './components/Sidebar';
 import { TextEditor } from './components/TextEditor';
 import { Toolbar } from './components/Toolbar';
@@ -73,6 +75,7 @@ function App() {
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
           <button className={`app-tab ${view === 'rate-book' ? 'active' : ''}`} onClick={() => setView('rate-book')}>Rates</button>
+          <button className={`app-tab ${view === 'sinks' ? 'active' : ''}`} onClick={() => setView('sinks')}>Sinks</button>
           <button className={`app-tab ${view === 'materials' ? 'active' : ''}`} onClick={() => setView('materials')}>Materials</button>
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Dashboard</button>
           <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
@@ -92,6 +95,8 @@ function App() {
         <Quotes />
       ) : view === 'rate-book' ? (
         <RatesWorkspace />
+      ) : view === 'sinks' ? (
+        <SinksWorkspace />
       ) : view === 'materials' ? (
         <MaterialsWorkspace />
       ) : view === 'dashboard' ? (
