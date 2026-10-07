@@ -551,3 +551,171 @@
     min-height: 44px;
   }
 }
+
+
+/* Materials v1.1 catalog interaction polish */
+.materials-name-toggle {
+  display: inline;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.materials-name-toggle strong {
+  display: inline;
+  color: inherit;
+  font: inherit;
+}
+
+.materials-name-toggle:hover strong {
+  text-decoration: underline;
+  text-decoration-color: rgba(103, 87, 49, .28);
+  text-underline-offset: 2px;
+}
+
+.materials-variant-toggle-cell {
+  width: 94px;
+  min-width: 94px;
+}
+
+.materials-variant-toggle-cell button,
+.materials-pin-button {
+  width: 82px;
+  min-width: 82px;
+  min-height: 30px;
+}
+
+.materials-variant-toggle-cell button {
+  display: block;
+  margin-left: auto;
+}
+
+.materials-variant-line {
+  grid-template-columns:
+    minmax(180px, 1.2fr)
+    minmax(120px, .75fr)
+    minmax(130px, .8fr)
+    minmax(120px, .7fr)
+    minmax(280px, 1.5fr)
+    82px;
+}
+
+.materials-pin-button {
+  justify-self: end;
+}
+
+@media (max-width: 700px) {
+  .materials-reference-table {
+    min-width: 590px;
+  }
+
+  /* On phones keep the fast sales scan: Brand → Name → Type → Cost → Variants. */
+  .materials-reference-table th:nth-child(4),
+  .materials-reference-table td:nth-child(4),
+  .materials-reference-table th:nth-child(6),
+  .materials-reference-table td:nth-child(6),
+  .materials-reference-table th:nth-child(7),
+  .materials-reference-table td:nth-child(7) {
+    display: none;
+  }
+
+  .materials-reference-table th,
+  .materials-reference-table td {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .materials-reference-table th:first-child,
+  .materials-reference-table td:first-child {
+    min-width: 86px;
+  }
+
+  .materials-reference-table th:nth-child(2),
+  .materials-reference-table td:nth-child(2) {
+    min-width: 145px;
+  }
+
+  .materials-reference-table th:nth-child(3),
+  .materials-reference-table td:nth-child(3) {
+    min-width: 80px;
+  }
+
+  .materials-reference-table th:nth-child(5),
+  .materials-reference-table td:nth-child(5) {
+    min-width: 88px;
+  }
+
+  .materials-reference-table th:last-child,
+  .materials-reference-table td:last-child {
+    width: 86px;
+    min-width: 86px;
+  }
+
+  .materials-variant-expanded-row > td {
+    display: table-cell !important;
+  }
+
+  .materials-variant-browser {
+    padding: 6px;
+  }
+
+  .materials-variant-line {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) 82px;
+    gap: 7px 8px;
+    align-items: start;
+  }
+
+  .materials-variant-identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .materials-pin-button {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .materials-variant-line > div:not(.materials-variant-identity):not(.materials-price-program-list) {
+    grid-column: 1 / -1;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 2px 8px;
+    align-items: baseline;
+  }
+
+  .materials-variant-line > div:not(.materials-variant-identity):not(.materials-price-program-list) > span {
+    grid-column: 1;
+  }
+
+  .materials-variant-line > div:not(.materials-variant-identity):not(.materials-price-program-list) > strong,
+  .materials-variant-line > div:not(.materials-variant-identity):not(.materials-price-program-list) > small {
+    grid-column: 2;
+  }
+
+  .materials-price-program-list {
+    grid-column: 1 / -1;
+    padding-top: 2px;
+  }
+
+  .materials-price-program-list > div {
+    flex-basis: 118px;
+  }
+
+  .materials-comparison-board > header small {
+    display: none;
+  }
+
+  .materials-comparison-strip {
+    padding: 7px 8px 9px;
+  }
+
+  .materials-comparison-card {
+    flex-basis: 205px;
+  }
+}
