@@ -527,11 +527,17 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function SupplierImportLauncher() {
+export function SupplierImportLauncher({ placement = 'floating' }: { placement?: 'floating' | 'toolbar' }) {
   const [open, setOpen] = useState(false);
+  const toolbar = placement === 'toolbar';
   return (
     <>
-      <button type="button" className="supplier-import-launcher" onClick={() => setOpen(true)} title="Open the management supplier-price staging area">Supplier imports</button>
+      <button
+        type="button"
+        className={`supplier-import-launcher ${toolbar ? 'is-toolbar' : ''}`}
+        onClick={() => setOpen(true)}
+        title="Open the management supplier-price staging area"
+      >{toolbar ? 'Supplier Import' : 'Supplier imports'}</button>
       {open && <SupplierImportCenter onClose={() => setOpen(false)} />}
     </>
   );
