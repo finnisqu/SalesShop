@@ -17,6 +17,7 @@ import type {
   SupplierImportPriceProvenance,
   SupplierImportSession,
   SupplierImportSource,
+  SupplierImportValidationIssue,
 } from '../types/supplierImport';
 
 export const SALESSHOP_TEMPLATE_PARSER_ID = 'salesshop-material-template-xlsx';
@@ -176,6 +177,7 @@ interface ParsedTemplateRow {
 interface MaterialAccumulator {
   material: StockMaterial;
   warnings: string[];
+  issues: SupplierImportValidationIssue[];
   priceEvidence: Record<string, SupplierImportPriceEvidence>;
 }
 
@@ -338,7 +340,16 @@ function addPurchaseOption(
 ) {
   const duplicate = variant.purchaseOptions.find((option) => optionIdentity(option) === normalized(row.purchaseLabel));
   if (duplicate) {
-    throw new Error(`Row ${row.rowNumber}: duplicate Purchase Program "${row.purchaseLabel}" for ${row.name} · ${row.thickness || 'unspecified thickness'} · ${row.formatName || 'unspecified format'}.`);
+    accumulator.issues.push({
+      id: `issue-${safeId(`${materialIdentity(accumulator.material)}-duplicate-${variant.id}-${row.purchaseLabel}-${row.rowNumber}`)}`,
+      severity: 'blocking',
+      scope: 'purchase',
+      message: `Row ${row.rowNumber} repeats purchase program "${row.purchaseLabel}" for the same physical variant. The first row was staged; this duplicate row was skipped.`,
+      rowNumbers: [row.rowNumber],
+      values: [row.purchaseLabel],
+      resolution: 'unresolved',
+    });
+    return;
   }
 
   const optionId = `staged-price-${safeId(`${variant.id}-${row.purchaseLabel}`)}`;
@@ -487,6 +498,7 @@ function compareCandidate(
   catalog: StockMaterial[],
   parserWarnings: string[],
   priceEvidence: Record<string, SupplierImportPriceEvidence>,
+  validationIssues: SupplierImportValidationIssue[] = [],
 ): SupplierImportCandidate {
   const identity = materialIdentity(material);
   const exactIdentity = catalog.find((existing) => materialIdentity(existing) === identity);
@@ -506,6 +518,7 @@ function compareCandidate(
       matchBasis: 'sku',
       changeSummary: [`SKU overlaps existing ${exactSku.brand || exactSku.supplier || 'catalog'} material ${exactSku.name}, but canonical Brand / Type / Name identity differs.`],
       warnings: parserWarnings,
+      validationIssues,
       priceEvidence,
     };
   }
@@ -520,6 +533,7 @@ function compareCandidate(
       confidence: 'high',
       changeSummary: ['New supplier catalog color from validated SalesShop template'],
       warnings: parserWarnings,
+      validationIssues,
       priceEvidence,
     };
   }
@@ -534,6 +548,7 @@ function compareCandidate(
     matchBasis: exactSku ? (normalized(existing.sku) === normalized(material.sku) ? 'sku' : 'variant-sku') : 'identity',
     changeSummary: diff.changes.length ? diff.changes : ['Supplier-owned fields match the current catalog'],
     warnings: uniqueStrings([...parserWarnings, ...diff.warnings]),
+    validationIssues,
     priceEvidence,
   };
 }
@@ -723,6 +738,57 @@ function parseTemplateRow(
       active: parseYesNo(values.Active, true),
       warnings,
     },
+  };
+}
+
+
+function recoverableRowIdentity(values: RowValues) {
+  const brand = (values['Brand / Manufacturer'] ?? '').trim();
+  const name = (values['Color / Product Name'] ?? '').trim();
+  const materialType = (values['Material Type'] ?? '').trim();
+  if (!brand || !name || !MATERIAL_TYPES.has(materialType)) return undefined;
+  const family = materialFamilyForType(materialType as StockMaterial['materialType']);
+  const key = [normalized(brand), normalized(family), normalized(materialType), normalized(name)].join('|');
+  return {
+    key,
+    material: {
+      id: `staged-material-${safeId(key)}`,
+      name,
+      supplier: (values['Supplier / Importer'] ?? '').trim() || undefined,
+      brand,
+      materialFamily: family,
+      materialType: materialType as StockMaterial['materialType'],
+      stockProgram: false,
+      unit: 'sf' as const,
+      features: [] as string[],
+      variants: [] as MaterialVariant[],
+      active: true,
+    } satisfies StockMaterial,
+  };
+}
+
+function conflictIssue(
+  material: StockMaterial,
+  field: SupplierImportValidationIssue['field'],
+  label: string,
+  rows: ParsedTemplateRow[],
+  values: string[],
+): SupplierImportValidationIssue {
+  return {
+    id: `issue-${safeId(`${materialIdentity(material)}-${field}-conflict`)}`,
+    severity: 'blocking',
+    scope: 'material',
+    field,
+    message: `${label} has conflicting values across this material. Choose the material-level value, leave it blank, or ignore the affected material before publishing.`,
+    rowNumbers: rows.filter((row) => {
+      const value = field === 'supplier' ? row.supplier
+        : field === 'collection' ? row.collection
+          : field === 'supplierGroup' ? row.supplierGroup
+            : row.materialSku;
+      return Boolean(value);
+    }).map((row) => row.rowNumber),
+    values,
+    resolution: 'unresolved',
   };
 }
 
