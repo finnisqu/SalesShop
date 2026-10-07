@@ -117,6 +117,7 @@ function LineEditor({
       updateLine(quote.id, line.id, {
         pricingMode,
         quantity: undefined,
+        quantitySource: undefined,
         rate: undefined,
         amount: next.amount,
         materialReference: next.materialReference,
@@ -128,6 +129,7 @@ function LineEditor({
       updateLine(quote.id, line.id, {
         pricingMode,
         amount: pricingMode === 'quantity-rate' ? undefined : line.amount,
+        quantitySource: pricingMode === 'quantity-rate' ? line.quantitySource : undefined,
         materialReference: {
           ...line.materialReference,
           pricingSource: 'manual-line-rate',
@@ -141,7 +143,7 @@ function LineEditor({
       return;
     }
 
-    updateLine(quote.id, line.id, { pricingMode });
+    updateLine(quote.id, line.id, { pricingMode, quantitySource: pricingMode === 'quantity-rate' ? line.quantitySource : undefined });
   };
 
   const updateSlabField = (
