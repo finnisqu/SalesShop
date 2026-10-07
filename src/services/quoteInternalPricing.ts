@@ -4,7 +4,7 @@ export interface QuoteInternalPricingLineSummary {
   lineId: string;
   customerAmount: number;
   internalCost?: number;
-  costSource?: 'manual-total' | 'material-sf' | 'material-slab' | 'rate-unit' | 'rate-flat';
+  costSource?: 'manual-total' | 'material-sf' | 'material-slab' | 'sink-unit' | 'rate-unit' | 'rate-flat';
   requiresCost: boolean;
 }
 
@@ -48,6 +48,16 @@ function materialInternalCost(line: QuoteLine) {
   return undefined;
 }
 
+function sinkInternalCost(line: QuoteLine) {
+  const snapshot = line.sinkReference?.snapshot;
+  if (!snapshot || !validNumber(snapshot.internalCost)) return undefined;
+  const quantity = validNumber(line.quantity) ? line.quantity ?? 0 : 1;
+  return {
+    value: roundCurrency((snapshot.internalCost ?? 0) * quantity),
+    source: 'sink-unit' as const,
+  };
+}
+
 function rateInternalCost(line: QuoteLine) {
   const snapshot = line.rateReference?.snapshot;
   if (!snapshot || !validNumber(snapshot.internalCost)) return undefined;
@@ -77,12 +87,13 @@ function internalCostForLine(line: QuoteLine) {
     };
   }
   if (line.kind === 'material') return materialInternalCost(line);
+  if (line.kind === 'sink') return sinkInternalCost(line);
   if (line.kind === 'rate') return rateInternalCost(line);
   return undefined;
 }
 
 function lineRequiresCost(line: QuoteLine, customerAmount: number) {
-  if (line.kind === 'material' || line.kind === 'rate') return true;
+  if (line.kind === 'material' || line.kind === 'sink' || line.kind === 'rate') return true;
   if (customerAmount <= 0) return false;
   return !['tax', 'discount', 'allowance'].includes(line.kind);
 }
