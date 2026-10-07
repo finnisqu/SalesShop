@@ -65,6 +65,18 @@ export interface SupplierImportSession {
 }
 
 
+export interface SupplierImportProfile {
+  id: string;
+  label: string;
+  supplier: string;
+  brand: string;
+  materialType: StockMaterial['materialType'];
+  parserId: string;
+  fileTypeLabel: string;
+  accept: string;
+  description: string;
+}
+
 export interface SupplierImportParserContext {
   catalog: StockMaterial[];
   effectiveDate?: string;
