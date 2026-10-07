@@ -17,6 +17,8 @@ interface SupplierImportState {
   setVariantDecision: (candidateId: string, variantId: string, decision: SupplierImportReviewDecision) => void;
   setPriceDecision: (candidateId: string, optionId: string, decision: SupplierImportReviewDecision) => void;
   setCandidateNote: (candidateId: string, note: string) => void;
+  resolveValidationIssue: (candidateId: string, issueId: string, resolutionValue: string) => void;
+  ignoreValidationIssue: (candidateId: string, issueId: string) => void;
   openHistorySession: (sessionId: string) => void;
   markPublished: (publication: SupplierImportSession['publication']) => void;
   clearSession: () => void;
@@ -59,6 +61,9 @@ function inferAttentionReasons(candidate: SupplierImportCandidate) {
   if ((candidate.material.variants ?? []).some((variant) => !variant.purchaseOptions.length)) {
     reasons.push('One or more physical specifications have no supplier price program.');
   }
+  reasons.push(...(candidate.validationIssues ?? [])
+    .filter((issue) => issue.severity === 'blocking' && (issue.resolution ?? 'unresolved') === 'unresolved')
+    .map((issue) => issue.message));
   reasons.push(...candidate.warnings);
   return [...new Set(reasons)];
 }
@@ -82,6 +87,10 @@ function normalizeCandidate(raw: SupplierImportCandidate): SupplierImportCandida
 
   return {
     ...raw,
+    validationIssues: (raw.validationIssues ?? []).map((issue) => ({
+      ...issue,
+      resolution: issue.resolution ?? 'unresolved',
+    })),
     reviewDecision: normalizeDecision(raw.reviewDecision, defaultDecision),
     attentionReasons,
     variantDecisions,
@@ -151,8 +160,33 @@ function recomputeCandidate(candidate: SupplierImportCandidate): SupplierImportC
     const priceValues = variant.purchaseOptions.map((option) => candidate.priceDecisions?.[option.id] ?? 'approved');
     if (priceValues.length) variantDecisions[variant.id] = summarizeDecision(priceValues);
   });
-  const reviewDecision = summarizeDecision(variants.map((variant) => variantDecisions[variant.id] ?? 'approved'));
-  return { ...candidate, variantDecisions, reviewDecision };
+  const unresolvedBlockingIssue = (candidate.validationIssues ?? []).some(
+    (issue) => issue.severity === 'blocking' && (issue.resolution ?? 'unresolved') === 'unresolved',
+  );
+  const variantDecision = summarizeDecision(variants.map((variant) => variantDecisions[variant.id] ?? 'approved'));
+  const reviewDecision = unresolvedBlockingIssue
+    ? 'needs-review'
+    : candidate.reviewDecision === 'ignored'
+      ? 'ignored'
+      : variantDecision;
+  return {
+    ...candidate,
+    variantDecisions,
+    attentionReasons: inferAttentionReasons(candidate),
+    reviewDecision,
+  };
+}
+
+function applyIssueResolutionValue(candidate: SupplierImportCandidate, issueId: string, resolutionValue: string) {
+  const issue = (candidate.validationIssues ?? []).find((item) => item.id === issueId);
+  if (!issue?.field) return candidate;
+  const material = { ...candidate.material };
+  const value = resolutionValue.trim() || undefined;
+  if (issue.field === 'supplier') material.supplier = value;
+  if (issue.field === 'collection') material.collection = value;
+  if (issue.field === 'supplierGroup') material.supplierGroup = value;
+  if (issue.field === 'sku') material.sku = value;
+  return { ...candidate, material };
 }
 
 function mutateCurrent(
@@ -197,7 +231,11 @@ export const useSupplierImportStore = create<SupplierImportState>((set, get) => 
         if (candidate.id !== candidateId) return candidate;
         const variantDecisions = Object.fromEntries((candidate.material.variants ?? []).map((variant) => [variant.id, decision]));
         const priceDecisions = Object.fromEntries(allPriceIds(candidate).map((optionId) => [optionId, decision]));
-        return { ...candidate, reviewDecision: decision, variantDecisions, priceDecisions };
+        const unresolvedBlockingIssue = (candidate.validationIssues ?? []).some(
+          (issue) => issue.severity === 'blocking' && (issue.resolution ?? 'unresolved') === 'unresolved',
+        );
+        const reviewDecision = decision === 'approved' && unresolvedBlockingIssue ? 'needs-review' : decision;
+        return { ...candidate, reviewDecision, variantDecisions, priceDecisions };
       }),
     }));
   },
@@ -229,6 +267,34 @@ export const useSupplierImportStore = create<SupplierImportState>((set, get) => 
     mutateCurrent(set, get, (current) => ({
       ...current,
       candidates: current.candidates.map((candidate) => candidate.id === candidateId ? { ...candidate, reviewNote: note } : candidate),
+    }));
+  },
+  resolveValidationIssue: (candidateId, issueId, resolutionValue) => {
+    mutateCurrent(set, get, (current) => ({
+      ...current,
+      candidates: current.candidates.map((candidate) => {
+        if (candidate.id !== candidateId) return candidate;
+        const withValue = applyIssueResolutionValue(candidate, issueId, resolutionValue);
+        return recomputeCandidate({
+          ...withValue,
+          validationIssues: (withValue.validationIssues ?? []).map((issue) => issue.id === issueId
+            ? { ...issue, resolution: 'resolved', resolutionValue }
+            : issue),
+        });
+      }),
+    }));
+  },
+  ignoreValidationIssue: (candidateId, issueId) => {
+    mutateCurrent(set, get, (current) => ({
+      ...current,
+      candidates: current.candidates.map((candidate) => candidate.id === candidateId
+        ? recomputeCandidate({
+          ...candidate,
+          validationIssues: (candidate.validationIssues ?? []).map((issue) => issue.id === issueId
+            ? { ...issue, resolution: 'ignored' }
+            : issue),
+        })
+        : candidate),
     }));
   },
   openHistorySession: (sessionId) => {
