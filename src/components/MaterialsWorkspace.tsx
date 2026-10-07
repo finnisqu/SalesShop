@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import {
   defaultMaterialPurchaseOption,
@@ -98,6 +98,9 @@ export function MaterialsWorkspace() {
     }
   });
   const [draggingKey, setDraggingKey] = useState<string | null>(null);
+  const [dragDelta, setDragDelta] = useState({ x: 0, y: 0 });
+  const [dragTarget, setDragTarget] = useState<{ key: string; position: 'before' | 'after' } | null>(null);
+  const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     void hydrateSettings();
@@ -168,7 +171,7 @@ export function MaterialsWorkspace() {
       : [...current, key]);
   };
 
-  const reorderPinned = (sourceKey: string, targetKey: string) => {
+  const reorderPinned = (sourceKey: string, targetKey: string, position: 'before' | 'after' = 'before') => {
     if (!sourceKey || sourceKey === targetKey) return;
     setPinnedKeys((current) => {
       const sourceIndex = current.indexOf(sourceKey);
@@ -176,7 +179,9 @@ export function MaterialsWorkspace() {
       if (sourceIndex < 0 || targetIndex < 0) return current;
       const next = [...current];
       const [moved] = next.splice(sourceIndex, 1);
-      next.splice(targetIndex, 0, moved);
+      const adjustedTargetIndex = next.indexOf(targetKey);
+      const insertionIndex = position === 'after' ? adjustedTargetIndex + 1 : adjustedTargetIndex;
+      next.splice(insertionIndex, 0, moved);
       return next;
     });
   };
@@ -280,51 +285,66 @@ export function MaterialsWorkspace() {
                   const key = pinKey(material.id, variant.id);
                   return (
                     <article
-                      className={`materials-comparison-card ${draggingKey === key ? 'is-dragging' : ''}`}
+                      className={[
+                        'materials-comparison-card',
+                        draggingKey === key ? 'is-dragging' : '',
+                        dragTarget?.key === key && dragTarget.position === 'before' ? 'is-drop-before' : '',
+                        dragTarget?.key === key && dragTarget.position === 'after' ? 'is-drop-after' : '',
+                      ].filter(Boolean).join(' ')}
                       key={key}
                       data-pin-key={key}
-                      onDragOver={(event) => {
-                        if (!draggingKey || draggingKey === key) return;
-                        event.preventDefault();
-                        event.dataTransfer.dropEffect = 'move';
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        const sourceKey = event.dataTransfer.getData('text/plain') || draggingKey;
-                        if (sourceKey) reorderPinned(sourceKey, key);
-                        setDraggingKey(null);
-                      }}
+                      style={draggingKey === key ? {
+                        transform: `translate3d(${dragDelta.x}px, ${dragDelta.y}px, 0) scale(1.025)`,
+                      } : undefined}
                     >
                       <button
                         type="button"
                         className="materials-card-drag-handle"
-                        draggable
                         title="Drag to reorder comparison cards"
                         aria-label={`Reorder ${material.name} ${variantSpec(variant)}`}
-                        onDragStart={(event) => {
-                          setDraggingKey(key);
-                          event.dataTransfer.effectAllowed = 'move';
-                          event.dataTransfer.setData('text/plain', key);
-                        }}
-                        onDragEnd={() => setDraggingKey(null)}
                         onPointerDown={(event) => {
-                          if (event.pointerType === 'mouse') return;
                           event.preventDefault();
                           event.currentTarget.setPointerCapture(event.pointerId);
+                          dragOriginRef.current = { x: event.clientX, y: event.clientY };
+                          setDragDelta({ x: 0, y: 0 });
+                          setDragTarget(null);
                           setDraggingKey(key);
                         }}
                         onPointerMove={(event) => {
-                          if (event.pointerType === 'mouse' || draggingKey !== key) return;
-                          const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-pin-key]');
+                          if (draggingKey !== key || !dragOriginRef.current) return;
+                          setDragDelta({
+                            x: event.clientX - dragOriginRef.current.x,
+                            y: event.clientY - dragOriginRef.current.y,
+                          });
+                          const target = document.elementsFromPoint(event.clientX, event.clientY)
+                            .map((element) => element.closest<HTMLElement>('[data-pin-key]'))
+                            .find((candidate) => candidate?.dataset.pinKey && candidate.dataset.pinKey !== key);
                           const targetKey = target?.dataset.pinKey;
-                          if (targetKey && targetKey !== key) reorderPinned(key, targetKey);
+                          if (!target || !targetKey) {
+                            setDragTarget(null);
+                            return;
+                          }
+                          const rect = target.getBoundingClientRect();
+                          setDragTarget({
+                            key: targetKey,
+                            position: event.clientX < rect.left + rect.width / 2 ? 'before' : 'after',
+                          });
                         }}
                         onPointerUp={(event) => {
-                          if (event.pointerType === 'mouse') return;
+                          if (dragTarget) reorderPinned(key, dragTarget.key, dragTarget.position);
                           if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+                          dragOriginRef.current = null;
+                          setDragDelta({ x: 0, y: 0 });
+                          setDragTarget(null);
                           setDraggingKey(null);
                         }}
-                        onPointerCancel={() => setDraggingKey(null)}
+                        onPointerCancel={(event) => {
+                          if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+                          dragOriginRef.current = null;
+                          setDragDelta({ x: 0, y: 0 });
+                          setDragTarget(null);
+                          setDraggingKey(null);
+                        }}
                         onKeyDown={(event) => {
                           if (event.key === 'ArrowLeft') {
                             event.preventDefault();
