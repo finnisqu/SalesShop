@@ -505,3 +505,105 @@
     justify-content: flex-start;
   }
 }
+
+
+/* Guided Next Issue coachmark */
+.quote-line-editor.has-active-issue-guide {
+  z-index: 45;
+  border-color: rgba(176, 132, 48, .34);
+  box-shadow:
+    inset 3px 0 rgba(187, 143, 51, .58),
+    0 0 0 2px rgba(197, 157, 73, .08);
+}
+
+.quote-area-card:has(.quote-line-editor.has-active-issue-guide) > .quote-area-header {
+  box-shadow: inset 3px 0 rgba(187, 143, 51, .38);
+}
+
+.quote-issue-coachmark {
+  position: absolute;
+  z-index: 140;
+  right: 28px;
+  bottom: calc(100% + 8px);
+  width: min(285px, calc(100% - 44px));
+  display: grid;
+  gap: 4px;
+  padding: 9px 32px 9px 10px;
+  border: 1px solid rgba(140, 109, 51, .28);
+  border-radius: 5px;
+  background: #fff9e9;
+  color: #51493c;
+  box-shadow: 0 10px 26px rgba(61, 49, 31, .18), 0 2px 5px rgba(61, 49, 31, .08);
+  cursor: default;
+}
+
+.quote-issue-coachmark::after {
+  content: '';
+  position: absolute;
+  right: 24px;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid rgba(140, 109, 51, .28);
+  border-bottom: 1px solid rgba(140, 109, 51, .28);
+  background: #fff9e9;
+  transform: rotate(45deg);
+}
+
+.quote-issue-coachmark-kicker {
+  color: #94712d;
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.quote-issue-coachmark > strong {
+  color: #4d4539;
+  font: 700 10px Georgia, serif;
+}
+
+.quote-issue-coachmark > p {
+  margin: 0;
+  color: #756b5b;
+  font-size: 7.3px;
+  line-height: 1.42;
+}
+
+.quote-issue-coachmark > button {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 21px;
+  height: 21px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #8b806d;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.quote-issue-coachmark > button:hover {
+  background: rgba(111, 91, 54, .08);
+  color: #51493c;
+}
+
+.view-split .quote-issue-coachmark {
+  right: 24px;
+  width: min(255px, calc(100% - 38px));
+}
+
+@media (max-width: 650px) {
+  .quote-issue-coachmark {
+    left: 8px;
+    right: auto;
+    bottom: calc(100% + 6px);
+    width: calc(100% - 26px);
+  }
+
+  .quote-issue-coachmark::after {
+    right: auto;
+    left: 22px;
+  }
+}
