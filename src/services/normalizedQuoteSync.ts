@@ -97,6 +97,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     id: String(row.id),
     title: String(row.title),
     customerVisible: Boolean(row.customer_visible),
+    customerDisplayMode: row.customer_display_mode === 'summary' ? 'summary' : 'detail',
     scope: areaScopeOrUndefined(row.scope),
   }));
   const linesByQuote = groupByQuote<QuoteLine>(lineRows, (row) => ({
@@ -306,6 +307,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     quote_id: quote.id,
     title: section.title,
     customer_visible: section.customerVisible,
+    customer_display_mode: section.customerDisplayMode ?? 'detail',
     scope: section.scope ?? null,
     sort_order: sortOrder,
   })));
