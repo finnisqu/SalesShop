@@ -33,6 +33,7 @@ import { CompanySettings } from './components/CompanySettings';
 import { Dashboard } from './components/Dashboard';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
+import { MobileAppChrome } from './components/MobileAppChrome';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
 import { Quotes } from './components/Quotes';
@@ -92,6 +93,7 @@ function App() {
           <AuthStatus />
         </div>
       </header>
+      <MobileAppChrome />
 
       {view === 'board' ? (
         <Board />
