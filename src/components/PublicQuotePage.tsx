@@ -62,9 +62,7 @@ function StandardQuoteBody({ data }: { data: PublicQuoteResponse }) {
             return <div className="customer-quote-section is-summary" key={section.id}>
               <div className="customer-quote-row customer-area-summary-row">
                 <div className="customer-line-description">{section.title}</div>
-                {quote.customerColumns.quantity && <div />}
-                {quote.customerColumns.rate && <div />}
-                {quote.customerColumns.lineAmount && <div className="customer-line-amount">{money.format(section.customerTotal ?? 0)}</div>}
+                <div className="customer-line-amount">{money.format(section.customerTotal ?? 0)}</div>
               </div>
             </div>;
           }
