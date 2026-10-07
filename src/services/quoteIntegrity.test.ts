@@ -150,6 +150,52 @@ describe('quote revision snapshots', () => {
     expect(frozen.lines[0].materialReference?.snapshot?.sourceEffectiveDate).toBe('2026-01-01');
     expect(frozen.sections[0].title).toBe('Base');
   });
+
+  it('freezes sink catalog identity, sell price, and private cost inside revisions', () => {
+    const subject = quote({
+      lines: [line({
+        kind: 'sink',
+        pricingMode: 'quantity-rate',
+        quantity: 2,
+        rate: 220,
+        amount: undefined,
+        sinkReference: {
+          sinkModelId: 'sink-model-3218',
+          variantId: 'sink-variant-3218-5050',
+          snapshot: {
+            capturedAt: '2026-10-07T18:20:00.000Z',
+            sinkModelId: 'sink-model-3218',
+            sinkModelName: 'Kitchen 3218',
+            modelCode: '3218',
+            category: 'kitchen',
+            variantId: 'sink-variant-3218-5050',
+            variantLabel: 'Standard 50/50',
+            variantCode: '3218-5050',
+            configuration: '50/50',
+            ada: false,
+            internalCost: 110,
+            sellPrice: 220,
+            effectiveDate: '2026-10-01',
+          },
+        },
+      })],
+    });
+    const frozen = createQuoteRevisionSnapshot(subject, '2026-10-07T18:30:00.000Z', 'Sent');
+
+    const sourceSnapshot = subject.lines[0].sinkReference?.snapshot;
+    if (sourceSnapshot) {
+      sourceSnapshot.sellPrice = 999;
+      sourceSnapshot.internalCost = 500;
+      sourceSnapshot.variantLabel = 'Changed later';
+    }
+    subject.lines[0].rate = 999;
+
+    expect(frozen.customerTotal).toBe(440);
+    expect(frozen.lines[0].rate).toBe(220);
+    expect(frozen.lines[0].sinkReference?.snapshot?.sellPrice).toBe(220);
+    expect(frozen.lines[0].sinkReference?.snapshot?.internalCost).toBe(110);
+    expect(frozen.lines[0].sinkReference?.snapshot?.variantLabel).toBe('Standard 50/50');
+  });
 });
 
 describe('quote lifecycle integrity', () => {
