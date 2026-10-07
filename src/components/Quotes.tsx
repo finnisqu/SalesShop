@@ -429,7 +429,7 @@ function LineEditor({
   );
 }
 
-function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sectionId: string; lines: QuoteLine[]; onAddLine: (kind: QuoteLineKind, sectionId: string) => void }) {
+function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote: Quote; sectionId: string; lines: QuoteLine[]; onAddLine: (kind: QuoteLineKind, sectionId: string) => void; onMoveArea?: (direction: -1 | 1) => void }) {
   const section = quote.sections.find((candidate) => candidate.id === sectionId);
   const updateSection = useQuoteStore((state) => state.updateSection);
   const deleteSection = useQuoteStore((state) => state.deleteSection);
@@ -466,7 +466,11 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
   return (
     <div className="quote-area-header">
       <button type="button" className="quote-area-drag-handle" draggable title="Drag Area to reorder" aria-label="Drag Area to reorder"><span aria-hidden="true">⠿</span></button>
-      <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`} onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
+      <div className="quote-area-mobile-order" aria-label="Reorder Area">
+        <button type="button" onClick={() => onMoveArea?.(-1)} title="Move Area up" aria-label="Move Area up">↑</button>
+        <button type="button" onClick={() => onMoveArea?.(1)} title="Move Area down" aria-label="Move Area down">↓</button>
+      </div>
+      <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}` onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
 
       <div className="quote-area-title">
         <div className="quote-area-kicker">
@@ -950,7 +954,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
       {!generalLines.length && <div className="quote-area-empty">General is ready for rows that do not belong to a named area.</div>}
     </div>
   </div>
-  {quote.sections.map((section) => {
+  {quote.sections.map((section, sectionIndex) => {
     const areaLines = linesForArea(section.id);
     return <div
       className={`quote-area-card ${draggingSectionId === section.id ? 'is-area-dragging' : ''}`}
@@ -981,7 +985,16 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
         }
       }}
     >
-      <AreaEditor quote={quote} sectionId={section.id} lines={areaLines} onAddLine={addAreaLine} />
+      <AreaEditor
+        quote={quote}
+        sectionId={section.id}
+        lines={areaLines}
+        onAddLine={addAreaLine}
+        onMoveArea={(direction) => {
+          const target = quote.sections[sectionIndex + direction];
+          if (target) reorderSection(quote.id, section.id, target.id);
+        }}
+      />
       <div className="quote-area-lines">
         {areaLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} issueGuide={activeIssueLineId === line.id ? quoteIssueGuide(quoteLineReminderLabels(line, quoteLinePricingComplete(line, guideMultiplier), Boolean(resolveLineAreaScopeState(quote, line)?.changed)), line, line.sectionId ? quote.sections.find((section) => section.id === line.sectionId)?.title : 'General') : undefined} issuePosition={activeIssueLineId === line.id ? issueLineIds.indexOf(line.id) + 1 : undefined} issueTotal={activeIssueLineId === line.id ? issueLineIds.length : undefined} onDismissIssue={() => setActiveIssueLineId(null)} />)}
         {!areaLines.length && <div className="quote-area-empty">No scope yet. Add a material, priced line, or scope note for this area.</div>}
