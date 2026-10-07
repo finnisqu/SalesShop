@@ -132,8 +132,16 @@ function safeAcceptedSnapshot(value: unknown) {
   const summarySectionIds = new Set(rawSections
     .filter((section) => section.customerDisplayMode === 'summary')
     .map((section) => String(section.id ?? '')));
+  const hiddenSectionIds = new Set(rawSections
+    .filter((section) => section.customerVisible === false)
+    .map((section) => String(section.id ?? '')));
   const lines = allLines
-    .filter((line) => line?.customerVisible !== false && !summarySectionIds.has(String(line.sectionId ?? '')))
+    .filter((line) => {
+      const sectionId = String(line.sectionId ?? '');
+      return line?.customerVisible !== false
+        && !summarySectionIds.has(sectionId)
+        && !hiddenSectionIds.has(sectionId);
+    })
     .map(safePublicLine);
   const sections = rawSections
     .filter((section) => section.customerVisible !== false)
@@ -186,6 +194,7 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentTyp
     lines: allLines.filter((line) => {
       if (!line.customerVisible) return false;
       const section = (snapshot.sections ?? []).find((candidate) => candidate.id === line.sectionId);
+      if (section && !section.customerVisible) return false;
       return !section || section.customerDisplayMode !== 'summary';
     }).map(safePublicLine),
     customerColumns: snapshot.customerColumns ?? { quantity: false, rate: false, lineAmount: true },
