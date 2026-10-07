@@ -585,3 +585,77 @@
     grid-row: 3;
   }
 }
+
+
+/* Split view is a narrow pane even on a wide browser.
+   Reflow area actions based on the view, not the viewport width. */
+.view-split .quote-area-header {
+  grid-template-columns: 18px minmax(0, 1fr) auto 18px;
+  grid-template-rows: auto auto;
+  column-gap: 6px;
+  row-gap: 5px;
+  align-items: center;
+  padding: 7px 7px 6px;
+}
+
+.view-split .quote-area-header > .quote-visibility {
+  grid-column: 1;
+  grid-row: 1;
+  width: 18px;
+  height: 18px;
+}
+
+.view-split .quote-area-title {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.view-split .quote-area-summary {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 76px;
+}
+
+.view-split .quote-area-actions {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.view-split .quote-area-actions button {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 25px;
+  padding: 0 6px;
+  white-space: nowrap;
+  font-size: 7px;
+}
+
+.view-split .quote-area-remove {
+  grid-column: 4;
+  grid-row: 1;
+  width: 18px;
+  height: 22px;
+}
+
+.view-split .quote-area-scope-panel {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.view-split .quote-area-scope-grid {
+  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  max-width: none;
+}
+
+@media (max-width: 760px) {
+  .view-split .quote-area-actions button {
+    flex: 1 1 62px;
+  }
+}
