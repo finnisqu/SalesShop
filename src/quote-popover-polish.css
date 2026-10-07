@@ -1000,3 +1000,175 @@
     width: 84px;
   }
 }
+
+
+/* Pricing anchor polish:
+   the passive yellow formula and line total remain visible while its popover is open,
+   and the formula shares the exact source-cost column above it. */
+.quote-line-editor.is-catalog-line.has-database-selection .quote-line-main,
+.view-split .quote-line-editor.is-catalog-line.has-database-selection .quote-line-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(122px, 170px) 84px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 7px;
+  row-gap: 3px;
+  position: relative;
+}
+
+.quote-line-editor.is-catalog-line.has-database-selection .quote-database-result,
+.view-split .quote-line-editor.is-catalog-line.has-database-selection .quote-database-result {
+  grid-column: 1 / 3;
+  grid-row: 1;
+  min-height: 27px;
+  display: grid;
+  grid-template-columns: minmax(125px, 1fr) minmax(122px, 170px);
+  gap: 7px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.quote-line-editor.is-catalog-line.has-database-selection .quote-material-cost-reference,
+.quote-line-editor.is-catalog-line.has-database-selection .quote-sink-price-reference,
+.quote-line-editor.is-catalog-line.has-database-selection .quote-rate-reference {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  padding: 2px 5px;
+}
+
+.quote-line-editor.is-catalog-line.has-database-selection .quote-line-resting-total {
+  display: block !important;
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  position: static;
+  align-self: center;
+  margin: 0;
+  text-align: right;
+}
+
+.quote-line-editor.is-catalog-line.has-database-selection .quote-line-main > textarea {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 3px 2px 2px;
+  overflow: hidden;
+  resize: none;
+  line-height: 1.2;
+}
+
+.quote-line-editor.is-catalog-line.has-database-selection .quote-line-resting-pricing {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  min-height: 20px;
+  display: block;
+  margin: 0;
+}
+
+.quote-line-editor.is-catalog-line.has-database-selection .quote-pricing-passive {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1px 2px 1px 6px;
+  background: rgba(239, 222, 164, .30);
+  border-color: rgba(160, 128, 51, .13);
+}
+
+.quote-line-editor.is-catalog-line.has-database-selection .quote-line-resting-pricing.is-open .quote-pricing-passive {
+  border-color: rgba(154, 126, 56, .26);
+  background: rgba(239, 222, 164, .38);
+}
+
+/* Reminder badges float above the row instead of participating in layout. */
+.quote-line-editor.is-catalog-line.has-database-selection .quote-line-reminders-overlay {
+  position: absolute;
+  z-index: 118;
+  right: 262px;
+  bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.quote-line-editor.is-catalog-line.has-database-selection .quote-line-reminders-overlay > span {
+  box-shadow: 0 1px 3px rgba(73, 58, 35, .08);
+}
+
+/* The pricing popover floats over the preserved resting row. */
+.quote-line-editor.is-catalog-line.has-database-selection > .quote-pricing-popover,
+.view-split .quote-line-editor.is-catalog-line.has-database-selection > .quote-pricing-popover {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+@media (max-width: 760px) {
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-line-main,
+  .view-split .quote-line-editor.is-catalog-line.has-database-selection .quote-line-main {
+    grid-template-columns: minmax(0, 1fr) minmax(108px, 145px) 72px;
+    column-gap: 5px;
+  }
+
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-database-result,
+  .view-split .quote-line-editor.is-catalog-line.has-database-selection .quote-database-result {
+    grid-template-columns: minmax(110px, 1fr) minmax(108px, 145px);
+    gap: 5px;
+  }
+
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-line-reminders-overlay {
+    right: 222px;
+  }
+}
+
+@media (max-width: 520px) {
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-line-main,
+  .view-split .quote-line-editor.is-catalog-line.has-database-selection .quote-line-main {
+    grid-template-columns: minmax(0, 1fr) 70px;
+    grid-template-rows: auto auto auto;
+  }
+
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-database-result,
+  .view-split .quote-line-editor.is-catalog-line.has-database-selection .quote-database-result {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    grid-template-columns: minmax(0, 1fr) minmax(104px, 132px);
+  }
+
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-line-main > textarea {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-line-resting-total {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-line-resting-pricing {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: min(132px, 100%);
+    justify-self: end;
+  }
+
+  .quote-line-editor.is-catalog-line.has-database-selection .quote-line-reminders-overlay {
+    right: auto;
+    left: 4px;
+    bottom: 4px;
+  }
+}
