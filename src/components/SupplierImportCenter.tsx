@@ -332,7 +332,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
       if (!activeProfile) throw new Error('Choose an import profile before staging a supplier file.');
       const next = await stageSupplierImport(activeProfile.parserId, file, {
         catalog: settings.stockMaterials,
-        effectiveDate: effectiveDateDraft || undefined,
+        effectiveDate: activeProfile.supportsEffectiveDateOverride ? effectiveDateDraft || undefined : undefined,
       });
       setSession(next);
       setFilter('all');
@@ -369,6 +369,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
                 <select value={selectedProfileId} onChange={(event) => {
                   setSelectedProfileId(event.target.value);
                   setFile(null);
+                  setEffectiveDateDraft('');
                   setError(null);
                 }}>
                   {supplierImportProfiles.map((profile) => <option value={profile.id} key={profile.id}>{profile.label}</option>)}
