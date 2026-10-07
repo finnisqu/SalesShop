@@ -8,6 +8,12 @@ import {
   type QuoteSection,
 } from '../types/quote';
 
+export const QUOTE_AREA_SCOPE_VISIBLE_FIELDS: QuoteAreaScopeField[] = [
+  'countertopSf',
+  'kitchenSinkCount',
+  'vanitySinkCount',
+];
+
 export const QUOTE_AREA_SCOPE_META: Record<QuoteAreaScopeField, { label: string; shortLabel: string; unit: 'SF' | 'LF' | 'Each' }> = {
   countertopSf: { label: 'Countertop SF', shortLabel: 'Countertop', unit: 'SF' },
   splashLf: { label: '4" splash LF', shortLabel: 'Splash', unit: 'LF' },
@@ -30,13 +36,11 @@ export function areaScopeSummary(section: QuoteSection) {
   const sinkTotal = (scope.kitchenSinkCount ?? 0) + (scope.vanitySinkCount ?? 0);
   if (sinkTotal) parts.push(`${sinkTotal} sink${sinkTotal === 1 ? '' : 's'}`);
   if (scope.cutoutCount) parts.push(`${scope.cutoutCount} cutout${scope.cutoutCount === 1 ? '' : 's'}`);
-  if (scope.splashLf) parts.push(`${scope.splashLf} LF splash`);
-  if (scope.fullHeightSplashSf) parts.push(`${scope.fullHeightSplashSf} SF full-height`);
   return parts.join(' · ');
 }
 
 export function compatibleAreaScopeFields(line: QuoteLine): QuoteAreaScopeField[] {
-  if (line.kind === 'material') return ['countertopSf', 'fullHeightSplashSf'];
+  if (line.kind === 'material') return ['countertopSf'];
   if (line.kind === 'sink') {
     const category = line.sinkReference?.snapshot?.category;
     if (category === 'kitchen') return ['kitchenSinkCount'];
@@ -46,17 +50,11 @@ export function compatibleAreaScopeFields(line: QuoteLine): QuoteAreaScopeField[
   if (line.kind === 'rate') {
     const snapshot = line.rateReference?.snapshot;
     if (!snapshot) return QUOTE_AREA_SCOPE_FIELDS.slice();
-    if (snapshot.unit === 'sf') return ['countertopSf', 'fullHeightSplashSf'];
-    if (snapshot.unit === 'lf') return ['splashLf'];
-    if (snapshot.unit === 'each') {
-      const text = `${snapshot.name} ${snapshot.code ?? ''}`.toLowerCase();
-      if (text.includes('cutout')) return ['cutoutCount'];
-      if (text.includes('sink')) return ['kitchenSinkCount', 'vanitySinkCount', 'cutoutCount'];
-      return ['kitchenSinkCount', 'vanitySinkCount', 'cutoutCount'];
-    }
+    if (snapshot.unit === 'sf') return ['countertopSf'];
+    if (snapshot.unit === 'each') return ['kitchenSinkCount', 'vanitySinkCount'];
     return [];
   }
-  if (line.pricingMode === 'quantity-rate') return QUOTE_AREA_SCOPE_FIELDS.slice();
+  if (line.pricingMode === 'quantity-rate') return QUOTE_AREA_SCOPE_VISIBLE_FIELDS.slice();
   return [];
 }
 
