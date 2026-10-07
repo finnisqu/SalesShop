@@ -3,6 +3,10 @@
    one horizontal document switcher, one command rail, compact Area headers,
    thumb-sized edit controls, and viewport-safe popovers. */
 
+.quote-area-mobile-order {
+  display: none;
+}
+
 @media (max-width: 700px) {
   /* ------------------------------
      Page + quote switcher
@@ -428,6 +432,7 @@
 
   .quote-area-mobile-order {
     position: absolute;
+    display: grid;
     z-index: 14;
     top: 5px;
     left: -7px;
