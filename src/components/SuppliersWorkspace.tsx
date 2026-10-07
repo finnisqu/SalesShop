@@ -9,7 +9,7 @@ import {
   trackDiscoveredSupplier,
   upsertSupplierProfile,
 } from '../services/supplierProfiles';
-import { fetchSupplierActivities, fetchSupplierCommitments } from '../services/supplierRelationship';
+import { fetchSupplierActivities } from '../services/supplierRelationship';
 import {
   createRulesFromPublished,
   deleteSupplierContact,
@@ -27,7 +27,6 @@ import { useCompanySettingsStore } from '../store/companySettingsStore';
 import type { StockMaterial } from '../types/settings';
 import type {
   SupplierActivity,
-  SupplierCommitment,
   SupplierContact,
   SupplierLocation,
   SupplierProfile,
@@ -126,7 +125,6 @@ export function SuppliersWorkspace() {
   const [profiles, setProfiles] = useState<SupplierProfile[]>([]);
   const [publications, setPublications] = useState<SupplierImportPublicationHistoryRow[]>([]);
   const [activities, setActivities] = useState<SupplierActivity[]>([]);
-  const [commitments, setCommitments] = useState<SupplierCommitment[]>([]);
   const [contacts, setContacts] = useState<SupplierContact[]>([]);
   const [locations, setLocations] = useState<SupplierLocation[]>([]);
   const [rules, setRules] = useState<SupplierRule[]>([]);
@@ -151,11 +149,10 @@ export function SuppliersWorkspace() {
   const refresh = async () => {
     setLoadError(null);
     try {
-      const [p, pub, act, com, con, loc, ruleRows] = await Promise.all([
+      const [p, pub, act, con, loc, ruleRows] = await Promise.all([
         fetchSupplierProfiles(),
         fetchSupplierImportPublicationHistory(200),
         fetchSupplierActivities(),
-        fetchSupplierCommitments(),
         fetchSupplierContacts(),
         fetchSupplierLocations(),
         fetchSupplierRules(),
@@ -163,7 +160,6 @@ export function SuppliersWorkspace() {
       setProfiles(p);
       setPublications(pub);
       setActivities(act);
-      setCommitments(com);
       setContacts(con);
       setLocations(loc);
       setRules(ruleRows);
@@ -229,9 +225,7 @@ export function SuppliersWorkspace() {
   const selectedLocations = selectedProfile ? locations.filter((item) => item.supplierId === selectedProfile.id) : [];
   const selectedRules = selectedProfile ? rules.filter((item) => item.supplierId === selectedProfile.id && item.active) : [];
   const selectedActivities = selectedProfile ? activities.filter((item) => item.supplierId === selectedProfile.id) : [];
-  const selectedCommitments = selectedProfile ? commitments.filter((item) => item.supplierId === selectedProfile.id) : [];
   const latestPublishedRules = selected?.latestPublication?.supplierRules ?? [];
-  const openCommitments = selectedCommitments.filter((item) => ['proposed', 'negotiating', 'confirmed'].includes(item.status)).length;
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -413,7 +407,7 @@ export function SuppliersWorkspace() {
             <header className="supplier-record-header">
               <div className="supplier-record-heading">
                 <div className="supplier-record-title-line"><h2>{selected.name}</h2><span className={`supplier-freshness-badge freshness-${selected.freshness}`}>{statusLabels[selected.freshness]}</span></div>
-                <p>{selected.brands.length ? selected.brands.join(' · ') : 'No brands linked yet'} · {selected.materials.length} material{selected.materials.length === 1 ? '' : 's'}{openCommitments ? ` · ${openCommitments} open commitment${openCommitments === 1 ? '' : 's'}` : ''}</p>
+                <p>{selected.brands.length ? selected.brands.join(' · ') : 'No brands linked yet'} · {selected.materials.length} material{selected.materials.length === 1 ? '' : 's'}</p>
                 {selectedProfile && !editingProfile && <div className="supplier-contact-strip">{selectedProfile.phone && <a href={`tel:${selectedProfile.phone}`}>{selectedProfile.phone}</a>}{selectedProfile.website && <a href={websiteHref(selectedProfile.website)} target="_blank" rel="noreferrer">{selectedProfile.website}</a>}</div>}
               </div>
               <div className="supplier-record-actions">
@@ -452,7 +446,7 @@ export function SuppliersWorkspace() {
               <footer><span /><span /><button type="button" onClick={() => { setEditingProfile(false); setProfileDraft(null); }}>Cancel</button><button type="button" className="primary" onClick={() => void saveProfile()} disabled={!profileDraft.name.trim() || saving}>{saving ? 'Saving…' : 'Save supplier'}</button></footer>
             </section>}
 
-            {!selectedProfile ? <section className="supplier-track-callout"><strong>Track {selected.name} to build the relationship record.</strong><span>Pricing history is already visible. Tracking adds contacts, locations, editable rules, notes, commitments, and activity.</span><button type="button" onClick={() => void trackSelected()} disabled={saving}>Track supplier</button></section> : <>
+            {!selectedProfile ? <section className="supplier-track-callout"><strong>Track {selected.name} to build the relationship record.</strong><span>Pricing history is already visible. Tracking adds contacts, locations, editable rules, notes, and activity.</span><button type="button" onClick={() => void trackSelected()} disabled={saving}>Track supplier</button></section> : <>
               <div className="supplier-info-grid">
                 <section className="supplier-info-card">
                   <header><div><span className="board-eyebrow">People</span><strong>Contacts</strong></div><button type="button" onClick={() => setContactDraft(emptyContact(selectedProfile.id))}>Add</button></header>
@@ -512,10 +506,8 @@ export function SuppliersWorkspace() {
               <SupplierRelationshipPanels
                 supplier={selectedProfile}
                 activities={selectedActivities}
-                commitments={selectedCommitments}
                 publications={selected.publications}
                 onActivityCreated={(activity) => setActivities((current) => [activity, ...current])}
-                onCommitmentChanged={(commitment) => setCommitments((current) => [commitment, ...current.filter((item) => item.id !== commitment.id)])}
               />
 
               <section className="supplier-pricing-history">
