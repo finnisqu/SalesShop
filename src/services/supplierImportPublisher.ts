@@ -45,6 +45,43 @@ export async function publishSupplierImport(session: SupplierImportSession): Pro
 
   assertSupplierImportPublishable(session);
 
+  const { data: existingPublication, error: existingPublicationError } = await supabase
+    .from('supplier_import_publications')
+    .select('id,published_at,summary')
+    .eq('organization_id', auth.organizationId)
+    .eq('source_session_id', session.id)
+    .order('published_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingPublicationError) throw new Error(existingPublicationError.message);
+
+  if (existingPublication) {
+    const { data: publishedOrg, error: publishedOrgError } = await supabase
+      .from('organizations')
+      .select('stock_materials')
+      .eq('id', auth.organizationId)
+      .single();
+    if (publishedOrgError || !publishedOrg) {
+      throw new Error(publishedOrgError?.message ?? 'Could not refresh the published Material Catalog.');
+    }
+    const summary = (existingPublication.summary && typeof existingPublication.summary === 'object'
+      ? existingPublication.summary
+      : {}) as SupplierImportPublicationHistoryRow['summary'];
+    return {
+      publicationId: String(existingPublication.id),
+      publishedAt: String(existingPublication.published_at),
+      publishedCount: Number(summary.publishedCount ?? 0),
+      newCount: Number(summary.newCount ?? 0),
+      updatedCount: Number(summary.updatedCount ?? 0),
+      unchangedCount: Number(summary.unchangedCount ?? 0),
+      ignoredCount: Number(summary.ignoredCount ?? 0),
+      stockMaterials: Array.isArray(publishedOrg.stock_materials)
+        ? publishedOrg.stock_materials as unknown as StockMaterial[]
+        : [],
+    };
+  }
+
   const { data: org, error: orgError } = await supabase
     .from('organizations')
     .select('stock_materials')
