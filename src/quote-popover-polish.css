@@ -1503,3 +1503,103 @@
     bottom: 4px;
   }
 }
+
+
+/* Quote workspace zoom: preserve the dense layout by scaling the authoring surfaces,
+   not the application chrome. The toolbar remains fixed-size and readable. */
+.quote-workbench-body > .quote-editor-pane > *,
+.quote-workbench-body > .quote-preview-pane > * {
+  zoom: var(--quote-workspace-zoom, 1);
+}
+
+.quote-workspace-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid rgba(91, 78, 58, .12);
+  border-radius: 3px;
+  background: rgba(245, 241, 232, .62);
+}
+
+.quote-workspace-zoom button {
+  min-width: 25px;
+  height: 25px;
+  border: 0;
+  border-radius: 2px;
+  padding: 0 5px;
+  background: transparent;
+  color: #696155;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.quote-workspace-zoom button:hover:not(:disabled) {
+  background: #fff8e9;
+  color: #3f392f;
+}
+
+.quote-workspace-zoom button:disabled {
+  opacity: .28;
+}
+
+.quote-workspace-zoom .quote-workspace-zoom-value {
+  min-width: 43px;
+  color: #81786a;
+  font-size: 6.8px;
+  font-weight: 850;
+  letter-spacing: .02em;
+}
+
+/* Empty Rate lines use the same blue source-reference track as selected Rates,
+   aligned directly above the yellow pricing track. */
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 5px;
+  border: 1px solid rgba(107, 129, 154, .11);
+  border-left: 0;
+  border-radius: 2px;
+  background: rgba(230, 236, 243, .46);
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.is-empty {
+  justify-content: flex-start;
+  color: #66788a;
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.is-empty strong {
+  color: #65778a;
+  font-size: 6.7px;
+  font-weight: 900;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-selection-main .quote-product-pencil {
+  color: #9da7b0;
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-selection-main .quote-product-pencil:hover,
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-selection-main .quote-product-pencil:focus-visible {
+  color: #64778a;
+  background: rgba(99, 122, 145, .06);
+}
+
+@media (max-width: 900px) {
+  .quote-header-actions {
+    gap: 5px;
+  }
+
+  .quote-workspace-zoom .quote-workspace-zoom-value {
+    min-width: 38px;
+  }
+}
