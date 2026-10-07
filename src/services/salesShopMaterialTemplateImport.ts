@@ -210,8 +210,8 @@ function optionIdentity(option: MaterialPurchaseOption) {
   return normalized(option.label);
 }
 
-function materialIdentity(material: Pick<StockMaterial, 'supplier' | 'brand' | 'materialType' | 'name'>) {
-  return [normalized(material.supplier), normalized(material.brand), normalized(material.materialType), normalized(material.name)].join('|');
+function materialIdentity(material: Pick<StockMaterial, 'brand' | 'materialType' | 'name'>) {
+  return [normalized(material.brand), normalized(material.materialType), normalized(material.name)].join('|');
 }
 
 function skuSet(material: StockMaterial) {
@@ -441,28 +441,13 @@ function compareCandidate(
       confidence: 'high',
       existingMaterialId: exactSku.id,
       matchBasis: 'sku',
-      changeSummary: [`SKU overlaps existing ${exactSku.brand || exactSku.supplier || 'catalog'} material ${exactSku.name}, but canonical Supplier / Brand / Type / Name identity differs.`],
+      changeSummary: [`SKU overlaps existing ${exactSku.brand || exactSku.supplier || 'catalog'} material ${exactSku.name}, but canonical Brand / Type / Name identity differs.`],
       warnings: parserWarnings,
       priceEvidence,
     };
   }
 
   const existing = exactSku ?? exactIdentity;
-  const sameNameAny = catalog.find((candidate) => normalized(candidate.name) === normalized(material.name));
-
-  if (!existing && sameNameAny) {
-    return {
-      id: `candidate-${safeId(material.sku || identity)}`,
-      material,
-      status: 'possible-duplicate',
-      confidence: 'high',
-      existingMaterialId: sameNameAny.id,
-      matchBasis: 'name',
-      changeSummary: [`Color name matches existing ${sameNameAny.brand || sameNameAny.supplier || 'catalog'} material, but canonical identity differs.`],
-      warnings: parserWarnings,
-      priceEvidence,
-    };
-  }
 
   if (!existing) {
     return {
@@ -729,7 +714,7 @@ export async function stageSalesShopMaterialTemplate(
   const accumulators = new Map<string, MaterialAccumulator>();
 
   parsedRows.forEach((row) => {
-    const key = [normalized(row.supplier), normalized(row.brand), normalized(row.materialType), normalized(row.name)].join('|');
+    const key = [normalized(row.brand), normalized(row.materialType), normalized(row.name)].join('|');
     let accumulator = accumulators.get(key);
     if (!accumulator) {
       accumulator = {
@@ -755,6 +740,7 @@ export async function stageSalesShopMaterialTemplate(
       accumulators.set(key, accumulator);
     } else {
       const conflicts = [
+        ['Supplier / Importer', accumulator.material.supplier, row.supplier],
         ['Collection / Series', accumulator.material.collection, row.collection],
         ['Supplier Group', accumulator.material.supplierGroup, row.supplierGroup],
         ['Material SKU', accumulator.material.sku, row.materialSku],
