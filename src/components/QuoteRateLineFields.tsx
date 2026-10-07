@@ -153,29 +153,29 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
   return (
     <div className="quote-rate-selection quote-database-result">
       <div className="quote-rate-selection-main">
-        <div className="quote-product-name-row">
-          <strong>{snapshot?.name ?? 'Rate'}</strong>
-          <button type="button" className="quote-product-pencil" onClick={() => {
-            window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
-            setSearch('');
-            setSearching(true);
-          }} title="Change rate" aria-label="Change rate">✎</button>
-        </div>
+        <strong>{snapshot?.name ?? 'Rate'}</strong>
         {snapshot && <small>{[snapshot.code, RATE_BOOK_CATEGORY_LABELS[snapshot.category], unit].filter(Boolean).join(' · ')}</small>}
       </div>
 
-      <div className={`quote-rate-reference ${snapshot ? '' : 'is-empty'}`}>
-        {snapshot ? (
-          <>
-            <span>{snapshot.pricingBehavior === 'cost-reference' ? 'Internal cost' : 'Quoted rate'}</span>
-            <strong>{snapshot.pricingBehavior === 'cost-reference'
-              ? snapshot.internalCost === undefined ? '—' : `${money.format(snapshot.internalCost)}/${unit}`
-              : snapshot.sellRate === undefined ? 'Manual' : `${money.format(snapshot.sellRate)}/${unit}`}</strong>
-            <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
-          </>
-        ) : (
-          <strong>Choose rate</strong>
-        )}
+      <div className={`quote-rate-reference quote-source-edit-reference ${snapshot ? '' : 'is-empty'}`}>
+        <div className="quote-source-reference-copy">
+          {snapshot ? (
+            <>
+              <span>{snapshot.pricingBehavior === 'cost-reference' ? 'Internal cost' : 'Quoted rate'}</span>
+              <strong>{snapshot.pricingBehavior === 'cost-reference'
+                ? snapshot.internalCost === undefined ? '—' : `${money.format(snapshot.internalCost)}/${unit}`
+                : snapshot.sellRate === undefined ? 'Manual' : `${money.format(snapshot.sellRate)}/${unit}`}</strong>
+              <small>{sourceDate ? `Effective ${sourceDate}` : 'Frozen quote snapshot'}</small>
+            </>
+          ) : (
+            <strong>Choose rate</strong>
+          )}
+        </div>
+        <button type="button" className="quote-source-pencil" onClick={() => {
+          window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
+          setSearch('');
+          setSearching(true);
+        }} title="Change rate" aria-label="Change rate">✎</button>
       </div>
 
       {snapshot?.pricingBehavior === 'cost-reference' && <span className="quote-source-status">Internal only</span>}
