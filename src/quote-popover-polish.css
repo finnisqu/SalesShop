@@ -1878,3 +1878,148 @@
   color: #745d41;
   background: rgba(151, 112, 61, .06);
 }
+
+
+/* Quote category colors + General/Area reorder polish.
+   Material = green, Sink = blue, Rate = red, Pricing = yellow. */
+
+/* GENERAL is a normal Area card, not a special dashed bucket. */
+.quote-area-general {
+  border-style: solid !important;
+  border-color: rgba(91, 78, 58, .13) !important;
+  background: rgba(255, 252, 244, .62) !important;
+}
+
+/* + Area joins the GENERAL action row. */
+.quote-area-add-area {
+  border-color: rgba(141, 116, 52, .28) !important;
+  background: #fff4cb !important;
+  color: #705b23 !important;
+}
+
+/* Sink = blue. */
+.quote-area-add-sink,
+.quote-add-row .quote-add-sink {
+  border-color: rgba(78, 116, 145, .26) !important;
+  background: #eaf2f8 !important;
+  color: #4f6f86 !important;
+}
+
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference {
+  border-color: rgba(78, 116, 145, .13) !important;
+  background: rgba(226, 237, 245, .66) !important;
+  color: #526f84 !important;
+}
+
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference .quote-source-reference-copy > strong {
+  color: #526f84 !important;
+}
+
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference .quote-source-pencil {
+  color: #8098aa !important;
+  border-left-color: rgba(78, 116, 145, .13) !important;
+}
+
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference .quote-source-pencil:hover,
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference .quote-source-pencil:focus-visible {
+  color: #4d6d84 !important;
+  background: rgba(78, 116, 145, .06) !important;
+}
+
+/* Rate = red. */
+.quote-area-add-rate,
+.quote-add-row .quote-add-rate {
+  border-color: rgba(151, 84, 82, .24) !important;
+  background: #f7e8e7 !important;
+  color: #84504f !important;
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference,
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference {
+  border-color: rgba(151, 84, 82, .12) !important;
+  background: rgba(247, 232, 231, .66) !important;
+  color: #865655 !important;
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.is-empty strong,
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference .quote-source-reference-copy > strong {
+  color: #865655 !important;
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference .quote-source-pencil {
+  color: #a78280 !important;
+  border-left-color: rgba(151, 84, 82, .13) !important;
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference .quote-source-pencil:hover,
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference .quote-source-pencil:focus-visible {
+  color: #815251 !important;
+  background: rgba(151, 84, 82, .06) !important;
+}
+
+/* Explicit Area drag affordance. The rest of the header remains click-safe. */
+.quote-area-card > .quote-area-header {
+  position: relative;
+}
+
+.quote-area-drag-handle {
+  position: absolute;
+  z-index: 12;
+  top: 50%;
+  left: -9px;
+  width: 18px;
+  min-width: 18px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(122, 101, 47, .20);
+  border-radius: 5px;
+  padding: 0;
+  background: #f4eedb;
+  color: #897a54;
+  box-shadow: 0 2px 5px rgba(52, 44, 35, .07);
+  transform: translateY(-50%);
+  cursor: grab !important;
+}
+
+.quote-area-drag-handle > span {
+  font: 900 13px/1 system-ui, sans-serif;
+}
+
+.quote-area-drag-handle:hover,
+.quote-area-drag-handle:focus-visible {
+  outline: 0;
+  border-color: rgba(153, 126, 48, .40);
+  background: #fff6d9;
+  color: #65572e;
+}
+
+.quote-area-drag-handle:active {
+  cursor: grabbing !important;
+}
+
+.quote-area-card.is-area-dragging {
+  opacity: .64;
+  box-shadow: 0 8px 20px rgba(70, 57, 37, .14);
+}
+
+/* The old implicit whole-header drag cursor is retired. */
+.quote-area-card > .quote-area-header {
+  cursor: default !important;
+}
+
+.quote-area-card > .quote-area-header input,
+.quote-area-card > .quote-area-header button:not(.quote-area-drag-handle) {
+  cursor: auto !important;
+}
+
+/* Six GENERAL actions remain one intentional cluster where space allows. */
+.quote-general-header .quote-area-actions {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 900px) {
+  .quote-general-header .quote-area-actions {
+    flex-wrap: wrap;
+  }
+}
