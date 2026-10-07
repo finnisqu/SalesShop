@@ -1638,3 +1638,22 @@
   font-size: 7px;
   line-height: 1.3;
 }
+
+
+.supplier-import-profile-static {
+  align-content: center;
+}
+
+.supplier-import-profile-static > strong {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid rgba(61, 54, 45, .14);
+  border-radius: 4px;
+  background: #fffef9;
+  color: #51493e;
+  font-size: 10px;
+  font-weight: 850;
+}
