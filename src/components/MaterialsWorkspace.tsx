@@ -11,6 +11,7 @@ import {
   type StockMaterial,
 } from '../types/settings';
 import { MaterialRateBook } from './MaterialRateBook';
+import { SupplierImportLauncher } from './SupplierImportCenter';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const PIN_STORAGE_KEY = 'salesshop-material-comparison-v1';
@@ -87,22 +88,23 @@ export function MaterialsWorkspace() {
   const [finishFilter, setFinishFilter] = useState('all');
   const [thicknessFilter, setThicknessFilter] = useState('all');
   const [sort, setSort] = useState<MaterialSort>('stock-supplier');
-  const [pinnedKeys, setPinnedKeys] = useState<Set<string>>(() => {
+  const [pinnedKeys, setPinnedKeys] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(PIN_STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
-      return new Set(Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === 'string') : []);
+      return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === 'string') : [];
     } catch {
-      return new Set();
+      return [];
     }
   });
+  const [draggingKey, setDraggingKey] = useState<string | null>(null);
 
   useEffect(() => {
     void hydrateSettings();
   }, [hydrateSettings]);
 
   useEffect(() => {
-    localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify([...pinnedKeys]));
+    localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(pinnedKeys));
   }, [pinnedKeys]);
 
   const materialTypes = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.materialType))].sort(), [settings.stockMaterials]);
@@ -131,14 +133,18 @@ export function MaterialsWorkspace() {
     });
   }, [settings.stockMaterials, query, programFilter, materialTypeFilter, supplierFilter, finishFilter, thicknessFilter, sort]);
 
+  const pinnedKeySet = useMemo(() => new Set(pinnedKeys), [pinnedKeys]);
+
   const pinnedVariants = useMemo(() => {
-    const entries: Array<{ material: StockMaterial; variant: MaterialVariant }> = [];
+    const catalog = new Map<string, { material: StockMaterial; variant: MaterialVariant }>();
     settings.stockMaterials.forEach((material) => {
       (material.variants ?? []).forEach((variant) => {
-        if (pinnedKeys.has(pinKey(material.id, variant.id))) entries.push({ material, variant });
+        catalog.set(pinKey(material.id, variant.id), { material, variant });
       });
     });
-    return entries;
+    return pinnedKeys
+      .map((key) => catalog.get(key))
+      .filter((entry): entry is { material: StockMaterial; variant: MaterialVariant } => Boolean(entry));
   }, [settings.stockMaterials, pinnedKeys]);
 
   const activeFilterCount = Number(programFilter !== 'all')
@@ -157,10 +163,31 @@ export function MaterialsWorkspace() {
 
   const togglePin = (materialId: string, variantId: string) => {
     const key = pinKey(materialId, variantId);
+    setPinnedKeys((current) => current.includes(key)
+      ? current.filter((candidate) => candidate !== key)
+      : [...current, key]);
+  };
+
+  const reorderPinned = (sourceKey: string, targetKey: string) => {
+    if (!sourceKey || sourceKey === targetKey) return;
     setPinnedKeys((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      const sourceIndex = current.indexOf(sourceKey);
+      const targetIndex = current.indexOf(targetKey);
+      if (sourceIndex < 0 || targetIndex < 0) return current;
+      const next = [...current];
+      const [moved] = next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, moved);
+      return next;
+    });
+  };
+
+  const nudgePinned = (key: string, offset: -1 | 1) => {
+    setPinnedKeys((current) => {
+      const index = current.indexOf(key);
+      const targetIndex = index + offset;
+      if (index < 0 || targetIndex < 0 || targetIndex >= current.length) return current;
+      const next = [...current];
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
       return next;
     });
   };
@@ -183,6 +210,7 @@ export function MaterialsWorkspace() {
             </label>
           )}
           <span className={`rates-mode-badge ${editing ? 'is-editing' : ''}`}>{editing ? 'Editing' : 'Reference mode'}</span>
+          <SupplierImportLauncher placement="toolbar" />
           <button type="button" className={editing ? 'rates-done-button' : 'rates-edit-button'} onClick={() => setEditing((value) => !value)}>
             {editing ? 'Done editing' : 'Edit materials'}
           </button>
@@ -240,7 +268,7 @@ export function MaterialsWorkspace() {
                 <strong>{pinnedVariants.length ? `${pinnedVariants.length} pinned variant${pinnedVariants.length === 1 ? '' : 's'}` : 'Pin slab variants while you browse'}</strong>
                 <small>Pinned variants stay here while search and filters change.</small>
               </div>
-              {pinnedVariants.length > 0 && <button type="button" onClick={() => setPinnedKeys(new Set())}>Clear all</button>}
+              {pinnedVariants.length > 0 && <button type="button" onClick={() => setPinnedKeys([])}>Clear all</button>}
             </header>
             {pinnedVariants.length > 0 ? (
               <div className="materials-comparison-strip">
@@ -249,8 +277,46 @@ export function MaterialsWorkspace() {
                   const costPerSf = materialPurchaseCostPerSf(variant, option);
                   const slabCost = materialPurchaseSlabCost(variant, option);
                   const area = materialVariantAreaSf(variant);
+                  const key = pinKey(material.id, variant.id);
                   return (
-                    <article className="materials-comparison-card" key={pinKey(material.id, variant.id)}>
+                    <article
+                      className={`materials-comparison-card ${draggingKey === key ? 'is-dragging' : ''}`}
+                      key={key}
+                      onDragOver={(event) => {
+                        if (!draggingKey || draggingKey === key) return;
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const sourceKey = event.dataTransfer.getData('text/plain') || draggingKey;
+                        if (sourceKey) reorderPinned(sourceKey, key);
+                        setDraggingKey(null);
+                      }}
+                    >
+                      <span
+                        className="materials-card-drag-handle"
+                        role="button"
+                        tabIndex={0}
+                        draggable
+                        title="Drag to reorder comparison cards"
+                        aria-label={`Reorder ${material.name} ${variantSpec(variant)}`}
+                        onDragStart={(event) => {
+                          setDraggingKey(key);
+                          event.dataTransfer.effectAllowed = 'move';
+                          event.dataTransfer.setData('text/plain', key);
+                        }}
+                        onDragEnd={() => setDraggingKey(null)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'ArrowLeft') {
+                            event.preventDefault();
+                            nudgePinned(key, -1);
+                          } else if (event.key === 'ArrowRight') {
+                            event.preventDefault();
+                            nudgePinned(key, 1);
+                          }
+                        }}
+                      >⠿</span>
                       <button type="button" className="materials-unpin" onClick={() => togglePin(material.id, variant.id)} aria-label={`Unpin ${material.name} ${variantSpec(variant)}`}>×</button>
                       <span>{material.supplier || 'Unknown supplier'} · {material.materialType}</span>
                       <strong>{material.name}</strong>
@@ -285,7 +351,7 @@ export function MaterialsWorkspace() {
                     const links = productLinks(material);
                     const activeVariants = (material.variants ?? []).filter((variant) => variant.active !== false);
                     const expanded = expandedMaterialId === material.id;
-                    const hasPinnedVariant = activeVariants.some((variant) => pinnedKeys.has(pinKey(material.id, variant.id)));
+                    const hasPinnedVariant = activeVariants.some((variant) => pinnedKeySet.has(pinKey(material.id, variant.id)));
                     return (
                       <Fragment key={material.id}>
                         <tr className={`${expanded ? 'is-expanded' : ''} ${hasPinnedVariant ? 'has-pinned-variant' : ''}`}>
@@ -307,7 +373,7 @@ export function MaterialsWorkspace() {
                                   const options = activePurchaseOptions(variant);
                                   const defaultOption = defaultMaterialPurchaseOption(variant);
                                   const defaultCost = materialPurchaseCostPerSf(variant, defaultOption);
-                                  const isPinned = pinnedKeys.has(pinKey(material.id, variant.id));
+                                  const isPinned = pinnedKeySet.has(pinKey(material.id, variant.id));
                                   return (
                                     <article className={`materials-variant-line ${isPinned ? 'is-pinned' : ''}`} key={variant.id}>
                                       <button type="button" className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`} onClick={() => togglePin(material.id, variant.id)}>{isPinned ? 'Pinned' : 'Pin'}</button>
