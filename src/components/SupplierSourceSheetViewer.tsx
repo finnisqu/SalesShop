@@ -29,7 +29,7 @@ function selectionA1(selection: UniverSelectionRange) {
   return start === end ? start : `${start}:${end}`;
 }
 
-function workbookSnapshot(preview: SupplierImportStructuredPreview, locale: string) {
+function workbookSnapshot(preview: SupplierImportStructuredPreview) {
   const sheetId = 'supplier-source-sheet';
   const cellData: Record<number, Record<number, { v: string }>> = {};
 
@@ -45,7 +45,7 @@ function workbookSnapshot(preview: SupplierImportStructuredPreview, locale: stri
     id: `supplier-source-${Date.now()}`,
     name: preview.fileName,
     appVersion: '',
-    locale,
+    locale: 'enUS' as const,
     styles: {},
     sheetOrder: [sheetId],
     sheets: {
@@ -135,7 +135,7 @@ export function SupplierSourceSheetViewer({
         });
 
         univerInstance = univer;
-        const workbook = univerAPI.createWorkbook(workbookSnapshot(preview, LocaleType.EN_US));
+        const workbook = univerAPI.createWorkbook(workbookSnapshot(preview));
         const worksheet = workbook.getActiveSheet();
 
         const activateRange = (range: string) => {
