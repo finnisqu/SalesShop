@@ -4,7 +4,6 @@ import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import {
   materialLevelCostBand,
   resolveMaterialPricingRecommendation,
-  resolveSlabPrice,
 } from '../types/materialLevelGuide';
 import type { PricingMaterialType } from '../types/quote';
 import {
