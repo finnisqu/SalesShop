@@ -27,6 +27,7 @@ import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
 import { QuoteShareControl } from './components/QuoteShareControl';
 import { Quotes } from './components/Quotes';
+import { MaterialsWorkspace } from './components/MaterialsWorkspace';
 import { RatesWorkspace } from './components/RatesWorkspace';
 import { Sidebar } from './components/Sidebar';
 import { SupplierImportLauncher } from './components/SupplierImportCenter';
@@ -73,6 +74,7 @@ function App() {
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
           <button className={`app-tab ${view === 'rate-book' ? 'active' : ''}`} onClick={() => setView('rate-book')}>Rates</button>
+          <button className={`app-tab ${view === 'materials' ? 'active' : ''}`} onClick={() => setView('materials')}>Materials</button>
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Dashboard</button>
           <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
@@ -91,6 +93,8 @@ function App() {
         <Quotes />
       ) : view === 'rate-book' ? (
         <RatesWorkspace />
+      ) : view === 'materials' ? (
+        <MaterialsWorkspace />
       ) : view === 'dashboard' ? (
         <Dashboard />
       ) : view === 'settings' ? (
@@ -138,7 +142,7 @@ function App() {
         </main>
       )}
       {view === 'quotes' && <QuoteShareControl />}
-      {view === 'rate-book' && <SupplierImportLauncher />}
+      {view === 'materials' && <SupplierImportLauncher />}
     </div>
   );
 }
