@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   RATE_BOOK_CATEGORY_LABELS,
   RATE_BOOK_UNIT_LABELS,
@@ -36,15 +36,22 @@ function priceLabel(item: RateBookItem, quote: Quote) {
   return item.pricingBehavior === 'manual' ? 'Manual price' : 'No current rate';
 }
 
-export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: QuoteLine }) {
+export function QuoteRateLineFields({ quote, line, editSignal = 0 }: { quote: Quote; line: QuoteLine; editSignal?: number }) {
   const items = useRateBookStore((state) => state.items);
   const hydrate = useRateBookStore((state) => state.hydrate);
   const updateLine = useQuoteStore((state) => state.updateLine);
   const snapshot = line.rateReference?.snapshot;
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(!snapshot);
+  const lastEditSignal = useRef(editSignal);
 
   useEffect(() => { hydrate(); }, [hydrate]);
+  useEffect(() => {
+    if (editSignal === lastEditSignal.current) return;
+    lastEditSignal.current = editSignal;
+    setSearch('');
+    setSearching(true);
+  }, [editSignal]);
 
   const activeItems = useMemo(() => items.filter((item) => item.active && allowedCategories.includes(item.category)), [items]);
   const selectedItem = line.rateReference?.rateBookItemId
@@ -138,8 +145,6 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
       {snapshot.pricingBehavior === 'cost-reference' && <span className="quote-source-status">Internal only</span>}
       {!selectedItem && <span className="quote-source-status is-warning">Source unavailable</span>}
       {comparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
-
-      <button type="button" className="quote-rate-change quote-database-change" onClick={() => { setSearch(''); setSearching(true); }}>Change</button>
     </div>
   );
 }
