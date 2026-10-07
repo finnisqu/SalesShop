@@ -214,13 +214,10 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
   const hydrated = useSupplierImportStore((state) => state.hydrated);
   const hydrate = useSupplierImportStore((state) => state.hydrate);
   const setSession = useSupplierImportStore((state) => state.setSession);
-  const setEffectiveDate = useSupplierImportStore((state) => state.setEffectiveDate);
   const setCandidateDecision = useSupplierImportStore((state) => state.setCandidateDecision);
   const clearSession = useSupplierImportStore((state) => state.clearSession);
   const markPublished = useSupplierImportStore((state) => state.markPublished);
   const [file, setFile] = useState<File | null>(null);
-  const [selectedProfileId, setSelectedProfileId] = useState(() => supplierImportProfiles[0]?.id ?? '');
-  const [effectiveDateDraft, setEffectiveDateDraft] = useState('');
   const [parsing, setParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<StatusFilter>('all');
@@ -239,27 +236,14 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
   }, [hydrate, hydrateSettings]);
 
   useEffect(() => {
-    setEffectiveDateDraft(session?.source.effectiveDate ?? '');
-    const matchingProfile = session
-      ? supplierImportProfiles.find((profile) => profile.parserId === session.source.parserId
-        && (!profile.supplier || profile.supplier === session.source.supplier)
-        && (!profile.brand || profile.brand === session.source.brand))
-      : undefined;
-    if (matchingProfile) setSelectedProfileId(matchingProfile.id);
     setReviewMode(false);
     setExpandedId(null);
     setPublishPreviewOpen(false);
     setPublishError(null);
-  }, [session?.id, session?.source.effectiveDate]);
+  }, [session?.id]);
 
-  const activeProfile = useMemo(
-    () => supplierImportProfiles.find((profile) => profile.id === selectedProfileId) ?? supplierImportProfiles[0],
-    [selectedProfileId],
-  );
-  const activeParser = useMemo(
-    () => activeProfile ? getSupplierImportParser(activeProfile.parserId) : undefined,
-    [activeProfile],
-  );
+  const activeProfile = supplierImportProfiles[0];
+  const activeParser = activeProfile ? getSupplierImportParser(activeProfile.parserId) : undefined;
 
   const counts = useMemo(() => {
     const candidates = session?.candidates ?? [];
@@ -332,7 +316,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
       if (!activeProfile) throw new Error('Choose an import profile before staging a supplier file.');
       const next = await stageSupplierImport(activeProfile.parserId, file, {
         catalog: settings.stockMaterials,
-        effectiveDate: activeProfile.supportsEffectiveDateOverride ? effectiveDateDraft || undefined : undefined,
+        effectiveDate: undefined,
       });
       setSession(next);
       setFilter('all');
@@ -340,7 +324,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
       setExpandedId(null);
       setReviewMode(false);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'The supplier sheet could not be staged.');
+      setError(reason instanceof Error ? reason.message : 'The material template could not be staged.');
     } finally {
       setParsing(false);
     }
@@ -364,17 +348,10 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
         <div className="supplier-import-body">
           <section className="supplier-import-source-card supplier-import-source-card-v4">
             <div className="supplier-import-profile-panel">
-              <label className="supplier-import-profile-select">
-                <span>Import source</span>
-                <select value={selectedProfileId} onChange={(event) => {
-                  setSelectedProfileId(event.target.value);
-                  setFile(null);
-                  setEffectiveDateDraft('');
-                  setError(null);
-                }}>
-                  {supplierImportProfiles.map((profile) => <option value={profile.id} key={profile.id}>{profile.label}</option>)}
-                </select>
-              </label>
+              <div className="supplier-import-profile-select supplier-import-profile-static">
+                <span>Import contract</span>
+                <strong>SalesShop Material Template v1.0</strong>
+              </div>
               {activeProfile && (
                 <div className="supplier-import-profile-summary">
                   <div><span>Brand</span><strong>{activeProfile.brand ?? 'From workbook'}</strong></div>
@@ -396,21 +373,11 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
                 <input type="file" accept={activeProfile?.accept} onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
                 <b>{file ? file.name : `Choose ${activeProfile?.fileTypeLabel ?? 'file'}…`}</b>
               </label>
-              {activeProfile?.supportsEffectiveDateOverride ? (
-                <label className="supplier-import-effective-date">
-                  <span>Effective date <em>optional</em></span>
-                  <input type="date" value={effectiveDateDraft} onChange={(event) => {
-                    setEffectiveDateDraft(event.target.value);
-                    if (session) setEffectiveDate(event.target.value || undefined);
-                  }} />
-                </label>
-              ) : (
-                <div className="supplier-import-template-date-note">
-                  <span>Effective dates</span>
-                  <strong>Read from workbook</strong>
-                  <small>Row date → META default → warning if missing</small>
-                </div>
-              )}
+              <div className="supplier-import-template-date-note">
+                <span>Effective dates</span>
+                <strong>Read from workbook</strong>
+                <small>Row date → META default → warning if missing</small>
+              </div>
               <button type="button" className="supplier-import-stage-button" disabled={!activeProfile || !file || parsing} onClick={() => void parseFile()}>
                 {parsing ? 'Validating…' : session ? 'Validate & stage new file' : 'Validate & stage'}
               </button>
