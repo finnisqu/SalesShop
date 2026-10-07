@@ -1,0 +1,239 @@
+import { describe, expect, it } from 'vitest';
+import type { StockMaterial } from '../types/settings';
+import { buildSupplierImportPublishPlan } from './supplierImportCatalog';
+import {
+  SALESSHOP_TEMPLATE_HEADERS,
+  SALESSHOP_TEMPLATE_PARSER_ID,
+  stageSalesShopMaterialTemplate,
+} from './salesShopMaterialTemplateImport';
+
+type TemplateRow = Partial<Record<(typeof SALESSHOP_TEMPLATE_HEADERS)[number], string | number>>;
+
+const baseRow: TemplateRow = {
+  Include: 'Yes',
+  'Supplier / Importer': 'UMI',
+  'Brand / Manufacturer': 'Vicostone',
+  'Material Type': 'Quartz',
+  'Color / Product Name': 'Akoya',
+  'Collection / Series': 'Classic',
+  'Supplier Group': 'Group 2',
+  'Material SKU': 'BQ8583',
+  'Variant SKU': 'BQ8583',
+  Thickness: '3cm',
+  Finish: 'Polished',
+  'Format Name': 'Jumbo',
+  'Format Kind': 'slab',
+  'Length In': 130,
+  'Width In': 65,
+  'Area SF Listed': 58.68,
+  Availability: 'stock',
+  'Default Variant': 'Yes',
+  'Purchase Program': 'Standard',
+  'Pricing Basis': 'slab',
+  'Cost / SF Listed': 14.5,
+  'Cost / Unit Listed': 850.86,
+  'Default Purchase': 'Yes',
+  'Effective Date': '2026-10-01',
+  'Source File': 'UMI-Oct-2026.pdf',
+  'Source Page / Sheet': 'Page 2',
+  'Source Reference / Original Label': 'Group 2 · Akoya',
+  'Price Provenance': 'supplier-listed',
+  Active: 'Yes',
+};
+
+async function makeTemplateFile(
+  rows: TemplateRow[],
+  options: {
+    templateVersion?: string;
+    priceListLabel?: string;
+    rule?: string;
+  } = {},
+) {
+  const ExcelJS = await import('exceljs');
+  const workbook = new ExcelJS.Workbook();
+
+  const meta = workbook.addWorksheet('META');
+  [
+    ['Key', 'Value'],
+    ['TemplateVersion', options.templateVersion ?? '1.0'],
+    ['SchemaName', 'SalesShop Material Import'],
+    ['ImportMode', 'SupplierCatalog'],
+    ['PriceListLabel', options.priceListLabel ?? 'October 2026'],
+    ['DefaultEffectiveDate', '2026-10-01'],
+    ['Currency', 'USD'],
+    ['SourceFiles', 'UMI-Oct-2026.pdf'],
+  ].forEach((row) => meta.addRow(row));
+
+  const imports = workbook.addWorksheet('IMPORT_ROWS');
+  imports.addRow([...SALESSHOP_TEMPLATE_HEADERS]);
+  rows.forEach((source) => {
+    imports.addRow(SALESSHOP_TEMPLATE_HEADERS.map((header) => source[header] ?? ''));
+  });
+
+  const rules = workbook.addWorksheet('SOURCE_RULES');
+  rules.addRow(['Include', 'Supplier / Importer', 'Brand / Manufacturer', 'Rule Scope', 'Scope Value', 'Rule Type', 'Rule Text', 'Effective Date', 'Source File', 'Source Page / Sheet', 'Source Reference', 'Reference Only']);
+  if (options.rule) rules.addRow(['Yes', 'UMI', 'Vicostone', 'Batch', '', 'Minimum Quantity', options.rule, '2026-10-01', 'UMI-Oct-2026.pdf', 'Page 1', 'Terms', 'Yes']);
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return new File([new Uint8Array(buffer as ArrayBuffer)], 'SalesShop_Material_Import_Template_v1.0.xlsx', {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+}
+
+function existingAkoya(overrides: Partial<StockMaterial> = {}): StockMaterial {
+  return {
+    id: 'catalog-akoya',
+    name: 'Akoya',
+    supplier: 'UMI',
+    brand: 'Vicostone',
+    collection: 'Classic',
+    supplierGroup: 'Group 2',
+    sku: 'BQ8583',
+    materialType: 'Quartz',
+    stockProgram: true,
+    builderLevelId: 'level-2',
+    unit: 'sf',
+    active: true,
+    variants: [{
+      id: 'catalog-akoya-3cm',
+      active: true,
+      default: true,
+      sku: 'BQ8583',
+      thickness: '3cm',
+      finish: 'Polished',
+      formatName: 'Jumbo',
+      formatKind: 'slab',
+      lengthIn: 130,
+      widthIn: 65,
+      areaSf: 58.68,
+      availability: 'stock',
+      purchaseOptions: [{
+        id: 'catalog-akoya-standard',
+        label: 'Standard',
+        active: true,
+        default: true,
+        pricingBasis: 'slab',
+        costPerSf: 13.75,
+        costPerUnit: 806.85,
+      }],
+    }],
+    ...overrides,
+  };
+}
+
+describe('SalesShop canonical material template importer', () => {
+  it('groups purchase-program rows into one material and one physical variant', async () => {
+    const file = await makeTemplateFile([
+      baseRow,
+      {
+        ...baseRow,
+        'Purchase Program': 'Bundle 8+',
+        'Min Quantity': 8,
+        'Cost / SF Listed': 13.5,
+        'Cost / Unit Listed': 792.18,
+        'Default Purchase': 'No',
+      },
+    ], { rule: 'Bundle program requires 8 slabs of the same color.' });
+
+    const session = await stageSalesShopMaterialTemplate(file, []);
+
+    expect(session.source.parserId).toBe(SALESSHOP_TEMPLATE_PARSER_ID);
+    expect(session.source.priceListLabel).toBe('October 2026');
+    expect(session.source.supplierRules).toEqual(['Minimum Quantity: Bundle program requires 8 slabs of the same color.']);
+    expect(session.candidates).toHaveLength(1);
+
+    const candidate = session.candidates[0];
+    expect(candidate.status).toBe('new');
+    expect(candidate.confidence).toBe('high');
+    expect(candidate.material).toMatchObject({
+      name: 'Akoya',
+      supplier: 'UMI',
+      brand: 'Vicostone',
+      materialType: 'Quartz',
+      stockProgram: false,
+    });
+    expect(candidate.material.variants).toHaveLength(1);
+    expect(candidate.material.variants?.[0].purchaseOptions).toHaveLength(2);
+    expect(candidate.material.variants?.[0].purchaseOptions.map((option) => option.label)).toEqual(['Standard', 'Bundle 8+']);
+
+    const standardId = candidate.material.variants?.[0].purchaseOptions[0].id ?? '';
+    expect(candidate.priceEvidence?.[standardId]).toMatchObject({
+      sourceFileName: 'UMI-Oct-2026.pdf',
+      sourcePageSheet: 'Page 2',
+      sourceReference: 'Group 2 · Akoya',
+      effectiveDate: '2026-10-01',
+      effectiveCostPerSf: 'supplier-listed',
+    });
+  });
+
+  it('uses canonical Supplier + Brand + Type + Color identity when SKU is absent', async () => {
+    const withoutSku = {
+      ...baseRow,
+      'Material SKU': '',
+      'Variant SKU': '',
+      'Cost / SF Listed': 14.75,
+      'Cost / Unit Listed': 865.23,
+    };
+    const existing = existingAkoya({
+      sku: undefined,
+      variants: [{
+        ...existingAkoya().variants![0],
+        sku: undefined,
+      }],
+    });
+    const session = await stageSalesShopMaterialTemplate(await makeTemplateFile([withoutSku]), [existing]);
+
+    expect(session.candidates[0].status).toBe('changed');
+    expect(session.candidates[0].matchBasis).toBe('identity');
+    expect(session.candidates[0].confidence).toBe('high');
+    expect(session.candidates[0].changeSummary.join(' ')).toMatch(/price/i);
+  });
+
+  it('publishes row-level source provenance into price history metadata', async () => {
+    const session = await stageSalesShopMaterialTemplate(await makeTemplateFile([baseRow]), []);
+    const plan = buildSupplierImportPublishPlan(session, [], {
+      publicationId: 'pub-template-1',
+      publishedAt: '2026-10-07T12:00:00.000Z',
+      idFactory: (prefix) => `${prefix}-test`,
+    });
+
+    const source = plan.stockMaterials[0].variants?.[0].purchaseOptions[0].source;
+    expect(source).toMatchObject({
+      kind: 'supplier-import',
+      publicationId: 'pub-template-1',
+      supplier: 'UMI',
+      brand: 'Vicostone',
+      sourceFileName: 'UMI-Oct-2026.pdf',
+      sourcePageSheet: 'Page 2',
+      sourceReference: 'Group 2 · Akoya',
+      priceListLabel: 'October 2026',
+      effectiveDate: '2026-10-01',
+      parserId: SALESSHOP_TEMPLATE_PARSER_ID,
+    });
+  });
+
+  it('rejects an unsupported workbook version before staging anything', async () => {
+    const file = await makeTemplateFile([baseRow], { templateVersion: '2.0' });
+    await expect(stageSalesShopMaterialTemplate(file, []))
+      .rejects.toThrow(/expects v1\.0/i);
+  });
+
+  it('rejects blocking included-row errors instead of silently skipping bad pricing', async () => {
+    const file = await makeTemplateFile([{
+      ...baseRow,
+      'Cost / SF Listed': '',
+      'Cost / Unit Listed': '',
+    }]);
+    await expect(stageSalesShopMaterialTemplate(file, []))
+      .rejects.toThrow(/blocking row error/i);
+  });
+
+  it('skips rows explicitly marked Include = No', async () => {
+    const file = await makeTemplateFile([
+      { ...baseRow, Include: 'No', 'Color / Product Name': 'Do Not Import' },
+      baseRow,
+    ]);
+    const session = await stageSalesShopMaterialTemplate(file, []);
+    expect(session.candidates.map((candidate) => candidate.material.name)).toEqual(['Akoya']);
+  });
+});
