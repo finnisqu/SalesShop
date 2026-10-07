@@ -178,4 +178,75 @@ describe('quote internal pricing summary', () => {
     expect(summary.grossSpread).toBe(1750);
     expect(summary.marginPercent).toBe(58.3);
   });
+
+  it('uses frozen sink unit cost times quoted sink quantity', () => {
+    const summary = summarizeQuoteInternalPricing([
+      line({
+        id: 'sink-3218',
+        kind: 'sink',
+        pricingMode: 'quantity-rate',
+        quantity: 3,
+        rate: 220,
+        amount: undefined,
+        sinkReference: {
+          sinkModelId: 'sink-model-3218',
+          variantId: 'sink-variant-3218-5050',
+          snapshot: {
+            capturedAt: '2026-10-07T18:20:00.000Z',
+            sinkModelId: 'sink-model-3218',
+            sinkModelName: 'Kitchen 3218',
+            category: 'kitchen',
+            variantId: 'sink-variant-3218-5050',
+            variantLabel: 'Standard 50/50',
+            configuration: '50/50',
+            ada: false,
+            internalCost: 110,
+            sellPrice: 220,
+          },
+        },
+      }),
+    ]);
+
+    expect(summary.customerTotal).toBe(660);
+    expect(summary.knownInternalCost).toBe(330);
+    expect(summary.grossSpread).toBe(330);
+    expect(summary.marginPercent).toBe(50);
+    expect(summary.complete).toBe(true);
+    expect(summary.lines[0].costSource).toBe('sink-unit');
+  });
+
+  it('keeps sink cost coverage incomplete when the catalog variant has no private cost', () => {
+    const summary = summarizeQuoteInternalPricing([
+      line({
+        id: 'sink-unpriced-cost',
+        kind: 'sink',
+        pricingMode: 'quantity-rate',
+        quantity: 1,
+        rate: 220,
+        amount: undefined,
+        sinkReference: {
+          sinkModelId: 'sink-model-3218',
+          variantId: 'sink-variant-3218-single',
+          snapshot: {
+            capturedAt: '2026-10-07T18:20:00.000Z',
+            sinkModelId: 'sink-model-3218',
+            sinkModelName: 'Kitchen 3218',
+            category: 'kitchen',
+            variantId: 'sink-variant-3218-single',
+            variantLabel: 'Standard Single',
+            configuration: 'single',
+            ada: false,
+            sellPrice: 220,
+          },
+        },
+      }),
+    ]);
+
+    expect(summary.customerTotal).toBe(220);
+    expect(summary.knownInternalCost).toBe(0);
+    expect(summary.costRequiredLineCount).toBe(1);
+    expect(summary.costedLineCount).toBe(0);
+    expect(summary.complete).toBe(false);
+    expect(summary.marginPercent).toBeUndefined();
+  });
 });
