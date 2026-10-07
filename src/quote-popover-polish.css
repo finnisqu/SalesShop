@@ -1172,3 +1172,334 @@
     bottom: 4px;
   }
 }
+
+
+/* Uniform quote-row tracks:
+   every priced row shares description | yellow pricing | total | delete,
+   while text rows use an inline eye instead of a left visibility column. */
+
+.quote-line-editor.is-priced-line,
+.view-split .quote-line-editor.is-priced-line {
+  position: relative;
+  overflow: visible;
+  min-height: 48px;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  grid-template-rows: auto;
+  align-items: start;
+  column-gap: 5px;
+  row-gap: 0;
+  padding: 5px 7px 5px 9px;
+}
+
+.quote-line-editor.is-priced-line > .quote-line-main,
+.view-split .quote-line-editor.is-priced-line > .quote-line-main {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(122px, 170px) 84px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 7px;
+  row-gap: 3px;
+  position: relative;
+  overflow: visible;
+}
+
+.quote-line-editor.is-priced-line > .quote-line-delete,
+.view-split .quote-line-editor.is-priced-line > .quote-line-delete {
+  grid-column: 2;
+  grid-row: 1;
+  width: 18px;
+  height: 22px;
+  align-self: start;
+}
+
+/* Generic row label occupies the same upper-left track as a Catalog product name. */
+.quote-line-editor.is-priced-line:not(.has-database-selection) .quote-line-topline {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  margin: 0;
+  align-self: center;
+}
+
+.quote-line-editor.is-priced-line:not(.has-database-selection) .quote-line-main > textarea {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 3px 2px 2px;
+  overflow: hidden;
+  resize: none;
+  line-height: 1.2;
+}
+
+/* Catalog source data occupies the upper two tracks, exactly as before. */
+.quote-line-editor.is-priced-line.has-database-selection .quote-database-result {
+  grid-column: 1 / 3;
+  grid-row: 1;
+  min-height: 27px;
+  display: grid;
+  grid-template-columns: minmax(125px, 1fr) minmax(122px, 170px);
+  gap: 7px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.quote-line-editor.is-priced-line.has-database-selection .quote-line-main > textarea {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 3px 2px 2px;
+  overflow: hidden;
+  resize: none;
+  line-height: 1.2;
+}
+
+/* Yellow calculator strip always owns the same middle track. */
+.quote-line-editor.is-priced-line .quote-line-resting-pricing {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  min-height: 20px;
+  display: block;
+  margin: 0;
+  align-self: center;
+}
+
+.quote-line-editor.is-priced-line .quote-pricing-passive {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1px 2px 1px 6px;
+  background: rgba(239, 222, 164, .30);
+  border: 1px solid rgba(160, 128, 51, .13);
+  border-radius: 2px;
+  color: #6e5d31;
+}
+
+/* Total always owns the same upper-right track, including while the popover is open. */
+.quote-line-editor.is-priced-line .quote-line-resting-total,
+.quote-line-editor.is-priced-line.is-line-editing .quote-line-resting-total,
+.view-split .quote-line-editor.is-priced-line .quote-line-resting-total {
+  display: block !important;
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  position: static;
+  align-self: center;
+  margin: 0;
+  color: #4d473d;
+  font: 700 10px Georgia, serif;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Generic pricing editors are popovers too, not permanent third-column controls. */
+.quote-line-editor.is-priced-line > .quote-pricing-popover,
+.view-split .quote-line-editor.is-priced-line > .quote-pricing-popover {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+/* Reminder pills never take part in layout. */
+.quote-line-editor.is-priced-line .quote-line-reminders-overlay {
+  position: absolute;
+  z-index: 118;
+  right: 262px;
+  bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Scope / Warranty / Note use the same outer right-edge delete track.
+   Visibility is an inline eye beside the row type, matching the product pencil position. */
+.quote-line-editor.kind-scope,
+.quote-line-editor.kind-warranty,
+.quote-line-editor.kind-note,
+.view-split .quote-line-editor.kind-scope,
+.view-split .quote-line-editor.kind-warranty,
+.view-split .quote-line-editor.kind-note {
+  min-height: 46px;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  grid-template-rows: auto;
+  align-items: center;
+  column-gap: 5px;
+  padding: 5px 7px 5px 9px;
+}
+
+.quote-line-editor.kind-scope > .quote-line-main,
+.quote-line-editor.kind-warranty > .quote-line-main,
+.quote-line-editor.kind-note > .quote-line-main,
+.view-split .quote-line-editor.kind-scope > .quote-line-main,
+.view-split .quote-line-editor.kind-warranty > .quote-line-main,
+.view-split .quote-line-editor.kind-note > .quote-line-main {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.quote-line-editor.kind-scope > .quote-line-delete,
+.quote-line-editor.kind-warranty > .quote-line-delete,
+.quote-line-editor.kind-note > .quote-line-delete,
+.view-split .quote-line-editor.kind-scope > .quote-line-delete,
+.view-split .quote-line-editor.kind-warranty > .quote-line-delete,
+.view-split .quote-line-editor.kind-note > .quote-line-delete {
+  grid-column: 2;
+  grid-row: 1;
+  width: 18px;
+  height: 22px;
+  align-self: start;
+}
+
+.quote-line-editor.kind-scope .quote-line-topline,
+.quote-line-editor.kind-warranty .quote-line-topline,
+.quote-line-editor.kind-note .quote-line-topline {
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.quote-line-eye {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 2px;
+  padding: 0;
+  background: transparent;
+  color: #a59c8f;
+  opacity: .78;
+}
+
+.quote-line-eye svg {
+  width: 13px;
+  height: 13px;
+  overflow: visible;
+}
+
+.quote-line-eye path,
+.quote-line-eye circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.quote-line-eye circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+.quote-line-eye.is-hidden {
+  color: #b2aaa0;
+  opacity: .58;
+}
+
+.quote-line-eye:hover,
+.quote-line-eye:focus-visible {
+  outline: 0;
+  background: rgba(98, 87, 67, .06);
+  color: #70675a;
+  opacity: 1;
+}
+
+.quote-line-eye-slash {
+  stroke-width: 2 !important;
+}
+
+.quote-line-editor.kind-scope .quote-line-main textarea,
+.quote-line-editor.kind-warranty .quote-line-main textarea,
+.quote-line-editor.kind-note .quote-line-main textarea {
+  min-height: 26px;
+  height: 26px;
+  margin: 0;
+  padding: 2px;
+}
+
+/* Retire the legacy left visibility control entirely. */
+.quote-line-editor.kind-scope > .quote-visibility,
+.quote-line-editor.kind-warranty > .quote-visibility,
+.quote-line-editor.kind-note > .quote-visibility {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .quote-line-editor.is-priced-line > .quote-line-main,
+  .view-split .quote-line-editor.is-priced-line > .quote-line-main {
+    grid-template-columns: minmax(0, 1fr) minmax(108px, 145px) 72px;
+    column-gap: 5px;
+  }
+
+  .quote-line-editor.is-priced-line.has-database-selection .quote-database-result {
+    grid-template-columns: minmax(110px, 1fr) minmax(108px, 145px);
+    gap: 5px;
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-reminders-overlay {
+    right: 222px;
+  }
+}
+
+@media (max-width: 520px) {
+  .quote-line-editor.is-priced-line > .quote-line-main,
+  .view-split .quote-line-editor.is-priced-line > .quote-line-main {
+    grid-template-columns: minmax(0, 1fr) 70px;
+    grid-template-rows: auto auto auto;
+  }
+
+  .quote-line-editor.is-priced-line.has-database-selection .quote-database-result {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    grid-template-columns: minmax(0, 1fr) minmax(104px, 132px);
+  }
+
+  .quote-line-editor.is-priced-line:not(.has-database-selection) .quote-line-topline {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-resting-total {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-main > textarea {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-resting-pricing {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: min(132px, 100%);
+    justify-self: end;
+  }
+
+  .quote-line-editor.is-priced-line .quote-line-reminders-overlay {
+    right: auto;
+    left: 4px;
+    bottom: 4px;
+  }
+}
