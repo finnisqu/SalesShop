@@ -359,7 +359,8 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
   const section = quote.sections.find((candidate) => candidate.id === sectionId);
   const updateSection = useQuoteStore((state) => state.updateSection);
   const deleteSection = useQuoteStore((state) => state.deleteSection);
-  const [scopeOpen, setScopeOpen] = useState(() => Boolean(section && areaScopeSummary(section)));
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const scopeHostRef = useRef<HTMLDivElement>(null);
   if (!section) return null;
 
   const summary = areaScopeSummary(section);
@@ -367,12 +368,21 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
     const nextScope = { ...(section.scope ?? {}), [field]: value };
     updateSection(quote.id, section.id, { scope: nextScope });
   };
-
   const fields: QuoteAreaScopeField[] = QUOTE_AREA_SCOPE_VISIBLE_FIELDS;
 
-  return <>
-    <div className="quote-area-header">
+  useEffect(() => {
+    if (!scopeOpen) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!scopeHostRef.current?.contains(event.target as Node)) setScopeOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [scopeOpen]);
+
+  return (
+    <div className="quote-area-header" ref={scopeHostRef}>
       <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`} onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
+
       <div className="quote-area-title">
         <div className="quote-area-kicker">
           <span>Area</span>
@@ -383,30 +393,39 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
         </div>
         <input value={section.title} onChange={(event) => updateSection(quote.id, section.id, { title: event.target.value })} />
       </div>
+
+      <div className="quote-area-actions">
+        <button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button>
+        <button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button>
+        <button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button>
+        <button type="button" onClick={() => onAddLine('item', section.id)}>+ Line</button>
+        <button type="button" onClick={() => onAddLine('scope', section.id)}>+ Scope</button>
+      </div>
+
       <div className="quote-area-summary"><span>{lines.length} item{lines.length === 1 ? '' : 's'}</span><strong>{money.format(quoteLinesTotal(lines))}</strong></div>
-      <div className="quote-area-actions"><button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button><button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button><button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button><button type="button" onClick={() => onAddLine('item', section.id)}>+ Line</button><button type="button" onClick={() => onAddLine('scope', section.id)}>+ Scope</button></div>
       <button type="button" className="quote-area-remove" onClick={() => deleteSection(quote.id, section.id)} title="Remove area. Its rows will move to General.">×</button>
+
+      {scopeOpen && <div className="quote-area-scope-popover">
+        <div className="quote-area-scope-popover-heading">
+          <strong>Area quantities</strong>
+          <small>Select the takeoff values, then click anywhere else to tuck this away.</small>
+        </div>
+        <div className="quote-area-scope-grid">
+          {fields.map((field) => {
+            const meta = QUOTE_AREA_SCOPE_META[field];
+            const integerField = field === 'kitchenSinkCount' || field === 'vanitySinkCount';
+            return <label key={field}>
+              <span>{meta.label}</span>
+              <div><input type="number" min="0" step={integerField ? '1' : '0.01'} value={section.scope?.[field] ?? ''} onChange={(event) => {
+                const next = numberValue(event.target.value);
+                updateScopeField(field, next === undefined ? undefined : Math.max(0, next));
+              }} /><b>{meta.unit}</b></div>
+            </label>;
+          })}
+        </div>
+      </div>}
     </div>
-    {scopeOpen && <div className="quote-area-scope-panel">
-      <div className="quote-area-scope-heading">
-        <div><strong>Area quantities</strong><small>Private takeoff-lite values. Quote rows only change when you explicitly link or update them.</small></div>
-        {summary && <span>{summary}</span>}
-      </div>
-      <div className="quote-area-scope-grid">
-        {fields.map((field) => {
-          const meta = QUOTE_AREA_SCOPE_META[field];
-          const integerField = field === 'kitchenSinkCount' || field === 'vanitySinkCount';
-          return <label key={field}>
-            <span>{meta.label}</span>
-            <div><input type="number" min="0" step={integerField ? '1' : '0.01'} value={section.scope?.[field] ?? ''} onChange={(event) => {
-              const next = numberValue(event.target.value);
-              updateScopeField(field, next === undefined ? undefined : Math.max(0, next));
-            }} /><b>{meta.unit}</b></div>
-          </label>;
-        })}
-      </div>
-    </div>}
-  </>;
+  );
 }
 
 function StandardCustomerPreview({ quote }: { quote: Quote }) {
