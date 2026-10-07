@@ -294,6 +294,14 @@ describe('supplier import publishing policy', () => {
     expect(plan.stockMaterials).toHaveLength(1);
   });
 
+  it('fails safely when a new staged Brand / Type / Color identity appears in the live catalog', () => {
+    const staged = material({ sku: undefined, variants: [] });
+    const live = material({ id: 'live-identity', sku: undefined, variants: [] });
+
+    expect(() => validateStagedAgainstCatalog(session([candidate({ material: staged })]), [live]))
+      .toThrow(/Brand \/ Type \/ Color/);
+  });
+
   it('fails safely when a new staged SKU now collides with the live catalog', () => {
     const live = material({ id: 'live-1', name: 'Existing Color', sku: 'BQ100' });
     expect(() => validateStagedAgainstCatalog(session([candidate()]), [live]))
