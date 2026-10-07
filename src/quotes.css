@@ -410,6 +410,63 @@
 .quote-total-toggle { display: flex; align-items: center; gap: 3px; color: #8d8578; font-size: 7px; }
 .quote-total-toggle input { margin: 0; }
 
+.quote-line-pricing.has-internal-cost {
+  flex-wrap: wrap;
+}
+
+.quote-internal-cost-input {
+  order: 10;
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(111, 96, 70, .16);
+  color: #817660;
+  font-size: 6.8px;
+  font-weight: 800;
+}
+
+.quote-internal-cost-input > span:first-child {
+  letter-spacing: .025em;
+  text-transform: uppercase;
+}
+
+.quote-internal-cost-money {
+  width: 82px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(118, 98, 65, .18);
+  border-radius: 2px;
+  background: #f3ede1;
+}
+
+.quote-internal-cost-money > span {
+  padding-left: 5px;
+  color: #8e816c;
+  font-size: 8px;
+}
+
+.quote-internal-cost-money input {
+  width: 100%;
+  min-width: 0;
+  height: 23px;
+  border: 0;
+  outline: 0;
+  padding: 0 5px 0 2px;
+  background: transparent;
+  color: #51493d;
+  font-size: 8px;
+}
+
+.quote-internal-cost-input small {
+  color: #9b8e79;
+  font-size: 6.3px;
+  font-weight: 700;
+}
+
 .quote-add-row {
   display: flex;
   flex-wrap: wrap;
