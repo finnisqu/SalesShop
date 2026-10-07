@@ -641,18 +641,18 @@ export function RateBook() {
           <button type="button" className={category === 'all' ? 'active' : ''} onClick={() => setCategory('all')}>All</button>
           {RATE_BOOK_CATEGORIES.map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{RATE_BOOK_CATEGORY_LABELS[item]}</button>)}
         </div>
-        <div className="rate-book-filter-row">
-          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={category === 'material' ? 'Search colors, brands, material types…' : 'Search rates…'} aria-label="Search Rate Book" />
+        {category !== 'material' && <div className="rate-book-filter-row">
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search rates…" aria-label="Search Rate Book" />
           <label><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Show inactive</label>
-          {category !== 'material' && <details className="rate-book-column-menu">
+          <details className="rate-book-column-menu">
             <summary>Columns</summary>
             <div>
               <strong>Show / hide</strong>
               {SHEET_COLUMNS.map((column) => <label key={column.key}><input type="checkbox" checked={!hiddenColumns.has(column.key)} disabled={column.lockVisible} onChange={() => toggleColumn(column.key)} /> {column.label}</label>)}
               <button type="button" onClick={() => { setHiddenColumns(new Set()); setColumnWidths(DEFAULT_COLUMN_WIDTHS); }}>Reset grid</button>
             </div>
-          </details>}
-        </div>
+          </details>
+        </div>}
       </section>
 
       {category === 'material' ? (
