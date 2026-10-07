@@ -1,39 +1,41 @@
 .customer-document-brand {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(56px, 82px) minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
+  gap: 3px;
 }
 
-.customer-document-brand img {
-  width: 100%;
-  max-width: 82px;
-  max-height: 48px;
-  object-fit: contain;
-  object-position: left top;
-}
-
-.customer-document-brand > div {
+.customer-document-brand-heading {
   min-width: 0;
   display: grid;
-  gap: 1px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
 }
 
-.customer-document-brand strong {
-  display: block;
+.customer-document-brand-heading img {
+  width: auto;
+  max-width: 76px;
+  max-height: 34px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.customer-document-brand-heading strong {
   min-width: 0;
   color: #2f302d;
   font-size: 13px;
-  line-height: 1.1;
+  line-height: 1.08;
   letter-spacing: .02em;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .customer-document-brand-details {
   min-width: 0;
   display: grid;
   gap: 1px;
-  margin: 2px 0 0;
+  margin: 1px 0 0;
+  padding-left: 0;
   font-style: normal;
 }
 
@@ -44,21 +46,32 @@
   min-width: 0;
   color: #756f65;
   font-size: 8px;
-  line-height: 1.3;
+  line-height: 1.28;
   text-decoration: none;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.customer-document-brand .brand-address,
+.customer-document-brand .brand-email,
+.customer-document-brand .brand-website {
   overflow-wrap: anywhere;
 }
 
 .customer-document-brand-contact {
   display: block;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .view-split .customer-quote-letterhead {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(96px, 118px);
-  gap: 14px;
+  grid-template-columns: minmax(155px, 1fr) minmax(92px, 112px);
+  gap: 12px;
   align-items: start;
+}
+
+.view-split .customer-quote-letterhead > div {
+  min-width: 0;
 }
 
 .view-split .customer-quote-letterhead dl {
@@ -67,41 +80,38 @@
 }
 
 .view-split .customer-quote-letterhead dl > div {
-  gap: 7px;
+  gap: 6px;
 }
 
-.view-split .customer-document-brand {
-  grid-template-columns: 56px minmax(0, 1fr);
-  gap: 8px;
+.view-split .customer-document-brand-heading {
+  grid-template-columns: auto minmax(70px, 1fr);
+  gap: 6px;
 }
 
-.view-split .customer-document-brand img {
-  width: 56px;
-  max-width: 56px;
-  max-height: 38px;
+.view-split .customer-document-brand-heading img {
+  max-width: 52px;
+  max-height: 28px;
 }
 
-.view-split .customer-document-brand strong {
-  font-size: 11px;
+.view-split .customer-document-brand-heading strong {
+  font-size: 10.5px;
 }
 
 .view-split .customer-document-brand .brand-detail,
 .view-split .customer-document-brand span,
 .view-split .customer-document-brand small,
 .view-split .customer-document-brand a {
-  font-size: 7px;
-  line-height: 1.25;
+  font-size: 6.8px;
+  line-height: 1.22;
 }
 
 @media (max-width: 650px) {
-  .customer-document-brand {
-    grid-template-columns: 54px minmax(0, 1fr);
-    gap: 8px;
+  .customer-document-brand-heading img {
+    max-width: 52px;
+    max-height: 28px;
   }
 
-  .customer-document-brand img {
-    width: 54px;
-    max-width: 54px;
-    max-height: 38px;
+  .customer-document-brand-heading strong {
+    font-size: 11px;
   }
 }
