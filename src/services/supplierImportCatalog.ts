@@ -7,6 +7,7 @@ import type {
 } from '../types/settings';
 import type {
   SupplierImportCandidate,
+  SupplierImportPriceEvidence,
   SupplierImportPriceProvenance,
   SupplierImportSession,
 } from '../types/supplierImport';
@@ -76,7 +77,7 @@ function priceChanged(existing: MaterialPurchaseOption | undefined, incoming: Ma
 function sourceFor(
   session: SupplierImportSession,
   candidate: SupplierImportCandidate,
-  evidence: SupplierImportCandidate['priceEvidence'][string] | undefined,
+  evidence: SupplierImportPriceEvidence | undefined,
   publicationId: string,
   provenance: SupplierImportPriceProvenance,
   recordedAt: string,
