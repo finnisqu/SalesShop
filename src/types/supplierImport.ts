@@ -65,6 +65,48 @@ export interface SupplierImportSession {
 }
 
 
+export type SupplierImportMappingField =
+  | 'name'
+  | 'sku'
+  | 'supplierGroup'
+  | 'thickness'
+  | 'finish'
+  | 'formatName'
+  | 'lengthIn'
+  | 'widthIn'
+  | 'areaSf'
+  | 'purchaseLabel'
+  | 'minQuantity'
+  | 'costPerSf'
+  | 'costPerUnit'
+  | 'availability'
+  | 'availabilityNote';
+
+export interface SupplierImportStructuredPreview {
+  fileName: string;
+  fileType: 'csv' | 'xlsx';
+  sheetName?: string;
+  sheetNames: string[];
+  headers: string[];
+  rows: string[][];
+  totalRows: number;
+}
+
+export interface SupplierImportMappingDraft {
+  supplier: string;
+  brand: string;
+  materialType: StockMaterial['materialType'];
+  sourceFileType: 'csv' | 'xlsx';
+  sheetName?: string;
+  columns: Partial<Record<SupplierImportMappingField, string>>;
+  defaults: {
+    thickness?: string;
+    finish?: string;
+    formatName?: string;
+    purchaseLabel?: string;
+  };
+}
+
 export interface SupplierImportProfile {
   id: string;
   label: string;
