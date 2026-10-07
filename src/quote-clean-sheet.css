@@ -659,3 +659,174 @@
     flex: 1 1 62px;
   }
 }
+
+
+/* Compact quote polish: comparison-card grip, inline Area scope, and pane-aware Split layout. */
+
+/* Match the Materials comparison-board grip, mirrored onto the left edge. */
+.quote-line-editor {
+  position: relative;
+}
+
+.quote-line-drag-handle,
+.quote-line-editor.has-database-selection > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-drag-handle {
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  right: auto;
+  z-index: 5;
+  width: 18px;
+  min-width: 18px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(122, 101, 47, .22);
+  border-radius: 5px;
+  background: #f4eedb;
+  color: #897a54;
+  box-shadow: 0 2px 5px rgba(52, 44, 35, .08);
+  cursor: grab;
+  transform: translateY(-50%);
+}
+
+.quote-line-drag-handle > span,
+.quote-line-editor.has-database-selection > .quote-line-drag-handle > span {
+  display: block;
+  transform: none;
+  font: 900 14px/1 system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.quote-line-drag-handle:hover,
+.quote-line-drag-handle:focus-visible {
+  outline: 0;
+  border-color: rgba(153, 126, 48, .42);
+  background: #fff6d9;
+  color: #65572e;
+  box-shadow: 0 3px 8px rgba(52, 44, 35, .12);
+}
+
+.quote-line-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Selected database rows no longer reserve a fake first column for the grip. */
+.quote-line-editor.has-database-selection,
+.view-split .quote-line-editor.has-database-selection,
+.view-split .quote-line-editor.has-database-selection.kind-material,
+.view-split .quote-line-editor.has-database-selection.kind-sink,
+.view-split .quote-line-editor.has-database-selection.kind-rate {
+  grid-template-columns: minmax(0, 1fr) 18px;
+  grid-template-rows: auto auto;
+  column-gap: 5px;
+  row-gap: 3px;
+  padding-left: 10px;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-main {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-pricing {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-delete {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Sink results use the same one-line resting geometry as Materials. */
+.quote-line-editor.has-database-selection.kind-sink .quote-database-result {
+  min-height: 34px;
+}
+
+.quote-line-editor.has-database-selection.kind-sink .quote-sink-price-reference {
+  width: auto;
+  max-width: 175px;
+}
+
+.quote-line-editor.has-database-selection.kind-sink .quote-sink-price-reference strong,
+.quote-line-editor.has-database-selection.kind-sink .quote-sink-price-reference small {
+  white-space: nowrap;
+}
+
+.quote-line-editor.has-database-selection.kind-sink .quote-line-main textarea {
+  min-height: 25px;
+}
+
+/* Scope becomes metadata on the AREA kicker rather than a third header line. */
+.quote-area-kicker {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 1px;
+  color: #938873;
+  font-size: 6.2px;
+  font-weight: 850;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.quote-area-kicker > span {
+  flex: 0 0 auto;
+}
+
+.quote-area-kicker .quote-area-scope-toggle {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #8a7c62;
+  font-size: 6.2px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-area-kicker .quote-area-scope-toggle:hover,
+.quote-area-kicker .quote-area-scope-toggle.active {
+  color: #62543b;
+}
+
+/* Split is a narrow editor pane even when the browser is wide. */
+.view-split .quote-details-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.view-split .quote-details-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 650px) {
+  .view-split .quote-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
