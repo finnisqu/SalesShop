@@ -68,10 +68,30 @@ export interface QuoteCustomerColumns {
   lineAmount: boolean;
 }
 
+export const QUOTE_AREA_SCOPE_FIELDS = [
+  'countertopSf',
+  'splashLf',
+  'fullHeightSplashSf',
+  'kitchenSinkCount',
+  'vanitySinkCount',
+  'cutoutCount',
+] as const;
+export type QuoteAreaScopeField = (typeof QUOTE_AREA_SCOPE_FIELDS)[number];
+
+export interface QuoteAreaScope {
+  countertopSf?: number;
+  splashLf?: number;
+  fullHeightSplashSf?: number;
+  kitchenSinkCount?: number;
+  vanitySinkCount?: number;
+  cutoutCount?: number;
+}
+
 export interface QuoteSection {
   id: string;
   title: string;
   customerVisible: boolean;
+  scope?: QuoteAreaScope;
 }
 
 export interface QuoteMaterialCostSnapshot {
@@ -178,6 +198,14 @@ export interface QuoteLineMaterialReference {
   snapshot?: QuoteMaterialCostSnapshot;
 }
 
+export interface QuoteLineQuantitySource {
+  kind: 'area-scope';
+  sectionId: string;
+  field: QuoteAreaScopeField;
+  capturedValue: number;
+  appliedAt: string;
+}
+
 export interface QuoteLine {
   id: string;
   sectionId?: string;
@@ -185,6 +213,7 @@ export interface QuoteLine {
   description: string;
   pricingMode: QuotePricingMode;
   quantity?: number;
+  quantitySource?: QuoteLineQuantitySource;
   rate?: number;
   amount?: number;
   internalCost?: number;
