@@ -1028,7 +1028,11 @@ export function Quotes() {
   const selectQuote = useQuoteStore((state) => state.selectQuote);
   const createQuote = useQuoteStore((state) => state.createQuote);
   const hydrateCrm = useCrmStore((state) => state.hydrate);
-  const [mode, setMode] = useState<QuoteViewMode>(() => window.matchMedia('(max-width: 700px)').matches ? 'edit' : 'split');
+  const [mode, setMode] = useState<QuoteViewMode>(() => (
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 700px)').matches
+      ? 'edit'
+      : 'split'
+  ));
   const [showArchived, setShowArchived] = useState(false);
   useEffect(() => { hydrate(); hydrateCrm(); }, [hydrate, hydrateCrm]);
   const quote = quotes.find((candidate) => candidate.id === activeQuoteId) ?? quotes[0] ?? null;
