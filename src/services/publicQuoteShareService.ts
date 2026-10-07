@@ -6,6 +6,8 @@ export interface PublicQuoteSection {
   id: string;
   title: string;
   customerVisible: boolean;
+  customerDisplayMode?: 'detail' | 'summary';
+  customerTotal?: number;
 }
 
 export interface PublicQuoteLine {
