@@ -84,6 +84,26 @@ describe('standard material Level suggestions', () => {
     });
   });
 
+  it('treats the configured premium threshold as authoritative even if a Level row extends higher', () => {
+    const customGuide = {
+      ...guide,
+      slabPricingThresholdCostPerSf: 23,
+      rules: [...rules, { id: 'l8', label: 'Level 8', maxMaterialCost: 30, customerRate: 100, active: true }],
+    };
+    const recommendation = resolveMaterialPricingRecommendation(customGuide, 24);
+    expect(recommendation.mode).toBe('slab-review');
+  });
+
+  it('does not trigger slab pricing early when the standard range has an uncovered Level gap', () => {
+    const customGuide = {
+      ...guide,
+      slabPricingThresholdCostPerSf: 23,
+      rules: rules.filter((rule) => rule.id !== 'l7'),
+    };
+    const recommendation = resolveMaterialPricingRecommendation(customGuide, 22);
+    expect(recommendation.mode).toBe('needs-cost');
+  });
+
   it('still honors an explicitly assigned STOCK Level as a management decision', () => {
     const recommendation = resolveMaterialPricingRecommendation(guide, 28, 'l7');
     expect(recommendation.mode).toBe('level');

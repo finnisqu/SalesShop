@@ -117,6 +117,15 @@ export function resolveMaterialPricingRecommendation(
     return { mode: 'needs-cost', basis: 'Needs effective material cost before SalesShop can suggest a Level.' };
   }
 
+  if (materialCost > guide.slabPricingThresholdCostPerSf) {
+    return {
+      mode: 'slab-review',
+      thresholdCostPerSf: guide.slabPricingThresholdCostPerSf,
+      multiplier: guide.slabPricingMultiplier,
+      basis: `Above the standard Level guide (>${guide.slabPricingThresholdCostPerSf.toFixed(2)}/SF). Review slab-based pricing.`,
+    };
+  }
+
   const level = resolveMaterialLevel(guide.rules, materialCost);
   if (level) {
     return {
@@ -127,10 +136,8 @@ export function resolveMaterialPricingRecommendation(
   }
 
   return {
-    mode: 'slab-review',
-    thresholdCostPerSf: guide.slabPricingThresholdCostPerSf,
-    multiplier: guide.slabPricingMultiplier,
-    basis: `Above the standard Level guide (>$${guide.slabPricingThresholdCostPerSf.toFixed(2)}/SF). Review slab-based pricing.`,
+    mode: 'needs-cost',
+    basis: `This cost is inside the standard range, but no active Level currently covers it.`,
   };
 }
 
