@@ -203,6 +203,7 @@ describe('quote revision snapshots', () => {
         id: 'section-1',
         title: 'Kitchen',
         customerVisible: true,
+        customerDisplayMode: 'summary',
         scope: {
           countertopSf: 62,
           splashLf: 18,
@@ -227,11 +228,13 @@ describe('quote revision snapshots', () => {
     });
     const frozen = createQuoteRevisionSnapshot(subject, '2026-10-07T18:45:00.000Z', 'Sent');
 
+    subject.sections[0].customerDisplayMode = 'detail';
     subject.sections[0].scope!.countertopSf = 68;
     subject.lines[0].quantity = 68;
     subject.lines[0].quantitySource!.capturedValue = 68;
 
     expect(frozen.customerTotal).toBe(1240);
+    expect(frozen.sections[0].customerDisplayMode).toBe('summary');
     expect(frozen.sections[0].scope?.countertopSf).toBe(62);
     expect(frozen.sections[0].scope?.cutoutCount).toBe(2);
     expect(frozen.lines[0].quantity).toBe(62);
