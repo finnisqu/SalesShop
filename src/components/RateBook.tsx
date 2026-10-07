@@ -656,7 +656,7 @@ export function RateBook() {
       </section>
 
       {category === 'material' ? (
-        <MaterialRateBook query={query} showInactive={showInactive} />
+        <MaterialRateBook query={query} showInactive={showInactive} mode="guide" />
       ) : (
         <>
           <div className="rate-book-sheet-notice" role="status">{sheetNotice}</div>
