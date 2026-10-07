@@ -88,6 +88,43 @@ function lineTotal(line: SnapshotLine) {
   return roundCurrency(line.kind === 'discount' ? -Math.abs(raw) : raw);
 }
 
+function safePublicLine(line: SnapshotLine) {
+  return {
+    id: String(line.id),
+    sectionId: line.sectionId ? String(line.sectionId) : undefined,
+    kind: String(line.kind),
+    description: String(line.description ?? ''),
+    pricingMode: String(line.pricingMode),
+    quantity: typeof line.quantity === 'number' && Number.isFinite(line.quantity) ? line.quantity : undefined,
+    rate: typeof line.rate === 'number' && Number.isFinite(line.rate) ? line.rate : undefined,
+    amount: typeof line.amount === 'number' && Number.isFinite(line.amount) ? line.amount : undefined,
+    customerVisible: Boolean(line.customerVisible),
+    includeInTotal: Boolean(line.includeInTotal),
+  };
+}
+
+function safeAcceptedSnapshot(value: unknown) {
+  if (!value || typeof value !== 'object') return value;
+  const snapshot = value as Record<string, unknown>;
+  const lines = Array.isArray(snapshot.lines)
+    ? (snapshot.lines as SnapshotLine[]).filter((line) => line?.customerVisible !== false).map(safePublicLine)
+    : [];
+  const sections = Array.isArray(snapshot.sections)
+    ? (snapshot.sections as Array<{ id?: unknown; title?: unknown; customerVisible?: unknown }>).map((section) => ({
+        id: String(section.id ?? ''),
+        title: String(section.title ?? ''),
+        customerVisible: Boolean(section.customerVisible),
+      }))
+    : [];
+  const {
+    projectId: _projectId,
+    companyId: _companyId,
+    contactId: _contactId,
+    ...publicSnapshot
+  } = snapshot;
+  return { ...publicSnapshot, sections, lines };
+}
+
 function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentType: string) {
   const allLines = Array.isArray(snapshot.lines) ? snapshot.lines : [];
   const calculatedTotal = roundCurrency(allLines.reduce((sum, line) => sum + lineTotal(line), 0));
@@ -107,15 +144,12 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentTyp
     revisionLabel: snapshot.label,
     quoteDate: snapshot.quoteDate,
     title: snapshot.title,
-    projectId: snapshot.projectId,
-    companyId: snapshot.companyId,
     companyName: snapshot.companyName,
-    contactId: snapshot.contactId,
     contactName: snapshot.contactName,
     contactEmail: snapshot.contactEmail,
     address: snapshot.address,
     sections: (snapshot.sections ?? []).filter((section) => section.customerVisible),
-    lines: allLines.filter((line) => line.customerVisible),
+    lines: allLines.filter((line) => line.customerVisible).map(safePublicLine),
     customerColumns: snapshot.customerColumns ?? { quantity: false, rate: false, lineAmount: true },
     customerNotes: snapshot.customerNotes ?? '',
     pricingSchedule: documentType === 'pricing-schedule' ? { customerItems } : undefined,
@@ -133,7 +167,7 @@ function safeSignature(row: Record<string, unknown> | null) {
     strokes: Array.isArray(row.strokes) ? row.strokes : [],
     consentText: String(row.consent_text),
     acceptedAt: String(row.accepted_at),
-    acceptedSnapshot: row.accepted_snapshot,
+    acceptedSnapshot: safeAcceptedSnapshot(row.accepted_snapshot),
   };
 }
 
