@@ -9,6 +9,7 @@ import './board-groups.css';
 import './accounts.css';
 import './notebook-project-links.css';
 import './quotes.css';
+import './customer-document-brand.css';
 import './quote-integrity.css';
 import './dashboard.css';
 import './company-settings.css';
