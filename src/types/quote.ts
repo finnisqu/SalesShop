@@ -34,8 +34,8 @@ export type PricingRatePriceMode = 'priced' | 'included' | 'no-charge' | 'tbd';
 export type PricingMaterialType = 'Granite' | 'Quartz' | 'Marble' | 'Quartzite' | 'Porcelain' | 'Solid Surface' | 'Other';
 export type PricingDetailsLayout = 'inline' | 'list';
 
-export type QuoteLineKind = 'item' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
-export type QuotePricingMode = 'direct' | 'quantity-rate' | 'none';
+export type QuoteLineKind = 'item' | 'material' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
+export type QuotePricingMode = 'direct' | 'quantity-rate' | 'slab-multiplier' | 'none';
 
 export interface QuoteCustomerColumns {
   quantity: boolean;
@@ -55,7 +55,7 @@ export interface QuoteLineMaterialReference {
   variantId?: string;
   purchaseOptionId?: string;
   stockProgram: boolean;
-  pricingSource: 'stock-level' | 'non-stock-stock-equivalent' | 'non-stock-guide' | 'suggested-level' | 'slab-multiplier';
+  pricingSource: 'stock-level' | 'non-stock-stock-equivalent' | 'non-stock-guide' | 'suggested-level' | 'manual-line-rate' | 'slab-multiplier';
   sourceCostPerSf?: number;
   guideRate?: number;
   stockEquivalentLevel?: string;

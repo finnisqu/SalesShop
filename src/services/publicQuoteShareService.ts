@@ -13,7 +13,7 @@ export interface PublicQuoteLine {
   sectionId?: string;
   kind: string;
   description: string;
-  pricingMode: 'direct' | 'quantity-rate' | 'none';
+  pricingMode: 'direct' | 'quantity-rate' | 'slab-multiplier' | 'none';
   quantity?: number;
   rate?: number;
   amount?: number;

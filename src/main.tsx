@@ -27,6 +27,7 @@ import './material-reference-variants.css';
 import './material-stock-program.css';
 import './board-scroll-controls.css';
 import './quote-line-reorder.css';
+import './quote-material-lines.css';
 import './rates-usability.css';
 import './rates-workspace-unification.css';
 

@@ -57,6 +57,28 @@ describe('quote money integrity', () => {
     expect(quoteLineTotal(line({ pricingMode: 'none', amount: 999 }))).toBe(0);
   });
 
+  it('treats slab-multiplier material rows as their calculated direct amount', () => {
+    const slabLine = line({
+      kind: 'material',
+      pricingMode: 'slab-multiplier',
+      amount: 6600,
+      quantity: undefined,
+      rate: undefined,
+      materialReference: {
+        materialId: 'material-1',
+        variantId: 'variant-1',
+        purchaseOptionId: 'price-1',
+        stockProgram: false,
+        pricingSource: 'slab-multiplier',
+        sourceSlabCost: 1500,
+        slabMultiplier: 2.2,
+        slabCount: 2,
+        customerPricePerSlab: 3300,
+      },
+    });
+    expect(quoteLineTotal(slabLine)).toBe(6600);
+  });
+
   it('produces a stable cents-safe quote total', () => {
     const subject = quote({
       lines: [

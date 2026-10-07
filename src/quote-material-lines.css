@@ -1,0 +1,311 @@
+/* Material selection and multiplier pricing live directly on quote rows. */
+
+.quote-line-editor.kind-material {
+  align-items: start;
+  background: rgba(239, 244, 234, .42);
+}
+
+.quote-line-editor.kind-material .quote-line-main {
+  padding-top: 2px;
+}
+
+.quote-line-editor.kind-material .quote-line-pricing {
+  padding-top: 23px;
+}
+
+.quote-add-row .quote-add-material {
+  border-color: rgba(104, 128, 92, .34);
+  background: #e7eee1;
+  color: #4e6249;
+}
+
+.quote-material-picker {
+  position: relative;
+  margin: 2px 0 5px;
+}
+
+.quote-material-search-row {
+  display: flex;
+  gap: 5px;
+}
+
+.quote-material-search-row input {
+  min-width: 0;
+  flex: 1;
+  height: 30px;
+  border: 1px solid #c9c2b4;
+  border-radius: 3px;
+  background: #fffdf7;
+  padding: 0 8px;
+  color: #454138;
+  font-size: 9px;
+}
+
+.quote-material-search-row button,
+.quote-material-change {
+  min-height: 28px;
+  border: 1px solid #c7bfaf;
+  border-radius: 3px;
+  background: #f6f1e5;
+  padding: 0 7px;
+  color: #6b6458;
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.quote-material-results {
+  max-height: 220px;
+  margin-top: 4px;
+  overflow-y: auto;
+  border: 1px solid #d0c8b9;
+  border-radius: 3px;
+  background: #fffdf7;
+  box-shadow: 0 5px 14px rgba(55, 48, 37, .08);
+}
+
+.quote-material-results > button {
+  width: 100%;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(125px, .72fr);
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid rgba(91, 78, 58, .08);
+  background: transparent;
+  padding: 7px 9px;
+  color: #4d493f;
+  text-align: left;
+}
+
+.quote-material-results > button:hover,
+.quote-material-results > button:focus-visible {
+  outline: 0;
+  background: #f5f0df;
+}
+
+.quote-material-results > button > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-material-results strong {
+  overflow: hidden;
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-results b {
+  overflow: hidden;
+  color: #625c52;
+  font-size: 8.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-results small {
+  overflow: hidden;
+  color: #8c8579;
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-results .quote-material-custom-result {
+  background: rgba(245, 239, 218, .56);
+}
+
+.quote-material-empty {
+  padding: 12px 9px;
+  color: #958d81;
+  font: italic 9px/1.4 Georgia, serif;
+}
+
+.quote-material-selection {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  gap: 5px;
+  margin: 2px 0 5px;
+}
+
+.quote-material-selection-main {
+  min-width: 130px;
+  max-width: 220px;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-material-selection-main > span,
+.quote-material-selection label > span,
+.quote-material-cost-reference > span {
+  color: #848071;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.quote-material-selection-main strong {
+  overflow: hidden;
+  color: #4a5143;
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-selection-main small,
+.quote-material-cost-reference small {
+  color: #918a7c;
+  font-size: 7.5px;
+}
+
+.quote-material-selection label {
+  min-width: 105px;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-material-selection select {
+  min-width: 0;
+  height: 28px;
+  border: 1px solid #d0c8b9;
+  border-radius: 2px;
+  background: #fffaf0;
+  padding: 0 5px;
+  color: #5d574e;
+  font-size: 8px;
+}
+
+.quote-material-cost-reference {
+  min-width: 82px;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-material-cost-reference strong {
+  color: #5a6253;
+  font-size: 8.5px;
+}
+
+.quote-slab-line-pricing {
+  display: grid;
+  grid-template-columns: 92px 10px 49px 10px 52px;
+  align-items: center;
+  gap: 2px;
+  color: #857b69;
+  font-size: 8px;
+  text-align: center;
+}
+
+.quote-slab-line-pricing label {
+  height: 28px;
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr);
+  align-items: center;
+  border: 1px solid #cdbf9c;
+  background: #fffaf0;
+}
+
+.quote-slab-line-pricing label span {
+  padding-left: 4px;
+  color: #8a7d62;
+}
+
+.quote-slab-line-pricing input {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  border: 1px solid #cdbf9c;
+  background: #fffaf0;
+  padding: 0 4px;
+  color: #4f493f;
+  font-size: 8px;
+  text-align: right;
+}
+
+.quote-slab-line-pricing label input {
+  border: 0;
+}
+
+@media (max-width: 1100px) {
+  .quote-line-editor.kind-material .quote-line-pricing {
+    grid-column: 3 / 5;
+    padding-top: 0;
+    flex-wrap: wrap;
+  }
+
+  .quote-material-selection {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .quote-line-editor.kind-material .quote-line-pricing {
+    grid-column: 2 / 4;
+  }
+}
+
+@media (max-width: 700px) {
+  .quote-line-editor.kind-material .quote-line-pricing {
+    grid-column: 3 / 5;
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .quote-material-selection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+
+  .quote-material-selection-main {
+    max-width: none;
+    grid-column: 1 / -1;
+  }
+
+  .quote-material-selection label {
+    min-width: 0;
+  }
+
+  .quote-material-cost-reference {
+    min-width: 0;
+  }
+
+  .quote-material-change {
+    min-height: 40px;
+  }
+
+  .quote-material-search-row input,
+  .quote-material-selection select {
+    min-height: 40px;
+    font-size: 16px;
+  }
+
+  .quote-material-search-row button {
+    min-height: 40px;
+  }
+
+  .quote-material-results > button {
+    min-height: 54px;
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .quote-slab-line-pricing {
+    width: 100%;
+    grid-template-columns: minmax(100px, 1.3fr) 12px minmax(62px, .65fr) 12px minmax(62px, .65fr);
+  }
+
+  .quote-slab-line-pricing label,
+  .quote-slab-line-pricing input {
+    min-height: 40px;
+    font-size: 15px;
+  }
+
+  .quote-slab-line-pricing label input {
+    min-height: 38px;
+  }
+}

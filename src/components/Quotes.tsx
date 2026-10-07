@@ -6,6 +6,7 @@ import {
   quoteIsCommerciallyEditable,
 } from '../services/quoteIntegrity';
 import { useCrmStore } from '../store/crmStore';
+import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import { useQuoteStore } from '../store/quoteStore';
 import {
   commercialDocumentLabel,
@@ -23,14 +24,15 @@ import {
 import { CustomerDocumentBrand } from './CustomerDocumentBrand';
 import { PricingScheduleCustomerPreview } from './PricingScheduleCustomerPreview';
 import { PricingScheduleWorkbook } from './PricingScheduleWorkbook';
-import { QuickMaterialQuote } from './QuickMaterialQuote';
 import { QuoteCrmFields } from './QuoteCrmFields';
+import { QuoteMaterialLineFields, slabReferencePatch } from './QuoteMaterialLineFields';
 import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteSignatureDialog } from './QuoteSignatureDialog';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const lineKinds: Array<[QuoteLineKind, string]> = [
   ['item', 'Line'],
+  ['material', 'Material'],
   ['allowance', 'Allowance'],
   ['discount', 'Discount'],
   ['tax', 'Tax'],
@@ -76,7 +78,57 @@ function LineEditor({
 }) {
   const updateLine = useQuoteStore((state) => state.updateLine);
   const deleteLine = useQuoteStore((state) => state.deleteLine);
+  const guideMultiplier = useMaterialLevelGuideStore((state) => state.guide.slabPricingMultiplier);
   const textLine = isTextLine(line);
+  const materialLine = line.kind === 'material';
+
+  const changePricingMode = (pricingMode: QuotePricingMode) => {
+    if (pricingMode === 'slab-multiplier' && materialLine) {
+      const baseCost = line.materialReference?.catalogSlabCost ?? line.materialReference?.sourceSlabCost;
+      const next = slabReferencePatch(line, guideMultiplier, {
+        sourceSlabCost: baseCost,
+        slabMultiplier: line.materialReference?.slabMultiplier ?? guideMultiplier,
+        slabCount: line.materialReference?.slabCount,
+      });
+      updateLine(quote.id, line.id, {
+        pricingMode,
+        quantity: undefined,
+        rate: undefined,
+        amount: next.amount,
+        materialReference: next.materialReference,
+      });
+      return;
+    }
+
+    if (materialLine && line.materialReference) {
+      updateLine(quote.id, line.id, {
+        pricingMode,
+        amount: pricingMode === 'quantity-rate' ? undefined : line.amount,
+        materialReference: {
+          ...line.materialReference,
+          pricingSource: 'manual-line-rate',
+          sourceSlabCost: undefined,
+          slabCostOverride: undefined,
+          slabMultiplier: undefined,
+          slabCount: undefined,
+          customerPricePerSlab: undefined,
+        },
+      });
+      return;
+    }
+
+    updateLine(quote.id, line.id, { pricingMode });
+  };
+
+  const updateSlabField = (
+    patch: Parameters<typeof slabReferencePatch>[2],
+  ) => {
+    const next = slabReferencePatch(line, guideMultiplier, patch);
+    updateLine(quote.id, line.id, {
+      materialReference: next.materialReference,
+      amount: next.amount,
+    });
+  };
 
   const beginDrag = (event: DragEvent<HTMLButtonElement>) => {
     onDragStart(line.id);
@@ -111,13 +163,27 @@ function LineEditor({
           <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>
           <select value={line.sectionId ?? ''} onChange={(event) => updateLine(quote.id, line.id, { sectionId: event.target.value || undefined })} aria-label="Quote section"><option value="">No section</option>{quote.sections.map((section) => <option key={section.id} value={section.id}>{section.title}</option>)}</select>
         </div>
+        {materialLine && <QuoteMaterialLineFields quoteId={quote.id} line={line} />}
         <textarea value={line.description} onChange={(event) => updateLine(quote.id, line.id, { description: event.target.value })} rows={textLine ? 2 : 1} aria-label="Line description" />
       </div>
       {!textLine && (
         <div className="quote-line-pricing">
-          <select value={line.pricingMode} onChange={(event) => updateLine(quote.id, line.id, { pricingMode: event.target.value as QuotePricingMode })} aria-label="Pricing mode"><option value="direct">Amount</option><option value="quantity-rate">Qty × Rate</option><option value="none">No price</option></select>
+          <select value={line.pricingMode} onChange={(event) => changePricingMode(event.target.value as QuotePricingMode)} aria-label="Pricing mode">
+            {materialLine && <option value="quantity-rate">Qty × Rate</option>}
+            {materialLine && <option value="slab-multiplier">Slab × Mult.</option>}
+            <option value="direct">Amount</option>
+            {!materialLine && <option value="quantity-rate">Qty × Rate</option>}
+            <option value="none">No price</option>
+          </select>
           {line.pricingMode === 'direct' && <label className="quote-money-input"><span>$</span><input type="number" step="0.01" value={line.amount ?? ''} onChange={(event) => updateLine(quote.id, line.id, { amount: numberValue(event.target.value) })} aria-label="Line amount" /></label>}
           {line.pricingMode === 'quantity-rate' && <div className="quote-qty-rate"><input type="number" step="0.01" placeholder="Qty" value={line.quantity ?? ''} onChange={(event) => updateLine(quote.id, line.id, { quantity: numberValue(event.target.value) })} aria-label="Quantity" /><span>×</span><input type="number" step="0.01" placeholder="Rate" value={line.rate ?? ''} onChange={(event) => updateLine(quote.id, line.id, { rate: numberValue(event.target.value) })} aria-label="Rate" /></div>}
+          {materialLine && line.pricingMode === 'slab-multiplier' && <div className="quote-slab-line-pricing">
+            <label><span>$</span><input type="number" step="0.01" min="0" placeholder="Slab cost" value={line.materialReference?.sourceSlabCost ?? ''} onChange={(event) => updateSlabField({ sourceSlabCost: numberValue(event.target.value) })} aria-label="Slab cost" /></label>
+            <span>×</span>
+            <input type="number" step="0.01" min="0.01" placeholder="2.2" value={line.materialReference?.slabMultiplier ?? guideMultiplier} onChange={(event) => updateSlabField({ slabMultiplier: numberValue(event.target.value) })} aria-label="Multiplier" />
+            <span>×</span>
+            <input type="number" step="1" min="1" placeholder="Slabs" value={line.materialReference?.slabCount ?? ''} onChange={(event) => updateSlabField({ slabCount: numberValue(event.target.value) })} aria-label="Slab count" />
+          </div>}
           {line.pricingMode !== 'none' && <strong>{money.format(quoteLineTotal(line))}</strong>}
           <label className="quote-total-toggle" title="Include this amount in quote total"><input type="checkbox" checked={line.includeInTotal} onChange={(event) => updateLine(quote.id, line.id, { includeInTotal: event.target.checked })} /> Total</label>
         </div>
@@ -344,7 +410,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
               <label className="quote-revision-label-field"><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Option A, VE alternate…" /></label>
               <QuoteCrmFields quote={quote} />
             </section>
-            {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><QuickMaterialQuote quote={quote} /><section className="quote-customer-controls"><div><span className="quote-control-heading">Customer columns</span><small>Keep the sent document minimal or expose pricing detail.</small></div><label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label><label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label><label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label></section><section className="quote-lines-editor"><header><div><span className="quote-control-heading">{documentLabel} content</span><small>Drag the handles to set row order. Customer view follows the same line order.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>{quote.sections.map((section) => <SectionEditor key={section.id} quote={quote} sectionId={section.id} />)}{quote.lines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} onMoveBy={moveLineBy} />)}<div className="quote-add-row"><button type="button" onClick={() => addLine(quote.id, 'item')}>+ Line</button><button type="button" onClick={() => addSection(quote.id)}>+ Section</button><button type="button" onClick={() => addLine(quote.id, 'scope')}>+ Scope</button><button type="button" onClick={() => addLine(quote.id, 'warranty')}>+ Warranty</button><button type="button" onClick={() => addLine(quote.id, 'tax')}>+ Tax</button><button type="button" onClick={() => addLine(quote.id, 'allowance')}>+ Allowance</button><button type="button" onClick={() => addLine(quote.id, 'discount')}>+ Discount</button><button type="button" onClick={() => addLine(quote.id, 'note')}>+ Note</button></div></section></>}
+            {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-customer-controls"><div><span className="quote-control-heading">Customer columns</span><small>Keep the sent document minimal or expose pricing detail.</small></div><label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label><label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label><label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label></section><section className="quote-lines-editor"><header><div><span className="quote-control-heading">{documentLabel} content</span><small>Drag the handles to set row order. Customer view follows the same line order.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>{quote.sections.map((section) => <SectionEditor key={section.id} quote={quote} sectionId={section.id} />)}{quote.lines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} onMoveBy={moveLineBy} />)}<div className="quote-add-row"><button type="button" className="quote-add-material" onClick={() => addLine(quote.id, 'material')}>+ Material</button><button type="button" onClick={() => addLine(quote.id, 'item')}>+ Line</button><button type="button" onClick={() => addSection(quote.id)}>+ Section</button><button type="button" onClick={() => addLine(quote.id, 'scope')}>+ Scope</button><button type="button" onClick={() => addLine(quote.id, 'warranty')}>+ Warranty</button><button type="button" onClick={() => addLine(quote.id, 'tax')}>+ Tax</button><button type="button" onClick={() => addLine(quote.id, 'allowance')}>+ Allowance</button><button type="button" onClick={() => addLine(quote.id, 'discount')}>+ Discount</button><button type="button" onClick={() => addLine(quote.id, 'note')}>+ Note</button></div></section></>}
             <section className="quote-notes-grid"><label><span>Customer notes</span><textarea value={quote.customerNotes} onChange={(event) => updateQuote(quote.id, { customerNotes: event.target.value })} placeholder="Appears on customer document" /></label><label className="internal-notes"><span>Internal notes · private</span><textarea value={quote.internalNotes} onChange={(event) => updateQuote(quote.id, { internalNotes: event.target.value })} placeholder="Pricing thoughts, negotiation notes, reminders…" /></label></section>
             {quote.history.length > 0 && <section className="quote-history"><span className="quote-control-heading">Sent history</span>{quote.history.map((revision) => <div key={`${revision.revision}-${revision.capturedAt}`}><strong>{quote.quoteNumber}{revision.revision ? `-R${revision.revision}` : ''}</strong><span>{revision.label || revision.status}</span><time>{revision.quoteDate}</time></div>)}</section>}
             {hasChangeOrders && permanentDelete && <small>This agreement has Change Orders attached and cannot be permanently deleted.</small>}
