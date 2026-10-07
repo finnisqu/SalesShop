@@ -188,6 +188,7 @@ function LineEditor({
     || line.materialReference?.customMaterialName
     || line.sinkReference?.snapshot
     || line.rateReference?.snapshot
+    || sinkLine
     || rateLine,
   );
 
