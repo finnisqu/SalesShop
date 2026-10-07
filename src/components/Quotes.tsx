@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent, type TouchEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type TouchEvent } from 'react';
 import { createPricingScheduleData } from '../services/pricingSchedule';
 import {
   QUOTE_AREA_SCOPE_META,
