@@ -45,7 +45,6 @@ function workbookSnapshot(preview: SupplierImportStructuredPreview) {
     id: `supplier-source-${Date.now()}`,
     name: preview.fileName,
     appVersion: '',
-    locale: 'enUS' as const,
     styles: {},
     sheetOrder: [sheetId],
     sheets: {
