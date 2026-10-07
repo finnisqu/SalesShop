@@ -135,13 +135,15 @@ function safeAcceptedSnapshot(value: unknown) {
   const lines = allLines
     .filter((line) => line?.customerVisible !== false && !summarySectionIds.has(String(line.sectionId ?? '')))
     .map(safePublicLine);
-  const sections = rawSections.map((section) => {
-    const id = String(section.id ?? '');
-    const sectionTotal = allLines
-      .filter((line) => String(line.sectionId ?? '') === id)
-      .reduce((sum, line) => sum + lineTotal(line), 0);
-    return safePublicSection(section, sectionTotal);
-  });
+  const sections = rawSections
+    .filter((section) => section.customerVisible !== false)
+    .map((section) => {
+      const id = String(section.id ?? '');
+      const sectionTotal = allLines
+        .filter((line) => String(line.sectionId ?? '') === id)
+        .reduce((sum, line) => sum + lineTotal(line), 0);
+      return safePublicSection(section, sectionTotal);
+    });
   const {
     projectId: _projectId,
     companyId: _companyId,
