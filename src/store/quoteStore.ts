@@ -41,6 +41,8 @@ interface QuoteState {
   quotes: Quote[];
   activeQuoteId: string | null;
   hydrated: boolean;
+  undoStacks: Record<string, Quote[]>;
+  redoStacks: Record<string, Quote[]>;
   hydrate: () => void;
   createQuote: (prefill?: Partial<Pick<Quote, 'documentType' | 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>>) => string;
   createChangeOrder: (sourceQuoteId: string) => string | null;
@@ -62,6 +64,8 @@ interface QuoteState {
   setCustomerColumns: (quoteId: string, patch: Partial<QuoteCustomerColumns>) => void;
   recordSent: (quoteId: string) => Promise<void>;
   createRevision: (quoteId: string) => void;
+  undoQuote: (quoteId: string) => void;
+  redoQuote: (quoteId: string) => void;
 }
 
 const uid = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
@@ -159,6 +163,35 @@ function persist(quotes: Quote[], activeQuoteId: string | null) {
   localQuoteRepository.save({ schemaVersion: 2, quotes, activeQuoteId });
 }
 
+const QUOTE_HISTORY_LIMIT = 50;
+
+function historyPatch(state: Pick<QuoteState, 'undoStacks' | 'redoStacks'>, quoteId: string, current: Quote) {
+  return {
+    undoStacks: {
+      ...state.undoStacks,
+      [quoteId]: [...(state.undoStacks[quoteId] ?? []), structuredClone(current)].slice(-QUOTE_HISTORY_LIMIT),
+    },
+    redoStacks: {
+      ...state.redoStacks,
+      [quoteId]: [],
+    },
+  };
+}
+
+async function reconcileQuoteSnapshotInCloud(current: Quote, target: Quote, document: QuoteDocument) {
+  const organizationId = cloudOrganizationId();
+  if (!organizationId) return;
+  const targetLineIds = new Set(target.lines.map((line) => line.id));
+  const targetSectionIds = new Set(target.sections.map((section) => section.id));
+  await Promise.all([
+    ...current.lines.filter((line) => !targetLineIds.has(line.id))
+      .map((line) => deleteNormalizedQuoteLine(organizationId, line.id)),
+    ...current.sections.filter((section) => !targetSectionIds.has(section.id))
+      .map((section) => deleteNormalizedQuoteSection(organizationId, section.id)),
+  ]);
+  await syncNormalizedQuotes(organizationId, document);
+}
+
 function localBaseNumber(quotes: Quote[], date: string) {
   const prefix = `Q-${date.replaceAll('-', '')}-`;
   const max = quotes.reduce((highest, quote) => {
@@ -218,6 +251,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   quotes: [],
   activeQuoteId: null,
   hydrated: false,
+  undoStacks: {},
+  redoStacks: {},
 
   hydrate: () => {
     if (get().hydrated) return;
