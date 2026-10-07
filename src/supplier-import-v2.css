@@ -1606,3 +1606,35 @@
     height: 270px;
   }
 }
+
+
+/* Importer v4.2 — canonical template date provenance */
+.supplier-import-template-date-note {
+  min-width: 150px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 5px 8px;
+  border: 1px solid rgba(61, 54, 45, .13);
+  border-radius: 3px;
+  background: rgba(255, 253, 247, .72);
+}
+
+.supplier-import-template-date-note > span {
+  color: #82796c;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.supplier-import-template-date-note strong {
+  color: #4f473d;
+  font-size: 9px;
+}
+
+.supplier-import-template-date-note small {
+  color: #8a8174;
+  font-size: 7px;
+  line-height: 1.3;
+}
