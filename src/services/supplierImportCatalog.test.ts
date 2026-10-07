@@ -294,12 +294,12 @@ describe('supplier import publishing policy', () => {
     expect(plan.stockMaterials).toHaveLength(1);
   });
 
-  it('fails safely when a new staged Brand / Type / Color identity appears in the live catalog', () => {
+  it('fails safely when a new staged Brand / Family / Type / Color identity appears in the live catalog', () => {
     const staged = material({ sku: undefined, variants: [] });
     const live = material({ id: 'live-identity', sku: undefined, variants: [] });
 
     expect(() => validateStagedAgainstCatalog(session([candidate({ material: staged })]), [live]))
-      .toThrow(/Brand \/ Type \/ Color/);
+      .toThrow(/Brand \/ Family \/ Type \/ Color/);
   });
 
   it('fails safely when a new staged SKU now collides with the live catalog', () => {
@@ -316,6 +316,6 @@ describe('supplier parser contract', () => {
       parserId: SALESSHOP_TEMPLATE_PARSER_ID,
       fileTypeLabel: 'Material Import Template (.xlsx)',
     });
-    expect(getSupplierImportParser(SALESSHOP_TEMPLATE_PARSER_ID).label).toBe('SalesShop Material Import Template v1.0');
+    expect(getSupplierImportParser(SALESSHOP_TEMPLATE_PARSER_ID).label).toBe('SalesShop Material Import Template v1.1');
   });
 });
