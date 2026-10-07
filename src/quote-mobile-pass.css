@@ -1373,3 +1373,38 @@
     min-height: 0;
   }
 }
+
+
+/* Immersive Quotes scroll ownership:
+   one vertical scroll surface below the fixed command bar.
+   Do not split scrolling between body/editor panes on iOS. */
+@media (max-width: 700px) {
+  .sales-app.view-quotes .quote-workbench-body,
+  .sales-app.view-quotes .view-split .quote-workbench-body {
+    display: block !important;
+    flex: 1 1 auto;
+    height: calc(100dvh - 50px);
+    min-height: 0;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .sales-app.view-quotes .quote-editor-pane,
+  .sales-app.view-quotes .quote-preview-pane,
+  .sales-app.view-quotes .view-split .quote-editor-pane,
+  .sales-app.view-quotes .view-split .quote-preview-pane {
+    min-height: 0;
+    overflow: visible !important;
+  }
+
+  .sales-app.view-quotes .quote-editor-pane {
+    padding-bottom: calc(44px + env(safe-area-inset-bottom));
+  }
+
+  .sales-app.view-quotes .quote-preview-pane {
+    padding-bottom: calc(44px + env(safe-area-inset-bottom));
+  }
+}
