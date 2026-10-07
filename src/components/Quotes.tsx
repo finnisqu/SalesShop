@@ -318,7 +318,7 @@ function LineEditor({
         {sinkLine && <QuoteSinkLineFields quoteId={quote.id} line={line} />}
         {rateLine && <QuoteRateLineFields quote={quote} line={line} />}
 
-        {catalogLine && line.pricingMode !== 'none' && <strong className="quote-line-resting-total">{money.format(quoteLineAmount(line))}</strong>}
+        {catalogLine && line.pricingMode !== 'none' && <strong className="quote-line-resting-total">{pricingComplete ? money.format(quoteLineAmount(line)) : '—'}</strong>}
 
         {catalogLine && !pricingEditing && (
           <div className="quote-line-resting-pricing">
