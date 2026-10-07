@@ -99,6 +99,13 @@ function LineEditor({
   const sinkLine = line.kind === 'sink';
   const rateLine = line.kind === 'rate';
   const manualCostLine = line.kind === 'item' && line.pricingMode !== 'none';
+  const databaseSelected = Boolean(
+    line.materialReference?.materialId
+    || line.materialReference?.customMaterialName
+    || line.sinkReference?.snapshot
+    || line.rateReference?.snapshot,
+  );
+
   const areaSection = line.sectionId ? quote.sections.find((section) => section.id === line.sectionId) : undefined;
   const compatibleScopeFields = areaSection ? compatibleAreaScopeFields(line) : [];
   const availableScopeFields = compatibleScopeFields.filter((field) => scopeValue(areaSection?.scope, field) !== undefined);
@@ -164,7 +171,7 @@ function LineEditor({
 
   return (
     <div
-      className={`quote-line-editor kind-${line.kind} ${dragging ? 'is-dragging' : ''}`}
+      className={`quote-line-editor kind-${line.kind} ${databaseSelected ? 'has-database-selection' : ''} ${dragging ? 'is-dragging' : ''}`}
       data-quote-line-id={line.id}
       onDragOver={(event) => { if (dragActive) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; } }}
       onDrop={(event) => { if (dragActive) { event.preventDefault(); onDrop(line.id); } }}
