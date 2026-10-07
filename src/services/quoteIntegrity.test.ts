@@ -96,6 +96,7 @@ describe('quote revision snapshots', () => {
     const subject = quote({
       lines: [line({
         amount: 125.55,
+        internalCost: 70,
         materialReference: {
           materialId: 'material-1',
           variantId: 'variant-1',
@@ -131,6 +132,7 @@ describe('quote revision snapshots', () => {
 
     subject.lines[0].description = 'Changed later';
     subject.lines[0].amount = 999;
+    subject.lines[0].internalCost = 500;
     if (subject.lines[0].materialReference?.snapshot) {
       subject.lines[0].materialReference.snapshot.costPerSf = 99;
       subject.lines[0].materialReference.snapshot.materialName = 'Changed later';
@@ -141,6 +143,7 @@ describe('quote revision snapshots', () => {
     expect(frozen.customerTotal).toBe(125.55);
     expect(frozen.pricingDivision).toBe('Commercial');
     expect(frozen.lines[0].description).toBe('Countertops');
+    expect(frozen.lines[0].internalCost).toBe(70);
     expect(frozen.lines[0].materialReference?.sourceCostPerSf).toBe(12.8);
     expect(frozen.lines[0].materialReference?.snapshot?.materialName).toBe('Arctic White');
     expect(frozen.lines[0].materialReference?.snapshot?.costPerSf).toBe(12.8);
