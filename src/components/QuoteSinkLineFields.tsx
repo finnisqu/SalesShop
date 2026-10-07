@@ -193,10 +193,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
       <div className={`quote-sink-price-reference quote-source-edit-reference ${snapshot ? '' : 'is-empty'}`}>
         <div className="quote-source-reference-copy">
           {snapshot ? (
-            <>
-              <span>Internal cost</span>
-              <strong>{snapshot.internalCost === undefined ? 'Cost —' : `Cost ${money.format(snapshot.internalCost)}`}</strong>
-            </>
+            <strong>{snapshot.internalCost === undefined ? 'COST —' : `COST ${money.format(snapshot.internalCost)}`}</strong>
           ) : (
             <strong>Choose sink</strong>
           )}
