@@ -85,7 +85,7 @@ export function SinksWorkspace() {
       .sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
   }, [models, category, query, showInactive]);
 
-  const selected = models.find((model) => model.id === selectedId) ?? visibleModels[0] ?? null;
+  const selected = visibleModels.find((model) => model.id === selectedId) ?? visibleModels[0] ?? null;
   const activeModels = models.filter((model) => model.active);
   const activeVariants = activeModels.flatMap((model) => model.variants.filter((variant) => variant.active));
   const pricedVariants = activeVariants.filter((variant) => variant.sellPrice !== undefined);
