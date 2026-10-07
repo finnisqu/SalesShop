@@ -59,9 +59,18 @@ export function QuoteRateLineFields({ quote, line, editSignal = 0 }: { quote: Qu
       setSearching(false);
       setSearch('');
     };
+    const collapseLine = (event: Event) => {
+      const detail = (event as CustomEvent<{ lineId?: string }>).detail;
+      if (detail?.lineId !== line.id) return;
+      collapse();
+    };
     window.addEventListener('sales-shop:quote-collapse-all', collapse);
-    return () => window.removeEventListener('sales-shop:quote-collapse-all', collapse);
-  }, [snapshot]);
+    window.addEventListener('sales-shop:quote-collapse-line', collapseLine);
+    return () => {
+      window.removeEventListener('sales-shop:quote-collapse-all', collapse);
+      window.removeEventListener('sales-shop:quote-collapse-line', collapseLine);
+    };
+  }, [line.id, snapshot]);
 
   const activeItems = useMemo(() => items.filter((item) => item.active && allowedCategories.includes(item.category)), [items]);
   const selectedItem = line.rateReference?.rateBookItemId
