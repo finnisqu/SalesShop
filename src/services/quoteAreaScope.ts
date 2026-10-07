@@ -1,5 +1,4 @@
 import {
-  QUOTE_AREA_SCOPE_FIELDS,
   type Quote,
   type QuoteAreaScope,
   type QuoteAreaScopeField,
@@ -35,7 +34,6 @@ export function areaScopeSummary(section: QuoteSection) {
   if (scope.countertopSf !== undefined) parts.push(`${scope.countertopSf} SF`);
   const sinkTotal = (scope.kitchenSinkCount ?? 0) + (scope.vanitySinkCount ?? 0);
   if (sinkTotal) parts.push(`${sinkTotal} sink${sinkTotal === 1 ? '' : 's'}`);
-  if (scope.cutoutCount) parts.push(`${scope.cutoutCount} cutout${scope.cutoutCount === 1 ? '' : 's'}`);
   return parts.join(' · ');
 }
 
@@ -49,7 +47,7 @@ export function compatibleAreaScopeFields(line: QuoteLine): QuoteAreaScopeField[
   }
   if (line.kind === 'rate') {
     const snapshot = line.rateReference?.snapshot;
-    if (!snapshot) return QUOTE_AREA_SCOPE_FIELDS.slice();
+    if (!snapshot) return QUOTE_AREA_SCOPE_VISIBLE_FIELDS.slice();
     if (snapshot.unit === 'sf') return ['countertopSf'];
     if (snapshot.unit === 'each') return ['kitchenSinkCount', 'vanitySinkCount'];
     return [];
