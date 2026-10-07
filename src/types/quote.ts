@@ -153,6 +153,7 @@ export interface QuoteLine {
   quantity?: number;
   rate?: number;
   amount?: number;
+  internalCost?: number;
   customerVisible: boolean;
   includeInTotal: boolean;
   materialReference?: QuoteLineMaterialReference;
