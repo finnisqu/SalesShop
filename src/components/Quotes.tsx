@@ -360,12 +360,15 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
   const updateSection = useQuoteStore((state) => state.updateSection);
   const deleteSection = useQuoteStore((state) => state.deleteSection);
   const [scopeOpen, setScopeOpen] = useState(false);
-  const scopeHostRef = useRef<HTMLDivElement>(null);
+  const scopeButtonRef = useRef<HTMLButtonElement>(null);
+  const scopePopoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!scopeOpen) return;
     const closeOnOutside = (event: PointerEvent) => {
-      if (!scopeHostRef.current?.contains(event.target as Node)) setScopeOpen(false);
+      const target = event.target as Node;
+      if (scopeButtonRef.current?.contains(target) || scopePopoverRef.current?.contains(target)) return;
+      setScopeOpen(false);
     };
     document.addEventListener('pointerdown', closeOnOutside);
     return () => document.removeEventListener('pointerdown', closeOnOutside);
@@ -381,14 +384,14 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
   const fields: QuoteAreaScopeField[] = QUOTE_AREA_SCOPE_VISIBLE_FIELDS;
 
   return (
-    <div className="quote-area-header" ref={scopeHostRef}>
+    <div className="quote-area-header">
       <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`} onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
 
       <div className="quote-area-title">
         <div className="quote-area-kicker">
           <span>Area</span>
           <span aria-hidden="true">·</span>
-          <button type="button" className={`quote-area-scope-toggle ${scopeOpen ? 'active' : ''}`} onClick={() => setScopeOpen((value) => !value)}>
+          <button ref={scopeButtonRef} type="button" className={`quote-area-scope-toggle ${scopeOpen ? 'active' : ''}`} onClick={() => setScopeOpen((value) => !value)}>
             {summary ? `Scope · ${summary}` : 'Scope · add'}
           </button>
         </div>
@@ -406,7 +409,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
       <div className="quote-area-summary"><span>{lines.length} item{lines.length === 1 ? '' : 's'}</span><strong>{money.format(quoteLinesTotal(lines))}</strong></div>
       <button type="button" className="quote-area-remove" onClick={() => deleteSection(quote.id, section.id)} title="Remove area. Its rows will move to General.">×</button>
 
-      {scopeOpen && <div className="quote-area-scope-popover">
+      {scopeOpen && <div ref={scopePopoverRef} className="quote-area-scope-popover">
         <div className="quote-area-scope-popover-heading">
           <strong>Area quantities</strong>
           <small>Select the takeoff values, then click anywhere else to tuck this away.</small>
