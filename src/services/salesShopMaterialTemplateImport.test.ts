@@ -190,6 +190,34 @@ describe('SalesShop canonical material template importer', () => {
   });
 
 
+  it('allows supplier group to vary across physical variants of the same material', async () => {
+    const file = await makeTemplateFile([
+      {
+        ...baseRow,
+        'Color / Product Name': 'Pure White',
+        'Supplier Group': 'B',
+        Finish: 'Polished',
+        'Source Reference / Original Label': 'Group B',
+      },
+      {
+        ...baseRow,
+        'Color / Product Name': 'Pure White',
+        'Supplier Group': 'C',
+        Finish: 'Honed',
+        'Cost / SF Listed': 11.5,
+        'Cost / Unit Listed': 888.06,
+        'Default Variant': 'No',
+        'Source Reference / Original Label': 'Group C',
+      },
+    ]);
+
+    const session = await stageSalesShopMaterialTemplate(file, []);
+    expect(session.candidates).toHaveLength(1);
+    expect(session.candidates[0].material.supplierGroup).toBe('B');
+    expect(session.candidates[0].material.variants).toHaveLength(2);
+    expect(session.candidates[0].status).toBe('new');
+  });
+
   it('treats a supplier change as an update to the same branded material', async () => {
     const withoutSku = {
       ...baseRow,
