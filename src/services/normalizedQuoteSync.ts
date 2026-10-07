@@ -14,6 +14,8 @@ import {
   type QuotePricingMode,
   type QuoteRevisionSnapshot,
   type QuoteSection,
+  type QuoteLineQuantitySource,
+  type QuoteAreaScope,
   type QuoteStatus,
 } from '../types/quote';
 
@@ -36,6 +38,14 @@ function materialReferenceOrUndefined(value: unknown): QuoteLineMaterialReferenc
 
 function rateReferenceOrUndefined(value: unknown): QuoteLineRateReference | undefined {
   return value && typeof value === 'object' ? value as QuoteLineRateReference : undefined;
+}
+
+function areaScopeOrUndefined(value: unknown): QuoteAreaScope | undefined {
+  return value && typeof value === 'object' ? value as QuoteAreaScope : undefined;
+}
+
+function quantitySourceOrUndefined(value: unknown): QuoteLineQuantitySource | undefined {
+  return value && typeof value === 'object' ? value as QuoteLineQuantitySource : undefined;
 }
 
 function sinkReferenceOrUndefined(value: unknown): QuoteLineSinkReference | undefined {
@@ -84,7 +94,10 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
   if (!quoteRows.length) return null;
 
   const sectionsByQuote = groupByQuote<QuoteSection>(sectionRows, (row) => ({
-    id: String(row.id), title: String(row.title), customerVisible: Boolean(row.customer_visible),
+    id: String(row.id),
+    title: String(row.title),
+    customerVisible: Boolean(row.customer_visible),
+    scope: areaScopeOrUndefined(row.scope),
   }));
   const linesByQuote = groupByQuote<QuoteLine>(lineRows, (row) => ({
     id: String(row.id),
@@ -93,6 +106,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     description: String(row.description),
     pricingMode: String(row.pricing_mode) as QuotePricingMode,
     quantity: numericOrUndefined(row.quantity),
+    quantitySource: quantitySourceOrUndefined(row.quantity_source),
     rate: numericOrUndefined(row.rate),
     amount: numericOrUndefined(row.amount),
     internalCost: numericOrUndefined(row.internal_cost),
@@ -287,7 +301,13 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   });
 
   const sections = acceptedQuotes.flatMap((quote) => quote.sections.map((section, sortOrder) => ({
-    organization_id: organizationId, id: section.id, quote_id: quote.id, title: section.title, customer_visible: section.customerVisible, sort_order: sortOrder,
+    organization_id: organizationId,
+    id: section.id,
+    quote_id: quote.id,
+    title: section.title,
+    customer_visible: section.customerVisible,
+    scope: section.scope ?? null,
+    sort_order: sortOrder,
   })));
   const lines = acceptedQuotes.flatMap((quote) => quote.lines.map((line, sortOrder) => ({
     organization_id: organizationId,
@@ -298,6 +318,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     description: line.description,
     pricing_mode: line.pricingMode,
     quantity: line.quantity ?? null,
+    quantity_source: line.quantitySource ?? null,
     rate: line.rate ?? null,
     amount: line.amount ?? null,
     internal_cost: line.internalCost ?? null,
