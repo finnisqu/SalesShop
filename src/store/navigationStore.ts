@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { useNotebookStore } from './notebookStore';
 import { useQuoteStore } from './quoteStore';
 
-export type AppView = 'notebook' | 'board' | 'quotes' | 'rate-book' | 'materials' | 'dashboard' | 'settings';
+export type AppView = 'notebook' | 'board' | 'quotes' | 'rate-book' | 'sinks' | 'materials' | 'dashboard' | 'settings';
 
 interface NavigationState {
   view: AppView;
@@ -18,7 +18,7 @@ interface NavigationState {
 }
 
 const VIEW_STORAGE_KEY = 'salesshop-active-view-v1';
-const APP_VIEWS: AppView[] = ['notebook', 'board', 'quotes', 'rate-book', 'materials', 'dashboard', 'settings'];
+const APP_VIEWS: AppView[] = ['notebook', 'board', 'quotes', 'rate-book', 'sinks', 'materials', 'dashboard', 'settings'];
 
 function initialView(): AppView {
   try {
