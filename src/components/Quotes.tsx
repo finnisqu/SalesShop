@@ -213,9 +213,9 @@ function LineEditor({
   useEffect(() => {
     const collapse = () => setPricingEditing(false);
     const focusLine = (event: Event) => {
-      const detail = (event as CustomEvent<{ lineId?: string }>).detail;
+      const detail = (event as CustomEvent<{ lineId?: string; openPricing?: boolean }>).detail;
       if (detail?.lineId !== line.id) return;
-      setPricingEditing(true);
+      if (detail.openPricing) setPricingEditing(true);
     };
     const closePricing = (event: Event) => {
       const detail = (event as CustomEvent<{ lineId?: string }>).detail;
@@ -624,13 +624,23 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     if (!issueLineIds.length) return;
     const issueIndex = issueCursor % issueLineIds.length;
     const lineId = issueLineIds[issueIndex];
+    const targetLine = quote.lines.find((line) => line.id === lineId);
+    const targetReminders = targetLine
+      ? quoteLineReminderLabels(
+          targetLine,
+          quoteLinePricingComplete(targetLine, guideMultiplier),
+          Boolean(resolveLineAreaScopeState(quote, targetLine)?.changed),
+        )
+      : [];
     setIssueCursor((current) => current + 1);
     setMetaPanel(null);
     setActiveIssueLineId(lineId);
     window.dispatchEvent(new Event('sales-shop:quote-collapse-all'));
     window.setTimeout(() => {
       document.querySelector(`[data-quote-line-id="${lineId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      window.dispatchEvent(new CustomEvent('sales-shop:quote-focus-line', { detail: { lineId } }));
+      window.dispatchEvent(new CustomEvent('sales-shop:quote-focus-line', {
+        detail: { lineId, openPricing: targetReminders.includes('Price') || targetReminders.includes('Scope') },
+      }));
     }, 40);
   };
 
