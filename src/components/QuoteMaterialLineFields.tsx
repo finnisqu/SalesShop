@@ -28,13 +28,6 @@ function materialDescription(material: StockMaterial, variant?: MaterialVariant)
   return [material.brand, material.name, variant?.thickness, variant?.finish, variant?.formatName].filter(Boolean).join(' · ');
 }
 
-function displayDate(value?: string) {
-  if (!value) return undefined;
-  const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
-  if (Number.isNaN(date.valueOf())) return value;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 function materialSearchText(material: StockMaterial) {
   const variants = (material.variants ?? []).flatMap((variant) => [
     variant.sku,
@@ -257,14 +250,6 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   const quotedSupplier = snapshot?.supplier ?? selectedMaterial?.supplier;
   const quotedVariantLabel = snapshot?.variantLabel ?? variantLabel(selectedVariant);
   const quotedPurchaseLabel = snapshot?.purchaseOptionLabel ?? selectedPurchaseOption?.label;
-  const sourceDate = displayDate(snapshot?.sourceEffectiveDate);
-  const sourceLabel = snapshot?.sourcePriceListLabel ?? snapshot?.sourceFileName;
-
-  const refreshSnapshot = () => {
-    if (!selectedMaterial || !currentReference) return;
-    applyMaterial(selectedMaterial, currentReference.variant?.id, currentReference.purchaseOption?.id);
-  };
-
   return (
     <div className="quote-material-selection quote-database-result">
       <div className="quote-material-selection-main">
