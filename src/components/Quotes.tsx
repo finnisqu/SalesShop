@@ -187,7 +187,8 @@ function LineEditor({
     line.materialReference?.materialId
     || line.materialReference?.customMaterialName
     || line.sinkReference?.snapshot
-    || line.rateReference?.snapshot,
+    || line.rateReference?.snapshot
+    || rateLine,
   );
 
   const areaSection = line.sectionId ? quote.sections.find((section) => section.id === line.sectionId) : undefined;
@@ -572,6 +573,10 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const [metaPanel, setMetaPanel] = useState<'document' | 'project' | 'visibility' | null>(null);
   const [issueCursor, setIssueCursor] = useState(0);
   const [activeIssueLineId, setActiveIssueLineId] = useState<string | null>(null);
+  const [workspaceZoom, setWorkspaceZoom] = useState(() => {
+    const stored = Number(window.localStorage.getItem('sales-shop:quote-workspace-zoom'));
+    return Number.isFinite(stored) && stored >= 80 && stored <= 160 ? stored : 100;
+  });
   const metaHostRef = useRef<HTMLElement>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const pricingSchedule = quote.documentType === 'pricing-schedule';
@@ -624,6 +629,14 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   useEffect(() => {
     if (activeIssueLineId && !issueLineIds.includes(activeIssueLineId)) setActiveIssueLineId(null);
   }, [activeIssueLineId, issueLineIds]);
+
+  useEffect(() => {
+    window.localStorage.setItem('sales-shop:quote-workspace-zoom', String(workspaceZoom));
+  }, [workspaceZoom]);
+
+  const adjustWorkspaceZoom = (direction: -1 | 1) => {
+    setWorkspaceZoom((current) => Math.max(80, Math.min(160, current + direction * 10)));
+  };
 
   const collapseAll = () => {
     setMetaPanel(null);
@@ -742,6 +755,11 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
             <button type="button" onClick={collapseAll} title="Collapse all open quote controls" aria-label="Collapse all open quote controls">⌃</button>
             <button type="button" disabled={!issueLineIds.length} onClick={focusNextIssue} title={issueLineIds.length ? `Go to next quote issue · ${issueLineIds.length} open` : 'No quote issues'} aria-label="Go to next quote issue">!</button>
           </div>
+          <div className="quote-workspace-zoom" aria-label="Quote workspace zoom">
+            <button type="button" disabled={workspaceZoom <= 80} onClick={() => adjustWorkspaceZoom(-1)} title="Zoom quote workspace out" aria-label="Zoom quote workspace out">−</button>
+            <button type="button" className="quote-workspace-zoom-value" onClick={() => setWorkspaceZoom(100)} title="Reset quote workspace zoom to 100%">{workspaceZoom}%</button>
+            <button type="button" disabled={workspaceZoom >= 160} onClick={() => adjustWorkspaceZoom(1)} title="Zoom quote workspace in" aria-label="Zoom quote workspace in">+</button>
+          </div>
           <div className="quote-view-switch" aria-label="Document view">
             {viewModes.map((viewMode) => <button type="button" key={viewMode} className={effectiveMode === viewMode ? 'active' : ''} onClick={() => onModeChange(viewMode)}>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</button>)}
           </div>
@@ -791,7 +809,7 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
         </div>
       ) : null}
       {sendError && <div className="quote-share-error" role="alert">{sendError}</div>}
-      <div className={`quote-workbench-body ${pricingSchedule ? 'is-swipeable' : ''}`} onTouchStart={beginPricingSwipe} onTouchEnd={finishPricingSwipe} onTouchCancel={() => { swipeStart.current = null; }}>
+      <div className={`quote-workbench-body ${pricingSchedule ? 'is-swipeable' : ''}`} style={{ '--quote-workspace-zoom': workspaceZoom / 100 } as CSSProperties} onTouchStart={beginPricingSwipe} onTouchEnd={finishPricingSwipe} onTouchCancel={() => { swipeStart.current = null; }}>
         {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingScheduleWorkbook quote={quote} /></div> : effectiveMode !== 'customer' ? (
           <div className="quote-editor-pane">
             <section className="quote-configuration-strip" ref={metaHostRef}>
