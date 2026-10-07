@@ -62,8 +62,8 @@ function quote(area = section(), quoteLine = line()): Quote {
 }
 
 describe('quote area scope', () => {
-  it('summarizes countertop, sink, cutout, and splash scope compactly', () => {
-    expect(areaScopeSummary(section())).toBe('62 SF · 1 sink · 2 cutouts · 18 LF splash · 12 SF full-height');
+  it('keeps the visible quote scope focused on countertop square feet and sinks', () => {
+    expect(areaScopeSummary(section())).toBe('62 SF · 1 sink');
   });
 
   it('captures an explicit area quantity without creating a live formula', () => {
@@ -101,7 +101,7 @@ describe('quote area scope', () => {
   });
 
   it('recommends scope fields based on product and rate semantics', () => {
-    expect(compatibleAreaScopeFields(line({ kind: 'material' }))).toEqual(['countertopSf', 'fullHeightSplashSf']);
+    expect(compatibleAreaScopeFields(line({ kind: 'material' }))).toEqual(['countertopSf']);
     expect(compatibleAreaScopeFields(line({
       kind: 'sink',
       sinkReference: {
@@ -131,13 +131,13 @@ describe('quote area scope', () => {
           pricingBehavior: 'suggested',
         },
       },
-    }))).toEqual(['cutoutCount']);
+    }))).toEqual([]);
   });
 
-  it('provides stable display metadata for all six scope fields', () => {
+  it('keeps future scope metadata under the hood while surfacing only the focused v1 fields', async () => {
+    const { QUOTE_AREA_SCOPE_VISIBLE_FIELDS } = await import('./quoteAreaScope');
     expect(Object.keys(QUOTE_AREA_SCOPE_META)).toHaveLength(6);
+    expect(QUOTE_AREA_SCOPE_VISIBLE_FIELDS).toEqual(['countertopSf', 'kitchenSinkCount', 'vanitySinkCount']);
     expect(QUOTE_AREA_SCOPE_META.countertopSf.unit).toBe('SF');
-    expect(QUOTE_AREA_SCOPE_META.splashLf.unit).toBe('LF');
-    expect(QUOTE_AREA_SCOPE_META.cutoutCount.unit).toBe('Each');
   });
 });
