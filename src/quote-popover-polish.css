@@ -1745,3 +1745,136 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Source-edit rectangles for partial/selected Rate + Sink rows.
+   The edit pencil lives inside the colored source rectangle, aligned above pricing. */
+.quote-source-edit-reference {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 2px 1px 6px !important;
+  border-left: 0 !important;
+  border-radius: 2px;
+}
+
+.quote-source-reference-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.quote-source-reference-copy > span,
+.quote-source-reference-copy > strong,
+.quote-source-reference-copy > small {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-source-reference-copy > span {
+  flex: 0 0 auto;
+  font-size: 5.9px !important;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.quote-source-reference-copy > strong {
+  flex: 0 1 auto;
+  font-size: 6.7px !important;
+  font-weight: 900 !important;
+  letter-spacing: .02em;
+}
+
+.quote-source-reference-copy > small {
+  flex: 1 1 auto;
+  font-size: 5.8px !important;
+  opacity: .72;
+}
+
+.quote-source-edit-reference.is-empty .quote-source-reference-copy > strong {
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+
+.quote-source-pencil {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid rgba(92, 83, 69, .10);
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: #90959a;
+  font-size: 9px;
+  line-height: 1;
+  opacity: .78;
+}
+
+.quote-source-pencil:hover,
+.quote-source-pencil:focus-visible {
+  outline: 0;
+  background: rgba(90, 84, 74, .05);
+  color: #5f6870;
+  opacity: 1;
+}
+
+/* Rate source rectangle */
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference {
+  border: 1px solid rgba(107, 129, 154, .11);
+  border-left: 0;
+  background: rgba(230, 236, 243, .46);
+  color: #65778a;
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference .quote-source-pencil {
+  color: #8795a3;
+  border-left-color: rgba(107, 129, 154, .12);
+}
+
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference .quote-source-pencil:hover,
+.quote-line-editor.kind-rate.has-database-selection .quote-rate-reference.quote-source-edit-reference .quote-source-pencil:focus-visible {
+  color: #5e7285;
+  background: rgba(99, 122, 145, .06);
+}
+
+/* Sink source rectangle */
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 1px solid rgba(153, 116, 67, .10);
+  border-left: 0;
+  background: rgba(244, 234, 218, .50);
+  color: #775f43;
+}
+
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference .quote-source-pencil {
+  color: #a08d74;
+  border-left-color: rgba(153, 116, 67, .12);
+}
+
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference .quote-source-pencil:hover,
+.quote-line-editor.kind-sink.has-database-selection .quote-sink-price-reference.quote-source-edit-reference .quote-source-pencil:focus-visible {
+  color: #745d41;
+  background: rgba(151, 112, 61, .06);
+}
