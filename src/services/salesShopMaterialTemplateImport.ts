@@ -122,8 +122,17 @@ interface MaterialAccumulator {
   material: StockMaterial;
   warnings: string[];
   priceEvidence: Record<string, SupplierImportPriceEvidence>;
-  materialDefaults: Set<string>;
-  variantDefaults: Map<string, Set<string>>;
+}
+
+function excelColumn(column: number) {
+  let value = Math.max(1, column);
+  let result = '';
+  while (value > 0) {
+    value -= 1;
+    result = String.fromCharCode(65 + (value % 26)) + result;
+    value = Math.floor(value / 26);
+  }
+  return result;
 }
 
 function safeId(value: string) {
@@ -165,14 +174,6 @@ function normalizeDate(value: string) {
   const parsed = new Date(trimmed);
   if (Number.isNaN(parsed.valueOf())) return trimmed;
   return parsed.toISOString().slice(0, 10);
-}
-
-function physicalArea(row: { areaSf?: number; lengthIn?: number; widthIn?: number }) {
-  if (row.areaSf && row.areaSf > 0) return row.areaSf;
-  if (row.lengthIn && row.widthIn && row.lengthIn > 0 && row.widthIn > 0) {
-    return Math.round(((row.lengthIn * row.widthIn) / 144) * 100) / 100;
-  }
-  return undefined;
 }
 
 function variantIdentity(variant: MaterialVariant) {
@@ -495,7 +496,7 @@ function readMeta(worksheet: { rowCount: number; getRow: (row: number) => { getC
 
 function assertHeaders(worksheet: { getRow: (row: number) => { getCell: (column: number) => { text: string } } }) {
   const actual = SALESSHOP_TEMPLATE_HEADERS.map((_, index) => worksheet.getRow(1).getCell(index + 1).text.trim());
-  const mismatches = SALESSHOP_TEMPLATE_HEADERS.flatMap((expected, index) => actual[index] === expected ? [] : [`${String.fromCharCode(65 + (index % 26))}: expected "${expected}", found "${actual[index] || 'blank'}"`]);
+  const mismatches = SALESSHOP_TEMPLATE_HEADERS.flatMap((expected, index) => actual[index] === expected ? [] : [`${excelColumn(index + 1)}: expected "${expected}", found "${actual[index] || 'blank'}"`]);
   if (mismatches.length) {
     throw new Error(`IMPORT_ROWS does not match SalesShop Material Import Template v${SALESSHOP_TEMPLATE_VERSION}. ${mismatches.slice(0, 3).join('; ')}${mismatches.length > 3 ? `; +${mismatches.length - 3} more` : ''}. Nothing was staged.`);
   }
@@ -690,8 +691,6 @@ export async function stageSalesShopMaterialTemplate(
         },
         warnings: [...row.warnings],
         priceEvidence: {},
-        materialDefaults: new Set(),
-        variantDefaults: new Map(),
       };
       accumulators.set(key, accumulator);
     } else {
