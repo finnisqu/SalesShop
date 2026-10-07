@@ -1,9 +1,9 @@
+import { resolvedMaterialFamily } from '../types/settings';
 import type {
   MaterialPriceSource,
   MaterialPriceVersion,
   MaterialPurchaseOption,
   MaterialVariant,
-  resolvedMaterialFamily,
   StockMaterial,
 } from '../types/settings';
 import type {
