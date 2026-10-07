@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type DragEvent, type TouchEvent }
 import { createPricingScheduleData } from '../services/pricingSchedule';
 import {
   QUOTE_AREA_SCOPE_META,
+  QUOTE_AREA_SCOPE_VISIBLE_FIELDS,
   applyAreaScopeQuantity,
   areaScopeSummary,
   compatibleAreaScopeFields,
@@ -20,6 +21,7 @@ import {
   commercialDocumentLabel,
   displayQuoteNumber,
   QUOTE_STATUSES,
+  quoteLineAmount,
   quoteLineTotal,
   quoteLinesTotal,
   quoteTotal,
@@ -190,10 +192,10 @@ function LineEditor({
         aria-keyshortcuts="ArrowUp ArrowDown"
         title="Drag to reorder. With this handle focused, ↑ / ↓ also moves the row."
       ><span aria-hidden="true">⋮⋮</span></button>
-      <button type="button" className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`} onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })} title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}>{line.customerVisible ? '●' : '○'}</button>
+      {textLine && <button type="button" className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`} onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })} title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}>{line.customerVisible ? '●' : '○'}</button>}
       <div className="quote-line-main">
         <div className="quote-line-topline">
-          <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>
+          {!databaseSelected && <span className="quote-line-kind">{lineKinds.find(([kind]) => kind === line.kind)?.[1]}</span>}
           <select value={line.sectionId ?? ''} onChange={(event) => updateLine(quote.id, line.id, { sectionId: event.target.value || undefined, quantitySource: undefined })} aria-label="Quote area"><option value="">General / no area</option>{quote.sections.map((section) => <option key={section.id} value={section.id}>{section.title}</option>)}</select>
         </div>
         {materialLine && <QuoteMaterialLineFields quoteId={quote.id} line={line} />}
@@ -249,7 +251,7 @@ function LineEditor({
             <span>×</span>
             <input type="number" step="1" min="1" placeholder="Slabs" value={line.materialReference?.slabCount ?? ''} onChange={(event) => updateSlabField({ slabCount: numberValue(event.target.value) })} aria-label="Slab count" />
           </div>}
-          {line.pricingMode !== 'none' && <strong>{money.format(quoteLineTotal(line))}</strong>}
+          {line.pricingMode !== 'none' && <strong>{money.format(quoteLineAmount(line))}</strong>}
           {manualCostLine && (
             <label className="quote-internal-cost-input" title="Private total internal cost for this line. Never shown to the customer.">
               <span>Internal cost</span>
@@ -260,7 +262,8 @@ function LineEditor({
               <small>Private total</small>
             </label>
           )}
-          <label className="quote-total-toggle" title="Include this amount in quote total"><input type="checkbox" checked={line.includeInTotal} onChange={(event) => updateLine(quote.id, line.id, { includeInTotal: event.target.checked })} /> Total</label>
+          <label className="quote-line-toggle" title="Show this line on the customer quote. Area total-only mode hides its detail while preserving this preference."><input type="checkbox" checked={line.customerVisible} onChange={(event) => updateLine(quote.id, line.id, { customerVisible: event.target.checked })} /> Show</label>
+          <label className="quote-line-toggle" title="Include this line's price in quote and area totals."><input type="checkbox" checked={line.includeInTotal} onChange={(event) => updateLine(quote.id, line.id, { includeInTotal: event.target.checked })} /> Include</label>
         </div>
       )}
       <button type="button" className="quote-line-delete" onClick={() => deleteLine(quote.id, line.id)} title="Delete row">×</button>
@@ -281,7 +284,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
     updateSection(quote.id, section.id, { scope: nextScope });
   };
 
-  const fields: QuoteAreaScopeField[] = ['countertopSf', 'splashLf', 'fullHeightSplashSf', 'kitchenSinkCount', 'vanitySinkCount', 'cutoutCount'];
+  const fields: QuoteAreaScopeField[] = QUOTE_AREA_SCOPE_VISIBLE_FIELDS;
 
   return <>
     <div className="quote-area-header">
@@ -292,6 +295,13 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
         <button type="button" className={`quote-area-scope-toggle ${scopeOpen ? 'active' : ''}`} onClick={() => setScopeOpen((value) => !value)}>
           {summary ? `Scope · ${summary}` : 'Add area scope'}
         </button>
+        <label className="quote-area-customer-mode">
+          <span>Customer</span>
+          <select value={section.customerDisplayMode ?? 'detail'} onChange={(event) => updateSection(quote.id, section.id, { customerDisplayMode: event.target.value as 'detail' | 'summary' })}>
+            <option value="detail">Detailed lines</option>
+            <option value="summary">Area total only</option>
+          </select>
+        </label>
       </div>
       <div className="quote-area-summary"><span>{lines.length} item{lines.length === 1 ? '' : 's'}</span><strong>{money.format(quoteLinesTotal(lines))}</strong></div>
       <div className="quote-area-actions"><button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button><button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button><button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button><button type="button" onClick={() => onAddLine('item', section.id)}>+ Line</button><button type="button" onClick={() => onAddLine('scope', section.id)}>+ Scope</button></div>
@@ -305,7 +315,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
       <div className="quote-area-scope-grid">
         {fields.map((field) => {
           const meta = QUOTE_AREA_SCOPE_META[field];
-          const integerField = field === 'kitchenSinkCount' || field === 'vanitySinkCount' || field === 'cutoutCount';
+          const integerField = field === 'kitchenSinkCount' || field === 'vanitySinkCount';
           return <label key={field}>
             <span>{meta.label}</span>
             <div><input type="number" min="0" step={integerField ? '1' : '0.01'} value={section.scope?.[field] ?? ''} onChange={(event) => {
@@ -324,15 +334,26 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
   const visibleLines = quote.lines.filter((line) => line.customerVisible);
   const renderLines = (lines: QuoteLine[]) => lines.map((line) => {
     const priced = line.pricingMode !== 'none';
-    return <div key={line.id} className={`customer-quote-row kind-${line.kind}`}><div className="customer-line-description">{line.description || '—'}</div>{quote.customerColumns.quantity && <div>{line.pricingMode === 'quantity-rate' ? line.quantity ?? '' : ''}</div>}{quote.customerColumns.rate && <div>{line.pricingMode === 'quantity-rate' && line.rate !== undefined ? money.format(line.rate) : ''}</div>}{quote.customerColumns.lineAmount && <div className="customer-line-amount">{priced ? money.format(quoteLineTotal(line)) : ''}</div>}</div>;
+    return <div key={line.id} className={`customer-quote-row kind-${line.kind}`}><div className="customer-line-description">{line.description || '—'}</div>{quote.customerColumns.quantity && <div>{line.pricingMode === 'quantity-rate' ? line.quantity ?? '' : ''}</div>}{quote.customerColumns.rate && <div>{line.pricingMode === 'quantity-rate' && line.rate !== undefined ? money.format(line.rate) : ''}</div>}{quote.customerColumns.lineAmount && <div className="customer-line-amount">{priced ? money.format(quoteLineAmount(line)) : ''}</div>}</div>;
   });
+  const renderAreaSummary = (title: string, total: number) => <div className="customer-quote-row customer-area-summary-row"><div className="customer-line-description">{title}</div>{quote.customerColumns.quantity && <div />}{quote.customerColumns.rate && <div />}{quote.customerColumns.lineAmount && <div className="customer-line-amount">{money.format(total)}</div>}</div>;
   const looseLines = visibleLines.filter((line) => !line.sectionId || !visibleSections.some((section) => section.id === line.sectionId));
   const documentLabel = commercialDocumentLabel(quote);
   return (
     <article className="customer-quote-paper">
       <header className="customer-quote-letterhead"><div><CustomerDocumentBrand /><strong>{documentLabel.toUpperCase()}</strong></div><dl><div><dt>Document</dt><dd>{displayQuoteNumber(quote)}</dd></div><div><dt>Date</dt><dd>{quote.quoteDate}</dd></div></dl></header>
       <section className="customer-quote-recipient"><div><span>Prepared for</span><strong>{quote.companyName || quote.contactName || 'Customer'}</strong>{quote.contactName && quote.companyName && <p>{quote.contactName}</p>}{quote.address && <p>{quote.address}</p>}</div><div><span>Project</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div></section>
-      <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}><div className="customer-quote-row customer-quote-table-head"><div>Description</div>{quote.customerColumns.quantity && <div>Qty</div>}{quote.customerColumns.rate && <div>Rate</div>}{quote.customerColumns.lineAmount && <div>Amount</div>}</div>{renderLines(looseLines)}{visibleSections.map((section) => { const sectionLines = visibleLines.filter((line) => line.sectionId === section.id); if (!sectionLines.length) return null; return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{renderLines(sectionLines)}</div>; })}</div>
+      <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}><div className="customer-quote-row customer-quote-table-head"><div>Description</div>{quote.customerColumns.quantity && <div>Qty</div>}{quote.customerColumns.rate && <div>Rate</div>}{quote.customerColumns.lineAmount && <div>Amount</div>}</div>{renderLines(looseLines)}{visibleSections.map((section) => {
+        const allSectionLines = quote.lines.filter((line) => line.sectionId === section.id);
+        const sectionLines = visibleLines.filter((line) => line.sectionId === section.id);
+        if ((section.customerDisplayMode ?? 'detail') === 'summary') {
+          const total = quoteLinesTotal(allSectionLines);
+          if (!allSectionLines.length) return null;
+          return <div className="customer-quote-section is-summary" key={section.id}>{renderAreaSummary(section.title, total)}</div>;
+        }
+        if (!sectionLines.length) return null;
+        return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{renderLines(sectionLines)}</div>;
+      })}</div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
       <footer>{quote.status === 'Signed' ? 'Accepted electronically with SalesShop.' : `Prepared with SalesShop · Electronic acceptance is available for this ${documentLabel.toLowerCase()}.`}</footer>
