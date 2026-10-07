@@ -122,7 +122,19 @@ function readLocal(): CompanySettingsData {
 }
 
 function writeLocal(settings: CompanySettingsData) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(settings));
+  try {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(settings));
+    return;
+  } catch {
+    // Large supplier catalogs can exceed Safari/iOS localStorage quotas.
+    // Cloud mode remains authoritative; keep a lightweight fallback cache instead
+    // of allowing a local cache failure to masquerade as a failed cloud action.
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify({ ...settings, stockMaterials: [] }));
+    } catch {
+      // Local caching is best-effort only. Never block cloud-backed SalesShop work.
+    }
+  }
 }
 
 function dbPayload(settings: CompanySettingsData) {
