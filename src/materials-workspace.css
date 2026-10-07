@@ -1,0 +1,447 @@
+/* Dedicated supplier/material database workspace. */
+
+.materials-workspace .materials-reference-tools {
+  width: 100%;
+  margin-left: 0;
+}
+
+.materials-workspace .materials-reference-tools > input[type='search'] {
+  width: min(520px, 42vw);
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.materials-show-inactive {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6e675c;
+  font-size: 9px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.materials-show-inactive input {
+  width: 15px;
+  height: 15px;
+}
+
+.materials-editor-host {
+  max-width: 1480px;
+  margin: 0 auto 18px;
+}
+
+.materials-editor-host .material-rate-book {
+  gap: 0;
+}
+
+.materials-editor-host .material-catalog-card {
+  box-shadow: 0 4px 14px rgba(52, 44, 35, .05);
+}
+
+.materials-comparison-board {
+  position: sticky;
+  top: 0;
+  z-index: 14;
+  max-width: 1480px;
+  margin: 0 auto 10px;
+  border: 1px solid rgba(61, 54, 45, .15);
+  background: rgba(239, 235, 224, .96);
+  box-shadow: 0 5px 15px rgba(49, 42, 33, .08);
+  backdrop-filter: blur(8px);
+}
+
+.materials-comparison-board.has-pins {
+  border-color: rgba(148, 122, 50, .28);
+  background: rgba(248, 242, 220, .97);
+}
+
+.materials-comparison-board > header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(61, 54, 45, .1);
+}
+
+.materials-comparison-board > header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.materials-comparison-board > header strong {
+  color: #484139;
+  font-size: 11px;
+}
+
+.materials-comparison-board > header small {
+  color: #81796d;
+  font-size: 8px;
+}
+
+.materials-comparison-board > header button {
+  min-height: 31px;
+  padding: 0 9px;
+  border: 1px solid rgba(61, 54, 45, .15);
+  border-radius: 4px;
+  background: #fffdf7;
+  color: #665f54;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.materials-comparison-empty {
+  padding: 10px 12px;
+  color: #837b70;
+  font-size: 9px;
+}
+
+.materials-comparison-strip {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.materials-comparison-card {
+  position: relative;
+  flex: 0 0 250px;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid rgba(122, 101, 47, .2);
+  border-top: 3px solid #b99d45;
+  background: #fffdf6;
+}
+
+.materials-comparison-card > span {
+  padding-right: 22px;
+  overflow: hidden;
+  color: #847a69;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.materials-comparison-card > strong {
+  overflow: hidden;
+  color: #3f3931;
+  font: 700 14px/1.15 Georgia, 'Times New Roman', serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-comparison-card > b {
+  overflow: hidden;
+  color: #625a4e;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-comparison-card > small {
+  overflow: hidden;
+  color: #857d70;
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-comparison-card dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+  margin: 5px 0;
+}
+
+.materials-comparison-card dl > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.materials-comparison-card dt {
+  color: #8a8173;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.materials-comparison-card dd {
+  margin: 0;
+  overflow: hidden;
+  color: #4c463d;
+  font-size: 9px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-unpin {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: #8e7967;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.materials-reference-table {
+  min-width: 1160px;
+}
+
+.materials-reference-table tr.is-expanded > td {
+  background: #fff9e9;
+  box-shadow: inset 0 -1px rgba(169, 137, 48, .2);
+}
+
+.materials-reference-table tr.has-pinned-variant > td {
+  background: rgba(248, 242, 216, .86);
+}
+
+.materials-reference-table tr.has-pinned-variant > td:first-child {
+  box-shadow: inset 3px 0 #b89a3c;
+}
+
+.materials-cell-note,
+.materials-default-spec small {
+  display: block;
+  margin-top: 2px;
+  color: #8b8377;
+  font-size: 8px;
+  font-weight: 500;
+  text-align: inherit;
+}
+
+.materials-default-spec {
+  min-width: 210px;
+}
+
+.materials-default-spec strong,
+.materials-default-spec small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-default-spec strong {
+  color: #4d473e;
+  font-size: 10px;
+}
+
+.materials-variant-toggle-cell {
+  min-width: 110px;
+  padding: 4px 6px !important;
+}
+
+.materials-variant-toggle-cell button {
+  width: 100%;
+  min-height: 31px;
+  border: 1px solid rgba(64, 56, 46, .14);
+  border-radius: 4px;
+  background: #f2eee4;
+  color: #625a50;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.materials-variant-toggle-cell button.active {
+  border-color: rgba(159, 130, 47, .28);
+  background: #f7eecb;
+  color: #655422;
+}
+
+.materials-variant-expanded-row > td {
+  padding: 0 !important;
+  background: #eee9dc !important;
+}
+
+.materials-variant-browser {
+  display: grid;
+  gap: 5px;
+  padding: 7px;
+}
+
+.materials-variant-line {
+  display: grid;
+  grid-template-columns: 58px minmax(180px, 1.25fr) minmax(120px, .75fr) minmax(130px, .8fr) minmax(120px, .7fr) minmax(280px, 1.5fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 930px;
+  padding: 8px;
+  border: 1px solid rgba(67, 59, 49, .11);
+  background: #f8f4e9;
+}
+
+.materials-variant-line.is-pinned {
+  border-color: rgba(165, 132, 43, .32);
+  background: #fff8dc;
+  box-shadow: inset 3px 0 #b99a3d;
+}
+
+.materials-pin-button {
+  min-height: 30px;
+  border: 1px solid rgba(64, 56, 46, .15);
+  border-radius: 4px;
+  background: #fffdf7;
+  color: #6f675c;
+  font-size: 8px;
+  font-weight: 850;
+}
+
+.materials-pin-button.is-pinned {
+  border-color: #aa8c36;
+  background: #e8d47d;
+  color: #44391d;
+}
+
+.materials-variant-identity,
+.materials-variant-line > div:not(.materials-price-program-list) {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.materials-variant-line > div > span {
+  color: #847b6d;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.materials-variant-line > div > strong {
+  overflow: hidden;
+  color: #494238;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-variant-line > div > small {
+  overflow: hidden;
+  color: #8b8274;
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-variant-identity > strong {
+  font-size: 10px !important;
+}
+
+.materials-variant-default-cost > strong {
+  color: #4d6248 !important;
+  font-size: 11px !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.materials-price-program-list {
+  min-width: 0;
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+}
+
+.materials-price-program-list > div {
+  flex: 0 0 128px;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  padding: 5px 7px;
+  border-left: 2px solid rgba(80, 104, 72, .18);
+  background: rgba(255, 254, 249, .7);
+}
+
+.materials-price-program-list > div.is-default {
+  border-left-color: #81966d;
+  background: rgba(235, 242, 229, .86);
+}
+
+.materials-price-program-list span,
+.materials-price-program-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-price-program-list span {
+  color: #796f61;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.materials-price-program-list strong {
+  color: #455a42;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.materials-price-program-list small {
+  color: #8b8377;
+  font-size: 7px;
+}
+
+.materials-variant-empty {
+  min-width: 900px;
+  padding: 16px;
+  border: 1px dashed rgba(69, 61, 49, .15);
+  background: rgba(255, 253, 247, .7);
+  color: #7d7569;
+  font-size: 9px;
+}
+
+@media (max-width: 980px) {
+  .materials-workspace .materials-reference-tools > input[type='search'] {
+    width: 100%;
+  }
+
+  .materials-variant-line {
+    grid-template-columns: 58px minmax(170px, 1.2fr) minmax(120px, .8fr) minmax(120px, .8fr) minmax(120px, .75fr) minmax(250px, 1.4fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .materials-show-inactive {
+    order: 3;
+    width: 100%;
+  }
+
+  .materials-controls {
+    gap: 7px;
+  }
+
+  .materials-comparison-board {
+    top: 0;
+    margin-bottom: 8px;
+  }
+
+  .materials-comparison-board > header {
+    align-items: flex-start;
+  }
+
+  .materials-comparison-card {
+    flex-basis: 220px;
+  }
+
+  .materials-reference-card > header > span {
+    max-width: 100%;
+  }
+
+  .materials-editor-host {
+    margin-bottom: 72px;
+  }
+}
