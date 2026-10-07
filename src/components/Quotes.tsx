@@ -489,11 +489,30 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
   const [draggingLineId, setDraggingLineId] = useState<string | null>(null);
+  const [draggingSectionId, setDraggingSectionId] = useState<string | null>(null);
+  const [metaPanel, setMetaPanel] = useState<'document' | 'project' | 'visibility' | null>(null);
+  const [issueCursor, setIssueCursor] = useState(0);
+  const metaHostRef = useRef<HTMLElement>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const pricingSchedule = quote.documentType === 'pricing-schedule';
   const commerciallyEditable = quoteIsCommerciallyEditable(quote);
   const effectiveMode: QuoteViewMode = pricingSchedule && mode === 'split' ? 'edit' : mode;
   const viewModes: QuoteViewMode[] = pricingSchedule ? ['edit', 'workbook', 'customer'] : ['edit', 'split', 'customer'];
+
+  const guideMultiplier = useMaterialLevelGuideStore((state) => state.guide.slabPricingMultiplier);
+  const customerVisibilitySummary = [
+    quote.customerColumns.quantity ? 'Qty' : undefined,
+    quote.customerColumns.rate ? 'Rate' : undefined,
+    quote.customerColumns.lineAmount ? 'Amount' : undefined,
+  ].filter(Boolean).join(' · ') || 'Description only';
+  const projectDetailsSummary = [quote.title, quote.companyName || quote.contactName].filter(Boolean).join(' · ');
+  const issueLineIds = quote.lines
+    .filter((line) => quoteLineReminderLabels(
+      line,
+      quoteLinePricingComplete(line, guideMultiplier),
+      Boolean(resolveLineAreaScopeState(quote, line)?.changed),
+    ).length > 0)
+    .map((line) => line.id);
 
   useEffect(() => {
     const handleHistoryShortcut = (event: KeyboardEvent) => {
@@ -506,6 +525,36 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     window.addEventListener('keydown', handleHistoryShortcut);
     return () => window.removeEventListener('keydown', handleHistoryShortcut);
   }, [quote.id, undoQuote, redoQuote]);
+
+  useEffect(() => {
+    if (!metaPanel) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!metaHostRef.current?.contains(event.target as Node)) setMetaPanel(null);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [metaPanel]);
+
+  useEffect(() => {
+    setIssueCursor(0);
+    setMetaPanel(null);
+  }, [quote.id]);
+
+  const collapseAll = () => {
+    setMetaPanel(null);
+    window.dispatchEvent(new Event('sales-shop:quote-collapse-all'));
+  };
+
+  const focusNextIssue = () => {
+    if (!issueLineIds.length) return;
+    const lineId = issueLineIds[issueCursor % issueLineIds.length];
+    setIssueCursor((current) => current + 1);
+    collapseAll();
+    window.setTimeout(() => {
+      document.querySelector(`[data-quote-line-id="${lineId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window.dispatchEvent(new CustomEvent('sales-shop:quote-focus-line', { detail: { lineId } }));
+    }, 40);
+  };
 
   const setDocumentType = (documentType: CommercialDocumentType) => {
     updateQuote(quote.id, { documentType, ...(documentType === 'pricing-schedule' && !quote.pricingSchedule ? { pricingSchedule: createPricingScheduleData(quote.id) } : {}) });
@@ -541,6 +590,18 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
     const lines = [...quote.lines];
     [lines[fromIndex], lines[targetIndex]] = [lines[targetIndex], lines[fromIndex]];
     updateQuote(quote.id, { lines });
+  };
+
+  const reorderSection = (sectionId: string, targetSectionId: string) => {
+    if (sectionId === targetSectionId) return;
+    const sections = [...quote.sections];
+    const fromIndex = sections.findIndex((section) => section.id === sectionId);
+    const targetIndex = sections.findIndex((section) => section.id === targetSectionId);
+    if (fromIndex < 0 || targetIndex < 0) return;
+    const [moved] = sections.splice(fromIndex, 1);
+    if (!moved) return;
+    sections.splice(targetIndex, 0, moved);
+    updateQuote(quote.id, { sections });
   };
 
   const beginPricingSwipe = (event: TouchEvent<HTMLDivElement>) => {
@@ -603,9 +664,11 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
           {quote.documentType === 'change-order' && parent && <small>Changes original agreement {displayQuoteNumber(parent)}</small>}
         </div>
         <div className="quote-header-actions">
-          <div className="quote-undo-redo" aria-label="Quote edit history">
+          <div className="quote-undo-redo" aria-label="Quote editing tools">
             <button type="button" disabled={!commerciallyEditable || undoDepth === 0} onClick={() => undoQuote(quote.id)} title="Undo last quote edit">↶</button>
-            <button type="button" disabled={!commerciallyEditable || redoDepth === 0} onClick={() => redoQuote(quote.id)} title="Redo quote edit">↷</button>
+            <button type="button" disabled={!commerciallyEditable || redoDepth === 0} onClick={() => redoQuote(quote.id)} title={redoDepth ? 'Redo quote edit' : 'Redo becomes available after Undo'}>↷</button>
+            <button type="button" onClick={collapseAll} title="Collapse all open quote controls" aria-label="Collapse all open quote controls">⌃</button>
+            <button type="button" disabled={!issueLineIds.length} onClick={focusNextIssue} title={issueLineIds.length ? `Go to next quote issue · ${issueLineIds.length} open` : 'No quote issues'} aria-label="Go to next quote issue">!</button>
           </div>
           <div className="quote-view-switch" aria-label="Document view">
             {viewModes.map((viewMode) => <button type="button" key={viewMode} className={effectiveMode === viewMode ? 'active' : ''} onClick={() => onModeChange(viewMode)}>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</button>)}
@@ -659,37 +722,60 @@ function QuoteEditor({ quote, mode, onModeChange }: { quote: Quote; mode: QuoteV
       <div className={`quote-workbench-body ${pricingSchedule ? 'is-swipeable' : ''}`} onTouchStart={beginPricingSwipe} onTouchEnd={finishPricingSwipe} onTouchCancel={() => { swipeStart.current = null; }}>
         {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingScheduleWorkbook quote={quote} /></div> : effectiveMode !== 'customer' ? (
           <div className="quote-editor-pane">
-            <section className="quote-details-grid">
-              <details className="quote-document-setup">
-                <summary>
-                  <span className="quote-document-setup-heading">Document setup</span>
-                  <span className="quote-document-setup-summary">{setupTypeLabel} · {quote.status} · {setupDateLabel}</span>
-                  <span className="quote-document-setup-chevron" aria-hidden="true">⌄</span>
-                </summary>
-                <div className="quote-document-setup-body">
-                  <div className="quote-document-type-row">
-                    <span>Document type</span>
-                    <div className="quote-document-type-switch" role="group" aria-label="Document type">
-                      {quote.documentType === 'change-order' ? (
-                        <button type="button" className="active" disabled>Change Order</button>
-                      ) : (
-                        <>
-                          <button type="button" className={quote.documentType === 'quote' ? 'active' : ''} disabled={documentTypeLocked} onClick={() => setDocumentType('quote')}>Quick Quote</button>
-                          <button type="button" className={quote.documentType === 'pricing-schedule' ? 'active' : ''} disabled={documentTypeLocked} onClick={() => setDocumentType('pricing-schedule')}>Pricing Schedule</button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="quote-document-meta-fields">
-                    <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={(status === 'Signed' && quote.status !== 'Signed') || (status === 'Sent' && quote.status !== 'Sent')}>{status}</option>)}</select></label>
-                    <label><span>Document date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
+            <section className="quote-configuration-strip" ref={metaHostRef}>
+              <button type="button" className={metaPanel === 'document' ? 'active' : ''} onClick={() => setMetaPanel((current) => current === 'document' ? null : 'document')}>
+                <span>Document setup</span>
+                <small>{setupTypeLabel} · {quote.status} · {setupDateLabel}</small>
+              </button>
+              <button type="button" className={metaPanel === 'project' ? 'active' : ''} onClick={() => setMetaPanel((current) => current === 'project' ? null : 'project')}>
+                <span>Project details</span>
+                <small>{projectDetailsSummary || 'Project · customer · contact'}</small>
+              </button>
+              {!pricingSchedule && <button type="button" className={metaPanel === 'visibility' ? 'active' : ''} onClick={() => setMetaPanel((current) => current === 'visibility' ? null : 'visibility')}>
+                <span>Customer visibility</span>
+                <small>{customerVisibilitySummary}</small>
+              </button>}
+
+              {metaPanel === 'document' && <div className="quote-config-popover is-document">
+                <div className="quote-config-popover-heading"><strong>Document setup</strong><small>Choose the document behavior, then click away.</small></div>
+                <div className="quote-document-type-row">
+                  <span>Document type</span>
+                  <div className="quote-document-type-switch" role="group" aria-label="Document type">
+                    {quote.documentType === 'change-order' ? (
+                      <button type="button" className="active" disabled>Change Order</button>
+                    ) : (
+                      <>
+                        <button type="button" className={quote.documentType === 'quote' ? 'active' : ''} disabled={documentTypeLocked} onClick={() => setDocumentType('quote')}>Quick Quote</button>
+                        <button type="button" className={quote.documentType === 'pricing-schedule' ? 'active' : ''} disabled={documentTypeLocked} onClick={() => setDocumentType('pricing-schedule')}>Pricing Schedule</button>
+                      </>
+                    )}
                   </div>
                 </div>
-              </details>
-              <label className="quote-revision-label-field"><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Option A, VE alternate…" /></label>
-              <QuoteCrmFields quote={quote} />
+                <div className="quote-document-meta-fields">
+                  <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={(status === 'Signed' && quote.status !== 'Signed') || (status === 'Sent' && quote.status !== 'Sent')}>{status}</option>)}</select></label>
+                  <label><span>Document date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
+                </div>
+              </div>}
+
+              {metaPanel === 'project' && <div className="quote-config-popover is-project">
+                <div className="quote-config-popover-heading"><strong>Project details</strong><small>CRM links and project context stay tucked away after selection.</small></div>
+                <div className="quote-project-details-grid">
+                  <QuoteCrmFields quote={quote} />
+                  <label className="quote-revision-label-field"><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Option A, VE alternate…" /></label>
+                </div>
+              </div>}
+
+              {metaPanel === 'visibility' && !pricingSchedule && <div className="quote-config-popover is-visibility">
+                <div className="quote-config-popover-heading"><strong>Customer visibility</strong><small>Choose how much pricing detail appears on the customer document.</small></div>
+                <div className="quote-customer-visibility-options">
+                  <label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> <span>Quantity column</span></label>
+                  <label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> <span>Rate column</span></label>
+                  <label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> <span>Line amount</span></label>
+                </div>
+                <small className="quote-config-footnote">Area and line visibility stay independent from these column choices.</small>
+              </div>}
             </section>
-            {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-customer-controls"><div><span className="quote-control-heading">Customer columns</span><small>Keep the sent document minimal or expose pricing detail.</small></div><label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> Qty</label><label><input type="checkbox" checked={quote.customerColumns.rate} onChange={(event) => setCustomerColumns(quote.id, { rate: event.target.checked })} /> Rate</label><label><input type="checkbox" checked={quote.customerColumns.lineAmount} onChange={(event) => setCustomerColumns(quote.id, { lineAmount: event.target.checked })} /> Line amount</label></section><section className="quote-lines-editor">
+            {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-lines-editor">
   <header><div><span className="quote-control-heading">{documentLabel} areas & scope</span><small>Organize the job by Kitchen, Bath, Unit Type, Clubhouse, or any other pricing area.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
   {generalLines.length > 0 && <div className="quote-area-card quote-area-general" onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, undefined); setDraggingLineId(null); } }}><div className="quote-area-general-header"><div><span>General</span><small>Rows not assigned to a specific area</small></div><strong>{money.format(quoteLinesTotal(generalLines))}</strong></div><div className="quote-area-lines">{generalLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} onMoveBy={moveLineBy} />)}</div></div>}
   {quote.sections.map((section) => { const areaLines = linesForArea(section.id); return <div className="quote-area-card" key={section.id} onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, section.id); setDraggingLineId(null); } }}><AreaEditor quote={quote} sectionId={section.id} lines={areaLines} onAddLine={addAreaLine} /><div className="quote-area-lines">{areaLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} onMoveBy={moveLineBy} />)}{!areaLines.length && <div className="quote-area-empty">No scope yet. Add a material, priced line, or scope note for this area.</div>}</div></div>; })}
