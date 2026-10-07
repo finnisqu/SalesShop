@@ -80,6 +80,18 @@ export function QuoteMaterialLineFields({ quoteId, line, editSignal = 0 }: { quo
     setSearching(true);
   }, [editSignal, line.materialReference?.materialId]);
 
+  useEffect(() => {
+    const collapse = () => {
+      if (!line.materialReference?.materialId && !line.materialReference?.customMaterialName) return;
+      setSearching(false);
+      setPendingMaterialId(null);
+      setPendingVariantId(null);
+      setSearch('');
+    };
+    window.addEventListener('sales-shop:quote-collapse-all', collapse);
+    return () => window.removeEventListener('sales-shop:quote-collapse-all', collapse);
+  }, [line.materialReference?.materialId, line.materialReference?.customMaterialName]);
+
   const activeMaterials = useMemo(
     () => materials.filter((material) => material.active),
     [materials],
