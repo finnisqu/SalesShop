@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import {
   EMPTY_COMPANY_SETTINGS,
+  materialFamilyForType,
   type CompanySettingsData,
   type MaterialPurchaseOption,
   type MaterialVariant,
@@ -90,6 +91,7 @@ function normalizeStockMaterial(raw: Partial<StockMaterial>, index: number): Sto
     collection: raw.collection,
     supplierGroup: raw.supplierGroup,
     sku: raw.sku,
+    materialFamily: raw.materialFamily ?? materialFamilyForType(raw.materialType ?? 'Granite'),
     materialType: raw.materialType ?? 'Granite',
     stockProgram: raw.stockProgram ?? true,
     internalCost: typeof raw.internalCost === 'number' ? raw.internalCost : undefined,
@@ -228,6 +230,7 @@ export const useCompanySettingsStore = create<CompanySettingsState>((set, get) =
     const material: StockMaterial = {
       id,
       name: 'New material color',
+      materialFamily: 'Engineered Surfaces',
       materialType: 'Quartz',
       stockProgram: false,
       unit: 'sf',
