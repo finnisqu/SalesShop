@@ -54,7 +54,7 @@ export interface RateBookDocument {
 export const RATE_BOOK_CATEGORY_LABELS: Record<RateBookCategory, string> = {
   material: 'Materials',
   'fabrication-install': 'Fabrication & Install',
-  sink: 'Sinks',
+  sink: 'Sink Services',
   'add-on': 'Add-ons',
 };
 
