@@ -350,7 +350,7 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
             <div className="supplier-import-profile-panel">
               <div className="supplier-import-profile-select supplier-import-profile-static">
                 <span>Import contract</span>
-                <strong>SalesShop Material Template v1.0</strong>
+                <strong>SalesShop Material Template v1.1</strong>
               </div>
               {activeProfile && (
                 <div className="supplier-import-profile-summary">
