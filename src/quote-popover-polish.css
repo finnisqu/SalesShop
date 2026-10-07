@@ -756,3 +756,247 @@
     width: calc(100% - 8px) !important;
   }
 }
+
+
+/* Generic quote rows rebuilt after removal of the old handle/area-selector columns.
+   These rules intentionally sit last so every +Line/+Scope/+Warranty/+Tax/etc.
+   has a stable layout in Edit, Split, and narrow panes. */
+
+/* Catalog rows use the same outer shell whether or not a Catalog choice exists yet. */
+.quote-line-editor.is-catalog-line,
+.view-split .quote-line-editor.is-catalog-line {
+  min-height: 52px;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  grid-template-rows: auto;
+  align-items: start;
+  column-gap: 5px;
+  row-gap: 0;
+  padding: 5px 7px 5px 9px;
+}
+
+.quote-line-editor.is-catalog-line > .quote-line-main,
+.view-split .quote-line-editor.is-catalog-line > .quote-line-main {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.quote-line-editor.is-catalog-line > .quote-line-delete,
+.view-split .quote-line-editor.is-catalog-line > .quote-line-delete {
+  grid-column: 2;
+  grid-row: 1;
+  width: 18px;
+  height: 22px;
+  align-self: start;
+}
+
+/* Priced manual rows: Line, Tax, Allowance and Discount. */
+.quote-line-editor.kind-item:not(.is-catalog-line),
+.quote-line-editor.kind-tax:not(.is-catalog-line),
+.quote-line-editor.kind-allowance:not(.is-catalog-line),
+.quote-line-editor.kind-discount:not(.is-catalog-line) {
+  min-height: 52px;
+  grid-template-columns: minmax(180px, 1fr) auto 18px;
+  grid-template-rows: auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 0;
+  padding: 6px 7px 6px 10px;
+}
+
+.quote-line-editor.kind-item:not(.is-catalog-line) > .quote-line-main,
+.quote-line-editor.kind-tax:not(.is-catalog-line) > .quote-line-main,
+.quote-line-editor.kind-allowance:not(.is-catalog-line) > .quote-line-main,
+.quote-line-editor.kind-discount:not(.is-catalog-line) > .quote-line-main {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.quote-line-editor.kind-item:not(.is-catalog-line) > .quote-line-pricing,
+.quote-line-editor.kind-tax:not(.is-catalog-line) > .quote-line-pricing,
+.quote-line-editor.kind-allowance:not(.is-catalog-line) > .quote-line-pricing,
+.quote-line-editor.kind-discount:not(.is-catalog-line) > .quote-line-pricing {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  width: auto;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+}
+
+.quote-line-editor.kind-item:not(.is-catalog-line) > .quote-line-delete,
+.quote-line-editor.kind-tax:not(.is-catalog-line) > .quote-line-delete,
+.quote-line-editor.kind-allowance:not(.is-catalog-line) > .quote-line-delete,
+.quote-line-editor.kind-discount:not(.is-catalog-line) > .quote-line-delete {
+  grid-column: 3;
+  grid-row: 1;
+  width: 18px;
+  height: 22px;
+  align-self: start;
+}
+
+.quote-line-editor.kind-item:not(.is-catalog-line) .quote-line-topline,
+.quote-line-editor.kind-tax:not(.is-catalog-line) .quote-line-topline,
+.quote-line-editor.kind-allowance:not(.is-catalog-line) .quote-line-topline,
+.quote-line-editor.kind-discount:not(.is-catalog-line) .quote-line-topline {
+  margin-bottom: 0;
+}
+
+.quote-line-editor.kind-item:not(.is-catalog-line) .quote-line-main textarea,
+.quote-line-editor.kind-tax:not(.is-catalog-line) .quote-line-main textarea,
+.quote-line-editor.kind-allowance:not(.is-catalog-line) .quote-line-main textarea,
+.quote-line-editor.kind-discount:not(.is-catalog-line) .quote-line-main textarea {
+  min-height: 24px;
+  height: 24px;
+  padding: 2px;
+  resize: none;
+}
+
+/* Text-only rows keep their small visibility dot, then give the writing surface all remaining width. */
+.quote-line-editor.kind-scope,
+.quote-line-editor.kind-warranty,
+.quote-line-editor.kind-note,
+.view-split .quote-line-editor.kind-scope,
+.view-split .quote-line-editor.kind-warranty,
+.view-split .quote-line-editor.kind-note {
+  min-height: 48px;
+  grid-template-columns: 18px minmax(0, 1fr) 18px;
+  grid-template-rows: auto;
+  align-items: center;
+  column-gap: 7px;
+  padding: 6px 7px 6px 7px;
+}
+
+.quote-line-editor.kind-scope > .quote-visibility,
+.quote-line-editor.kind-warranty > .quote-visibility,
+.quote-line-editor.kind-note > .quote-visibility {
+  grid-column: 1;
+  grid-row: 1;
+  width: 18px;
+  height: 18px;
+  align-self: center;
+}
+
+.quote-line-editor.kind-scope > .quote-line-main,
+.quote-line-editor.kind-warranty > .quote-line-main,
+.quote-line-editor.kind-note > .quote-line-main {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.quote-line-editor.kind-scope > .quote-line-delete,
+.quote-line-editor.kind-warranty > .quote-line-delete,
+.quote-line-editor.kind-note > .quote-line-delete {
+  grid-column: 3;
+  grid-row: 1;
+  width: 18px;
+  height: 22px;
+}
+
+.quote-line-editor.kind-scope .quote-line-topline,
+.quote-line-editor.kind-warranty .quote-line-topline,
+.quote-line-editor.kind-note .quote-line-topline {
+  margin-bottom: 0;
+}
+
+.quote-line-editor.kind-scope .quote-line-main textarea,
+.quote-line-editor.kind-warranty .quote-line-main textarea,
+.quote-line-editor.kind-note .quote-line-main textarea {
+  min-height: 28px;
+  height: 28px;
+  padding: 2px;
+  resize: vertical;
+}
+
+/* Private manual cost belongs under that row's pricing controls, not in a tiny legacy column. */
+.quote-line-editor.kind-item:not(.is-catalog-line) .quote-line-pricing.has-internal-cost {
+  max-width: 360px;
+}
+
+.quote-line-editor.kind-item:not(.is-catalog-line) .quote-internal-cost-input {
+  min-width: 220px;
+}
+
+/* Narrow editor panes stack the calculator below the writing surface instead of squeezing either. */
+@media (max-width: 820px) {
+  .quote-line-editor.kind-item:not(.is-catalog-line),
+  .quote-line-editor.kind-tax:not(.is-catalog-line),
+  .quote-line-editor.kind-allowance:not(.is-catalog-line),
+  .quote-line-editor.kind-discount:not(.is-catalog-line),
+  .view-split .quote-line-editor.kind-item:not(.is-catalog-line),
+  .view-split .quote-line-editor.kind-tax:not(.is-catalog-line),
+  .view-split .quote-line-editor.kind-allowance:not(.is-catalog-line),
+  .view-split .quote-line-editor.kind-discount:not(.is-catalog-line) {
+    grid-template-columns: minmax(0, 1fr) 18px;
+    grid-template-rows: auto auto;
+    align-items: start;
+    row-gap: 3px;
+  }
+
+  .quote-line-editor.kind-item:not(.is-catalog-line) > .quote-line-main,
+  .quote-line-editor.kind-tax:not(.is-catalog-line) > .quote-line-main,
+  .quote-line-editor.kind-allowance:not(.is-catalog-line) > .quote-line-main,
+  .quote-line-editor.kind-discount:not(.is-catalog-line) > .quote-line-main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .quote-line-editor.kind-item:not(.is-catalog-line) > .quote-line-pricing,
+  .quote-line-editor.kind-tax:not(.is-catalog-line) > .quote-line-pricing,
+  .quote-line-editor.kind-allowance:not(.is-catalog-line) > .quote-line-pricing,
+  .quote-line-editor.kind-discount:not(.is-catalog-line) > .quote-line-pricing {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    justify-content: flex-start;
+    padding-top: 3px;
+  }
+
+  .quote-line-editor.kind-item:not(.is-catalog-line) > .quote-line-delete,
+  .quote-line-editor.kind-tax:not(.is-catalog-line) > .quote-line-delete,
+  .quote-line-editor.kind-allowance:not(.is-catalog-line) > .quote-line-delete,
+  .quote-line-editor.kind-discount:not(.is-catalog-line) > .quote-line-delete {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .quote-line-editor.kind-item:not(.is-catalog-line) .quote-line-pricing.has-internal-cost {
+    max-width: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .quote-line-editor.kind-scope,
+  .quote-line-editor.kind-warranty,
+  .quote-line-editor.kind-note,
+  .view-split .quote-line-editor.kind-scope,
+  .view-split .quote-line-editor.kind-warranty,
+  .view-split .quote-line-editor.kind-note {
+    grid-template-columns: 16px minmax(0, 1fr) 18px;
+    column-gap: 5px;
+    padding-left: 5px;
+  }
+
+  .quote-line-editor.kind-item:not(.is-catalog-line) .quote-line-pricing,
+  .quote-line-editor.kind-tax:not(.is-catalog-line) .quote-line-pricing,
+  .quote-line-editor.kind-allowance:not(.is-catalog-line) .quote-line-pricing,
+  .quote-line-editor.kind-discount:not(.is-catalog-line) .quote-line-pricing {
+    gap: 4px;
+  }
+
+  .quote-line-editor.kind-item:not(.is-catalog-line) .quote-line-pricing > select,
+  .quote-line-editor.kind-tax:not(.is-catalog-line) .quote-line-pricing > select,
+  .quote-line-editor.kind-allowance:not(.is-catalog-line) .quote-line-pricing > select,
+  .quote-line-editor.kind-discount:not(.is-catalog-line) .quote-line-pricing > select {
+    width: 84px;
+  }
+}
