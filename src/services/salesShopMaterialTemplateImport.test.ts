@@ -3,6 +3,7 @@ import type { StockMaterial } from '../types/settings';
 import { buildSupplierImportPublishPlan } from './supplierImportCatalog';
 import {
   SALESSHOP_TEMPLATE_HEADERS,
+  SALESSHOP_TEMPLATE_HEADERS_V1_0,
   SALESSHOP_TEMPLATE_PARSER_ID,
   stageSalesShopMaterialTemplate,
 } from './salesShopMaterialTemplateImport';
@@ -13,6 +14,7 @@ const baseRow: TemplateRow = {
   Include: 'Yes',
   'Supplier / Importer': 'UMI',
   'Brand / Manufacturer': 'Vicostone',
+  'Material Family': 'Engineered Surfaces',
   'Material Type': 'Quartz',
   'Color / Product Name': 'Akoya',
   'Collection / Series': 'Classic',
@@ -65,9 +67,11 @@ async function makeTemplateFile(
   ].forEach((row) => meta.addRow(row));
 
   const imports = workbook.addWorksheet('IMPORT_ROWS');
-  imports.addRow([...SALESSHOP_TEMPLATE_HEADERS]);
+  const templateVersion = options.templateVersion ?? '1.1';
+  const headers = templateVersion === '1.0' ? SALESSHOP_TEMPLATE_HEADERS_V1_0 : SALESSHOP_TEMPLATE_HEADERS;
+  imports.addRow([...headers]);
   rows.forEach((source) => {
-    imports.addRow(SALESSHOP_TEMPLATE_HEADERS.map((header) => source[header] ?? ''));
+    imports.addRow(headers.map((header) => source[header] ?? ''));
   });
 
   const rules = workbook.addWorksheet('SOURCE_RULES');
@@ -75,7 +79,7 @@ async function makeTemplateFile(
   if (options.rule) rules.addRow(['Yes', 'UMI', 'Vicostone', 'Batch', '', 'Minimum Quantity', options.rule, '2026-10-01', 'UMI-Oct-2026.pdf', 'Page 1', 'Terms', 'Yes']);
 
   const buffer = await workbook.xlsx.writeBuffer();
-  return new File([new Uint8Array(buffer as ArrayBuffer)], 'SalesShop_Material_Import_Template_v1.0.xlsx', {
+  return new File([new Uint8Array(buffer as ArrayBuffer)], 'SalesShop_Material_Import_Template_v1.1.xlsx', {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
 }
@@ -149,6 +153,7 @@ describe('SalesShop canonical material template importer', () => {
       name: 'Akoya',
       supplier: 'UMI',
       brand: 'Vicostone',
+      materialFamily: 'Engineered Surfaces',
       materialType: 'Quartz',
       stockProgram: false,
     });
@@ -166,7 +171,7 @@ describe('SalesShop canonical material template importer', () => {
     });
   });
 
-  it('uses canonical Brand + Type + Color identity when SKU is absent', async () => {
+  it('uses canonical Brand + Family + Type + Color identity when SKU is absent', async () => {
     const withoutSku = {
       ...baseRow,
       'Material SKU': '',
@@ -216,6 +221,42 @@ describe('SalesShop canonical material template importer', () => {
     expect(session.candidates[0].material.supplierGroup).toBe('B');
     expect(session.candidates[0].material.variants).toHaveLength(2);
     expect(session.candidates[0].status).toBe('new');
+  });
+
+  it('accepts Natural Stone as a safe fallback type when geology is unverified', async () => {
+    const file = await makeTemplateFile([{
+      ...baseRow,
+      'Brand / Manufacturer': 'Scalea',
+      'Material Family': 'Natural Stone',
+      'Material Type': 'Natural Stone',
+      'Color / Product Name': 'White Napoli',
+    }]);
+    const session = await stageSalesShopMaterialTemplate(file, []);
+    expect(session.candidates[0].material).toMatchObject({
+      brand: 'Scalea',
+      materialFamily: 'Natural Stone',
+      materialType: 'Natural Stone',
+      name: 'White Napoli',
+    });
+  });
+
+  it('rejects a v1.1 family/type mismatch instead of accepting bad taxonomy', async () => {
+    const file = await makeTemplateFile([{
+      ...baseRow,
+      'Material Family': 'Natural Stone',
+      'Material Type': 'Quartz',
+    }]);
+    await expect(stageSalesShopMaterialTemplate(file, []))
+      .rejects.toThrow(/does not match Material Type/i);
+  });
+
+  it('keeps v1.0 templates backward compatible by deriving Material Family', async () => {
+    const legacyRow = { ...baseRow };
+    delete legacyRow['Material Family'];
+    const file = await makeTemplateFile([legacyRow], { templateVersion: '1.0' });
+    const session = await stageSalesShopMaterialTemplate(file, []);
+    expect(session.candidates[0].material.materialFamily).toBe('Engineered Surfaces');
+    expect(session.candidates[0].material.materialType).toBe('Quartz');
   });
 
   it('treats a supplier change as an update to the same branded material', async () => {
@@ -340,7 +381,7 @@ describe('SalesShop canonical material template importer', () => {
   it('rejects an unsupported workbook version before staging anything', async () => {
     const file = await makeTemplateFile([baseRow], { templateVersion: '2.0' });
     await expect(stageSalesShopMaterialTemplate(file, []))
-      .rejects.toThrow(/expects v1\.0/i);
+      .rejects.toThrow(/supports v1\.0 and v1\.1/i);
   });
 
   it('rejects blocking included-row errors instead of silently skipping bad pricing', async () => {
