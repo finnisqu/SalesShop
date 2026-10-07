@@ -1,5 +1,4 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { SupplierImportMappingWorkspace } from './SupplierImportMappingWorkspace';
 import { fetchSupplierImportPublicationHistory, publishSupplierImport, type SupplierImportPublicationHistoryRow } from '../services/supplierImportPublisher';
 import {
   getSupplierImportParser,
@@ -17,7 +16,6 @@ import type {
 } from '../types/supplierImport';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-const NEW_MAPPED_PROFILE_ID = '__new-mapped-supplier__';
 
 type StatusFilter = 'all' | SupplierImportStatus | 'warnings';
 
@@ -244,8 +242,8 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
     setEffectiveDateDraft(session?.source.effectiveDate ?? '');
     const matchingProfile = session
       ? supplierImportProfiles.find((profile) => profile.parserId === session.source.parserId
-        && profile.supplier === session.source.supplier
-        && profile.brand === session.source.brand)
+        && (!profile.supplier || profile.supplier === session.source.supplier)
+        && (!profile.brand || profile.brand === session.source.brand))
       : undefined;
     if (matchingProfile) setSelectedProfileId(matchingProfile.id);
     setReviewMode(false);
@@ -254,10 +252,9 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
     setPublishError(null);
   }, [session?.id, session?.source.effectiveDate]);
 
-  const mappingMode = selectedProfileId === NEW_MAPPED_PROFILE_ID;
   const activeProfile = useMemo(
-    () => mappingMode ? undefined : supplierImportProfiles.find((profile) => profile.id === selectedProfileId) ?? supplierImportProfiles[0],
-    [selectedProfileId, mappingMode],
+    () => supplierImportProfiles.find((profile) => profile.id === selectedProfileId) ?? supplierImportProfiles[0],
+    [selectedProfileId],
   );
   const activeParser = useMemo(
     () => activeProfile ? getSupplierImportParser(activeProfile.parserId) : undefined,
@@ -359,49 +356,46 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
             <p>Clean supplier data is ready automatically. Management is interrupted only when SalesShop sees something that deserves judgment.</p>
           </div>
           <div className="supplier-import-header-actions">
-            <span className="supplier-import-review-badge">Importer v4 · mapping foundation</span>
+            <span className="supplier-import-review-badge">Importer v4 · canonical template</span>
             <button type="button" onClick={onClose}>Close</button>
           </div>
         </header>
 
         <div className="supplier-import-body">
-          {mappingMode ? (
-            <SupplierImportMappingWorkspace onBack={() => setSelectedProfileId(supplierImportProfiles[0]?.id ?? '')} />
-          ) : (
-            <section className="supplier-import-source-card supplier-import-source-card-v4">
-              <div className="supplier-import-profile-panel">
-                <label className="supplier-import-profile-select">
-                  <span>Import source</span>
-                  <select value={selectedProfileId} onChange={(event) => {
-                    setSelectedProfileId(event.target.value);
-                    setFile(null);
-                    setError(null);
-                  }}>
-                    {supplierImportProfiles.map((profile) => <option value={profile.id} key={profile.id}>{profile.label}</option>)}
-                    <option value={NEW_MAPPED_PROFILE_ID}>New supplier…</option>
-                  </select>
-                </label>
-                {activeProfile && (
-                  <div className="supplier-import-profile-summary">
-                    <div><span>Brand</span><strong>{activeProfile.brand}</strong></div>
-                    <div><span>Supplier</span><strong>{activeProfile.supplier}</strong></div>
-                    <div><span>Material</span><strong>{activeProfile.materialType}</strong></div>
-                    <div><span>Source</span><strong>{activeProfile.fileTypeLabel}</strong></div>
-                  </div>
-                )}
-                <div className="supplier-import-profile-status">
-                  <span className="board-eyebrow">Saved import profile</span>
-                  <strong>{activeProfile?.label ?? 'No profile selected'}</strong>
-                  <p>{activeProfile?.description ?? 'Choose a supplier import profile to continue.'}</p>
-                  {activeParser && <small>Parser v{activeParser.version} · explicit listings only</small>}
+          <section className="supplier-import-source-card supplier-import-source-card-v4">
+            <div className="supplier-import-profile-panel">
+              <label className="supplier-import-profile-select">
+                <span>Import source</span>
+                <select value={selectedProfileId} onChange={(event) => {
+                  setSelectedProfileId(event.target.value);
+                  setFile(null);
+                  setError(null);
+                }}>
+                  {supplierImportProfiles.map((profile) => <option value={profile.id} key={profile.id}>{profile.label}</option>)}
+                </select>
+              </label>
+              {activeProfile && (
+                <div className="supplier-import-profile-summary">
+                  <div><span>Brand</span><strong>{activeProfile.brand ?? 'From workbook'}</strong></div>
+                  <div><span>Supplier</span><strong>{activeProfile.supplier ?? 'From workbook'}</strong></div>
+                  <div><span>Material</span><strong>{activeProfile.materialType ?? 'From workbook'}</strong></div>
+                  <div><span>Source</span><strong>{activeProfile.fileTypeLabel}</strong></div>
                 </div>
+              )}
+              <div className="supplier-import-profile-status">
+                <span className="board-eyebrow">Controlled import contract</span>
+                <strong>{activeProfile?.label ?? 'No profile selected'}</strong>
+                <p>{activeProfile?.description ?? 'Choose an import source to continue.'}</p>
+                {activeParser && <small>Parser v{activeParser.version} · explicit normalized data only</small>}
               </div>
-              <div className="supplier-import-file-controls">
-                <label className="supplier-import-file-picker">
-                  <span>{activeProfile?.fileTypeLabel ?? 'Supplier file'}</span>
-                  <input type="file" accept={activeProfile?.accept} onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
-                  <b>{file ? file.name : `Choose ${activeProfile?.fileTypeLabel ?? 'file'}…`}</b>
-                </label>
+            </div>
+            <div className="supplier-import-file-controls">
+              <label className="supplier-import-file-picker">
+                <span>{activeProfile?.fileTypeLabel ?? 'Supplier file'}</span>
+                <input type="file" accept={activeProfile?.accept} onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+                <b>{file ? file.name : `Choose ${activeProfile?.fileTypeLabel ?? 'file'}…`}</b>
+              </label>
+              {activeProfile?.supportsEffectiveDateOverride ? (
                 <label className="supplier-import-effective-date">
                   <span>Effective date <em>optional</em></span>
                   <input type="date" value={effectiveDateDraft} onChange={(event) => {
@@ -409,23 +403,31 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
                     if (session) setEffectiveDate(event.target.value || undefined);
                   }} />
                 </label>
-                <button type="button" className="supplier-import-stage-button" disabled={!activeProfile || !file || parsing} onClick={() => void parseFile()}>{parsing ? 'Reading file…' : session ? 'Stage new file' : 'Stage for review'}</button>
-              </div>
-              <div className="supplier-import-profile-roadmap">
-                <strong>v4 foundation</strong>
-                <span>Import profiles now choose the parser and define Brand, Supplier, material type and accepted source file. Additional supplier profiles can plug into the same review/publish pipeline without changing catalog safety rules.</span>
-              </div>
-              {error && <div className="supplier-import-error">{error}</div>}
-            </section>
-          )}
+              ) : (
+                <div className="supplier-import-template-date-note">
+                  <span>Effective dates</span>
+                  <strong>Read from workbook</strong>
+                  <small>Row date → META default → warning if missing</small>
+                </div>
+              )}
+              <button type="button" className="supplier-import-stage-button" disabled={!activeProfile || !file || parsing} onClick={() => void parseFile()}>
+                {parsing ? 'Validating…' : session ? 'Validate & stage new file' : 'Validate & stage'}
+              </button>
+            </div>
+            <div className="supplier-import-profile-roadmap">
+              <strong>Canonical workflow</strong>
+              <span>Supplier documents are normalized into the SalesShop template before upload. The app validates schema and rows, then uses the existing New / Changed / Unchanged / Duplicate review and controlled publish pipeline.</span>
+            </div>
+            {error && <div className="supplier-import-error">{error}</div>}
+          </section>
 
           <SessionHistory currentId={session?.id} />
           <PublishedHistory rows={publishedHistory} />
 
-          {mappingMode ? null : !hydrated ? <div className="supplier-import-empty">Opening staging area…</div> : !session ? (
+          {!hydrated ? <div className="supplier-import-empty">Opening staging area…</div> : !session ? (
             <section className="supplier-import-empty supplier-import-empty-state">
-              <strong>No staged supplier sheet</strong>
-              <span>Choose an import profile and supplier file above. SalesShop will stage it through that profile's parser and compare explicit supplier listings against the current Material Catalog.</span>
+              <strong>No staged material workbook</strong>
+              <span>Upload a completed SalesShop Material Import Template. SalesShop will validate the contract, normalize it into Materials / Variants / Purchase Programs, and compare it against the current Material Catalog.</span>
               <small>Stage and review first. Only a deliberate Publish action can change the Material Catalog.</small>
             </section>
           ) : (
