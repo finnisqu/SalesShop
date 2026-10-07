@@ -1,11 +1,25 @@
 import type { SupplierImportParser, SupplierImportParserContext, SupplierImportProfile, SupplierImportSession } from '../types/supplierImport';
 import { vicostoneSupplierParser } from './vicostoneSupplierImport';
+import {
+  SALESSHOP_TEMPLATE_PARSER_ID,
+  salesShopMaterialTemplateParser,
+} from './salesShopMaterialTemplateImport';
 
 export const supplierImportParsers: readonly SupplierImportParser[] = [
+  salesShopMaterialTemplateParser,
   vicostoneSupplierParser,
 ];
 
 export const supplierImportProfiles: readonly SupplierImportProfile[] = [
+  {
+    id: 'salesshop-material-template',
+    label: 'SalesShop Material Template',
+    parserId: SALESSHOP_TEMPLATE_PARSER_ID,
+    fileTypeLabel: 'Material Import Template (.xlsx)',
+    accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx',
+    description: 'Canonical SalesShop material-import workbook. Supplier interpretation happens before upload; SalesShop validates explicit normalized rows only.',
+    supportsEffectiveDateOverride: false,
+  },
   {
     id: 'vicostone-via-umi',
     label: 'Vicostone · via UMI',
@@ -15,7 +29,8 @@ export const supplierImportProfiles: readonly SupplierImportProfile[] = [
     parserId: vicostoneSupplierParser.id,
     fileTypeLabel: 'Fabricator PDF',
     accept: 'application/pdf,.pdf',
-    description: 'Vicostone fabricator pricing distributed by UMI. Reads only explicitly listed colors, physical specs and supplier prices.',
+    description: 'Legacy direct import for the proven Vicostone / UMI fabricator PDF.',
+    supportsEffectiveDateOverride: true,
   },
 ];
 
