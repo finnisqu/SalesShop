@@ -616,4 +616,48 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes });
     recordRevisionCreated(revised);
   },
+
+  undoQuote: (quoteId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    const past = get().undoStacks[quoteId] ?? [];
+    const targetSnapshot = past.at(-1);
+    if (!current || !targetSnapshot || !quoteIsCommerciallyEditable(current)) return;
+
+    const target: Quote = { ...structuredClone(targetSnapshot), updatedAt: now() };
+    const quotes = get().quotes.map((quote) => quote.id === quoteId ? target : quote);
+    const undoStacks = { ...get().undoStacks, [quoteId]: past.slice(0, -1) };
+    const redoStacks = {
+      ...get().redoStacks,
+      [quoteId]: [...(get().redoStacks[quoteId] ?? []), structuredClone(current)].slice(-QUOTE_HISTORY_LIMIT),
+    };
+    persist(quotes, get().activeQuoteId);
+    set({ quotes, undoStacks, redoStacks });
+    void reconcileQuoteSnapshotInCloud(current, target, {
+      schemaVersion: 2,
+      quotes,
+      activeQuoteId: get().activeQuoteId,
+    }).catch(reportCloudDeleteError);
+  },
+
+  redoQuote: (quoteId) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    const future = get().redoStacks[quoteId] ?? [];
+    const targetSnapshot = future.at(-1);
+    if (!current || !targetSnapshot || !quoteIsCommerciallyEditable(current)) return;
+
+    const target: Quote = { ...structuredClone(targetSnapshot), updatedAt: now() };
+    const quotes = get().quotes.map((quote) => quote.id === quoteId ? target : quote);
+    const redoStacks = { ...get().redoStacks, [quoteId]: future.slice(0, -1) };
+    const undoStacks = {
+      ...get().undoStacks,
+      [quoteId]: [...(get().undoStacks[quoteId] ?? []), structuredClone(current)].slice(-QUOTE_HISTORY_LIMIT),
+    };
+    persist(quotes, get().activeQuoteId);
+    set({ quotes, undoStacks, redoStacks });
+    void reconcileQuoteSnapshotInCloud(current, target, {
+      schemaVersion: 2,
+      quotes,
+      activeQuoteId: get().activeQuoteId,
+    }).catch(reportCloudDeleteError);
+  },
 }));
