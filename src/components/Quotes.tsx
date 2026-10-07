@@ -190,7 +190,7 @@ function LineEditor({
         aria-label={`Reorder ${line.description || 'quote line'}`}
         aria-keyshortcuts="ArrowUp ArrowDown"
         title="Drag to reorder. With this handle focused, ↑ / ↓ also moves the row."
-      ><span aria-hidden="true">⋮⋮</span></button>
+      ><span aria-hidden="true">⠿</span></button>
       {textLine && <button type="button" className={`quote-visibility ${line.customerVisible ? 'is-visible' : ''}`} onClick={() => updateLine(quote.id, line.id, { customerVisible: !line.customerVisible })} title={line.customerVisible ? 'Visible to customer' : 'Private / hidden from customer'}>{line.customerVisible ? '●' : '○'}</button>}
       <div className="quote-line-main">
         {!databaseSelected && <div className="quote-line-topline">
@@ -287,12 +287,14 @@ function AreaEditor({ quote, sectionId, lines, onAddLine }: { quote: Quote; sect
     <div className="quote-area-header">
       <button type="button" className={`quote-visibility ${section.customerVisible ? 'is-visible' : ''}`} onClick={() => updateSection(quote.id, section.id, { customerVisible: !section.customerVisible })} title={section.customerVisible ? 'Area visible to customer' : 'Area hidden from customer'}>{section.customerVisible ? '●' : '○'}</button>
       <div className="quote-area-title">
-        <span>Area</span>
+        <div className="quote-area-kicker">
+          <span>Area</span>
+          <span aria-hidden="true">·</span>
+          <button type="button" className={`quote-area-scope-toggle ${scopeOpen ? 'active' : ''}`} onClick={() => setScopeOpen((value) => !value)}>
+            {summary ? `Scope · ${summary}` : 'Scope · add'}
+          </button>
+        </div>
         <input value={section.title} onChange={(event) => updateSection(quote.id, section.id, { title: event.target.value })} />
-        <button type="button" className={`quote-area-scope-toggle ${scopeOpen ? 'active' : ''}`} onClick={() => setScopeOpen((value) => !value)}>
-          {summary ? `Scope · ${summary}` : 'Add area scope'}
-        </button>
-
       </div>
       <div className="quote-area-summary"><span>{lines.length} item{lines.length === 1 ? '' : 's'}</span><strong>{money.format(quoteLinesTotal(lines))}</strong></div>
       <div className="quote-area-actions"><button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button><button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button><button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button><button type="button" onClick={() => onAddLine('item', section.id)}>+ Line</button><button type="button" onClick={() => onAddLine('scope', section.id)}>+ Scope</button></div>
