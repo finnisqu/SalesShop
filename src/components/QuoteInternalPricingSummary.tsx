@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { summarizeQuoteInternalPricing } from '../services/quoteInternalPricing';
 import type { Quote, QuoteLine } from '../types/quote';
 
@@ -39,6 +40,7 @@ function PricingMetrics({ lines, compact = false }: { lines: QuoteLine[]; compac
 }
 
 export function QuoteInternalPricingSummary({ quote }: { quote: Quote }) {
+  const [open, setOpen] = useState(false);
   const validAreaIds = new Set(quote.sections.map((section) => section.id));
   const generalLines = quote.lines.filter((line) => !line.sectionId || !validAreaIds.has(line.sectionId));
   const groups = [
@@ -54,31 +56,47 @@ export function QuoteInternalPricingSummary({ quote }: { quote: Quote }) {
   const overall = summarizeQuoteInternalPricing(quote.lines);
   const trackedCosts = overall.lines.some((line) => line.internalCost !== undefined || line.requiresCost);
 
+  useEffect(() => {
+    const collapse = () => setOpen(false);
+    window.addEventListener('sales-shop:quote-collapse-all', collapse);
+    return () => window.removeEventListener('sales-shop:quote-collapse-all', collapse);
+  }, []);
+
   if (!trackedCosts) return null;
 
+  const summaryLabel = overall.complete && overall.marginPercent !== undefined
+    ? `${money.format(overall.knownInternalCost)} cost · ${overall.marginPercent}% margin`
+    : `${money.format(overall.knownInternalCost)} known cost · ${overall.costedLineCount}/${overall.costRequiredLineCount} covered`;
+
   return (
-    <section className="quote-internal-pricing" aria-label="Internal pricing summary">
-      <header>
+    <details className="quote-internal-pricing" open={open} onToggle={(event) => setOpen(event.currentTarget.open)} aria-label="Internal pricing summary">
+      <summary>
         <div>
           <span className="quote-control-heading">Internal pricing · private</span>
+          <small>{summaryLabel}</small>
+        </div>
+        <span className="quote-internal-private-badge">Private</span>
+        <span className="quote-internal-pricing-chevron" aria-hidden="true">⌄</span>
+      </summary>
+      <div className="quote-internal-pricing-body">
+        <header>
           <small>Uses private manual costs plus frozen Material, Sink Catalog, and Rate Book cost snapshots on this quote. Customer pricing is unchanged.</small>
-        </div>
-        <span className="quote-internal-private-badge">Not customer visible</span>
-      </header>
-      <PricingMetrics lines={quote.lines} />
-      {groups.length > 1 && (
-        <div className="quote-internal-area-list">
-          {groups.map((group) => (
-            <div className="quote-internal-area-row" key={group.id}>
-              <div>
-                <strong>{group.title}</strong>
-                <small>{group.lines.length} line{group.lines.length === 1 ? '' : 's'}</small>
+        </header>
+        <PricingMetrics lines={quote.lines} />
+        {groups.length > 1 && (
+          <div className="quote-internal-area-list">
+            {groups.map((group) => (
+              <div className="quote-internal-area-row" key={group.id}>
+                <div>
+                  <strong>{group.title}</strong>
+                  <small>{group.lines.length} line{group.lines.length === 1 ? '' : 's'}</small>
+                </div>
+                <PricingMetrics lines={group.lines} compact />
               </div>
-              <PricingMetrics lines={group.lines} compact />
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
+            ))}
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
