@@ -20,8 +20,13 @@ function shortQuoteDate(value: string): string {
 export function catalogQuoteDestinationLabel(quote: QuoteDestinationDetails): string {
   const title = quote.title.trim() || 'Untitled quote';
   const company = quote.companyName?.trim();
-  const reference = isDraftQuoteNumber(quote.quoteNumber)
+  const reference = catalogQuoteDestinationReference(quote);
+  return [title, company, reference].filter(Boolean).join(' · ');
+}
+
+/** Compact third line in the mobile destination chooser. */
+export function catalogQuoteDestinationReference(quote: QuoteDestinationDetails): string {
+  return isDraftQuoteNumber(quote.quoteNumber)
     ? [shortQuoteDate(quote.quoteDate), 'Draft'].filter(Boolean).join(' · ')
     : displayQuoteNumber(quote);
-  return [title, company, reference].filter(Boolean).join(' · ');
 }
