@@ -4,6 +4,7 @@ import '../board-integrity.css';
 import { projectAttentionFlags } from '../services/boardIntegrity';
 import { AccountsBoard } from './AccountsBoard';
 import { BoardScrollControls } from './BoardScrollControls';
+import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
 import {
@@ -84,6 +85,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   const deleteProject = useCrmStore((state) => state.deleteProject);
   const activities = useCrmStore((state) => state.activities);
   const openQuote = useNavigationStore((state) => state.openQuote);
+  const dialogRef = useDismissibleLayer<HTMLElement>(true, onClose);
   const [draft, setDraft] = useState({
     name: project.name,
     companyName: project.companyName ?? '',
@@ -127,15 +129,15 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   };
 
   return (
-    <div className="project-editor-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <aside className="project-editor" aria-label="Edit project">
+    <div className="project-editor-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor" aria-label="Edit project">
         <header>
           <div><span className="board-eyebrow">Project card</span><h2>{project.name}</h2></div>
-          <button type="button" className="editor-close" onClick={onClose} aria-label="Close editor">×</button>
+          <button type="button" className="editor-close" data-dialog-initial-focus onClick={onClose} aria-label="Close editor">×</button>
         </header>
 
         <form onSubmit={submit}>
-          <label><span>Project name</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} autoFocus /></label>
+          <label><span>Project name</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })}  /></label>
           <label><span>Company</span><input value={draft.companyName} onChange={(event) => setDraft({ ...draft, companyName: event.target.value })} placeholder="Optional" /></label>
           <div className="editor-two-up">
             <label><span>Stage</span><select value={draft.stage} onChange={(event) => setDraft({ ...draft, stage: event.target.value as ProjectStage })}>{PROJECT_STAGES.map((stage) => <option key={stage}>{stage}</option>)}</select></label>
