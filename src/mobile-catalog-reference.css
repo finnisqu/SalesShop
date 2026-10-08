@@ -197,3 +197,138 @@
     padding:12px 14px;
   }
 }
+
+/* Batch 2: shared Tools drawer and dismissible active-filter chips. */
+.mobile-catalog-tools-backdrop,.mobile-catalog-active-filters{display:none}
+@media(max-width:700px){
+  .sales-app.view-catalog .mobile-catalog-active-filters{
+    display:flex;
+    gap:5px;
+    width:100%;
+    min-width:0;
+    align-items:center;
+    overflow-x:auto;
+    padding:4px 6px 7px;
+    box-sizing:border-box;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sales-app.view-catalog .mobile-catalog-active-filters>button{
+    display:inline-flex;
+    flex:0 0 auto;
+    align-items:center;
+    gap:7px;
+    min-height:29px;
+    max-width:min(68vw,210px);
+    border:1px solid rgba(143,119,72,.25);
+    border-radius:16px;
+    background:#fff5dc;
+    padding:4px 9px;
+    color:#665636;
+    font-size:10px;
+    line-height:1.2;
+  }
+  .sales-app.view-catalog .mobile-catalog-active-filters>button>span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .sales-app.view-catalog .mobile-catalog-active-filters>button>b{
+    flex:0 0 auto;
+    font-size:13px;
+    line-height:1;
+  }
+  .sales-app.view-catalog .mobile-catalog-active-filters>.mobile-catalog-clear-filters{
+    background:#f5efe3;
+    border-color:#d5cbbc;
+    color:#776c5b;
+    font-weight:700;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-backdrop{
+    display:flex;
+    position:fixed;
+    inset:0;
+    z-index:1900;
+    align-items:flex-end;
+    background:rgba(45,39,31,.32);
+    backdrop-filter:blur(2px);
+    overscroll-behavior:contain;
+    touch-action:pan-y;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-sheet{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    max-height:min(80dvh,700px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    padding-bottom:env(safe-area-inset-bottom);
+    border:1px solid rgba(91,78,58,.18);
+    border-bottom:0;
+    border-radius:14px 14px 0 0;
+    background:#f7f1e6;
+    box-shadow:0 -14px 38px rgba(45,36,25,.22);
+    -webkit-overflow-scrolling:touch;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    padding:13px 14px;
+    border-bottom:1px solid #d5cab9;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-header>div{
+    display:grid;
+    min-width:0;
+    gap:4px;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-header span{
+    color:#837868;
+    font-size:10px;
+    font-weight:850;
+    text-transform:uppercase;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-header strong{
+    color:#40392f;
+    font:700 21px Georgia,'Times New Roman',serif;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-header small{
+    color:#847b6f;
+    font-size:11px;
+    line-height:1.4;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-header button{
+    flex:0 0 42px;
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:6px;
+    background:#faf5ea;
+    color:#62594d;
+    font-size:23px;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-sheet>section{
+    display:grid;
+    gap:10px;
+    padding:15px 13px;
+    border-bottom:1px solid #d6cbbb;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-sheet>section>small{
+    font-size:11px;
+    line-height:1.4;
+    color:#847b6f;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-footer{
+    margin-top:auto;
+    padding:13px;
+    font-size:11px;
+    color:#766e62;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-sheet :is(
+    input:not([type=checkbox]),select,textarea
+  ){
+    max-width:100%;
+  }
+}
