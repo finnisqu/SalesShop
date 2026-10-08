@@ -1,19 +1,17 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppearanceStore } from '../store/appearanceStore';
+import { TeamAccessSettings } from './TeamAccessSettings';
 import { useAuthStore } from '../store/authStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 
 type SettingsTab = 'company' | 'account' | 'team' | 'appearance';
-type MemberRow = { user_id: string; role: 'owner' | 'admin' | 'member'; created_at: string };
-type MemberInfo = MemberRow & { displayName?: string };
 const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
   { id: 'company', title: 'Company & Branding', subtitle: 'Customer-facing identity' },
   { id: 'account', title: 'My Account', subtitle: 'Salesperson profile' },
   { id: 'team', title: 'Team', subtitle: 'People in your shop' },
   { id: 'appearance', title: 'Appearance & Accessibility', subtitle: 'Personal preferences' },
 ];
-const roleLabel = (role: string) => role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : 'Member';
 const localMessage = 'Sign in to a cloud workspace to manage your salesperson profile and team.';
 
 export function CompanySettings() {
@@ -33,9 +31,6 @@ export function CompanySettings() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileNotice, setProfileNotice] = useState('');
-  const [members, setMembers] = useState<MemberInfo[]>([]);
-  const [teamLoading, setTeamLoading] = useState(false);
-  const [teamError, setTeamError] = useState('');
   const cloudReady = mode === 'cloud' && Boolean(user && organizationId && supabase);
 
   useEffect(() => {
@@ -55,40 +50,6 @@ export function CompanySettings() {
     return () => { cancelled = true; };
   }, [tab, cloudReady, user?.id, organizationId]);
 
-  useEffect(() => {
-    if (tab !== 'team' || !cloudReady || !organizationId || !supabase) return;
-    let cancelled = false;
-    setTeamLoading(true);
-    setTeamError('');
-    void (async () => {
-      const { data: rows, error: memberError } = await supabase.from('organization_members')
-        .select('user_id,role,created_at').eq('organization_id', organizationId).order('created_at');
-      if (cancelled) return;
-      if (memberError) {
-        setMembers([]);
-        setTeamError(memberError.message);
-        setTeamLoading(false);
-        return;
-      }
-      const membership = (rows ?? []) as MemberRow[];
-      if (!membership.length) {
-        setMembers([]);
-        setTeamLoading(false);
-        return;
-      }
-      const { data: profiles, error: profileError } = await supabase.from('profiles')
-        .select('user_id,display_name').in('user_id', membership.map((row) => row.user_id));
-      if (cancelled) return;
-      const names = new Map((profiles ?? []).map((row) => [String(row.user_id), String(row.display_name ?? '')]));
-      setMembers(membership.map((row) => ({
-        ...row,
-        displayName: names.get(row.user_id) || (row.user_id === user?.id ? profileName : '') || undefined,
-      })));
-      setTeamError(profileError ? 'Member names are unavailable; showing membership roles instead.' : '');
-      setTeamLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [tab, cloudReady, organizationId, user?.id]);
 
   const saveProfile = async () => {
     if (!cloudReady || !user || !supabase || profileSaving) return;
@@ -102,7 +63,6 @@ export function CompanySettings() {
     setProfileNotice(saveError?.message || (!data?.length ? 'Your profile could not be updated. Please try signing in again.' : 'Profile saved.'));
   };
 
-  const myRole = members.find((member) => member.user_id === user?.id)?.role;
   return (
     <main className="company-settings-view">
       <div className="settings-layout">
@@ -167,31 +127,7 @@ export function CompanySettings() {
           </article>
         </section>}
 
-        {tab === 'team' && <section className="settings-panel-grid" aria-label="Team and company members">
-          <article className="company-settings-card settings-main-card">
-            <header><div><strong>People in your company</strong><small>Members with access to this SalesShop organization.</small></div><span className="settings-count">{members.length} members</span></header>
-            {!cloudReady ? <p className="settings-help">{localMessage}</p> : teamLoading ? <p className="settings-help" role="status">Loading teammates…</p> : <>
-              {teamError && <p className="settings-feedback" role="status">{teamError}</p>}
-              {members.length ? <div className="settings-member-list">
-                {members.map((member) => {
-                  const self = member.user_id === user?.id;
-                  const label = member.displayName || (self ? user?.email || 'You' : `Teammate · ${member.user_id.slice(0, 6)}`);
-                  return <div className="settings-member" key={member.user_id}>
-                    <span className="settings-avatar">{label.charAt(0).toUpperCase()}</span>
-                    <div><strong>{label}{self ? ' (You)' : ''}</strong><small>{self ? user?.email : 'Organization member'}</small></div>
-                    <span className="settings-role">{roleLabel(member.role)}</span>
-                  </div>;
-                })}
-              </div> : <p className="settings-help">No members found for this organization.</p>}
-            </>}
-          </article>
-          <article className="company-settings-card settings-secondary-card">
-            <header><div><strong>Team access</strong><small>Workspace membership and permissions.</small></div></header>
-            <div className="settings-detail-line"><span>Your role</span><strong>{myRole ? roleLabel(myRole) : '—'}</strong></div>
-            <p className="settings-help">Owners and admins can manage membership. Invitations and role editing aren’t available from Settings yet.</p>
-          </article>
-        </section>}
-
+        {tab === 'team' && <TeamAccessSettings />}
         {tab === 'appearance' && <section className="settings-panel-grid" aria-label="Appearance and accessibility preferences">
           <article className="company-settings-card settings-main-card">
             <header><div><strong>Reading & interaction</strong><small>Changes apply immediately on this device.</small></div></header>
