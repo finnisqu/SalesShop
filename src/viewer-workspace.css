@@ -44,3 +44,7 @@
   .viewer-role-pill { order: -1; }
   .viewer-record-grid { grid-template-columns: 1fr; }
 }
+
+.viewer-purchasing-jump { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin: 0 0 16px; font-size: 12px; color: #696b5e; }
+.viewer-purchasing-jump button { border: 1px solid #9dab94; background: #e4ebdc; color: #365037; border-radius: 6px; padding: 9px 13px; font: inherit; font-weight: 700; cursor: pointer; }
+.viewer-purchasing-jump button:focus-visible { outline: 3px solid #8da487; outline-offset: 2px; }
