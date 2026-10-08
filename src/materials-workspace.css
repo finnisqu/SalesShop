@@ -719,3 +719,321 @@
     flex-basis: 205px;
   }
 }
+
+
+/* Mobile Materials is reference-first. Management controls live in a temporary tools sheet. */
+.materials-mobile-tools-trigger,
+.materials-mobile-tools-backdrop {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .sales-app.view-catalog .materials-workspace.is-catalog-embedded {
+    padding-top: 0 !important;
+  }
+
+  /* Mobile command bar already says Catalog · Materials. Don't repeat a large title/admin card. */
+  .sales-app.view-catalog .materials-workspace.is-catalog-embedded > .rates-workspace-header {
+    display: none !important;
+  }
+
+  .sales-app.view-catalog .materials-workspace .materials-controls {
+    margin: 0;
+    padding: 5px 4px 4px;
+    border: 0;
+    background: transparent;
+  }
+
+  .sales-app.view-catalog .materials-workspace .materials-reference-tools {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "search search search"
+      "filter sort tools";
+    gap: 5px;
+    align-items: center;
+  }
+
+  .sales-app.view-catalog .materials-workspace .materials-reference-tools > input[type='search'] {
+    grid-area: search;
+    width: 100%;
+    min-width: 0;
+    height: 46px;
+    margin: 0;
+    border-radius: 7px;
+    padding: 0 12px;
+    font-size: 16px;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-filter-menu {
+    grid-area: filter;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-filter-menu > summary {
+    min-width: 78px;
+    min-height: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 9px;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-filter-popover {
+    position: fixed;
+    z-index: 1250;
+    left: 7px;
+    right: 7px;
+    top: 106px;
+    width: auto;
+    max-height: calc(100dvh - 122px);
+    overflow-y: auto;
+    padding: 9px;
+    border-radius: 8px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-sort-control {
+    grid-area: sort;
+    min-width: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-sort-control > span {
+    font-size: 7px;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-sort-control select {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    border-radius: 6px;
+    padding-inline: 8px 28px;
+    font-size: 16px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-trigger {
+    grid-area: tools;
+    min-width: 66px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid rgba(91, 78, 58, .15);
+    border-radius: 6px;
+    background: rgba(255, 252, 244, .86);
+    color: #61594e;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-trigger > span {
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-trigger > strong {
+    font-size: 8px;
+  }
+
+  /* Empty comparison state should be a thin reference cue, not another hero panel. */
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) {
+    margin: 1px 4px 5px;
+    box-shadow: none;
+  }
+
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) > header {
+    min-height: 34px;
+    padding: 5px 8px;
+  }
+
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) > header .board-eyebrow,
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) > header small {
+    display: none;
+  }
+
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) > header strong {
+    font-size: 9px;
+  }
+
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) .materials-comparison-empty {
+    padding: 6px 8px;
+    font-size: 7px;
+  }
+
+  .sales-app.view-catalog .materials-reference-card {
+    margin-inline: 4px;
+  }
+
+  .sales-app.view-catalog .materials-reference-card > header {
+    padding: 7px 8px;
+  }
+
+  .sales-app.view-catalog .materials-reference-card > header > span {
+    display: none;
+  }
+
+  /* Temporary bottom sheet for admin / import workflows. */
+  .sales-app.view-catalog .materials-mobile-tools-backdrop {
+    position: fixed;
+    z-index: 1800;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    background: rgba(45, 39, 31, .30);
+    backdrop-filter: blur(2px);
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet {
+    width: 100%;
+    max-height: min(78dvh, 660px);
+    overflow-y: auto;
+    padding: 9px 9px calc(10px + env(safe-area-inset-bottom));
+    border: 1px solid rgba(91, 78, 58, .18);
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
+    background: #f7f1e6;
+    box-shadow: 0 -14px 38px rgba(45, 36, 25, .22);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header {
+    min-height: 54px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 3px 8px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header > div {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header span,
+  .materials-mobile-tools-label {
+    color: #948979;
+    font-size: 6.5px;
+    font-weight: 900;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header strong {
+    color: #433d34;
+    font: 700 17px Georgia, serif;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header small {
+    color: #8c8274;
+    font-size: 7px;
+    line-height: 1.35;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header > button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(255, 252, 244, .76);
+    color: #71685b;
+    font-size: 21px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-section {
+    display: grid;
+    gap: 6px;
+    padding: 9px 3px;
+    border-top: 1px solid rgba(91, 78, 58, .10);
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row > button {
+    min-width: 0;
+    min-height: 62px;
+    display: grid;
+    align-content: center;
+    gap: 3px;
+    border: 1px solid rgba(91, 78, 58, .12);
+    border-radius: 7px;
+    padding: 8px;
+    background: rgba(255, 252, 244, .66);
+    color: #625a4e;
+    text-align: left;
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row > button.active {
+    border-color: rgba(166, 137, 63, .28);
+    background: #fff5d8;
+    box-shadow: inset 3px 0 #bca354;
+    color: #51452d;
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row strong {
+    font-size: 9px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row small {
+    color: #908677;
+    font-size: 6.5px;
+    line-height: 1.25;
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 6px;
+    padding: 7px 8px;
+    background: rgba(255, 252, 244, .62);
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle input {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle > span {
+    display: grid;
+    gap: 1px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle strong {
+    color: #595247;
+    font-size: 9px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle small,
+  .sales-app.view-catalog .materials-mobile-tools-note {
+    color: #908678;
+    font-size: 6.7px;
+    line-height: 1.35;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet .supplier-import-launcher.is-toolbar {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+    border-radius: 7px;
+  }
+}
