@@ -32,6 +32,8 @@ export function CompanySettings() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileNotice, setProfileNotice] = useState('');
+  const [workspaces, setWorkspaces] = useState<Array<{id:string;name:string}>>([]);
+  const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
   const cloudReady = mode === 'cloud' && Boolean(user && organizationId && supabase);
   const [companyRole, setCompanyRole] = useState<TeamRole | null>(null);
   const canEditCompany = mode === 'local' || companyRole === 'owner' || companyRole === 'admin';
@@ -62,6 +64,36 @@ export function CompanySettings() {
     })();
     return () => { cancelled = true; };
   }, [tab, cloudReady, user?.id, organizationId]);
+
+  useEffect(() => {
+    if (tab !== 'account' || !cloudReady || !user || !supabase) return;
+    let cancelled = false;
+    void (async () => {
+      const { data: memberships, error: memberError } = await supabase.from('organization_members')
+        .select('organization_id').eq('user_id', user.id);
+      if (memberError || cancelled) return;
+      const ids = (memberships ?? []).map((row) => String(row.organization_id));
+      if (!ids.length) return;
+      const { data: organizations } = await supabase.from('organizations').select('id,name').in('id', ids);
+      if (!cancelled) setWorkspaces((organizations ?? []).map((row) => ({
+        id:String(row.id), name:String(row.name ?? 'Company workspace'),
+      })).sort((a,b) => a.name.localeCompare(b.name)));
+    })();
+    return () => { cancelled = true; };
+  }, [tab, cloudReady, user?.id, organizationId]);
+
+  const switchWorkspace = async (targetId:string) => {
+    if (!supabase || switchingWorkspace || !organizationId || targetId === organizationId) return;
+    const target = workspaces.find((item) => item.id === targetId);
+    if (!target || !window.confirm(`Switch to ${target.name}? Your current company records will remain separate.`)) return;
+    setSwitchingWorkspace(true);
+    setProfileNotice('');
+    const { error: switchError } = await supabase.rpc('select_team_workspace', { target_organization:targetId });
+    if (switchError) {
+      setSwitchingWorkspace(false);
+      setProfileNotice(switchError.message);
+    } else window.location.reload();
+  };
 
 
   const saveProfile = async () => {
@@ -138,6 +170,18 @@ export function CompanySettings() {
             <header><div><strong>Account & privacy</strong><small>What belongs to you and what belongs to the shop.</small></div></header>
             <p className="settings-help">Your notebook is private to your account. Company records, quotes, materials, and CRM contacts belong to the shared organization workspace.</p>
             <div className="settings-detail-line"><span>Connection</span><strong>{mode === 'cloud' ? organizationId ? 'Cloud connected' : 'Cloud needs attention' : 'Local mode'}</strong></div>
+            {cloudReady && <div className="settings-workspace-selector">
+              <strong>Current company</strong>
+              {workspaces.length > 1 ? <>
+                <label htmlFor="settings-workspace-choice">Select an organization you belong to</label>
+                <select id="settings-workspace-choice" value={organizationId ?? ''}
+                  disabled={switchingWorkspace}
+                  onChange={(event) => void switchWorkspace(event.target.value)}>
+                  {workspaces.map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}
+                </select>
+                <small>Your personal workspace stays intact when you join a team. Switching never merges company records.</small>
+              </> : <span>{workspaces.find((item) => item.id === organizationId)?.name || settings.organizationName || 'Your company'}</span>}
+            </div>}
           </article>
         </section>}
 
