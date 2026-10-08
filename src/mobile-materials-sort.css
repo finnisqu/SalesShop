@@ -49,7 +49,10 @@
     box-shadow:none;
     background:transparent;
     color:#4e4435;
-    font:750 16px/20px inherit;
+    font-family:inherit;
+    font-size:16px;
+    font-weight:750;
+    line-height:20px;
     letter-spacing:-.5px;
   }
   .sales-app.view-catalog .materials-workspace .materials-sort-control::after {
