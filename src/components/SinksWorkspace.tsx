@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   SINK_CATEGORIES,
   SINK_CATEGORY_LABELS,
@@ -291,7 +291,8 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
               const low = prices.length ? Math.min(...prices) : undefined;
               const high = prices.length ? Math.max(...prices) : undefined;
               return (
-                <button type="button" key={model.id} className={(isMobileCatalog ? expandedMobileSinkId === model.id : selected?.id === model.id) ? 'active' : ''} aria-expanded={isMobileCatalog ? expandedMobileSinkId === model.id : undefined} onClick={() => {
+                <Fragment key={model.id}>
+                <button type="button" className={(isMobileCatalog ? expandedMobileSinkId === model.id : selected?.id === model.id) ? 'active' : ''} aria-expanded={isMobileCatalog ? expandedMobileSinkId === model.id : undefined} onClick={() => {
                   setSelectedId(model.id);
                   if (isMobileCatalog) setExpandedMobileSinkId((current) => current === model.id ? null : model.id);
                 }}>
@@ -306,6 +307,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
                 {isMobileCatalog && expandedMobileSinkId === model.id && (
                   <div className="sinks-mobile-model-detail">{renderSinkDetail(model)}</div>
                 )}
+                </Fragment>
               );
             })}
             {!visibleModels.length && <div className="sinks-empty-navigator"><strong>No sinks found</strong><span>Change the search/filter or add a sink model.</span></div>}
