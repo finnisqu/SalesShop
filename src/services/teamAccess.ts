@@ -20,3 +20,8 @@ export type TeamInvitationRow = {
   revoked_at: string|null;
   status: 'pending'|'accepted'|'revoked'|'expired';
 };
+
+/** Never import local CRM/quotes into a workspace joined as a team member. */
+export function maySeedCompanyFromLocal(role: TeamRole, acceptedInvitation: boolean): boolean {
+  return role === 'owner' && !acceptedInvitation;
+}
