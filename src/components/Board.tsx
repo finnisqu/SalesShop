@@ -4,6 +4,7 @@ import '../board-integrity.css';
 import { projectAttentionFlags } from '../services/boardIntegrity';
 import { AccountsBoard } from './AccountsBoard';
 import { BoardScrollControls } from './BoardScrollControls';
+import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
 import {
   isMobileBoardInteraction,
@@ -58,7 +59,10 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
     >
       <div className="project-card-pin" aria-hidden="true" />
       <div className="project-card-company">{project.companyName || 'Unassigned company'}</div>
-      <h3>{project.name}</h3>
+      <div className="project-card-title-row">
+        <h3>{project.name}</h3>
+        {Boolean(project.amount) && <strong className="project-card-title-value">{money.format(project.amount ?? 0)}</strong>}
+      </div>
       {(project.amount || project.dueDate) && (
         <div className="project-card-facts">
           {Boolean(project.amount) && <strong>{money.format(project.amount ?? 0)}</strong>}
@@ -282,6 +286,11 @@ export function Board() {
         </form>
       </section>
 
+      <MobileBoardStagePicker
+        boardRef={boardRef}
+        stages={PROJECT_STAGES}
+        counts={PROJECT_STAGES.map((stage) => (projectsByStage.get(stage) ?? []).length)}
+      />
       <section
         ref={boardRef}
         className="project-board"
