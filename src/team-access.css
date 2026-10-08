@@ -56,3 +56,17 @@
   grid-column:1/-1;margin:0;padding:11px;border:1px solid #d6c7aa;
   border-radius:7px;background:#fff6e5;color:#716147;font-size:11px;line-height:1.5;
 }
+
+.sales-app.view-settings .settings-workspace-selector{display:grid;gap:8px;min-width:0;padding-top:8px}
+.sales-app.view-settings .settings-workspace-selector>strong{font:700 14px Georgia,'Times New Roman',serif;color:#554837}
+.sales-app.view-settings .settings-workspace-selector>label,
+.sales-app.view-settings .settings-workspace-selector>small,
+.sales-app.view-settings .settings-workspace-selector>span{font-size:11px;line-height:1.5;color:#837664}
+.sales-app.view-settings .settings-workspace-selector>select{
+  width:100%;min-width:0;min-height:43px;padding:8px 10px;
+  border:1px solid #bfa77a;border-radius:7px;
+  background:#fffaf1;color:#514536;font:inherit;font-size:13px;
+}
+@media(max-width:700px){
+  .sales-app.view-settings .settings-workspace-selector>select{font-size:16px}
+}
