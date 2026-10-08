@@ -1,0 +1,131 @@
+/* Shared touch-first Catalog reference language, derived from the Materials card.
+   Independent of desktop table layout: no table-row display hacks. */
+.mobile-catalog-reference-list { display:none; }
+@media (max-width:700px) {
+  .mobile-catalog-reference-list {
+    display:grid;
+    gap:5px;
+    width:100%;
+    min-width:0;
+    padding:6px;
+    box-sizing:border-box;
+  }
+  .mobile-catalog-reference-card {
+    min-width:0;
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid rgba(91,78,58,.18);
+    border-radius:6px;
+    overflow:hidden;
+    background:#fffaf0;
+  }
+  .mobile-catalog-reference-card.is-expanded {
+    border-color:#ad9257;
+    background:#fff7e7;
+  }
+  .mobile-catalog-reference-card.is-highlighted {
+    box-shadow:inset 3px 0 #b89a3c;
+  }
+  .mobile-catalog-reference-trigger {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,max-content) 14px;
+    gap:7px;
+    align-items:center;
+    width:100%;
+    min-width:0;
+    min-height:60px;
+    box-sizing:border-box;
+    margin:0;
+    padding:9px 10px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    color:#4f473e;
+    text-align:left;
+    cursor:pointer;
+    font-family:inherit;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mobile-catalog-reference-trigger:focus-visible {
+    outline:2px solid #ad9257;
+    outline-offset:-3px;
+  }
+  .mobile-catalog-reference-name {
+    display:flex;
+    min-width:0;
+    flex-direction:column;
+    gap:4px;
+  }
+  .mobile-catalog-reference-name>strong {
+    color:#4c453b;
+    font-size:12px;
+    font-weight:750;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+  .mobile-catalog-reference-name>small {
+    color:#908577;
+    font-size:9px;
+    font-weight:500;
+    line-height:1.35;
+    overflow-wrap:anywhere;
+  }
+  .mobile-catalog-reference-price {
+    display:flex;
+    min-width:0;
+    max-width:min(43vw,170px);
+    flex-direction:column;
+    align-items:flex-end;
+    gap:3px;
+    color:#3f3b34;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .mobile-catalog-reference-price>strong {
+    max-width:100%;
+    font:700 12px/1.3 Georgia,'Times New Roman',serif;
+    overflow-wrap:anywhere;
+  }
+  .mobile-catalog-reference-price-meta {
+    display:grid;
+    gap:2px;
+    color:#897e70;
+    font-size:8px;
+    line-height:1.25;
+    overflow-wrap:anywhere;
+  }
+  .mobile-catalog-reference-chevron {
+    color:#97896e;
+    text-align:center;
+    font-size:15px;
+    font-weight:800;
+  }
+  .mobile-catalog-reference-details {
+    min-width:0;
+    border-top:1px solid rgba(91,78,58,.14);
+    background:#fbf7ed;
+    padding:5px;
+  }
+  .mobile-catalog-reference-empty {
+    padding:23px 12px;
+    border:1px dashed rgba(91,78,58,.22);
+    border-radius:6px;
+    color:#81776a;
+    background:#fffaf0;
+    font-size:11px;
+    line-height:1.5;
+    text-align:center;
+  }
+  /* Shared reference panels use one parent scroller under the fixed app bar. */
+  .sales-app.view-catalog .catalog-section-host {
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  @media(max-width:350px) {
+    .mobile-catalog-reference-trigger { gap:4px; padding-inline:7px; }
+    .mobile-catalog-reference-price>strong { font-size:11px; }
+    .mobile-catalog-reference-price { max-width:min(43vw,145px); }
+  }
+}
