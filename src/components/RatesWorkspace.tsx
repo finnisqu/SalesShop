@@ -12,7 +12,7 @@ import {
   type RateBookUnit,
 } from '../types/rateBook';
 import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
-import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
+import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { RateBook } from './RateBook';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -63,6 +63,7 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const editorHostRef = useRef<HTMLDivElement | null>(null);
   const [editing, setEditing] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [expandedRateId, setExpandedRateId] = useState<string | null>(null);
   const [expandedLevelId, setExpandedLevelId] = useState<string | null>(null);
   const [category, setCategory] = useState<ReferenceCategory>('all');
@@ -207,6 +208,7 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
                     <button type="button" onClick={clearReferenceFilters} disabled={!activeReferenceFilters}>Clear filters</button>
                   </div>
                 </details>
+                <button type="button" className="mobile-catalog-filter-trigger" aria-haspopup="dialog" onClick={() => setMobileFilterOpen(true)}>Filter{activeReferenceFilters ? ` · ${activeReferenceFilters}` : ''}</button>
                 <label className="rates-sort-control">
                   <span>Sort</span>
                   <select value={rateSort} onChange={(event) => setRateSort(event.target.value as RateSort)} aria-label="Sort rate reference">
@@ -225,6 +227,15 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
       </section>
       {!editing && <MobileCatalogActiveFilters items={activeMobileFilters}
         onClear={() => { setQuery(''); selectCategory('all'); clearReferenceFilters(); }} />}
+
+      {!editing && !showingMaterialPricing && mobileFilterOpen && (
+        <MobileCatalogFilterSheet section="Rates" onClose={() => setMobileFilterOpen(false)}>
+          <label><span>Pricing behavior</span><select value={behaviorFilter} onChange={(event) => setBehaviorFilter(event.target.value as 'all' | RateBookPricingBehavior)}><option value="all">All behaviors</option><option value="suggested">Suggested sell</option><option value="cost-reference">Cost reference</option><option value="manual">Manual</option></select></label>
+                    <label><span>Unit</span><select value={unitFilter} onChange={(event) => setUnitFilter(event.target.value as 'all' | RateBookUnit)}><option value="all">All units</option>{availableUnits.map((unit) => <option value={unit} key={unit}>{RATE_BOOK_UNIT_LABELS[unit]}</option>)}</select></label>
+                    <label><span>Division pricing</span><select value={overrideFilter} onChange={(event) => setOverrideFilter(event.target.value as OverrideFilter)}><option value="all">All rows</option><option value="has">Has division override</option><option value="base">Base rate only</option></select></label>
+                    <button type="button" onClick={clearReferenceFilters} disabled={!activeReferenceFilters}>Clear filters</button>
+        </MobileCatalogFilterSheet>
+      )}
 
       {mobileToolsOpen && (
         <MobileCatalogToolsSheet title="Rate tools" section="Rates"
