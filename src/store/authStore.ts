@@ -2,6 +2,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 import { ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
+import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 
 export type BackendMode = 'local' | 'cloud';
 
@@ -19,10 +20,26 @@ interface AuthState {
   signUp: (email: string, password: string, shopName: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   clearMessage: () => void;
+  retryWorkspace: () => Promise<void>;
+  discardInvitation: () => Promise<void>;
 }
 
 let initializePromise: Promise<void> | null = null;
 let authListenerStarted = false;
+let inviteAcceptance: Promise<string> | null = null;
+
+async function acceptPendingInvitation(): Promise<string | null> {
+  const token = pendingTeamInviteToken();
+  if (!token || !supabase) return null;
+  if (!inviteAcceptance) inviteAcceptance = (async () => {
+    const { data, error } = await supabase.rpc('accept_team_invite', { invite_token: token });
+    if (error) throw error;
+    if (typeof data !== 'string') throw new Error('Invitation acceptance did not return a workspace.');
+    clearPendingTeamInvite();
+    return data;
+  })().finally(() => { inviteAcceptance = null; });
+  return inviteAcceptance;
+}
 
 function messageFrom(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong.';
@@ -57,7 +74,13 @@ async function applySession(session: Session | null) {
 
   useAuthStore.setState({ busy: true, error: null, notice: null });
   try {
+    // Join the invited organization BEFORE workspace bootstrap or data hydration.
+    // Otherwise an invited account could seed and switch to an unrelated shop.
+    const acceptedOrganizationId = await acceptPendingInvitation();
     const organizationId = await ensureCurrentWorkspace();
+    if (acceptedOrganizationId && acceptedOrganizationId !== organizationId) {
+      throw new Error('Invitation joined a different workspace than the one selected.');
+    }
     await hydrateCloudDocuments(organizationId, session.user.id);
     startCloudSync(organizationId, session.user.id, (error) => {
       useAuthStore.setState({ error: `Cloud sync: ${error}` });
@@ -182,4 +205,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearMessage: () => set({ error: null, notice: null }),
+  retryWorkspace: async () => { const session = useAuthStore.getState().session; if (session) await applySession(session); },
+  discardInvitation: async () => {
+    clearPendingTeamInvite();
+    const session = useAuthStore.getState().session;
+    if (session) await applySession(session);
+  },
 }));
