@@ -18,6 +18,8 @@ import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogTool
 import { MaterialRateBook } from './MaterialRateBook';
 import { SupplierImportLauncher } from './SupplierImportCenter';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
+import { WorkspaceLoadingState } from './WorkspaceLoadingState';
+import { restoreScrollAnchor } from '../lib/scrollAnchor';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const PIN_STORAGE_KEY = 'salesshop-material-comparison-v1';
@@ -84,6 +86,7 @@ function compareOptionalNumbers(left?: number, right?: number) {
 
 export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
   const settings = useCompanySettingsStore((state) => state.settings);
+  const hydrated = useCompanySettingsStore((state) => state.hydrated);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
   const [sectionView, setSectionView] = useState<'catalog' | 'suppliers'>(() => {
     if (embedded) return 'catalog';
@@ -216,9 +219,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (!anchor.isConnected) return;
-          const afterTop = anchor.getBoundingClientRect().top;
-          const delta = afterTop - beforeTop;
-          if (Math.abs(delta) > 0.5) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+          restoreScrollAnchor(anchor, beforeTop);
         });
       });
     }
@@ -291,6 +292,8 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
       </div>
     );
   };
+
+  if (!hydrated) return <WorkspaceLoadingState title="Opening Materials" detail="Loading colors, slab variants, and supplier costs…" />;
 
   return (
     <main className={`rates-workspace materials-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
