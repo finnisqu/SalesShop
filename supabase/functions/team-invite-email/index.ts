@@ -37,11 +37,11 @@ function escapeHtml(value: string) {
     .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
-function invitationEmail(company: string, role: 'admin' | 'member', link: string, email: string) {
+function invitationEmail(company: string, role: 'admin' | 'member' | 'viewer', link: string, email: string) {
   const name = escapeHtml(company);
   const safeLink = escapeHtml(link);
   const safeRecipient = escapeHtml(email);
-  const roleText = role === 'admin' ? 'administrator' : 'team member';
+  const roleText = role === 'admin' ? 'administrator' : role === 'viewer' ? 'read-only viewer' : 'team member';
   return {
     subject: `${company} invited you to SalesShop`,
     text: `The ${company} team invited ${email} to join its existing SalesShop workspace as a ${roleText}.\n\nJoin the workspace using this private link:\n${link}\n\nThe invitation expires in seven days. Sign in or register with the invited email address. This message was sent because a workspace administrator invited you; if you didn't expect it, you can safely ignore it.`,
@@ -88,7 +88,7 @@ Deno.serve(async (request: Request) => {
     const email = typeof input?.email === 'string' ? input.email.trim().toLowerCase() : '';
     const role = input?.role;
     if (!/^[a-f0-9-]{36}$/i.test(organizationId) || email.length > 254
-      || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || (role !== 'member' && role !== 'admin')) {
+      || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || (role !== 'member' && role !== 'admin' && role !== 'viewer')) {
       return json(request, { error: 'Enter a valid recipient, workspace, and role.' }, 400);
     }
 
