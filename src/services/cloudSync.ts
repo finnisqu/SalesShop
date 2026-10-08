@@ -198,13 +198,16 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   writeCacheScope({ userId, organizationId: orgId });
 }
 
-export function startCloudSync(orgId: string, userId: string, onError?: (message: string) => void) {
+export function startCloudSync(orgId: string, userId: string, onError?: (message: string) => void,
+  options: { readOnlyShared?: boolean } = {}) {
   stopCloudSync();
   if (!supabase || typeof window === 'undefined') return;
 
   const handler = (event: Event) => {
     const detail = (event as CustomEvent<CloudDocumentSavedDetail>).detail;
     if (!detail?.key) return;
+    // Viewers may sync their personal notebook, never shared company documents.
+    if (options.readOnlyShared && detail.key !== PRIVATE_DOCUMENT_KEY) return;
     const previous = pending.get(detail.key);
     if (previous) window.clearTimeout(previous);
 
