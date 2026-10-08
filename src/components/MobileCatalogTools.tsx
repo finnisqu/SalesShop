@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 
 type MobileCatalogToolsSheetProps = {
   title: string;
@@ -17,40 +18,7 @@ export function MobileCatalogToolsSheet({
   children,
   footer,
 }: MobileCatalogToolsSheetProps) {
-  const sheetRef = useRef<HTMLElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const closeHandlerRef = useRef(onClose);
-  closeHandlerRef.current = onClose;
-
-  useEffect(() => {
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    closeRef.current?.focus({ preventScroll: true });
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeHandlerRef.current();
-      }
-      if (event.key !== 'Tab' || !sheetRef.current) return;
-      const focusable = Array.from(sheetRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
-      )).filter((element) => element.getClientRects().length > 0);
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      previous?.focus({ preventScroll: true });
-    };
-  }, []);
+  const sheetRef = useDismissibleLayer<HTMLElement>(true, onClose);
 
   return (
     <div className="mobile-catalog-tools-backdrop" onPointerDown={(event) => {
@@ -59,7 +27,7 @@ export function MobileCatalogToolsSheet({
       <aside ref={sheetRef} className="mobile-catalog-tools-sheet" role="dialog" aria-modal="true" aria-label={title}>
         <header className="mobile-catalog-tools-header">
           <div><span>Catalog · {section}</span><strong>{title}</strong><small>{description}</small></div>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label={`Close ${title}`}>×</button>
+          <button data-dialog-initial-focus type="button" onClick={onClose} aria-label={`Close ${title}`}>×</button>
         </header>
         {children}
         {footer && <footer className="mobile-catalog-tools-footer">{footer}</footer>}
