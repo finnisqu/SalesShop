@@ -14,6 +14,7 @@ import {
 import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
 import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { RateBook } from './RateBook';
+import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 type ReferenceCategory = 'all' | RateBookCategory;
@@ -154,7 +155,7 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
     ...(!showingMaterialPricing && overrideFilter !== 'all' ? [{ key: 'overrides', label: overrideFilter === 'has' ? 'Division overrides' : 'Base rates', onRemove: () => setOverrideFilter('all') }] : []),
   ];
 
-  if (!hydrated) return <div className="rate-book-loading">Opening Rates…</div>;
+  if (!hydrated) return <WorkspaceLoadingState title="Opening Rates" detail="Loading labor, service, and material pricing…" />;
 
   return (
     <main className={`rates-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
