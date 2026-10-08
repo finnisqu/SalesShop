@@ -14,7 +14,7 @@ vi.mock('../store/authStore', () => {
     discardInvitation: () => Promise.resolve(), clearMessage: () => {},
   };
   return { useAuthStore: Object.assign(
-    (selector: (state: typeof state) => unknown) => selector(state),
+    (selector: (snapshot: typeof state) => unknown) => selector(state),
     { getState: () => state },
   ) };
 });
