@@ -20,6 +20,8 @@ import { SupplierImportLauncher } from './SupplierImportCenter';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { restoreScrollAnchor } from '../lib/scrollAnchor';
+import { CatalogAddToQuoteButton, CatalogQuoteInsert } from './CatalogQuoteInsert';
+import type { CatalogQuoteSource } from '../services/catalogQuoteInsertion';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const PIN_STORAGE_KEY = 'salesshop-material-comparison-v1';
@@ -95,6 +97,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   const [editing, setEditing] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [quoteSource, setQuoteSource] = useState<CatalogQuoteSource | null>(null);
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
@@ -285,10 +288,14 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
                 className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`}
                 onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}
               >{isPinned ? 'Pinned' : 'Pin'}</button>
+              {!editing && <CatalogAddToQuoteButton onClick={() => setQuoteSource({ kind: 'material', material, variantId: variant.id })} />}
             </article>
           );
         })}
-        {!activeVariants.length && <div className="materials-variant-empty">This material has no active structured variants yet. Use Edit materials to add slab sizes and supplier price programs.</div>}
+        {!activeVariants.length && <div className="materials-variant-empty">
+          <span>This material has no active structured variants yet. You can quote its legacy reference or add slab sizes in Edit materials.</span>
+          {!editing && <CatalogAddToQuoteButton onClick={() => setQuoteSource({ kind: 'material', material })} />}
+        </div>}
       </div>
     );
   };
@@ -622,6 +629,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
           </section>
         </div>
       )}
+    {quoteSource && <CatalogQuoteInsert source={quoteSource} onClose={() => setQuoteSource(null)} />}
     </main>
   );
 }
