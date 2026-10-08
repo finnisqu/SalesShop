@@ -6,6 +6,7 @@ import { resolveMobileDrawerChoice } from '../lib/mobileDrawerNavigation';
 import { AuthStatus } from './AuthGate';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
+import { useAuthStore } from '../store/authStore';
 
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'notebook', label: 'Notebook', short: 'Notebook' },
@@ -34,6 +35,7 @@ function catalogLabel(section: CatalogSection) {
 
 export function MobileAppChrome() {
   const view = useNavigationStore((state) => state.view);
+  const viewer = useAuthStore((state) => state.mode === 'cloud' && state.teamRole === 'viewer');
   const setView = useNavigationStore((state) => state.setView);
   const catalogSection = useNavigationStore((state) => state.catalogSection);
   const setCatalogSection = useNavigationStore((state) => state.setCatalogSection);
@@ -74,7 +76,7 @@ export function MobileAppChrome() {
     [entries, activeEntryId],
   );
 
-  if (view === 'quotes') return null;
+  if (view === 'quotes' && !viewer) return null;
 
   const contextTitle = view === 'notebook'
     ? activeEntry?.title || 'Notebook'
@@ -103,8 +105,8 @@ export function MobileAppChrome() {
           <span>SalesShop</span>
           <strong>{contextTitle}</strong>
         </div>
-        <GlobalSearch />
-        <QuickCreate />
+        {!viewer && <GlobalSearch />}
+        {!viewer && <QuickCreate />}
       </header>
 
       {open && <div className="mobile-app-drawer-backdrop" onPointerDown={() => setOpen(false)}>
