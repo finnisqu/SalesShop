@@ -55,7 +55,7 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
       onClick={mobileInteraction ? onOpen : undefined}
       onDoubleClick={mobileInteraction ? undefined : onOpen}
       tabIndex={0}
-      onKeyDown={(event) => { if (event.key === 'Enter') onOpen(); }}
+      onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(); } }}
       title={mobileInteraction ? 'Tap to edit' : 'Double-click to edit'}
     >
       <div className="project-card-pin" aria-hidden="true" />
