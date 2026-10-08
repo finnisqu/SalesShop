@@ -110,7 +110,7 @@ export function CompanySettings() {
               {settings.logoUrl ? <img src={settings.logoUrl} alt={`${settings.organizationName || 'Company'} logo`} /> : <div className="company-logo-placeholder">LOGO</div>}
               <div><strong>{settings.organizationName || 'Your company'}</strong><span>{settings.address || 'Company address'}</span><span>{settings.phone || settings.email || 'Company phone / email'}</span></div>
             </div>
-            <div className="company-settings-fields">
+            <fieldset className="company-settings-fields team-company-fieldset" disabled={!canEditCompany}>
               <label className="wide"><span>Logo URL</span><input type="url" value={settings.logoUrl} onChange={(event) => update({ logoUrl: event.target.value })} placeholder="https://…" /><small>Paste a hosted image URL. File upload is not available yet.</small></label>
               <label><span>Default document contact</span><input value={settings.quoteContactName} onChange={(event) => update({ quoteContactName: event.target.value })} /></label>
               <label><span>Contact phone</span><input type="tel" value={settings.quoteContactPhone} onChange={(event) => update({ quoteContactPhone: event.target.value })} /></label>
