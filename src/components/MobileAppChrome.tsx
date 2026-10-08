@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigationStore, type AppView, type CatalogSection } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
+import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { AuthStatus } from './AuthGate';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
@@ -42,6 +43,7 @@ export function MobileAppChrome() {
   const createEntry = useNotebookStore((state) => state.createEntry);
 
   const [open, setOpen] = useState(false);
+  const drawerRef = useDismissibleLayer<HTMLElement>(open, () => setOpen(false));
   const [boardMode, setBoardMode] = useState<'projects' | 'accounts'>(() => {
     if (typeof window === 'undefined') return 'projects';
     return window.sessionStorage.getItem('salesshop-board-mode-v1') === 'accounts' ? 'accounts' : 'projects';
@@ -93,10 +95,10 @@ export function MobileAppChrome() {
       </header>
 
       {open && <div className="mobile-app-drawer-backdrop" onPointerDown={() => setOpen(false)}>
-        <aside className="mobile-app-drawer" onPointerDown={(event) => event.stopPropagation()}>
+        <aside ref={drawerRef} className="mobile-app-drawer" role="dialog" aria-modal="true" aria-label="SalesShop navigation" onPointerDown={(event) => event.stopPropagation()}>
           <header>
             <div><span>SalesShop</span><strong>{viewLabel(view)}</strong></div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close navigation">×</button>
+            <button type="button" data-dialog-initial-focus onClick={() => setOpen(false)} aria-label="Close navigation">×</button>
           </header>
 
           <nav className="mobile-app-drawer-nav" aria-label="SalesShop sections">
