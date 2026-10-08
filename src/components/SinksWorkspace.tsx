@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { MobileCatalogReferenceCard } from './MobileCatalogReferenceCard';
 import {
   SINK_CATEGORIES,
   SINK_CATEGORY_LABELS,
@@ -290,24 +291,32 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
               const prices = variants.map((variant) => variant.sellPrice).filter((value): value is number => value !== undefined);
               const low = prices.length ? Math.min(...prices) : undefined;
               const high = prices.length ? Math.max(...prices) : undefined;
-              return (
-                <Fragment key={model.id}>
-                <button type="button" className={(isMobileCatalog ? expandedMobileSinkId === model.id : selected?.id === model.id) ? 'active' : ''} aria-expanded={isMobileCatalog ? expandedMobileSinkId === model.id : undefined} onClick={() => {
-                  setSelectedId(model.id);
-                  if (isMobileCatalog) setExpandedMobileSinkId((current) => current === model.id ? null : model.id);
-                }}>
+              const displayPrice = low === undefined ? 'Unpriced' : low === high ? money.format(low) : `${money.format(low)}–${money.format(high ?? low)}`;
+              const expanded = expandedMobileSinkId === model.id;
+              return isMobileCatalog ? (
+                <MobileCatalogReferenceCard
+                  key={model.id}
+                  title={model.name}
+                  subtitle={`${model.modelCode || SINK_CATEGORY_LABELS[model.category]}${model.brand ? ` · ${model.brand}` : ''}`}
+                  price={displayPrice}
+                  priceAriaLabel={`Customer price ${displayPrice}`}
+                  priceMeta={`${variants.length} variant${variants.length === 1 ? '' : 's'}${model.active ? '' : ' · Archived'}`}
+                  expanded={expanded}
+                  onToggle={() => {
+                    setSelectedId(model.id);
+                    setExpandedMobileSinkId(expanded ? null : model.id);
+                  }}
+                  details={renderSinkDetail(model)}
+                />
+              ) : (
+                <button type="button" key={model.id} className={selected?.id === model.id ? 'active' : ''} onClick={() => setSelectedId(model.id)}>
                   <span className="sinks-model-list-main"><strong>{model.name}</strong><small>{model.modelCode || SINK_CATEGORY_LABELS[model.category]}</small></span>
                   <span className="sinks-model-list-meta">
                     <b>{variants.length} variant{variants.length === 1 ? '' : 's'}</b>
-                    <small>{low === undefined ? 'Unpriced' : low === high ? money.format(low) : `${money.format(low)}–${money.format(high ?? low)}`}</small>
+                    <small>{displayPrice}</small>
                   </span>
                   {!model.active && <em>Archived</em>}
-                  <span className="sinks-mobile-model-chevron" aria-hidden="true">{expandedMobileSinkId === model.id ? '⌃' : '⌄'}</span>
                 </button>
-                {isMobileCatalog && expandedMobileSinkId === model.id && (
-                  <div className="sinks-mobile-model-detail">{renderSinkDetail(model)}</div>
-                )}
-                </Fragment>
               );
             })}
             {!visibleModels.length && <div className="sinks-empty-navigator"><strong>No sinks found</strong><span>Change the search/filter or add a sink model.</span></div>}
