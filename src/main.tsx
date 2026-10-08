@@ -41,6 +41,7 @@ import './mobile-qc-batch4.css';
 import './mobile-materials-sort.css';
 import './settings-workspace.css';
 import './mobile-qc-batch5.css';
+import './catalog-quote-integration.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
