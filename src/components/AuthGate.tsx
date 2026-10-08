@@ -37,6 +37,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [formError, setFormError] = useState('');
   const [guestInvite, setGuestInvite] = useState<TeamInvitePreview | null>(null);
   const [guestInviteUnavailable, setGuestInviteUnavailable] = useState(false);
+  const [guestInviteError, setGuestInviteError] = useState(false);
 
   useEffect(() => { void initialize(); }, [initialize]);
   useEffect(() => {
@@ -46,7 +47,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     let cancelled = false;
     void previewTeamInvite(token).then((preview) => {
       if (!cancelled) { setGuestInvite(preview); setGuestInviteUnavailable(!preview); }
-    }).catch(() => { /* Acceptance retries have a dedicated actionable error screen. */ });
+    }).catch(() => { if (!cancelled) setGuestInviteError(true); });
     return () => { cancelled = true; };
   }, [invited]);
 
@@ -90,6 +91,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
     </div>
   </section></main>;
 
+  if (invited && !user && guestInviteError) return <main className="auth-shell"><section className="auth-card">
+    <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
+    <div className="auth-copy"><h1>Unable to check invitation</h1><p>We couldn't securely verify your team invitation. Try again before creating an account.</p></div>
+    <button type="button" className="auth-primary auth-full-width" onClick={() => window.location.reload()}>Retry verification</button>
+  </section></main>;
+  if (invited && !user && !guestInvite && !guestInviteUnavailable) return <div className="auth-loading">Checking team invitation…</div>;
   if (invited && !user && (guestInviteUnavailable || (guestInvite && guestInvite.status !== 'pending'))) {
     return <main className="auth-shell"><section className="auth-card">
       <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
