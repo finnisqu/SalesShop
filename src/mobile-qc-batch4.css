@@ -81,9 +81,10 @@
   }
   /* Board still pages sideways while each card stack scrolls on its own. */
   .sales-app.view-board .board-card-stack{
-    touch-action:pan-y;
     min-height:0;
     overscroll-behavior-y:contain;
+    /* Preserve horizontal stage swipes even when the gesture begins on a card. */
+    touch-action:auto;
   }
   .sales-app.view-board .mobile-board-stage-picker select{
     touch-action:manipulation;
