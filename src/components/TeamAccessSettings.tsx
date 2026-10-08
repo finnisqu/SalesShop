@@ -28,6 +28,7 @@ export function TeamAccessSettings() {
   const [email, setEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'member'|'admin'>('member');
   const [newInviteLink, setNewInviteLink] = useState('');
+  const [lastEmailReference, setLastEmailReference] = useState('');
   const [copied, setCopied] = useState(false);
   const myRole = members.find((member) => member.user_id === user?.id)?.role ?? null;
   const inviteRoles = allowedInviteRoles(myRole);
@@ -67,7 +68,7 @@ export function TeamAccessSettings() {
   const createInvite = async (event?: FormEvent, sendEmail = true) => {
     event?.preventDefault();
     if (!supabase || !orgId || !isAdmin || busy || !email.trim()) return;
-    setBusy(true); setError(''); setNotice(''); setNewInviteLink('');
+    setBusy(true); setError(''); setNotice(''); setNewInviteLink(''); setLastEmailReference('');
     try {
       if (sendEmail) {
         const { data, error: emailError } = await supabase.functions.invoke('team-invite-email', {
@@ -79,8 +80,9 @@ export function TeamAccessSettings() {
             ? await context.json().catch(() => ({})) as { error?: string } : {};
           setError(details.error || emailError.message);
         } else {
-          const result = data as { sent?: boolean; invitationUrl?: string; error?: string; email?: string } | null;
+          const result = data as { sent?: boolean; invitationUrl?: string; error?: string; email?: string; providerMessageId?: string } | null;
           if (result?.sent) {
+            setLastEmailReference(result.providerMessageId || '');
             setEmail('');
             setNotice(`Invitation submitted for ${result.email || 'your teammate'}. The link expires in seven days. Email delivery isn't guaranteed: if it doesn't arrive, check Resend's delivery activity and the recipient's spam folder.`);
           } else if (result?.invitationUrl) {
@@ -193,6 +195,7 @@ export function TeamAccessSettings() {
             </select></label>
             <div className="settings-inline-actions"><button type="submit" className="settings-primary-button" disabled={!email.trim() || busy}>{busy ? 'Working…' : 'Send invitation email'}</button><button type="button" disabled={!email.trim() || busy} onClick={() => void createInvite(undefined, false)}>Create link instead</button></div>
           </form>
+          {lastEmailReference && <p className="settings-help">Resend submission reference: <code>{lastEmailReference}</code> · <a href="https://resend.com/emails" target="_blank" rel="noopener noreferrer">Check delivery status</a></p>}
           {newInviteLink && <div className="team-new-invite"><strong>Share this invitation</strong>
             <p>Only the invited, email-verified account can use it. This link is shown once. Creating a new link for the same recipient replaces their previous pending invitation.</p>
             <input readOnly value={newInviteLink} onFocus={(event)=>event.target.select()} aria-label="Invitation link" />
