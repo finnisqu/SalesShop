@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export type TeamInvitePreview = {
   organizationName: string;
-  role: 'member' | 'admin';
+  role: 'member' | 'admin' | 'viewer';
   emailHint: string;
   expiresAt: string;
   status: 'pending' | 'accepted' | 'revoked' | 'expired';
@@ -11,7 +11,7 @@ export type TeamInvitePreview = {
 
 type InvitePreviewRow = {
   organization_name: string;
-  invite_role: 'member' | 'admin';
+  invite_role: 'member' | 'admin' | 'viewer';
   invited_email_hint: string;
   expires_at: string;
   invitation_status: TeamInvitePreview['status'];
