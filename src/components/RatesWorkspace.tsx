@@ -340,9 +340,10 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
               label="Standard material price levels"
               empty={!materialPricingRows.length}
               emptyMessage="No active material pricing levels match this search."
-              onReset={query.trim() || category !== 'all' ? () => {
+              resetLabel="View all rates"
+              onReset={() => {
                 setQuery(''); selectCategory('all'); clearReferenceFilters();
-              } : undefined}
+              }}
             >
               {materialPricingRows.map((rule) => {
                 const expanded = expandedLevelId === rule.id;
