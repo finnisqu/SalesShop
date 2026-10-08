@@ -31,6 +31,7 @@ import './viewer-workspace.css';
 import { AuthStatus } from './components/AuthGate';
 import { ViewerWorkspace } from './components/ViewerWorkspace';
 import { useAuthStore } from './store/authStore';
+import { canEditTeamArea } from './services/teamDepartments';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
 import { Connections } from './components/Connections';
@@ -51,7 +52,17 @@ import { useNotebookStore } from './store/notebookStore';
 
 function App() {
   const view = useNavigationStore((state) => state.view);
-  const viewer = useAuthStore((state) => state.mode === 'cloud' && state.teamRole === 'viewer');
+  const mode = useAuthStore((state) => state.mode);
+  const teamRole = useAuthStore((state) => state.teamRole);
+  const department = useAuthStore((state) => state.teamDepartment);
+  const catalogSection = useNavigationStore((state) => state.catalogSection);
+  const viewer = mode === 'cloud' && teamRole === 'viewer';
+  const scopedMember = mode === 'cloud' && teamRole === 'member' && department !== 'general';
+  const readOnlyArea = viewer || (scopedMember && (
+    ((view === 'board' || view === 'dashboard') && !canEditTeamArea(teamRole, department, 'crm')) ||
+    (view === 'quotes' && !canEditTeamArea(teamRole, department, 'quotes')) ||
+    (view === 'catalog' && !(catalogSection === 'suppliers' && canEditTeamArea(teamRole, department, 'supplier')))
+  ));
   const setView = useNavigationStore((state) => state.setView);
   const openProject = useNavigationStore((state) => state.openProject);
   const hydrate = useNotebookStore((state) => state.hydrate);
@@ -78,7 +89,7 @@ function App() {
   if (!hydrated || !entry) return <div className="loading-screen">Opening SalesShop…</div>;
 
   return (
-    <div className={`sales-app view-${view}${viewer ? ' sales-app-viewer' : ''}`}>
+    <div className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}`}>
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
         <nav className="app-tabs" aria-label="SalesShop sections">
@@ -91,7 +102,7 @@ function App() {
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
         {!viewer && <GlobalSearch />}
-        {!viewer && <QuickCreate />}
+        {!viewer && !scopedMember && <QuickCreate />}
         <div className="app-account-zone">
           <div className="migration-chip">React foundation</div>
           <AuthStatus />
@@ -99,7 +110,7 @@ function App() {
       </header>
       <MobileAppChrome />
 
-      {viewer && view !== 'notebook' && view !== 'settings' ? (
+      {readOnlyArea && view !== 'notebook' && view !== 'settings' ? (
         <ViewerWorkspace section={view} />
       ) : view === 'board' ? (
         <Board />
