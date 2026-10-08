@@ -288,7 +288,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                     </article>
                   );
                 })}
-                {!accounts.length && <div className="board-empty-card">No accounts here</div>}
+                {!accounts.length && <div className="board-empty-card">No accounts in this stage yet</div>}
               </div>
             </section>
           );
