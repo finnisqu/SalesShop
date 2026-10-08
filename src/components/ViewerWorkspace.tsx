@@ -3,13 +3,16 @@ import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { quoteTotal, displayQuoteNumber, quoteLineTotal } from '../types/quote';
-import type { AppView } from '../store/navigationStore';
+import { useNavigationStore, type AppView } from '../store/navigationStore';
+import { useAuthStore } from '../store/authStore';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 /** Viewer-only browsing surface. No shared-record mutation controls are rendered. */
 export function ViewerWorkspace({ section }: { section: AppView }) {
   const [query, setQuery] = useState('');
+  const setCatalogSection = useNavigationStore((state) => state.setCatalogSection);
+  const department = useAuthStore((state) => state.teamDepartment);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
@@ -50,6 +53,10 @@ export function ViewerWorkspace({ section }: { section: AppView }) {
         <p>Read-only access to shared SalesShop records. Your personal notebook remains editable.</p></div>
       <span className="viewer-role-pill" aria-label="Read-only access">View only</span>
     </header>
+    {section === 'catalog' && department === 'purchasing' && <div className="viewer-purchasing-jump">
+      <button type="button" onClick={() => setCatalogSection('suppliers')}>Open editable Suppliers catalog →</button>
+      <span>Other catalog sections remain read-only.</span>
+    </div>}
     <div className="viewer-search">
       <label htmlFor="viewer-workspace-search">Find in {title.toLowerCase()}</label>
       <input id="viewer-workspace-search" type="search" value={query}
