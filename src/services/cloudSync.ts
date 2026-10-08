@@ -113,12 +113,15 @@ export async function ensureCurrentWorkspace() {
   return data;
 }
 
-export async function hydrateCloudDocuments(orgId: string, userId: string) {
+export async function hydrateCloudDocuments(orgId: string, userId: string, options: {
+  allowCompanySeed?: boolean;
+  allowNotebookSeed?: boolean;
+} = {}) {
   if (!supabase) return;
 
   const previousScope = readCacheScope();
-  const canSeedOrgFromLocal = !previousScope || previousScope.organizationId === orgId;
-  const canSeedNotebookFromLocal = !previousScope || previousScope.userId === userId;
+  const canSeedOrgFromLocal = options.allowCompanySeed === true && (!previousScope || previousScope.organizationId === orgId);
+  const canSeedNotebookFromLocal = options.allowNotebookSeed !== false && (!previousScope || previousScope.userId === userId);
 
   // CRM uses normalized tables. The old org_documents.crm row is rollback-only.
   const normalizedCrm = await loadNormalizedCrm(orgId);
@@ -146,10 +149,15 @@ export async function hydrateCloudDocuments(orgId: string, userId: string) {
     const seededQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
     writeLocalDocument(QUOTES_DOCUMENT_KEY, seededQuotes ?? localQuotes, false);
   } else {
-    // A real cloud shop starts clean, never with the Blue Jay Park demo quote.
-    const starter = starterQuoteDocument();
-    await syncNormalizedQuotes(orgId, starter);
-    writeLocalDocument(QUOTES_DOCUMENT_KEY, starter, false);
+    // Collaborators never seed a company with their own local/demo data.
+    // Only a workspace owner initializing a new shop creates the starter quote.
+    if (options.allowCompanySeed) {
+      const starter = starterQuoteDocument();
+      await syncNormalizedQuotes(orgId, starter);
+      writeLocalDocument(QUOTES_DOCUMENT_KEY, starter, false);
+    } else {
+      writeLocalDocument(QUOTES_DOCUMENT_KEY, { schemaVersion: 2, activeQuoteId: null, quotes: [] }, false);
+    }
   }
 
   // Signatures are immutable business records. Existing cloud records always win.
