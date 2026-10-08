@@ -88,6 +88,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
     try { return localStorage.getItem(MATERIALS_SECTION_KEY) === 'suppliers' ? 'suppliers' : 'catalog'; } catch { return 'catalog'; }
   });
   const [editing, setEditing] = useState(false);
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
@@ -280,6 +281,9 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
             placeholder="Search colors, suppliers, brands, finishes…"
             aria-label="Search material library"
           />
+          <button type="button" className="materials-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open material catalog tools">
+            <span>•••</span><strong>Tools</strong>
+          </button>
           {!editing && (
             <>
               <details className="rates-filter-menu">
@@ -309,6 +313,47 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
           )}
         </div>
       </section>}
+
+      {mobileToolsOpen && <div className="materials-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
+        <aside className="materials-mobile-tools-sheet" onPointerDown={(event) => event.stopPropagation()}>
+          <header>
+            <div>
+              <span>Materials</span>
+              <strong>Catalog tools</strong>
+              <small>Maintenance controls stay out of the reference workspace until you need them.</small>
+            </div>
+            <button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close catalog tools">×</button>
+          </header>
+
+          <section className="materials-mobile-tools-section">
+            <span className="materials-mobile-tools-label">Mode</span>
+            <div className="materials-mobile-mode-row">
+              <button type="button" className={!editing ? 'active' : ''} onClick={() => setEditing(false)}>
+                <strong>Reference</strong>
+                <small>Search, compare, and look up costs</small>
+              </button>
+              <button type="button" className={editing ? 'active' : ''} onClick={() => setEditing(true)}>
+                <strong>Edit materials</strong>
+                <small>Maintain catalog records and variants</small>
+              </button>
+            </div>
+          </section>
+
+          {editing && <section className="materials-mobile-tools-section">
+            <span className="materials-mobile-tools-label">Editing</span>
+            <label className="materials-mobile-inactive-toggle">
+              <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />
+              <span><strong>Show inactive</strong><small>Include archived catalog records while editing</small></span>
+            </label>
+          </section>}
+
+          <section className="materials-mobile-tools-section">
+            <span className="materials-mobile-tools-label">Supplier data</span>
+            <SupplierImportLauncher placement="toolbar" />
+            <small className="materials-mobile-tools-note">Stage and review supplier price-list updates before publishing them into the catalog.</small>
+          </section>
+        </aside>
+      </div>}
 
       {sectionView === 'suppliers' ? (
         <SuppliersWorkspace />
