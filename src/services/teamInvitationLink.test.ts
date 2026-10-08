@@ -24,7 +24,7 @@ function fakeWindow() {
 }
 
 describe('team invitation handoff', () => {
-  it('rejects invalid invitation token shapes and uses canonical beta URL', () => {
+  it('rejects invalid invitation token shapes and uses canonical SalesShop URL', () => {
     expect(() => teamInviteUrl('not-a-token')).toThrow('Invalid invitation token');
     expect(() => teamInviteUrl('a'.repeat(63))).toThrow('Invalid invitation token');
   });
@@ -41,7 +41,7 @@ describe('team invitation handoff', () => {
       expect(local.size).toBe(1);
       session.clear(); // Email confirmation opened in another browser tab.
       expect(pendingTeamInviteToken()).toBe(token);
-      expect(teamInviteUrl(token)).toBe(`https://finnisqu.github.io/SalesShop/#invite=${token}`);
+      expect(teamInviteUrl(token)).toBe(`https://app.salesshop.work/#invite=${token}`);
       clearPendingTeamInvite();
       expect(pendingTeamInviteToken()).toBeNull();
       expect(local.size).toBe(0);
