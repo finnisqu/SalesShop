@@ -1,22 +1,27 @@
 /* Batch 4: mobile overlay, scrolling, and touch QA.
    Kept separate from the existing desktop notebook and pricing layouts. */
 @media (max-width:700px){
-  /* Only the active Catalog workspace should own vertical scroll.
-     Avoid parent + child scroll competition, which can trap swipes on phones. */
+  /* The Catalog host is the ONLY vertical scrolling surface.
+     Prior QC accidentally hid overflow here while forcing the embedded
+     Materials and Rates workspaces to overflow:visible !important. */
   .sales-app.view-catalog .catalog-section-host{
+    flex:1 1 auto;
+    height:auto;
     min-height:0;
-    overflow:hidden!important;
+    min-width:0;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
   }
   .sales-app.view-catalog .catalog-section-host > :is(
     .rates-workspace.is-catalog-embedded,
     .sinks-workspace.is-catalog-embedded
   ){
-    height:100%;
+    height:auto!important;
     min-height:0;
-    overflow-x:hidden;
-    overflow-y:auto;
-    overscroll-behavior-y:contain;
-    -webkit-overflow-scrolling:touch;
+    overflow:visible!important;
     padding-bottom:calc(24px + env(safe-area-inset-bottom));
   }
   .sales-app.view-catalog .catalog-section-host:is(
