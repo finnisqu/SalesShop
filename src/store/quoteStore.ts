@@ -40,6 +40,8 @@ import { useAuthStore } from './authStore';
 interface QuoteState {
   quotes: Quote[];
   activeQuoteId: string | null;
+  recentCatalogInsert: { quoteId: string; lineId: string } | null;
+  clearCatalogInsert: () => void;
   hydrated: boolean;
   undoStacks: Record<string, Quote[]>;
   redoStacks: Record<string, Quote[]>;
@@ -252,6 +254,8 @@ async function assignCommercialIdentity(quote: Quote, document: QuoteDocument) {
 export const useQuoteStore = create<QuoteState>((set, get) => ({
   quotes: [],
   activeQuoteId: null,
+  recentCatalogInsert: null,
+  clearCatalogInsert: () => set({ recentCatalogInsert: null }),
   hydrated: false,
   undoStacks: {},
   redoStacks: {},
@@ -468,7 +472,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       ? { ...quote, lines: [...quote.lines, line], updatedAt: timestamp }
       : quote);
     persist(quotes, get().activeQuoteId);
-    set({ quotes, ...history });
+    set({ quotes, ...history, recentCatalogInsert: { quoteId, lineId: line.id } });
     return line.id;
   },
 
