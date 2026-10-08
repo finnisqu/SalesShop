@@ -27,7 +27,10 @@ import './quote-select-leave.css';
 import './quote-popover-polish.css';
 import './quote-mobile-pass.css';
 import './catalog-workspace.css';
+import './viewer-workspace.css';
 import { AuthStatus } from './components/AuthGate';
+import { ViewerWorkspace } from './components/ViewerWorkspace';
+import { useAuthStore } from './store/authStore';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
 import { Connections } from './components/Connections';
@@ -48,6 +51,7 @@ import { useNotebookStore } from './store/notebookStore';
 
 function App() {
   const view = useNavigationStore((state) => state.view);
+  const viewer = useAuthStore((state) => state.mode === 'cloud' && state.teamRole === 'viewer');
   const setView = useNavigationStore((state) => state.setView);
   const openProject = useNavigationStore((state) => state.openProject);
   const hydrate = useNotebookStore((state) => state.hydrate);
@@ -74,7 +78,7 @@ function App() {
   if (!hydrated || !entry) return <div className="loading-screen">Opening SalesShop…</div>;
 
   return (
-    <div className={`sales-app view-${view}`}>
+    <div className={`sales-app view-${view}${viewer ? ' sales-app-viewer' : ''}`}>
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
         <nav className="app-tabs" aria-label="SalesShop sections">
@@ -86,16 +90,18 @@ function App() {
           <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
-        <GlobalSearch />
-        <QuickCreate />
+        {!viewer && <GlobalSearch />}
+        {!viewer && <QuickCreate />}
         <div className="app-account-zone">
           <div className="migration-chip">React foundation</div>
           <AuthStatus />
         </div>
       </header>
-      <MobileAppChrome />
+      {!viewer && <MobileAppChrome />}
 
-      {view === 'board' ? (
+      {viewer && view !== 'notebook' && view !== 'settings' ? (
+        <ViewerWorkspace section={view} />
+      ) : view === 'board' ? (
         <Board />
       ) : view === 'quotes' ? (
         <Quotes />
