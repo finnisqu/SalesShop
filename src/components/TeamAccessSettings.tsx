@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { allowedInviteRoles, canManageTeamMember, roleName, TEAM_ROLE_HELP, type TeamRole, type TeamInvitationRow } from '../services/teamAccess';
 import { teamInviteUrl } from '../services/teamInvitationLink';
+import { TEAM_DEPARTMENTS, TEAM_DEPARTMENT_DETAILS, departmentName, type TeamDepartment } from '../services/teamDepartments';
 import { useAuthStore } from '../store/authStore';
 
-type MemberRow = { user_id: string; role: TeamRole; created_at: string };
+type MemberRow = { user_id: string; role: TeamRole; job_function: TeamDepartment; created_at: string };
 type MemberInfo = MemberRow & { displayName?: string };
 
 function day(value: string) {
@@ -27,6 +28,7 @@ export function TeamAccessSettings() {
   const [notice, setNotice] = useState('');
   const [email, setEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'viewer'|'member'|'admin'>('member');
+  const [inviteDepartment, setInviteDepartment] = useState<TeamDepartment>('general');
   const [newInviteLink, setNewInviteLink] = useState('');
   const [lastEmailReference, setLastEmailReference] = useState('');
   const [copied, setCopied] = useState(false);
@@ -38,7 +40,7 @@ export function TeamAccessSettings() {
     if (!orgId || !supabase) return;
     setLoading(true);
     const { data: roster, error: membershipError } = await supabase
-      .from('organization_members').select('user_id,role,created_at')
+      .from('organization_members').select('user_id,role,job_function,created_at')
       .eq('organization_id', orgId).order('created_at');
     if (membershipError) { setError(membershipError.message); setLoading(false); return; }
     const rows = (roster ?? []) as MemberRow[];
@@ -72,7 +74,8 @@ export function TeamAccessSettings() {
     try {
       if (sendEmail) {
         const { data, error: emailError } = await supabase.functions.invoke('team-invite-email', {
-          body: { organizationId: orgId, email: email.trim(), role: inviteRole },
+          body: { organizationId: orgId, email: email.trim(), role: inviteRole,
+            jobFunction: inviteRole === 'member' ? inviteDepartment : 'general' },
         });
         if (emailError) {
           const context = emailError.context;
@@ -92,8 +95,9 @@ export function TeamAccessSettings() {
           } else setError(result?.error || 'Could not send the invitation.');
         }
       } else {
-        const { data, error: inviteError } = await supabase.rpc('create_team_invite', {
+        const { data, error: inviteError } = await supabase.rpc('create_team_invite_with_department', {
           target_organization: orgId, target_email: email.trim(), target_role: inviteRole,
+          target_job_function: inviteRole === 'member' ? inviteDepartment : 'general',
         });
         if (inviteError) setError(inviteError.message);
         else {
@@ -138,6 +142,22 @@ export function TeamAccessSettings() {
     await refresh();setBusy(false);
   };
 
+  const changeDepartment = async (member: MemberInfo, department: TeamDepartment) => {
+    if (!supabase || !orgId || member.role !== 'member' || busy ||
+      !canManageTeamMember(myRole, member.role, member.user_id === user?.id) ||
+      member.job_function === department) return;
+    if (!window.confirm(`Assign ${member.displayName || 'this member'} to ${departmentName(department)}? Their shared editing access will change.`)) return;
+    setBusy(true); setError(''); setNotice('');
+    const { error: rpcError } = await supabase.rpc('set_team_job_function', {
+      target_organization: orgId,
+      member_user_id: member.user_id,
+      new_job_function: department,
+    });
+    if (rpcError) setError(rpcError.message);
+    else setNotice('Department updated. Ask the member to sign in again to refresh their workspace tools. Database permissions apply immediately.');
+    await refresh(); setBusy(false);
+  };
+
   const removeMember = async (member:MemberInfo) => {
     if (!supabase || !orgId || !canManageTeamMember(myRole,member.role,member.user_id===user?.id) || busy) return;
     if (!window.confirm(`Remove ${member.displayName || 'this teammate'} from your company? They will lose server-side access to shared records.`)) return;
@@ -166,7 +186,7 @@ export function TeamAccessSettings() {
             const editable=canManageTeamMember(myRole,member.role,self);
             return <div className="settings-member team-member-row" key={member.user_id}>
               <span className="settings-avatar">{label.charAt(0).toUpperCase()}</span>
-              <div><strong>{label}{self ? ' (You)' : ''}</strong><small>{self ? user?.email : `Member since ${day(member.created_at)}`}</small><small>{TEAM_ROLE_HELP[member.role]}</small></div>
+              <div><strong>{label}{self ? ' (You)' : ''}</strong><small>{self ? user?.email : `Member since ${day(member.created_at)}`}</small><small>{member.role === 'member' ? departmentName(member.job_function || 'general') : TEAM_ROLE_HELP[member.role]}</small></div>
               <span className="settings-role">{roleName(member.role)}</span>
               {editable && <div className="team-member-actions">
                 <label><span className="team-screenreader">Change role</span>
@@ -175,6 +195,12 @@ export function TeamAccessSettings() {
                     <option value="member">Member</option><option value="viewer">Viewer</option>{myRole==='owner' && <option value="admin">Admin</option>}
                   </select>
                 </label>
+                {member.role === 'member' && <label><span className="team-screenreader">Department</span>
+                  <select aria-label={`Department for ${label}`} value={member.job_function || 'general'} disabled={busy}
+                    onChange={(event) => void changeDepartment(member, event.target.value as TeamDepartment)}>
+                    {TEAM_DEPARTMENTS.map((department) => <option key={department} value={department}>{departmentName(department)}</option>)}
+                  </select>
+                </label>}
                 <button type="button" disabled={busy} onClick={() => void removeMember(member)}>Remove</button>
               </div>}
             </div>;
@@ -193,6 +219,12 @@ export function TeamAccessSettings() {
             <label><span>Access</span><select value={inviteRole} disabled={busy} onChange={(event)=>setInviteRole(event.target.value as 'viewer'|'member'|'admin')}>
               {inviteRoles.map((role)=><option key={role} value={role}>{roleName(role)}</option>)}
             </select><small>{TEAM_ROLE_HELP[inviteRole]}</small></label>
+            {inviteRole === 'member' && <label><span>Department</span>
+              <select value={inviteDepartment} disabled={busy}
+                onChange={(event) => setInviteDepartment(event.target.value as TeamDepartment)}>
+                {TEAM_DEPARTMENTS.map((department) => <option key={department} value={department}>{departmentName(department)}</option>)}
+              </select><small>{TEAM_DEPARTMENT_DETAILS[inviteDepartment].description}</small>
+            </label>}
             <div className="settings-inline-actions"><button type="submit" className="settings-primary-button" disabled={!email.trim() || busy}>{busy ? 'Working…' : 'Send invitation email'}</button><button type="button" disabled={!email.trim() || busy} onClick={() => void createInvite(undefined, false)}>Create link instead</button></div>
           </form>
           {lastEmailReference && <p className="settings-help">Resend submission reference: <code>{lastEmailReference}</code> · <a href="https://resend.com/emails" target="_blank" rel="noopener noreferrer">Check delivery status</a></p>}
@@ -226,6 +258,14 @@ export function TeamAccessSettings() {
           ] as string[][]).map((row) => <div role="row" className="team-role-matrix-row" key={row[0]}>{row.map((v,i)=><span role="cell" key={i}>{v}</span>)}</div>)}
         </div>
         <p className="settings-help">All roles have access to their own private notebook. Viewer access never writes shared company data.</p>
+        <div className="team-department-explainer">
+          <strong>Member departments</strong>
+          <p className="settings-help">Departments are assigned within the Member role. Owner and Admin permissions do not change.</p>
+          {TEAM_DEPARTMENTS.map((department) => <div key={department} className="settings-detail-line">
+            <span>{departmentName(department)}</span><small>{TEAM_DEPARTMENT_DETAILS[department].writableAreas.map((area) => area === 'crm' ? 'CRM' : area === 'quotes' ? 'Quotes' : 'Suppliers').join(' · ')}</small>
+          </div>)}
+          <p className="settings-help">Internal-cost visibility and quote approval require separate protected data and workflow controls; this batch only governs editing by area.</p>
+        </div>
         <p className="settings-help">Individual sales ownership and “Mine / Team” reporting are a separate upcoming step.</p>
       </article>
     </div>
