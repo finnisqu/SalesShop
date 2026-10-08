@@ -2,6 +2,7 @@ import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { previewTeamInvite, type TeamInvitePreview } from '../services/teamInvitePreview';
+import { departmentName } from '../services/teamDepartments';
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const initialize = useAuthStore((state) => state.initialize);
@@ -169,6 +170,7 @@ export function AuthStatus() {
   const user = useAuthStore((state) => state.user);
   const organizationId = useAuthStore((state) => state.organizationId);
   const teamRole = useAuthStore((state) => state.teamRole);
+  const teamDepartment = useAuthStore((state) => state.teamDepartment);
   const error = useAuthStore((state) => state.error);
   const signOut = useAuthStore((state) => state.signOut);
 
@@ -178,7 +180,7 @@ export function AuthStatus() {
 
   return (
     <div className="backend-account" title={error || user?.email || 'Cloud workspace'}>
-      <span className={`backend-status ${organizationId ? 'cloud' : 'warning'}`} title={teamRole === 'viewer' ? 'Read-only Viewer access' : 'Shared cloud workspace'}>{organizationId ? teamRole === 'viewer' ? 'Viewer · Cloud' : 'Cloud' : 'Cloud issue'}</span>
+      <span className={`backend-status ${organizationId ? 'cloud' : 'warning'}`} title={teamRole === 'member' ? departmentName(teamDepartment) : teamRole === 'viewer' ? 'Read-only Viewer access' : 'Shared cloud workspace'}>{organizationId ? teamRole === 'viewer' ? 'Viewer · Cloud' : teamRole === 'member' && teamDepartment !== 'general' ? departmentName(teamDepartment) : 'Cloud' : 'Cloud issue'}</span>
       <button type="button" onClick={() => void signOut()}>Sign out</button>
     </div>
   );
