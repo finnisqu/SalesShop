@@ -1,0 +1,155 @@
+/* Connections — one human-centered home for relationships, sales records and reporting. */
+.sales-app.view-dashboard .connections-workspace{
+  flex:1 1 auto;display:flex;flex-direction:column;gap:14px;min-width:0;min-height:0;
+  height:100%;padding:20px 24px calc(28px + env(safe-area-inset-bottom));
+  box-sizing:border-box;overflow-x:hidden;overflow-y:auto;
+  background:#f1ece0;color:#514638;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
+}
+.connections-heading{display:flex;justify-content:space-between;align-items:end;gap:14px;border-bottom:1px solid #d6c9b5;padding-bottom:14px}
+.connections-heading>div:first-child{min-width:0}
+.connections-heading>div:first-child>span{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#857454}
+.connections-heading h1{margin:4px 0;font:700 28px/1.15 Georgia,'Times New Roman',serif;color:#4c4132}
+.connections-heading p{margin:5px 0 0;font-size:12px;color:#796c5b;line-height:1.45}
+.connections-workspace-summary{display:grid;justify-items:end;gap:5px;padding:8px 0;white-space:nowrap}
+.connections-workspace-summary strong{font:700 15px Georgia,'Times New Roman',serif}
+.connections-workspace-summary span{font-size:10px;color:#897966}
+.connections-tabs{
+  display:flex;flex:0 0 auto;gap:6px;align-items:stretch;
+  overflow-x:auto;max-width:100%;padding:5px;
+  border:1px solid #d7cbb6;border-radius:9px;background:#e9e2d3;
+  -webkit-overflow-scrolling:touch;
+}
+.connections-tabs>button{
+  display:grid;align-content:center;justify-items:start;flex:1 0 auto;
+  min-width:94px;min-height:54px;gap:3px;
+  padding:9px 11px;border:1px solid transparent;border-radius:6px;
+  background:transparent;color:#645b4d;text-align:left;cursor:pointer;
+}
+.connections-tabs>button strong{font-size:12px}
+.connections-tabs>button small{font-size:9px;color:#938677}
+.connections-tabs>button.active{
+  border-color:#c9b99d;background:#fffaf0;color:#4b3f2d;
+  box-shadow:inset 0 -3px #b49a63;
+}
+.connections-overview{display:grid;gap:12px;min-width:0;min-height:0}
+.connections-overview>.leadership-dashboard,
+.sales-app.view-dashboard .connections-overview>.leadership-dashboard{
+  flex:0 0 auto;height:auto!important;min-height:0!important;
+  overflow:visible!important;padding:0!important;background:transparent;
+  width:100%;box-sizing:border-box;
+}
+.connections-overview .dashboard-heading{display:none}
+.connections-overview .dashboard-kpis,.connections-overview .dashboard-grid{min-width:0;width:100%}
+.connections-scope-strip{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border:1px solid #d7c8ad;border-radius:8px;background:#fff9eb;padding:10px 12px;
+}
+.connections-scope-strip>div:first-child{display:grid;gap:4px}
+.connections-scope-strip strong{font:700 14px Georgia,'Times New Roman',serif}
+.connections-scope-strip small{color:#807360;font-size:10px}
+.connections-scope-buttons{display:flex;gap:5px;padding:3px;border:1px solid #d9cdb8;border-radius:7px;background:#eee7d9}
+.connections-scope-buttons button{min-height:36px;padding:7px 11px;border:1px solid transparent;border-radius:5px;background:transparent;color:#756958;font-size:11px;font-weight:800}
+.connections-scope-buttons button.active{background:#fffdfa;border-color:#c9b89d;color:#59492f}
+.connections-scope-buttons button:disabled{opacity:.5;cursor:not-allowed}
+.connections-scope-note{color:#897764;font-size:11px;line-height:1.45;margin:0}
+.connections-directory-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:end;min-width:0}
+.connections-search{display:grid;flex:1 1 270px;gap:5px;min-width:0}
+.connections-filter{display:grid;flex:0 1 230px;gap:5px;min-width:0}
+.connections-directory-toolbar label>span,
+.connections-add-form label>span,
+.connections-person-editor label>span{font-size:10px;font-weight:850;color:#82735c;text-transform:uppercase;letter-spacing:.04em}
+.connections-directory-toolbar input,.connections-directory-toolbar select,
+.connections-add-form :is(input,select),.connections-person-editor :is(input,select){
+  min-width:0;width:100%;min-height:42px;box-sizing:border-box;
+  border:1px solid #cebea4;border-radius:7px;background:#fffdf8;padding:8px 10px;
+  font-family:inherit;font-size:14px;color:#514335;
+}
+.connections-add,.connections-add-form button,.connections-person-editor button{
+  border:1px solid #c3ad82;border-radius:7px;background:#fffaf0;
+  color:#62543e;min-height:42px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;
+}
+.connections-add{background:#e7d5aa}
+.connections-directory{display:grid;align-content:start;gap:10px;min-width:0}
+.connections-count{margin:0;font-size:11px;color:#857761}
+.connections-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,275px),1fr));gap:9px;min-width:0}
+.connections-record{
+  display:grid;align-content:start;position:relative;gap:6px;min-width:0;min-height:100px;
+  padding:14px 35px 13px 14px;
+  border:1px solid #d6c9b6;border-radius:8px;background:#fffaf0;color:#504638;
+  box-sizing:border-box;text-align:left;cursor:pointer;
+}
+.connections-record:hover{background:#fff6e4;border-color:#b9a171}
+.connections-record-eyebrow{font-size:9px;color:#9a8054;letter-spacing:.045em;text-transform:uppercase;font-weight:850}
+.connections-record>strong,.connections-person-record>div>strong{
+  font:700 16px/1.3 Georgia,'Times New Roman',serif;color:#473d31;overflow-wrap:anywhere;
+}
+.connections-record small,.connections-person-record>div>small{font-size:11px;line-height:1.45;color:#87796a;overflow-wrap:anywhere}
+.connections-record>b{font:700 13px Georgia,'Times New Roman',serif;color:#55452e}
+.connections-record-arrow{position:absolute;right:12px;top:12px;color:#ae966b;font-size:19px}
+.connections-person-record{display:flex;justify-content:space-between;align-items:center;gap:9px;padding:12px 14px}
+.connections-person-record>div{display:grid;align-content:center;gap:6px;min-width:0;overflow-wrap:anywhere}
+.connections-person-record>button{flex:0 0 auto;min-height:39px;border:1px solid #d0bea0;border-radius:6px;background:#f6e9cb;padding:7px 10px;font-size:11px;font-weight:800;color:#63533b}
+.connections-empty{border:1px dashed #d0c4af;border-radius:8px;margin:0;padding:20px 12px;background:#fffaf0;color:#8a7b68;font-size:12px;text-align:center}
+.connections-notice{border:1px solid #d5c8ab;border-radius:7px;margin:0;padding:10px;background:#fff9e9;color:#65583d;font-size:12px}
+.connections-add-form,.connections-person-editor{
+  display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));
+  padding:13px;border:1px solid #c8b696;border-radius:8px;background:#fff9e9;
+  min-width:0;
+}
+.connections-add-form>strong,.connections-person-editor>header{grid-column:1/-1;font:700 17px Georgia,'Times New Roman',serif}
+.connections-add-form label,.connections-person-editor label{display:grid;gap:5px;min-width:0}
+.connections-add-form>div,.connections-person-editor>div{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.connections-add-form .primary,.connections-person-editor .primary{background:#e6d3a5;border-color:#ad9566}
+.connections-person-editor>header{display:flex;align-items:center;justify-content:space-between}
+.connections-person-editor>header button{font-size:22px;line-height:1}
+.connections-activity-list{display:grid;gap:6px}
+.connections-activity-list>button{
+  display:flex;gap:12px;align-items:center;justify-content:space-between;
+  border:1px solid #d8c9b0;border-radius:7px;background:#fffaf1;
+  padding:12px;color:#504537;text-align:left;
+}
+.connections-activity-list>button:disabled{opacity:.7}
+.connections-activity-list>button:not(:disabled){cursor:pointer}
+.connections-activity-list>button>span{display:grid;gap:5px;min-width:0}
+.connections-activity-list strong{font-size:12px;overflow-wrap:anywhere}
+.connections-activity-list small,.connections-activity-list time{font-size:10px;color:#8b7b68;line-height:1.4}
+.connections-activity-list time{flex:0 0 auto;white-space:nowrap}
+.connections-footer{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  margin-top:4px;padding-top:12px;border-top:1px solid #d8cbb8;color:#8a7d6b;font-size:11px;line-height:1.4;
+}
+.connections-footer button{flex:0 0 auto;min-height:38px;padding:7px 11px;border:1px solid #ccba9a;border-radius:6px;background:#fffaf0;color:#5c4b32;font-size:11px;font-weight:750;cursor:pointer}
+.sales-app.view-dashboard .connections-workspace :is(button,input,select):focus-visible{outline:2px solid #b29661;outline-offset:2px}
+@media(max-width:700px){
+  .sales-app.view-dashboard .connections-workspace{
+    height:calc(100dvh - 50px);min-height:0;overflow-y:auto;
+    gap:9px;padding:8px 7px calc(22px + env(safe-area-inset-bottom));
+  }
+  .connections-heading{padding:4px 4px 10px;align-items:center}
+  .connections-heading h1{font-size:20px}
+  .connections-heading p{font-size:10px}
+  .connections-heading>div:first-child>span{font-size:8px}
+  .connections-workspace-summary{display:none}
+  .connections-tabs{gap:4px;padding:4px;overflow-x:auto;scrollbar-width:none}
+  .connections-tabs::-webkit-scrollbar{display:none}
+  .connections-tabs>button{min-width:83px;min-height:49px;padding:7px 8px}
+  .connections-tabs>button strong{font-size:11px}
+  .connections-tabs>button small{font-size:8px}
+  .connections-scope-strip{padding:9px;align-items:start}
+  .connections-scope-buttons button{min-height:39px;padding:7px}
+  .connections-scope-note{font-size:10px}
+  .connections-directory-toolbar{gap:6px}
+  .connections-search{flex:1 1 100%}
+  .connections-filter{flex:1 1 auto;min-width:0}
+  .connections-directory-toolbar :is(input,select),
+  .connections-add-form :is(input,select),
+  .connections-person-editor :is(input,select){font-size:16px}
+  .connections-card-grid{grid-template-columns:minmax(0,1fr);gap:6px}
+  .connections-record{min-height:90px;padding:12px 33px 12px 12px}
+  .connections-add-form,.connections-person-editor{grid-template-columns:minmax(0,1fr);padding:11px}
+  .connections-add-form>strong,.connections-person-editor>header,
+  .connections-add-form>div,.connections-person-editor>div{grid-column:1}
+  .connections-footer{flex-wrap:wrap;gap:8px}
+  .connections-overview .leadership-dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .connections-overview .leadership-dashboard .dashboard-grid{grid-template-columns:minmax(0,1fr)}
+}
