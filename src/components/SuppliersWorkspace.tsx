@@ -131,6 +131,7 @@ export function SuppliersWorkspace() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [filter, setFilter] = useState<SupplierFilter>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(() => {
     try { return localStorage.getItem(SELECTED_KEY); } catch { return null; }
@@ -257,6 +258,7 @@ export function SuppliersWorkspace() {
       setSelectedKey(supplierKey(created.name));
       setProfileDraft(created);
       setEditingProfile(true);
+      setMobileToolsOpen(false);
     } catch (reason) {
       setLoadError(reason instanceof Error ? reason.message : 'Supplier could not be added.');
     } finally { setAdding(false); }
@@ -375,7 +377,7 @@ export function SuppliersWorkspace() {
       <aside className="supplier-navigator">
         <header><div><span className="board-eyebrow">Reverse CRM</span><strong>Suppliers</strong></div><span>{rollups.length}</span></header>
         <div className="supplier-nav-search">
-          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search suppliers or brands…" />
+          <div className="supplier-mobile-search-row"><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search suppliers or brands…" aria-label="Search suppliers" /><button type="button" className="supplier-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)}>••• Tools</button></div>
           <div className="supplier-filter-chips">
             {(['all', 'attention', 'current', 'missing'] as SupplierFilter[]).map((value) => (
               <button type="button" className={filter === value ? 'active' : ''} onClick={() => setFilter(value)} key={value}>
@@ -400,6 +402,13 @@ export function SuppliersWorkspace() {
         </div>
       </aside>
 
+      {mobileToolsOpen && <div className="supplier-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
+        <aside className="supplier-mobile-tools-sheet" role="dialog" aria-modal="true" aria-label="Supplier tools" onPointerDown={(event) => event.stopPropagation()}>
+          <header><div><span>Catalog · Suppliers</span><strong>Supplier tools</strong><small>Manage your directory without crowding reference lookup.</small></div><button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close supplier tools">×</button></header>
+          <section><strong>Add supplier</strong><div className="supplier-mobile-add-row"><input value={newSupplierName} onChange={(event) => setNewSupplierName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void addSupplier(); }} placeholder="Supplier name…" /><button type="button" onClick={() => void addSupplier()} disabled={!newSupplierName.trim() || adding}>{adding ? 'Adding…' : 'Add'}</button></div></section>
+          <section><strong>Directory maintenance</strong><small>Select a supplier, then use the record's Edit, Track, contacts, locations, or rules controls.</small></section>
+        </aside>
+      </div>}
       <section className="supplier-record">
         {loadError && <div className="supplier-directory-error">{loadError}</div>}
         {!selected ? <div className="supplier-record-empty"><strong>No supplier selected</strong><span>Add or select a supplier from the navigator.</span></div> : (
