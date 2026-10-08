@@ -91,7 +91,15 @@ Deno.serve(async (req) => {
         target_area: 'quotes',
       });
       if (permissionError || canEdit !== true) {
-        return json({ error: 'Your team permissions do not allow editing or sending customer quotes.' }, 403);
+        return json({ error: 'Your team permissions do not allow editing customer quotes.' }, 403);
+      }
+      if (action === 'create' || action === 'regenerate') {
+        const { data: canIssue, error: issueError } = await userClient.rpc('can_issue_team_quote', {
+          target_organization: organizationId,
+        });
+        if (issueError || canIssue !== true) {
+          return json({ error: 'Your department may prepare estimates but cannot issue customer quote links.' }, 403);
+        }
       }
     }
 
