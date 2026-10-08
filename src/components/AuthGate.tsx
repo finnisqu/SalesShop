@@ -64,7 +64,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <h1>{switching ? `Join ${activeInvitePreview?.organizationName || 'your invited team'}` : invalid ? 'Invitation no longer available' : verifyEmail ? 'Confirm your email to join' : 'Unable to check invitation'}</h1>
         <p>{switching ? `This invitation is for ${activeInvitePreview?.emailHint || 'a different email address'}. You're currently signed in as ${user.email || 'another user'}. To keep workspaces separate, switch accounts before joining.` : invalid ? 'This invitation may have expired, been revoked, or already been accepted. Ask the team owner for a new invitation if needed.' : verifyEmail ? 'Check the confirmation email for your SalesShop account, then return here and retry the invitation.' : error || 'Please retry checking your invitation.'}</p>
       </div>
-      {switching && activeInvitePreview && <div className="auth-invite-summary"><strong>{activeInvitePreview.organizationName}</strong><span>Joining as {activeInvitePreview.role === 'admin' ? 'Administrator' : 'Member'}</span><small>Invited email: {activeInvitePreview.emailHint}</small></div>}
+      {switching && activeInvitePreview && <div className="auth-invite-summary"><strong>{activeInvitePreview.organizationName}</strong><span>Joining as {activeInvitePreview.role === 'admin' ? 'Administrator' : activeInvitePreview.role === 'viewer' ? 'Viewer' : 'Member'}</span><small>Invited email: {activeInvitePreview.emailHint}</small></div>}
       <div className="auth-form">
         {switching ? <button type="button" className="auth-primary" disabled={busy} onClick={() => void signOut()}>{busy ? 'Switching…' : 'Continue with invited account'}</button>
           : !invalid ? <button type="button" className="auth-primary" disabled={busy} onClick={() => void retryWorkspace()}>{busy ? 'Checking…' : 'Retry invitation'}</button> : null}
@@ -78,7 +78,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     <div className="auth-copy"><span className="auth-eyebrow">Invitation accepted</span>
       <h1>Welcome to {joinWelcome.organizationName}</h1>
       <p>Your account is now connected to the existing {joinWelcome.organizationName} workspace. Your teammates' shared sales records are ready.</p></div>
-    <div className="auth-invite-summary"><strong>{joinWelcome.organizationName}</strong><span>Your role: {joinWelcome.role === 'admin' ? 'Administrator' : 'Member'}</span><small>Signed in as {user.email}</small></div>
+    <div className="auth-invite-summary"><strong>{joinWelcome.organizationName}</strong><span>Your role: {joinWelcome.role === 'admin' ? 'Administrator' : joinWelcome.role === 'viewer' ? 'Viewer' : 'Member'}</span><small>Signed in as {user.email}</small></div>
     <button type="button" className="auth-primary auth-full-width" onClick={dismissJoinWelcome}>Enter workspace</button>
   </section></main>;
   if (user && organizationId && !passwordRecovery) return <>{children}</>;
@@ -136,7 +136,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           <p>{passwordRecovery ? 'Enter a new password to finish recovering your account.' : recoverMode ? 'We’ll send a secure recovery link to your email address.' : invited ? creating ? 'You’ve been invited to join an existing SalesShop team. Use your invited email address to create an account, then confirm your email to finish joining.' : 'Already have an account? Sign in with the invited email address to join your team.' : creating ? 'Start with one account. Your shop workspace is created automatically.' : 'Sign in to your SalesShop workspace.'}</p>
         </div>
 
-        {invited && guestInvite?.status === 'pending' && <div className="auth-invite-summary"><strong>{guestInvite.organizationName}</strong><span>You're invited as {guestInvite.role === 'admin' ? 'Administrator' : 'Member'}</span><small>Invited email: {guestInvite.emailHint}</small></div>}
+        {invited && guestInvite?.status === 'pending' && <div className="auth-invite-summary"><strong>{guestInvite.organizationName}</strong><span>You're invited as {guestInvite.role === 'admin' ? 'Administrator' : guestInvite.role === 'viewer' ? 'Viewer' : 'Member'}</span><small>Invited email: {guestInvite.emailHint}</small></div>}
         <form onSubmit={submit} className="auth-form">
           {creating && !invited && !recoverMode && !passwordRecovery && (
             <label><span>Shop name</span><input value={shopName} onChange={(event) => setShopName(event.target.value)} placeholder="World Stone" autoComplete="organization" /></label>
