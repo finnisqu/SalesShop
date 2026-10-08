@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { useNavigationStore } from '../store/navigationStore';
 import { RATE_BOOK_DIVISIONS, type RateBookDivision } from '../types/rateBook';
 import type { Quote } from '../types/quote';
 
@@ -66,7 +67,11 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
   const companies = useCrmStore((state) => state.companies);
   const contacts = useCrmStore((state) => state.contacts);
   const updateQuote = useQuoteStore((state) => state.updateQuote);
+  const openProject = useNavigationStore((state) => state.openProject);
+  const openCompany = useNavigationStore((state) => state.openCompany);
   const linkedProject = quote.projectId ? projects.find((project) => project.id === quote.projectId) : undefined;
+  const linkedCompany = quote.companyId ? companies.find((company) => company.id === quote.companyId) : undefined;
+  const linkedContact = quote.contactId ? contacts.find((contact) => contact.id === quote.contactId) : undefined;
   const projectQuery = !quote.projectId && quote.title.trim().toLowerCase() === 'untitled quote' ? '' : quote.title;
 
   const projectSuggestions = useMemo(() => recentFirst(projects)
@@ -121,6 +126,19 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
 
   return (
     <>
+      <section className="quote-crm-connections" aria-label="CRM record links">
+        <header><strong>CRM connections</strong><small>Keep this quote attached to the right records</small></header>
+        <div className="quote-crm-connection-grid">
+          {linkedProject ? <button type="button" onClick={() => openProject(linkedProject.id)}>
+            <span>Project <b>↗</b></span><strong>{linkedProject.name}</strong><small>{linkedProject.stage}</small>
+          </button> : <div><span>Project</span><strong>Not linked</strong><small>Choose an existing project below</small></div>}
+          {linkedCompany ? <button type="button" onClick={() => openCompany(linkedCompany.id)}>
+            <span>Account <b>↗</b></span><strong>{linkedCompany.name}</strong><small>View company in Board</small>
+          </button> : <div><span>Account</span><strong>Not linked</strong><small>Select a company below</small></div>}
+          <div><span>Contact</span><strong>{linkedContact?.name ?? (quote.contactName ? 'Name entered' : 'Not linked')}</strong><small>{linkedContact?.email || 'Choose a known contact below'}</small></div>
+        </div>
+        <p>Sending, viewing, or signing the quote records sales activity. Sending and signing also update the project pipeline using existing rules.</p>
+      </section>
       <EntityField label="Project" value={quote.title} suggestions={projectSuggestions} onChange={(value) => updateQuote(quote.id, { title: value, projectId: undefined })} />
       <label>
         <span>Division / pricing context</span>
