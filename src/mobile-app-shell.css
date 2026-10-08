@@ -545,3 +545,184 @@
     padding-bottom: 7px;
   }
 }
+
+
+/* Shared-shell consolidation pass:
+   remove duplicate per-tab navigation now that MobileAppChrome owns it. */
+@media (max-width: 700px) {
+  /* Board drawer context */
+  .mobile-board-mode-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    padding: 0 8px 8px;
+  }
+
+  .mobile-board-mode-list > button {
+    min-width: 0;
+    min-height: 58px;
+    display: grid;
+    align-content: center;
+    gap: 3px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 6px;
+    padding: 7px 8px;
+    background: rgba(250, 247, 239, .68);
+    color: #655d51;
+    text-align: left;
+  }
+
+  .mobile-board-mode-list > button.active {
+    border-color: rgba(163, 136, 67, .24);
+    background: #fff5d9;
+    color: #52462d;
+    box-shadow: inset 3px 0 #bca354;
+  }
+
+  .mobile-board-mode-list strong {
+    font-size: 9px;
+  }
+
+  .mobile-board-mode-list small {
+    color: #918779;
+    font-size: 6.5px;
+    line-height: 1.25;
+  }
+
+  /* Projects: the shared shell + Quick Create replaces the entire secondary header. */
+  .sales-app.view-board .board-view:not(.accounts-view) > .board-header-panel {
+    display: none;
+  }
+
+  .sales-app.view-board .board-view:not(.accounts-view) > .project-board {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-top: 6px;
+  }
+
+  /* Accounts only keeps CRM cleanup; Projects/Accounts switching moved to the drawer. */
+  .sales-app.view-board .accounts-view > .accounts-header-panel {
+    min-height: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 4px 6px;
+  }
+
+  .sales-app.view-board .accounts-header-panel > div:first-child,
+  .sales-app.view-board .accounts-header-panel > .board-view-toggle {
+    display: none !important;
+  }
+
+  .sales-app.view-board .accounts-header-actions {
+    width: 100%;
+    margin: 0;
+    justify-content: flex-end;
+  }
+
+  .sales-app.view-board .accounts-header-actions .accounts-inference-note {
+    display: none;
+  }
+
+  .sales-app.view-board .accounts-cleanup-button {
+    height: 34px;
+    min-height: 34px;
+    border-radius: 6px;
+  }
+
+  /* Catalog: section switching lives in the shared drawer, so no second tab strip. */
+  .sales-app.view-catalog .catalog-workspace {
+    height: calc(100dvh - 50px);
+    overflow: hidden;
+  }
+
+  .sales-app.view-catalog .catalog-section-nav {
+    display: none !important;
+  }
+
+  .sales-app.view-catalog .catalog-section-host {
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-catalog .catalog-section-host > .rates-workspace.is-catalog-embedded,
+  .sales-app.view-catalog .catalog-section-host > .sinks-workspace.is-catalog-embedded {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .sales-app.view-catalog .catalog-section-suppliers {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  /* Dashboard begins directly under the command bar and keeps compact 2x2 KPIs. */
+  .sales-app.view-dashboard .leadership-dashboard {
+    height: calc(100dvh - 50px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi {
+    min-height: 88px;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi > span {
+    font-size: 9px;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi > strong {
+    font-size: 22px;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi small {
+    font-size: 8px;
+    line-height: 1.25;
+  }
+
+  /* Settings is one clean scroll surface beneath the shared shell. */
+  .sales-app.view-settings .company-settings-view {
+    height: calc(100dvh - 50px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-settings .company-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-app.view-settings .company-settings-card {
+    border-radius: 5px;
+  }
+
+  /* Notebook: shared drawer owns page navigation; only writing tools remain on-screen. */
+  .sales-app.view-notebook .notebook-workspace {
+    height: calc(100dvh - 50px);
+  }
+
+  .sales-app.view-notebook .binder-stage {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sales-app.view-notebook .desk-surface {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
