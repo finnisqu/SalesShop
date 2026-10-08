@@ -24,12 +24,12 @@ export function MobileCatalogToolsSheet({
     <div className="mobile-catalog-tools-backdrop" onPointerDown={(event) => {
       if (event.target === event.currentTarget) onClose();
     }}>
-      <aside ref={sheetRef} className="mobile-catalog-tools-sheet" role="dialog" aria-modal="true" aria-label={title}>
+      <aside ref={sheetRef} className={`mobile-catalog-tools-sheet${footer ? ' has-footer' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
         <header className="mobile-catalog-tools-header">
           <div><span>Catalog · {section}</span><strong>{title}</strong><small>{description}</small></div>
           <button data-dialog-initial-focus type="button" onClick={onClose} aria-label={`Close ${title}`}>×</button>
         </header>
-        {children}
+        <div className="mobile-catalog-tools-content">{children}</div>
         {footer && <footer className="mobile-catalog-tools-footer">{footer}</footer>}
       </aside>
     </div>
