@@ -328,10 +328,10 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
             {!visibleModels.length && (
               <div className="sinks-empty-navigator" role="status">
                 <strong>No sinks found</strong>
-                <span>{query.trim() || category !== 'all' || showInactive
+                <span>{query.trim() || category !== 'all'
                   ? 'No models match these search options.'
                   : 'No sink models are available yet.'}</span>
-                {(query.trim() || category !== 'all' || showInactive) && (
+                {(query.trim() || category !== 'all') && (
                   <button type="button" onClick={() => {
                     setQuery(''); setCategory('all'); setShowInactive(false);
                   }}>Clear search and filters</button>
