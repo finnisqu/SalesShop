@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalogQuoteDestinationLabel } from './catalogQuoteDestination';
+import { catalogQuoteDestinationLabel, catalogQuoteDestinationReference } from './catalogQuoteDestination';
 import type { Quote } from '../types/quote';
 
 type Destination = Pick<Quote, 'title' | 'companyName' | 'quoteDate' | 'quoteNumber' | 'documentType' | 'revision'>;
@@ -37,6 +37,11 @@ describe('Catalog quote destination labels', () => {
       title: ' ',
       companyName: ' ',
     })).toBe('Untitled quote · Oct 7, 2026 · Draft');
+  });
+
+  it('provides a compact quote reference independent from its title punctuation', () => {
+    expect(catalogQuoteDestinationReference({ ...draft, title: 'Church · Renovation' })).toBe('Oct 7, 2026 · Draft');
+    expect(catalogQuoteDestinationReference({ ...draft, quoteNumber: 'Q-20261005-001' })).toBe('Q-20261005-001');
   });
 
   it('hides raw draft identifiers even when dates are unavailable', () => {
