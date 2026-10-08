@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigationStore, type AppView, type CatalogSection } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
+import { resolveMobileDrawerChoice } from '../lib/mobileDrawerNavigation';
 import { AuthStatus } from './AuthGate';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
@@ -84,14 +85,14 @@ export function MobileAppChrome() {
         : viewLabel(view);
 
   const chooseView = (next: AppView) => {
-    if (next === 'catalog') {
-      // The parent is a navigation group, never an immediate redirect.
-      setCatalogExpanded((current) => !current);
+    const choice = resolveMobileDrawerChoice(next, catalogExpanded);
+    if (choice.kind === 'toggle-catalog') {
+      setCatalogExpanded(choice.expanded);
       return;
     }
     setOpen(false);
     setCatalogExpanded(false);
-    setView(next);
+    setView(choice.view);
   };
 
   return (
