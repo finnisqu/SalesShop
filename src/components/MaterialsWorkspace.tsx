@@ -14,6 +14,7 @@ import {
   type StockMaterial,
 } from '../types/settings';
 import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
+import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { MaterialRateBook } from './MaterialRateBook';
 import { SupplierImportLauncher } from './SupplierImportCenter';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
@@ -193,6 +194,16 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
     setThicknessFilter('all');
   };
 
+  const activeMobileFilters: MobileCatalogFilterChip[] = [
+    ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
+    ...(programFilter !== 'all' ? [{ key: 'program', label: `Program: ${programFilter === 'stock' ? 'STOCK' : 'Non-stock'}`, onRemove: () => setProgramFilter('all') }] : []),
+    ...(materialFamilyFilter !== 'all' ? [{ key: 'family', label: materialFamilyFilter, onRemove: () => setMaterialFamilyFilter('all') }] : []),
+    ...(materialTypeFilter !== 'all' ? [{ key: 'type', label: materialTypeFilter, onRemove: () => setMaterialTypeFilter('all') }] : []),
+    ...(brandFilter !== 'all' ? [{ key: 'brand', label: brandFilter, onRemove: () => setBrandFilter('all') }] : []),
+    ...(finishFilter !== 'all' ? [{ key: 'finish', label: finishFilter, onRemove: () => setFinishFilter('all') }] : []),
+    ...(thicknessFilter !== 'all' ? [{ key: 'thickness', label: thicknessFilter, onRemove: () => setThicknessFilter('all') }] : []),
+  ];
+
   const togglePin = (materialId: string, variantId: string, anchor?: HTMLElement | null) => {
     const key = pinKey(materialId, variantId);
     const beforeTop = anchor?.getBoundingClientRect().top;
@@ -365,18 +376,14 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
           )}
         </div>
       </section>}
+      {sectionView === 'catalog' && !editing && (
+        <MobileCatalogActiveFilters items={activeMobileFilters} onClear={() => { setQuery(''); clearFilters(); }} />
+      )}
 
-      {mobileToolsOpen && <div className="materials-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
-        <aside className="materials-mobile-tools-sheet" onPointerDown={(event) => event.stopPropagation()}>
-          <header>
-            <div>
-              <span>Materials</span>
-              <strong>Catalog tools</strong>
-              <small>Maintenance controls stay out of the reference workspace until you need them.</small>
-            </div>
-            <button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close catalog tools">×</button>
-          </header>
-
+      {mobileToolsOpen && (
+        <MobileCatalogToolsSheet title="Catalog tools" section="Materials"
+          description="Maintenance controls stay out of reference browsing until you need them."
+          onClose={() => setMobileToolsOpen(false)}>
           <section className="materials-mobile-tools-section">
             <span className="materials-mobile-tools-label">Mode</span>
             <div className="materials-mobile-mode-row">
@@ -404,8 +411,8 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
             <SupplierImportLauncher placement="toolbar" />
             <small className="materials-mobile-tools-note">Stage and review supplier price-list updates before publishing them into the catalog.</small>
           </section>
-        </aside>
-      </div>}
+        </MobileCatalogToolsSheet>
+      )}
 
       {sectionView === 'suppliers' ? (
         <SuppliersWorkspace />
