@@ -12,6 +12,7 @@ import {
   type RateBookUnit,
 } from '../types/rateBook';
 import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
+import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { RateBook } from './RateBook';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -144,6 +145,14 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
     setOverrideFilter('all');
   };
 
+  const activeMobileFilters: MobileCatalogFilterChip[] = [
+    ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
+    ...(category !== 'all' ? [{ key: 'category', label: CATEGORY_TABS.find(([key]) => key === category)?.[1] || category, onRemove: () => selectCategory('all') }] : []),
+    ...(!showingMaterialPricing && behaviorFilter !== 'all' ? [{ key: 'behavior', label: RATE_BOOK_PRICING_BEHAVIOR_LABELS[behaviorFilter], onRemove: () => setBehaviorFilter('all') }] : []),
+    ...(!showingMaterialPricing && unitFilter !== 'all' ? [{ key: 'unit', label: RATE_BOOK_UNIT_LABELS[unitFilter], onRemove: () => setUnitFilter('all') }] : []),
+    ...(!showingMaterialPricing && overrideFilter !== 'all' ? [{ key: 'overrides', label: overrideFilter === 'has' ? 'Division overrides' : 'Base rates', onRemove: () => setOverrideFilter('all') }] : []),
+  ];
+
   if (!hydrated) return <div className="rate-book-loading">Opening Rates…</div>;
 
   return (
@@ -214,10 +223,13 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
           </div>
         )}
       </section>
+      {!editing && <MobileCatalogActiveFilters items={activeMobileFilters}
+        onClear={() => { setQuery(''); selectCategory('all'); clearReferenceFilters(); }} />}
 
-      {mobileToolsOpen && <div className="rates-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
-        <aside className="rates-mobile-tools-sheet" role="dialog" aria-modal="true" aria-label="Rates tools" onPointerDown={(event) => event.stopPropagation()}>
-          <header><div><span>Catalog · Rates</span><strong>Rate tools</strong><small>Pricing maintenance stays separate from everyday lookup.</small></div><button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close rate tools">×</button></header>
+      {mobileToolsOpen && (
+        <MobileCatalogToolsSheet title="Rate tools" section="Rates"
+          description="Pricing maintenance stays separate from everyday lookup."
+          onClose={() => setMobileToolsOpen(false)}>
           <section><span className="rates-mobile-tools-label">Mode</span><div className="rates-mobile-mode-row">
             <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up current rates</small></button>
             <button type="button" className={editing ? 'active' : ''} onClick={() => { syncEditorCategory(category); setEditing(true); setMobileToolsOpen(false); }}><strong>Edit pricing</strong><small>Maintain rates and policy</small></button>
@@ -235,8 +247,8 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
             </select>
           </section>}
           <section><span className="rates-mobile-tools-label">Current category</span><strong>{CATEGORY_TABS.find(([key]) => key === category)?.[1]}</strong><small>Select a category in the reference toolbar to change which rates are shown.</small></section>
-        </aside>
-      </div>}
+        </MobileCatalogToolsSheet>
+      )}
 
       {editing && !showingMaterialPricing && (
         <section className="rate-book-stats rates-workspace-stats" aria-label="Rate Book summary">
