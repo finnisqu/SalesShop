@@ -13,6 +13,7 @@ import {
   type MaterialVariant,
   type StockMaterial,
 } from '../types/settings';
+import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
 import { MaterialRateBook } from './MaterialRateBook';
 import { SupplierImportLauncher } from './SupplierImportCenter';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
@@ -529,35 +530,32 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
               <span>Variants reveal slab size, square footage, availability, and every active supplier price program.</span>
             </header>
             {isMobileReference ? (
-              <div className="materials-mobile-reference-list" aria-label="Materials and default costs">
+              <MobileCatalogReferenceList
+                label="Materials and default purchase costs"
+                empty={!materials.length}
+                emptyMessage="No active materials match the current search and filters."
+              >
                 {materials.map((material) => {
                   const reference = resolveStockMaterialCostReference(material);
                   const expanded = expandedMaterialId === material.id;
                   const activeVariantCount = (material.variants ?? []).filter((variant) => variant.active !== false).length;
                   const pinned = (material.variants ?? []).some((variant) => pinnedKeySet.has(pinKey(material.id, variant.id)));
                   return (
-                    <article key={material.id} className={`materials-mobile-reference-card ${expanded ? 'is-expanded' : ''} ${pinned ? 'has-pin' : ''}`}>
-                      <button type="button" className="materials-mobile-reference-trigger" aria-expanded={expanded} aria-label={`${material.name}, ${moneyPerSf(reference.costPerSf)}. ${expanded ? 'Hide' : 'Show'} ${activeVariantCount} variants`} onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}>
-                        <span className="materials-mobile-reference-name">
-                          <strong>{material.name}</strong>
-                          <small>{material.brand || material.supplier || 'Unbranded'} · {material.materialType || resolvedMaterialFamily(material)}</small>
-                        </span>
-                        <span className="materials-mobile-reference-cost">
-                          <strong>{moneyPerSf(reference.costPerSf)}</strong>
-                          <small>{reference.purchaseOption?.label || (reference.basis === 'legacy' ? 'Legacy cost' : 'No default price')}</small>
-                        </span>
-                        <span className="materials-mobile-reference-chevron" aria-hidden="true">{expanded ? '⌃' : '⌄'}</span>
-                      </button>
-                      {expanded && (
-                        <div className="materials-mobile-reference-details">
-                          {renderVariantBrowser(material)}
-                        </div>
-                      )}
-                    </article>
+                    <MobileCatalogReferenceCard
+                      key={material.id}
+                      title={material.name}
+                      subtitle={`${material.brand || material.supplier || 'Unbranded'} · ${material.materialType || resolvedMaterialFamily(material)}`}
+                      price={moneyPerSf(reference.costPerSf)}
+                      priceAriaLabel={`Default cost ${moneyPerSf(reference.costPerSf)}`}
+                      priceMeta={reference.purchaseOption?.label || (reference.basis === 'legacy' ? 'Legacy cost' : 'No default price')}
+                      highlighted={pinned}
+                      expanded={expanded}
+                      onToggle={() => setExpandedMaterialId(expanded ? null : material.id)}
+                      details={renderVariantBrowser(material)}
+                    />
                   );
                 })}
-                {!materials.length && <div className="rates-reference-empty">No active materials match the current search and filters.</div>}
-              </div>
+              </MobileCatalogReferenceList>
             ) : (
             <div className="rates-reference-table-wrap">
               <table className="rates-reference-table materials-reference-table">
