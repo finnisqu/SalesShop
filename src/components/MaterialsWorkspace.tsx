@@ -555,6 +555,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
                 label="Materials and default purchase costs"
                 empty={!materials.length}
                 emptyMessage="No active materials match the current search and filters."
+                onReset={query.trim() || activeFilterCount ? () => { setQuery(''); clearFilters(); } : undefined}
               >
                 {materials.map((material) => {
                   const reference = resolveStockMaterialCostReference(material);
