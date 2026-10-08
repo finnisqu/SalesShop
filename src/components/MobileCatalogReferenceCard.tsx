@@ -30,7 +30,7 @@ interface MobileCatalogReferenceCardProps {
   priceMeta?: ReactNode;
   expanded: boolean;
   onToggle: () => void;
-  details?: ReactNode;
+  details?: ReactNode | (() => ReactNode);
   highlighted?: boolean;
   className?: string;
   priceAriaLabel?: string;
@@ -77,7 +77,7 @@ export function MobileCatalogReferenceCard({
         <span className="mobile-catalog-reference-chevron" aria-hidden="true">{expanded ? '⌃' : '⌄'}</span>
       </button>
       {expanded && details != null && (
-        <div id={detailsId} className="mobile-catalog-reference-details">{details}</div>
+        <div id={detailsId} className="mobile-catalog-reference-details">{typeof details === 'function' ? details() : details}</div>
       )}
     </article>
   );
