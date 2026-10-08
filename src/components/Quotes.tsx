@@ -1121,6 +1121,8 @@ export function Quotes() {
   const activeQuoteId = useQuoteStore((state) => state.activeQuoteId);
   const selectQuote = useQuoteStore((state) => state.selectQuote);
   const createQuote = useQuoteStore((state) => state.createQuote);
+  const recentCatalogInsert = useQuoteStore((state) => state.recentCatalogInsert);
+  const clearCatalogInsert = useQuoteStore((state) => state.clearCatalogInsert);
   const hydrateCrm = useCrmStore((state) => state.hydrate);
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(false);
   const navigatorRef = useDismissibleLayer<HTMLElement>(mobileNavigatorOpen, () => setMobileNavigatorOpen(false));
@@ -1132,6 +1134,23 @@ export function Quotes() {
   const [showArchived, setShowArchived] = useState(false);
   useEffect(() => { hydrate(); hydrateCrm(); }, [hydrate, hydrateCrm]);
   const quote = quotes.find((candidate) => candidate.id === activeQuoteId) ?? quotes[0] ?? null;
+  useEffect(() => {
+    if (!recentCatalogInsert || recentCatalogInsert.quoteId !== quote?.id) return;
+    let highlightTimer: number | undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const line = Array.from(document.querySelectorAll<HTMLElement>('[data-quote-line-id]'))
+        .find((element) => element.dataset.quoteLineId === recentCatalogInsert.lineId);
+      if (!line) return;
+      line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      line.classList.add('is-catalog-inserted');
+      clearCatalogInsert();
+      highlightTimer = window.setTimeout(() => line.classList.remove('is-catalog-inserted'), 3500);
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (highlightTimer !== undefined) window.clearTimeout(highlightTimer);
+    };
+  }, [recentCatalogInsert, quote?.id, clearCatalogInsert]);
   const archivedCount = quotes.filter((item) => Boolean(item.archivedAt)).length;
   const sortedQuotes = useMemo(() => quotes
     .filter((item) => showArchived || !item.archivedAt || item.id === quote?.id)
