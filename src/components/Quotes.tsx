@@ -708,8 +708,18 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
     const closeOnOutside = (event: PointerEvent) => {
       if (!mobileToolbarRef.current?.contains(event.target as Node)) setMobileMenu(null);
     };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setMobileMenu(null);
+      }
+    };
     document.addEventListener('pointerdown', closeOnOutside);
-    return () => document.removeEventListener('pointerdown', closeOnOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
   }, [mobileMenu]);
 
   useEffect(() => {
@@ -843,21 +853,23 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
           <strong>{quote.title}</strong>
         </div>
 
-        <button type="button" className={`quote-mobile-view-button ${mobileMenu === 'view' ? 'active' : ''}`} onClick={() => setMobileMenu((current) => current === 'view' ? null : 'view')}>
+        <button type="button" className={`quote-mobile-view-button ${mobileMenu === 'view' ? 'active' : ''}`} aria-expanded={mobileMenu === 'view'} aria-haspopup="dialog" onClick={() => setMobileMenu((current) => current === 'view' ? null : 'view')}>
           {effectiveMode === 'customer' ? 'Customer' : effectiveMode[0].toUpperCase() + effectiveMode.slice(1)} <span aria-hidden="true">⌄</span>
         </button>
 
-        <button type="button" className={`quote-mobile-more-button ${mobileMenu === 'tools' ? 'active' : ''}`} onClick={() => setMobileMenu((current) => current === 'tools' ? null : 'tools')} aria-label="Quote tools">•••</button>
+        <button type="button" className={`quote-mobile-more-button ${mobileMenu === 'tools' ? 'active' : ''}`} aria-expanded={mobileMenu === 'tools'} aria-haspopup="dialog" onClick={() => setMobileMenu((current) => current === 'tools' ? null : 'tools')} aria-label="Quote tools">•••</button>
+        {mobileMenu && <div className="quote-mobile-menu-scrim" aria-hidden="true" onPointerDown={() => setMobileMenu(null)} />}
 
-        {mobileMenu === 'view' && <div className="quote-mobile-menu quote-mobile-view-menu">
-          <span className="quote-mobile-menu-heading">View</span>
+        {mobileMenu === 'view' && <div className="quote-mobile-menu quote-mobile-view-menu" role="dialog" aria-modal="true" aria-label="Quote view">
+          <div className="quote-mobile-menu-header"><strong>Choose a view</strong><button type="button" onClick={() => setMobileMenu(null)} aria-label="Close view menu">×</button></div>
           {viewModes.map((viewMode) => <button type="button" key={viewMode} className={effectiveMode === viewMode ? 'active' : ''} onClick={() => { onModeChange(viewMode); setMobileMenu(null); }}>
             <strong>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</strong>
             <small>{viewMode === 'edit' ? 'Build the quote' : viewMode === 'split' ? 'Editor + customer sheet' : viewMode === 'workbook' ? 'Pricing workspace' : 'Customer document'}</small>
           </button>)}
         </div>}
 
-        {mobileMenu === 'tools' && <div className="quote-mobile-menu quote-mobile-tools-menu">
+        {mobileMenu === 'tools' && <div className="quote-mobile-menu quote-mobile-tools-menu" role="dialog" aria-modal="true" aria-label="Quote tools">
+          <div className="quote-mobile-menu-header"><strong>Quote tools</strong><button type="button" onClick={() => setMobileMenu(null)} aria-label="Close quote tools">×</button></div>
           <div className="quote-mobile-menu-section">
             <span className="quote-mobile-menu-heading">Editing</span>
             <div className="quote-mobile-tool-grid">
@@ -897,6 +909,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
               {canCreateChangeOrder && <button type="button" onClick={() => { createChangeOrder(quote.id); setMobileMenu(null); }}>Change Order</button>}
             </div>
           </div>
+          <button type="button" className="quote-mobile-menu-done" onClick={() => setMobileMenu(null)}>Done · Back to quote</button>
         </div>}
       </header>
 
