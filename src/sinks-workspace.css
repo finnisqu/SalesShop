@@ -934,148 +934,71 @@
   .sales-app.view-catalog .sinks-mobile-tools-sheet > footer.has-error { color: #a15349; }
 }
 
-/* Mobile Sinks: expand model details in place, matching Materials' paper card rhythm. */
-.sinks-mobile-model-chevron,.sinks-mobile-variant-price{display:none}
+/* Sink model cards now inherit the same shared mobile reference skin. */
+.sinks-mobile-variant-price{display:none}
 @media(max-width:700px){
-  .sales-app.view-catalog .sinks-workspace .sinks-catalog-shell{
-    background:transparent;
-    border:0;
-    box-shadow:none;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-navigator{
-    min-width:0;
-    border:0;
-    border-radius:6px;
-    overflow:visible;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list{
-    display:grid;
-    grid-template-columns:minmax(0,1fr);
-    gap:5px;
-    padding:6px;
-    overflow:visible;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list>button{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) minmax(70px,max-content) 14px;
-    width:100%;
-    min-width:0;
-    min-height:58px;
-    box-sizing:border-box;
-    gap:6px;
-    padding:9px 10px;
-    margin:0;
-    border:1px solid rgba(91,78,58,.18);
-    border-radius:6px;
-    background:#fffaf0;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list>button.active{
-    border-color:#ad9257;
-    background:#fff7e7;
-    box-shadow:inset 3px 0 #b49a61;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list-main{min-width:0;gap:3px}
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list-main strong{
-    white-space:normal;
-    overflow-wrap:anywhere;
-    font-size:12px;
-    line-height:1.3;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list-main small{
-    font-size:9px;
-    line-height:1.3;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list-meta{
-    min-width:0;
-    max-width:155px;
-    gap:3px;
-    align-items:flex-end;
-    text-align:right;
-    font-variant-numeric:tabular-nums;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list-meta small{
-    order:-1;
-    max-width:100%;
-    color:#3f3b34;
-    font:700 12px/1.25 Georgia,serif;
-    overflow-wrap:anywhere;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list-meta small::before{
-    content:'Sell · ';
-    color:#897e70;
-    font:800 8px/1.25 sans-serif;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-model-list-meta b{
-    order:1;
-    color:#897e70;
-    font-size:9px;
-    font-weight:600;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-model-chevron{
-    display:block;
-    color:#97896e;
-    font-size:15px;
-    font-weight:800;
-    text-align:center;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-model-detail{
-    min-width:0;
-    width:100%;
-    box-sizing:border-box;
-    margin-top:-5px;
-    border:1px solid rgba(173,146,87,.35);
-    border-top:0;
-    border-radius:0 0 6px 6px;
-    background:#fbf7ed;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-model-detail .sinks-detail{
-    display:block;
-    min-width:0;
-    padding:9px 7px;
-    background:transparent;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-model-detail .sinks-model-header{
-    flex-direction:row;
-    flex-wrap:wrap;
-    gap:8px;
-    align-items:center;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-model-detail .sinks-model-header h2{font-size:16px}
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-model-detail .sinks-variant-list{gap:6px}
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-model-detail .sinks-variant-card{
-    min-width:0;
-    border-radius:5px;
-    overflow:hidden;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-model-detail .sinks-variant-card>header{
-    flex-wrap:wrap;
-    gap:5px 8px;
-    padding:9px;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-variant-price{
-    display:flex;
-    min-width:0;
-    flex-direction:column;
-    align-items:flex-end;
-    gap:3px;
-    margin-left:auto;
-    color:#403b34;
-    font:700 12px/1.25 Georgia,serif;
-    font-variant-numeric:tabular-nums;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-mobile-variant-price small{
-    font:600 8px/1.25 sans-serif;
-    color:#897e70;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-variant-badges{
-    flex-basis:100%;
-    justify-content:flex-start;
-  }
-  .sales-app.view-catalog .sinks-workspace .sinks-variant-reference strong{font-size:12px}
-  .sales-app.view-catalog .sinks-workspace .sinks-variant-reference span{font-size:8px}
-  .sales-app.view-catalog .sinks-workspace .sinks-empty-navigator{font-size:10px}
-  @media(max-width:350px){
-    .sales-app.view-catalog .sinks-workspace .sinks-model-list>button{gap:4px;padding-inline:7px}
-    .sales-app.view-catalog .sinks-workspace .sinks-model-list-meta small{font-size:11px}
-  }
+ .sales-app.view-catalog .sinks-workspace .sinks-catalog-shell{
+   border:0;
+   background:transparent;
+   box-shadow:none;
+ }
+ .sales-app.view-catalog .sinks-workspace .sinks-navigator{
+   min-width:0;
+   border:0;
+   border-radius:6px;
+   overflow:visible;
+ }
+ .sales-app.view-catalog .sinks-workspace .sinks-model-list{
+   display:grid;
+   grid-template-columns:minmax(0,1fr);
+   gap:5px;
+   padding:6px;
+   overflow:visible;
+ }
+ .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-details .sinks-detail{
+   display:block;
+   min-width:0;
+   padding:9px 7px;
+   background:transparent;
+ }
+ .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-details .sinks-model-header{
+   flex-wrap:wrap;
+   flex-direction:row;
+   gap:8px;
+   align-items:center;
+ }
+ .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-details .sinks-model-header h2{font-size:16px}
+ .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-details .sinks-variant-list{gap:6px}
+ .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-details .sinks-variant-card{
+   min-width:0;
+   border-radius:5px;
+   overflow:hidden;
+ }
+ .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-details .sinks-variant-card>header{
+   flex-wrap:wrap;
+   gap:5px 8px;
+   padding:9px;
+ }
+ .sales-app.view-catalog .sinks-workspace .sinks-mobile-variant-price{
+   display:flex;
+   min-width:0;
+   flex-direction:column;
+   align-items:flex-end;
+   gap:3px;
+   margin-left:auto;
+   color:#403b34;
+   font:700 12px/1.25 Georgia,serif;
+   font-variant-numeric:tabular-nums;
+ }
+ .sales-app.view-catalog .sinks-workspace .sinks-mobile-variant-price small{
+   font:600 8px/1.25 sans-serif;
+   color:#897e70;
+ }
+ .sales-app.view-catalog .sinks-workspace .sinks-variant-badges{
+   flex-basis:100%;
+   justify-content:flex-start;
+ }
+ .sales-app.view-catalog .sinks-workspace .sinks-variant-reference strong{font-size:12px}
+ .sales-app.view-catalog .sinks-workspace .sinks-variant-reference span{font-size:8px}
+ .sales-app.view-catalog .sinks-workspace .sinks-empty-navigator{font-size:10px}
 }
