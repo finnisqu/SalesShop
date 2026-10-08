@@ -18,6 +18,7 @@ import {
   type Company,
 } from '../types/crm';
 import { BoardScrollControls } from './BoardScrollControls';
+import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { CrmCleanupPanel } from './CrmCleanupPanel';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
@@ -226,6 +227,11 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
         </div>
       </section>
 
+      <MobileBoardStagePicker
+        boardRef={boardRef}
+        stages={ACCOUNT_STAGES}
+        counts={ACCOUNT_STAGES.map((stage) => (accountsByStage.get(stage) ?? []).length)}
+      />
       <section
         ref={boardRef}
         className="project-board account-board"
@@ -264,7 +270,10 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                       title={mobileInteraction ? 'Tap to open' : 'Double-click to open'}
                     >
                       <div className="project-card-company">{health.stage}</div>
-                      <h3>{company.name}</h3>
+                      <div className="account-card-title-row">
+                        <h3>{company.name}</h3>
+                        {expectedAnnualWork !== undefined && <strong className="account-card-title-value">{money.format(expectedAnnualWork)}</strong>}
+                      </div>
                       <div className="account-card-stats">
                         <span>{health.openProjectCount} open</span>
                         <span>{health.contactCount} contacts</span>
