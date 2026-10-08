@@ -44,6 +44,7 @@ import './mobile-qc-batch5.css';
 import './catalog-quote-integration.css';
 import './quote-crm-batch7.css';
 import './connections-workspace.css';
+import './team-access.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
