@@ -5,8 +5,11 @@ import { appAbsoluteUrl } from '../lib/appUrl';
 import { ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
+import { inviteAccountDecision, previewTeamInvite, type TeamInvitePreview } from '../services/teamInvitePreview';
 
 export type BackendMode = 'local' | 'cloud';
+export type InviteProblem = 'switch-account' | 'unavailable' | 'preview-error';
+export type JoinWelcome = { userId: string; organizationId: string; organizationName: string; role: 'member' | 'admin' };
 
 interface AuthState {
   mode: BackendMode;
@@ -16,6 +19,10 @@ interface AuthState {
   session: Session | null;
   organizationId: string | null;
   passwordRecovery: boolean;
+  inviteProblem: InviteProblem | null;
+  activeInvitePreview: TeamInvitePreview | null;
+  joinWelcome: JoinWelcome | null;
+  dismissJoinWelcome: () => void;
   error: string | null;
   notice: string | null;
   initialize: () => Promise<void>;
@@ -32,6 +39,21 @@ interface AuthState {
 let initializePromise: Promise<void> | null = null;
 let authListenerStarted = false;
 let inviteAcceptance: Promise<string> | null = null;
+const JOIN_WELCOME_KEY = 'salesshop-joined-team-welcome-v1';
+
+function readJoinWelcome(userId: string, organizationId: string): JoinWelcome | null {
+  try {
+    const raw = sessionStorage.getItem(JOIN_WELCOME_KEY);
+    const saved = raw ? JSON.parse(raw) as JoinWelcome : null;
+    return saved?.userId === userId && saved.organizationId === organizationId ? saved : null;
+  } catch { return null; }
+}
+function saveJoinWelcome(welcome: JoinWelcome) {
+  try { sessionStorage.setItem(JOIN_WELCOME_KEY, JSON.stringify(welcome)); } catch { /* no storage */ }
+}
+function clearJoinWelcome() {
+  try { sessionStorage.removeItem(JOIN_WELCOME_KEY); } catch { /* no storage */ }
+}
 
 function initialPasswordRecovery() {
   if (typeof window === 'undefined') return false;
@@ -54,7 +76,9 @@ async function acceptPendingInvitation(): Promise<string | null> {
 }
 
 function messageFrom(error: unknown) {
-  return error instanceof Error ? error.message : 'Something went wrong.';
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') return error.message;
+  return 'Something went wrong.';
 }
 
 function reloadForIdentityBoundary() {
@@ -80,12 +104,28 @@ async function applySession(session: Session | null) {
       user: null,
       session: null,
       organizationId: null,
+      inviteProblem: null,
+      activeInvitePreview: null,
+      joinWelcome: null,
     });
     return;
   }
 
-  useAuthStore.setState({ busy: true, error: null, notice: null });
+  useAuthStore.setState({ busy: true, ready: false, user: session.user, session,
+    organizationId: null, inviteProblem: null, activeInvitePreview: null, error: null, notice: null });
   try {
+    const inviteToken = pendingTeamInviteToken();
+    const invitePreview = inviteToken ? await previewTeamInvite(inviteToken) : null;
+    if (inviteToken) {
+      const decision = inviteAccountDecision(invitePreview, true);
+      if (decision !== 'continue') {
+        useAuthStore.setState({ mode: 'cloud', ready: true, busy: false,
+          user: session.user, session, organizationId: null, activeInvitePreview: invitePreview,
+          inviteProblem: decision === 'switch-account' ? 'switch-account' : 'unavailable',
+          error: null });
+        return;
+      }
+    }
     // Join the invited organization BEFORE workspace bootstrap or data hydration.
     // Otherwise an invited account could seed and switch to an unrelated shop.
     const acceptedOrganizationId = await acceptPendingInvitation();
@@ -106,6 +146,10 @@ async function applySession(session: Session | null) {
     startCloudSync(organizationId, session.user.id, (error) => {
       useAuthStore.setState({ error: `Cloud sync: ${error}` });
     });
+    if (acceptedOrganizationId && invitePreview) saveJoinWelcome({
+      userId: session.user.id, organizationId, organizationName: invitePreview.organizationName,
+      role: invitePreview.role,
+    });
     useAuthStore.setState({
       mode: 'cloud',
       ready: true,
@@ -113,6 +157,9 @@ async function applySession(session: Session | null) {
       user: session.user,
       session,
       organizationId,
+      joinWelcome: readJoinWelcome(session.user.id, organizationId),
+      inviteProblem: null,
+      activeInvitePreview: null,
     });
   } catch (error) {
     useAuthStore.setState({
@@ -122,6 +169,7 @@ async function applySession(session: Session | null) {
       user: session.user,
       session,
       organizationId: null,
+      inviteProblem: pendingTeamInviteToken() ? 'preview-error' : null,
       error: messageFrom(error),
     });
   }
@@ -135,6 +183,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   organizationId: null,
   passwordRecovery: initialPasswordRecovery(),
+  inviteProblem: null,
+  activeInvitePreview: null,
+  joinWelcome: null,
+  dismissJoinWelcome: () => { clearJoinWelcome(); set({ joinWelcome: null }); },
   error: null,
   notice: null,
 
@@ -239,6 +291,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     stopCloudSync();
+    clearJoinWelcome();
     if (supabase) await supabase.auth.signOut();
     set({
       mode: supabaseConfigured ? 'cloud' : 'local',
@@ -247,6 +300,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: null,
       session: null,
       organizationId: null,
+      inviteProblem: null,
+      activeInvitePreview: null,
+      joinWelcome: null,
       error: null,
       notice: null,
     });
@@ -259,5 +315,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     clearPendingTeamInvite();
     const session = useAuthStore.getState().session;
     if (session) await applySession(session);
+    else reloadForIdentityBoundary();
   },
 }));
