@@ -332,3 +332,59 @@
     max-width:100%;
   }
 }
+
+/* Mobile Supplier directory uses the same reference-card anatomy as pricing. */
+@media(max-width:700px){
+  .sales-app.view-catalog .supplier-navigator .supplier-nav-list{
+    display:none;
+  }
+  .sales-app.view-catalog .supplier-navigator .supplier-mobile-reference-list{
+    display:grid;
+    gap:5px;
+    padding:6px;
+    min-width:0;
+    overflow:visible;
+  }
+  .sales-app.view-catalog .supplier-navigator .mobile-catalog-active-filters{
+    padding:4px 5px 7px;
+  }
+  .sales-app.view-catalog .supplier-mobile-reference-details{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:5px;
+    padding:5px;
+  }
+  .sales-app.view-catalog .supplier-mobile-reference-details>div{
+    min-width:0;
+    display:grid;
+    gap:4px;
+    padding:9px;
+    border:1px solid rgba(91,78,58,.12);
+    border-radius:5px;
+    background:#fffaf0;
+  }
+  .sales-app.view-catalog .supplier-mobile-reference-details span{
+    color:#8b8172;
+    font-size:8px;
+    font-weight:800;
+    text-transform:uppercase;
+  }
+  .sales-app.view-catalog .supplier-mobile-reference-details strong{
+    color:#4c453b;
+    font-size:11px;
+    overflow-wrap:anywhere;
+  }
+  .sales-app.view-catalog .supplier-mobile-reference-details button{
+    grid-column:1/-1;
+    min-height:42px;
+    border:1px solid #cbbd9f;
+    border-radius:6px;
+    background:#f8f2e4;
+    color:#5e543f;
+    font-size:11px;
+    font-weight:800;
+  }
+  .sales-app.view-catalog .supplier-mobile-reference-list .mobile-catalog-reference-price>strong{
+    font-size:11px;
+  }
+}
