@@ -32,10 +32,12 @@ export function MobileBoardStagePicker({
       });
     };
     board.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
     // Existing Board state restoration occurs on the next frame.
     const initialFrame = requestAnimationFrame(update);
     return () => {
       board.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
       cancelAnimationFrame(initialFrame);
       cancelAnimationFrame(frame);
     };
