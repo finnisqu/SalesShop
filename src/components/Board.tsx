@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } 
 import '../project-activity.css';
 import '../board-integrity.css';
 import { projectAttentionFlags } from '../services/boardIntegrity';
+import { quotesForProject } from '../services/quoteCrmLinks';
+import { displayQuoteNumber, quoteTotal } from '../types/quote';
+import { useQuoteStore } from '../store/quoteStore';
 import { AccountsBoard } from './AccountsBoard';
 import { BoardScrollControls } from './BoardScrollControls';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
@@ -85,7 +88,12 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   const updateProject = useCrmStore((state) => state.updateProject);
   const deleteProject = useCrmStore((state) => state.deleteProject);
   const activities = useCrmStore((state) => state.activities);
+  const quotes = useQuoteStore((state) => state.quotes);
+  const hydrateQuotes = useQuoteStore((state) => state.hydrate);
+  const createQuote = useQuoteStore((state) => state.createQuote);
   const openQuote = useNavigationStore((state) => state.openQuote);
+  useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
+  const linkedQuotes = quotesForProject(project, quotes).filter((quote) => !quote.archivedAt);
   const dialogRef = useDismissibleLayer<HTMLElement>(true, onClose);
   const [draft, setDraft] = useState({
     name: project.name,
@@ -149,6 +157,27 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
             <label><span>Last touch</span><input type="date" value={draft.lastTouchpoint} onChange={(event) => setDraft({ ...draft, lastTouchpoint: event.target.value })} /></label>
           </div>
           <label><span>Next action</span><textarea value={draft.nextAction} onChange={(event) => setDraft({ ...draft, nextAction: event.target.value })} placeholder="What should happen next?" /></label>
+
+          <section className="crm-linked-quotes" aria-label="Project quotes">
+            <header><div><span className="board-eyebrow">Quotes and pipeline</span><h3>Linked quotes</h3></div><span>{linkedQuotes.length}</span></header>
+            <p>Drafts stay in progress. Sending a quote records activity and updates the sales pipeline using the existing status rules.</p>
+            <div className="crm-linked-quote-list">
+              {linkedQuotes.map((quote) => <button type="button" key={quote.id} className="crm-linked-quote-row" onClick={() => openQuote(quote.id)}>
+                <strong>{quote.title || 'Untitled quote'}</strong>
+                <span>{displayQuoteNumber(quote)} · {quote.status}{quoteTotal(quote) ? ` · ${money.format(quoteTotal(quote))}` : ''}</span>
+              </button>)}
+              {!linkedQuotes.length && <small>No quotes explicitly linked yet.</small>}
+            </div>
+            <button type="button" className="crm-linked-create" onClick={() => {
+              const id = createQuote({
+                title: project.name,
+                projectId: project.id,
+                companyId: project.companyId,
+                companyName: project.companyName,
+              });
+              openQuote(id);
+            }}>+ New quote for project</button>
+          </section>
 
           <ProjectNotebookLinks project={project} />
 
