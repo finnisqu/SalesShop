@@ -64,23 +64,51 @@ export function TeamAccessSettings() {
     else setLoading(false);
   },[cloudReady,refresh]);
 
-  const createInvite = async (event:FormEvent) => {
-    event.preventDefault();
-    if (!supabase || !orgId || !isAdmin || busy) return;
-    setBusy(true);setError('');setNotice('');setNewInviteLink('');
-    const {data,error:inviteError}=await supabase.rpc('create_team_invite',{
-      target_organization:orgId,target_email:email.trim(),target_role:inviteRole,
-    });
-    if (inviteError) setError(inviteError.message);
-    else {
-      const row=(data as Array<{invite_token:string}>|null)?.[0];
-      if (row?.invite_token) {
-        try { setNewInviteLink(teamInviteUrl(row.invite_token)); setCopied(false);setEmail('');setNotice('Invitation created. Copy the link and send it to the invited email address.'); }
-        catch(e) { setError(e instanceof Error ? e.message : 'Could not build invitation link.'); }
-      } else setError('The server did not return an invitation link.');
+  const createInvite = async (event?: FormEvent, sendEmail = true) => {
+    event?.preventDefault();
+    if (!supabase || !orgId || !isAdmin || busy || !email.trim()) return;
+    setBusy(true); setError(''); setNotice(''); setNewInviteLink('');
+    try {
+      if (sendEmail) {
+        const { data, error: emailError } = await supabase.functions.invoke('team-invite-email', {
+          body: { organizationId: orgId, email: email.trim(), role: inviteRole },
+        });
+        if (emailError) {
+          const context = emailError.context;
+          const details = context instanceof Response
+            ? await context.json().catch(() => ({})) as { error?: string } : {};
+          setError(details.error || emailError.message);
+        } else {
+          const result = data as { sent?: boolean; invitationUrl?: string; error?: string; email?: string } | null;
+          if (result?.sent) {
+            setEmail('');
+            setNotice(`Invitation email sent to ${result.email || 'your teammate'}. The link expires in seven days.`);
+          } else if (result?.invitationUrl) {
+            setNewInviteLink(result.invitationUrl);
+            setCopied(false);
+            setNotice(result.error || 'The invitation was created, but email delivery failed. Share the link manually.');
+          } else setError(result?.error || 'Could not send the invitation.');
+        }
+      } else {
+        const { data, error: inviteError } = await supabase.rpc('create_team_invite', {
+          target_organization: orgId, target_email: email.trim(), target_role: inviteRole,
+        });
+        if (inviteError) setError(inviteError.message);
+        else {
+          const row = (data as Array<{ invite_token: string }> | null)?.[0];
+          if (row?.invite_token) {
+            setNewInviteLink(teamInviteUrl(row.invite_token));
+            setCopied(false); setEmail('');
+            setNotice('Invitation created. Copy the link and send it to the invited email address.');
+          } else setError('The server did not return an invitation link.');
+        }
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not create the invitation.');
+    } finally {
+      await refresh();
+      setBusy(false);
     }
-    await refresh();
-    setBusy(false);
   };
 
   const copyLink = async () => {
@@ -156,17 +184,17 @@ export function TeamAccessSettings() {
     </article>
     <div className="team-settings-side">
       <article className="company-settings-card">
-        <header><div><strong>Invitations</strong><small>Invite coworkers using a one-time, seven-day link.</small></div></header>
+        <header><div><strong>Invitations</strong><small>Send an email invitation or copy a seven-day, one-time link.</small></div></header>
         {isAdmin ? <>
           <form className="team-invite-form" onSubmit={(event) => void createInvite(event)}>
             <label><span>Email address</span><input type="email" autoComplete="email" required value={email} onChange={(event)=>setEmail(event.target.value)} placeholder="salesperson@company.com" /></label>
             <label><span>Access</span><select value={inviteRole} disabled={busy} onChange={(event)=>setInviteRole(event.target.value as 'member'|'admin')}>
               {inviteRoles.map((role)=><option key={role} value={role}>{roleName(role)}</option>)}
             </select></label>
-            <button type="submit" className="settings-primary-button" disabled={!email.trim() || busy}>{busy?'Working…':'Create invitation link'}</button>
+            <div className="settings-inline-actions"><button type="submit" className="settings-primary-button" disabled={!email.trim() || busy}>{busy ? 'Working…' : 'Send invitation email'}</button><button type="button" disabled={!email.trim() || busy} onClick={() => void createInvite(undefined, false)}>Create link instead</button></div>
           </form>
           {newInviteLink && <div className="team-new-invite"><strong>Share this invitation</strong>
-            <p>Only the invited, email-verified account can use it. This link is shown once.</p>
+            <p>Only the invited, email-verified account can use it. This link is shown once. Creating a new link for the same recipient replaces their previous pending invitation.</p>
             <input readOnly value={newInviteLink} onFocus={(event)=>event.target.select()} aria-label="Invitation link" />
             <button type="button" onClick={() => void copyLink()}>{copied?'Copied':'Copy link'}</button>
             <button type="button" onClick={()=>setNewInviteLink('')}>Dismiss</button>
