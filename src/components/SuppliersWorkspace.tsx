@@ -33,6 +33,8 @@ import type {
   SupplierRule,
 } from '../types/supplier';
 import { SupplierRelationshipPanels } from './SupplierRelationshipPanels';
+import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
+import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 
 type SupplierFreshness = 'missing' | 'stale' | 'due-soon' | 'current' | 'inactive';
 type SupplierFilter = 'all' | 'attention' | 'current' | 'missing';
@@ -132,6 +134,7 @@ export function SuppliersWorkspace() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
+  const [mobileExpandedSupplierKey, setMobileExpandedSupplierKey] = useState<string | null>(null);
   const [filter, setFilter] = useState<SupplierFilter>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(() => {
     try { return localStorage.getItem(SELECTED_KEY); } catch { return null; }
@@ -237,6 +240,15 @@ export function SuppliersWorkspace() {
       return !needle || `${supplier.name} ${supplier.brands.join(' ')} ${statusLabels[supplier.freshness]}`.toLowerCase().includes(needle);
     });
   }, [rollups, query, filter]);
+
+  const activeMobileFilters: MobileCatalogFilterChip[] = [
+    ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
+    ...(filter !== 'all' ? [{
+      key: 'status',
+      label: filter === 'attention' ? 'Needs attention' : filter === 'current' ? 'Current pricing' : 'Missing pricing',
+      onRemove: () => setFilter('all' as SupplierFilter),
+    }] : []),
+  ];
 
   const chooseSupplier = (key: string) => {
     setSelectedKey(key);
@@ -386,6 +398,44 @@ export function SuppliersWorkspace() {
             ))}
           </div>
         </div>
+        <MobileCatalogActiveFilters items={activeMobileFilters}
+          onClear={() => { setQuery(''); setFilter('all'); }} />
+        <MobileCatalogReferenceList
+          label="Supplier directory and pricing status"
+          empty={!filtered.length}
+          emptyMessage="No suppliers match the current search or status filter."
+          className="supplier-mobile-reference-list"
+        >
+          {filtered.map((supplier) => {
+            const expanded = mobileExpandedSupplierKey === supplier.key;
+            return (
+              <MobileCatalogReferenceCard
+                key={supplier.key}
+                title={supplier.name}
+                subtitle={supplier.brands.length ? supplier.brands.slice(0, 2).join(' · ') : 'No brands linked'}
+                price={statusLabels[supplier.freshness]}
+                priceMeta={`${supplier.materials.length} materials`}
+                expanded={expanded}
+                highlighted={expanded}
+                onToggle={() => {
+                  chooseSupplier(supplier.key);
+                  setMobileExpandedSupplierKey(expanded ? null : supplier.key);
+                }}
+                details={() => (
+                  <div className="supplier-mobile-reference-details">
+                    <div><span>Latest pricing</span><strong>{displayDate(supplier.latestEffectiveDate)}</strong></div>
+                    <div><span>Next review</span><strong>{displayDate(supplier.nextReviewDate)}</strong></div>
+                    <div><span>Published lists</span><strong>{supplier.publications.length}</strong></div>
+                    <button type="button" onClick={() => {
+                      chooseSupplier(supplier.key);
+                      document.querySelector('.supplier-record')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}>View full supplier record ↓</button>
+                  </div>
+                )}
+              />
+            );
+          })}
+        </MobileCatalogReferenceList>
         <div className="supplier-nav-list">
           {filtered.map((supplier) => (
             <button type="button" className={`supplier-nav-item ${selected?.key === supplier.key ? 'active' : ''}`} onClick={() => chooseSupplier(supplier.key)} key={supplier.key}>
@@ -402,13 +452,15 @@ export function SuppliersWorkspace() {
         </div>
       </aside>
 
-      {mobileToolsOpen && <div className="supplier-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
-        <aside className="supplier-mobile-tools-sheet" role="dialog" aria-modal="true" aria-label="Supplier tools" onPointerDown={(event) => event.stopPropagation()}>
-          <header><div><span>Catalog · Suppliers</span><strong>Supplier tools</strong><small>Manage your directory without crowding reference lookup.</small></div><button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close supplier tools">×</button></header>
+      {mobileToolsOpen && (
+        <MobileCatalogToolsSheet title="Supplier tools" section="Suppliers"
+          description="Manage your directory without crowding reference lookup."
+          onClose={() => setMobileToolsOpen(false)}>
           <section><strong>Add supplier</strong><div className="supplier-mobile-add-row"><input value={newSupplierName} onChange={(event) => setNewSupplierName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void addSupplier(); }} placeholder="Supplier name…" /><button type="button" onClick={() => void addSupplier()} disabled={!newSupplierName.trim() || adding}>{adding ? 'Adding…' : 'Add'}</button></div></section>
           <section><strong>Directory maintenance</strong><small>Select a supplier, then use the record's Edit, Track, contacts, locations, or rules controls.</small></section>
-        </aside>
-      </div>}
+        </MobileCatalogToolsSheet>
+      )}
+
       <section className="supplier-record">
         {loadError && <div className="supplier-directory-error">{loadError}</div>}
         {!selected ? <div className="supplier-record-empty"><strong>No supplier selected</strong><span>Add or select a supplier from the navigator.</span></div> : (
