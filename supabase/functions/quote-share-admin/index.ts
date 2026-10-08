@@ -83,8 +83,16 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!membership) return json({ error: 'Workspace access denied.' }, 403);
     // This handler uses a privileged client and bypasses RLS; enforce viewer read-only here too.
-    if (membership.role === 'viewer' && action !== 'get') {
-      return json({ error: 'Viewer access is read-only. Ask an administrator for editor access.' }, 403);
+    if (action !== 'get') {
+      // This endpoint uses a privileged database key; check the user's actual
+      // organization and department permission before mutating quote shares.
+      const { data: canEdit, error: permissionError } = await userClient.rpc('can_edit_team_area', {
+        target_organization: organizationId,
+        target_area: 'quotes',
+      });
+      if (permissionError || canEdit !== true) {
+        return json({ error: 'Your team permissions do not allow editing or sending customer quotes.' }, 403);
+      }
     }
 
     if (action === 'get') {
