@@ -97,7 +97,7 @@ function App() {
           <AuthStatus />
         </div>
       </header>
-      {!viewer && <MobileAppChrome />}
+      <MobileAppChrome />
 
       {viewer && view !== 'notebook' && view !== 'settings' ? (
         <ViewerWorkspace section={view} />
