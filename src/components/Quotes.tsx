@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type TouchEvent } from 'react';
 import { createPricingScheduleData } from '../services/pricingSchedule';
+import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import {
   QUOTE_AREA_SCOPE_META,
   QUOTE_AREA_SCOPE_VISIBLE_FIELDS,
@@ -655,6 +656,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
   const [issueCursor, setIssueCursor] = useState(0);
   const [activeIssueLineId, setActiveIssueLineId] = useState<string | null>(null);
   const [mobileMenu, setMobileMenu] = useState<'view' | 'tools' | null>(null);
+  const mobileMenuRef = useDismissibleLayer<HTMLDivElement>(Boolean(mobileMenu), () => setMobileMenu(null));
   const mobileToolbarRef = useRef<HTMLElement>(null);
   const [workspaceZoom, setWorkspaceZoom] = useState(() => {
     const stored = Number(window.localStorage.getItem('sales-shop:quote-workspace-zoom'));
@@ -860,16 +862,16 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
         <button type="button" className={`quote-mobile-more-button ${mobileMenu === 'tools' ? 'active' : ''}`} aria-expanded={mobileMenu === 'tools'} aria-haspopup="dialog" onClick={() => setMobileMenu((current) => current === 'tools' ? null : 'tools')} aria-label="Quote tools">•••</button>
         {mobileMenu && <div className="quote-mobile-menu-scrim" aria-hidden="true" onPointerDown={() => setMobileMenu(null)} />}
 
-        {mobileMenu === 'view' && <div className="quote-mobile-menu quote-mobile-view-menu" role="dialog" aria-modal="true" aria-label="Quote view">
-          <div className="quote-mobile-menu-header"><strong>Choose a view</strong><button type="button" onClick={() => setMobileMenu(null)} aria-label="Close view menu">×</button></div>
+        {mobileMenu === 'view' && <div ref={mobileMenuRef} className="quote-mobile-menu quote-mobile-view-menu" role="dialog" aria-modal="true" aria-label="Quote view">
+          <div className="quote-mobile-menu-header"><strong>Choose a view</strong><button type="button" data-dialog-initial-focus onClick={() => setMobileMenu(null)} aria-label="Close view menu">×</button></div>
           {viewModes.map((viewMode) => <button type="button" key={viewMode} className={effectiveMode === viewMode ? 'active' : ''} onClick={() => { onModeChange(viewMode); setMobileMenu(null); }}>
             <strong>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</strong>
             <small>{viewMode === 'edit' ? 'Build the quote' : viewMode === 'split' ? 'Editor + customer sheet' : viewMode === 'workbook' ? 'Pricing workspace' : 'Customer document'}</small>
           </button>)}
         </div>}
 
-        {mobileMenu === 'tools' && <div className="quote-mobile-menu quote-mobile-tools-menu" role="dialog" aria-modal="true" aria-label="Quote tools">
-          <div className="quote-mobile-menu-header"><strong>Quote tools</strong><button type="button" onClick={() => setMobileMenu(null)} aria-label="Close quote tools">×</button></div>
+        {mobileMenu === 'tools' && <div ref={mobileMenuRef} className="quote-mobile-menu quote-mobile-tools-menu" role="dialog" aria-modal="true" aria-label="Quote tools">
+          <div className="quote-mobile-menu-header"><strong>Quote tools</strong><button type="button" data-dialog-initial-focus onClick={() => setMobileMenu(null)} aria-label="Close quote tools">×</button></div>
           <div className="quote-mobile-menu-section">
             <span className="quote-mobile-menu-heading">Editing</span>
             <div className="quote-mobile-tool-grid">
@@ -1121,6 +1123,7 @@ export function Quotes() {
   const createQuote = useQuoteStore((state) => state.createQuote);
   const hydrateCrm = useCrmStore((state) => state.hydrate);
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(false);
+  const navigatorRef = useDismissibleLayer<HTMLElement>(mobileNavigatorOpen, () => setMobileNavigatorOpen(false));
   const [mode, setMode] = useState<QuoteViewMode>(() => (
     typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 700px)').matches
       ? 'edit'
@@ -1154,10 +1157,10 @@ export function Quotes() {
 
   return <main className="quotes-view">
     {mobileNavigatorOpen && <div className="quote-mobile-navigator-backdrop" onPointerDown={() => setMobileNavigatorOpen(false)}>
-      <section className="quote-mobile-navigator" onPointerDown={(event) => event.stopPropagation()}>
+      <section ref={navigatorRef} className="quote-mobile-navigator" role="dialog" aria-modal="true" aria-label="Quotes navigation" onPointerDown={(event) => event.stopPropagation()}>
         <header>
           <div><span>SalesShop</span><strong>Quotes & COs</strong></div>
-          <button type="button" onClick={() => setMobileNavigatorOpen(false)} aria-label="Close navigation">×</button>
+          <button type="button" data-dialog-initial-focus onClick={() => setMobileNavigatorOpen(false)} aria-label="Close navigation">×</button>
         </header>
 
         <nav className="quote-mobile-app-nav" aria-label="SalesShop sections">
