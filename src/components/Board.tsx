@@ -209,10 +209,22 @@ export function Board() {
 
   const setBoardMode = (mode: 'projects' | 'accounts') => {
     setBoardModeState(mode);
-    if (typeof window !== 'undefined') window.sessionStorage.setItem(BOARD_MODE_KEY, mode);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(BOARD_MODE_KEY, mode);
+      window.dispatchEvent(new CustomEvent('sales-shop:board-mode-changed', { detail: { mode } }));
+    }
   };
 
   useEffect(() => { hydrate(); }, [hydrate]);
+  useEffect(() => {
+    const handleBoardModeRequest = (event: Event) => {
+      const detail = (event as CustomEvent<{ mode?: 'projects' | 'accounts' }>).detail;
+      if (detail?.mode) setBoardMode(detail.mode);
+    };
+    window.addEventListener('sales-shop:board-mode-request', handleBoardModeRequest);
+    return () => window.removeEventListener('sales-shop:board-mode-request', handleBoardModeRequest);
+  }, []);
+
   useEffect(() => {
     if (focusedProjectId && projects.some((project) => project.id === focusedProjectId)) {
       setBoardMode('projects');
