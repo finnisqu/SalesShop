@@ -1,0 +1,78 @@
+/* Mobile Materials: the sort label and selected order share one compact control. */
+@media (max-width:700px) {
+  .sales-app.view-catalog .materials-workspace .materials-reference-tools {
+    grid-template-columns:78px minmax(0,1fr) 66px;
+    gap:5px;
+  }
+  .sales-app.view-catalog .materials-workspace .materials-sort-control {
+    position:relative;
+    grid-area:sort;
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:10px 20px;
+    align-content:center;
+    gap:1px;
+    width:100%;
+    min-width:0;
+    height:42px;
+    min-height:42px;
+    box-sizing:border-box;
+    margin:0;
+    padding:4px 24px 4px 10px;
+    border:1px solid rgba(91,78,58,.18);
+    border-radius:6px;
+    background:#fffaf0;
+  }
+  .sales-app.view-catalog .materials-workspace .materials-sort-control > span {
+    min-width:0;
+    color:#918476;
+    font-size:8px;
+    font-weight:850;
+    line-height:10px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .sales-app.view-catalog .materials-workspace .materials-sort-control select {
+    display:block;
+    -webkit-appearance:none;
+    appearance:none;
+    width:100%;
+    min-width:0;
+    max-width:none;
+    height:20px;
+    min-height:20px;
+    margin:0;
+    padding:0;
+    border:0;
+    border-radius:0;
+    outline:0;
+    box-shadow:none;
+    background:transparent;
+    color:#4e4435;
+    font:750 16px/20px inherit;
+    letter-spacing:-.5px;
+  }
+  .sales-app.view-catalog .materials-workspace .materials-sort-control::after {
+    content:'';
+    position:absolute;
+    right:12px;
+    top:50%;
+    width:6px;
+    height:6px;
+    border-right:2px solid #776a53;
+    border-bottom:2px solid #776a53;
+    transform:translateY(-70%) rotate(45deg);
+    pointer-events:none;
+  }
+  .sales-app.view-catalog .materials-workspace .materials-sort-control:focus-within {
+    border-color:#ad9257;
+    outline:2px solid rgba(173,146,87,.23);
+    outline-offset:1px;
+    background:#fff7e7;
+  }
+  .sales-app.view-catalog .materials-workspace .materials-mobile-tools-trigger {
+    min-width:0;
+    width:100%;
+    height:42px;
+  }
+}
