@@ -187,14 +187,45 @@
     white-space:normal;
     line-height:1.25;
   }
+  /* Unlike the View picker, Tools has a long menu and a Done action.
+     The sheet never scrolls as a whole: only its content pane scrolls. */
+  .sales-app.view-quotes .quote-mobile-tools-menu{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    max-height:min(80dvh,700px);
+    overflow:hidden;
+    padding:0;
+    box-sizing:border-box;
+  }
+  .sales-app.view-quotes .quote-mobile-tools-menu>.quote-mobile-menu-header{
+    position:relative;
+    top:auto;
+    flex:0 0 auto;
+    margin:0;
+  }
+  .sales-app.view-quotes .quote-mobile-tools-menu>.quote-mobile-menu-scroll{
+    flex:1 1 auto;
+    min-height:0;
+    min-width:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding:8px 12px 12px;
+  }
+  .sales-app.view-quotes .quote-mobile-menu-footer{
+    flex:0 0 auto;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid #d5cab9;
+    background:#f7f1e6;
+  }
   .sales-app.view-quotes .quote-mobile-menu-done{
-    position:sticky;
-    bottom:0;
-    z-index:2;
+    position:static;
     display:block;
     width:100%;
     min-height:46px;
-    margin-top:12px;
+    margin:0;
     border:1px solid #aa915b;
     border-radius:7px;
     background:#fff3d7;
