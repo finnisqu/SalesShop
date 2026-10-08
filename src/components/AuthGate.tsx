@@ -17,8 +17,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const signIn = useAuthStore((state) => state.signIn);
   const signUp = useAuthStore((state) => state.signUp);
   const clearMessage = useAuthStore((state) => state.clearMessage);
-  const [creating, setCreating] = useState(false);
   const [invited] = useState(() => Boolean(pendingTeamInviteToken()));
+  // Invitations are for joining an existing team: lead with account creation.
+  // Existing accounts can still choose the sign-in option below.
+  const [creating, setCreating] = useState(invited);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shopName, setShopName] = useState('');
@@ -54,8 +56,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
         <div className="auth-copy">
           <span className="auth-eyebrow">Stone sales workspace</span>
-          <h1>{invited ? creating ? 'Join your team' : 'Sign in to join your team' : creating ? 'Create your shop' : 'Welcome back'}</h1>
-          <p>{invited ? 'Use the email address your invitation was sent to. New here? Create an account, confirm your email, then return to this invitation link.' : creating ? 'Start with one account. Your shop workspace is created automatically.' : 'Sign in to your SalesShop workspace.'}</p>
+          <h1>{invited ? creating ? 'Create your account' : 'Sign in to join your team' : creating ? 'Create your shop' : 'Welcome back'}</h1>
+          <p>{invited ? creating ? 'You’ve been invited to join an existing SalesShop team. Use your invited email address to create an account, then confirm your email to finish joining.' : 'Already have an account? Sign in with the invited email address to join your team.' : creating ? 'Start with one account. Your shop workspace is created automatically.' : 'Sign in to your SalesShop workspace.'}</p>
         </div>
 
         <form onSubmit={submit} className="auth-form">
@@ -66,7 +68,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           <label><span>Password</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={6} autoComplete={creating ? 'new-password' : 'current-password'} /></label>
           {error && <div className="auth-message error">{error}</div>}
           {notice && <div className="auth-message notice">{notice}</div>}
-          <button type="submit" className="auth-primary" disabled={busy}>{busy ? 'Connecting…' : creating ? 'Create SalesShop' : 'Sign in'}</button>
+          <button type="submit" className="auth-primary" disabled={busy}>{busy ? 'Connecting…' : creating ? invited ? 'Create account' : 'Create SalesShop' : 'Sign in'}</button>
         </form>
 
         <button type="button" className="auth-switch" onClick={() => { clearMessage(); setCreating((value) => !value); }}>
