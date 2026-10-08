@@ -168,6 +168,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
                           <strong>{variant.label}</strong>
                           <small>{variantSubtitle(variant)}</small>
                         </div>
+                        {!editing && <span className="sinks-mobile-variant-price">{priceLabel(variant.sellPrice)}<small>Customer price</small></span>}
                         <div className="sinks-variant-badges">
                           {variant.default && <span>Default</span>}
                           {variant.ada && <span>ADA</span>}
