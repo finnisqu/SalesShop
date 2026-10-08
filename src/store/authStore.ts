@@ -81,7 +81,16 @@ async function applySession(session: Session | null) {
     if (acceptedOrganizationId && acceptedOrganizationId !== organizationId) {
       throw new Error('Invitation joined a different workspace than the one selected.');
     }
-    await hydrateCloudDocuments(organizationId, session.user.id);
+    // Only owners bootstrapping their own shop may import existing local sales data.
+    // Joining members must never upload another device's CRM/quotes into the team.
+    if (!supabase) throw new Error('Cloud is unavailable.');
+    const { data: membership, error: memberError } = await supabase.from('organization_members')
+      .select('role').eq('organization_id', organizationId).eq('user_id', session.user.id).single();
+    if (memberError || !membership) throw memberError ?? new Error('No team access found.');
+    await hydrateCloudDocuments(organizationId, session.user.id, {
+      allowCompanySeed: membership.role === 'owner' && !acceptedOrganizationId,
+      allowNotebookSeed: !acceptedOrganizationId,
+    });
     startCloudSync(organizationId, session.user.id, (error) => {
       useAuthStore.setState({ error: `Cloud sync: ${error}` });
     });
