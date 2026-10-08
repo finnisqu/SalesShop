@@ -551,7 +551,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
                       highlighted={pinned}
                       expanded={expanded}
                       onToggle={() => setExpandedMaterialId(expanded ? null : material.id)}
-                      details={renderVariantBrowser(material)}
+                      details={() => renderVariantBrowser(material)}
                     />
                   );
                 })}
