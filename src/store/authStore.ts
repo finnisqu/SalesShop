@@ -9,7 +9,7 @@ import { inviteAccountDecision, previewTeamInvite, type TeamInvitePreview } from
 
 export type BackendMode = 'local' | 'cloud';
 export type InviteProblem = 'switch-account' | 'unavailable' | 'preview-error' | 'verify-email';
-export type JoinWelcome = { userId: string; organizationId: string; organizationName: string; role: 'member' | 'admin' };
+export type JoinWelcome = { userId: string; organizationId: string; organizationName: string; role: 'member' | 'admin' | 'viewer' };
 
 interface AuthState {
   mode: BackendMode;
@@ -18,6 +18,7 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   organizationId: string | null;
+  teamRole: TeamRole | null;
   passwordRecovery: boolean;
   inviteProblem: InviteProblem | null;
   activeInvitePreview: TeamInvitePreview | null;
@@ -123,6 +124,7 @@ async function performSessionApplication(session: Session | null) {
       user: null,
       session: null,
       organizationId: null,
+      teamRole: null,
       inviteProblem: null,
       activeInvitePreview: null,
       joinWelcome: null,
@@ -131,7 +133,7 @@ async function performSessionApplication(session: Session | null) {
   }
 
   useAuthStore.setState({ busy: true, ready: false, user: session.user, session,
-    organizationId: null, inviteProblem: null, activeInvitePreview: null, error: null, notice: null });
+    organizationId: null, teamRole: null, inviteProblem: null, activeInvitePreview: null, error: null, notice: null });
   try {
     const inviteToken = pendingTeamInviteToken();
     const invitePreview = inviteToken ? await previewTeamInvite(inviteToken) : null;
@@ -162,9 +164,11 @@ async function performSessionApplication(session: Session | null) {
       allowCompanySeed: maySeedCompanyFromLocal(membership.role as TeamRole, Boolean(acceptedOrganizationId)),
       allowNotebookSeed: !acceptedOrganizationId,
     });
-    startCloudSync(organizationId, session.user.id, (error) => {
-      useAuthStore.setState({ error: `Cloud sync: ${error}` });
-    });
+    if (membership.role !== 'viewer') {
+      startCloudSync(organizationId, session.user.id, (error) => {
+        useAuthStore.setState({ error: `Cloud sync: ${error}` });
+      });
+    }
     if (acceptedOrganizationId && invitePreview) saveJoinWelcome({
       userId: session.user.id, organizationId, organizationName: invitePreview.organizationName,
       role: invitePreview.role,
@@ -176,6 +180,7 @@ async function performSessionApplication(session: Session | null) {
       user: session.user,
       session,
       organizationId,
+      teamRole: membership.role as TeamRole,
       joinWelcome: readJoinWelcome(session.user.id, organizationId),
       inviteProblem: null,
       activeInvitePreview: null,
@@ -203,6 +208,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   organizationId: null,
+  teamRole: null,
   passwordRecovery: initialPasswordRecovery(),
   inviteProblem: null,
   activeInvitePreview: null,
@@ -306,7 +312,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     await supabase.auth.signOut();
     set({ passwordRecovery: false, busy: false, user: null, session: null,
-      organizationId: null, error: null, notice: 'Password updated. Sign in with your new password.' });
+      organizationId: null, teamRole: null, error: null, notice: 'Password updated. Sign in with your new password.' });
     return true;
   },
 
@@ -321,6 +327,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: null,
       session: null,
       organizationId: null,
+      teamRole: null,
       inviteProblem: null,
       activeInvitePreview: null,
       joinWelcome: null,
