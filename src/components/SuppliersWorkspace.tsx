@@ -404,6 +404,7 @@ export function SuppliersWorkspace() {
           label="Supplier directory and pricing status"
           empty={!filtered.length}
           emptyMessage="No suppliers match the current search or status filter."
+          onReset={query.trim() || filter !== 'all' ? () => { setQuery(''); setFilter('all'); } : undefined}
           className="supplier-mobile-reference-list"
         >
           {filtered.map((supplier) => {
