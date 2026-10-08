@@ -4,6 +4,7 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import { buildCatalogQuoteLinePatch, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
+import { catalogQuoteDestinationLabel } from '../services/catalogQuoteDestination';
 import { resolveStockMaterialCostReference, defaultMaterialVariant, defaultMaterialPurchaseOption } from '../types/settings';
 import { defaultSinkVariant } from '../types/sink';
 import { RATE_BOOK_UNIT_LABELS, resolveRateBookValues } from '../types/rateBook';
@@ -104,7 +105,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
           <label className="catalog-quote-field"><span>Destination quote</span>
             <select value={destinationId} onChange={(event) => { setTargetId(event.target.value); setError(''); }}>
               <option value={TARGET_NEW}>+ Create new quote</option>
-              {eligible.map((quote) => <option key={quote.id} value={quote.id}>{quote.quoteNumber} · {quote.title}{quote.companyName ? ` · ${quote.companyName}` : ''}</option>)}
+              {eligible.map((quote) => <option key={quote.id} value={quote.id}>{catalogQuoteDestinationLabel(quote)}</option>)}
             </select>
           </label>
           {destinationId === TARGET_NEW && <label className="catalog-quote-field"><span>New quote title</span><input type="text" value={newTitle} onChange={(event) => setNewTitle(event.target.value)} placeholder={`Quote · ${title}`} /></label>}
