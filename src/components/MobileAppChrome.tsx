@@ -126,7 +126,7 @@ export function MobileAppChrome() {
             ))}
           </nav>
 
-          {view === 'notebook' && <section className="mobile-app-context-section">
+          {view === 'notebook' && !catalogExpanded && <section className="mobile-app-context-section">
             <header>
               <div><strong>Notebook pages</strong><small>{visibleEntries.length} visible</small></div>
               <button type="button" onClick={() => { createEntry(); setOpen(false); }}>+ New</button>
@@ -142,7 +142,7 @@ export function MobileAppChrome() {
             </div>
           </section>}
 
-          {view === 'board' && <section className="mobile-app-context-section mobile-board-context-section">
+          {view === 'board' && !catalogExpanded && <section className="mobile-app-context-section mobile-board-context-section">
             <header><div><strong>Board view</strong><small>One CRM, two lenses</small></div></header>
             <div className="mobile-board-mode-list">
               <button type="button" className={boardMode === 'projects' ? 'active' : ''} onClick={() => {
