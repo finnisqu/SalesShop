@@ -30,6 +30,8 @@ let authListenerStarted = false;
 let inviteAcceptance: Promise<string> | null = null;
 
 async function acceptPendingInvitation(): Promise<string | null> {
+  // Supabase refresh and getSession may overlap: await the same acceptance.
+  if (inviteAcceptance) return inviteAcceptance;
   const token = pendingTeamInviteToken();
   if (!token || !supabase) return null;
   if (!inviteAcceptance) inviteAcceptance = (async () => {
