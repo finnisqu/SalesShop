@@ -1,0 +1,46 @@
+/* Dedicated read-only experience for SalesShop Viewer members. */
+.viewer-workspace {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: clamp(16px, 2.5vw, 30px);
+  background: #f0eee6;
+  color: #34362f;
+}
+.viewer-workspace-header {
+  display: flex; justify-content: space-between; align-items: start; gap: 16px;
+  margin-bottom: 18px; max-width: 1260px;
+}
+.viewer-workspace-header h1 { margin: 5px 0; font-size: clamp(24px, 3vw, 35px); color: #353b32; }
+.viewer-workspace-header p { margin: 0; font-size: 13px; line-height: 1.5; color: #706e63; }
+.viewer-role-pill { white-space: nowrap; border: 1px solid #b8c2a6; background: #e7eddb; color: #385039; padding: 7px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+.viewer-search { display: grid; gap: 6px; margin-bottom: 18px; max-width: 500px; }
+.viewer-search label { text-transform: uppercase; letter-spacing: .08em; color: #777668; font-size: 10px; font-weight: 700; }
+.viewer-search input { background: #fdfcf7; width: 100%; box-sizing: border-box; border: 1px solid #cbc8b9; border-radius: 7px; padding: 12px; font: inherit; }
+.viewer-record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 13px; max-width: 1260px; align-content: start; padding-bottom: 22px; }
+.viewer-record { display: flex; flex-direction: column; align-items: start; gap: 9px; background: #fffcf4; border: 1px solid #d9d4c7; border-radius: 8px; padding: 18px; min-width: 0; overflow-wrap: anywhere; box-shadow: 0 2px 6px #2e2e2810; }
+.viewer-record h2 { margin: 0; font-size: 17px; line-height: 1.25; }
+.viewer-record p { margin: 0; color: #65645b; line-height: 1.45; font-size: 12px; }
+.viewer-record > small { font-weight: 700; font-size: 10px; letter-spacing: .03em; color: #777e62; }
+.viewer-facts { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: #51554d; }
+.viewer-record button { border: 1px solid #b3b8a6; border-radius: 5px; padding: 8px 12px; background: #f2f4e9; color: #3d4b3b; font-weight: 600; cursor: pointer; }
+.viewer-record button:focus-visible { outline: 3px solid #8da487; outline-offset: 2px; }
+.viewer-details { width: 100%; border-top: 1px solid #e2dfd4; padding-top: 12px; display: grid; gap: 8px; }
+.viewer-line { width: 100%; display: flex; justify-content: space-between; gap: 10px; font-size: 11px; line-height: 1.4; padding-bottom: 5px; border-bottom: 1px solid #e8e5dd; }
+.viewer-line span:last-child { text-align: right; }
+.viewer-empty, .viewer-helper { color: #67675e; font-size: 12px; grid-column: 1 / -1; }
+.viewer-metrics { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.viewer-metrics > div { min-width: 100px; border-radius: 7px; background: #fdfcf7; border: 1px solid #d9d4c7; padding: 12px 18px; display: grid; gap: 4px; }
+.viewer-metrics strong { font-size: 23px; }
+.viewer-metrics span { color: #666; font-size: 11px; }
+.team-role-matrix { overflow-x: auto; border: 1px solid #ded9cb; border-radius: 7px; }
+.team-role-matrix-header, .team-role-matrix-row { display: grid; grid-template-columns: minmax(115px, 1.5fr) repeat(4, minmax(47px, .75fr)); min-width: 390px; align-items: center; gap: 4px; padding: 10px; font-size: 11px; border-bottom: 1px solid #ded9cb; }
+.team-role-matrix-header { background: #eae6dc; }
+.team-role-matrix-header strong:not(:first-child), .team-role-matrix-row span:not(:first-child) { text-align: center; }
+.team-role-matrix-row:last-child { border: none; }
+@media (max-width: 680px) {
+  .viewer-workspace { padding: 14px; -webkit-overflow-scrolling: touch; }
+  .viewer-workspace-header { flex-wrap: wrap; }
+  .viewer-role-pill { order: -1; }
+  .viewer-record-grid { grid-template-columns: 1fr; }
+}
