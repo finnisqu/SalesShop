@@ -122,9 +122,11 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
             {source.model.variants.filter((variant) => variant.active).map((variant) => <option key={variant.id} value={variant.id}>{variant.label}{variant.ada ? ' · ADA' : ''}{variant.code ? ` · ${variant.code}` : ''}</option>)}
             {!sinkVariant && <option value="">No active variants</option>}
           </select></label>}
-          <label className="catalog-quote-field"><span>{source.kind === 'material' ? 'Quoted area (SF) · optional' : source.kind === 'sink' ? 'Quantity' : `Quantity (${RATE_BOOK_UNIT_LABELS[source.item.unit]}) · optional`}</span>
-            <input type="number" min="0.001" step="any" inputMode="decimal" value={quantityText} onChange={(event) => setQuantityText(event.target.value)} placeholder={source.kind === 'material' ? 'Enter takeoff SF later' : 'Enter quantity'} />
-          </label>
+          {(source.kind !== 'rate' || source.item.unit !== 'flat') && (
+            <label className="catalog-quote-field"><span>{source.kind === 'material' ? 'Quoted area (SF) · optional' : source.kind === 'sink' ? 'Quantity' : `Quantity (${RATE_BOOK_UNIT_LABELS[source.item.unit]}) · optional`}</span>
+              <input type="number" min="0.001" step="any" inputMode="decimal" value={quantityText} onChange={(event) => setQuantityText(event.target.value)} placeholder={source.kind === 'material' ? 'Enter takeoff SF later' : 'Enter quantity'} />
+            </label>
+          )}
           <div className="catalog-quote-review">
             <span>{source.kind === 'material' ? 'Internal purchasing reference' : source.kind === 'rate' && source.item.pricingBehavior === 'cost-reference' ? 'Internal cost reference' : 'Pricing reference'}</span>
             <strong>{priceLabel}</strong>
