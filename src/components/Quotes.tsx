@@ -1136,7 +1136,6 @@ export function Quotes() {
   const quote = quotes.find((candidate) => candidate.id === activeQuoteId) ?? quotes[0] ?? null;
   useEffect(() => {
     if (!recentCatalogInsert || recentCatalogInsert.quoteId !== quote?.id) return;
-    let highlightTimer: number | undefined;
     const frame = window.requestAnimationFrame(() => {
       const line = Array.from(document.querySelectorAll<HTMLElement>('[data-quote-line-id]'))
         .find((element) => element.dataset.quoteLineId === recentCatalogInsert.lineId);
@@ -1144,12 +1143,9 @@ export function Quotes() {
       line.scrollIntoView({ behavior: 'smooth', block: 'center' });
       line.classList.add('is-catalog-inserted');
       clearCatalogInsert();
-      highlightTimer = window.setTimeout(() => line.classList.remove('is-catalog-inserted'), 3500);
+      window.setTimeout(() => line.classList.remove('is-catalog-inserted'), 3500);
     });
-    return () => {
-      window.cancelAnimationFrame(frame);
-      if (highlightTimer !== undefined) window.clearTimeout(highlightTimer);
-    };
+    return () => window.cancelAnimationFrame(frame);
   }, [recentCatalogInsert, quote?.id, clearCatalogInsert]);
   const archivedCount = quotes.filter((item) => Boolean(item.archivedAt)).length;
   const sortedQuotes = useMemo(() => quotes
