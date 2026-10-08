@@ -56,12 +56,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (user && inviteProblem && !passwordRecovery) {
     const switching = inviteProblem === 'switch-account';
     const invalid = inviteProblem === 'unavailable';
+    const verifyEmail = inviteProblem === 'verify-email';
     return <main className="auth-shell"><section className="auth-card auth-invite-card">
       <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
       <div className="auth-copy">
         <span className="auth-eyebrow">Team invitation</span>
-        <h1>{switching ? `Join ${activeInvitePreview?.organizationName || 'your invited team'}` : invalid ? 'Invitation no longer available' : 'Unable to check invitation'}</h1>
-        <p>{switching ? `This invitation is for ${activeInvitePreview?.emailHint || 'a different email address'}. You're currently signed in as ${user.email || 'another user'}. To keep workspaces separate, switch accounts before joining.` : invalid ? 'This invitation may have expired, been revoked, or already been accepted. Ask the team owner for a new invitation if needed.' : error || 'Please retry checking your invitation.'}</p>
+        <h1>{switching ? `Join ${activeInvitePreview?.organizationName || 'your invited team'}` : invalid ? 'Invitation no longer available' : verifyEmail ? 'Confirm your email to join' : 'Unable to check invitation'}</h1>
+        <p>{switching ? `This invitation is for ${activeInvitePreview?.emailHint || 'a different email address'}. You're currently signed in as ${user.email || 'another user'}. To keep workspaces separate, switch accounts before joining.` : invalid ? 'This invitation may have expired, been revoked, or already been accepted. Ask the team owner for a new invitation if needed.' : verifyEmail ? 'Check the confirmation email for your SalesShop account, then return here and retry the invitation.' : error || 'Please retry checking your invitation.'}</p>
       </div>
       {switching && activeInvitePreview && <div className="auth-invite-summary"><strong>{activeInvitePreview.organizationName}</strong><span>Joining as {activeInvitePreview.role === 'admin' ? 'Administrator' : 'Member'}</span><small>Invited email: {activeInvitePreview.emailHint}</small></div>}
       <div className="auth-form">
