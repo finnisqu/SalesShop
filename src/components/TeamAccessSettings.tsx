@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
-import { allowedInviteRoles, canManageTeamMember, roleName, type TeamRole, type TeamInvitationRow } from '../services/teamAccess';
+import { allowedInviteRoles, canManageTeamMember, roleName, TEAM_ROLE_HELP, type TeamRole, type TeamInvitationRow } from '../services/teamAccess';
 import { teamInviteUrl } from '../services/teamInvitationLink';
 import { useAuthStore } from '../store/authStore';
 
@@ -26,7 +26,7 @@ export function TeamAccessSettings() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [email, setEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'member'|'admin'>('member');
+  const [inviteRole, setInviteRole] = useState<'viewer'|'member'|'admin'>('member');
   const [newInviteLink, setNewInviteLink] = useState('');
   const [lastEmailReference, setLastEmailReference] = useState('');
   const [copied, setCopied] = useState(false);
@@ -127,7 +127,7 @@ export function TeamAccessSettings() {
     await refresh();setBusy(false);
   };
 
-  const changeRole = async (member:MemberInfo,role:'admin'|'member') => {
+  const changeRole = async (member:MemberInfo,role:'admin'|'member'|'viewer') => {
     if (!supabase || !orgId || !canManageTeamMember(myRole,member.role,member.user_id===user?.id) || busy) return;
     if (!window.confirm(`Change ${member.displayName || 'this teammate'} to ${roleName(role)}?`)) return;
     setBusy(true);setError('');
@@ -166,13 +166,13 @@ export function TeamAccessSettings() {
             const editable=canManageTeamMember(myRole,member.role,self);
             return <div className="settings-member team-member-row" key={member.user_id}>
               <span className="settings-avatar">{label.charAt(0).toUpperCase()}</span>
-              <div><strong>{label}{self ? ' (You)' : ''}</strong><small>{self ? user?.email : `Member since ${day(member.created_at)}`}</small></div>
+              <div><strong>{label}{self ? ' (You)' : ''}</strong><small>{self ? user?.email : `Member since ${day(member.created_at)}`}</small><small>{TEAM_ROLE_HELP[member.role]}</small></div>
               <span className="settings-role">{roleName(member.role)}</span>
               {editable && <div className="team-member-actions">
                 <label><span className="team-screenreader">Change role</span>
                   <select value={member.role} aria-label={`Role for ${label}`} disabled={busy}
-                    onChange={(event)=>void changeRole(member,event.target.value as 'admin'|'member')}>
-                    <option value="member">Member</option>{myRole==='owner' && <option value="admin">Admin</option>}
+                    onChange={(event)=>void changeRole(member,event.target.value as 'admin'|'member'|'viewer')}>
+                    <option value="member">Member</option><option value="viewer">Viewer</option>{myRole==='owner' && <option value="admin">Admin</option>}
                   </select>
                 </label>
                 <button type="button" disabled={busy} onClick={() => void removeMember(member)}>Remove</button>
@@ -190,9 +190,9 @@ export function TeamAccessSettings() {
         {isAdmin ? <>
           <form className="team-invite-form" onSubmit={(event) => void createInvite(event)}>
             <label><span>Email address</span><input type="email" autoComplete="email" required value={email} onChange={(event)=>setEmail(event.target.value)} placeholder="salesperson@company.com" /></label>
-            <label><span>Access</span><select value={inviteRole} disabled={busy} onChange={(event)=>setInviteRole(event.target.value as 'member'|'admin')}>
+            <label><span>Access</span><select value={inviteRole} disabled={busy} onChange={(event)=>setInviteRole(event.target.value as 'viewer'|'member'|'admin')}>
               {inviteRoles.map((role)=><option key={role} value={role}>{roleName(role)}</option>)}
-            </select></label>
+            </select><small>{TEAM_ROLE_HELP[inviteRole]}</small></label>
             <div className="settings-inline-actions"><button type="submit" className="settings-primary-button" disabled={!email.trim() || busy}>{busy ? 'Working…' : 'Send invitation email'}</button><button type="button" disabled={!email.trim() || busy} onClick={() => void createInvite(undefined, false)}>Create link instead</button></div>
           </form>
           {lastEmailReference && <p className="settings-help">Resend submission reference: <code>{lastEmailReference}</code> · <a href="https://resend.com/emails" target="_blank" rel="noopener noreferrer">Check delivery status</a></p>}
@@ -213,9 +213,19 @@ export function TeamAccessSettings() {
         </> : <p className="settings-help">Owners and admins can invite teammates. Ask your administrator if you need a new person added.</p>}
       </article>
       <article className="company-settings-card">
-        <header><div><strong>Permissions</strong><small>These are enforced by SalesShop’s database.</small></div></header>
+        <header><div><strong>Role permissions</strong><small>Roles are enforced by SalesShop’s database.</small></div></header>
         <div className="settings-detail-line"><span>Your role</span><strong>{myRole?roleName(myRole):'Loading…'}</strong></div>
-        <p className="settings-help">Owners can manage administrators. Admins can invite and manage members. Members can collaborate on company quotes and CRM records. Private notebooks remain personal.</p>
+        <div className="team-role-matrix" role="table" aria-label="SalesShop role permissions">
+          <div className="team-role-matrix-header" role="row"><strong role="columnheader">Access</strong><strong role="columnheader">Owner</strong><strong role="columnheader">Admin</strong><strong role="columnheader">Member</strong><strong role="columnheader">Viewer</strong></div>
+          {([
+            ['View shared work','✓','✓','✓','✓'],
+            ['Edit shared records','✓','✓','✓','—'],
+            ['Company settings','✓','✓','—','—'],
+            ['Invite teammates','✓','✓','—','—'],
+            ['Manage administrators','✓','—','—','—'],
+          ] as string[][]).map((row) => <div role="row" className="team-role-matrix-row" key={row[0]}>{row.map((v,i)=><span role="cell" key={i}>{v}</span>)}</div>)}
+        </div>
+        <p className="settings-help">All roles have access to their own private notebook. Viewer access never writes shared company data.</p>
         <p className="settings-help">Individual sales ownership and “Mine / Team” reporting are a separate upcoming step.</p>
       </article>
     </div>
