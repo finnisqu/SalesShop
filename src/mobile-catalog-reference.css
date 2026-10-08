@@ -388,3 +388,25 @@
     font-size:11px;
   }
 }
+
+@media(max-width:700px){
+  /* The importer is still launched from Materials tools after the shared-sheet migration. */
+  .sales-app.view-catalog .mobile-catalog-tools-sheet .supplier-import-launcher.is-toolbar{
+    display:flex;
+    width:100%;
+    min-height:46px;
+    align-items:center;
+    justify-content:center;
+    border-radius:7px;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-sheet .materials-mobile-tools-note{
+    font-size:10px;
+    line-height:1.4;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-sheet .materials-mobile-mode-row small{
+    font-size:10px;
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-sheet .materials-mobile-mode-row strong{
+    font-size:12px;
+  }
+}
