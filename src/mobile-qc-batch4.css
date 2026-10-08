@@ -13,7 +13,6 @@
     overflow-y:auto!important;
     overscroll-behavior-y:contain;
     -webkit-overflow-scrolling:touch;
-    touch-action:pan-y;
   }
   .sales-app.view-catalog .catalog-section-host > :is(
     .rates-workspace.is-catalog-embedded,
