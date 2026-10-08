@@ -61,6 +61,8 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const editorHostRef = useRef<HTMLDivElement | null>(null);
   const [editing, setEditing] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
+  const [expandedRateId, setExpandedRateId] = useState<string | null>(null);
+  const [expandedLevelId, setExpandedLevelId] = useState<string | null>(null);
   const [category, setCategory] = useState<ReferenceCategory>('all');
   const [query, setQuery] = useState('');
   const [rateSort, setRateSort] = useState<RateSort>('category');
@@ -220,6 +222,17 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
             <button type="button" className={editing ? 'active' : ''} onClick={() => { syncEditorCategory(category); setEditing(true); setMobileToolsOpen(false); }}><strong>Edit pricing</strong><small>Maintain rates and policy</small></button>
           </div></section>
           {editing && !showingMaterialPricing && <section><span className="rates-mobile-tools-label">Maintenance</span><button type="button" className="rates-mobile-add" onClick={() => { addCurrentRate(); setMobileToolsOpen(false); }}>+ Add rate row</button></section>}
+          {!editing && !showingMaterialPricing && <section>
+            <span className="rates-mobile-tools-label">Sort rates</span>
+            <select className="rates-mobile-sort-select" aria-label="Sort rates on mobile" value={rateSort} onChange={(event) => setRateSort(event.target.value as RateSort)}>
+              <option value="category">Category / item</option>
+              <option value="name">Item A–Z</option>
+              <option value="sell-asc">Sell price · low to high</option>
+              <option value="sell-desc">Sell price · high to low</option>
+              <option value="cost-asc">Cost · low to high</option>
+              <option value="effective-desc">Effective date · newest</option>
+            </select>
+          </section>}
           <section><span className="rates-mobile-tools-label">Current category</span><strong>{CATEGORY_TABS.find(([key]) => key === category)?.[1]}</strong><small>Select a category in the reference toolbar to change which rates are shown.</small></section>
         </aside>
       </div>}
@@ -239,6 +252,35 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
         {!showingMaterialPricing ? (
           <section className="rates-reference-card">
             <header><div><strong>Current company rates</strong><small>{rateRows.length} active reference{rateRows.length === 1 ? '' : 's'} shown</small></div><span>Click Edit pricing when you want to make changes.</span></header>
+            <div className="rates-mobile-card-list" aria-label="Company rate reference">
+              {rateRows.map((item) => {
+                const expanded = expandedRateId === item.id;
+                return (
+                  <article className={`rates-mobile-price-card ${expanded ? 'is-expanded' : ''}`} key={item.id}>
+                    <button type="button" className="rates-mobile-price-trigger" aria-expanded={expanded} onClick={() => setExpandedRateId(expanded ? null : item.id)}>
+                      <span className="rates-mobile-price-name">
+                        <strong>{item.name}</strong>
+                        <small>{RATE_BOOK_CATEGORY_LABELS[item.category]}{item.code ? ` · ${item.code}` : ''}</small>
+                      </span>
+                      <span className="rates-mobile-price-amount">
+                        <strong>{moneyLabel(item.sellRate)}</strong>
+                        <small>{RATE_BOOK_UNIT_LABELS[item.unit]} · sell</small>
+                        <small>Cost {moneyLabel(item.internalCost)}</small>
+                      </span>
+                      <span className="rates-mobile-price-chevron" aria-hidden="true">{expanded ? '⌃' : '⌄'}</span>
+                    </button>
+                    {expanded && <div className="rates-mobile-price-details">
+                      <div><span>Pricing behavior</span><strong>{RATE_BOOK_PRICING_BEHAVIOR_LABELS[item.pricingBehavior]}</strong></div>
+                      <div><span>Margin</span><strong>{marginLabel(item)}</strong></div>
+                      <div><span>Effective date</span><strong>{item.effectiveDate || '—'}</strong></div>
+                      <div><span>Division overrides</span><strong>{item.divisionOverrides.length || '—'}</strong></div>
+                      {item.notes && <p>{item.notes}</p>}
+                    </div>}
+                  </article>
+                );
+              })}
+              {!rateRows.length && <div className="rates-reference-empty">No active rates match the current search and filters.</div>}
+            </div>
             <div className="rates-reference-table-wrap">
               <table className="rates-reference-table">
                 <thead><tr><th>Item</th><th>Category</th><th>Cost</th><th>Suggested sell</th><th>Unit</th><th>Margin</th><th>Effective</th></tr></thead>
@@ -265,6 +307,25 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
               <div><strong>Standard material pricing</strong><small>{materialPricingRows.length} active pricing level{materialPricingRows.length === 1 ? '' : 's'}</small></div>
               <span>Supplier colors and slab variants now live in Materials. This page only owns the pricing policy.</span>
             </header>
+            <div className="rates-mobile-card-list" aria-label="Material pricing levels">
+              {materialPricingRows.map((rule) => {
+                const expanded = expandedLevelId === rule.id;
+                return (
+                  <article className={`rates-mobile-price-card ${expanded ? 'is-expanded' : ''}`} key={rule.id}>
+                    <button type="button" className="rates-mobile-price-trigger" aria-expanded={expanded} onClick={() => setExpandedLevelId(expanded ? null : rule.id)}>
+                      <span className="rates-mobile-price-name"><strong>{rule.label}</strong><small>Standard material level</small></span>
+                      <span className="rates-mobile-price-amount"><strong>{money.format(rule.customerRate)}/SF</strong><small>Customer price</small></span>
+                      <span className="rates-mobile-price-chevron" aria-hidden="true">{expanded ? '⌃' : '⌄'}</span>
+                    </button>
+                    {expanded && <div className="rates-mobile-price-details">
+                      <div><span>Cost ceiling</span><strong>{rule.maxMaterialCost === undefined ? 'No ceiling' : `${money.format(rule.maxMaterialCost)}/SF`}</strong></div>
+                      <div><span>Cost band</span><strong>{materialLevelCostBand(guide.rules, rule)}</strong></div>
+                    </div>}
+                  </article>
+                );
+              })}
+              {!materialPricingRows.length && <div className="rates-reference-empty">No active material pricing levels match this search.</div>}
+            </div>
             <div className="rates-reference-table-wrap">
               <table className="rates-reference-table rates-material-pricing-table">
                 <thead><tr><th>Level</th><th>Material cost ceiling</th><th>Standard customer price</th><th>Meaning</th></tr></thead>
