@@ -35,6 +35,7 @@ import type {
 import { SupplierRelationshipPanels } from './SupplierRelationshipPanels';
 import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
 import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
+import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 
 type SupplierFreshness = 'missing' | 'stale' | 'due-soon' | 'current' | 'inactive';
 type SupplierFilter = 'all' | 'attention' | 'current' | 'missing';
@@ -382,7 +383,7 @@ export function SuppliersWorkspace() {
     finally { setSaving(false); }
   };
 
-  if (loading) return <div className="supplier-directory-empty">Opening supplier directory…</div>;
+  if (loading) return <WorkspaceLoadingState title="Opening Suppliers" detail="Loading suppliers, pricing history, and contacts…" />;
 
   return (
     <div className="supplier-workbench">
