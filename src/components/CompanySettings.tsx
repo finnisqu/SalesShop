@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppearanceStore } from '../store/appearanceStore';
 import { TeamAccessSettings } from './TeamAccessSettings';
+import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 
@@ -32,6 +33,18 @@ export function CompanySettings() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileNotice, setProfileNotice] = useState('');
   const cloudReady = mode === 'cloud' && Boolean(user && organizationId && supabase);
+  const [companyRole, setCompanyRole] = useState<TeamRole | null>(null);
+  const canEditCompany = mode === 'local' || companyRole === 'owner' || companyRole === 'admin';
+  useEffect(() => {
+    if (!cloudReady || !user || !organizationId || !supabase) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.from('organization_members').select('role')
+        .eq('organization_id', organizationId).eq('user_id', user.id).maybeSingle();
+      if (!cancelled) setCompanyRole((data?.role as TeamRole | undefined) ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [cloudReady, user?.id, organizationId]);
 
   useEffect(() => {
     if (tab !== 'account' || !cloudReady || !user || !supabase) return;
@@ -80,15 +93,16 @@ export function CompanySettings() {
         </nav>
 
         {tab === 'company' && <section className="company-settings-grid settings-company-grid" aria-label="Company and branding">
+          {!canEditCompany && <p className="settings-company-role-note" role="status">Only owners and admins can change company branding and shared pricing. Contact an administrator to request an update.</p>}
           <article className="company-settings-card">
             <header><div><strong>Company identity</strong><small>Appears on customer-facing documents and shared quotes.</small></div><span className="settings-card-save" role="status">{error ? 'Save issue' : saving ? 'Saving…' : 'Auto-saved'}</span></header>
-            <div className="company-settings-fields">
+            <fieldset className="company-settings-fields team-company-fieldset" disabled={!canEditCompany}>
               <label className="wide"><span>Company name</span><input value={settings.organizationName} onChange={(event) => update({ organizationName: event.target.value })} autoComplete="organization" /></label>
               <label className="wide"><span>Business address</span><textarea rows={2} value={settings.address} onChange={(event) => update({ address: event.target.value })} autoComplete="street-address" /></label>
               <label><span>Phone</span><input type="tel" value={settings.phone} onChange={(event) => update({ phone: event.target.value })} autoComplete="tel" /></label>
               <label><span>Email</span><input type="email" value={settings.email} onChange={(event) => update({ email: event.target.value })} autoComplete="email" /></label>
               <label className="wide"><span>Website</span><input type="url" value={settings.website} onChange={(event) => update({ website: event.target.value })} placeholder="https://…" /></label>
-            </div>
+            </fieldset>
           </article>
           <article className="company-settings-card">
             <header><div><strong>Document branding</strong><small>Preview of the contact block customers will see.</small></div></header>
@@ -100,7 +114,7 @@ export function CompanySettings() {
               <label className="wide"><span>Logo URL</span><input type="url" value={settings.logoUrl} onChange={(event) => update({ logoUrl: event.target.value })} placeholder="https://…" /><small>Paste a hosted image URL. File upload is not available yet.</small></label>
               <label><span>Default document contact</span><input value={settings.quoteContactName} onChange={(event) => update({ quoteContactName: event.target.value })} /></label>
               <label><span>Contact phone</span><input type="tel" value={settings.quoteContactPhone} onChange={(event) => update({ quoteContactPhone: event.target.value })} /></label>
-            </div>
+            </fieldset>
           </article>
         </section>}
 
