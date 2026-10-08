@@ -872,6 +872,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
 
         {mobileMenu === 'tools' && <div ref={mobileMenuRef} className="quote-mobile-menu quote-mobile-tools-menu" role="dialog" aria-modal="true" aria-label="Quote tools">
           <div className="quote-mobile-menu-header"><strong>Quote tools</strong><button type="button" data-dialog-initial-focus onClick={() => setMobileMenu(null)} aria-label="Close quote tools">×</button></div>
+          <div className="quote-mobile-menu-scroll">
           <div className="quote-mobile-menu-section">
             <span className="quote-mobile-menu-heading">Editing</span>
             <div className="quote-mobile-tool-grid">
@@ -911,7 +912,10 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
               {canCreateChangeOrder && <button type="button" onClick={() => { createChangeOrder(quote.id); setMobileMenu(null); }}>Change Order</button>}
             </div>
           </div>
-          <button type="button" className="quote-mobile-menu-done" onClick={() => setMobileMenu(null)}>Done · Back to quote</button>
+          </div>
+          <footer className="quote-mobile-menu-footer">
+            <button type="button" className="quote-mobile-menu-done" onClick={() => setMobileMenu(null)}>Done · Back to quote</button>
+          </footer>
         </div>}
       </header>
 
