@@ -1045,3 +1045,122 @@
     z-index: 2200;
   }
 }
+
+/* Material names + purchase costs remain visible together on narrow screens. */
+.materials-mobile-brand,.materials-mobile-chevron{display:none}
+@media(max-width:700px){
+  .sales-app.view-catalog .materials-reference-card .rates-reference-table-wrap{
+    overflow-x:hidden;
+    width:100%;
+  }
+  .sales-app.view-catalog .materials-reference-table{
+    display:block;
+    width:100%;
+    min-width:0;
+    border-collapse:separate;
+  }
+  .sales-app.view-catalog .materials-reference-table thead{display:none}
+  .sales-app.view-catalog .materials-reference-table tbody{
+    display:grid;
+    width:100%;
+    gap:5px;
+    padding:5px;
+    box-sizing:border-box;
+  }
+  .sales-app.view-catalog .materials-reference-table tbody>tr:not(.materials-variant-expanded-row){
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 100px;
+    align-items:stretch;
+    min-width:0;
+    width:100%;
+    border:1px solid rgba(91,78,58,.18);
+    border-radius:5px;
+    background:#fffaf0;
+    overflow:hidden;
+  }
+  .sales-app.view-catalog .materials-reference-table tbody>tr:not(.materials-variant-expanded-row)>td{
+    display:none!important;
+    min-width:0;
+    width:auto;
+    border:0;
+    box-shadow:none;
+  }
+  .sales-app.view-catalog .materials-reference-table tbody>tr:not(.materials-variant-expanded-row)>td:nth-child(2),
+  .sales-app.view-catalog .materials-reference-table tbody>tr:not(.materials-variant-expanded-row)>td:nth-child(5){
+    display:flex!important;
+    flex-direction:column;
+    justify-content:center;
+    gap:3px;
+    padding:10px 9px;
+    background:transparent;
+  }
+  .sales-app.view-catalog .materials-reference-table tbody>tr:not(.materials-variant-expanded-row)>td:nth-child(5){
+    align-items:flex-end;
+    text-align:right;
+    border-left:1px solid rgba(91,78,58,.12);
+    background:rgba(242,235,220,.45);
+    font-variant-numeric:tabular-nums;
+  }
+  .sales-app.view-catalog .materials-reference-table tbody>tr:not(.materials-variant-expanded-row)>td:nth-child(5)>strong{
+    color:#4a443a;
+    font-size:13px;
+    white-space:nowrap;
+  }
+  .sales-app.view-catalog .materials-reference-table .materials-name-toggle{
+    display:flex;
+    width:100%;
+    min-width:0;
+    align-items:center;
+    justify-content:space-between;
+    gap:5px;
+    padding:0;
+    text-align:left;
+    white-space:normal;
+  }
+  .sales-app.view-catalog .materials-reference-table .materials-name-toggle strong{
+    min-width:0;
+    overflow-wrap:anywhere;
+    font-size:12px;
+    line-height:1.3;
+  }
+  .sales-app.view-catalog .materials-reference-table .materials-mobile-brand{
+    display:block;
+    color:#8b8172;
+    font-size:9px;
+    line-height:1.3;
+  }
+  .sales-app.view-catalog .materials-reference-table .materials-mobile-chevron{
+    display:block;
+    flex:0 0 auto;
+    color:#9b8967;
+    font-size:15px;
+  }
+  .sales-app.view-catalog .materials-reference-table .materials-desktop-subtitle{display:none}
+  .sales-app.view-catalog .materials-reference-table .materials-cell-note{
+    max-width:95px;
+    overflow-wrap:anywhere;
+    font-size:8px;
+    line-height:1.2;
+  }
+  .sales-app.view-catalog .materials-reference-table tbody>tr.is-expanded:not(.materials-variant-expanded-row){
+    border-color:#b49a61;
+    background:#fff6e5;
+    box-shadow:inset 3px 0 #b49a61;
+  }
+  .sales-app.view-catalog .materials-reference-table tbody>tr.materials-variant-expanded-row{
+    display:block;
+    width:100%;
+    min-width:0;
+    margin-top:-5px;
+    border:1px solid rgba(180,154,97,.3);
+    border-top:0;
+    border-radius:0 0 5px 5px;
+  }
+  .sales-app.view-catalog .materials-reference-table tbody>tr.materials-variant-expanded-row>td{
+    display:block!important;
+    width:100%;
+    min-width:0;
+    padding:6px;
+    box-sizing:border-box;
+  }
+}
