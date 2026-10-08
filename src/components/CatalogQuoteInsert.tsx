@@ -4,7 +4,7 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import { buildCatalogQuoteLinePatch, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
-import { catalogQuoteDestinationLabel, catalogQuoteDestinationReference } from '../services/catalogQuoteDestination';
+import { catalogQuoteDestinationLabel } from '../services/catalogQuoteDestination';
 import { resolveStockMaterialCostReference, defaultMaterialVariant, defaultMaterialPurchaseOption } from '../types/settings';
 import { defaultSinkVariant } from '../types/sink';
 import { RATE_BOOK_UNIT_LABELS, resolveRateBookValues } from '../types/rateBook';
@@ -34,7 +34,6 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const [quantityText, setQuantityText] = useState(() => source.kind === 'sink' ? '1' : source.kind === 'rate' && ['each','slab'].includes(source.item.unit) ? '1' : '');
   const [newTitle, setNewTitle] = useState('');
   const [error, setError] = useState('');
-  const [choosingQuote, setChoosingQuote] = useState(false);
 
   useEffect(() => { hydrate(); }, [hydrate]);
 
@@ -102,39 +101,13 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
           <div><span>Catalog → Quotes</span><strong>Review & add</strong><small>{sourceLabel} · {title}</small></div>
           <button type="button" data-dialog-initial-focus aria-label="Close add to quote" onClick={onClose}>×</button>
         </header>
-        {choosingQuote ? (
-          <section className="catalog-quote-choice-screen" aria-label="Choose destination quote">
-            <header><button type="button" onClick={() => setChoosingQuote(false)}>← Back</button><strong>Choose destination</strong></header>
-            <div className="catalog-quote-choice-list">
-              <button type="button" className="catalog-quote-choice-row" onClick={() => { setTargetId(TARGET_NEW); setChoosingQuote(false); setError(''); }}>
-                <strong>+ Create new quote</strong><small>Start a new draft</small>
-              </button>
-              {eligible.map((quote) => (
-                <button type="button" key={quote.id} className={`catalog-quote-choice-row ${destinationId === quote.id ? 'selected' : ''}`}
-                  aria-pressed={destinationId === quote.id}
-                  onClick={() => { setTargetId(quote.id); setChoosingQuote(false); setError(''); }}>
-                  <strong>{quote.title.trim() || 'Untitled quote'}</strong>
-                  <span>{quote.companyName?.trim() || 'No company linked'}</span>
-                  <small>{catalogQuoteDestinationReference(quote)}</small>
-                </button>
-              ))}
-            </div>
-          </section>
-        ) : <div className="catalog-quote-content">
-          <label className="catalog-quote-field catalog-quote-desktop-destination"><span>Destination quote</span>
+        <div className="catalog-quote-content">
+          <label className="catalog-quote-field"><span>Destination quote</span>
             <select value={destinationId} onChange={(event) => { setTargetId(event.target.value); setError(''); }}>
               <option value={TARGET_NEW}>+ Create new quote</option>
               {eligible.map((quote) => <option key={quote.id} value={quote.id}>{catalogQuoteDestinationLabel(quote)}</option>)}
             </select>
           </label>
-          <div className="catalog-quote-mobile-destination">
-            <span>Destination quote</span>
-            <button type="button" className="catalog-quote-selected-quote" onClick={() => setChoosingQuote(true)} aria-haspopup="true">
-              <strong>{destination?.title.trim() || (destinationId === TARGET_NEW ? '+ Create new quote' : 'Untitled quote')}</strong>
-              <small>{destination ? [destination.companyName?.trim(), catalogQuoteDestinationReference(destination)].filter(Boolean).join(' · ') : 'Choose or create a quote'}</small>
-              <b aria-hidden="true">›</b>
-            </button>
-          </div>
           {destinationId === TARGET_NEW && <label className="catalog-quote-field"><span>New quote title</span><input type="text" value={newTitle} onChange={(event) => setNewTitle(event.target.value)} placeholder={`Quote · ${title}`} /></label>}
           {source.kind === 'material' && <>
             <label className="catalog-quote-field"><span>Slab variant</span><select value={materialVariant?.id ?? ''} onChange={(event) => { setVariantId(event.target.value); setPurchaseOptionId(''); }}>
@@ -165,11 +138,11 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
                 : 'The current price is frozen in the quote. You can adjust pricing or quantity in Quotes.'}</small>
           </div>
           {error && <p className="catalog-quote-error" role="alert">{error}</p>}
-        </div>}
-        {!choosingQuote && <footer className="catalog-quote-footer">
+        </div>
+        <footer className="catalog-quote-footer">
           <button type="button" onClick={onClose}>Cancel</button>
           <button type="button" className="primary" disabled={!validQuantity || (source.kind === 'sink' && !sinkVariant)} onClick={insert}>Add & open quote →</button>
-        </footer>}
+        </footer>
       </div>
     </div>
   );
