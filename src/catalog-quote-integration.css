@@ -152,3 +152,10 @@
   .catalog-quote-footer{padding-inline:13px}
   .catalog-quote-footer button.primary{flex:1 1 auto}
 }
+
+/* Make the newly imported quote line easy to find after switching workspaces. */
+.sales-app.view-quotes .quote-line-editor.is-catalog-inserted {
+  border-color:#b4955e!important;
+  box-shadow:inset 3px 0 #b4955e,0 0 0 2px rgba(180,149,94,.19);
+  background:#fff8e8;
+}
