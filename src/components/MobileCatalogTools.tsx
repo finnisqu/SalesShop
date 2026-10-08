@@ -19,6 +19,8 @@ export function MobileCatalogToolsSheet({
 }: MobileCatalogToolsSheetProps) {
   const sheetRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const closeHandlerRef = useRef(onClose);
+  closeHandlerRef.current = onClose;
 
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -26,7 +28,7 @@ export function MobileCatalogToolsSheet({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        closeHandlerRef.current();
       }
       if (event.key !== 'Tab' || !sheetRef.current) return;
       const focusable = Array.from(sheetRef.current.querySelectorAll<HTMLElement>(
@@ -48,7 +50,7 @@ export function MobileCatalogToolsSheet({
       document.removeEventListener('keydown', onKeyDown);
       previous?.focus({ preventScroll: true });
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="mobile-catalog-tools-backdrop" onPointerDown={(event) => {
