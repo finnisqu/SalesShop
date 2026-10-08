@@ -306,7 +306,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
                     setSelectedId(model.id);
                     setExpandedMobileSinkId(expanded ? null : model.id);
                   }}
-                  details={renderSinkDetail(model)}
+                  details={() => renderSinkDetail(model)}
                 />
               ) : (
                 <button type="button" key={model.id} className={selected?.id === model.id ? 'active' : ''} onClick={() => setSelectedId(model.id)}>
