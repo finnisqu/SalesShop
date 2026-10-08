@@ -68,6 +68,32 @@ export function MobileCatalogToolsSheet({
   );
 }
 
+export function MobileCatalogFilterSheet({
+  section,
+  onClose,
+  children,
+}: {
+  section: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <MobileCatalogToolsSheet
+      title="Filter results"
+      section={section}
+      description="Refine the list, then close this sheet whenever you're ready."
+      onClose={onClose}
+      footer={
+        <button type="button" className="mobile-catalog-filter-done" onClick={onClose}>
+          Done · View results
+        </button>
+      }
+    >
+      <section className="mobile-catalog-filter-fields">{children}</section>
+    </MobileCatalogToolsSheet>
+  );
+}
+
 export type MobileCatalogFilterChip = {
   key: string;
   label: string;
