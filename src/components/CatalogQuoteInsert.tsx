@@ -4,7 +4,7 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import { buildCatalogQuoteLinePatch, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
-import { catalogQuoteDestinationLabel } from '../services/catalogQuoteDestination';
+import { catalogQuoteDestinationLabel, catalogQuoteDestinationReference } from '../services/catalogQuoteDestination';
 import { catalogQuoteDestinationLabel } from '../services/catalogQuoteDestination';
 import { resolveStockMaterialCostReference, defaultMaterialVariant, defaultMaterialPurchaseOption } from '../types/settings';
 import { defaultSinkVariant } from '../types/sink';
@@ -116,7 +116,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
                   onClick={() => { setTargetId(quote.id); setChoosingQuote(false); setError(''); }}>
                   <strong>{quote.title.trim() || 'Untitled quote'}</strong>
                   <span>{quote.companyName?.trim() || 'No company linked'}</span>
-                  <small>{catalogQuoteDestinationLabel(quote).split(' · ').slice(quote.companyName?.trim() ? 2 : 1).join(' · ') || 'Draft'}</small>
+                  <small>{catalogQuoteDestinationReference(quote)}</small>
                 </button>
               ))}
             </div>
@@ -132,7 +132,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
             <span>Destination quote</span>
             <button type="button" className="catalog-quote-selected-quote" onClick={() => setChoosingQuote(true)} aria-haspopup="true">
               <strong>{destination?.title.trim() || (destinationId === TARGET_NEW ? '+ Create new quote' : 'Untitled quote')}</strong>
-              <small>{destination ? [destination.companyName?.trim(), catalogQuoteDestinationLabel(destination).split(' · ').slice(destination.companyName?.trim() ? 2 : 1).join(' · ')].filter(Boolean).join(' · ') : 'Choose or create a quote'}</small>
+              <small>{destination ? [destination.companyName?.trim(), catalogQuoteDestinationReference(destination)].filter(Boolean).join(' · ') : 'Choose or create a quote'}</small>
               <b aria-hidden="true">›</b>
             </button>
           </div>
