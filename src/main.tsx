@@ -40,6 +40,7 @@ import './mobile-workspaces-batch3.css';
 import './mobile-qc-batch4.css';
 import './mobile-materials-sort.css';
 import './settings-workspace.css';
+import './mobile-qc-batch5.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
