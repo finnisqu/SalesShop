@@ -1037,3 +1037,11 @@
     border-radius: 7px;
   }
 }
+
+
+@media (max-width: 700px) {
+  /* Supplier Import is launched from the tools sheet, so its full-screen workflow must sit above it. */
+  .sales-app.view-catalog .supplier-import-overlay {
+    z-index: 2200;
+  }
+}
