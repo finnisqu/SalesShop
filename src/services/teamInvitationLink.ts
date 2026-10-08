@@ -56,7 +56,9 @@ export function clearPendingTeamInvite(): void {
 export function teamInviteUrl(token: string): string {
   if (!TOKEN_PATTERN.test(token)) throw new Error('Invalid invitation token');
   if (typeof window === 'undefined') throw new Error('Invitation links require a browser');
-  const url = new URL(window.location.href);
+  // Keep beta invites on the one canonical current-branch deployment even
+  // when an owner creates a link from a Netlify preview or another tab.
+  const url = new URL('https://finnisqu.github.io/SalesShop/');
   url.hash = `invite=${token}`;
   return url.toString();
 }
