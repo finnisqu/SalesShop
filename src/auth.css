@@ -117,3 +117,27 @@
 @media (max-width: 580px) {
   .backend-status { padding-inline: 5px; font-size: 8px; }
 }
+
+/* Invitation onboarding: shared across desktop and compact mobile viewports. */
+.auth-invite-card { width: min(100%, 450px); }
+.auth-invite-summary {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 20px;
+  padding: 15px 16px;
+  border: 1px solid #dcd6c4;
+  border-left: 3px solid #6c765d;
+  border-radius: 3px;
+  background: rgba(255,255,255,.46);
+}
+.auth-invite-summary strong { font: 19px/1.2 Georgia, serif; color: #30362e; }
+.auth-invite-summary span { color: #4d5646; font-weight: 700; font-size: 11px; }
+.auth-invite-summary small,
+.auth-switch-hint { font-size: 11px; line-height: 1.55; color: #817d72; }
+.auth-switch-hint { display: block; text-align: center; margin-top: 4px; }
+.auth-full-width { width: 100%; }
+@media (max-width: 460px) {
+  .auth-shell { padding: 18px; }
+  .auth-card { padding: 24px 22px; }
+  .auth-invite-summary { padding: 13px; }
+}
