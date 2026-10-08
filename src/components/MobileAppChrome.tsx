@@ -12,7 +12,7 @@ const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> =
   { view: 'board', label: 'Board', short: 'Board' },
   { view: 'quotes', label: 'Quotes', short: 'Quotes' },
   { view: 'catalog', label: 'Catalog', short: 'Catalog' },
-  { view: 'dashboard', label: 'Dashboard', short: 'Dashboard' },
+  { view: 'dashboard', label: 'Connections', short: 'Connections' },
   { view: 'settings', label: 'Settings', short: 'Settings' },
 ];
 
