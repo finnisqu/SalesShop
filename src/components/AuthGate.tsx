@@ -1,5 +1,6 @@
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
+import { pendingTeamInviteToken } from '../services/teamInvitationLink';
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const initialize = useAuthStore((state) => state.initialize);
@@ -7,12 +8,17 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const busy = useAuthStore((state) => state.busy);
   const mode = useAuthStore((state) => state.mode);
   const user = useAuthStore((state) => state.user);
+  const organizationId = useAuthStore((state) => state.organizationId);
+  const retryWorkspace = useAuthStore((state) => state.retryWorkspace);
+  const discardInvitation = useAuthStore((state) => state.discardInvitation);
+  const signOut = useAuthStore((state) => state.signOut);
   const error = useAuthStore((state) => state.error);
   const notice = useAuthStore((state) => state.notice);
   const signIn = useAuthStore((state) => state.signIn);
   const signUp = useAuthStore((state) => state.signUp);
   const clearMessage = useAuthStore((state) => state.clearMessage);
   const [creating, setCreating] = useState(false);
+  const [invited] = useState(() => Boolean(pendingTeamInviteToken()));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shopName, setShopName] = useState('');
@@ -21,12 +27,21 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (mode === 'local') return <>{children}</>;
   if (!ready) return <div className="auth-loading">Connecting SalesShop…</div>;
-  if (user) return <>{children}</>;
+  if (user && organizationId) return <>{children}</>;
+  if (user) return <main className="auth-shell"><section className="auth-card">
+    <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
+    <div className="auth-copy"><h1>Workspace access needs attention</h1><p>{error || 'We could not resolve your company workspace.'}</p></div>
+    <div className="auth-form">
+      <button type="button" className="auth-primary" onClick={() => void retryWorkspace()} disabled={busy}>{busy ? 'Checking…' : 'Retry workspace access'}</button>
+      {pendingTeamInviteToken() && <button type="button" className="auth-switch" disabled={busy} onClick={() => void discardInvitation()}>Cancel invitation and use my own workspace</button>}
+      <button type="button" className="auth-switch" onClick={() => void signOut()}>Sign out</button>
+    </div>
+  </section></main>;
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (creating) {
-      const ok = await signUp(email, password, shopName);
+      const ok = await signUp(email, password, invited ? '' : shopName);
       if (ok && !useAuthStore.getState().user) setCreating(false);
     } else {
       await signIn(email, password);
@@ -39,12 +54,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
         <div className="auth-copy">
           <span className="auth-eyebrow">Stone sales workspace</span>
-          <h1>{creating ? 'Create your shop' : 'Welcome back'}</h1>
-          <p>{creating ? 'Start with one account. Your shop workspace is created automatically.' : 'Sign in to your SalesShop workspace.'}</p>
+          <h1>{invited ? creating ? 'Join your team' : 'Sign in to join your team' : creating ? 'Create your shop' : 'Welcome back'}</h1>
+          <p>{invited ? 'Use the email address your invitation was sent to. New here? Create an account, confirm your email, then return to this invitation link.' : creating ? 'Start with one account. Your shop workspace is created automatically.' : 'Sign in to your SalesShop workspace.'}</p>
         </div>
 
         <form onSubmit={submit} className="auth-form">
-          {creating && (
+          {creating && !invited && (
             <label><span>Shop name</span><input value={shopName} onChange={(event) => setShopName(event.target.value)} placeholder="World Stone" autoComplete="organization" /></label>
           )}
           <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" /></label>
@@ -55,7 +70,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         </form>
 
         <button type="button" className="auth-switch" onClick={() => { clearMessage(); setCreating((value) => !value); }}>
-          {creating ? 'Already have a workspace? Sign in' : 'New shop? Create an account'}
+          {creating ? 'Already have an account? Sign in' : invited ? 'Need an account? Sign up to join' : 'New shop? Create an account'}
         </button>
         <small className="auth-footnote">Notebook content is private to your user. Shared sales records belong to your shop workspace.</small>
       </section>
