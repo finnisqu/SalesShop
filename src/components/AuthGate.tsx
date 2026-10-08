@@ -9,6 +9,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const mode = useAuthStore((state) => state.mode);
   const user = useAuthStore((state) => state.user);
   const organizationId = useAuthStore((state) => state.organizationId);
+  const passwordRecovery = useAuthStore((state) => state.passwordRecovery);
+  const sendPasswordReset = useAuthStore((state) => state.sendPasswordReset);
+  const updatePassword = useAuthStore((state) => state.updatePassword);
   const retryWorkspace = useAuthStore((state) => state.retryWorkspace);
   const discardInvitation = useAuthStore((state) => state.discardInvitation);
   const signOut = useAuthStore((state) => state.signOut);
@@ -24,13 +27,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shopName, setShopName] = useState('');
+  const [recoverMode, setRecoverMode] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => { void initialize(); }, [initialize]);
 
   if (mode === 'local') return <>{children}</>;
   if (!ready) return <div className="auth-loading">Connecting SalesShop…</div>;
-  if (user && organizationId) return <>{children}</>;
-  if (user) return <main className="auth-shell"><section className="auth-card">
+  if (user && organizationId && !passwordRecovery) return <>{children}</>;
+  if (user && !passwordRecovery) return <main className="auth-shell"><section className="auth-card">
     <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
     <div className="auth-copy"><h1>Workspace access needs attention</h1><p>{error || 'We could not resolve your company workspace.'}</p></div>
     <div className="auth-form">
@@ -42,6 +48,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    setFormError('');
+    if (passwordRecovery) {
+      if (password !== confirmPassword) { setFormError('Passwords do not match.'); return; }
+      await updatePassword(password);
+      return;
+    }
+    if (recoverMode) {
+      await sendPasswordReset(email);
+      return;
+    }
     if (creating) {
       const ok = await signUp(email, password, invited ? '' : shopName);
       if (ok && !useAuthStore.getState().user) setCreating(false);
@@ -56,24 +72,31 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
         <div className="auth-copy">
           <span className="auth-eyebrow">Stone sales workspace</span>
-          <h1>{invited ? creating ? 'Create your account' : 'Sign in to join your team' : creating ? 'Create your shop' : 'Welcome back'}</h1>
-          <p>{invited ? creating ? 'You’ve been invited to join an existing SalesShop team. Use your invited email address to create an account, then confirm your email to finish joining.' : 'Already have an account? Sign in with the invited email address to join your team.' : creating ? 'Start with one account. Your shop workspace is created automatically.' : 'Sign in to your SalesShop workspace.'}</p>
+          <h1>{passwordRecovery ? 'Choose a new password' : recoverMode ? 'Reset your password' : invited ? creating ? 'Create your account' : 'Sign in to join your team' : creating ? 'Create your shop' : 'Welcome back'}</h1>
+          <p>{passwordRecovery ? 'Enter a new password to finish recovering your account.' : recoverMode ? 'We’ll send a secure recovery link to your email address.' : invited ? creating ? 'You’ve been invited to join an existing SalesShop team. Use your invited email address to create an account, then confirm your email to finish joining.' : 'Already have an account? Sign in with the invited email address to join your team.' : creating ? 'Start with one account. Your shop workspace is created automatically.' : 'Sign in to your SalesShop workspace.'}</p>
         </div>
 
         <form onSubmit={submit} className="auth-form">
-          {creating && !invited && (
+          {creating && !invited && !recoverMode && !passwordRecovery && (
             <label><span>Shop name</span><input value={shopName} onChange={(event) => setShopName(event.target.value)} placeholder="World Stone" autoComplete="organization" /></label>
           )}
-          <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" /></label>
-          <label><span>Password</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={6} autoComplete={creating ? 'new-password' : 'current-password'} /></label>
+          {!passwordRecovery && <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" /></label>}
+          {!recoverMode && <label><span>{passwordRecovery ? 'New password' : 'Password'}</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={passwordRecovery ? 8 : 6} autoComplete={passwordRecovery || creating ? 'new-password' : 'current-password'} /></label>}
+          {passwordRecovery && <label><span>Confirm new password</span><input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} autoComplete="new-password" /></label>}
+          {formError && <div className="auth-message error" role="alert">{formError}</div>}
           {error && <div className="auth-message error">{error}</div>}
           {notice && <div className="auth-message notice">{notice}</div>}
-          <button type="submit" className="auth-primary" disabled={busy}>{busy ? 'Connecting…' : creating ? invited ? 'Create account' : 'Create SalesShop' : 'Sign in'}</button>
+          <button type="submit" className="auth-primary" disabled={busy}>{busy ? 'Working…' : passwordRecovery ? 'Save new password' : recoverMode ? 'Send reset link' : creating ? invited ? 'Create account' : 'Create SalesShop' : 'Sign in'}</button>
         </form>
 
-        <button type="button" className="auth-switch" onClick={() => { clearMessage(); setCreating((value) => !value); }}>
-          {creating ? 'Already have an account? Sign in' : invited ? 'Need an account? Sign up to join' : 'New shop? Create an account'}
-        </button>
+        {!passwordRecovery && <>
+          <button type="button" className="auth-switch" onClick={() => { clearMessage(); setFormError(''); setRecoverMode((value) => !value); }}>
+            {recoverMode ? 'Back to sign in' : 'Forgot password?'}
+          </button>
+          {!recoverMode && <button type="button" className="auth-switch" onClick={() => { clearMessage(); setFormError(''); setCreating((value) => !value); }}>
+            {creating ? 'Already have an account? Sign in' : invited ? 'Need an account? Sign up to join' : 'New shop? Create an account'}
+          </button>}
+        </> }
         <small className="auth-footnote">Notebook content is private to your user. Shared sales records belong to your shop workspace.</small>
       </section>
     </main>
