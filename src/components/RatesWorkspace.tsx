@@ -60,6 +60,7 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const hydrateGuide = useMaterialLevelGuideStore((state) => state.hydrate);
   const editorHostRef = useRef<HTMLDivElement | null>(null);
   const [editing, setEditing] = useState(false);
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [category, setCategory] = useState<ReferenceCategory>('all');
   const [query, setQuery] = useState('');
   const [rateSort, setRateSort] = useState<RateSort>('category');
@@ -182,6 +183,7 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
               placeholder={showingMaterialPricing ? 'Search material levels…' : 'Search rates, codes, categories…'}
               aria-label={showingMaterialPricing ? 'Search material pricing levels' : 'Search pricing reference'}
             />
+            <button type="button" className="rates-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open rate catalog tools">••• <span>Tools</span></button>
             {!showingMaterialPricing && (
               <>
                 <details className="rates-filter-menu">
@@ -209,6 +211,18 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
           </div>
         )}
       </section>
+
+      {mobileToolsOpen && <div className="rates-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
+        <aside className="rates-mobile-tools-sheet" role="dialog" aria-modal="true" aria-label="Rates tools" onPointerDown={(event) => event.stopPropagation()}>
+          <header><div><span>Catalog · Rates</span><strong>Rate tools</strong><small>Pricing maintenance stays separate from everyday lookup.</small></div><button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close rate tools">×</button></header>
+          <section><span className="rates-mobile-tools-label">Mode</span><div className="rates-mobile-mode-row">
+            <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up current rates</small></button>
+            <button type="button" className={editing ? 'active' : ''} onClick={() => { syncEditorCategory(category); setEditing(true); setMobileToolsOpen(false); }}><strong>Edit pricing</strong><small>Maintain rates and policy</small></button>
+          </div></section>
+          {editing && !showingMaterialPricing && <section><span className="rates-mobile-tools-label">Maintenance</span><button type="button" className="rates-mobile-add" onClick={() => { addCurrentRate(); setMobileToolsOpen(false); }}>+ Add rate row</button></section>}
+          <section><span className="rates-mobile-tools-label">Current category</span><strong>{CATEGORY_TABS.find(([key]) => key === category)?.[1]}</strong><small>Select a category in the reference toolbar to change which rates are shown.</small></section>
+        </aside>
+      </div>}
 
       {editing && !showingMaterialPricing && (
         <section className="rate-book-stats rates-workspace-stats" aria-label="Rate Book summary">
