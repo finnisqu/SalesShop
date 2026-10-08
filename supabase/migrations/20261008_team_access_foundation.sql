@@ -138,6 +138,15 @@ begin
       or exists (select 1 from public.signatures x where x.organization_id = old_org)
       or exists (select 1 from public.suppliers x where x.organization_id = old_org)
       or exists (select 1 from public.quote_shares x where x.organization_id = old_org)
+      or exists (select 1 from public.quote_lines x where x.organization_id = old_org)
+      or exists (select 1 from public.quote_sections x where x.organization_id = old_org)
+      or exists (select 1 from public.quote_revisions x where x.organization_id = old_org)
+      or exists (select 1 from public.supplier_activities x where x.organization_id = old_org)
+      or exists (select 1 from public.supplier_commitments x where x.organization_id = old_org)
+      or exists (select 1 from public.supplier_contacts x where x.organization_id = old_org)
+      or exists (select 1 from public.supplier_import_publications x where x.organization_id = old_org)
+      or exists (select 1 from public.supplier_locations x where x.organization_id = old_org)
+      or exists (select 1 from public.supplier_rules x where x.organization_id = old_org)
     then raise exception 'This account already belongs to another active workspace'; end if;
     delete from public.organization_members where organization_id = old_org and user_id = actor;
     delete from public.organizations where id = old_org and created_by = actor;
