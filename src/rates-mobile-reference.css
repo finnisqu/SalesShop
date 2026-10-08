@@ -44,3 +44,131 @@
 .sales-app.view-catalog .rates-workspace.is-editing>.rates-workspace-header .rates-mode-actions button{min-height:40px;font-size:11px}
 .sales-app.view-catalog .rates-workspace.is-editing .rates-shared-controls{flex-direction:column}
 }
+/* Rates mobile reference: same native cards as Materials, not an overflowing table. */
+.rates-mobile-card-list{display:none}
+@media(max-width:700px){
+  .sales-app.view-catalog .rates-workspace:not(.materials-workspace).is-reference .rates-reference-host .rates-reference-table-wrap{display:none}
+  .sales-app.view-catalog .rates-workspace:not(.materials-workspace) .rates-mobile-card-list{
+    display:grid;
+    gap:5px;
+    min-width:0;
+    width:100%;
+    padding:6px;
+    box-sizing:border-box;
+  }
+  .sales-app.view-catalog .rates-workspace:not(.materials-workspace) .rates-mobile-price-card{
+    min-width:0;
+    overflow:hidden;
+    border:1px solid rgba(91,78,58,.18);
+    border-radius:6px;
+    background:#fffaf0;
+  }
+  .sales-app.view-catalog .rates-workspace:not(.materials-workspace) .rates-mobile-price-card.is-expanded{
+    border-color:#ad9257;
+    background:#fff7e7;
+  }
+  .sales-app.view-catalog .rates-workspace:not(.materials-workspace) .rates-mobile-price-trigger{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(80px,max-content) 14px;
+    width:100%;
+    min-width:0;
+    min-height:59px;
+    align-items:center;
+    gap:6px;
+    box-sizing:border-box;
+    border:0;
+    padding:9px 10px;
+    background:transparent;
+    color:#4f473e;
+    text-align:left;
+  }
+  .sales-app.view-catalog .rates-mobile-price-name,
+  .sales-app.view-catalog .rates-mobile-price-amount{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    gap:3px;
+  }
+  .sales-app.view-catalog .rates-mobile-price-name strong{
+    font-size:12px;
+    line-height:1.3;
+    color:#4c453b;
+    overflow-wrap:anywhere;
+  }
+  .sales-app.view-catalog .rates-mobile-price-name small{
+    color:#908577;
+    font-size:9px;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+  .sales-app.view-catalog .rates-mobile-price-amount{
+    align-items:flex-end;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .sales-app.view-catalog .rates-mobile-price-amount strong{
+    color:#3f3b34;
+    font:700 12px/1.25 Georgia,serif;
+    white-space:nowrap;
+  }
+  .sales-app.view-catalog .rates-mobile-price-amount small{
+    color:#897e70;
+    font-size:8px;
+    line-height:1.25;
+  }
+  .sales-app.view-catalog .rates-mobile-price-chevron{
+    color:#97896e;
+    text-align:center;
+    font-size:15px;
+    font-weight:800;
+  }
+  .sales-app.view-catalog .rates-mobile-price-details{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:1px;
+    border-top:1px solid rgba(91,78,58,.14);
+    background:rgba(101,86,62,.09);
+  }
+  .sales-app.view-catalog .rates-mobile-price-details>div{
+    display:grid;
+    align-content:center;
+    gap:4px;
+    min-width:0;
+    padding:9px;
+    background:#fffaf0;
+  }
+  .sales-app.view-catalog .rates-mobile-price-details span{
+    color:#8b8172;
+    font-size:8px;
+    font-weight:800;
+    text-transform:uppercase;
+  }
+  .sales-app.view-catalog .rates-mobile-price-details strong{
+    color:#4c453b;
+    font-size:10px;
+    overflow-wrap:anywhere;
+  }
+  .sales-app.view-catalog .rates-mobile-price-details p{
+    grid-column:1/-1;
+    margin:0;
+    padding:10px;
+    background:#fffaf0;
+    font-size:10px;
+    line-height:1.4;
+  }
+  .sales-app.view-catalog .rates-mobile-sort-select{
+    width:100%;
+    height:42px;
+    min-width:0;
+    padding:0 8px;
+    border:1px solid #c4b8a4;
+    border-radius:6px;
+    background:#fffaf0;
+    color:#4d473e;
+    font-size:16px;
+  }
+  @media(max-width:350px){
+    .sales-app.view-catalog .rates-workspace:not(.materials-workspace) .rates-mobile-price-trigger{gap:4px;padding-inline:7px}
+    .sales-app.view-catalog .rates-mobile-price-amount strong{font-size:11px}
+  }
+}
