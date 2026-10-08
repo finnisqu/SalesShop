@@ -478,3 +478,51 @@ button.danger, .danger-link { color: #8a4c42 !important; }
   background: rgba(91, 81, 67, .48);
   background-clip: padding-box;
 }
+
+/* Mobile Suppliers: single flowing reference document, with maintenance in a drawer. */
+.supplier-mobile-tools-trigger,.supplier-mobile-tools-backdrop{display:none}
+.supplier-mobile-search-row{display:flex;gap:6px;min-width:0}
+.supplier-mobile-search-row>input{min-width:0;flex:1 1 auto;width:100%;height:34px;border:1px solid rgba(61,54,45,.14);border-radius:4px;background:#fffdf7;color:#4d473e;padding:0 9px;font-size:9px}
+@media(max-width:700px){
+.sales-app.view-catalog .supplier-workbench{display:flex;flex-direction:column;width:100%;height:auto;min-height:100%;margin:0;padding:5px 5px calc(24px + env(safe-area-inset-bottom));border:0;overflow:visible;background:transparent;box-shadow:none}
+.sales-app.view-catalog .supplier-navigator{height:auto;min-height:0;flex:0 0 auto;overflow:visible;border:1px solid #c9c0b1;border-radius:6px;background:#ebe5d8}
+.sales-app.view-catalog .supplier-navigator>header{display:none}
+.sales-app.view-catalog .supplier-nav-search{gap:5px;padding:5px}
+.sales-app.view-catalog .supplier-mobile-search-row>input{height:42px;font-size:16px;padding:0 11px;border-radius:6px}
+.sales-app.view-catalog .supplier-mobile-tools-trigger{display:block;flex:0 0 70px;min-height:42px;border:1px solid #bcb2a1;border-radius:6px;background:#f9f3e7;color:#5d5549;font-size:11px;font-weight:800}
+.sales-app.view-catalog .supplier-filter-chips{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;scrollbar-width:none}
+.sales-app.view-catalog .supplier-filter-chips button{flex:0 0 auto;min-height:32px;padding:0 11px;font-size:10px}
+.sales-app.view-catalog .supplier-nav-list{display:flex;gap:5px;overflow-x:auto;overflow-y:hidden;max-height:none;min-height:0;padding:6px;scrollbar-width:thin;overscroll-behavior-x:contain}
+.sales-app.view-catalog .supplier-nav-item{flex:0 0 180px;min-width:180px;min-height:63px;display:grid;grid-template-columns:8px minmax(0,1fr);gap:8px;padding:9px;border:1px solid rgba(91,78,58,.15);border-radius:6px;background:#f7f2e8}
+.sales-app.view-catalog .supplier-nav-item.active{background:#fff9e9}
+.sales-app.view-catalog .supplier-nav-copy strong{font-size:12px}
+.sales-app.view-catalog .supplier-nav-copy small{font-size:9px}
+.sales-app.view-catalog .supplier-nav-add{display:none}
+.sales-app.view-catalog .supplier-record{height:auto;min-height:240px;overflow:visible;margin-top:6px;border:1px solid #c9c0b1;border-radius:6px;background:#f8f5ec}
+.sales-app.view-catalog .supplier-record-header{position:relative;top:auto;min-height:0;display:flex;flex-wrap:wrap;gap:8px;padding:12px}
+.sales-app.view-catalog .supplier-record-title-line h2{font-size:20px}
+.sales-app.view-catalog .supplier-record-heading p,.sales-app.view-catalog .supplier-contact-strip a{font-size:11px;line-height:1.4}
+.sales-app.view-catalog .supplier-record-actions{flex-direction:row;flex-wrap:wrap}
+.sales-app.view-catalog .supplier-record-actions button,.sales-app.view-catalog .supplier-info-card header button,.sales-app.view-catalog .supplier-rules-card header button{min-height:36px;font-size:10px}
+.sales-app.view-catalog .supplier-health-strip{grid-template-columns:repeat(2,minmax(0,1fr));margin:7px}
+.sales-app.view-catalog .supplier-health-strip span{font-size:9px}
+.sales-app.view-catalog .supplier-health-strip strong{font-size:11px}
+.sales-app.view-catalog .supplier-info-grid,.sales-app.view-catalog .supplier-relationship-grid,.sales-app.view-catalog .supplier-rule-list{grid-template-columns:1fr}
+.sales-app.view-catalog .supplier-card-list article{grid-template-columns:minmax(0,1fr) auto}
+.sales-app.view-catalog .supplier-card-list strong,.sales-app.view-catalog .supplier-rule-list article p{font-size:11px}
+.sales-app.view-catalog .supplier-card-list small,.sales-app.view-catalog .supplier-pricing-history article small{font-size:10px}
+.sales-app.view-catalog .supplier-add-form{z-index:2200}
+.sales-app.view-catalog .supplier-mobile-tools-backdrop{display:block;position:fixed;inset:0;z-index:1900;background:rgba(43,36,28,.38)}
+.sales-app.view-catalog .supplier-mobile-tools-sheet{position:absolute;inset:0 0 0 auto;width:min(92vw,390px);height:100%;display:flex;flex-direction:column;overflow-y:auto;background:#eee8dc;box-shadow:-10px 0 30px rgba(40,30,20,.22)}
+.sales-app.view-catalog .supplier-mobile-tools-sheet>header{display:flex;justify-content:space-between;gap:12px;padding:17px 14px 12px;border-bottom:1px solid #d5cab9}
+.sales-app.view-catalog .supplier-mobile-tools-sheet>header div{display:grid;gap:4px}
+.sales-app.view-catalog .supplier-mobile-tools-sheet>header span{font-size:10px;color:#837868;font-weight:850;text-transform:uppercase}
+.sales-app.view-catalog .supplier-mobile-tools-sheet>header strong{font:700 21px Georgia,serif}
+.sales-app.view-catalog .supplier-mobile-tools-sheet>header small,.sales-app.view-catalog .supplier-mobile-tools-sheet>section small{font-size:11px;color:#847b6f;line-height:1.4}
+.sales-app.view-catalog .supplier-mobile-tools-sheet>header button{width:42px;height:42px;border:0;border-radius:6px;background:#faf5ea;font-size:23px}
+.sales-app.view-catalog .supplier-mobile-tools-sheet>section{display:grid;gap:10px;padding:15px 13px;border-bottom:1px solid #d6cbbb}
+.sales-app.view-catalog .supplier-mobile-tools-sheet>section>strong{font-size:12px}
+.sales-app.view-catalog .supplier-mobile-add-row{display:flex;gap:5px}
+.sales-app.view-catalog .supplier-mobile-add-row input{min-width:0;flex:1;height:43px;font-size:16px;padding:0 10px;border:1px solid #bcb2a1;border-radius:6px}
+.sales-app.view-catalog .supplier-mobile-add-row button{min-width:65px;border:1px solid #9e8a65;border-radius:6px;background:#fff7e5;font-weight:800}
+}
