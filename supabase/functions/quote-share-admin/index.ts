@@ -82,6 +82,10 @@ Deno.serve(async (req) => {
       .eq('user_id', userData.user.id)
       .maybeSingle();
     if (!membership) return json({ error: 'Workspace access denied.' }, 403);
+    // This handler uses a privileged client and bypasses RLS; enforce viewer read-only here too.
+    if (membership.role === 'viewer' && action !== 'get') {
+      return json({ error: 'Viewer access is read-only. Ask an administrator for editor access.' }, 403);
+    }
 
     if (action === 'get') {
       let shareQuery = admin
