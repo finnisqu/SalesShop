@@ -261,18 +261,31 @@
     flex-direction:column;
     width:100%;
     max-height:min(80dvh,700px);
-    overflow-y:auto;
-    overscroll-behavior:contain;
-    padding-bottom:env(safe-area-inset-bottom);
+    min-height:0;
+    overflow:hidden;
+    box-sizing:border-box;
     border:1px solid rgba(91,78,58,.18);
     border-bottom:0;
     border-radius:14px 14px 0 0;
     background:#f7f1e6;
     box-shadow:0 -14px 38px rgba(45,36,25,.22);
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-content{
+    flex:1 1 auto;
+    min-height:0;
+    min-width:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
     -webkit-overflow-scrolling:touch;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom));
+  }
+  .sales-app.view-catalog .mobile-catalog-tools-sheet.has-footer>.mobile-catalog-tools-content{
+    padding-bottom:8px;
   }
   .sales-app.view-catalog .mobile-catalog-tools-header{
     display:flex;
+    flex:0 0 auto;
     justify-content:space-between;
     align-items:flex-start;
     gap:12px;
@@ -309,20 +322,24 @@
     color:#62594d;
     font-size:23px;
   }
-  .sales-app.view-catalog .mobile-catalog-tools-sheet>section{
+  .sales-app.view-catalog .mobile-catalog-tools-content>section{
     display:grid;
     gap:10px;
     padding:15px 13px;
     border-bottom:1px solid #d6cbbb;
   }
-  .sales-app.view-catalog .mobile-catalog-tools-sheet>section>small{
+  .sales-app.view-catalog .mobile-catalog-tools-content>section>small{
     font-size:11px;
     line-height:1.4;
     color:#847b6f;
   }
   .sales-app.view-catalog .mobile-catalog-tools-footer{
-    margin-top:auto;
-    padding:13px;
+    position:relative;
+    flex:0 0 auto;
+    margin:0;
+    padding:10px 13px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid #d5cab9;
+    background:#f7f1e6;
     font-size:11px;
     color:#766e62;
   }
@@ -485,14 +502,6 @@
     font-weight:800;
   }
   .sales-app.view-catalog .mobile-catalog-filter-fields > button:disabled{opacity:.45}
-  .sales-app.view-catalog .mobile-catalog-tools-footer:has(.mobile-catalog-filter-done){
-    position:sticky;
-    bottom:0;
-    z-index:1;
-    background:#f7f1e6;
-    border-top:1px solid #d5cab9;
-    padding:10px 13px calc(10px + env(safe-area-inset-bottom));
-  }
   .sales-app.view-catalog .mobile-catalog-filter-done{
     display:block;
     width:100%;
