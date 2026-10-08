@@ -5,14 +5,25 @@ import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { quoteTotal, displayQuoteNumber, quoteLineTotal } from '../types/quote';
 import { useNavigationStore, type AppView } from '../store/navigationStore';
 import { useAuthStore } from '../store/authStore';
+import { roleName, type TeamRole } from '../services/teamAccess';
+import { departmentName, type TeamDepartment } from '../services/teamDepartments';
+import { resolveOwnerPerspective } from '../services/rolePerspective';
+import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 /** Viewer-only browsing surface. No shared-record mutation controls are rendered. */
-export function ViewerWorkspace({ section }: { section: AppView }) {
+export function ViewerWorkspace({ section, previewRole, previewDepartment }: { section: AppView; previewRole?: TeamRole | null; previewDepartment?: TeamDepartment }) {
   const [query, setQuery] = useState('');
   const setCatalogSection = useNavigationStore((state) => state.setCatalogSection);
   const department = useAuthStore((state) => state.teamDepartment);
+  const actualRole = useAuthStore((state) => state.teamRole);
+  const mode = useAuthStore((state) => state.mode);
+  const previewId = useRolePerspectiveStore((state) => state.activePerspective);
+  const isOwnerPreview = Boolean(resolveOwnerPerspective(previewId, actualRole, mode));
+  const effectiveDepartment = previewDepartment ?? department;
+  const visibleRole = previewRole ?? actualRole;
+  const accessLabel = visibleRole === 'member' ? departmentName(effectiveDepartment) : visibleRole ? roleName(visibleRole) : 'Viewer';
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
@@ -49,11 +60,11 @@ export function ViewerWorkspace({ section }: { section: AppView }) {
 
   return <main className="viewer-workspace">
     <header className="viewer-workspace-header">
-      <div><span className="board-eyebrow">Workspace access · Viewer</span><h1>{title}</h1>
-        <p>Read-only access to shared SalesShop records. Your personal notebook remains editable.</p></div>
+      <div><span className="board-eyebrow">Workspace access · {accessLabel}</span><h1>{title}</h1>
+        <p>{isOwnerPreview ? 'Owner perspective preview — shared data cannot be changed in this simulation.' : 'Read-only access to this section. Personal notebook entries remain editable.'}</p></div>
       <span className="viewer-role-pill" aria-label="Read-only access">View only</span>
     </header>
-    {section === 'catalog' && department === 'purchasing' && <div className="viewer-purchasing-jump">
+    {section === 'catalog' && effectiveDepartment === 'purchasing' && <div className="viewer-purchasing-jump">
       <button type="button" onClick={() => setCatalogSection('suppliers')}>Open editable Suppliers catalog →</button>
       <span>Other catalog sections remain read-only.</span>
     </div>}
