@@ -126,7 +126,14 @@ begin
     where user_id = actor
   loop
     if not exists (select 1 from public.organizations o
-      where o.id = old_org and o.created_by = actor)
+      where o.id = old_org and o.created_by = actor
+        and o.name = 'My Shop'
+        and o.timezone = 'UTC'
+        and o.address is null and o.phone is null and o.email is null
+        and o.website is null and o.logo_url is null
+        and o.quote_contact_name is null and o.quote_contact_phone is null
+        and coalesce(o.stock_materials, '[]'::jsonb) = '[]'::jsonb
+        and coalesce(o.sink_catalog, '[]'::jsonb) = '[]'::jsonb)
       or exists (select 1 from public.organization_members m
         where m.organization_id = old_org and m.user_id <> actor)
       or exists (select 1 from public.org_documents d where d.organization_id = old_org)
