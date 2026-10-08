@@ -45,3 +45,14 @@
   .sales-app.view-settings .team-settings-side{gap:7px}
   .sales-app.view-settings .team-invite-form :is(input,select){font-size:16px}
 }
+
+.sales-app.view-settings .team-company-fieldset{
+  min-width:0;width:100%;margin:0;padding:0;border:0;
+}
+.sales-app.view-settings .team-company-fieldset:disabled,
+.sales-app.view-settings .team-company-fieldset:disabled :is(input,textarea){cursor:not-allowed}
+.sales-app.view-settings .team-company-fieldset :is(input,textarea):disabled{opacity:.7;background:#f1ebdf}
+.sales-app.view-settings .settings-company-role-note{
+  grid-column:1/-1;margin:0;padding:11px;border:1px solid #d6c7aa;
+  border-radius:7px;background:#fff6e5;color:#716147;font-size:11px;line-height:1.5;
+}
