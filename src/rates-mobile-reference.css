@@ -38,5 +38,9 @@
 .sales-app.view-catalog .rates-mobile-mode-row button strong{font-size:12px}
 .sales-app.view-catalog .rates-mobile-mode-row button small{font-size:10px;line-height:1.35}
 .sales-app.view-catalog .rates-mobile-add{min-height:43px;border:1px solid #9e8a65;border-radius:6px;background:#fff7e5;color:#564c3a;font-size:12px;font-weight:800}
+.sales-app.view-catalog .rates-workspace.is-editing>.rates-workspace-header{display:flex!important;flex-direction:column;align-items:stretch;gap:5px;margin:0 0 6px;padding:7px;background:#f3eddf;border:1px solid #d3c7b4;border-radius:6px}
+.sales-app.view-catalog .rates-workspace.is-editing>.rates-workspace-header>div:first-child{display:none}
+.sales-app.view-catalog .rates-workspace.is-editing>.rates-workspace-header .rates-mode-actions{display:flex;justify-content:space-between;gap:7px}
+.sales-app.view-catalog .rates-workspace.is-editing>.rates-workspace-header .rates-mode-actions button{min-height:40px;font-size:11px}
 .sales-app.view-catalog .rates-workspace.is-editing .rates-shared-controls{flex-direction:column}
 }
