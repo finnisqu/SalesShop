@@ -628,7 +628,6 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     persist(quotes, get().activeQuoteId);
     set({ quotes });
 
-    const auth = useAuthStore.getState();
     if (supabase && auth.mode === 'cloud' && auth.organizationId) {
       await syncNormalizedQuotes(auth.organizationId, {
         schemaVersion: 2,
