@@ -5,6 +5,8 @@ interface MobileCatalogReferenceListProps {
   emptyMessage: string;
   empty: boolean;
   children: ReactNode;
+  onReset?: () => void;
+  resetLabel?: string;
   className?: string;
 }
 
@@ -14,11 +16,18 @@ export function MobileCatalogReferenceList({
   empty,
   emptyMessage,
   children,
+  onReset,
+  resetLabel = 'Clear search and filters',
   className = '',
 }: MobileCatalogReferenceListProps) {
   return (
     <div className={`mobile-catalog-reference-list ${className}`} role="list" aria-label={label}>
-      {empty ? <div className="mobile-catalog-reference-empty" role="status">{emptyMessage}</div> : children}
+      {empty ? (
+        <div className="mobile-catalog-reference-empty">
+          <span role="status">{emptyMessage}</span>
+          {onReset && <button type="button" onClick={onReset}>{resetLabel}</button>}
+        </div>
+      ) : children}
     </div>
   );
 }
