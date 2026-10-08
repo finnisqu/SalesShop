@@ -39,6 +39,8 @@ interface AuthState {
 let initializePromise: Promise<void> | null = null;
 let authListenerStarted = false;
 let inviteAcceptance: Promise<string> | null = null;
+let activeSessionApplication: Promise<void> | null = null;
+let activeSessionUserId: string | null = null;
 const JOIN_WELCOME_KEY = 'salesshop-joined-team-welcome-v1';
 
 function readJoinWelcome(userId: string, organizationId: string): JoinWelcome | null {
@@ -93,7 +95,24 @@ function browserTimezone() {
   }
 }
 
-async function applySession(session: Session | null) {
+async function applySession(session: Session | null): Promise<void> {
+  // SIGNED_IN, INITIAL_SESSION and getSession can arrive together. Do not
+  // race the one-use invitation RPC or hydrate one account twice.
+  const userId = session?.user.id ?? null;
+  if (activeSessionApplication && activeSessionUserId === userId) return activeSessionApplication;
+  activeSessionUserId = userId;
+  const running = performSessionApplication(session);
+  activeSessionApplication = running;
+  try { await running; }
+  finally {
+    if (activeSessionApplication === running) {
+      activeSessionApplication = null;
+      activeSessionUserId = null;
+    }
+  }
+}
+
+async function performSessionApplication(session: Session | null) {
   stopCloudSync();
 
   if (!session) {
