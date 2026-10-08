@@ -8,7 +8,7 @@ import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
 import { inviteAccountDecision, previewTeamInvite, type TeamInvitePreview } from '../services/teamInvitePreview';
 
 export type BackendMode = 'local' | 'cloud';
-export type InviteProblem = 'switch-account' | 'unavailable' | 'preview-error';
+export type InviteProblem = 'switch-account' | 'unavailable' | 'preview-error' | 'verify-email';
 export type JoinWelcome = { userId: string; organizationId: string; organizationName: string; role: 'member' | 'admin' };
 
 interface AuthState {
@@ -188,7 +188,9 @@ async function performSessionApplication(session: Session | null) {
       user: session.user,
       session,
       organizationId: null,
-      inviteProblem: pendingTeamInviteToken() ? 'preview-error' : null,
+      inviteProblem: pendingTeamInviteToken()
+        ? /Confirm your email address before joining/i.test(messageFrom(error)) ? 'verify-email' : 'preview-error'
+        : null,
       error: messageFrom(error),
     });
   }
