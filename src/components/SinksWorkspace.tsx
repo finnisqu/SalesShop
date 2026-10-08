@@ -51,6 +51,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const deleteVariant = useSinkCatalogStore((state) => state.deleteVariant);
 
   const [editing, setEditing] = useState(false);
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<'all' | SinkCategory>('all');
@@ -95,6 +96,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
     const id = addModel(category === 'all' ? 'kitchen' : category);
     setSelectedId(id);
     setEditing(true);
+    setMobileToolsOpen(false);
   };
 
   if (!hydrated) return <div className="sinks-loading">Opening Sinks…</div>;
@@ -130,9 +132,38 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
         </div>
         <div className="sinks-search-tools">
           <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models, variants, codes…" aria-label="Search sink catalog" />
-          <label><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Archived</label>
+          <label className="sinks-archived-toggle"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Archived</label>
+          <button type="button" className="sinks-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open sink catalog tools">••• <span>Tools</span></button>
         </div>
       </section>
+
+      {mobileToolsOpen && (
+        <div className="sinks-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
+          <aside className="sinks-mobile-tools-sheet" role="dialog" aria-modal="true" aria-label="Sink catalog tools" onPointerDown={(event) => event.stopPropagation()}>
+            <header>
+              <div><span>Catalog · Sinks</span><strong>Sink tools</strong><small>Browse by default; open maintenance only when needed.</small></div>
+              <button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close sink tools">×</button>
+            </header>
+            <section>
+              <span className="sinks-mobile-tools-label">Mode</span>
+              <div className="sinks-mobile-mode-row">
+                <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up models and pricing</small></button>
+                <button type="button" className={editing ? 'active' : ''} onClick={() => { setEditing(true); setMobileToolsOpen(false); }}><strong>Edit catalog</strong><small>Maintain models and variants</small></button>
+              </div>
+            </section>
+            <section>
+              <span className="sinks-mobile-tools-label">Catalog visibility</span>
+              <label className="sinks-mobile-archived"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /><span>Show archived models</span></label>
+            </section>
+            {editing && <section>
+              <span className="sinks-mobile-tools-label">Maintenance</span>
+              <button type="button" className="sinks-mobile-add-model" onClick={createModel}>+ Add sink model</button>
+              <small>Choose a model to edit its details, variants, prices and history.</small>
+            </section>}
+            <footer className={error ? 'has-error' : ''}>{error ? 'Cloud sync issue' : saving ? 'Saving changes…' : 'Changes saved'}</footer>
+          </aside>
+        </div>
+      )}
 
       <div className="sinks-catalog-shell">
         <aside className="sinks-navigator">
