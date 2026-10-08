@@ -164,11 +164,9 @@ async function performSessionApplication(session: Session | null) {
       allowCompanySeed: maySeedCompanyFromLocal(membership.role as TeamRole, Boolean(acceptedOrganizationId)),
       allowNotebookSeed: !acceptedOrganizationId,
     });
-    if (membership.role !== 'viewer') {
-      startCloudSync(organizationId, session.user.id, (error) => {
-        useAuthStore.setState({ error: `Cloud sync: ${error}` });
-      });
-    }
+    startCloudSync(organizationId, session.user.id, (error) => {
+      useAuthStore.setState({ error: `Cloud sync: ${error}` });
+    }, { readOnlyShared: membership.role === 'viewer' });
     if (acceptedOrganizationId && invitePreview) saveJoinWelcome({
       userId: session.user.id, organizationId, organizationName: invitePreview.organizationName,
       role: invitePreview.role,
