@@ -10,6 +10,8 @@ import {
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { quotesForCompany } from '../services/quoteCrmLinks';
+import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import {
   ACCOUNT_STAGES,
   companyAnnualPotential,
@@ -44,6 +46,12 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
   const activities = useCrmStore((state) => state.activities);
   const updateCompany = useCrmStore((state) => state.updateCompany);
   const createContact = useCrmStore((state) => state.createContact);
+  const quotes = useQuoteStore((state) => state.quotes);
+  const hydrateQuotes = useQuoteStore((state) => state.hydrate);
+  const createQuote = useQuoteStore((state) => state.createQuote);
+  const openQuote = useNavigationStore((state) => state.openQuote);
+  useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
+  const linkedQuotes = quotesForCompany(company, projects, quotes).filter((quote) => !quote.archivedAt);
   const dialogRef = useDismissibleLayer<HTMLElement>(true, onClose);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -149,6 +157,21 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
             </div>
           ))}
           {!companyProjects.length && <p className="account-empty">No projects yet.</p>}
+        </section>
+
+        <section className="account-editor-section crm-linked-quotes">
+          <header><strong>Quotes</strong><span>{linkedQuotes.length} linked</span></header>
+          <div className="crm-linked-quote-list">
+            {linkedQuotes.map((quote) => <button type="button" key={quote.id} className="crm-linked-quote-row" onClick={() => openQuote(quote.id)}>
+              <strong>{quote.title || 'Untitled quote'}</strong>
+              <span>{displayQuoteNumber(quote)} · {quote.status}{quoteTotal(quote) ? ` · ${money.format(quoteTotal(quote))}` : ''}</span>
+            </button>)}
+            {!linkedQuotes.length && <p className="account-empty">No quotes linked to this account yet.</p>}
+          </div>
+          {company.kind === 'customer' && <button className="crm-linked-create" type="button" onClick={() => {
+            const id = createQuote({ title: `Quote · ${company.name}`, companyId: company.id, companyName: company.name });
+            openQuote(id);
+          }}>+ New quote for account</button>}
         </section>
 
         <section className="account-editor-section">
