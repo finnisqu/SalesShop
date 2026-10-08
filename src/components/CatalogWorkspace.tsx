@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { MaterialsWorkspace } from './MaterialsWorkspace';
 import { RatesWorkspace } from './RatesWorkspace';
 import { SinksWorkspace } from './SinksWorkspace';
@@ -77,6 +78,13 @@ function OtherCatalogComingSoon() {
 export function CatalogWorkspace() {
   const section = useNavigationStore((state) => state.catalogSection);
   const setSection = useNavigationStore((state) => state.setCatalogSection);
+  const sectionScrollRef = useRef<HTMLElement>(null);
+
+  // New sections start at the top instead of inheriting the previous section's
+  // scroll position from the single shared mobile/desktop Catalog host.
+  useEffect(() => {
+    if (sectionScrollRef.current) sectionScrollRef.current.scrollTop = 0;
+  }, [section]);
   const current = CATALOG_SECTIONS.find((candidate) => candidate.id === section) ?? CATALOG_SECTIONS[0];
 
   return (
@@ -108,7 +116,7 @@ export function CatalogWorkspace() {
         ))}
       </nav>
 
-      <section className={`catalog-section-host catalog-section-${section}`}>
+      <section ref={sectionScrollRef} className={`catalog-section-host catalog-section-${section}`}>
         {section === 'materials' ? (
           <MaterialsWorkspace embedded />
         ) : section === 'sinks' ? (
