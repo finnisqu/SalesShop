@@ -268,7 +268,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                       onClick={mobileInteraction ? () => setEditingId(company.id) : undefined}
                       onDoubleClick={mobileInteraction ? undefined : () => setEditingId(company.id)}
                       tabIndex={0}
-                      onKeyDown={(event) => { if (event.key === 'Enter') setEditingId(company.id); }}
+                      onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setEditingId(company.id); } }}
                       title={mobileInteraction ? 'Tap to open' : 'Double-click to open'}
                     >
                       <div className="project-card-company">{health.stage}</div>
