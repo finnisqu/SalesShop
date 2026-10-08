@@ -5,7 +5,6 @@ import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import { buildCatalogQuoteLinePatch, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
 import { catalogQuoteDestinationLabel, catalogQuoteDestinationReference } from '../services/catalogQuoteDestination';
-import { catalogQuoteDestinationLabel } from '../services/catalogQuoteDestination';
 import { resolveStockMaterialCostReference, defaultMaterialVariant, defaultMaterialPurchaseOption } from '../types/settings';
 import { defaultSinkVariant } from '../types/sink';
 import { RATE_BOOK_UNIT_LABELS, resolveRateBookValues } from '../types/rateBook';
