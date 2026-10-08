@@ -41,6 +41,21 @@ describe('shared mobile Catalog reference', () => {
     expect(expanded).toContain('aria-controls=');
   });
 
+  it('provides an accessible reset action for a filtered empty catalog', () => {
+    const html = renderToStaticMarkup(
+      <MobileCatalogReferenceList
+        label="Materials" empty emptyMessage="No matching materials"
+        onReset={() => {}} resetLabel="Show all materials"
+      >
+        <p>Hidden</p>
+      </MobileCatalogReferenceList>,
+    );
+    expect(html).toContain('No matching materials');
+    expect(html).toContain('Show all materials');
+    expect(html).toContain('type="button"');
+    expect(html).not.toContain('Hidden');
+  });
+
   it('shows an empty state instead of a blank catalog', () => {
     const html = renderToStaticMarkup(
       <MobileCatalogReferenceList label="Materials" empty emptyMessage="No matches">
