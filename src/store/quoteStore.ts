@@ -56,6 +56,7 @@ interface QuoteState {
   linkQuoteCompany: (quoteId: string, company: Pick<Company, 'id' | 'name'>) => void;
   linkQuoteContact: (quoteId: string, contact: Pick<Contact, 'id' | 'name' | 'email'>) => void;
   addLine: (quoteId: string, kind?: QuoteLineKind, sectionId?: string) => string;
+  addCatalogLine: (quoteId: string, kind: 'material' | 'sink' | 'rate', patch: Partial<Omit<QuoteLine, 'id'>>) => string;
   updateLine: (quoteId: string, lineId: string, patch: Partial<Omit<QuoteLine, 'id'>>) => void;
   deleteLine: (quoteId: string, lineId: string) => void;
   addSection: (quoteId: string) => string;
@@ -449,6 +450,20 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const line = newLine(kind, sectionId);
     const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
+    const quotes = get().quotes.map((quote) => quote.id === quoteId
+      ? { ...quote, lines: [...quote.lines, line], updatedAt: timestamp }
+      : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes, ...history });
+    return line.id;
+  },
+
+  addCatalogLine: (quoteId, kind, patch) => {
+    const current = get().quotes.find((quote) => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current) || current.documentType === 'pricing-schedule') return '';
+    const line: QuoteLine = { ...newLine(kind), ...patch, kind };
+    const timestamp = now();
+    const history = historyPatch(get(), quoteId, current);
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? { ...quote, lines: [...quote.lines, line], updatedAt: timestamp }
       : quote);
