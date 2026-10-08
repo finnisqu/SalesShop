@@ -82,7 +82,7 @@ export function TeamAccessSettings() {
           const result = data as { sent?: boolean; invitationUrl?: string; error?: string; email?: string } | null;
           if (result?.sent) {
             setEmail('');
-            setNotice(`Invitation email sent to ${result.email || 'your teammate'}. The link expires in seven days.`);
+            setNotice(`Invitation submitted for ${result.email || 'your teammate'}. The link expires in seven days. Email delivery isn't guaranteed: if it doesn't arrive, check Resend's delivery activity and the recipient's spam folder.`);
           } else if (result?.invitationUrl) {
             setNewInviteLink(result.invitationUrl);
             setCopied(false);
@@ -184,7 +184,7 @@ export function TeamAccessSettings() {
     </article>
     <div className="team-settings-side">
       <article className="company-settings-card">
-        <header><div><strong>Invitations</strong><small>Send an email invitation or copy a seven-day, one-time link.</small></div></header>
+        <header><div><strong>Invitations</strong><small>Send a seven-day invitation or share its one-time link. Delivery problems can be checked in Resend.</small></div></header>
         {isAdmin ? <>
           <form className="team-invite-form" onSubmit={(event) => void createInvite(event)}>
             <label><span>Email address</span><input type="email" autoComplete="email" required value={email} onChange={(event)=>setEmail(event.target.value)} placeholder="salesperson@company.com" /></label>
