@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 import { ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
+import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
 
 export type BackendMode = 'local' | 'cloud';
 
@@ -88,7 +89,7 @@ async function applySession(session: Session | null) {
       .select('role').eq('organization_id', organizationId).eq('user_id', session.user.id).single();
     if (memberError || !membership) throw memberError ?? new Error('No team access found.');
     await hydrateCloudDocuments(organizationId, session.user.id, {
-      allowCompanySeed: membership.role === 'owner' && !acceptedOrganizationId,
+      allowCompanySeed: maySeedCompanyFromLocal(membership.role as TeamRole, Boolean(acceptedOrganizationId)),
       allowNotebookSeed: !acceptedOrganizationId,
     });
     startCloudSync(organizationId, session.user.id, (error) => {
