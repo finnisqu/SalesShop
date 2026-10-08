@@ -726,3 +726,56 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* Catalog is a group in the hamburger navigation, not a direct destination. */
+@media(max-width:700px) {
+  .mobile-app-drawer-nav button[aria-controls="mobile-catalog-destinations"] {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+  }
+  .mobile-app-drawer-nav button[aria-controls="mobile-catalog-destinations"].is-expanded {
+    border-color:#b59b68;
+    background:#fff3d5;
+    box-shadow:inset 0 -2px #b79e64;
+  }
+  .mobile-app-catalog-chevron{
+    color:#87775b;
+    font-size:14px;
+    font-weight:800;
+    line-height:1;
+  }
+  .mobile-catalog-destinations{
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .mobile-catalog-destinations > header{
+    flex:0 0 auto;
+    min-height:56px;
+    border-bottom:1px solid rgba(91,78,58,.10);
+  }
+  .mobile-catalog-destinations > header strong{font-size:12px}
+  .mobile-catalog-destinations > header small{font-size:10px}
+  .mobile-catalog-destinations .mobile-catalog-section-list{
+    flex:0 0 auto;
+    gap:7px;
+    padding:8px 10px 14px;
+  }
+  .mobile-catalog-destinations .mobile-catalog-section-list button{
+    min-height:52px;
+    font-size:12px;
+    border-radius:7px;
+    background:#fffaf0;
+  }
+  .mobile-catalog-destinations .mobile-catalog-section-list button.active{
+    border-color:#b59b68;
+    background:#fff4d7;
+  }
+  .mobile-catalog-destinations .mobile-catalog-section-list button:focus-visible{
+    outline:2px solid #b59b68;
+    outline-offset:2px;
+  }
+}
