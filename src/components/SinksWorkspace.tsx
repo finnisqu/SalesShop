@@ -5,6 +5,7 @@ import {
   SINK_CONFIGURATIONS,
   SINK_CONFIGURATION_LABELS,
   type SinkCategory,
+  type SinkModel,
   type SinkMountType,
   type SinkVariant,
 } from '../types/sink';
@@ -52,12 +53,25 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
 
   const [editing, setEditing] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
+  const [expandedMobileSinkId, setExpandedMobileSinkId] = useState<string | null>(null);
+  const [isMobileCatalog, setIsMobileCatalog] = useState(
+    () => embedded && typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches,
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<'all' | SinkCategory>('all');
   const [showInactive, setShowInactive] = useState(false);
 
   useEffect(() => { void hydrate(); }, [hydrate]);
+
+  useEffect(() => {
+    if (!embedded) return;
+    const media = window.matchMedia('(max-width: 700px)');
+    const update = () => setIsMobileCatalog(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, [embedded]);
 
   useEffect(() => {
     if (!models.length) return;
@@ -95,100 +109,13 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const createModel = () => {
     const id = addModel(category === 'all' ? 'kitchen' : category);
     setSelectedId(id);
+    setExpandedMobileSinkId(id);
     setEditing(true);
     setMobileToolsOpen(false);
   };
 
-  if (!hydrated) return <div className="sinks-loading">Opening Sinks…</div>;
-
-  return (
-    <main className={`sinks-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
-      <header className="sinks-workspace-header">
-        <div>
-          <span className="board-eyebrow">Product catalog</span>
-          <h1>Sinks</h1>
-          <p>Physical sink products live here. Sink cutouts and customer-provided sink installation stay in Rates as services.</p>
-        </div>
-        <div className="sinks-header-actions">
-          <span className={`sinks-save-status ${error ? 'has-error' : ''}`}>{error ? 'Cloud issue' : saving ? 'Saving…' : 'Saved'}</span>
-          {editing && <button type="button" className="sinks-add-model" onClick={createModel}>+ Sink model</button>}
-          <button type="button" className={editing ? 'sinks-done-button' : 'sinks-edit-button'} onClick={() => setEditing((value) => !value)}>
-            {editing ? 'Done editing' : 'Edit catalog'}
-          </button>
-        </div>
-      </header>
-
-      <section className="sinks-stats" aria-label="Sink catalog summary">
-        <div><span>Active models</span><strong>{activeModels.length}</strong></div>
-        <div><span>Active variants</span><strong>{activeVariants.length}</strong></div>
-        <div><span>Priced variants</span><strong>{pricedVariants.length}/{activeVariants.length}</strong></div>
-        <div><span>Multi-variant models</span><strong>{multiVariantModels.length}</strong></div>
-      </section>
-
-      <section className="sinks-shared-controls">
-        <div className="sinks-category-tabs" role="tablist" aria-label="Sink categories">
-          <button type="button" className={category === 'all' ? 'active' : ''} onClick={() => setCategory('all')}>All Sinks</button>
-          {SINK_CATEGORIES.map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{SINK_CATEGORY_LABELS[item]}</button>)}
-        </div>
-        <div className="sinks-search-tools">
-          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models, variants, codes…" aria-label="Search sink catalog" />
-          <label className="sinks-archived-toggle"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Archived</label>
-          <button type="button" className="sinks-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open sink catalog tools">••• <span>Tools</span></button>
-        </div>
-      </section>
-
-      {mobileToolsOpen && (
-        <div className="sinks-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
-          <aside className="sinks-mobile-tools-sheet" role="dialog" aria-modal="true" aria-label="Sink catalog tools" onPointerDown={(event) => event.stopPropagation()}>
-            <header>
-              <div><span>Catalog · Sinks</span><strong>Sink tools</strong><small>Browse by default; open maintenance only when needed.</small></div>
-              <button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close sink tools">×</button>
-            </header>
-            <section>
-              <span className="sinks-mobile-tools-label">Mode</span>
-              <div className="sinks-mobile-mode-row">
-                <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up models and pricing</small></button>
-                <button type="button" className={editing ? 'active' : ''} onClick={() => { setEditing(true); setMobileToolsOpen(false); }}><strong>Edit catalog</strong><small>Maintain models and variants</small></button>
-              </div>
-            </section>
-            <section>
-              <span className="sinks-mobile-tools-label">Catalog visibility</span>
-              <label className="sinks-mobile-archived"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /><span>Show archived models</span></label>
-            </section>
-            {editing && <section>
-              <span className="sinks-mobile-tools-label">Maintenance</span>
-              <button type="button" className="sinks-mobile-add-model" onClick={createModel}>+ Add sink model</button>
-              <small>Choose a model to edit its details, variants, prices and history.</small>
-            </section>}
-            <footer className={error ? 'has-error' : ''}>{error ? 'Cloud sync issue' : saving ? 'Saving changes…' : 'Changes saved'}</footer>
-          </aside>
-        </div>
-      )}
-
-      <div className="sinks-catalog-shell">
-        <aside className="sinks-navigator">
-          <header><strong>Models</strong><span>{visibleModels.length}</span></header>
-          <div className="sinks-model-list">
-            {visibleModels.map((model) => {
-              const variants = model.variants.filter((variant) => variant.active);
-              const prices = variants.map((variant) => variant.sellPrice).filter((value): value is number => value !== undefined);
-              const low = prices.length ? Math.min(...prices) : undefined;
-              const high = prices.length ? Math.max(...prices) : undefined;
-              return (
-                <button type="button" key={model.id} className={selected?.id === model.id ? 'active' : ''} onClick={() => setSelectedId(model.id)}>
-                  <span className="sinks-model-list-main"><strong>{model.name}</strong><small>{model.modelCode || SINK_CATEGORY_LABELS[model.category]}</small></span>
-                  <span className="sinks-model-list-meta">
-                    <b>{variants.length} variant{variants.length === 1 ? '' : 's'}</b>
-                    <small>{low === undefined ? 'Unpriced' : low === high ? money.format(low) : `${money.format(low)}–${money.format(high ?? low)}`}</small>
-                  </span>
-                  {!model.active && <em>Archived</em>}
-                </button>
-              );
-            })}
-            {!visibleModels.length && <div className="sinks-empty-navigator"><strong>No sinks found</strong><span>Change the search/filter or add a sink model.</span></div>}
-          </div>
-        </aside>
-
+  // One model renderer is reused by the desktop detail pane and mobile inline cards.
+  const renderSinkDetail = (selected: SinkModel | null) => (
         <section className="sinks-detail">
           {!selected ? (
             <div className="sinks-empty-detail"><strong>No sink model selected</strong><span>Add a model to start the catalog.</span></div>
@@ -285,6 +212,106 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
             </>
           )}
         </section>
+  );
+
+  if (!hydrated) return <div className="sinks-loading">Opening Sinks…</div>;
+
+  return (
+    <main className={`sinks-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
+      <header className="sinks-workspace-header">
+        <div>
+          <span className="board-eyebrow">Product catalog</span>
+          <h1>Sinks</h1>
+          <p>Physical sink products live here. Sink cutouts and customer-provided sink installation stay in Rates as services.</p>
+        </div>
+        <div className="sinks-header-actions">
+          <span className={`sinks-save-status ${error ? 'has-error' : ''}`}>{error ? 'Cloud issue' : saving ? 'Saving…' : 'Saved'}</span>
+          {editing && <button type="button" className="sinks-add-model" onClick={createModel}>+ Sink model</button>}
+          <button type="button" className={editing ? 'sinks-done-button' : 'sinks-edit-button'} onClick={() => setEditing((value) => !value)}>
+            {editing ? 'Done editing' : 'Edit catalog'}
+          </button>
+        </div>
+      </header>
+
+      <section className="sinks-stats" aria-label="Sink catalog summary">
+        <div><span>Active models</span><strong>{activeModels.length}</strong></div>
+        <div><span>Active variants</span><strong>{activeVariants.length}</strong></div>
+        <div><span>Priced variants</span><strong>{pricedVariants.length}/{activeVariants.length}</strong></div>
+        <div><span>Multi-variant models</span><strong>{multiVariantModels.length}</strong></div>
+      </section>
+
+      <section className="sinks-shared-controls">
+        <div className="sinks-category-tabs" role="tablist" aria-label="Sink categories">
+          <button type="button" className={category === 'all' ? 'active' : ''} onClick={() => setCategory('all')}>All Sinks</button>
+          {SINK_CATEGORIES.map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{SINK_CATEGORY_LABELS[item]}</button>)}
+        </div>
+        <div className="sinks-search-tools">
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models, variants, codes…" aria-label="Search sink catalog" />
+          <label className="sinks-archived-toggle"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Archived</label>
+          <button type="button" className="sinks-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open sink catalog tools">••• <span>Tools</span></button>
+        </div>
+      </section>
+
+      {mobileToolsOpen && (
+        <div className="sinks-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
+          <aside className="sinks-mobile-tools-sheet" role="dialog" aria-modal="true" aria-label="Sink catalog tools" onPointerDown={(event) => event.stopPropagation()}>
+            <header>
+              <div><span>Catalog · Sinks</span><strong>Sink tools</strong><small>Browse by default; open maintenance only when needed.</small></div>
+              <button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close sink tools">×</button>
+            </header>
+            <section>
+              <span className="sinks-mobile-tools-label">Mode</span>
+              <div className="sinks-mobile-mode-row">
+                <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up models and pricing</small></button>
+                <button type="button" className={editing ? 'active' : ''} onClick={() => { setEditing(true); setMobileToolsOpen(false); }}><strong>Edit catalog</strong><small>Maintain models and variants</small></button>
+              </div>
+            </section>
+            <section>
+              <span className="sinks-mobile-tools-label">Catalog visibility</span>
+              <label className="sinks-mobile-archived"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /><span>Show archived models</span></label>
+            </section>
+            {editing && <section>
+              <span className="sinks-mobile-tools-label">Maintenance</span>
+              <button type="button" className="sinks-mobile-add-model" onClick={createModel}>+ Add sink model</button>
+              <small>Choose a model to edit its details, variants, prices and history.</small>
+            </section>}
+            <footer className={error ? 'has-error' : ''}>{error ? 'Cloud sync issue' : saving ? 'Saving changes…' : 'Changes saved'}</footer>
+          </aside>
+        </div>
+      )}
+
+      <div className="sinks-catalog-shell">
+        <aside className="sinks-navigator">
+          <header><strong>Models</strong><span>{visibleModels.length}</span></header>
+          <div className="sinks-model-list">
+            {visibleModels.map((model) => {
+              const variants = model.variants.filter((variant) => variant.active);
+              const prices = variants.map((variant) => variant.sellPrice).filter((value): value is number => value !== undefined);
+              const low = prices.length ? Math.min(...prices) : undefined;
+              const high = prices.length ? Math.max(...prices) : undefined;
+              return (
+                <button type="button" key={model.id} className={selected?.id === model.id ? 'active' : ''} aria-expanded={isMobileCatalog ? expandedMobileSinkId === model.id : undefined} onClick={() => {
+                  setSelectedId(model.id);
+                  if (isMobileCatalog) setExpandedMobileSinkId((current) => current === model.id ? null : model.id);
+                }}>
+                  <span className="sinks-model-list-main"><strong>{model.name}</strong><small>{model.modelCode || SINK_CATEGORY_LABELS[model.category]}</small></span>
+                  <span className="sinks-model-list-meta">
+                    <b>{variants.length} variant{variants.length === 1 ? '' : 's'}</b>
+                    <small>{low === undefined ? 'Unpriced' : low === high ? money.format(low) : `${money.format(low)}–${money.format(high ?? low)}`}</small>
+                  </span>
+                  {!model.active && <em>Archived</em>}
+                  <span className="sinks-mobile-model-chevron" aria-hidden="true">{expandedMobileSinkId === model.id ? '⌃' : '⌄'}</span>
+                </button>
+                {isMobileCatalog && expandedMobileSinkId === model.id && (
+                  <div className="sinks-mobile-model-detail">{renderSinkDetail(model)}</div>
+                )}
+              );
+            })}
+            {!visibleModels.length && <div className="sinks-empty-navigator"><strong>No sinks found</strong><span>Change the search/filter or add a sink model.</span></div>}
+          </div>
+        </aside>
+
+        {!isMobileCatalog && renderSinkDetail(selected)}
       </div>
     </main>
   );
