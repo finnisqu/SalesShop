@@ -35,7 +35,7 @@ export function TeamAccessSettings() {
 
   const refresh = useCallback(async () => {
     if (!orgId || !supabase) return;
-    setLoading(true); setError('');
+    setLoading(true);
     const { data: roster, error: membershipError } = await supabase
       .from('organization_members').select('user_id,role,created_at')
       .eq('organization_id', orgId).order('created_at');
@@ -180,7 +180,7 @@ export function TeamAccessSettings() {
           {!members.length && <p className="settings-help">No memberships could be found. Refresh and try again.</p>}
         </div>}
       {(error || notice) && <p className="settings-feedback" role={error?'alert':'status'}>{error || notice}</p>}
-      <div className="settings-inline-actions"><button type="button" disabled={busy || loading} onClick={() => void refresh()}>Refresh team</button></div>
+      <div className="settings-inline-actions"><button type="button" disabled={busy || loading} onClick={() => { setError(''); void refresh(); }}>Refresh team</button></div>
     </article>
     <div className="team-settings-side">
       <article className="company-settings-card">
