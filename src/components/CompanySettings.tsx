@@ -121,7 +121,7 @@ export function CompanySettings() {
 
         {tab === 'company' && <section className="company-settings-grid settings-company-grid" aria-label="Company and branding">
           <article className="company-settings-card">
-            <header><div><strong>Company identity</strong><small>Appears on customer-facing documents and shared quotes.</small></div></header>
+            <header><div><strong>Company identity</strong><small>Appears on customer-facing documents and shared quotes.</small></div><span className="settings-card-save" role="status">{error ? 'Save issue' : saving ? 'Saving…' : 'Auto-saved'}</span></header>
             <div className="company-settings-fields">
               <label className="wide"><span>Company name</span><input value={settings.organizationName} onChange={(event) => update({ organizationName: event.target.value })} autoComplete="organization" /></label>
               <label className="wide"><span>Business address</span><textarea rows={2} value={settings.address} onChange={(event) => update({ address: event.target.value })} autoComplete="street-address" /></label>
