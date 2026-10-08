@@ -1,0 +1,210 @@
+/* Batch 3 — Board and Quotes mobile hierarchy, matching the Catalog paper language. */
+.mobile-board-stage-picker,
+.project-card-title-value,
+.account-card-title-value,
+.quote-mobile-menu-scrim,
+.quote-mobile-menu-header,
+.quote-mobile-menu-done{display:none}
+
+@media(max-width:700px){
+  /* Board: explicit stage navigation without changing the horizontal-swipe workflow. */
+  .sales-app.view-board .mobile-board-stage-picker{
+    display:flex;
+    flex:0 0 auto;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+    min-height:46px;
+    padding:4px 9px;
+    border-bottom:1px solid rgba(91,78,58,.13);
+    background:#f5f0e5;
+  }
+  .sales-app.view-board .mobile-board-stage-picker>label{
+    display:flex;
+    flex:1 1 auto;
+    min-width:0;
+    align-items:center;
+    gap:7px;
+  }
+  .sales-app.view-board .mobile-board-stage-picker>label>span{
+    flex:0 0 auto;
+    font-size:9px;
+    font-weight:850;
+    color:#887e70;
+    text-transform:uppercase;
+  }
+  .sales-app.view-board .mobile-board-stage-picker select{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:38px;
+    padding:0 26px 0 10px;
+    box-sizing:border-box;
+    border:1px solid rgba(91,78,58,.17);
+    border-radius:7px;
+    background:#fffaf0;
+    color:#504739;
+    font-size:16px;
+    font-weight:700;
+  }
+  .sales-app.view-board .mobile-board-stage-position{
+    flex:0 0 auto;
+    color:#8f816a;
+    font-size:10px;
+    font-variant-numeric:tabular-nums;
+    font-weight:800;
+  }
+  .sales-app.view-board .mobile-board-stage-hint{
+    display:none;
+  }
+  .sales-app.view-board .board-column-header{
+    min-height:49px;
+  }
+  .sales-app.view-board :is(.project-card,.account-card){
+    min-width:0;
+    border-color:rgba(91,78,58,.18);
+    border-radius:7px;
+    background:#fffaf0;
+  }
+  .sales-app.view-board :is(.project-card-title-row,.account-card-title-row){
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    min-width:0;
+    gap:8px;
+    margin:6px 0;
+  }
+  .sales-app.view-board :is(.project-card-title-row,.account-card-title-row)>h3{
+    min-width:0;
+    flex:1 1 auto;
+    margin:0;
+    font:700 14px/1.28 Georgia,'Times New Roman',serif;
+    color:#40392f;
+    overflow-wrap:anywhere;
+  }
+  .sales-app.view-board :is(.project-card-title-value,.account-card-title-value){
+    display:block;
+    flex:0 1 43%;
+    max-width:43%;
+    color:#4c4335;
+    text-align:right;
+    font:700 13px/1.28 Georgia,'Times New Roman',serif;
+    font-variant-numeric:tabular-nums;
+    overflow-wrap:anywhere;
+  }
+  .sales-app.view-board .project-card-facts>strong,
+  .sales-app.view-board .account-card-annual-value{display:none}
+  .sales-app.view-board :is(.project-card,.account-card):focus-visible{
+    outline:2px solid #aa925c;
+    outline-offset:-2px;
+  }
+  .sales-app.view-board :is(.board-card-stack,.project-board,.account-board){
+    overscroll-behavior-y:contain;
+  }
+  /* Quotes: dedicated, dismissible bottom sheets for view switching and tools. */
+  .sales-app.view-quotes .quote-mobile-menu-scrim{
+    display:block;
+    position:fixed;
+    inset:0;
+    z-index:205;
+    background:rgba(45,39,31,.32);
+    backdrop-filter:blur(2px);
+  }
+  .sales-app.view-quotes .quote-mobile-menu{
+    position:fixed;
+    z-index:210;
+    top:auto;
+    left:0;
+    right:0;
+    bottom:0;
+    width:100%;
+    max-width:100%;
+    max-height:min(80dvh,700px);
+    overflow-y:auto;
+    box-sizing:border-box;
+    padding:0 12px calc(12px + env(safe-area-inset-bottom));
+    border:1px solid rgba(91,78,58,.18);
+    border-bottom:0;
+    border-radius:14px 14px 0 0;
+    background:#f7f1e6;
+    box-shadow:0 -14px 38px rgba(45,36,25,.22);
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sales-app.view-quotes .quote-mobile-menu-header{
+    position:sticky;
+    top:0;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    min-height:58px;
+    gap:12px;
+    margin:0 -12px 9px;
+    padding:9px 14px;
+    border-bottom:1px solid #d5cab9;
+    background:#f7f1e6;
+  }
+  .sales-app.view-quotes .quote-mobile-menu-header>strong{
+    font:700 20px/1.2 Georgia,'Times New Roman',serif;
+    color:#40392f;
+  }
+  .sales-app.view-quotes .quote-mobile-menu-header>button{
+    flex:0 0 42px;
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:7px;
+    background:#fffaf0;
+    color:#62594d;
+    font-size:23px;
+  }
+  .sales-app.view-quotes .quote-mobile-menu-heading{
+    font-size:10px;
+    letter-spacing:.04em;
+  }
+  .sales-app.view-quotes .quote-mobile-view-menu>button{
+    min-height:54px;
+    padding:10px;
+  }
+  .sales-app.view-quotes .quote-mobile-view-menu>button strong{
+    font-size:13px;
+  }
+  .sales-app.view-quotes .quote-mobile-view-menu>button small{
+    font-size:10px;
+  }
+  .sales-app.view-quotes .quote-mobile-tools-menu :is(
+    .quote-mobile-tool-grid button,.quote-mobile-setup-grid button
+  ){min-height:62px}
+  .sales-app.view-quotes .quote-mobile-tools-menu .quote-mobile-tool-grid button>small{
+    font-size:9px;
+    line-height:1.25;
+    white-space:normal;
+  }
+  .sales-app.view-quotes .quote-mobile-tools-menu .quote-mobile-setup-grid strong{font-size:11px}
+  .sales-app.view-quotes .quote-mobile-tools-menu .quote-mobile-setup-grid small{
+    font-size:9px;
+    white-space:normal;
+    line-height:1.25;
+  }
+  .sales-app.view-quotes .quote-mobile-menu-done{
+    position:sticky;
+    bottom:0;
+    z-index:2;
+    display:block;
+    width:100%;
+    min-height:46px;
+    margin-top:12px;
+    border:1px solid #aa915b;
+    border-radius:7px;
+    background:#fff3d7;
+    color:#5c4d2f;
+    font-size:13px;
+    font-weight:850;
+    text-align:center;
+  }
+  .sales-app.view-quotes .quote-mobile-menu :is(button,select):focus-visible{
+    outline:2px solid #ad9257;
+    outline-offset:2px;
+  }
+}
