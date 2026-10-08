@@ -92,6 +92,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
+  const [isMobileReference, setIsMobileReference] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches);
   const [programFilter, setProgramFilter] = useState<ProgramFilter>('all');
   const [materialFamilyFilter, setMaterialFamilyFilter] = useState<'all' | MaterialFamily>('all');
   const [materialTypeFilter, setMaterialTypeFilter] = useState('all');
@@ -116,6 +117,14 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   useEffect(() => {
     void hydrateSettings();
   }, [hydrateSettings]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 700px)');
+    const update = () => setIsMobileReference(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(pinnedKeys));
@@ -226,6 +235,48 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
       [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
       return next;
     });
+  };
+
+  // The desktop table and compact mobile cards share exactly the same variant details.
+  const renderVariantBrowser = (material: StockMaterial) => {
+    const activeVariants = (material.variants ?? []).filter((variant) => variant.active !== false);
+    return (
+      <div className="materials-variant-browser">
+        {activeVariants.map((variant) => {
+          const area = materialVariantAreaSf(variant);
+          const options = activePurchaseOptions(variant);
+          const defaultOption = defaultMaterialPurchaseOption(variant);
+          const defaultCost = materialPurchaseCostPerSf(variant, defaultOption);
+          const isPinned = pinnedKeySet.has(pinKey(material.id, variant.id));
+          return (
+            <article className={`materials-variant-line ${isPinned ? 'is-pinned' : ''}`} key={variant.id}>
+              <div className="materials-variant-identity"><strong>{variantSpec(variant)}</strong><small>{variant.sku || 'No variant SKU'}{variant.default ? ' · Default spec' : ''}</small></div>
+              <div><span>Size</span><strong>{variantSize(variant)}</strong><small>{area === undefined ? 'Area not available' : `${area.toFixed(2)} SF`}</small></div>
+              <div><span>Availability</span><strong>{availabilityLabel(variant.availability)}</strong><small>{variant.availabilityNote || 'No ETA note'}</small></div>
+              <div className="materials-variant-default-cost"><span>Default cost</span><strong>{moneyPerSf(defaultCost)}</strong><small>{defaultOption?.label || 'No default program'}</small></div>
+              <div className="materials-price-program-list">
+                {options.length ? options.map((option) => {
+                  const summary = priceProgramSummary(variant, option);
+                  return (
+                    <div key={option.id} className={option.default ? 'is-default' : ''}>
+                      <span>{summary.label}{option.minQuantity ? ` · ${option.minQuantity}+` : ''}</span>
+                      <strong>{moneyPerSf(summary.costPerSf)}</strong>
+                      <small>{summary.unitCost === undefined ? 'No unit cost' : `${money.format(summary.unitCost)}/${option.pricingBasis}`}</small>
+                    </div>
+                  );
+                }) : <div className="is-empty"><span>No supplier price programs</span><strong>—</strong></div>}
+              </div>
+              <button
+                type="button"
+                className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`}
+                onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}
+              >{isPinned ? 'Pinned' : 'Pin'}</button>
+            </article>
+          );
+        })}
+        {!activeVariants.length && <div className="materials-variant-empty">This material has no active structured variants yet. Use Edit materials to add slab sizes and supplier price programs.</div>}
+      </div>
+    );
   };
 
   return (
@@ -477,6 +528,37 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
               <div><strong>Supplier material catalog</strong><small>{materials.length} active material{materials.length === 1 ? '' : 's'} shown</small></div>
               <span>Variants reveal slab size, square footage, availability, and every active supplier price program.</span>
             </header>
+            {isMobileReference ? (
+              <div className="materials-mobile-reference-list" aria-label="Materials and default costs">
+                {materials.map((material) => {
+                  const reference = resolveStockMaterialCostReference(material);
+                  const expanded = expandedMaterialId === material.id;
+                  const activeVariantCount = (material.variants ?? []).filter((variant) => variant.active !== false).length;
+                  const pinned = (material.variants ?? []).some((variant) => pinnedKeySet.has(pinKey(material.id, variant.id)));
+                  return (
+                    <article key={material.id} className={`materials-mobile-reference-card ${expanded ? 'is-expanded' : ''} ${pinned ? 'has-pin' : ''}`}>
+                      <button type="button" className="materials-mobile-reference-trigger" aria-expanded={expanded} aria-label={`${material.name}, ${moneyPerSf(reference.costPerSf)}. ${expanded ? 'Hide' : 'Show'} ${activeVariantCount} variants`} onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}>
+                        <span className="materials-mobile-reference-name">
+                          <strong>{material.name}</strong>
+                          <small>{material.brand || material.supplier || 'Unbranded'} · {material.materialType || resolvedMaterialFamily(material)}</small>
+                        </span>
+                        <span className="materials-mobile-reference-cost">
+                          <strong>{moneyPerSf(reference.costPerSf)}</strong>
+                          <small>{reference.purchaseOption?.label || (reference.basis === 'legacy' ? 'Legacy cost' : 'No default price')}</small>
+                        </span>
+                        <span className="materials-mobile-reference-chevron" aria-hidden="true">{expanded ? '⌃' : '⌄'}</span>
+                      </button>
+                      {expanded && (
+                        <div className="materials-mobile-reference-details">
+                          {renderVariantBrowser(material)}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+                {!materials.length && <div className="rates-reference-empty">No active materials match the current search and filters.</div>}
+              </div>
+            ) : (
             <div className="rates-reference-table-wrap">
               <table className="rates-reference-table materials-reference-table">
                 <thead><tr><th>Brand</th><th>Name</th><th>Type</th><th>Program</th><th>Default cost</th><th>Default spec</th><th>Product</th><th>Variants</th></tr></thead>
@@ -502,41 +584,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
                         {expanded && (
                           <tr key={`${material.id}-variants`} className="materials-variant-expanded-row">
                             <td colSpan={8}>
-                              <div className="materials-variant-browser">
-                                {activeVariants.map((variant) => {
-                                  const area = materialVariantAreaSf(variant);
-                                  const options = activePurchaseOptions(variant);
-                                  const defaultOption = defaultMaterialPurchaseOption(variant);
-                                  const defaultCost = materialPurchaseCostPerSf(variant, defaultOption);
-                                  const isPinned = pinnedKeySet.has(pinKey(material.id, variant.id));
-                                  return (
-                                    <article className={`materials-variant-line ${isPinned ? 'is-pinned' : ''}`} key={variant.id}>
-                                      <div className="materials-variant-identity"><strong>{variantSpec(variant)}</strong><small>{variant.sku || 'No variant SKU'}{variant.default ? ' · Default spec' : ''}</small></div>
-                                      <div><span>Size</span><strong>{variantSize(variant)}</strong><small>{area === undefined ? 'Area not available' : `${area.toFixed(2)} SF`}</small></div>
-                                      <div><span>Availability</span><strong>{availabilityLabel(variant.availability)}</strong><small>{variant.availabilityNote || 'No ETA note'}</small></div>
-                                      <div className="materials-variant-default-cost"><span>Default cost</span><strong>{moneyPerSf(defaultCost)}</strong><small>{defaultOption?.label || 'No default program'}</small></div>
-                                      <div className="materials-price-program-list">
-                                        {options.length ? options.map((option) => {
-                                          const summary = priceProgramSummary(variant, option);
-                                          return (
-                                            <div key={option.id} className={option.default ? 'is-default' : ''}>
-                                              <span>{summary.label}{option.minQuantity ? ` · ${option.minQuantity}+` : ''}</span>
-                                              <strong>{moneyPerSf(summary.costPerSf)}</strong>
-                                              <small>{summary.unitCost === undefined ? 'No unit cost' : `${money.format(summary.unitCost)}/${option.pricingBasis}`}</small>
-                                            </div>
-                                          );
-                                        }) : <div className="is-empty"><span>No supplier price programs</span><strong>—</strong></div>}
-                                      </div>
-                                      <button
-                                        type="button"
-                                        className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`}
-                                        onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}
-                                      >{isPinned ? 'Pinned' : 'Pin'}</button>
-                                    </article>
-                                  );
-                                })}
-                                {!activeVariants.length && <div className="materials-variant-empty">This material has no active structured variants yet. Use Edit materials to add slab sizes and supplier price programs.</div>}
-                              </div>
+                              {renderVariantBrowser(material)}
                             </td>
                           </tr>
                         )}
@@ -547,6 +595,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
                 </tbody>
               </table>
             </div>
+            )}
           </section>
         </div>
       )}
