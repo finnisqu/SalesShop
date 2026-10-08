@@ -7,6 +7,7 @@ import { AuthStatus } from './AuthGate';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
 import { useAuthStore } from '../store/authStore';
+import { canEditTeamArea } from '../services/teamDepartments';
 
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'notebook', label: 'Notebook', short: 'Notebook' },
@@ -35,7 +36,12 @@ function catalogLabel(section: CatalogSection) {
 
 export function MobileAppChrome() {
   const view = useNavigationStore((state) => state.view);
-  const viewer = useAuthStore((state) => state.mode === 'cloud' && state.teamRole === 'viewer');
+  const mode = useAuthStore((state) => state.mode);
+  const teamRole = useAuthStore((state) => state.teamRole);
+  const department = useAuthStore((state) => state.teamDepartment);
+  const viewer = mode === 'cloud' && teamRole === 'viewer';
+  const scopedMember = mode === 'cloud' && teamRole === 'member' && department !== 'general';
+  const quoteReadOnly = viewer || (scopedMember && !canEditTeamArea(teamRole, department, 'quotes'));
   const setView = useNavigationStore((state) => state.setView);
   const catalogSection = useNavigationStore((state) => state.catalogSection);
   const setCatalogSection = useNavigationStore((state) => state.setCatalogSection);
@@ -76,7 +82,7 @@ export function MobileAppChrome() {
     [entries, activeEntryId],
   );
 
-  if (view === 'quotes' && !viewer) return null;
+  if (view === 'quotes' && !quoteReadOnly) return null;
 
   const contextTitle = view === 'notebook'
     ? activeEntry?.title || 'Notebook'
@@ -106,7 +112,7 @@ export function MobileAppChrome() {
           <strong>{contextTitle}</strong>
         </div>
         {!viewer && <GlobalSearch />}
-        {!viewer && <QuickCreate />}
+        {!viewer && !scopedMember && <QuickCreate />}
       </header>
 
       {open && <div className="mobile-app-drawer-backdrop" onPointerDown={() => setOpen(false)}>
@@ -145,7 +151,7 @@ export function MobileAppChrome() {
             </div>
           </section>}
 
-          {view === 'board' && !catalogExpanded && <section className="mobile-app-context-section mobile-board-context-section">
+          {view === 'board' && !viewer && !(scopedMember && !canEditTeamArea(teamRole, department, 'crm')) && !catalogExpanded && <section className="mobile-app-context-section mobile-board-context-section">
             <header><div><strong>Board view</strong><small>One CRM, two lenses</small></div></header>
             <div className="mobile-board-mode-list">
               <button type="button" className={boardMode === 'projects' ? 'active' : ''} onClick={() => {
