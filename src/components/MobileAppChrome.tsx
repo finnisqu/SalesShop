@@ -43,6 +43,12 @@ export function MobileAppChrome() {
   const createEntry = useNotebookStore((state) => state.createEntry);
 
   const [open, setOpen] = useState(false);
+  const [catalogExpanded, setCatalogExpanded] = useState(false);
+  const openNavigation = () => {
+    // Every entry starts at the top level: Catalog only expands after an explicit tap.
+    setCatalogExpanded(false);
+    setOpen(true);
+  };
   const drawerRef = useDismissibleLayer<HTMLElement>(open, () => setOpen(false));
   const [boardMode, setBoardMode] = useState<'projects' | 'accounts'>(() => {
     if (typeof window === 'undefined') return 'projects';
@@ -78,14 +84,20 @@ export function MobileAppChrome() {
         : viewLabel(view);
 
   const chooseView = (next: AppView) => {
+    if (next === 'catalog') {
+      // The parent is a navigation group, never an immediate redirect.
+      setCatalogExpanded((current) => !current);
+      return;
+    }
     setOpen(false);
+    setCatalogExpanded(false);
     setView(next);
   };
 
   return (
     <>
       <header className="mobile-app-commandbar">
-        <button type="button" className="mobile-app-menu-button" onClick={() => setOpen(true)} aria-label="Open SalesShop navigation">☰</button>
+        <button type="button" className="mobile-app-menu-button" onClick={openNavigation} aria-label="Open SalesShop navigation">☰</button>
         <div className="mobile-app-current">
           <span>SalesShop</span>
           <strong>{contextTitle}</strong>
@@ -103,8 +115,13 @@ export function MobileAppChrome() {
 
           <nav className="mobile-app-drawer-nav" aria-label="SalesShop sections">
             {APP_DESTINATIONS.map((item) => (
-              <button type="button" key={item.view} className={view === item.view ? 'active' : ''} onClick={() => chooseView(item.view)}>
-                {item.short}
+              <button type="button" key={item.view}
+                className={`${view === item.view ? 'active' : ''} ${item.view === 'catalog' && catalogExpanded ? 'is-expanded' : ''}`.trim()}
+                onClick={() => chooseView(item.view)}
+                aria-expanded={item.view === 'catalog' ? catalogExpanded : undefined}
+                aria-controls={item.view === 'catalog' ? 'mobile-catalog-destinations' : undefined}
+              >
+                {item.short}{item.view === 'catalog' && <span className="mobile-app-catalog-chevron" aria-hidden="true">{catalogExpanded ? '⌃' : '⌄'}</span>}
               </button>
             ))}
           </nav>
@@ -145,11 +162,13 @@ export function MobileAppChrome() {
             </div>
           </section>}
 
-          {view === 'catalog' && <section className="mobile-app-context-section">
-            <header><div><strong>Catalog sections</strong><small>Source of truth</small></div></header>
+          {catalogExpanded && <section id="mobile-catalog-destinations" className="mobile-app-context-section mobile-catalog-destinations">
+            <header><div><strong>Choose a Catalog section</strong><small>Select a destination to open it</small></div></header>
             <div className="mobile-catalog-section-list">
               {CATALOG_SECTIONS.map((item) => (
-                <button type="button" key={item.id} className={catalogSection === item.id ? 'active' : ''} onClick={() => { setCatalogSection(item.id); setOpen(false); }}>
+                <button type="button" key={item.id} className={view === 'catalog' && catalogSection === item.id ? 'active' : ''}
+                  aria-current={view === 'catalog' && catalogSection === item.id ? 'page' : undefined}
+                  onClick={() => { setCatalogSection(item.id); setCatalogExpanded(false); setOpen(false); }}>
                   {item.label}
                 </button>
               ))}
