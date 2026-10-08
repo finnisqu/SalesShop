@@ -40,18 +40,12 @@ jobs:
           VITE_BASE_PATH: '/'
       - name: Verify custom-domain asset paths
         run: |
-          node --input-type=module -e "
-          import fs from 'node:fs';
-          const html = fs.readFileSync('dist/index.html', 'utf8');
-          if (!html.includes('src=\"/assets/') || !html.includes('href=\"/assets/')) {
-            console.error('Built HTML does not point to root-relative JS/CSS assets.');
-            process.exit(1);
-          }
-          if (/\\b(?:src|href)=\"\\/SalesShop\\//.test(html)) {
-            console.error('Built HTML still uses legacy /SalesShop/ paths.');
-            process.exit(1);
-          }
-          "
+          grep -Eq 'src="/assets/' dist/index.html
+          grep -Eq 'href="/assets/' dist/index.html
+          if grep -Eq '(src|href)="/SalesShop/' dist/index.html; then
+            echo "Built HTML still uses the old /SalesShop/ base path" >&2
+            exit 1
+          fi
       - name: Add GitHub Pages SPA fallback
         if: github.event_name != 'pull_request'
         run: |
