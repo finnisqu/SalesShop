@@ -30,7 +30,7 @@ import './catalog-workspace.css';
 import { AuthStatus } from './components/AuthGate';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
-import { Dashboard } from './components/Dashboard';
+import { Connections } from './components/Connections';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
 import { MobileAppChrome } from './components/MobileAppChrome';
@@ -82,7 +82,7 @@ function App() {
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
           <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')}>Catalog</button>
-          <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Dashboard</button>
+          <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Connections</button>
           <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
@@ -102,7 +102,7 @@ function App() {
       ) : view === 'catalog' ? (
         <CatalogWorkspace />
       ) : view === 'dashboard' ? (
-        <Dashboard />
+        <Connections />
       ) : view === 'settings' ? (
         <CompanySettings />
       ) : (
