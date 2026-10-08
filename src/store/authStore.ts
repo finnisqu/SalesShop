@@ -5,6 +5,7 @@ import { appAbsoluteUrl } from '../lib/appUrl';
 import { ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
+import type { TeamDepartment } from '../services/teamDepartments';
 import { inviteAccountDecision, previewTeamInvite, type TeamInvitePreview } from '../services/teamInvitePreview';
 
 export type BackendMode = 'local' | 'cloud';
@@ -19,6 +20,7 @@ interface AuthState {
   session: Session | null;
   organizationId: string | null;
   teamRole: TeamRole | null;
+  teamDepartment: TeamDepartment;
   passwordRecovery: boolean;
   inviteProblem: InviteProblem | null;
   activeInvitePreview: TeamInvitePreview | null;
@@ -125,6 +127,7 @@ async function performSessionApplication(session: Session | null) {
       session: null,
       organizationId: null,
       teamRole: null,
+      teamDepartment: 'general',
       inviteProblem: null,
       activeInvitePreview: null,
       joinWelcome: null,
@@ -133,7 +136,7 @@ async function performSessionApplication(session: Session | null) {
   }
 
   useAuthStore.setState({ busy: true, ready: false, user: session.user, session,
-    organizationId: null, teamRole: null, inviteProblem: null, activeInvitePreview: null, error: null, notice: null });
+    organizationId: null, teamRole: null, teamDepartment: 'general', inviteProblem: null, activeInvitePreview: null, error: null, notice: null });
   try {
     const inviteToken = pendingTeamInviteToken();
     const invitePreview = inviteToken ? await previewTeamInvite(inviteToken) : null;
@@ -158,7 +161,7 @@ async function performSessionApplication(session: Session | null) {
     // Joining members must never upload another device's CRM/quotes into the team.
     if (!supabase) throw new Error('Cloud is unavailable.');
     const { data: membership, error: memberError } = await supabase.from('organization_members')
-      .select('role').eq('organization_id', organizationId).eq('user_id', session.user.id).single();
+      .select('role,job_function').eq('organization_id', organizationId).eq('user_id', session.user.id).single();
     if (memberError || !membership) throw memberError ?? new Error('No team access found.');
     await hydrateCloudDocuments(organizationId, session.user.id, {
       allowCompanySeed: maySeedCompanyFromLocal(membership.role as TeamRole, Boolean(acceptedOrganizationId)),
@@ -179,6 +182,7 @@ async function performSessionApplication(session: Session | null) {
       session,
       organizationId,
       teamRole: membership.role as TeamRole,
+      teamDepartment: (membership.job_function as TeamDepartment) || 'general',
       joinWelcome: readJoinWelcome(session.user.id, organizationId),
       inviteProblem: null,
       activeInvitePreview: null,
@@ -207,6 +211,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   organizationId: null,
   teamRole: null,
+  teamDepartment: 'general',
   passwordRecovery: initialPasswordRecovery(),
   inviteProblem: null,
   activeInvitePreview: null,
@@ -310,7 +315,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     await supabase.auth.signOut();
     set({ passwordRecovery: false, busy: false, user: null, session: null,
-      organizationId: null, teamRole: null, error: null, notice: 'Password updated. Sign in with your new password.' });
+      organizationId: null, teamRole: null, teamDepartment: 'general', error: null, notice: 'Password updated. Sign in with your new password.' });
     return true;
   },
 
@@ -326,6 +331,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       session: null,
       organizationId: null,
       teamRole: null,
+      teamDepartment: 'general',
       inviteProblem: null,
       activeInvitePreview: null,
       joinWelcome: null,
