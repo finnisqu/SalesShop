@@ -18,6 +18,7 @@ import {
   type Company,
 } from '../types/crm';
 import { BoardScrollControls } from './BoardScrollControls';
+import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { CrmCleanupPanel } from './CrmCleanupPanel';
 
@@ -43,6 +44,7 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
   const activities = useCrmStore((state) => state.activities);
   const updateCompany = useCrmStore((state) => state.updateCompany);
   const createContact = useCrmStore((state) => state.createContact);
+  const dialogRef = useDismissibleLayer<HTMLElement>(true, onClose);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [alias, setAlias] = useState('');
@@ -67,11 +69,11 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
   };
 
   return (
-    <div className="project-editor-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <aside className="project-editor account-editor" aria-label="Account details">
+    <div className="project-editor-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor account-editor" aria-label="Account details">
         <header>
           <div><span className="board-eyebrow">Account</span><h2>{company.name}</h2></div>
-          <button type="button" className="editor-close" onClick={onClose}>×</button>
+          <button type="button" className="editor-close" data-dialog-initial-focus onClick={onClose} aria-label="Close account details">×</button>
         </header>
 
         <div className="account-health-callout">
