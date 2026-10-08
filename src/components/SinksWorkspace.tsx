@@ -291,7 +291,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
               const low = prices.length ? Math.min(...prices) : undefined;
               const high = prices.length ? Math.max(...prices) : undefined;
               return (
-                <button type="button" key={model.id} className={selected?.id === model.id ? 'active' : ''} aria-expanded={isMobileCatalog ? expandedMobileSinkId === model.id : undefined} onClick={() => {
+                <button type="button" key={model.id} className={(isMobileCatalog ? expandedMobileSinkId === model.id : selected?.id === model.id) ? 'active' : ''} aria-expanded={isMobileCatalog ? expandedMobileSinkId === model.id : undefined} onClick={() => {
                   setSelectedId(model.id);
                   if (isMobileCatalog) setExpandedMobileSinkId((current) => current === model.id ? null : model.id);
                 }}>
