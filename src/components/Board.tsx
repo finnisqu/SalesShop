@@ -333,7 +333,7 @@ export function Board() {
                     onDragStart={(event) => { setDraggedId(project.id); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', project.id); }}
                   />
                 ))}
-                {!stageProjects.length && <div className="board-empty-card">Drop a project here</div>}
+                {!stageProjects.length && <div className="board-empty-card">{mobileInteraction ? "No projects in this stage yet" : "Drop a project here"}</div>}
               </div>
             </section>
           );
