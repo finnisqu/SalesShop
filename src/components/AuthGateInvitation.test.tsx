@@ -21,15 +21,14 @@ vi.mock('../store/authStore', () => {
 
 import { AuthGate } from './AuthGate';
 
-describe('team invite account creation landing', () => {
-  it('opens account creation first instead of sign in or create shop', () => {
+describe('team invitation account creation', () => {
+  it('waits for invitation preflight before exposing the registration form', () => {
+    // SSR cannot run the invitation verification useEffect, so initial HTML
+    // must be the safe loading state, not a sign-up flow for an unverified token.
     const html = renderToStaticMarkup(<AuthGate><p>Private shop content</p></AuthGate>);
-    expect(html).toContain('Create your account');
-    expect(html).toContain('Create account</button>');
-    expect(html).toContain('Already have an account? Sign in');
-    expect(html).toContain('invited email address');
-    expect(html).not.toContain('>Shop name<');
+    expect(html).toContain('Checking team invitation');
     expect(html).not.toContain('Create SalesShop</button>');
+    expect(html).not.toContain('Create account</button>');
     expect(html).not.toContain('Private shop content');
   });
 });
