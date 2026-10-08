@@ -37,21 +37,22 @@ function escapeHtml(value: string) {
     .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
-function invitationEmail(company: string, role: 'admin' | 'member', link: string) {
+function invitationEmail(company: string, role: 'admin' | 'member', link: string, email: string) {
   const name = escapeHtml(company);
   const safeLink = escapeHtml(link);
+  const safeRecipient = escapeHtml(email);
   const roleText = role === 'admin' ? 'administrator' : 'team member';
   return {
-    subject: `You're invited to join ${company} on SalesShop`,
-    text: `You've been invited to join ${company} as a ${roleText} on SalesShop. Open your private invitation: ${link}\n\nThis link expires in seven days. Use the invited email address to create an account or sign in. If you weren't expecting this invitation, you can ignore this email.`,
+    subject: `${company} invited you to SalesShop`,
+    text: `The ${company} team invited ${email} to join its existing SalesShop workspace as a ${roleText}.\n\nJoin the workspace using this private link:\n${link}\n\nThe invitation expires in seven days. Sign in or register with the invited email address. This message was sent because a workspace administrator invited you; if you didn't expect it, you can safely ignore it.`,
     html: `<!doctype html><html><body style="margin:0;padding:38px 16px;background:#f3f0e7;font-family:Arial,Helvetica,sans-serif;color:#2b2e27">
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;max-width:540px;margin:0 auto;background:#fffdf6;border:1px solid #e2dccb;border-radius:8px">
     <tr><td style="padding:32px 32px 16px;border-bottom:1px solid #e8e3d5"><span style="display:inline-block;background:#2b3029;color:white;border-radius:5px;padding:8px 11px;font-weight:bold">S</span><span style="font-size:17px;font-weight:bold;margin-left:10px">SalesShop</span></td></tr>
     <tr><td style="padding:30px 32px 36px"><div style="text-transform:uppercase;letter-spacing:1.3px;font-size:11px;color:#8f8166;font-weight:bold">Team invitation</div>
     <h1 style="font-size:25px;font-weight:600;line-height:1.3;margin:16px 0">${name} invited you to SalesShop</h1>
-    <p style="font-size:15px;line-height:1.65;color:#5a5b53">You've been invited to collaborate as a ${roleText}. Your quotes, contacts, and materials will be available in your team's existing workspace.</p>
+    <p style="font-size:15px;line-height:1.65;color:#5a5b53">The ${name} team invited you to collaborate as a ${roleText} in its existing SalesShop workspace.</p>
     <a href="${safeLink}" style="display:inline-block;padding:13px 20px;margin:16px 0 22px;background:#30392f;border-radius:5px;color:white;text-decoration:none;font-weight:bold;font-size:14px">Join ${name}</a>
-    <p style="font-size:12px;line-height:1.6;color:#77776e">The invitation expires in seven days and can only be accepted by the invited, email-verified account. If you already have a SalesShop account, use the sign-in option on the invitation page.</p>
+    <p style="font-size:12px;line-height:1.6;color:#77776e">Sent to ${safeRecipient} at the request of your team's SalesShop administrator. This invitation expires in seven days. Sign in or register using that email address. If you weren't expecting this message, you can ignore it.</p>
     </td></tr></table>
     <p style="text-align:center;margin:20px auto;font-size:11px;color:#88877f">SalesShop · <a href="${APP_ORIGIN}" style="color:#65745d">app.salesshop.work</a></p>
     </body></html>`,
@@ -115,8 +116,9 @@ Deno.serve(async (request: Request) => {
     const { data: organization } = await db.from('organizations')
       .select('name').eq('id', organizationId).maybeSingle();
     const company = String(organization?.name ?? 'your team').trim().slice(0, 120) || 'your team';
-    const content = invitationEmail(company, role, link);
+    const content = invitationEmail(company, role, link, email);
     let sent = false;
+    let providerMessageId: string | null = null;
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -126,15 +128,17 @@ Deno.serve(async (request: Request) => {
         },
         body: JSON.stringify({ from: FROM_EMAIL, to: [email], ...content }),
       });
+      const providerResult = await response.json().catch(() => null) as { id?: string; message?: string } | null;
       sent = response.ok;
-      if (!sent) console.error('Resend invitation delivery failed', response.status);
+      if (sent) providerMessageId = typeof providerResult?.id === 'string' ? providerResult.id : null;
+      else console.error('Resend rejected invitation submission', response.status, providerResult?.message ?? 'no error details');
     } catch (error) {
       console.error('Resend invitation network error', error instanceof Error ? error.message : 'unknown');
     }
     // If Resend rejects an email, the admin still receives this one-time link
     // to deliver manually; no confidential API credentials leave this function.
     return json(request, {
-      sent, email, expiresAt: invitation.expires_at,
+      sent, email, expiresAt: invitation.expires_at, providerMessageId,
       ...(!sent ? { invitationUrl: link, error: 'Email could not be delivered. Copy and share the invitation link instead.' } : {}),
     });
   } catch (error) {
