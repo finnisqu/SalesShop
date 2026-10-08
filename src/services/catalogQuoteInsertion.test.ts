@@ -15,7 +15,7 @@ const material = {
   }],
 } as StockMaterial;
 const sink = {
-  id: 'model1', name: '3218 Sink', category: 'kitchen', active: true, variants: [{
+  id: 'model1', name: '3218 Sink', category: 'kitchen', active: true, createdAt: '', updatedAt: '', variants: [{
     id: 'v1', label: 'Single', configuration: 'single', ada: false, active: true, default: true,
     internalCost: 110, sellPrice: 220, history: [],
   }],
