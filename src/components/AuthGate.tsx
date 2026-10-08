@@ -168,6 +168,7 @@ export function AuthStatus() {
   const mode = useAuthStore((state) => state.mode);
   const user = useAuthStore((state) => state.user);
   const organizationId = useAuthStore((state) => state.organizationId);
+  const teamRole = useAuthStore((state) => state.teamRole);
   const error = useAuthStore((state) => state.error);
   const signOut = useAuthStore((state) => state.signOut);
 
@@ -177,7 +178,7 @@ export function AuthStatus() {
 
   return (
     <div className="backend-account" title={error || user?.email || 'Cloud workspace'}>
-      <span className={`backend-status ${organizationId ? 'cloud' : 'warning'}`}>{organizationId ? 'Cloud' : 'Cloud issue'}</span>
+      <span className={`backend-status ${organizationId ? 'cloud' : 'warning'}`} title={teamRole === 'viewer' ? 'Read-only Viewer access' : 'Shared cloud workspace'}>{organizationId ? teamRole === 'viewer' ? 'Viewer · Cloud' : 'Cloud' : 'Cloud issue'}</span>
       <button type="button" onClick={() => void signOut()}>Sign out</button>
     </div>
   );
