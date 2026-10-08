@@ -328,11 +328,11 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
           <section className="materials-mobile-tools-section">
             <span className="materials-mobile-tools-label">Mode</span>
             <div className="materials-mobile-mode-row">
-              <button type="button" className={!editing ? 'active' : ''} onClick={() => setEditing(false)}>
+              <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}>
                 <strong>Reference</strong>
                 <small>Search, compare, and look up costs</small>
               </button>
-              <button type="button" className={editing ? 'active' : ''} onClick={() => setEditing(true)}>
+              <button type="button" className={editing ? 'active' : ''} onClick={() => { setEditing(true); setMobileToolsOpen(false); }}>
                 <strong>Edit materials</strong>
                 <small>Maintain catalog records and variants</small>
               </button>
