@@ -16,6 +16,12 @@ describe('safe team invitation preflight', () => {
     expect(inviteAccountDecision({ ...pending, currentAccountMatches: null }, true)).toBe('switch-account');
   });
 
+  it('previews a viewer invitation safely', () => {
+    const viewer = { ...pending, role: 'viewer' as const };
+    expect(viewer.role).toBe('viewer');
+    expect(inviteAccountDecision(viewer, false)).toBe('continue');
+  });
+
   it('permits a verified-email-matched signed-in account to try acceptance', () => {
     expect(inviteAccountDecision({ ...pending, currentAccountMatches: true }, true)).toBe('continue');
   });
