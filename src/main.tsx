@@ -34,6 +34,7 @@ import './materials-workspace.css';
 import './sinks-workspace.css';
 import './materials-suppliers.css';
 import './mobile-app-shell.css';
+import './rates-mobile-reference.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
