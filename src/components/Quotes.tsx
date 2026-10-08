@@ -19,6 +19,8 @@ import { useCrmStore } from '../store/crmStore';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import { useNavigationStore, type AppView } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { useAuthStore } from '../store/authStore';
+import { canIssueTeamQuote } from '../services/teamDepartments';
 import {
   commercialDocumentLabel,
   displayQuoteNumber,
@@ -640,6 +642,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
   const reorderSection = useQuoteStore((state) => state.reorderSection);
   const setCustomerColumns = useQuoteStore((state) => state.setCustomerColumns);
   const recordSent = useQuoteStore((state) => state.recordSent);
+  const canIssueQuote = useAuthStore((state) => state.mode !== 'cloud' || canIssueTeamQuote(state.teamRole, state.teamDepartment);
   const createRevision = useQuoteStore((state) => state.createRevision);
   const createChangeOrder = useQuoteStore((state) => state.createChangeOrder);
   const restoreQuote = useQuoteStore((state) => state.restoreQuote);
@@ -904,7 +907,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
           <div className="quote-mobile-menu-section">
             <span className="quote-mobile-menu-heading">Document actions</span>
             <div className="quote-mobile-document-actions">
-              {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="is-send" disabled={sending} onClick={() => void send()}>{sending ? 'Sending…' : `Send ${documentLabel}`}</button>}
+              {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="is-send" disabled={sending || !canIssueQuote} title={!canIssueQuote ? 'Only authorized Salesperson, General Member, Admin or Owner accounts may issue customer quotes.' : undefined} onClick={() => void send()}>{sending ? 'Sending…' : `Send ${documentLabel}`}</button>}
               <QuoteShareControl />
               {canSign && <button type="button" className="is-sign" onClick={() => { setSignatureOpen(true); setMobileMenu(null); }}>Sign now</button>}
               {quote.status === 'Signed' && <button type="button" onClick={() => { setSignatureOpen(true); setMobileMenu(null); }}>View signature</button>}
@@ -942,7 +945,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
           </div>
           <div className="quote-document-actions">
             {(quote.status === 'Draft' || quote.status === 'Ready') && (
-              <button type="button" className="quote-send-button quote-action-button" disabled={sending} onClick={() => void send()}>
+              <button type="button" className="quote-send-button quote-action-button" disabled={sending || !canIssueQuote} title={!canIssueQuote ? 'You can prepare this estimate, but your department cannot issue customer quotes.' : undefined} onClick={() => void send()}>
                 <span className="quote-action-icon" aria-hidden="true">↑</span>
                 <span className="quote-action-label">{sending ? 'Sending…' : `Send ${documentLabel}`}</span>
               </button>
@@ -985,6 +988,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
           <div><strong>Frozen revision</strong><span>Customer-facing content is locked. Create a revision to make commercial changes without altering what was previously sent.</span></div>
         </div>
       ) : null}
+      {!canIssueQuote && (quote.status === 'Draft' || quote.status === 'Ready') && <div className="quote-share-error" role="status">Estimate preparation only — ask a Salesperson, General Member, Admin or Owner to issue this customer quote.</div>}
       {sendError && <div className="quote-share-error" role="alert">{sendError}</div>}
       <div className={`quote-workbench-body ${pricingSchedule ? 'is-swipeable' : ''}`} style={{ '--quote-workspace-zoom': workspaceZoom / 100 } as CSSProperties} onTouchStart={beginPricingSwipe} onTouchEnd={finishPricingSwipe} onTouchCancel={() => { swipeStart.current = null; }}>
         {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingScheduleWorkbook quote={quote} /></div> : effectiveMode !== 'customer' ? (
