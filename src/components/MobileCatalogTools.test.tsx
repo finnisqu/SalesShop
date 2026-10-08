@@ -29,6 +29,38 @@ describe('mobile catalog shared controls', () => {
     expect(html).toContain('All families');
   });
 
+  it('isolates the Filter menu options between its header and action footer', () => {
+    const html = renderToStaticMarkup(
+      <MobileCatalogFilterSheet section="Materials" onClose={() => {}}>
+        <label><span>Finish</span><select defaultValue="all"><option value="all">All finishes</option></select></label>
+        <label><span>Thickness</span><select defaultValue="all"><option value="all">All thicknesses</option></select></label>
+      </MobileCatalogFilterSheet>,
+    );
+    const head = html.indexOf('class="mobile-catalog-tools-header"');
+    const body = html.indexOf('class="mobile-catalog-tools-content"');
+    const finish = html.indexOf('All finishes');
+    const thickness = html.indexOf('All thicknesses');
+    const footer = html.indexOf('class="mobile-catalog-tools-footer"');
+    const done = html.indexOf('Done · View results');
+    expect(head).toBeGreaterThan(0);
+    expect(body).toBeGreaterThan(head);
+    expect(finish).toBeGreaterThan(body);
+    expect(thickness).toBeGreaterThan(finish);
+    expect(footer).toBeGreaterThan(thickness);
+    expect(done).toBeGreaterThan(footer);
+    expect(html).toContain('mobile-catalog-tools-sheet has-footer');
+  });
+
+  it('keeps the Sinks save status outside scrollable Tools content', () => {
+    const html = renderToStaticMarkup(
+      <MobileCatalogToolsSheet title="Sink tools" section="Sinks" description="Edit" onClose={() => {}} footer="Changes saved">
+        <section><strong>Catalog visibility</strong></section>
+      </MobileCatalogToolsSheet>,
+    );
+    expect(html.indexOf('Catalog visibility')).toBeLessThan(html.indexOf('Changes saved'));
+    expect(html.indexOf('class="mobile-catalog-tools-content"')).toBeLessThan(html.indexOf('class="mobile-catalog-tools-footer"'));
+  });
+
   it('renders dismissible filter buttons and Clear all only for multiple selections', () => {
     const items = [
       { key: 'brand', label: 'Caesarstone', onRemove: () => {} },
