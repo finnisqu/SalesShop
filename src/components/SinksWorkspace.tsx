@@ -12,6 +12,7 @@ import {
   type SinkVariant,
 } from '../types/sink';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
+import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const MOUNT_TYPES: Array<[SinkMountType, string]> = [
@@ -223,7 +224,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
     ...(showInactive ? [{ key: 'archived', label: 'Including archived', onRemove: () => setShowInactive(false) }] : []),
   ];
 
-  if (!hydrated) return <div className="sinks-loading">Opening Sinks…</div>;
+  if (!hydrated) return <WorkspaceLoadingState title="Opening Sinks" detail="Loading models, variants, and pricing…" />;
 
   return (
     <main className={`sinks-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
