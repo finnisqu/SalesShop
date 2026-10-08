@@ -21,6 +21,8 @@ import { useNavigationStore, type AppView } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useAuthStore } from '../store/authStore';
 import { canIssueTeamQuote } from '../services/teamDepartments';
+import { resolveOwnerPerspective } from '../services/rolePerspective';
+import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import {
   commercialDocumentLabel,
   displayQuoteNumber,
@@ -642,7 +644,13 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
   const reorderSection = useQuoteStore((state) => state.reorderSection);
   const setCustomerColumns = useQuoteStore((state) => state.setCustomerColumns);
   const recordSent = useQuoteStore((state) => state.recordSent);
-  const canIssueQuote = useAuthStore((state) => state.mode !== 'cloud' || canIssueTeamQuote(state.teamRole, state.teamDepartment);
+  const currentMode = useAuthStore((state) => state.mode);
+  const currentRole = useAuthStore((state) => state.teamRole);
+  const currentDepartment = useAuthStore((state) => state.teamDepartment);
+  const previewId = useRolePerspectiveStore((state) => state.activePerspective);
+  const perspective = resolveOwnerPerspective(previewId, currentRole, currentMode);
+  const canIssueQuote = currentMode !== 'cloud' ||
+    canIssueTeamQuote(perspective?.role ?? currentRole, perspective?.department ?? currentDepartment);
   const createRevision = useQuoteStore((state) => state.createRevision);
   const createChangeOrder = useQuoteStore((state) => state.createChangeOrder);
   const restoreQuote = useQuoteStore((state) => state.restoreQuote);
