@@ -8,6 +8,9 @@ import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
 import { useAuthStore } from '../store/authStore';
 import { canEditTeamArea } from '../services/teamDepartments';
+import { resolveOwnerPerspective } from '../services/rolePerspective';
+import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
+import { RolePerspectivePicker } from './RolePerspectiveControls';
 
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'notebook', label: 'Notebook', short: 'Notebook' },
@@ -39,9 +42,13 @@ export function MobileAppChrome() {
   const mode = useAuthStore((state) => state.mode);
   const teamRole = useAuthStore((state) => state.teamRole);
   const department = useAuthStore((state) => state.teamDepartment);
-  const viewer = mode === 'cloud' && teamRole === 'viewer';
-  const scopedMember = mode === 'cloud' && teamRole === 'member' && department !== 'general';
-  const quoteReadOnly = viewer || (scopedMember && !canEditTeamArea(teamRole, department, 'quotes'));
+  const previewId = useRolePerspectiveStore((state) => state.activePerspective);
+  const preview = resolveOwnerPerspective(previewId, teamRole, mode);
+  const effectiveRole = preview?.role ?? teamRole;
+  const effectiveDepartment = preview?.department ?? department;
+  const viewer = mode === 'cloud' && effectiveRole === 'viewer';
+  const scopedMember = mode === 'cloud' && effectiveRole === 'member' && effectiveDepartment !== 'general';
+  const quoteReadOnly = viewer || (scopedMember && !canEditTeamArea(effectiveRole, effectiveDepartment, 'quotes'));
   const setView = useNavigationStore((state) => state.setView);
   const catalogSection = useNavigationStore((state) => state.catalogSection);
   const setCatalogSection = useNavigationStore((state) => state.setCatalogSection);
@@ -82,7 +89,7 @@ export function MobileAppChrome() {
     [entries, activeEntryId],
   );
 
-  if (view === 'quotes' && !quoteReadOnly) return null;
+  if (view === 'quotes' && !quoteReadOnly && !preview) return null;
 
   const contextTitle = view === 'notebook'
     ? activeEntry?.title || 'Notebook'
@@ -111,8 +118,9 @@ export function MobileAppChrome() {
           <span>SalesShop</span>
           <strong>{contextTitle}</strong>
         </div>
-        {!viewer && <GlobalSearch />}
-        {!viewer && !scopedMember && <QuickCreate />}
+        <RolePerspectivePicker compact />
+        {!viewer && !preview && <GlobalSearch />}
+        {!viewer && !scopedMember && !preview && <QuickCreate />}
       </header>
 
       {open && <div className="mobile-app-drawer-backdrop" onPointerDown={() => setOpen(false)}>
@@ -151,7 +159,7 @@ export function MobileAppChrome() {
             </div>
           </section>}
 
-          {view === 'board' && !viewer && !(scopedMember && !canEditTeamArea(teamRole, department, 'crm')) && !catalogExpanded && <section className="mobile-app-context-section mobile-board-context-section">
+          {view === 'board' && !viewer && !preview && !(scopedMember && !canEditTeamArea(effectiveRole, effectiveDepartment, 'crm')) && !catalogExpanded && <section className="mobile-app-context-section mobile-board-context-section">
             <header><div><strong>Board view</strong><small>One CRM, two lenses</small></div></header>
             <div className="mobile-board-mode-list">
               <button type="button" className={boardMode === 'projects' ? 'active' : ''} onClick={() => {
