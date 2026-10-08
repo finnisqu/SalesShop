@@ -28,7 +28,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
     quoteIsCommerciallyEditable(quote) && quote.documentType !== 'pricing-schedule',
   ), [quotes]);
   const [targetId, setTargetId] = useState<string>(() => activeQuoteId ?? TARGET_NEW);
-  const [variantId, setVariantId] = useState(() => source.variantId ?? '');
+  const [variantId, setVariantId] = useState(() => source.kind === 'rate' ? '' : source.variantId ?? '');
   const [purchaseOptionId, setPurchaseOptionId] = useState('');
   const [quantityText, setQuantityText] = useState(() => source.kind === 'sink' ? '1' : source.kind === 'rate' && ['each','slab'].includes(source.item.unit) ? '1' : '');
   const [newTitle, setNewTitle] = useState('');
