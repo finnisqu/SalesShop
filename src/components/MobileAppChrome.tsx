@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigationStore, type AppView, type CatalogSection } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
 import { AuthStatus } from './AuthGate';
@@ -42,6 +42,20 @@ export function MobileAppChrome() {
   const createEntry = useNotebookStore((state) => state.createEntry);
 
   const [open, setOpen] = useState(false);
+  const [boardMode, setBoardMode] = useState<'projects' | 'accounts'>(() => {
+    if (typeof window === 'undefined') return 'projects';
+    return window.sessionStorage.getItem('salesshop-board-mode-v1') === 'accounts' ? 'accounts' : 'projects';
+  });
+
+  useEffect(() => {
+    const syncBoardMode = (event: Event) => {
+      const detail = (event as CustomEvent<{ mode?: 'projects' | 'accounts' }>).detail;
+      if (detail?.mode) setBoardMode(detail.mode);
+    };
+    window.addEventListener('sales-shop:board-mode-changed', syncBoardMode);
+    return () => window.removeEventListener('sales-shop:board-mode-changed', syncBoardMode);
+  }, []);
+
 
   const activeEntry = entries.find((entry) => entry.id === activeEntryId) ?? null;
   const visibleEntries = useMemo(
@@ -57,7 +71,9 @@ export function MobileAppChrome() {
     ? activeEntry?.title || 'Notebook'
     : view === 'catalog'
       ? `Catalog · ${catalogLabel(catalogSection)}`
-      : viewLabel(view);
+      : view === 'board'
+        ? `Board · ${boardMode === 'accounts' ? 'Accounts' : 'Projects'}`
+        : viewLabel(view);
 
   const chooseView = (next: AppView) => {
     setOpen(false);
@@ -104,6 +120,26 @@ export function MobileAppChrome() {
                   <small>{new Date(entry.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small>
                 </button>
               ))}
+            </div>
+          </section>}
+
+          {view === 'board' && <section className="mobile-app-context-section mobile-board-context-section">
+            <header><div><strong>Board view</strong><small>One CRM, two lenses</small></div></header>
+            <div className="mobile-board-mode-list">
+              <button type="button" className={boardMode === 'projects' ? 'active' : ''} onClick={() => {
+                setBoardMode('projects');
+                window.dispatchEvent(new CustomEvent('sales-shop:board-mode-request', { detail: { mode: 'projects' } }));
+                setOpen(false);
+              }}>
+                <strong>Projects</strong><small>Work we are trying to win or perform</small>
+              </button>
+              <button type="button" className={boardMode === 'accounts' ? 'active' : ''} onClick={() => {
+                setBoardMode('accounts');
+                window.dispatchEvent(new CustomEvent('sales-shop:board-mode-request', { detail: { mode: 'accounts' } }));
+                setOpen(false);
+              }}>
+                <strong>Accounts</strong><small>Customer relationship health</small>
+              </button>
             </div>
           </section>}
 
