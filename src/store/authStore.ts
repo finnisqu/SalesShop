@@ -1,6 +1,7 @@
 import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { supabase, supabaseConfigured } from '../lib/supabase';
+import { appAbsoluteUrl } from '../lib/appUrl';
 import { ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
@@ -14,11 +15,14 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   organizationId: string | null;
+  passwordRecovery: boolean;
   error: string | null;
   notice: string | null;
   initialize: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<boolean>;
   signUp: (email: string, password: string, shopName: string) => Promise<boolean>;
+  sendPasswordReset: (email: string) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   clearMessage: () => void;
   retryWorkspace: () => Promise<void>;
@@ -28,6 +32,11 @@ interface AuthState {
 let initializePromise: Promise<void> | null = null;
 let authListenerStarted = false;
 let inviteAcceptance: Promise<string> | null = null;
+
+function initialPasswordRecovery() {
+  if (typeof window === 'undefined') return false;
+  return /(?:[?#&])type=recovery(?:[&#]|$)/.test(window.location.search + window.location.hash);
+}
 
 async function acceptPendingInvitation(): Promise<string | null> {
   // Supabase refresh and getSession may overlap: await the same acceptance.
@@ -125,6 +134,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   organizationId: null,
+  passwordRecovery: initialPasswordRecovery(),
   error: null,
   notice: null,
 
@@ -139,7 +149,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ mode: 'cloud', ready: false, busy: true, error: null });
       if (!authListenerStarted) {
         authListenerStarted = true;
-        supabase.auth.onAuthStateChange((_event, session) => {
+        supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'PASSWORD_RECOVERY') useAuthStore.setState({ passwordRecovery: true });
           void applySession(session);
         });
       }
@@ -177,6 +188,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       email: email.trim(),
       password,
       options: {
+        emailRedirectTo: appAbsoluteUrl('/'),
         data: {
           shop_name: shopName.trim() || 'My Shop',
           shop_timezone: browserTimezone(),
@@ -197,6 +209,31 @@ export const useAuthStore = create<AuthState>((set) => ({
         notice: 'Account created. Check your email to confirm your address, then sign in.',
       });
     }
+    return true;
+  },
+
+  sendPasswordReset: async (email) => {
+    if (!supabase) return false;
+    set({ busy: true, error: null, notice: null });
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: appAbsoluteUrl('/'),
+    });
+    set({ busy: false, error: error?.message ?? null,
+      notice: error ? null : 'If this address has an account, you will receive a password reset email shortly.' });
+    return !error;
+  },
+
+  updatePassword: async (password) => {
+    if (!supabase) return false;
+    set({ busy: true, error: null, notice: null });
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      set({ busy: false, error: error.message });
+      return false;
+    }
+    await supabase.auth.signOut();
+    set({ passwordRecovery: false, busy: false, user: null, session: null,
+      organizationId: null, error: null, notice: 'Password updated. Sign in with your new password.' });
     return true;
   },
 
