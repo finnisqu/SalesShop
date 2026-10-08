@@ -363,15 +363,15 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
                 </div>
               </details>
               <button type="button" className="mobile-catalog-filter-trigger" aria-haspopup="dialog" onClick={() => setMobileFilterOpen(true)}>Filter{activeFilterCount ? ` · ${activeFilterCount}` : ''}</button>
-              <label className="rates-sort-control">
-                <span>Sort</span>
+              <label className="rates-sort-control materials-sort-control">
+                <span>Sort by</span>
                 <select value={sort} onChange={(event) => setSort(event.target.value as MaterialSort)} aria-label="Sort material library">
-                  <option value="stock-brand">STOCK / brand</option>
+                  <option value="stock-brand">{isMobileReference ? 'STOCK · Brand' : 'STOCK / brand'}</option>
                   <option value="name">Color A–Z</option>
                   <option value="brand">Brand A–Z</option>
                   <option value="type">Material type</option>
-                  <option value="cost-asc">Cost / SF · low to high</option>
-                  <option value="cost-desc">Cost / SF · high to low</option>
+                  <option value="cost-asc">{isMobileReference ? 'Cost · Low first' : 'Cost / SF · low to high'}</option>
+                  <option value="cost-desc">{isMobileReference ? 'Cost · High first' : 'Cost / SF · high to low'}</option>
                 </select>
               </label>
             </>
