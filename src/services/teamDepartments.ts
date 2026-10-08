@@ -41,6 +41,12 @@ export function canEditTeamArea(role: TeamRole | null, department: TeamDepartmen
   return TEAM_DEPARTMENT_DETAILS[department].writableAreas.includes(area);
 }
 
+/** Local UX mirror; the server independently guards quote issuance. */
+export function canIssueTeamQuote(role: TeamRole | null, department: TeamDepartment) {
+  if (role === 'owner' || role === 'admin') return true;
+  return role === 'member' && (department === 'general' || department === 'salesperson');
+}
+
 export function departmentName(value: TeamDepartment) {
   return TEAM_DEPARTMENT_DETAILS[value].name;
 }
