@@ -1,6 +1,4 @@
 /* Batch 7 — mobile quote destination list + connected CRM workspaces. */
-.catalog-quote-mobile-destination,
-.catalog-quote-choice-screen { display:none; }
 .crm-linked-quotes{
   display:grid;
   gap:9px;
@@ -80,43 +78,5 @@
 .quote-crm-connection-grid strong{color:#504533;font-size:11px;line-height:1.4}
 .quote-crm-connection-grid small{font-size:10px;line-height:1.3;color:#8a7d6d}
 @media(max-width:700px){
-  .catalog-quote-desktop-destination{display:none!important}
-  .catalog-quote-mobile-destination{display:grid;gap:6px}
-  .catalog-quote-mobile-destination>span{color:#766a55;font-size:10px;font-weight:850;text-transform:uppercase}
-  .catalog-quote-selected-quote{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 18px;
-    align-content:center;
-    gap:4px 6px;
-    min-width:0;
-    min-height:62px;
-    padding:10px 12px;
-    border:1px solid #c4af7c;
-    border-radius:7px;
-    background:#fffdf8;
-    color:#534637;
-    text-align:left;
-    box-shadow:0 0 0 2px rgba(187,157,96,.14);
-  }
-  .catalog-quote-selected-quote>strong,.catalog-quote-selected-quote>small{grid-column:1;overflow-wrap:anywhere}
-  .catalog-quote-selected-quote>strong{font:700 15px/1.25 Georgia,'Times New Roman',serif}
-  .catalog-quote-selected-quote>small{font-size:11px;color:#817461;line-height:1.35}
-  .catalog-quote-selected-quote>b{grid-column:2;grid-row:1/3;align-self:center;font-size:26px;color:#9b8253}
-  .catalog-quote-choice-screen{display:flex;flex-direction:column;min-height:0;overflow:hidden;flex:1}
-  .catalog-quote-choice-screen>header{display:flex;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #d5c8b5}
-  .catalog-quote-choice-screen>header button{min-height:42px;border:1px solid #d5c5a7;border-radius:7px;background:#fffaf0;padding:8px 12px}
-  .catalog-quote-choice-screen>header strong{font:700 16px Georgia,'Times New Roman',serif}
-  .catalog-quote-choice-list{display:grid;align-content:start;gap:6px;overflow-y:auto;overscroll-behavior:contain;padding:12px 12px calc(18px + env(safe-area-inset-bottom))}
-  .catalog-quote-choice-row{
-    display:grid;gap:5px;min-height:65px;width:100%;box-sizing:border-box;
-    border:1px solid #d7c8b0;border-radius:7px;
-    background:#fffdf7;
-    padding:11px 12px;text-align:left;overflow-wrap:anywhere;
-    color:#514435;
-  }
-  .catalog-quote-choice-row strong{font:700 15px/1.3 Georgia,'Times New Roman',serif}
-  .catalog-quote-choice-row span{font-size:12px;color:#6f6352}
-  .catalog-quote-choice-row small{font-size:11px;color:#927f61}
-  .catalog-quote-choice-row.selected{border-color:#ad9059;background:#fff2d7;box-shadow:inset 3px 0 #ae9059}
   .quote-crm-connection-grid{grid-template-columns:1fr}
 }
