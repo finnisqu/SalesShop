@@ -589,6 +589,14 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   recordSent: async (quoteId) => {
     const initial = get().quotes.find((quote) => quote.id === quoteId);
     if (!initial || (initial.status !== 'Draft' && initial.status !== 'Ready')) return;
+    const auth = useAuthStore.getState();
+    if (supabase && auth.mode === 'cloud' && auth.organizationId) {
+      const { data: mayIssue, error: permissionError } = await supabase.rpc('can_issue_team_quote', {
+        target_organization: auth.organizationId,
+      });
+      if (permissionError) throw permissionError;
+      if (mayIssue !== true) throw new Error('Your team role can prepare estimates but cannot issue customer quotes. Ask your administrator for Salesperson or General Member access.');
+    }
     if (initial.documentType === 'pricing-schedule') validatePricingScheduleForSend(initial.pricingSchedule);
 
     const identity = await assignCommercialIdentity(initial, {
