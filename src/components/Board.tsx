@@ -6,6 +6,7 @@ import { AccountsBoard } from './AccountsBoard';
 import { BoardScrollControls } from './BoardScrollControls';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
+import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { detachNotebookPagesForProject, ProjectNotebookLinks } from './ProjectNotebookLinks';
 import {
   isMobileBoardInteraction,
@@ -271,7 +272,7 @@ export function Board() {
     setDraggedId(null); setDragStage(null);
   };
 
-  if (!hydrated) return <div className="board-loading">Opening sales boards…</div>;
+  if (!hydrated) return <WorkspaceLoadingState title="Opening Board" detail="Loading projects, accounts, and sales activity…" />;
   if (boardMode === 'accounts') return <AccountsBoard onShowProjects={() => setBoardMode('projects')} />;
 
   return (
