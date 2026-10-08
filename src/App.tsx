@@ -28,8 +28,12 @@ import './quote-popover-polish.css';
 import './quote-mobile-pass.css';
 import './catalog-workspace.css';
 import './viewer-workspace.css';
+import './role-perspective.css';
 import { AuthStatus } from './components/AuthGate';
 import { ViewerWorkspace } from './components/ViewerWorkspace';
+import { RolePerspectivePicker, RolePerspectiveBanner, RolePerspectiveSettings } from './components/RolePerspectiveControls';
+import { resolveOwnerPerspective } from './services/rolePerspective';
+import { useRolePerspectiveStore } from './store/rolePerspectiveStore';
 import { useAuthStore } from './store/authStore';
 import { canEditTeamArea } from './services/teamDepartments';
 import { Board } from './components/Board';
@@ -56,12 +60,17 @@ function App() {
   const teamRole = useAuthStore((state) => state.teamRole);
   const department = useAuthStore((state) => state.teamDepartment);
   const catalogSection = useNavigationStore((state) => state.catalogSection);
-  const viewer = mode === 'cloud' && teamRole === 'viewer';
-  const scopedMember = mode === 'cloud' && teamRole === 'member' && department !== 'general';
+  const previewId = useRolePerspectiveStore((state) => state.activePerspective);
+  const preview = resolveOwnerPerspective(previewId, teamRole, mode);
+  const effectiveRole = preview?.role ?? teamRole;
+  const effectiveDepartment = preview?.department ?? department;
+  const inRolePreview = Boolean(preview);
+  const viewer = mode === 'cloud' && effectiveRole === 'viewer';
+  const scopedMember = mode === 'cloud' && effectiveRole === 'member' && effectiveDepartment !== 'general';
   const readOnlyArea = viewer || (scopedMember && (
-    ((view === 'board' || view === 'dashboard') && !canEditTeamArea(teamRole, department, 'crm')) ||
-    (view === 'quotes' && !canEditTeamArea(teamRole, department, 'quotes')) ||
-    (view === 'catalog' && !(catalogSection === 'suppliers' && canEditTeamArea(teamRole, department, 'supplier')))
+    ((view === 'board' || view === 'dashboard') && !canEditTeamArea(effectiveRole, effectiveDepartment, 'crm')) ||
+    (view === 'quotes' && !canEditTeamArea(effectiveRole, effectiveDepartment, 'quotes')) ||
+    (view === 'catalog' && !(catalogSection === 'suppliers' && canEditTeamArea(effectiveRole, effectiveDepartment, 'supplier')))
   ));
   const setView = useNavigationStore((state) => state.setView);
   const openProject = useNavigationStore((state) => state.openProject);
@@ -89,7 +98,8 @@ function App() {
   if (!hydrated || !entry) return <div className="loading-screen">Opening SalesShop…</div>;
 
   return (
-    <div className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}`}>
+    <div className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}${inRolePreview ? ' owner-perspective-active' : ''}`}>
+      <RolePerspectiveBanner />
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
         <nav className="app-tabs" aria-label="SalesShop sections">
@@ -101,17 +111,21 @@ function App() {
           <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
           <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
         </nav>
-        {!viewer && <GlobalSearch />}
-        {!viewer && !scopedMember && <QuickCreate />}
+        {!viewer && !inRolePreview && <GlobalSearch />}
+        {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
         <div className="app-account-zone">
+          <RolePerspectivePicker />
           <div className="migration-chip">React foundation</div>
           <AuthStatus />
         </div>
       </header>
       <MobileAppChrome />
 
-      {readOnlyArea && view !== 'notebook' && view !== 'settings' ? (
-        <ViewerWorkspace section={view} />
+      <div className="role-perspective-content" inert={inRolePreview && !readOnlyArea && view !== 'settings'}>
+      {inRolePreview && view === 'settings' ? (
+        <RolePerspectiveSettings />
+      ) : readOnlyArea && view !== 'notebook' && view !== 'settings' ? (
+        <ViewerWorkspace section={view} previewRole={effectiveRole} previewDepartment={effectiveDepartment} />
       ) : view === 'board' ? (
         <Board />
       ) : view === 'quotes' ? (
@@ -164,6 +178,7 @@ function App() {
           </section>
         </main>
       )}
+      </div>
     </div>
   );
 }
