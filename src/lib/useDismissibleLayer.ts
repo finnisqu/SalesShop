@@ -1,6 +1,17 @@
 import { useEffect, useRef, type RefObject } from 'react';
 
 /**
+ * Returns the target for Tab wrapping inside a dialog.
+ * An activeIndex of -1 means the keyboard focus escaped the overlay.
+ */
+export function modalTabWrapTarget(activeIndex: number, length: number, backwards: boolean): 'first' | 'last' | null {
+  if (!length) return null;
+  if (backwards && (activeIndex <= 0)) return 'last';
+  if (!backwards && (activeIndex === -1 || activeIndex === length - 1)) return 'first';
+  return null;
+}
+
+/**
  * Keyboard and focus lifecycle for a temporary dialog/drawer.
  * Works for desktop and touch overlays; does not block background scroll on its own.
  */
@@ -41,14 +52,11 @@ export function useDismissibleLayer<T extends HTMLElement>(
         event.preventDefault();
         return;
       }
-      const first = targets[0];
-      const last = targets[targets.length - 1];
-      if (event.shiftKey && (document.activeElement === first || !layer.contains(document.activeElement))) {
+      const activeIndex = targets.indexOf(document.activeElement as HTMLElement);
+      const wrap = modalTabWrapTarget(activeIndex, targets.length, event.shiftKey);
+      if (wrap) {
         event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !layer.contains(document.activeElement))) {
-        event.preventDefault();
-        first.focus();
+        (wrap === 'first' ? targets[0] : targets[targets.length - 1]).focus();
       }
     };
     document.addEventListener('keydown', onKeyDown, true);
