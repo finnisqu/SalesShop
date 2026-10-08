@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MobileCatalogReferenceCard } from './MobileCatalogReferenceCard';
+import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import {
   SINK_CATEGORIES,
   SINK_CATEGORY_LABELS,
@@ -216,6 +217,12 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
         </section>
   );
 
+  const activeMobileFilters: MobileCatalogFilterChip[] = [
+    ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
+    ...(category !== 'all' ? [{ key: 'category', label: SINK_CATEGORY_LABELS[category], onRemove: () => setCategory('all') }] : []),
+    ...(showInactive ? [{ key: 'archived', label: 'Including archived', onRemove: () => setShowInactive(false) }] : []),
+  ];
+
   if (!hydrated) return <div className="sinks-loading">Opening Sinks…</div>;
 
   return (
@@ -253,15 +260,15 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
           <button type="button" className="sinks-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open sink catalog tools">••• <span>Tools</span></button>
         </div>
       </section>
+      <MobileCatalogActiveFilters items={activeMobileFilters}
+        onClear={() => { setQuery(''); setCategory('all'); setShowInactive(false); }} />
 
       {mobileToolsOpen && (
-        <div className="sinks-mobile-tools-backdrop" onPointerDown={() => setMobileToolsOpen(false)}>
-          <aside className="sinks-mobile-tools-sheet" role="dialog" aria-modal="true" aria-label="Sink catalog tools" onPointerDown={(event) => event.stopPropagation()}>
-            <header>
-              <div><span>Catalog · Sinks</span><strong>Sink tools</strong><small>Browse by default; open maintenance only when needed.</small></div>
-              <button type="button" onClick={() => setMobileToolsOpen(false)} aria-label="Close sink tools">×</button>
-            </header>
-            <section>
+        <MobileCatalogToolsSheet title="Sink tools" section="Sinks"
+          description="Browse by default; open maintenance only when needed."
+          onClose={() => setMobileToolsOpen(false)}
+          footer={error ? 'Cloud sync issue' : saving ? 'Saving changes…' : 'Changes saved'}>
+          <section>
               <span className="sinks-mobile-tools-label">Mode</span>
               <div className="sinks-mobile-mode-row">
                 <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up models and pricing</small></button>
@@ -277,9 +284,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
               <button type="button" className="sinks-mobile-add-model" onClick={createModel}>+ Add sink model</button>
               <small>Choose a model to edit its details, variants, prices and history.</small>
             </section>}
-            <footer className={error ? 'has-error' : ''}>{error ? 'Cloud sync issue' : saving ? 'Saving changes…' : 'Changes saved'}</footer>
-          </aside>
-        </div>
+        </MobileCatalogToolsSheet>
       )}
 
       <div className="sinks-catalog-shell">
