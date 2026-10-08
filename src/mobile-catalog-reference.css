@@ -410,3 +410,99 @@
     font-size:12px;
   }
 }
+
+/* Mobile Catalog Filter must never trap users behind a fixed desktop popover.
+   On phones, Filter opens the same bottom sheet as Tools with Done / Close / backdrop / Escape. */
+.mobile-catalog-filter-trigger{display:none}
+@media(max-width:700px){
+  .sales-app.view-catalog .rates-reference-tools > .rates-filter-menu{
+    display:none!important;
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-trigger{
+    display:inline-flex;
+    flex:0 0 auto;
+    align-items:center;
+    justify-content:center;
+    min-width:78px;
+    min-height:42px;
+    padding:0 10px;
+    border:1px solid rgba(91,78,58,.18);
+    border-radius:6px;
+    background:#fffaf0;
+    color:#62594e;
+    font-size:11px;
+    font-weight:800;
+    white-space:nowrap;
+    cursor:pointer;
+  }
+  .sales-app.view-catalog .materials-workspace .mobile-catalog-filter-trigger{
+    grid-area:filter;
+    width:100%;
+    height:42px;
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-trigger:focus-visible,
+  .sales-app.view-catalog .mobile-catalog-filter-done:focus-visible{
+    outline:2px solid #ad9257;
+    outline-offset:2px;
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-fields{
+    display:grid;
+    gap:12px;
+    padding:14px;
+    min-height:0;
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-fields > label{
+    display:grid;
+    min-width:0;
+    gap:5px;
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-fields > label > span{
+    color:#7a7367;
+    font-size:10px;
+    font-weight:850;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-fields select{
+    width:100%;
+    min-width:0;
+    min-height:44px;
+    box-sizing:border-box;
+    padding:0 10px;
+    border:1px solid #cabda9;
+    border-radius:6px;
+    background:#fffdf7;
+    color:#4f473e;
+    font-size:16px;
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-fields > button{
+    min-height:40px;
+    border:1px solid #cfc2ad;
+    border-radius:6px;
+    background:#f1ebdf;
+    color:#635a4d;
+    font-size:11px;
+    font-weight:800;
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-fields > button:disabled{opacity:.45}
+  .sales-app.view-catalog .mobile-catalog-tools-footer:has(.mobile-catalog-filter-done){
+    position:sticky;
+    bottom:0;
+    z-index:1;
+    background:#f7f1e6;
+    border-top:1px solid #d5cab9;
+    padding:10px 13px calc(10px + env(safe-area-inset-bottom));
+  }
+  .sales-app.view-catalog .mobile-catalog-filter-done{
+    display:block;
+    width:100%;
+    min-height:46px;
+    border:1px solid #aa915b;
+    border-radius:7px;
+    background:#fff3d7;
+    color:#5c4d2f;
+    font-size:13px;
+    font-weight:850;
+    text-align:center;
+  }
+}
