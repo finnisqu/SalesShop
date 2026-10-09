@@ -7,3 +7,5 @@ export type { PageHeaderProps } from './PageHeader';
 export { Panel } from './Panel';
 export type { PanelProps } from './Panel';
 export { StatusText } from './StatusText';
+export { SectionTabs } from './SectionTabs';
+export type { SectionTab, SectionTabsProps } from './SectionTabs';
