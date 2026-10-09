@@ -12,7 +12,7 @@
   display: inline;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* Treat the three document views as one mobile pager rather than a toolbar that grows
      around each label. The buttons remain explicit controls; Pricing Schedules can also
      move between these views with a horizontal swipe on non-interactive content. */

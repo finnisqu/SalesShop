@@ -282,7 +282,7 @@
   margin: 0;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .rates-workspace {
     padding: 14px 10px calc(72px + env(safe-area-inset-bottom));
   }

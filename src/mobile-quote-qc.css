@@ -2,7 +2,7 @@
    Keeps quote cards readable, fixes iOS form containment, and gives Quotes + Pricing Schedules
    one shared command-bar language on phones. */
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   :root {
     --document-command-height: 42px;
     --document-command-radius: 7px;

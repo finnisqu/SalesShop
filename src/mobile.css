@@ -1,6 +1,6 @@
 /* iPhone-first responsive layer. Imported last so it can safely override desktop surfaces. */
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   html,
   body,
   #root {

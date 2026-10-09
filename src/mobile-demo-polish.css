@@ -1,5 +1,5 @@
 /* Final iPhone demo polish. Imported after mobile.css. */
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   * { -webkit-tap-highlight-color: transparent; }
 
   /* Make the chrome feel like a deliberate mobile app, not a compressed desktop header. */

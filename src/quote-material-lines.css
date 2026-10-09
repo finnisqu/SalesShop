@@ -248,7 +248,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .quote-line-editor.kind-material .quote-line-pricing {
     grid-column: 3 / 5;
     width: 100%;
@@ -573,7 +573,7 @@
   max-width: none;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .quote-material-snapshot-meta,
   .quote-material-catalog-state {
     grid-column: 1 / -1;

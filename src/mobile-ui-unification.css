@@ -347,7 +347,7 @@
 /* ------------------------------
    Mobile hierarchy + spacing system
 ------------------------------ */
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   :root {
     --mobile-page-gutter: 12px;
     --mobile-title-size: 27px;

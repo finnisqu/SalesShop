@@ -1,7 +1,7 @@
 /* Mobile pricing-schedule containment.
    Keep the Quotes page viewport-width while allowing only the spreadsheet surface to own horizontal movement. */
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .pricing-schedule-editor-pane,
   .pricing-schedule-workspace,
   .pricing-schedule-workspace-header,

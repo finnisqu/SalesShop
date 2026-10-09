@@ -215,7 +215,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .material-nonstock-guide {
     grid-template-columns: 1fr;
     padding: 10px;
@@ -374,7 +374,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .material-slab-guide {
     grid-template-columns: 1fr;
     padding: 10px;
@@ -518,7 +518,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .quick-material-header {
     align-items: stretch !important;
     flex-direction: column;

@@ -10,7 +10,7 @@
   display: none;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* Lock the board to the remaining app viewport. Nothing above/below the card stack
      should participate in vertical scrolling. */
   .board-view,
