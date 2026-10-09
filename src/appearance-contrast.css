@@ -94,6 +94,37 @@
   border-color: var(--ss-theme-border);
   color: var(--ss-on-surface);
 }
+/*
+ * Paper-textured legacy backgrounds sometimes use opaque cream gradients,
+ * not just background-color. Reset only the *workspace* textures in Dark.
+ * Notebook paper and the customer quote document keep their own styling.
+ */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .board-column, .quotes-sidebar, .quote-editor-pane,
+  .quote-preview-pane, .sinks-workspace, .materials-workspace,
+  .rates-workspace, .supplier-navigator, .leadership-dashboard,
+  .quote-workbench-body, .catalog-section-host
+) {
+  background: var(--ss-theme-base);
+  color: var(--ss-on-surface);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .project-card, .account-card, .board-column,
+  .quote-line-editor, .quote-section-editor,
+  .mobile-catalog-reference-card, .supplier-nav-item,
+  .dashboard-panel, .dashboard-kpi
+) {
+  background-image: none;
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .board-column, .dashboard-panel, .dashboard-kpi,
+  .quote-list-item, .quote-lines-editor, .quote-rate-results,
+  .supplier-nav-item, .mobile-catalog-reference-card
+) {
+  color:var(--ss-on-surface);
+  border-color:var(--ss-theme-border);
+}
+
 /* Indicate selection with a dark-surface tint instead of old cream. */
 :root[data-sales-theme="dark"] .sales-app :is(
   .mobile-app-drawer-nav button.active,
