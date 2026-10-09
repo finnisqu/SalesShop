@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppearanceStore } from '../store/appearanceStore';
 import { AppearanceThemePicker } from './AppearanceThemePicker';
+import { PageHeader, Panel, Button } from '../design-system/components';
+import { SettingsIdentityFields, SettingsProfileFields } from './SettingsIdentityFields';
 import { TeamAccessSettings } from './TeamAccessSettings';
 import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
@@ -112,10 +114,13 @@ export function CompanySettings() {
   return (
     <main className="company-settings-view">
       <div className="settings-layout">
-        <header className="company-settings-header">
-          <div><span className="board-eyebrow">Your workspace</span><h1>Settings</h1><p>Company identity, account information, and the way SalesShop feels to you.</p></div>
-          {tab === 'company' && <div className="company-settings-save-state" role="status">{error ? <strong className="has-error">{error}</strong> : <span>{saving ? 'Saving…' : 'Saved automatically'}</span>}</div>}
-        </header>
+        <PageHeader
+          className="company-settings-header settings-foundation-page-header"
+          eyebrow="Your workspace"
+          title="Settings"
+          description="Company identity, account information, and the way SalesShop feels to you."
+          actions={tab === 'company' ? <div className="company-settings-save-state" role="status">{error ? <strong className="has-error">{error}</strong> : <span>{saving ? 'Saving…' : 'Saved automatically'}</span>}</div> : undefined}
+        />
         <nav className="settings-tabs" aria-label="Settings sections">
           {TABS.map((item) => (
             <button key={item.id} type="button" className={tab === item.id ? 'active' : ''}
@@ -127,16 +132,12 @@ export function CompanySettings() {
 
         {tab === 'company' && <section className="company-settings-grid settings-company-grid" aria-label="Company and branding">
           {!canEditCompany && <p className="settings-company-role-note" role="status">Only owners and admins can change company branding and shared pricing. Contact an administrator to request an update.</p>}
-          <article className="company-settings-card">
-            <header><div><strong>Company identity</strong><small>Appears on customer-facing documents and shared quotes.</small></div><span className="settings-card-save" role="status">{error ? 'Save issue' : saving ? 'Saving…' : 'Auto-saved'}</span></header>
-            <fieldset className="company-settings-fields team-company-fieldset" disabled={!canEditCompany}>
-              <label className="wide"><span>Company name</span><input value={settings.organizationName} onChange={(event) => update({ organizationName: event.target.value })} autoComplete="organization" /></label>
-              <label className="wide"><span>Business address</span><textarea rows={2} value={settings.address} onChange={(event) => update({ address: event.target.value })} autoComplete="street-address" /></label>
-              <label><span>Phone</span><input type="tel" value={settings.phone} onChange={(event) => update({ phone: event.target.value })} autoComplete="tel" /></label>
-              <label><span>Email</span><input type="email" value={settings.email} onChange={(event) => update({ email: event.target.value })} autoComplete="email" /></label>
-              <label className="wide"><span>Website</span><input type="url" value={settings.website} onChange={(event) => update({ website: event.target.value })} placeholder="https://…" /></label>
+          <Panel className="company-settings-card settings-foundation-panel"
+            heading={<><div className="settings-foundation-panel-title"><strong>Company identity</strong><small>Appears on customer-facing documents and shared quotes.</small></div><span className="settings-card-save" role="status">{error ? 'Save issue' : saving ? 'Saving…' : 'Auto-saved'}</span></>}>
+            <fieldset className="company-settings-fields team-company-fieldset settings-foundation-fields" disabled={!canEditCompany}>
+              <SettingsIdentityFields settings={settings} update={update} />
             </fieldset>
-          </article>
+          </Panel>
           <article className="company-settings-card">
             <header><div><strong>Document branding</strong><small>Preview of the contact block customers will see.</small></div></header>
             <div className="company-branding-preview">
@@ -152,21 +153,25 @@ export function CompanySettings() {
         </section>}
 
         {tab === 'account' && <section className="settings-panel-grid" aria-label="Salesperson account">
-          <article className="company-settings-card settings-main-card">
-            <header><div><strong>My salesperson profile</strong><small>Personal account details, separate from your company’s branding.</small></div></header>
+          <Panel className="company-settings-card settings-main-card settings-foundation-panel"
+            heading={<div className="settings-foundation-panel-title"><strong>My salesperson profile</strong><small>Personal account details, separate from your company’s branding.</small></div>}>
             {!cloudReady ? <p className="settings-help">{localMessage}</p> : <>
               <div className="settings-account-identity">
                 <span className="settings-avatar">{(profileName || user?.email || 'S').charAt(0).toUpperCase()}</span>
                 <div><strong>{profileName || 'Your account'}</strong><small>{user?.email}</small></div>
               </div>
-              <div className="company-settings-fields">
-                <label className="wide"><span>Display name</span><input value={profileName} onChange={(event) => { setProfileName(event.target.value); setProfileNotice(''); }} disabled={profileLoading || profileSaving} placeholder="How your team knows you" autoComplete="name" /></label>
-                <label className="wide"><span>Sign-in email</span><input type="email" value={user?.email || ''} readOnly aria-readonly="true" /><small>Managed by your sign-in account.</small></label>
+              <div className="company-settings-fields settings-foundation-fields">
+                <SettingsProfileFields name={profileName} email={user?.email || ''} busy={profileLoading || profileSaving}
+                  onNameChange={(name) => { setProfileName(name); setProfileNotice(''); }} />
               </div>
-              <div className="settings-inline-actions"><button type="button" className="settings-primary-button" disabled={profileLoading || profileSaving} onClick={() => void saveProfile()}>{profileSaving ? 'Saving…' : 'Save profile'}</button><button type="button" onClick={() => void signOut()}>Sign out</button></div>
+              <div className="settings-inline-actions">
+                <Button variant="primary" disabled={profileLoading} loading={profileSaving} loadingLabel="Saving profile"
+                  onClick={() => void saveProfile()}>{profileSaving ? 'Saving…' : 'Save profile'}</Button>
+                <Button variant="secondary" onClick={() => void signOut()}>Sign out</Button>
+              </div>
               {profileNotice && <p className="settings-feedback" role="status">{profileNotice}</p>}
             </>}
-          </article>
+          </Panel>
           <article className="company-settings-card settings-secondary-card">
             <header><div><strong>Account & privacy</strong><small>What belongs to you and what belongs to the shop.</small></div></header>
             <p className="settings-help">Your notebook is private to your account. Company records, quotes, materials, and CRM contacts belong to the shared organization workspace.</p>
