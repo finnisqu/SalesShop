@@ -118,7 +118,6 @@ export function MobileAppChrome() {
           <span>SalesShop</span>
           <strong>{contextTitle}</strong>
         </div>
-        <RolePerspectivePicker compact />
         {!viewer && !preview && <GlobalSearch />}
         {!viewer && !scopedMember && !preview && <QuickCreate />}
       </header>
@@ -130,6 +129,7 @@ export function MobileAppChrome() {
             <button type="button" data-dialog-initial-focus onClick={() => setOpen(false)} aria-label="Close navigation">×</button>
           </header>
 
+          <div className="mobile-app-drawer-owner-tools"><RolePerspectivePicker compact /></div>
           <nav className="mobile-app-drawer-nav" aria-label="SalesShop sections">
             {APP_DESTINATIONS.map((item) => (
               <button type="button" key={item.view}
@@ -143,7 +143,7 @@ export function MobileAppChrome() {
             ))}
           </nav>
 
-          {view === 'notebook' && !catalogExpanded && <section className="mobile-app-context-section">
+          {view === 'notebook' && !catalogExpanded && !preview && <section className="mobile-app-context-section">
             <header>
               <div><strong>Notebook pages</strong><small>{visibleEntries.length} visible</small></div>
               <button type="button" onClick={() => { createEntry(); setOpen(false); }}>+ New</button>
