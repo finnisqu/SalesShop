@@ -49,6 +49,8 @@ import './connections-workspace.css';
 import './team-access.css';
 // Last-stage legacy foreground bridge until all workspaces use design tokens.
 import './appearance-contrast.css';
+// Scoped UI Foundation Batch 3 Settings adapter (after legacy theme bridges).
+import './design-system/settings-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
