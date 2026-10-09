@@ -779,3 +779,61 @@
     outline-offset:2px;
   }
 }
+
+/* Keep role-preview and Viewer navigation available when Quotes uses its
+   immersive editor shell. They do not have an active editable quote toolbar. */
+@media (max-width: 700px) {
+  .sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) > .mobile-app-commandbar {
+    position: relative;
+    z-index: 170;
+    display: grid;
+    grid-template-columns: 40px minmax(0,1fr) 40px 40px;
+    align-items: center;
+    gap: 4px;
+    height: 50px;
+    min-height: 50px;
+    flex: 0 0 50px;
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(87,76,58,.18);
+    background: rgba(246,243,235,.97);
+    box-shadow: 0 2px 7px rgba(49,43,34,.08);
+  }
+  /* Read-only routes always retain a tappable hamburger and visible bar.
+     Unlike the editable quote workspace, there is no internal nav to fall back on. */
+  .sales-app.sales-app-viewer > .mobile-app-commandbar {
+    display: grid;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .mobile-app-drawer-owner-tools {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(91,78,58,.12);
+    background: rgba(234,231,220,.75);
+  }
+  .mobile-app-drawer-owner-tools .role-perspective-picker {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+  .mobile-app-drawer-owner-tools .role-perspective-picker-label { display: inline; }
+  .mobile-app-drawer-owner-tools .role-perspective-picker select {
+    min-width: 0;
+    width: min(60%,200px);
+    max-width: 200px;
+    min-height: 34px;
+    border: 1px solid #c4bda9;
+    border-radius: 5px;
+    padding: 4px 7px;
+    background: #fffaf0;
+    font-size: 12px;
+  }
+  .sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) .quotes-view,
+  .sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) .quotes-workbench {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+}
