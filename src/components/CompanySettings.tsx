@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppearanceStore } from '../store/appearanceStore';
+import { AppearanceThemePicker } from './AppearanceThemePicker';
 import { TeamAccessSettings } from './TeamAccessSettings';
 import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
@@ -187,6 +188,7 @@ export function CompanySettings() {
 
         {tab === 'team' && <TeamAccessSettings />}
         {tab === 'appearance' && <section className="settings-panel-grid" aria-label="Appearance and accessibility preferences">
+          <AppearanceThemePicker />
           <article className="company-settings-card settings-main-card">
             <header><div><strong>Reading & interaction</strong><small>Changes apply immediately on this device.</small></div></header>
             <div className="settings-preference-row">
@@ -208,7 +210,7 @@ export function CompanySettings() {
             <div className="settings-inline-actions"><button type="button" onClick={resetAppearance}>Restore defaults</button><span className="settings-muted">Saved on this device</span></div>
           </article>
           <article className="company-settings-card settings-secondary-card">
-            <header><div><strong>Preview</strong><small>SalesShop keeps its paper-and-ink character.</small></div></header>
+            <header><div><strong>Reference preview</strong><small>Theme choices affect the app—not prices, print layouts, or customer quote documents.</small></div></header>
             <div className="settings-appearance-preview"><div><strong>Calacatta Laza</strong><small>MSI · Quartz · 3cm</small></div><div><strong>$12.50/SF</strong><small>Reference cost</small></div></div>
             <p className="settings-help">Preferences affect your interface, not the pricing or document values your customers see.</p>
           </article>
