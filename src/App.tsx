@@ -29,6 +29,8 @@ import './quote-mobile-pass.css';
 import './catalog-workspace.css';
 import './viewer-workspace.css';
 import './role-perspective.css';
+import './appearance-themes.css';
+import './appearance-picker.css';
 import { AuthStatus } from './components/AuthGate';
 import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
 import { ViewerWorkspace } from './components/ViewerWorkspace';
@@ -36,6 +38,7 @@ import { RolePerspectivePicker, RolePerspectiveBanner, RolePerspectiveSettings }
 import { resolveOwnerPerspective } from './services/rolePerspective';
 import { useRolePerspectiveStore } from './store/rolePerspectiveStore';
 import { useAuthStore } from './store/authStore';
+import { useAppearanceStore } from './store/appearanceStore';
 import { canEditTeamArea } from './services/teamDepartments';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
@@ -58,6 +61,8 @@ import { useNotebookStore } from './store/notebookStore';
 function App() {
   const view = useNavigationStore((state) => state.view);
   const mode = useAuthStore((state) => state.mode);
+  const organizationId = useAuthStore((state) => state.organizationId);
+  const loadCompanyPalette = useAppearanceStore((state) => state.loadCompanyPalette);
   const teamRole = useAuthStore((state) => state.teamRole);
   const department = useAuthStore((state) => state.teamDepartment);
   const catalogSection = useNavigationStore((state) => state.catalogSection);
@@ -90,6 +95,10 @@ function App() {
     hydrateCrm();
     void hydrateSettings();
   }, [hydrate, hydrateCrm, hydrateSettings]);
+
+  // Appearance is per device, but the default palette follows the active company.
+  // The membership RLS lets all teammates read the default; only admins update it.
+  useEffect(() => { void loadCompanyPalette(mode === 'cloud' ? organizationId : null); }, [mode, organizationId, loadCompanyPalette]);
 
   const entry = entries.find((candidate) => candidate.id === activeEntryId) ?? null;
   const linkedProject = entry?.context?.projectId
