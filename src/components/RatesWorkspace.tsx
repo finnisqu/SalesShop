@@ -12,6 +12,8 @@ import {
   type RateBookUnit,
 } from '../types/rateBook';
 import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
+import { Button, Field, PageHeader } from '../design-system/components';
+import { RatesFilterFields } from './RatesFilterFields';
 import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { RateBook } from './RateBook';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
@@ -162,57 +164,54 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
 
   return (
     <main className={`rates-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
-      <header className="rates-workspace-header">
-        <div>
-          <span className="board-eyebrow">Company pricing reference</span>
-          <h1>Rates</h1>
-          <p>{editing
-            ? showingMaterialPricing
-              ? 'Edit the material cost bands and standard customer square-foot pricing used by quoting.'
-              : 'Edit company pricing, history, overrides, and selling references.'
-            : showingMaterialPricing
-              ? 'See the standard material cost bands and customer square-foot pricing without opening the supplier catalog.'
-              : 'Look up a price without worrying about accidentally changing it.'}</p>
-        </div>
-        <div className="rates-mode-actions">
-          <span className={`rates-mode-badge ${editing ? 'is-editing' : ''}`}>{editing ? 'Editing' : 'Reference mode'}</span>
-          {editing && !showingMaterialPricing && <button type="button" className="rates-add-button" onClick={addCurrentRate}>+ Rate row</button>}
-          <button type="button" className={editing ? 'rates-done-button' : 'rates-edit-button'} onClick={() => {
+      <PageHeader className="rates-workspace-header rates-foundation-heading"
+        eyebrow="Company pricing reference" title="Rates"
+        description={editing
+          ? showingMaterialPricing
+            ? 'Edit the material cost bands and standard customer square-foot pricing used by quoting.'
+            : 'Edit company pricing, history, overrides, and selling references.'
+          : showingMaterialPricing
+            ? 'See the standard material cost bands and customer square-foot pricing without opening the supplier catalog.'
+            : 'Look up a price without worrying about accidentally changing it.'}
+        actions={<div className="rates-mode-actions">
+          <span className={`rates-mode-badge ${editing ? 'is-editing' : ''}`} role="status">{editing ? 'Editing' : 'Reference mode'}</span>
+          {editing && !showingMaterialPricing && <Button variant="secondary" className="rates-add-button" onClick={addCurrentRate}>+ Rate row</Button>}
+          <Button variant={editing ? 'primary' : 'secondary'} className={editing ? 'rates-done-button' : 'rates-edit-button'} onClick={() => {
             if (!editing) syncEditorCategory(category);
             setEditing((value) => !value);
-          }}>{editing ? 'Done editing' : 'Edit pricing'}</button>
-        </div>
-      </header>
-
+          }}>{editing ? 'Done editing' : 'Edit pricing'}</Button>
+        </div>}
+      />
       <section className="rates-reference-controls rates-shared-controls">
-        <div className="rates-reference-tabs" role="tablist" aria-label="Rate categories">
+        <div className="rates-reference-tabs" role="group" aria-label="Filter rate category">
           {CATEGORY_TABS.map(([tab, label]) => (
-            <button type="button" key={tab} className={category === tab ? 'active' : ''} onClick={() => selectCategory(tab)}>{label}</button>
+            <Button variant="quiet" key={tab} className={category === tab ? 'active' : ''}
+              aria-pressed={category === tab} onClick={() => selectCategory(tab)}>{label}</Button>
           ))}
         </div>
 
         {!editing && (
           <div className="rates-reference-tools">
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={showingMaterialPricing ? 'Search material levels…' : 'Search rates, codes, categories…'}
-              aria-label={showingMaterialPricing ? 'Search material pricing levels' : 'Search pricing reference'}
-            />
-            <button type="button" className="rates-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open rate catalog tools">••• <span>Tools</span></button>
+            <Field id="rates-catalog-search" className="rates-foundation-search"
+              label={showingMaterialPricing ? 'Search material pricing levels' : 'Search pricing reference'}>
+              {(control) => <input {...control} type="search"
+                value={query} onChange={(event) => setQuery(event.target.value)}
+                placeholder={showingMaterialPricing ? 'Search material levels…' : 'Search rates, codes, categories…'} />}
+            </Field>
+            <Button variant="secondary" className="rates-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open rate catalog tools">••• <span>Tools</span></Button>
             {!showingMaterialPricing && (
               <>
                 <details className="rates-filter-menu">
                   <summary>Filter{activeReferenceFilters ? ` · ${activeReferenceFilters}` : ''}</summary>
-                  <div className="rates-filter-popover">
-                    <label><span>Pricing behavior</span><select value={behaviorFilter} onChange={(event) => setBehaviorFilter(event.target.value as 'all' | RateBookPricingBehavior)}><option value="all">All behaviors</option><option value="suggested">Suggested sell</option><option value="cost-reference">Cost reference</option><option value="manual">Manual</option></select></label>
-                    <label><span>Unit</span><select value={unitFilter} onChange={(event) => setUnitFilter(event.target.value as 'all' | RateBookUnit)}><option value="all">All units</option>{availableUnits.map((unit) => <option value={unit} key={unit}>{RATE_BOOK_UNIT_LABELS[unit]}</option>)}</select></label>
-                    <label><span>Division pricing</span><select value={overrideFilter} onChange={(event) => setOverrideFilter(event.target.value as OverrideFilter)}><option value="all">All rows</option><option value="has">Has division override</option><option value="base">Base rate only</option></select></label>
-                    <button type="button" onClick={clearReferenceFilters} disabled={!activeReferenceFilters}>Clear filters</button>
+                  <div className="rates-filter-popover rates-foundation-filter-popover">
+                    <RatesFilterFields idPrefix="rates-desktop"
+                      behaviorFilter={behaviorFilter} unitFilter={unitFilter} overrideFilter={overrideFilter}
+                      availableUnits={availableUnits} activeFilterCount={activeReferenceFilters}
+                      onBehaviorChange={setBehaviorFilter} onUnitChange={setUnitFilter}
+                      onOverrideChange={setOverrideFilter} onClear={clearReferenceFilters} />
                   </div>
                 </details>
-                <button type="button" className="mobile-catalog-filter-trigger" aria-haspopup="dialog" onClick={() => setMobileFilterOpen(true)}>Filter{activeReferenceFilters ? ` · ${activeReferenceFilters}` : ''}</button>
+                <Button variant="secondary" className="mobile-catalog-filter-trigger" aria-haspopup="dialog" onClick={() => setMobileFilterOpen(true)}>Filter{activeReferenceFilters ? ` · ${activeReferenceFilters}` : ''}</Button>
                 <label className="rates-sort-control">
                   <span>Sort</span>
                   <select value={rateSort} onChange={(event) => setRateSort(event.target.value as RateSort)} aria-label="Sort rate reference">
@@ -234,10 +233,11 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
 
       {!editing && !showingMaterialPricing && mobileFilterOpen && (
         <MobileCatalogFilterSheet section="Rates" onClose={() => setMobileFilterOpen(false)}>
-          <label><span>Pricing behavior</span><select value={behaviorFilter} onChange={(event) => setBehaviorFilter(event.target.value as 'all' | RateBookPricingBehavior)}><option value="all">All behaviors</option><option value="suggested">Suggested sell</option><option value="cost-reference">Cost reference</option><option value="manual">Manual</option></select></label>
-                    <label><span>Unit</span><select value={unitFilter} onChange={(event) => setUnitFilter(event.target.value as 'all' | RateBookUnit)}><option value="all">All units</option>{availableUnits.map((unit) => <option value={unit} key={unit}>{RATE_BOOK_UNIT_LABELS[unit]}</option>)}</select></label>
-                    <label><span>Division pricing</span><select value={overrideFilter} onChange={(event) => setOverrideFilter(event.target.value as OverrideFilter)}><option value="all">All rows</option><option value="has">Has division override</option><option value="base">Base rate only</option></select></label>
-                    <button type="button" onClick={clearReferenceFilters} disabled={!activeReferenceFilters}>Clear filters</button>
+          <RatesFilterFields idPrefix="rates-mobile"
+            behaviorFilter={behaviorFilter} unitFilter={unitFilter} overrideFilter={overrideFilter}
+            availableUnits={availableUnits} activeFilterCount={activeReferenceFilters}
+            onBehaviorChange={setBehaviorFilter} onUnitChange={setUnitFilter}
+            onOverrideChange={setOverrideFilter} onClear={clearReferenceFilters} />
         </MobileCatalogFilterSheet>
       )}
 
@@ -246,8 +246,8 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
           description="Pricing maintenance stays separate from everyday lookup."
           onClose={() => setMobileToolsOpen(false)}>
           <section><span className="rates-mobile-tools-label">Mode</span><div className="rates-mobile-mode-row">
-            <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up current rates</small></button>
-            <button type="button" className={editing ? 'active' : ''} onClick={() => { syncEditorCategory(category); setEditing(true); setMobileToolsOpen(false); }}><strong>Edit pricing</strong><small>Maintain rates and policy</small></button>
+            <button type="button" className={!editing ? 'active' : ''} aria-pressed={!editing} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up current rates</small></button>
+            <button type="button" className={editing ? 'active' : ''} aria-pressed={editing} onClick={() => { syncEditorCategory(category); setEditing(true); setMobileToolsOpen(false); }}><strong>Edit pricing</strong><small>Maintain rates and policy</small></button>
           </div></section>
           {editing && !showingMaterialPricing && <section><span className="rates-mobile-tools-label">Maintenance</span><button type="button" className="rates-mobile-add" onClick={() => { addCurrentRate(); setMobileToolsOpen(false); }}>+ Add rate row</button></section>}
           {!editing && !showingMaterialPricing && <section>
