@@ -83,6 +83,43 @@ describe('UI Foundation Batch 5B — Materials', () => {
     expect(css).toContain('flex:none');
   });
 
+  it('matches Sort to neighboring controls without fixed ivory or brown mobile colors', () => {
+    const sortCss = readFileSync(new URL('../mobile-materials-sort.css', import.meta.url), 'utf8');
+    expect(sortCss).toContain('var(--ss-materials-card');
+    expect(sortCss).toContain('var(--ss-materials-ink');
+    expect(sortCss).toContain('var(--ss-materials-muted');
+    expect(sortCss).not.toContain('background:#fffaf0');
+    expect(sortCss).not.toContain('color:#4e4435');
+    expect(css).toContain('.rates-sort-control.materials-sort-control select');
+    expect(css).toContain('-webkit-text-fill-color:var(--ss-materials-ink)');
+    expect(css).toContain('font:650 16px/22px');
+  });
+
+  it('rounds the comparison board and its header/footer without clipping the sticky tray', () => {
+    expect(css).toContain('.materials-comparison-board>header');
+    expect(css).toContain('border-radius:var(--ss-radius-md) var(--ss-radius-md) 0 0');
+    expect(css).toContain('.materials-comparison-board:not(.has-pins) .materials-comparison-empty');
+    expect(css).toContain('border-radius:0 0 var(--ss-radius-md) var(--ss-radius-md)');
+    expect(css).not.toContain('overflow:hidden on a sticky');
+  });
+
+  it('themes expanded slab variants, nested supplier price programs and pinned states', () => {
+    const legacyCss = readFileSync(new URL('../materials-workspace.css', import.meta.url), 'utf8');
+    for (const selector of [
+      '.mobile-catalog-reference-card.is-expanded>.mobile-catalog-reference-details',
+      '.mobile-catalog-reference-details .materials-variant-browser',
+      '.materials-variant-line.is-pinned',
+      '.materials-price-program-list>div',
+      '.materials-price-program-list>div.is-default',
+      '.materials-variant-default-cost>strong',
+      '.materials-variant-empty',
+    ]) {
+      expect(css, `Expanded material theme coverage missing: ${selector}`).toContain(selector);
+    }
+    expect(legacyCss).toContain('background: var(--ss-materials-bg, #eee9dc) !important');
+    expect(legacyCss).not.toContain('color: #4d6248 !important');
+  });
+
   it('uses token-based foreground/background pairs and keeps the mobile search row intact', () => {
     expect(css).toContain('.sales-app.view-catalog .materials-workspace');
     for (const required of [
