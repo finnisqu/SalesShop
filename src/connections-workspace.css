@@ -35,6 +35,7 @@
 .connections-overview>.leadership-dashboard,
 .sales-app.view-dashboard .connections-overview>.leadership-dashboard{
   flex:0 0 auto;height:auto!important;min-height:0!important;
+  max-height:none!important; /* The 100% cap made the footer overlap taller dashboard panels. */
   overflow:visible!important;padding:0!important;background:transparent;
   width:100%;box-sizing:border-box;
 }
@@ -122,7 +123,8 @@
 .sales-app.view-dashboard .connections-workspace :is(button,input,select):focus-visible{outline:2px solid #b29661;outline-offset:2px}
 @media(max-width:700px){
   .sales-app.view-dashboard .connections-workspace{
-    height:calc(100dvh - 50px);min-height:0;overflow-y:auto;
+    /* Flex owns the available height even with an Owner preview banner above it. */
+    height:auto;min-height:0;flex:1 1 auto;overflow-y:auto;
     gap:9px;padding:8px 7px calc(22px + env(safe-area-inset-bottom));
   }
   .connections-heading{padding:4px 4px 10px;align-items:center}
@@ -149,7 +151,8 @@
   .connections-add-form,.connections-person-editor{grid-template-columns:minmax(0,1fr);padding:11px}
   .connections-add-form>strong,.connections-person-editor>header,
   .connections-add-form>div,.connections-person-editor>div{grid-column:1}
-  .connections-footer{flex-wrap:wrap;gap:8px}
+  /* Redundant Settings callout interrupted mobile reporting and could overlay the dashboard. */
+  .connections-footer{display:none}
   .connections-overview .leadership-dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .connections-overview .leadership-dashboard .dashboard-grid{grid-template-columns:minmax(0,1fr)}
 }
