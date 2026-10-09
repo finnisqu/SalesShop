@@ -47,6 +47,8 @@ import './catalog-quote-integration.css';
 import './quote-crm-batch7.css';
 import './connections-workspace.css';
 import './team-access.css';
+// Last-stage legacy foreground bridge until all workspaces use design tokens.
+import './appearance-contrast.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
