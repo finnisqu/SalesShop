@@ -50,7 +50,7 @@
 }
 :root[data-sales-theme="rainy"] {
   --ss-theme-canvas:#d6dfe4; --ss-theme-base:#e9eef1; --ss-theme-card:#f5f8f9;
-  --ss-theme-ink:#2a3c49; --ss-theme-muted:#526777; --ss-theme-border:#afc0c9;
+  --ss-theme-ink:#2a3c49; --ss-theme-muted:#465f6f; --ss-theme-border:#afc0c9;
   --ss-theme-accent:#516d88; --ss-theme-tint:#d8e2e9; --ss-theme-contrast:#fff;
 }
 
