@@ -1,0 +1,254 @@
+/*
+ * SalesShop UI Foundation v1 — Batch 5A: Catalog shell.
+ * Preserve mobile drawer-only section navigation and the section-local search,
+ * filters, tools, supplier import, pricing and add-to-quote behaviors.
+ * This file styles the shared shell, not its specialized product editors.
+ */
+:root[data-sales-theme] .sales-app.view-catalog {
+  --ss-catalog-canvas:var(--ss-theme-canvas,var(--ss-app-bg));
+  --ss-catalog-rail:var(--ss-theme-base,var(--ss-shell-bg));
+  --ss-catalog-card:var(--ss-theme-card,var(--ss-surface-raised));
+  --ss-catalog-tint:var(--ss-theme-tint,var(--ss-surface));
+  --ss-catalog-ink:var(--ss-theme-ink,var(--ss-text));
+  --ss-catalog-muted:var(--ss-theme-muted,var(--ss-text-muted));
+  --ss-catalog-border:var(--ss-theme-border,var(--ss-border));
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-workspace {
+  height:auto;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  overflow:hidden;
+  background:var(--ss-catalog-canvas);
+  color:var(--ss-catalog-ink);
+}
+/* Catalog's shared PageHeader follows the typography, gutters and palette
+ * of Settings and Connections. Desktop keeps the active-section summary. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-header.catalog-foundation-heading {
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:var(--ss-space-4);
+  padding:var(--ss-space-4) var(--ss-page-inset);
+  border-bottom:1px solid var(--ss-catalog-border);
+  background:var(--ss-catalog-rail);
+  color:var(--ss-catalog-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-heading .ss-page-header__intro {
+  flex:1 1 300px;
+  display:grid;
+  gap:var(--ss-space-1);
+  min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-heading .ss-page-header__eyebrow {
+  color:var(--ss-catalog-muted);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+  letter-spacing:.06em;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-heading .ss-page-header__title {
+  margin:0;
+  color:var(--ss-catalog-ink);
+  font:700 var(--ss-text-page)/1.16 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-heading .ss-page-header__description {
+  max-width:65ch;
+  margin:0;
+  color:var(--ss-catalog-muted);
+  font:400 var(--ss-text-body)/1.5 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-heading .ss-page-header__actions {
+  flex:0 1 380px;
+  max-width:100%;
+  min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-current-section {
+  width:100%;
+  min-width:0;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:var(--ss-space-1);
+  padding:var(--ss-space-3);
+  background:var(--ss-catalog-card);
+  color:var(--ss-catalog-ink);
+  border:1px solid var(--ss-catalog-border);
+  border-radius:var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-current-section>span {
+  color:var(--ss-catalog-muted);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+  letter-spacing:.05em;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-current-section>strong {
+  color:var(--ss-catalog-ink);
+  font:700 15px/1.3 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-current-section>small {
+  color:var(--ss-catalog-muted);
+  font:400 var(--ss-text-xs)/1.4 var(--ss-font-body);
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+/* A shared SectionTabs component, just as in Connections. Preserve five
+ * desktop options, and intentionally hide it on phones where the global
+ * hamburger drawer already owns Catalog section switching. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-nav.catalog-foundation-tabs {
+  display:flex;
+  align-items:stretch;
+  flex:0 0 auto;
+  gap:var(--ss-space-1);
+  padding:var(--ss-space-1) var(--ss-page-inset);
+  border-bottom:1px solid var(--ss-catalog-border);
+  background:var(--ss-catalog-rail);
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-nav.catalog-foundation-tabs .ss-section-tab {
+  position:relative;
+  flex:1 0 115px;
+  min-width:115px;
+  min-height:48px;
+  display:grid;
+  align-content:center;
+  justify-items:start;
+  gap:var(--ss-space-1);
+  padding:var(--ss-space-2) var(--ss-space-3);
+  border:1px solid transparent;
+  border-radius:var(--ss-radius-sm);
+  background:transparent;
+  color:var(--ss-catalog-ink);
+  text-align:left;
+  cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-tabs .ss-section-tab>strong {
+  color:inherit;
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+  white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-tabs .ss-section-tab>small {
+  display:block;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  max-width:100%;
+  color:var(--ss-catalog-muted);
+  font:400 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-tabs .ss-section-tab:hover,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-tabs .ss-section-tab:focus-visible {
+  background:var(--ss-catalog-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-tabs .ss-section-tab.active {
+  color:var(--ss-catalog-ink);
+  border-color:var(--ss-catalog-border);
+  background:var(--ss-catalog-tint);
+  box-shadow:inset 0 -3px var(--ss-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-tabs .ss-section-tab.active>small {
+  color:var(--ss-catalog-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-tabs .ss-section-tab:focus-visible {
+  outline:3px solid var(--ss-focus);
+  outline-offset:-3px;
+}
+/* An explicit route scroll boundary. Do not create a new wrapper or duplicate
+ * the embedded Materials/Sinks/Rates own controls, which are migrated later. */
+.sales-app.view-catalog .catalog-section-host {
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+}
+/* Keep Suppliers and Other scrollable while the shell stays fixed. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-suppliers,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-other {
+  background:var(--ss-catalog-canvas);
+}
+/* Shared Panel for Other placeholder, retaining its illustrative content.
+ * No paper/quote document treatments are modified. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-card.catalog-foundation-other-card.ss-panel {
+  display:flex;
+  flex-direction:column;
+  width:min(760px,100%);
+  padding:0;
+  margin:0;
+  border:1px solid var(--ss-catalog-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-catalog-card);
+  color:var(--ss-catalog-ink);
+  box-shadow:var(--ss-shadow-raised);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card>.ss-panel__header {
+  display:grid;
+  gap:var(--ss-space-1);
+  padding:var(--ss-space-4);
+  border-bottom:1px solid var(--ss-catalog-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card>.ss-panel__header>.board-eyebrow {
+  color:var(--ss-catalog-muted);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card>.ss-panel__header h2 {
+  margin:0;
+  color:var(--ss-catalog-ink);
+  font:700 var(--ss-text-section)/1.3 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card>.ss-panel__body {
+  padding:var(--ss-space-4);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card>.ss-panel__body>p,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card>.ss-panel__body>small {
+  color:var(--ss-catalog-muted);
+  font:400 var(--ss-text-body)/1.5 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card .catalog-other-example-grid>span {
+  background:var(--ss-catalog-rail);
+  color:var(--ss-catalog-ink);
+  border:1px solid var(--ss-catalog-border);
+  border-radius:var(--ss-radius-sm);
+  font:650 var(--ss-text-sm)/1.4 var(--ss-font-body);
+}
+@media(max-width:900px) and (min-width:701px) {
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-heading .ss-page-header__actions {
+    flex:1 1 240px;
+  }
+}
+/* Critical: mobile has ONE global toolbar and its drawer supplies the section
+ * navigation. A second sticky strip would steal its search-first workspace. */
+@media(max-width:700px) {
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-workspace {
+    height:auto;
+    min-height:0;
+    flex:1 1 auto;
+    overflow:hidden;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-header.catalog-foundation-heading {
+    display:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-nav.catalog-foundation-tabs {
+    display:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host {
+    flex:1 1 auto;
+    height:auto;
+    min-height:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-other-coming-soon {
+    min-height:100%;
+    height:auto;
+    padding:var(--ss-space-3);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card>.ss-panel__header,
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-foundation-other-card>.ss-panel__body {
+    padding:var(--ss-space-3);
+  }
+}
