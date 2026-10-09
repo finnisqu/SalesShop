@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Dashboard } from './Dashboard';
+import { Button, Field, PageHeader, Panel, SectionTabs, StatusText } from '../design-system/components';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -154,50 +155,47 @@ export function Connections() {
 
   return (
     <main className="connections-workspace">
-      <header className="connections-heading">
-        <div><span>SalesShop · Relationships & information</span><h1>Connections</h1>
-          <p>All the people, companies, projects, and conversations behind the work.</p></div>
-        <div className="connections-workspace-summary" title="Current workspace records">
+      <PageHeader className="connections-heading connections-foundation-heading"
+        eyebrow="SalesShop · Relationships & information"
+        title="Connections"
+        description="All the people, companies, projects, and conversations behind the work."
+        actions={<div className="connections-workspace-summary" title="Current workspace records">
           <strong>{companies.length} companies</strong><span>{contacts.length} people · {projects.length} projects</span>
-        </div>
-      </header>
+        </div>}
+      />
 
-      <nav className="connections-tabs" aria-label="Connections sections">
-        {CONNECTIONS_TABS.map((item) => (
-          <button type="button" key={item.id} className={tab === item.id ? 'active' : ''}
-            aria-current={tab === item.id ? 'page' : undefined} onClick={() => chooseTab(item.id)}>
-            <strong>{item.label}</strong><small>{item.description}</small>
-          </button>
-        ))}
-      </nav>
+      <SectionTabs className="connections-tabs" aria-label="Connections sections"
+        items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
 
       {tab === 'overview' ? (
         <div className="connections-overview">
-          <div className="connections-scope-strip">
-            <div><strong>Reporting view</strong><small>{cloudMode === 'cloud' && organizationId
-              ? 'Current company workspace' : 'Current local workspace'}</small></div>
+          <Panel className="connections-scope-strip connections-foundation-scope"
+            heading={<div><strong>Reporting view</strong><small>{cloudMode === 'cloud' && organizationId
+              ? 'Current company workspace' : 'Current local workspace'}</small></div>}>
             <div className="connections-scope-buttons" role="group" aria-label="Reporting scope">
-              <button type="button" className="active" aria-pressed="true">Workspace</button>
-              <button type="button" disabled title="Personal ownership and permission checks are not configured yet">Mine · Soon</button>
+              <Button variant="quiet" className="active" aria-pressed="true">Workspace</Button>
+              <Button variant="quiet" disabled title="Personal ownership and permission checks are not configured yet">Mine · Soon</Button>
             </div>
-          </div>
+          </Panel>
           <p className="connections-scope-note">Personal reporting will become available after each quote, project, and activity has a verified salesperson owner. Team-wide visibility will follow your assigned role.</p>
           <Dashboard />
         </div>
       ) : (
         <>
           <div className="connections-directory-toolbar">
-            <label className="connections-search"><span>Search {tab}</span>
-              <input value={query} onChange={(event) => setQuery(event.target.value)}
-                placeholder={tab === 'companies' ? 'Search company or alias…' : tab === 'people' ? 'Search names, email, company…' : `Search ${tab}…`} />
-            </label>
+            <Field className="connections-search" id="connections-directory-search" label={`Search ${tab}`}>
+              {(control) => <input {...control} type="search" value={query} onChange={(event) => setQuery(event.target.value)}
+                placeholder={tab === 'companies' ? 'Search company or alias…' : tab === 'people' ? 'Search names, email, company…' : `Search ${tab}…`} />}
+            </Field>
             {tab === 'companies' && <>
-              <label className="connections-filter"><span>Type</span><select value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyFilter)}>
-                <option value="all">All companies</option><option value="customer">Customers & prospects</option><option value="non-customer">Partners & other</option>
-              </select></label>
-              <button type="button" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</button>
+              <Field className="connections-filter" id="connections-company-filter" label="Type">
+                {(control) => <select {...control} value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyFilter)}>
+                  <option value="all">All companies</option><option value="customer">Customers & prospects</option><option value="non-customer">Partners & other</option>
+                </select>}
+              </Field>
+              <Button variant="primary" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</Button>
             </>}
-            {tab === 'people' && <button type="button" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</button>}
+            {tab === 'people' && <Button variant="primary" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</Button>}
           </div>
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab === 'companies' && (
@@ -223,7 +221,7 @@ export function Connections() {
                   </button>;
                 })}
               </div>
-              {!companyRows.length && <p className="connections-empty">No companies match. Try another search or relationship type.</p>}
+              {!companyRows.length && <StatusText state="empty" className="connections-empty">No companies match. Try another search or relationship type.</StatusText>}
             </section>
           )}
           {tab === 'people' && (
@@ -246,7 +244,7 @@ export function Connections() {
                   <button type="button" onClick={() => startEditingPerson(person)}>Edit</button>
                 </article>)}
               </div>
-              {!peopleRows.length && <p className="connections-empty">No contacts match. Adjust your search or add a person.</p>}
+              {!peopleRows.length && <StatusText state="empty" className="connections-empty">No contacts match. Adjust your search or add a person.</StatusText>}
               {editingPersonId && <form className="connections-person-editor" onSubmit={savePerson}>
                 <header><strong>Edit contact</strong><button type="button" onClick={() => setEditingPersonId(null)} aria-label="Close contact editor">×</button></header>
                 <label><span>Name</span><input value={personName} onChange={(e) => setPersonName(e.target.value)} /></label>
@@ -274,7 +272,7 @@ export function Connections() {
                 </button>;
               })}
             </div>
-            {!projectRows.length && <p className="connections-empty">No projects match your search.</p>}
+            {!projectRows.length && <StatusText state="empty" className="connections-empty">No projects match your search.</StatusText>}
           </section>}
           {tab === 'quotes' && <section className="connections-directory">
             <p className="connections-count">{quoteRows.length} current documents · open a quote to edit or review</p>
@@ -287,7 +285,7 @@ export function Connections() {
                 <span className="connections-record-arrow" aria-hidden="true">↗</span>
               </button>)}
             </div>
-            {!quoteRows.length && <p className="connections-empty">No matching quotes.</p>}
+            {!quoteRows.length && <StatusText state="empty" className="connections-empty">No matching quotes.</StatusText>}
           </section>}
           {tab === 'activity' && <section className="connections-directory">
             <p className="connections-count">Latest {activityRows.length} activity records · opened from the linked quote, project, or company</p>
@@ -299,7 +297,7 @@ export function Connections() {
                   <time>{timeLabel(activity.occurredAt)}</time>
                 </button>;
               })}
-              {!activityRows.length && <p className="connections-empty">Activity appears here as your team works on quotes and projects.</p>}
+              {!activityRows.length && <StatusText state="empty" className="connections-empty">Activity appears here as your team works on quotes and projects.</StatusText>}
             </div>
           </section>}
         </>
