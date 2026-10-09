@@ -151,6 +151,14 @@
 
 /* The paper itself, drawing surface and print/customer quotes remain deliberately unthemed. */
 :root[data-sales-theme] .sales-app .desk-surface { background-color:var(--ss-theme-canvas); }
+:root[data-sales-theme] .sales-app .customer-quote-paper {
+  --ink:#272821;
+  --muted:#77766f;
+  --border:#cbc8be;
+  --chrome:#f4f3ef;
+  --chrome-2:#ebe9e2;
+  color-scheme:light;
+}
 :root[data-sales-theme="dark"] .sales-app { color-scheme:dark; }
 :root[data-sales-theme="dark"] .sales-app :is(.quote-title-input,.quote-number,.quote-control-heading,.quote-line-kind,.quote-area-title,.quote-area-summary,.catalog-current-section,.connections-record-eyebrow) { color:var(--ss-theme-ink); }
 :root[data-sales-theme="dark"] .sales-app :is(.quote-preview-pane,.quote-workbench-body,.quote-lines-editor) { background:var(--ss-theme-base); }
