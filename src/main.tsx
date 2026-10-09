@@ -53,6 +53,8 @@ import './appearance-contrast.css';
 import './design-system/settings-adapter.css';
 // Batch 4 Connections palette/layout adapter, scoped after legacy theme fixes.
 import './design-system/connections-adapter.css';
+// UI Foundation Batch 5A Catalog shell; embedded catalog tools remain specialized.
+import './design-system/catalog-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
