@@ -75,7 +75,7 @@ describe('UI Foundation Batch 5C — Sinks', () => {
   });
 
   it('preserves search-first mobile layout, 16px editing inputs, and a scrolling sheet body', () => {
-    expect(css).toContain('@media(max-width:700px)');
+    expect(css).toContain('(orientation: landscape) and (max-height: 520px) and (pointer: coarse)');
     expect(css).toContain('font-size:16px');
     expect(css).toContain('min-height:44px');
     expect(css).toContain('.sinks-foundation-search');

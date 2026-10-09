@@ -59,7 +59,7 @@ describe('UI Foundation Batch 5A — Catalog shell', () => {
     expect(chrome).toContain('setCatalogSection');
     expect(chrome).toContain('mobile-app-drawer');
     expect(chrome).toContain("view === 'catalog'");
-    expect(css).toContain('@media(max-width:700px)');
+    expect(css).toContain('(orientation: landscape) and (max-height: 520px) and (pointer: coarse)');
     expect(css).toContain('.catalog-header.catalog-foundation-heading');
     expect(css).toContain('display:none;');
     expect(css).toContain('.catalog-section-nav.catalog-foundation-tabs');
