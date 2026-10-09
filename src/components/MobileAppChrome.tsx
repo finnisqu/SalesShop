@@ -8,7 +8,7 @@ import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
 import { useAuthStore } from '../store/authStore';
 import { canEditTeamArea } from '../services/teamDepartments';
-import { resolveOwnerPerspective } from '../services/rolePerspective';
+import { allowedOwnerPerspective, resolveOwnerPerspective } from '../services/rolePerspective';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { RolePerspectivePicker } from './RolePerspectiveControls';
 
@@ -129,7 +129,7 @@ export function MobileAppChrome() {
             <button type="button" data-dialog-initial-focus onClick={() => setOpen(false)} aria-label="Close navigation">×</button>
           </header>
 
-          <div className="mobile-app-drawer-owner-tools"><RolePerspectivePicker compact /></div>
+          {allowedOwnerPerspective(teamRole, mode) && !preview && <div className="mobile-app-drawer-owner-tools"><RolePerspectivePicker compact /></div>}
           <nav className="mobile-app-drawer-nav" aria-label="SalesShop sections">
             {APP_DESTINATIONS.map((item) => (
               <button type="button" key={item.view}
