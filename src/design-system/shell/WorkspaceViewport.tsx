@@ -15,6 +15,7 @@ export const WorkspaceViewport = forwardRef<HTMLDivElement, WorkspaceViewportPro
     ref={ref}
     data-ss-viewport="v1"
     data-ss-mode={mode}
+    data-ss-scroll={mode === 'managed' && scroll ? 'true' : undefined}
     className={[
       className,
       mode === 'managed' ? 'ss-workspace-viewport' : null,
