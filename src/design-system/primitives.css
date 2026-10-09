@@ -1,0 +1,93 @@
+/*
+ * SalesShop UI Foundation v1 — opt-in classes only. No legacy selectors,
+ * global element resets, scrollbar changes, or tab-specific viewport rules.
+ */
+.ss-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+:where(.ss-button, .ss-field :is(input, textarea, select), .ss-workspace-toolbar :is(button, input, select)):focus-visible {
+  outline: 3px solid var(--ss-focus);
+  outline-offset: 2px;
+}
+.ss-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ss-space-2);
+  min-height: var(--ss-control-height);
+  border: 1px solid transparent;
+  border-radius: var(--ss-radius-sm);
+  padding: var(--ss-space-2) var(--ss-space-3);
+  font: 650 var(--ss-text-sm)/1.2 var(--ss-font-body);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.ss-button[data-ss-variant="primary"] { background: var(--ss-text); color: #fffdf5; }
+.ss-button[data-ss-variant="secondary"] { border-color: var(--ss-border); background: var(--ss-surface-raised); color: var(--ss-text); }
+.ss-button[data-ss-variant="quiet"] { background: transparent; color: var(--ss-text); }
+.ss-button[data-ss-variant="danger"] { background: var(--ss-danger); color: #fff; }
+.ss-button:not(:disabled):hover { filter: brightness(.95); }
+.ss-button:disabled { cursor: not-allowed; opacity: .54; }
+.ss-button[data-ss-size="compact"] { padding-inline: var(--ss-space-2); }
+.ss-button[data-ss-icon-only="true"] { width: var(--ss-control-height); padding: 0; }
+.ss-button__spinner {
+  height: 12px; width: 12px; border: 2px solid currentColor;
+  border-right-color: transparent; border-radius: 50%;
+  animation: ss-spin .7s linear infinite;
+}
+@keyframes ss-spin { to { transform: rotate(360deg); } }
+.ss-field { display: grid; gap: var(--ss-space-2); min-width: 0; color: var(--ss-text); }
+.ss-field__label { font: 700 var(--ss-text-sm)/1.35 var(--ss-font-body); }
+.ss-field__required { color: var(--ss-danger); margin-left: var(--ss-space-1); }
+.ss-field__help, .ss-field__error { margin: 0; font: 400 var(--ss-text-xs)/1.45 var(--ss-font-body); color: var(--ss-text-muted); }
+.ss-field__error { color: var(--ss-danger); }
+.ss-field :is(input, select, textarea) {
+  width: 100%; min-width: 0; min-height: var(--ss-control-height);
+  border: 1px solid var(--ss-border); border-radius: var(--ss-radius-sm);
+  padding: var(--ss-space-2) var(--ss-space-3); background: var(--ss-surface-raised);
+  color: var(--ss-text); font: 400 var(--ss-text-body)/1.4 var(--ss-font-body);
+}
+.ss-field textarea { resize: vertical; }
+.ss-field [aria-invalid="true"] { border-color: var(--ss-danger); }
+.ss-page-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: var(--ss-space-4); min-width: 0; color: var(--ss-text); }
+.ss-page-header__intro { display: grid; gap: var(--ss-space-1); min-width: 0; }
+.ss-page-header__eyebrow { color: var(--ss-text-muted); text-transform: uppercase; letter-spacing: .07em; font: 700 var(--ss-text-xs)/1.3 var(--ss-font-body); }
+.ss-page-header__title { margin: 0; color: var(--ss-text); font: 700 var(--ss-text-page)/1.16 var(--ss-font-editorial); }
+.ss-page-header__description { margin: 0; color: var(--ss-text-muted); font: 400 var(--ss-text-body)/1.5 var(--ss-font-body); }
+.ss-page-header__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ss-space-2); }
+.ss-page-header[data-ss-density="compact"] .ss-page-header__title { font-size: var(--ss-text-section); }
+.ss-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; border: 1px solid var(--ss-border); border-radius: var(--ss-radius-md); background: var(--ss-surface-raised); color: var(--ss-text); overflow: hidden; }
+.ss-panel__header, .ss-panel__footer { padding: var(--ss-space-3) var(--ss-panel-inset); flex: none; }
+.ss-panel__header { border-bottom: 1px solid var(--ss-border); font: 700 16px/1.4 var(--ss-font-editorial); }
+.ss-panel__footer { border-top: 1px solid var(--ss-border); }
+.ss-panel__body { min-width: 0; min-height: 0; padding: var(--ss-panel-inset); }
+.ss-panel[data-ss-scroll="true"] .ss-panel__body { flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.ss-status { padding: var(--ss-space-4); border: 1px dashed var(--ss-border); border-radius: var(--ss-radius-md); background: var(--ss-surface); color: var(--ss-text-muted); font: 400 var(--ss-text-body)/1.5 var(--ss-font-body); }
+.ss-status[data-ss-state="error"] { border-color: var(--ss-danger); color: var(--ss-danger); }
+.ss-status[data-ss-state="success"] { border-color: var(--ss-positive); color: var(--ss-positive); }
+.ss-workspace-toolbar[data-ss-mode="managed"] { display: grid; grid-template-columns: minmax(0,auto) minmax(0,1fr) minmax(0,auto); align-items: center; gap: var(--ss-space-2); min-height: var(--ss-nav-height); padding-inline: var(--ss-space-3); border-bottom: 1px solid var(--ss-border); background: var(--ss-shell-bg); }
+.ss-workspace-toolbar__slot { display: flex; gap: var(--ss-space-2); align-items: center; min-width: 0; }
+.ss-workspace-toolbar__slot[data-ss-slot="center"] { justify-content: center; overflow: hidden; }
+.ss-workspace-toolbar__slot[data-ss-slot="end"] { justify-content: flex-end; }
+.ss-workspace-viewport[data-ss-mode="managed"] { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ss-workspace-scroll { flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.ss-sales-shell[data-ss-mode="managed"] { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+@media (max-width: 700px) {
+  .ss-page-header__description[data-ss-hide-on-mobile="true"] { display: none; }
+  .ss-workspace-toolbar[data-ss-mode="managed"] { padding-inline: var(--ss-space-2); }
+  .ss-field :is(input, textarea, select) { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-button { transition: none; }
+  .ss-button__spinner { animation: none; }
+}
