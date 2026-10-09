@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { WorkspaceToolbar } from '../design-system/shell';
 import { useNavigationStore, type AppView, type CatalogSection } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
@@ -112,7 +113,7 @@ export function MobileAppChrome() {
 
   return (
     <>
-      <header className="mobile-app-commandbar">
+      <WorkspaceToolbar mode="legacy" className="mobile-app-commandbar">
         <button type="button" className="mobile-app-menu-button" onClick={openNavigation} aria-label="Open SalesShop navigation">☰</button>
         <div className="mobile-app-current">
           <span>SalesShop</span>
@@ -120,7 +121,7 @@ export function MobileAppChrome() {
         </div>
         {!viewer && !preview && <GlobalSearch />}
         {!viewer && !scopedMember && !preview && <QuickCreate />}
-      </header>
+      </WorkspaceToolbar>
 
       {open && <div className="mobile-app-drawer-backdrop" onPointerDown={() => setOpen(false)}>
         <aside ref={drawerRef} className="mobile-app-drawer" role="dialog" aria-modal="true" aria-label="SalesShop navigation" onPointerDown={(event) => event.stopPropagation()}>
