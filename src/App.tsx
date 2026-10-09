@@ -30,6 +30,7 @@ import './catalog-workspace.css';
 import './viewer-workspace.css';
 import './role-perspective.css';
 import { AuthStatus } from './components/AuthGate';
+import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
 import { ViewerWorkspace } from './components/ViewerWorkspace';
 import { RolePerspectivePicker, RolePerspectiveBanner, RolePerspectiveSettings } from './components/RolePerspectiveControls';
 import { resolveOwnerPerspective } from './services/rolePerspective';
@@ -98,7 +99,7 @@ function App() {
   if (!hydrated || !entry) return <div className="loading-screen">Opening SalesShop…</div>;
 
   return (
-    <div className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}${inRolePreview ? ' owner-perspective-active' : ''}`}>
+    <SalesShopShell mode="legacy" className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}${inRolePreview ? ' owner-perspective-active' : ''}`}>
       <RolePerspectiveBanner />
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
@@ -121,7 +122,7 @@ function App() {
       </header>
       <MobileAppChrome />
 
-      <div className="role-perspective-content" inert={inRolePreview && !readOnlyArea && view !== 'settings'}>
+      <WorkspaceViewport mode="legacy" className="role-perspective-content" inert={inRolePreview && !readOnlyArea && view !== 'settings'}>
       {inRolePreview && view === 'settings' ? (
         <RolePerspectiveSettings />
       ) : readOnlyArea && view !== 'notebook' && view !== 'settings' ? (
@@ -178,8 +179,8 @@ function App() {
           </section>
         </main>
       )}
-      </div>
-    </div>
+      </WorkspaceViewport>
+    </SalesShopShell>
   );
 }
 
