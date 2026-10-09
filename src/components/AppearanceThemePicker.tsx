@@ -56,13 +56,16 @@ export function AppearanceThemePicker() {
       <div className="appearance-theme-section-heading">
         <div><strong>Your appearance</strong><small>Saved on this device; you can always switch back.</small></div>
       </div>
-      <div className="appearance-theme-grid">
-        {renderTheme('warm', appearance.themeChoice === 'company', () => updateAppearance({ themeChoice:'company' }))}
-      </div>
-      <div className="appearance-theme-follow-caption">
-        <strong>Follow {companyPaletteOrgId ? 'company' : 'SalesShop'} default</strong>
-        <span>{companyPaletteOrgId ? `Your company currently uses ${themeName(companyPalette)}.` : 'Follow the classic Warm Paper palette.'} This option stays in sync when the default changes.</span>
-      </div>
+      <button type="button" className="appearance-theme-follow"
+        aria-pressed={appearance.themeChoice === 'company'}
+        onClick={() => updateAppearance({ themeChoice:'company' })}>
+        <ThemeSample swatches={THEME_OPTIONS.find((item) => item.id === companyPalette)?.swatches ?? THEME_OPTIONS[1].swatches} />
+        <span className="appearance-theme-follow-caption">
+          <strong>Follow {companyPaletteOrgId ? 'company' : 'SalesShop'} default</strong>
+          <span>{companyPaletteOrgId ? `Currently ${themeName(companyPalette)}.` : 'Classic Warm Paper.'} Always stays in sync with the default.</span>
+        </span>
+        {appearance.themeChoice === 'company' && <span className="appearance-theme-selected" aria-hidden="true">✓ Selected</span>}
+      </button>
       <div className="appearance-theme-grid">
         {THEME_OPTIONS.filter((option) => option.category === 'essentials').map((item) => personalTheme(item.id))}
       </div>
