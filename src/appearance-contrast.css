@@ -397,3 +397,185 @@
 :root[data-sales-contrast="high"] .sales-app {
   --ss-on-muted:var(--ss-theme-ink);
 }
+
+
+/*
+ * Dark mode detail pass — Connections reporting and Catalog Materials.
+ * Fix foreground/background together. Restrict to the two relevant views:
+ * older tab/metric/card rules still ship their own brown #hex text colors.
+ * Neither quote documents nor notebook paper are touched here.
+ */
+
+/* Connections header + tabs. Keep the light selected-tab treatment paired
+ * with dark ink; the other tabs need light ink on the dark tab bar. */
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-heading>div:first-child>span {
+  color:var(--ss-theme-accent);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs>button {
+  background:transparent;
+  border-color:transparent;
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs>button small {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs>button.active {
+  background:var(--ss-theme-tint);
+  border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs>button.active small {
+  color:var(--ss-theme-muted);
+}
+/* The pale reporting strip was inheriting white text. Make it an actual
+ * dark surface, including both segments of the scope switch. */
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-strip {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-strip strong {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-strip small,
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-note {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-buttons {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-buttons button {
+  background:transparent;
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-buttons button.active {
+  background:var(--ss-theme-tint);
+  border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-ink);
+}
+/* KPI values were already bright, while their descriptions and queue labels
+ * kept old mid-brown colors that disappear on slate. */
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-kpi,.dashboard-panel
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-kpi>span,.dashboard-kpi>strong,
+  .dashboard-panel h2,.dashboard-panel>header>strong
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-kpi small,.dashboard-panel>header>span,
+  .dashboard-eyebrow,.dashboard-attention-copy small,
+  .dashboard-attention-copy span,.dashboard-attention-side small,
+  .dashboard-list-main>span,.dashboard-record-note,
+  .dashboard-stage-copy span,.dashboard-stage-copy small,
+  .dashboard-funnel-flow span,.dashboard-funnel-stats span,
+  .dashboard-activity-row small
+) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-row,.dashboard-list-row,.dashboard-funnel-stats>div
+) {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-row:hover,.dashboard-list-row:hover
+) {
+  background:var(--ss-theme-tint);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-copy strong,.dashboard-attention-side strong,
+  .dashboard-list-main strong,.dashboard-list-side strong,
+  .dashboard-funnel-flow strong,.dashboard-funnel-stats strong,
+  .dashboard-activity-row strong
+) {
+  color:var(--ss-theme-ink);
+}
+
+/* Catalog — make Materials list labels agree with the already-dark cards.
+ * These are shared mobile reference-card classes used by Sinks/Rates too. */
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .mobile-catalog-reference-card,.mobile-catalog-reference-trigger,
+  .mobile-catalog-reference-details,.mobile-catalog-reference-empty
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .mobile-catalog-reference-card.is-expanded,.mobile-catalog-reference-card.is-highlighted
+) {
+  background:var(--ss-theme-tint);
+  border-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .mobile-catalog-reference-name>strong,
+  .mobile-catalog-reference-price,
+  .mobile-catalog-reference-price>strong
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .mobile-catalog-reference-name>small,
+  .mobile-catalog-reference-price-meta,
+  .mobile-catalog-reference-chevron
+) {
+  color:var(--ss-theme-muted);
+}
+/* A light reference table heading was next to dark list cards. */
+:root[data-sales-theme="dark"] .sales-app.view-catalog .materials-workspace :is(
+  .materials-reference-card,.materials-reference-card>header,
+  .materials-comparison-board,.materials-comparison-board>header
+) {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .materials-workspace :is(
+  .materials-reference-card>header strong,
+  .materials-comparison-board>header strong
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .materials-workspace :is(
+  .materials-reference-card>header small,
+  .materials-reference-card>header>span,
+  .materials-comparison-board>header small,
+  .materials-comparison-empty
+) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .materials-workspace .materials-comparison-empty {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+}
+/* The select was rendered as ivory with white letters on iOS. Give the
+ * select AND its options an explicit same-surface ink pairing. */
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .rates-sort-control select,.rates-filter-menu>summary
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+  color-scheme:dark;
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .rates-sort-control>span {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .rates-sort-control select option {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+}
