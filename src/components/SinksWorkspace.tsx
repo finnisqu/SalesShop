@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MobileCatalogReferenceCard } from './MobileCatalogReferenceCard';
+import { Button, Field, PageHeader, StatusText } from '../design-system/components';
 import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import {
   SINK_CATEGORIES,
@@ -124,7 +125,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const renderSinkDetail = (selected: SinkModel | null) => (
         <section className="sinks-detail">
           {!selected ? (
-            <div className="sinks-empty-detail"><strong>No sink model selected</strong><span>Add a model to start the catalog.</span></div>
+            <StatusText state="empty" className="sinks-empty-detail"><strong>No sink model selected</strong><span>Add a model to start the catalog.</span></StatusText>
           ) : (
             <>
               <header className="sinks-model-header">
@@ -232,20 +233,18 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
 
   return (
     <main className={`sinks-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
-      <header className="sinks-workspace-header">
-        <div>
-          <span className="board-eyebrow">Product catalog</span>
-          <h1>Sinks</h1>
-          <p>Physical sink products live here. Sink cutouts and customer-provided sink installation stay in Rates as services.</p>
-        </div>
-        <div className="sinks-header-actions">
-          <span className={`sinks-save-status ${error ? 'has-error' : ''}`}>{error ? 'Cloud issue' : saving ? 'Saving…' : 'Saved'}</span>
-          {editing && <button type="button" className="sinks-add-model" onClick={createModel}>+ Sink model</button>}
-          <button type="button" className={editing ? 'sinks-done-button' : 'sinks-edit-button'} onClick={() => setEditing((value) => !value)}>
+      <PageHeader className="sinks-workspace-header sinks-foundation-header"
+        eyebrow="Product catalog" title="Sinks"
+        description="Physical sink products live here. Sink cutouts and customer-provided sink installation stay in Rates as services."
+        actions={<div className="sinks-header-actions">
+          <span className={`sinks-save-status ${error ? 'has-error' : ''}`} role="status">{error ? 'Cloud issue' : saving ? 'Saving…' : 'Saved'}</span>
+          {editing && <Button variant="secondary" className="sinks-add-model" onClick={createModel}>+ Sink model</Button>}
+          <Button variant={editing ? 'primary' : 'secondary'} className={editing ? 'sinks-done-button' : 'sinks-edit-button'}
+            onClick={() => setEditing((value) => !value)}>
             {editing ? 'Done editing' : 'Edit catalog'}
-          </button>
-        </div>
-      </header>
+          </Button>
+        </div>}
+      />
 
       <section className="sinks-stats" aria-label="Sink catalog summary">
         <div><span>Active models</span><strong>{activeModels.length}</strong></div>
@@ -255,14 +254,19 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
       </section>
 
       <section className="sinks-shared-controls">
-        <div className="sinks-category-tabs" role="tablist" aria-label="Sink categories">
-          <button type="button" className={category === 'all' ? 'active' : ''} onClick={() => setCategory('all')}>All Sinks</button>
-          {SINK_CATEGORIES.map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{SINK_CATEGORY_LABELS[item]}</button>)}
+        <div className="sinks-category-tabs" role="group" aria-label="Filter sink category">
+          <Button variant="quiet" className={category === 'all' ? 'active' : ''} aria-pressed={category === 'all'} onClick={() => setCategory('all')}>All Sinks</Button>
+          {SINK_CATEGORIES.map((item) => <Button variant="quiet" key={item}
+            className={category === item ? 'active' : ''} aria-pressed={category === item}
+            onClick={() => setCategory(item)}>{SINK_CATEGORY_LABELS[item]}</Button>)}
         </div>
         <div className="sinks-search-tools">
-          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models, variants, codes…" aria-label="Search sink catalog" />
+          <Field className="sinks-foundation-search" id="sinks-catalog-search" label="Search sink catalog">
+            {(control) => <input {...control} type="search" value={query} onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search models, variants, codes…" />}
+          </Field>
           <label className="sinks-archived-toggle"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Archived</label>
-          <button type="button" className="sinks-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open sink catalog tools">••• <span>Tools</span></button>
+          <Button variant="secondary" className="sinks-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open sink catalog tools">••• <span>Tools</span></Button>
         </div>
       </section>
       <MobileCatalogActiveFilters items={activeMobileFilters}
@@ -276,8 +280,8 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
           <section>
               <span className="sinks-mobile-tools-label">Mode</span>
               <div className="sinks-mobile-mode-row">
-                <button type="button" className={!editing ? 'active' : ''} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up models and pricing</small></button>
-                <button type="button" className={editing ? 'active' : ''} onClick={() => { setEditing(true); setMobileToolsOpen(false); }}><strong>Edit catalog</strong><small>Maintain models and variants</small></button>
+                <button type="button" className={!editing ? 'active' : ''} aria-pressed={!editing} onClick={() => { setEditing(false); setMobileToolsOpen(false); }}><strong>Reference</strong><small>Look up models and pricing</small></button>
+                <button type="button" className={editing ? 'active' : ''} aria-pressed={editing} onClick={() => { setEditing(true); setMobileToolsOpen(false); }}><strong>Edit catalog</strong><small>Maintain models and variants</small></button>
               </div>
             </section>
             <section>
