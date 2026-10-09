@@ -55,6 +55,8 @@ import './design-system/settings-adapter.css';
 import './design-system/connections-adapter.css';
 // UI Foundation Batch 5A Catalog shell; embedded catalog tools remain specialized.
 import './design-system/catalog-adapter.css';
+// Batch 5B Materials UI; scoped after the Catalog shell and legacy palette fixes.
+import './design-system/materials-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
