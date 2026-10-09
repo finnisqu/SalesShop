@@ -51,6 +51,8 @@ import './team-access.css';
 import './appearance-contrast.css';
 // Scoped UI Foundation Batch 3 Settings adapter (after legacy theme bridges).
 import './design-system/settings-adapter.css';
+// Batch 4 Connections palette/layout adapter, scoped after legacy theme fixes.
+import './design-system/connections-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
