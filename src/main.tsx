@@ -57,6 +57,8 @@ import './design-system/connections-adapter.css';
 import './design-system/catalog-adapter.css';
 // Batch 5B Materials UI; scoped after the Catalog shell and legacy palette fixes.
 import './design-system/materials-adapter.css';
+// UI Foundation Batch 5C Sinks: route-scoped forms, product cards and mobile sheet.
+import './design-system/sinks-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
