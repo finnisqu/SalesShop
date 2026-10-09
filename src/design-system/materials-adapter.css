@@ -302,3 +302,182 @@
     min-height:48px;
   }
 }
+
+
+/* Batch 5B mobile QC polish: visually identical Filter / Sort / Tools cards.
+ * Old mobile sort had an ivory wrapper and a separately dark native select.
+ * Preserve its two-line layout and iOS 16px select size to avoid focus zoom. */
+@media(max-width:700px) {
+  :root[data-sales-theme] .sales-app.view-catalog .materials-workspace .materials-reference-tools
+  .rates-sort-control.materials-sort-control {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:11px minmax(0,1fr);
+    align-content:center;
+    height:44px;
+    min-height:44px;
+    padding:4px 28px 4px 12px;
+    border:1px solid var(--ss-materials-border);
+    border-radius:var(--ss-radius-sm);
+    background:var(--ss-materials-card);
+    color:var(--ss-materials-ink);
+    box-shadow:none;
+    overflow:hidden;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+  .rates-sort-control.materials-sort-control>span {
+    color:var(--ss-materials-muted);
+    font:750 9px/11px var(--ss-font-body);
+    letter-spacing:.04em;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+  .rates-sort-control.materials-sort-control select {
+    display:block;
+    width:100%;
+    height:24px;
+    min-height:24px;
+    margin:0;
+    padding:0;
+    border:0;
+    background:transparent;
+    color:var(--ss-materials-ink);
+    -webkit-text-fill-color:var(--ss-materials-ink);
+    font:650 16px/22px var(--ss-font-body);
+    letter-spacing:normal;
+    appearance:none;
+    -webkit-appearance:none;
+    box-shadow:none;
+    outline:0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+  .rates-sort-control.materials-sort-control::after {
+    right:12px;
+    border-color:var(--ss-materials-muted);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+  .rates-sort-control.materials-sort-control:focus-within {
+    border-color:var(--ss-materials-accent);
+    outline:2px solid var(--ss-materials-accent);
+    outline-offset:1px;
+    background:var(--ss-materials-card);
+  }
+}
+
+/* Comparison container: round its visible children as well as its border.
+ * Don't set overflow:hidden on a sticky, horizontally-scrolling tray. */
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-comparison-board {
+  border-radius:var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-comparison-board>header {
+  border-radius:var(--ss-radius-md) var(--ss-radius-md) 0 0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-comparison-board:not(.has-pins) .materials-comparison-empty {
+  background:var(--ss-materials-card);
+  color:var(--ss-materials-muted);
+  border-radius:0 0 var(--ss-radius-md) var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-comparison-board.has-pins .materials-comparison-strip {
+  border-radius:0 0 var(--ss-radius-md) var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-comparison-board.has-pins .materials-comparison-card {
+  background:var(--ss-materials-card);
+  border-color:var(--ss-materials-border);
+  color:var(--ss-materials-ink);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-comparison-card :is(strong,b,dd) {
+  color:var(--ss-materials-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-comparison-card :is(span,small,dt) {
+  color:var(--ss-materials-muted);
+}
+
+/* Expanded material variant: all nested row, price program, and control
+ * backgrounds get the same theme as the collapsed parent. Old fixed cream
+ * details and green default-cost labels are illegible in After Hours. */
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.mobile-catalog-reference-card.is-expanded>.mobile-catalog-reference-trigger {
+  background:var(--ss-materials-tint);
+  color:var(--ss-materials-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.mobile-catalog-reference-card.is-expanded>.mobile-catalog-reference-details {
+  background:var(--ss-materials-bg);
+  border-color:var(--ss-materials-border);
+  color:var(--ss-materials-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.mobile-catalog-reference-details .materials-variant-browser {
+  background:var(--ss-materials-bg);
+  border-color:var(--ss-materials-border);
+  color:var(--ss-materials-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-variant-line {
+  background:var(--ss-materials-card);
+  border-color:var(--ss-materials-border);
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-materials-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-variant-line.is-pinned {
+  background:var(--ss-materials-tint);
+  border-color:var(--ss-materials-accent);
+  box-shadow:inset 3px 0 var(--ss-materials-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-variant-line>div>strong,
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-variant-default-cost>strong {
+  color:var(--ss-materials-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-variant-line>div :is(span,small) {
+  color:var(--ss-materials-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-price-program-list>div {
+  background:var(--ss-materials-bg);
+  border-color:var(--ss-materials-border);
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-materials-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-price-program-list>div.is-default {
+  background:var(--ss-materials-tint);
+  border-color:var(--ss-materials-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-price-program-list strong {
+  color:var(--ss-materials-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-price-program-list :is(span,small) {
+  color:var(--ss-materials-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-variant-empty {
+  background:var(--ss-materials-bg);
+  border-color:var(--ss-materials-border);
+  color:var(--ss-materials-muted);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-pin-button:not(.is-pinned) {
+  background:var(--ss-materials-bg);
+  color:var(--ss-materials-ink);
+  border-color:var(--ss-materials-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+.materials-pin-button.is-pinned {
+  background:var(--ss-materials-tint);
+  color:var(--ss-materials-ink);
+  border-color:var(--ss-materials-accent);
+}
