@@ -266,7 +266,7 @@
 
 .materials-variant-expanded-row > td {
   padding: 0 !important;
-  background: #eee9dc !important;
+  background: var(--ss-materials-bg, #eee9dc) !important;
 }
 
 .materials-variant-browser {
@@ -344,7 +344,7 @@
 }
 
 .materials-variant-default-cost > strong {
-  color: #4d6248 !important;
+  color: var(--ss-materials-ink, #4d6248);
   font-size: 11px !important;
   font-variant-numeric: tabular-nums;
 }
