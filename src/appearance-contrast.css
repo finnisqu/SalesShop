@@ -140,96 +140,205 @@
 }
 
 /*
- * Foreground correction for legacy hard-coded color declarations.
- * Never target customer-document/paper descendants. The :where exclusion is
- * intentionally zero-specificity: themed containers win, paper stays neutral.
+ * Surface-aware dark mode: pair EACH light foreground with a known dark
+ * background. Never repaint arbitrary descendants by tag name. The former
+ * selector applied light color to every span/div/button, including nested
+ * ivory paper and pastel controls (white on cream on iPhone).
  */
+
+/* App chrome + BOTH mobile navigators. Quotes uses its own drawer. */
 :root[data-sales-theme="dark"] .sales-app :is(
-  .app-header, .mobile-app-commandbar, .mobile-app-drawer,
-  .board-view, .accounts-view, .quotes-view, .catalog-workspace,
-  .connections-workspace, .leadership-dashboard,
-  .company-settings-view, .viewer-workspace, .role-perspective-settings,
-  .global-search-sheet, .quick-create-sheet,
-  .project-editor, .account-editor
-) :is(
-  h1,h2,h3,h4,h5,h6,
-  p,span,small,strong,em,b,i,label,legend,summary,dt,dd,th,td,li,div,
-  .board-eyebrow, .account-health-callout, .quote-control-heading,
-  .quote-line-kind, .quote-area-title, .quote-area-summary,
-  .quote-number, .quote-title-input, .catalog-current-section,
-  .connections-record-eyebrow, .settings-detail-line
-):not(:is(
-  .paper-sheet *, .paper-sheet,
-  .customer-quote-paper *, .customer-quote-paper,
-  .company-branding-preview *, .company-branding-preview,
-  .role-perspective-banner *, .role-perspective-banner,
-  .settings-appearance-preview *, .settings-appearance-preview,
-  .appearance-theme-sample *, .appearance-theme-sample,
-  .appearance-theme-selected, .appearance-theme-selected-detail *,
-  .quote-send-button *, .quote-send-button,
-  .quote-revision-button *, .quote-revision-button,
-  .quick-create-primary *, .quick-create-primary,
-  .account-stage-won *, .account-stage-won,
-  .account-stage-quoted *, .account-stage-quoted,
-  .account-stage-lost *, .account-stage-lost,
-  .account-stage-non-customer *, .account-stage-non-customer,
-  .has-error, .quote-share-error, .settings-feedback.has-error,
-  .settings-primary-button *, .settings-primary-button
-)) {
-  color: var(--ss-on-surface);
+  .mobile-app-drawer, .quote-mobile-navigator,
+  .mobile-app-commandbar, .quote-mobile-commandbar,
+  .quote-mobile-menu, .quote-mobile-tools-menu, .quote-mobile-view-menu,
+  .mobile-app-context-section, .mobile-catalog-destinations,
+  .mobile-app-drawer-owner-tools
+) {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
 }
-/* Secondary metadata is deliberately lighter, not the old dark grey. */
 :root[data-sales-theme="dark"] .sales-app :is(
-  .app-header, .mobile-app-commandbar, .mobile-app-drawer,
-  .board-view, .accounts-view, .quotes-view, .catalog-workspace,
-  .connections-workspace, .leadership-dashboard,
-  .company-settings-view, .viewer-workspace,
-  .global-search-sheet, .quick-create-sheet
-) :is(
-  small, .eyebrow, .board-eyebrow, .project-card-company,
-  .account-card-company, .project-last-touch, .quote-control-heading,
-  .quote-lines-editor header small, .quote-list-item small,
-  .mobile-app-current>span, .catalog-current-section small,
-  .mobile-catalog-reference-name>small, .mobile-catalog-reference-price-meta,
-  .supplier-nav-item small, .supplier-navigator>header span,
-  .settings-preference-row>div>small, .company-settings-card small,
-  .connections-record small, .dashboard-kpi span, .viewer-record>small,
-  .global-search-result-copy small, .quick-create-option small
-):not(:is(
-  .paper-sheet *, .customer-quote-paper *,
-  .company-branding-preview *, .settings-appearance-preview *,
-  .role-perspective-banner *, .appearance-theme-sample *
-)) {
-  color: var(--ss-on-muted);
+  .mobile-app-drawer>header, .quote-mobile-navigator>header,
+  .quote-mobile-document-heading, .mobile-app-context-section>header
+) :is(strong,span,small) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer-nav button, .quote-mobile-app-nav button,
+  .mobile-catalog-section-list button,
+  .quote-mobile-document-list>button,
+  .quote-mobile-archive-toggle, .quote-mobile-document-heading>button,
+  .quote-mobile-view-menu>button, .quote-mobile-tool-grid button,
+  .quote-mobile-setup-grid button, .quote-mobile-zoom-row button,
+  .quote-mobile-document-actions>button,
+  .quote-mobile-view-button, .quote-mobile-more-button,
+  .quote-mobile-nav-button, .mobile-app-menu-button
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer-nav button.active,.quote-mobile-app-nav button.active,
+  .quote-mobile-view-menu>button.active,.quote-mobile-view-button.active,
+  .quote-mobile-more-button.active,.mobile-catalog-section-list button.active,
+  .quote-mobile-document-list>button.active,
+  .mobile-app-drawer-nav button.is-expanded
+) {
+  background:var(--ss-theme-tint);
+  border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer-nav button, .quote-mobile-app-nav button,
+  .quote-mobile-document-list>button, .mobile-catalog-section-list button
+) :is(span,strong,small,b) {
+  color:inherit;
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .quote-mobile-document-heading small,.quote-mobile-document-list small,
+  .quote-mobile-view-menu small,.quote-mobile-menu-heading,
+  .mobile-app-drawer>header span,.quote-mobile-navigator>header span,
+  .mobile-app-catalog-chevron,.quote-mobile-current-document span
+) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer-owner-tools .role-perspective-picker {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer-owner-tools .role-perspective-picker :is(span,select) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer-owner-tools .role-perspective-picker select {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color-scheme:dark;
+}
+/* The Cloud/role badge remains deliberately light. Its label needs dark ink. */
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer>footer .backend-status.cloud {
+  color:#27382f;
+}
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer>header>button,
+:root[data-sales-theme="dark"] .sales-app .quote-mobile-navigator>header>button {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
 }
 
-/* Legacy buttons/selects often set their own foreground to dark brown. */
-:root[data-sales-theme="dark"] .sales-app :is(
-  .app-header, .mobile-app-commandbar, .mobile-app-drawer,
-  .board-view, .accounts-view, .quotes-view, .catalog-workspace,
-  .connections-workspace, .company-settings-view, .viewer-workspace,
-  .global-search-sheet, .quick-create-sheet,
-  .project-editor, .account-editor
-) :is(button, select, input:not([type="checkbox"]), textarea):not(:is(
-  .paper-sheet *, .customer-quote-paper *, .company-branding-preview *,
-  .quote-send-button, .quote-revision-button,
-  .settings-primary-button, .quick-create-primary,
-  .account-stage-won, .account-stage-quoted, .account-stage-lost
-)) {
-  color: var(--ss-on-surface);
-  border-color: var(--ss-theme-border);
+/* Quotes estimate editor: dark surfaces + light text in the SAME component. */
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-card,.quote-area-header,.quote-general-header,
+  .quote-section-editor,.quote-lines-editor,.quote-details-grid,
+  .quote-customer-controls,.quote-add-row,.quote-history,
+  .quote-notes-grid label,.quote-notes-grid label.internal-notes,
+  .quote-configuration-strip,.quote-list-item
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
 }
-:root[data-sales-theme="dark"] .sales-app :is(
-  input:not([type="checkbox"]), textarea, select
-):not(:is(.paper-sheet *, .customer-quote-paper *, .company-branding-preview *)) {
-  caret-color: var(--ss-on-surface);
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-header,.quote-general-header,.quote-section-editor,
+  .quote-add-row,.quote-customer-controls
+) {
+  background:var(--ss-theme-base);
 }
-:root[data-sales-theme="dark"] .sales-app :is(
-  input,textarea
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-title>span,.quote-area-summary>span,
+  .quote-number,.quote-line-kind,.quote-control-heading,
+  .quote-lines-editor header small,.quote-notes-grid label>span,
+  .quote-general-title>small,.quote-list-item>small,
+  .quote-list-item>span
+) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-title input,.quote-area-summary strong,
+  .quote-general-title>strong,.quote-section-editor input,
+  .quote-list-item>strong,.quote-list-item>b,
+  .quote-lines-editor>header>strong,.quote-line-editor .quote-line-main,
+  .quote-notes-grid label>span
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-details-grid :is(input,select),
+  .quote-notes-grid textarea,.quote-title-input,
+  .quote-section-editor input,.quote-area-title input
+) {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+  caret-color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-notes-grid textarea,.quote-details-grid input
 )::placeholder {
-  color: var(--ss-on-muted);
-  opacity: 1;
+  color:var(--ss-theme-muted);
+  opacity:1;
 }
+/* Pastel action buttons deliberately retain their light surfaces. */
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-actions button,.quote-add-row button
+) {
+  color:#2b352e;
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-actions button:hover,.quote-add-row button:hover
+) {
+  color:#2b352e;
+}
+/* Notes are not customer paper; their dark-mode form fields use dark colors. */
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-line-editor,.quote-section-editor,.quote-history
+) {
+  background-color:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-line-kind,.quote-history>div,.quote-customer-controls label
+) { color:var(--ss-theme-muted); }
+
+/* Common other dark workspace components, scoped instead of all descendants. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .board-column-header h2,.board-column-header strong,.project-card-facts strong,
+  .account-editor-section>header strong,.dashboard-heading h1,
+  .dashboard-kpi>strong,.connections-heading h1,
+  .company-settings-header h1,.viewer-workspace-header h1,
+  .supplier-navigator>header strong,.sinks-workspace-header h1
+) {color:var(--ss-theme-ink);}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .board-column-header span,.project-last-touch,.account-activity-row small,
+  .dashboard-kpi>span,.dashboard-subtitle,
+  .connections-heading p,.company-settings-header p,
+  .viewer-workspace-header p,.supplier-nav-item small
+) {color:var(--ss-theme-muted);}
+/* These existing controls live directly on themed dark surfaces. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .quotes-sidebar>header button,.quote-mobile-archive-toggle,
+  .global-search-launcher,.global-search-sheet input,
+  .quick-create-sheet input,.mobile-app-drawer-nav button
+) {
+  color:var(--ss-theme-ink);
+}
+/* Search, textareas and selectors should not show dark text on dark input. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .global-search-sheet input,.quick-create-sheet input,
+  .connections-workspace :is(input,select,textarea),
+  .catalog-workspace :is(input,select,textarea),
+  .company-settings-view :is(input,select,textarea)
+) {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .global-search-sheet input,.quick-create-sheet input,
+  .connections-workspace input,.catalog-workspace input,
+  .company-settings-view input
+)::placeholder {color:var(--ss-theme-muted);opacity:1;}
 
 /* Preserve light islands and their dark text, including live quote previews.
  * Colorful semantic notices are not turned into white-on-pastel accidents. */
