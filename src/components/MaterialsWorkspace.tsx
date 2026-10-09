@@ -14,6 +14,8 @@ import {
   type StockMaterial,
 } from '../types/settings';
 import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
+import { Button, Field } from '../design-system/components';
+import { MaterialsFilterFields, type MaterialsFilterFieldsProps } from './MaterialsFilterFields';
 import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { MaterialRateBook } from './MaterialRateBook';
 import { SupplierImportLauncher } from './SupplierImportCenter';
@@ -200,6 +202,19 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
     setFinishFilter('all');
     setThicknessFilter('all');
   };
+  // Both desktop and mobile filter sheets receive exactly the same state.
+  const filterFields: Omit<MaterialsFilterFieldsProps, 'idPrefix'> = {
+    programFilter, materialFamilyFilter, materialTypeFilter, brandFilter,
+    finishFilter, thicknessFilter, materialTypes, brands, finishes,
+    thicknesses, activeFilterCount,
+    onProgramChange: setProgramFilter,
+    onFamilyChange: setMaterialFamilyFilter,
+    onTypeChange: setMaterialTypeFilter,
+    onBrandChange: setBrandFilter,
+    onFinishChange: setFinishFilter,
+    onThicknessChange: setThicknessFilter,
+    onClear: clearFilters,
+  };
 
   const activeMobileFilters: MobileCatalogFilterChip[] = [
     ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
@@ -348,31 +363,26 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
 
       {sectionView === 'catalog' && <section className="rates-reference-controls rates-shared-controls materials-controls">
         <div className="rates-reference-tools materials-reference-tools">
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search colors, suppliers, brands, finishes…"
-            aria-label="Search material library"
-          />
-          <button type="button" className="materials-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open material catalog tools">
+          <Field id="materials-catalog-search" label="Search material library" className="materials-foundation-search">
+            {(control) => <input {...control}
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search colors, suppliers, brands, finishes…"
+            />}
+          </Field>
+          <Button variant="secondary" className="materials-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open material catalog tools">
             <span>•••</span><strong>Tools</strong>
-          </button>
+          </Button>
           {!editing && (
             <>
               <details className="rates-filter-menu">
                 <summary>Filter{activeFilterCount ? ` · ${activeFilterCount}` : ''}</summary>
-                <div className="rates-filter-popover">
-                  <label><span>Program</span><select value={programFilter} onChange={(event) => setProgramFilter(event.target.value as ProgramFilter)}><option value="all">All programs</option><option value="stock">STOCK only</option><option value="non-stock">Non-stock only</option></select></label>
-                  <label><span>Material family</span><select value={materialFamilyFilter} onChange={(event) => setMaterialFamilyFilter(event.target.value as 'all' | MaterialFamily)}><option value="all">All families</option>{MATERIAL_FAMILIES.map((family) => <option value={family} key={family}>{family}</option>)}</select></label>
-                  <label><span>Material type</span><select value={materialTypeFilter} onChange={(event) => setMaterialTypeFilter(event.target.value)}><option value="all">All types</option>{materialTypes.map((type) => <option value={type} key={type}>{type}</option>)}</select></label>
-                  <label><span>Brand</span><select value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}><option value="all">All brands</option>{brands.map((brand) => <option value={brand} key={brand}>{brand}</option>)}</select></label>
-                  <label><span>Finish</span><select value={finishFilter} onChange={(event) => setFinishFilter(event.target.value)}><option value="all">All finishes</option>{finishes.map((finish) => <option value={finish} key={finish}>{finish}</option>)}</select></label>
-                  <label><span>Thickness</span><select value={thicknessFilter} onChange={(event) => setThicknessFilter(event.target.value)}><option value="all">All thicknesses</option>{thicknesses.map((thickness) => <option value={thickness} key={thickness}>{thickness}</option>)}</select></label>
-                  <button type="button" onClick={clearFilters} disabled={!activeFilterCount}>Clear filters</button>
+                <div className="rates-filter-popover materials-foundation-filter-popover">
+                  <MaterialsFilterFields idPrefix="materials-desktop" {...filterFields} />
                 </div>
               </details>
-              <button type="button" className="mobile-catalog-filter-trigger" aria-haspopup="dialog" onClick={() => setMobileFilterOpen(true)}>Filter{activeFilterCount ? ` · ${activeFilterCount}` : ''}</button>
+              <Button variant="secondary" className="mobile-catalog-filter-trigger" aria-haspopup="dialog" onClick={() => setMobileFilterOpen(true)}>Filter{activeFilterCount ? ` · ${activeFilterCount}` : ''}</Button>
               <label className="rates-sort-control materials-sort-control">
                 <span>Sort by</span>
                 <select value={sort} onChange={(event) => setSort(event.target.value as MaterialSort)} aria-label="Sort material library">
@@ -394,13 +404,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
 
       {sectionView === 'catalog' && !editing && mobileFilterOpen && (
         <MobileCatalogFilterSheet section="Materials" onClose={() => setMobileFilterOpen(false)}>
-          <label><span>Program</span><select value={programFilter} onChange={(event) => setProgramFilter(event.target.value as ProgramFilter)}><option value="all">All programs</option><option value="stock">STOCK only</option><option value="non-stock">Non-stock only</option></select></label>
-                  <label><span>Material family</span><select value={materialFamilyFilter} onChange={(event) => setMaterialFamilyFilter(event.target.value as 'all' | MaterialFamily)}><option value="all">All families</option>{MATERIAL_FAMILIES.map((family) => <option value={family} key={family}>{family}</option>)}</select></label>
-                  <label><span>Material type</span><select value={materialTypeFilter} onChange={(event) => setMaterialTypeFilter(event.target.value)}><option value="all">All types</option>{materialTypes.map((type) => <option value={type} key={type}>{type}</option>)}</select></label>
-                  <label><span>Brand</span><select value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}><option value="all">All brands</option>{brands.map((brand) => <option value={brand} key={brand}>{brand}</option>)}</select></label>
-                  <label><span>Finish</span><select value={finishFilter} onChange={(event) => setFinishFilter(event.target.value)}><option value="all">All finishes</option>{finishes.map((finish) => <option value={finish} key={finish}>{finish}</option>)}</select></label>
-                  <label><span>Thickness</span><select value={thicknessFilter} onChange={(event) => setThicknessFilter(event.target.value)}><option value="all">All thicknesses</option>{thicknesses.map((thickness) => <option value={thickness} key={thickness}>{thickness}</option>)}</select></label>
-                  <button type="button" onClick={clearFilters} disabled={!activeFilterCount}>Clear filters</button>
+          <MaterialsFilterFields idPrefix="materials-mobile" {...filterFields} />
         </MobileCatalogFilterSheet>
       )}
 
