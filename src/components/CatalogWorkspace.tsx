@@ -4,8 +4,9 @@ import { RatesWorkspace } from './RatesWorkspace';
 import { SinksWorkspace } from './SinksWorkspace';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
 import { useNavigationStore, type CatalogSection } from '../store/navigationStore';
+import { PageHeader, SectionTabs, Panel } from '../design-system/components';
 
-const CATALOG_SECTIONS: Array<{
+export const CATALOG_SECTIONS: Array<{
   id: CatalogSection;
   label: string;
   eyebrow: string;
@@ -55,9 +56,8 @@ function OtherCatalogComingSoon() {
 
   return (
     <section className="catalog-other-coming-soon">
-      <div className="catalog-other-card">
-        <span className="board-eyebrow">Accessories & shop inputs</span>
-        <h2>Other</h2>
+      <Panel className="catalog-other-card catalog-foundation-other-card"
+        heading={<><span className="board-eyebrow">Accessories & shop inputs</span><h2>Other</h2></>}>
         <p>
           This catalog will hold the physical items that do not belong under Materials or Sinks—whether we sell them directly
           to a customer or consume them while fabricating and installing countertops.
@@ -70,7 +70,7 @@ function OtherCatalogComingSoon() {
           The goal is one place for product cost, sell price, supplier, inventory relevance, and margin impact without forcing
           every shop input to become a customer-facing quote item.
         </small>
-      </div>
+      </Panel>
     </section>
   );
 }
@@ -89,32 +89,21 @@ export function CatalogWorkspace() {
 
   return (
     <main className="catalog-workspace">
-      <header className="catalog-header">
-        <div>
-          <span className="board-eyebrow">Commercial source of truth</span>
-          <h1>Catalog</h1>
-          <p>Products, purchasing inputs, supplier sources, and pricing references that feed SalesShop quoting and margin.</p>
-        </div>
-        <div className="catalog-current-section">
+      <PageHeader className="catalog-header catalog-foundation-heading"
+        eyebrow="Commercial source of truth"
+        title="Catalog"
+        description="Products, purchasing inputs, supplier sources, and pricing references that feed SalesShop quoting and margin."
+        actions={<div className="catalog-current-section" aria-live="polite">
           <span>{current.eyebrow}</span>
           <strong>{current.label}</strong>
           <small>{current.description}</small>
-        </div>
-      </header>
+        </div>}
+      />
 
-      <nav className="catalog-section-nav" aria-label="Catalog sections">
-        {CATALOG_SECTIONS.map((item) => (
-          <button
-            type="button"
-            key={item.id}
-            className={section === item.id ? 'active' : ''}
-            onClick={() => setSection(item.id)}
-          >
-            <strong>{item.label}</strong>
-            <span>{item.eyebrow}</span>
-          </button>
-        ))}
-      </nav>
+      <SectionTabs className="catalog-section-nav catalog-foundation-tabs"
+        aria-label="Catalog sections"
+        items={CATALOG_SECTIONS.map(({ id, label, eyebrow }) => ({ id, label, description: eyebrow }))}
+        selected={section} onSelect={setSection} />
 
       <section ref={sectionScrollRef} className={`catalog-section-host catalog-section-${section}`}>
         {section === 'materials' ? (
