@@ -4,6 +4,8 @@ import App from './App';
 import { AuthGate } from './components/AuthGate';
 import { PublicQuotePage } from './components/PublicQuotePage';
 import { appRelativePath } from './lib/appUrl';
+import './design-system/tokens.css';
+import './design-system/primitives.css';
 import './index.css';
 import './auth.css';
 import './pricing-schedule-builder.css';
