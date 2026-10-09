@@ -59,6 +59,8 @@ import './design-system/catalog-adapter.css';
 import './design-system/materials-adapter.css';
 // UI Foundation Batch 5C Sinks: route-scoped forms, product cards and mobile sheet.
 import './design-system/sinks-adapter.css';
+// UI Foundation Batch 5D Rates: shared lookup filters, editor and mobile cards.
+import './design-system/rates-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
