@@ -204,6 +204,17 @@
 ) {
   color:var(--ss-theme-muted);
 }
+:root[data-sales-theme="dark"] .sales-app .quote-mobile-current-document strong {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .quote-mobile-document-actions>button.is-send,
+  .quote-mobile-document-actions>button.is-sign
+) {
+  background:var(--ss-theme-accent);
+  border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-contrast);
+}
 :root[data-sales-theme="dark"] .sales-app .mobile-app-drawer-owner-tools .role-perspective-picker {
   background:var(--ss-theme-card);
   border-color:var(--ss-theme-border);
