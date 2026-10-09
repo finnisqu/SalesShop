@@ -8,7 +8,8 @@ const bridge = readFileSync(new URL('../appearance-contrast.css', import.meta.ur
 const main = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
 
 function luminance(hex: string): number {
-  const clean = hex.slice(1);
+  const raw = hex.slice(1);
+  const clean = raw.length === 3 ? [...raw].map((digit) => digit + digit).join('') : raw;
   const rgb = [0, 2, 4].map((at) => Number.parseInt(clean.slice(at, at + 2), 16) / 255)
     .map((value) => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
   return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
