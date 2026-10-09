@@ -60,11 +60,30 @@ describe('SalesShop theme contrast contract', () => {
     }
   });
 
-  it('preserves the intentionally light notebook and customer documents', () => {
-    expect(bridge).toContain('.paper-sheet *');
-    expect(bridge).toContain('.customer-quote-paper *');
+  it('never forces light ink onto arbitrary nested light or pastel controls', () => {
+    // Old global tag-selector caused white-on-cream in both mobile drawers.
+    expect(bridge).not.toContain('p,span,small,strong,em,b,i,label,legend');
+    expect(bridge).toContain('.quote-area-actions button,.quote-add-row button');
+    expect(bridge).toContain('color:#2b352e');
+  });
+
+  it('pairs dark surfaces and text in the regular and Quotes mobile drawers', () => {
+    for (const className of [
+      '.mobile-app-drawer-owner-tools', '.role-perspective-picker',
+      '.quote-mobile-navigator', '.quote-mobile-document-list>button',
+      '.quote-mobile-app-nav button', '.quote-mobile-current-document strong',
+      '.quote-area-header', '.quote-notes-grid label', '.quote-notes-grid textarea',
+    ]) {
+      expect(bridge, `Missing color pairing for ${className}`).toContain(className);
+    }
+    expect(bridge).toContain('background:var(--ss-theme-card)');
+    expect(bridge).toContain('color:var(--ss-theme-ink)');
+  });
+
+  it('preserves physical notebook and customer document paper', () => {
+    expect(bridge).toContain('.paper-sheet, .customer-quote-paper');
     expect(bridge).toContain('color-scheme:light');
-    expect(bridge).not.toMatch(/:root\[data-sales-theme="dark"\]\s+(?:body|#root)\b/);
+    expect(bridge).not.toMatch(/:root\\[data-sales-theme="dark"\\]\\s+(?:body|#root)\\b/);
     expect(bridge).toContain('.sales-app');
   });
 });
