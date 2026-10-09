@@ -100,7 +100,7 @@ describe('UI Foundation Batch 5B — Materials', () => {
     expect(css).toContain('border-radius:var(--ss-radius-md) var(--ss-radius-md) 0 0');
     expect(css).toContain('.materials-comparison-board:not(.has-pins) .materials-comparison-empty');
     expect(css).toContain('border-radius:0 0 var(--ss-radius-md) var(--ss-radius-md)');
-    expect(css).not.toContain('overflow:hidden on a sticky');
+    expect(css).not.toMatch(/\.materials-comparison-board\s*\{[^}]*overflow:\s*hidden/);
   });
 
   it('themes expanded slab variants, nested supplier price programs and pinned states', () => {
