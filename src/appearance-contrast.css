@@ -82,7 +82,7 @@
   .materials-toolbar, .materials-show-card, .materials-reference-row,
   .rates-reference-card, .rates-reference-row,
   .sinks-reference-card, .sinks-list-card,
-  .company-settings-card, .settings-tabs,
+  .company-settings-card, .settings-tabs, .leadership-dashboard,
   .settings-preference-row select, .team-invite-form,
   .viewer-record, .viewer-metrics>div,
   .role-perspective-settings-card, .role-perspective-capability,
@@ -122,7 +122,7 @@
   .project-editor, .account-editor
 ) :is(
   h1,h2,h3,h4,h5,h6,
-  p,span,small,strong,em,b,i,label,legend,summary,dt,dd,th,td,li,
+  p,span,small,strong,em,b,i,label,legend,summary,dt,dd,th,td,li,div,
   .board-eyebrow, .account-health-callout, .quote-control-heading,
   .quote-line-kind, .quote-area-title, .quote-area-summary,
   .quote-number, .quote-title-input, .catalog-current-section,
@@ -136,6 +136,7 @@
   .appearance-theme-sample *, .appearance-theme-sample,
   .appearance-theme-selected, .appearance-theme-selected-detail *,
   .quote-send-button *, .quote-send-button,
+  .has-error, .quote-share-error, .settings-feedback.has-error,
   .settings-primary-button *, .settings-primary-button
 )) {
   color: var(--ss-on-surface);
@@ -206,12 +207,6 @@
   --ink-muted:#706759;
   color:#353025;
   color-scheme:light;
-}
-:root[data-sales-theme="dark"] .sales-app :is(
-  .paper-sheet, .customer-quote-paper,
-  .company-branding-preview, .settings-appearance-preview
-) :is(h1,h2,h3,h4,h5,h6,span,strong,small,p,label,th,td) {
-  color:inherit;
 }
 /* Existing pipeline/status pills deliberately have a light semantic fill. */
 :root[data-sales-theme="dark"] .sales-app :is(
