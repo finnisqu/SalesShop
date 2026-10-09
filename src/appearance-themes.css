@@ -55,7 +55,7 @@
 }
 
 /* Bridge the shared tokens to selected palette. No printer/public views. */
-:root[data-sales-theme] {
+:root[data-sales-theme] .sales-app {
   --ss-app-bg:var(--ss-theme-canvas);
   --ss-shell-bg:var(--ss-theme-base);
   --ss-surface:var(--ss-theme-base);
