@@ -1,0 +1,247 @@
+/*
+ * SalesShop legacy-UI contrast bridge.
+ *
+ * The UI Foundation tokens already offer per-theme ink and muted ink, but
+ * several older workspaces hard-code brown/grey foregrounds. On a dark theme
+ * those declarations beat inherited color. This layer gives all legacy
+ * surfaces predictable foregrounds until their migration.
+ *
+ * Scope strictly to .sales-app: never theme public quote pages. Preserve
+ * deliberately light surfaces (notebook sheets, quote documents, branding
+ * previews) and intentional status/semantic color chips.
+ */
+
+/* Themed surfaces inherit the same accessible foreground vocabulary. */
+:root[data-sales-theme] .sales-app {
+  --ss-on-canvas: var(--ss-theme-ink);
+  --ss-on-surface: var(--ss-theme-ink);
+  --ss-on-muted: var(--ss-theme-muted);
+  --ss-on-accent: var(--ss-theme-contrast);
+  --ink-muted: var(--ss-on-muted);
+  --paper-ink: #353025; /* physical notebook paper always stays light */
+}
+:root[data-sales-theme] .sales-app :is(
+  .board-view, .accounts-view, .catalog-workspace, .materials-workspace,
+  .sinks-workspace, .rates-workspace, .connections-workspace,
+  .leadership-dashboard, .company-settings-view, .quotes-view,
+  .quotes-workbench, .viewer-workspace, .role-perspective-settings
+) {
+  --ink-muted: var(--ss-on-muted);
+  color: var(--ss-on-canvas);
+}
+
+/* Tabs, menus, popovers and support dialogs have their own legacy colors. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-commandbar, .mobile-app-drawer, .mobile-app-drawer-nav,
+  .mobile-app-context-section, .mobile-catalog-destinations,
+  .mobile-catalog-tools-sheet, .materials-mobile-tools-sheet,
+  .rates-mobile-tools-sheet, .sinks-mobile-tools-sheet,
+  .quote-mobile-commandbar, .quote-mobile-document-switcher,
+  .quotes-sidebar, .quote-list, .quote-workbench-header,
+  .catalog-header, .catalog-section-nav, .materials-subtabs,
+  .supplier-navigator, .supplier-detail, .supplier-detail-panel,
+  .settings-tabs, .settings-panel-grid, .company-settings-card,
+  .connections-tabs, .connections-directory,
+  .global-search-sheet, .global-search-dialog, .quick-create-sheet,
+  .project-editor, .account-editor, .quote-rate-picker,
+  .quote-material-picker, .rate-book-workspace,
+  .team-new-invite, .team-invite-form
+) {
+  --ink: var(--ss-on-surface);
+  --muted: var(--ss-on-muted);
+  --ink-muted: var(--ss-on-muted);
+  color: var(--ss-on-surface);
+}
+
+/*
+ * Refresh surface colors together with text. Applying white text to an
+ * unmodified ivory card is a contrast failure too. This surface list covers
+ * the new UI and the older nested/mobile cards left out of the first pass.
+ */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer, .mobile-app-context-section,
+  .mobile-app-drawer-nav button, .mobile-app-catalog-section-list button,
+  .mobile-catalog-reference-card, .mobile-catalog-reference-trigger,
+  .mobile-catalog-reference-detail, .mobile-catalog-reference-row,
+  .mobile-catalog-filter-trigger, .mobile-catalog-tools-sheet,
+  .materials-mobile-tools-sheet, .rates-mobile-tools-sheet,
+  .sinks-mobile-tools-sheet, .rates-mobile-tools-trigger,
+  .materials-mobile-tools-trigger, .sinks-mobile-tools-trigger,
+  .quote-mobile-commandbar, .quote-mobile-document-switcher,
+  .quote-list-item, .quote-view-switch, .quote-section-editor,
+  .quote-details-grid, .quote-customer-controls, .quote-lines-editor,
+  .quote-add-row, .quote-rate-picker, .quote-rate-results,
+  .quote-material-picker, .quote-material-results,
+  .board-header-panel, .board-column-header, .board-quick-add,
+  .project-card, .account-card, .accounts-inference-note,
+  .account-health-callout, .dashboard-kpi, .dashboard-card,
+  .dashboard-panel, .connections-directory-toolbar, .connections-record,
+  .connections-add-form, .connections-person-editor,
+  .supplier-navigator, .supplier-nav-item, .supplier-detail,
+  .supplier-filter-chips button, .supplier-detail-panel,
+  .materials-toolbar, .materials-show-card, .materials-reference-row,
+  .rates-reference-card, .rates-reference-row,
+  .sinks-reference-card, .sinks-list-card,
+  .company-settings-card, .settings-tabs,
+  .settings-preference-row select, .team-invite-form,
+  .viewer-record, .viewer-metrics>div,
+  .role-perspective-settings-card, .role-perspective-capability,
+  .global-search-sheet, .global-search-result,
+  .quick-create-sheet, .quick-create-option,
+  .project-editor, .account-editor
+) {
+  background-color: var(--ss-theme-card);
+  border-color: var(--ss-theme-border);
+  color: var(--ss-on-surface);
+}
+/* Indicate selection with a dark-surface tint instead of old cream. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer-nav button.active,
+  .mobile-catalog-reference-card.is-selected,
+  .quote-list-item.active, .quote-view-switch button.active,
+  .supplier-nav-item.active, .supplier-filter-chips button.active,
+  .materials-subtabs button.active, .settings-tabs button.active,
+  .project-card.is-selected, .account-card.is-selected
+) {
+  background-color: var(--ss-theme-tint);
+  border-color: var(--ss-theme-accent);
+  color: var(--ss-on-surface);
+}
+
+/*
+ * Foreground correction for legacy hard-coded color declarations.
+ * Never target customer-document/paper descendants. The :where exclusion is
+ * intentionally zero-specificity: themed containers win, paper stays neutral.
+ */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .app-header, .mobile-app-commandbar, .mobile-app-drawer,
+  .board-view, .accounts-view, .quotes-view, .catalog-workspace,
+  .connections-workspace, .leadership-dashboard,
+  .company-settings-view, .viewer-workspace, .role-perspective-settings,
+  .global-search-sheet, .quick-create-sheet,
+  .project-editor, .account-editor
+) :is(
+  h1,h2,h3,h4,h5,h6,
+  p,span,small,strong,em,b,i,label,legend,summary,dt,dd,th,td,li,
+  .board-eyebrow, .account-health-callout, .quote-control-heading,
+  .quote-line-kind, .quote-area-title, .quote-area-summary,
+  .quote-number, .quote-title-input, .catalog-current-section,
+  .connections-record-eyebrow, .settings-detail-line
+):not(:is(
+  .paper-sheet *, .paper-sheet,
+  .customer-quote-paper *, .customer-quote-paper,
+  .company-branding-preview *, .company-branding-preview,
+  .role-perspective-banner *, .role-perspective-banner,
+  .settings-appearance-preview *, .settings-appearance-preview,
+  .appearance-theme-sample *, .appearance-theme-sample,
+  .appearance-theme-selected, .appearance-theme-selected-detail *,
+  .quote-send-button *, .quote-send-button,
+  .settings-primary-button *, .settings-primary-button
+)) {
+  color: var(--ss-on-surface);
+}
+/* Secondary metadata is deliberately lighter, not the old dark grey. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .app-header, .mobile-app-commandbar, .mobile-app-drawer,
+  .board-view, .accounts-view, .quotes-view, .catalog-workspace,
+  .connections-workspace, .leadership-dashboard,
+  .company-settings-view, .viewer-workspace,
+  .global-search-sheet, .quick-create-sheet
+) :is(
+  small, .eyebrow, .board-eyebrow, .project-card-company,
+  .account-card-company, .project-last-touch, .quote-control-heading,
+  .quote-lines-editor header small, .quote-list-item small,
+  .mobile-app-current>span, .catalog-current-section small,
+  .mobile-catalog-reference-name>small, .mobile-catalog-reference-price-meta,
+  .supplier-nav-item small, .supplier-navigator>header span,
+  .settings-preference-row>div>small, .company-settings-card small,
+  .connections-record small, .dashboard-kpi span, .viewer-record>small,
+  .global-search-result-copy small, .quick-create-option small
+):not(:is(
+  .paper-sheet *, .customer-quote-paper *,
+  .company-branding-preview *, .settings-appearance-preview *,
+  .role-perspective-banner *, .appearance-theme-sample *
+)) {
+  color: var(--ss-on-muted);
+}
+
+/* Legacy buttons/selects often set their own foreground to dark brown. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .app-header, .mobile-app-commandbar, .mobile-app-drawer,
+  .board-view, .accounts-view, .quotes-view, .catalog-workspace,
+  .connections-workspace, .company-settings-view, .viewer-workspace,
+  .global-search-sheet, .quick-create-sheet,
+  .project-editor, .account-editor
+) :is(button, select, input:not([type="checkbox"]), textarea):not(:is(
+  .paper-sheet *, .customer-quote-paper *, .company-branding-preview *,
+  .quote-send-button, .quote-revision-button,
+  .settings-primary-button, .quick-create-primary,
+  .account-stage-won, .account-stage-quoted, .account-stage-lost
+)) {
+  color: var(--ss-on-surface);
+  border-color: var(--ss-theme-border);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  input:not([type="checkbox"]), textarea, select
+):not(:is(.paper-sheet *, .customer-quote-paper *, .company-branding-preview *)) {
+  caret-color: var(--ss-on-surface);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  input,textarea
+)::placeholder {
+  color: var(--ss-on-muted);
+  opacity: 1;
+}
+
+/* Preserve light islands and their dark text, including live quote previews.
+ * Colorful semantic notices are not turned into white-on-pastel accidents. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .paper-sheet, .customer-quote-paper,
+  .company-branding-preview, .settings-appearance-preview
+) {
+  --ss-on-surface:#353025;
+  --ss-on-muted:#706759;
+  --ink:#353025;
+  --muted:#706759;
+  --ink-muted:#706759;
+  color:#353025;
+  color-scheme:light;
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .paper-sheet, .customer-quote-paper,
+  .company-branding-preview, .settings-appearance-preview
+) :is(h1,h2,h3,h4,h5,h6,span,strong,small,p,label,th,td) {
+  color:inherit;
+}
+/* Existing pipeline/status pills deliberately have a light semantic fill. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .account-stage-won, .account-stage-quoted,
+  .account-stage-lost, .account-stage-non-customer,
+  .quote-send-button, .quote-revision-button,
+  .settings-primary-button, .quick-create-primary
+) {
+  color:#2e322b;
+  color-scheme:light;
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .viewer-role-pill, .team-role-matrix-header
+) {
+  background:var(--ss-theme-tint);
+  color:var(--ss-on-surface);
+  border-color:var(--ss-theme-border);
+}
+
+/* Strengthen High Contrast with real semantic foregrounds, not old greys. */
+:root[data-sales-theme="contrast"] .sales-app {
+  --ss-on-surface:#111b1b;
+  --ss-on-muted:#293c41;
+}
+:root[data-sales-theme="contrast"] .sales-app :is(
+  .board-view,.quotes-view,.catalog-workspace,
+  .connections-workspace,.company-settings-view,.viewer-workspace
+) :is(h1,h2,h3,h4,h5,h6,p,strong,label,small) {
+  color:var(--ss-on-surface);
+}
+:root[data-sales-contrast="high"] .sales-app {
+  --ss-on-muted:var(--ss-theme-ink);
+}
