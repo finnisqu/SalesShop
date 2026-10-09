@@ -80,6 +80,36 @@ describe('SalesShop theme contrast contract', () => {
     expect(bridge).toContain('color:var(--ss-theme-ink)');
   });
 
+  it('pairs dark Connections reporting surfaces with legible labels and text', () => {
+    for (const selector of [
+      '.connections-tabs>button', '.connections-tabs>button.active',
+      '.connections-scope-strip', '.connections-scope-strip strong',
+      '.connections-scope-buttons button.active',
+      '.connections-scope-note', '.dashboard-kpi small',
+      '.dashboard-attention-copy small', '.dashboard-attention-row',
+      '.dashboard-panel>header>span',
+    ]) {
+      expect(bridge, `Connections contrast rule missing: ${selector}`).toContain(selector);
+    }
+  });
+
+  it('keeps Catalog reference cards, prices, sort control, and headings readable', () => {
+    for (const selector of [
+      '.mobile-catalog-reference-name>strong',
+      '.mobile-catalog-reference-price>strong',
+      '.mobile-catalog-reference-price-meta',
+      '.mobile-catalog-reference-chevron',
+      '.materials-reference-card>header',
+      '.materials-comparison-board>header',
+      '.rates-sort-control select option',
+    ]) {
+      expect(bridge, `Catalog contrast rule missing: ${selector}`).toContain(selector);
+    }
+    expect(bridge).toContain('color-scheme:dark');
+    expect(bridge).toContain('.sales-app.view-catalog');
+    expect(bridge).toContain('.sales-app.view-dashboard');
+  });
+
   it('preserves physical notebook and customer document paper', () => {
     expect(bridge).toContain('.paper-sheet, .customer-quote-paper');
     expect(bridge).toContain('color-scheme:light');
