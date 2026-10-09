@@ -12,7 +12,7 @@ const fields = {
   behaviorFilter: 'cost-reference' as const,
   unitFilter: 'sf' as const,
   overrideFilter: 'has' as const,
-  availableUnits: ['sf', 'ea'] as Array<'sf' | 'ea'>,
+  availableUnits: ['sf', 'each'] as Array<'sf' | 'each'>,
   activeFilterCount: 3,
   onBehaviorChange: () => {},
   onUnitChange: () => {},
@@ -70,7 +70,7 @@ describe('UI Foundation Batch 5D — Rates', () => {
   it('preserves price sorting, cost bands, division overrides, history and quote insertion', () => {
     for (const required of [
       'useRateBookStore', 'useMaterialLevelGuideStore',
-      "sort === 'cost-asc'", "rateSort === 'sell-asc'",
+      "rateSort === 'cost-asc'", "rateSort === 'sell-asc'",
       "rateSort === 'sell-desc'", "rateSort === 'effective-desc'",
       'divisionOverrides.length', 'marginLabel(item)',
       'materialLevelCostBand(guide.rules, rule)', 'guide.slabPricingMultiplier',
