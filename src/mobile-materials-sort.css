@@ -1,5 +1,5 @@
 /* Mobile Materials: the sort label and selected order share one compact control. */
-@media (max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog .materials-workspace .materials-reference-tools {
     grid-template-columns:78px minmax(0,1fr) 66px;
     gap:5px;

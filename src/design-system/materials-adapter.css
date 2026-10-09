@@ -254,7 +254,7 @@
   color:var(--ss-theme-contrast);
   border-color:var(--ss-materials-accent);
 }
-@media(max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog .materials-workspace .materials-reference-tools>.materials-foundation-search {
     grid-area:search;
     width:100%;
@@ -307,7 +307,7 @@
 /* Batch 5B mobile QC polish: visually identical Filter / Sort / Tools cards.
  * Old mobile sort had an ivory wrapper and a separately dark native select.
  * Preserve its two-line layout and iOS 16px select size to avoid focus zoom. */
-@media(max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   :root[data-sales-theme] .sales-app.view-catalog .materials-workspace .materials-reference-tools
   .rates-sort-control.materials-sort-control {
     display:grid;

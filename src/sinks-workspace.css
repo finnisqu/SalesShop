@@ -714,7 +714,7 @@
 .sinks-mobile-tools-trigger,
 .sinks-mobile-tools-backdrop { display: none; }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog .sinks-workspace.is-catalog-embedded {
     height: auto !important;
     min-height: 100%;
@@ -936,7 +936,7 @@
 
 /* Sink model cards now inherit the same shared mobile reference skin. */
 .sinks-mobile-variant-price{display:none}
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
  .sales-app.view-catalog .sinks-workspace .sinks-catalog-shell{
    border:0;
    background:transparent;

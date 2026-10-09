@@ -6,7 +6,7 @@
   display: none;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* One compact app bar replaces the desktop header/tabs everywhere. */
   .sales-app:not(.view-quotes) > .app-header {
     display: none;
@@ -549,7 +549,7 @@
 
 /* Shared-shell consolidation pass:
    remove duplicate per-tab navigation now that MobileAppChrome owns it. */
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* Board drawer context */
   .mobile-board-mode-list {
     display: grid;
@@ -728,7 +728,7 @@
 }
 
 /* Catalog is a group in the hamburger navigation, not a direct destination. */
-@media(max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .mobile-app-drawer-nav button[aria-controls="mobile-catalog-destinations"] {
     display:flex;
     align-items:center;
@@ -782,7 +782,7 @@
 
 /* Keep role-preview and Viewer navigation available when Quotes uses its
    immersive editor shell. They do not have an active editable quote toolbar. */
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) > .mobile-app-commandbar {
     position: relative;
     z-index: 170;

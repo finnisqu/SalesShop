@@ -1,6 +1,6 @@
 /* Reference-first mobile Rates: shared Catalog shell owns viewport scrolling. */
 .rates-mobile-tools-trigger,.rates-mobile-tools-backdrop{display:none}
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
 .sales-app.view-catalog .rates-workspace.is-catalog-embedded{height:auto!important;min-height:100%;overflow:visible!important;padding:5px 5px calc(28px + env(safe-area-inset-bottom))}
 .sales-app.view-catalog .rates-workspace.is-catalog-embedded>.rates-workspace-header{display:none}
 .sales-app.view-catalog .rates-workspace.is-catalog-embedded>.rates-workspace-stats{display:none}
@@ -45,7 +45,7 @@
 .sales-app.view-catalog .rates-workspace.is-editing .rates-shared-controls{flex-direction:column}
 }
 /* The reference lists now share one card component and skin with Materials. */
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
  .sales-app.view-catalog .rates-workspace.is-reference:not(.materials-workspace) .rates-reference-host .rates-reference-table-wrap{display:none}
  .sales-app.view-catalog .rates-mobile-price-details{
    display:grid;

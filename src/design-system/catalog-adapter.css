@@ -220,7 +220,7 @@
 }
 /* Critical: mobile has ONE global toolbar and its drawer supplies the section
  * navigation. A second sticky strip would steal its search-first workspace. */
-@media(max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   :root[data-sales-theme] .sales-app.view-catalog .catalog-workspace {
     height:auto;
     min-height:0;

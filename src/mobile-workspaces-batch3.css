@@ -6,7 +6,7 @@
 .quote-mobile-menu-header,
 .quote-mobile-menu-done{display:none}
 
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* Board: explicit stage navigation without changing the horizontal-swipe workflow. */
   .sales-app.view-board .mobile-board-stage-picker{
     display:flex;

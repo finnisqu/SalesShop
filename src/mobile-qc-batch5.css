@@ -46,7 +46,7 @@
 :root[data-sales-motion='reduced'] .workspace-loading-marker{
   animation:none;
 }
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app .workspace-loading-state{
     min-height:170px;
     align-self:stretch;

@@ -1,7 +1,7 @@
 /* Shared touch-first Catalog reference language, derived from the Materials card.
    Independent of desktop table layout: no table-row display hacks. */
 .mobile-catalog-reference-list { display:none; }
-@media (max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .mobile-catalog-reference-list {
     display:grid;
     gap:5px;
@@ -132,7 +132,7 @@
 
 /* Shared mobile Catalog controls and Tools presentation.
    The existing business actions remain owned by each workspace. */
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog :is(
     .materials-reference-tools>input[type="search"],
     .rates-reference-tools>input[type="search"],
@@ -200,7 +200,7 @@
 
 /* Batch 2: shared Tools drawer and dismissible active-filter chips. */
 .mobile-catalog-tools-backdrop,.mobile-catalog-active-filters{display:none}
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog .mobile-catalog-active-filters{
     display:flex;
     gap:5px;
@@ -351,7 +351,7 @@
 }
 
 /* Mobile Supplier directory uses the same reference-card anatomy as pricing. */
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog .supplier-navigator .supplier-nav-list{
     display:none;
   }
@@ -406,7 +406,7 @@
   }
 }
 
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* The importer is still launched from Materials tools after the shared-sheet migration. */
   .sales-app.view-catalog .mobile-catalog-tools-sheet .supplier-import-launcher.is-toolbar{
     display:flex;
@@ -431,7 +431,7 @@
 /* Mobile Catalog Filter must never trap users behind a fixed desktop popover.
    On phones, Filter opens the same bottom sheet as Tools with Done / Close / backdrop / Escape. */
 .mobile-catalog-filter-trigger{display:none}
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog .rates-reference-tools > .rates-filter-menu{
     display:none!important;
   }

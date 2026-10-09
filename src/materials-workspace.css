@@ -414,7 +414,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .materials-show-inactive {
     order: 3;
     width: 100%;
@@ -546,7 +546,7 @@
   cursor: grabbing;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .materials-workspace .supplier-import-launcher.is-toolbar {
     min-height: 44px;
   }
@@ -609,7 +609,7 @@
   justify-self: end;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .materials-reference-table {
     min-width: 590px;
   }
@@ -727,7 +727,7 @@
   display: none;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog .materials-workspace.is-catalog-embedded {
     padding-top: 0 !important;
   }
@@ -1039,7 +1039,7 @@
 }
 
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* Supplier Import is launched from the tools sheet, so its full-screen workflow must sit above it. */
   .sales-app.view-catalog .supplier-import-overlay {
     z-index: 2200;
@@ -1048,7 +1048,7 @@
 
 /* Shared mobile cards own the summary sizing; Material variants only style their details. */
 .materials-mobile-brand,.materials-mobile-chevron{display:none}
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-catalog .materials-reference-card{min-width:0;max-width:100%}
   .sales-app.view-catalog .mobile-catalog-reference-details .materials-variant-browser{
     min-width:0;

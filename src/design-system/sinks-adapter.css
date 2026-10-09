@@ -340,7 +340,7 @@
   border-color:var(--ss-sinks-accent);
   box-shadow:inset 3px 0 var(--ss-sinks-accent);
 }
-@media(max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace.is-catalog-embedded {
     background:var(--ss-sinks-canvas);
     min-width:0;
