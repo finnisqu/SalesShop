@@ -19,13 +19,13 @@
     box-sizing:border-box;
     margin:0;
     padding:4px 24px 4px 10px;
-    border:1px solid rgba(91,78,58,.18);
+    border:1px solid var(--ss-materials-border,rgba(91,78,58,.18));
     border-radius:6px;
-    background:#fffaf0;
+    background:var(--ss-materials-card,#fffaf0);
   }
   .sales-app.view-catalog .materials-workspace .materials-sort-control > span {
     min-width:0;
-    color:#918476;
+    color:var(--ss-materials-muted,#918476);
     font-size:8px;
     font-weight:850;
     line-height:10px;
@@ -48,12 +48,12 @@
     outline:0;
     box-shadow:none;
     background:transparent;
-    color:#4e4435;
+    color:var(--ss-materials-ink,#4e4435);
     font-family:inherit;
     font-size:16px;
-    font-weight:750;
+    font-weight:700;
     line-height:20px;
-    letter-spacing:-.5px;
+    letter-spacing:normal;
   }
   .sales-app.view-catalog .materials-workspace .materials-sort-control::after {
     content:'';
@@ -62,16 +62,16 @@
     top:50%;
     width:6px;
     height:6px;
-    border-right:2px solid #776a53;
-    border-bottom:2px solid #776a53;
+    border-right:2px solid var(--ss-materials-muted,#776a53);
+    border-bottom:2px solid var(--ss-materials-muted,#776a53);
     transform:translateY(-70%) rotate(45deg);
     pointer-events:none;
   }
   .sales-app.view-catalog .materials-workspace .materials-sort-control:focus-within {
-    border-color:#ad9257;
-    outline:2px solid rgba(173,146,87,.23);
+    border-color:var(--ss-materials-accent,#ad9257);
+    outline:2px solid var(--ss-materials-accent,#ad9257);
     outline-offset:1px;
-    background:#fff7e7;
+    background:var(--ss-materials-tint,#fff7e7);
   }
   .sales-app.view-catalog .materials-workspace .materials-mobile-tools-trigger {
     min-width:0;
