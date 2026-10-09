@@ -278,7 +278,7 @@
   .sales-app.view-settings .settings-panel-grid,
   .sales-app.view-settings .settings-company-grid{grid-template-columns:1fr}
 }
-@media(max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-settings .company-settings-view{
     height:calc(100dvh - 50px);
     padding:8px 7px calc(22px + env(safe-area-inset-bottom));

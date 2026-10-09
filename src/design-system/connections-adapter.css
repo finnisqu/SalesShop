@@ -358,7 +358,7 @@
   border:1px solid var(--ss-connections-border);
   border-radius:var(--ss-radius-sm);
 }
-@media(max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   :root[data-sales-theme] .sales-app.view-dashboard .connections-workspace {
     flex:1 1 auto;
     height:auto;

@@ -1,6 +1,6 @@
 /* Batch 4: mobile overlay, scrolling, and touch QA.
    Kept separate from the existing desktop notebook and pricing layouts. */
-@media (max-width:700px){
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* The Catalog host is the ONLY vertical scrolling surface.
      Prior QC accidentally hid overflow here while forcing the embedded
      Materials and Rates workspaces to overflow:visible !important. */

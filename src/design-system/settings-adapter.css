@@ -196,7 +196,7 @@
 }
 /* Preserve older two-column settings when space permits; never crop a long
  * form or bottom row because of fixed viewport calculations. */
-@media (max-width:700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-settings .company-settings-view {
     height: auto;
     min-height: 0;

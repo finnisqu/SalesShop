@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import {
   MATERIAL_FAMILIES,
@@ -103,7 +104,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
-  const [isMobileReference, setIsMobileReference] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches);
+  const [isMobileReference, setIsMobileReference] = useState(() => typeof window !== 'undefined' && window.matchMedia(PHONE_LAYOUT_QUERY).matches);
   const [programFilter, setProgramFilter] = useState<ProgramFilter>('all');
   const [materialFamilyFilter, setMaterialFamilyFilter] = useState<'all' | MaterialFamily>('all');
   const [materialTypeFilter, setMaterialTypeFilter] = useState('all');
@@ -130,7 +131,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   }, [hydrateSettings]);
 
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 700px)');
+    const media = window.matchMedia(PHONE_LAYOUT_QUERY);
     const update = () => setIsMobileReference(media.matches);
     update();
     media.addEventListener('change', update);

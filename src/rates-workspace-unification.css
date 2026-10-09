@@ -175,7 +175,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .rates-mode-actions {
     flex-wrap: wrap;
     justify-content: flex-start;
@@ -260,7 +260,7 @@
   line-height: 1.4;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .rates-material-pricing-footer {
     align-items: flex-start;
     flex-direction: column;

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { MobileCatalogReferenceCard } from './MobileCatalogReferenceCard';
 import { Button, Field, PageHeader, StatusText } from '../design-system/components';
 import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
@@ -62,7 +63,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const [quoteSource, setQuoteSource] = useState<CatalogQuoteSource | null>(null);
   const [expandedMobileSinkId, setExpandedMobileSinkId] = useState<string | null>(null);
   const [isMobileCatalog, setIsMobileCatalog] = useState(
-    () => embedded && typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches,
+    () => embedded && typeof window !== 'undefined' && window.matchMedia(PHONE_LAYOUT_QUERY).matches,
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -73,7 +74,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
 
   useEffect(() => {
     if (!embedded) return;
-    const media = window.matchMedia('(max-width: 700px)');
+    const media = window.matchMedia(PHONE_LAYOUT_QUERY);
     const update = () => setIsMobileCatalog(media.matches);
     update();
     media.addEventListener('change', update);
