@@ -818,7 +818,7 @@
     padding: 9px 10px;
     font-size: 12px;
   }
-  .mobile-app-drawer-owner-tools .role-perspective-picker-label { display: inline; }
+  .mobile-app-drawer-owner-tools .role-perspective-picker.is-compact .role-perspective-picker-label { display: inline; }
   .mobile-app-drawer-owner-tools .role-perspective-picker select {
     min-width: 0;
     width: min(60%,200px);
