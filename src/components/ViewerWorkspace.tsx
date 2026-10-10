@@ -9,6 +9,7 @@ import { roleName, type TeamRole } from '../services/teamAccess';
 import { departmentName, type TeamDepartment } from '../services/teamDepartments';
 import { resolveOwnerPerspective } from '../services/rolePerspective';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
+import { Button, Field, PageHeader } from '../design-system/components';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
@@ -59,20 +60,22 @@ export function ViewerWorkspace({ section, previewRole, previewDepartment }: { s
     : section === 'catalog' ? 'Material catalog' : 'Connections';
 
   return <main className="viewer-workspace">
-    <header className="viewer-workspace-header">
-      <div><span className="board-eyebrow">Workspace access · {accessLabel}</span><h1>{title}</h1>
-        <p>{isOwnerPreview ? 'Owner perspective preview — shared data cannot be changed in this simulation.' : 'Read-only access to this section. Personal notebook entries remain editable.'}</p></div>
-      <span className="viewer-role-pill" aria-label="Read-only access">View only</span>
-    </header>
+    <PageHeader className="viewer-workspace-header viewer-foundation-header"
+      eyebrow={`Workspace access · ${accessLabel}`} title={title}
+      description={isOwnerPreview
+        ? 'Owner perspective preview — shared data cannot be changed in this simulation.'
+        : 'Read-only access to this section. Personal notebook entries remain editable.'}
+      actions={<span className="viewer-role-pill" aria-label="Read-only access">View only</span>}
+    />
     {section === 'catalog' && effectiveDepartment === 'purchasing' && <div className="viewer-purchasing-jump">
-      <button type="button" onClick={() => setCatalogSection('suppliers')}>Open editable Suppliers catalog →</button>
+      <Button variant="secondary" onClick={() => setCatalogSection('suppliers')}>Open editable Suppliers catalog →</Button>
       <span>Other catalog sections remain read-only.</span>
     </div>}
-    <div className="viewer-search">
-      <label htmlFor="viewer-workspace-search">Find in {title.toLowerCase()}</label>
-      <input id="viewer-workspace-search" type="search" value={query}
-        placeholder="Search shared records…" onChange={(event) => setQuery(event.target.value)} />
-    </div>
+    <Field id="viewer-workspace-search" className="viewer-search viewer-foundation-search"
+      label={`Find in ${title.toLowerCase()}`}>
+      {(control) => <input {...control} type="search" value={query}
+        placeholder="Search shared records…" onChange={(event) => setQuery(event.target.value)} />}
+    </Field>
 
     {section === 'board' && <div className="viewer-record-grid">
       {filteredProjects.map((project) => <article className="viewer-record" key={project.id}>
@@ -81,9 +84,10 @@ export function ViewerWorkspace({ section, previewRole, previewDepartment }: { s
           {project.amount !== undefined && <span>{money.format(project.amount)}</span>}
           {project.dueDate && <span>Due {project.dueDate}</span>}
         </div>
-        <button type="button" onClick={() => setSelectedProjectId(project.id === selectedProjectId ? null : project.id)}>
+        <Button variant="secondary" aria-expanded={selectedProjectId === project.id}
+          onClick={() => setSelectedProjectId(project.id === selectedProjectId ? null : project.id)}>
           {selectedProjectId === project.id ? 'Hide details' : 'View details'}
-        </button>
+        </Button>
         {selectedProject?.id === project.id && <div className="viewer-details">
           {project.nextAction && <p><strong>Next action:</strong> {project.nextAction}</p>}
           {project.lastTouchpoint && <p><strong>Last touch:</strong> {project.lastTouchpoint}</p>}
@@ -98,9 +102,10 @@ export function ViewerWorkspace({ section, previewRole, previewDepartment }: { s
         <small>{displayQuoteNumber(quote)} · {quote.status}</small><h2>{quote.title || 'Untitled quote'}</h2>
         <p>{quote.companyName || 'No company'}</p>
         <div className="viewer-facts"><strong>{money.format(quoteTotal(quote))}</strong><span>{quote.quoteDate}</span></div>
-        <button type="button" onClick={() => setSelectedQuoteId(quote.id === selectedQuoteId ? null : quote.id)}>
+        <Button variant="secondary" aria-expanded={selectedQuoteId === quote.id}
+          onClick={() => setSelectedQuoteId(quote.id === selectedQuoteId ? null : quote.id)}>
           {selectedQuoteId === quote.id ? 'Hide line items' : 'View line items'}
-        </button>
+        </Button>
         {selectedQuote?.id === quote.id && <div className="viewer-details">
           {quote.lines.map((line) => <div key={line.id} className="viewer-line">
             <span>{line.description}</span><span>{money.format(quoteLineTotal(line))}</span>
