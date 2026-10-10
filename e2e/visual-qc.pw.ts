@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
 
 const WORKSPACES = ['notebook', 'board', 'quotes', 'catalog', 'dashboard', 'settings'] as const;
 type Workspace = (typeof WORKSPACES)[number];
@@ -15,10 +15,14 @@ async function openView(page: Page, view: Workspace, theme = 'warm') {
     }));
   }, { view, theme });
   await page.reload({ waitUntil: 'domcontentloaded' });
+  // Fail immediately if local QC did not bypass the built-in cloud URL fallback.
+  if (await page.getByRole('heading', { name: 'Welcome back' }).isVisible()) {
+    throw new Error('Browser QC unexpectedly opened cloud sign-in; VITE_SALES_SHOP_LOCAL_QC must be 1 in Vite DEV mode.');
+  }
   await expect(page.locator(`.sales-app.view-${view}`)).toBeVisible();
 }
 
-async function snapshot(page: Page, title: string, testInfo: Parameters<typeof test>[1] extends never ? never : any) {
+async function snapshot(page: Page, title: string, testInfo: TestInfo) {
   await testInfo.attach(title, { body: await page.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
 }
 
