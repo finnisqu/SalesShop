@@ -216,3 +216,16 @@
     font-size:16px;
   }
 }
+
+
+/* Batch 10B screenshot audit: empty-state copy in the mobile Materials/Rates/
+ * Sinks reference lists was retaining brown foreground on a dark card.
+ * Keep the empty surface and its status text on the same theme tokens. */
+:root[data-sales-theme] .sales-app.view-catalog .mobile-catalog-reference-empty {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .mobile-catalog-reference-empty > [role="status"] {
+  color:var(--ss-theme-muted);
+}
