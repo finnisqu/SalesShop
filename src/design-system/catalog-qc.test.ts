@@ -108,7 +108,6 @@ describe('UI Foundation Batch 6 — Catalog-wide QC',()=>{
     expect(qc).toContain('background:var(--ss-theme-card);');
     expect(qc).toContain('.supplier-mobile-reference-details>div>strong');
     expect(qc).toContain('color:var(--ss-theme-ink);');
-    expect(qc).toContain('.supplier-pricing-history');
     // Pricing-publication details are styled by the 5E section adapter.
     const supplier=load('./suppliers-adapter.css');
     expect(supplier).toContain('.supplier-pricing-history');
