@@ -121,7 +121,14 @@ test('Quotes setup and Catalog filter keep independent visible controls', async 
     await done.click();
     await expect(page.locator('.quote-mobile-menu')).toHaveCount(0);
   }
-  await page.locator('.quote-configuration-strip > button').first().click();
+  if (PHONE(testInfo.project.name)) {
+    // Mobile hides the three desktop summary cards on purpose; the Tools
+    // drawer is the only user-facing way to open those same popovers.
+    await page.getByRole('button', { name: 'Quote tools' }).click();
+    await page.locator('.quote-mobile-setup-grid button').first().click();
+  } else {
+    await page.locator('.quote-configuration-strip > button').first().click();
+  }
   await expect(page.locator('#quote-setup-document')).toBeVisible();
   const geometry = await page.locator('#quote-setup-document').evaluate((node) => {
     const rect = node.getBoundingClientRect();
