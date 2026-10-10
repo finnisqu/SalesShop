@@ -94,13 +94,13 @@
   gap: 8px;
 }
 
-.quote-project-details-grid label,
-.quote-document-meta-fields label {
+/* Project/CRM labels still use the legacy markup. Status and date use
+ * design-system Field controls and are styled by quote-editor-adapter.css. */
+.quote-project-details-grid label {
   min-width: 0;
 }
 
-.quote-project-details-grid label > span,
-.quote-document-meta-fields label > span {
+.quote-project-details-grid label > span {
   display: block;
   margin: 0 0 4px 1px;
   color: #80786b;
@@ -111,9 +111,7 @@
 }
 
 .quote-project-details-grid input,
-.quote-project-details-grid select,
-.quote-document-meta-fields input,
-.quote-document-meta-fields select {
+.quote-project-details-grid select {
   width: 100%;
   min-width: 0;
   height: 31px;
@@ -127,9 +125,7 @@
 }
 
 .quote-project-details-grid input:focus,
-.quote-project-details-grid select:focus,
-.quote-document-meta-fields input:focus,
-.quote-document-meta-fields select:focus {
+.quote-project-details-grid select:focus {
   border-color: #a7925b;
   box-shadow: 0 0 0 2px rgba(169, 146, 83, .10);
 }
