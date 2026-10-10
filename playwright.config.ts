@@ -10,7 +10,7 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 12_000 },
   retries: 0, // deterministic local demo; diagnose failures without a long retry storm
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 4 : undefined,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'artifacts/playwright-report' }]],
   outputDir: 'artifacts/playwright-results',
   use: {
