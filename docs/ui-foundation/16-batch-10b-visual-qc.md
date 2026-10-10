@@ -33,3 +33,14 @@ Static semantic color-token contrast was computed for normal ink on card surface
 The original SalesShop Pages workflow continues to run `npm test` and `npm run build` and deploy the architecture branch. The browser QC workflow is an additional parallel gate; neither changes `main`.
 
 Review the full browser workflow run and its artifact before merging the foundation or declaring full visual sign-off. If a run fails, treat its screenshot + geometry JSON as evidence and address exact selectors/components rather than resetting global theme/scroll rules.
+
+## Rendered screenshot findings and fixes
+
+These are **observed in Chromium-rendered output**, not inferred solely from legacy CSS:
+
+1. **Dark Settings save chip:** `Auto-saved` retained a cream background while its text adopted a very light dark-theme muted token. Fixed in `settings-adapter.css` so status text and card surface always come from the same theme.
+2. **Company branding preview:** Dark appearance painted a preview of the customer contact block as an unintended gray surface with dark paper text. The Settings preview now deliberately keeps light document paper and dark matching contact typography, without changing the public/customer quote document.
+3. **Dark Catalog empty state:** The message inside a mobile reference-card empty state used low-contrast legacy copy on a dark card. `catalog-qc.css` now pairs the reference card background and status foreground with theme tokens.
+4. **Mobile Quotes setup testing:** The compact Quotes design intentionally hides the desktop setup-summary buttons. The Browser QC route now opens Document via the actual **Quote tools → Quote setup → Document** path instead of trying to click a nonvisible desktop control.
+
+A first browser run reached the cloud sign-in screen because the Supabase client has a fallback project URL. A **development-only** `VITE_SALES_SHOP_LOCAL_QC=1` flag now explicitly disables that connection for isolated browser tests; it does not override production authentication. The next valid browser run passed **24/28 tests**. Its four failures were all the shared incorrect mobile Quotes test click above, now corrected. The final run includes browser-computed contrast assertions for the three observed dark-theme surfaces. Verify its status in GitHub Actions before claiming the final visual automation matrix is green.
