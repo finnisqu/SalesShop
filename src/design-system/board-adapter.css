@@ -87,10 +87,16 @@
   min-width:0;
   margin-left:0;
 }
-.sales-app.view-board .board-foundation-quick-field {
+.sales-app.view-board .board-quick-add > .board-foundation-quick-field {
   display:grid;
+  grid-template-columns:minmax(0,1fr);
   gap:var(--ss-space-1);
   min-width:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
 }
 :root[data-sales-theme] .sales-app.view-board .board-foundation-quick-field>.ss-field__label {
   margin:0;

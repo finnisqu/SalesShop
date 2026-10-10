@@ -65,6 +65,10 @@ import './design-system/rates-adapter.css';
 import './design-system/suppliers-adapter.css';
 // Batch 6 Catalog-wide visual, scroll, and palette QC after all section adapters.
 import './design-system/catalog-qc.css';
+// UI Foundation Batch 7: Board, Quotes internal workspace, Notebook chrome.
+import './design-system/board-adapter.css';
+import './design-system/quotes-adapter.css';
+import './design-system/notebook-chrome-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
