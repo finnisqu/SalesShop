@@ -211,7 +211,7 @@ test('theme screenshots preserve foreground contrast and paper boundaries', asyn
             const background = getComputedStyle(chip ?? paper ?? el).backgroundColor;
             return { color, background };
           });
-          const rgb = (css: string) => (css.match(/[\\d.]+/g) ?? []).slice(0, 3).map(Number);
+          const rgb = (css: string) => (css.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
           const luminance = (css: string) => {
             const c = rgb(css).map((x) => {
               const n = x / 255;
