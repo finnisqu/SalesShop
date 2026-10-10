@@ -177,8 +177,8 @@
   font-size: 8px;
   font-weight: 850;
 }
-button.primary { background: #eaf2e5 !important; border-color: rgba(91,124,78,.25) !important; color: #4e6845 !important; }
-button.danger, .danger-link { color: #8a4c42 !important; }
+.supplier-workbench button.primary { background: #eaf2e5; border-color: rgba(91,124,78,.25); color: #4e6845; }
+.supplier-workbench button.danger, .supplier-workbench .danger-link { color: #8a4c42; }
 
 .supplier-freshness-badge {
   display: inline-flex;
@@ -482,7 +482,6 @@ button.danger, .danger-link { color: #8a4c42 !important; }
 /* Mobile Suppliers: single flowing reference document, with maintenance in a drawer. */
 .supplier-mobile-tools-trigger,.supplier-mobile-tools-backdrop{display:none}
 .supplier-mobile-search-row{display:flex;gap:6px;min-width:0}
-.supplier-mobile-search-row>input{min-width:0;flex:1 1 auto;width:100%;height:34px;border:1px solid rgba(61,54,45,.14);border-radius:4px;background:#fffdf7;color:#4d473e;padding:0 9px;font-size:9px}
 @media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
 .sales-app.view-catalog .supplier-workbench{display:flex;flex-direction:column;width:100%;height:auto;min-height:100%;margin:0;padding:5px 5px calc(24px + env(safe-area-inset-bottom));border:0;overflow:visible;background:transparent;box-shadow:none}
 .sales-app.view-catalog .supplier-navigator{height:auto;min-height:0;flex:0 0 auto;overflow:visible;border:1px solid #c9c0b1;border-radius:6px;background:#ebe5d8}

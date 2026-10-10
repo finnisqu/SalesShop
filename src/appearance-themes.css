@@ -11,7 +11,7 @@
 :root[data-sales-theme="warm"] {
   --ss-theme-canvas:#e9e3d8; --ss-theme-base:#f4f0e8; --ss-theme-card:#fffaf0;
   --ss-theme-ink:#36342c; --ss-theme-muted:#6b6456; --ss-theme-border:#cfc5b4;
-  --ss-theme-accent:#987739; --ss-theme-tint:#ebe2ce; --ss-theme-contrast:#fffaf0;
+  --ss-theme-accent:#8d6e30; --ss-theme-tint:#ebe2ce; --ss-theme-contrast:#fffaf0;
 }
 :root[data-sales-theme="contrast"] {
   --ss-theme-canvas:#ededeb; --ss-theme-base:#f8f8f5; --ss-theme-card:#fff;
