@@ -264,3 +264,35 @@
     font-size:16px;
   }
 }
+
+
+/* Batch 10B visual QC: internal/private pricing was still the old ivory
+ * collapsible row, so Dark rendered light theme ink on a pale background.
+ * Match both sides of the contrast pair; never touch customer quote paper. */
+:root[data-sales-theme] .sales-app.view-quotes .quote-internal-pricing {
+  background:var(--ss-quote-field-base);
+  border-color:var(--ss-quote-field-border);
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-internal-pricing > summary {
+  background:var(--ss-quote-field-card);
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-internal-pricing > summary :is(
+  .quote-control-heading,small,.quote-internal-pricing-chevron
+) {
+  color:var(--ss-quote-field-muted);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-internal-pricing > summary .quote-internal-private-badge {
+  color:var(--ss-quote-field-ink);
+  background:var(--ss-quote-field-tint);
+  border-color:var(--ss-quote-field-border);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-internal-pricing-body {
+  background:var(--ss-quote-field-base);
+  color:var(--ss-quote-field-ink);
+  border-color:var(--ss-quote-field-border);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-internal-pricing-body > header small {
+  color:var(--ss-quote-field-muted);
+}
