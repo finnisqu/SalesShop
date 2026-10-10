@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:materials": "vitest run src/types/settings.test.ts src/services/salesShopMaterialTemplateImport.test.ts src/services/supplierImportCatalog.test.ts",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:visual": "playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
@@ -33,6 +34,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.2",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@playwright/test": "^1.56.1"
   }
 }
