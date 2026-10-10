@@ -108,34 +108,11 @@
   color: #484239;
 }
 
-.catalog-section-nav button.active::after {
-  content: '';
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 0;
-  height: 2px;
-  background: #9b8656;
-}
-
 .catalog-section-nav strong {
   overflow: hidden;
   font: 700 10px Georgia, serif;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.catalog-section-nav span {
-  overflow: hidden;
-  color: #948a7b;
-  font-size: 6.5px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.catalog-section-nav button.active span {
-  color: #796d5a;
 }
 
 .catalog-section-host {

@@ -63,6 +63,8 @@ import './design-system/sinks-adapter.css';
 import './design-system/rates-adapter.css';
 // UI Foundation Batch 5E Suppliers: directory, forms and pricing publication history.
 import './design-system/suppliers-adapter.css';
+// Batch 6 Catalog-wide visual, scroll, and palette QC after all section adapters.
+import './design-system/catalog-qc.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
