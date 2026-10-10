@@ -4,6 +4,21 @@ const WORKSPACES = ['notebook', 'board', 'quotes', 'catalog', 'dashboard', 'sett
 type Workspace = (typeof WORKSPACES)[number];
 const PHONE = (name: string) => name.startsWith('phone');
 
+/** WCAG contrast for opaque computed rgb()/rgba() pairs. */
+function contrastRatio(foreground: string, background: string): number {
+  const luminance = (css: string) => {
+    const channels = (css.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+    const linear = channels.map((value) => {
+      const n = value / 255;
+      return n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4;
+    });
+    return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+  };
+  const a = luminance(foreground), b = luminance(background);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+
 async function openView(page: Page, view: Workspace, theme = 'warm') {
   if (!page.url().startsWith('http')) await page.goto('/');
   await page.evaluate(({ view, theme }) => {
@@ -196,6 +211,17 @@ test('theme screenshots preserve foreground contrast and paper boundaries', asyn
         };
       });
       findings.push({ view, ...metrics });
+      if (theme === 'dark' && view === 'catalog') {
+        const emptyStatus = page.locator('.mobile-catalog-reference-empty > [role="status"]').first();
+        if (await emptyStatus.isVisible()) {
+          const colors = await emptyStatus.evaluate((el) => ({
+            color: getComputedStyle(el).color,
+            background: getComputedStyle(el.parentElement!).backgroundColor,
+          }));
+          expect.soft(contrastRatio(colors.color, colors.background),
+            'Dark Catalog empty-state contrast').toBeGreaterThanOrEqual(4.5);
+        }
+      }
       if (theme === 'dark' && view === 'settings') {
         // Computed foreground and background must agree. This caught the
         // pale "Auto-saved" chip and the brown-on-slate branding preview.
@@ -211,17 +237,7 @@ test('theme screenshots preserve foreground contrast and paper boundaries', asyn
             const background = getComputedStyle(chip ?? paper ?? el).backgroundColor;
             return { color, background };
           });
-          const rgb = (css: string) => (css.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
-          const luminance = (css: string) => {
-            const c = rgb(css).map((x) => {
-              const n = x / 255;
-              return n <= 0.04045 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4);
-            });
-            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-          };
-          const a = luminance(colors.color);
-          const b = luminance(colors.background);
-          const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+          const ratio = contrastRatio(colors.color, colors.background);
           expect.soft(ratio, `${selector} dark theme foreground/background ratio`).toBeGreaterThanOrEqual(4.5);
         }
       }
