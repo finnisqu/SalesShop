@@ -27,7 +27,6 @@ import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import {
   commercialDocumentLabel,
   displayQuoteNumber,
-  QUOTE_STATUSES,
   quoteLineAmount,
   quoteLinesTotal,
   quoteTotal,
@@ -37,12 +36,12 @@ import {
   type QuoteLine,
   type QuoteLineKind,
   type QuotePricingMode,
-  type QuoteStatus,
 } from '../types/quote';
 import { CustomerDocumentBrand } from './CustomerDocumentBrand';
 import { PricingScheduleCustomerPreview } from './PricingScheduleCustomerPreview';
 import { PricingScheduleWorkbook } from './PricingScheduleWorkbook';
 import { QuoteCrmFields } from './QuoteCrmFields';
+import { QuoteDocumentSetupFields, QuoteRevisionLabelField, QuoteNotesFields } from './QuoteEditorFields';
 import { QuoteInternalPricingSummary } from './QuoteInternalPricingSummary';
 import { QuoteMaterialLineFields, slabReferencePatch } from './QuoteMaterialLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
@@ -487,7 +486,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
             {summary ? `Scope · ${summary}` : 'Scope · add'}
           </button>
         </div>
-        <input value={section.title} onChange={(event) => updateSection(quote.id, section.id, { title: event.target.value })} />
+        <input aria-label="Area name" value={section.title} onChange={(event) => updateSection(quote.id, section.id, { title: event.target.value })} />
       </div>
 
       <div className="quote-area-actions">
@@ -934,7 +933,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
       <header className="quote-workbench-header">
         <div>
           <span className="quote-number">{displayQuoteNumber(quote)}</span>
-          <input className="quote-title-input" value={quote.title} readOnly={!commerciallyEditable} onChange={(event) => updateQuote(quote.id, { title: event.target.value, projectId: undefined })} />
+          <input className="quote-title-input" aria-label="Quote title" value={quote.title} readOnly={!commerciallyEditable} onChange={(event) => updateQuote(quote.id, { title: event.target.value, projectId: undefined })} />
           {quote.documentType === 'change-order' && parent && <small>Changes original agreement {displayQuoteNumber(parent)}</small>}
         </div>
         <div className="quote-header-actions">
@@ -1003,20 +1002,20 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
         {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingScheduleWorkbook quote={quote} /></div> : effectiveMode !== 'customer' ? (
           <div className="quote-editor-pane">
             <section className="quote-configuration-strip" ref={metaHostRef}>
-              <button type="button" className={metaPanel === 'document' ? 'active' : ''} onClick={() => setMetaPanel((current) => current === 'document' ? null : 'document')}>
+              <button type="button" className={metaPanel === 'document' ? 'active' : ''} aria-expanded={metaPanel === 'document'} aria-controls="quote-setup-document" onClick={() => setMetaPanel((current) => current === 'document' ? null : 'document')}>
                 <span>Document setup</span>
                 <small>{setupTypeLabel} · {quote.status} · {setupDateLabel}</small>
               </button>
-              <button type="button" className={metaPanel === 'project' ? 'active' : ''} onClick={() => setMetaPanel((current) => current === 'project' ? null : 'project')}>
+              <button type="button" className={metaPanel === 'project' ? 'active' : ''} aria-expanded={metaPanel === 'project'} aria-controls="quote-setup-project" onClick={() => setMetaPanel((current) => current === 'project' ? null : 'project')}>
                 <span>Project details</span>
                 <small>{projectDetailsSummary || 'Project · customer · contact'}</small>
               </button>
-              {!pricingSchedule && <button type="button" className={metaPanel === 'visibility' ? 'active' : ''} onClick={() => setMetaPanel((current) => current === 'visibility' ? null : 'visibility')}>
+              {!pricingSchedule && <button type="button" className={metaPanel === 'visibility' ? 'active' : ''} aria-expanded={metaPanel === 'visibility'} aria-controls="quote-setup-visibility" onClick={() => setMetaPanel((current) => current === 'visibility' ? null : 'visibility')}>
                 <span>Customer visibility</span>
                 <small>{customerVisibilitySummary}</small>
               </button>}
 
-              {metaPanel === 'document' && <div className="quote-config-popover is-document">
+              {metaPanel === 'document' && <div id="quote-setup-document" className="quote-config-popover is-document">
                 <div className="quote-config-popover-heading"><strong>Document setup</strong><small>Choose the document behavior, then click away.</small></div>
                 <div className="quote-document-type-row">
                   <span>Document type</span>
@@ -1031,21 +1030,21 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
                     )}
                   </div>
                 </div>
-                <div className="quote-document-meta-fields">
-                  <label><span>Status</span><select value={quote.status} disabled={quote.status === 'Signed'} onChange={(event) => updateQuote(quote.id, { status: event.target.value as QuoteStatus })}>{QUOTE_STATUSES.map((status) => <option key={status} disabled={(status === 'Signed' && quote.status !== 'Signed') || (status === 'Sent' && quote.status !== 'Sent')}>{status}</option>)}</select></label>
-                  <label><span>Document date</span><input type="date" value={quote.quoteDate} onChange={(event) => updateQuote(quote.id, { quoteDate: event.target.value })} /></label>
-                </div>
+                <QuoteDocumentSetupFields quote={quote}
+                  onStatusChange={(status) => updateQuote(quote.id, { status })}
+                  onDateChange={(quoteDate) => updateQuote(quote.id, { quoteDate })} />
               </div>}
 
-              {metaPanel === 'project' && <div className="quote-config-popover is-project">
+              {metaPanel === 'project' && <div id="quote-setup-project" className="quote-config-popover is-project">
                 <div className="quote-config-popover-heading"><strong>Project details</strong><small>CRM links and project context stay tucked away after selection.</small></div>
                 <div className="quote-project-details-grid">
                   <QuoteCrmFields quote={quote} />
-                  <label className="quote-revision-label-field"><span>Revision / option label</span><input value={quote.revisionLabel ?? ''} onChange={(event) => updateQuote(quote.id, { revisionLabel: event.target.value })} placeholder="Option A, VE alternate…" /></label>
+                  <QuoteRevisionLabelField value={quote.revisionLabel ?? ''}
+                    onChange={(revisionLabel) => updateQuote(quote.id, { revisionLabel })} />
                 </div>
               </div>}
 
-              {metaPanel === 'visibility' && !pricingSchedule && <div className="quote-config-popover is-visibility">
+              {metaPanel === 'visibility' && !pricingSchedule && <div id="quote-setup-visibility" className="quote-config-popover is-visibility">
                 <div className="quote-config-popover-heading"><strong>Customer visibility</strong><small>Choose how much pricing detail appears on the customer document.</small></div>
                 <div className="quote-customer-visibility-options">
                   <label><input type="checkbox" checked={quote.customerColumns.quantity} onChange={(event) => setCustomerColumns(quote.id, { quantity: event.target.checked })} /> <span>Quantity column</span></label>
@@ -1112,7 +1111,9 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
     </div>;
   })}
 </section></>}
-            <section className="quote-notes-grid"><label><span>Customer notes</span><textarea value={quote.customerNotes} onChange={(event) => updateQuote(quote.id, { customerNotes: event.target.value })} placeholder="Appears on customer document" /></label><label className="internal-notes"><span>Internal notes · private</span><textarea value={quote.internalNotes} onChange={(event) => updateQuote(quote.id, { internalNotes: event.target.value })} placeholder="Pricing thoughts, negotiation notes, reminders…" /></label></section>
+            <QuoteNotesFields customerNotes={quote.customerNotes} internalNotes={quote.internalNotes}
+              onCustomerChange={(customerNotes) => updateQuote(quote.id, { customerNotes })}
+              onInternalChange={(internalNotes) => updateQuote(quote.id, { internalNotes })} />
             {!pricingSchedule && <QuoteInternalPricingSummary quote={quote} />}
             {quote.history.length > 0 && <section className="quote-history"><span className="quote-control-heading">Sent history</span>{quote.history.map((revision) => <div key={`${revision.revision}-${revision.capturedAt}`}><strong>{quote.quoteNumber}{revision.revision ? `-R${revision.revision}` : ''}</strong><span>{revision.label || revision.status}</span><time>{revision.quoteDate}</time></div>)}</section>}
             {hasChangeOrders && permanentDelete && <small>This agreement has Change Orders attached and cannot be permanently deleted.</small>}
