@@ -132,10 +132,29 @@
   color: var(--ss-settings-muted);
   font: 400 var(--ss-text-xs)/1.4 var(--ss-font-body);
 }
+/* Batch 10B: pair the status chip's ink and surface. The old ivory chip
+ * remained light when Dark switched its text to a light semantic token. */
 :root[data-sales-theme] .sales-app.view-settings .settings-foundation-panel .settings-card-save {
+  background: var(--ss-settings-card);
+  border-color: var(--ss-settings-border);
   color: var(--ss-settings-muted);
   font: 650 var(--ss-text-xs)/1.4 var(--ss-font-body);
   white-space: nowrap;
+}
+
+/* Document-branded output is intentionally light, even in a dark workspace.
+ * Keep preview paper and its text together so it never becomes brown on slate. */
+:root[data-sales-theme] .sales-app.view-settings .company-branding-preview {
+  color-scheme: light;
+  background: #fffaf0;
+  border-color: #cfc5b4;
+  color: #36342c;
+}
+:root[data-sales-theme] .sales-app.view-settings .company-branding-preview > div:last-child > strong {
+  color: #36342c;
+}
+:root[data-sales-theme] .sales-app.view-settings .company-branding-preview > div:last-child > span {
+  color: #62594d;
 }
 .sales-app.view-settings .settings-foundation-fields {
   display: grid;
