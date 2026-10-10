@@ -69,6 +69,8 @@ import './design-system/catalog-qc.css';
 import './design-system/board-adapter.css';
 import './design-system/quotes-adapter.css';
 import './design-system/notebook-chrome-adapter.css';
+// Batch 8: Viewer / Owner preview parity and compact role escape.
+import './design-system/restricted-view-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
