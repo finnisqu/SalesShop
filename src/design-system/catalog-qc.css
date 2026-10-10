@@ -1,0 +1,218 @@
+/*
+ * UI Foundation Batch 6 — Catalog QC across Materials, Sinks, Rates & Suppliers.
+ * Shared shell and mobile sheet contracts only; no data/price/role changes.
+ * Individual section adapters still own their category-specific appearance.
+ */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host {
+  min-height:0;
+  min-width:0;
+}
+/* Desktop supplier navigator and selected record each own their scroll.
+ * A 100%-height child plus parent padding previously overran the Catalog host. */
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host.catalog-section-suppliers {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
+  padding:var(--ss-space-3) var(--ss-space-4);
+  box-sizing:border-box;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host.catalog-section-suppliers>.supplier-workbench {
+  flex:1 1 auto;
+  height:auto;
+  min-height:0;
+  max-width:1480px;
+  box-sizing:border-box;
+  margin:0 auto;
+  width:100%;
+}
+/* Shared mobile Catalog tools / filter sheet: one scrollable content body,
+ * a non-overlapping footer, and a legible close button in every palette.
+ * The backdrop/sheet positioning remains owned by mobile-catalog-reference.css. */
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-sheet {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+  border-radius:var(--ss-radius-md) var(--ss-radius-md) 0 0;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-header {
+  flex:0 0 auto;
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-header strong {
+  color:var(--ss-theme-ink);
+  font:700 19px/1.25 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-header :is(span,small) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-header button {
+  min-width:44px;
+  min-height:44px;
+  border:1px solid var(--ss-theme-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-content {
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  background:var(--ss-theme-base);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-content>section {
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-content>section>strong {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-content>section>small {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-tools-footer {
+  flex:0 0 auto;
+  position:relative;
+  margin:0;
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host .mobile-catalog-filter-done {
+  width:100%;
+  min-height:44px;
+  background:var(--ss-theme-accent);
+  color:var(--ss-theme-contrast);
+  border:1px solid var(--ss-theme-accent);
+  border-radius:var(--ss-radius-sm);
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host :is(
+  .mobile-catalog-filter-done,
+  .mobile-catalog-tools-header button,
+  .mobile-catalog-reference-trigger,
+  .supplier-filter-chips button
+):focus-visible {
+  outline:3px solid var(--ss-focus);
+  outline-offset:2px;
+}
+/* Supplier expansion's interior tiles were still ivory even in Dark mode.
+ * They are shared reference-card content, not permanently light callouts. */
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-suppliers .supplier-mobile-reference-details>div {
+  background:var(--ss-theme-card);
+  border:1px solid var(--ss-theme-border);
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-suppliers .supplier-mobile-reference-details>div>span {
+  color:var(--ss-theme-muted);
+  font:700 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-suppliers .supplier-mobile-reference-details>div>strong {
+  color:var(--ss-theme-ink);
+  font:700 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+/* Common supplier relationship nested cards need theme ownership just as their
+ * top-level info cards do, including merge, activity and published rule text. */
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-suppliers :is(
+  .supplier-source-rules div,
+  .supplier-closed-commitments article,
+  .supplier-merge-panel,
+  .supplier-commitment-card
+) {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-suppliers :is(
+  .supplier-merge-panel strong,.supplier-commitment-card strong,
+  .supplier-commitment-card dd,.supplier-source-rules p
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-suppliers :is(
+  .supplier-merge-panel span,.supplier-commitment-card dt,
+  .supplier-commitment-card p,.supplier-closed-commitments span,
+  .supplier-source-rules summary
+) { color:var(--ss-theme-muted); }
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  /* Phones have one scroll owner: the Catalog section host. In particular,
+   * 844px-wide rotated phones must not inherit embedded desktop scrollports. */
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host {
+    flex:1 1 auto;
+    min-height:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host > :is(
+    .rates-workspace.is-catalog-embedded,
+    .sinks-workspace.is-catalog-embedded
+  ) {
+    height:auto;
+    min-height:0;
+    max-height:none;
+    overflow:visible;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-section-suppliers {
+    display:block;
+    padding:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-section-suppliers>.supplier-workbench {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    height:auto;
+    min-height:0;
+    margin:0;
+    overflow:visible;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-section-suppliers .supplier-record {
+    height:auto;
+    min-height:0;
+    overflow:visible;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host .mobile-catalog-tools-content :is(
+    input:not([type="checkbox"]),select,textarea
+  ) {
+    min-width:0;
+    max-width:100%;
+    font-size:16px;
+  }
+}
