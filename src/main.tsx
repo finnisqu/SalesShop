@@ -61,6 +61,8 @@ import './design-system/materials-adapter.css';
 import './design-system/sinks-adapter.css';
 // UI Foundation Batch 5D Rates: shared lookup filters, editor and mobile cards.
 import './design-system/rates-adapter.css';
+// UI Foundation Batch 5E Suppliers: directory, forms and pricing publication history.
+import './design-system/suppliers-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
