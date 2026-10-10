@@ -196,6 +196,35 @@ test('theme screenshots preserve foreground contrast and paper boundaries', asyn
         };
       });
       findings.push({ view, ...metrics });
+      if (theme === 'dark' && view === 'settings') {
+        // Computed foreground and background must agree. This caught the
+        // pale "Auto-saved" chip and the brown-on-slate branding preview.
+        for (const selector of [
+          '.settings-foundation-panel .settings-card-save',
+          '.company-branding-preview > div:last-child > strong',
+          '.company-branding-preview > div:last-child > span',
+        ]) {
+          const colors = await page.locator(selector).first().evaluate((el) => {
+            const color = getComputedStyle(el).color;
+            const chip = el.closest('.settings-card-save');
+            const paper = el.closest('.company-branding-preview');
+            const background = getComputedStyle(chip ?? paper ?? el).backgroundColor;
+            return { color, background };
+          });
+          const rgb = (css: string) => (css.match(/[\\d.]+/g) ?? []).slice(0, 3).map(Number);
+          const luminance = (css: string) => {
+            const c = rgb(css).map((x) => {
+              const n = x / 255;
+              return n <= 0.04045 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+          };
+          const a = luminance(colors.color);
+          const b = luminance(colors.background);
+          const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+          expect.soft(ratio, `${selector} dark theme foreground/background ratio`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
     }
   }
   await testInfo.attach('appearance-metrics.json', {
