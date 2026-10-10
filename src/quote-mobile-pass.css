@@ -7,7 +7,7 @@
   display: none;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* ------------------------------
      Page + quote switcher
   ------------------------------ */
@@ -804,7 +804,7 @@
   display: none;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-quotes {
     height: 100dvh;
     min-height: 100dvh;
@@ -1378,7 +1378,7 @@
 /* Immersive Quotes scroll ownership:
    one vertical scroll surface below the fixed command bar.
    Do not split scrolling between body/editor panes on iOS. */
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .sales-app.view-quotes .quote-workbench-body,
   .sales-app.view-quotes .view-split .quote-workbench-body {
     display: block !important;
@@ -1415,7 +1415,7 @@
    Use the phone width intentionally: left = identity/description,
    right = source + pricing + total. Keep every priced row on the same tracks.
 ------------------------------ */
-@media (max-width: 700px) {
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   /* More quote, less frame. */
   .sales-app.view-quotes .quote-editor-pane {
     padding: 4px 3px calc(38px + env(safe-area-inset-bottom));
