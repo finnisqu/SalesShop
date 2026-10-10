@@ -1,0 +1,266 @@
+/*
+ * UI Foundation Batch 9 — Quotes internal estimating editor.
+ * Scoped to SalesShop's editor, NOT customer quote paper, public /q/, or PDF.
+ * Existing price calculations, snapshots, issue/send rules, and section
+ * reordering remain owned by the Quotes application components.
+ */
+:root[data-sales-theme] .sales-app.view-quotes .quotes-workbench {
+  --ss-quote-field-card:var(--ss-theme-card,var(--ss-surface-raised));
+  --ss-quote-field-base:var(--ss-theme-base,var(--ss-shell-bg));
+  --ss-quote-field-tint:var(--ss-theme-tint,var(--ss-surface));
+  --ss-quote-field-ink:var(--ss-theme-ink,var(--ss-text));
+  --ss-quote-field-muted:var(--ss-theme-muted,var(--ss-text-muted));
+  --ss-quote-field-border:var(--ss-theme-border,var(--ss-border));
+  --ss-quote-field-accent:var(--ss-theme-accent,var(--ss-accent));
+}
+
+/* Document/project/visibility disclosures open the existing popover in place.
+ * A popup is independently scrollable on shorter devices; the content behind
+ * it remains the editor's own scroll surface. */
+:root[data-sales-theme] .sales-app.view-quotes .quote-configuration-strip>button {
+  color:var(--ss-quote-field-ink);
+  border-color:var(--ss-quote-field-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-quote-field-card);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-configuration-strip>button small {
+  color:var(--ss-quote-field-muted);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-configuration-strip>button[aria-expanded="true"] {
+  color:var(--ss-quote-field-ink);
+  border-color:var(--ss-quote-field-accent);
+  background:var(--ss-quote-field-tint);
+  box-shadow:inset 0 -3px var(--ss-quote-field-accent);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-config-popover,
+:root[data-sales-theme] .sales-app.view-quotes .quote-area-scope-popover,
+:root[data-sales-theme] .sales-app.view-quotes .quote-general-other-popover {
+  border:1px solid var(--ss-quote-field-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-quote-field-base);
+  color:var(--ss-quote-field-ink);
+  box-shadow:var(--ss-shadow-overlay);
+  max-height:min(70dvh,560px);
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-config-popover-heading,.quote-area-scope-popover-heading,
+  .quote-general-other-popover-heading
+) strong {
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-config-popover-heading,.quote-area-scope-popover-heading,
+  .quote-general-other-popover-heading
+) small {
+  color:var(--ss-quote-field-muted);
+}
+
+/* Shared Field controls: the same labeled editor semantics as Settings,
+ * Catalog and Connections, without globally repainting other quote elements. */
+.sales-app.view-quotes .quote-foundation-fields .ss-field,
+.sales-app.view-quotes .quote-project-details-grid .quote-revision-label-field,
+.sales-app.view-quotes .quote-foundation-notes .ss-field {
+  min-width:0;
+  display:grid;
+  align-content:start;
+  gap:var(--ss-space-1);
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-foundation-fields,.quote-project-details-grid,.quote-foundation-notes
+) .ss-field__label {
+  font:700 var(--ss-text-sm)/1.35 var(--ss-font-body);
+  color:var(--ss-quote-field-muted);
+  letter-spacing:normal;
+  text-transform:none;
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-foundation-fields,.quote-project-details-grid .quote-revision-label-field
+) :is(input,select) {
+  width:100%;
+  min-width:0;
+  min-height:var(--ss-control-height);
+  box-sizing:border-box;
+  border:1px solid var(--ss-quote-field-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-quote-field-card);
+  color:var(--ss-quote-field-ink);
+  caret-color:var(--ss-quote-field-ink);
+  font:500 var(--ss-text-body)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-foundation-fields select {
+  color-scheme:dark;
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-foundation-fields,.quote-project-details-grid .quote-revision-label-field
+) input::placeholder {
+  color:var(--ss-quote-field-muted);
+  opacity:1;
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-foundation-fields,.quote-project-details-grid .quote-revision-label-field
+) :is(input,select):disabled {
+  opacity:.7;
+  cursor:not-allowed;
+}
+
+/* Private notes stay private and distinctly tinted. The physical document's
+ * customer notes are still rendered from the underlying Quote data elsewhere. */
+:root[data-sales-theme] .sales-app.view-quotes .quote-foundation-notes {
+  gap:var(--ss-space-3);
+  min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-foundation-notes .quote-foundation-note {
+  min-width:0;
+  padding:var(--ss-space-3);
+  border:1px solid var(--ss-quote-field-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-quote-field-card);
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-foundation-notes .quote-foundation-note.internal-notes {
+  background:var(--ss-quote-field-tint);
+  border-color:var(--ss-quote-field-border);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-foundation-notes textarea {
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:88px;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:var(--ss-space-2) var(--ss-space-3);
+  resize:vertical;
+  background:var(--ss-quote-field-card);
+  color:var(--ss-quote-field-ink);
+  border:1px solid var(--ss-quote-field-border);
+  border-radius:var(--ss-radius-sm);
+  caret-color:var(--ss-quote-field-ink);
+  font:400 var(--ss-text-body)/1.5 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-foundation-notes textarea::placeholder {
+  color:var(--ss-quote-field-muted);
+  opacity:1;
+}
+
+/* Estimating area and row surfaces follow the same panel contract as Catalog.
+ * Do NOT repaint the intentional light-blue Sink or light-red Rate action chips. */
+:root[data-sales-theme] .sales-app.view-quotes .quote-lines-editor {
+  border-color:var(--ss-quote-field-border);
+  border-radius:var(--ss-radius-md);
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-lines-editor>header,
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-area-header,.quote-general-header
+) {
+  background:var(--ss-quote-field-base);
+  color:var(--ss-quote-field-ink);
+  border-color:var(--ss-quote-field-border);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-area-card {
+  background:var(--ss-quote-field-card);
+  border:1px solid var(--ss-quote-field-border);
+  border-radius:var(--ss-radius-md);
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-area-card>.quote-area-header:first-child {
+  border-radius:var(--ss-radius-md) var(--ss-radius-md) 0 0;
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-area-title input,
+:root[data-sales-theme] .sales-app.view-quotes .quote-title-input {
+  color:var(--ss-quote-field-ink);
+  caret-color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-area-summary strong,
+:root[data-sales-theme] .sales-app.view-quotes .quote-lines-editor>header>strong {
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-area-summary>span,
+:root[data-sales-theme] .sales-app.view-quotes .quote-control-heading,
+:root[data-sales-theme] .sales-app.view-quotes .quote-lines-editor>header small {
+  color:var(--ss-quote-field-muted);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-line-editor {
+  background:var(--ss-quote-field-card);
+  border-color:var(--ss-quote-field-border);
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes .quote-area-empty {
+  background:var(--ss-quote-field-base);
+  border-color:var(--ss-quote-field-border);
+  color:var(--ss-quote-field-muted);
+  border-radius:var(--ss-radius-sm);
+}
+/* Scope setup and line-price popovers are editor-owned, never quote paper. */
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-area-scope-grid label,.quote-area-quantity-link,
+  .quote-pricing-popover,.quote-catalog-popover
+) {
+  background:var(--ss-quote-field-card);
+  border-color:var(--ss-quote-field-border);
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-area-scope-grid input,.quote-pricing-popover input,
+  .quote-pricing-popover select,.quote-catalog-popover input
+) {
+  background:var(--ss-quote-field-card);
+  color:var(--ss-quote-field-ink);
+  border-color:var(--ss-quote-field-border);
+  caret-color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-pricing-popover select {
+  color-scheme:dark;
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-area-scope-grid label>span,.quote-area-quantity-link label>span
+) {
+  color:var(--ss-quote-field-muted);
+}
+:root[data-sales-theme] .sales-app.view-quotes :is(
+  .quote-foundation-fields :is(input,select),
+  .quote-project-details-grid .quote-revision-label-field input,
+  .quote-foundation-notes textarea,
+  .quote-area-title input,.quote-title-input,
+  .quote-pricing-popover :is(input,select),
+  .quote-area-scope-grid input
+):focus-visible {
+  outline:3px solid var(--ss-focus);
+  outline-offset:2px;
+}
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  /* Popovers must fit a rotated phone's SHORT viewport, not its width. */
+  :root[data-sales-theme] .sales-app.view-quotes :is(
+    .quote-config-popover,.quote-area-scope-popover,.quote-general-other-popover
+  ) {
+    max-height:min(66dvh,430px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .quote-foundation-notes {
+    grid-template-columns:minmax(0,1fr);
+    gap:var(--ss-space-2);
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .quote-foundation-notes .quote-foundation-note {
+    padding:var(--ss-space-2);
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .quote-foundation-notes textarea {
+    min-height:92px;
+    font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app.view-quotes :is(
+    .quote-foundation-fields :is(input,select),
+    .quote-project-details-grid .quote-revision-label-field input
+  ) {
+    min-height:44px;
+    font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .quote-area-scope-grid input {
+    font-size:16px;
+  }
+}
