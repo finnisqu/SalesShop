@@ -9,7 +9,7 @@ describe('UI Foundation Batch 10 — CSS cleanup boundaries', () => {
     const quotes = source('../components/Quotes.tsx');
     const fields = source('../components/QuoteEditorFields.tsx');
 
-    expect(css).not.toMatch(/\\.quote-document-setup(?:\\b|-|\\[)/);
+    expect(css).not.toMatch(/\.quote-document-setup(?:\b|-|\[)/);
     expect(css).not.toContain('.quote-details-grid > label:nth-child(4)');
     expect(quotes).not.toContain('quote-document-setup');
     expect(quotes).toContain('<QuoteDocumentSetupFields');
@@ -53,7 +53,7 @@ describe('UI Foundation Batch 10 — CSS cleanup boundaries', () => {
     expect(quoteShell).toContain('.quote-mobile-menu-footer');
     expect(quoteShell).toContain('overflow-y:auto');
     // No active rule may target customer-facing document CSS.
-    const withoutComments = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');
-    expect(withoutComments).not.toMatch(/\\.customer-quote-|\\.public-quote-|\\.pricing-schedule-customer/);
+    const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(withoutComments).not.toMatch(/\.customer-quote-|\.public-quote-|\.pricing-schedule-customer/);
   });
 });
