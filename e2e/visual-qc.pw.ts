@@ -126,6 +126,15 @@ test('responsive navigation retains its escape path', async ({ page }, testInfo)
 test('Quotes setup and Catalog filter keep independent visible controls', async ({ page }, testInfo) => {
   await openView(page, 'quotes', 'dark');
   await expect(page.locator('.quotes-workbench')).toBeVisible();
+  await expect(page.locator('.quote-internal-pricing > summary .quote-control-heading')).toBeVisible();
+  const privateSummaryColors = await page.locator('.quote-internal-pricing > summary .quote-control-heading').evaluate((el) => ({
+    foreground: getComputedStyle(el).color,
+    background: getComputedStyle(el.closest('summary')!).backgroundColor,
+  }));
+  expect.soft(
+    contrastRatio(privateSummaryColors.foreground, privateSummaryColors.background),
+    'Dark Quotes internal pricing summary contrast',
+  ).toBeGreaterThanOrEqual(4.5);
   if (PHONE(testInfo.project.name)) {
     await page.getByRole('button', { name: 'Quote tools' }).click();
     const done = page.locator('.quote-mobile-menu-done');
