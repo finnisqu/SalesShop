@@ -71,6 +71,8 @@ import './design-system/quotes-adapter.css';
 import './design-system/notebook-chrome-adapter.css';
 // Batch 8: Viewer / Owner preview parity and compact role escape.
 import './design-system/restricted-view-adapter.css';
+// Batch 9: Quotes estimating editor form and popover foundation; exclude customer paper.
+import './design-system/quote-editor-adapter.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
