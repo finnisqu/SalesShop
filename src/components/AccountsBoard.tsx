@@ -22,6 +22,7 @@ import {
 import { BoardScrollControls } from './BoardScrollControls';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
+import { Button, PageHeader } from '../design-system/components';
 import { CrmCleanupPanel } from './CrmCleanupPanel';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
@@ -238,19 +239,22 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
 
   return (
     <main className="board-view accounts-view">
-      <section className="board-header-panel accounts-header-panel">
-        <div><span className="board-eyebrow">Relationship health</span><h1>Accounts</h1><p>Same CRM data, viewed by customer relationship instead of project lifecycle.</p></div>
-        <div className="board-view-toggle" aria-label="Board type">
-          <button type="button" onClick={onShowProjects}>Projects</button>
-          <button type="button" className="active">Accounts</button>
-        </div>
-        <div className="accounts-header-actions">
-          <div className="accounts-inference-note"><strong>Auto-inferred</strong><span>Each card explains why.</span></div>
-          <button type="button" className={`accounts-cleanup-button ${integrityReport.issueCount ? 'has-issues' : ''}`} onClick={() => setCleanupOpen(true)}>
-            CRM cleanup{integrityReport.issueCount ? ` · ${integrityReport.issueCount}` : ''}
-          </button>
-        </div>
-      </section>
+      <PageHeader className="board-header-panel accounts-header-panel board-foundation-header"
+        eyebrow="Relationship health" title="Accounts"
+        description="Same CRM data, viewed by customer relationship instead of project lifecycle."
+        actions={<>
+          <div className="board-view-toggle" role="group" aria-label="Board type">
+            <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Projects</Button>
+            <Button variant="quiet" className="active" aria-pressed={true}>Accounts</Button>
+          </div>
+          <div className="accounts-header-actions">
+            <div className="accounts-inference-note"><strong>Auto-inferred</strong><span>Each card explains why.</span></div>
+            <Button variant="secondary" className={`accounts-cleanup-button ${integrityReport.issueCount ? 'has-issues' : ''}`} onClick={() => setCleanupOpen(true)}>
+              CRM cleanup{integrityReport.issueCount ? ` · ${integrityReport.issueCount}` : ''}
+            </Button>
+          </div>
+        </>}
+      />
 
       <MobileBoardStagePicker
         boardRef={boardRef}

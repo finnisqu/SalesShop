@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type TouchEvent } from 'react';
 import { createPricingScheduleData } from '../services/pricingSchedule';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
+import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import {
   QUOTE_AREA_SCOPE_META,
   QUOTE_AREA_SCOPE_VISIBLE_FIELDS,
@@ -1143,7 +1144,7 @@ export function Quotes() {
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(false);
   const navigatorRef = useDismissibleLayer<HTMLElement>(mobileNavigatorOpen, () => setMobileNavigatorOpen(false));
   const [mode, setMode] = useState<QuoteViewMode>(() => (
-    typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 700px)').matches
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(PHONE_LAYOUT_QUERY).matches
       ? 'edit'
       : 'split'
   ));

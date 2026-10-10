@@ -6,6 +6,7 @@ import { quotesForProject } from '../services/quoteCrmLinks';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useQuoteStore } from '../store/quoteStore';
 import { AccountsBoard } from './AccountsBoard';
+import { Button, Field, PageHeader } from '../design-system/components';
 import { BoardScrollControls } from './BoardScrollControls';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
@@ -306,17 +307,24 @@ export function Board() {
 
   return (
     <main className="board-view">
-      <section className="board-header-panel">
-        <div><span className="board-eyebrow">Sales pipeline</span><h1>Projects</h1><p>What work are we trying to win, perform, or finish?</p></div>
-        <div className="board-view-toggle" aria-label="Board type">
-          <button type="button" className="active">Projects</button>
-          <button type="button" onClick={() => setBoardMode('accounts')}>Accounts</button>
-        </div>
-        <form className="board-quick-add" onSubmit={quickAdd}>
-          <label htmlFor="new-project-name">Quick project</label>
-          <div><input id="new-project-name" value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Type a project name…" /><button type="submit" disabled={!newName.trim()}>Add</button></div>
-        </form>
-      </section>
+      <PageHeader className="board-header-panel board-foundation-header"
+        eyebrow="Sales pipeline" title="Projects"
+        description="What work are we trying to win, perform, or finish?"
+        actions={<>
+          <div className="board-view-toggle" role="group" aria-label="Board type">
+            <Button variant="quiet" className="active" aria-pressed={true}>Projects</Button>
+            <Button variant="quiet" aria-pressed={false} onClick={() => setBoardMode('accounts')}>Accounts</Button>
+          </div>
+          <form className="board-quick-add" onSubmit={quickAdd}>
+            <Field id="new-project-name" label="Quick project" className="board-foundation-quick-field">
+              {(control) => <div className="board-foundation-quick-row">
+                <input {...control} value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Type a project name…" />
+                <Button type="submit" variant="secondary" disabled={!newName.trim()}>Add</Button>
+              </div>}
+            </Field>
+          </form>
+        </>}
+      />
 
       <MobileBoardStagePicker
         boardRef={boardRef}
