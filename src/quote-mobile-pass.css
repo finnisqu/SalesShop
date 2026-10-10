@@ -246,10 +246,9 @@
     gap: 7px;
   }
 
+  /* Status/date Field mobile sizes live in quote-editor-adapter.css. */
   .quote-project-details-grid input,
-  .quote-project-details-grid select,
-  .quote-document-meta-fields input,
-  .quote-document-meta-fields select {
+  .quote-project-details-grid select {
     min-height: 42px;
     height: 42px;
     font-size: 16px; /* Prevent iOS focus zoom. */
