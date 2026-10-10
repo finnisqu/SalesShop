@@ -36,6 +36,8 @@ import { SupplierRelationshipPanels } from './SupplierRelationshipPanels';
 import { MobileCatalogReferenceCard, MobileCatalogReferenceList } from './MobileCatalogReferenceCard';
 import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
+import { Button, Field } from '../design-system/components';
+import { SupplierProfileFields } from './SupplierProfileFields';
 
 type SupplierFreshness = 'missing' | 'stale' | 'due-soon' | 'current' | 'inactive';
 type SupplierFilter = 'all' | 'attention' | 'current' | 'missing';
@@ -390,12 +392,19 @@ export function SuppliersWorkspace() {
       <aside className="supplier-navigator">
         <header><div><span className="board-eyebrow">Reverse CRM</span><strong>Suppliers</strong></div><span>{rollups.length}</span></header>
         <div className="supplier-nav-search">
-          <div className="supplier-mobile-search-row"><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search suppliers or brands…" aria-label="Search suppliers" /><button type="button" className="supplier-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)}>••• Tools</button></div>
+          <div className="supplier-mobile-search-row">
+            <Field className="supplier-foundation-search" id="supplier-directory-search" label="Search suppliers">
+              {(control) => <input {...control} type="search" value={query}
+                onChange={(event) => setQuery(event.target.value)} placeholder="Search suppliers or brands…" />}
+            </Field>
+            <Button variant="secondary" className="supplier-mobile-tools-trigger"
+              onClick={() => setMobileToolsOpen(true)} aria-label="Open supplier tools">••• Tools</Button>
+          </div>
           <div className="supplier-filter-chips">
             {(['all', 'attention', 'current', 'missing'] as SupplierFilter[]).map((value) => (
-              <button type="button" className={filter === value ? 'active' : ''} onClick={() => setFilter(value)} key={value}>
+              <Button variant="quiet" className={filter === value ? 'active' : ''} aria-pressed={filter === value} onClick={() => setFilter(value)} key={value}>
                 {value === 'all' ? 'All' : value === 'attention' ? 'Needs attention' : value === 'current' ? 'Current' : 'Missing'}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -449,8 +458,14 @@ export function SuppliersWorkspace() {
           {!filtered.length && <div className="supplier-nav-empty">No suppliers match this view.</div>}
         </div>
         <div className="supplier-nav-add">
-          <input value={newSupplierName} onChange={(event) => setNewSupplierName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void addSupplier(); }} placeholder="Add a supplier…" />
-          <button type="button" onClick={() => void addSupplier()} disabled={!newSupplierName.trim() || adding}>+</button>
+          <Field className="supplier-foundation-add-field" id="supplier-new-name-desktop" label="New supplier name">
+            {(control) => <input {...control} value={newSupplierName}
+              onChange={(event) => setNewSupplierName(event.target.value)}
+              onKeyDown={(event) => { if (event.key === 'Enter') void addSupplier(); }}
+              placeholder="Add a supplier…" />}
+          </Field>
+          <Button variant="secondary" onClick={() => void addSupplier()}
+            disabled={!newSupplierName.trim() || adding} aria-label="Add supplier">+</Button>
         </div>
       </aside>
 
@@ -458,7 +473,16 @@ export function SuppliersWorkspace() {
         <MobileCatalogToolsSheet title="Supplier tools" section="Suppliers"
           description="Manage your directory without crowding reference lookup."
           onClose={() => setMobileToolsOpen(false)}>
-          <section><strong>Add supplier</strong><div className="supplier-mobile-add-row"><input value={newSupplierName} onChange={(event) => setNewSupplierName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void addSupplier(); }} placeholder="Supplier name…" /><button type="button" onClick={() => void addSupplier()} disabled={!newSupplierName.trim() || adding}>{adding ? 'Adding…' : 'Add'}</button></div></section>
+          <section><strong>Add supplier</strong><div className="supplier-mobile-add-row">
+            <Field className="supplier-foundation-add-field" id="supplier-new-name-mobile" label="New supplier name">
+              {(control) => <input {...control} value={newSupplierName}
+                onChange={(event) => setNewSupplierName(event.target.value)}
+                onKeyDown={(event) => { if (event.key === 'Enter') void addSupplier(); }}
+                placeholder="Supplier name…" />}
+            </Field>
+            <Button variant="primary" onClick={() => void addSupplier()}
+              disabled={!newSupplierName.trim() || adding}>{adding ? 'Adding…' : 'Add'}</Button>
+          </div></section>
           <section><strong>Directory maintenance</strong><small>Select a supplier, then use the record's Edit, Track, contacts, locations, or rules controls.</small></section>
         </MobileCatalogToolsSheet>
       )}
@@ -474,9 +498,9 @@ export function SuppliersWorkspace() {
                 {selectedProfile && !editingProfile && <div className="supplier-contact-strip">{selectedProfile.phone && <a href={`tel:${selectedProfile.phone}`}>{selectedProfile.phone}</a>}{selectedProfile.website && <a href={websiteHref(selectedProfile.website)} target="_blank" rel="noreferrer">{selectedProfile.website}</a>}</div>}
               </div>
               <div className="supplier-record-actions">
-                {!selectedProfile ? <button type="button" className="primary" onClick={() => void trackSelected()} disabled={saving}>Track supplier</button> : <>
-                  <button type="button" onClick={() => { setProfileDraft({ ...selectedProfile }); setEditingProfile(true); }}>Edit supplier</button>
-                  <button type="button" onClick={() => setMergeOpen((value) => !value)}>Merge</button>
+                {!selectedProfile ? <Button variant="primary" onClick={() => void trackSelected()} disabled={saving}>Track supplier</Button> : <>
+                  <Button variant="secondary" onClick={() => { setProfileDraft({ ...selectedProfile }); setEditingProfile(true); }}>Edit supplier</Button>
+                  <Button variant="secondary" onClick={() => setMergeOpen((value) => !value)}>Merge</Button>
                 </>}
               </div>
             </header>
@@ -497,16 +521,11 @@ export function SuppliersWorkspace() {
 
             {editingProfile && selectedProfile && profileDraft && <section className="supplier-edit-card">
               <header><div><span className="board-eyebrow">Supplier profile</span><strong>Edit {selected.name}</strong></div><button type="button" onClick={() => { setEditingProfile(false); setProfileDraft(null); }}>×</button></header>
-              <div className="supplier-edit-grid">
-                <label><span>Name</span><input value={profileDraft.name} onChange={(event) => setProfileDraft({ ...profileDraft, name: event.target.value })} /></label>
-                <label><span>Main phone</span><input value={profileDraft.phone ?? ''} onChange={(event) => setProfileDraft({ ...profileDraft, phone: event.target.value })} /></label>
-                <label className="wide"><span>Website</span><input value={profileDraft.website ?? ''} onChange={(event) => setProfileDraft({ ...profileDraft, website: event.target.value })} placeholder="supplier.com" /></label>
-                <label><span>Pricing cadence</span><select value={profileDraft.pricingCadenceMonths ?? 12} onChange={(event) => setProfileDraft({ ...profileDraft, pricingCadenceMonths: Number(event.target.value) })}><option value={3}>Every 3 months</option><option value={6}>Every 6 months</option><option value={12}>Annual</option><option value={18}>Every 18 months</option><option value={24}>Every 24 months</option></select></label>
-                <label><span>Next pricing review</span><input type="date" value={profileDraft.nextPricingReviewDate ?? ''} onChange={(event) => setProfileDraft({ ...profileDraft, nextPricingReviewDate: event.target.value || undefined })} /></label>
-                <label><span>Status</span><select value={profileDraft.active ? 'active' : 'inactive'} onChange={(event) => setProfileDraft({ ...profileDraft, active: event.target.value === 'active' })}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-                <label className="wide"><span>Relationship notes</span><textarea value={profileDraft.notes} onChange={(event) => setProfileDraft({ ...profileDraft, notes: event.target.value })} /></label>
+              <div className="supplier-edit-grid supplier-foundation-profile-fields">
+                <SupplierProfileFields profile={profileDraft} onChange={setProfileDraft} />
               </div>
-              <footer><span /><span /><button type="button" onClick={() => { setEditingProfile(false); setProfileDraft(null); }}>Cancel</button><button type="button" className="primary" onClick={() => void saveProfile()} disabled={!profileDraft.name.trim() || saving}>{saving ? 'Saving…' : 'Save supplier'}</button></footer>
+              <footer><span /><span /><button type="button" onClick={() => { setEditingProfile(false); setProfileDraft(null); }}>Cancel</button><Button variant="primary" onClick={() => void saveProfile()}
+                disabled={!profileDraft.name.trim() || saving}>{saving ? 'Saving…' : 'Save supplier'}</Button></footer>
             </section>}
 
             {!selectedProfile ? <section className="supplier-track-callout"><strong>Track {selected.name} to build the relationship record.</strong><span>Pricing history is already visible. Tracking adds contacts, locations, editable rules, notes, and activity.</span><button type="button" onClick={() => void trackSelected()} disabled={saving}>Track supplier</button></section> : <>
