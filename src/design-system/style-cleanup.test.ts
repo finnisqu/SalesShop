@@ -56,15 +56,15 @@ describe('UI Foundation Batch 10 — CSS cleanup boundaries', () => {
     const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
     expect(withoutComments).not.toMatch(/\.customer-quote-|\.public-quote-|\.pricing-schedule-customer/);
   });
+
   it('uses the shared Field adapter, not old cream overrides, for status/date inputs', () => {
     const legacyDesktop = source('../quote-popover-polish.css');
     const legacyMobile = source('../quote-mobile-pass.css');
     const newAdapter = source('./quote-editor-adapter.css');
 
-    expect(legacyDesktop).not.toMatch(/\\.quote-document-meta-fields\\s+(?:label|input|select)/);
-    expect(legacyMobile).not.toMatch(/\\.quote-document-meta-fields\\s+(?:label|input|select)/);
+    expect(legacyDesktop).not.toMatch(/\.quote-document-meta-fields\s+(?:label|input|select)/);
+    expect(legacyMobile).not.toMatch(/\.quote-document-meta-fields\s+(?:label|input|select)/);
     expect(newAdapter).toContain('.quote-foundation-fields');
     expect(newAdapter).toContain('min-height:44px');
   });
-
 });
