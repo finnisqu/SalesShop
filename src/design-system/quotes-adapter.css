@@ -137,16 +137,15 @@
   overscroll-behavior-y:contain;
   -webkit-overflow-scrolling:touch;
 }
-:root[data-sales-theme] .sales-app.view-quotes .quote-mobile-menu :is(
-  .quote-mobile-view-menu>button,.quote-mobile-tool-grid button,
-  .quote-mobile-setup-grid button,.quote-mobile-zoom-row button
+:root[data-sales-theme] .sales-app.view-quotes .quote-mobile-view-menu>button,
+:root[data-sales-theme] .sales-app.view-quotes .quote-mobile-tools-menu :is(
+  .quote-mobile-tool-grid button,.quote-mobile-setup-grid button,.quote-mobile-zoom-row button
 ) {
   background:var(--ss-quotes-card);color:var(--ss-quotes-ink);
   border-color:var(--ss-quotes-border);border-radius:var(--ss-radius-sm);
 }
-:root[data-sales-theme] .sales-app.view-quotes .quote-mobile-menu :is(
-  .quote-mobile-view-menu>button.active,.quote-mobile-tool-grid button.active
-) {
+:root[data-sales-theme] .sales-app.view-quotes .quote-mobile-view-menu>button.active,
+:root[data-sales-theme] .sales-app.view-quotes .quote-mobile-tools-menu .quote-mobile-tool-grid button.active {
   background:var(--ss-quotes-tint);border-color:var(--ss-quotes-accent);
 }
 :root[data-sales-theme] .sales-app.view-quotes .quote-mobile-menu :is(
