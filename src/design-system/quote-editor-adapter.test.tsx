@@ -106,8 +106,9 @@ describe('UI Foundation Batch 9 — Quotes internal editor',()=>{
     expect(css).toContain('font-size:16px');
     expect(css).toContain('min-height:44px');
     expect(css).toContain('-webkit-overflow-scrolling:touch');
-    const qMobile=readFileSync(new URL('../quote-mobile-pass.css',import.meta.url),'utf8');
-    expect(qMobile).toContain('.quote-mobile-menu-footer');
-    expect(source).toContain('onClose={() =>');
+    const qChrome=readFileSync(new URL('./quotes-adapter.css',import.meta.url),'utf8');
+    expect(qChrome).toContain('.quote-mobile-menu-footer');
+    expect(source).toContain('className="quote-mobile-menu-footer"');
+    expect(source).toContain('onClick={() => setMobileMenu(null)}');
   });
 });
