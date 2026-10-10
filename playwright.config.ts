@@ -9,7 +9,7 @@ export default defineConfig({
   testMatch: '**/*.pw.ts',
   timeout: 60_000,
   expect: { timeout: 12_000 },
-  retries: process.env.CI ? 1 : 0,
+  retries: 0, // deterministic local demo; diagnose failures without a long retry storm
   workers: process.env.CI ? 2 : undefined,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'artifacts/playwright-report' }]],
   outputDir: 'artifacts/playwright-results',
@@ -34,6 +34,7 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       // An explicit local-only demo; never give Playwright cloud credentials.
+      VITE_SALES_SHOP_LOCAL_QC: '1',
       VITE_SUPABASE_URL: '',
       VITE_SUPABASE_ANON_KEY: '',
       VITE_BASE_PATH: '/',
