@@ -7,7 +7,6 @@ import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useQuoteStore } from '../store/quoteStore';
 import { AccountsBoard } from './AccountsBoard';
 import { Button, Field, PageHeader } from '../design-system/components';
-import { BoardScrollControls } from './BoardScrollControls';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
@@ -376,7 +375,7 @@ export function Board() {
           );
         })}
       </section>
-      <BoardScrollControls boardRef={boardRef} />
+
       {editingProject && <ProjectEditor project={editingProject} onClose={() => setEditingId(null)} />}
     </main>
   );
