@@ -77,6 +77,8 @@ import './design-system/quote-editor-adapter.css';
 import './design-system/batch-10c.css';
 // Batch 10D: consistent global toolbar actions on mobile Quotes.
 import './design-system/batch-10d.css';
+// Batch 11: owner/admin Team Quotes reference view and reporting groups.
+import './design-system/batch-11-quotes.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
