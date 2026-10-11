@@ -19,7 +19,6 @@ import {
   type AccountStage,
   type Company,
 } from '../types/crm';
-import { BoardScrollControls } from './BoardScrollControls';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { Button, PageHeader } from '../design-system/components';
@@ -321,7 +320,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
           );
         })}
       </section>
-      <BoardScrollControls boardRef={boardRef} />
+
       {editingCompany && <AccountEditor company={editingCompany} onClose={() => setEditingId(null)} />}
       {cleanupOpen && <CrmCleanupPanel onClose={() => setCleanupOpen(false)} />}
     </main>
