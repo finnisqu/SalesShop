@@ -73,6 +73,8 @@ import './design-system/notebook-chrome-adapter.css';
 import './design-system/restricted-view-adapter.css';
 // Batch 9: Quotes estimating editor form and popover foundation; exclude customer paper.
 import './design-system/quote-editor-adapter.css';
+// Batch 10C: late opt-in corrections for Board and internal quote fields.
+import './design-system/batch-10c.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
