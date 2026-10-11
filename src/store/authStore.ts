@@ -2,7 +2,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 import { appAbsoluteUrl } from '../lib/appUrl';
-import { ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
+import { clearCloudIdentityCache, ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
 import type { TeamDepartment } from '../services/teamDepartments';
@@ -147,6 +147,7 @@ async function performSessionApplication(session: Session | null) {
     const { data: isDeveloper, error: developerError } = await supabase.rpc('is_platform_developer');
     if (developerError) throw developerError;
     if (isDeveloper === true) {
+      clearCloudIdentityCache();
       if (pendingTeamInviteToken()) {
         throw new Error('Developer accounts cannot join company workspaces. Open the invitation with a separate employee account.');
       }
@@ -208,6 +209,9 @@ async function performSessionApplication(session: Session | null) {
       activeInvitePreview: null,
     });
   } catch (error) {
+    if (/This account has left its previous workspace|Developer accounts cannot create or enter customer workspaces/i.test(messageFrom(error))) {
+      clearCloudIdentityCache();
+    }
     useAuthStore.setState({
       mode: 'cloud',
       ready: true,
@@ -343,6 +347,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     stopCloudSync();
+    clearCloudIdentityCache();
     clearJoinWelcome();
     if (supabase) await supabase.auth.signOut();
     set({
