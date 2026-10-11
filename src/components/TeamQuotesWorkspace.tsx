@@ -21,6 +21,9 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
   const [notice,setNotice] = useState('');
   const [loading,setLoading] = useState(true);
   const [saving,setSaving] = useState(false);
+  const [grants,setGrants] = useState<Array<{user_id:string}>>([]);
+  const [grantTo,setGrantTo] = useState('');
+  const currentUserId=useAuthStore(state=>state.user?.id);
   const [selectedId,setSelectedId] = useState<string|null>(null);
   const [assignment,setAssignment] = useState({ owner:'',division:'',team:'' });
   const [filters,setFilters] = useState<TeamQuoteFilters>({
@@ -62,6 +65,23 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
     return ()=>{cancelled=true};
   },[organizationId]);
 
+  // Grant rows are owner/admin-only. A specific quote grant permits Viewers to
+  // read just that quote without exposing the rest of the organization.
+  useEffect(()=>{
+    if(!supabase || !organizationId || !selectedId || !['owner','admin'].includes(currentRole??'')){
+      setGrants([]);return;
+    }
+    let cancelled=false;
+    void supabase.from('quote_access_grants').select('user_id')
+      .eq('organization_id',organizationId).eq('quote_id',selectedId)
+      .then(({data,error})=>{
+        if(cancelled)return;
+        if(error)setError(error.message);
+        else setGrants((data??[]) as Array<{user_id:string}>);
+      });
+    return ()=>{cancelled=true};
+  },[organizationId,selectedId,currentRole]);
+
   const filtered=useMemo(()=>filterTeamQuotes(quotes,filters),[quotes,filters]);
   const metrics=useMemo(()=>summarizeTeamQuotes(filtered),[filtered]);
   const selected=quotes.find(q=>q.id===selectedId);
@@ -71,7 +91,7 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
   const ownerName=(id?:string)=>members.find(m=>m.user_id===id)?.displayName??'Unassigned';
   const updateFilters=(patch:Partial<TeamQuoteFilters>)=>setFilters(f=>({...f,...patch}));
   const chooseQuote=(quote:Quote)=>{
-    setNotice('');setError('');
+    setNotice('');setError('');setGrantTo('');
     setSelectedId(id=>id===quote.id?null:quote.id);
     setAssignment({owner:quote.ownerUserId??'',division:quote.divisionId??'',team:quote.teamId??''});
   };
@@ -95,6 +115,24 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
       teamId:data.team_id??undefined,
     });
     setNotice('Quote responsibility updated.');
+  };
+
+  const saveGrant=async(userId:string, remove=false)=>{
+    if(!supabase || !organizationId || !selectedId || !currentUserId ||
+      !['owner','admin'].includes(currentRole??'') || !userId)return;
+    setSaving(true);setError('');setNotice('');
+    const request=remove
+      ? supabase.from('quote_access_grants').delete().eq('organization_id',organizationId)
+        .eq('quote_id',selectedId).eq('user_id',userId)
+      : supabase.from('quote_access_grants').insert({
+          organization_id:organizationId,quote_id:selectedId,user_id:userId,granted_by:currentUserId,
+        });
+    const {error:writeError}=await request;
+    setSaving(false);
+    if(writeError){setError(writeError.message);return}
+    setGrants(current=>remove?current.filter(g=>g.user_id!==userId):[...current,{user_id:userId}]);
+    setGrantTo('');
+    setNotice(remove?'Quote access revoked.':'Read-only quote access granted.');
   };
 
   return <main className="team-quotes-view" aria-label="Team Quotes overview">
@@ -168,6 +206,22 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
               </select></label>
             </div>
             <button type="button" disabled={saving||loading} onClick={()=>void saveAssignment()}>{saving?'Saving…':'Save assignment'}</button>
+          </section>}
+          {selected && (currentRole==='owner'||currentRole==='admin') && <section className="team-quote-assignment" aria-label="Explicit quote access">
+            <h3>Additional read-only access</h3>
+            <p>Grant an individual access to this quote only. Team members can also see quotes assigned to their team; viewers require an explicit grant.</p>
+            {grants.map(g=><div className="team-quote-grant-row" key={g.user_id}>
+              <span>{ownerName(g.user_id)}</span>
+              <button type="button" disabled={saving} onClick={()=>void saveGrant(g.user_id,true)}>Revoke</button>
+            </div>)}
+            <div className="team-quote-grant-add">
+              <label><span>Share read-only with</span><select aria-label="Grant quote read access to member" value={grantTo} onChange={e=>setGrantTo(e.target.value)}>
+                <option value="">Choose a member</option>
+                {members.filter(m=>!grants.some(g=>g.user_id===m.user_id))
+                  .map(m=><option key={m.user_id} value={m.user_id}>{m.displayName} · {m.role}</option>)}
+              </select></label>
+              <button type="button" disabled={!grantTo||saving} onClick={()=>void saveGrant(grantTo)}>Grant view access</button>
+            </div>
           </section>}
         </div>}
       </article>)}
