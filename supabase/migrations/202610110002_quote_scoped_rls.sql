@@ -188,3 +188,19 @@ comment on function public.can_access_quote(uuid,text,text)
   is 'JWT-scoped boolean quote authorization for privileged quote-share function. No row data returned.';
 comment on table public.quote_access_grants
   is 'Owner/admin-created read grants for specific quotes. Viewers need explicit grants.';
+
+-- The public numbering RPC delegates to a privileged helper. Its org-level
+-- issuing check alone is insufficient when quote reads are owner-scoped.
+-- Check authorization for the *specific* quote before entering that helper.
+create or replace function public.assign_commercial_document_number(
+  p_organization_id uuid, p_quote_id text
+) returns jsonb language plpgsql security invoker set search_path=''
+as $$
+begin
+  if not private.can_edit_quote(p_organization_id,p_quote_id) then
+    raise exception 'This quote is not assigned to your editing scope'
+      using errcode='42501';
+  end if;
+  return private.assign_commercial_document_number(p_organization_id,p_quote_id);
+end;
+$$;
