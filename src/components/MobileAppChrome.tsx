@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/authStore';
 import { canEditTeamArea } from '../services/teamDepartments';
 import { resolveOwnerPerspective } from '../services/rolePerspective';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
+import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'notebook', label: 'Notebook', short: 'Notebook' },
@@ -43,6 +44,7 @@ export function MobileAppChrome() {
   const teamRole = useAuthStore((state) => state.teamRole);
   const department = useAuthStore((state) => state.teamDepartment);
   const previewId = useRolePerspectiveStore((state) => state.activePerspective);
+  const quoteLibraryMode = useQuoteLibraryStore((state) => state.mode);
   const preview = resolveOwnerPerspective(previewId, teamRole, mode);
   const effectiveRole = preview?.role ?? teamRole;
   const effectiveDepartment = preview?.department ?? department;
@@ -89,7 +91,7 @@ export function MobileAppChrome() {
     [entries, activeEntryId],
   );
 
-  if (view === 'quotes' && !quoteReadOnly && !preview) return null;
+  if (view === 'quotes' && !quoteReadOnly && !preview && !(quoteLibraryMode === 'team' && mode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin'))) return null;
 
   const contextTitle = view === 'notebook'
     ? activeEntry?.title || 'Notebook'
