@@ -79,6 +79,8 @@ import './design-system/batch-10c.css';
 import './design-system/batch-10d.css';
 // Batch 11: owner/admin Team Quotes reference view and reporting groups.
 import './design-system/batch-11-quotes.css';
+// P2: ownership transfer within Team Settings, never in customer documents.
+import './design-system/ownership-transfer.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
