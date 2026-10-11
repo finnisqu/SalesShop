@@ -136,3 +136,47 @@
   .sales-app.view-quotes .quote-library-mode-switch {display:none}
   .sales-app.view-quotes .quote-my-quotes-empty {height:0;min-height:0;flex:1 1 auto}
 }
+
+/* Settings: organizational reporting groups use the same semantic palette. */
+:root[data-sales-theme] .sales-app.view-settings .sales-team-management {
+  display:grid;gap:15px;color:var(--ss-theme-ink);
+  background:var(--ss-theme-card);border-color:var(--ss-theme-border);
+}
+.sales-app.view-settings .sales-team-management h3 {font:700 14px system-ui,sans-serif;margin:0 0 8px}
+.sales-app.view-settings .sales-team-management-columns,
+.sales-app.view-settings .sales-team-roster>div {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+.sales-app.view-settings .sales-team-management-columns>form,
+.sales-app.view-settings .sales-team-roster {
+  display:grid;align-content:start;gap:8px;padding:12px;
+  border:1px solid var(--ss-theme-border);border-radius:9px;
+  background:var(--ss-theme-base);
+}
+.sales-app.view-settings .sales-team-management label {display:grid;min-width:0;gap:4px}
+.sales-app.view-settings .sales-team-management label>span,
+.sales-app.view-settings .sales-team-roster p,.sales-app.view-settings .sales-team-roster small {
+  color:var(--ss-theme-muted);font:500 11px/1.4 system-ui,sans-serif;
+}
+.sales-app.view-settings .sales-team-management :is(input,select) {
+  width:100%;min-width:0;min-height:44px;
+  padding:8px 10px;border:1px solid var(--ss-theme-border);
+  border-radius:6px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  font:450 16px system-ui,sans-serif;
+}
+.sales-app.view-settings .sales-team-management button {
+  min-height:40px;justify-self:start;
+  padding:8px 12px;border:1px solid var(--ss-theme-border);
+  border-radius:6px;background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+  font:700 12px system-ui,sans-serif;
+}
+.sales-app.view-settings .sales-team-management button:disabled {opacity:.5}
+.sales-app.view-settings .sales-team-roster>div {grid-template-columns:repeat(2,minmax(0,1fr)) auto;align-items:end}
+.sales-app.view-settings :is(.sales-team-management-error,.sales-team-management-notice) {
+  padding:10px;margin:0;border:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-base);color:var(--ss-theme-ink);border-radius:8px;
+}
+@media(max-width:700px) {
+  .sales-app.view-settings .sales-team-management-columns,
+  .sales-app.view-settings .sales-team-roster>div {grid-template-columns:1fr}
+}
