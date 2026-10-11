@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppearanceStore } from '../store/appearanceStore';
 import { AppearanceThemePicker } from './AppearanceThemePicker';
+import { OwnerRolePreviewSettings } from './RolePerspectiveControls';
 import { PageHeader, Panel, Button } from '../design-system/components';
 import { SettingsIdentityFields, SettingsProfileFields } from './SettingsIdentityFields';
 import { TeamAccessSettings } from './TeamAccessSettings';
@@ -194,6 +195,7 @@ export function CompanySettings() {
         {tab === 'team' && <TeamAccessSettings />}
         {tab === 'appearance' && <section className="settings-panel-grid" aria-label="Appearance and accessibility preferences">
           <AppearanceThemePicker />
+          <OwnerRolePreviewSettings />
           <article className="company-settings-card settings-main-card">
             <header><div><strong>Reading & interaction</strong><small>Changes apply immediately on this device.</small></div></header>
             <div className="settings-preference-row">
