@@ -349,11 +349,6 @@ export interface QuoteRevisionSnapshot {
   parentQuoteId?: string;
   changeOrderNumber?: number;
   title: string;
-  /** Responsible salesperson; absent on legacy unassigned documents. */
-  ownerUserId?: string;
-  /** Organization-scoped reporting group IDs, separate from pricingDivision. */
-  divisionId?: string;
-  teamId?: string;
   projectId?: string;
   companyId?: string;
   companyName?: string;
@@ -382,6 +377,11 @@ export interface Quote {
   revisionLabel?: string;
   status: QuoteStatus;
   title: string;
+  /** Responsible salesperson; absent on legacy unassigned documents. */
+  ownerUserId?: string;
+  /** Organization-scoped reporting group IDs, separate from pricingDivision. */
+  divisionId?: string;
+  teamId?: string;
   projectId?: string;
   companyId?: string;
   companyName?: string;
