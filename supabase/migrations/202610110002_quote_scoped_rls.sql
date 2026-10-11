@@ -183,6 +183,17 @@ alter policy activities_read_org on public.activities
       or (quote_id is not null and private.can_read_quote(organization_id,quote_id))
     ));
 
+-- CRM writers may still create ordinary activities. Existing quote-related
+-- activity records must not be altered or erased by unrelated coworkers.
+alter policy activities_update_editor on public.activities
+  using (private.can_edit_org_area(organization_id,'crm')
+    and (quote_id is null or private.can_edit_quote(organization_id,quote_id)))
+  with check (private.can_edit_org_area(organization_id,'crm')
+    and (quote_id is null or private.can_edit_quote(organization_id,quote_id)));
+alter policy activities_delete_editor on public.activities
+  using (private.can_edit_org_area(organization_id,'crm')
+    and (quote_id is null or private.can_edit_quote(organization_id,quote_id)));
+
 -- Public RPC for authenticated Edge Functions is intentionally BOOLEAN-only.
 comment on function public.can_access_quote(uuid,text,text)
   is 'JWT-scoped boolean quote authorization for privileged quote-share function. No row data returned.';
