@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { previewTeamInvite, type TeamInvitePreview } from '../services/teamInvitePreview';
 import { departmentName } from '../services/teamDepartments';
+import { DeveloperConsole } from './DeveloperConsole';
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const initialize = useAuthStore((state) => state.initialize);
@@ -11,6 +12,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const mode = useAuthStore((state) => state.mode);
   const user = useAuthStore((state) => state.user);
   const organizationId = useAuthStore((state) => state.organizationId);
+  const platformRole = useAuthStore((state) => state.platformRole);
   const inviteProblem = useAuthStore((state) => state.inviteProblem);
   const activeInvitePreview = useAuthStore((state) => state.activeInvitePreview);
   const joinWelcome = useAuthStore((state) => state.joinWelcome);
@@ -82,6 +84,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     <div className="auth-invite-summary"><strong>{joinWelcome.organizationName}</strong><span>Your role: {joinWelcome.role === 'admin' ? 'Administrator' : joinWelcome.role === 'viewer' ? 'Viewer' : 'Member'}</span><small>Signed in as {user.email}</small></div>
     <button type="button" className="auth-primary auth-full-width" onClick={dismissJoinWelcome}>Enter workspace</button>
   </section></main>;
+  if (user && platformRole === 'developer' && !passwordRecovery) return <DeveloperConsole />;
   if (user && organizationId && !passwordRecovery) return <>{children}</>;
   if (user && !passwordRecovery) return <main className="auth-shell"><section className="auth-card">
     <div className="auth-brand"><span>S</span><strong>SalesShop</strong></div>
