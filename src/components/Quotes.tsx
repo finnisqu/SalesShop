@@ -27,6 +27,7 @@ import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
+import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 import {
   commercialDocumentLabel,
   displayQuoteNumber,
@@ -1156,7 +1157,8 @@ export function Quotes() {
       : 'split'
   ));
   const [showArchived, setShowArchived] = useState(false);
-  const [quoteLibraryMode, setQuoteLibraryMode] = useState<'mine' | 'team'>('mine');
+  const quoteLibraryMode = useQuoteLibraryStore((state) => state.mode);
+  const setQuoteLibraryMode = useQuoteLibraryStore((state) => state.setMode);
   const authMode = useAuthStore((state) => state.mode);
   const teamRole = useAuthStore((state) => state.teamRole);
   const userId = useAuthStore((state) => state.user?.id);
