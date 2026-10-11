@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../store/authStore';
 import {
   isDraftQuoteNumber,
   quoteLinesTotal,
@@ -63,8 +64,8 @@ function atLeastAsNew(localValue: string, serverValue?: string) {
   if (!serverValue) return true;
   const localTime = Date.parse(localValue);
   const serverTime = Date.parse(serverValue);
-  if (!Number.isFinite(localTime) || !Number.isFinite(serverTime)) return localValue >= serverValue;
-  return localTime >= serverTime;
+  if (!Number.isFinite(localTime) || !Number.isFinite(serverTime)) return localValue > serverValue;
+  return localTime > serverTime;
 }
 
 async function selectRows(table: QuoteTable, organizationId: string, orderColumn: string) {
@@ -242,7 +243,15 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   if (!supabase) return;
   if (document.schemaVersion !== 2) throw new Error('Unsupported Quote document schema.');
   const guards = await serverQuoteGuards(organizationId);
-  const acceptedQuotes = document.quotes.filter((quote) => atLeastAsNew(quote.updatedAt, guards.get(quote.id)?.updatedAt));
+  // A read-only team grant may include other people's quotes in the local
+  // cache. Never replay those records as edits when this device saves one
+  // owned quote. RLS separately enforces this on the server.
+  const auth = useAuthStore.getState();
+  const isAdmin = auth.mode === 'cloud' && (auth.teamRole === 'owner' || auth.teamRole === 'admin');
+  const actorId = auth.mode === 'cloud' ? auth.user?.id : null;
+  const acceptedQuotes = document.quotes.filter((quote) =>
+    (isAdmin || (actorId && quote.ownerUserId === actorId)) &&
+    atLeastAsNew(quote.updatedAt, guards.get(quote.id)?.updatedAt));
   const acceptedIds = new Set(acceptedQuotes.map((quote) => quote.id));
 
   const quotes = acceptedQuotes.map((quote, sortOrder) => {
