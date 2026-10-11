@@ -5,6 +5,7 @@ import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 
 type NamedCreateMode = 'project' | 'account' | null;
 
@@ -40,6 +41,7 @@ export function QuickCreate() {
       updateQuote(quoteId, { pricingSchedule: createPricingScheduleData(quoteId) });
     }
     close();
+    useQuoteLibraryStore.getState().setMode('mine');
     openQuote(quoteId);
   };
 
