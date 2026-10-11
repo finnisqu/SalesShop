@@ -352,6 +352,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: null,
       session: null,
       organizationId: null,
+      platformRole: null,
       teamRole: null,
       teamDepartment: 'general',
       inviteProblem: null,
