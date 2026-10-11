@@ -29,12 +29,6 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
   const setQuoteAssignmentFromCloud = useQuoteStore(s=>s.setQuoteAssignmentFromCloud);
 
   useEffect(()=>{
-    const shell = document.querySelector('.sales-app.view-quotes');
-    shell?.classList.add('team-quotes-overview-active');
-    return ()=>shell?.classList.remove('team-quotes-overview-active');
-  },[]);
-
-  useEffect(()=>{
     if (!organizationId || !supabase) { setLoading(false); return; }
     const client=supabase;
     let cancelled=false;
