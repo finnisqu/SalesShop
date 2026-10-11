@@ -26,6 +26,7 @@ import { resolveOwnerPerspective } from '../services/rolePerspective';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
+import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import {
   commercialDocumentLabel,
   displayQuoteNumber,
@@ -1155,8 +1156,18 @@ export function Quotes() {
       : 'split'
   ));
   const [showArchived, setShowArchived] = useState(false);
+  const [quoteLibraryMode, setQuoteLibraryMode] = useState<'mine' | 'team'>('mine');
+  const authMode = useAuthStore((state) => state.mode);
+  const teamRole = useAuthStore((state) => state.teamRole);
+  const userId = useAuthStore((state) => state.user?.id);
+  const previewRole = useRolePerspectiveStore((state) => state.activePerspective);
+  const canBrowseTeam = authMode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin') && !previewRole;
   useEffect(() => { hydrate(); hydrateCrm(); }, [hydrate, hydrateCrm]);
-  const quote = quotes.find((candidate) => candidate.id === activeQuoteId) ?? quotes[0] ?? null;
+  // Own work is strictly attributed by user ID. Legacy quotes have no owner;
+  // preserve them as "Unassigned" in the Team reference view.
+  const myQuotes = useMemo(() => canBrowseTeam ? quotes.filter((item) => item.ownerUserId === userId) : quotes,
+    [quotes,canBrowseTeam,userId]);
+  const quote = myQuotes.find((candidate) => candidate.id === activeQuoteId) ?? myQuotes[0] ?? null;
   useEffect(() => {
     if (!recentCatalogInsert || recentCatalogInsert.quoteId !== quote?.id) return;
     const frame = window.requestAnimationFrame(() => {
@@ -1170,11 +1181,11 @@ export function Quotes() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [recentCatalogInsert, quote?.id, clearCatalogInsert]);
-  const archivedCount = quotes.filter((item) => Boolean(item.archivedAt)).length;
-  const sortedQuotes = useMemo(() => quotes
+  const archivedCount = myQuotes.filter((item) => Boolean(item.archivedAt)).length;
+  const sortedQuotes = useMemo(() => myQuotes
     .filter((item) => showArchived || !item.archivedAt || item.id === quote?.id)
     .slice()
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [quotes, quote?.id, showArchived]);
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [myQuotes, quote?.id, showArchived]);
   useEffect(() => {
     if (quote?.documentType === 'pricing-schedule') setMode('edit');
   }, [quote?.id, quote?.documentType]);
@@ -1182,7 +1193,18 @@ export function Quotes() {
     if (quote?.documentType === 'pricing-schedule' && mode === 'split') setMode('edit');
     if (quote?.documentType !== 'pricing-schedule' && mode === 'workbook') setMode('edit');
   }, [quote?.documentType, mode]);
-  if (!hydrated || !quote) return <div className="quotes-loading">Opening quotes…</div>;
+  if (!hydrated) return <div className="quotes-loading">Opening quotes…</div>;
+  if (canBrowseTeam && quoteLibraryMode === 'team') return (
+    <TeamQuotesWorkspace quotes={quotes} onShowMine={() => setQuoteLibraryMode('mine')} />
+  );
+  if (!quote) return <main className="quotes-view quote-my-quotes-empty">
+    <section>
+      <h1>My Quotes</h1>
+      <p>You have no quotes assigned to you yet. Existing organization quotes are still available in Team Quotes, labeled Unassigned until an owner or admin assigns them.</p>
+      <button type="button" onClick={() => createQuote()}>+ New Quote</button>
+      {canBrowseTeam && <button type="button" onClick={() => setQuoteLibraryMode('team')}>View Team Quotes</button>}
+    </section>
+  </main>;
 
   const appDestinations: Array<{ view: AppView; label: string }> = [
     { view: 'notebook', label: 'Notebook' },
@@ -1194,6 +1216,10 @@ export function Quotes() {
   ];
 
   return <main className="quotes-view">
+    {canBrowseTeam && <div className="quote-library-mode-switch" role="group" aria-label="Quote library">
+      <button type="button" aria-pressed={true}>My Quotes</button>
+      <button type="button" onClick={() => setQuoteLibraryMode('team')}>Team Quotes</button>
+    </div>}
     {mobileNavigatorOpen && <div className="quote-mobile-navigator-backdrop" onPointerDown={() => setMobileNavigatorOpen(false)}>
       <section ref={navigatorRef} className="quote-mobile-navigator" role="dialog" aria-modal="true" aria-label="Quotes navigation" onPointerDown={(event) => event.stopPropagation()}>
         <header>
@@ -1207,6 +1233,10 @@ export function Quotes() {
             setView(destination.view);
           }}>{destination.label}</button>)}
         </nav>
+
+        {canBrowseTeam && <button type="button" className="quote-navigator-team-link" onClick={() => {
+          setMobileNavigatorOpen(false); setQuoteLibraryMode('team');
+        }}>Team Quotes · overview</button>}
 
         <div className="quote-mobile-document-heading">
           <div><strong>Documents</strong><small>{sortedQuotes.length} shown</small></div>
@@ -1224,7 +1254,7 @@ export function Quotes() {
       </section>
     </div>}
 
-    <aside className="quotes-sidebar"><header><div><span>Commercial documents</span><strong>Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside>
+    <aside className="quotes-sidebar"><header><div><span>My documents</span><strong>My Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside>
     <QuoteEditor quote={quote} mode={mode} onModeChange={setMode} onOpenMobileNavigator={() => setMobileNavigatorOpen(true)} />
   </main>;
 }
