@@ -75,6 +75,8 @@ import './design-system/restricted-view-adapter.css';
 import './design-system/quote-editor-adapter.css';
 // Batch 10C: late opt-in corrections for Board and internal quote fields.
 import './design-system/batch-10c.css';
+// Batch 10D: consistent global toolbar actions on mobile Quotes.
+import './design-system/batch-10d.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 
