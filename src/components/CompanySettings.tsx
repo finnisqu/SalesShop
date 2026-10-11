@@ -11,12 +11,13 @@ import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 
-type SettingsTab = 'company' | 'account' | 'team' | 'appearance';
+type SettingsTab = 'company' | 'account' | 'team' | 'appearance' | 'advanced';
 const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
   { id: 'company', title: 'Company & Branding', subtitle: 'Customer-facing identity' },
   { id: 'account', title: 'My Account', subtitle: 'Salesperson profile' },
   { id: 'team', title: 'Team', subtitle: 'People in your shop' },
   { id: 'appearance', title: 'Appearance & Accessibility', subtitle: 'Personal preferences' },
+  { id: 'advanced', title: 'Advanced', subtitle: 'Optional tools' },
 ];
 const localMessage = 'Sign in to a cloud workspace to manage your salesperson profile and team.';
 
@@ -26,6 +27,7 @@ export function CompanySettings() {
   const saving = useCompanySettingsStore((state) => state.saving);
   const error = useCompanySettingsStore((state) => state.error);
   const mode = useAuthStore((state) => state.mode);
+  const actualRole = useAuthStore((state) => state.teamRole);
   const user = useAuthStore((state) => state.user);
   const organizationId = useAuthStore((state) => state.organizationId);
   const signOut = useAuthStore((state) => state.signOut);
@@ -124,7 +126,7 @@ export function CompanySettings() {
           actions={tab === 'company' ? <div className="company-settings-save-state" role="status">{error ? <strong className="has-error">{error}</strong> : <span>{saving ? 'Saving…' : 'Saved automatically'}</span>}</div> : undefined}
         />
         <nav className="settings-tabs" aria-label="Settings sections">
-          {TABS.map((item) => (
+          {TABS.filter((item) => item.id !== 'advanced' || (mode === 'cloud' && actualRole === 'owner')).map((item) => (
             <button key={item.id} type="button" className={tab === item.id ? 'active' : ''}
               aria-current={tab === item.id ? 'page' : undefined} onClick={() => setTab(item.id)}>
               <strong>{item.title}</strong><small>{item.subtitle}</small>
@@ -196,7 +198,6 @@ export function CompanySettings() {
         {tab === 'team' && <><TeamAccessSettings /><SalesTeamManagement /></>}
         {tab === 'appearance' && <section className="settings-panel-grid" aria-label="Appearance and accessibility preferences">
           <AppearanceThemePicker />
-          <OwnerRolePreviewSettings />
           <article className="company-settings-card settings-main-card">
             <header><div><strong>Reading & interaction</strong><small>Changes apply immediately on this device.</small></div></header>
             <div className="settings-preference-row">
@@ -223,6 +224,11 @@ export function CompanySettings() {
             <p className="settings-help">Preferences affect your interface, not the pricing or document values your customers see.</p>
           </article>
         </section>}
+        {tab === 'advanced' && mode === 'cloud' && actualRole === 'owner' && (
+          <section className="settings-panel-grid" aria-label="Advanced settings">
+            <OwnerRolePreviewSettings />
+          </section>
+        )}
       </div>
     </main>
   );
