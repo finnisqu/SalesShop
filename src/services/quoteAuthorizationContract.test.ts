@@ -5,6 +5,7 @@ import { join } from 'node:path';
 const root = process.cwd();
 const sql=readFileSync(join(root,'supabase/migrations/202610110002_quote_scoped_rls.sql'),'utf8');
 const edge=readFileSync(join(root,'supabase/functions/quote-share-admin/index.ts'),'utf8');
+const legacyLock=readFileSync(join(root,'supabase/migrations/202610110003_lock_legacy_org_snapshots.sql'),'utf8');
 const sync=readFileSync(join(root,'src/services/normalizedQuoteSync.ts'),'utf8');
 
 describe('quote authorization defense in depth',()=>{
@@ -31,6 +32,8 @@ describe('quote authorization defense in depth',()=>{
   });
   it('closes legacy JSON and quote-activity alternate read paths',()=>{
     expect(sql).toContain("document_key not in ('quotes','signatures')");
+    expect(legacyLock).toContain('alter policy org_documents_select_members');
+    expect(legacyLock).toContain('using (private.is_org_admin(organization_id))');
     expect(sql).toContain('alter policy activities_read_org');
     expect(sql).toContain('private.can_read_quote(organization_id,quote_id)');
   });
