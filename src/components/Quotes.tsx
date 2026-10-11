@@ -1167,8 +1167,11 @@ export function Quotes() {
   useEffect(() => { hydrate(); hydrateCrm(); }, [hydrate, hydrateCrm]);
   // Own work is strictly attributed by user ID. Legacy quotes have no owner;
   // preserve them as "Unassigned" in the Team reference view.
-  const myQuotes = useMemo(() => canBrowseTeam ? quotes.filter((item) => item.ownerUserId === userId) : quotes,
-    [quotes,canBrowseTeam,userId]);
+  // Every editor works only on their own quotes. Team-readable quotes from
+  // Supabase RLS are reference data, not editable "My Quotes" records.
+  const myQuotes = useMemo(() => authMode === 'cloud'
+    ? quotes.filter((item) => item.ownerUserId === userId)
+    : quotes, [quotes,authMode,userId]);
   const quote = myQuotes.find((candidate) => candidate.id === activeQuoteId) ?? myQuotes[0] ?? null;
   useEffect(() => {
     if (!recentCatalogInsert || recentCatalogInsert.quoteId !== quote?.id) return;
