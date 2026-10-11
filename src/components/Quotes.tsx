@@ -24,6 +24,8 @@ import { useAuthStore } from '../store/authStore';
 import { canIssueTeamQuote } from '../services/teamDepartments';
 import { resolveOwnerPerspective } from '../services/rolePerspective';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
+import { GlobalSearch } from './GlobalSearch';
+import { QuickCreate } from './QuickCreate';
 import {
   commercialDocumentLabel,
   displayQuoteNumber,
@@ -865,6 +867,9 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
           <span>{displayQuoteNumber(quote)}</span>
           <strong>{quote.title}</strong>
         </div>
+
+        {currentRole !== 'viewer' && !previewId && <GlobalSearch />}
+        {(currentMode !== 'cloud' || (!previewId && (currentRole === 'owner' || currentRole === 'admin' || (currentRole === 'member' && currentDepartment === 'general')))) && <QuickCreate />}
 
         <button type="button" className={`quote-mobile-view-button ${mobileMenu === 'view' ? 'active' : ''}`} aria-expanded={mobileMenu === 'view'} aria-haspopup="dialog" onClick={() => setMobileMenu((current) => current === 'view' ? null : 'view')}>
           {effectiveMode === 'customer' ? 'Customer' : effectiveMode[0].toUpperCase() + effectiveMode.slice(1)} <span aria-hidden="true">⌄</span>
