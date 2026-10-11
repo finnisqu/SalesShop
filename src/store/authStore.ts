@@ -19,6 +19,8 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   organizationId: string | null;
+  /** A product-level identity, never a role in organization_members. */
+  platformRole: 'developer' | null;
   teamRole: TeamRole | null;
   teamDepartment: TeamDepartment;
   passwordRecovery: boolean;
@@ -126,6 +128,7 @@ async function performSessionApplication(session: Session | null) {
       user: null,
       session: null,
       organizationId: null,
+      platformRole: null,
       teamRole: null,
       teamDepartment: 'general',
       inviteProblem: null,
@@ -136,8 +139,24 @@ async function performSessionApplication(session: Session | null) {
   }
 
   useAuthStore.setState({ busy: true, ready: false, user: session.user, session,
-    organizationId: null, teamRole: null, teamDepartment: 'general', inviteProblem: null, activeInvitePreview: null, error: null, notice: null });
+    organizationId: null, platformRole: null, teamRole: null, teamDepartment: 'general', inviteProblem: null, activeInvitePreview: null, error: null, notice: null });
   try {
+    // Consult only a boolean, JWT-scoped RPC before any tenant workspace
+    // selection, creation, local hydration, or cloud sync.
+    if (!supabase) throw new Error('Cloud is unavailable.');
+    const { data: isDeveloper, error: developerError } = await supabase.rpc('is_platform_developer');
+    if (developerError) throw developerError;
+    if (isDeveloper === true) {
+      if (pendingTeamInviteToken()) {
+        throw new Error('Developer accounts cannot join company workspaces. Open the invitation with a separate employee account.');
+      }
+      useAuthStore.setState({
+        mode:'cloud', ready:true, busy:false, user:session.user, session,
+        organizationId:null, platformRole:'developer', teamRole:null,
+        teamDepartment:'general', inviteProblem:null, activeInvitePreview:null, joinWelcome:null,
+      });
+      return;
+    }
     const inviteToken = pendingTeamInviteToken();
     const invitePreview = inviteToken ? await previewTeamInvite(inviteToken) : null;
     if (inviteToken) {
@@ -181,6 +200,7 @@ async function performSessionApplication(session: Session | null) {
       user: session.user,
       session,
       organizationId,
+      platformRole: null,
       teamRole: membership.role as TeamRole,
       teamDepartment: (membership.job_function as TeamDepartment) || 'general',
       joinWelcome: readJoinWelcome(session.user.id, organizationId),
@@ -195,6 +215,7 @@ async function performSessionApplication(session: Session | null) {
       user: session.user,
       session,
       organizationId: null,
+      platformRole: null,
       inviteProblem: pendingTeamInviteToken()
         ? /Confirm your email address before joining/i.test(messageFrom(error)) ? 'verify-email' : 'preview-error'
         : null,
@@ -210,6 +231,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   organizationId: null,
+  platformRole: null,
   teamRole: null,
   teamDepartment: 'general',
   passwordRecovery: initialPasswordRecovery(),
