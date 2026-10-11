@@ -1216,10 +1216,7 @@ export function Quotes() {
   ];
 
   return <main className="quotes-view">
-    {canBrowseTeam && <div className="quote-library-mode-switch" role="group" aria-label="Quote library">
-      <button type="button" aria-pressed={true}>My Quotes</button>
-      <button type="button" onClick={() => setQuoteLibraryMode('team')}>Team Quotes</button>
-    </div>}
+
     {mobileNavigatorOpen && <div className="quote-mobile-navigator-backdrop" onPointerDown={() => setMobileNavigatorOpen(false)}>
       <section ref={navigatorRef} className="quote-mobile-navigator" role="dialog" aria-modal="true" aria-label="Quotes navigation" onPointerDown={(event) => event.stopPropagation()}>
         <header>
@@ -1254,7 +1251,10 @@ export function Quotes() {
       </section>
     </div>}
 
-    <aside className="quotes-sidebar"><header><div><span>My documents</span><strong>My Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside>
+    <aside className="quotes-sidebar"><header><div><span>My documents</span><strong>My Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>{canBrowseTeam && <div className="quote-library-mode-switch" role="group" aria-label="Quote library">
+      <button type="button" aria-pressed={true}>My Quotes</button>
+      <button type="button" onClick={() => setQuoteLibraryMode('team')}>Team Quotes</button>
+    </div>}{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside>
     <QuoteEditor quote={quote} mode={mode} onModeChange={setMode} onOpenMobileNavigator={() => setMobileNavigatorOpen(true)} />
   </main>;
 }
