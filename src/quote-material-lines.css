@@ -1,0 +1,593 @@
+/* Material selection and multiplier pricing live directly on quote rows. */
+
+.quote-line-editor.kind-material {
+  align-items: start;
+  background: rgba(239, 244, 234, .42);
+}
+
+.quote-line-editor.kind-material .quote-line-main {
+  padding-top: 2px;
+}
+
+.quote-line-editor.kind-material .quote-line-pricing {
+  padding-top: 23px;
+}
+
+.quote-add-row .quote-add-material {
+  border-color: rgba(104, 128, 92, .34);
+  background: #e7eee1;
+  color: #4e6249;
+}
+
+.quote-material-picker {
+  position: relative;
+  margin: 2px 0 5px;
+}
+
+.quote-material-search-row {
+  display: flex;
+  gap: 5px;
+}
+
+.quote-material-search-row input {
+  min-width: 0;
+  flex: 1;
+  height: 30px;
+  border: 1px solid #c9c2b4;
+  border-radius: 3px;
+  background: #fffdf7;
+  padding: 0 8px;
+  color: #454138;
+  font-size: 9px;
+}
+
+.quote-material-search-row button,
+.quote-material-change {
+  min-height: 28px;
+  border: 1px solid #c7bfaf;
+  border-radius: 3px;
+  background: #f6f1e5;
+  padding: 0 7px;
+  color: #6b6458;
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.quote-material-results {
+  max-height: 220px;
+  margin-top: 4px;
+  overflow-y: auto;
+  border: 1px solid #d0c8b9;
+  border-radius: 3px;
+  background: #fffdf7;
+  box-shadow: 0 5px 14px rgba(55, 48, 37, .08);
+}
+
+.quote-material-results > button {
+  width: 100%;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(125px, .72fr);
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid rgba(91, 78, 58, .08);
+  background: transparent;
+  padding: 7px 9px;
+  color: #4d493f;
+  text-align: left;
+}
+
+.quote-material-results > button:hover,
+.quote-material-results > button:focus-visible {
+  outline: 0;
+  background: #f5f0df;
+}
+
+.quote-material-results > button > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-material-results strong {
+  overflow: hidden;
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-results b {
+  overflow: hidden;
+  color: #625c52;
+  font-size: 8.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-results small {
+  overflow: hidden;
+  color: #8c8579;
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-results .quote-material-custom-result {
+  background: rgba(245, 239, 218, .56);
+}
+
+.quote-material-empty {
+  padding: 12px 9px;
+  color: #958d81;
+  font: italic 9px/1.4 Georgia, serif;
+}
+
+.quote-material-selection {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  gap: 5px;
+  margin: 2px 0 5px;
+}
+
+.quote-material-selection-main {
+  min-width: 130px;
+  max-width: 220px;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-material-selection-main > span,
+.quote-material-selection label > span,
+.quote-material-cost-reference > span {
+  color: #848071;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.quote-material-selection-main strong {
+  overflow: hidden;
+  color: #4a5143;
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-selection-main small,
+.quote-material-cost-reference small {
+  color: #918a7c;
+  font-size: 7.5px;
+}
+
+.quote-material-selection label {
+  min-width: 105px;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-material-selection select {
+  min-width: 0;
+  height: 28px;
+  border: 1px solid #d0c8b9;
+  border-radius: 2px;
+  background: #fffaf0;
+  padding: 0 5px;
+  color: #5d574e;
+  font-size: 8px;
+}
+
+.quote-material-cost-reference {
+  min-width: 82px;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-material-cost-reference strong {
+  color: #5a6253;
+  font-size: 8.5px;
+}
+
+.quote-slab-line-pricing {
+  display: grid;
+  grid-template-columns: 92px 10px 49px 10px 52px;
+  align-items: center;
+  gap: 2px;
+  color: #857b69;
+  font-size: 8px;
+  text-align: center;
+}
+
+.quote-slab-line-pricing label {
+  height: 28px;
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr);
+  align-items: center;
+  border: 1px solid #cdbf9c;
+  background: #fffaf0;
+}
+
+.quote-slab-line-pricing label span {
+  padding-left: 4px;
+  color: #8a7d62;
+}
+
+.quote-slab-line-pricing input {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  border: 1px solid #cdbf9c;
+  background: #fffaf0;
+  padding: 0 4px;
+  color: #4f493f;
+  font-size: 8px;
+  text-align: right;
+}
+
+.quote-slab-line-pricing label input {
+  border: 0;
+}
+
+@media (max-width: 1100px) {
+  .quote-line-editor.kind-material .quote-line-pricing {
+    grid-column: 3 / 5;
+    padding-top: 0;
+    flex-wrap: wrap;
+  }
+
+  .quote-material-selection {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .quote-line-editor.kind-material .quote-line-pricing {
+    grid-column: 2 / 4;
+  }
+}
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .quote-line-editor.kind-material .quote-line-pricing {
+    grid-column: 3 / 5;
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .quote-material-selection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+
+  .quote-material-selection-main {
+    max-width: none;
+    grid-column: 1 / -1;
+  }
+
+  .quote-material-selection label {
+    min-width: 0;
+  }
+
+  .quote-material-cost-reference {
+    min-width: 0;
+  }
+
+  .quote-material-change {
+    min-height: 40px;
+  }
+
+  .quote-material-search-row input,
+  .quote-material-selection select {
+    min-height: 40px;
+    font-size: 16px;
+  }
+
+  .quote-material-search-row button {
+    min-height: 40px;
+  }
+
+  .quote-material-results > button {
+    min-height: 54px;
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .quote-slab-line-pricing {
+    width: 100%;
+    grid-template-columns: minmax(100px, 1.3fr) 12px minmax(62px, .65fr) 12px minmax(62px, .65fr);
+  }
+
+  .quote-slab-line-pricing label,
+  .quote-slab-line-pricing input {
+    min-height: 40px;
+    font-size: 15px;
+  }
+
+  .quote-slab-line-pricing label input {
+    min-height: 38px;
+  }
+}
+
+
+/* Split-view material rows: preserve the wide Edit layout, but turn the editor
+   half into a compact stacked card instead of squeezing every control inline. */
+.view-split .quote-line-editor.kind-material {
+  grid-template-columns: 26px 24px minmax(0, 1fr) 26px;
+  grid-template-rows: auto auto;
+  align-items: start;
+  column-gap: 7px;
+  row-gap: 4px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.view-split .quote-line-editor.kind-material > .quote-line-drag-handle {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.view-split .quote-line-editor.kind-material > .quote-visibility {
+  grid-column: 2;
+  grid-row: 1;
+  margin-top: 4px;
+}
+
+.view-split .quote-line-editor.kind-material > .quote-line-main {
+  grid-column: 3;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  padding-top: 0;
+}
+
+.view-split .quote-line-editor.kind-material > .quote-line-pricing {
+  grid-column: 3;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 7px 0 1px;
+  border-top: 1px solid rgba(91, 78, 58, .08);
+}
+
+.view-split .quote-line-editor.kind-material > .quote-line-delete {
+  grid-column: 4;
+  grid-row: 1;
+  align-self: start;
+  margin-top: 2px;
+}
+
+.view-split .quote-line-editor.kind-material .quote-line-topline {
+  margin-bottom: 5px;
+}
+
+.view-split .quote-material-selection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 7px;
+  align-items: end;
+  margin-bottom: 6px;
+}
+
+.view-split .quote-material-selection-main {
+  grid-column: 1;
+  min-width: 0;
+  max-width: none;
+}
+
+.view-split .quote-material-selection > .quote-material-change {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 58px;
+}
+
+.view-split .quote-material-selection > label {
+  min-width: 0;
+  width: 100%;
+}
+
+.view-split .quote-material-selection > label:nth-of-type(1) {
+  grid-column: 1 / -1;
+}
+
+.view-split .quote-material-selection > label:nth-of-type(2) {
+  grid-column: 1 / -1;
+}
+
+.view-split .quote-material-selection select {
+  width: 100%;
+  max-width: none;
+}
+
+.view-split .quote-material-cost-reference {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 2px;
+  background: rgba(228, 235, 222, .52);
+}
+
+.view-split .quote-material-cost-reference > span {
+  flex: 0 0 auto;
+}
+
+.view-split .quote-material-cost-reference strong,
+.view-split .quote-material-cost-reference small {
+  white-space: nowrap;
+}
+
+.view-split .quote-line-editor.kind-material .quote-line-main textarea {
+  min-height: 28px;
+  margin-top: 1px;
+  padding-top: 5px;
+}
+
+.view-split .quote-line-editor.kind-material .quote-line-pricing > select {
+  width: 96px;
+  flex: 0 0 96px;
+}
+
+.view-split .quote-line-editor.kind-material .quote-qty-rate {
+  grid-template-columns: minmax(54px, 68px) 12px minmax(64px, 82px);
+}
+
+.view-split .quote-line-editor.kind-material .quote-line-pricing > strong {
+  min-width: 74px;
+  margin-left: auto;
+  font-size: 10px;
+}
+
+.view-split .quote-line-editor.kind-material .quote-total-toggle {
+  flex: 0 0 auto;
+}
+
+.view-split .quote-line-editor.kind-material .quote-slab-line-pricing {
+  flex: 1 1 220px;
+  max-width: 270px;
+}
+
+.view-split .quote-material-picker {
+  margin-bottom: 6px;
+}
+
+.view-split .quote-material-results > button {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+}
+
+@media (max-width: 900px) {
+  .view-split .quote-line-editor.kind-material {
+    grid-template-columns: 28px 32px minmax(0, 1fr) 36px;
+  }
+
+  .view-split .quote-line-editor.kind-material > .quote-line-pricing {
+    grid-column: 3 / 5;
+  }
+}
+
+
+/* Quote-time material snapshots: old quotes retain the exact pricing context used when priced. */
+.quote-material-snapshot-meta {
+  min-width: 145px;
+  max-width: 260px;
+  display: grid;
+  gap: 1px;
+  padding: 4px 6px;
+  border-left: 2px solid rgba(108, 126, 91, .26);
+  background: rgba(235, 240, 229, .42);
+}
+
+.quote-material-snapshot-meta > span {
+  overflow: hidden;
+  color: #5f6658;
+  font-size: 7.7px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-snapshot-meta > small {
+  overflow: hidden;
+  color: #8b8579;
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-catalog-state {
+  min-width: 155px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid rgba(91, 78, 58, .1);
+  border-radius: 3px;
+  background: #f5f1e8;
+}
+
+.quote-material-catalog-state > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-material-catalog-state strong {
+  color: #665f54;
+  font-size: 7.7px;
+  white-space: nowrap;
+}
+
+.quote-material-catalog-state small {
+  color: #8b8376;
+  font-size: 7px;
+  white-space: nowrap;
+}
+
+.quote-material-catalog-state button {
+  flex: 0 0 auto;
+  min-height: 26px;
+  margin-left: auto;
+  border: 1px solid rgba(100, 122, 83, .24);
+  border-radius: 3px;
+  background: #edf3e8;
+  padding: 0 7px;
+  color: #53694a;
+  font-size: 7.3px;
+  font-weight: 800;
+}
+
+.quote-material-catalog-state.is-changed {
+  border-color: rgba(175, 135, 43, .22);
+  background: #fff5d5;
+}
+
+.quote-material-catalog-state.is-changed strong {
+  color: #795f1f;
+}
+
+.quote-material-catalog-state.is-unavailable {
+  display: grid;
+  gap: 1px;
+  border-color: rgba(158, 94, 77, .18);
+  background: #f8e8e2;
+}
+
+.quote-material-catalog-state.is-unavailable strong {
+  color: #805044;
+}
+
+.quote-material-catalog-state.is-legacy {
+  border-style: dashed;
+}
+
+.view-split .quote-material-snapshot-meta,
+.view-split .quote-material-catalog-state {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .quote-material-snapshot-meta,
+  .quote-material-catalog-state {
+    grid-column: 1 / -1;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .quote-material-catalog-state {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quote-material-catalog-state button {
+    min-height: 38px;
+    margin-left: 0;
+  }
+}

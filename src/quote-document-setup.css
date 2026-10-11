@@ -1,0 +1,108 @@
+/* UI Foundation Batch 10: former <details> accordion retired in favor of
+ * QuoteDocumentSetupFields inside the existing configuration popover.
+ * Only live document type, status/date and revision layout rules remain. */
+
+
+.quote-document-type-row {
+  min-width: 0;
+}
+
+.quote-document-type-row > span {
+  display: block;
+  margin: 0 0 4px 1px;
+  color: #80786b;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.quote-document-type-switch {
+  width: min(360px, 100%);
+  min-width: 0;
+  display: flex;
+  padding: 2px;
+  box-sizing: border-box;
+  border: 1px solid #c6beaf;
+  border-radius: 4px;
+  background: #dcd7cd;
+}
+
+.quote-document-type-switch button {
+  min-width: 0;
+  flex: 1 1 0;
+  height: 31px;
+  border: 0;
+  border-radius: 3px;
+  padding: 0 10px;
+  background: transparent;
+  color: #7c756a;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.quote-document-type-switch button.active {
+  background: #fffaf0;
+  color: #443f36;
+  box-shadow: 0 1px 2px rgba(57, 49, 36, .10), inset 0 -2px #c4a640;
+}
+
+.quote-document-type-switch button:disabled {
+  cursor: default;
+}
+
+.quote-document-type-switch button:not(.active):disabled {
+  opacity: .48;
+}
+
+.quote-document-meta-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* Revision is an optional qualifier, not part of the normal customer/project flow. */
+.quote-revision-label-field {
+  order: 20;
+}
+
+@media (max-width: 700px) {
+
+  .quote-revision-label-field {
+    order: 20;
+  }
+
+  .quote-document-type-row > span {
+    font-size: 8px;
+  }
+
+  .quote-document-type-switch {
+    width: 100%;
+    height: var(--document-command-height, 42px);
+    padding: 2px;
+    border-radius: var(--document-command-radius, 7px);
+    background: rgba(226, 222, 211, .9);
+  }
+
+  .quote-document-type-switch button {
+    height: 36px;
+    border-radius: 5px;
+    font-size: 11px;
+  }
+
+  .quote-document-type-switch button.active {
+    background: var(--document-command-active, #fff8e5);
+  }
+
+  .quote-document-meta-fields {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 390px) {
+
+  .quote-document-meta-fields {
+    grid-template-columns: 1fr;
+  }
+}

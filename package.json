@@ -1,0 +1,40 @@
+{
+  "name": "salesshop",
+  "private": true,
+  "version": "0.1.0-react-foundation",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:materials": "vitest run src/types/settings.test.ts src/services/salesShopMaterialTemplateImport.test.ts src/services/supplierImportCatalog.test.ts",
+    "test:watch": "vitest",
+    "test:visual": "playwright test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "@tiptap/react": "^3.31.4",
+    "@tiptap/starter-kit": "^3.31.4",
+    "@univerjs/core": "^1.0.3",
+    "@univerjs/preset-sheets-core": "^1.0.3",
+    "@univerjs/presets": "^1.0.3",
+    "exceljs": "4.4.0",
+    "pdfjs-dist": "6.4.299",
+    "perfect-freehand": "^1.2.3",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "roughjs": "^4.6.6",
+    "zustand": "^5.0.15",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^3.2.4",
+    "@playwright/test": "^1.56.1"
+  }
+}

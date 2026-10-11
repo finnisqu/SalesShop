@@ -1,0 +1,289 @@
+/* Quiet resting state for Catalog-backed quote rows.
+   Automation controls appear only while Change is open. */
+
+.quote-line-editor.has-database-selection.kind-material,
+.quote-line-editor.has-database-selection.kind-sink,
+.quote-line-editor.has-database-selection.kind-rate {
+  background: rgba(255, 252, 244, .32);
+}
+
+.quote-database-result.quote-material-selection,
+.quote-database-result.quote-sink-selection,
+.quote-database-result.quote-rate-selection {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 7px;
+  margin: 1px 0 4px;
+  padding: 2px 0;
+  border: 0;
+  border-left: 0;
+  background: transparent;
+}
+
+.quote-database-result .quote-material-selection-main,
+.quote-database-result .quote-sink-selection-main,
+.quote-database-result .quote-rate-selection-main {
+  min-width: 0;
+  max-width: none;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-database-result .quote-material-selection-main > span,
+.quote-database-result .quote-sink-selection-main > span,
+.quote-database-result .quote-rate-selection-main > span,
+.quote-database-result .quote-material-cost-reference > span,
+.quote-database-result .quote-sink-price-reference > span,
+.quote-database-result .quote-rate-reference > span {
+  color: #9a9184;
+  font-size: 6.2px;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.quote-database-result .quote-material-selection-main strong,
+.quote-database-result .quote-sink-selection-main strong,
+.quote-database-result .quote-rate-selection-main strong {
+  overflow: hidden;
+  color: #49443c;
+  font: 700 9.4px Georgia, serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-database-result .quote-material-selection-main small,
+.quote-database-result .quote-sink-selection-main small,
+.quote-database-result .quote-rate-selection-main small,
+.quote-database-result .quote-material-cost-reference small,
+.quote-database-result .quote-sink-price-reference small,
+.quote-database-result .quote-rate-reference small {
+  overflow: hidden;
+  color: #948c80;
+  font-size: 6.7px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-database-result .quote-material-cost-reference,
+.quote-database-result .quote-sink-price-reference,
+.quote-database-result .quote-rate-reference {
+  min-width: 88px;
+  display: grid;
+  gap: 1px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(91, 78, 58, .10);
+}
+
+.quote-database-result .quote-material-cost-reference strong,
+.quote-database-result .quote-sink-price-reference strong,
+.quote-database-result .quote-rate-reference strong {
+  color: #61594c;
+  font-size: 7.8px;
+  font-weight: 800;
+}
+
+.quote-source-status {
+  align-self: center;
+  color: #94846c;
+  font-size: 6.1px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.quote-source-status::before {
+  content: '•';
+  margin-right: 3px;
+  color: #ad976f;
+}
+
+.quote-source-status.is-warning {
+  color: #986153;
+}
+
+.quote-source-status.is-warning::before {
+  color: #b77a69;
+}
+
+.quote-database-change,
+.quote-database-result .quote-material-change,
+.quote-database-result .quote-sink-change,
+.quote-database-result .quote-rate-change {
+  min-height: 24px;
+  margin-left: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(100, 88, 68, .22);
+  border-radius: 0;
+  background: transparent;
+  padding: 0 2px;
+  color: #827765;
+  font-size: 6.5px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.quote-database-change:hover,
+.quote-database-result .quote-material-change:hover,
+.quote-database-result .quote-sink-change:hover,
+.quote-database-result .quote-rate-change:hover {
+  border-bottom-color: #8c7957;
+  background: transparent;
+  color: #5f533f;
+}
+
+.quote-picker-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  padding: 6px 7px;
+  border: 1px solid rgba(91, 78, 58, .10);
+  background: rgba(243, 239, 230, .62);
+}
+
+.quote-picker-current > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-picker-current span,
+.quote-picker-options label > span {
+  color: #958b7d;
+  font-size: 6.2px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.quote-picker-current strong {
+  overflow: hidden;
+  color: #514b42;
+  font-size: 8.4px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-picker-current small {
+  overflow: hidden;
+  color: #91887b;
+  font-size: 6.7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-picker-current > button {
+  flex: 0 0 auto;
+  min-height: 25px;
+  border: 1px solid rgba(168, 126, 40, .25);
+  border-radius: 2px;
+  background: #fff1be;
+  padding: 0 7px;
+  color: #735a20;
+  font-size: 6.5px;
+  font-weight: 850;
+}
+
+.quote-picker-options {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.quote-picker-options label {
+  min-width: 130px;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-picker-options select {
+  min-width: 0;
+  height: 28px;
+  border: 1px solid #cec6b7;
+  border-radius: 2px;
+  background: #fffaf0;
+  padding: 0 5px;
+  color: #5b554b;
+  font-size: 8px;
+}
+
+.view-split .quote-database-result.quote-material-selection,
+.view-split .quote-database-result.quote-sink-selection,
+.view-split .quote-database-result.quote-rate-selection {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.view-split .quote-database-result .quote-material-cost-reference,
+.view-split .quote-database-result .quote-sink-price-reference,
+.view-split .quote-database-result .quote-rate-reference,
+.view-split .quote-database-result .quote-source-status {
+  grid-column: 1;
+}
+
+.view-split .quote-database-result .quote-database-change {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+@media (max-width: 700px) {
+  .quote-database-result.quote-material-selection,
+  .quote-database-result.quote-sink-selection,
+  .quote-database-result.quote-rate-selection,
+  .view-split .quote-database-result.quote-material-selection,
+  .view-split .quote-database-result.quote-sink-selection,
+  .view-split .quote-database-result.quote-rate-selection {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 4px 8px;
+  }
+
+  .quote-database-result .quote-material-cost-reference,
+  .quote-database-result .quote-sink-price-reference,
+  .quote-database-result .quote-rate-reference,
+  .quote-database-result .quote-source-status,
+  .view-split .quote-database-result .quote-material-cost-reference,
+  .view-split .quote-database-result .quote-sink-price-reference,
+  .view-split .quote-database-result .quote-rate-reference,
+  .view-split .quote-database-result .quote-source-status {
+    grid-column: 1;
+    min-width: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .quote-database-result .quote-database-change,
+  .view-split .quote-database-result .quote-database-change {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 30px;
+  }
+
+  .quote-picker-current {
+    align-items: stretch;
+  }
+
+  .quote-picker-current > button {
+    min-height: 36px;
+  }
+
+  .quote-picker-options {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .quote-picker-options label {
+    min-width: 0;
+  }
+
+  .quote-picker-options select {
+    min-height: 40px;
+    font-size: 16px;
+  }
+}

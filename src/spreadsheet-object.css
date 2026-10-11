@@ -1,0 +1,72 @@
+.spreadsheet-object-editor {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(72, 77, 70, .24);
+  border-radius: 2px;
+  background: #fbfbf7;
+  box-shadow:
+    0 1px 0 rgba(45, 43, 36, .12),
+    0 5px 12px rgba(45, 43, 36, .12),
+    inset 0 1px rgba(255, 255, 255, .75);
+}
+
+.spreadsheet-object-label {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-bottom: 1px solid #dadbd5;
+  background: #f1f0e9;
+  color: #66685f;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.spreadsheet-object-host {
+  position: absolute;
+  inset: 22px 0 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.univer-sheet-mount {
+  width: 100%;
+  height: 100%;
+}
+
+.spreadsheet-object-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: transparent;
+  cursor: pointer;
+}
+
+.spreadsheet-object-editor.is-interactive .spreadsheet-object-cover {
+  display: none;
+}
+
+.notebook-object-frame[data-object-type="spreadsheet"] {
+  min-width: 260px;
+  min-height: 190px;
+}
+
+.notebook-object-frame[data-object-type="spreadsheet"].is-selected {
+  outline-color: rgba(55, 91, 115, .72);
+}
+
+@media (pointer: coarse) {
+  .spreadsheet-object-label {
+    height: 28px;
+    font-size: 10px;
+  }
+
+  .spreadsheet-object-host {
+    inset: 28px 0 0;
+  }
+}

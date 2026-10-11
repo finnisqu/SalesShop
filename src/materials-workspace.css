@@ -1,0 +1,1057 @@
+/* Dedicated supplier/material database workspace. */
+
+.materials-workspace .materials-reference-tools {
+  width: 100%;
+  margin-left: 0;
+}
+
+.materials-workspace .materials-reference-tools > input[type='search'] {
+  width: min(520px, 42vw);
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.materials-show-inactive {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6e675c;
+  font-size: 9px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.materials-show-inactive input {
+  width: 15px;
+  height: 15px;
+}
+
+.materials-editor-host {
+  max-width: 1480px;
+  margin: 0 auto 18px;
+}
+
+.materials-editor-host .material-rate-book {
+  gap: 0;
+}
+
+.materials-editor-host .material-catalog-card {
+  box-shadow: 0 4px 14px rgba(52, 44, 35, .05);
+}
+
+.materials-comparison-board {
+  position: sticky;
+  top: 0;
+  z-index: 14;
+  max-width: 1480px;
+  margin: 0 auto 10px;
+  border: 1px solid rgba(61, 54, 45, .15);
+  background: rgba(239, 235, 224, .96);
+  box-shadow: 0 5px 15px rgba(49, 42, 33, .08);
+  backdrop-filter: blur(8px);
+}
+
+.materials-comparison-board.has-pins {
+  border-color: rgba(148, 122, 50, .28);
+  background: rgba(248, 242, 220, .97);
+}
+
+.materials-comparison-board > header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(61, 54, 45, .1);
+}
+
+.materials-comparison-board > header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.materials-comparison-board > header strong {
+  color: #484139;
+  font-size: 11px;
+}
+
+.materials-comparison-board > header small {
+  color: #81796d;
+  font-size: 8px;
+}
+
+.materials-comparison-board > header button {
+  min-height: 31px;
+  padding: 0 9px;
+  border: 1px solid rgba(61, 54, 45, .15);
+  border-radius: 4px;
+  background: #fffdf7;
+  color: #665f54;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.materials-comparison-empty {
+  padding: 10px 12px;
+  color: #837b70;
+  font-size: 9px;
+}
+
+.materials-comparison-strip {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.materials-comparison-card {
+  position: relative;
+  flex: 0 0 250px;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid rgba(122, 101, 47, .2);
+  border-top: 3px solid #b99d45;
+  background: #fffdf6;
+}
+
+.materials-comparison-card > span {
+  padding-right: 22px;
+  overflow: hidden;
+  color: #847a69;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.materials-comparison-card > strong {
+  overflow: hidden;
+  color: #3f3931;
+  font: 700 14px/1.15 Georgia, 'Times New Roman', serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-comparison-card > b {
+  overflow: hidden;
+  color: #625a4e;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-comparison-card > small {
+  overflow: hidden;
+  color: #857d70;
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-comparison-card dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+  margin: 5px 0;
+}
+
+.materials-comparison-card dl > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.materials-comparison-card dt {
+  color: #8a8173;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.materials-comparison-card dd {
+  margin: 0;
+  overflow: hidden;
+  color: #4c463d;
+  font-size: 9px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-unpin {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: #8e7967;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.materials-reference-table {
+  min-width: 1160px;
+}
+
+.materials-reference-table tr.is-expanded > td {
+  background: #fff9e9;
+  box-shadow: inset 0 -1px rgba(169, 137, 48, .2);
+}
+
+.materials-reference-table tr.has-pinned-variant > td {
+  background: rgba(248, 242, 216, .86);
+}
+
+.materials-reference-table tr.has-pinned-variant > td:first-child {
+  box-shadow: inset 3px 0 #b89a3c;
+}
+
+.materials-cell-note,
+.materials-default-spec small {
+  display: block;
+  margin-top: 2px;
+  color: #8b8377;
+  font-size: 8px;
+  font-weight: 500;
+  text-align: inherit;
+}
+
+.materials-default-spec {
+  min-width: 210px;
+}
+
+.materials-default-spec strong,
+.materials-default-spec small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-default-spec strong {
+  color: #4d473e;
+  font-size: 10px;
+}
+
+.materials-variant-toggle-cell {
+  min-width: 110px;
+  padding: 4px 6px !important;
+}
+
+.materials-variant-toggle-cell button {
+  width: 100%;
+  min-height: 31px;
+  border: 1px solid rgba(64, 56, 46, .14);
+  border-radius: 4px;
+  background: #f2eee4;
+  color: #625a50;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.materials-variant-toggle-cell button.active {
+  border-color: rgba(159, 130, 47, .28);
+  background: #f7eecb;
+  color: #655422;
+}
+
+.materials-variant-expanded-row > td {
+  padding: 0 !important;
+  background: var(--ss-materials-bg, #eee9dc) !important;
+}
+
+.materials-variant-browser {
+  display: grid;
+  gap: 5px;
+  padding: 7px;
+}
+
+.materials-variant-line {
+  display: grid;
+  grid-template-columns: 58px minmax(180px, 1.25fr) minmax(120px, .75fr) minmax(130px, .8fr) minmax(120px, .7fr) minmax(280px, 1.5fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 930px;
+  padding: 8px;
+  border: 1px solid rgba(67, 59, 49, .11);
+  background: #f8f4e9;
+}
+
+.materials-variant-line.is-pinned {
+  border-color: rgba(165, 132, 43, .32);
+  background: #fff8dc;
+  box-shadow: inset 3px 0 #b99a3d;
+}
+
+.materials-pin-button {
+  min-height: 30px;
+  border: 1px solid rgba(64, 56, 46, .15);
+  border-radius: 4px;
+  background: #fffdf7;
+  color: #6f675c;
+  font-size: 8px;
+  font-weight: 850;
+}
+
+.materials-pin-button.is-pinned {
+  border-color: #aa8c36;
+  background: #e8d47d;
+  color: #44391d;
+}
+
+.materials-variant-identity,
+.materials-variant-line > div:not(.materials-price-program-list) {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.materials-variant-line > div > span {
+  color: #847b6d;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.materials-variant-line > div > strong {
+  overflow: hidden;
+  color: #494238;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-variant-line > div > small {
+  overflow: hidden;
+  color: #8b8274;
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-variant-identity > strong {
+  font-size: 10px !important;
+}
+
+.materials-variant-default-cost > strong {
+  color: var(--ss-materials-ink, #4d6248);
+  font-size: 11px !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.materials-price-program-list {
+  min-width: 0;
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+}
+
+.materials-price-program-list > div {
+  flex: 0 0 128px;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  padding: 5px 7px;
+  border-left: 2px solid rgba(80, 104, 72, .18);
+  background: rgba(255, 254, 249, .7);
+}
+
+.materials-price-program-list > div.is-default {
+  border-left-color: #81966d;
+  background: rgba(235, 242, 229, .86);
+}
+
+.materials-price-program-list span,
+.materials-price-program-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-price-program-list span {
+  color: #796f61;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.materials-price-program-list strong {
+  color: #455a42;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.materials-price-program-list small {
+  color: #8b8377;
+  font-size: 7px;
+}
+
+.materials-variant-empty {
+  min-width: 900px;
+  padding: 16px;
+  border: 1px dashed rgba(69, 61, 49, .15);
+  background: rgba(255, 253, 247, .7);
+  color: #7d7569;
+  font-size: 9px;
+}
+
+@media (max-width: 980px) {
+  .materials-workspace .materials-reference-tools > input[type='search'] {
+    width: 100%;
+  }
+
+  .materials-variant-line {
+    grid-template-columns: 58px minmax(170px, 1.2fr) minmax(120px, .8fr) minmax(120px, .8fr) minmax(120px, .75fr) minmax(250px, 1.4fr);
+  }
+}
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .materials-show-inactive {
+    order: 3;
+    width: 100%;
+  }
+
+  .materials-controls {
+    gap: 7px;
+  }
+
+  .materials-comparison-board {
+    top: 0;
+    margin-bottom: 8px;
+  }
+
+  .materials-comparison-board > header {
+    align-items: flex-start;
+  }
+
+  .materials-comparison-card {
+    flex-basis: 220px;
+  }
+
+  .materials-reference-card > header > span {
+    max-width: 100%;
+  }
+
+  .materials-editor-host {
+    margin-bottom: 72px;
+  }
+}
+
+
+/* First-class Materials actions + ordered comparison tray. */
+.materials-workspace .supplier-import-launcher.is-toolbar {
+  position: static;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(88, 76, 54, .24);
+  border-radius: 5px;
+  background: #f7f3e9;
+  color: #574f43;
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+
+.materials-workspace .supplier-import-launcher.is-toolbar:hover {
+  background: #fff9e7;
+  border-color: #aa965e;
+}
+
+.materials-comparison-card {
+  transition: opacity .14s ease, transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+}
+
+.materials-comparison-card.is-dragging {
+  z-index: 25;
+  opacity: .97;
+  border-color: rgba(147, 116, 34, .42);
+  box-shadow: 0 15px 30px rgba(50, 42, 31, .2);
+  transition: none;
+  user-select: none;
+}
+
+.materials-comparison-card.is-dragging,
+.materials-comparison-card.is-dragging * {
+  cursor: grabbing !important;
+}
+
+.materials-comparison-card.is-drop-before::before,
+.materials-comparison-card.is-drop-after::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  z-index: 30;
+  width: 3px;
+  border-radius: 999px;
+  background: #b39539;
+  box-shadow: 0 0 0 2px rgba(255, 249, 225, .9), 0 2px 7px rgba(91, 72, 24, .22);
+  pointer-events: none;
+}
+
+.materials-comparison-card.is-drop-before::before {
+  left: -6px;
+}
+
+.materials-comparison-card.is-drop-after::after {
+  right: -6px;
+}
+
+.materials-card-drag-handle {
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  left: auto;
+  width: 18px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(122, 101, 47, .22);
+  border-radius: 5px;
+  background: #f4eedb;
+  color: #897a54;
+  box-shadow: 0 2px 5px rgba(52, 44, 35, .08);
+  font: 900 14px/1 system-ui, sans-serif;
+  cursor: grab;
+  touch-action: none;
+  transform: translateY(-50%);
+  z-index: 4;
+}
+
+.materials-card-drag-handle:hover,
+.materials-card-drag-handle:focus-visible {
+  outline: 0;
+  border-color: rgba(153, 126, 48, .42);
+  background: #fff6d9;
+  color: #65572e;
+  box-shadow: 0 3px 8px rgba(52, 44, 35, .12);
+}
+
+.materials-card-drag-handle:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .materials-workspace .supplier-import-launcher.is-toolbar {
+    min-height: 44px;
+  }
+}
+
+
+/* Materials v1.1 catalog interaction polish */
+.materials-name-toggle {
+  display: inline;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.materials-name-toggle strong {
+  display: inline;
+  color: inherit;
+  font: inherit;
+}
+
+.materials-name-toggle:hover strong {
+  text-decoration: underline;
+  text-decoration-color: rgba(103, 87, 49, .28);
+  text-underline-offset: 2px;
+}
+
+.materials-variant-toggle-cell {
+  width: 94px;
+  min-width: 94px;
+}
+
+.materials-variant-toggle-cell button,
+.materials-pin-button {
+  width: 82px;
+  min-width: 82px;
+  min-height: 30px;
+}
+
+.materials-variant-toggle-cell button {
+  display: block;
+  margin-left: auto;
+}
+
+.materials-variant-line {
+  grid-template-columns:
+    minmax(180px, 1.2fr)
+    minmax(120px, .75fr)
+    minmax(130px, .8fr)
+    minmax(120px, .7fr)
+    minmax(280px, 1.5fr)
+    82px;
+}
+
+.materials-pin-button {
+  justify-self: end;
+}
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .materials-reference-table {
+    min-width: 590px;
+  }
+
+  /* On phones keep the fast sales scan: Brand → Name → Type → Cost → Variants. */
+  .materials-reference-table th:nth-child(4),
+  .materials-reference-table td:nth-child(4),
+  .materials-reference-table th:nth-child(6),
+  .materials-reference-table td:nth-child(6),
+  .materials-reference-table th:nth-child(7),
+  .materials-reference-table td:nth-child(7) {
+    display: none;
+  }
+
+  .materials-reference-table th,
+  .materials-reference-table td {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .materials-reference-table th:first-child,
+  .materials-reference-table td:first-child {
+    min-width: 86px;
+  }
+
+  .materials-reference-table th:nth-child(2),
+  .materials-reference-table td:nth-child(2) {
+    min-width: 145px;
+  }
+
+  .materials-reference-table th:nth-child(3),
+  .materials-reference-table td:nth-child(3) {
+    min-width: 80px;
+  }
+
+  .materials-reference-table th:nth-child(5),
+  .materials-reference-table td:nth-child(5) {
+    min-width: 88px;
+  }
+
+  .materials-reference-table th:last-child,
+  .materials-reference-table td:last-child {
+    width: 86px;
+    min-width: 86px;
+  }
+
+  .materials-variant-expanded-row > td {
+    display: table-cell !important;
+  }
+
+  .materials-variant-browser {
+    padding: 6px;
+  }
+
+  .materials-variant-line {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) 82px;
+    gap: 7px 8px;
+    align-items: start;
+  }
+
+  .materials-variant-identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .materials-pin-button {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .materials-variant-line > div:not(.materials-variant-identity):not(.materials-price-program-list) {
+    grid-column: 1 / -1;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 2px 8px;
+    align-items: baseline;
+  }
+
+  .materials-variant-line > div:not(.materials-variant-identity):not(.materials-price-program-list) > span {
+    grid-column: 1;
+  }
+
+  .materials-variant-line > div:not(.materials-variant-identity):not(.materials-price-program-list) > strong,
+  .materials-variant-line > div:not(.materials-variant-identity):not(.materials-price-program-list) > small {
+    grid-column: 2;
+  }
+
+  .materials-price-program-list {
+    grid-column: 1 / -1;
+    padding-top: 2px;
+  }
+
+  .materials-price-program-list > div {
+    flex-basis: 118px;
+  }
+
+  .materials-comparison-board > header small {
+    display: none;
+  }
+
+  .materials-comparison-strip {
+    padding: 7px 8px 9px;
+  }
+
+  .materials-comparison-card {
+    flex-basis: 205px;
+  }
+}
+
+
+/* Mobile Materials is reference-first. Management controls live in a temporary tools sheet. */
+.materials-mobile-tools-trigger,
+.materials-mobile-tools-backdrop {
+  display: none;
+}
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .sales-app.view-catalog .materials-workspace.is-catalog-embedded {
+    padding-top: 0 !important;
+  }
+
+  /* Mobile command bar already says Catalog · Materials. Don't repeat a large title/admin card. */
+  .sales-app.view-catalog .materials-workspace.is-catalog-embedded > .rates-workspace-header {
+    display: none !important;
+  }
+
+  .sales-app.view-catalog .materials-workspace .materials-controls {
+    margin: 0;
+    padding: 5px 4px 4px;
+    border: 0;
+    background: transparent;
+  }
+
+  .sales-app.view-catalog .materials-workspace .materials-reference-tools {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "search search search"
+      "filter sort tools";
+    gap: 5px;
+    align-items: center;
+  }
+
+  .sales-app.view-catalog .materials-workspace .materials-reference-tools > input[type='search'] {
+    grid-area: search;
+    width: 100%;
+    min-width: 0;
+    height: 46px;
+    margin: 0;
+    border-radius: 7px;
+    padding: 0 12px;
+    font-size: 16px;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-filter-menu {
+    grid-area: filter;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-filter-menu > summary {
+    min-width: 78px;
+    min-height: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 9px;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-filter-popover {
+    position: fixed;
+    z-index: 1250;
+    left: 7px;
+    right: 7px;
+    top: 106px;
+    width: auto;
+    max-height: calc(100dvh - 122px);
+    overflow-y: auto;
+    padding: 9px;
+    border-radius: 8px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-sort-control {
+    grid-area: sort;
+    min-width: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-sort-control > span {
+    font-size: 7px;
+  }
+
+  .sales-app.view-catalog .materials-workspace .rates-sort-control select {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    border-radius: 6px;
+    padding-inline: 8px 28px;
+    font-size: 16px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-trigger {
+    grid-area: tools;
+    min-width: 66px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid rgba(91, 78, 58, .15);
+    border-radius: 6px;
+    background: rgba(255, 252, 244, .86);
+    color: #61594e;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-trigger > span {
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-trigger > strong {
+    font-size: 8px;
+  }
+
+  /* Empty comparison state should be a thin reference cue, not another hero panel. */
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) {
+    margin: 1px 4px 5px;
+    box-shadow: none;
+  }
+
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) > header {
+    min-height: 34px;
+    padding: 5px 8px;
+  }
+
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) > header .board-eyebrow,
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) > header small {
+    display: none;
+  }
+
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) > header strong {
+    font-size: 9px;
+  }
+
+  .sales-app.view-catalog .materials-comparison-board:not(.has-pins) .materials-comparison-empty {
+    padding: 6px 8px;
+    font-size: 7px;
+  }
+
+  .sales-app.view-catalog .materials-reference-card {
+    margin-inline: 4px;
+  }
+
+  .sales-app.view-catalog .materials-reference-card > header {
+    padding: 7px 8px;
+  }
+
+  .sales-app.view-catalog .materials-reference-card > header > span {
+    display: none;
+  }
+
+  /* Temporary bottom sheet for admin / import workflows. */
+  .sales-app.view-catalog .materials-mobile-tools-backdrop {
+    position: fixed;
+    z-index: 1800;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    background: rgba(45, 39, 31, .30);
+    backdrop-filter: blur(2px);
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet {
+    width: 100%;
+    max-height: min(78dvh, 660px);
+    overflow-y: auto;
+    padding: 9px 9px calc(10px + env(safe-area-inset-bottom));
+    border: 1px solid rgba(91, 78, 58, .18);
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
+    background: #f7f1e6;
+    box-shadow: 0 -14px 38px rgba(45, 36, 25, .22);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header {
+    min-height: 54px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 3px 8px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header > div {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header span,
+  .materials-mobile-tools-label {
+    color: #948979;
+    font-size: 6.5px;
+    font-weight: 900;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header strong {
+    color: #433d34;
+    font: 700 17px Georgia, serif;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header small {
+    color: #8c8274;
+    font-size: 7px;
+    line-height: 1.35;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet > header > button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(255, 252, 244, .76);
+    color: #71685b;
+    font-size: 21px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-section {
+    display: grid;
+    gap: 6px;
+    padding: 9px 3px;
+    border-top: 1px solid rgba(91, 78, 58, .10);
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row > button {
+    min-width: 0;
+    min-height: 62px;
+    display: grid;
+    align-content: center;
+    gap: 3px;
+    border: 1px solid rgba(91, 78, 58, .12);
+    border-radius: 7px;
+    padding: 8px;
+    background: rgba(255, 252, 244, .66);
+    color: #625a4e;
+    text-align: left;
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row > button.active {
+    border-color: rgba(166, 137, 63, .28);
+    background: #fff5d8;
+    box-shadow: inset 3px 0 #bca354;
+    color: #51452d;
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row strong {
+    font-size: 9px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-mode-row small {
+    color: #908677;
+    font-size: 6.5px;
+    line-height: 1.25;
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 6px;
+    padding: 7px 8px;
+    background: rgba(255, 252, 244, .62);
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle input {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle > span {
+    display: grid;
+    gap: 1px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle strong {
+    color: #595247;
+    font-size: 9px;
+  }
+
+  .sales-app.view-catalog .materials-mobile-inactive-toggle small,
+  .sales-app.view-catalog .materials-mobile-tools-note {
+    color: #908678;
+    font-size: 6.7px;
+    line-height: 1.35;
+  }
+
+  .sales-app.view-catalog .materials-mobile-tools-sheet .supplier-import-launcher.is-toolbar {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+    border-radius: 7px;
+  }
+}
+
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  /* Supplier Import is launched from the tools sheet, so its full-screen workflow must sit above it. */
+  .sales-app.view-catalog .supplier-import-overlay {
+    z-index: 2200;
+  }
+}
+
+/* Shared mobile cards own the summary sizing; Material variants only style their details. */
+.materials-mobile-brand,.materials-mobile-chevron{display:none}
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .sales-app.view-catalog .materials-reference-card{min-width:0;max-width:100%}
+  .sales-app.view-catalog .mobile-catalog-reference-details .materials-variant-browser{
+    min-width:0;
+    padding:0;
+  }
+}

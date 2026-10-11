@@ -1,0 +1,275 @@
+/* UI Foundation Batch 7 — Board & Accounts surface and control vocabulary.
+ * Cards retain their paper tactility; layout owns the horizontal stage
+ * carousel and per-column vertical scroll. All colors are paired. */
+:root[data-sales-theme] .sales-app.view-board .board-view {
+  --ss-board-canvas:var(--ss-theme-canvas,var(--ss-app-bg));
+  --ss-board-base:var(--ss-theme-base,var(--ss-shell-bg));
+  --ss-board-card:var(--ss-theme-card,var(--ss-surface-raised));
+  --ss-board-tint:var(--ss-theme-tint,var(--ss-surface));
+  --ss-board-ink:var(--ss-theme-ink,var(--ss-text));
+  --ss-board-muted:var(--ss-theme-muted,var(--ss-text-muted));
+  --ss-board-border:var(--ss-theme-border,var(--ss-border));
+  --ss-board-accent:var(--ss-theme-accent,var(--ss-accent));
+  background:var(--ss-board-canvas);
+  color:var(--ss-board-ink);
+}
+:root[data-sales-theme] .sales-app.view-board .board-header-panel.board-foundation-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:var(--ss-space-3);
+  min-height:0;
+  padding:var(--ss-space-3) var(--ss-page-inset);
+  background:var(--ss-board-base);
+  color:var(--ss-board-ink);
+  border-color:var(--ss-board-border);
+  box-shadow:none;
+}
+.sales-app.view-board .board-foundation-header .ss-page-header__intro {
+  flex:1 1 220px;
+  min-width:0;
+  display:grid;
+  gap:var(--ss-space-1);
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-header .ss-page-header__eyebrow {
+  color:var(--ss-board-muted);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-header .ss-page-header__title {
+  margin:0;
+  color:var(--ss-board-ink);
+  font:700 var(--ss-text-page)/1.15 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-header .ss-page-header__description {
+  margin:0;
+  color:var(--ss-board-muted);
+  font:400 var(--ss-text-body)/1.4 var(--ss-font-body);
+}
+.sales-app.view-board .board-foundation-header .ss-page-header__actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex:1 1 auto;
+  min-width:0;
+  gap:var(--ss-space-3);
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-header .board-view-toggle {
+  display:flex;
+  align-items:center;
+  gap:var(--ss-space-1);
+  min-width:0;
+  padding:var(--ss-space-1);
+  border:1px solid var(--ss-board-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-board-card);
+  color:var(--ss-board-ink);
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-header .board-view-toggle .ss-button {
+  min-height:36px;
+  border:1px solid transparent;
+  border-radius:var(--ss-radius-sm);
+  background:transparent;
+  color:var(--ss-board-ink);
+  font:700 var(--ss-text-sm)/1.3 var(--ss-font-body);
+  box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-header .board-view-toggle .ss-button[aria-pressed="true"] {
+  background:var(--ss-board-tint);
+  color:var(--ss-board-ink);
+  border-color:var(--ss-board-border);
+  box-shadow:inset 0 -3px var(--ss-board-accent);
+}
+.sales-app.view-board .board-quick-add {
+  flex:1 1 270px;
+  width:min(370px,100%);
+  max-width:100%;
+  min-width:0;
+  margin-left:0;
+}
+.sales-app.view-board .board-quick-add > .board-foundation-quick-field {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:var(--ss-space-1);
+  min-width:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-quick-field>.ss-field__label {
+  margin:0;
+  color:var(--ss-board-muted);
+  font:750 var(--ss-text-xs)/1.25 var(--ss-font-body);
+  text-transform:none;
+  letter-spacing:normal;
+}
+.sales-app.view-board .board-quick-add .board-foundation-quick-row {
+  min-width:0;
+  display:flex;
+  align-items:stretch;
+  gap:0;
+  overflow:hidden;
+  background:transparent;
+  border:1px solid var(--ss-board-border);
+  border-radius:var(--ss-radius-sm);
+  box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-quick-row>input {
+  flex:1 1 0;
+  min-width:0;
+  width:100%;
+  min-height:40px;
+  height:40px;
+  padding:var(--ss-space-2) var(--ss-space-3);
+  border:0;
+  border-radius:0;
+  background:var(--ss-board-card);
+  color:var(--ss-board-ink);
+  font:400 var(--ss-text-body)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-quick-row>input::placeholder {
+  color:var(--ss-board-muted);
+  opacity:1;
+}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-quick-row>.ss-button {
+  flex:0 0 auto;
+  min-height:40px;
+  height:40px;
+  border:0;
+  border-left:1px solid var(--ss-board-border);
+  border-radius:0;
+  background:var(--ss-board-tint);
+  color:var(--ss-board-ink);
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-board .accounts-header-actions {
+  display:flex;
+  align-items:center;
+  gap:var(--ss-space-2);
+  min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-board .accounts-header-actions .accounts-cleanup-button.ss-button {
+  min-height:40px;
+  background:var(--ss-board-card);
+  color:var(--ss-board-ink);
+  border:1px solid var(--ss-board-border);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-board .board-column {
+  background:var(--ss-board-base);
+  color:var(--ss-board-ink);
+  border-color:var(--ss-board-border);
+  border-radius:var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-header,
+:root[data-sales-theme] .sales-app.view-board .board-column-rule {
+  border-color:var(--ss-board-border);
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-header h2,
+:root[data-sales-theme] .sales-app.view-board .board-column-header strong {
+  color:var(--ss-board-ink);
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-header span {
+  color:var(--ss-board-muted);
+}
+:root[data-sales-theme] .sales-app.view-board :is(.project-card,.account-card) {
+  border:1px solid var(--ss-board-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-board-card);
+  color:var(--ss-board-ink);
+}
+:root[data-sales-theme] .sales-app.view-board .project-card:nth-child(even) {
+  background:var(--ss-board-card);
+}
+:root[data-sales-theme] .sales-app.view-board .project-card :is(
+  h3,.project-card-title-value,.account-card-title-value,.project-card-facts strong
+) {color:var(--ss-board-ink)}
+:root[data-sales-theme] .sales-app.view-board .project-card :is(
+  .project-card-company,.project-last-touch,.project-card-facts,.account-card-reason,
+  .account-card-stats,.project-next-action
+) {color:var(--ss-board-muted)}
+:root[data-sales-theme] .sales-app.view-board :is(
+  .board-empty-card,.accounts-inference-note,.board-carousel-position
+) {
+  background:var(--ss-board-card);
+  border-color:var(--ss-board-border);
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-board-muted);
+}
+/* Project/Account modal chrome only; CRM values, pricing and actions stay. */
+:root[data-sales-theme] .sales-app.view-board :is(
+  .project-editor,.account-editor
+) {
+  background:var(--ss-board-base);
+  border-color:var(--ss-board-border);
+  border-radius:var(--ss-radius-lg);
+  color:var(--ss-board-ink);
+}
+:root[data-sales-theme] .sales-app.view-board :is(
+  .project-editor,.account-editor
+)>header {
+  background:var(--ss-board-base);
+  border-color:var(--ss-board-border);
+}
+:root[data-sales-theme] .sales-app.view-board :is(
+  .project-editor,.account-editor
+)>header h2 {color:var(--ss-board-ink)}
+:root[data-sales-theme] .sales-app.view-board :is(
+  .project-editor,.account-editor
+)>header .board-eyebrow {color:var(--ss-board-muted)}
+:root[data-sales-theme] .sales-app.view-board .board-foundation-header :is(
+  button,input
+):focus-visible {
+  outline:3px solid var(--ss-focus);
+  outline-offset:2px;
+}
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root[data-sales-theme] .sales-app.view-board .board-header-panel.board-foundation-header {
+    display:flex;
+    flex-wrap:wrap;
+    gap:var(--ss-space-2);
+    padding:var(--ss-space-2) var(--ss-page-inset);
+    min-height:0;
+  }
+  .sales-app.view-board .board-foundation-header .ss-page-header__intro {
+    flex:1 1 120px;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-foundation-header .ss-page-header__title {
+    font-size:var(--ss-text-section);
+  }
+  .sales-app.view-board .board-foundation-header .ss-page-header__description {
+    display:none;
+  }
+  .sales-app.view-board .board-foundation-header .ss-page-header__actions {
+    flex:0 1 auto;
+    min-width:0;
+    gap:var(--ss-space-2);
+  }
+  .sales-app.view-board .board-foundation-header .board-view-toggle .ss-button {
+    min-height:36px;
+    padding-inline:var(--ss-space-2);
+  }
+  /* Quick-add is available from global + on phones. Hide the duplicate field
+   * here to protect the independently scrolling Kanban columns. */
+  .sales-app.view-board .board-foundation-header .board-quick-add {
+    display:none;
+  }
+  .sales-app.view-board .accounts-header-actions .accounts-inference-note {
+    display:none;
+  }
+  .sales-app.view-board .accounts-header-actions .accounts-cleanup-button.ss-button {
+    min-height:36px;
+  }
+  /* Never replace stage carousel with page scrolling. */
+  .sales-app.view-board .project-board,
+  .sales-app.view-board .account-board {
+    overflow-x:auto;
+    overflow-y:hidden;
+  }
+  .sales-app.view-board .board-card-stack {
+    min-height:0;
+    overflow-y:auto;
+  }
+}

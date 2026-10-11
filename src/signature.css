@@ -1,0 +1,276 @@
+.signature-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(38, 33, 27, .46);
+  backdrop-filter: blur(3px);
+}
+
+.signature-dialog {
+  width: min(760px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+  border: 1px solid rgba(89, 73, 54, .24);
+  border-radius: 16px;
+  background: #f5f0e5;
+  box-shadow: 0 28px 80px rgba(45, 37, 27, .26), inset 0 1px rgba(255,255,255,.7);
+}
+
+.signature-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid rgba(95, 79, 61, .14);
+  background: rgba(255,255,255,.28);
+}
+
+.signature-dialog-header h2,
+.signature-receipt h3 { margin: 2px 0 4px; }
+.signature-dialog-header p,
+.signature-receipt p { margin: 0; color: #756b5c; }
+.signature-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: #897a63;
+}
+.signature-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(78, 65, 49, .07);
+  font-size: 24px;
+  cursor: pointer;
+}
+.signature-form,
+.signature-receipt { padding: 24px 28px 28px; }
+.signature-info {
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border-left: 3px solid rgba(99, 122, 91, .55);
+  background: rgba(117, 139, 107, .09);
+  color: #5d6757;
+  font-size: 13px;
+}
+.signature-identity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.signature-identity-grid label { display: grid; gap: 6px; }
+.signature-identity-grid label > span { font-size: 12px; font-weight: 750; color: #6c6255; }
+.signature-identity-grid input {
+  min-height: 40px;
+  border: 1px solid rgba(82, 68, 51, .18);
+  border-radius: 8px;
+  padding: 0 11px;
+  background: rgba(255,255,255,.62);
+  font: inherit;
+}
+.signature-method-switch {
+  display: inline-flex;
+  margin: 20px 0 12px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(77, 67, 55, .07);
+}
+.signature-method-switch button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  color: #6b6256;
+  font-weight: 700;
+  cursor: pointer;
+}
+.signature-method-switch button.active {
+  background: #fffdf8;
+  color: #39332b;
+  box-shadow: 0 1px 4px rgba(60,50,40,.12);
+}
+.signature-pad-wrap {
+  border: 1px solid rgba(91, 76, 58, .18);
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,.55)),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(101, 133, 152, .07) 31px 32px),
+    #fbf7ed;
+}
+.signature-pad {
+  display: block;
+  width: 100%;
+  height: 190px;
+  touch-action: none;
+  cursor: crosshair;
+}
+.signature-pad polyline,
+.signature-receipt-signature polyline {
+  fill: none;
+  stroke: #2d3135;
+  stroke-width: 3.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.signature-baseline {
+  stroke: rgba(77, 67, 55, .18);
+  stroke-width: 1;
+  stroke-dasharray: 5 5;
+}
+.signature-pad-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(91, 76, 58, .1);
+  font-size: 11px;
+  color: #8b7f70;
+}
+.signature-pad-footer button {
+  border: 0;
+  background: transparent;
+  color: #6b6256;
+  font-weight: 700;
+  cursor: pointer;
+}
+.typed-signature-preview,
+.typed-signature {
+  font-family: "Segoe Script", "Bradley Hand", cursive;
+  font-size: clamp(32px, 7vw, 54px);
+  line-height: 1.15;
+  color: #303237;
+}
+.typed-signature-preview {
+  min-height: 190px;
+  display: flex;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid rgba(91, 76, 58, .18);
+  border-radius: 12px;
+  background: #fbf7ed;
+}
+.signature-consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 18px;
+  color: #5f574d;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.signature-consent input { margin-top: 3px; }
+.signature-error {
+  margin-top: 12px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: rgba(156, 66, 58, .08);
+  color: #8f4038;
+  font-size: 13px;
+}
+.signature-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+.signature-primary,
+.signature-secondary {
+  border-radius: 9px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.signature-primary {
+  border: 1px solid #4f6650;
+  background: #5c745d;
+  color: white;
+}
+.signature-secondary {
+  border: 1px solid rgba(82, 68, 51, .18);
+  background: rgba(255,255,255,.45);
+  color: #5f574d;
+}
+.signature-prototype-note {
+  display: block;
+  margin-top: 14px;
+  text-align: center;
+  color: #958979;
+}
+.signature-receipt {
+  display: grid;
+  gap: 16px;
+}
+.signature-success-mark {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(93, 124, 91, .14);
+  color: #587257;
+  font-size: 24px;
+  font-weight: 900;
+}
+.signature-receipt-card {
+  padding: 18px;
+  border: 1px solid rgba(91, 76, 58, .16);
+  border-radius: 12px;
+  background: rgba(255,255,255,.44);
+}
+.signature-receipt-card dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0 0 14px;
+}
+.signature-receipt-card dl div { display: grid; gap: 3px; }
+.signature-receipt-card dt { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #948777; }
+.signature-receipt-card dd { margin: 0; font-weight: 750; color: #4a433a; }
+.signature-receipt-signature {
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid rgba(91, 76, 58, .12);
+  border-bottom: 1px solid rgba(91, 76, 58, .12);
+  margin: 10px 0;
+  padding: 10px 4px;
+}
+.signature-receipt-signature svg { width: 100%; height: 120px; }
+.signature-receipt-card small { color: #8a7e70; line-height: 1.45; }
+.quote-sign-button,
+.quote-signature-receipt-button {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.quote-sign-button {
+  border: 1px solid #536b55;
+  background: #617962;
+  color: #fff;
+}
+.quote-signature-receipt-button {
+  border: 1px solid rgba(80, 105, 79, .24);
+  background: rgba(94, 123, 92, .1);
+  color: #50674f;
+}
+
+@media (max-width: 700px) {
+  .signature-backdrop { padding: 10px; }
+  .signature-dialog { width: 100%; max-height: 96vh; }
+  .signature-dialog-header,
+  .signature-form,
+  .signature-receipt { padding-left: 18px; padding-right: 18px; }
+  .signature-identity-grid,
+  .signature-receipt-card dl { grid-template-columns: 1fr; }
+  .signature-actions { flex-direction: column-reverse; }
+  .signature-primary,
+  .signature-secondary { width: 100%; }
+}

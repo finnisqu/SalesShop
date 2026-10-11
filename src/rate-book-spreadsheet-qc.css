@@ -1,0 +1,342 @@
+/* Rate Book spreadsheet interaction + desktop containment pass. */
+
+.rate-book-view {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: 72px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.rate-book-sheet {
+  width: max(100%, var(--rate-book-sheet-width, 100%));
+}
+
+.rate-book-sheet th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding-right: 12px;
+  user-select: none;
+}
+
+/* Old nth-child widths belong to the first fixed grid. The colgroup now owns width. */
+.rate-book-sheet thead th { width: auto !important; }
+
+.rate-book-sheet th > span:first-child {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rate-book-column-resizer {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 8;
+}
+
+.rate-book-column-resizer::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 4px;
+  width: 1px;
+  background: transparent;
+}
+
+.rate-book-sheet th:hover .rate-book-column-resizer::after,
+.rate-book-is-resizing .rate-book-column-resizer::after {
+  background: rgba(96, 84, 61, .34);
+}
+
+.rate-book-is-resizing,
+.rate-book-is-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+.rate-book-row-header-cell,
+.rate-book-row-header {
+  position: sticky !important;
+  left: 0;
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  padding: 0 !important;
+  text-align: center !important;
+  background: #e9e4d8 !important;
+  z-index: 7 !important;
+}
+
+.rate-book-row-header {
+  z-index: 3 !important;
+  background: #efebe1 !important;
+}
+
+.rate-book-row-header-cell button,
+.rate-book-row-header button {
+  width: 100%;
+  height: 100%;
+  min-height: 32px;
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: #8a8276;
+  font: 750 10px/1 inherit;
+}
+
+.rate-book-row-header button {
+  min-height: 38px;
+}
+
+.rate-book-row-header button:hover,
+.rate-book-row-header button.is-selected,
+.rate-book-row-header-cell button:hover {
+  background: #e3d9b9;
+  color: #4d473c;
+}
+
+.rate-book-sheet tr.is-selected > td {
+  background: rgba(240, 231, 195, .64);
+}
+
+.rate-book-sheet tr.is-selected > td input:not([type='checkbox']),
+.rate-book-sheet tr.is-selected > td select {
+  background: rgba(255, 253, 246, .5);
+}
+
+.rate-book-sheet tr.has-rate-warning > td:not(.rate-book-row-header) {
+  box-shadow: inset 0 1px rgba(174, 126, 51, .18), inset 0 -1px rgba(174, 126, 51, .14);
+}
+
+.rate-book-row-warning {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #d8ae58;
+  color: #43382a;
+  font: 850 8px/1 inherit;
+}
+
+.rate-book-filter-row {
+  flex-wrap: wrap;
+}
+
+.rate-book-column-menu {
+  position: relative;
+  z-index: 12;
+}
+
+.rate-book-column-menu > summary {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid rgba(62, 55, 45, .18);
+  border-radius: 4px;
+  background: rgba(255, 253, 247, .82);
+  color: #625c52;
+  font-size: 11px;
+  font-weight: 750;
+  list-style: none;
+  cursor: pointer;
+}
+
+.rate-book-column-menu > summary::-webkit-details-marker { display: none; }
+
+.rate-book-column-menu[open] > summary {
+  background: #fff9e8;
+  box-shadow: inset 0 -2px #c2a541;
+}
+
+.rate-book-column-menu > div {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  width: 220px;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgba(61, 54, 45, .18);
+  border-radius: 5px;
+  background: #fffdf6;
+  box-shadow: 0 10px 28px rgba(49, 41, 31, .16);
+}
+
+.rate-book-column-menu > div > strong {
+  margin-bottom: 2px;
+  color: #756e63;
+  font-size: 9px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.rate-book-column-menu label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 25px;
+  color: #554f46;
+  font-size: 11px;
+}
+
+.rate-book-column-menu label input { margin: 0; }
+
+.rate-book-column-menu button {
+  min-height: 32px;
+  margin-top: 4px;
+  border: 1px solid rgba(61, 54, 45, .15);
+  border-radius: 3px;
+  background: #f5f1e7;
+  color: #655e53;
+  font: 750 10px/1 inherit;
+}
+
+.rate-book-sheet-notice {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  margin: -2px 0 9px;
+  padding: 6px 9px;
+  border: 1px solid rgba(75, 87, 68, .13);
+  background: rgba(237, 241, 231, .64);
+  color: #686b61;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.rate-book-qc-banner {
+  display: grid;
+  grid-template-columns: minmax(190px, .65fr) minmax(280px, 1.35fr);
+  gap: 12px;
+  margin-bottom: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(164, 119, 47, .23);
+  border-left: 3px solid #c2964c;
+  background: rgba(249, 238, 211, .7);
+  color: #5e5547;
+}
+
+.rate-book-qc-banner > div:first-child,
+.rate-book-qc-examples {
+  display: grid;
+  gap: 3px;
+}
+
+.rate-book-qc-banner strong { font-size: 11px; }
+.rate-book-qc-banner span { font-size: 9px; line-height: 1.35; }
+.rate-book-qc-examples b { font-weight: 800; }
+
+.rate-book-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  margin-bottom: 9px;
+  padding: 7px 8px;
+  border: 1px solid rgba(154, 132, 66, .32);
+  border-left: 3px solid #b79b39;
+  background: #f7efd3;
+  box-shadow: 0 2px 7px rgba(57, 48, 35, .05);
+}
+
+.rate-book-bulk-bar > strong {
+  flex: 0 0 auto;
+  margin-right: 4px;
+  font-size: 11px;
+}
+
+.rate-book-bulk-bar select,
+.rate-book-bulk-bar input,
+.rate-book-bulk-bar button {
+  min-height: 33px;
+  box-sizing: border-box;
+  border: 1px solid rgba(61, 54, 45, .17);
+  border-radius: 3px;
+  background: rgba(255, 254, 249, .92);
+  color: #4f493f;
+  padding: 0 8px;
+  font: 700 10px/1 inherit;
+}
+
+.rate-book-bulk-bar input { width: 130px; }
+.rate-book-bulk-bar button { flex: 0 0 auto; }
+.rate-book-bulk-bar button.primary { background: #dfca72; border-color: #b59b3e; color: #3f392e; }
+
+.rate-book-sheet [data-rate-cell='true']:focus {
+  outline: 0;
+}
+
+.rate-book-footnote {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 24px;
+  line-height: 1.45;
+}
+
+.rate-book-footnote span {
+  color: #81796d;
+}
+
+@media (min-width: 701px) {
+  .rate-book-view {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+}
+
+@media (max-width: 700px) {
+  .rate-book-view {
+    height: 100%;
+    max-height: 100%;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    scrollbar-gutter: auto;
+  }
+
+  .rate-book-column-resizer { display: none; }
+
+  .rate-book-column-menu {
+    width: 100%;
+  }
+
+  .rate-book-column-menu > summary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rate-book-column-menu > div {
+    left: 0;
+    right: auto;
+    width: min(280px, calc(100vw - 24px));
+  }
+
+  .rate-book-sheet-notice {
+    font-size: 9px;
+  }
+
+  .rate-book-qc-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .rate-book-bulk-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rate-book-bulk-bar > * { flex: 0 0 auto; }
+}

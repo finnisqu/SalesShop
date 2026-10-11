@@ -1,0 +1,500 @@
+/*
+ * UI Foundation v1 — Batch 5E Suppliers.
+ * Only the Catalog supplier workspace receives these tokens. Supplier
+ * publication history, importing, merged identity, and CRM data stay intact.
+ */
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench {
+  --ss-supplier-canvas:var(--ss-theme-canvas,var(--ss-app-bg));
+  --ss-supplier-base:var(--ss-theme-base,var(--ss-shell-bg));
+  --ss-supplier-card:var(--ss-theme-card,var(--ss-surface-raised));
+  --ss-supplier-tint:var(--ss-theme-tint,var(--ss-surface));
+  --ss-supplier-ink:var(--ss-theme-ink,var(--ss-text));
+  --ss-supplier-muted:var(--ss-theme-muted,var(--ss-text-muted));
+  --ss-supplier-border:var(--ss-theme-border,var(--ss-border));
+  --ss-supplier-accent:var(--ss-theme-accent,var(--ss-accent));
+  max-width:1480px;
+  width:100%;
+  height:100%;
+  min-height:0;
+  margin:0 auto;
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-supplier-canvas);
+  color:var(--ss-supplier-ink);
+  box-shadow:var(--ss-shadow-raised);
+  overflow:hidden;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-navigator {
+  background:var(--ss-supplier-base);
+  color:var(--ss-supplier-ink);
+  border-color:var(--ss-supplier-border);
+  min-height:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-navigator>header {
+  border-color:var(--ss-supplier-border);
+  color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-navigator>header strong {
+  color:var(--ss-supplier-ink);
+  font:700 18px/1.3 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-navigator>header>span {
+  background:var(--ss-supplier-card);
+  color:var(--ss-supplier-muted);
+  border:1px solid var(--ss-supplier-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-search {
+  background:var(--ss-supplier-base);
+  border-color:var(--ss-supplier-border);
+  gap:var(--ss-space-2);
+}
+.sales-app.view-catalog .supplier-mobile-search-row {
+  display:flex;
+  gap:var(--ss-space-2);
+  min-width:0;
+  align-items:stretch;
+}
+.sales-app.view-catalog .supplier-foundation-search,
+.sales-app.view-catalog .supplier-foundation-add-field {
+  min-width:0;
+  flex:1 1 auto;
+  width:100%;
+  display:block;
+}
+.sales-app.view-catalog .supplier-foundation-search>.ss-field__label,
+.sales-app.view-catalog .supplier-foundation-add-field>.ss-field__label {
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-foundation-search,.supplier-foundation-add-field
+) input {
+  display:block;width:100%;min-width:0;
+  min-height:var(--ss-control-height);height:var(--ss-control-height);
+  background:var(--ss-supplier-card);
+  color:var(--ss-supplier-ink);
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-sm);
+  padding:var(--ss-space-2) var(--ss-space-3);
+  box-sizing:border-box;
+  font:400 var(--ss-text-body)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench input::placeholder,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench textarea::placeholder {
+  color:var(--ss-supplier-muted);opacity:1;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-filter-chips {
+  gap:var(--ss-space-1);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-filter-chips .ss-button {
+  min-height:36px;
+  padding:var(--ss-space-2) var(--ss-space-3);
+  background:var(--ss-supplier-card);
+  color:var(--ss-supplier-ink);
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-pill);
+  font:700 var(--ss-text-sm)/1.25 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-filter-chips .ss-button[aria-pressed="true"] {
+  background:var(--ss-supplier-tint);
+  border-color:var(--ss-supplier-accent);
+  box-shadow:inset 0 -2px var(--ss-supplier-accent);
+  color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-list {
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  scrollbar-color:var(--ss-supplier-muted) transparent;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-item {
+  min-height:52px;
+  border:1px solid transparent;
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-item:is(:hover,:focus-visible) {
+  background:var(--ss-supplier-card);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-item.active {
+  background:var(--ss-supplier-tint);
+  border-color:var(--ss-supplier-border);
+  color:var(--ss-supplier-ink);
+  box-shadow:inset 3px 0 var(--ss-supplier-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-copy strong {
+  color:var(--ss-supplier-ink);
+  font:700 var(--ss-text-sm)/1.35 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-copy small,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-meta,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-empty {
+  color:var(--ss-supplier-muted);
+  font:400 var(--ss-text-xs)/1.35 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-add {
+  grid-template-columns:minmax(0,1fr) 44px;
+  gap:var(--ss-space-2);
+  padding:var(--ss-space-2);
+  border-color:var(--ss-supplier-border);
+  background:var(--ss-supplier-base);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-nav-add>.ss-button,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-mobile-add-row>.ss-button,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-mobile-tools-trigger.ss-button {
+  min-height:var(--ss-control-height);
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-supplier-card);
+  color:var(--ss-supplier-ink);
+  font:700 var(--ss-text-sm)/1.25 var(--ss-font-body);
+}
+/* Desktop: Navigator and record scroll separately within the Catalog host.
+ * Phone: the outer Catalog host owns one continuous vertical scroll. */
+:root[data-sales-theme] .sales-app.view-catalog .supplier-record {
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  background:var(--ss-supplier-canvas);
+  color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-record-header {
+  background:var(--ss-supplier-base);
+  border-color:var(--ss-supplier-border);
+  color:var(--ss-supplier-ink);
+  padding:var(--ss-space-4);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-record-title-line h2 {
+  color:var(--ss-supplier-ink);
+  font:700 var(--ss-text-section)/1.25 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-record-heading p,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-contact-strip a {
+  color:var(--ss-supplier-muted);
+  font:400 var(--ss-text-sm)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-record-actions .ss-button,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-edit-card footer .ss-button {
+  min-height:40px;
+  border-radius:var(--ss-radius-sm);
+  border:1px solid var(--ss-supplier-border);
+  background:var(--ss-supplier-card);
+  color:var(--ss-supplier-ink);
+  font:700 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-record-actions .ss-button[data-ss-variant="primary"],
+:root[data-sales-theme] .sales-app.view-catalog .supplier-edit-card footer .ss-button[data-ss-variant="primary"] {
+  background:var(--ss-supplier-ink);
+  border-color:var(--ss-supplier-ink);
+  color:var(--ss-supplier-card);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-health-strip {
+  gap:1px;
+  background:var(--ss-supplier-border);
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-md);
+  overflow:hidden;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-health-strip>div {
+  background:var(--ss-supplier-card);
+  color:var(--ss-supplier-ink);
+  padding:var(--ss-space-3);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-health-strip span {
+  color:var(--ss-supplier-muted);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-health-strip strong {
+  color:var(--ss-supplier-ink);
+  font:700 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+/* Supplier record cards and pricing-audit blocks use the same surface/radius
+ * pairings as the Catalog shell and other converted sections. */
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-info-card,.supplier-rules-card,.supplier-pricing-history,
+  .supplier-edit-card,.supplier-mini-editor,.supplier-relationship-workspace,
+  .supplier-commitment-panel,.supplier-activity-panel,.supplier-merge-panel,
+  .supplier-track-callout
+) {
+  background:var(--ss-supplier-card);
+  color:var(--ss-supplier-ink);
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-md);
+  box-shadow:var(--ss-shadow-raised);
+  min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-info-card,.supplier-rules-card,.supplier-pricing-history,
+  .supplier-edit-card,.supplier-mini-editor
+)>header {
+  background:var(--ss-supplier-base);
+  border-color:var(--ss-supplier-border);
+  border-radius:var(--ss-radius-md) var(--ss-radius-md) 0 0;
+  min-height:48px;
+  padding:var(--ss-space-3);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-info-card,.supplier-rules-card,.supplier-pricing-history,
+  .supplier-edit-card,.supplier-mini-editor
+)>header strong {
+  color:var(--ss-supplier-ink);
+  font:700 16px/1.25 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-info-card,.supplier-rules-card,.supplier-pricing-history,
+  .supplier-edit-card,.supplier-mini-editor
+)>header :is(small,.board-eyebrow) {
+  color:var(--ss-supplier-muted);
+  font:600 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-card-list article,.supplier-rule-list article,
+  .supplier-pricing-history article,.supplier-activity-entry>div:last-child
+) {
+  border-color:var(--ss-supplier-border);
+  color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-card-list strong,.supplier-rule-list article p,
+  .supplier-pricing-history article strong,.supplier-activity-entry strong,
+  .supplier-commitment-card strong,.supplier-record-empty strong
+) {
+  color:var(--ss-supplier-ink);
+  font:650 var(--ss-text-sm)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-card-list small,.supplier-pricing-history article small,
+  .supplier-pricing-history article>span,.supplier-soft-empty,
+  .supplier-rule-list article small,.supplier-activity-entry p,
+  .supplier-activity-entry time,.supplier-activity-entry small,
+  .supplier-source-rules summary,.supplier-record-empty
+) {
+  color:var(--ss-supplier-muted);
+  font:400 var(--ss-text-xs)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-rule-list article,.supplier-commitment-card,.supplier-source-rules div,
+  .supplier-closed-commitments article,.supplier-mobile-reference-details,
+  .supplier-add-form
+) {
+  background:var(--ss-supplier-base);
+  border-color:var(--ss-supplier-border);
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-source-rules div p,.supplier-commitment-card dt,
+  .supplier-commitment-card dd,.supplier-commitment-card p,
+  .supplier-rule-list article>span
+) {
+  color:var(--ss-supplier-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-source-rules button,.supplier-info-card header button,
+  .supplier-rules-card header button,.supplier-card-list article>button,
+  .supplier-rule-list article button,.supplier-edit-card button,
+  .supplier-mini-editor button,.supplier-add-form button
+) {
+  background:var(--ss-supplier-base);
+  border:1px solid var(--ss-supplier-border);
+  color:var(--ss-supplier-ink);
+  border-radius:var(--ss-radius-sm);
+  min-height:36px;
+  font:700 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-card-links a,.supplier-contact-strip a
+) {color:var(--ss-supplier-ink)}
+/* Shared form fields plus older contact/location/rule editors, keeping
+ * save/cancel/delete handlers, validation and price-publication actions. */
+.sales-app.view-catalog .supplier-foundation-profile-fields>.ss-field {
+  min-width:0;display:grid;gap:var(--ss-space-1);
+}
+.sales-app.view-catalog .supplier-foundation-profile-fields>.ss-field.wide {
+  grid-column:1/-1;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench .supplier-edit-grid
+:is(.ss-field__label,label>span) {
+  color:var(--ss-supplier-muted);
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+  letter-spacing:normal;
+  text-transform:none;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-edit-grid input:not([type="checkbox"]),
+  .supplier-edit-grid select,.supplier-edit-grid textarea,
+  .supplier-add-form input,.supplier-add-form select,.supplier-add-form textarea,
+  .supplier-merge-panel select,.supplier-commitment-top select
+) {
+  min-width:0;max-width:100%;min-height:40px;
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-supplier-card);
+  color:var(--ss-supplier-ink);
+  font:400 var(--ss-text-body)/1.4 var(--ss-font-body);
+  caret-color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .supplier-add-form label>span,.supplier-merge-panel>div>span,
+  .supplier-activity-panel header span,.supplier-commitment-panel header span
+) {color:var(--ss-supplier-muted)}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  button,.supplier-edit-grid input,.supplier-edit-grid select,
+  .supplier-edit-grid textarea,.supplier-foundation-search input,
+  .supplier-mobile-add-row input
+):focus-visible {
+  outline:3px solid var(--ss-focus);outline-offset:2px;
+}
+/* Supplier pricing import publications and editable rules use the same
+ * theme vocabulary while retaining provenance and effective dates. */
+:root[data-sales-theme] .sales-app.view-catalog .supplier-pricing-history>header>span {
+  background:var(--ss-supplier-tint);
+  color:var(--ss-supplier-ink);
+  border:1px solid var(--ss-supplier-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-source-rules>summary,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-source-rules button {
+  color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+.supplier-directory-error {
+  background:var(--ss-supplier-tint);
+  color:var(--ss-supplier-ink);
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-sm);
+}
+/* Shared mobile reference card and one tools sheet.
+ * Do not render a second horizontal supplier list under the reference cards. */
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .mobile-catalog-reference-card,.mobile-catalog-reference-trigger,
+  .mobile-catalog-reference-details
+) {
+  background:var(--ss-supplier-card);
+  border-color:var(--ss-supplier-border);
+  color:var(--ss-supplier-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+.mobile-catalog-reference-card.is-expanded {
+  background:var(--ss-supplier-tint);
+  border-color:var(--ss-supplier-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+.mobile-catalog-reference-card.is-expanded>.mobile-catalog-reference-trigger {
+  background:var(--ss-supplier-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+.mobile-catalog-reference-card.is-expanded>.mobile-catalog-reference-details {
+  background:var(--ss-supplier-base);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .mobile-catalog-reference-name>strong,.mobile-catalog-reference-price>strong,
+  .supplier-mobile-reference-details strong
+) {color:var(--ss-supplier-ink)}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .mobile-catalog-reference-name>small,.mobile-catalog-reference-price-meta,
+  .mobile-catalog-reference-chevron,.supplier-mobile-reference-details span
+) {color:var(--ss-supplier-muted)}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+.supplier-mobile-reference-details>button {
+  min-height:44px;
+  color:var(--ss-supplier-ink);
+  background:var(--ss-supplier-card);
+  border:1px solid var(--ss-supplier-border);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+  .mobile-catalog-tools-sheet,.mobile-catalog-tools-header,
+  .mobile-catalog-tools-content,.mobile-catalog-tools-footer
+) {
+  background:var(--ss-supplier-base);
+  color:var(--ss-supplier-ink);
+  border-color:var(--ss-supplier-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+.mobile-catalog-tools-header :is(strong,button) {color:var(--ss-supplier-ink)}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+.mobile-catalog-tools-header :is(span,small) {color:var(--ss-supplier-muted)}
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench {
+    flex:0 0 auto;
+    height:auto;
+    min-height:100%;
+    overflow:visible;
+    margin:0;
+    padding:var(--ss-space-2) var(--ss-space-2)
+      calc(var(--ss-space-5) + env(safe-area-inset-bottom));
+    border:0;border-radius:0;background:transparent;box-shadow:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-navigator {
+    flex:0 0 auto;height:auto;min-height:0;
+    border:1px solid var(--ss-supplier-border);
+    border-radius:var(--ss-radius-md);
+    overflow:visible;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-nav-search {
+    padding:var(--ss-space-2);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-mobile-search-row
+  .supplier-foundation-search input {
+    height:44px;min-height:44px;font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-mobile-tools-trigger.ss-button {
+    min-height:44px;
+    flex:0 0 76px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-filter-chips .ss-button {
+    min-height:40px;
+    font-size:var(--ss-text-sm);
+    white-space:nowrap;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-navigator .supplier-nav-list {
+    display:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-record {
+    flex:0 0 auto;height:auto;min-height:0;overflow:visible;
+    background:var(--ss-supplier-canvas);
+    border:1px solid var(--ss-supplier-border);
+    border-radius:var(--ss-radius-md);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-record-header {
+    position:relative;top:auto;
+    padding:var(--ss-space-3);
+    border-radius:var(--ss-radius-md) var(--ss-radius-md) 0 0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-info-grid,
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-relationship-grid,
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-rule-list {
+    grid-template-columns:minmax(0,1fr);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-foundation-profile-fields {
+    grid-template-columns:minmax(0,1fr);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-foundation-profile-fields>.ss-field.wide {
+    grid-column:1;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+    .supplier-edit-grid input:not([type="checkbox"]),.supplier-edit-grid select,
+    .supplier-edit-grid textarea,.supplier-mobile-add-row input,
+    .supplier-merge-panel select,.supplier-add-form input,.supplier-add-form select
+  ) {min-height:44px;font-size:16px}
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-mobile-add-row>.ss-button {
+    min-height:44px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench :is(
+    .supplier-record-actions button,.supplier-edit-card footer button,
+    .supplier-mini-editor footer button,.supplier-rule-list button,
+    .supplier-source-rules button
+  ) {min-height:44px}
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-mobile-reference-list {
+    min-height:0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+  .mobile-catalog-tools-content {
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench
+  .mobile-catalog-tools-footer {position:relative;flex:0 0 auto}
+}

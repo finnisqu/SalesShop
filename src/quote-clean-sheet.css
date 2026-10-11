@@ -1,0 +1,832 @@
+/* Quotes clean-sheet pass.
+   Catalog automation collapses after selection; the resting surface reads like paper. */
+
+.quote-line-editor.has-database-selection {
+  min-height: 0;
+  grid-template-columns: 14px minmax(0, 1fr) 18px;
+  grid-template-rows: auto auto;
+  align-items: start;
+  column-gap: 5px;
+  row-gap: 3px;
+  padding: 6px 6px 6px 2px;
+  background: rgba(255, 252, 244, .22);
+}
+
+.quote-line-editor.has-database-selection > .quote-line-drag-handle {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 14px;
+  min-width: 14px;
+  height: 30px;
+  align-self: start;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #a69c8d;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-drag-handle > span {
+  display: inline-block;
+  transform: rotate(90deg);
+  transform-origin: center;
+  font-size: 9px;
+  letter-spacing: -2px;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-main {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  padding: 0 88px 0 0;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-pricing {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 5px 0 0;
+  border-top: 1px solid rgba(91, 78, 58, .075);
+}
+
+.quote-line-editor.has-database-selection > .quote-line-delete {
+  grid-column: 3;
+  grid-row: 1;
+  width: 18px;
+  height: 22px;
+  padding: 0;
+  align-self: start;
+}
+
+.quote-line-editor.has-database-selection .quote-line-topline {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 82px;
+  height: 24px;
+  margin: 0;
+  z-index: 2;
+}
+
+.quote-line-editor.has-database-selection .quote-line-kind {
+  display: none;
+}
+
+.quote-line-editor.has-database-selection .quote-line-topline select {
+  width: 82px;
+  max-width: 82px;
+  height: 24px;
+  border: 1px solid rgba(112, 96, 69, .18);
+  border-radius: 2px;
+  padding: 0 5px;
+  background: rgba(248, 243, 233, .75);
+  color: #776c5b;
+  font-size: 6.6px;
+  font-weight: 750;
+}
+
+.quote-line-editor.has-database-selection .quote-database-result {
+  grid-template-columns: minmax(155px, 1.15fr) minmax(125px, .8fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 49px;
+  margin: 0;
+  padding: 0;
+}
+
+.quote-line-editor.has-database-selection .quote-database-result .quote-database-change {
+  position: absolute;
+  top: 27px;
+  right: 0;
+  width: 82px;
+  min-height: 22px;
+  border: 1px solid rgba(112, 96, 69, .15);
+  border-radius: 2px;
+  background: rgba(248, 243, 233, .54);
+  padding: 0 5px;
+  color: #766a58;
+  font-size: 6.3px;
+  font-weight: 850;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.quote-line-editor.has-database-selection .quote-database-result .quote-database-change:hover {
+  border-color: #a89469;
+  background: #fff8e9;
+}
+
+.quote-line-editor.has-database-selection .quote-material-selection-main,
+.quote-line-editor.has-database-selection .quote-sink-selection-main,
+.quote-line-editor.has-database-selection .quote-rate-selection-main {
+  min-width: 0;
+  max-width: none;
+}
+
+.quote-line-editor.has-database-selection .quote-material-selection-main strong,
+.quote-line-editor.has-database-selection .quote-sink-selection-main strong,
+.quote-line-editor.has-database-selection .quote-rate-selection-main strong {
+  color: #453f37;
+  font: 700 10px/1.15 Georgia, serif;
+}
+
+.quote-line-editor.has-database-selection .quote-material-selection-main small,
+.quote-line-editor.has-database-selection .quote-sink-selection-main small,
+.quote-line-editor.has-database-selection .quote-rate-selection-main small {
+  margin-top: 2px;
+  color: #948979;
+  font-size: 6.7px;
+}
+
+.quote-line-editor.has-database-selection .quote-material-cost-reference,
+.quote-line-editor.has-database-selection .quote-sink-price-reference,
+.quote-line-editor.has-database-selection .quote-rate-reference {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 2px;
+  background: rgba(228, 235, 222, .56);
+  white-space: nowrap;
+}
+
+.quote-line-editor.has-database-selection .quote-sink-price-reference {
+  background: rgba(240, 230, 213, .54);
+}
+
+.quote-line-editor.has-database-selection .quote-rate-reference {
+  background: rgba(230, 236, 243, .52);
+}
+
+.quote-line-editor.has-database-selection .quote-material-cost-reference > span,
+.quote-line-editor.has-database-selection .quote-sink-price-reference > span,
+.quote-line-editor.has-database-selection .quote-rate-reference > span {
+  display: none;
+}
+
+.quote-line-editor.has-database-selection .quote-material-cost-reference strong,
+.quote-line-editor.has-database-selection .quote-sink-price-reference strong,
+.quote-line-editor.has-database-selection .quote-rate-reference strong {
+  color: #56604f;
+  font-size: 7.2px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.quote-line-editor.has-database-selection .quote-material-cost-reference small,
+.quote-line-editor.has-database-selection .quote-sink-price-reference small,
+.quote-line-editor.has-database-selection .quote-rate-reference small {
+  color: #817968;
+  font-size: 6.3px;
+}
+
+.quote-line-editor.has-database-selection .quote-source-status {
+  justify-self: end;
+  font-size: 5.9px;
+}
+
+.quote-line-editor.has-database-selection .quote-line-main textarea {
+  min-height: 27px;
+  margin-top: 2px;
+  padding: 4px 2px 3px;
+  color: #302d28;
+  font: 10.5px/1.25 Georgia, serif;
+}
+
+.quote-line-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #81786a;
+  font-size: 6.8px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.quote-line-toggle input {
+  margin: 0;
+}
+
+.quote-line-pricing > strong {
+  margin-left: auto;
+}
+
+.quote-line-editor.has-database-selection .quote-line-pricing > select {
+  width: 96px;
+}
+
+.quote-line-editor.has-database-selection .quote-area-quantity-link {
+  min-width: 145px;
+}
+
+.quote-material-choice-step {
+  display: grid;
+  gap: 5px;
+}
+
+.quote-material-choice-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border: 1px solid rgba(91, 78, 58, .10);
+  background: rgba(246, 241, 230, .58);
+}
+
+.quote-material-choice-heading > button {
+  flex: 0 0 auto;
+  min-height: 25px;
+  border: 0;
+  background: transparent;
+  color: #746956;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.quote-material-choice-heading > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.quote-material-choice-heading span {
+  color: #918777;
+  font-size: 6.1px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.quote-material-choice-heading strong {
+  overflow: hidden;
+  color: #51493e;
+  font: 700 9px Georgia, serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-material-variant-choices {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid rgba(91, 78, 58, .11);
+  background: #fffdf7;
+}
+
+.quote-material-variant-choices > button {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(91, 78, 58, .08);
+  padding: 7px 9px;
+  background: transparent;
+  color: #4e483f;
+  text-align: left;
+}
+
+.quote-material-variant-choices > button:hover {
+  background: #f5f0df;
+}
+
+.quote-material-variant-choices > button > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-material-variant-choices > button > span:last-child {
+  text-align: right;
+}
+
+.quote-material-variant-choices strong {
+  color: #4c463d;
+  font-size: 8.6px;
+}
+
+.quote-material-variant-choices b {
+  color: #5c6654;
+  font-size: 7.5px;
+}
+
+.quote-material-variant-choices small {
+  color: #908779;
+  font-size: 6.7px;
+}
+
+.quote-area-customer-mode {
+  width: max-content;
+  max-width: 170px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  color: #8b8172;
+}
+
+.quote-area-customer-mode > span {
+  font-size: 6.1px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.quote-area-customer-mode select {
+  height: 20px;
+  border: 0;
+  border-bottom: 1px solid rgba(111, 94, 67, .18);
+  background: transparent;
+  color: #746957;
+  font-size: 6.7px;
+  font-weight: 750;
+}
+
+.quote-area-scope-grid {
+  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  max-width: 620px;
+}
+
+.customer-quote-section.is-summary {
+  border-top: 1px solid #c9c9c7;
+}
+
+.customer-area-summary-row {
+  min-height: 42px;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  background: #fafaf8;
+}
+
+.customer-area-summary-row .customer-line-description {
+  font: 700 10px Georgia, serif;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+}
+
+.customer-area-summary-row .customer-line-amount {
+  font: 700 11px Georgia, serif;
+}
+
+@media (max-width: 900px) {
+  .quote-line-editor.has-database-selection {
+    grid-template-columns: 14px minmax(0, 1fr) 18px;
+  }
+
+  .quote-line-editor.has-database-selection > .quote-line-pricing {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .quote-line-editor.has-database-selection {
+    padding-right: 5px;
+  }
+
+  .quote-line-editor.has-database-selection > .quote-line-main {
+    padding-right: 82px;
+  }
+
+  .quote-line-editor.has-database-selection .quote-line-topline,
+  .quote-line-editor.has-database-selection .quote-line-topline select,
+  .quote-line-editor.has-database-selection .quote-database-result .quote-database-change {
+    width: 76px;
+  }
+
+  .quote-line-editor.has-database-selection .quote-database-result {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    min-height: 58px;
+  }
+
+  .quote-line-editor.has-database-selection .quote-material-cost-reference,
+  .quote-line-editor.has-database-selection .quote-sink-price-reference,
+  .quote-line-editor.has-database-selection .quote-rate-reference,
+  .quote-line-editor.has-database-selection .quote-source-status {
+    justify-self: start;
+  }
+
+  .quote-line-editor.has-database-selection .quote-material-cost-reference,
+  .quote-line-editor.has-database-selection .quote-sink-price-reference,
+  .quote-line-editor.has-database-selection .quote-rate-reference {
+    flex-wrap: wrap;
+  }
+
+  .quote-material-variant-choices > button {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .quote-material-variant-choices > button > span:last-child {
+    text-align: left;
+  }
+
+  .quote-area-customer-mode {
+    max-width: none;
+  }
+
+  .quote-area-scope-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: none;
+  }
+}
+
+@media (max-width: 470px) {
+  .quote-area-scope-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* 2026-10-07 compression follow-up:
+   eliminate legacy split-view gutters and keep selected Catalog data on one internal line. */
+.view-split .quote-line-editor.has-database-selection,
+.view-split .quote-line-editor.has-database-selection.kind-material,
+.view-split .quote-line-editor.has-database-selection.kind-sink,
+.view-split .quote-line-editor.has-database-selection.kind-rate {
+  grid-template-columns: 14px minmax(0, 1fr) 18px;
+  grid-template-rows: auto auto;
+  column-gap: 5px;
+  row-gap: 3px;
+  padding: 6px 6px 6px 2px;
+}
+
+.view-split .quote-line-editor.has-database-selection > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-drag-handle {
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.view-split .quote-line-editor.has-database-selection > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-main {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  padding: 0;
+}
+
+.view-split .quote-line-editor.has-database-selection > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-pricing {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  padding: 5px 0 0;
+}
+
+.view-split .quote-line-editor.has-database-selection > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-delete {
+  grid-column: 3;
+  grid-row: 1;
+  margin-top: 0;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-main {
+  padding-right: 0;
+}
+
+.quote-line-editor.has-database-selection .quote-line-topline {
+  display: none;
+}
+
+.quote-line-editor.has-database-selection .quote-database-result,
+.view-split .quote-line-editor.has-database-selection .quote-database-result,
+.view-split .quote-database-result.quote-material-selection,
+.view-split .quote-database-result.quote-sink-selection,
+.view-split .quote-database-result.quote-rate-selection {
+  grid-template-columns: minmax(150px, 1fr) auto 70px;
+  gap: 8px;
+  min-height: 35px;
+  align-items: center;
+}
+
+.quote-line-editor.has-database-selection .quote-material-cost-reference,
+.quote-line-editor.has-database-selection .quote-sink-price-reference,
+.quote-line-editor.has-database-selection .quote-rate-reference,
+.view-split .quote-line-editor.has-database-selection .quote-material-cost-reference,
+.view-split .quote-line-editor.has-database-selection .quote-sink-price-reference,
+.view-split .quote-line-editor.has-database-selection .quote-rate-reference {
+  grid-column: auto;
+  grid-row: auto;
+  margin: 0;
+}
+
+.quote-line-editor.has-database-selection .quote-database-result .quote-database-change,
+.view-split .quote-line-editor.has-database-selection .quote-database-result .quote-database-change {
+  position: static;
+  grid-column: 3;
+  grid-row: 1;
+  width: 70px;
+  min-height: 25px;
+  align-self: center;
+}
+
+.quote-line-editor.has-database-selection .quote-source-status,
+.view-split .quote-line-editor.has-database-selection .quote-source-status {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+}
+
+.quote-line-editor.has-database-selection .quote-line-main textarea {
+  margin-top: 0;
+}
+
+.quote-line-toggle,
+.quote-area-customer-mode {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .quote-line-editor.has-database-selection > .quote-line-main {
+    padding-right: 0;
+  }
+
+  .quote-line-editor.has-database-selection .quote-database-result,
+  .view-split .quote-line-editor.has-database-selection .quote-database-result {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .quote-line-editor.has-database-selection .quote-material-cost-reference,
+  .quote-line-editor.has-database-selection .quote-sink-price-reference,
+  .quote-line-editor.has-database-selection .quote-rate-reference,
+  .view-split .quote-line-editor.has-database-selection .quote-material-cost-reference,
+  .view-split .quote-line-editor.has-database-selection .quote-sink-price-reference,
+  .view-split .quote-line-editor.has-database-selection .quote-rate-reference {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .quote-line-editor.has-database-selection .quote-database-result .quote-database-change,
+  .view-split .quote-line-editor.has-database-selection .quote-database-result .quote-database-change {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    width: 68px;
+    min-height: 34px;
+  }
+
+  .quote-line-editor.has-database-selection .quote-source-status,
+  .view-split .quote-line-editor.has-database-selection .quote-source-status {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
+
+/* Split view is a narrow pane even on a wide browser.
+   Reflow area actions based on the view, not the viewport width. */
+.view-split .quote-area-header {
+  grid-template-columns: 18px minmax(0, 1fr) auto 18px;
+  grid-template-rows: auto auto;
+  column-gap: 6px;
+  row-gap: 5px;
+  align-items: center;
+  padding: 7px 7px 6px;
+}
+
+.view-split .quote-area-header > .quote-visibility {
+  grid-column: 1;
+  grid-row: 1;
+  width: 18px;
+  height: 18px;
+}
+
+.view-split .quote-area-title {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.view-split .quote-area-summary {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 76px;
+}
+
+.view-split .quote-area-actions {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.view-split .quote-area-actions button {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 25px;
+  padding: 0 6px;
+  white-space: nowrap;
+  font-size: 7px;
+}
+
+.view-split .quote-area-remove {
+  grid-column: 4;
+  grid-row: 1;
+  width: 18px;
+  height: 22px;
+}
+
+.view-split .quote-area-scope-panel {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.view-split .quote-area-scope-grid {
+  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  max-width: none;
+}
+
+@media (max-width: 760px) {
+  .view-split .quote-area-actions button {
+    flex: 1 1 62px;
+  }
+}
+
+
+/* Compact quote polish: comparison-card grip, inline Area scope, and pane-aware Split layout. */
+
+/* Match the Materials comparison-board grip, mirrored onto the left edge. */
+.quote-line-editor {
+  position: relative;
+}
+
+.quote-line-drag-handle,
+.quote-line-editor.has-database-selection > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-drag-handle,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-drag-handle {
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  right: auto;
+  z-index: 5;
+  width: 18px;
+  min-width: 18px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(122, 101, 47, .22);
+  border-radius: 5px;
+  background: #f4eedb;
+  color: #897a54;
+  box-shadow: 0 2px 5px rgba(52, 44, 35, .08);
+  cursor: grab;
+  transform: translateY(-50%);
+}
+
+.quote-line-drag-handle > span,
+.quote-line-editor.has-database-selection > .quote-line-drag-handle > span {
+  display: block;
+  transform: none;
+  font: 900 14px/1 system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.quote-line-drag-handle:hover,
+.quote-line-drag-handle:focus-visible {
+  outline: 0;
+  border-color: rgba(153, 126, 48, .42);
+  background: #fff6d9;
+  color: #65572e;
+  box-shadow: 0 3px 8px rgba(52, 44, 35, .12);
+}
+
+.quote-line-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Selected database rows no longer reserve a fake first column for the grip. */
+.quote-line-editor.has-database-selection,
+.view-split .quote-line-editor.has-database-selection,
+.view-split .quote-line-editor.has-database-selection.kind-material,
+.view-split .quote-line-editor.has-database-selection.kind-sink,
+.view-split .quote-line-editor.has-database-selection.kind-rate {
+  grid-template-columns: minmax(0, 1fr) 18px;
+  grid-template-rows: auto auto;
+  column-gap: 5px;
+  row-gap: 3px;
+  padding-left: 10px;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-main,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-main {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-pricing,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-pricing {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.quote-line-editor.has-database-selection > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-material > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-sink > .quote-line-delete,
+.view-split .quote-line-editor.has-database-selection.kind-rate > .quote-line-delete {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Sink results use the same one-line resting geometry as Materials. */
+.quote-line-editor.has-database-selection.kind-sink .quote-database-result {
+  min-height: 34px;
+}
+
+.quote-line-editor.has-database-selection.kind-sink .quote-sink-price-reference {
+  width: auto;
+  max-width: 175px;
+}
+
+.quote-line-editor.has-database-selection.kind-sink .quote-sink-price-reference strong,
+.quote-line-editor.has-database-selection.kind-sink .quote-sink-price-reference small {
+  white-space: nowrap;
+}
+
+.quote-line-editor.has-database-selection.kind-sink .quote-line-main textarea {
+  min-height: 25px;
+}
+
+/* Scope becomes metadata on the AREA kicker rather than a third header line. */
+.quote-area-kicker {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 1px;
+  color: #938873;
+  font-size: 6.2px;
+  font-weight: 850;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.quote-area-kicker > span {
+  flex: 0 0 auto;
+}
+
+.quote-area-kicker .quote-area-scope-toggle {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #8a7c62;
+  font-size: 6.2px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-area-kicker .quote-area-scope-toggle:hover,
+.quote-area-kicker .quote-area-scope-toggle.active {
+  color: #62543b;
+}
+
+/* Split is a narrow editor pane even when the browser is wide. */
+.view-split .quote-details-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.view-split .quote-details-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 650px) {
+  .view-split .quote-details-grid {
+    grid-template-columns: 1fr;
+  }
+}

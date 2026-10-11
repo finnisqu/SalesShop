@@ -1,0 +1,248 @@
+/*
+ * UI Foundation v1 — Batch 3 Settings adapter.
+ *
+ * No global element styling. The shared header, panels and labeled fields
+ * are opt-in; legacy Team/Appearance components retain their own behavior.
+ * Colors always come from the same selected palette as the panel surface.
+ */
+:root[data-sales-theme] .sales-app.view-settings {
+  --ss-settings-bg: var(--ss-theme-canvas, var(--ss-app-bg));
+  --ss-settings-rail: var(--ss-theme-base, var(--ss-shell-bg));
+  --ss-settings-card: var(--ss-theme-card, var(--ss-surface-raised));
+  --ss-settings-tint: var(--ss-theme-tint, var(--ss-surface));
+  --ss-settings-ink: var(--ss-theme-ink, var(--ss-text));
+  --ss-settings-muted: var(--ss-theme-muted, var(--ss-text-muted));
+  --ss-settings-border: var(--ss-theme-border, var(--ss-border));
+}
+.sales-app.view-settings .company-settings-view {
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.sales-app.view-settings .settings-layout {
+  min-width: 0;
+  grid-template-rows: auto minmax(0,1fr);
+}
+.sales-app.view-settings .settings-foundation-page-header {
+  align-items: center;
+  gap: var(--ss-space-4);
+  padding-bottom: var(--ss-space-4);
+  border-color: var(--ss-settings-border, var(--ss-border));
+}
+.sales-app.view-settings .settings-foundation-page-header .ss-page-header__title {
+  margin: 0;
+  color: var(--ss-settings-ink, var(--ss-text));
+  font: 700 var(--ss-text-page)/1.16 var(--ss-font-editorial);
+}
+.sales-app.view-settings .settings-foundation-page-header .ss-page-header__eyebrow {
+  color: var(--ss-settings-muted, var(--ss-text-muted));
+  font: 750 var(--ss-text-xs)/1.25 var(--ss-font-body);
+}
+.sales-app.view-settings .settings-foundation-page-header .ss-page-header__description {
+  margin: 0;
+  color: var(--ss-settings-muted, var(--ss-text-muted));
+  font: 400 var(--ss-text-body)/1.5 var(--ss-font-body);
+  max-width: 67ch;
+}
+.sales-app.view-settings .settings-foundation-page-header .company-settings-save-state {
+  padding: 0;
+}
+/* Identical navigation dimensions across themes. Active tint and foreground
+ * are paired to avoid cream-on-white or near-black-on-slate regressions. */
+:root[data-sales-theme] .sales-app.view-settings .settings-tabs {
+  background: var(--ss-settings-rail);
+  border-color: var(--ss-settings-border);
+  border-radius: var(--ss-radius-md);
+  padding: var(--ss-space-2);
+  gap: var(--ss-space-1);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-tabs > button {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ss-settings-ink);
+  border-radius: var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-tabs > button small {
+  color: var(--ss-settings-muted);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-tabs > button:is(:hover,:focus-visible) {
+  background: var(--ss-settings-tint);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-tabs > button.active {
+  background: var(--ss-settings-tint);
+  border-color: var(--ss-settings-border);
+  box-shadow: inset 3px 0 var(--ss-accent);
+  color: var(--ss-settings-ink);
+}
+/* Unconverted Settings panels receive the same shared surfaces without
+ * changing their markup or state-management logic. */
+:root[data-sales-theme] .sales-app.view-settings .company-settings-card {
+  background: var(--ss-settings-card);
+  color: var(--ss-settings-ink);
+  border-color: var(--ss-settings-border);
+  border-radius: var(--ss-radius-md);
+  box-shadow: var(--ss-shadow-raised);
+}
+:root[data-sales-theme] .sales-app.view-settings .company-settings-card > header strong,
+:root[data-sales-theme] .sales-app.view-settings .settings-account-identity strong {
+  color: var(--ss-settings-ink);
+}
+:root[data-sales-theme] .sales-app.view-settings .company-settings-card > header small,
+:root[data-sales-theme] .sales-app.view-settings .settings-account-identity small,
+:root[data-sales-theme] .sales-app.view-settings .settings-help,
+:root[data-sales-theme] .sales-app.view-settings .settings-muted {
+  color: var(--ss-settings-muted);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-panel.ss-panel {
+  padding: 0;
+  background: var(--ss-settings-card);
+  color: var(--ss-settings-ink);
+  overflow: hidden;
+  height: fit-content;
+}
+.sales-app.view-settings .settings-foundation-panel.ss-panel > .ss-panel__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--ss-space-3);
+  padding: var(--ss-panel-inset);
+  margin: 0;
+  min-width: 0;
+  border-bottom: 1px solid var(--ss-settings-border, var(--ss-border));
+  font: inherit;
+}
+.sales-app.view-settings .settings-foundation-panel .settings-foundation-panel-title {
+  display: grid;
+  gap: var(--ss-space-1);
+  min-width: 0;
+}
+.sales-app.view-settings .settings-foundation-panel .ss-panel__body {
+  padding: var(--ss-panel-inset);
+  min-width: 0;
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-panel .settings-foundation-panel-title strong {
+  color: var(--ss-settings-ink);
+  font: 700 17px/1.25 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-panel .settings-foundation-panel-title small {
+  color: var(--ss-settings-muted);
+  font: 400 var(--ss-text-xs)/1.4 var(--ss-font-body);
+}
+/* Batch 10B: pair the status chip's ink and surface. The old ivory chip
+ * remained light when Dark switched its text to a light semantic token. */
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-panel .settings-card-save {
+  background: var(--ss-settings-card);
+  border-color: var(--ss-settings-border);
+  color: var(--ss-settings-muted);
+  font: 650 var(--ss-text-xs)/1.4 var(--ss-font-body);
+  white-space: nowrap;
+}
+
+/* Document-branded output is intentionally light, even in a dark workspace.
+ * Keep preview paper and its text together so it never becomes brown on slate. */
+:root[data-sales-theme] .sales-app.view-settings .company-branding-preview {
+  color-scheme: light;
+  background: #fffaf0;
+  border-color: #cfc5b4;
+  color: #36342c;
+}
+:root[data-sales-theme] .sales-app.view-settings .company-branding-preview > div:last-child > strong {
+  color: #36342c;
+}
+:root[data-sales-theme] .sales-app.view-settings .company-branding-preview > div:last-child > span {
+  color: #62594d;
+}
+.sales-app.view-settings .settings-foundation-fields {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: var(--ss-space-3);
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+}
+.sales-app.view-settings .settings-foundation-fields .ss-field {
+  min-width: 0;
+  gap: var(--ss-space-1);
+  align-content: start;
+}
+.sales-app.view-settings .settings-foundation-fields .ss-field.wide {
+  grid-column: 1/-1;
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-fields .ss-field__label {
+  color: var(--ss-settings-muted);
+  font: 700 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-fields .ss-field :is(input,textarea,select) {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--ss-control-height);
+  border: 1px solid var(--ss-settings-border);
+  background: var(--ss-settings-card);
+  color: var(--ss-settings-ink);
+  border-radius: var(--ss-radius-sm);
+  font: 400 var(--ss-text-body)/1.4 var(--ss-font-body);
+  caret-color: var(--ss-settings-ink);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-fields .ss-field textarea {
+  min-height: 76px;
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-fields .ss-field :is(input,textarea)::placeholder {
+  color: var(--ss-settings-muted);
+  opacity: 1;
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-fields .ss-field__help {
+  color: var(--ss-settings-muted);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-panel .ss-button[data-ss-variant="primary"] {
+  background: var(--ss-settings-ink);
+  border-color: var(--ss-settings-ink);
+  color: var(--ss-theme-contrast,#fffaf0);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-panel .ss-button[data-ss-variant="secondary"] {
+  background: var(--ss-settings-card);
+  border-color: var(--ss-settings-border);
+  color: var(--ss-settings-ink);
+}
+:root[data-sales-theme] .sales-app.view-settings .settings-foundation-panel .settings-feedback {
+  background: var(--ss-settings-tint);
+  border-color: var(--ss-settings-border);
+  color: var(--ss-settings-ink);
+}
+/* Preserve older two-column settings when space permits; never crop a long
+ * form or bottom row because of fixed viewport calculations. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .sales-app.view-settings .company-settings-view {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: var(--ss-space-2) var(--ss-space-2) calc(var(--ss-space-6) + env(safe-area-inset-bottom));
+  }
+  .sales-app.view-settings .settings-layout {
+    grid-template-columns: minmax(0,1fr);
+    grid-template-rows: auto;
+    gap: var(--ss-space-2);
+  }
+  .sales-app.view-settings .settings-foundation-panel .ss-panel__header,
+  .sales-app.view-settings .settings-foundation-panel .ss-panel__body {
+    padding: var(--ss-space-3);
+  }
+  .sales-app.view-settings .settings-foundation-fields {
+    grid-template-columns: minmax(0,1fr);
+    gap: var(--ss-space-3);
+  }
+  .sales-app.view-settings .settings-foundation-fields .ss-field.wide {
+    grid-column: 1;
+  }
+  .sales-app.view-settings .settings-foundation-fields .ss-field :is(input,textarea,select) {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .sales-app.view-settings .settings-foundation-panel .ss-button {
+    min-height: 44px;
+  }
+}

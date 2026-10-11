@@ -1,0 +1,839 @@
+/* Shared immersive mobile shell for SalesShop tabs other than Quotes.
+   Quotes keeps its specialized command bar; the rest share this compact chrome. */
+
+.mobile-app-commandbar,
+.mobile-app-drawer-backdrop {
+  display: none;
+}
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  /* One compact app bar replaces the desktop header/tabs everywhere. */
+  .sales-app:not(.view-quotes) > .app-header {
+    display: none;
+  }
+
+  .sales-app:not(.view-quotes) {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .sales-app:not(.view-quotes) > .mobile-app-commandbar {
+    position: relative;
+    z-index: 170;
+    min-height: 50px;
+    height: 50px;
+    flex: 0 0 50px;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(87, 76, 58, .18);
+    background: rgba(246, 243, 235, .97);
+    box-shadow: 0 2px 7px rgba(49, 43, 34, .08);
+  }
+
+  .mobile-app-menu-button {
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(91, 78, 58, .15);
+    border-radius: 7px;
+    background: rgba(255, 252, 244, .82);
+    color: #5f584d;
+    font-size: 17px;
+    font-weight: 850;
+  }
+
+  .mobile-app-current {
+    min-width: 0;
+    display: grid;
+    gap: 1px;
+    padding: 0 4px;
+  }
+
+  .mobile-app-current > span {
+    overflow: hidden;
+    color: #948a7a;
+    font-size: 6.4px;
+    font-weight: 850;
+    letter-spacing: .07em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .mobile-app-current > strong {
+    overflow: hidden;
+    color: #3f3a32;
+    font: 700 13px/1.1 Georgia, serif;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-app-commandbar .global-search-launcher,
+  .mobile-app-commandbar .quick-create-launcher {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    border: 1px solid rgba(91, 78, 58, .15);
+    border-radius: 7px;
+    background: rgba(255, 252, 244, .82);
+    color: #5f584d;
+    box-shadow: none;
+  }
+
+  .mobile-app-commandbar .quick-create-launcher {
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  .mobile-app-commandbar .global-search-launcher svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Shared drawer */
+  .mobile-app-drawer-backdrop {
+    position: fixed;
+    z-index: 1500;
+    inset: 0;
+    display: block;
+    background: rgba(44, 39, 32, .28);
+    backdrop-filter: blur(2px);
+  }
+
+  .mobile-app-drawer {
+    width: min(92vw, 390px);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid rgba(79, 68, 52, .20);
+    background: #eee8dc;
+    box-shadow: 14px 0 36px rgba(42, 35, 26, .25);
+  }
+
+  .mobile-app-drawer > header {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 10px 8px 13px;
+    border-bottom: 1px solid rgba(91, 78, 58, .12);
+  }
+
+  .mobile-app-drawer > header > div {
+    min-width: 0;
+    display: grid;
+    gap: 1px;
+  }
+
+  .mobile-app-drawer > header span {
+    color: #8e8578;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .mobile-app-drawer > header strong {
+    color: #433e35;
+    font: 700 17px Georgia, serif;
+  }
+
+  .mobile-app-drawer > header > button {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(255, 252, 244, .65);
+    color: #70675a;
+    font-size: 22px;
+  }
+
+  .mobile-app-drawer-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid rgba(91, 78, 58, .10);
+  }
+
+  .mobile-app-drawer-nav button {
+    min-height: 42px;
+    border: 1px solid rgba(91, 78, 58, .10);
+    border-radius: 5px;
+    background: rgba(250, 247, 239, .64);
+    color: #6c6458;
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  .mobile-app-drawer-nav button.active {
+    border-color: rgba(163, 136, 67, .24);
+    background: #fff5d9;
+    color: #52462d;
+  }
+
+  .mobile-app-context-section {
+    min-height: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mobile-app-context-section > header {
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px 6px;
+  }
+
+  .mobile-app-context-section > header > div {
+    display: grid;
+    gap: 1px;
+  }
+
+  .mobile-app-context-section > header strong {
+    color: #514a3f;
+    font-size: 10px;
+  }
+
+  .mobile-app-context-section > header small {
+    color: #93897a;
+    font-size: 7px;
+  }
+
+  .mobile-app-context-section > header button {
+    min-width: 68px;
+    min-height: 36px;
+    border: 1px solid #aaa18f;
+    border-radius: 6px;
+    background: #f7f0df;
+    color: #514a3f;
+    font-size: 9px;
+    font-weight: 850;
+  }
+
+  .mobile-notebook-page-list {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0 8px 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-notebook-page-list > button {
+    width: 100%;
+    min-height: 58px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    border: 1px solid rgba(100, 87, 65, .15);
+    border-radius: 5px;
+    padding: 7px 8px;
+    background: #f1ebdd;
+    color: #4c463d;
+    text-align: left;
+  }
+
+  .mobile-notebook-page-list > button.active {
+    border-color: #9c8959;
+    background: #fff7e5;
+    box-shadow: inset 3px 0 #bca354;
+  }
+
+  .mobile-notebook-page-list span {
+    color: #948879;
+    font-size: 7px;
+    font-weight: 850;
+  }
+
+  .mobile-notebook-page-list strong {
+    overflow: hidden;
+    font: 700 11px Georgia, serif;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-notebook-page-list small {
+    color: #958b7d;
+    font-size: 7px;
+    white-space: nowrap;
+  }
+
+  .mobile-catalog-section-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+    padding: 0 8px 8px;
+  }
+
+  .mobile-catalog-section-list button {
+    min-height: 44px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 5px;
+    background: rgba(250, 247, 239, .68);
+    color: #655d51;
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  .mobile-catalog-section-list button.active {
+    border-color: rgba(163, 136, 67, .24);
+    background: #fff5d9;
+    color: #52462d;
+  }
+
+  .mobile-app-drawer > footer {
+    margin-top: auto;
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(91, 78, 58, .10);
+  }
+
+  .mobile-app-drawer > footer .app-account-zone,
+  .mobile-app-drawer > footer .backend-account {
+    width: 100%;
+  }
+
+  /* ------------------------------
+     Notebook
+  ------------------------------ */
+  .sales-app.view-notebook .notebook-workspace {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: block;
+    overflow: hidden;
+  }
+
+  .sales-app.view-notebook .notebook-sidebar {
+    display: none;
+  }
+
+  .sales-app.view-notebook .binder-stage {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .sales-app.view-notebook .paper-toolbar {
+    height: 44px;
+    flex-basis: 44px;
+    gap: 4px;
+    padding-inline: 5px;
+    scrollbar-width: none;
+  }
+
+  .sales-app.view-notebook .paper-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sales-app.view-notebook .desk-surface {
+    padding: 4px 3px calc(26px + env(safe-area-inset-bottom));
+  }
+
+  .sales-app.view-notebook .paper-sheet {
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .sales-app.view-notebook .paper-heading {
+    min-height: 58px;
+    padding: 11px 13px 5px;
+  }
+
+  .sales-app.view-notebook .paper-title {
+    font-size: 19px !important;
+  }
+
+  .sales-app.view-notebook .paper-writing-surface {
+    padding-inline: 13px;
+  }
+
+  /* ------------------------------
+     Board
+  ------------------------------ */
+  .sales-app.view-board .board-view,
+  .sales-app.view-board .accounts-view {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .sales-app.view-board .board-header-panel,
+  .sales-app.view-board .accounts-header-panel {
+    min-height: 48px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    padding: 4px 6px;
+  }
+
+  .sales-app.view-board .board-header-panel > div:first-child,
+  .sales-app.view-board .accounts-header-panel > div:first-child {
+    display: none;
+  }
+
+  .sales-app.view-board .board-view-toggle {
+    width: auto;
+    min-width: 150px;
+  }
+
+  .sales-app.view-board .board-view-toggle button {
+    min-height: 38px;
+    height: 38px;
+    padding-inline: 10px;
+    font-size: 9px;
+  }
+
+  .sales-app.view-board .board-quick-add {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .sales-app.view-board .board-quick-add > label {
+    display: none;
+  }
+
+  .sales-app.view-board .board-quick-add input,
+  .sales-app.view-board .board-quick-add button {
+    height: 38px;
+  }
+
+  .sales-app.view-board .board-quick-add input {
+    font-size: 16px !important;
+  }
+
+  .sales-app.view-board .project-board,
+  .sales-app.view-board .account-board {
+    padding: 6px 6px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  /* ------------------------------
+     Catalog
+  ------------------------------ */
+  .sales-app.view-catalog .catalog-workspace {
+    height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .sales-app.view-catalog .catalog-header {
+    display: none;
+  }
+
+  .sales-app.view-catalog .catalog-section-nav {
+    grid-template-columns: repeat(5, minmax(66px, 1fr));
+    gap: 1px;
+    padding: 0 3px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-catalog .catalog-section-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sales-app.view-catalog .catalog-section-nav button {
+    min-height: 42px;
+    padding: 5px 6px;
+    text-align: center;
+  }
+
+  .sales-app.view-catalog .catalog-section-nav strong {
+    font-size: 8px;
+  }
+
+  .sales-app.view-catalog .catalog-section-nav span {
+    display: none;
+  }
+
+  .sales-app.view-catalog .catalog-section-host {
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-catalog .catalog-section-host > .rates-workspace.is-catalog-embedded,
+  .sales-app.view-catalog .catalog-section-host > .sinks-workspace.is-catalog-embedded {
+    padding: 5px 4px calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .sales-app.view-catalog .catalog-section-host .is-catalog-embedded .rates-workspace-header,
+  .sales-app.view-catalog .catalog-section-host .sinks-workspace.is-catalog-embedded .sinks-workspace-header {
+    margin-bottom: 5px;
+    padding: 6px;
+  }
+
+  .sales-app.view-catalog .catalog-section-host .is-catalog-embedded .rates-workspace-header p,
+  .sales-app.view-catalog .catalog-section-host .sinks-workspace.is-catalog-embedded .sinks-workspace-header p {
+    display: none;
+  }
+
+  /* ------------------------------
+     Dashboard
+  ------------------------------ */
+  .sales-app.view-dashboard .leadership-dashboard {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    padding: 6px 6px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .sales-app.view-dashboard .dashboard-heading {
+    display: none;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpis {
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi {
+    min-height: 90px;
+    padding: 10px;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi > strong {
+    margin: 7px 0 3px;
+    font-size: 24px;
+  }
+
+  .sales-app.view-dashboard .dashboard-panel {
+    padding: 10px;
+  }
+
+  /* ------------------------------
+     Settings
+  ------------------------------ */
+  .sales-app.view-settings .company-settings-view {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    padding: 6px 6px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .sales-app.view-settings .company-settings-header {
+    display: none;
+  }
+
+  .sales-app.view-settings .company-settings-grid {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .sales-app.view-settings .company-settings-card {
+    padding: 10px;
+  }
+
+  .sales-app.view-settings .company-settings-card > header {
+    margin-bottom: 8px;
+    padding-bottom: 7px;
+  }
+}
+
+
+/* Shared-shell consolidation pass:
+   remove duplicate per-tab navigation now that MobileAppChrome owns it. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  /* Board drawer context */
+  .mobile-board-mode-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    padding: 0 8px 8px;
+  }
+
+  .mobile-board-mode-list > button {
+    min-width: 0;
+    min-height: 58px;
+    display: grid;
+    align-content: center;
+    gap: 3px;
+    border: 1px solid rgba(91, 78, 58, .11);
+    border-radius: 6px;
+    padding: 7px 8px;
+    background: rgba(250, 247, 239, .68);
+    color: #655d51;
+    text-align: left;
+  }
+
+  .mobile-board-mode-list > button.active {
+    border-color: rgba(163, 136, 67, .24);
+    background: #fff5d9;
+    color: #52462d;
+    box-shadow: inset 3px 0 #bca354;
+  }
+
+  .mobile-board-mode-list strong {
+    font-size: 9px;
+  }
+
+  .mobile-board-mode-list small {
+    color: #918779;
+    font-size: 6.5px;
+    line-height: 1.25;
+  }
+
+  /* Projects: the shared shell + Quick Create replaces the entire secondary header. */
+  .sales-app.view-board .board-view:not(.accounts-view) > .board-header-panel {
+    display: none;
+  }
+
+  .sales-app.view-board .board-view:not(.accounts-view) > .project-board {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-top: 6px;
+  }
+
+  /* Accounts only keeps CRM cleanup; Projects/Accounts switching moved to the drawer. */
+  .sales-app.view-board .accounts-view > .accounts-header-panel {
+    min-height: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 4px 6px;
+  }
+
+  .sales-app.view-board .accounts-header-panel > div:first-child,
+  .sales-app.view-board .accounts-header-panel > .board-view-toggle {
+    display: none !important;
+  }
+
+  .sales-app.view-board .accounts-header-actions {
+    width: 100%;
+    margin: 0;
+    justify-content: flex-end;
+  }
+
+  .sales-app.view-board .accounts-header-actions .accounts-inference-note {
+    display: none;
+  }
+
+  .sales-app.view-board .accounts-cleanup-button {
+    height: 34px;
+    min-height: 34px;
+    border-radius: 6px;
+  }
+
+  /* Catalog: section switching lives in the shared drawer, so no second tab strip. */
+  .sales-app.view-catalog .catalog-workspace {
+    height: calc(100dvh - 50px);
+    overflow: hidden;
+  }
+
+  .sales-app.view-catalog .catalog-section-nav {
+    display: none !important;
+  }
+
+  .sales-app.view-catalog .catalog-section-host {
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-catalog .catalog-section-host > .rates-workspace.is-catalog-embedded,
+  .sales-app.view-catalog .catalog-section-host > .sinks-workspace.is-catalog-embedded {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .sales-app.view-catalog .catalog-section-suppliers {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  /* Dashboard begins directly under the command bar and keeps compact 2x2 KPIs. */
+  .sales-app.view-dashboard .leadership-dashboard {
+    height: calc(100dvh - 50px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi {
+    min-height: 88px;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi > span {
+    font-size: 9px;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi > strong {
+    font-size: 22px;
+  }
+
+  .sales-app.view-dashboard .dashboard-kpi small {
+    font-size: 8px;
+    line-height: 1.25;
+  }
+
+  /* Settings is one clean scroll surface beneath the shared shell. */
+  .sales-app.view-settings .company-settings-view {
+    height: calc(100dvh - 50px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sales-app.view-settings .company-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-app.view-settings .company-settings-card {
+    border-radius: 5px;
+  }
+
+  /* Notebook: shared drawer owns page navigation; only writing tools remain on-screen. */
+  .sales-app.view-notebook .notebook-workspace {
+    height: calc(100dvh - 50px);
+  }
+
+  .sales-app.view-notebook .binder-stage {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sales-app.view-notebook .desk-surface {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Catalog is a group in the hamburger navigation, not a direct destination. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .mobile-app-drawer-nav button[aria-controls="mobile-catalog-destinations"] {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+  }
+  .mobile-app-drawer-nav button[aria-controls="mobile-catalog-destinations"].is-expanded {
+    border-color:#b59b68;
+    background:#fff3d5;
+    box-shadow:inset 0 -2px #b79e64;
+  }
+  .mobile-app-catalog-chevron{
+    color:#87775b;
+    font-size:14px;
+    font-weight:800;
+    line-height:1;
+  }
+  .mobile-catalog-destinations{
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .mobile-catalog-destinations > header{
+    flex:0 0 auto;
+    min-height:56px;
+    border-bottom:1px solid rgba(91,78,58,.10);
+  }
+  .mobile-catalog-destinations > header strong{font-size:12px}
+  .mobile-catalog-destinations > header small{font-size:10px}
+  .mobile-catalog-destinations .mobile-catalog-section-list{
+    flex:0 0 auto;
+    gap:7px;
+    padding:8px 10px 14px;
+  }
+  .mobile-catalog-destinations .mobile-catalog-section-list button{
+    min-height:52px;
+    font-size:12px;
+    border-radius:7px;
+    background:#fffaf0;
+  }
+  .mobile-catalog-destinations .mobile-catalog-section-list button.active{
+    border-color:#b59b68;
+    background:#fff4d7;
+  }
+  .mobile-catalog-destinations .mobile-catalog-section-list button:focus-visible{
+    outline:2px solid #b59b68;
+    outline-offset:2px;
+  }
+}
+
+/* Keep role-preview and Viewer navigation available when Quotes uses its
+   immersive editor shell. They do not have an active editable quote toolbar. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) > .mobile-app-commandbar {
+    position: relative;
+    z-index: 170;
+    display: grid;
+    grid-template-columns: 40px minmax(0,1fr) 40px 40px;
+    align-items: center;
+    gap: 4px;
+    height: 50px;
+    min-height: 50px;
+    flex: 0 0 50px;
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(87,76,58,.18);
+    background: rgba(246,243,235,.97);
+    box-shadow: 0 2px 7px rgba(49,43,34,.08);
+  }
+  /* Read-only routes always retain a tappable hamburger and visible bar.
+     Unlike the editable quote workspace, there is no internal nav to fall back on. */
+  .sales-app.sales-app-viewer > .mobile-app-commandbar {
+    display: grid;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .mobile-app-drawer-owner-tools {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(91,78,58,.12);
+    background: rgba(234,231,220,.75);
+  }
+  .mobile-app-drawer-owner-tools .role-perspective-picker {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+  .mobile-app-drawer-owner-tools .role-perspective-picker.is-compact .role-perspective-picker-label { display: inline; }
+  .mobile-app-drawer-owner-tools .role-perspective-picker select {
+    min-width: 0;
+    width: min(60%,200px);
+    max-width: 200px;
+    min-height: 34px;
+    border: 1px solid #c4bda9;
+    border-radius: 5px;
+    padding: 4px 7px;
+    background: #fffaf0;
+    font-size: 12px;
+  }
+  .sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) .quotes-view,
+  .sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) .quotes-workbench {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+}

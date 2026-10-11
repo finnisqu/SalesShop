@@ -1,0 +1,53 @@
+name: SalesShop Visual QC (Batch 10B)
+
+on:
+  push:
+    branches:
+      - architecture/react-foundation
+    paths:
+      - 'src/**'
+      - 'e2e/**'
+      - 'playwright.config.ts'
+      - 'package.json'
+      - '.github/workflows/visual-qc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-qc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-qc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      # Browser QC never signs in or touches the shared World Stone cloud workspace.
+      VITE_SUPABASE_URL: ''
+      VITE_SUPABASE_ANON_KEY: ''
+      VITE_BASE_PATH: '/'
+    steps:
+      - name: Check out architecture branch
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Install Chromium and browser dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Browser layout, appearance and scroll checks
+        run: npm run test:visual
+      - name: Upload screenshots, layout measurements and browser traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: salesshop-batch10b-visual-qc
+          path: |
+            artifacts/playwright-results/
+            artifacts/playwright-report/
+          retention-days: 14
+          if-no-files-found: warn

@@ -1,0 +1,176 @@
+/*
+ * SalesShop themes — curated palettes applied to workspace chrome and common
+ * surfaces, not customer-facing quote documents or notebook paper. This bridge
+ * can shrink as each tab adopts the UI Foundation tokens.
+ */
+:root[data-sales-theme="light"] {
+  --ss-theme-canvas:#eaf0f2; --ss-theme-base:#f7f9fa; --ss-theme-card:#fff;
+  --ss-theme-ink:#25343e; --ss-theme-muted:#51616a; --ss-theme-border:#b8c7cf;
+  --ss-theme-accent:#47788e; --ss-theme-tint:#dcebf1; --ss-theme-contrast:#fff;
+}
+:root[data-sales-theme="warm"] {
+  --ss-theme-canvas:#e9e3d8; --ss-theme-base:#f4f0e8; --ss-theme-card:#fffaf0;
+  --ss-theme-ink:#36342c; --ss-theme-muted:#6b6456; --ss-theme-border:#cfc5b4;
+  --ss-theme-accent:#8d6e30; --ss-theme-tint:#ebe2ce; --ss-theme-contrast:#fffaf0;
+}
+:root[data-sales-theme="contrast"] {
+  --ss-theme-canvas:#ededeb; --ss-theme-base:#f8f8f5; --ss-theme-card:#fff;
+  --ss-theme-ink:#111b1b; --ss-theme-muted:#293c41; --ss-theme-border:#364d52;
+  --ss-theme-accent:#214e72; --ss-theme-tint:#d8eaf1; --ss-theme-contrast:#fff;
+}
+:root[data-sales-theme="dark"] {
+  --ss-theme-canvas:#1b242b; --ss-theme-base:#263139; --ss-theme-card:#303d46;
+  --ss-theme-ink:#f6f3ea; --ss-theme-muted:#c4ced1; --ss-theme-border:#53636b;
+  --ss-theme-accent:#dac083; --ss-theme-tint:#394b53; --ss-theme-contrast:#17232b;
+}
+:root[data-sales-theme="sage"] {
+  --ss-theme-canvas:#dfe6dd; --ss-theme-base:#eef1e8; --ss-theme-card:#fbfcf3;
+  --ss-theme-ink:#2d3b31; --ss-theme-muted:#546356; --ss-theme-border:#b6c6b5;
+  --ss-theme-accent:#53744f; --ss-theme-tint:#d5e6cd; --ss-theme-contrast:#fff;
+}
+:root[data-sales-theme="coastal"] {
+  --ss-theme-canvas:#dce9ed; --ss-theme-base:#edf4f4; --ss-theme-card:#faffff;
+  --ss-theme-ink:#273e48; --ss-theme-muted:#4c6470; --ss-theme-border:#afc6cb;
+  --ss-theme-accent:#347888; --ss-theme-tint:#d1e8e9; --ss-theme-contrast:#fff;
+}
+:root[data-sales-theme="autumn"] {
+  --ss-theme-canvas:#e9ddd0; --ss-theme-base:#f6eddf; --ss-theme-card:#fff7eb;
+  --ss-theme-ink:#463328; --ss-theme-muted:#755a46; --ss-theme-border:#d5bfa4;
+  --ss-theme-accent:#ae623e; --ss-theme-tint:#f3dbc6; --ss-theme-contrast:#fff;
+}
+:root[data-sales-theme="winter"] {
+  --ss-theme-canvas:#dfe7ef; --ss-theme-base:#eff3f7; --ss-theme-card:#fbfdff;
+  --ss-theme-ink:#2d3c4d; --ss-theme-muted:#52677a; --ss-theme-border:#b8c9d8;
+  --ss-theme-accent:#537596; --ss-theme-tint:#d7e5f3; --ss-theme-contrast:#fff;
+}
+:root[data-sales-theme="holiday"] {
+  --ss-theme-canvas:#e1e4dc; --ss-theme-base:#f0f2e9; --ss-theme-card:#fffcf3;
+  --ss-theme-ink:#263d34; --ss-theme-muted:#586258; --ss-theme-border:#aebfad;
+  --ss-theme-accent:#9a4947; --ss-theme-tint:#dde8dc; --ss-theme-contrast:#fff;
+}
+:root[data-sales-theme="rainy"] {
+  --ss-theme-canvas:#d6dfe4; --ss-theme-base:#e9eef1; --ss-theme-card:#f5f8f9;
+  --ss-theme-ink:#2a3c49; --ss-theme-muted:#465f6f; --ss-theme-border:#afc0c9;
+  --ss-theme-accent:#516d88; --ss-theme-tint:#d8e2e9; --ss-theme-contrast:#fff;
+}
+
+/* Bridge the shared tokens to selected palette. No printer/public views. */
+:root[data-sales-theme] .sales-app {
+  --ss-app-bg:var(--ss-theme-canvas);
+  --ss-shell-bg:var(--ss-theme-base);
+  --ss-surface:var(--ss-theme-base);
+  --ss-surface-raised:var(--ss-theme-card);
+  --ss-text:var(--ss-theme-ink);
+  --ss-text-muted:var(--ss-theme-muted);
+  --ss-border:var(--ss-theme-border);
+  --ss-accent:var(--ss-theme-accent);
+  --ss-focus:var(--ss-theme-accent);
+  --chrome:var(--ss-theme-base);
+  --chrome-2:var(--ss-theme-tint);
+  --border:var(--ss-theme-border);
+  --ink:var(--ss-theme-ink);
+  --muted:var(--ss-theme-muted);
+}
+
+/* Shared workspace surfaces, intentionally excluding the customer's document. */
+:root[data-sales-theme] .sales-app {
+  color:var(--ss-theme-ink);
+  background:var(--ss-theme-canvas);
+}
+:root[data-sales-theme] .sales-app :is(.app-header,.mobile-app-commandbar,.mobile-app-drawer,.mobile-app-drawer>header) {
+  background:var(--ss-theme-base);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app :is(.brand-lockup,.mobile-app-current>strong,.mobile-app-current>span,.mobile-app-drawer>header strong,.app-tab,.migration-chip) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app :is(.app-tab.active,.mobile-app-drawer-nav button.active,.settings-tabs button.active,.catalog-section-nav button.active) {
+  background:var(--ss-theme-tint);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme] .sales-app :is(
+ .board-view,.board-header-panel,.project-board,.catalog-workspace,.catalog-header,
+ .connections-workspace,.company-settings-view,.settings-layout,.quotes-view,.quotes-workbench,
+ .viewer-workspace,.role-perspective-settings
+) {
+  background:var(--ss-theme-canvas);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app :is(
+ .quotes-sidebar,.quote-workbench-header,.catalog-section-nav,.connections-tabs,
+ .company-settings-header,.settings-tabs,.notebook-sidebar,.paper-toolbar
+) {
+  background:var(--ss-theme-base);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app :is(
+ .project-card,.account-card,.board-column,.board-empty-card,.company-settings-card,
+ .connections-record,.connections-person-record,.viewer-record,.viewer-metrics>div,
+ .catalog-other-card,.quote-area-card,.quote-line-editor,.quote-editor-pane,
+ .role-perspective-settings-card,.role-perspective-capability
+) {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app :is(
+ .company-settings-card>header strong,.settings-preference-row>div>strong,
+ .connections-record h2,.project-card h3,.account-card h3,
+ .catalog-header h1,.connections-heading h1,.company-settings-header h1,
+ .viewer-record h2,.viewer-workspace-header h1,.quote-workbench-header strong
+) { color:var(--ss-theme-ink); }
+:root[data-sales-theme] .sales-app :is(
+ .company-settings-card small,.settings-preference-row>div>small,
+ .connections-record small,.project-card-company,.account-card-company,
+ .viewer-record p,.viewer-record small,.viewer-workspace-header p,
+ .catalog-header p,.connections-heading p,.company-settings-header p
+) { color:var(--ss-theme-muted); }
+:root[data-sales-theme] .sales-app :is(
+ .company-settings-view,.connections-workspace,.catalog-workspace,.board-view,
+ .quotes-view,.viewer-workspace
+) :is(input:not([type="checkbox"]),select,textarea) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app :is(
+ .mobile-app-menu-button,.mobile-app-commandbar .global-search-launcher,
+ .mobile-app-commandbar .quick-create-launcher,
+ .settings-tabs button,.catalog-section-nav button
+) {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app :is(
+ .settings-preference-row input[type="checkbox"],.settings-tabs button.active
+) { accent-color:var(--ss-theme-accent); }
+
+/* The paper itself, drawing surface and print/customer quotes remain deliberately unthemed. */
+:root[data-sales-theme] .sales-app .desk-surface { background-color:var(--ss-theme-canvas); }
+:root[data-sales-theme] .sales-app .customer-quote-paper {
+  --ink:#272821;
+  --muted:#77766f;
+  --border:#cbc8be;
+  --chrome:#f4f3ef;
+  --chrome-2:#ebe9e2;
+  color-scheme:light;
+}
+:root[data-sales-theme="dark"] .sales-app { color-scheme:dark; }
+:root[data-sales-theme="dark"] .sales-app :is(.quote-title-input,.quote-number,.quote-control-heading,.quote-line-kind,.quote-area-title,.quote-area-summary,.catalog-current-section,.connections-record-eyebrow) { color:var(--ss-theme-ink); }
+:root[data-sales-theme="dark"] .sales-app :is(.quote-preview-pane,.quote-workbench-body,.quote-lines-editor) { background:var(--ss-theme-base); }
+/* Do not style the customer quote document or preview paper; it remains white. */
+:root[data-sales-theme="dark"] .sales-app .customer-quote-paper { color-scheme:light; }
+:root[data-sales-theme="contrast"] .sales-app :is(
+ .project-card,.account-card,.company-settings-card,.connections-record,.viewer-record,.quote-area-card
+) { border-width:2px; }
+:root[data-sales-theme="contrast"] .sales-app :is(button,input,select,textarea):focus-visible {
+  outline:3px solid var(--ss-theme-accent);
+  outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce) {
+  :root[data-sales-theme] .sales-app * { scroll-behavior:auto; }
+}

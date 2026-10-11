@@ -1,0 +1,475 @@
+import type {
+  RateBookCategory,
+  RateBookDivision,
+  RateBookPricingBehavior,
+  RateBookUnit,
+} from './rateBook';
+import type {
+  SinkCategory,
+  SinkConfiguration,
+  SinkMountType,
+} from './sink';
+
+export const QUOTE_STATUSES = ['Draft', 'Ready', 'Sent', 'Viewed', 'Signed', 'Declined', 'Expired'] as const;
+export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
+
+export const COMMERCIAL_DOCUMENT_TYPES = ['quote', 'pricing-schedule', 'change-order'] as const;
+export type CommercialDocumentType = (typeof COMMERCIAL_DOCUMENT_TYPES)[number];
+
+export const PRICING_SCHEDULE_FIELDS = [
+  'series',
+  'itemType',
+  'planNumber',
+  'planName',
+  'optionCode',
+  'description',
+  'customerPrice',
+] as const;
+export type PricingScheduleField = (typeof PRICING_SCHEDULE_FIELDS)[number];
+
+export const PRICING_BUILDER_PRODUCT_TYPES = [
+  'Countertops',
+  'Backsplash',
+  'Kitchen Sink',
+  'Vanity Sink',
+  'Support',
+  'Other',
+] as const;
+export type PricingBuilderProductType = (typeof PRICING_BUILDER_PRODUCT_TYPES)[number];
+export type PricingBuilderUnit = 'sf' | 'each' | 'flat';
+export type PricingScheduleRoute = 'rate-sheet' | 'plan-builder' | 'workbook';
+export type PricingSchedulePublishSource = 'rate-sheet' | 'builder' | 'workbook';
+export type PricingRateKind = 'material-level' | 'add-on';
+export type PricingRatePriceMode = 'priced' | 'included' | 'no-charge' | 'tbd';
+export type PricingMaterialType =
+  | 'Granite'
+  | 'Quartzite'
+  | 'Marble'
+  | 'Dolomite'
+  | 'Soapstone'
+  | 'Onyx'
+  | 'Travertine'
+  | 'Limestone'
+  | 'Natural Stone'
+  | 'Quartz'
+  | 'Sintered Stone'
+  | 'Porcelain'
+  | 'Solid Surface'
+  | 'Terrazzo'
+  | 'Other';
+export type PricingDetailsLayout = 'inline' | 'list';
+
+export type QuoteLineKind = 'item' | 'material' | 'sink' | 'rate' | 'allowance' | 'discount' | 'tax' | 'note' | 'scope' | 'warranty';
+export type QuotePricingMode = 'direct' | 'quantity-rate' | 'slab-multiplier' | 'none';
+
+export interface QuoteCustomerColumns {
+  quantity: boolean;
+  rate: boolean;
+  lineAmount: boolean;
+}
+
+export const QUOTE_AREA_SCOPE_FIELDS = [
+  'countertopSf',
+  'splashLf',
+  'fullHeightSplashSf',
+  'kitchenSinkCount',
+  'vanitySinkCount',
+  'cutoutCount',
+] as const;
+export type QuoteAreaScopeField = (typeof QUOTE_AREA_SCOPE_FIELDS)[number];
+
+export interface QuoteAreaScope {
+  countertopSf?: number;
+  splashLf?: number;
+  fullHeightSplashSf?: number;
+  kitchenSinkCount?: number;
+  vanitySinkCount?: number;
+  cutoutCount?: number;
+}
+
+export type QuoteSectionCustomerDisplay = 'detail' | 'summary';
+
+export interface QuoteSection {
+  id: string;
+  title: string;
+  customerVisible: boolean;
+  customerDisplayMode?: QuoteSectionCustomerDisplay;
+  scope?: QuoteAreaScope;
+}
+
+export interface QuoteMaterialCostSnapshot {
+  capturedAt: string;
+  materialId: string;
+  materialName: string;
+  brand?: string;
+  supplier?: string;
+  materialFamily?: string;
+  materialType: PricingMaterialType;
+  stockProgram: boolean;
+  variantId?: string;
+  variantLabel?: string;
+  thickness?: string;
+  finish?: string;
+  formatName?: string;
+  formatKind?: string;
+  lengthIn?: number;
+  widthIn?: number;
+  areaSf?: number;
+  availability?: string;
+  purchaseOptionId?: string;
+  purchaseOptionLabel?: string;
+  purchaseMinQuantity?: number;
+  pricingBasis?: string;
+  costPerSf?: number;
+  slabCost?: number;
+  sourcePublicationId?: string;
+  sourcePriceListLabel?: string;
+  sourceEffectiveDate?: string;
+  sourceFileName?: string;
+  sourcePageSheet?: string;
+  sourceReference?: string;
+  sourceRecordedAt?: string;
+  sourceProvenance?: string;
+}
+
+export interface QuoteRateSnapshot {
+  capturedAt: string;
+  rateBookItemId: string;
+  category: RateBookCategory;
+  name: string;
+  code?: string;
+  unit: RateBookUnit;
+  pricingBehavior: RateBookPricingBehavior;
+  pricingDivision?: RateBookDivision;
+  internalCost?: number;
+  sellRate?: number;
+  effectiveDate?: string;
+  notes?: string;
+  sourceUpdatedAt?: string;
+}
+
+export interface QuoteLineRateReference {
+  rateBookItemId?: string;
+  snapshot?: QuoteRateSnapshot;
+}
+
+export interface QuoteSinkSnapshot {
+  capturedAt: string;
+  sinkModelId: string;
+  sinkModelName: string;
+  modelCode?: string;
+  brand?: string;
+  supplier?: string;
+  category: SinkCategory;
+  widthIn?: number;
+  depthIn?: number;
+  mountType?: SinkMountType;
+  material?: string;
+  variantId: string;
+  variantLabel: string;
+  variantCode?: string;
+  configuration: SinkConfiguration;
+  ada: boolean;
+  internalCost?: number;
+  sellPrice?: number;
+  effectiveDate?: string;
+  sourceUpdatedAt?: string;
+}
+
+export interface QuoteLineSinkReference {
+  sinkModelId?: string;
+  variantId?: string;
+  snapshot?: QuoteSinkSnapshot;
+}
+
+export interface QuoteLineMaterialReference {
+  materialId?: string;
+  customMaterialName?: string;
+  variantId?: string;
+  purchaseOptionId?: string;
+  stockProgram: boolean;
+  pricingSource: 'stock-level' | 'non-stock-stock-equivalent' | 'non-stock-guide' | 'suggested-level' | 'manual-line-rate' | 'slab-multiplier';
+  sourceCostPerSf?: number;
+  guideRate?: number;
+  stockEquivalentLevel?: string;
+  sourceSlabCost?: number;
+  catalogSlabCost?: number;
+  slabCostOverride?: boolean;
+  slabMultiplier?: number;
+  slabCount?: number;
+  customerPricePerSlab?: number;
+  snapshot?: QuoteMaterialCostSnapshot;
+}
+
+export interface QuoteLineQuantitySource {
+  kind: 'area-scope';
+  sectionId: string;
+  field: QuoteAreaScopeField;
+  capturedValue: number;
+  appliedAt: string;
+}
+
+export interface QuoteLine {
+  id: string;
+  sectionId?: string;
+  kind: QuoteLineKind;
+  description: string;
+  pricingMode: QuotePricingMode;
+  quantity?: number;
+  quantitySource?: QuoteLineQuantitySource;
+  rate?: number;
+  amount?: number;
+  internalCost?: number;
+  customerVisible: boolean;
+  includeInTotal: boolean;
+  materialReference?: QuoteLineMaterialReference;
+  sinkReference?: QuoteLineSinkReference;
+  rateReference?: QuoteLineRateReference;
+}
+
+export type PricingScheduleColumnMapping = Partial<Record<PricingScheduleField, number>>;
+
+export interface PricingScheduleMapping {
+  sheetId: string;
+  headerRow: number;
+  firstDataRow: number;
+  lastDataRow?: number;
+  columns: PricingScheduleColumnMapping;
+}
+
+export interface PricingScheduleItem {
+  sourceRow: number;
+  series?: string;
+  itemType?: string;
+  planNumber?: string;
+  planName?: string;
+  optionCode?: string;
+  description?: string;
+  customerPrice?: number;
+  displayType?: 'schedule-item' | 'rate-level' | 'rate-add-on';
+  groupLabel?: string;
+  priceLabel?: string;
+  unitLabel?: string;
+  colors?: string[];
+  details?: string[];
+  detailsLayout?: PricingDetailsLayout;
+}
+
+export interface PricingRateItem {
+  id: string;
+  productType: PricingBuilderProductType;
+  name: string;
+  unit: PricingBuilderUnit;
+  rate?: number;
+  kind?: PricingRateKind;
+  materialType?: PricingMaterialType;
+  level?: string;
+  description?: string;
+  colors?: string[];
+  colorsText?: string;
+  colorIds?: string[];
+  priceMode?: PricingRatePriceMode;
+  customerVisible?: boolean;
+  showLevelOnCustomer?: boolean;
+  detailsLayout?: PricingDetailsLayout;
+  sourceRateBookItemId?: string;
+  sourceRateBookEffectiveDate?: string;
+  sourcePricingBehavior?: RateBookPricingBehavior;
+  pricingDivision?: RateBookDivision;
+  internalCost?: number;
+  suggestedRate?: number;
+}
+
+export interface PricingOptionRule {
+  id: string;
+  scope: string;
+  productType: PricingBuilderProductType;
+  rateItemId: string;
+}
+
+export interface PricingOptionPackage {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  isBase?: boolean;
+  flatAdjustment?: number;
+  rules: PricingOptionRule[];
+}
+
+export interface PricingPlan {
+  id: string;
+  series?: string;
+  planNumber: string;
+  name: string;
+  description?: string;
+  notes?: string;
+  excludedOptionIds?: string[];
+}
+
+export interface PricingPlanTakeoff {
+  id: string;
+  planId: string;
+  room: string;
+  piece?: string;
+  length?: number;
+  width?: number;
+  squareFeet?: number;
+  kitchenSinks?: number;
+  vanityBowls?: number;
+  supports?: number;
+}
+
+export interface PricingScheduleBuilderData {
+  rateBookName: string;
+  rates: PricingRateItem[];
+  options: PricingOptionPackage[];
+  plans: PricingPlan[];
+  takeoffs: PricingPlanTakeoff[];
+}
+
+export interface PricingScheduleData {
+  route?: PricingScheduleRoute;
+  publishSource?: PricingSchedulePublishSource;
+  builder?: PricingScheduleBuilderData;
+  workbookData?: unknown;
+  mapping?: PricingScheduleMapping;
+  customerItems: PricingScheduleItem[];
+  sourceFileName?: string;
+  importedAt?: string;
+}
+
+export interface QuoteRevisionSnapshot {
+  revision: number;
+  label?: string;
+  quoteDate: string;
+  capturedAt: string;
+  status: QuoteStatus;
+  documentType?: CommercialDocumentType;
+  parentQuoteId?: string;
+  changeOrderNumber?: number;
+  title: string;
+  projectId?: string;
+  companyId?: string;
+  companyName?: string;
+  contactId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  address?: string;
+  pricingDivision?: RateBookDivision;
+  sections: QuoteSection[];
+  lines: QuoteLine[];
+  customerColumns: QuoteCustomerColumns;
+  customerNotes: string;
+  pricingSchedule?: PricingScheduleData;
+  customerTotal: number;
+}
+
+export interface Quote {
+  id: string;
+  quoteNumber: string;
+  documentType: CommercialDocumentType;
+  parentQuoteId?: string;
+  changeOrderNumber?: number;
+  originalQuoteDate: string;
+  quoteDate: string;
+  revision: number;
+  revisionLabel?: string;
+  status: QuoteStatus;
+  title: string;
+  /** Responsible salesperson; absent on legacy unassigned documents. */
+  ownerUserId?: string;
+  /** Organization-scoped reporting group IDs, separate from pricingDivision. */
+  divisionId?: string;
+  teamId?: string;
+  projectId?: string;
+  companyId?: string;
+  companyName?: string;
+  contactId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  address?: string;
+  pricingDivision?: RateBookDivision;
+  sections: QuoteSection[];
+  lines: QuoteLine[];
+  customerColumns: QuoteCustomerColumns;
+  customerNotes: string;
+  internalNotes: string;
+  pricingSchedule?: PricingScheduleData;
+  history: QuoteRevisionSnapshot[];
+  sentAt?: string;
+  viewedAt?: string;
+  signedAt?: string;
+  archivedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuoteDocument {
+  schemaVersion: 2;
+  quotes: Quote[];
+  activeQuoteId: string | null;
+}
+
+export type QuotePatch = Partial<Pick<Quote,
+  | 'documentType'
+  | 'title'
+  | 'projectId'
+  | 'companyId'
+  | 'companyName'
+  | 'contactId'
+  | 'contactName'
+  | 'contactEmail'
+  | 'address'
+  | 'pricingDivision'
+  | 'quoteDate'
+  | 'revisionLabel'
+  | 'status'
+  | 'lines'
+  | 'customerNotes'
+  | 'internalNotes'
+  | 'pricingSchedule'
+>>;
+
+export function roundCurrency(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  const magnitude = Math.round((Math.abs(value) + Number.EPSILON) * 100) / 100;
+  return value < 0 ? -magnitude : magnitude;
+}
+
+export function quoteLineAmount(line: QuoteLine) {
+  if (line.pricingMode === 'none') return 0;
+  const raw = line.pricingMode === 'quantity-rate'
+    ? (line.quantity ?? 0) * (line.rate ?? 0)
+    : (line.amount ?? 0);
+  const signed = line.kind === 'discount' ? -Math.abs(raw) : raw;
+  return roundCurrency(signed);
+}
+
+export function quoteLineTotal(line: QuoteLine) {
+  if (!line.includeInTotal) return 0;
+  return quoteLineAmount(line);
+}
+
+export function quoteLinesTotal(lines: QuoteLine[]) {
+  return roundCurrency(lines.reduce((total, line) => total + quoteLineTotal(line), 0));
+}
+
+export function quoteTotal(quote: Quote) {
+  return quoteLinesTotal(quote.lines);
+}
+
+export function isDraftQuoteNumber(value: string) {
+  return value.startsWith('DRAFT-');
+}
+
+export function commercialDocumentLabel(document: Pick<Quote, 'documentType'>) {
+  if (document.documentType === 'pricing-schedule') return 'Pricing Schedule';
+  if (document.documentType === 'change-order') return 'Change Order';
+  return 'Quote';
+}
+
+export function displayQuoteNumber(quote: Pick<Quote, 'quoteNumber' | 'revision' | 'documentType'>) {
+  if (isDraftQuoteNumber(quote.quoteNumber)) return `${commercialDocumentLabel(quote)} Draft`;
+  return quote.revision > 0 ? `${quote.quoteNumber}-R${quote.revision}` : quote.quoteNumber;
+}
