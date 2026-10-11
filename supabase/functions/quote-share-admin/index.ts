@@ -88,10 +88,20 @@ Deno.serve(async (req) => {
     const { data: allowedQuote, error: quoteAccessError } = await userClient.rpc('can_access_quote', {
       p_organization_id: organizationId,
       p_quote_id: quoteId,
-      p_action: action === 'get' ? 'read' : 'edit',
+      p_action: 'edit',
     });
     if (quoteAccessError || allowedQuote !== true) {
       return json({ error: 'Quote access denied.' }, 403);
+    }
+    // A share URL acts as a bearer credential; even reading it requires
+    // permission to issue customer quotes, not just view quote details.
+    if (action === 'get') {
+      const { data: canIssue, error: issueError } = await userClient.rpc('can_issue_team_quote', {
+        target_organization: organizationId,
+      });
+      if (issueError || canIssue !== true) {
+        return json({ error: 'Customer-link access denied for this department.' }, 403);
+      }
     }
     // This handler uses a privileged client and bypasses RLS; enforce viewer read-only here too.
     if (action !== 'get') {
