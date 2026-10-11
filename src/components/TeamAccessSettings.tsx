@@ -4,6 +4,7 @@ import { allowedInviteRoles, canManageTeamMember, roleName, TEAM_ROLE_HELP, type
 import { teamInviteUrl } from '../services/teamInvitationLink';
 import { TEAM_DEPARTMENTS, TEAM_DEPARTMENT_DETAILS, departmentName, type TeamDepartment } from '../services/teamDepartments';
 import { useAuthStore } from '../store/authStore';
+import { OwnershipTransferPanel } from './OwnershipTransferPanel';
 
 type MemberRow = { user_id: string; role: TeamRole; job_function: TeamDepartment; created_at: string };
 type MemberInfo = MemberRow & { displayName?: string };
@@ -211,6 +212,11 @@ export function TeamAccessSettings() {
       <div className="settings-inline-actions"><button type="button" disabled={busy || loading} onClick={() => { setError(''); void refresh(); }}>Refresh team</button></div>
     </article>
     <div className="team-settings-side">
+      {!loading && <OwnershipTransferPanel orgId={orgId!} myRole={myRole}
+        members={members.map(member=>({
+          user_id:member.user_id,displayName:member.displayName|| (member.user_id===user?.id ? 'You' : 'Teammate'),
+          role:member.role,
+        }))} />}
       <article className="company-settings-card">
         <header><div><strong>Invitations</strong><small>Send a seven-day invitation or share its one-time link. Delivery problems can be checked in Resend.</small></div></header>
         {isAdmin ? <>
