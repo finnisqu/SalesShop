@@ -6,6 +6,7 @@ import { OwnerRolePreviewSettings } from './RolePerspectiveControls';
 import { PageHeader, Panel, Button } from '../design-system/components';
 import { SettingsIdentityFields, SettingsProfileFields } from './SettingsIdentityFields';
 import { TeamAccessSettings } from './TeamAccessSettings';
+import { SalesTeamManagement } from './SalesTeamManagement';
 import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
@@ -192,7 +193,7 @@ export function CompanySettings() {
           </article>
         </section>}
 
-        {tab === 'team' && <TeamAccessSettings />}
+        {tab === 'team' && <><TeamAccessSettings /><SalesTeamManagement /></>}
         {tab === 'appearance' && <section className="settings-panel-grid" aria-label="Appearance and accessibility preferences">
           <AppearanceThemePicker />
           <OwnerRolePreviewSettings />
