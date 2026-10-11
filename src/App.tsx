@@ -34,7 +34,7 @@ import './appearance-picker.css';
 import { AuthStatus } from './components/AuthGate';
 import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
 import { ViewerWorkspace } from './components/ViewerWorkspace';
-import { RolePerspectivePicker, RolePerspectiveBanner, RolePerspectiveSettings } from './components/RolePerspectiveControls';
+import { RolePerspectiveBanner, RolePerspectiveSettings } from './components/RolePerspectiveControls';
 import { resolveOwnerPerspective } from './services/rolePerspective';
 import { useRolePerspectiveStore } from './store/rolePerspectiveStore';
 import { useAuthStore } from './store/authStore';
@@ -124,7 +124,6 @@ function App() {
         {!viewer && !inRolePreview && <GlobalSearch />}
         {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
         <div className="app-account-zone">
-          <RolePerspectivePicker />
           <div className="migration-chip">React foundation</div>
           <AuthStatus />
         </div>
