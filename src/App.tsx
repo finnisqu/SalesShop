@@ -37,6 +37,7 @@ import { ViewerWorkspace } from './components/ViewerWorkspace';
 import { RolePerspectiveBanner, RolePerspectiveSettings } from './components/RolePerspectiveControls';
 import { resolveOwnerPerspective } from './services/rolePerspective';
 import { useRolePerspectiveStore } from './store/rolePerspectiveStore';
+import { useQuoteLibraryStore } from './store/quoteLibraryStore';
 import { useAuthStore } from './store/authStore';
 import { useAppearanceStore } from './store/appearanceStore';
 import { canEditTeamArea } from './services/teamDepartments';
@@ -71,6 +72,8 @@ function App() {
   const effectiveRole = preview?.role ?? teamRole;
   const effectiveDepartment = preview?.department ?? department;
   const inRolePreview = Boolean(preview);
+  const quoteLibraryMode = useQuoteLibraryStore((state) => state.mode);
+  const teamQuotesOverview = view === 'quotes' && quoteLibraryMode === 'team' && mode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin') && !inRolePreview;
   const viewer = mode === 'cloud' && effectiveRole === 'viewer';
   const scopedMember = mode === 'cloud' && effectiveRole === 'member' && effectiveDepartment !== 'general';
   const readOnlyArea = viewer || (scopedMember && (
@@ -108,7 +111,7 @@ function App() {
   if (!hydrated || !entry) return <div className="loading-screen">Opening SalesShop…</div>;
 
   return (
-    <SalesShopShell mode="legacy" className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}${inRolePreview ? ' owner-perspective-active' : ''}`}>
+    <SalesShopShell mode="legacy" className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}${inRolePreview ? ' owner-perspective-active' : ''}${teamQuotesOverview ? ' team-quotes-overview-active' : ''}`}>
       <RolePerspectiveBanner />
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
