@@ -49,6 +49,7 @@ interface QuoteState {
   createQuote: (prefill?: Partial<Pick<Quote, 'documentType' | 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>>) => string;
   createChangeOrder: (sourceQuoteId: string) => string | null;
   selectQuote: (quoteId: string) => void;
+  setQuoteAssignmentFromCloud: (quoteId: string, patch: Pick<Quote, 'ownerUserId' | 'divisionId' | 'teamId'>) => void;
   updateQuote: (quoteId: string, patch: QuotePatch) => void;
   deleteQuote: (quoteId: string) => void;
   restoreQuote: (quoteId: string) => void;
@@ -136,6 +137,7 @@ function newQuote(prefill: Partial<Pick<Quote, 'documentType' | 'title' | 'proje
     revision: 0,
     status: 'Draft',
     title: prefill.title?.trim() || 'Untitled quote',
+    ownerUserId: useAuthStore.getState().mode === 'cloud' ? useAuthStore.getState().user?.id : undefined,
     projectId: prefill.projectId,
     companyId: prefill.companyId,
     companyName: prefill.companyName,
@@ -312,6 +314,12 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, activeQuoteId: changeOrder.id });
     recordQuoteCreated(changeOrder);
     return changeOrder.id;
+  },
+
+  setQuoteAssignmentFromCloud: (quoteId, patch) => {
+    const quotes = get().quotes.map((quote) => quote.id === quoteId ? { ...quote, ...patch } : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes });
   },
 
   selectQuote: (activeQuoteId) => {
