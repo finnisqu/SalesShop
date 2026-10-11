@@ -9,9 +9,10 @@ export function RolePerspectivePicker({ compact = false }: { compact?: boolean }
   const actualRole = useAuthStore((state) => state.teamRole);
   const mode = useAuthStore((state) => state.mode);
   const current = useRolePerspectiveStore((state) => state.activePerspective);
+  const enabled = useRolePerspectiveStore((state) => state.previewToolsEnabled);
   const start = useRolePerspectiveStore((state) => state.startPerspective);
   const exit = useRolePerspectiveStore((state) => state.exitPerspective);
-  if (!allowedOwnerPerspective(actualRole, mode) || current) return null;
+  if (!allowedOwnerPerspective(actualRole, mode) || !enabled || current) return null;
 
   return <label className={`role-perspective-picker${compact ? ' is-compact' : ''}`}>
     <span className="role-perspective-picker-label">{compact ? 'Roles' : 'Preview as'}</span>
@@ -27,6 +28,27 @@ export function RolePerspectivePicker({ compact = false }: { compact?: boolean }
   </label>;
 }
 
+/** Advanced Setting only. This toggle does not change account permissions. */
+export function OwnerRolePreviewSettings() {
+  const role = useAuthStore((state) => state.teamRole);
+  const mode = useAuthStore((state) => state.mode);
+  const enabled = useRolePerspectiveStore((state) => state.previewToolsEnabled);
+  const setEnabled = useRolePerspectiveStore((state) => state.setPreviewToolsEnabled);
+  const active = useRolePerspectiveStore((state) => state.activePerspective);
+  const exit = useRolePerspectiveStore((state) => state.exitPerspective);
+  if (!allowedOwnerPerspective(role, mode)) return null;
+  return <article className="company-settings-card settings-secondary-card role-preview-preferences">
+    <header><div><strong>Advanced · Role Preview</strong><small>Optional owner-only UI simulator; never changes permissions or signs in as another person.</small></div></header>
+    <label className="settings-preference-row">
+      <div><strong>Enable Role Preview tools</strong><small>Show the preview banner only while testing a role. Keep everyday navigation clear.</small></div>
+      <input type="checkbox" aria-label="Enable Role Preview tools" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
+    </label>
+    {enabled && <div className="role-preview-preferences-picker">
+      {active ? <button type="button" onClick={exit}>Exit current role preview</button> : <RolePerspectivePicker />}
+    </div>}
+  </article>;
+}
+
 export function RolePerspectiveBanner() {
   const actualRole = useAuthStore((state) => state.teamRole);
   const mode = useAuthStore((state) => state.mode);
@@ -40,7 +62,7 @@ export function RolePerspectiveBanner() {
     if (!isOwner && current) exit();
   }, [current, isOwner, exit]);
 
-  if (!item) return null;
+  if (!item || !enabled) return null;
   return <div className="role-perspective-banner" role="status" aria-label="Owner role preview active">
     <span className="role-perspective-symbol" aria-hidden="true">◉</span>
     <div className="role-perspective-banner-copy">
