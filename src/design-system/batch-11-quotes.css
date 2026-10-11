@@ -1,0 +1,138 @@
+/* SalesShop Batch 11 — My Quotes vs read-only Team Quotes.
+ * Internal chrome only; public/customer quote papers are never targeted. */
+:root[data-sales-theme] .sales-app.view-quotes .team-quotes-view {
+  --tq-base:var(--ss-theme-base); --tq-card:var(--ss-theme-card);
+  --tq-canvas:var(--ss-theme-canvas); --tq-ink:var(--ss-theme-ink);
+  --tq-muted:var(--ss-theme-muted); --tq-tint:var(--ss-theme-tint);
+  --tq-border:var(--ss-theme-border); --tq-accent:var(--ss-theme-accent);
+  flex:1 1 auto; min-height:0; min-width:0;
+  overflow-x:hidden; overflow-y:auto;
+  overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch;
+  padding:clamp(12px,2vw,26px);
+  background:var(--tq-canvas); color:var(--tq-ink);
+}
+.sales-app.view-quotes .team-quotes-heading {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:15px; margin:0 0 14px;
+}
+.sales-app.view-quotes .team-quotes-heading div {min-width:0}
+.sales-app.view-quotes .team-quotes-heading span {
+  color:var(--tq-muted);font:750 11px/1.4 system-ui,sans-serif;letter-spacing:.07em;
+}
+.sales-app.view-quotes .team-quotes-heading h1 {
+  margin:2px 0 4px;color:var(--tq-ink);
+  font:700 clamp(22px,3vw,34px)/1.2 Georgia,serif;
+}
+.sales-app.view-quotes .team-quotes-heading p {
+  color:var(--tq-muted);margin:0;font:400 13px/1.5 system-ui,sans-serif;
+}
+.sales-app.view-quotes .team-quotes-heading button,
+.sales-app.view-quotes .team-quote-details-button,
+.sales-app.view-quotes .team-quote-assignment>button {
+  min-height:40px;padding:9px 13px;border:1px solid var(--tq-border);
+  border-radius:7px;background:var(--tq-tint);color:var(--tq-ink);
+  font:700 12px/1.3 system-ui,sans-serif;cursor:pointer;
+}
+.sales-app.view-quotes .team-quotes-summary {
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 12px;
+}
+.sales-app.view-quotes .team-quotes-summary>div {
+  display:grid;gap:6px;padding:12px;min-width:0;
+  border:1px solid var(--tq-border);border-radius:9px;background:var(--tq-card);
+}
+.sales-app.view-quotes .team-quotes-summary span {color:var(--tq-muted);font:650 11px system-ui,sans-serif}
+.sales-app.view-quotes .team-quotes-summary strong {color:var(--tq-ink);font:750 20px system-ui,sans-serif}
+.sales-app.view-quotes .team-quotes-filters {
+  display:grid;grid-template-columns:minmax(155px,1.5fr) repeat(4,minmax(120px,1fr)) auto;
+  gap:8px;align-items:end;padding:11px;margin-bottom:12px;
+  border:1px solid var(--tq-border);border-radius:9px;background:var(--tq-base);
+}
+.sales-app.view-quotes .team-quotes-filters>label,
+.sales-app.view-quotes .team-quote-assignment label {display:grid;min-width:0;gap:4px}
+.sales-app.view-quotes .team-quotes-filters label>span,
+.sales-app.view-quotes .team-quote-assignment label>span {
+  color:var(--tq-muted);font:650 11px system-ui,sans-serif;
+}
+.sales-app.view-quotes .team-quotes-filters :is(select,input[type="search"]),
+.sales-app.view-quotes .team-quote-assignment select {
+  display:block;min-width:0;width:100%;min-height:44px;border-radius:6px;
+  border:1px solid var(--tq-border);background:var(--tq-card);color:var(--tq-ink);
+  padding:8px 10px;font:400 16px system-ui,sans-serif;
+}
+.sales-app.view-quotes .team-quotes-filters :is(select,input)::placeholder {color:var(--tq-muted)}
+.sales-app.view-quotes .team-quotes-archive {
+  display:flex!important;align-items:center;gap:5px;min-height:44px;
+  color:var(--tq-ink);font:600 11px system-ui,sans-serif;
+}
+.sales-app.view-quotes .team-quotes-archive input {accent-color:var(--tq-accent)}
+.sales-app.view-quotes .team-quotes-list {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:start;gap:10px}
+.sales-app.view-quotes .team-quote-card {
+  min-width:0;border:1px solid var(--tq-border);border-radius:10px;
+  background:var(--tq-card);padding:14px;display:grid;gap:12px;
+}
+.sales-app.view-quotes .team-quote-card-heading {display:flex;gap:10px;justify-content:space-between}
+.sales-app.view-quotes .team-quote-card-heading>div:first-child {min-width:0}
+.sales-app.view-quotes .team-quote-card-heading small,
+.sales-app.view-quotes .team-quote-card-heading p,
+.sales-app.view-quotes .team-quote-card-total span {display:block;margin:0 0 5px;color:var(--tq-muted);font:450 11px/1.4 system-ui,sans-serif}
+.sales-app.view-quotes .team-quote-card-heading h2 {margin:0 0 5px;color:var(--tq-ink);font:700 18px/1.25 Georgia,serif;overflow-wrap:anywhere}
+.sales-app.view-quotes .team-quote-card-total {text-align:right;white-space:nowrap}
+.sales-app.view-quotes .team-quote-card-total strong {display:block;margin-bottom:5px;color:var(--tq-ink);font:750 16px system-ui,sans-serif}
+.sales-app.view-quotes .team-quote-details-button {width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--tq-base)}
+.sales-app.view-quotes .team-quote-details {padding-top:8px;border-top:1px solid var(--tq-border);display:grid;gap:6px}
+.sales-app.view-quotes .team-quote-details-heading {color:var(--tq-muted);font:700 11px system-ui,sans-serif}
+.sales-app.view-quotes .team-quote-detail-line {display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--tq-border);font:450 12px system-ui,sans-serif}
+.sales-app.view-quotes .team-quote-detail-line strong {color:var(--tq-ink);white-space:nowrap}
+.sales-app.view-quotes .team-quote-assignment {display:grid;gap:10px;margin-top:12px;padding:12px;border:1px solid var(--tq-border);border-radius:8px;background:var(--tq-base)}
+.sales-app.view-quotes .team-quote-assignment h3 {margin:0;font-size:13px;color:var(--tq-ink)}
+.sales-app.view-quotes .team-quote-assignment>div {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sales-app.view-quotes .team-quote-assignment>button {justify-self:start}
+.sales-app.view-quotes .team-quotes-info,
+.sales-app.view-quotes .team-quotes-error,
+.sales-app.view-quotes .team-quotes-empty {padding:11px;margin:8px 0;border:1px solid var(--tq-border);border-radius:8px;background:var(--tq-base);color:var(--tq-ink);font:450 12px/1.5 system-ui,sans-serif}
+.sales-app.view-quotes .team-quotes-error {border-color:#bd7269}
+.sales-app.view-quotes .quote-library-mode-switch {display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:6px}
+.sales-app.view-quotes .quote-library-mode-switch button,
+.sales-app.view-quotes .quote-navigator-team-link,
+.sales-app.view-quotes .quote-my-quotes-empty button {
+  min-height:40px;border:1px solid var(--ss-theme-border);
+  border-radius:6px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  padding:8px;font:700 12px system-ui,sans-serif;
+}
+.sales-app.view-quotes .quote-library-mode-switch button[aria-pressed="true"] {background:var(--ss-theme-tint);box-shadow:inset 0 -3px var(--ss-theme-accent)}
+.sales-app.view-quotes .quote-my-quotes-empty {display:flex;align-items:center;justify-content:center}
+.sales-app.view-quotes .quote-my-quotes-empty>section {max-width:460px;padding:24px;display:grid;gap:12px;color:var(--ss-theme-ink);background:var(--ss-theme-card);border:1px solid var(--ss-theme-border);border-radius:12px}
+.sales-app.view-quotes .quote-my-quotes-empty h1 {margin:0}
+.sales-app.view-quotes .quote-my-quotes-empty p {margin:0;color:var(--ss-theme-muted);line-height:1.5}
+.sales-app.view-quotes .team-quotes-view :is(button,select,input):focus-visible {outline:3px solid var(--ss-focus);outline-offset:2px}
+@media(max-width:1000px) {
+  .sales-app.view-quotes .team-quotes-summary {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sales-app.view-quotes .team-quotes-filters {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sales-app.view-quotes .team-quotes-filter-search {grid-column:span 2}
+}
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  /* Team reference mode uses the same global mobile command bar as Viewer,
+     instead of the editing Quotes commandbar. */
+  .sales-app.view-quotes.team-quotes-overview-active > .mobile-app-commandbar {
+    position:relative;z-index:170;display:grid!important;
+    grid-template-columns:40px minmax(0,1fr) 40px 40px;
+    align-items:center;gap:4px;height:50px;min-height:50px;
+    flex:0 0 50px;padding:5px 6px;
+    border-bottom:1px solid var(--ss-theme-border);
+    background:var(--ss-theme-base);color:var(--ss-theme-ink);
+  }
+  .sales-app.view-quotes.team-quotes-overview-active .team-quotes-view {height:0;min-height:0;flex:1 1 auto;padding:10px}
+  .sales-app.view-quotes .team-quotes-heading {align-items:start;gap:8px}
+  .sales-app.view-quotes .team-quotes-heading h1 {font-size:20px}
+  .sales-app.view-quotes .team-quotes-heading p {font-size:11px}
+  .sales-app.view-quotes .team-quotes-summary {grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .sales-app.view-quotes .team-quotes-summary>div {padding:8px}
+  .sales-app.view-quotes .team-quotes-summary strong {font-size:16px}
+  .sales-app.view-quotes .team-quotes-filters {grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:7px}
+  .sales-app.view-quotes .team-quotes-filter-search {grid-column:1/-1}
+  .sales-app.view-quotes .team-quotes-archive {grid-column:1/-1}
+  .sales-app.view-quotes .team-quotes-list {grid-template-columns:1fr;gap:8px}
+  .sales-app.view-quotes .team-quote-assignment>div {grid-template-columns:1fr}
+  .sales-app.view-quotes .quote-library-mode-switch {display:none}
+  .sales-app.view-quotes .quote-my-quotes-empty {height:0;min-height:0;flex:1 1 auto}
+}
