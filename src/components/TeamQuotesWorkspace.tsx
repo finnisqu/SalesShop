@@ -50,7 +50,7 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
         : {data:[],error:null};
       if(cancelled)return;
       if(profiles.error)setError(profiles.error.message);
-      const names=new Map((profiles.data??[]).map(p=>[String(p.user_id),String(p.display_name||'')]));
+      const names=new Map<string,string>((profiles.data??[]).map(p=>[String(p.user_id),String(p.display_name||'')] as const));
       setMembers(membership.map(row=>({
         user_id:row.user_id,role:row.role,jobFunction:row.job_function,
         displayName:names.get(row.user_id) || `Member ${row.user_id.slice(0,8)}`,
