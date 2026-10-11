@@ -82,6 +82,17 @@ Deno.serve(async (req) => {
       .eq('user_id', userData.user.id)
       .maybeSingle();
     if (!membership) return json({ error: 'Workspace access denied.' }, 403);
+    // This service-role handler bypasses Postgres RLS. Verify quote-specific
+    // access using the caller's JWT BEFORE any privileged quote/share reads.
+    // A mere organization membership is not sufficient.
+    const { data: allowedQuote, error: quoteAccessError } = await userClient.rpc('can_access_quote', {
+      p_organization_id: organizationId,
+      p_quote_id: quoteId,
+      p_action: action === 'get' ? 'read' : 'edit',
+    });
+    if (quoteAccessError || allowedQuote !== true) {
+      return json({ error: 'Quote access denied.' }, 403);
+    }
     // This handler uses a privileged client and bypasses RLS; enforce viewer read-only here too.
     if (action !== 'get') {
       // This endpoint uses a privileged database key; check the user's actual
