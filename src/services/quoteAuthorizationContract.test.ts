@@ -6,6 +6,7 @@ const root = process.cwd();
 const sql=readFileSync(join(root,'supabase/migrations/202610110002_quote_scoped_rls.sql'),'utf8');
 const edge=readFileSync(join(root,'supabase/functions/quote-share-admin/index.ts'),'utf8');
 const legacyLock=readFileSync(join(root,'supabase/migrations/202610110003_lock_legacy_org_snapshots.sql'),'utf8');
+const sensitive=readFileSync(join(root,'supabase/migrations/202610110004_sensitive_quote_artifacts.sql'),'utf8');
 const sync=readFileSync(join(root,'src/services/normalizedQuoteSync.ts'),'utf8');
 
 describe('quote authorization defense in depth',()=>{
@@ -42,7 +43,12 @@ describe('quote authorization defense in depth',()=>{
     const j=edge.indexOf("if (action === 'get')",i);
     expect(i).toBeGreaterThan(0);
     expect(j).toBeGreaterThan(i);
-    expect(edge).toContain("p_action: action === 'get' ? 'read' : 'edit'");
+    expect(edge).toContain("p_action: 'edit'");
+    expect(edge).toContain("if (action === 'get')");
+    expect(edge).toContain("Customer-link access denied for this department.");
+    expect(sensitive).toContain('alter policy quote_shares_members_select');
+    expect(sensitive).toContain('private.can_issue_org_quotes(organization_id)');
+    expect(sensitive).toContain('alter policy signatures_members_select');
   });
   it('never bulk-resubmits team read-only quotes or unchanged rows',()=>{
     expect(sync).toContain('quote.ownerUserId === actorId');
