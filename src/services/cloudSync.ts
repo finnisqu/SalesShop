@@ -233,6 +233,23 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   activeCleanup = () => window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT, handler);
 }
 
+/**
+ * Local browser storage is not a permission boundary. When changing a cloud
+ * identity, discard previously hydrated company and personal cloud caches.
+ * Do not clear local-only/demo data (which has no cloud cache scope).
+ * A signed-in successor will rehydrate authorized rows from RLS.
+ */
+export function clearCloudIdentityCache() {
+  try {
+    if (!readCacheScope()) return;
+    for (const key of [CRM_DOCUMENT_KEY, QUOTES_DOCUMENT_KEY, SIGNATURES_DOCUMENT_KEY, PRIVATE_DOCUMENT_KEY]) {
+      removeLocalDocument(key);
+    }
+    localStorage.removeItem('salesshop-company-settings-v1');
+    localStorage.removeItem(CACHE_SCOPE_KEY);
+  } catch { /* best effort when storage is blocked */ }
+}
+
 export function stopCloudSync() {
   activeCleanup?.();
   activeCleanup = null;
