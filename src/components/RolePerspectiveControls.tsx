@@ -53,6 +53,7 @@ export function RolePerspectiveBanner() {
   const actualRole = useAuthStore((state) => state.teamRole);
   const mode = useAuthStore((state) => state.mode);
   const current = useRolePerspectiveStore((state) => state.activePerspective);
+  const enabled = useRolePerspectiveStore((state) => state.previewToolsEnabled);
   const start = useRolePerspectiveStore((state) => state.startPerspective);
   const exit = useRolePerspectiveStore((state) => state.exitPerspective);
   const isOwner = allowedOwnerPerspective(actualRole, mode);
