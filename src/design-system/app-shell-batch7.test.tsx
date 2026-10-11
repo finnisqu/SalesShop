@@ -40,7 +40,8 @@ describe('UI Foundation Batch 7 — Board / Quotes / Notebook',()=>{
     expect(accounts).toContain('onClick={onShowProjects}');
     expect(accounts).toContain('onClick={() => setCleanupOpen(true)}');
     expect(accounts).toContain('<MobileBoardStagePicker');
-    expect(accounts).toContain('<BoardScrollControls');
+    expect(accounts).not.toContain('<BoardScrollControls');
+    expect(board).not.toContain('<BoardScrollControls');
     expect(board).toContain('onDrop={(event) => dropOnStage(event, stage)}');
     expect(board).toContain('rememberMobileColumnScroll');
     expect(boardCss).toContain('overflow-x:auto;');
