@@ -85,6 +85,8 @@ import './design-system/batch-11-quotes.css';
 import './design-system/ownership-transfer.css';
 // Takeoffs Lite is the final internal Quotes overlay (never customer paper).
 import './quote-takeoffs-lite.css';
+// Opt-in mobile-only Quotes Beta. Existing Quotes remains the default.
+import './quotes-mobile-beta.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
