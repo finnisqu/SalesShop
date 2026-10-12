@@ -73,6 +73,7 @@ type Snapshot = {
   customerNotes?: string;
   pricingSchedule?: { customerItems?: ScheduleItem[] };
   customerTotal?: number;
+  attachSelectionsSheet?: boolean;
 };
 
 function roundCurrency(value: number) {
@@ -109,7 +110,8 @@ function safePublicLine(line: SnapshotLine) {
  * Without a suitable visible host, an anonymous included work row preserves total.
  */
 function publicItemizedLines(rows: SnapshotLine[], scopeId = 'general') {
-  const visible = rows.filter(line => line.customerVisible !== false);
+  const visible = rows.filter(line => line.customerVisible !== false &&
+    (line.includeInTotal || line.pricingMode === 'none'));
   const hiddenAmount = roundCurrency(rows.filter(line => line.customerVisible === false)
     .reduce((sum, line) => sum + lineTotal(line), 0));
   const host = visible.find(line => line.includeInTotal && line.pricingMode !== 'none' &&
@@ -225,6 +227,52 @@ function safeAcceptedSnapshot(value: unknown) {
   return { ...publicSnapshot, sections, lines };
 }
 
+
+/** Customer-safe allowlist only. Never send raw geometry, hole spread, source
+ * supplier costs, or internal variant references to a public quote visitor. */
+function publicCustomerSelections(snapshot: Snapshot) {
+  if (!snapshot.attachSelectionsSheet) return [];
+  return (snapshot.sections??[]).filter(section=>section.customerVisible).map(section=>{
+    const scope=section.scope&&typeof section.scope==='object'
+      ?section.scope as Record<string,unknown>:{};
+    const ref=scope.takeoffMaterialReference&&typeof scope.takeoffMaterialReference==='object'
+      ?scope.takeoffMaterialReference as Record<string,unknown>:{};
+    const variant=ref.snapshot&&typeof ref.snapshot==='object'
+      ?ref.snapshot as Record<string,unknown>:{};
+    const label=(value:unknown,limit=160)=>typeof value==='string'
+      ?value.trim().slice(0,limit):'';
+    const material=[label(scope.takeoffMaterial,300),label(variant.thickness),
+      label(variant.finish)].filter(Boolean).join(' · ');
+    const sinkModels=Array.isArray(scope.takeoffSinks)
+      ?scope.takeoffSinks.slice(0,100).map(value=>{
+        if(!value||typeof value!=='object')return '';
+        const sink=value as Record<string,unknown>;
+        const qty=Number(sink.count);
+        return Number.isInteger(qty)&&qty>0&&qty<=1000
+          ?qty+' × '+(label(sink.name)||'Sink'):'';
+      }).filter(Boolean):[];
+    const pieces=Array.isArray(scope.takeoffPieces)?scope.takeoffPieces.slice(0,500):[];
+    const edgeProfiles=new Set<string>();
+    const splashHeights=new Set<string>();
+    for(const value of pieces) {
+      if(!value||typeof value!=='object')continue;
+      const piece=value as Record<string,unknown>;
+      if(!(Number(piece.count)>0))continue;
+      edgeProfiles.add(label(piece.edgeProfile)||label(scope.takeoffDefaultEdgeProfile)||'Flat');
+      if(piece.backsplash||piece.leftSplash||piece.rightSplash){
+        const n=Number(piece.splashHeightIn??scope.takeoffDefaultSplashHeightIn??4);
+        if(Number.isFinite(n)&&n>=0&&n<=120)splashHeights.add(n+'″');
+      }
+    }
+    if(!edgeProfiles.size&&label(scope.takeoffDefaultEdgeProfile))edgeProfiles.add(label(scope.takeoffDefaultEdgeProfile));
+    const defaultSplash=scope.takeoffDefaultSplashHeightIn;
+    if(!splashHeights.size&&typeof defaultSplash==='number'&&Number.isFinite(defaultSplash))
+      splashHeights.add(defaultSplash+'″ default');
+    return {id:section.id,area:isGeneralTakeoffsTitle(section)?'General':label(section.title),
+      material:material||undefined,sinkModels,edgeProfiles:[...edgeProfiles],splashHeights:[...splashHeights]};
+  }).filter(row=>row.material||row.sinkModels.length||row.edgeProfiles.length||row.splashHeights.length);
+}
+
 function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentType: string) {
   const allLines = Array.isArray(snapshot.lines) ? snapshot.lines : [];
   const calculatedTotal = roundCurrency(allLines.reduce((sum, line) => sum + lineTotal(line), 0));
@@ -270,6 +318,7 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentTyp
     ],
     customerColumns: snapshot.customerColumns ?? { quantity: false, rate: false, lineAmount: true },
     customerNotes: snapshot.customerNotes ?? '',
+    selections: documentType === 'pricing-schedule' ? [] : publicCustomerSelections(snapshot),
     pricingSchedule: documentType === 'pricing-schedule' ? { customerItems } : undefined,
     acceptedTotal: total,
   };
