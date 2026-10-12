@@ -50,6 +50,7 @@ import { QuoteInternalPricingSummary } from './QuoteInternalPricingSummary';
 import { QuoteMaterialLineFields, slabReferencePatch } from './QuoteMaterialLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
+import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteSignatureDialog } from './QuoteSignatureDialog';
 
@@ -444,6 +445,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
   const updateSection = useQuoteStore((state) => state.updateSection);
   const deleteSection = useQuoteStore((state) => state.deleteSection);
   const [scopeOpen, setScopeOpen] = useState(false);
+  const [takeoffOpen, setTakeoffOpen] = useState(false);
   const scopeButtonRef = useRef<HTMLButtonElement>(null);
   const scopePopoverRef = useRef<HTMLDivElement>(null);
 
@@ -459,7 +461,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
   }, [scopeOpen]);
 
   useEffect(() => {
-    const collapse = () => setScopeOpen(false);
+    const collapse = () => {setScopeOpen(false);setTakeoffOpen(false);};
     window.addEventListener('sales-shop:quote-collapse-all', collapse);
     return () => window.removeEventListener('sales-shop:quote-collapse-all', collapse);
   }, []);
@@ -474,6 +476,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
   const fields: QuoteAreaScopeField[] = QUOTE_AREA_SCOPE_VISIBLE_FIELDS;
 
   return (
+    <>
     <div className="quote-area-header">
       <button type="button" className="quote-area-drag-handle" draggable title="Drag Area to reorder" aria-label="Drag Area to reorder"><span aria-hidden="true">⠿</span></button>
       <div className="quote-area-mobile-order" aria-label="Reorder Area">
@@ -494,6 +497,11 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
       </div>
 
       <div className="quote-area-actions">
+        <button type="button" className={`quote-area-takeoff-toggle ${takeoffOpen?'active':''}`}
+          onClick={() => {setTakeoffOpen(open=>!open);setScopeOpen(false);}}
+          aria-expanded={takeoffOpen} aria-label={`Takeoffs Lite for ${section.title}`}>
+          {section.scope?.takeoffPieces ? `▤ Takeoff · ${section.scope.countertopSf ?? 0} SF` : '▤ Takeoffs Lite'}
+        </button>
         <button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button>
         <button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button>
         <button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button>
@@ -515,15 +523,21 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
             const integerField = field === 'kitchenSinkCount' || field === 'vanitySinkCount';
             return <label key={field}>
               <span>{meta.label}</span>
-              <div><input type="number" min="0" step={integerField ? '1' : '0.01'} value={section.scope?.[field] ?? ''} onChange={(event) => {
+              <div><input type="number" min="0" step={integerField ? '1' : '0.01'} value={section.scope?.[field] ?? ''}
+                disabled={field === 'countertopSf' && Array.isArray(section.scope?.takeoffPieces)}
+                title={field === 'countertopSf' && Array.isArray(section.scope?.takeoffPieces) ? 'Controlled by Takeoffs Lite' : undefined}
+                onChange={(event) => {
                 const next = numberValue(event.target.value);
                 updateScopeField(field, next === undefined ? undefined : Math.max(0, next));
               }} /><b>{meta.unit}</b></div>
             </label>;
           })}
         </div>
+        {Array.isArray(section.scope?.takeoffPieces) && <small className="quote-takeoffs-scope-note">Countertop SF is calculated by Takeoffs Lite. Edit dimensions there.</small>}
       </div>}
     </div>
+    {takeoffOpen && <QuoteTakeoffsLite quote={quote} section={section}/>}
+    </>
   );
 }
 
