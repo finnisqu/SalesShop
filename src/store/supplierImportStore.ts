@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { scopedStorageKey } from '../lib/developerPlayground';
 import type {
   SupplierImportCandidate,
   SupplierImportPriceEvidence,
@@ -24,8 +25,8 @@ interface SupplierImportState {
   clearSession: () => void;
 }
 
-const LOCAL_KEY = 'salesshop-supplier-import-staging-v2';
-const LEGACY_KEY = 'salesshop-supplier-import-staging-v1';
+const LOCAL_KEY = scopedStorageKey('salesshop-supplier-import-staging-v2');
+const LEGACY_KEY = scopedStorageKey('salesshop-supplier-import-staging-v1');
 const HISTORY_LIMIT = 5;
 
 function allPriceIds(candidate: SupplierImportCandidate) {
