@@ -51,6 +51,7 @@ import { QuoteMaterialLineFields, slabReferencePatch } from './QuoteMaterialLine
 import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
+import { takeoffCustomerSpecs } from '../services/quoteTakeoffsLite';
 import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteSignatureDialog } from './QuoteSignatureDialog';
 
@@ -524,8 +525,8 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
             return <label key={field}>
               <span>{meta.label}</span>
               <div><input type="number" min="0" step={integerField ? '1' : '0.01'} value={section.scope?.[field] ?? ''}
-                disabled={field === 'countertopSf' && Array.isArray(section.scope?.takeoffPieces)}
-                title={field === 'countertopSf' && Array.isArray(section.scope?.takeoffPieces) ? 'Controlled by Takeoffs Lite' : undefined}
+                disabled={(field === 'countertopSf'||field === 'splashLf') && Array.isArray(section.scope?.takeoffPieces)}
+                title={(field === 'countertopSf'||field === 'splashLf') && Array.isArray(section.scope?.takeoffPieces) ? 'Controlled by Takeoffs Lite' : undefined}
                 onChange={(event) => {
                 const next = numberValue(event.target.value);
                 updateScopeField(field, next === undefined ? undefined : Math.max(0, next));
@@ -622,7 +623,7 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
     const priced = line.pricingMode !== 'none';
     return <div key={line.id} className={`customer-quote-row kind-${line.kind}`}><div className="customer-line-description">{line.description || '—'}</div>{quote.customerColumns.quantity && <div>{line.pricingMode === 'quantity-rate' ? line.quantity ?? '' : ''}</div>}{quote.customerColumns.rate && <div>{line.pricingMode === 'quantity-rate' && line.rate !== undefined ? money.format(line.rate) : ''}</div>}{quote.customerColumns.lineAmount && <div className="customer-line-amount">{priced ? money.format(quoteLineAmount(line)) : ''}</div>}</div>;
   });
-  const renderAreaSummary = (title: string, total: number) => <div className="customer-quote-row customer-area-summary-row"><div className="customer-line-description">{title}</div><div className="customer-line-amount">{money.format(total)}</div></div>;
+  const renderAreaSummary = (title: string, total: number, specification = '') => <div className="customer-quote-row customer-area-summary-row"><div className="customer-line-description"><strong>{title}</strong>{specification && <small className="customer-area-spec">{specification}</small>}</div><div className="customer-line-amount">{money.format(total)}</div></div>;
   const allSectionIds = new Set(quote.sections.map((section) => section.id));
   const looseLines = visibleLines.filter((line) => !line.sectionId || !allSectionIds.has(line.sectionId));
   const documentLabel = commercialDocumentLabel(quote);
@@ -636,10 +637,10 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
         if ((section.customerDisplayMode ?? 'detail') === 'summary') {
           const total = quoteLinesTotal(allSectionLines);
           if (!allSectionLines.length) return null;
-          return <div className="customer-quote-section is-summary" key={section.id}>{renderAreaSummary(section.title, total)}</div>;
+          return <div className="customer-quote-section is-summary" key={section.id}>{renderAreaSummary(section.title, total, takeoffCustomerSpecs(section))}</div>;
         }
         if (!sectionLines.length) return null;
-        return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{renderLines(sectionLines)}</div>;
+        return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{section.scope?.takeoffMaterial && <p className="customer-area-spec">{section.scope.takeoffMaterial}</p>}{renderLines(sectionLines)}</div>;
       })}</div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
