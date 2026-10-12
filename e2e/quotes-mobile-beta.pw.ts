@@ -443,13 +443,15 @@ test('Area workflow advances to Materials and Pricing, creates Next Area and saf
   await beta.getByRole('button',{name:'+ New quote'}).click();
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen A');
-  await beta.getByRole('button',{name:'Materials ›'}).click();
+  await expect(beta.getByRole('button',{name:'Continue to next Area step'})).toContainText('Materials');
+  await beta.getByRole('button',{name:'Continue to next Area step'}).click();
   await expect(beta.locator('.qmb-area-editor .qmb-tabs')
     .getByRole('button',{name:'Materials'})).toHaveAttribute('aria-current','page');
-  await beta.getByRole('button',{name:'Pricing ›'}).click();
+  await expect(beta.getByRole('button',{name:'Continue to next Area step'})).toContainText('Pricing');
+  await beta.getByRole('button',{name:'Continue to next Area step'}).click();
   await expect(beta.locator('.qmb-area-editor .qmb-tabs')
     .getByRole('button',{name:'Pricing'})).toHaveAttribute('aria-current','page');
-  await beta.getByRole('button',{name:'+ Next Area ›'}).click();
+  await beta.getByRole('button',{name:'Create next Area'}).click();
   await expect(beta.getByRole('textbox',{name:'Area name'})).not.toHaveValue('Kitchen A');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(beta.locator('.qmb-area-card')).toHaveCount(2);
