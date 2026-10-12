@@ -147,7 +147,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
           <div className="qtl-table-wrap" onKeyDown={event=>{
             // Spreadsheet-style entry: Enter moves to the next text/number cell.
             // Checkboxes and buttons retain their native Enter/Space behavior.
-            if(event.key!=='Enter'||event.isComposing||event.shiftKey||event.ctrlKey||event.metaKey)return;
+            if(event.key!=='Enter'||event.nativeEvent.isComposing||event.shiftKey||event.ctrlKey||event.metaKey)return;
             const target=event.target;
             if(!(target instanceof HTMLInputElement)||target.type==='checkbox')return;
             const fields=[...event.currentTarget.querySelectorAll<HTMLInputElement>(
