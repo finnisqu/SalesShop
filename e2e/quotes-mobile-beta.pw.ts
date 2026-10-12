@@ -124,7 +124,7 @@ test('Materials sink rows stay compact and Rate picker pushes content instead of
   await expect(row).toBeVisible();
   const height=await row.evaluate(el=>el.getBoundingClientRect().height);
   expect(height).toBeLessThan(155);
-  await row.getByRole('checkbox',{name:'Charge on quote'}).check();
+  await expect(row.getByRole('checkbox',{name:'Charge on quote'})).toHaveCount(0);
   await expect(row.getByRole('spinbutton',{name:'Sink 1 sell price'})).toBeVisible();
   await beta.getByRole('button',{name:'Pricing'}).click();
   await beta.getByRole('button',{name:/Choose from Rates/}).click();
@@ -186,4 +186,66 @@ test('mobile quote fabrication options persist while zero quantity stays editabl
   await beta.getByRole('button',{name:'Faucet holes for Sink 1'}).click();
   const persisted=page.getByRole('dialog',{name:'Faucet holes for Sink 1'});
   await expect(persisted.getByRole('checkbox',{name:'2 inches left'})).toBeChecked();
+});
+
+
+test('mobile quote scroll retains title, total and tabs while hiding larger heading', async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Mobile quote chrome contract');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const sticky=beta.locator('.qmb-quote-sticky');
+  await expect(sticky.getByRole('textbox',{name:'Quote title'})).toBeVisible();
+  await expect(sticky.getByRole('navigation',{name:'Quote views'})).toBeVisible();
+  await expect(sticky.getByLabel('Current quote total')).toBeVisible();
+  await expect(beta.getByText('Current quote total',{exact:true})).toHaveCount(0);
+  await beta.getByRole('button',{name:'Open quote selections'}).click();
+  const selections=beta.getByRole('dialog',{name:'Quote selections'});
+  await expect(selections.getByRole('textbox',{name:'Material to pin'})).toBeAttached();
+  await expect(selections.getByRole('spinbutton',{name:'Job backsplash height in inches'})).toHaveValue('4');
+  await expect(selections.getByRole('combobox',{name:'Job default edge profile'})).toHaveValue('Flat');
+  await selections.getByRole('button',{name:'Done',exact:true}).click();
+  const scroll=beta.locator('.qmb-quote-scroll');
+  // Enough content to prove the heading moves away and identity remains sticky.
+  for(let i=0;i<8;i++){
+    await beta.getByRole('button',{name:'+ Add Area'}).click();
+    await beta.getByRole('button',{name:/Done · Quote/}).click();
+  }
+  await scroll.evaluate(el=>{el.scrollTop=170;});
+  await expect(sticky).toBeInViewport();
+  const layout=await page.evaluate(()=>{
+    const scrolling=document.querySelector('.qmb-quote-scroll')!.getBoundingClientRect();
+    const sticky=document.querySelector('.qmb-quote-sticky')!.getBoundingClientRect();
+    const head=document.querySelector('.qmb-quote-editor .qmb-pagehead')!.getBoundingClientRect();
+    return {top:scrolling.top,stickyTop:sticky.top,headBottom:head.bottom};
+  });
+  expect(Math.abs(layout.top-layout.stickyTop)).toBeLessThanOrEqual(2);
+  expect(layout.headBottom).toBeLessThanOrEqual(layout.top+1);
+});
+
+test('mobile Accounts has a complete stage picker below the persistent app nav',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Mobile Accounts header contract');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','board');
+    sessionStorage.setItem('salesshop-board-mode-v1','accounts');
+  });
+  await page.reload();
+  const board=page.locator('.accounts-view');
+  await expect(board).toBeVisible();
+  const picker=board.locator('.mobile-board-stage-picker');
+  await expect(picker).toBeVisible();
+  await expect(board.locator('.accounts-header-panel')).toBeHidden();
+  const positions=await page.evaluate(()=>{
+    const nav=document.querySelector('.mobile-app-commandbar')!.getBoundingClientRect();
+    const picker=document.querySelector('.accounts-view .mobile-board-stage-picker')!.getBoundingClientRect();
+    return {navBottom:nav.bottom,pickerTop:picker.top};
+  });
+  expect(positions.pickerTop).toBeGreaterThanOrEqual(positions.navBottom-2);
+  await expect(picker.getByRole('button',{name:'Open CRM cleanup'})).toBeVisible();
 });
