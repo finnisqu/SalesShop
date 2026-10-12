@@ -244,6 +244,14 @@ export function Board() {
   const mobileInteraction = isMobileBoardInteraction();
 
   const setBoardMode = (mode: 'projects' | 'accounts') => {
+    if (mobileInteraction && mode !== boardMode) {
+      // The two Board modes have different header heights. Do not inherit the
+      // old mode's vertical offset or lift the shared command bar offscreen.
+      const oldBoard=document.querySelector<HTMLElement>('.sales-app.view-board .board-view');
+      if(oldBoard)oldBoard.scrollTop=0;
+      document.querySelectorAll<HTMLElement>('.sales-app.view-board .role-perspective-content, .sales-app.view-board .project-board')
+        .forEach(node=>{node.scrollTop=0;});
+    }
     setBoardModeState(mode);
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(BOARD_MODE_KEY, mode);
