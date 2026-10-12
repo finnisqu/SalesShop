@@ -13,7 +13,7 @@ test('Catalog Materials shortcut opens the editable historical Stock Builder Lev
   await catalog.getByRole('button',{name:'Open material catalog tools'}).click();
   await catalog.getByRole('button',{name:/Stock \/ Builder Levels/}).click();
   await expect(catalog.locator('.rates-workspace')).toBeVisible();
-  const pricing=catalog.getByRole('button',{name:'Material Pricing'});
+  const pricing=catalog.locator('.rates-reference-tabs').getByRole('button',{name:'Material Pricing',exact:true});
   await expect(pricing).toHaveAttribute('aria-pressed','true');
   const table=catalog.locator('.rates-material-pricing-table');
   await expect(table).toContainText('Level 0');
