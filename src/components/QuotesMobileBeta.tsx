@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useQuoteStore } from '../store/quoteStore';
 import { useCrmStore } from '../store/crmStore';
@@ -31,6 +31,7 @@ import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import { TakeoffMaterialCatalog, TakeoffSinkCatalog } from './TakeoffCatalogPickers';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
+import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
@@ -118,6 +119,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
   const updateLine=useQuoteStore(s=>s.updateLine);
   const [kind,setKind]=useState<QuoteLineKind>('item');
   const [advanced,setAdvanced]=useState(false);
+  const areaScrollRef=useRef<HTMLDivElement>(null);
   const pieces=section.scope?.takeoffPieces??[];
   const sinks=section.scope?.takeoffSinks??[];
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
@@ -127,7 +129,8 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
   const savePieces=(next:QuoteTakeoffPiece[])=>updatePieces(quote.id,section.id,next);
   const patchPiece=(id:string,patch:Partial<QuoteTakeoffPiece>)=>savePieces(pieces.map(p=>p.id===id?{...p,...patch}:p));
   const patchSink=(id:string,patch:Partial<QuoteTakeoffSink>)=>updateSinks(quote.id,section.id,sinks.map(s=>s.id===id?{...s,...patch}:s));
-  return <div className="qmb-editor">
+  return <div className="qmb-editor qmb-area-editor">
+    <div ref={areaScrollRef} className="qmb-area-scroll">
     <header className="qmb-pagehead">
       <button type="button" className="qmb-back" onClick={goBack}>‹ Quote</button>
       <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>
@@ -142,40 +145,16 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
     </div>
     <nav className="qmb-tabs" aria-label="Area sections">
       {([['measure','Measure'],['materials','Materials'],['pricing','Pricing']] as const).map(([id,label])=>
-        <button key={id} type="button" className={tab===id?'active':''} aria-current={tab===id?'page':undefined} onClick={()=>setTab(id)}>{label}</button>)}
+        <button key={id} type="button" className={tab===id?'active':''} aria-current={tab===id?'page':undefined} onClick={()=>{
+          setTab(id);
+          const scroll=areaScrollRef.current;
+          const tabs=scroll?.querySelector<HTMLElement>('.qmb-tabs');
+          if(scroll&&tabs)scroll.scrollTo({top:tabs.offsetTop,behavior:'auto'});
+        }}>{label}</button>)}
     </nav>
     <div className="qmb-pad qmb-pagecontent">
-      {tab==='measure'&&<>
-        <div className="qmb-section-head"><div><h3>Measurements</h3><p>Nothing is required until you're ready to quote it.</p></div><span className="qmb-chip">{pieces.length} pieces</span></div>
-        {!pieces.length&&<div className="qmb-empty">Start with a piece—or skip directly to Materials or Pricing.</div>}
-        {pieces.map((p,i)=><section key={p.id} className="qmb-card qmb-piece">
-          <div className="qmb-split"><strong>Piece {i+1}</strong><button type="button" className="qmb-quiet" disabled={!editable} onClick={()=>savePieces(pieces.filter(x=>x.id!==p.id))}>Remove</button></div>
-          <Field label="Piece name (optional)"><input value={p.name} disabled={!editable} placeholder={'Piece '+(i+1)}
-            onChange={e=>patchPiece(p.id,{name:e.target.value})}/></Field>
-          <div className="qmb-three">
-            {([['lengthIn','Length (in)'],['widthIn','Width (in)']] as const).map(([key,label])=>
-              <InchField key={key} label={label} disabled={!editable} value={p[key]}
-                onChange={n=>patchPiece(p.id,{[key]:n})}/>)}
-            <Field label="Qty"><input type="number" min="1" max="1000" inputMode="numeric" disabled={!editable} value={p.count}
-              onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchPiece(p.id,{count:n});}}/></Field>
-          </div>
-          <div className="qmb-checkrow">
-            {([['backsplash','Back'],['leftSplash','Left'],['rightSplash','Right']] as const).map(([key,label])=>
-              <label key={key} className="qmb-tile"><input type="checkbox" checked={Boolean(p[key])} disabled={!editable}
-                onChange={e=>patchPiece(p.id,{[key]:e.target.checked})}/>{label}</label>)}
-          </div>
-          <div className="qmb-split qmb-piecefoot"><small>4″ splash edges included in SF</small>
-            <button type="button" className="qmb-quiet" disabled={!editable||pieces.length>=500} onClick={()=>savePieces([...pieces,{...p,id:'takeoff_'+crypto.randomUUID(),name:p.name?p.name+' copy':''}])}>Duplicate</button>
-          </div>
-        </section>)}
-        <button type="button" className="qmb-outline qmb-block" disabled={!editable||pieces.length>=500}
-          onClick={()=>savePieces([...pieces,newTakeoffPiece(pieces.length+1)])}>+ Add piece</button>
-        <section className="qmb-card qmb-measuretotal"><div className="qmb-split"><span>Countertops</span><strong>{sf.format(totalTakeoffSf(pieces))} SF</strong></div>
-          <div className="qmb-split"><span>4″ splashes</span><strong>{sf.format(totalSplashSf(pieces))} SF</strong></div>
-          <hr/><div className="qmb-split"><strong>Total material area</strong><strong>{sf.format(measured)} SF</strong></div>
-        </section>
-        <button type="button" className="qmb-quiet qmb-block" onClick={()=>setAdvanced(true)}>Advanced takeoffs · split pieces, legacy controls ↗</button>
-      </>}
+      {tab==='measure'&&<QuoteBetaMeasureGrid pieces={pieces} editable={editable}
+        onSave={savePieces} onAdvanced={()=>setAdvanced(true)}/>}
       {tab==='materials'&&<>
         <div className="qmb-section-head"><div><h3>Material & sinks</h3><p>Choose from your live Catalog or type a description.</p></div></div>
         <section className="qmb-card">
@@ -245,6 +224,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
             onClick={()=>addLine(quote.id,kind,section.id)}>+ Add line to Area</button>
         </section>
       </>}
+    </div>
     </div>
     <footer className="qmb-footer"><div><small>Area total</small><strong>{money.format(amount)}</strong></div>
       <button type="button" className="qmb-primary" onClick={goBack}>Done · Quote ›</button></footer>
