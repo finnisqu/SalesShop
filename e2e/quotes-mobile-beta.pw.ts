@@ -375,7 +375,7 @@ test('mobile material RATE dropdown never stretches Quantity or overlays followi
   const before=await qty.evaluate(el=>({height:el.getBoundingClientRect().height,
     top:el.getBoundingClientRect().top}));
   await row.getByRole('button',{name:'Choose rate for material line'}).click();
-  await expect(row.getByRole('region',{name:'Available selling rates'})).toBeVisible();
+  await expect(row.locator('.qmb-line-rate-drawer')).toBeVisible();
   const levels=row.getByRole('group',{name:'Stock Builder pricing levels'});
   await expect(levels.getByRole('button')).toHaveCount(9);
   const after=await qty.evaluate(el=>({height:el.getBoundingClientRect().height,
