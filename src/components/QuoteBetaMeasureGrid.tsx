@@ -121,7 +121,7 @@ function SplashMenu({piece,index,editable,onPatch}:{
   const caption=selected.length===3?'B·L·R':selected.map(f=>f==='backsplash'?'B':f==='leftSplash'?'L':'R').join('·')||'+';
   return <FloatingRowMenu label={'Splash options for Piece '+index} caption={caption} active={selected.length>0}>
     {close=><>
-      <div className="qmb-row-menu-title"><strong>4″ splash edges</strong><small>Piece {index}</small></div>
+      <div className="qmb-row-menu-title"><strong>{piece.splashHeightIn??DEFAULT_SPLASH_HEIGHT_IN}″ splash edges</strong><small>Piece {index}</small></div>
       {([['backsplash','Back'],['leftSplash','Left'],['rightSplash','Right']] as const).map(([flag,label])=>
         <label key={flag} className="qmb-row-menu-check">
           <input type="checkbox" checked={Boolean(piece[flag])} disabled={!editable}
@@ -242,6 +242,6 @@ export function QuoteBetaMeasureGrid({pieces,editable,onSave,onAdvanced,defaults
       <button type="button" className="qmb-quiet" onClick={()=>setShowHelp(v=>!v)} aria-expanded={showHelp}>ⓘ Entry tips</button>
       <button type="button" className="qmb-quiet" onClick={onAdvanced}>Advanced takeoffs ↗</button>
     </div>
-    {showHelp&&<p className="qmb-help">Unfinished dimensions or a quantity of 0 yield no square footage and will be flagged before issuing. Dimensions accept decimals and fractions such as 25½ or 25 1/2. Tap + in Splash for Back / Left / Right edges. Enter moves to the next editable cell. Names, quantities and splash selections save through the same quote as Classic.</p>}
+    {showHelp&&<p className="qmb-help">Unfinished dimensions or a quantity of 0 yield no square footage and will be flagged before issuing. Dimensions accept decimals and fractions such as 25½ or 25 1/2. Tap + in Splash for Back / Left / Right edges and the ⋯ menu for backsplash height or edge profile. Enter moves to the next editable cell. Names, quantities and splash selections save through the same quote as Classic.</p>}
   </>;
 }
