@@ -137,3 +137,52 @@
   border-color:var(--qmb-accent);border-style:dashed;
 }
 .qmb .qmb-builder-level-choice.is-suggested span {color:var(--qmb-accent);}
+
+/* RATE / Quantity isolation: the rate options are now a sibling below both
+   inputs, not a grid child sharing Quantity's row. No input can grow to menu height. */
+.qmb .qmb-line-fields fieldset {width:100%;min-width:0;}
+.qmb .qmb-line-fields .qmb-two {align-items:start;}
+.qmb .qmb-line-fields .qmb-two>.qmb-field {align-self:start;}
+.qmb .qmb-line-fields .qmb-material-rate-cell {
+  display:grid;grid-template-columns:minmax(0,1fr) 70px;
+  gap:6px;align-items:end;align-self:start;min-width:0;
+}
+.qmb .qmb-line-fields .qmb-material-rate-cell>.qmb-field {
+  grid-column:1;grid-row:1;align-self:start;min-width:0;
+}
+.qmb .qmb-line-fields .qmb-material-rate-cell>.qmb-line-rate-trigger {
+  grid-column:2;grid-row:1;min-width:0;width:100%;
+  height:43px;max-width:none;margin-bottom:13px;
+}
+.qmb .qmb-line-rate-drawer {
+  display:block;position:relative;width:100%;max-width:100%;min-width:0;
+  max-height:min(390px,52dvh);overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:9px 10px;margin:0 0 13px;
+  border:1px solid var(--qmb-border);border-radius:11px;
+  color:var(--qmb-ink);background:var(--qmb-card);
+}
+.qmb .qmb-sf-rate-choices {display:grid;gap:7px;min-width:0;}
+.qmb .qmb-other-rate-choices {display:flex;flex-wrap:wrap;gap:6px;}
+.qmb .qmb-other-rate-choices button {
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+  gap:3px;min-height:43px;padding:7px 9px;min-width:0;max-width:100%;
+  border:1px solid var(--qmb-border);border-radius:8px;
+  background:var(--qmb-tint);color:var(--qmb-ink);font-size:11px;
+}
+.qmb .qmb-other-rate-choices button strong {font-size:11px;overflow-wrap:anywhere;}
+.qmb .qmb-other-rate-choices button small {font-size:10px;color:var(--qmb-muted);}
+.qmb .qmb-other-rate-choices button.is-active {border-color:var(--qmb-accent);}
+.qmb .qmb-audit-rate-fix {display:grid;gap:8px;min-width:0;}
+.qmb .qmb-audit-rate-chooser {display:grid;gap:7px;min-width:0;}
+.qmb .qmb-audit-rate-toggle {min-height:39px;width:100%;font-weight:800;font-size:12px;}
+.qmb .qmb-audit-rate-panel {
+  max-height:min(330px,48dvh);overflow-x:hidden;overflow-y:auto;
+  min-width:0;padding:9px;border:1px solid var(--qmb-border);
+  border-radius:10px;background:var(--qmb-card);overscroll-behavior:contain;
+}
+@media(max-width:350px){
+ .qmb .qmb-line-fields .qmb-material-rate-cell {grid-template-columns:minmax(0,1fr) 58px;gap:4px;}
+ .qmb .qmb-line-fields .qmb-material-rate-cell>.qmb-line-rate-trigger{font-size:10px;padding-inline:3px;}
+ .qmb .qmb-audit-rate-panel,.qmb .qmb-line-rate-drawer{padding:6px;}
+}
