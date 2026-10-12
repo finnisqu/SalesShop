@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import {
-  isValidTakeoffPiece,newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,
-  totalSplashLf,totalTakeoffSf,takeoffOwnedScope,takeoffCustomerSpecs,
+  isValidTakeoffPiece,newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceTotalSf,
+  totalSplashLf,totalTakeoffSf,totalSplashSf,totalBillableTakeoffSf,takeoffOwnedScope,takeoffCustomerSpecs,
 } from '../services/quoteTakeoffsLite';
 import { quoteLinesTotal,type Quote, type QuoteSection, type QuoteTakeoffPiece, type QuoteTakeoffSink } from '../types/quote';
 
@@ -44,7 +44,9 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const owned=takeoffOwnedScope(section.scope);
   const pieces=section.scope?.takeoffPieces??[];
   const sinks=section.scope?.takeoffSinks??[];
-  const totalSf=totalTakeoffSf(pieces);
+  const topSf=totalTakeoffSf(pieces);
+  const splashSf=totalSplashSf(pieces);
+  const totalSf=totalBillableTakeoffSf(pieces);
   const splashLf=totalSplashLf(pieces);
   const validCount=pieces.filter(isValidTakeoffPiece).length;
   const customerMode=section.customerDisplayMode==='summary'?'summary':'detail';
@@ -101,8 +103,9 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
       </header>
       <div className="qtl-scrollbody">
         <section className="qtl-summary-strip" aria-label="Area measurements">
-          <div><small>Countertop</small><strong>{sfFmt.format(totalSf)} <em>SF</em></strong></div>
-          <div><small>4″ Splash</small><strong>{sfFmt.format(splashLf)} <em>LF</em></strong></div>
+          <div><small>Countertops</small><strong>{sfFmt.format(topSf)} <em>SF</em></strong></div>
+          <div><small>4″ Splash</small><strong>{sfFmt.format(splashSf)} <em>SF</em></strong></div>
+          <div><small>Combined takeoff</small><strong>{sfFmt.format(totalSf)} <em>SF</em></strong></div>
           <div><small>Sinks</small><strong>{sinks.reduce((n,s)=>n+s.count,0)}</strong></div>
           <div><small>Area quote total</small><strong>{cash.format(areaPrice)}</strong></div>
         </section>
@@ -110,7 +113,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
         <section className="qtl-panel qtl-pieces">
           <div className="qtl-section-title"><div><h3>Pieces</h3><p>Inches · optional name · check the exposed splash edges</p></div>
             <button type="button" onClick={()=>setHelp(p=>!p)} aria-expanded={help}>? Tips</button></div>
-          {help&&<p className="qtl-help">Length × width × count ÷ 144 = SF. For a typical 4″ splash, back adds the piece length, and left/right add the piece width. Check only edges needing splash. Enter 25½, 25 1/2, or 25.5. Incomplete pieces count as zero.</p>}
+          {help&&<p className="qtl-help">Top SF = length × width × count ÷ 144. Each checked 4″ splash adds (4 × the chosen edge length × count) ÷ 144 SF, included in the combined SF and linked quote quantity. Back uses length; left/right use width. Check only edges needing splash. Enter 25½, 25 1/2, or 25.5. Incomplete pieces count as zero.</p>}
           <div className="qtl-table-wrap">
             <div className="qtl-table-header"><span>PIECE NAME</span><span>LENGTH</span><span>WIDTH</span><span>QTY</span><span>BACK</span><span>LEFT</span><span>RIGHT</span><span>SF</span><span/></div>
             {pieces.map((piece,i)=><div className="qtl-piece" key={piece.id}>
@@ -131,7 +134,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
                 <input type="checkbox" aria-label={`Piece ${i+1} ${edge}`} disabled={!editable}
                   checked={Boolean(piece[edge])} onChange={e=>patchPiece(piece.id,{[edge]:e.target.checked})}/>
               </label>)}
-              <output className="qtl-row-sf" aria-label={`Piece ${i+1} square feet`}>{sfFmt.format(takeoffPieceSf(piece))}</output>
+              <output className="qtl-row-sf" aria-label={`Piece ${i+1} square feet`}>{sfFmt.format(takeoffPieceTotalSf(piece))}</output>
               <div className="qtl-row-buttons">
                 <button type="button" title="Duplicate piece" disabled={!editable||pieces.length>=500}
                   aria-label={`Duplicate piece ${i+1}`} onClick={()=>savePieces([...pieces.slice(0,i+1),
@@ -206,7 +209,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
               onClick={()=>addSfLine(quote.id,section.id)}>
               {linkedSf.length>0?'✓ SF pricing row linked':'+ Add SF pricing row'}
             </button>
-            <span>{linkedSf.length} live SF {linkedSf.length===1?'row':'rows'} · Amounts are summed from the Area's pricing rows.</span>
+            <span>{linkedSf.length} live SF {linkedSf.length===1?'row':'rows'} · SF includes checked 4″ splashes. Amounts are summed from the Area's pricing rows.</span>
           </div>
         </section>
         {owned&&editable&&<button type="button" className="qtl-manual"
@@ -216,7 +219,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
             }
           }}>Switch countertop SF to manual entry</button>}
       </div>
-      <footer className="qtl-footer"><span><strong>{sfFmt.format(totalSf)} SF</strong> · {sfFmt.format(splashLf)} splash LF · {sinks.length} sink selections</span>
+      <footer className="qtl-footer"><span><strong>{sfFmt.format(totalSf)} SF including splashes</strong> · {sfFmt.format(splashSf)} splash SF · {sfFmt.format(splashLf)} splash LF · {sinks.length} sink selections</span>
         <button type="button" onClick={onClose}>Done · Back to quote</button></footer>
     </div>
   </div>,document.body);
