@@ -51,6 +51,7 @@ import { QuoteMaterialLineFields, slabReferencePatch } from './QuoteMaterialLine
 import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
+import { QuoteProjectMaterials } from './QuoteProjectMaterials';
 import { takeoffCustomerSpecs } from '../services/quoteTakeoffsLite';
 import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteSignatureDialog } from './QuoteSignatureDialog';
@@ -1079,7 +1080,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
                 <small className="quote-config-footnote">Area and line visibility stay independent from these column choices.</small>
               </div>}
             </section>
-            {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-lines-editor">
+            {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><QuoteProjectMaterials quote={quote}/><section className="quote-lines-editor">
   <header><div><span className="quote-control-heading">{documentLabel} areas & scope</span><small>Organize the job by Kitchen, Bath, Unit Type, Clubhouse, or any other pricing area.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
   <div className="quote-area-card quote-area-general" onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, undefined); setDraggingLineId(null); } }}>
     <GeneralAreaHeader lines={generalLines} onAddLine={(kind) => addLine(quote.id, kind)} onAddArea={() => addSection(quote.id)}
