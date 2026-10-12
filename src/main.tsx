@@ -2,6 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { AuthGate } from './components/AuthGate';
+import { DeveloperPlaygroundGate } from './components/DeveloperPlaygroundGate';
+import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
 import { PublicQuotePage } from './components/PublicQuotePage';
 import { appRelativePath } from './lib/appUrl';
 import './design-system/tokens.css';
@@ -83,11 +85,14 @@ import './design-system/batch-11-quotes.css';
 import './design-system/ownership-transfer.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
+const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {isPublicQuote ? (
       <PublicQuotePage />
+    ) : isPlayground ? (
+      <DeveloperPlaygroundGate><App /></DeveloperPlaygroundGate>
     ) : (
       <AuthGate>
         <App />
