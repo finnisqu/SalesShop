@@ -9,6 +9,7 @@ import {
 
 export const QUOTE_AREA_SCOPE_VISIBLE_FIELDS: QuoteAreaScopeField[] = [
   'countertopSf',
+  'splashLf',
   'kitchenSinkCount',
   'vanitySinkCount',
 ];
@@ -49,6 +50,7 @@ export function compatibleAreaScopeFields(line: QuoteLine): QuoteAreaScopeField[
     const snapshot = line.rateReference?.snapshot;
     if (!snapshot) return QUOTE_AREA_SCOPE_VISIBLE_FIELDS.slice();
     if (snapshot.unit === 'sf') return ['countertopSf'];
+    if (snapshot.unit === 'lf') return ['splashLf'];
     if (snapshot.unit === 'each') {
       const text = `${snapshot.name} ${snapshot.code ?? ''}`.toLowerCase();
       if (text.includes('cutout')) return [];
@@ -73,7 +75,7 @@ export function applyAreaScopeQuantity(
     field,
     capturedValue: value,
     appliedAt,
-    ...(field === 'countertopSf' && Array.isArray(section.scope?.takeoffPieces) ? { syncMode: 'live' as const } : {}),
+    ...((field === 'countertopSf'||field === 'splashLf') && Array.isArray(section.scope?.takeoffPieces) ? { syncMode: 'live' as const } : {}),
   };
   return { quantity: value, quantitySource };
 }
