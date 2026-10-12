@@ -99,6 +99,8 @@ import './quotes-mobile-sticky-selections.css';
 import './quotes-mobile-builder-levels.css';
 // Draft review and issue readiness audit (mobile Quotes Beta).
 import './quotes-mobile-audit.css';
+// Mobile Quotes Beta area progression and duplication shortcuts.
+import './quotes-mobile-speed.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
