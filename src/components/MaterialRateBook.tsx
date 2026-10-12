@@ -266,7 +266,7 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
                   <td><input value={rule.label} onChange={(event) => updateRule(rule.id, { label: event.target.value })} /></td>
                   <td className="number"><label className="material-currency-cell"><span>$</span><input type="number" step="0.01" value={rule.maxMaterialCost} onChange={(event) => {
                     const value = numberValue(event.target.value);
-                    if (value !== undefined) updateRule(rule.id, { maxMaterialCost: value });
+                    if (value !== undefined) updateRule(rule.id, { maxMaterialCost: value,costBandConfirmed:true });
                   }} /></label></td>
                   <td className="number"><label className="material-currency-cell"><span>$</span><input type="number" step="0.01" value={rule.customerRate} onChange={(event) => {
                     const value = numberValue(event.target.value);
@@ -316,6 +316,7 @@ export function MaterialRateBook({ query, showInactive, mode = 'all' }: { query:
                   guide,
                   reference.costPerSf,
                   material.stockProgram ? material.builderLevelId : undefined,
+                  material.materialType,
                 );
                 const validForced = material.stockProgram && material.builderLevelId && guide.rules.some((rule) => rule.id === material.builderLevelId);
                 const expanded = expandedMaterialId === material.id;
