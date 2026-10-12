@@ -1275,3 +1275,16 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Customer-facing scope: display material/sink specs without private takeoff dimensions. */
+.customer-quote-paper .customer-area-spec{
+  display:block;margin:4px 0 2px;color:#6f6a60;
+  font:400 10px/1.55 system-ui,-apple-system,sans-serif;
+  white-space:normal;overflow-wrap:anywhere;
+}
+.customer-quote-paper .customer-area-summary-row .customer-line-description{
+  min-width:0;display:block;
+}
+.customer-quote-paper .customer-area-summary-row .customer-line-description strong{
+  color:inherit;font-weight:700;
+}
