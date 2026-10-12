@@ -29,11 +29,22 @@ const LEGACY_BASELINE_RULES: MaterialLevelRule[] = [
   { id: 'builder_level_7', label: 'Level 7', maxMaterialCost: 23, customerRate: 85, active: true },
 ];
 
-/** Starter Stock / Builder selling prices, editable under Rates → Materials.
- * Material cost ceilings remain distinct from the customer's sell prices.
- */
-export const DEFAULT_BUILDER_LEVEL_RATES = [34,54,65,75,85,95,105,115,125] as const;
+/** Approved historical material cost bands and selling price reference. */
+export const DEFAULT_BUILDER_LEVEL_RATES = [34,44,54,60,68,75,85,115,125] as const;
 const BASELINE_RULES: MaterialLevelRule[] = [
+  { id: 'builder_level_0', label: 'Level 0', maxMaterialCost: 9, customerRate: 34, active: true, graniteOnly: true },
+  { id: 'builder_level_1', label: 'Level 1', maxMaterialCost: 12, customerRate: 44, active: true },
+  { id: 'builder_level_2', label: 'Level 2', maxMaterialCost: 14, customerRate: 54, active: true },
+  { id: 'builder_level_3', label: 'Level 3', maxMaterialCost: 16, customerRate: 60, active: true },
+  { id: 'builder_level_4', label: 'Level 4', maxMaterialCost: 19, customerRate: 68, active: true },
+  { id: 'builder_level_5', label: 'Level 5', maxMaterialCost: 21, customerRate: 75, active: true },
+  { id: 'builder_level_6', label: 'Level 6', maxMaterialCost: 23, customerRate: 85, active: true },
+  // Last week's extra 7/8 sell-rate presets are retained for quote convenience.
+  // No cost bands were supplied for these, so they MUST NOT auto-price materials.
+  { id: 'builder_level_7', label: 'Level 7', maxMaterialCost: 23, customerRate: 115, active: true, costBandConfirmed: false },
+  { id: 'builder_level_8', label: 'Level 8', maxMaterialCost: 26, customerRate: 125, active: true, costBandConfirmed: false },
+];
+const PREVIOUS_0_8_RULES:MaterialLevelRule[]=[
   { id: 'builder_level_0', label: 'Level 0', maxMaterialCost: 7, customerRate: 34, active: true },
   { id: 'builder_level_1', label: 'Level 1', maxMaterialCost: 9, customerRate: 54, active: true },
   { id: 'builder_level_2', label: 'Level 2', maxMaterialCost: 12, customerRate: 65, active: true },
@@ -44,36 +55,72 @@ const BASELINE_RULES: MaterialLevelRule[] = [
   { id: 'builder_level_7', label: 'Level 7', maxMaterialCost: 23, customerRate: 115, active: true },
   { id: 'builder_level_8', label: 'Level 8', maxMaterialCost: 26, customerRate: 125, active: true },
 ];
-
-/** Expand historical guides without replacing company-edited pricing.
- * Only the exact old starter schedule is repriced; custom tiers/rates are kept.
- * Returns a new document only if a migration is necessary.
+function matchesDefault(actual:MaterialLevelRule, baseline:MaterialLevelRule){
+  return actual.id===baseline.id&&actual.label===baseline.label
+    && actual.maxMaterialCost===baseline.maxMaterialCost
+    && actual.customerRate===baseline.customerRate&&actual.active===baseline.active;
+}
+/** Upgrade only unchanged seeded records. Preserve every user-customized
+ * sell rate / cost ceiling and keep a recoverable guide version.
+ * Never rewrite an already migrated guide on subsequent openings.
  */
 export function upgradeBuilderLevelGuide(guide: MaterialLevelGuideDocument): MaterialLevelGuideDocument {
   const current=guide.rules;
-  const exactOldDefault=current.length===LEGACY_BASELINE_RULES.length
-    && LEGACY_BASELINE_RULES.every(old=>current.some(rule=>rule.id===old.id
-      &&rule.label===old.label&&rule.maxMaterialCost===old.maxMaterialCost
-      &&rule.customerRate===old.customerRate&&rule.active===old.active));
-  if(exactOldDefault){
+  const exactOldSeven=current.length===LEGACY_BASELINE_RULES.length
+    &&LEGACY_BASELINE_RULES.every(old=>current.some(rule=>matchesDefault(rule,old)));
+  const exactOldNine=current.length===PREVIOUS_0_8_RULES.length
+    &&PREVIOUS_0_8_RULES.every(old=>current.some(rule=>matchesDefault(rule,old)));
+  if(exactOldSeven||exactOldNine){
     const recordedAt=new Date().toISOString();
     const previous:MaterialLevelGuideVersion={
-      id:'guide_version_before_levels_0_8',recordedAt,
-      note:'Before Stock / Builder Levels 0–8 update',rules:structuredClone(current),
+      id:'guide_version_before_cost_band_restore',recordedAt,
+      note:'Before historical granite/quartz cost bands were restored',
+      rules:structuredClone(current),
       slabPricingThresholdCostPerSf:guide.slabPricingThresholdCostPerSf,
       slabPricingMultiplier:guide.slabPricingMultiplier,
     };
     return {...guide,rules:structuredClone(BASELINE_RULES),
-      slabPricingThresholdCostPerSf:guide.slabPricingThresholdCostPerSf===23?26:guide.slabPricingThresholdCostPerSf,
-      history:[previous,...guide.history.filter(version=>version.id!==previous.id)],updatedAt:recordedAt};
+      slabPricingThresholdCostPerSf:23,
+      history:[previous,...guide.history.filter(v=>v.id!==previous.id)],updatedAt:recordedAt};
   }
-  // Preserve custom and manager-assigned Levels. Supply missing endpoints only;
-  // never override their existing sell prices, ceilings, or premium slab threshold.
-  const additions=[BASELINE_RULES[0],BASELINE_RULES[8]].filter(seed=>
-    !current.some(rule=>rule.id===seed.id||rule.label.trim().toLowerCase()===seed.label.toLowerCase()));
-  if(!additions.length)return guide;
-  return {...guide,rules:[...current,...structuredClone(additions)]
-    .sort((a,b)=>a.maxMaterialCost-b.maxMaterialCost),updatedAt:new Date().toISOString()};
+  // For edited versions of the temporary 0–8 preset, adjust only unchanged
+  // individual starter values and preserve all customized fields. New cost
+  // ranges for levels 7/8 remain explicitly unapproved.
+  const corrected=current.map(rule=>{
+    const prior=PREVIOUS_0_8_RULES.find(old=>old.id===rule.id);
+    const reference=BASELINE_RULES.find(seed=>seed.id===rule.id);
+    if(!prior||!reference)return rule;
+    const wasPreviousCeiling=rule.maxMaterialCost===prior.maxMaterialCost;
+    const wasPreviousPrice=rule.customerRate===prior.customerRate;
+    const needsMetadata=(rule.id==='builder_level_0'&&!rule.graniteOnly)
+      ||((rule.id==='builder_level_7'||rule.id==='builder_level_8')
+        &&rule.costBandConfirmed===undefined && wasPreviousCeiling);
+    if(!wasPreviousCeiling&&!wasPreviousPrice&&!needsMetadata)return rule;
+    return {...rule,
+      maxMaterialCost:wasPreviousCeiling?reference.maxMaterialCost:rule.maxMaterialCost,
+      customerRate:wasPreviousPrice?reference.customerRate:rule.customerRate,
+      ...(rule.id==='builder_level_0'?{graniteOnly:true}:{}),
+      ...(rule.id==='builder_level_7'||rule.id==='builder_level_8'
+        ?{costBandConfirmed:wasPreviousCeiling?false:rule.costBandConfirmed??true}:{}),
+    };
+  });
+  const additions=BASELINE_RULES.filter(seed=>
+    !corrected.some(rule=>rule.id===seed.id||rule.label.trim().toLowerCase()===seed.label.toLowerCase()));
+  if(!additions.length&&corrected.every((rule,i)=>rule===current[i]))return guide;
+  const changed=[...corrected,...structuredClone(additions)];
+  const recordedAt=new Date().toISOString();
+  const previous:MaterialLevelGuideVersion={
+    id:'guide_version_before_cost_band_restore',recordedAt,
+    note:'Before historical granite/quartz cost bands were restored',
+    rules:structuredClone(current),slabPricingThresholdCostPerSf:guide.slabPricingThresholdCostPerSf,
+    slabPricingMultiplier:guide.slabPricingMultiplier,
+  };
+  const needsThresholdRestore=guide.slabPricingThresholdCostPerSf===26
+    &&current.length>=9&&PREVIOUS_0_8_RULES.some(r=>current.some(c=>c.id===r.id));
+  return {...guide,rules:changed,
+    slabPricingThresholdCostPerSf:needsThresholdRestore?23:guide.slabPricingThresholdCostPerSf,
+    history:guide.history.some(v=>v.id===previous.id)?guide.history:[previous,...guide.history],
+    updatedAt:recordedAt};
 }
 
 function baselineGuide(): MaterialLevelGuideDocument {
@@ -84,12 +131,12 @@ function baselineGuide(): MaterialLevelGuideDocument {
     name: 'Standard Builder Pricing Guide',
     note: 'SalesShop suggests the standard Level from effective material cost. Above the normal Level range, review slab-based pricing using actual slabs purchased × the slab multiplier.',
     rules,
-    slabPricingThresholdCostPerSf: 26,
+    slabPricingThresholdCostPerSf: 23,
     slabPricingMultiplier: 2.2,
     history: [{
       id: 'guide_version_baseline_v3',
       recordedAt: SEED_TIME,
-      note: 'Stock / Builder Levels 0–8 starter pricing; adjust selling rates for your company.',
+      note: 'Historical stock granite and quartz cost bands through Level 6; Levels 7/8 require company cost-band confirmation.',
       rules: structuredClone(rules),
       slabPricingThresholdCostPerSf: 26,
       slabPricingMultiplier: 2.2,
@@ -117,6 +164,8 @@ function normalizeRule(raw: Record<string, unknown>, index: number): MaterialLev
     maxMaterialCost,
     customerRate,
     active: typeof raw.active === 'boolean' ? raw.active : true,
+    graniteOnly: raw.graniteOnly===true,
+    costBandConfirmed:typeof raw.costBandConfirmed==='boolean'?raw.costBandConfirmed:undefined,
   };
 }
 
