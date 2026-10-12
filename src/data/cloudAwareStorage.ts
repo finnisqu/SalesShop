@@ -1,6 +1,6 @@
 import { scopedStorageKey } from '../lib/developerPlayground';
 
- = 'crm' | 'quotes' | 'signatures' | 'notebook';
+export type CloudDocumentKey = 'crm' | 'quotes' | 'signatures' | 'notebook';
 
 export const CLOUD_DOCUMENT_SAVED_EVENT = 'salesshop:document-saved';
 
