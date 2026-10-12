@@ -15,10 +15,8 @@ export function QuoteBetaSelections({quote,onClose}:{
   quote:Quote;onClose:()=>void;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
-  const selectMaterial=useQuoteStore(s=>s.selectTakeoffMaterial);
   const pinMaterial=useQuoteStore(s=>s.pinProjectMaterial);
-  const updateSection=useQuoteStore(s=>s.updateSection);
-  const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
+  const applySelections=useQuoteStore(s=>s.applyJobSelections);
   const first=quote.sections.find(s=>s.scope?.takeoffDefaultEdgeProfile!==undefined||
     s.scope?.takeoffDefaultSplashHeightIn!==undefined)??quote.sections[0];
   const [edge,setEdge]=useState(first?.scope?.takeoffDefaultEdgeProfile??DEFAULT_EDGE_PROFILE);
@@ -38,20 +36,11 @@ export function QuoteBetaSelections({quote,onClose}:{
       if(material.trim())pinMaterial(quote.id,material);
       return;
     }
-    const store=useQuoteStore.getState();
-    // Store already persists scope as JSON. Area-default fields become the source
-    // for all future pieces, and existing overrides are respected unless explicitly replaced.
-    for(const area of quote.sections) {
-      store.updateSection(quote.id,area.id,{scope:{...area.scope,
-        takeoffDefaultEdgeProfile:edge,takeoffDefaultSplashHeightIn:n}});
-      if(includeExistingPieces && area.scope?.takeoffPieces?.length)
-        store.updateTakeoffPieces(quote.id,area.id,area.scope.takeoffPieces.map(piece=>({
-          ...piece,edgeProfile:edge,splashHeightIn:n,
-        })));
-      if(applyMaterial && material.trim())
-        store.selectTakeoffMaterial(quote.id,area.id,material,materialRef);
-    }
-    if(material.trim())pinMaterial(quote.id,material,materialRef);
+    applySelections(quote.id,{
+      edgeProfile:edge,splashHeightIn:n,includeExistingPieces,
+      material:material.trim()||undefined,materialReference:materialRef,
+      assignMaterialToAreas:applyMaterial,
+    });
     setMessage(includeExistingPieces?'Applied defaults to all current pieces.':'Saved defaults for new pieces in all current Areas.');
   };
   return <div className="qmb-selections-backdrop" onPointerDown={e=>{if(e.target===e.currentTarget)onClose();}}>
