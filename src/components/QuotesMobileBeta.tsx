@@ -33,6 +33,8 @@ import { QuoteBetaMaterials } from './QuoteBetaMaterials';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { selectedMaterialCost } from '../services/selectedMaterialCost';
 import { QuoteBetaSelections } from './QuoteBetaSelections';
+import { QuoteBetaReview } from './QuoteBetaReview';
+import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
@@ -351,19 +353,26 @@ export function QuotesMobileBeta() {
     if(page==='area'&&!area)setPage('quote');
     if(page!=='library'&&!quote)setPage('library');
   },[page,area,quote]);
-  const reminders=quote?[
-    ...quote.sections.flatMap(section=>[
-      ...(section.scope?.takeoffPieces??[]).filter(p=>p.count===0||!p.lengthIn||!p.widthIn)
-        .map(p=>`Unfinished piece in ${section.title}: ${p.name||'Unnamed'}`),
-      ...(section.scope?.takeoffSinks??[]).filter(s=>s.includeInPricing&&s.unitPrice===undefined)
-        .map(s=>`Sink needs selling price: ${s.name||'Unnamed sink'}`),
-    ]),
-    ...(!quote.companyName&&!quote.contactName?['Customer not selected']:[]),
-    ...(!quote.contactEmail?['Contact email not entered']:[]),
-    ...(!quote.lines.some(l=>l.includeInTotal&&quoteLineAmount(l)!==0)?['No priced work yet']:[]),
-    ...quote.lines.filter(l=>l.includeInTotal&&l.pricingMode==='quantity-rate'&&l.rate===undefined&&
-      (l.quantity??0)>0).map(l=>'Sell rate needed: '+l.description),
-  ]:[];
+  const audit=quote?auditQuoteDraft(quote):null;
+  const fixAudit=(destination:QuoteAuditDestination)=>{
+    if(destination.view==='area'){
+      setAreaId(destination.areaId);setAreaTab(destination.tab);setPage('area');
+    }else{
+      setQuoteTab(destination.view);setPage('quote');setAreaId(null);
+    }
+  };
+  const issueQuote=async()=>{
+    if(!quote||sending)return;
+    const latest=useQuoteStore.getState().quotes.find(q=>q.id===quote.id);
+    // Recheck at the moment of issuing, not just when the screen rendered.
+    if(!latest||auditQuoteDraft(latest).blockers.length){
+      setError('Resolve pricing blockers before issuing this quote.');return;
+    }
+    setSending(true);setError('');
+    try{await recordSent(quote.id);}
+    catch(e){setError(e instanceof Error?e.message:'Could not issue quote');}
+    finally{setSending(false);}
+  };
   if(!hydrated)return <main className="qmb"><p className="qmb-loading">Opening Quotes Beta…</p></main>;
   if(canBrowseTeam&&libraryMode==='team')return <main className="quotes-view qmb-team">
     <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes Beta</button></div>
@@ -470,31 +479,17 @@ export function QuotesMobileBeta() {
         </div>
       </div>
       <footer className="qmb-footer qmb-quote-footer">
-        <button type="button" className="qmb-primary" onClick={()=>setPage('review')}>Review quote ›</button>
+        <button type="button" className="qmb-primary" onClick={()=>{setError('');setPage('review');}}>
+          Review {audit?.blockers.length?'· '+audit.blockers.length+' to resolve':'quote'} ›</button>
       </footer>
       {selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
-    </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab} setTab={setAreaTab} goBack={goBack}/>:page==='review'&&quote?<div className="qmb-editor">
-      <header className="qmb-pagehead"><button type="button" className="qmb-back" onClick={()=>setPage('quote')}>‹ Quote</button><span className="qmb-chip">Review</span></header>
-      <div className="qmb-pad qmb-pagecontent">
-        <div className="qmb-kicker">FINAL CHECK · WHEN YOU'RE READY</div><h1>Ready to share?</h1>
-        <p className="qmb-subtitle">Unfinished fields never prevent you from saving or returning to a draft.</p>
-        <div className="qmb-totalcard"><small>Customer quote total</small><strong>{money.format(quoteTotal(quote))}</strong><span>{quote.sections.length} Areas</span></div>
-        <div className="qmb-section-head"><h3>Things to review</h3><span className="qmb-chip">{reminders.length} reminders</span></div>
-        {reminders.length?reminders.map((msg,i)=><div className="qmb-card" key={String(i)+msg}><strong>◌ {msg}</strong><p className="qmb-help">You can return to the appropriate tab and fill this in later.</p></div>):
-          <div className="qmb-card"><strong>✓ No obvious missing details</strong><p className="qmb-help">Review your customer preview before issuing.</p></div>}
-        {error&&<p role="alert" className="qmb-error">{error}</p>}
-        <div className="qmb-card">
-          <strong>Customer delivery</strong><p className="qmb-help">Share uses the same secure customer link as Classic Quotes. Marking sent records an issued revision.</p>
-          <QuoteShareControl/>
-          {(quote.status==='Draft'||quote.status==='Ready')&&<button type="button" className="qmb-outline qmb-block"
-            disabled={sending||!canIssue} onClick={async()=>{setSending(true);setError('');try{await recordSent(quote.id);}catch(e){setError(e instanceof Error?e.message:'Could not issue quote');}finally{setSending(false);}}}>
-            {sending?'Issuing…':'Mark quote sent / issue revision'}</button>}
-        </div>
-        <button type="button" className="qmb-outline qmb-block" onClick={()=>{setQuoteTab('preview');setPage('quote');}}>See full customer preview ›</button>
-        <button type="button" className="qmb-quiet qmb-block" onClick={()=>{exitBeta(false);setView('quotes');}}>Continue in Classic Quotes</button>
-      </div>
-      <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={()=>setPage('quote')}>Back to draft</button></footer>
-    </div>:null}
+    </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab} setTab={setAreaTab} goBack={goBack}/>:page==='review'&&quote?<QuoteBetaReview
+      quote={quote} canIssue={canIssue} sending={sending} error={error}
+      onBack={()=>setPage('quote')} onFix={fixAudit}
+      onPreview={()=>{setQuoteTab('preview');setPage('quote');}}
+      onClassic={()=>{exitBeta(false);setView('quotes');}}
+      onIssue={issueQuote}
+    />:null}
     {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
       <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>
