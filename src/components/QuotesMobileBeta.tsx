@@ -18,7 +18,6 @@ import {
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
 } from '../types/quote';
 import { QuoteCrmFields } from './QuoteCrmFields';
-import { QuoteProjectMaterials } from './QuoteProjectMaterials';
 import { QuoteNotesFields } from './QuoteEditorFields';
 import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
@@ -30,6 +29,7 @@ import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
+import { QuoteBetaSelections } from './QuoteBetaSelections';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
@@ -245,6 +245,8 @@ export function QuotesMobileBeta() {
   const [search,setSearch]=useState('');
   const [showArchived,setShowArchived]=useState(false);
   const [newLineKind,setNewLineKind]=useState<QuoteLineKind>('item');
+  const [selectionsOpen,setSelectionsOpen]=useState(false);
+  const quoteScrollRef=useRef<HTMLDivElement>(null);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
   useEffect(()=>{hydrate();hydrateCrm();},[hydrate,hydrateCrm]);
@@ -288,7 +290,7 @@ export function QuotesMobileBeta() {
   const list=myQuotes.filter(q=>(showArchived||!q.archivedAt)&&
     [q.title,q.companyName,q.quoteNumber].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
-  const openQuote=(id:string)=>{select(id);setQuoteTab('build');setPage('quote');setError('');};
+  const openQuote=(id:string)=>{select(id);setQuoteTab('build');setPage('quote');setSelectionsOpen(false);setError('');};
   const createQuote=()=>{const id=create();useQuoteStore.getState().updateQuote(id,{lines:[]});openQuote(id);};
   const openArea=(id:string)=>{setAreaId(id);setAreaTab('measure');setPage('area');};
   const goBack=()=>{setPage('quote');setAreaId(null);};
@@ -296,7 +298,13 @@ export function QuotesMobileBeta() {
     if(!quote||!editable)return;
     const id=addSection(quote.id);
     if(id){
-      useQuoteStore.getState().updateSection(quote.id,id,{customerDisplayMode:'summary'});
+      const jobDefaults=quote.sections.find(s=>s.scope?.takeoffDefaultSplashHeightIn!==undefined||
+        s.scope?.takeoffDefaultEdgeProfile!==undefined)?.scope;
+      useQuoteStore.getState().updateSection(quote.id,id,{
+        customerDisplayMode:'summary',
+        ...(jobDefaults?{scope:{takeoffDefaultSplashHeightIn:jobDefaults.takeoffDefaultSplashHeightIn,
+          takeoffDefaultEdgeProfile:jobDefaults.takeoffDefaultEdgeProfile}}:{}),
+      });
       openArea(id);
     }
   };
@@ -341,31 +349,42 @@ export function QuotesMobileBeta() {
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={createQuote}>+ New quote</button></footer>
-    </>:page==='quote'&&quote?<div className="qmb-editor">
-      <header className="qmb-pagehead">
-        <button type="button" className="qmb-back" onClick={()=>setPage('library')}>‹ My quotes</button>
-        <span className="qmb-chip">{quote.status}</span>
-        <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button></div>
-      </header>
-      <div className="qmb-pad qmb-titlepad">
-        <div className="qmb-kicker">{displayQuoteNumber(quote)} · MOBILE BETA</div>
-        <input className="qmb-titleinput" aria-label="Quote title" maxLength={300}
-          disabled={!editable} placeholder="Untitled quote"
-          value={quote.title==='Untitled quote'?'':quote.title}
-          onChange={e=>update(quote.id,{title:e.target.value})}/>
-        <p className="qmb-subtitle">{quote.companyName||'No customer yet'} · All sections can be completed in any order</p>
-      </div>
-      <nav className="qmb-tabs" aria-label="Quote views">
-        {([['build','Build'],['details','Details'],['preview','Preview']] as const).map(([id,label])=>
-          <button key={id} type="button" className={quoteTab===id?'active':''}
-            aria-current={quoteTab===id?'page':undefined} onClick={()=>setQuoteTab(id)}>{label}</button>)}
-      </nav>
-      <div className="qmb-pad qmb-pagecontent">
+    </>:page==='quote'&&quote?<div className="qmb-editor qmb-quote-editor">
+      <div className="qmb-quote-scroll" ref={quoteScrollRef}>
+        <header className="qmb-pagehead">
+          <button type="button" className="qmb-back" onClick={()=>setPage('library')}>‹ My quotes</button>
+          <span className="qmb-chip">{quote.status}</span>
+          <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button></div>
+        </header>
+        <div className="qmb-quote-sticky">
+          <div className="qmb-quote-identity">
+            <input className="qmb-quote-name" aria-label="Quote title" maxLength={300}
+              disabled={!editable} placeholder="Untitled quote"
+              value={quote.title==='Untitled quote'?'':quote.title}
+              onChange={e=>update(quote.id,{title:e.target.value})}/>
+            <strong className="qmb-quote-total" aria-label="Current quote total">{money.format(quoteTotal(quote))}</strong>
+          </div>
+          <nav className="qmb-tabs" aria-label="Quote views">
+            {([['build','Build'],['details','Details'],['preview','Preview']] as const).map(([id,label])=>
+              <button key={id} type="button" className={quoteTab===id?'active':''}
+                aria-current={quoteTab===id?'page':undefined}
+                onClick={()=>{
+                  setQuoteTab(id);
+                  const scroll=quoteScrollRef.current;
+                  const identity=scroll?.querySelector<HTMLElement>('.qmb-quote-sticky');
+                  if(scroll&&identity)scroll.scrollTop=identity.offsetTop;
+                }}>{label}</button>)}
+          </nav>
+        </div>
+        <div className="qmb-pad qmb-pagecontent">
         {quote.documentType==='pricing-schedule'&&<div className="qmb-card"><strong>Pricing Schedule</strong><p>Use Classic Quotes for the full schedule workbook. This Beta editor does not alter its special pricing data.</p>
           <button type="button" className="qmb-outline" onClick={()=>exitBeta(false)}>Open classic editor</button></div>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
-          <div className="qmb-totalcard"><small>Current quote total</small><strong>{money.format(quoteTotal(quote))}</strong>
-            <span>{quote.sections.length} Areas · {quote.lines.length} lines · saved with SalesShop</span></div>
+          <button type="button" className="qmb-selections-launch" aria-label="Open quote selections"
+            onClick={()=>setSelectionsOpen(true)}>
+            <span><strong>◇ Selections</strong><small>{(quote.projectMaterials??[]).length} materials · Job defaults</small></span>
+            <span aria-hidden="true">›</span>
+          </button>
           <div className="qmb-section-head"><h3>Areas</h3><button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button></div>
           {quote.sections.map(s=>{
             const lines=quote.lines.filter(l=>l.sectionId===s.id);
@@ -387,7 +406,6 @@ export function QuotesMobileBeta() {
                 .map(([id,label])=><option value={id} key={id}>{label}</option>)}
             </select><button type="button" className="qmb-outline" onClick={()=>addLine(quote.id,newLineKind)}>+ Add line</button></div>
           </section>}
-          <QuoteProjectMaterials quote={quote}/>
         </>}
         {quoteTab==='details'&&<>
           <div className="qmb-section-head"><h3>Customer & project</h3><span className="qmb-chip">Optional while drafting</span></div>
@@ -410,11 +428,12 @@ export function QuotesMobileBeta() {
           <p className="qmb-help">This uses the same customer document renderer as Classic Quotes. Private internal notes and dimensions remain internal.</p>
           <QuoteShareControl/>
         </>}
+        </div>
       </div>
-      <footer className="qmb-footer">
-        <div><small>Total</small><strong>{money.format(quoteTotal(quote))}</strong></div>
-        <button type="button" className="qmb-primary" onClick={()=>setPage('review')}>Review ›</button>
+      <footer className="qmb-footer qmb-quote-footer">
+        <button type="button" className="qmb-primary" onClick={()=>setPage('review')}>Review quote ›</button>
       </footer>
+      {selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab} setTab={setAreaTab} goBack={goBack}/>:page==='review'&&quote?<div className="qmb-editor">
       <header className="qmb-pagehead"><button type="button" className="qmb-back" onClick={()=>setPage('quote')}>‹ Quote</button><span className="qmb-chip">Review</span></header>
       <div className="qmb-pad qmb-pagecontent">
