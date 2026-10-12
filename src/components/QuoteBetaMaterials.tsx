@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import type { Quote, QuoteSection, QuoteTakeoffSink } from '../types/quote';
 import { SINK_CATEGORIES, SINK_CATEGORY_LABELS } from '../types/sink';
-import { newTakeoffSink } from '../services/quoteTakeoffsLite';
+import { newTakeoffSink, FAUCET_HOLE_OFFSETS_IN } from '../services/quoteTakeoffsLite';
+import { FloatingRowMenu } from './QuoteBetaMeasureGrid';
 import { TakeoffMaterialCatalog, TakeoffSinkCatalog } from './TakeoffCatalogPickers';
 
 /** Compact, live-store-connected Material and Sink editor for mobile Quotes Beta. */
@@ -31,7 +32,7 @@ export function QuoteBetaMaterials({quote,section,editable}:{
       <button className="qmb-quiet" type="button" onClick={()=>setShowHelp(v=>!v)}
         aria-expanded={showHelp}>ⓘ</button>
     </div>
-    {showHelp&&<p className="qmb-help">Charge on quote creates a normal priced sink line. Leave it unchecked when its price is already built into another charge. Customer visibility is chosen separately on the Pricing tab. Hiding a priced sink on the customer quote rolls that charge into the main visible line.</p>}
+    {showHelp&&<p className="qmb-help">Each selected sink creates a price line automatically. Use the Pricing tab to decide whether that sink appears separately or is included in the countertop amount. Faucet holes are fabrication-only selections and never appear on the customer quote.</p>}
     <div className="qmb-sinks-sheet">
       {sinks.map((sink,index)=><div className="qmb-sink-line" key={sink.id}>
         <div className="qmb-sink-primary">
@@ -51,13 +52,35 @@ export function QuoteBetaMaterials({quote,section,editable}:{
           <label className="qmb-sink-qty">Qty <input type="number" inputMode="numeric" min="1" max="1000"
             aria-label={'Sink '+(index+1)+' quantity'} value={sink.count} disabled={!editable}
             onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchSink(sink.id,{count:n});}}/></label>
-          <label className="qmb-sink-charge"><input type="checkbox" checked={sink.includeInPricing} disabled={!editable}
-            onChange={e=>patchSink(sink.id,{includeInPricing:e.target.checked})}/> Charge on quote</label>
-          {sink.includeInPricing&&<label className="qmb-sink-price">
+          <label className="qmb-sink-price">
             $/each <input aria-label={'Sink '+(index+1)+' sell price'} type="number" inputMode="decimal"
               min="0" step=".01" value={sink.unitPrice??''} placeholder="—" disabled={!editable}
               onChange={e=>{const n=Number(e.target.value);if(e.target.value===''||(Number.isFinite(n)&&n>=0))patchSink(sink.id,{unitPrice:e.target.value===''?undefined:n});}}/>
-          </label>}
+          </label>
+          <FloatingRowMenu width={338} label={'Faucet holes for Sink '+(index+1)}
+            caption={'Holes · '+((sink.faucetHoleOffsetsIn??[0]).length||'None')}>
+            {close=><div className="qmb-holes-menu">
+              <div className="qmb-row-menu-title"><strong>Faucet hole locations</strong>
+                <small>Each position is 2″ apart; center = 0. Leave empty if unknown.</small></div>
+              <div className="qmb-hole-positions" role="group" aria-label={'Sink '+(index+1)+' faucet hole spread'}>
+                {FAUCET_HOLE_OFFSETS_IN.map(offset=><label key={offset} className={offset===0?'is-center':''}>
+                  <input type="checkbox" aria-label={offset===0?'Center hole':offset<0?Math.abs(offset)+' inches left':offset+' inches right'}
+                    disabled={!editable} checked={(sink.faucetHoleOffsetsIn??[0]).includes(offset)}
+                    onChange={e=>{
+                      const current=sink.faucetHoleOffsetsIn??[0];
+                      const updated=e.target.checked?[...current,offset]:current.filter(v=>v!==offset);
+                      patchSink(sink.id,{faucetHoleOffsetsIn:[...new Set(updated)].sort((a,b)=>a-b)});
+                    }}/>
+                  <small>{offset===0?'C':offset>0?'+'+offset:String(offset)}</small>
+                </label>)}
+              </div>
+              <div className="qmb-row-menu-buttons">
+                <button type="button" disabled={!editable} onClick={()=>patchSink(sink.id,{faucetHoleOffsetsIn:[]})}>Clear</button>
+                <button type="button" disabled={!editable} onClick={()=>patchSink(sink.id,{faucetHoleOffsetsIn:[-2,0,2]})}>4″ spread</button>
+                <button type="button" className="qmb-row-menu-done" onClick={close}>Done</button>
+              </div>
+            </div>}
+          </FloatingRowMenu>
         </div>
       </div>)}
       {!sinks.length&&<div className="qmb-grid-empty">No sinks yet. You can leave this empty.</div>}
