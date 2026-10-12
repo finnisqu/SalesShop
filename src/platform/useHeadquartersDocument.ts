@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-type DocumentKind='notebook'|'crm';
+type DocumentKind='notebook'|'crm'|'settings';
 type GetResponse={document:unknown;revision:number;updatedAt:string|null};
 type SaveResponse={revision:number;updatedAt:string|null};
 
