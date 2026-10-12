@@ -2,7 +2,16 @@
 .developer-console {
   --dc-bg:#f2efe7; --dc-card:#fffcf6; --dc-ink:#27333a; --dc-sub:#5e6970;
   --dc-line:#d8dad6; --dc-accent:#c6ad70; --dc-dark:#26333b;
-  min-height:100dvh; display:grid;grid-template-columns:238px minmax(0,1fr);
+  /* The tenant app locks body scrolling. Studio therefore owns its own
+     viewport-sized scroll surface instead of relying on document scroll. */
+  height:100vh;
+  height:100dvh;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  display:grid;grid-template-columns:238px minmax(0,1fr);
   font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:var(--dc-bg);color:var(--dc-ink);
 }
@@ -107,8 +116,11 @@
   border-radius:8px;background:#fff0ec;color:#7c3229;font-size:13px}
 .developer-console-footnote {margin:6px 0;color:var(--dc-sub);font-size:12px;line-height:1.5}
 @media(max-width:840px) {
-  .developer-console {grid-template-columns:1fr}
-  .developer-console-sidebar {padding:11px 14px;min-height:auto;gap:10px}
+  .developer-console {grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  .developer-console-sidebar {
+    position:sticky;top:0;z-index:5;
+    padding:11px 14px;min-height:auto;gap:10px;
+  }
   .developer-console-brand {padding:0}
   .developer-console-sidebar nav {display:flex;align-items:center;gap:8px}
   .developer-console-sidebar nav button {padding:9px 12px;min-height:40px}
@@ -117,7 +129,10 @@
     align-items:center;display:flex}
   .developer-console-sidebar-foot strong,.developer-console-sidebar-foot small {display:none}
   .developer-console-sidebar-foot button {margin:0;min-height:36px;padding:6px 10px}
-  .developer-console-main {min-height:0}
+  .developer-console-main {
+    min-height:0;
+    padding-bottom:max(24px, env(safe-area-inset-bottom));
+  }
 }
 @media(max-width:560px) {
   .developer-console-header {align-items:flex-start;gap:10px}
