@@ -294,9 +294,7 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
-  await beta.getByRole('button',{name:/Review quote/}).click();
-  const review=beta.getByRole('group',{name:'Resolve before issuing'}).or(
-    beta.getByRole('region',{name:'Resolve before issuing'}));
+  await beta.getByRole('button',{name:/^Review /}).click();
   await expect(beta.getByRole('button',{name:'Fix No priced work yet'})).toBeVisible();
   await expect(beta.getByRole('button',{name:'Resolve pricing issues to issue'})).toBeDisabled();
   await beta.getByRole('button',{name:'Fix No priced work yet'}).click();
