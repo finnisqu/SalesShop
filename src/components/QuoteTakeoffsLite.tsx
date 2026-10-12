@@ -2,6 +2,7 @@ import { useEffect,useRef,useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuoteStore } from '../store/quoteStore';
 import { TakeoffMaterialCatalog,TakeoffSinkCatalog } from './TakeoffCatalogPickers';
+import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { SINK_CATEGORIES,SINK_CATEGORY_LABELS } from '../types/sink';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import {
@@ -38,9 +39,13 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
   const updateSection=useQuoteStore(s=>s.updateSection);
   const selectMaterial=useQuoteStore(s=>s.selectTakeoffMaterial);
-  const addSfLine=useQuoteStore(s=>s.addTakeoffLine);
+  const setRate=useQuoteStore(s=>s.setTakeoffRate);
+  const split=useQuoteStore(s=>s.splitTakeoff);
+  const updateLine=useQuoteStore(s=>s.updateLine);
   const detachTakeoff=useQuoteStore(s=>s.detachTakeoff);
   const [help,setHelp]=useState(false);
+  const [selectedPieceIds,setSelectedPieceIds]=useState<string[]>([]);
+  const [newAreaTitle,setNewAreaTitle]=useState('');
   const dialog=useRef<HTMLDivElement>(null);
   const returnFocus=useRef<Element|null>(null);
   const editable=quoteIsCommerciallyEditable(quote);
@@ -57,6 +62,8 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const validCount=pieces.filter(isValidTakeoffPiece).length;
   const customerMode=section.customerDisplayMode==='summary'?'summary':'detail';
   const linkedSf=quote.lines.filter(l=>l.sectionId===section.id&&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
+  const smartLine=linkedSf[0];
+  const customerLines=quote.lines.filter(l=>l.sectionId===section.id&&l.includeInTotal);
   const pricedSinks=sinks.filter(s=>s.includeInPricing);
   const pendingPrice=pricedSinks.some(s=>s.unitPrice===undefined);
   const areaPrice=quoteLinesTotal(quote.lines.filter(l=>l.sectionId===section.id));
@@ -64,7 +71,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   useEffect(()=>{
     returnFocus.current=document.activeElement;
     dialog.current?.focus();
-    if(!section.scope?.takeoffPieces?.length&&editable){
+    if(!section.scope?.takeoffPieces&&editable){
       updatePieces(quote.id,section.id,[newTakeoffPiece(1)]);
     }
     const handle=(event:KeyboardEvent)=>{
@@ -98,6 +105,11 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
     updateSinks(quote.id,section.id,sinks.map(s=>s.id===id?{...s,...patch}:s));
   const mode=(next:'summary'|'detail')=>
     updateSection(quote.id,section.id,{customerDisplayMode:next});
+  const movePieces=()=>{
+    if(!selectedPieceIds.length)return;
+    const id=split(quote.id,section.id,selectedPieceIds,newAreaTitle.trim()||'New area');
+    if(id){setSelectedPieceIds([]);setNewAreaTitle('');}
+  };
   return createPortal(<div className="qtl-backdrop" role="presentation"
       onPointerDown={e=>{if(e.target===e.currentTarget)onClose();}}>
     <div ref={dialog} className="qtl-dialog" role="dialog" aria-modal="true"
@@ -128,8 +140,9 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
             <button type="button" onClick={()=>setHelp(p=>!p)} aria-expanded={help}>? Tips</button></div>
           {help&&<p className="qtl-help">Top SF = length × width × count ÷ 144. Each checked 4″ splash adds (4 × the chosen edge length × count) ÷ 144 SF, included in the combined SF and linked quote quantity. Back uses length; left/right use width. Check only edges needing splash. Enter 25½, 25 1/2, or 25.5. Incomplete pieces count as zero.</p>}
           <div className="qtl-table-wrap">
-            <div className="qtl-table-header"><span>PIECE NAME</span><span>LENGTH</span><span>WIDTH</span><span>QTY</span><span>BACK</span><span>LEFT</span><span>RIGHT</span><span>SF</span><span/></div>
+            <div className="qtl-table-header"><span>MOVE</span><span>PIECE NAME</span><span>LENGTH</span><span>WIDTH</span><span>QTY</span><span>BACK</span><span>LEFT</span><span>RIGHT</span><span>SF</span><span/></div>
             {pieces.map((piece,i)=><div className="qtl-piece" key={piece.id}>
+              <label className="qtl-move"><span>Select</span><input type="checkbox" disabled={!editable} aria-label={`Select piece ${i+1} for new Area`} checked={selectedPieceIds.includes(piece.id)} onChange={e=>setSelectedPieceIds(prev=>e.target.checked?[...prev,piece.id]:prev.filter(id=>id!==piece.id))}/></label>
               <label className="qtl-name"><span>Piece name</span><input type="text" maxLength={120} disabled={!editable}
                 aria-label={`Piece ${i+1} name`} value={piece.name}
                 placeholder={`Piece ${i+1} (optional)`}
@@ -157,19 +170,21 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
               </div>
             </div>)}
           </div>
-          <button type="button" className="qtl-add" disabled={!editable||pieces.length>=500} onClick={addPiece}>+ Add piece</button>
+          <div className="qtl-piece-actions"><button type="button" className="qtl-add" disabled={!editable||pieces.length>=500} onClick={addPiece}>+ Add piece</button>
+            {selectedPieceIds.length>0&&<div className="qtl-split-actions"><input aria-label="New Area name" placeholder="New Area name" value={newAreaTitle} onChange={e=>setNewAreaTitle(e.target.value)}/>
+              <button type="button" onClick={movePieces} disabled={!editable||selectedPieceIds.length===pieces.length}>Move {selectedPieceIds.length} to new Area</button></div>}
+          </div>
         </section>
 
         <section className="qtl-panel">
           <div className="qtl-section-title"><div><h3>Material & sinks</h3>
             <p>Specs can appear on a single lump-sum line. Add sink pricing only when needed.</p></div></div>
-          <label className="qtl-material"><span>Material / finish specification</span><input type="text"
-            value={section.scope?.takeoffMaterial??''} maxLength={300} disabled={!editable}
-            placeholder="e.g. Carrara White Quartz · 3cm · Polished"
-            onChange={e=>selectMaterial(quote.id,section.id,e.target.value)}/></label>
-          <TakeoffMaterialCatalog disabled={!editable}
-            selected={section.scope?.takeoffMaterialReference}
-            onSelect={(reference,label)=>selectMaterial(quote.id,section.id,label,reference)}/>
+          <label className="qtl-material"><span>Material / finish</span>
+            <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
+              selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
+              onTextChange={name=>selectMaterial(quote.id,section.id,name)}
+              onSelect={(reference,label)=>selectMaterial(quote.id,section.id,label,reference)}/>
+          </label>
           <div className="qtl-sinks">
             {sinks.map((sink,i)=><div className="qtl-sink-card" key={sink.id}>
               <label><span>Type</span><select value={sink.category} disabled={!editable}
@@ -178,13 +193,11 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
                 {SINK_CATEGORIES.map(category=><option value={category} key={category}>{SINK_CATEGORY_LABELS[category]}</option>)}
               </select></label>
               <div className="qtl-sink-name">
-                <label><span>Sink model / spec</span><input type="text"
-                  maxLength={160} disabled={!editable} value={sink.name}
-                  placeholder="e.g. 3218 Single Bowl" onFocus={e=>e.currentTarget.select()}
-                  onChange={e=>patchSink(sink.id,{name:e.target.value,sinkReference:undefined})}/></label>
-                <TakeoffSinkCatalog disabled={!editable}
-                  onSelect={patch=>patchSink(sink.id,patch)}/>
-                {sink.sinkReference?.snapshot&&<small className="qtl-catalog-selected">Catalog: {sink.sinkReference.snapshot.variantLabel}</small>}
+                <label><span>Sink model / spec</span><TakeoffSinkCatalog
+                  disabled={!editable} value={sink.name}
+                  onTextChange={name=>patchSink(sink.id,{name,sinkReference:undefined})}
+                  onSelect={patch=>patchSink(sink.id,patch)}/></label>
+                {sink.sinkReference?.snapshot&&<small className="qtl-catalog-selected">✓ Catalog variant: {sink.sinkReference.snapshot.variantLabel}</small>}
               </div>
               <label><span>Qty</span><input type="number" min="1" max="1000" step="1"
                 value={sink.count} disabled={!editable}
@@ -208,6 +221,19 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
           <p className="qtl-note">Sinks always appear in the area's scope. Checking <strong>Price separately</strong> adds a managed, priced quote row. Unchecked sinks add no extra charge—useful when your lump-sum price already includes them.</p>
         </section>
 
+        <section className="qtl-panel qtl-pricing-panel">
+          <div className="qtl-section-title"><div><h3>Finish pricing</h3>
+            <p>Takeoff SF is added as a smart quote line automatically. Choose a selling rate to finish this Area.</p></div></div>
+          <div className="qtl-price-layout"><div>
+            <strong className="qtl-price-measurement">{sfFmt.format(totalSf)} SF</strong>
+            <small>Countertops + 4″ splashes</small>
+          </div><TakeoffRatePicker quote={quote} rate={smartLine?.rate} disabled={!editable||validCount===0}
+            onSelect={(value,reference)=>setRate(quote.id,section.id,value,reference)}/>
+            <div><strong className="qtl-price-measurement">{cash.format(smartLine?.rate===undefined?0:totalSf*smartLine.rate)}</strong>
+              <small>Material line subtotal</small></div>
+          </div>
+          {validCount>0&&smartLine?.rate===undefined&&<p className="qtl-unpriced">Enter a selling rate before sending this quote.</p>}
+        </section>
         <section className="qtl-panel">
           <div className="qtl-section-title"><div><h3>How should this Area appear on the quote?</h3>
             <p>Presentation only—switching views does not change existing prices.</p></div></div>
@@ -224,13 +250,16 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
             </label>
           </div>
           <p className="qtl-preview-spec"><strong>Customer description:</strong> {takeoffCustomerSpecs(section)||'Add material or sink specifications above.'}</p>
-          <div className="qtl-price-actions">
-            <button type="button" disabled={!editable||!owned||validCount===0||linkedSf.length>0}
-              onClick={()=>addSfLine(quote.id,section.id)}>
-              {linkedSf.length>0?'✓ SF pricing row linked':'+ Add SF pricing row'}
-            </button>
-            <span>{linkedSf.length} live SF {linkedSf.length===1?'row':'rows'} · SF includes checked 4″ splashes. Amounts are summed from the Area's pricing rows.</span>
-          </div>
+          {customerMode==='detail'&&<div className="qtl-breakout-rows">
+            <strong>Choose what the customer sees under this Area</strong>
+            {customerLines.map(line=><label key={line.id}>
+              <input type="checkbox" checked={line.customerVisible} disabled={!editable}
+                onChange={e=>updateLine(quote.id,line.id,{customerVisible:e.target.checked})}/>
+              <span>{line.description||'Line item'} · {cash.format(line.pricingMode==='quantity-rate'?(line.quantity??0)*(line.rate??0):line.amount??0)}</span>
+            </label>)}
+            <small>Unchecked priced rows are grouped as “Other included work” so the customer total still matches.</small>
+          </div>}
+          <p className="qtl-note">Smart = linked measurements and catalog references. You can still edit, add, or replace any line manually in Quotes.</p>
         </section>
         {owned&&editable&&<button type="button" className="qtl-manual"
           onClick={()=>{
