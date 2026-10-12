@@ -6,6 +6,10 @@ const unicodeFractions: Record<string,string> = {
 };
 const maxDimensionIn=10000;
 const maxPieceCount=1000;
+export const DEFAULT_SPLASH_HEIGHT_IN=4;
+export const DEFAULT_EDGE_PROFILE='Flat';
+export const FAUCET_HOLE_OFFSETS_IN=[-8,-6,-4,-2,0,2,4,6,8] as const;
+export const DEFAULT_FAUCET_HOLE_OFFSETS_IN=[0] as const;
 
 export function parseInches(raw:string):number|undefined {
   let value=raw.trim().replace(/[″"]/g,'').trim();
@@ -46,9 +50,10 @@ function splashEdgeInches(piece:QuoteTakeoffPiece):number {
     +(piece.leftSplash?piece.widthIn!:0)+(piece.rightSplash?piece.widthIn!:0);
   return edges*piece.count;
 }
-/** 4-inch splash material: (4 × chosen edge inches × piece count) / 144. */
+/** Piece-specific splash height, default 4 inches, affects material SF. */
 export function takeoffPieceSplashSf(piece:QuoteTakeoffPiece):number {
-  return splashEdgeInches(piece)*4/144;
+  const height=piece.splashHeightIn??DEFAULT_SPLASH_HEIGHT_IN;
+  return Number.isFinite(height)&&height>=0&&height<=120?splashEdgeInches(piece)*height/144:0;
 }
 export function takeoffPieceTotalSf(piece:QuoteTakeoffPiece):number {
   return takeoffPieceSf(piece)+takeoffPieceSplashSf(piece);
@@ -68,7 +73,7 @@ export function totalBillableTakeoffSf(pieces:QuoteTakeoffPiece[]):number {
 }
 export function newTakeoffSink():QuoteTakeoffSink {
   return {id:`sinktakeoff_${crypto.randomUUID()}`,category:'kitchen',name:'',count:1,
-    includeInPricing:false};
+    includeInPricing:true,faucetHoleOffsetsIn:[0]};
 }
 export function takeoffCustomerSpecs(section:QuoteSection):string {
   const material=section.scope?.takeoffMaterial?.trim()??'';
@@ -97,7 +102,7 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
       description:`Sink · ${sink.name.trim()|| (sink.category==='vanity'?'Vanity sink':'Kitchen sink')}`,
       pricingMode:'quantity-rate',quantity:sink.count,rate:sink.unitPrice,
       // An itemization choice is independent of editing sink quantities or prices.
-      customerVisible:existing?.customerVisible??true,
+      customerVisible:existing?.customerVisible??false,
       includeInTotal:existing?.includeInTotal??true,
       sinkReference:sink.sinkReference,
       takeoffSinkId:sink.id,
@@ -181,7 +186,7 @@ export function patchQuoteTakeoffMaterial(
 
 export function newTakeoffPiece(index:number):QuoteTakeoffPiece {
   void index;
-  return {id:`takeoff_${crypto.randomUUID()}`,name:'',count:1};
+  return {id:`takeoff_${crypto.randomUUID()}`,name:'',count:1,splashHeightIn:DEFAULT_SPLASH_HEIGHT_IN,edgeProfile:DEFAULT_EDGE_PROFILE};
 }
 export function takeoffOwnedScope(scope:QuoteAreaScope|undefined):boolean {
   return Array.isArray(scope?.takeoffPieces);
