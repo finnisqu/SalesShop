@@ -265,9 +265,6 @@ function publicCustomerSelections(snapshot: Snapshot) {
       }
     }
     if(!edgeProfiles.size&&label(scope.takeoffDefaultEdgeProfile))edgeProfiles.add(label(scope.takeoffDefaultEdgeProfile));
-    const defaultSplash=scope.takeoffDefaultSplashHeightIn;
-    if(!splashHeights.size&&typeof defaultSplash==='number'&&Number.isFinite(defaultSplash))
-      splashHeights.add(defaultSplash+'″ default');
     return {id:section.id,area:isGeneralTakeoffsTitle(section)?'General':label(section.title),
       material:material||undefined,sinkModels,edgeProfiles:[...edgeProfiles],splashHeights:[...splashHeights]};
   }).filter(row=>row.material||row.sinkModels.length||row.edgeProfiles.length||row.splashHeights.length);
