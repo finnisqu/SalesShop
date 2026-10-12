@@ -76,3 +76,27 @@ export function patchQuoteTakeoff(
     }),
   };
 }
+
+/** Explicitly return an Area to manually entered SF without losing its last
+ * measured number or unexpectedly repricing a linked quantity. */
+export function detachQuoteTakeoff(quote:Quote, sectionId:string):Quote {
+  const section=quote.sections.find(s=>s.id===sectionId);
+  if(!section || !takeoffOwnedScope(section.scope))return quote;
+  return {
+    ...quote,
+    sections:quote.sections.map(s=>{
+      if(s.id!==sectionId)return s;
+      const scope={...(s.scope??{})};
+      delete scope.takeoffPieces;
+      return {...s,scope};
+    }),
+    lines:quote.lines.map(line=>{
+      const source=line.quantitySource;
+      if(line.sectionId!==sectionId || source?.kind!=='area-scope'
+        ||source.field!=='countertopSf'||source.sectionId!==sectionId||source.syncMode!=='live')return line;
+      const {syncMode: _live, ...snapshot}=source;
+      void _live;
+      return {...line,quantitySource:snapshot};
+    }),
+  };
+}
