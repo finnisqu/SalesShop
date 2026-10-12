@@ -1,14 +1,16 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useState, type RefObject, type ReactNode } from 'react';
 
 /** Navigate a horizontally paged mobile Board without disturbing each stage's vertical scroll. */
 export function MobileBoardStagePicker({
   boardRef,
   stages,
   counts,
+  actions,
 }: {
   boardRef: RefObject<HTMLElement | null>;
   stages: readonly string[];
   counts: readonly number[];
+  actions?: ReactNode;
 }) {
   const [activeStage, setActiveStage] = useState(0);
 
@@ -62,6 +64,7 @@ export function MobileBoardStagePicker({
         </select>
       </label>
       <span className="mobile-board-stage-position" aria-live="off">{Math.min(activeStage + 1, stages.length)} / {stages.length}</span>
+      {actions&&<div className="mobile-board-stage-actions">{actions}</div>}
       <span className="mobile-board-stage-hint">Swipe for next stage →</span>
     </div>
   );
