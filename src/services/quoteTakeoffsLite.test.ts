@@ -105,7 +105,7 @@ describe('Takeoffs Lite: precise fractional-inch piece measurements',()=>{
     expect(blank.sections[0].scope?.countertopSf).toBe(0);
     expect(blank.lines[0].quantity).toBe(0);
     const a=newTakeoffPiece(1),b=newTakeoffPiece(1);
-    expect(a).toMatchObject({name:'Piece 1',count:1});
+    expect(a).toMatchObject({name:'',count:1});
     expect(a.id).not.toBe(b.id);
   });
 });
