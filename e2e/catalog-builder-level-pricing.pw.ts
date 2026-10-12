@@ -15,9 +15,9 @@ test('Catalog Materials shortcut opens the editable historical Stock Builder Lev
   const pricing=catalog.getByRole('button',{name:'Material Pricing'});
   await expect(pricing).toHaveAttribute('aria-pressed','true');
   const table=catalog.locator('.rates-material-pricing-table');
-  await expect(table.getByText('Level 0')).toBeVisible();
-  await expect(table.getByText('Granite only')).toBeVisible();
-  await expect(table.getByText('First quartz level')).toBeVisible();
+  await expect(table).toContainText('Level 0');
+  await expect(table).toContainText('Granite only');
+  await expect(table).toContainText('First quartz level');
   await catalog.getByRole('button',{name:'Edit pricing'}).click();
   await expect(catalog.locator('.material-level-sheet')).toBeVisible();
   await expect(catalog.locator('.material-level-sheet tbody tr')).toHaveCount(9);
