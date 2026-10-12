@@ -17,6 +17,7 @@ export function QuoteBetaSelections({quote,onClose}:{
   const editable=quoteIsCommerciallyEditable(quote);
   const pinMaterial=useQuoteStore(s=>s.pinProjectMaterial);
   const applySelections=useQuoteStore(s=>s.applyJobSelections);
+  const updateQuote=useQuoteStore(s=>s.updateQuote);
   const first=quote.sections.find(s=>s.scope?.takeoffDefaultEdgeProfile!==undefined||
     s.scope?.takeoffDefaultSplashHeightIn!==undefined)??quote.sections[0];
   const [edge,setEdge]=useState(first?.scope?.takeoffDefaultEdgeProfile??DEFAULT_EDGE_PROFILE);
@@ -86,6 +87,15 @@ export function QuoteBetaSelections({quote,onClose}:{
               onClick={()=>apply(true)}>Apply to all pieces</button>
           </div>
           <p className="qmb-help">Set defaults affects new pieces in existing Areas. Apply to all also updates individual pieces. You can override any piece later.</p>
+        </div>
+        <div className="qmb-selections-card">
+          <strong>Customer selections appendix</strong>
+          <label className="qmb-check">
+            <input type="checkbox" disabled={!editable} checked={Boolean(quote.attachSelectionsSheet)}
+              onChange={event=>updateQuote(quote.id,{attachSelectionsSheet:event.target.checked})}/>
+            Attach material, sink, edge and backsplash selections to customer quote
+          </label>
+          <p className="qmb-help">Optional. Customer preview will show only selected materials and finishes—not buying costs, measurements, or faucet-drilling instructions. Review the appendix before issuing.</p>
         </div>
         {message&&<p className="qmb-selections-feedback" role="status">{message}</p>}
       </div>
