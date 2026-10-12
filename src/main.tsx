@@ -97,6 +97,8 @@ import './quotes-mobile-fabrication-options.css';
 import './quotes-mobile-sticky-selections.css';
 // Stock / Builder Level 0–8 quote RATE presets use the existing material pricing guide.
 import './quotes-mobile-builder-levels.css';
+// Draft review and issue readiness audit (mobile Quotes Beta).
+import './quotes-mobile-audit.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
