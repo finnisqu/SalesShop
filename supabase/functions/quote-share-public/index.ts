@@ -190,6 +190,7 @@ function safeAcceptedSnapshot(value: unknown) {
     projectId: _projectId,
     companyId: _companyId,
     contactId: _contactId,
+    projectMaterials: _privateProjectMaterials,
     ...publicSnapshot
   } = snapshot;
   return { ...publicSnapshot, sections, lines };
