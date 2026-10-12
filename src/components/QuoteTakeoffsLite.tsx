@@ -40,6 +40,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const updateSection=useQuoteStore(s=>s.updateSection);
   const selectMaterial=useQuoteStore(s=>s.selectTakeoffMaterial);
   const setRate=useQuoteStore(s=>s.setTakeoffRate);
+  const addSfLine=useQuoteStore(s=>s.addTakeoffLine);
   const split=useQuoteStore(s=>s.splitTakeoff);
   const updateLine=useQuoteStore(s=>s.updateLine);
   const detachTakeoff=useQuoteStore(s=>s.detachTakeoff);
@@ -224,10 +225,17 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
         <section className="qtl-panel qtl-pricing-panel">
           <div className="qtl-section-title"><div><h3>Finish pricing</h3>
             <p>Takeoff SF is added as a smart quote line automatically. Choose a selling rate to finish this Area.</p></div></div>
+          {validCount>0&&!smartLine&&<div className="qtl-migration-alert">
+            <div><strong>This Area already has manually priced material lines.</strong>
+              <p>To avoid charging twice, Takeoffs has not added another SF price row automatically. Add a linked SF row only if needed.</p></div>
+            <button type="button" disabled={!editable} onClick={()=>addSfLine(quote.id,section.id)}>
+              + Add linked SF row
+            </button>
+          </div>}
           <div className="qtl-price-layout"><div>
             <strong className="qtl-price-measurement">{sfFmt.format(totalSf)} SF</strong>
             <small>Countertops + 4″ splashes</small>
-          </div><TakeoffRatePicker quote={quote} rate={smartLine?.rate} disabled={!editable||validCount===0}
+          </div><TakeoffRatePicker quote={quote} rate={smartLine?.rate} disabled={!editable||validCount===0||!smartLine}
             onSelect={(value,reference)=>setRate(quote.id,section.id,value,reference)}/>
             <div><strong className="qtl-price-measurement">{cash.format(smartLine?.rate===undefined?0:totalSf*smartLine.rate)}</strong>
               <small>Material line subtotal</small></div>
