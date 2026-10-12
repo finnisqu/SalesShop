@@ -38,6 +38,29 @@ type Page = 'library' | 'quote' | 'area' | 'review';
 type QuoteTab = 'build' | 'details' | 'preview';
 type AreaTab = 'measure' | 'materials' | 'pricing';
 
+function AppMenu() {
+  const setView = useNavigationStore(s=>s.setView);
+  return <details className="qmb-appnav"><summary aria-label="Open SalesShop navigation">☰</summary>
+    <nav aria-label="SalesShop destinations">
+      {([['notebook','Notebook'],['board','Board'],['quotes','Quotes'],['catalog','Catalog'],['dashboard','Connections'],['settings','Settings']] as const).map(([id,name])=>
+        <button type="button" key={id} onClick={()=>setView(id)}>{name}</button>)}
+    </nav>
+  </details>;
+}
+function InchField({value,onChange,disabled,label}:{
+  value?:number;onChange:(next:number|undefined)=>void;disabled:boolean;label:string;
+}) {
+  const [draft,setDraft]=useState(value===undefined?'':String(value));
+  useEffect(()=>setDraft(value===undefined?'':String(value)),[value]);
+  const commit=()=>{const raw=draft.trim();if(!raw){onChange(undefined);return;}
+    const parsed=parseInches(raw);
+    if(parsed!==undefined)onChange(parsed);
+    else setDraft(value===undefined?'':String(value));
+  };
+  return <Field label={label}><input aria-label={label} inputMode="decimal" disabled={disabled}
+    value={draft} placeholder="—" onChange={e=>setDraft(e.target.value)}
+    onBlur={commit} onKeyDown={e=>{if(e.key==='Enter'){e.currentTarget.blur();}}}/></Field>;
+}
 function Field({label,children}:{label:string;children:React.ReactNode}) {
   return <label className="qmb-field"><span>{label}</span>{children}</label>;
 }
@@ -131,8 +154,8 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
             onChange={e=>patchPiece(p.id,{name:e.target.value})}/></Field>
           <div className="qmb-three">
             {([['lengthIn','Length (in)'],['widthIn','Width (in)']] as const).map(([key,label])=>
-              <Field key={key} label={label}><input inputMode="decimal" disabled={!editable} value={p[key]??''}
-                placeholder="—" onChange={e=>{const v=e.target.value;const n=parseInches(v);if(v===''||n!==undefined)patchPiece(p.id,{[key]:v===''?undefined:n});}}/></Field>)}
+              <InchField key={key} label={label} disabled={!editable} value={p[key]}
+                onChange={n=>patchPiece(p.id,{[key]:n})}/>)}
             <Field label="Qty"><input type="number" min="1" max="1000" inputMode="numeric" disabled={!editable} value={p.count}
               onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchPiece(p.id,{count:n});}}/></Field>
           </div>
@@ -276,7 +299,7 @@ export function QuotesMobileBeta() {
     [q.title,q.companyName,q.quoteNumber].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
   const openQuote=(id:string)=>{select(id);setQuoteTab('build');setPage('quote');setError('');};
-  const createQuote=()=>{const id=create();openQuote(id);};
+  const createQuote=()=>{const id=create();useQuoteStore.getState().updateQuote(id,{lines:[]});openQuote(id);};
   const openArea=(id:string)=>{setAreaId(id);setAreaTab('measure');setPage('area');};
   const goBack=()=>{setPage('quote');setAreaId(null);};
   const newArea=()=>{
@@ -306,7 +329,7 @@ export function QuotesMobileBeta() {
   return <main className="quotes-view qmb" aria-label="Quotes mobile beta">
     {page==='library'?<>
       <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Quotes <span>Beta</span></strong></div>
-        <button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic view ↗</button></header>
+        <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Quotes</h1>
         <p className="qmb-subtitle">Pick up where you left off, or start with a blank idea.</p>
@@ -326,7 +349,7 @@ export function QuotesMobileBeta() {
       <header className="qmb-pagehead">
         <button type="button" className="qmb-back" onClick={()=>setPage('library')}>‹ My quotes</button>
         <span className="qmb-chip">{quote.status}</span>
-        <button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button>
+        <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button></div>
       </header>
       <div className="qmb-pad qmb-titlepad">
         <div className="qmb-kicker">{displayQuoteNumber(quote)} · MOBILE BETA</div>
