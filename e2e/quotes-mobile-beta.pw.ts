@@ -184,7 +184,7 @@ test('mobile quote fabrication options persist while zero quantity stays editabl
   await holes.getByRole('button',{name:'Done'}).click();
   await beta.getByRole('button',{name:'Pricing'}).click();
   await expect(beta.getByText('Sink ·', {exact:false}).first()).toBeVisible();
-  await beta.getByRole('button',{name:'Materials'}).click();
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Materials'}).click();
   await beta.getByRole('button',{name:'Faucet holes for Sink 1'}).click();
   const persisted=page.getByRole('dialog',{name:'Faucet holes for Sink 1'});
   await expect(persisted.getByRole('checkbox',{name:'2 inches left'})).toBeChecked();
