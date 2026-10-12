@@ -652,7 +652,7 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
   );
 }
 
-function CustomerPreview({ quote }: { quote: Quote }) {
+export function CustomerPreview({ quote }: { quote: Quote }) {
   return quote.documentType === 'pricing-schedule' ? <PricingScheduleCustomerPreview quote={quote} /> : <StandardCustomerPreview quote={quote} />;
 }
 
