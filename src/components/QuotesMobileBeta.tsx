@@ -107,7 +107,16 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
                 className="qmb-builder-rate-toggle qmb-line-rate-trigger"
                 disabled={!editable} aria-expanded={ratesOpen}
                 aria-label="Choose rate for material line"
-                onClick={()=>setRatesOpen(open=>!open)}>
+                // New catalog material rows open a search popover by default.
+                // Prevent its document-level pointerdown handler from removing
+                // the click target before RATE can receive the click event.
+                onPointerDown={e=>e.stopPropagation()}
+                onClick={()=>{
+                  window.dispatchEvent(new CustomEvent('sales-shop:quote-collapse-line',{
+                    detail:{lineId:line.id},
+                  }));
+                  setRatesOpen(open=>!open);
+                }}>
                 RATE {ratesOpen?'⌃':'▾'}
               </button>}
             </div>
