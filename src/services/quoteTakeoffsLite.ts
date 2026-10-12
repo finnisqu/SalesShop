@@ -98,7 +98,8 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
 }
 
 export function newTakeoffPiece(index:number):QuoteTakeoffPiece {
-  return {id:`takeoff_${crypto.randomUUID()}`,name:`Piece ${index}`,count:1};
+  void index;
+  return {id:`takeoff_${crypto.randomUUID()}`,name:'',count:1};
 }
 export function takeoffOwnedScope(scope:QuoteAreaScope|undefined):boolean {
   return Array.isArray(scope?.takeoffPieces);
