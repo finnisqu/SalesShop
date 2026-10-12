@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { scopedStorageKey } from '../lib/developerPlayground';
 import {
   RATE_BOOK_DIVISIONS,
   RATE_BOOK_PRICING_BEHAVIORS,
@@ -24,7 +25,7 @@ interface RateBookState {
   deleteItem: (id: string) => void;
 }
 
-const LOCAL_KEY = 'salesshop-rate-book-v1';
+const LOCAL_KEY = scopedStorageKey('salesshop-rate-book-v1');
 const SEED_TIME = '2026-10-06T00:00:00.000Z';
 const SEED_DATE = '2026-10-06';
 const uid = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
