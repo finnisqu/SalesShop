@@ -127,7 +127,9 @@ test('Materials sink rows stay compact and Rate picker pushes content instead of
   await expect(row.getByRole('checkbox',{name:'Charge on quote'})).toHaveCount(0);
   await expect(row.getByRole('spinbutton',{name:'Sink 1 sell price'})).toBeVisible();
   await beta.getByRole('button',{name:'Pricing'}).click();
+  await expect(beta.getByLabel('Selected material cost reference')).toBeVisible();
   await beta.getByRole('button',{name:/Choose from Rates/}).click();
+  await expect(beta.getByLabel('Buying cost comparison')).toBeVisible();
   const options=beta.locator('.qtl-rate-options');
   await expect(options).toBeVisible();
   const result=await page.evaluate(()=>{
@@ -275,8 +277,8 @@ test('mobile Quote RATE picker shows Stock Builder Level 0–8 and records selec
   await levels.getByRole('button',{name:/Level 0.*34\.00\/SF/}).click();
   await expect(beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'})).toHaveValue('34');
   await beta.getByRole('button',{name:/Choose from Rates/}).click();
-  await levels.getByRole('button',{name:/Level 2.*65\.00\/SF/}).click();
-  await expect(beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'})).toHaveValue('65');
+  await levels.getByRole('button',{name:/Level 2.*54\.00\/SF/}).click();
+  await expect(beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'})).toHaveValue('54');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await expect(beta.getByLabel('Current quote total')).toContainText('$520.00');
+  await expect(beta.getByLabel('Current quote total')).toContainText('$432.00');
 });
