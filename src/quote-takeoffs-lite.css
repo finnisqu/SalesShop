@@ -70,18 +70,18 @@
 }
 .sales-app.view-quotes .quote-takeoffs-grid-head span:nth-child(5) {text-align:right}
 .sales-app.view-quotes .quote-takeoffs-grid-row {padding:4px 0;border-top:1px solid var(--qtl-border)}
-.sales-app.view-quotes .quote-takeoffs-grid-row>input {
+.sales-app.view-quotes .quote-takeoffs-grid-row .quote-takeoffs-cell>input {
   background:var(--qtl-card);color:var(--qtl-ink);border:1px solid var(--qtl-border);
   padding:8px 9px;min-width:0;width:100%;border-radius:6px;min-height:40px;
   font:450 14px system-ui,sans-serif;box-shadow:none;
 }
-.sales-app.view-quotes .quote-takeoffs-grid-row>input[aria-invalid="true"] {border-color:#b85c45}
-.sales-app.view-quotes .quote-takeoffs-grid-row>input:focus-visible,
+.sales-app.view-quotes .quote-takeoffs-grid-row .quote-takeoffs-cell>input[aria-invalid="true"] {border-color:#b85c45}
+.sales-app.view-quotes .quote-takeoffs-grid-row .quote-takeoffs-cell>input:focus-visible,
 .sales-app.view-quotes .quote-takeoffs-lite button:focus-visible {outline:3px solid var(--qtl-accent);outline-offset:2px}
-.sales-app.view-quotes .quote-takeoffs-grid-row>input:disabled {
+.sales-app.view-quotes .quote-takeoffs-grid-row .quote-takeoffs-cell>input:disabled {
   background:var(--qtl-tint);opacity:.7;
 }
-.sales-app.view-quotes .quote-takeoffs-grid-row output {
+.sales-app.view-quotes .quote-takeoffs-grid-row .quote-takeoffs-cell output {
   justify-self:end;color:var(--qtl-ink);font:750 13px system-ui,sans-serif;
   white-space:nowrap;font-variant-numeric:tabular-nums;
 }
@@ -135,3 +135,27 @@
   padding:4px 0;font:650 11px system-ui,sans-serif;
 }
 .sales-app.view-quotes .quote-takeoffs-manual:hover {color:var(--qtl-ink)}
+
+.sales-app.view-quotes .quote-takeoffs-cell {display:grid;align-items:center;min-width:0}
+.sales-app.view-quotes .quote-takeoffs-mobile-caption {display:none}
+.sales-app.view-quotes .quote-takeoffs-cell.is-sf {justify-items:end}
+@media(max-width:620px) {
+  .sales-app.view-quotes .quote-takeoffs-scroll {overflow-x:visible;}
+  .sales-app.view-quotes .quote-takeoffs-grid-head {display:none}
+  .sales-app.view-quotes .quote-takeoffs-grid-row {
+    min-width:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+    border:1px solid var(--qtl-border);border-radius:10px;
+    padding:10px;margin-bottom:8px;background:var(--qtl-tint);
+  }
+  .sales-app.view-quotes .quote-takeoffs-cell {gap:5px}
+  .sales-app.view-quotes .quote-takeoffs-mobile-caption {
+    display:block;color:var(--qtl-muted);
+    font:750 10px/1.3 system-ui,sans-serif;
+  }
+  .sales-app.view-quotes .quote-takeoffs-cell.is-name {grid-column:1/-1}
+  .sales-app.view-quotes .quote-takeoffs-cell.is-sf {justify-items:start}
+  .sales-app.view-quotes .quote-takeoffs-cell.is-sf output {padding:8px 0;min-height:40px;
+    display:flex;align-items:center;font-size:15px}
+  .sales-app.view-quotes .quote-takeoffs-row-actions {grid-column:1/-1;justify-content:end}
+  .sales-app.view-quotes .quote-takeoffs-row-actions button {flex:0 0 45px}
+}
