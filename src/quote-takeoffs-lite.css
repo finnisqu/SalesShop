@@ -1,0 +1,129 @@
+/* Takeoffs Lite — scoped to the internal Quotes editor; public documents never get piece data. */
+.sales-app.view-quotes .quote-area-takeoff-toggle {
+  border:1px solid var(--ss-theme-accent,var(--ss-accent,#ab8845));
+  border-radius:7px;color:var(--ss-theme-ink,var(--ink,#25342e));
+  background:var(--ss-theme-tint,var(--chrome,#f4f2e8));
+  padding:7px 10px;min-height:38px;font-weight:750;font-size:12px;white-space:nowrap;
+}
+.sales-app.view-quotes .quote-area-takeoff-toggle.active {
+  box-shadow:inset 0 -3px var(--ss-theme-accent,var(--ss-accent,#c0a35c));
+}
+.sales-app.view-quotes .quote-takeoffs-lite {
+  --qtl-ink:var(--ss-theme-ink,var(--ink,#273b32));
+  --qtl-muted:var(--ss-theme-muted,var(--muted,#65766a));
+  --qtl-border:var(--ss-theme-border,var(--border,#d1d7d0));
+  --qtl-card:var(--ss-theme-card,var(--chrome,#fffdf8));
+  --qtl-tint:var(--ss-theme-tint,var(--chrome-2,#f3f2e9));
+  --qtl-accent:var(--ss-theme-accent,var(--ss-accent,#bca66c));
+  color:var(--qtl-ink);border-top:1px solid var(--qtl-border);
+  border-bottom:1px solid var(--qtl-border);background:var(--qtl-card);
+  padding:clamp(12px,2vw,21px);display:grid;gap:13px;min-width:0;
+}
+.sales-app.view-quotes .quote-takeoffs-top {
+  display:flex;flex-wrap:wrap;gap:14px;align-items:start;justify-content:space-between;
+}
+.sales-app.view-quotes .quote-takeoffs-top>div:first-child {min-width:0;flex:1}
+.sales-app.view-quotes .quote-takeoffs-eyebrow {
+  display:block;color:var(--qtl-muted);letter-spacing:.09em;font:750 10px/1.4 system-ui,sans-serif;
+}
+.sales-app.view-quotes .quote-takeoffs-top h4 {
+  color:var(--qtl-ink);font:750 20px/1.25 Georgia,serif;margin:5px 0 3px;
+}
+.sales-app.view-quotes .quote-takeoffs-top p,
+.sales-app.view-quotes .quote-takeoffs-note {
+  color:var(--qtl-muted);font:450 11px/1.55 system-ui,sans-serif;margin:0;
+}
+.sales-app.view-quotes .quote-takeoffs-total {
+  display:grid;gap:5px;justify-items:end;padding:9px 13px;border:1px solid var(--qtl-border);
+  border-radius:10px;background:var(--qtl-tint);min-width:160px;
+}
+.sales-app.view-quotes .quote-takeoffs-total small {
+  color:var(--qtl-muted);font:750 10px system-ui,sans-serif;white-space:nowrap;
+}
+.sales-app.view-quotes .quote-takeoffs-total strong {
+  color:var(--qtl-ink);font:750 clamp(20px,2.8vw,27px) system-ui,sans-serif;white-space:nowrap;
+}
+.sales-app.view-quotes .quote-takeoffs-total strong span {font:750 12px system-ui,sans-serif}
+.sales-app.view-quotes .quote-takeoffs-help-row {display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sales-app.view-quotes .quote-takeoffs-help-row button {
+  border:0;background:transparent;color:var(--qtl-muted);text-decoration:underline;
+  font:700 11px system-ui,sans-serif;padding:4px 0;
+}
+.sales-app.view-quotes .quote-takeoffs-help-row span {
+  color:var(--qtl-ink);font:750 11px system-ui,sans-serif;
+}
+.sales-app.view-quotes .quote-takeoffs-help {
+  border:1px solid var(--qtl-border);border-radius:7px;background:var(--qtl-tint);
+  color:var(--qtl-muted);font:450 12px/1.65 system-ui,sans-serif;
+  padding:12px;margin:0;
+}
+.sales-app.view-quotes .quote-takeoffs-scroll {min-width:0;width:100%;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+.sales-app.view-quotes .quote-takeoffs-grid-head,
+.sales-app.view-quotes .quote-takeoffs-grid-row {
+  display:grid;grid-template-columns:minmax(126px,1.4fr) minmax(86px,.8fr) minmax(86px,.8fr) minmax(58px,.55fr) minmax(66px,.65fr) 76px;
+  gap:6px;align-items:center;min-width:532px;
+}
+.sales-app.view-quotes .quote-takeoffs-grid-head {
+  color:var(--qtl-muted);font:750 10px/1.4 system-ui,sans-serif;
+  letter-spacing:.03em;padding:3px 4px 6px;
+}
+.sales-app.view-quotes .quote-takeoffs-grid-head span:nth-child(5) {text-align:right}
+.sales-app.view-quotes .quote-takeoffs-grid-row {padding:4px 0;border-top:1px solid var(--qtl-border)}
+.sales-app.view-quotes .quote-takeoffs-grid-row>input {
+  background:var(--qtl-card);color:var(--qtl-ink);border:1px solid var(--qtl-border);
+  padding:8px 9px;min-width:0;width:100%;border-radius:6px;min-height:40px;
+  font:450 14px system-ui,sans-serif;box-shadow:none;
+}
+.sales-app.view-quotes .quote-takeoffs-grid-row>input[aria-invalid="true"] {border-color:#b85c45}
+.sales-app.view-quotes .quote-takeoffs-grid-row>input:focus-visible,
+.sales-app.view-quotes .quote-takeoffs-lite button:focus-visible {outline:3px solid var(--qtl-accent);outline-offset:2px}
+.sales-app.view-quotes .quote-takeoffs-grid-row>input:disabled {
+  background:var(--qtl-tint);opacity:.7;
+}
+.sales-app.view-quotes .quote-takeoffs-grid-row output {
+  justify-self:end;color:var(--qtl-ink);font:750 13px system-ui,sans-serif;
+  white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+.sales-app.view-quotes .quote-takeoffs-row-actions {display:flex;justify-content:end;gap:4px}
+.sales-app.view-quotes .quote-takeoffs-row-actions button {
+  background:var(--qtl-tint);color:var(--qtl-ink);border:1px solid var(--qtl-border);
+  border-radius:6px;min-width:32px;min-height:38px;font:750 18px system-ui,sans-serif;
+}
+.sales-app.view-quotes .quote-takeoffs-empty {padding:16px;text-align:center;
+  color:var(--qtl-muted);font:450 12px/1.6 system-ui,sans-serif;
+  border:1px dashed var(--qtl-border);border-radius:8px;}
+.sales-app.view-quotes .quote-takeoffs-bottom {
+  display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+}
+.sales-app.view-quotes .quote-takeoffs-add,
+.sales-app.view-quotes .quote-takeoffs-actions button {
+  background:var(--qtl-tint);color:var(--qtl-ink);
+  border:1px solid var(--qtl-border);border-radius:8px;min-height:42px;
+  padding:9px 13px;font:750 12px system-ui,sans-serif;
+}
+.sales-app.view-quotes .quote-takeoffs-actions {display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.sales-app.view-quotes .quote-takeoffs-actions>span {color:var(--qtl-muted);font:600 12px system-ui,sans-serif}
+.sales-app.view-quotes .quote-takeoffs-actions strong {color:var(--qtl-ink);white-space:nowrap}
+.sales-app.view-quotes .quote-takeoffs-actions button {
+  border-color:var(--qtl-accent);background:var(--qtl-accent);
+  color:var(--ss-theme-on-accent,var(--qtl-ink));
+}
+.sales-app.view-quotes .quote-takeoffs-lite button:disabled {opacity:.45;cursor:not-allowed}
+.sales-app.view-quotes .quote-takeoffs-scope-note {
+  display:block;color:var(--ss-theme-muted,var(--muted,#65766a));
+  font:500 11px/1.5 system-ui,sans-serif;padding:6px 2px;
+}
+@media(max-width:750px) {
+ .sales-app.view-quotes .quote-takeoffs-lite {padding:12px;gap:10px}
+ .sales-app.view-quotes .quote-takeoffs-total {min-width:115px;justify-items:start}
+ .sales-app.view-quotes .quote-takeoffs-bottom {align-items:stretch;flex-direction:column}
+ .sales-app.view-quotes .quote-takeoffs-bottom>button {width:100%}
+ .sales-app.view-quotes .quote-takeoffs-actions{justify-content:space-between}
+ .sales-app.view-quotes .quote-takeoffs-actions button{flex:1 1 130px}
+ .sales-app.view-quotes .quote-takeoffs-top{gap:9px}
+}
+@media(max-width:440px) {
+ .sales-app.view-quotes .quote-takeoffs-total{width:100%}
+ .sales-app.view-quotes .quote-takeoffs-total strong {font-size:22px}
+}
