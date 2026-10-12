@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { playgroundUrl } from '../lib/developerPlayground';
 import '../developer-console.css';
+import '../developer-playground.css';
 
 type TenantStatus = 'not_configured' | 'trial' | 'active' | 'past_due' | 'suspended';
 type Plan = 'not_configured' | 'starter' | 'growth' | 'enterprise';
