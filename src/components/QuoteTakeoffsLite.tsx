@@ -51,6 +51,9 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const splashSf=totalSplashSf(pieces);
   const totalSf=totalBillableTakeoffSf(pieces);
   const splashLf=totalSplashLf(pieces);
+  /** Existing Areas from the LF-only release must be explicitly recalculated. */
+  const needsSplashMigration=owned && splashSf>0
+    && (section.scope?.takeoffSplashSf!==splashSf||section.scope?.countertopSf!==totalSf);
   const validCount=pieces.filter(isValidTakeoffPiece).length;
   const customerMode=section.customerDisplayMode==='summary'?'summary':'detail';
   const linkedSf=quote.lines.filter(l=>l.sectionId===section.id&&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
@@ -105,6 +108,13 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
         <button type="button" className="qtl-close" onClick={onClose} aria-label="Close Takeoffs Lite">×</button>
       </header>
       <div className="qtl-scrollbody">
+        {needsSplashMigration&&<div className="qtl-migration-alert" role="status">
+          <div><strong>Apply 4″ splash SF to this saved Area</strong>
+          <p>This older takeoff still has its original top-only SF in the quote. Apply the new combined SF when you're ready to update linked pricing.</p></div>
+          <button type="button" disabled={!editable} onClick={()=>updatePieces(quote.id,section.id,pieces)}>
+            Recalculate Area SF
+          </button>
+        </div>}
         <section className="qtl-summary-strip" aria-label="Area measurements">
           <div><small>Countertops</small><strong>{sfFmt.format(topSf)} <em>SF</em></strong></div>
           <div><small>4″ Splash</small><strong>{sfFmt.format(splashSf)} <em>SF</em></strong></div>
