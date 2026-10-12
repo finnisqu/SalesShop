@@ -146,3 +146,33 @@
   .qtl-footer span{max-width:35%;line-height:1.4}
   .qtl-footer button{flex:1}
 }
+
+/* Catalog selectors match the existing Quotes data sources, inside modal viewport. */
+.qtl-catalog-pick{display:grid;gap:6px;min-width:0;}
+.qtl-catalog-trigger,.qtl-catalog-back{
+  background:var(--qt-tint);color:var(--qt-ink);border:1px solid var(--qt-border);
+  border-radius:8px;min-height:40px;padding:8px 11px;cursor:pointer;
+  font:750 12px/1.35 system-ui,sans-serif;text-align:left;
+}
+.qtl-catalog-menu{display:grid;gap:9px;padding:10px;background:var(--qt-tint);
+  border:1px solid var(--qt-border);border-radius:10px;min-width:0;}
+.qtl-catalog-menu>input{color:var(--qt-ink);background:var(--qt-panel);
+  border:1px solid var(--qt-border);border-radius:8px;padding:10px 12px;
+  min-height:45px;font-size:16px;min-width:0;width:100%;}
+.qtl-catalog-choices{display:grid;gap:5px;max-height:min(36vh,300px);
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.qtl-catalog-choices>button:not(.qtl-catalog-back){display:grid;gap:3px;
+  border:1px solid var(--qt-border);border-radius:7px;background:var(--qt-panel);
+  color:var(--qt-ink);text-align:left;min-width:0;min-height:43px;
+  padding:8px 11px;cursor:pointer;}
+.qtl-catalog-choices strong{font:750 12px/1.45 system-ui,sans-serif;overflow-wrap:anywhere;}
+.qtl-catalog-choices small{color:var(--qt-muted);font:450 11px/1.4 system-ui,sans-serif;}
+.qtl-catalog-choices p{color:var(--qt-muted);padding:8px;font-size:12px;}
+.qtl-catalog-selected{font:550 10px/1.4 system-ui,sans-serif;color:var(--qt-muted)}
+.qtl-sink-card .qtl-sink-name{display:grid;gap:6px;min-width:0;align-self:stretch;}
+.qtl-sink-card .qtl-sink-name>label{display:grid;gap:5px;}
+@media(max-width:620px){
+  .qtl-catalog-trigger{width:100%;min-height:45px;}
+  .qtl-catalog-choices{max-height:33vh;}
+  .qtl-sink-card .qtl-sink-name{grid-column:1/-1;grid-row:1;}
+}
