@@ -87,6 +87,8 @@ import './design-system/ownership-transfer.css';
 import './quote-takeoffs-lite.css';
 // Opt-in mobile-only Quotes Beta. Existing Quotes remains the default.
 import './quotes-mobile-beta.css';
+// Beta measurement sheet: scroll-away Area header, sticky tabs and splash popovers.
+import './quotes-mobile-measure-grid.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
