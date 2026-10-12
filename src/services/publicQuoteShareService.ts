@@ -8,6 +8,8 @@ export interface PublicQuoteSection {
   customerVisible: boolean;
   customerDisplayMode?: 'detail' | 'summary';
   customerTotal?: number;
+  /** Approved material/sink specification string; never raw takeoff geometry. */
+  specification?: string;
 }
 
 export interface PublicQuoteLine {
