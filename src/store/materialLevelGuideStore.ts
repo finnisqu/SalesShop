@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 import { scopedStorageKey } from '../lib/developerPlayground';
+import { supabase } from '../lib/supabase';
+import { useAuthStore } from './authStore';
 import type { MaterialLevelGuideDocument, MaterialLevelGuideVersion, MaterialLevelRule } from '../types/materialLevelGuide';
 
 interface MaterialLevelGuideState {
   guide: MaterialLevelGuideDocument;
   hydrated: boolean;
+  syncError?: string;
   hydrate: () => void;
   updateGuide: (patch: Partial<Pick<MaterialLevelGuideDocument, 'name' | 'note' | 'slabPricingThresholdCostPerSf' | 'slabPricingMultiplier'>>) => void;
   updateRule: (id: string, patch: Partial<Omit<MaterialLevelRule, 'id'>>) => void;
@@ -14,7 +17,14 @@ interface MaterialLevelGuideState {
   restoreVersion: (versionId: string) => void;
 }
 
-const LOCAL_KEY = scopedStorageKey('salesshop-material-level-guide-v1');
+const LEGACY_LOCAL_KEY = scopedStorageKey('salesshop-material-level-guide-v1');
+const localKey=()=>{
+  const auth=useAuthStore.getState();
+  return auth.mode==='cloud'&&auth.organizationId
+    ?LEGACY_LOCAL_KEY+':org:'+auth.organizationId:LEGACY_LOCAL_KEY;
+};
+let cloudSaveTimer: ReturnType<typeof setTimeout>|undefined;
+let hydrationStarted=false;
 const SEED_TIME = '2026-10-06T15:52:00.000Z';
 const uid = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
@@ -222,7 +232,7 @@ function normalizeVersion(raw: unknown, fallbackThreshold: number, fallbackMulti
 function readLocal(): MaterialLevelGuideDocument {
   const baseline = baselineGuide();
   try {
-    const raw = localStorage.getItem(LOCAL_KEY);
+    const raw = localStorage.getItem(localKey());
     if (!raw) return baseline;
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const rules = normalizeRules(parsed.rules);
@@ -255,8 +265,19 @@ function readLocal(): MaterialLevelGuideDocument {
   }
 }
 
-function persist(guide: MaterialLevelGuideDocument) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(guide));
+function persist(guide: MaterialLevelGuideDocument,share=true) {
+  localStorage.setItem(localKey(), JSON.stringify(guide));
+  if(!share)return;
+  const auth=useAuthStore.getState();
+  const orgId=auth.mode==='cloud'?auth.organizationId:undefined;
+  if(!supabase||!orgId)return;
+  if(cloudSaveTimer)clearTimeout(cloudSaveTimer);
+  cloudSaveTimer=setTimeout(()=>{
+    void supabase.from('organizations').update({material_level_guide:guide})
+      .eq('id',orgId).then(({error})=>{
+        useMaterialLevelGuideStore.setState({syncError:error?.message});
+      });
+  },650);
 }
 
 export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, get) => ({
@@ -264,10 +285,28 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
   hydrated: false,
 
   hydrate: () => {
-    if (get().hydrated) return;
-    const guide = upgradeBuilderLevelGuide(readLocal());
-    persist(guide);
-    set({ guide, hydrated: true });
+    if (get().hydrated||hydrationStarted) return;
+    hydrationStarted=true;
+    const local=upgradeBuilderLevelGuide(readLocal());
+    const auth=useAuthStore.getState();
+    if(!supabase||auth.mode!=='cloud'||!auth.organizationId){
+      persist(local,false);set({guide:local,hydrated:true});hydrationStarted=false;return;
+    }
+    // Cloud is authoritative. Never expose browser-local prices as current
+    // company rates while waiting for the org-scoped guide to load.
+    void supabase.from('organizations').select('material_level_guide')
+      .eq('id',auth.organizationId).single().then(({data,error})=>{
+        const stored=data?.material_level_guide as MaterialLevelGuideDocument|undefined;
+        const valid=stored&&stored.schemaVersion===3&&Array.isArray(stored.rules);
+        const guide=valid?upgradeBuilderLevelGuide(stored):local;
+        persist(guide,false);
+        set({guide,hydrated:true,syncError:error?.message});
+        // For a new organization, publish the seed exactly once if allowed.
+        if(!error&&!valid)persist(guide,true);
+      }).catch((error:unknown)=>{
+        set({guide:local,hydrated:true,syncError:
+          error instanceof Error?error.message:'Could not load shared Builder Levels'});
+      }).finally(()=>{hydrationStarted=false;});
   },
 
   updateGuide: (patch) => {
