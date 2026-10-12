@@ -1,4 +1,6 @@
 import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
+import { isDeveloperPlaygroundRoute } from '../lib/developerPlayground';
+import { seedPlaygroundCrm } from '../services/playgroundFixtures';
 import type { Activity, Company, Contact, CrmDocument, Project, ProjectStage } from '../types/crm';
 import { ACTIVITY_TYPES, PROJECT_STAGES } from '../types/crm';
 
@@ -118,7 +120,7 @@ export const localCrmRepository: CrmRepository = {
       this.save(normalized);
       return normalized;
     }
-    const seeded = seedDocument();
+    const seeded = isDeveloperPlaygroundRoute() ? seedPlaygroundCrm() : seedDocument();
     this.save(seeded);
     return seeded;
   },
