@@ -187,8 +187,8 @@ export function DeveloperConsole() {
           <button type="button" onClick={() => setTab('companies')}>View all companies →</button></div>
         <TenantList tenants={(overview?.organizations ?? []).slice(0, 5)} loading={loading}/>
       </div>}
-      {tab === 'notebook' && <HeadquartersNotebook store={notebookStore}/>}
-      {tab === 'crm' && <HeadquartersCrm store={crmStore} tenants={overview?.organizations ?? []}/>}
+      {tab === 'notebook' && !notebookStore.error && <HeadquartersNotebook store={notebookStore}/>}
+      {tab === 'crm' && !crmStore.error && <HeadquartersCrm store={crmStore} tenants={overview?.organizations ?? []}/>}
       {tab === 'playground' && <section className="developer-console-playground">
         <div className="developer-console-playground-hero">
           <span className="developer-console-eyebrow">SAFE TO EXPERIMENT</span>
