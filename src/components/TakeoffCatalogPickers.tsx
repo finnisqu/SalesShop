@@ -1,4 +1,4 @@
-import { useEffect,useMemo,useState } from 'react';
+import { useEffect,useMemo,useRef,useState } from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
 import { createQuoteMaterialCostSnapshot } from '../services/quoteMaterialSnapshot';
@@ -7,132 +7,134 @@ import {
   defaultMaterialPurchaseOption,resolveStockMaterialCostReference,
   type StockMaterial,type MaterialVariant,type MaterialPurchaseOption,
 } from '../types/settings';
-import type { QuoteLineMaterialReference,QuoteTakeoffSink } from '../types/quote';
+import type { QuoteLineMaterialReference,QuoteProjectMaterial,QuoteTakeoffSink } from '../types/quote';
 import { SINK_CATEGORY_LABELS,type SinkModel,type SinkVariant } from '../types/sink';
+const materialLabel=(m:StockMaterial,v:MaterialVariant)=>
+  [m.brand,m.name,v.thickness,v.finish].filter(Boolean).join(' · ');
 
-const labelMaterial=(material:StockMaterial,variant:MaterialVariant)=>
-  [material.brand,material.name,variant.thickness,variant.finish].filter(Boolean).join(' · ');
-
-/** Reads the exact shared Company Catalog source used by regular Quote Material rows. */
-export function TakeoffMaterialCatalog({disabled,selected,onSelect}:{
-  disabled:boolean;selected?:QuoteLineMaterialReference;
-  onSelect:(reference:QuoteLineMaterialReference,label:string)=>void;
+export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,onTextChange}:{
+  disabled:boolean;value:string;selected?:QuoteLineMaterialReference;pinned:QuoteProjectMaterial[];
+  onSelect:(ref:QuoteLineMaterialReference,label:string)=>void;
+  onTextChange:(text:string)=>void;
 }){
   const materials=useCompanySettingsStore(s=>s.settings.stockMaterials);
   const hydrate=useCompanySettingsStore(s=>s.hydrate);
+  const root=useRef<HTMLDivElement>(null);
   const [open,setOpen]=useState(false);
-  const [search,setSearch]=useState('');
   const [materialId,setMaterialId]=useState<string|null>(null);
   const [variantId,setVariantId]=useState<string|null>(null);
   useEffect(()=>{void hydrate();},[hydrate]);
+  useEffect(()=>{if(!open)return;
+    const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node)){setOpen(false);setMaterialId(null);setVariantId(null);}};
+    document.addEventListener('pointerdown',dismiss);
+    return()=>document.removeEventListener('pointerdown',dismiss);
+  },[open]);
   const active=useMemo(()=>materials.filter(m=>m.active),[materials]);
-  const results=useMemo(()=>{
-    const q=search.trim().toLowerCase();
-    return active.filter(m=>!q || [m.brand,m.name,m.supplier,m.materialType,m.collection,
-      ...(m.variants??[]).flatMap(v=>[v.thickness,v.finish,v.sku])].filter(Boolean)
-      .join(' ').toLowerCase().includes(q))
-      .sort((a,b)=>Number(b.stockProgram)-Number(a.stockProgram)||a.name.localeCompare(b.name)).slice(0,30);
-  },[active,search]);
+  const query=value.trim().toLowerCase();
+  const ordered=useMemo(()=>{
+    const pinnedIds=new Set(pinned.map(m=>m.reference?.materialId).filter(Boolean));
+    return active.filter(m=>!query||[
+      m.brand,m.name,m.supplier,m.materialType,m.collection,
+      ...(m.variants??[]).flatMap(v=>[v.thickness,v.finish,v.sku]),
+    ].filter(Boolean).join(' ').toLowerCase().includes(query))
+      .sort((a,b)=>Number(pinnedIds.has(b.id))-Number(pinnedIds.has(a.id))
+        ||Number(b.stockProgram)-Number(a.stockProgram)||a.name.localeCompare(b.name)).slice(0,35);
+  },[active,pinned,query]);
   const material=active.find(m=>m.id===materialId);
   const variants=(material?.variants??[]).filter(v=>v.active!==false);
   const variant=variants.find(v=>v.id===variantId);
-  const complete=(m:StockMaterial,v:MaterialVariant,option?:MaterialPurchaseOption)=>{
-    const cost=resolveStockMaterialCostReference(m,v.id,option?.id);
-    const ref:QuoteLineMaterialReference={
-      materialId:m.id,variantId:v.id,purchaseOptionId:cost.purchaseOption?.id,
+  const complete=(m:StockMaterial,v:MaterialVariant,o?:MaterialPurchaseOption)=>{
+    const resolved=resolveStockMaterialCostReference(m,v.id,o?.id);
+    onSelect({
+      materialId:m.id,variantId:v.id,purchaseOptionId:resolved.purchaseOption?.id,
       stockProgram:m.stockProgram,pricingSource:'manual-line-rate',
-      sourceCostPerSf:cost.costPerSf,catalogSlabCost:cost.slabCost,
-      snapshot:createQuoteMaterialCostSnapshot(m,cost),
-    };
-    onSelect(ref,labelMaterial(m,v));setOpen(false);setSearch('');setMaterialId(null);setVariantId(null);
+      sourceCostPerSf:resolved.costPerSf,catalogSlabCost:resolved.slabCost,
+      snapshot:createQuoteMaterialCostSnapshot(m,resolved),
+    },materialLabel(m,v));
+    setOpen(false);setMaterialId(null);setVariantId(null);
   };
-  const chooseVariant=(m:StockMaterial,v:MaterialVariant)=>{
-    const options=(v.purchaseOptions??[]).filter(o=>o.active!==false);
-    if(options.length>1){setVariantId(v.id);return;}
-    complete(m,v,defaultMaterialPurchaseOption(v));
-  };
-  return <div className="qtl-catalog-pick">
-    <button type="button" className="qtl-catalog-trigger" disabled={disabled} aria-expanded={open}
-      onClick={()=>{setOpen(o=>!o);setMaterialId(null);setVariantId(null);}}>
-      ◇ {selected?.materialId?'Change catalog material':'Select from Materials Catalog'}
-    </button>
-    {open&&<div className="qtl-catalog-menu">
-      {material ? <div className="qtl-catalog-choices">
-        <button type="button" className="qtl-catalog-back" onClick={()=>{if(variant)setVariantId(null);else setMaterialId(null);}}>
-          ← {variant?'Variants':'Materials'}
-        </button>
-        <strong>{material.brand} {material.name}</strong>
-        {variant
-          ? (variant.purchaseOptions??[]).filter(o=>o.active!==false).map(o=>
-              <button type="button" key={o.id} onClick={()=>complete(material,variant,o)}>
-                <strong>{o.label}</strong><small>{o.pricingBasis}</small>
-              </button>)
-          : variants.map(v=><button type="button" key={v.id} onClick={()=>chooseVariant(material,v)}>
-              <strong>{[v.thickness,v.finish,v.formatName].filter(Boolean).join(' · ')||'Standard variant'}</strong>
-              <small>{v.sku||'Choose variant'}</small>
-            </button>)}
-        {!variants.length&&<p>No active variants. Add one in Catalog first.</p>}
-      </div>:<>
-        <input autoFocus type="search" value={search} onChange={e=>setSearch(e.target.value)}
-          placeholder="Search material, brand, color…" aria-label="Find catalog material"/>
-        <div className="qtl-catalog-choices">
-          {results.map(m=><button type="button" key={m.id}
-            onClick={()=>setMaterialId(m.id)}><strong>{[m.brand,m.name].filter(Boolean).join(' ')}</strong>
-            <small>{[m.materialType,m.supplier].filter(Boolean).join(' · ')}</small></button>)}
-          {!results.length&&<p>No matching active catalog materials.</p>}
-        </div>
-      </>}
-      <button type="button" className="qtl-catalog-back" onClick={()=>setOpen(false)}>Close catalog</button>
+  return <div className="qtl-combobox" ref={root}>
+    <input type="text" role="combobox" aria-expanded={open} aria-controls="qtl-material-choices"
+      autoComplete="off" disabled={disabled} value={value} maxLength={300}
+      placeholder="Search catalog colors or type a custom material…"
+      aria-label="Material: type to search Catalog" onFocus={e=>{e.currentTarget.select();setOpen(true);}}
+      onChange={e=>{onTextChange(e.target.value);setMaterialId(null);setVariantId(null);setOpen(true);}}/>
+    {open&&<div className="qtl-combobox-menu" id="qtl-material-choices" role="listbox">
+      {material?<div className="qtl-combobox-results">
+        <button type="button" onClick={()=>{if(variant)setVariantId(null);else setMaterialId(null);}}>← Back to {variant?'variants':'materials'}</button>
+        <strong className="qtl-step-title">{[material.brand,material.name].filter(Boolean).join(' ')}</strong>
+        {variant?(variant.purchaseOptions??[]).filter(o=>o.active!==false).map(o=>
+          <button key={o.id} type="button" onClick={()=>complete(material,variant,o)}>{o.label}<small>{o.pricingBasis}</small></button>)
+          :variants.map(v=><button key={v.id} type="button" onClick={()=>{
+            const options=(v.purchaseOptions??[]).filter(o=>o.active!==false);
+            if(options.length>1)setVariantId(v.id);else complete(material,v,defaultMaterialPurchaseOption(v));
+          }}>{[v.thickness,v.finish,v.formatName].filter(Boolean).join(' · ')||'Standard variant'}
+          <small>{v.sku||'Choose variant'}</small></button>)}
+        {!variants.length&&<p>No active variants available.</p>}
+      </div>:<div className="qtl-combobox-results">
+        {ordered.map(m=><button type="button" key={m.id} onClick={()=>{
+          setMaterialId(m.id);setVariantId(null);
+        }}><strong>{pinned.some(p=>p.reference?.materialId===m.id)?'★ ':''}{[m.brand,m.name].filter(Boolean).join(' ')}</strong>
+          <small>{[m.materialType,m.supplier].filter(Boolean).join(' · ')}</small></button>)}
+        {!ordered.length&&<p>No matching Catalog items. Custom names are allowed.</p>}
+        {value.trim()&&<button type="button" onClick={()=>setOpen(false)}>
+          Use custom material “{value.trim()}”</button>}
+      </div>}
     </div>}
+    {selected?.materialId&&<small className="qtl-catalog-selected">✓ Linked to Materials Catalog</small>}
   </div>;
 }
 
-/** Uses the same active models, variants, and sell-price snapshot as QuoteSinkLineFields. */
-export function TakeoffSinkCatalog({disabled,onSelect}:{
-  disabled:boolean;onSelect:(patch:Partial<QuoteTakeoffSink>)=>void;
+export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
+  disabled:boolean;value:string;onSelect:(patch:Partial<QuoteTakeoffSink>)=>void;
+  onTextChange:(value:string)=>void;
 }){
   const models=useSinkCatalogStore(s=>s.models);
   const hydrate=useSinkCatalogStore(s=>s.hydrate);
+  const root=useRef<HTMLDivElement>(null);
   const [open,setOpen]=useState(false);
-  const [search,setSearch]=useState('');
   useEffect(()=>{void hydrate();},[hydrate]);
+  useEffect(()=>{if(!open)return;
+    const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node))setOpen(false);};
+    document.addEventListener('pointerdown',dismiss);
+    return()=>document.removeEventListener('pointerdown',dismiss);
+  },[open]);
   const results=useMemo(()=>{
-    const q=search.trim().toLowerCase();
+    const query=value.trim().toLowerCase();
     return models.filter(m=>m.active).flatMap(model=>
       model.variants.filter(variant=>variant.active).map(variant=>({model,variant})))
-      .filter(({model,variant})=>!q||[
+      .filter(({model,variant})=>!query||[
         model.brand,model.name,model.modelCode,model.category,model.supplier,
         variant.label,variant.code,variant.configuration,variant.ada?'ADA':'',
-      ].filter(Boolean).join(' ').toLowerCase().includes(q))
+      ].filter(Boolean).join(' ').toLowerCase().includes(query))
       .sort((a,b)=>a.model.name.localeCompare(b.model.name)||a.variant.label.localeCompare(b.variant.label))
       .slice(0,40);
-  },[models,search]);
+  },[models,value]);
   const choose=(model:SinkModel,variant:SinkVariant)=>{
     const snapshot=createQuoteSinkSnapshot(model,variant);
-    onSelect({
-      name:sinkSnapshotDescription(snapshot),
-      category:model.category,
+    onSelect({name:sinkSnapshotDescription(snapshot),category:model.category,
       unitPrice:variant.sellPrice,
-      sinkReference:{sinkModelId:model.id,variantId:variant.id,snapshot},
-    });
-    setOpen(false);setSearch('');
+      sinkReference:{sinkModelId:model.id,variantId:variant.id,snapshot}});
+    setOpen(false);
   };
-  return <div className="qtl-catalog-pick">
-    <button type="button" className="qtl-catalog-trigger" disabled={disabled} aria-expanded={open}
-      onClick={()=>setOpen(o=>!o)}>◇ Choose from Sinks Catalog</button>
-    {open&&<div className="qtl-catalog-menu">
-      <input autoFocus type="search" value={search} onChange={e=>setSearch(e.target.value)}
-        placeholder="Model, bowl, ADA, brand…" aria-label="Find catalog sink"/>
-      <div className="qtl-catalog-choices">
-        {results.map(({model,variant})=><button type="button" key={variant.id}
+  return <div className="qtl-combobox" ref={root}>
+    <input type="text" role="combobox" aria-expanded={open} aria-controls="qtl-sink-choices"
+      autoComplete="off" disabled={disabled} value={value} maxLength={160}
+      placeholder="Search sink catalog…" aria-label="Sink model: type to search Catalog"
+      onFocus={e=>{e.currentTarget.select();setOpen(true);}}
+      onChange={e=>{onTextChange(e.target.value);setOpen(true);}}/>
+    {open&&<div className="qtl-combobox-menu" id="qtl-sink-choices" role="listbox">
+      <div className="qtl-combobox-results">
+        {results.map(({model,variant})=><button key={variant.id} type="button"
           onClick={()=>choose(model,variant)}>
           <strong>{[model.brand,model.name,variant.label].filter(Boolean).join(' · ')}</strong>
           <small>{SINK_CATEGORY_LABELS[model.category]} · {variant.configuration}
-            {variant.sellPrice!==undefined?` · Sell $ ${variant.sellPrice.toFixed(2)}`:' · Price not set'}</small>
+          {variant.sellPrice!==undefined?` · Sell $${variant.sellPrice.toFixed(2)}`:' · Unpriced'}</small>
         </button>)}
-        {!results.length&&<p>No matching active catalog sink variants.</p>}
+        {!results.length&&<p>No matching active catalog sinks. Custom names are allowed.</p>}
+        {value.trim()&&<button type="button" onClick={()=>setOpen(false)}>
+          Use custom sink “{value.trim()}”</button>}
       </div>
-      <button type="button" className="qtl-catalog-back" onClick={()=>setOpen(false)}>Close catalog</button>
     </div>}
   </div>;
 }
