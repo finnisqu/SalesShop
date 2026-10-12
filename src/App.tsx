@@ -32,6 +32,9 @@ import './role-perspective.css';
 import './appearance-themes.css';
 import './appearance-picker.css';
 import { AuthStatus } from './components/AuthGate';
+import { DeveloperPlaygroundToolbar } from './components/DeveloperPlaygroundToolbar';
+import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
+import './developer-playground.css';
 import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
 import { ViewerWorkspace } from './components/ViewerWorkspace';
 import { RolePerspectiveBanner, RolePerspectiveSettings } from './components/RolePerspectiveControls';
@@ -112,6 +115,7 @@ function App() {
 
   return (
     <SalesShopShell mode="legacy" className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}${inRolePreview ? ' owner-perspective-active' : ''}${teamQuotesOverview ? ' team-quotes-overview-active' : ''}`}>
+      {isDeveloperPlaygroundRoute() && <DeveloperPlaygroundToolbar />}
       <RolePerspectiveBanner />
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
