@@ -1,5 +1,6 @@
 import type { Activity, Company, Contact, CrmDocument, Project } from '../types/crm';
 import type { Quote, QuoteDocument, QuoteLine } from '../types/quote';
+import { EMPTY_COMPANY_SETTINGS, type CompanySettingsData } from '../types/settings';
 
 /** Fictional fixtures only. No actual SalesShop customer/company records. */
 export function seedPlaygroundCrm(): CrmDocument {
@@ -64,4 +65,29 @@ export function seedPlaygroundQuotes(): QuoteDocument {
       'demo_project_3','Cora Fiction','cora@cobaltcove.example','Sent',840,49),
   ];
   return {schemaVersion:2,quotes,activeQuoteId:quotes[0].id};
+}
+
+export function seedPlaygroundSettings():CompanySettingsData {
+  return {
+    ...EMPTY_COMPANY_SETTINGS,
+    organizationName:'Atelier Demo Stoneworks',
+    email:'sales@atelier-demo.example',
+    quoteContactName:'Demo Sales Desk',
+    stockMaterials:[
+      {id:'demo_material_quartz',name:'Cloudcrest White (Demo)',brand:'Atelier Fictional Surfaces',
+        supplier:'Sandbox Sample Supply Co.',materialType:'Quartz',materialFamily:'Engineered Surfaces',
+        stockProgram:true,active:true,unit:'sf',
+        variants:[{id:'demo_variant_quartz',active:true,default:true,thickness:'3cm',
+          finish:'Polished',formatKind:'slab',lengthIn:126,widthIn:63,
+          purchaseOptions:[{id:'demo_option_quartz',label:'Standard',active:true,default:true,
+            pricingBasis:'sf',costPerSf:13.75}]}]},
+      {id:'demo_material_granite',name:'Starlit Gray (Demo)',brand:'Fictional Natural Collection',
+        supplier:'Sandbox Sample Supply Co.',materialType:'Granite',materialFamily:'Natural Stone',
+        stockProgram:true,active:true,unit:'sf',
+        variants:[{id:'demo_variant_granite',active:true,default:true,thickness:'3cm',
+          finish:'Polished',formatKind:'slab',lengthIn:120,widthIn:60,
+          purchaseOptions:[{id:'demo_option_granite',label:'Standard',active:true,default:true,
+            pricingBasis:'sf',costPerSf:11.25}]}]},
+    ],
+  };
 }
