@@ -1,6 +1,8 @@
 import { useEffect,useRef,useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuoteStore } from '../store/quoteStore';
+import { TakeoffMaterialCatalog,TakeoffSinkCatalog } from './TakeoffCatalogPickers';
+import { SINK_CATEGORIES,SINK_CATEGORY_LABELS } from '../types/sink';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import {
   isValidTakeoffPiece,newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceTotalSf,
@@ -35,6 +37,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
   const updateSection=useQuoteStore(s=>s.updateSection);
+  const selectMaterial=useQuoteStore(s=>s.selectTakeoffMaterial);
   const addSfLine=useQuoteStore(s=>s.addTakeoffLine);
   const detachTakeoff=useQuoteStore(s=>s.detachTakeoff);
   const [help,setHelp]=useState(false);
@@ -153,19 +156,26 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
           <label className="qtl-material"><span>Material / finish specification</span><input type="text"
             value={section.scope?.takeoffMaterial??''} maxLength={300} disabled={!editable}
             placeholder="e.g. Carrara White Quartz · 3cm · Polished"
-            onChange={e=>updateSection(quote.id,section.id,{
-              scope:{...section.scope,takeoffMaterial:e.target.value}
-            })}/></label>
+            onChange={e=>selectMaterial(quote.id,section.id,e.target.value)}/></label>
+          <TakeoffMaterialCatalog disabled={!editable}
+            selected={section.scope?.takeoffMaterialReference}
+            onSelect={(reference,label)=>selectMaterial(quote.id,section.id,label,reference)}/>
           <div className="qtl-sinks">
             {sinks.map((sink,i)=><div className="qtl-sink-card" key={sink.id}>
               <label><span>Type</span><select value={sink.category} disabled={!editable}
-                onChange={e=>patchSink(sink.id,{category:e.target.value as QuoteTakeoffSink['category']})}>
-                <option value="kitchen">Kitchen</option><option value="vanity">Vanity</option>
+                onChange={e=>patchSink(sink.id,{category:e.target.value as QuoteTakeoffSink['category'],
+                  sinkReference:undefined})}>
+                {SINK_CATEGORIES.map(category=><option value={category} key={category}>{SINK_CATEGORY_LABELS[category]}</option>)}
               </select></label>
-              <label className="qtl-sink-name"><span>Sink model / spec</span><input type="text"
-                maxLength={160} disabled={!editable} value={sink.name}
-                placeholder="e.g. 3218 Single Bowl" onFocus={e=>e.currentTarget.select()}
-                onChange={e=>patchSink(sink.id,{name:e.target.value})}/></label>
+              <div className="qtl-sink-name">
+                <label><span>Sink model / spec</span><input type="text"
+                  maxLength={160} disabled={!editable} value={sink.name}
+                  placeholder="e.g. 3218 Single Bowl" onFocus={e=>e.currentTarget.select()}
+                  onChange={e=>patchSink(sink.id,{name:e.target.value,sinkReference:undefined})}/></label>
+                <TakeoffSinkCatalog disabled={!editable}
+                  onSelect={patch=>patchSink(sink.id,patch)}/>
+                {sink.sinkReference?.snapshot&&<small className="qtl-catalog-selected">Catalog: {sink.sinkReference.snapshot.variantLabel}</small>}
+              </div>
               <label><span>Qty</span><input type="number" min="1" max="1000" step="1"
                 value={sink.count} disabled={!editable}
                 onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchSink(sink.id,{count:n});}}/></label>
