@@ -52,6 +52,10 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const editable=quoteIsCommerciallyEditable(quote);
   const owned=takeoffOwnedScope(section.scope);
   const pieces=section.scope?.takeoffPieces??[];
+  const eligibleIds=pieces.map(p=>p.id);
+  const selectedIds=selectedPieceIds.filter(id=>eligibleIds.includes(id));
+  const allSelected=pieces.length>0&&selectedIds.length===pieces.length;
+  const toggleAll=()=>setSelectedPieceIds(allSelected?[]:eligibleIds);
   const sinks=section.scope?.takeoffSinks??[];
   const topSf=totalTakeoffSf(pieces);
   const splashSf=totalSplashSf(pieces);
@@ -107,8 +111,8 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const mode=(next:'summary'|'detail')=>
     updateSection(quote.id,section.id,{customerDisplayMode:next});
   const movePieces=()=>{
-    if(!selectedPieceIds.length)return;
-    const id=split(quote.id,section.id,selectedPieceIds,newAreaTitle.trim()||'New area');
+    if(!selectedIds.length)return;
+    const id=split(quote.id,section.id,selectedIds,newAreaTitle.trim()||'New area');
     if(id){setSelectedPieceIds([]);setNewAreaTitle('');}
   };
   return createPortal(<div className="qtl-backdrop" role="presentation"
@@ -140,7 +144,21 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
           <div className="qtl-section-title"><div><h3>Pieces</h3><p>Inches · optional name · check the exposed splash edges</p></div>
             <button type="button" onClick={()=>setHelp(p=>!p)} aria-expanded={help}>? Tips</button></div>
           {help&&<p className="qtl-help">Top SF = length × width × count ÷ 144. Each checked 4″ splash adds (4 × the chosen edge length × count) ÷ 144 SF, included in the combined SF and linked quote quantity. Back uses length; left/right use width. Check only edges needing splash. Enter 25½, 25 1/2, or 25.5. Incomplete pieces count as zero.</p>}
-          <div className="qtl-table-wrap">
+          <div className="qtl-table-wrap" onKeyDown={event=>{
+            // Spreadsheet-style entry: Enter moves to the next text/number cell.
+            // Checkboxes and buttons retain their native Enter/Space behavior.
+            if(event.key!=='Enter'||event.isComposing||event.shiftKey||event.ctrlKey||event.metaKey)return;
+            const target=event.target;
+            if(!(target instanceof HTMLInputElement)||target.type==='checkbox')return;
+            const fields=[...event.currentTarget.querySelectorAll<HTMLInputElement>(
+              '.qtl-piece input:not([type="checkbox"]):not(:disabled)'
+            )];
+            const index=fields.indexOf(target);
+            if(index<0||index+1>=fields.length)return;
+            event.preventDefault();
+            fields[index+1].focus();
+            fields[index+1].select();
+          }}>
             <div className="qtl-table-header"><span>MOVE</span><span>PIECE NAME</span><span>LENGTH</span><span>WIDTH</span><span>QTY</span><span>BACK</span><span>LEFT</span><span>RIGHT</span><span>SF</span><span/></div>
             {pieces.map((piece,i)=><div className="qtl-piece" key={piece.id}>
               <label className="qtl-move"><span>Select</span><input type="checkbox" disabled={!editable} aria-label={`Select piece ${i+1} for new Area`} checked={selectedPieceIds.includes(piece.id)} onChange={e=>setSelectedPieceIds(prev=>e.target.checked?[...prev,piece.id]:prev.filter(id=>id!==piece.id))}/></label>
@@ -171,9 +189,14 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
               </div>
             </div>)}
           </div>
-          <div className="qtl-piece-actions"><button type="button" className="qtl-add" disabled={!editable||pieces.length>=500} onClick={addPiece}>+ Add piece</button>
-            {selectedPieceIds.length>0&&<div className="qtl-split-actions"><input aria-label="New Area name" placeholder="New Area name" value={newAreaTitle} onChange={e=>setNewAreaTitle(e.target.value)}/>
-              <button type="button" onClick={movePieces} disabled={!editable}>Move {selectedPieceIds.length} to new Area</button></div>}
+          <div className="qtl-piece-actions">
+            <button type="button" className="qtl-add" disabled={!editable||pieces.length>=500} onClick={addPiece}>+ Add piece</button>
+            {pieces.length>0&&<button type="button" className="qtl-selection-toggle"
+              disabled={!editable} aria-pressed={allSelected} onClick={toggleAll}>
+              {allSelected?'Clear selection':`Select all (${pieces.length})`}
+            </button>}
+            {selectedIds.length>0&&<div className="qtl-split-actions"><input aria-label="New Area name" placeholder="New Area name" value={newAreaTitle} onChange={e=>setNewAreaTitle(e.target.value)}/>
+              <button type="button" onClick={movePieces} disabled={!editable}>Move {selectedIds.length} to new Area</button></div>}
           </div>
         </section>
 
