@@ -388,7 +388,7 @@ export function QuotesMobileBeta() {
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={()=>setPage('quote')}>Back to draft</button></footer>
     </div>:null}
-    {quote&&page==='quote'&&<div className="qmb-history" aria-label="Undo or redo">
+    {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
       <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>
     </div>}
