@@ -42,6 +42,7 @@ export function QuoteTakeoffsLite({quote,section}:{
 }){
   const edit=useQuoteStore(s=>s.updateTakeoffPieces);
   const addSfLine=useQuoteStore(s=>s.addTakeoffLine);
+  const detachTakeoff=useQuoteStore(s=>s.detachTakeoff);
   const [showHelp,setShowHelp]=useState(false);
   const editable=quoteIsCommerciallyEditable(quote);
   const enabled=takeoffOwnedScope(section.scope);
@@ -51,7 +52,9 @@ export function QuoteTakeoffsLite({quote,section}:{
   const linked=quote.lines.filter(line=>line.sectionId===section.id
     &&line.quantitySource?.syncMode==='live'
     &&line.quantitySource.field==='countertopSf');
-  const update=(pieces:QuoteTakeoffPiece[])=>edit(quote.id,section.id,pieces);
+  const update=(nextPieces:QuoteTakeoffPiece[])=>{
+    if(nextPieces.length<=500)edit(quote.id,section.id,nextPieces);
+  };
   const patch=(id:string,values:Partial<QuoteTakeoffPiece>)=>
     update(pieces.map(piece=>piece.id===id?{...piece,...values}:piece));
   return <div className="quote-takeoffs-lite" aria-label={`Takeoffs Lite for ${section.title}`}>
@@ -77,7 +80,7 @@ export function QuoteTakeoffsLite({quote,section}:{
       </div>
       {pieces.map((piece,i)=><div className="quote-takeoffs-grid-row" key={piece.id}>
         <input type="text" aria-label={`Piece ${i+1} name`} placeholder={`Piece ${i+1}`}
-          value={piece.name} disabled={!editable}
+          value={piece.name} disabled={!editable} maxLength={120}
           onChange={event=>patch(piece.id,{name:event.target.value})}/>
         <DimensionInput label={`${piece.name||'Piece '+(i+1)} length in inches`} value={piece.lengthIn}
           disabled={!editable} onCommit={lengthIn=>patch(piece.id,{lengthIn})}/>
@@ -101,7 +104,7 @@ export function QuoteTakeoffsLite({quote,section}:{
       {!pieces.length&&<div className="quote-takeoffs-empty">No pieces yet. Add a rectangular piece to start your takeoff.</div>}
     </div>
     <div className="quote-takeoffs-bottom">
-      <button type="button" className="quote-takeoffs-add" disabled={!editable}
+      <button type="button" className="quote-takeoffs-add" disabled={!editable||pieces.length>=500}
         onClick={()=>update([...pieces,newTakeoffPiece(pieces.length+1)])}>+ Add Piece</button>
       <div className="quote-takeoffs-actions">
         <span>Measured area: <strong>{sfFormat.format(total)} SF</strong></span>
@@ -110,6 +113,11 @@ export function QuoteTakeoffsLite({quote,section}:{
           onClick={()=>addSfLine(quote.id,section.id)}>+ Quote SF line</button>
       </div>
     </div>
+    {enabled&&editable&&<button type="button" className="quote-takeoffs-manual" onClick={()=>{
+      if(window.confirm('Return this Area to manual countertop SF? The last measured total and current quote pricing will stay, but piece measurements will be removed and live links will become captured quantities.')){
+        detachTakeoff(quote.id,section.id);
+      }
+    }}>Switch to manual SF</button>}
     <p className="quote-takeoffs-note">Internal takeoff only. It does not automatically add waste or reveal piece dimensions in the customer proposal. Add a selling rate to any new SF line.</p>
   </div>;
 }
