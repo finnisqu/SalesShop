@@ -9,11 +9,13 @@ export type AppView = 'notebook' | 'board' | 'quotes' | 'catalog' | 'dashboard' 
 interface NavigationState {
   view: AppView;
   catalogSection: CatalogSection;
+  ratesFocus?: 'material';
   focusedProjectId: string | null;
   focusedCompanyId: string | null;
   setView: (view: AppView) => void;
   setCatalogSection: (section: CatalogSection) => void;
   openCatalog: (section?: CatalogSection) => void;
+  openBuilderRates: () => void;
   openProject: (projectId: string) => void;
   openCompany: (companyId: string) => void;
   openNotebookPage: (pageId: string) => void;
@@ -66,6 +68,7 @@ export const useNavigationStore = create<NavigationState>((set) => {
   return {
     view: initial.view,
     catalogSection: initial.catalogSection,
+    ratesFocus: undefined,
     focusedProjectId: null,
     focusedCompanyId: null,
     setView: (view) => navigate(view),
@@ -77,6 +80,10 @@ export const useNavigationStore = create<NavigationState>((set) => {
     openCatalog: (catalogSection = 'materials') => {
       rememberCatalogSection(catalogSection);
       navigate('catalog', { catalogSection });
+    },
+    openBuilderRates: () => {
+      rememberCatalogSection('rates');
+      navigate('catalog',{catalogSection:'rates',ratesFocus:'material'});
     },
     openProject: (projectId) => navigate('board', { focusedProjectId: projectId }),
     openCompany: (companyId) => navigate('board', { focusedCompanyId: companyId }),
