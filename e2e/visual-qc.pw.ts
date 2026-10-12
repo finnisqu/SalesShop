@@ -200,6 +200,9 @@ test('Quotes setup and Catalog filter keep independent visible controls', async 
 });
 
 test('theme screenshots preserve foreground contrast and paper boundaries', async ({ page }, testInfo) => {
+  // This intentionally reloads three workspaces across four themes. On mobile
+  // emulation the screenshots can exceed the normal 60-second per-test budget.
+  test.setTimeout(150_000);
   const findings: unknown[] = [];
   for (const theme of ['warm', 'dark', 'contrast', 'coastal'] as const) {
     for (const view of ['board', 'catalog', 'settings'] as const) {
