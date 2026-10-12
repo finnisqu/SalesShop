@@ -3,6 +3,8 @@ import type {Quote} from '../types/quote';
 import {quoteTotal} from '../types/quote';
 import {QuoteShareControl} from './QuoteShareControl';
 import {auditQuoteDraft,type QuoteAuditDestination,type QuoteAuditFinding} from '../services/quoteDraftAudit';
+import {quoteCanCreateRevision} from '../services/quoteIntegrity';
+import {useQuoteStore} from '../store/quoteStore';
 import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEditor';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -15,6 +17,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
   canIssue:boolean;sending:boolean;error:string;onIssue:()=>void;
 }){
   const report=auditQuoteDraft(quote);
+  const createRevision=useQuoteStore(state=>state.createRevision);
   const [acknowledged,setAcknowledged]=useState(false);
   const [expandedId,setExpandedId]=useState<string|null>(null);
   const issueSet=report.findings.map(f=>f.id+':'+f.severity).join('|');
@@ -34,7 +37,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
         const fix=quickFixForFinding(finding);
         const linkedQuantity=fix?.kind==='line'&&fix.field==='quantity'&&
           quote.lines.some(line=>line.id===fix.id&&line.quantitySource?.syncMode==='live');
-        const hasInline=Boolean(fix&&!linkedQuantity);
+        const hasInline=Boolean(fix&&!linkedQuantity&&editable);
         const expanded=expandedId===finding.id;
         return <article className={'qmb-audit-finding '+kind+(expanded?' is-expanded':'')} key={finding.id}>
           <div className="qmb-audit-finding-summary">
@@ -89,6 +92,9 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
       {error&&<p role="alert" className="qmb-error">{error}</p>}
       <section className="qmb-card qmb-audit-delivery">
         <strong>Customer delivery</strong>
+        {!editable&&<p className="qmb-audit-help">This revision is {quote.status.toLowerCase()} and its customer-facing values are frozen. To change pricing or selections, start a new revision.</p>}
+        {!editable&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
+          onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
         <p className="qmb-help">Preview and draft links are available at any time. Issuing records a formal quote revision.</p>
         <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer preview ›</button>
         <QuoteShareControl/>
