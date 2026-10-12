@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
+import { useNavigationStore } from '../store/navigationStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import {
   MATERIAL_FAMILIES,
@@ -90,6 +91,7 @@ function compareOptionalNumbers(left?: number, right?: number) {
 }
 
 export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
+  const openBuilderRates = useNavigationStore(state=>state.openBuilderRates);
   const settings = useCompanySettingsStore((state) => state.settings);
   const hydrated = useCompanySettingsStore((state) => state.hydrated);
   const hydrateSettings = useCompanySettingsStore((state) => state.hydrate);
@@ -331,6 +333,8 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
               : 'Browse what we can buy, drill into slab variants, and compare real supplier costs without entering edit mode.'}</p>
         </div>
         <div className="rates-mode-actions">
+          {sectionView==='catalog'&&<button type="button" className="rates-edit-button materials-builder-rates-link"
+            onClick={openBuilderRates}>Builder Levels ↗</button>}
           {sectionView === 'catalog' && editing && (
             <label className="materials-show-inactive">
               <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />
