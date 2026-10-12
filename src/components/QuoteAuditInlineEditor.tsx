@@ -64,6 +64,7 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
     fix?.kind==='piece'?String(piece?.count??0):'');
   const [secondary,setSecondary]=useState(fix?.kind==='customer'?quote.contactName??'':String(piece?.lengthIn??''));
   const [tertiary,setTertiary]=useState(String(piece?.widthIn??''));
+  const [materialDraft,setMaterialDraft]=useState(section?.scope?.takeoffMaterial??'');
   const [error,setError]=useState('');
   // Remount by finding ID when a different issue is opened; don't reset a
   // partially typed draft on unrelated quote-store updates.
@@ -133,13 +134,15 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
   return <div className="qmb-audit-inline" role="region" aria-label={'Resolve '+finding.title}>
     {nonForm&&section?<>
       <label className="qmb-audit-input-label">Choose material or type a custom name</label>
-      <TakeoffMaterialCatalog disabled={false} value={section.scope?.takeoffMaterial??''}
+      <TakeoffMaterialCatalog disabled={false} value={materialDraft}
         selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
-        onTextChange={name=>selectMaterial(quote.id,section.id,name)}
+        onTextChange={setMaterialDraft}
         onSelect={(ref,label)=>{selectMaterial(quote.id,section.id,label,ref);onClose();}}/>
       <div className="qmb-audit-inline-actions">
-        <button type="button" className="qmb-quiet" onClick={onClose}>Done</button>
-        <button type="button" className="qmb-outline" onClick={()=>onGoTo(finding.destination)}>Open Materials ›</button>
+        <button type="button" className="qmb-primary" disabled={!materialDraft.trim()}
+          onClick={()=>{selectMaterial(quote.id,section.id,materialDraft.trim());onClose();}}>Save</button>
+        <button type="button" className="qmb-outline" onClick={()=>onGoTo(finding.destination)}>Full editor ›</button>
+        <button type="button" className="qmb-quiet" onClick={onClose}>Cancel</button>
       </div>
     </>:<form onSubmit={save} noValidate>
       {fix.kind==='customer'?<>
