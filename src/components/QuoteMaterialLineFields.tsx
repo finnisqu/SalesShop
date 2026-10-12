@@ -219,8 +219,8 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
     applyMaterial(pendingMaterial, pendingVariant.id, purchaseOptionId);
   };
 
-  const applyCustom = () => {
-    const name = search.trim();
+  const applyCustom = (candidate?: string) => {
+    const name = (candidate ?? search).trim();
     if (!name) return;
     const slabMode = line.pricingMode === 'slab-multiplier';
     const multiplier = line.materialReference?.slabMultiplier ?? guide.slabPricingMultiplier;
@@ -314,6 +314,11 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
               {(snapshot || selectedMaterial || line.materialReference?.customMaterialName) && <button type="button" onClick={() => setSearching(false)}>Cancel</button>}
             </div>
             <div className="quote-material-results">
+              {pinned.filter(m => !m.reference?.materialId && (!search || m.label.toLowerCase().includes(search.trim().toLowerCase()))).map(m => (
+                <button type="button" key={m.id} onClick={() => applyCustom(m.label)}>
+                  <span><strong>★ {m.label}</strong><small>Project material · Custom</small></span>
+                </button>
+              ))}
               {results.map((material) => (
                 <button type="button" key={material.id} onClick={() => chooseMaterial(material)}>
                   <span><strong>{[material.brand, material.name].filter(Boolean).join(' ')}</strong><small>{[material.materialType, material.supplier].filter(Boolean).join(' · ')}</small></span>
@@ -321,7 +326,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
                 </button>
               ))}
               {search.trim() && (
-                <button type="button" className="quote-material-custom-result" onClick={applyCustom}>
+                <button type="button" className="quote-material-custom-result" onClick={() => applyCustom()}>
                   <span><strong>Use “{search.trim()}”</strong><small>Custom material for this quote</small></span>
                   <span><b>Not in database</b><small>No catalog variant required</small></span>
                 </button>
