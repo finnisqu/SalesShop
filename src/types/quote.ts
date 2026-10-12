@@ -104,10 +104,15 @@ export interface QuoteTakeoffSink {
 export interface QuoteAreaScope {
   /** Optional Takeoffs Lite measurements. Presence means Takeoffs Lite owns countertopSf. */
   takeoffPieces?: QuoteTakeoffPiece[];
+  /** Internal takeoff breakdown; countertopSf below is tops + 4-inch splash. */
+  takeoffTopSf?: number;
+  takeoffSplashSf?: number;
   /** Label shown in the customer's consolidated area description. */
   takeoffMaterial?: string;
   takeoffSinks?: QuoteTakeoffSink[];
+  /** In Takeoffs Lite, the combined top + checked 4-inch splash material SF. */
   countertopSf?: number;
+  /** Retained separately for optional splash labor/linear-foot estimating. */
   splashLf?: number;
   fullHeightSplashSf?: number;
   kitchenSinkCount?: number;
