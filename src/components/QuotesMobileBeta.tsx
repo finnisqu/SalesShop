@@ -283,6 +283,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
       <div className="qmb-footer-area-total"><small>Area total</small><strong>{money.format(amount)}</strong></div>
       <div className="qmb-area-footer-actions">
         {editable&&<button type="button" className="qmb-outline qmb-area-next"
+          aria-label={tab==='pricing'?'Create next Area':'Continue to next Area step'}
           onClick={advanceArea}>
           {tab==='measure'?'Materials ›':tab==='materials'?'Pricing ›':'+ Next Area ›'}
         </button>}
