@@ -255,7 +255,10 @@ export function QuotesMobileBeta() {
     if(!quote||!quoteIsCommerciallyEditable(quote))return;
     for(const section of quote.sections){
       const sinks=section.scope?.takeoffSinks;
-      if(!sinks?.some(s=>!s.includeInPricing))continue;
+      if(!sinks?.length)continue;
+      const hasExcludedCharge=quote.lines.some(line=>line.sectionId===section.id
+        &&line.takeoffSinkId&&!line.includeInTotal);
+      if(!sinks.some(s=>!s.includeInPricing)&&!hasExcludedCharge)continue;
       const updated=sinks.map(sink=>{
         if(sink.includeInPricing)return sink;
         const alreadyCharged=quote.lines.some(line=>line.sectionId===section.id
@@ -265,7 +268,8 @@ export function QuotesMobileBeta() {
               &&line.description.toLowerCase().includes(sink.name.trim().toLowerCase()))));
         return alreadyCharged?sink:{...sink,includeInPricing:true};
       });
-      if(updated.some((sink,i)=>sink!==sinks[i]))updateSinks(quote.id,section.id,updated);
+      if(updated.some((sink,i)=>sink!==sinks[i])||hasExcludedCharge)
+        updateSinks(quote.id,section.id,updated);
     }
   },[quote,updateSinks]);
   const area=quote?.sections.find(s=>s.id===areaId)??null;
