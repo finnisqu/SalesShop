@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { scopedStorageKey } from '../lib/developerPlayground';
+import { scopedStorageKey, isDeveloperPlaygroundRoute } from '../lib/developerPlayground';
+import { seedPlaygroundSettings } from '../services/playgroundFixtures';
 import {
   EMPTY_COMPANY_SETTINGS,
   materialFamilyForType,
@@ -116,7 +117,7 @@ function normalizeMaterials(value: unknown): StockMaterial[] {
 function readLocal(): CompanySettingsData {
   try {
     const raw = localStorage.getItem(LOCAL_KEY);
-    if (!raw) return { ...EMPTY_COMPANY_SETTINGS };
+    if (!raw) return isDeveloperPlaygroundRoute() ? seedPlaygroundSettings() : { ...EMPTY_COMPANY_SETTINGS };
     const parsed = JSON.parse(raw) as Partial<CompanySettingsData>;
     return { ...EMPTY_COMPANY_SETTINGS, ...parsed, stockMaterials: normalizeMaterials(parsed.stockMaterials) };
   } catch {
