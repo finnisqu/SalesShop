@@ -78,7 +78,18 @@ export const QUOTE_AREA_SCOPE_FIELDS = [
 ] as const;
 export type QuoteAreaScopeField = (typeof QUOTE_AREA_SCOPE_FIELDS)[number];
 
+/** A rectangular countertop piece measured in inches; future CAD Lite can map here. */
+export interface QuoteTakeoffPiece {
+  id: string;
+  name: string;
+  lengthIn?: number;
+  widthIn?: number;
+  count: number;
+}
+
 export interface QuoteAreaScope {
+  /** Optional Takeoffs Lite measurements. Presence means Takeoffs Lite owns countertopSf. */
+  takeoffPieces?: QuoteTakeoffPiece[];
   countertopSf?: number;
   splashLf?: number;
   fullHeightSplashSf?: number;
@@ -207,6 +218,8 @@ export interface QuoteLineQuantitySource {
   field: QuoteAreaScopeField;
   capturedValue: number;
   appliedAt: string;
+  /** Explicit live link to Takeoffs Lite; legacy captures stay snapshots. */
+  syncMode?: 'live';
 }
 
 export interface QuoteLine {
