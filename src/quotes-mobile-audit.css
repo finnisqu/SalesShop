@@ -133,3 +133,35 @@
   padding:7px 9px;text-align:left;font-size:12px;font-weight:800;
 }
 .qmb .qmb-audit-crm-suggestions button small {color:var(--qmb-accent);font-size:10px;flex:0 0 auto;}
+
+/* Customer-approved Selections appendix shared by preview and public links. */
+.customer-quote-paper .quote-customer-selections {
+  margin-top:22px;padding-top:15px;border-top:1px solid #c9c2b3;
+  break-inside:avoid;page-break-inside:avoid;color:#37342f;
+}
+.customer-quote-paper .quote-customer-selections h3 {
+  font-family:inherit;font-size:17px;line-height:1.3;margin:0 0 3px;
+  color:#2e2c29;letter-spacing:.01em;
+}
+.customer-quote-paper .quote-customer-selections>p {
+  margin:0 0 11px;color:#69665f;font-size:11px;line-height:1.4;
+}
+.customer-quote-paper .quote-customer-selection-area {
+  border-bottom:1px solid #e8e3d9;padding:8px 0 11px;
+  display:grid;gap:5px;min-width:0;
+}
+.customer-quote-paper .quote-customer-selection-area>strong {
+  font-size:12px;font-weight:850;color:#3e3a30;
+}
+.customer-quote-paper .quote-customer-selection-area>div {
+  display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;
+  align-items:start;font-size:11px;line-height:1.35;
+}
+.customer-quote-paper .quote-customer-selection-area span {color:#7a756c;}
+.customer-quote-paper .quote-customer-selection-area b {
+  overflow-wrap:anywhere;font-weight:650;color:#403d37;
+}
+@media print {
+  .customer-quote-paper .quote-customer-selections {break-before:auto;}
+  .customer-quote-paper .quote-customer-selection-area {break-inside:avoid;}
+}
