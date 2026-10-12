@@ -111,7 +111,7 @@ export function TakeoffSinkCatalog({disabled,onSelect}:{
     const snapshot=createQuoteSinkSnapshot(model,variant);
     onSelect({
       name:sinkSnapshotDescription(snapshot),
-      category:model.category==='vanity'?'vanity':'kitchen',
+      category:model.category,
       unitPrice:variant.sellPrice,
       sinkReference:{sinkModelId:model.id,variantId:variant.id,snapshot},
     });
