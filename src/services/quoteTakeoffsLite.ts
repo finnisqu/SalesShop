@@ -96,7 +96,9 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
       sectionId,kind:sink.sinkReference?.snapshot?'sink':'item',
       description:`Sink · ${sink.name.trim()|| (sink.category==='vanity'?'Vanity sink':'Kitchen sink')}`,
       pricingMode:'quantity-rate',quantity:sink.count,rate:sink.unitPrice,
-      customerVisible:true,includeInTotal:true,
+      // An itemization choice is independent of editing sink quantities or prices.
+      customerVisible:existing?.customerVisible??true,
+      includeInTotal:existing?.includeInTotal??true,
       sinkReference:sink.sinkReference,
       takeoffSinkId:sink.id,
     };
