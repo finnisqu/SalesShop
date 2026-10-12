@@ -440,6 +440,14 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
           </section>}
 
           <section className="materials-mobile-tools-section">
+            <span className="materials-mobile-tools-label">Pricing reference</span>
+            <button type="button" className="rates-edit-button" onClick={()=>{setMobileToolsOpen(false);openBuilderRates();}}>
+              Stock / Builder Levels ↗
+            </button>
+            <small className="materials-mobile-tools-note">Open editable Level 0–8 cost bands and selling prices.</small>
+          </section>
+
+          <section className="materials-mobile-tools-section">
             <span className="materials-mobile-tools-label">Supplier data</span>
             <SupplierImportLauncher placement="toolbar" />
             <small className="materials-mobile-tools-note">Stage and review supplier price-list updates before publishing them into the catalog.</small>
