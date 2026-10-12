@@ -127,3 +127,11 @@
  .sales-app.view-quotes .quote-takeoffs-total{width:100%}
  .sales-app.view-quotes .quote-takeoffs-total strong {font-size:22px}
 }
+
+/* Intentionally secondary: removing the takeoff retains the captured quote SF. */
+.sales-app.view-quotes .quote-takeoffs-manual {
+  justify-self:start;border:0;background:transparent;color:var(--qtl-muted);
+  text-decoration:underline;text-underline-offset:3px;
+  padding:4px 0;font:650 11px system-ui,sans-serif;
+}
+.sales-app.view-quotes .quote-takeoffs-manual:hover {color:var(--qtl-ink)}
