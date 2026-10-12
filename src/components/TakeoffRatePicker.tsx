@@ -1,21 +1,13 @@
-import { useEffect,useMemo,useState } from 'react';
-import { useRateBookStore } from '../store/rateBookStore';
-import { createQuoteRateSnapshot } from '../services/quoteRateSnapshot';
+import { useState } from 'react';
 import type { QuoteLineRateReference,Quote } from '../types/quote';
-import { BuilderLevelChoices } from './BuilderLevelChoices';
+import { QuoteSfRateChoices } from './QuoteSfRateChoices';
 
 export function TakeoffRatePicker({quote,rate,disabled,onSelect,selectedRateId,materialType,materialCostPerSf}:{
   quote:Quote;rate?:number;disabled:boolean;
   onSelect:(rate:number|undefined,ref?:QuoteLineRateReference)=>void;
   selectedRateId?:string;materialType?:string;materialCostPerSf?:number;
 }){
-  const items=useRateBookStore(s=>s.items);
-  const hydrate=useRateBookStore(s=>s.hydrate);
   const [open,setOpen]=useState(false);
-  useEffect(()=>{hydrate();},[hydrate]);
-  const choices=useMemo(()=>items.filter(i=>i.active&&i.unit==='sf').map(item=>({
-    item,snapshot:createQuoteRateSnapshot(item,quote.pricingDivision),
-  })).filter(x=>x.snapshot.pricingBehavior!=='cost-reference'),[items,quote.pricingDivision]);
   return <div className="qtl-rate-box">
     <label className="qtl-rate-input"><span>Selling price per SF</span>
       <div><strong>$</strong><input aria-label="Takeoff selling rate per square foot"
@@ -30,16 +22,10 @@ export function TakeoffRatePicker({quote,rate,disabled,onSelect,selectedRateId,m
       <button type="button" disabled={disabled} aria-expanded={open}
         onClick={()=>setOpen(v=>!v)}>Choose from Rates ▾</button>
       {open&&<div className="qtl-rate-options">
-        <BuilderLevelChoices division={quote.pricingDivision} selectedRateId={selectedRateId}
-          materialType={materialType} materialCostPerSf={materialCostPerSf}
+        <QuoteSfRateChoices division={quote.pricingDivision}
+          selectedRateId={selectedRateId} materialType={materialType}
+          materialCostPerSf={materialCostPerSf}
           onSelect={(price,ref)=>{onSelect(price,ref);setOpen(false);}}/>
-        <div className="qmb-other-rate-heading">Other SF rates</div>
-        {choices.map(({item,snapshot})=><button type="button" key={item.id}
-          onClick={()=>{onSelect(snapshot.sellRate,{rateBookItemId:item.id,snapshot});setOpen(false);}}>
-          <strong>{item.name}</strong>
-          <small>{snapshot.sellRate===undefined?'Enter rate manually':`$${snapshot.sellRate.toFixed(2)}/SF`}</small>
-        </button>)}
-        {!choices.length&&<p>No other active SF rates. Enter a custom value above.</p>}
       </div>}
     </div>
   </div>;
