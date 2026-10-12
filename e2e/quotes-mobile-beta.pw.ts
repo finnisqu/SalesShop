@@ -210,7 +210,7 @@ test('mobile quote scroll retains title, total and tabs while hiding larger head
   await expect(selections.getByRole('textbox',{name:'Material to pin'})).toBeVisible();
   await expect(selections.getByRole('spinbutton',{name:'Job backsplash height in inches'})).toHaveValue('4');
   await expect(selections.getByRole('combobox',{name:'Job default edge profile'})).toHaveValue('Flat');
-  await selections.getByRole('button',{name:'Done',exact:true}).click();
+  await selections.locator('.qmb-selections-foot').getByRole('button',{name:'Done'}).click();
   const scroll=beta.locator('.qmb-quote-scroll');
   // Enough content to prove the heading moves away and identity remains sticky.
   for(let i=0;i<8;i++){
