@@ -138,6 +138,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
   const catalogMaterials=useCompanySettingsStore(state=>state.settings.stockMaterials);
   const selectedCost=selectedMaterialCost(
     section.scope?.takeoffMaterial??'',section.scope?.takeoffMaterialReference,catalogMaterials);
+  const costPerSf=selectedCost.quotedCostPerSf??selectedCost.currentCatalogCostPerSf;
   const pieces=section.scope?.takeoffPieces??[];
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
   const linked=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf');
@@ -189,11 +190,11 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
           <div className="qmb-area-material-cost" aria-label="Selected material cost reference">
             <div className="qmb-area-cost-top">
               <span>Selected material cost <small>· internal</small></span>
-              <strong>{selectedCost.quotedCostPerSf!==undefined
-                ?money.format(selectedCost.quotedCostPerSf)+'/SF':'—'}</strong>
+              <strong>{costPerSf!==undefined
+                ?money.format(costPerSf)+'/SF':'—'}</strong>
             </div>
-            {selectedCost.quotedCostPerSf!==undefined?<>
-              <small className="qmb-area-cost-detail">{selectedCost.materialName} · Cost captured when selected</small>
+            {costPerSf!==undefined?<>
+              <small className="qmb-area-cost-detail">{selectedCost.materialName} · {selectedCost.quotedCostPerSf!==undefined?'Cost captured when selected':'Current Catalog reference (not saved on quote)'}</small>
               {selectedCost.catalogCostChanged&&<small className="qmb-area-cost-updated">
                 Catalog now {money.format(selectedCost.currentCatalogCostPerSf!)}/SF · Re-select under Materials to update the cost reference
               </small>}
@@ -207,7 +208,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
           {linked?<TakeoffRatePicker quote={quote} rate={linked.rate} disabled={!editable}
             selectedRateId={linked.rateReference?.rateBookItemId}
             materialType={selectedCost.materialType}
-            materialCostPerSf={selectedCost.quotedCostPerSf}
+            materialCostPerSf={costPerSf}
             onSelect={(rate,ref)=>setRate(quote.id,section.id,rate,ref)}/>:<>
             <p className="qmb-help">{pieces.length?'No linked SF price yet. Adding one is a separate charge: check for existing material rows first.':'Add measurements first, or create a manual price row below.'}</p>
             <button type="button" className="qmb-outline" disabled={!editable||!pieces.some(p=>p.lengthIn&&p.widthIn)}
