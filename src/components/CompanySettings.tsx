@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
+import { useNavigationStore } from '../store/navigationStore';
 import { supabase } from '../lib/supabase';
 import { useAppearanceStore } from '../store/appearanceStore';
 import { AppearanceThemePicker } from './AppearanceThemePicker';
@@ -11,12 +13,13 @@ import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 
-type SettingsTab = 'company' | 'account' | 'team' | 'appearance' | 'advanced';
+type SettingsTab = 'company' | 'account' | 'team' | 'appearance' | 'beta' | 'advanced';
 const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
   { id: 'company', title: 'Company & Branding', subtitle: 'Customer-facing identity' },
   { id: 'account', title: 'My Account', subtitle: 'Salesperson profile' },
   { id: 'team', title: 'Team', subtitle: 'People in your shop' },
   { id: 'appearance', title: 'Appearance & Accessibility', subtitle: 'Personal preferences' },
+  { id: 'beta', title: 'Beta Features', subtitle: 'Try upcoming workflows' },
   { id: 'advanced', title: 'Advanced', subtitle: 'Optional tools' },
 ];
 const localMessage = 'Sign in to a cloud workspace to manage your salesperson profile and team.';
@@ -35,6 +38,9 @@ export function CompanySettings() {
   const updateAppearance = useAppearanceStore((state) => state.update);
   const resetAppearance = useAppearanceStore((state) => state.reset);
   const [tab, setTab] = useState<SettingsTab>('company');
+  const quotesBetaEnabled = useQuotesMobileBetaStore((state) => state.enabled);
+  const setQuotesBetaEnabled = useQuotesMobileBetaStore((state) => state.setEnabled);
+  const setAppView = useNavigationStore((state) => state.setView);
   const [profileName, setProfileName] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -222,6 +228,26 @@ export function CompanySettings() {
             <header><div><strong>Reference preview</strong><small>Theme choices affect the app—not prices, print layouts, or customer quote documents.</small></div></header>
             <div className="settings-appearance-preview"><div><strong>Calacatta Laza</strong><small>MSI · Quartz · 3cm</small></div><div><strong>$12.50/SF</strong><small>Reference cost</small></div></div>
             <p className="settings-help">Preferences affect your interface, not the pricing or document values your customers see.</p>
+          </article>
+        </section>}
+        {tab === 'beta' && <section className="settings-panel-grid" aria-label="Beta features">
+          <article className="company-settings-card settings-main-card">
+            <header><div><strong>Quotes 2.0 · Mobile Beta</strong>
+              <small>A more flexible, Area-first quote builder. Your existing quotes and Catalog stay connected.</small></div>
+              <span className="settings-card-save">{quotesBetaEnabled ? 'Opted in' : 'Off by default'}</span>
+            </header>
+            <label className="settings-preference-row">
+              <div><strong>Use mobile Quotes Beta</strong>
+                <small>Only on phone-sized layouts, including phone landscape. Desktop and the original Quotes editor are unchanged.</small></div>
+              <input type="checkbox" checked={quotesBetaEnabled}
+                onChange={event=>setQuotesBetaEnabled(event.target.checked)} />
+            </label>
+            <p className="settings-help">This is a view switch, not a migration. The same quote records, Areas, takeoffs, Catalog selections, customer preview, secure shares, and company permissions are used in either editor. Switching back will not discard saved changes.</p>
+            <div className="settings-inline-actions">
+              <Button variant="primary" onClick={()=>{setQuotesBetaEnabled(true);setAppView('quotes');}}>Open Quotes Beta</Button>
+              <Button variant="secondary" onClick={()=>{setQuotesBetaEnabled(false);setAppView('quotes');}}>Open classic Quotes</Button>
+            </div>
+            <small className="settings-muted">Preference is saved on this device. In the mobile Beta, tap Classic to exit immediately.</small>
           </article>
         </section>}
         {tab === 'advanced' && mode === 'cloud' && actualRole === 'owner' && (
