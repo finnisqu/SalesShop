@@ -1,4 +1,4 @@
-import { useEffect,useMemo,useRef,useState } from 'react';
+import { useEffect,useId,useMemo,useRef,useState } from 'react';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
 import { createQuoteMaterialCostSnapshot } from '../services/quoteMaterialSnapshot';
@@ -20,6 +20,7 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
   const materials=useCompanySettingsStore(s=>s.settings.stockMaterials);
   const hydrate=useCompanySettingsStore(s=>s.hydrate);
   const root=useRef<HTMLDivElement>(null);
+  const menuId=useId();
   const [open,setOpen]=useState(false);
   const [searchTerm,setSearchTerm]=useState('');
   const [materialId,setMaterialId]=useState<string|null>(null);
@@ -54,13 +55,20 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
     },materialLabel(m,v));
     setOpen(false);setMaterialId(null);setVariantId(null);
   };
-  return <div className="qtl-combobox" ref={root}>
-    <input type="text" role="combobox" aria-expanded={open} aria-controls="qtl-material-choices"
+  return <div className="qtl-combobox" ref={root} onKeyDown={event=>{
+    if(event.key==='Escape'&&open){
+      event.preventDefault();event.stopPropagation();setOpen(false);setMaterialId(null);setVariantId(null);
+    }else if(event.key==='ArrowDown'&&open&&event.target===root.current?.querySelector('input')){
+      const first=root.current?.querySelector<HTMLButtonElement>('.qtl-combobox-results button');
+      if(first){event.preventDefault();first.focus();}
+    }
+  }}>
+    <input type="text" role="combobox" aria-expanded={open} aria-controls={menuId}
       autoComplete="off" disabled={disabled} value={value} maxLength={300}
       placeholder="Search catalog colors or type a custom material…"
       aria-label="Material: type to search Catalog" onFocus={e=>{e.currentTarget.select();setSearchTerm('');setOpen(true);}}
       onChange={e=>{onTextChange(e.target.value);setSearchTerm(e.target.value);setMaterialId(null);setVariantId(null);setOpen(true);}}/>
-    {open&&<div className="qtl-combobox-menu" id="qtl-material-choices" role="listbox">
+    {open&&<div className="qtl-combobox-menu" id={menuId} role="group" aria-label="Material catalog suggestions">
       {material?<div className="qtl-combobox-results">
         <button type="button" onClick={()=>{if(variant)setVariantId(null);else setMaterialId(null);}}>← Back to {variant?'variants':'materials'}</button>
         <strong className="qtl-step-title">{[material.brand,material.name].filter(Boolean).join(' ')}</strong>
@@ -123,13 +131,19 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
       sinkReference:{sinkModelId:model.id,variantId:variant.id,snapshot}});
     setOpen(false);
   };
-  return <div className="qtl-combobox" ref={root}>
-    <input type="text" role="combobox" aria-expanded={open} aria-controls="qtl-sink-choices"
+  return <div className="qtl-combobox" ref={root} onKeyDown={event=>{
+    if(event.key==='Escape'&&open){event.preventDefault();event.stopPropagation();setOpen(false);}
+    else if(event.key==='ArrowDown'&&open&&event.target===root.current?.querySelector('input')){
+      const first=root.current?.querySelector<HTMLButtonElement>('.qtl-combobox-results button');
+      if(first){event.preventDefault();first.focus();}
+    }
+  }}>
+    <input type="text" role="combobox" aria-expanded={open} aria-controls={menuId}
       autoComplete="off" disabled={disabled} value={value} maxLength={160}
       placeholder="Search sink catalog…" aria-label="Sink model: type to search Catalog"
       onFocus={e=>{e.currentTarget.select();setSearchTerm('');setOpen(true);}}
       onChange={e=>{onTextChange(e.target.value);setSearchTerm(e.target.value);setOpen(true);}}/>
-    {open&&<div className="qtl-combobox-menu" id="qtl-sink-choices" role="listbox">
+    {open&&<div className="qtl-combobox-menu" id={menuId} role="group" aria-label="Sink catalog suggestions">
       <div className="qtl-combobox-results">
         {results.map(({model,variant})=><button key={variant.id} type="button"
           onClick={()=>choose(model,variant)}>
