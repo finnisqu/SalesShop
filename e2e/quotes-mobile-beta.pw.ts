@@ -100,3 +100,41 @@ test('Area takeoff grid keeps tabs visible and splash popover updates billable S
   await expect(beta.locator('.qmb-measure-row')).toHaveCount(13);
   expect(pageErrors).toEqual([]);
 });
+
+
+test('Materials sink rows stay compact and Rate picker pushes content instead of overlapping',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Representative touch-phone geometry');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
+  await beta.getByRole('textbox',{name:'Length (in)'}).blur();
+  await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
+  await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await beta.getByRole('button',{name:'Materials'}).click();
+  await beta.getByRole('button',{name:'+ Add sink'}).click();
+  const row=beta.locator('.qmb-sink-line').first();
+  await expect(row).toBeVisible();
+  const height=await row.evaluate(el=>el.getBoundingClientRect().height);
+  expect(height).toBeLessThan(155);
+  await row.getByRole('checkbox',{name:'Charge on quote'}).check();
+  await expect(row.getByRole('spinbutton',{name:'Sink 1 sell price'})).toBeVisible();
+  await beta.getByRole('button',{name:'Pricing'}).click();
+  await beta.getByRole('button',{name:/Choose from Rates/}).click();
+  const options=beta.locator('.qtl-rate-options');
+  await expect(options).toBeVisible();
+  const result=await page.evaluate(()=>{
+    const options=document.querySelector('.qmb .qtl-rate-options')!.getBoundingClientRect();
+    const customer=Array.from(document.querySelectorAll('.qmb .qmb-card'))
+      .find(el=>el.textContent?.includes('Customer display'))!.getBoundingClientRect();
+    return {optionsBottom:options.bottom,customerTop:customer.top};
+  });
+  expect(result.optionsBottom).toBeLessThanOrEqual(result.customerTop+2);
+});
