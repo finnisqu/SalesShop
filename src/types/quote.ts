@@ -414,6 +414,8 @@ export interface QuoteRevisionSnapshot {
 }
 
 export interface Quote {
+  /** Quote-scoped pinned material picks; never company-global. */
+  projectMaterials?: QuoteProjectMaterial[];
   id: string;
   quoteNumber: string;
   documentType: CommercialDocumentType;
