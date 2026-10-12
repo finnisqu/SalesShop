@@ -114,6 +114,34 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
     lines,updatedAt:timestamp};
 }
 
+/** Sync a separately edited Takeoffs-managed sink row back into the Area.
+ * Regular quote pricing is editable, so the popup must not silently revert it. */
+export function syncManagedSinkLineEdit(
+  quote:Quote,lineId:string,patch:Partial<QuoteLine>,
+):Quote {
+  const original=quote.lines.find(line=>line.id===lineId);
+  if(!original?.takeoffSinkId || !original.sectionId)return quote;
+  const keys=['quantity','rate','description','sinkReference'] as const;
+  if(!keys.some(key=>Object.prototype.hasOwnProperty.call(patch,key)))return quote;
+  const updated={...original,...patch};
+  return {...quote,sections:quote.sections.map(section=>section.id===original.sectionId
+    &&section.scope?.takeoffSinks
+    ? {...section,scope:{...section.scope,takeoffSinks:section.scope.takeoffSinks.map(sink=>
+      sink.id!==original.takeoffSinkId?sink:{
+        ...sink,
+        ...(Object.prototype.hasOwnProperty.call(patch,'rate')
+          ?{unitPrice:typeof updated.rate==='number'&&Number.isFinite(updated.rate)&&updated.rate>=0
+            ?updated.rate:undefined}:{}),
+        ...(Object.prototype.hasOwnProperty.call(patch,'quantity')
+          &&Number.isInteger(updated.quantity)&&(updated.quantity??0)>=1&&(updated.quantity??0)<=1000
+          ?{count:updated.quantity!}:{}),
+        ...(Object.prototype.hasOwnProperty.call(patch,'description')
+          ?{name:updated.description.replace(/^Sink\s*·\s*/i,'')}:{}),
+        ...(Object.prototype.hasOwnProperty.call(patch,'sinkReference')
+          ?{sinkReference:updated.sinkReference}:{}),
+      })}}:section)};
+}
+
 /** Keep a catalog selection (or a free-text material) tied to Area scope.
  * Only the Area's explicit live takeoff SF rows receive the new catalog
  * material snapshot; manual material rows and selling rates are untouched. */
