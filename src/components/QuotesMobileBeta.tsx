@@ -10,15 +10,13 @@ import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { canIssueTeamQuote } from '../services/teamDepartments';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import {
-  newTakeoffPiece, newTakeoffSink, parseInches, takeoffCustomerSpecs,
+  parseInches, takeoffCustomerSpecs,
   totalBillableTakeoffSf, totalSplashSf, totalTakeoffSf,
 } from '../services/quoteTakeoffsLite';
 import {
   displayQuoteNumber, quoteLineAmount, quoteLinesTotal, quoteTotal,
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
-  type QuoteTakeoffSink,
 } from '../types/quote';
-import { SINK_CATEGORIES, SINK_CATEGORY_LABELS } from '../types/sink';
 import { QuoteCrmFields } from './QuoteCrmFields';
 import { QuoteProjectMaterials } from './QuoteProjectMaterials';
 import { QuoteNotesFields } from './QuoteEditorFields';
@@ -28,10 +26,10 @@ import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteShareControl } from './QuoteShareControl';
 import { CustomerPreview } from './Quotes';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
-import { TakeoffMaterialCatalog, TakeoffSinkCatalog } from './TakeoffCatalogPickers';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
+import { QuoteBetaMaterials } from './QuoteBetaMaterials';
 
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
@@ -111,8 +109,6 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
   const editable=quoteIsCommerciallyEditable(quote);
   const updateSection=useQuoteStore(s=>s.updateSection);
   const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
-  const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
-  const selectMaterial=useQuoteStore(s=>s.selectTakeoffMaterial);
   const addLinked=useQuoteStore(s=>s.addTakeoffLine);
   const setRate=useQuoteStore(s=>s.setTakeoffRate);
   const addLine=useQuoteStore(s=>s.addLine);
@@ -121,14 +117,12 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
   const [advanced,setAdvanced]=useState(false);
   const areaScrollRef=useRef<HTMLDivElement>(null);
   const pieces=section.scope?.takeoffPieces??[];
-  const sinks=section.scope?.takeoffSinks??[];
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
   const linked=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf');
   const amount=quoteLinesTotal(lines);
   const measured=totalBillableTakeoffSf(pieces);
   const savePieces=(next:QuoteTakeoffPiece[])=>updatePieces(quote.id,section.id,next);
   const patchPiece=(id:string,patch:Partial<QuoteTakeoffPiece>)=>savePieces(pieces.map(p=>p.id===id?{...p,...patch}:p));
-  const patchSink=(id:string,patch:Partial<QuoteTakeoffSink>)=>updateSinks(quote.id,section.id,sinks.map(s=>s.id===id?{...s,...patch}:s));
   return <div className="qmb-editor qmb-area-editor">
     <div ref={areaScrollRef} className="qmb-area-scroll">
     <header className="qmb-pagehead">
@@ -155,38 +149,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
     <div className="qmb-pad qmb-pagecontent">
       {tab==='measure'&&<QuoteBetaMeasureGrid pieces={pieces} editable={editable}
         onSave={savePieces} onAdvanced={()=>setAdvanced(true)}/>}
-      {tab==='materials'&&<>
-        <div className="qmb-section-head"><div><h3>Material & sinks</h3><p>Choose from your live Catalog or type a description.</p></div></div>
-        <section className="qmb-card">
-          <Field label="Material / finish">
-            <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
-              selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
-              onTextChange={name=>selectMaterial(quote.id,section.id,name)}
-              onSelect={(ref,label)=>selectMaterial(quote.id,section.id,label,ref)}/>
-          </Field>
-          <small className="qmb-help">Your selection is also saved in this quote's Project Materials shortlist.</small>
-        </section>
-        <div className="qmb-section-head"><h3>Sinks</h3><span className="qmb-chip">{sinks.length} selected</span></div>
-        {sinks.map((sink,i)=><section className="qmb-card" key={sink.id}>
-          <div className="qmb-split"><strong>Sink {i+1}</strong><button type="button" className="qmb-quiet" disabled={!editable}
-            onClick={()=>updateSinks(quote.id,section.id,sinks.filter(s=>s.id!==sink.id))}>Remove</button></div>
-          <Field label="Type"><select value={sink.category} disabled={!editable} onChange={e=>patchSink(sink.id,{category:e.target.value as QuoteTakeoffSink['category'],sinkReference:undefined})}>
-            {SINK_CATEGORIES.map(c=><option key={c} value={c}>{SINK_CATEGORY_LABELS[c]}</option>)}</select></Field>
-          <Field label="Catalog sink or description"><TakeoffSinkCatalog disabled={!editable} value={sink.name}
-            onTextChange={name=>patchSink(sink.id,{name,sinkReference:undefined})}
-            onSelect={patch=>patchSink(sink.id,patch)}/></Field>
-          <div className="qmb-two"><Field label="Quantity"><input type="number" min="1" max="1000" value={sink.count} disabled={!editable}
-            onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchSink(sink.id,{count:n});}}/></Field>
-            <Field label="Sell price each"><input type="number" min="0" step=".01" inputMode="decimal" value={sink.unitPrice??''}
-              disabled={!editable||!sink.includeInPricing} placeholder="Not set"
-              onChange={e=>patchSink(sink.id,{unitPrice:e.target.value===''?undefined:Number(e.target.value)})}/></Field></div>
-          <label className="qmb-check"><input type="checkbox" disabled={!editable} checked={sink.includeInPricing}
-            onChange={e=>patchSink(sink.id,{includeInPricing:e.target.checked})}/> Price separately on this quote</label>
-        </section>)}
-        <button type="button" className="qmb-outline qmb-block" disabled={!editable||sinks.length>=100}
-          onClick={()=>updateSinks(quote.id,section.id,[...sinks,newTakeoffSink()])}>+ Add sink</button>
-        <p className="qmb-help">Unchecked sinks remain specifications; no extra price is added. Separate sink charges use your existing quote lines.</p>
-      </>}
+      {tab==='materials'&&<QuoteBetaMaterials quote={quote} section={section} editable={editable}/>}
       {tab==='pricing'&&<>
         <div className="qmb-section-head"><div><h3>Pricing & presentation</h3><p>Finish pricing here—or leave it undecided.</p></div></div>
         <section className="qmb-card">
