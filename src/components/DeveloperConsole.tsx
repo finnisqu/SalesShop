@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { playgroundUrl } from '../lib/developerPlayground';
 import { HeadquartersNotebook } from '../platform/HeadquartersNotebook';
 import { HeadquartersCrm } from '../platform/HeadquartersCrm';
+import { HeadquartersSettings } from '../platform/HeadquartersSettings';
+import { blankStudioSettings,cleanStudioSettings,type StudioTab } from '../platform/headquartersSettingsTypes';
 import { useHeadquartersDocument } from '../platform/useHeadquartersDocument';
 import { blankNotebook,cleanNotebook,blankCrm,cleanCrm,remainingFollowUps } from '../platform/headquartersTypes';
 import '../developer-console.css';
 import '../developer-playground.css';
 import '../platform/headquarters.css';
+import '../platform/headquarters-settings.css';
 
 type TenantStatus = 'not_configured' | 'trial' | 'active' | 'past_due' | 'suspended';
 type Plan = 'not_configured' | 'starter' | 'growth' | 'enterprise';
@@ -20,7 +23,7 @@ type TenantMetadata = {
   plan: Plan;
 };
 type Overview = { organizations: TenantMetadata[]; organizationCount: number };
-type ConsoleTab = 'overview' | 'companies' | 'notebook' | 'crm' | 'playground';
+type ConsoleTab = StudioTab;
 
 const label = (value: string) => value === 'not_configured' ? 'Not configured'
   : value.replaceAll('_', ' ').replace(/^\w/, (c) => c.toUpperCase());
@@ -39,7 +42,15 @@ export function DeveloperConsole() {
   const [tab, setTab] = useState<ConsoleTab>('overview');
   const notebookStore = useHeadquartersDocument('notebook',blankNotebook,cleanNotebook,platformRole==='developer');
   const crmStore = useHeadquartersDocument('crm',blankCrm,cleanCrm,platformRole==='developer');
-  const unsaved = notebookStore.dirty || crmStore.dirty;
+  const settingsStore = useHeadquartersDocument('settings',blankStudioSettings,cleanStudioSettings,platformRole==='developer');
+  const initialSettingsApplied = useRef(false);
+  useEffect(() => {
+    if (!initialSettingsApplied.current && !settingsStore.loading && !settingsStore.error) {
+      initialSettingsApplied.current = true;
+      setTab(settingsStore.document.startTab);
+    }
+  }, [settingsStore.loading,settingsStore.error,settingsStore.document.startTab]);
+  const unsaved = notebookStore.dirty || crmStore.dirty || settingsStore.dirty || notebookStore.saving || crmStore.saving || settingsStore.saving;
   const openPlayground = () => {
     if (unsaved) { window.alert('Please wait for Headquarters changes to finish saving.'); return; }
     window.location.assign(playgroundUrl());
@@ -82,7 +93,7 @@ export function DeveloperConsole() {
   const configuredCount = overview?.organizations.filter((item) =>
     item.lifecycle !== 'not_configured').length ?? 0;
 
-  return <div className="developer-console">
+  return <div className="developer-console" data-studio-density={settingsStore.document.density} data-studio-accent={settingsStore.document.accent}>
     <aside className="developer-console-sidebar" aria-label="Developer navigation">
       <div className="developer-console-brand"><span className="developer-console-brand-icon">S</span>
         <div><strong>SalesShop</strong><small>PLATFORM STUDIO</small></div></div>
@@ -97,6 +108,8 @@ export function DeveloperConsole() {
           className={tab === 'crm' ? 'active' : ''} onClick={() => setTab('crm')}>SalesShop CRM</button>
         <button type="button" aria-current={tab === 'playground' ? 'page' : undefined}
           className={tab === 'playground' ? 'active' : ''} onClick={() => setTab('playground')}>Developer Playground</button>
+        <button type="button" aria-current={tab === 'settings' ? 'page' : undefined}
+          className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Settings</button>
         <span className="developer-console-nav-caption">FUTURE MODULES</span>
         <div className="developer-console-disabled">Subscriptions <span>Planned</span></div>
         <div className="developer-console-disabled">Releases <span>Planned</span></div>
@@ -114,28 +127,29 @@ export function DeveloperConsole() {
           <h1>{tab === 'overview' ? 'SalesShop headquarters'
             : tab === 'companies' ? 'Customer companies'
             : tab === 'notebook' ? 'My notebook'
-            : tab === 'crm' ? 'Platform sales CRM' : 'Developer Playground'}</h1>
+            : tab === 'crm' ? 'Platform sales CRM' : tab === 'settings' ? 'Studio settings' : 'Developer Playground'}</h1>
           <p>{tab === 'overview' ? 'Your private home for growing and building SalesShop.'
             : tab === 'companies' ? 'Customer workspace metadata only. No access to employee or sales records.'
             : tab === 'notebook' ? 'Capture product ideas, meeting notes and next releases in your Developer account.'
             : tab === 'crm' ? 'Manage leads and conversations with companies evaluating SalesShop.'
+            : tab === 'settings' ? 'Manage your Developer account, Studio preferences, platform configuration and data boundaries.'
             : 'Run the actual SalesShop app in an isolated, editable local sandbox.'}</p>
         </div>
         {(tab === 'overview' || tab === 'companies') && <button type="button" onClick={() => void refresh()} disabled={loading}>
           {loading ? 'Refreshing…' : '↻ Refresh'}
         </button>}
       </header>
-      {(tab === 'notebook' || tab === 'crm') && <div className="hq-sync-status" role="status">
+      {(tab === 'notebook' || tab === 'crm' || tab === 'settings') && <div className="hq-sync-status" role="status">
         {(() => {
-          const store = tab === 'notebook' ? notebookStore : crmStore;
+          const store = tab === 'notebook' ? notebookStore : tab === 'crm' ? crmStore : settingsStore;
           return store.loading ? 'Loading private data…' : store.error ? 'Save unavailable'
             : store.saving || store.dirty ? 'Saving changes…' : '✓ Saved privately to your Developer account';
         })()}
       </div>}
-      {((tab === 'notebook' && notebookStore.error) || (tab === 'crm' && crmStore.error)) && <div className="developer-console-error" role="alert">
+      {((tab === 'notebook' && notebookStore.error) || (tab === 'crm' && crmStore.error) || (tab === 'settings' && settingsStore.error)) && <div className="developer-console-error" role="alert">
         <strong>Headquarters data needs attention</strong>
-        <span>{tab === 'notebook' ? notebookStore.error : crmStore.error}</span>
-        <button type="button" onClick={() => void (tab === 'notebook' ? notebookStore.reload() : crmStore.reload())}>
+        <span>{tab === 'notebook' ? notebookStore.error : tab === 'crm' ? crmStore.error : settingsStore.error}</span>
+        <button type="button" onClick={() => void (tab === 'notebook' ? notebookStore.reload() : tab === 'crm' ? crmStore.reload() : settingsStore.reload())}>
           Reload saved copy (discard unsaved changes)
         </button>
       </div>}
@@ -153,9 +167,9 @@ export function DeveloperConsole() {
             <small>Private platform CRM · not tenant customers</small></article>
         </section>
         <section className="hq-overview-actions">
-          <button type="button" onClick={() => setTab('crm')}>
+          {settingsStore.document.showFollowUps && <button type="button" onClick={() => setTab('crm')}>
             <strong>{crmStore.loading ? '—' : remainingFollowUps(crmStore.document).length} follow-ups due</strong>
-            <span>Open sales pipeline →</span></button>
+            <span>Open sales pipeline →</span></button>}
           <button type="button" onClick={() => setTab('notebook')}>
             <strong>{notebookStore.loading ? '—' : notebookStore.document.pages.length} notebook pages</strong>
             <span>Open product notebook →</span></button>
@@ -189,6 +203,12 @@ export function DeveloperConsole() {
       </div>}
       {tab === 'notebook' && !notebookStore.error && <HeadquartersNotebook store={notebookStore}/>}
       {tab === 'crm' && !crmStore.error && <HeadquartersCrm store={crmStore} tenants={overview?.organizations ?? []}/>}
+      {tab === 'settings' && !settingsStore.error && <HeadquartersSettings
+        store={settingsStore} notebook={notebookStore} crm={crmStore}
+        email={user?.email ?? ''} verified={Boolean(user?.email_confirmed_at)}
+        registeredCompanies={loading ? null : companyCount}
+        lifecycleConfigured={loading ? null : configuredCount}
+        openPlayground={openPlayground}/>}
       {tab === 'playground' && <section className="developer-console-playground">
         <div className="developer-console-playground-hero">
           <span className="developer-console-eyebrow">SAFE TO EXPERIMENT</span>
