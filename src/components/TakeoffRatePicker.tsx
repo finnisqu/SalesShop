@@ -2,10 +2,12 @@ import { useEffect,useMemo,useState } from 'react';
 import { useRateBookStore } from '../store/rateBookStore';
 import { createQuoteRateSnapshot } from '../services/quoteRateSnapshot';
 import type { QuoteLineRateReference,Quote } from '../types/quote';
+import { BuilderLevelChoices } from './BuilderLevelChoices';
 
-export function TakeoffRatePicker({quote,rate,disabled,onSelect}:{
+export function TakeoffRatePicker({quote,rate,disabled,onSelect,selectedRateId}:{
   quote:Quote;rate?:number;disabled:boolean;
   onSelect:(rate:number|undefined,ref?:QuoteLineRateReference)=>void;
+  selectedRateId?:string;
 }){
   const items=useRateBookStore(s=>s.items);
   const hydrate=useRateBookStore(s=>s.hydrate);
@@ -28,12 +30,15 @@ export function TakeoffRatePicker({quote,rate,disabled,onSelect}:{
       <button type="button" disabled={disabled} aria-expanded={open}
         onClick={()=>setOpen(v=>!v)}>Choose from Rates ▾</button>
       {open&&<div className="qtl-rate-options">
+        <BuilderLevelChoices division={quote.pricingDivision} selectedRateId={selectedRateId}
+          onSelect={(price,ref)=>{onSelect(price,ref);setOpen(false);}}/>
+        <div className="qmb-other-rate-heading">Other SF rates</div>
         {choices.map(({item,snapshot})=><button type="button" key={item.id}
           onClick={()=>{onSelect(snapshot.sellRate,{rateBookItemId:item.id,snapshot});setOpen(false);}}>
           <strong>{item.name}</strong>
           <small>{snapshot.sellRate===undefined?'Enter rate manually':`$${snapshot.sellRate.toFixed(2)}/SF`}</small>
         </button>)}
-        {!choices.length&&<p>No active SF selling rates yet. Enter one manually.</p>}
+        {!choices.length&&<p>No other active SF rates. Enter a custom value above.</p>}
       </div>}
     </div>
   </div>;
