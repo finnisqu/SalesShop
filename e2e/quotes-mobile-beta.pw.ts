@@ -355,3 +355,75 @@ test('Review resolves customer name and sink price inline without leaving Review
   await expect(beta.getByRole('button',{name:/Resolve .*needs a selling price/})).toHaveCount(0);
   await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
 });
+
+
+test('mobile material RATE dropdown never stretches Quantity or overlays following controls',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Regression for reported material line geometry');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('combobox',{name:'General line type'}).selectOption('material');
+  await beta.getByRole('button',{name:'+ Add line'}).click();
+  const row=beta.locator('.qmb-line').first();
+  await row.getByRole('button',{name:'Edit line'}).click();
+  const qty=row.getByRole('spinbutton',{name:'Quantity'});
+  const before=await qty.evaluate(el=>({height:el.getBoundingClientRect().height,
+    top:el.getBoundingClientRect().top}));
+  await row.getByRole('button',{name:'Choose rate for material line'}).click();
+  await expect(row.getByRole('region',{name:'Available selling rates'})).toBeVisible();
+  const levels=row.getByRole('group',{name:'Stock Builder pricing levels'});
+  await expect(levels.getByRole('button')).toHaveCount(9);
+  const after=await qty.evaluate(el=>({height:el.getBoundingClientRect().height,
+    top:el.getBoundingClientRect().top}));
+  expect(Math.abs(after.height-before.height)).toBeLessThanOrEqual(3);
+  expect(Math.abs(after.top-before.top)).toBeLessThanOrEqual(3);
+  const layout=await row.evaluate(el=>{
+    const qty=el.querySelector<HTMLInputElement>('input[type="number"]');
+    const ratePanel=el.querySelector('.qmb-line-rate-drawer')!.getBoundingClientRect();
+    const two=el.querySelector('.qmb-two')!.getBoundingClientRect();
+    const checkbox=el.querySelector('.qmb-check')!.getBoundingClientRect();
+    return {panelTop:ratePanel.top,inputsBottom:two.bottom,
+      panelBottom:ratePanel.bottom,checkboxTop:checkbox.top,
+      panelHeight:ratePanel.height};
+  });
+  expect(layout.panelTop).toBeGreaterThanOrEqual(layout.inputsBottom-2);
+  expect(layout.checkboxTop).toBeGreaterThanOrEqual(layout.panelBottom-2);
+  expect(layout.panelHeight).toBeLessThanOrEqual(405);
+  await levels.getByRole('button',{name:/Level 2.*54\.00\/SF/}).click();
+  await expect(row.getByRole('spinbutton',{name:'Sell rate ($/SF)'})).toHaveValue('54');
+  await expect(row.locator('.qmb-line-rate-drawer')).toHaveCount(0);
+});
+
+test('Review missing material rate offers same Builder Levels and other SF rates inline',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Rate quick-fix regression');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('combobox',{name:'General line type'}).selectOption('material');
+  await beta.getByRole('button',{name:'+ Add line'}).click();
+  const row=beta.locator('.qmb-line').first();
+  await row.getByRole('button',{name:'Edit line'}).click();
+  await row.getByRole('spinbutton',{name:'Quantity'}).fill('8');
+  await beta.getByRole('button',{name:/^Review /}).click();
+  await beta.getByRole('button',{name:/Resolve Missing sell rate/}).click();
+  const editor=beta.getByRole('region',{name:/Resolve Missing sell rate/});
+  await editor.getByRole('button',{name:'Choose from Rates in Review'}).click();
+  const choices=editor.getByRole('region',{name:'Available selling rates'});
+  await expect(choices).toBeVisible();
+  const levels=choices.getByRole('group',{name:'Stock Builder pricing levels'});
+  await expect(levels.getByRole('button')).toHaveCount(9);
+  await expect(choices.getByText('Other SF rates')).toBeVisible();
+  await levels.getByRole('button',{name:/Level 2.*54\.00\/SF/}).click();
+  await expect(beta.getByRole('button',{name:/Resolve Missing sell rate/})).toHaveCount(0);
+  await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
+});
