@@ -73,6 +73,10 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
           <small>{v.sku||'Choose variant'}</small></button>)}
         {!variants.length&&<p>No active variants available.</p>}
       </div>:<div className="qtl-combobox-results">
+        {pinned.filter(p=>!p.reference?.materialId && (!query||p.label.toLowerCase().includes(query))).map(p=>
+          <button type="button" key={p.id} onClick={()=>{onTextChange(p.label);setOpen(false);}}>
+            <strong>★ {p.label}</strong><small>Project material · Custom</small>
+          </button>)}
         {ordered.map(m=><button type="button" key={m.id} onClick={()=>{
           setMaterialId(m.id);setVariantId(null);
         }}><strong>{pinned.some(p=>p.reference?.materialId===m.id)?'★ ':''}{[m.brand,m.name].filter(Boolean).join(' ')}</strong>
