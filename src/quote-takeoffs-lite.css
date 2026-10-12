@@ -176,3 +176,18 @@
   .qtl-catalog-choices{max-height:33vh;}
   .qtl-sink-card .qtl-sink-name{grid-column:1/-1;grid-row:1;}
 }
+
+/* Opt-in recalculation of older LF-only saved Areas; never reprice by merely opening. */
+.qtl-migration-alert{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  border:1px solid #b99c57;border-radius:10px;padding:12px 14px;
+  color:var(--qt-ink);background:var(--qt-tint);}
+.qtl-migration-alert>div{display:grid;gap:4px;}
+.qtl-migration-alert strong{font:750 13px/1.4 system-ui,sans-serif;}
+.qtl-migration-alert p{font:450 12px/1.5 system-ui,sans-serif;color:var(--qt-muted);margin:0;}
+.qtl-migration-alert button{border:1px solid #a78c4d;border-radius:8px;
+  padding:10px 13px;min-height:44px;background:var(--qt-panel);color:var(--qt-ink);
+  font:750 12px system-ui,sans-serif;flex-shrink:0;}
+@media(max-width:620px){
+  .qtl-migration-alert{flex-direction:column;align-items:stretch;}
+  .qtl-migration-alert button{width:100%;}
+}
