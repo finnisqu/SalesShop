@@ -101,6 +101,7 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
               {line.kind==='material'&&<BuilderLevelRateButton disabled={!editable}
                 division={quote.pricingDivision}
                 selectedRateId={line.rateReference?.rateBookItemId}
+                materialType={line.materialReference?.snapshot?.materialType}
                 onSelect={(price,ref)=>update(quote.id,line.id,{rate:price,rateReference:ref})}/>}
             </div>
           </>:<Field label="Amount ($)"><input type="number" inputMode="decimal" step=".01" value={line.amount??''}
@@ -181,6 +182,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
           <div className="qmb-split"><span>Linked area SF</span><strong>{sf.format(measured)} SF</strong></div>
           {linked?<TakeoffRatePicker quote={quote} rate={linked.rate} disabled={!editable}
             selectedRateId={linked.rateReference?.rateBookItemId}
+            materialType={section.scope?.takeoffMaterialReference?.snapshot?.materialType}
             onSelect={(rate,ref)=>setRate(quote.id,section.id,rate,ref)}/>:<>
             <p className="qmb-help">{pieces.length?'No linked SF price yet. Adding one is a separate charge: check for existing material rows first.':'Add measurements first, or create a manual price row below.'}</p>
             <button type="button" className="qmb-outline" disabled={!editable||!pieces.some(p=>p.lengthIn&&p.widthIn)}
