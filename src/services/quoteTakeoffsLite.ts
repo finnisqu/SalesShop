@@ -267,6 +267,6 @@ export function splitTakeoffPieces(
   return {...ready,lines:ready.lines.map(line=>{
     if(line.sectionId!==id||line.quantitySource?.field!=='countertopSf'
       ||line.quantitySource.syncMode!=='live')return line;
-    return {...line,rate,rateReference:oldLive.rateReference};
+    return {...line,rate,rateReference:oldLive?.rateReference};
   })};
 }
