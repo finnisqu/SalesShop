@@ -65,6 +65,7 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const hydrateRates = useRateBookStore((state) => state.hydrate);
   const addRateItem = useRateBookStore((state) => state.addItem);
   const guide = useMaterialLevelGuideStore((state) => state.guide);
+  const guideSyncError = useMaterialLevelGuideStore((state) => state.syncError);
   const hydrateGuide = useMaterialLevelGuideStore((state) => state.hydrate);
   const editorHostRef = useRef<HTMLDivElement | null>(null);
   const [editing, setEditing] = useState(false);
@@ -340,6 +341,9 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
           </section>
         ) : (
           <section className="rates-reference-card rates-material-pricing-card">
+            {guideSyncError&&<div role="alert" className="rates-reference-empty">
+              Shared Builder Levels could not sync: {guideSyncError}. Changes on this device may not be available to teammates.
+            </div>}
             <header>
               <div><strong>Standard material pricing</strong><small>{materialPricingRows.length} active pricing level{materialPricingRows.length === 1 ? '' : 's'}</small></div>
               <span>Supplier colors and slab variants now live in Materials. This page only owns the pricing policy.</span>
