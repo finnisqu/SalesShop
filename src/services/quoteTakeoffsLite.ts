@@ -142,6 +142,18 @@ export function syncManagedSinkLineEdit(
       })}}:section)};
 }
 
+/** Deleting a managed sink charge in normal Quotes leaves the sink
+ * specification in Takeoffs, but prevents an unwanted charge reappearing. */
+export function unpriceDeletedTakeoffSink(quote:Quote,lineId:string):Quote {
+  const line=quote.lines.find(item=>item.id===lineId);
+  if(!line?.takeoffSinkId || !line.sectionId)return quote;
+  return {...quote,sections:quote.sections.map(section=>
+    section.id===line.sectionId && section.scope?.takeoffSinks
+      ? {...section,scope:{...section.scope,takeoffSinks:section.scope.takeoffSinks.map(sink=>
+        sink.id===line.takeoffSinkId?{...sink,includeInPricing:false}:sink)}}
+      : section)};
+}
+
 /** Keep a catalog selection (or a free-text material) tied to Area scope.
  * Only the Area's explicit live takeoff SF rows receive the new catalog
  * material snapshot; manual material rows and selling rates are untouched. */
