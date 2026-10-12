@@ -77,7 +77,8 @@ describe('Takeoffs v3 smart workflow',()=>{
     expect(sync).toContain('projectMaterials: Array.isArray(row.project_materials)');
     expect(migration).toContain('alter table public.quotes add column');
     expect(editor).toContain('<TakeoffRatePicker');
-    expect(editor).toContain('Move {selectedPieceIds.length} to new Area');
+    expect(editor).toContain('Move {selectedIds.length} to new Area');
+    expect(editor).toContain('const allSelected=pieces.length>0');
     expect(editor).toContain('setRate(quote.id,section.id');
     expect(quoteCss).toContain('.qtl-piece');
     expect(quoteCss).toContain('.qtl-table-header');
