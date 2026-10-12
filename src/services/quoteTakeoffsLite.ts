@@ -253,7 +253,7 @@ export function splitTakeoffPieces(
   if(!source?.scope?.takeoffPieces?.length||!pieceIds.length)return quote;
   const picked=new Set(pieceIds);
   const moving=source.scope.takeoffPieces.filter(p=>picked.has(p.id));
-  if(!moving.length||moving.length===source.scope.takeoffPieces.length)return quote;
+  if(!moving.length)return quote;
   const remaining=source.scope.takeoffPieces.filter(p=>!picked.has(p.id));
   const id=`section_${crypto.randomUUID()}`;
   const newArea:QuoteSection={
