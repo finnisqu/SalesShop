@@ -58,7 +58,8 @@ function StandardQuoteBody({ data }: { data: PublicQuoteResponse }) {
         </div>
         {renderLines(loose)}
         {sections.map((section) => {
-          if ((section.customerDisplayMode ?? 'detail') === 'summary') {
+          const general=section.title.trim().toLowerCase()==='general takeoffs';
+          if ((section.customerDisplayMode ?? 'detail') === 'summary' && !general) {
             return <div className="customer-quote-section is-summary" key={section.id}>
               <div className="customer-quote-row customer-area-summary-row">
                 <div className="customer-line-description"><strong>{section.title}</strong>{section.specification&&<small className="customer-area-spec">{section.specification}</small>}</div>
@@ -68,7 +69,10 @@ function StandardQuoteBody({ data }: { data: PublicQuoteResponse }) {
           }
           const sectionLines = lines.filter((line) => line.sectionId === section.id);
           if (!sectionLines.length) return null;
-          return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{section.specification&&<p className="customer-area-spec">{section.specification}</p>}{renderLines(sectionLines)}</div>;
+          return <div className={general?'customer-quote-section is-general':'customer-quote-section'} key={section.id}>
+            {!general&&<><h3>{section.title}</h3>{section.specification&&<p className="customer-area-spec">{section.specification}</p>}</>}
+            {renderLines(sectionLines)}
+          </div>;
         })}
       </div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quote.acceptedTotal)}</strong></div>
