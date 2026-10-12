@@ -103,6 +103,11 @@ export interface QuoteTakeoffSink {
   sinkReference?: QuoteLineSinkReference;
 }
 
+export interface QuoteProjectMaterial {
+  id: string;
+  label: string;
+  reference?: QuoteLineMaterialReference;
+}
 export interface QuoteAreaScope {
   /** Optional Takeoffs Lite measurements. Presence means Takeoffs Lite owns countertopSf. */
   takeoffPieces?: QuoteTakeoffPiece[];
@@ -400,6 +405,8 @@ export interface QuoteRevisionSnapshot {
   pricingDivision?: RateBookDivision;
   sections: QuoteSection[];
   lines: QuoteLine[];
+  /** Quote-scoped material shortlist, pinned for quoting any Area. */
+  projectMaterials?: QuoteProjectMaterial[];
   customerColumns: QuoteCustomerColumns;
   customerNotes: string;
   pricingSchedule?: PricingScheduleData;
