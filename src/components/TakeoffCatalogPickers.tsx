@@ -105,6 +105,7 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
   const models=useSinkCatalogStore(s=>s.models);
   const hydrate=useSinkCatalogStore(s=>s.hydrate);
   const root=useRef<HTMLDivElement>(null);
+  const menuId=useId();
   const [open,setOpen]=useState(false);
   const [searchTerm,setSearchTerm]=useState('');
   useEffect(()=>{void hydrate();},[hydrate]);
