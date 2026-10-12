@@ -22,7 +22,7 @@ describe('Platform Headquarters authorization and document contracts',()=>{
   });
   it('protects both RPCs behind server-side Developer identity and per-user identity scoping',()=>{
     expect(migration.match(/if not private\.is_platform_developer\(\)/g)?.length).toBe(2);
-    expect(migration.match(/\(select auth\.uid\(\)\)/g)?.length.toBeGreaterThanOrEqual(2);
+    expect(migration.match(/\(select auth\.uid\(\)\)/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
     expect(migration).toContain('p_expected_revision');
     expect(migration).toContain('revision=p_expected_revision');
     expect(migration).toContain("using errcode='40001'");
