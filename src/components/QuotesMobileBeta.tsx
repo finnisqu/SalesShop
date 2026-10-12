@@ -30,6 +30,8 @@ import { BuilderLevelRateButton } from './BuilderLevelChoices';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
+import { useCompanySettingsStore } from '../store/companySettingsStore';
+import { selectedMaterialCost } from '../services/selectedMaterialCost';
 import { QuoteBetaSelections } from './QuoteBetaSelections';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
@@ -102,6 +104,7 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
                 division={quote.pricingDivision}
                 selectedRateId={line.rateReference?.rateBookItemId}
                 materialType={line.materialReference?.snapshot?.materialType}
+                materialCostPerSf={line.materialReference?.sourceCostPerSf??line.materialReference?.snapshot?.costPerSf}
                 onSelect={(price,ref)=>update(quote.id,line.id,{rate:price,rateReference:ref})}/>}
             </div>
           </>:<Field label="Amount ($)"><input type="number" inputMode="decimal" step=".01" value={line.amount??''}
@@ -132,6 +135,9 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
   const [kind,setKind]=useState<QuoteLineKind>('item');
   const [advanced,setAdvanced]=useState(false);
   const areaScrollRef=useRef<HTMLDivElement>(null);
+  const catalogMaterials=useCompanySettingsStore(state=>state.settings.stockMaterials);
+  const selectedCost=selectedMaterialCost(
+    section.scope?.takeoffMaterial??'',section.scope?.takeoffMaterialReference,catalogMaterials);
   const pieces=section.scope?.takeoffPieces??[];
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
   const linked=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf');
@@ -180,9 +186,28 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
         <div className="qmb-section-head"><div><h3>Pricing & presentation</h3><p>Finish pricing here—or leave it undecided.</p></div></div>
         <section className="qmb-card">
           <div className="qmb-split"><span>Linked area SF</span><strong>{sf.format(measured)} SF</strong></div>
+          <div className="qmb-area-material-cost" aria-label="Selected material cost reference">
+            <div className="qmb-area-cost-top">
+              <span>Selected material cost <small>· internal</small></span>
+              <strong>{selectedCost.quotedCostPerSf!==undefined
+                ?money.format(selectedCost.quotedCostPerSf)+'/SF':'—'}</strong>
+            </div>
+            {selectedCost.quotedCostPerSf!==undefined?<>
+              <small className="qmb-area-cost-detail">{selectedCost.materialName} · Cost captured when selected</small>
+              {selectedCost.catalogCostChanged&&<small className="qmb-area-cost-updated">
+                Catalog now {money.format(selectedCost.currentCatalogCostPerSf!)}/SF · Re-select under Materials to update the cost reference
+              </small>}
+            </>:<div className="qmb-area-cost-missing">
+              <small>{selectedCost.materialName==='Material not selected'
+                ?'Choose a catalog material to compare buying cost and selling levels.'
+                :'No $/SF buying cost recorded for this material.'}</small>
+              <button type="button" onClick={()=>setTab('materials')}>Materials ›</button>
+            </div>}
+          </div>
           {linked?<TakeoffRatePicker quote={quote} rate={linked.rate} disabled={!editable}
             selectedRateId={linked.rateReference?.rateBookItemId}
-            materialType={section.scope?.takeoffMaterialReference?.snapshot?.materialType}
+            materialType={selectedCost.materialType}
+            materialCostPerSf={selectedCost.quotedCostPerSf}
             onSelect={(rate,ref)=>setRate(quote.id,section.id,rate,ref)}/>:<>
             <p className="qmb-help">{pieces.length?'No linked SF price yet. Adding one is a separate charge: check for existing material rows first.':'Add measurements first, or create a manual price row below.'}</p>
             <button type="button" className="qmb-outline" disabled={!editable||!pieces.some(p=>p.lengthIn&&p.widthIn)}
