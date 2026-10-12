@@ -89,6 +89,8 @@ import './quote-takeoffs-lite.css';
 import './quotes-mobile-beta.css';
 // Beta measurement sheet: scroll-away Area header, sticky tabs and splash popovers.
 import './quotes-mobile-measure-grid.css';
+// Dense Materials/Sinks and non-overlapping Rates chooser (mobile Quotes Beta only).
+import './quotes-mobile-materials-pricing.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
