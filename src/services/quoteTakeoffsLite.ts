@@ -1,4 +1,4 @@
-import type { Quote, QuoteSection, QuoteTakeoffPiece, QuoteAreaScope, QuoteTakeoffSink, QuoteLine } from '../types/quote';
+import type { Quote, QuoteSection, QuoteTakeoffPiece, QuoteAreaScope, QuoteTakeoffSink, QuoteLine, QuoteLineMaterialReference } from '../types/quote';
 
 /** Compatible with common shop dimensions: 25.5, 25 1/2, 25-1/2, 1/4, 25½. */
 const unicodeFractions: Record<string,string> = {
@@ -93,10 +93,11 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
     const existing=managedExisting.find(line=>line.takeoffSinkId===sink.id);
     const line:QuoteLine={
       id:existing?.id??`line_${crypto.randomUUID()}`,
-      sectionId,kind:'item',
+      sectionId,kind:sink.sinkReference?.snapshot?'sink':'item',
       description:`Sink · ${sink.name.trim()|| (sink.category==='vanity'?'Vanity sink':'Kitchen sink')}`,
       pricingMode:'quantity-rate',quantity:sink.count,rate:sink.unitPrice,
       customerVisible:true,includeInTotal:true,
+      sinkReference:sink.sinkReference,
       takeoffSinkId:sink.id,
     };
     const index=lines.findIndex(item=>item.id===line.id);
@@ -109,6 +110,31 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
         kitchenSinkCount:sinks.reduce((n,sink)=>n+(sink.category==='kitchen'?sink.count:0),0),
         vanitySinkCount:sinks.reduce((n,sink)=>n+(sink.category==='vanity'?sink.count:0),0)}}:s),
     lines,updatedAt:timestamp};
+}
+
+/** Keep a catalog selection (or a free-text material) tied to Area scope.
+ * Only the Area's explicit live takeoff SF rows receive the new catalog
+ * material snapshot; manual material rows and selling rates are untouched. */
+export function patchQuoteTakeoffMaterial(
+  quote:Quote,sectionId:string,label:string,reference?:QuoteLineMaterialReference,
+):Quote {
+  const section=quote.sections.find(s=>s.id===sectionId);
+  if(!section)return quote;
+  return {...quote,
+    sections:quote.sections.map(s=>s.id===sectionId
+      ? {...s,scope:{...(s.scope??{}),takeoffMaterial:label,
+          takeoffMaterialReference:reference}}:s),
+    lines:quote.lines.map(line=>{
+      const src=line.quantitySource;
+      if(line.sectionId!==sectionId||src?.field!=='countertopSf'
+        ||src?.syncMode!=='live'||src.sectionId!==sectionId)return line;
+      return {...line,
+        kind:reference?'material':'item',
+        description:label.trim()||`Countertop and 4″ splash SF · ${section.title}`,
+        materialReference:reference,
+      };
+    }),
+  };
 }
 
 export function newTakeoffPiece(index:number):QuoteTakeoffPiece {
