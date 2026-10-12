@@ -36,8 +36,8 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
-import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf } from '../services/quoteTakeoffsLite';
-import type { QuoteTakeoffPiece, QuoteTakeoffSink, QuoteLineMaterialReference } from '../types/quote';
+import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces } from '../services/quoteTakeoffsLite';
+import type { QuoteTakeoffPiece, QuoteTakeoffSink, QuoteLineMaterialReference, QuoteLineRateReference } from '../types/quote';
 
 interface QuoteState {
   quotes: Quote[];
@@ -70,6 +70,11 @@ interface QuoteState {
   updateTakeoffSinks: (quoteId: string, sectionId: string, sinks: QuoteTakeoffSink[]) => void;
   selectTakeoffMaterial: (quoteId: string, sectionId: string, label: string, reference?: QuoteLineMaterialReference) => void;
   addTakeoffLine: (quoteId: string, sectionId: string) => string;
+  setTakeoffRate: (quoteId: string, sectionId: string, value: number | undefined, reference?: QuoteLineRateReference) => void;
+  pinProjectMaterial: (quoteId: string, label: string, reference?: QuoteLineMaterialReference) => void;
+  unpinProjectMaterial: (quoteId: string, materialId: string) => void;
+  ensureGeneralTakeoff: (quoteId: string) => string;
+  splitTakeoff: (quoteId: string, sectionId: string, pieceIds: string[], title: string) => string;
   detachTakeoff: (quoteId: string, sectionId: string) => void;
   reorderSection: (quoteId: string, sectionId: string, targetSectionId: string) => void;
   deleteSection: (quoteId: string, sectionId: string) => void;
@@ -565,11 +570,67 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   selectTakeoffMaterial: (quoteId, sectionId, label, reference) => {
     const current=get().quotes.find(q=>q.id===quoteId);
     if(!current||!quoteIsCommerciallyEditable(current)||!current.sections.some(area=>area.id===sectionId))return;
-    const updated={...patchQuoteTakeoffMaterial(current,sectionId,label.slice(0,300),reference),updatedAt:now()};
+    const materialUpdated=patchQuoteTakeoffMaterial(current,sectionId,label.slice(0,300),reference);
+    const updated={...(reference?.materialId?upsertProjectMaterial(materialUpdated,label,reference):materialUpdated),updatedAt:now()};
     const history=historyPatch(get(),quoteId,current);
     const quotes=get().quotes.map(quote=>quote.id===quoteId?updated:quote);
     persist(quotes,get().activeQuoteId);
     set({quotes,...history});
+  },
+  pinProjectMaterial: (quoteId, label, reference) => {
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return;
+    const updated=upsertProjectMaterial(current,label,reference);
+    if(updated===current)return;
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
+  },
+  unpinProjectMaterial: (quoteId, materialId) => {
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return;
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId
+      ?{...q,projectMaterials:(q.projectMaterials??[]).filter(m=>m.id!==materialId),updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
+  },
+  ensureGeneralTakeoff: (quoteId) => {
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return '';
+    const existing=current.sections.find(s=>s.title==='General takeoffs');
+    if(existing)return existing.id;
+    const id=uid('section');
+    const section:QuoteSection={id,title:'General takeoffs',customerVisible:true,customerDisplayMode:'summary'};
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId
+      ?{...q,sections:[section,...q.sections],updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
+    return id;
+  },
+  splitTakeoff: (quoteId, sectionId, pieceIds, title) => {
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)||!pieceIds.length)return '';
+    const updated=splitTakeoffPieces(current,sectionId,pieceIds,title);
+    if(updated===current)return '';
+    const id=updated.sections.find(s=>!current.sections.some(old=>old.id===s.id))?.id??'';
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
+    return id;
+  },
+  setTakeoffRate: (quoteId, sectionId, value, reference) => {
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)||current.documentType==='pricing-schedule')return;
+    if(value!==undefined&&(!Number.isFinite(value)||value<0))return;
+    const updated=ensureSmartTakeoffLine(current,sectionId);
+    const candidate=updated.lines.find(l=>l.sectionId===sectionId
+      &&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
+    if(!candidate)return;
+    const lines=updated.lines.map(l=>l.id===candidate.id
+      ?{...l,rate:value,rateReference:reference}:l);
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,lines,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
   },
   updateTakeoffSinks: (quoteId, sectionId, sinks) => {
     const current=get().quotes.find(quote=>quote.id===quoteId);
@@ -587,39 +648,31 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const current = get().quotes.find(quote => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)
       || !current.sections.some(section => section.id === sectionId)) return;
-    const updated = { ...patchQuoteTakeoff(current, sectionId, pieces), updatedAt: now() };
+    const wasEmpty=!Array.isArray(current.sections.find(s=>s.id===sectionId)?.scope?.takeoffPieces);
+    const priorLines=current.lines.filter(l=>l.sectionId===sectionId);
+    const measured=patchQuoteTakeoff(current,sectionId,pieces);
+    const section=measured.sections.find(s=>s.id===sectionId);
+    const summarized=wasEmpty&&priorLines.length===0
+      ?{...measured,sections:measured.sections.map(s=>s.id===sectionId?{...s,customerDisplayMode:'summary' as const}:s)}
+      :measured;
+    const updated={...ensureSmartTakeoffLine(summarized,sectionId),updatedAt:now()};
+    void section;
     const history = historyPatch(get(), quoteId, current);
     const quotes = get().quotes.map(quote => quote.id === quoteId ? updated : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes, ...history });
   },
   addTakeoffLine: (quoteId, sectionId) => {
-    const current = get().quotes.find(quote => quote.id === quoteId);
-    const section = current?.sections.find(section => section.id === sectionId);
-    if (!current || !section || !quoteIsCommerciallyEditable(current)
-      || current.documentType === 'pricing-schedule') return '';
-    const quantity = sectionTakeoffSf(section);
-    if (quantity === undefined) return '';
-    const line: QuoteLine = {
-      ...newLine(section.scope?.takeoffMaterialReference ? 'material' : 'item', sectionId),
-      description: section.scope?.takeoffMaterial?.trim() || `Countertop and 4″ splash SF · ${section.title}`,
-      materialReference: section.scope?.takeoffMaterialReference,
-      pricingMode: 'quantity-rate',
-      amount: undefined,
-      quantity,
-      rate: undefined,
-      quantitySource: {
-        kind: 'area-scope', sectionId, field: 'countertopSf',
-        capturedValue: quantity, appliedAt: now(), syncMode: 'live',
-      },
-    };
-    const history = historyPatch(get(), quoteId, current);
-    const quotes = get().quotes.map(quote => quote.id === quoteId
-      ? { ...quote, lines: [...quote.lines, line], updatedAt: now() }
-      : quote);
-    persist(quotes, get().activeQuoteId);
-    set({ quotes, ...history });
-    return line.id;
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return '';
+    const updated=ensureSmartTakeoffLine(current,sectionId);
+    const line=updated.lines.find(l=>l.sectionId===sectionId
+      &&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
+    if(updated===current)return line?.id??'';
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
+    return line?.id??'';
   },
   reorderSection: (quoteId, sectionId, targetSectionId) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
