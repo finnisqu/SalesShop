@@ -1,3 +1,4 @@
+import { QuoteCustomerSelectionsSheet } from './QuoteCustomerSelectionsSheet';
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { appRelativePath } from '../lib/appUrl';
 import {
@@ -117,6 +118,7 @@ function QuoteDocument({ data }: { data: PublicQuoteResponse }) {
         </>
       ) : <StandardQuoteBody data={data} />}
 
+      {!pricingSchedule&&<QuoteCustomerSelectionsSheet rows={quote.selections??[]}/>}
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
       <footer>{data.signature ? 'Accepted electronically with SalesShop.' : `Secure ${documentLabel.toLowerCase()} prepared with SalesShop.`}</footer>
     </article>
