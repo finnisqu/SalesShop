@@ -38,19 +38,33 @@ export function isValidTakeoffPiece(piece: QuoteTakeoffPiece):boolean {
 export function takeoffPieceSf(piece: QuoteTakeoffPiece):number {
   return isValidTakeoffPiece(piece) ? piece.lengthIn!*piece.widthIn!*piece.count/144 : 0;
 }
-/** Sum unrounded rectangle areas before rounding to hundredths of a SF. */
+/** All geometry is summed before rounding, so small pieces retain their SF. */
+const roundSf=(n:number)=>Math.round((n+Number.EPSILON)*100)/100;
+function splashEdgeInches(piece:QuoteTakeoffPiece):number {
+  if(!isValidTakeoffPiece(piece))return 0;
+  const edges=(piece.backsplash?piece.lengthIn!:0)
+    +(piece.leftSplash?piece.widthIn!:0)+(piece.rightSplash?piece.widthIn!:0);
+  return edges*piece.count;
+}
+/** 4-inch splash material: (4 × chosen edge inches × piece count) / 144. */
+export function takeoffPieceSplashSf(piece:QuoteTakeoffPiece):number {
+  return splashEdgeInches(piece)*4/144;
+}
+export function takeoffPieceTotalSf(piece:QuoteTakeoffPiece):number {
+  return takeoffPieceSf(piece)+takeoffPieceSplashSf(piece);
+}
 export function totalTakeoffSf(pieces:QuoteTakeoffPiece[]):number {
-  const total=pieces.reduce((acc,piece)=>acc+takeoffPieceSf(piece),0);
-  return Math.round((total+Number.EPSILON)*100)/100;
+  return roundSf(pieces.reduce((acc,piece)=>acc+takeoffPieceSf(piece),0));
 }
 export function totalSplashLf(pieces:QuoteTakeoffPiece[]):number {
-  const inches=pieces.reduce((sum,piece)=>{
-    if(!isValidTakeoffPiece(piece))return sum;
-    const edges=(piece.backsplash?piece.lengthIn!:0)
-      +(piece.leftSplash?piece.widthIn!:0)+(piece.rightSplash?piece.widthIn!:0);
-    return sum+edges*piece.count;
-  },0);
-  return Math.round((inches/12+Number.EPSILON)*100)/100;
+  return roundSf(pieces.reduce((acc,piece)=>acc+splashEdgeInches(piece),0)/12);
+}
+export function totalSplashSf(pieces:QuoteTakeoffPiece[]):number {
+  return roundSf(pieces.reduce((acc,piece)=>acc+takeoffPieceSplashSf(piece),0));
+}
+/** Single billable SF quantity: tops + 4-inch splash material, rounded once. */
+export function totalBillableTakeoffSf(pieces:QuoteTakeoffPiece[]):number {
+  return roundSf(pieces.reduce((acc,piece)=>acc+takeoffPieceTotalSf(piece),0));
 }
 export function newTakeoffSink():QuoteTakeoffSink {
   return {id:`sinktakeoff_${crypto.randomUUID()}`,category:'kitchen',name:'',count:1,
@@ -106,22 +120,25 @@ export function takeoffOwnedScope(scope:QuoteAreaScope|undefined):boolean {
 }
 export function sectionTakeoffSf(section:QuoteSection):number|undefined {
   if(!takeoffOwnedScope(section.scope))return undefined;
-  return totalTakeoffSf(section.scope!.takeoffPieces!);
+  return totalBillableTakeoffSf(section.scope!.takeoffPieces!);
 }
 
-/** A single atomic edit updates area SF and ONLY its explicitly live-linked
+/** A single atomic edit updates tops + 4-inch splash SF and ONLY its live-linked
  * quote quantities. Manual quantities and legacy snapshots cannot drift. */
 export function patchQuoteTakeoff(
   quote:Quote, sectionId:string, pieces:QuoteTakeoffPiece[], appliedAt=new Date().toISOString(),
 ):Quote {
   const section=quote.sections.find(s=>s.id===sectionId);
   if(!section)return quote;
-  const total=totalTakeoffSf(pieces);
+  const topSf=totalTakeoffSf(pieces);
+  const splashSf=totalSplashSf(pieces);
+  const total=totalBillableTakeoffSf(pieces);
   const splash=totalSplashLf(pieces);
   return {
     ...quote,
     sections:quote.sections.map(s=>s.id===sectionId
-      ? {...s,scope:{...(s.scope??{}),takeoffPieces:pieces,countertopSf:total,splashLf:totalSplashLf(pieces)}}
+      ? {...s,scope:{...(s.scope??{}),takeoffPieces:pieces,
+        countertopSf:total,takeoffTopSf:topSf,takeoffSplashSf:splashSf,splashLf:splash}}
       : s),
     lines:quote.lines.map(line=>{
       const source=line.quantitySource;
