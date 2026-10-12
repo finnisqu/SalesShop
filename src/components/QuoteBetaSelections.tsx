@@ -34,7 +34,7 @@ export function QuoteBetaSelections({quote,onClose}:{
     if(!Number.isFinite(n)||n<0||n>120){setMessage('Backsplash height must be between 0 and 120 inches.');return;}
     if(!quote.sections.length){
       setMessage('Materials can be pinned now. Add an Area to save fabrication defaults to the quote.');
-      if(material.trim())pinMaterial(quote.id,material);
+      if(material.trim())pinMaterial(quote.id,material,materialRef);
       return;
     }
     applySelections(quote.id,{
