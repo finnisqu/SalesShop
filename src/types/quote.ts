@@ -416,6 +416,7 @@ export interface QuoteRevisionSnapshot {
   lines: QuoteLine[];
   /** Quote-scoped material shortlist, pinned for quoting any Area. */
   projectMaterials?: QuoteProjectMaterial[];
+  attachSelectionsSheet?: boolean;
   customerColumns: QuoteCustomerColumns;
   customerNotes: string;
   pricingSchedule?: PricingScheduleData;
@@ -425,6 +426,8 @@ export interface QuoteRevisionSnapshot {
 export interface Quote {
   /** Quote-scoped pinned material picks; never company-global. */
   projectMaterials?: QuoteProjectMaterial[];
+  /** Explicit opt-in to attach a sanitized customer-facing selections appendix. */
+  attachSelectionsSheet?: boolean;
   id: string;
   quoteNumber: string;
   documentType: CommercialDocumentType;
@@ -481,6 +484,7 @@ export type QuotePatch = Partial<Pick<Quote,
   | 'contactEmail'
   | 'address'
   | 'pricingDivision'
+  | 'attachSelectionsSheet'
   | 'quoteDate'
   | 'revisionLabel'
   | 'status'
