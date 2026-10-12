@@ -204,13 +204,17 @@ export function detachQuoteTakeoff(quote:Quote, sectionId:string):Quote {
 
 /** A smart row is a normal quote line plus live quantity/reference metadata;
  * never replace manual rows or create duplicate SF rows. */
-export function ensureSmartTakeoffLine(quote:Quote,sectionId:string):Quote {
+export function ensureSmartTakeoffLine(quote:Quote,sectionId:string,force=false):Quote {
   const section=quote.sections.find(s=>s.id===sectionId);
   if(!section || !takeoffOwnedScope(section.scope)
     || !section.scope?.takeoffPieces?.some(isValidTakeoffPiece))return quote;
   const linked=quote.lines.some(l=>l.sectionId===sectionId
     &&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
   if(linked)return quote;
+  // Never auto-add a second material charge to an Area that already has
+  // manually priced material/items; the user may opt in explicitly instead.
+  if(!force&&quote.lines.some(l=>l.sectionId===sectionId&&l.includeInTotal
+    &&(l.kind==='material'||l.kind==='item')&&l.pricingMode!=='none'))return quote;
   const quantity=sectionTakeoffSf(section)??0;
   const line:QuoteLine={
     id:`line_${crypto.randomUUID()}`,sectionId,
