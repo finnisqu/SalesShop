@@ -119,7 +119,7 @@ export function QuoteBetaMeasureGrid({pieces,editable,onSave,onAdvanced}:{
   // Spreadsheet-like Enter handling, but no forced progression or mandatory cells.
   const advance=(event:KeyboardEvent<HTMLDivElement>)=>{
     if(event.key!=='Enter'||!(event.target instanceof HTMLInputElement)||!event.target.matches('[data-qmb-grid-cell]'))return;
-    if(event.isComposing)return;
+    if(event.nativeEvent.isComposing)return;
     const cells=Array.from(grid.current?.querySelectorAll<HTMLInputElement>('[data-qmb-grid-cell]:not(:disabled)')??[]);
     const index=cells.indexOf(event.target);
     if(index<0)return;
