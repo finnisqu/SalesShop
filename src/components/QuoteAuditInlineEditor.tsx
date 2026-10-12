@@ -1,5 +1,5 @@
 import {useEffect,useState,type FormEvent} from 'react';
-import type {Quote,QuoteTakeoffPiece,QuoteTakeoffSink} from '../types/quote';
+import type {Quote,QuoteTakeoffPiece} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {parseInches} from '../services/quoteTakeoffsLite';
 import {TakeoffMaterialCatalog} from './TakeoffCatalogPickers';
@@ -44,8 +44,9 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
   const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
   const updateSection=useQuoteStore(s=>s.updateSection);
   const selectMaterial=useQuoteStore(s=>s.selectTakeoffMaterial);
-  const section='areaId' in (fix??{})?quote.sections.find(s=>s.id===(fix as {areaId:string}).areaId):
-    quote.sections.find(s=>s.id===finding.destination.view==='area'?finding.destination.areaId:undefined);
+  const areaId=fix&&'areaId' in fix?fix.areaId:
+    finding.destination.view==='area'?finding.destination.areaId:undefined;
+  const section=quote.sections.find(s=>s.id===areaId);
   const line=fix?.kind==='line'?quote.lines.find(l=>l.id===fix.id):undefined;
   const owner=fix?.kind==='sink'||fix?.kind==='piece'
     ?quote.sections.find(s=>(fix.kind==='sink'
