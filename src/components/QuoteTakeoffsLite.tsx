@@ -202,8 +202,10 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
           </div>
           <p className="qtl-preview-spec"><strong>Customer description:</strong> {takeoffCustomerSpecs(section)||'Add material or sink specifications above.'}</p>
           <div className="qtl-price-actions">
-            <button type="button" disabled={!editable||!owned||validCount===0}
-              onClick={()=>addSfLine(quote.id,section.id)}>+ Add SF pricing row</button>
+            <button type="button" disabled={!editable||!owned||validCount===0||linkedSf.length>0}
+              onClick={()=>addSfLine(quote.id,section.id)}>
+              {linkedSf.length>0?'✓ SF pricing row linked':'+ Add SF pricing row'}
+            </button>
             <span>{linkedSf.length} live SF {linkedSf.length===1?'row':'rows'} · Amounts are summed from the Area's pricing rows.</span>
           </div>
         </section>
