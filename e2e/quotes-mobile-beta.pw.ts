@@ -250,3 +250,33 @@ test('mobile Accounts has a complete stage picker below the persistent app nav',
   expect(positions.pickerTop).toBeGreaterThanOrEqual(positions.navBottom-2);
   await expect(picker.getByRole('button',{name:'Open CRM cleanup'})).toBeVisible();
 });
+
+
+test('mobile Quote RATE picker shows Stock Builder Level 0–8 and records selected SF price',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Phone material-level chooser contract');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
+  await beta.getByRole('textbox',{name:'Length (in)'}).blur();
+  await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
+  await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await beta.getByRole('button',{name:'Pricing'}).click();
+  await beta.getByRole('button',{name:/Choose from Rates/}).click();
+  const levels=beta.getByRole('group',{name:'Stock Builder pricing levels'});
+  await expect(levels.getByRole('button')).toHaveCount(9);
+  await levels.getByRole('button',{name:/Level 0.*34\.00\/SF/}).click();
+  await expect(beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'})).toHaveValue('34');
+  await beta.getByRole('button',{name:/Choose from Rates/}).click();
+  await levels.getByRole('button',{name:/Level 2.*65\.00\/SF/}).click();
+  await expect(beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'})).toHaveValue('65');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await expect(beta.getByLabel('Current quote total')).toContainText('$520.00');
+});
