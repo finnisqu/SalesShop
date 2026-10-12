@@ -194,3 +194,27 @@ This is an incremental, first release of flexible customer
 grouping—not a fully recursive arbitrary-depth quote hierarchy.
 Nested, repeatable line groups can be added later without destabilizing
 the standard Area summary and detailed presentation.
+
+## v3 polish — speed, itemization stability, and keyboard entry
+
+The **Pieces** toolbar includes a **Select all / Clear selection** control
+for quickly moving a batch of measured pieces to a new Area. Piece selection
+is reconciled against current pieces, so removed rows aren't accidentally
+passed to Area splitting. In the desktop spreadsheet grid, **Enter** advances
+from one text/number cell to the next; normal checkbox, button and Tab
+behavior remains available.
+
+The catalog input fields support **Arrow Down** to focus the first suggestion
+and **Escape** to close suggestions without exiting the entire Takeoffs
+popup. Each sink/material suggestion menu uses its own generated element ID
+so repeated sink selectors do not share accessibility references.
+
+Pricing safety: when a user hides a priced Takeoffs-managed sink row in the
+customer's itemized presentation, updating that sink's model, quantity or
+price no longer makes the row visible again. Conversely, edits to its
+quantity, sell rate or name in the normal Quote line editor are reflected
+back in Takeoffs Lite to avoid the next Takeoffs edit silently overwriting
+a newer manual price.
+
+The polish does not create new kinds of customer charge, change tenant
+permissions, move customer records, or alter production `main`.
