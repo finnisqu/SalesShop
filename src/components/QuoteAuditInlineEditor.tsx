@@ -1,6 +1,7 @@
 import {useEffect,useState,type FormEvent} from 'react';
 import type {Quote,QuoteTakeoffPiece} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
+import {useCrmStore} from '../store/crmStore';
 import {parseInches} from '../services/quoteTakeoffsLite';
 import {TakeoffMaterialCatalog} from './TakeoffCatalogPickers';
 import type {QuoteAuditDestination,QuoteAuditFinding} from '../services/quoteDraftAudit';
@@ -39,6 +40,7 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
 }) {
   const fix=quickFixForFinding(finding);
   const updateQuote=useQuoteStore(s=>s.updateQuote);
+  const crmCompanies=useCrmStore(s=>s.companies);
   const updateLine=useQuoteStore(s=>s.updateLine);
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
   const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
@@ -66,6 +68,10 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
   const [tertiary,setTertiary]=useState(String(piece?.widthIn??''));
   const [materialDraft,setMaterialDraft]=useState(section?.scope?.takeoffMaterial??'');
   const [error,setError]=useState('');
+  const crmMatches=fix?.kind==='customer'&&main.trim().length>=2
+    ?crmCompanies.filter(company=>company.name.toLowerCase().includes(main.trim().toLowerCase())
+      ||company.aliases?.some(alias=>alias.toLowerCase().includes(main.trim().toLowerCase()))).slice(0,5)
+    :[];
   // Remount by finding ID when a different issue is opened; don't reset a
   // partially typed draft on unrelated quote-store updates.
   useEffect(()=>setError(''),[finding.id]);
@@ -77,6 +83,7 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
       if(!main.trim()&&!secondary.trim()){setError('Enter a customer or contact name.');return;}
       updateQuote(quote.id,{
         companyName:main.trim(),companyId:main.trim()===quote.companyName?quote.companyId:undefined,
+        projectId:main.trim()===quote.companyName?quote.projectId:undefined,
         contactName:secondary.trim(),
         contactId:secondary.trim()===quote.contactName?quote.contactId:undefined,
       });
@@ -150,6 +157,16 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
           <input autoFocus value={main} maxLength={200} placeholder="Customer or builder name"
             onChange={e=>setMain(e.target.value)}/>
         </label>
+        {crmMatches.length>0&&<div className="qmb-audit-crm-suggestions" aria-label="Matching CRM customers">
+          <small>Existing CRM customers</small>
+          {crmMatches.map(company=><button key={company.id} type="button"
+            onClick={()=>{updateQuote(quote.id,{
+              companyId:company.id,companyName:company.name,
+              projectId:quote.companyId===company.id?quote.projectId:undefined,
+            });onClose();}}>
+            <span>{company.name}</span><small>Select ›</small>
+          </button>)}
+        </div>}
         <label>Contact name <small>(optional)</small>
           <input value={secondary} maxLength={200} placeholder="Contact person"
             onChange={e=>setSecondary(e.target.value)}/>
