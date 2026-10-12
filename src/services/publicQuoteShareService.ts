@@ -1,5 +1,6 @@
 import { supabaseKey, supabaseUrl } from '../lib/supabase';
 import type { CommercialDocumentType, PricingScheduleItem } from '../types/quote';
+import type { CustomerSelectionRow } from './quoteCustomerSelections';
 import type { SignatureMethod, SignatureStroke } from '../types/signature';
 
 export interface PublicQuoteSection {
@@ -41,6 +42,7 @@ export interface PublicQuotePayload {
   lines: PublicQuoteLine[];
   customerColumns: { quantity: boolean; rate: boolean; lineAmount: boolean };
   customerNotes: string;
+  selections?: CustomerSelectionRow[];
   pricingSchedule?: { customerItems: PricingScheduleItem[] };
   acceptedTotal: number;
 }
