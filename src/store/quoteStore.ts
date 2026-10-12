@@ -36,7 +36,7 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
-import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces } from '../services/quoteTakeoffsLite';
+import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces, syncManagedSinkLineEdit } from '../services/quoteTakeoffsLite';
 import type { QuoteTakeoffPiece, QuoteTakeoffSink, QuoteLineMaterialReference, QuoteLineRateReference } from '../types/quote';
 
 interface QuoteState {
@@ -500,10 +500,12 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;
     const history = historyPatch(get(), quoteId, current);
+    const synchronized = syncManagedSinkLineEdit(current,lineId,patch);
     const timestamp = now();
     const quotes = get().quotes.map((quote) => quote.id === quoteId
       ? {
           ...quote,
+          sections: synchronized.sections,
           lines: quote.lines.map((line) => line.id === lineId ? { ...line, ...patch } : line),
           updatedAt: timestamp,
         }
