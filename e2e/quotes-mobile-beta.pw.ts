@@ -138,3 +138,52 @@ test('Materials sink rows stay compact and Rate picker pushes content instead of
   });
   expect(result.optionsBottom).toBeLessThanOrEqual(result.customerTop+2);
 });
+
+
+test('mobile quote fabrication options persist while zero quantity stays editable',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Run mobile fabrication regression on phone');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  const qty=beta.getByRole('textbox',{name:'Piece 1 quantity'});
+  await qty.fill('');
+  await qty.blur();
+  await expect(qty).toHaveValue('0');
+  await qty.fill('2');
+  await qty.blur();
+  await expect(qty).toHaveValue('2');
+  await beta.getByRole('button',{name:'Area fabrication defaults'}).click();
+  const defaults=page.getByRole('dialog',{name:'Area fabrication defaults'});
+  await defaults.getByRole('spinbutton',{name:'Default backsplash height (in)'}).fill('6');
+  await defaults.getByRole('combobox',{name:'Default edge profile'}).selectOption('Eased');
+  await defaults.getByRole('button',{name:'Apply all'}).click();
+  await beta.getByRole('button',{name:'Actions for Piece 1'}).click();
+  const piece=page.getByRole('dialog',{name:'Actions for Piece 1'});
+  await expect(piece.getByRole('spinbutton',{name:'Piece 1 backsplash height (in)'})).toHaveValue('6');
+  await expect(piece.getByRole('combobox',{name:'Piece 1 edge profile'})).toHaveValue('Eased');
+  await piece.getByRole('combobox',{name:'Piece 1 edge profile'}).selectOption('Flat');
+  await page.keyboard.press('Escape');
+  await beta.getByRole('button',{name:'Materials'}).click();
+  await beta.getByRole('button',{name:'+ Add sink'}).click();
+  await beta.getByRole('spinbutton',{name:'Sink 1 sell price'}).fill('220');
+  await beta.getByRole('button',{name:'Faucet holes for Sink 1'}).click();
+  const holes=page.getByRole('dialog',{name:'Faucet holes for Sink 1'});
+  await expect(holes.getByRole('checkbox',{name:'Center hole'})).toBeChecked();
+  await holes.getByRole('button',{name:'4″ spread'}).click();
+  await expect(holes.getByRole('checkbox',{name:'2 inches left'})).toBeChecked();
+  await expect(holes.getByRole('checkbox',{name:'2 inches right'})).toBeChecked();
+  await holes.getByRole('button',{name:'Done'}).click();
+  await beta.getByRole('button',{name:'Pricing'}).click();
+  await expect(beta.getByText('Sink ·', {exact:false}).first()).toBeVisible();
+  await beta.getByRole('button',{name:'Materials'}).click();
+  await beta.getByRole('button',{name:'Faucet holes for Sink 1'}).click();
+  const persisted=page.getByRole('dialog',{name:'Faucet holes for Sink 1'});
+  await expect(persisted.getByRole('checkbox',{name:'2 inches left'})).toBeChecked();
+});
