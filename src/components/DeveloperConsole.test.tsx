@@ -17,8 +17,12 @@ describe('isolated developer console',()=>{
   it('shows company-safe product metadata without any tenant workspace navigation',()=>{
     const html=renderToStaticMarkup(<DeveloperConsole/>);
     expect(html).toContain('PLATFORM STUDIO');
-    expect(html).toContain('Platform overview');
-    expect(html).toContain('Customer data access');
+    expect(html).toContain('SalesShop headquarters');
+    expect(html).toContain('Notebook');
+    expect(html).toContain('SalesShop CRM');
+    expect(html).toContain('follow-ups due');
+    expect(html).toContain('Product usage metrics');
+    expect(html).toContain('SalesShop leads');
     expect(html).toContain('Company ownership');
     expect(html).toContain('Not available by default');
     expect(html).toContain('Subscriptions');
