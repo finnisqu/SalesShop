@@ -61,14 +61,14 @@ function StandardQuoteBody({ data }: { data: PublicQuoteResponse }) {
           if ((section.customerDisplayMode ?? 'detail') === 'summary') {
             return <div className="customer-quote-section is-summary" key={section.id}>
               <div className="customer-quote-row customer-area-summary-row">
-                <div className="customer-line-description">{section.title}</div>
+                <div className="customer-line-description"><strong>{section.title}</strong>{section.specification&&<small className="customer-area-spec">{section.specification}</small>}</div>
                 <div className="customer-line-amount">{money.format(section.customerTotal ?? 0)}</div>
               </div>
             </div>;
           }
           const sectionLines = lines.filter((line) => line.sectionId === section.id);
           if (!sectionLines.length) return null;
-          return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{renderLines(sectionLines)}</div>;
+          return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{section.specification&&<p className="customer-area-spec">{section.specification}</p>}{renderLines(sectionLines)}</div>;
         })}
       </div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quote.acceptedTotal)}</strong></div>
