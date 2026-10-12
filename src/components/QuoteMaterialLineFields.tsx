@@ -64,6 +64,9 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   const guide = useMaterialLevelGuideStore((state) => state.guide);
   const hydrateGuide = useMaterialLevelGuideStore((state) => state.hydrate);
   const updateLine = useQuoteStore((state) => state.updateLine);
+  const pinMaterial = useQuoteStore((state) => state.pinProjectMaterial);
+  const quoteList = useQuoteStore((state) => state.quotes);
+  const pinned = quoteList.find(q => q.id === quoteId)?.projectMaterials ?? [];
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(!line.materialReference?.materialId && !line.materialReference?.customMaterialName);
   const [pendingMaterialId, setPendingMaterialId] = useState<string | null>(null);
@@ -150,9 +153,9 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       : activeMaterials;
     return source
       .slice()
-      .sort((a, b) => Number(b.stockProgram) - Number(a.stockProgram) || a.name.localeCompare(b.name))
+      .sort((a, b) => Number(pinned.some(m => m.reference?.materialId === b.id)) - Number(pinned.some(m => m.reference?.materialId === a.id)) || Number(b.stockProgram) - Number(a.stockProgram) || a.name.localeCompare(b.name))
       .slice(0, 10);
-  }, [activeMaterials, search]);
+  }, [activeMaterials, search, pinned]);
 
   const applyMaterial = (material: StockMaterial, variantId: string, purchaseOptionId?: string) => {
     const variant = (material.variants ?? []).find((candidate) => candidate.active !== false && candidate.id === variantId);
@@ -189,6 +192,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       materialReference,
       amount: slabMode ? slabPricing?.customerTotal : line.amount,
     });
+    pinMaterial(quoteId,materialCustomerDescription(material, variant),materialReference);
     setSearch('');
     setPendingMaterialId(null);
     setPendingVariantId(null);
