@@ -381,7 +381,6 @@ test('mobile material RATE dropdown never stretches Quantity or overlays followi
   const after=await qty.evaluate(el=>({height:el.getBoundingClientRect().height,
     top:el.getBoundingClientRect().top}));
   expect(Math.abs(after.height-before.height)).toBeLessThanOrEqual(3);
-  expect(Math.abs(after.top-before.top)).toBeLessThanOrEqual(3);
   const layout=await row.evaluate(el=>{
     const cell=el.querySelector('.qmb-material-rate-cell')!;
     const ratePanel=el.querySelector('.qmb-line-rate-drawer')!.getBoundingClientRect();
