@@ -4,6 +4,10 @@ export interface MaterialLevelRule {
   maxMaterialCost: number;
   customerRate: number;
   active: boolean;
+  /** Lowest tier is a granite-only program, not a quartz suggestion. */
+  graniteOnly?: boolean;
+  /** Extended tiers may have prices but no approved material-cost band yet. */
+  costBandConfirmed?: boolean;
 }
 
 export interface MaterialLevelGuideVersion {
@@ -64,30 +68,34 @@ export interface ResolvedSlabPrice {
 
 function activeRules(rules: MaterialLevelRule[]) {
   return rules
-    .filter((rule) => rule.active)
+    .filter((rule) => rule.active && rule.costBandConfirmed !== false)
     .sort((a, b) => a.maxMaterialCost - b.maxMaterialCost);
 }
 
 export function materialLevelCostBand(rules: MaterialLevelRule[], rule: MaterialLevelRule) {
+  if(rule.costBandConfirmed===false) return 'Extended level · material cost range not assigned';
   const ordered = activeRules(rules);
   const index = ordered.findIndex((candidate) => candidate.id === rule.id);
   const previous = index > 0 ? ordered[index - 1] : undefined;
   const lower = previous?.maxMaterialCost;
   const upper = rule.maxMaterialCost;
-  if (lower === undefined) return `$0–$${upper.toFixed(2)}/SF material cost`;
-  return `Over $${lower.toFixed(2)}–$${upper.toFixed(2)}/SF material cost`;
+  if (lower === undefined) return `$0–${upper.toFixed(2)}/SF cost${rule.graniteOnly?' · Granite only':''}`;
+  return `Over ${lower.toFixed(2)}–${upper.toFixed(2)}/SF cost${rule.label==='Level 1'?' · First quartz level':''}`;
 }
 
 export function resolveMaterialLevel(
   rules: MaterialLevelRule[],
   materialCost?: number,
   forcedRuleId?: string,
+  materialType?: string,
 ): ResolvedMaterialLevel | undefined {
   const ordered = activeRules(rules);
-  const forced = forcedRuleId ? ordered.find((rule) => rule.id === forcedRuleId) : undefined;
+  const forced = forcedRuleId ? rules.find(rule=>rule.active&&rule.id===forcedRuleId) : undefined;
+  const suggested=materialType&&materialType.toLowerCase()!=='granite'
+    ?ordered.filter(rule=>!rule.graniteOnly):ordered;
   const rule = forced ?? (materialCost === undefined
     ? undefined
-    : ordered.find((candidate) => materialCost <= candidate.maxMaterialCost));
+    : suggested.find((candidate) => materialCost <= candidate.maxMaterialCost));
   if (!rule) return undefined;
 
   return {
@@ -103,8 +111,9 @@ export function resolveMaterialPricingRecommendation(
   guide: Pick<MaterialLevelGuideDocument, 'rules' | 'slabPricingThresholdCostPerSf' | 'slabPricingMultiplier'>,
   materialCost?: number,
   forcedRuleId?: string,
+  materialType?: string,
 ): MaterialPricingRecommendation {
-  const forced = forcedRuleId ? resolveMaterialLevel(guide.rules, materialCost, forcedRuleId) : undefined;
+  const forced = forcedRuleId ? resolveMaterialLevel(guide.rules, materialCost, forcedRuleId, materialType) : undefined;
   if (forced) {
     return {
       mode: 'level',
@@ -126,7 +135,7 @@ export function resolveMaterialPricingRecommendation(
     };
   }
 
-  const level = resolveMaterialLevel(guide.rules, materialCost);
+  const level = resolveMaterialLevel(guide.rules, materialCost, undefined, materialType);
   if (level) {
     return {
       mode: 'level',
