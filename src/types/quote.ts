@@ -85,11 +85,28 @@ export interface QuoteTakeoffPiece {
   lengthIn?: number;
   widthIn?: number;
   count: number;
+  backsplash?: boolean;
+  leftSplash?: boolean;
+  rightSplash?: boolean;
+}
+
+export interface QuoteTakeoffSink {
+  id: string;
+  category: 'kitchen' | 'vanity';
+  name: string;
+  count: number;
+  /** Optional sell price per sink, not cost. */
+  unitPrice?: number;
+  /** Creates a linked priced quote row when enabled; otherwise specs only. */
+  includeInPricing: boolean;
 }
 
 export interface QuoteAreaScope {
   /** Optional Takeoffs Lite measurements. Presence means Takeoffs Lite owns countertopSf. */
   takeoffPieces?: QuoteTakeoffPiece[];
+  /** Label shown in the customer's consolidated area description. */
+  takeoffMaterial?: string;
+  takeoffSinks?: QuoteTakeoffSink[];
   countertopSf?: number;
   splashLf?: number;
   fullHeightSplashSf?: number;
@@ -237,6 +254,8 @@ export interface QuoteLine {
   includeInTotal: boolean;
   materialReference?: QuoteLineMaterialReference;
   sinkReference?: QuoteLineSinkReference;
+  /** Links a sink price row managed by Area Takeoffs Lite. */
+  takeoffSinkId?: string;
   rateReference?: QuoteLineRateReference;
 }
 
