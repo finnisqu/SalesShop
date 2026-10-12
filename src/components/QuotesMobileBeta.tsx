@@ -26,6 +26,7 @@ import { QuoteShareControl } from './QuoteShareControl';
 import { CustomerPreview } from './Quotes';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
+import { BuilderLevelRateButton } from './BuilderLevelChoices';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
@@ -91,8 +92,17 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
             <Field label="Quantity"><input type="number" inputMode="decimal" step="any" value={line.quantity??''}
               disabled={line.quantitySource?.syncMode==='live'} placeholder="—"
               onChange={e=>update(quote.id,line.id,{quantity:e.target.value===''?undefined:Number(e.target.value)})}/></Field>
-            <Field label="Sell rate ($)"><input type="number" inputMode="decimal" min="0" step=".01" value={line.rate??''}
-              placeholder="Not set" onChange={e=>update(quote.id,line.id,{rate:e.target.value===''?undefined:Number(e.target.value)})}/></Field>
+            <div className="qmb-material-rate-cell">
+              <Field label="Sell rate ($/SF)"><input type="number" inputMode="decimal" min="0" step=".01"
+                value={line.rate??''} placeholder="Not set"
+                onChange={e=>update(quote.id,line.id,{
+                  rate:e.target.value===''?undefined:Number(e.target.value),rateReference:undefined,
+                })}/></Field>
+              {line.kind==='material'&&<BuilderLevelRateButton disabled={!editable}
+                division={quote.pricingDivision}
+                selectedRateId={line.rateReference?.rateBookItemId}
+                onSelect={(price,ref)=>update(quote.id,line.id,{rate:price,rateReference:ref})}/>}
+            </div>
           </>:<Field label="Amount ($)"><input type="number" inputMode="decimal" step=".01" value={line.amount??''}
             placeholder="Not set" onChange={e=>update(quote.id,line.id,{amount:e.target.value===''?undefined:Number(e.target.value)})}/></Field>}
         </div>}
@@ -170,6 +180,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
         <section className="qmb-card">
           <div className="qmb-split"><span>Linked area SF</span><strong>{sf.format(measured)} SF</strong></div>
           {linked?<TakeoffRatePicker quote={quote} rate={linked.rate} disabled={!editable}
+            selectedRateId={linked.rateReference?.rateBookItemId}
             onSelect={(rate,ref)=>setRate(quote.id,section.id,rate,ref)}/>:<>
             <p className="qmb-help">{pieces.length?'No linked SF price yet. Adding one is a separate charge: check for existing material rows first.':'Add measurements first, or create a manual price row below.'}</p>
             <button type="button" className="qmb-outline" disabled={!editable||!pieces.some(p=>p.lengthIn&&p.widthIn)}
