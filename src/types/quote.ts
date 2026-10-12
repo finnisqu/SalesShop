@@ -99,6 +99,8 @@ export interface QuoteTakeoffSink {
   unitPrice?: number;
   /** Creates a linked priced quote row when enabled; otherwise specs only. */
   includeInPricing: boolean;
+  /** Snapshot of a Catalog sink model + variant at selection time. */
+  sinkReference?: QuoteLineSinkReference;
 }
 
 export interface QuoteAreaScope {
@@ -109,6 +111,8 @@ export interface QuoteAreaScope {
   takeoffSplashSf?: number;
   /** Label shown in the customer's consolidated area description. */
   takeoffMaterial?: string;
+  /** Catalog material + variant and source-cost snapshot, when chosen. */
+  takeoffMaterialReference?: QuoteLineMaterialReference;
   takeoffSinks?: QuoteTakeoffSink[];
   /** In Takeoffs Lite, the combined top + checked 4-inch splash material SF. */
   countertopSf?: number;
