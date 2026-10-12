@@ -206,7 +206,8 @@ test('mobile quote scroll retains title, total and tabs while hiding larger head
   await expect(beta.getByText('Current quote total',{exact:true})).toHaveCount(0);
   await beta.getByRole('button',{name:'Open quote selections'}).click();
   const selections=beta.getByRole('dialog',{name:'Quote selections'});
-  await expect(selections.getByRole('textbox',{name:'Material to pin'})).toBeAttached();
+  await selections.getByRole('button',{name:'+ Add material'}).click();
+  await expect(selections.getByRole('textbox',{name:'Material to pin'})).toBeVisible();
   await expect(selections.getByRole('spinbutton',{name:'Job backsplash height in inches'})).toHaveValue('4');
   await expect(selections.getByRole('combobox',{name:'Job default edge profile'})).toHaveValue('Flat');
   await selections.getByRole('button',{name:'Done',exact:true}).click();
