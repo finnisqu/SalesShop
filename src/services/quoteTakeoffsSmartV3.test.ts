@@ -37,7 +37,7 @@ describe('Takeoffs v3 smart workflow',()=>{
       pricingMode:'quantity-rate',quantity:13,rate:50,customerVisible:true,includeInTotal:true,
     };
     const withManual={...base,lines:[manual]};
-    expect(ensureSmartTakeoffLine(withManual)).toEqual(withManual); // no accidental duplicate
+    expect(ensureSmartTakeoffLine(withManual,'a')).toEqual(withManual); // no accidental duplicate
     const explicit=ensureSmartTakeoffLine(withManual,'a',true);
     expect(explicit.lines).toHaveLength(2);
   });
