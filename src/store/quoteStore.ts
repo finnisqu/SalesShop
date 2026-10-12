@@ -22,6 +22,7 @@ import {
   syncNormalizedQuotes,
 } from '../services/normalizedQuoteSync';
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
+import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import { relinkQuotesForCompany, relinkQuotesForContact } from '../services/crmIdentity';
 import {
   isDraftQuoteNumber,
@@ -739,6 +740,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       if (mayIssue !== true) throw new Error('Your team role can prepare estimates but cannot issue customer quotes. Ask your administrator for Salesperson or General Member access.');
     }
     if (initial.documentType === 'pricing-schedule') validatePricingScheduleForSend(initial.pricingSchedule);
+    else assertQuoteHasNoPricingBlockers(initial);
 
     const identity = await assignCommercialIdentity(initial, {
       schemaVersion: 2,
@@ -748,6 +750,10 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
 
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || (current.status !== 'Draft' && current.status !== 'Ready')) return;
+    // Revalidate after the asynchronous number assignment. The quote may have
+    // changed while the server request was in progress.
+    if (current.documentType === 'pricing-schedule') validatePricingScheduleForSend(current.pricingSchedule);
+    else assertQuoteHasNoPricingBlockers(current);
 
     const timestamp = now();
     let sentQuote: Quote = {
@@ -766,9 +772,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       history: alreadyCaptured ? current.history : [...current.history, createQuoteRevisionSnapshot(sentQuote, timestamp, 'Sent')],
     };
     const quotes = get().quotes.map((quote) => quote.id === quoteId ? sentQuote : quote);
-    persist(quotes, get().activeQuoteId);
-    set({ quotes });
-
+    // Never display a successfully Sent quote locally until the cloud
+    // confirms that the numbered revision was durably persisted.
     if (supabase && auth.mode === 'cloud' && auth.organizationId) {
       await syncNormalizedQuotes(auth.organizationId, {
         schemaVersion: 2,
@@ -776,6 +781,8 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
         activeQuoteId: get().activeQuoteId,
       });
     }
+    persist(quotes, get().activeQuoteId);
+    set({ quotes });
   },
 
   createRevision: (quoteId) => {
