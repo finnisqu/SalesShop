@@ -31,7 +31,6 @@ import './material-reference-variants.css';
 import './material-stock-program.css';
 import './board-scroll-controls.css';
 import './quote-line-reorder.css';
-import './quote-takeoffs-lite.css';
 import './quote-material-lines.css';
 import './rates-usability.css';
 import './rates-workspace-unification.css';
@@ -84,6 +83,8 @@ import './design-system/batch-10d.css';
 import './design-system/batch-11-quotes.css';
 // P2: ownership transfer within Team Settings, never in customer documents.
 import './design-system/ownership-transfer.css';
+// Takeoffs Lite is the final internal Quotes overlay (never customer paper).
+import './quote-takeoffs-lite.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
