@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { scopedStorageKey } from '../lib/developerPlayground';
 import {
   EMPTY_COMPANY_SETTINGS,
   materialFamilyForType,
@@ -29,7 +30,7 @@ interface CompanySettingsState {
   acceptPublishedStockMaterials: (materials: StockMaterial[]) => void;
 }
 
-const LOCAL_KEY = 'salesshop-company-settings-v1';
+const LOCAL_KEY = scopedStorageKey('salesshop-company-settings-v1');
 let saveTimer: number | undefined;
 const uid = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
