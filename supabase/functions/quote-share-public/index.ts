@@ -103,6 +103,49 @@ function safePublicLine(line: SnapshotLine) {
   };
 }
 
+/**
+ * Presentation-only grouping; never edits source quote rows or customerTotal.
+ * Each hidden charge becomes part of the first visible material/item charge.
+ * Without a suitable visible host, an anonymous included work row preserves total.
+ */
+function publicItemizedLines(rows: SnapshotLine[], scopeId = 'general') {
+  const visible = rows.filter(line => line.customerVisible !== false);
+  const hiddenAmount = roundCurrency(rows.filter(line => line.customerVisible === false)
+    .reduce((sum, line) => sum + lineTotal(line), 0));
+  const host = visible.find(line => line.includeInTotal && line.pricingMode !== 'none' &&
+    (line.kind === 'material' || line.kind === 'item'))
+    ?? visible.find(line => line.includeInTotal && line.pricingMode !== 'none' && line.kind !== 'discount');
+  const safe = visible.map(line => {
+    const base = safePublicLine(line);
+    if (host && line.id === host.id && hiddenAmount !== 0) {
+      return { ...base, pricingMode: 'direct', amount: roundCurrency(lineTotal(line) + hiddenAmount),
+        quantity: undefined, rate: undefined };
+    }
+    return base;
+  });
+  if (hiddenAmount !== 0 && !host) safe.push(safePublicLine({
+    id: 'included-work-' + scopeId, sectionId: scopeId === 'general' ? undefined : scopeId,
+    kind: 'item', description: 'Included work', pricingMode: 'direct',
+    amount: hiddenAmount, includeInTotal: true, customerVisible: true,
+  }));
+  return safe;
+}
+function isGeneralTakeoffsTitle(section: { title?: unknown }): boolean {
+  return String(section.title ?? '').trim().toLowerCase() === 'general takeoffs';
+}
+function publicGeneralSummary(rows: SnapshotLine[], id: string) {
+  if (!rows.length) return [];
+  const host = rows.find(line => line.customerVisible !== false && line.includeInTotal &&
+    (line.kind === 'material' || line.kind === 'item'))
+    ?? rows.find(line => line.customerVisible !== false && line.includeInTotal && line.pricingMode !== 'none');
+  return [safePublicLine({
+    id: 'general-summary-' + id, sectionId: id, kind: 'item',
+    description: host?.description?.trim() || 'Countertops & included work',
+    pricingMode: 'direct', amount: roundCurrency(rows.reduce((sum,line)=>sum+lineTotal(line),0)),
+    includeInTotal: true, customerVisible: true,
+  })];
+}
+
 function safeSectionSpecs(scope: unknown, existing: unknown): string | undefined {
   if(typeof existing==='string')return existing.slice(0,1300).trim()||undefined;
   if(!scope || typeof scope!=='object')return undefined;
@@ -153,29 +196,15 @@ function safeAcceptedSnapshot(value: unknown) {
   const hiddenSectionIds = new Set(rawSections
     .filter((section) => section.customerVisible === false)
     .map((section) => String(section.id ?? '')));
-  const lines = allLines
-    .filter((line) => {
-      const sectionId = String(line.sectionId ?? '');
-      return line?.customerVisible !== false
-        && !summarySectionIds.has(sectionId)
-        && !hiddenSectionIds.has(sectionId);
-    })
-    .map(safePublicLine);
-  // Customer-selected itemization always reconciles to the actual Area total;
-  // hidden priced details are represented by one anonymous remainder row.
-  for(const section of rawSections.filter(section => section.customerVisible !== false && section.customerDisplayMode !== 'summary')){
-    const id=String(section.id??'');
-    const hiddenAmount=roundCurrency(allLines
-      .filter(line=>String(line.sectionId??'')===id && line.customerVisible===false)
-      .reduce((sum,line)=>sum+lineTotal(line),0));
-    if(hiddenAmount!==0){
-      lines.push(safePublicLine({
-        id:`remainder_${id}`,sectionId:id,kind:hiddenAmount<0?'discount':'item',
-        description:'Other included work',pricingMode:'direct',amount:Math.abs(hiddenAmount),
-        includeInTotal:true,customerVisible:true,
-      }));
-    }
-  }
+  // Accepted snapshots are already customer-safe; do not reprice or expose hidden
+  // original rows here. Kept separate for compatibility with older signatures.
+  const lines = allLines.filter(line => {
+    const sectionId=String(line.sectionId??'');
+    return line?.customerVisible !== false
+      && !summarySectionIds.has(sectionId)
+      && !hiddenSectionIds.has(sectionId);
+  }).map(safePublicLine);
+
   const sections = rawSections
     .filter((section) => section.customerVisible !== false)
     .map((section) => {
@@ -219,18 +248,26 @@ function buildSafeQuote(snapshot: Snapshot, baseQuoteNumber: string, documentTyp
     contactName: snapshot.contactName,
     contactEmail: snapshot.contactEmail,
     address: snapshot.address,
-    sections: (snapshot.sections ?? []).filter((section) => section.customerVisible).map((section) => {
-      const sectionTotal = allLines
-        .filter((line) => line.sectionId === section.id)
-        .reduce((sum, line) => sum + lineTotal(line), 0);
-      return safePublicSection(section, sectionTotal);
+    sections: (snapshot.sections ?? []).filter(section => section.customerVisible).map(section => {
+      const sectionTotal = allLines.filter(line => line.sectionId === section.id)
+        .reduce((sum,line) => sum + lineTotal(line), 0);
+      const general=isGeneralTakeoffsTitle(section);
+      return safePublicSection(general
+        ? { ...section, customerDisplayMode: 'detail', scope: undefined, specification: undefined }
+        : section, sectionTotal);
     }),
-    lines: allLines.filter((line) => {
-      if (!line.customerVisible) return false;
-      const section = (snapshot.sections ?? []).find((candidate) => candidate.id === line.sectionId);
-      if (section && !section.customerVisible) return false;
-      return !section || section.customerDisplayMode !== 'summary';
-    }).map(safePublicLine),
+    lines: [
+      ...publicItemizedLines(allLines.filter(line=>!line.sectionId ||
+        !(snapshot.sections??[]).some(section=>section.id===line.sectionId))),
+      ...(snapshot.sections ?? []).filter(section=>section.customerVisible).flatMap(section=>{
+        const rows=allLines.filter(line=>line.sectionId===section.id);
+        const general=isGeneralTakeoffsTitle(section);
+        if (section.customerDisplayMode === 'summary') {
+          return general ? publicGeneralSummary(rows,section.id) : [];
+        }
+        return publicItemizedLines(rows,section.id);
+      }),
+    ],
     customerColumns: snapshot.customerColumns ?? { quantity: false, rate: false, lineAmount: true },
     customerNotes: snapshot.customerNotes ?? '',
     pricingSchedule: documentType === 'pricing-schedule' ? { customerItems } : undefined,
