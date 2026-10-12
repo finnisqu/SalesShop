@@ -137,7 +137,7 @@ describe('quote area scope', () => {
   it('keeps future scope metadata under the hood while surfacing only the focused v1 fields', async () => {
     const { QUOTE_AREA_SCOPE_VISIBLE_FIELDS } = await import('./quoteAreaScope');
     expect(Object.keys(QUOTE_AREA_SCOPE_META)).toHaveLength(6);
-    expect(QUOTE_AREA_SCOPE_VISIBLE_FIELDS).toEqual(['countertopSf', 'kitchenSinkCount', 'vanitySinkCount']);
+    expect(QUOTE_AREA_SCOPE_VISIBLE_FIELDS).toEqual(['countertopSf', 'splashLf', 'kitchenSinkCount', 'vanitySinkCount']);
     expect(QUOTE_AREA_SCOPE_META.countertopSf.unit).toBe('SF');
   });
 });
