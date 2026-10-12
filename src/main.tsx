@@ -93,6 +93,8 @@ import './quotes-mobile-measure-grid.css';
 import './quotes-mobile-materials-pricing.css';
 // Area/piece fabrication preferences and optional faucet drilling controls.
 import './quotes-mobile-fabrication-options.css';
+// Sticky Quotes Beta header/Selections sheet and aligned Accounts mobile Board shell.
+import './quotes-mobile-sticky-selections.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
