@@ -270,10 +270,11 @@ function persist(guide: MaterialLevelGuideDocument,share=true) {
   if(!share)return;
   const auth=useAuthStore.getState();
   const orgId=auth.mode==='cloud'?auth.organizationId:undefined;
-  if(!supabase||!orgId)return;
+  const client=supabase;
+  if(!client||!orgId)return;
   if(cloudSaveTimer)clearTimeout(cloudSaveTimer);
   cloudSaveTimer=setTimeout(()=>{
-    void supabase.from('organizations').update({material_level_guide:guide})
+    void client.from('organizations').update({material_level_guide:guide})
       .eq('id',orgId).then(({error})=>{
         useMaterialLevelGuideStore.setState({syncError:error?.message});
       });
@@ -294,8 +295,8 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
     }
     // Cloud is authoritative. Never expose browser-local prices as current
     // company rates while waiting for the org-scoped guide to load.
-    void supabase.from('organizations').select('material_level_guide')
-      .eq('id',auth.organizationId).single().then(({data,error})=>{
+    void Promise.resolve(supabase.from('organizations').select('material_level_guide')
+      .eq('id',auth.organizationId).single()).then(({data,error})=>{
         const stored=data?.material_level_guide as MaterialLevelGuideDocument|undefined;
         const valid=stored&&stored.schemaVersion===3&&Array.isArray(stored.rules);
         const guide=valid?upgradeBuilderLevelGuide(stored):local;
