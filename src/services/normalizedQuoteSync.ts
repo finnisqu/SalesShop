@@ -116,6 +116,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     includeInTotal: Boolean(row.include_in_total),
     materialReference: materialReferenceOrUndefined(row.material_reference),
     sinkReference: sinkReferenceOrUndefined(row.sink_reference),
+    takeoffSinkId: valueOrUndefined(row.takeoff_sink_id),
     rateReference: rateReferenceOrUndefined(row.rate_reference),
   }));
   const revisionsByQuote = groupByQuote<QuoteRevisionSnapshot>(revisionRows, (row) => {
@@ -343,6 +344,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     include_in_total: line.includeInTotal,
     material_reference: line.materialReference ?? null,
     sink_reference: line.sinkReference ?? null,
+    takeoff_sink_id: line.takeoffSinkId ?? null,
     rate_reference: line.rateReference ?? null,
     sort_order: sortOrder,
   })));
