@@ -1,4 +1,4 @@
-import type { Quote, QuoteSection, QuoteTakeoffPiece, QuoteAreaScope, QuoteTakeoffSink, QuoteLine, QuoteLineMaterialReference } from '../types/quote';
+import type { Quote, QuoteSection, QuoteTakeoffPiece, QuoteAreaScope, QuoteTakeoffSink, QuoteLine, QuoteLineMaterialReference, QuoteProjectMaterial } from '../types/quote';
 
 /** Compatible with common shop dimensions: 25.5, 25 1/2, 25-1/2, 1/4, 25½. */
 const unicodeFractions: Record<string,string> = {
@@ -200,4 +200,73 @@ export function detachQuoteTakeoff(quote:Quote, sectionId:string):Quote {
       return {...line,quantitySource:snapshot};
     }),
   };
+}
+
+/** A smart row is a normal quote line plus live quantity/reference metadata;
+ * never replace manual rows or create duplicate SF rows. */
+export function ensureSmartTakeoffLine(quote:Quote,sectionId:string):Quote {
+  const section=quote.sections.find(s=>s.id===sectionId);
+  if(!section || !takeoffOwnedScope(section.scope)
+    || !section.scope?.takeoffPieces?.some(isValidTakeoffPiece))return quote;
+  const linked=quote.lines.some(l=>l.sectionId===sectionId
+    &&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
+  if(linked)return quote;
+  const quantity=sectionTakeoffSf(section)??0;
+  const line:QuoteLine={
+    id:`line_${crypto.randomUUID()}`,sectionId,
+    kind:section.scope?.takeoffMaterialReference?'material':'item',
+    description:section.scope?.takeoffMaterial?.trim()||`Countertop & 4″ splash · ${section.title}`,
+    pricingMode:'quantity-rate',quantity,rate:undefined,
+    customerVisible:true,includeInTotal:true,
+    materialReference:section.scope?.takeoffMaterialReference,
+    quantitySource:{kind:'area-scope',sectionId,field:'countertopSf',
+      capturedValue:quantity,appliedAt:new Date().toISOString(),syncMode:'live'},
+  };
+  return {...quote,lines:[...quote.lines,line]};
+}
+
+export function upsertProjectMaterial(
+  quote:Quote,label:string,reference?:QuoteLineMaterialReference,
+):Quote {
+  const name=label.trim().slice(0,300);
+  if(!name)return quote;
+  const previous=quote.projectMaterials??[];
+  const found=previous.find(m=>
+    reference?.materialId
+      ? m.reference?.materialId===reference.materialId&&m.reference?.variantId===reference.variantId
+      : m.label.toLowerCase()===name.toLowerCase());
+  if(found)return quote;
+  const material:QuoteProjectMaterial={id:`pm_${crypto.randomUUID()}`,label:name,reference};
+  return {...quote,projectMaterials:[...previous,material]};
+}
+
+/** Move selected measured pieces into a new priced Area, preserving sink and
+ * other current-Area rows; split linked SF quantity without duplicating it. */
+export function splitTakeoffPieces(
+  quote:Quote,sourceId:string,pieceIds:string[],title:string,
+):Quote {
+  const source=quote.sections.find(section=>section.id===sourceId);
+  if(!source?.scope?.takeoffPieces?.length||!pieceIds.length)return quote;
+  const picked=new Set(pieceIds);
+  const moving=source.scope.takeoffPieces.filter(p=>picked.has(p.id));
+  if(!moving.length||moving.length===source.scope.takeoffPieces.length)return quote;
+  const remaining=source.scope.takeoffPieces.filter(p=>!picked.has(p.id));
+  const id=`section_${crypto.randomUUID()}`;
+  const newArea:QuoteSection={
+    id,title:title.trim()||'New area',customerVisible:true,customerDisplayMode:'summary',
+    scope:{takeoffPieces:[],takeoffMaterial:source.scope.takeoffMaterial,
+      takeoffMaterialReference:source.scope.takeoffMaterialReference},
+  };
+  const initial={...quote,sections:[...quote.sections,newArea]};
+  const updated=patchQuoteTakeoff(patchQuoteTakeoff(initial,sourceId,remaining),id,moving);
+  const ready=ensureSmartTakeoffLine(updated,id);
+  const oldLive=ready.lines.find(line=>line.sectionId===sourceId
+    &&line.quantitySource?.field==='countertopSf'&&line.quantitySource.syncMode==='live');
+  const rate=oldLive?.rate;
+  if(rate===undefined)return ready;
+  return {...ready,lines:ready.lines.map(line=>{
+    if(line.sectionId!==id||line.quantitySource?.field!=='countertopSf'
+      ||line.quantitySource.syncMode!=='live')return line;
+    return {...line,rate,rateReference:oldLive.rateReference};
+  })};
 }
