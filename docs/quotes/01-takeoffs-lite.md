@@ -86,3 +86,52 @@ Sink selections and their pricing links remain in the Area.
 Migration: `supabase/migrations/202610120003_quote_takeoff_sink_link.sql`.
 Frontend tests: `src/services/quoteTakeoffsLiteV2.test.ts`,
 `quoteTakeoffsLite.test.ts`, `quoteAreaScope.test.ts`.
+
+## v2.1 — 4-inch splash material SF + catalog picker controls
+
+**Splash arithmetic**: Each checked Back / Left / Right edge includes actual
+4-inch-high material area, not only LF. Back uses the piece LENGTH; either
+side uses its WIDTH. With length and width in inches, one edge contributes
+`4 × edge inches × count ÷ 144` SF. The per-piece displayed SF includes
+top and checked splashes; the popup displays Top SF, Splash SF and
+**Combined takeoff SF**, with a separate LF reference retained for any
+splash labor estimate.
+
+Combined top + splash SF is the quantity that the existing live-linked
+`countertopSf` field now supplies to a quote material/SF line. Internal
+`takeoffTopSf` and `takeoffSplashSf` keep the breakdown. Sum unrounded
+measurements and round only the resulting total to two decimals. Never
+silently add the same splash material to another quote line:
+independent `splashLf` can still be used for labor or another explicit
+pricing choice.
+
+**Compatibility**: Opening a previously saved takeoff with flagged splashes
+does not silently modify its priced quantity. When its saved scope is from
+the prior LF-only release, the popup offers **Recalculate Area SF**. The
+operator approves applying the new combined SF to live pricing. Draft/Ready
+editing safeguards still apply; issued quotes are not modified.
+
+**Materials Catalog**: Choose an existing material, active variant,
+and—when relevant—a purchase/cost option directly inside the popup.
+Search uses the same company catalog store as regular Quote Material lines.
+Selection saves the catalog IDs, current source-cost snapshot and
+customer-readable material/variant description in the Area's scope.
+If the Area has a live SF pricing row, that row becomes a catalog-linked
+material line without resetting its selling rate. If the row is added later,
+it inherits the Area's current material selection. Free-text materials
+remain available and explicitly detach stale catalog selection references.
+
+**Sinks Catalog**: Choose a real active sink model and variant from the
+existing company Sink Catalog. Selection saves the variant snapshot,
+category, model description and the catalog **selling price**, when
+available. It does *not* automatically add an extra charge: the
+**Price separately?** checkbox still controls whether a managed sink
+line is created. A separately priced linked sink line retains the catalog
+snapshot and can be edited in the regular Quotes sink interface. Switching
+back to unchecked removes only that managed row, not pre-existing or
+manually entered sink rows.
+
+Catalog costs are internal references, not inferred selling prices.
+Cloud persistence uses the existing Area `scope` JSON and sink line
+`takeoff_sink_id` link; no new schema or tenant permission changes are
+needed for these catalog selection fields.
