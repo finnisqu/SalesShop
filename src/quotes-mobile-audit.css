@@ -115,3 +115,21 @@
   .qmb .qmb-audit-inline-actions button {padding-inline:7px;font-size:11px;}
   .qmb .qmb-audit-finding-summary {gap:6px;padding:9px;}
 }
+
+/* Existing CRM customers are selectable without leaving Review. */
+.qmb .qmb-audit-crm-suggestions {
+  display:grid;gap:3px;border:1px solid var(--qmb-border);
+  background:var(--qmb-tint);border-radius:9px;padding:6px;
+  max-height:205px;overflow-y:auto;
+}
+.qmb .qmb-audit-crm-suggestions>small {
+  font-size:10px;color:var(--qmb-muted);font-weight:850;
+  padding:2px 5px 4px;
+}
+.qmb .qmb-audit-crm-suggestions button {
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;min-height:39px;gap:10px;border:0;border-radius:7px;
+  background:var(--qmb-card);color:var(--qmb-ink);
+  padding:7px 9px;text-align:left;font-size:12px;font-weight:800;
+}
+.qmb .qmb-audit-crm-suggestions button small {color:var(--qmb-accent);font-size:10px;flex:0 0 auto;}
