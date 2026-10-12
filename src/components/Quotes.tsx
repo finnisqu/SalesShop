@@ -496,13 +496,13 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
         </div>
         <input aria-label="Area name" value={section.title} onChange={(event) => updateSection(quote.id, section.id, { title: event.target.value })} />
       </div>
+      <button type="button" className={`quote-area-takeoff-toggle quote-takeoff-feature-button ${takeoffOpen?'active':''}`}
+        onClick={() => {setTakeoffOpen(open=>!open);setScopeOpen(false);}}
+        aria-expanded={takeoffOpen} aria-label={`Takeoffs Lite for ${section.title}`}>
+        {section.scope?.takeoffPieces ? `▤ Takeoff · ${section.scope.countertopSf ?? 0} SF` : '▤ Takeoffs'}
+      </button>
 
       <div className="quote-area-actions">
-        <button type="button" className={`quote-area-takeoff-toggle ${takeoffOpen?'active':''}`}
-          onClick={() => {setTakeoffOpen(open=>!open);setScopeOpen(false);}}
-          aria-expanded={takeoffOpen} aria-label={`Takeoffs Lite for ${section.title}`}>
-          {section.scope?.takeoffPieces ? `▤ Takeoff · ${section.scope.countertopSf ?? 0} SF` : '▤ Takeoffs Lite'}
-        </button>
         <button type="button" className="quote-area-add-material" onClick={() => onAddLine('material', section.id)}>+ Material</button>
         <button type="button" className="quote-area-add-sink" onClick={() => onAddLine('sink', section.id)}>+ Sink</button>
         <button type="button" className="quote-area-add-rate" onClick={() => onAddLine('rate', section.id)}>+ Rate</button>
@@ -543,7 +543,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
 }
 
 
-function GeneralAreaHeader({ lines, onAddLine, onAddArea }: { lines: QuoteLine[]; onAddLine: (kind: QuoteLineKind) => void; onAddArea: () => void }) {
+function GeneralAreaHeader({ lines, onAddLine, onAddArea, onTakeoffs }: { lines: QuoteLine[]; onAddLine: (kind: QuoteLineKind) => void; onAddArea: () => void; onTakeoffs: () => void }) {
   const [otherOpen, setOtherOpen] = useState(false);
   const otherButtonRef = useRef<HTMLButtonElement>(null);
   const otherPopoverRef = useRef<HTMLDivElement>(null);
@@ -587,6 +587,7 @@ function GeneralAreaHeader({ lines, onAddLine, onAddArea }: { lines: QuoteLine[]
         <strong>General</strong>
         <small>Rows not assigned to a specific area</small>
       </div>
+      <button type="button" className="quote-area-takeoff-toggle quote-takeoff-feature-button" onClick={onTakeoffs}>▤ Takeoffs</button>
 
       <div className="quote-area-actions">
         <button type="button" className="quote-area-add-area" onClick={onAddArea}>+ Area</button>
@@ -660,6 +661,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
   const addLine = useQuoteStore((state) => state.addLine);
   const updateLine = useQuoteStore((state) => state.updateLine);
   const addSection = useQuoteStore((state) => state.addSection);
+  const ensureGeneralTakeoff = useQuoteStore((state) => state.ensureGeneralTakeoff);
   const reorderSection = useQuoteStore((state) => state.reorderSection);
   const setCustomerColumns = useQuoteStore((state) => state.setCustomerColumns);
   const recordSent = useQuoteStore((state) => state.recordSent);
@@ -681,6 +683,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
   const [draggingLineId, setDraggingLineId] = useState<string | null>(null);
+  const [generalTakeoffId,setGeneralTakeoffId] = useState<string | null>(null);
   const [draggingSectionId, setDraggingSectionId] = useState<string | null>(null);
   const [metaPanel, setMetaPanel] = useState<'document' | 'project' | 'visibility' | null>(null);
   const [issueCursor, setIssueCursor] = useState(0);
@@ -1079,7 +1082,12 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
             {pricingSchedule ? <section className="pricing-schedule-summary-card"><div><span className="quote-control-heading">Pricing schedule</span><p>{quote.pricingSchedule?.customerItems.length ?? 0} published customer rows</p></div><small>Choose Simple Rates, Plan Pricing, or Spreadsheet in the Pricing workspace. Only the selected published source becomes contractual.</small><div className="pricing-schedule-summary-actions"><button type="button" onClick={() => onModeChange('workbook')}>Open pricing workspace</button><button type="button" onClick={() => onModeChange('customer')}>Preview customer schedule</button></div></section> : <><section className="quote-lines-editor">
   <header><div><span className="quote-control-heading">{documentLabel} areas & scope</span><small>Organize the job by Kitchen, Bath, Unit Type, Clubhouse, or any other pricing area.</small></div><strong>{money.format(quoteTotal(quote))}</strong></header>
   <div className="quote-area-card quote-area-general" onDragOver={(event) => { if (draggingLineId) event.preventDefault(); }} onDrop={(event) => { if (draggingLineId) { event.preventDefault(); moveLineToArea(draggingLineId, undefined); setDraggingLineId(null); } }}>
-    <GeneralAreaHeader lines={generalLines} onAddLine={(kind) => addLine(quote.id, kind)} onAddArea={() => addSection(quote.id)} />
+    <GeneralAreaHeader lines={generalLines} onAddLine={(kind) => addLine(quote.id, kind)} onAddArea={() => addSection(quote.id)}
+      onTakeoffs={()=>{const id=ensureGeneralTakeoff(quote.id);if(id)setGeneralTakeoffId(id);}} />
+    {generalTakeoffId&&quote.sections.some(s=>s.id===generalTakeoffId)&&
+      <QuoteTakeoffsLite quote={quote} section={quote.sections.find(s=>s.id===generalTakeoffId)!}
+        onClose={()=>setGeneralTakeoffId(null)}/>}
+
     <div className="quote-area-lines">
       {generalLines.map((line) => <LineEditor key={line.id} quote={quote} line={line} dragActive={Boolean(draggingLineId)} dragging={draggingLineId === line.id} onDragStart={setDraggingLineId} onDrop={(targetId) => { if (draggingLineId) reorderLine(draggingLineId, targetId); setDraggingLineId(null); }} onDragEnd={() => setDraggingLineId(null)} issueGuide={activeIssueLineId === line.id ? quoteIssueGuide(quoteLineReminderLabels(line, quoteLinePricingComplete(line, guideMultiplier), Boolean(resolveLineAreaScopeState(quote, line)?.changed)), line, 'General') : undefined} issuePosition={activeIssueLineId === line.id ? issueLineIds.indexOf(line.id) + 1 : undefined} issueTotal={activeIssueLineId === line.id ? issueLineIds.length : undefined} onDismissIssue={() => setActiveIssueLineId(null)} />)}
       {!generalLines.length && <div className="quote-area-empty">General is ready for rows that do not belong to a named area.</div>}
