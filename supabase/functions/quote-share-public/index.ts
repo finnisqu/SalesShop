@@ -161,6 +161,21 @@ function safeAcceptedSnapshot(value: unknown) {
         && !hiddenSectionIds.has(sectionId);
     })
     .map(safePublicLine);
+  // Customer-selected itemization always reconciles to the actual Area total;
+  // hidden priced details are represented by one anonymous remainder row.
+  for(const section of rawSections.filter(section => section.customerVisible !== false && section.customerDisplayMode !== 'summary')){
+    const id=String(section.id??'');
+    const hiddenAmount=roundCurrency(allLines
+      .filter(line=>String(line.sectionId??'')===id && line.customerVisible===false)
+      .reduce((sum,line)=>sum+lineTotal(line),0));
+    if(hiddenAmount!==0){
+      lines.push(safePublicLine({
+        id:`remainder_${id}`,sectionId:id,kind:hiddenAmount<0?'discount':'item',
+        description:'Other included work',pricingMode:'direct',amount:Math.abs(hiddenAmount),
+        includeInTotal:true,customerVisible:true,
+      }));
+    }
+  }
   const sections = rawSections
     .filter((section) => section.customerVisible !== false)
     .map((section) => {
