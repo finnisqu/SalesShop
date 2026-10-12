@@ -91,6 +91,8 @@ import './quotes-mobile-beta.css';
 import './quotes-mobile-measure-grid.css';
 // Dense Materials/Sinks and non-overlapping Rates chooser (mobile Quotes Beta only).
 import './quotes-mobile-materials-pricing.css';
+// Area/piece fabrication preferences and optional faucet drilling controls.
+import './quotes-mobile-fabrication-options.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
