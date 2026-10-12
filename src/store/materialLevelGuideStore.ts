@@ -86,7 +86,8 @@ export function upgradeBuilderLevelGuide(guide: MaterialLevelGuideDocument): Mat
   // For edited versions of the temporary 0–8 preset, adjust only unchanged
   // individual starter values and preserve all customized fields. New cost
   // ranges for levels 7/8 remain explicitly unapproved.
-  const corrected=current.map(rule=>{
+  // Do not reinterpret company-edited pre-Level-0 guides as the temporary 0–8 preset.
+  const corrected=current.some(rule=>rule.id==='builder_level_0')?current.map(rule=>{
     const prior=PREVIOUS_0_8_RULES.find(old=>old.id===rule.id);
     const reference=BASELINE_RULES.find(seed=>seed.id===rule.id);
     if(!prior||!reference)return rule;
@@ -107,7 +108,7 @@ export function upgradeBuilderLevelGuide(guide: MaterialLevelGuideDocument): Mat
       &&updated.customerRate===rule.customerRate
       &&updated.graniteOnly===rule.graniteOnly
       &&updated.costBandConfirmed===rule.costBandConfirmed?rule:updated;
-  });
+  }):current;
   const additions=BASELINE_RULES.filter(seed=>
     !corrected.some(rule=>rule.id===seed.id||rule.label.trim().toLowerCase()===seed.label.toLowerCase()));
   if(!additions.length&&corrected.every((rule,i)=>rule===current[i]))return guide;
