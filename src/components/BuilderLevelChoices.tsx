@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState } from 'react';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import { builderLevelRateReference, selectableBuilderLevels } from '../services/builderLevelRate';
+import { materialLevelCostBand } from '../types/materialLevelGuide';
 import type { QuoteLineRateReference } from '../types/quote';
 import type { RateBookDivision } from '../types/rateBook';
 
@@ -14,13 +15,36 @@ export function BuilderLevelChoices({division,selectedRateId,onSelect}:{
   useEffect(()=>{hydrate();},[hydrate]);
   return <div className="qmb-builder-levels">
     <div className="qmb-builder-levels-heading"><strong>Stock / Builder levels</strong>
-      <small>Editable under Rates → Materials</small></div>
+      <small>Catalog → Rates → Material Pricing</small></div>
     <div className="qmb-builder-level-grid" role="group" aria-label="Stock Builder pricing levels">
       {levels.map(rule=><button type="button" key={rule.id}
         className={'qmb-builder-level-choice'+(selectedRateId===rule.id?' is-active':'')}
         aria-pressed={selectedRateId===rule.id}
         onClick={()=>onSelect(rule.customerRate,builderLevelRateReference(guide,rule,division))}>
-        <span>{rule.label}</span><strong>{'$'+rule.customerRate.toFixed(2)}/SF</strong>
+        <span>{rule.label}</span><strong>{'
+      </button>)}
+    </div>
+    {!levels.length&&<p>No active builder levels. Set rates under Rates → Materials.</p>}
+  </div>;
+}
+
+/** Smaller line-item RATE control; uses exactly the same guide as the SF takeoff picker. */
+export function BuilderLevelRateButton({division,selectedRateId,disabled,onSelect}:{
+  division?:RateBookDivision;selectedRateId?:string;disabled:boolean;
+  onSelect:(rate:number,reference:QuoteLineRateReference)=>void;
+}){
+  const [open,setOpen]=useState(false);
+  return <div className="qmb-builder-rate-control">
+    <button type="button" aria-expanded={open} disabled={disabled}
+      onClick={()=>setOpen(v=>!v)} className="qmb-builder-rate-toggle">RATE ▾</button>
+    {open&&<div className="qmb-builder-rate-menu">
+      <BuilderLevelChoices division={division} selectedRateId={selectedRateId}
+        onSelect={(rate,reference)=>{onSelect(rate,reference);setOpen(false);}}/>
+    </div>}
+  </div>;
+}
++rule.customerRate.toFixed(2)}/SF</strong>
+        <small className="qmb-builder-cost">{materialLevelCostBand(guide.rules,rule)}</small>
       </button>)}
     </div>
     {!levels.length&&<p>No active builder levels. Set rates under Rates → Materials.</p>}
