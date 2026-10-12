@@ -160,3 +160,15 @@
   .qmb .qmb-three input {padding-inline:5px!important;}
   .qmb .qmb-area-icon {display:none;}
 }
+
+.qmb .qmb-headeractions {display:flex;align-items:center;gap:7px;flex:0 0 auto;}
+.qmb .qmb-appnav {position:relative;z-index:15;}
+.qmb .qmb-appnav summary {display:grid;place-items:center;min-width:36px;min-height:36px;
+  color:var(--qmb-accent);border:1px solid var(--qmb-border);border-radius:9px;cursor:pointer;list-style:none;font-size:17px;}
+.qmb .qmb-appnav summary::-webkit-details-marker {display:none;}
+.qmb .qmb-appnav nav {position:absolute;right:0;top:42px;width:180px;max-height:min(360px,70dvh);
+  overflow:auto;padding:7px;background:var(--qmb-card);border:1px solid var(--qmb-border);
+  box-shadow:0 12px 30px rgba(0,0,0,.18);border-radius:13px;display:grid;gap:3px;}
+.qmb .qmb-appnav nav button {min-height:43px;border:0;text-align:left;background:transparent;
+  color:var(--qmb-ink);border-radius:8px;padding:9px 12px;font-weight:700;}
+.qmb .qmb-appnav nav button:focus-visible, .qmb .qmb-appnav nav button:hover {background:var(--qmb-tint);}
