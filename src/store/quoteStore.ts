@@ -23,6 +23,7 @@ import {
 } from '../services/normalizedQuoteSync';
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
+import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
 import { relinkQuotesForCompany, relinkQuotesForContact } from '../services/crmIdentity';
 import {
   isDraftQuoteNumber,
@@ -73,6 +74,7 @@ interface QuoteState {
   addTakeoffLine: (quoteId: string, sectionId: string) => string;
   setTakeoffRate: (quoteId: string, sectionId: string, value: number | undefined, reference?: QuoteLineRateReference) => void;
   pinProjectMaterial: (quoteId: string, label: string, reference?: QuoteLineMaterialReference) => void;
+  applyJobSelections: (quoteId: string, options: JobSelectionsPatch) => void;
   unpinProjectMaterial: (quoteId: string, materialId: string) => void;
   ensureGeneralTakeoff: (quoteId: string) => string;
   splitTakeoff: (quoteId: string, sectionId: string, pieceIds: string[], title: string) => string;
@@ -578,6 +580,15 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const updated={...(reference?.materialId?upsertProjectMaterial(materialUpdated,label,reference):materialUpdated),updatedAt:now()};
     const history=historyPatch(get(),quoteId,current);
     const quotes=get().quotes.map(quote=>quote.id===quoteId?updated:quote);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
+  },
+  applyJobSelections: (quoteId, options) => {
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return;
+    const updated=applyJobSelectionsToQuote(current,options);
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,updatedAt:now()}:q);
     persist(quotes,get().activeQuoteId);
     set({quotes,...history});
   },
