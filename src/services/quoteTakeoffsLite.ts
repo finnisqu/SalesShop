@@ -103,7 +103,7 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
       pricingMode:'quantity-rate',quantity:sink.count,rate:sink.unitPrice,
       // An itemization choice is independent of editing sink quantities or prices.
       customerVisible:existing?.customerVisible??false,
-      includeInTotal:existing?.includeInTotal??true,
+      includeInTotal:true,
       sinkReference:sink.sinkReference,
       takeoffSinkId:sink.id,
     };
