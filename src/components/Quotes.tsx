@@ -53,6 +53,7 @@ import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteProjectMaterials } from './QuoteProjectMaterials';
 import { takeoffCustomerSpecs } from '../services/quoteTakeoffsLite';
+import { isGeneralTakeoffSection, presentItemizedQuoteLines, presentGeneralSummary, type PresentedQuoteLine } from '../services/quoteCustomerPresentation';
 import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteSignatureDialog } from './QuoteSignatureDialog';
 
@@ -619,35 +620,53 @@ function GeneralAreaHeader({ lines, onAddLine, onAddArea, onTakeoffs }: { lines:
 }
 
 function StandardCustomerPreview({ quote }: { quote: Quote }) {
-  const visibleSections = quote.sections.filter((section) => section.customerVisible);
-  const visibleLines = quote.lines.filter((line) => line.customerVisible);
-  const renderLines = (lines: QuoteLine[]) => lines.map((line) => {
-    const priced = line.pricingMode !== 'none';
-    return <div key={line.id} className={`customer-quote-row kind-${line.kind}`}><div className="customer-line-description">{line.description || '—'}</div>{quote.customerColumns.quantity && <div>{line.pricingMode === 'quantity-rate' ? line.quantity ?? '' : ''}</div>}{quote.customerColumns.rate && <div>{line.pricingMode === 'quantity-rate' && line.rate !== undefined ? money.format(line.rate) : ''}</div>}{quote.customerColumns.lineAmount && <div className="customer-line-amount">{priced ? money.format(quoteLineAmount(line)) : ''}</div>}</div>;
+  const visibleSections = quote.sections.filter(section=>section.customerVisible);
+  const renderLines = (rows: PresentedQuoteLine[]) => rows.map(row => {
+    const line=row.source;
+    return <div key={row.id} className={`customer-quote-row kind-${row.kind}`}>
+      <div className="customer-line-description">{row.description||'—'}</div>
+      {quote.customerColumns.quantity&&<div>{!row.aggregated&&line?.pricingMode==='quantity-rate'?line.quantity??'':''}</div>}
+      {quote.customerColumns.rate&&<div>{!row.aggregated&&line?.pricingMode==='quantity-rate'&&line.rate!==undefined?money.format(line.rate):''}</div>}
+      {quote.customerColumns.lineAmount&&<div className="customer-line-amount">{row.priced?money.format(row.amount):''}</div>}
+    </div>;
   });
-  const renderAreaSummary = (title: string, total: number, specification = '') => <div className="customer-quote-row customer-area-summary-row"><div className="customer-line-description"><strong>{title}</strong>{specification && <small className="customer-area-spec">{specification}</small>}</div><div className="customer-line-amount">{money.format(total)}</div></div>;
-  const allSectionIds = new Set(quote.sections.map((section) => section.id));
-  const looseLines = visibleLines.filter((line) => !line.sectionId || !allSectionIds.has(line.sectionId));
-  const documentLabel = commercialDocumentLabel(quote);
+  const renderAreaSummary=(title:string,total:number,specification='')=><div className="customer-quote-row customer-area-summary-row">
+    <div className="customer-line-description"><strong>{title}</strong>{specification&&<small className="customer-area-spec">{specification}</small>}</div>
+    <div className="customer-line-amount">{money.format(total)}</div>
+  </div>;
+  const allSectionIds=new Set(quote.sections.map(section=>section.id));
+  const looseLines=quote.lines.filter(line=>!line.sectionId||!allSectionIds.has(line.sectionId));
+  const documentLabel=commercialDocumentLabel(quote);
   return (
     <article className="customer-quote-paper">
       <header className="customer-quote-letterhead"><div><CustomerDocumentBrand /><strong>{documentLabel.toUpperCase()}</strong></div><dl><div><dt>Document</dt><dd>{displayQuoteNumber(quote)}</dd></div><div><dt>Date</dt><dd>{quote.quoteDate}</dd></div></dl></header>
       <section className="customer-quote-recipient"><div><span>Prepared for</span><strong>{quote.companyName || quote.contactName || 'Customer'}</strong>{quote.contactName && quote.companyName && <p>{quote.contactName}</p>}{quote.address && <p>{quote.address}</p>}</div><div><span>Project</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div></section>
-      <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}><div className="customer-quote-row customer-quote-table-head"><div>Description</div>{quote.customerColumns.quantity && <div>Qty</div>}{quote.customerColumns.rate && <div>Rate</div>}{quote.customerColumns.lineAmount && <div>Amount</div>}</div>{renderLines(looseLines)}{visibleSections.map((section) => {
-        const allSectionLines = quote.lines.filter((line) => line.sectionId === section.id);
-        const sectionLines = visibleLines.filter((line) => line.sectionId === section.id);
-        if ((section.customerDisplayMode ?? 'detail') === 'summary') {
-          const total = quoteLinesTotal(allSectionLines);
-          if (!allSectionLines.length) return null;
-          return <div className="customer-quote-section is-summary" key={section.id}>{renderAreaSummary(section.title, total, takeoffCustomerSpecs(section))}</div>;
-        }
-        const hiddenTotal = quoteLinesTotal(allSectionLines.filter(line => !line.customerVisible));
-        if (!sectionLines.length && hiddenTotal === 0) return null;
-        return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{takeoffCustomerSpecs(section) && <p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}{renderLines(sectionLines)}{hiddenTotal !== 0 && renderAreaSummary('Other included work', hiddenTotal)}</div>;
-      })}</div>
+      <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}>
+        <div className="customer-quote-row customer-quote-table-head"><div>Description</div>{quote.customerColumns.quantity&&<div>Qty</div>}{quote.customerColumns.rate&&<div>Rate</div>}{quote.customerColumns.lineAmount&&<div>Amount</div>}</div>
+        {renderLines(presentItemizedQuoteLines(looseLines))}
+        {visibleSections.map(section=>{
+          const allSectionLines=quote.lines.filter(line=>line.sectionId===section.id);
+          if(!allSectionLines.length)return null;
+          const general=isGeneralTakeoffSection(section);
+          if(section.customerDisplayMode==='summary'){
+            if(general)return <div className="customer-quote-section is-general" key={section.id}>
+              {renderLines(presentGeneralSummary(allSectionLines))}
+            </div>;
+            return <div className="customer-quote-section is-summary" key={section.id}>
+              {renderAreaSummary(section.title,quoteLinesTotal(allSectionLines),takeoffCustomerSpecs(section))}
+            </div>;
+          }
+          const rows=presentItemizedQuoteLines(allSectionLines);
+          if(!rows.length)return null;
+          return <div className={general?'customer-quote-section is-general':'customer-quote-section'} key={section.id}>
+            {!general&&<><h3>{section.title}</h3>{takeoffCustomerSpecs(section)&&<p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}</>}
+            {renderLines(rows)}
+          </div>;
+        })}
+      </div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
-      {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
-      <footer>{quote.status === 'Signed' ? 'Accepted electronically with SalesShop.' : `Prepared with SalesShop · Electronic acceptance is available for this ${documentLabel.toLowerCase()}.`}</footer>
+      {quote.customerNotes&&<div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
+      <footer>{quote.status==='Signed'?'Accepted electronically with SalesShop.':`Prepared with SalesShop · Electronic acceptance is available for this ${documentLabel.toLowerCase()}.`}</footer>
     </article>
   );
 }
