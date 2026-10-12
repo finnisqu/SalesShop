@@ -295,9 +295,9 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
   await beta.getByRole('button',{name:/^Review /}).click();
-  await expect(beta.getByRole('button',{name:'Fix No priced work yet'})).toBeVisible();
+  await expect(beta.getByRole('button',{name:'Go to No priced work yet'})).toBeVisible();
   await expect(beta.getByRole('button',{name:'Resolve pricing issues to issue'})).toBeDisabled();
-  await beta.getByRole('button',{name:'Fix No priced work yet'}).click();
+  await beta.getByRole('button',{name:'Go to No priced work yet'}).click();
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'+ Add piece'}).click();
   await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
@@ -315,6 +315,43 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await expect(beta.getByRole('button',{name:'Review remaining items to issue'})).toBeDisabled();
   await beta.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
   await expect(beta.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
-  await beta.getByRole('button',{name:/Fix Material not selected:/}).click();
+  await beta.getByRole('button',{name:/Resolve Material not selected:/}).click();
+  await expect(beta.getByRole('region',{name:/Resolve Material not selected:/})).toBeVisible();
+  await beta.getByRole('region',{name:/Resolve Material not selected:/})
+    .getByRole('button',{name:'Full editor ›'}).click();
   await expect(beta.getByRole('button',{name:'Materials'})).toHaveAttribute('aria-current','page');
+});
+
+
+test('Review resolves customer name and sink price inline without leaving Review',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Mobile quick fix workflow');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:/^Review /}).click();
+  await beta.getByRole('button',{name:'Resolve Customer not selected'}).click();
+  const customer=beta.getByRole('region',{name:'Resolve Customer not selected'});
+  await expect(customer).toBeVisible();
+  await customer.getByRole('textbox',{name:'Customer / company'}).fill('Acme Builder');
+  await customer.getByRole('button',{name:'Save'}).click();
+  await expect(beta.getByRole('button',{name:'Resolve Customer not selected'})).toHaveCount(0);
+  await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
+  // Still on Review, and no navigation through Details was required.
+  await beta.getByRole('button',{name:'Back to draft'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('button',{name:'Materials'}).click();
+  await beta.getByRole('button',{name:'+ Add sink'}).click();
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:/^Review /}).click();
+  await beta.getByRole('button',{name:/Resolve .*needs a selling price/}).click();
+  const sink=beta.getByRole('region',{name:/Resolve .*needs a selling price/});
+  await sink.getByRole('spinbutton',{name:'Sink selling price / each ($)'}).fill('220');
+  await sink.getByRole('button',{name:'Save'}).click();
+  await expect(beta.getByRole('button',{name:/Resolve .*needs a selling price/})).toHaveCount(0);
+  await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
 });
