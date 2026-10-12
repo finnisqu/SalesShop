@@ -641,8 +641,9 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
           if (!allSectionLines.length) return null;
           return <div className="customer-quote-section is-summary" key={section.id}>{renderAreaSummary(section.title, total, takeoffCustomerSpecs(section))}</div>;
         }
-        if (!sectionLines.length) return null;
-        return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{takeoffCustomerSpecs(section) && <p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}{renderLines(sectionLines)}</div>;
+        const hiddenTotal = quoteLinesTotal(allSectionLines.filter(line => !line.customerVisible));
+        if (!sectionLines.length && hiddenTotal === 0) return null;
+        return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{takeoffCustomerSpecs(section) && <p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}{renderLines(sectionLines)}{hiddenTotal !== 0 && renderAreaSummary('Other included work', hiddenTotal)}</div>;
       })}</div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
