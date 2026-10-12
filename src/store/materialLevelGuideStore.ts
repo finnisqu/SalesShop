@@ -25,6 +25,10 @@ const localKey=()=>{
 };
 let cloudSaveTimer: ReturnType<typeof setTimeout>|undefined;
 let hydrationStarted=false;
+let hydrationToken=0;
+let hydratedContext='';
+const pricingContext=(auth:ReturnType<typeof useAuthStore.getState>)=>
+  auth.mode==='cloud'&&auth.organizationId?'cloud:'+auth.organizationId:'local';
 const SEED_TIME = '2026-10-06T15:52:00.000Z';
 const uid = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
@@ -286,8 +290,12 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
   hydrated: false,
 
   hydrate: () => {
-    if (get().hydrated||hydrationStarted) return;
+    const context=pricingContext(useAuthStore.getState());
+    if ((get().hydrated||hydrationStarted)&&hydratedContext===context) return;
+    hydratedContext=context;
     hydrationStarted=true;
+    const token=++hydrationToken;
+    set({hydrated:false,syncError:undefined});
     const local=upgradeBuilderLevelGuide(readLocal());
     const auth=useAuthStore.getState();
     if(!supabase||auth.mode!=='cloud'||!auth.organizationId){
@@ -297,6 +305,7 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
     // company rates while waiting for the org-scoped guide to load.
     void Promise.resolve(supabase.from('organizations').select('material_level_guide')
       .eq('id',auth.organizationId).single()).then(({data,error})=>{
+        if(token!==hydrationToken)return;
         const stored=data?.material_level_guide as MaterialLevelGuideDocument|undefined;
         const valid=stored&&stored.schemaVersion===3&&Array.isArray(stored.rules);
         const guide=valid?upgradeBuilderLevelGuide(stored):local;
@@ -305,9 +314,10 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
         // For a new organization, publish the seed exactly once if allowed.
         if(!error&&!valid)persist(guide,true);
       }).catch((error:unknown)=>{
+        if(token!==hydrationToken)return;
         set({guide:local,hydrated:true,syncError:
           error instanceof Error?error.message:'Could not load shared Builder Levels'});
-      }).finally(()=>{hydrationStarted=false;});
+      }).finally(()=>{if(token===hydrationToken)hydrationStarted=false;});
   },
 
   updateGuide: (patch) => {
@@ -382,3 +392,17 @@ export const useMaterialLevelGuideStore = create<MaterialLevelGuideState>((set, 
     set({ guide });
   },
 }));
+
+/** Switching organizations must invalidate the cached pricing guide; otherwise
+ * a second team's employees could momentarily see the first team's levels. */
+useAuthStore.subscribe((auth,previous)=>{
+  if(pricingContext(auth)===pricingContext(previous))return;
+  ++hydrationToken;
+  hydrationStarted=false;
+  hydratedContext='';
+  if(cloudSaveTimer)clearTimeout(cloudSaveTimer);
+  useMaterialLevelGuideStore.setState({
+    guide:baselineGuide(),hydrated:false,syncError:undefined,
+  });
+  useMaterialLevelGuideStore.getState().hydrate();
+});
