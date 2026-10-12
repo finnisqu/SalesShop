@@ -6,7 +6,7 @@ import {
   isValidTakeoffPiece,newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,
   totalSplashLf,totalTakeoffSf,takeoffOwnedScope,takeoffCustomerSpecs,
 } from '../services/quoteTakeoffsLite';
-import type { Quote,QuoteSection,QuoteTakeoffPiece,QuoteTakeoffSink } from '../types/quote';
+import { quoteLinesTotal,type Quote, type QuoteSection, type QuoteTakeoffPiece, type QuoteTakeoffSink } from '../types/quote';
 
 const sfFmt=new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const cash=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -51,8 +51,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const linkedSf=quote.lines.filter(l=>l.sectionId===section.id&&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
   const pricedSinks=sinks.filter(s=>s.includeInPricing);
   const pendingPrice=pricedSinks.some(s=>s.unitPrice===undefined);
-  const areaPrice=quote.lines.filter(l=>l.sectionId===section.id&&l.includeInTotal)
-    .reduce((n,l)=>n+(l.pricingMode==='quantity-rate'?(l.quantity??0)*(l.rate??0):(l.amount??0)),0);
+  const areaPrice=quoteLinesTotal(quote.lines.filter(l=>l.sectionId===section.id));
 
   useEffect(()=>{
     returnFocus.current=document.activeElement;
