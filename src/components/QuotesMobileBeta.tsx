@@ -30,6 +30,7 @@ import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
+import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
@@ -107,6 +108,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
   quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;goBack:()=>void;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
+  const general=isGeneralTakeoffSection(section);
   const updateSection=useQuoteStore(s=>s.updateSection);
   const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
   const addLinked=useQuoteStore(s=>s.addTakeoffLine);
@@ -130,11 +132,13 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
       <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>
     </header>
     <div className="qmb-pad qmb-titlepad">
-      <div className="qmb-kicker">AREA WORKSPACE</div>
-      <Field label="Area name">
-        <input className="qmb-titleinput" value={section.title} disabled={!editable} maxLength={200} placeholder="Kitchen, Unit A, Level 2…"
-          onChange={e=>updateSection(quote.id,section.id,{title:e.target.value})}/>
-      </Field>
+      {general?<div className="qmb-kicker">GENERAL · TAKEOFFS & PRICING</div>:<>
+        <div className="qmb-kicker">AREA WORKSPACE</div>
+        <Field label="Area name">
+          <input className="qmb-titleinput" value={section.title} disabled={!editable} maxLength={200} placeholder="Kitchen, Unit A, Level 2…"
+            onChange={e=>updateSection(quote.id,section.id,{title:e.target.value})}/>
+        </Field>
+      </>}
       <div className="qmb-area-summary"><span>{sf.format(measured)} SF measured</span><strong>{money.format(amount)}</strong></div>
     </div>
     <nav className="qmb-tabs" aria-label="Area sections">
@@ -172,7 +176,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
               className={section.customerDisplayMode==='detail'?'active':''}
               onClick={()=>updateSection(quote.id,section.id,{customerDisplayMode:'detail'})}>Itemized</button>
           </div>
-          <p className="qmb-help">{takeoffCustomerSpecs(section)||'Material and sink specifications can be added anytime.'}</p>
+          <p className="qmb-help">{general?'General has no customer-facing heading or specification blurb.':takeoffCustomerSpecs(section)||'Material and sink specifications can be added anytime.'}</p>
           {section.customerDisplayMode==='detail'&&lines.filter(l=>l.includeInTotal).map(l=>
             <label key={l.id} className="qmb-check"><input type="checkbox" disabled={!editable} checked={l.customerVisible}
               onChange={e=>updateLine(quote.id,l.id,{customerVisible:e.target.checked})}/>{l.description||'Line item'}</label>)}
@@ -317,7 +321,7 @@ export function QuotesMobileBeta() {
           {quote.sections.map(s=>{
             const lines=quote.lines.filter(l=>l.sectionId===s.id);
             return <button type="button" key={s.id} className="qmb-card qmb-area-card" onClick={()=>openArea(s.id)}>
-              <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title||'Untitled Area'}</strong>
+              <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
                 <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
                 <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small></span>
               <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b><span>›</span></span>
