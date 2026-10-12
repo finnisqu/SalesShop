@@ -796,6 +796,20 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
         quotes,
         activeQuoteId: get().activeQuoteId,
       });
+      // A stale-write guard can skip an update. Confirm the authoritative
+      // server status and frozen revision before displaying "Sent" locally.
+      const {data:serverQuote,error:serverError}=await supabase.from('quotes')
+        .select('status,quote_number,revision').eq('organization_id',auth.organizationId)
+        .eq('id',quoteId).single();
+      if(serverError||!serverQuote||serverQuote.status!=='Sent'
+        ||serverQuote.quote_number!==sentQuote.quoteNumber
+        ||Number(serverQuote.revision)!==sentQuote.revision)
+        throw new Error('Quote was not confirmed as Sent in the cloud. Keep the draft and retry.');
+      const {data:frozen,error:freezeError}=await supabase.from('quote_revisions')
+        .select('revision').eq('organization_id',auth.organizationId)
+        .eq('quote_id',quoteId).eq('revision',sentQuote.revision).single();
+      if(freezeError||!frozen)
+        throw new Error('Quote revision was not confirmed saved in the cloud. Please retry.');
     }
     persist(quotes, get().activeQuoteId);
     set({ quotes });
