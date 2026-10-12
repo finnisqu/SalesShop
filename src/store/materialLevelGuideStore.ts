@@ -96,13 +96,17 @@ export function upgradeBuilderLevelGuide(guide: MaterialLevelGuideDocument): Mat
       ||((rule.id==='builder_level_7'||rule.id==='builder_level_8')
         &&rule.costBandConfirmed===undefined && wasPreviousCeiling);
     if(!wasPreviousCeiling&&!wasPreviousPrice&&!needsMetadata)return rule;
-    return {...rule,
+    const updated:MaterialLevelRule={...rule,
       maxMaterialCost:wasPreviousCeiling?reference.maxMaterialCost:rule.maxMaterialCost,
       customerRate:wasPreviousPrice?reference.customerRate:rule.customerRate,
       ...(rule.id==='builder_level_0'?{graniteOnly:true}:{}),
       ...(rule.id==='builder_level_7'||rule.id==='builder_level_8'
         ?{costBandConfirmed:wasPreviousCeiling?false:rule.costBandConfirmed??true}:{}),
     };
+    return updated.maxMaterialCost===rule.maxMaterialCost
+      &&updated.customerRate===rule.customerRate
+      &&updated.graniteOnly===rule.graniteOnly
+      &&updated.costBandConfirmed===rule.costBandConfirmed?rule:updated;
   });
   const additions=BASELINE_RULES.filter(seed=>
     !corrected.some(rule=>rule.id===seed.id||rule.label.trim().toLowerCase()===seed.label.toLowerCase()));
