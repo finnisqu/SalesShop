@@ -17,6 +17,7 @@ import {
   type QuoteSection,
   type QuoteLineQuantitySource,
   type QuoteAreaScope,
+  type QuoteProjectMaterial,
   type QuoteStatus,
 } from '../types/quote';
 
@@ -170,6 +171,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     address: valueOrUndefined(row.address),
     pricingDivision: valueOrUndefined(row.pricing_division) as Quote['pricingDivision'],
     sections: sectionsByQuote.get(String(row.id)) ?? [],
+    projectMaterials: Array.isArray(row.project_materials) ? row.project_materials as QuoteProjectMaterial[] : [],
     lines: linesByQuote.get(String(row.id)) ?? [],
     customerColumns: {
       quantity: Boolean(row.customer_quantity), rate: Boolean(row.customer_rate), lineAmount: Boolean(row.customer_line_amount),
@@ -301,6 +303,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
       contact_email: quote.contactEmail ?? null,
       address: quote.address ?? null,
       pricing_division: quote.pricingDivision ?? null,
+      project_materials: quote.projectMaterials ?? [],
       customer_quantity: quote.customerColumns.quantity,
       customer_rate: quote.customerColumns.rate,
       customer_line_amount: quote.customerColumns.lineAmount,
