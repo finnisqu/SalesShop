@@ -95,6 +95,8 @@ import './quotes-mobile-materials-pricing.css';
 import './quotes-mobile-fabrication-options.css';
 // Sticky Quotes Beta header/Selections sheet and aligned Accounts mobile Board shell.
 import './quotes-mobile-sticky-selections.css';
+// Stock / Builder Level 0–8 quote RATE presets use the existing material pricing guide.
+import './quotes-mobile-builder-levels.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
