@@ -88,6 +88,10 @@ export interface QuoteTakeoffPiece {
   backsplash?: boolean;
   leftSplash?: boolean;
   rightSplash?: boolean;
+  /** Optional per-piece fabricated backsplash height; defaults to 4 inches. */
+  splashHeightIn?: number;
+  /** Optional fabrication edge selection; defaults to Flat. */
+  edgeProfile?: string;
 }
 
 export interface QuoteTakeoffSink {
@@ -97,8 +101,10 @@ export interface QuoteTakeoffSink {
   count: number;
   /** Optional sell price per sink, not cost. */
   unitPrice?: number;
-  /** Creates a linked priced quote row when enabled; otherwise specs only. */
+  /** Legacy catalog compatibility flag. New mobile Beta sinks always receive a priced quote line. */
   includeInPricing: boolean;
+  /** Nine optional faucet drilling locations at 2-inch intervals relative to center, -8 through +8. */
+  faucetHoleOffsetsIn?: number[];
   /** Snapshot of a Catalog sink model + variant at selection time. */
   sinkReference?: QuoteLineSinkReference;
 }
@@ -119,6 +125,9 @@ export interface QuoteAreaScope {
   /** Catalog material + variant and source-cost snapshot, when chosen. */
   takeoffMaterialReference?: QuoteLineMaterialReference;
   takeoffSinks?: QuoteTakeoffSink[];
+  /** Default for newly added pieces; individually overridden pieces keep their own choices. */
+  takeoffDefaultSplashHeightIn?: number;
+  takeoffDefaultEdgeProfile?: string;
   /** In Takeoffs Lite, the combined top + checked 4-inch splash material SF. */
   countertopSf?: number;
   /** Retained separately for optional splash labor/linear-foot estimating. */
