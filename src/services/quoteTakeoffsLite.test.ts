@@ -3,7 +3,7 @@ import type { Quote,QuoteTakeoffPiece,QuoteLine } from '../types/quote';
 import { applyAreaScopeQuantity,resolveLineAreaScopeState } from './quoteAreaScope';
 import {
   parseInches,isValidTakeoffPiece,takeoffPieceSf,totalTakeoffSf,
-  patchQuoteTakeoff,sectionTakeoffSf,newTakeoffPiece,
+  patchQuoteTakeoff,detachQuoteTakeoff,sectionTakeoffSf,newTakeoffPiece,
 } from './quoteTakeoffsLite';
 
 const at='2026-10-12T18:30:00.000Z';
@@ -86,6 +86,19 @@ describe('Takeoffs Lite: precise fractional-inch piece measurements',()=>{
     const linked={...current.lines[0],quantity:patch!.quantity,quantitySource:patch!.quantitySource};
     expect(resolveLineAreaScopeState({...current,lines:[linked]},linked)?.changed).toBe(false);
     expect(applyAreaScopeQuantity(start.sections[0],'countertopSf',at)?.quantitySource?.syncMode).toBeUndefined();
+  });
+  it('switches back to manual SF without erasing current billable area or quote rates',()=>{
+    const original=quote();
+    const measured=patchQuoteTakeoff(original,'kitchen',[piece('island',96,36)],at);
+    const detached=detachQuoteTakeoff(measured,'kitchen');
+    expect(detached.sections[0].scope?.countertopSf).toBe(24);
+    expect(detached.sections[0].scope?.takeoffPieces).toBeUndefined();
+    expect(detached.lines[0].quantity).toBe(24);
+    expect(detached.lines[0].rate).toBe(25);
+    expect(detached.lines[0].quantitySource?.syncMode).toBeUndefined();
+    expect(detached.lines[0].quantitySource?.capturedValue).toBe(24);
+    expect(detached.lines[1]).toEqual(original.lines[1]);
+    expect(detachQuoteTakeoff(detached,'kitchen')).toBe(detached);
   });
   it('supports an empty area and a new piece with independent identity',()=>{
     const blank=patchQuoteTakeoff(quote(),'kitchen',[]);
