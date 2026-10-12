@@ -31,7 +31,10 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
       </div>
       <small className="qmb-audit-help">{description}</small>
       {items.map(finding=>{
-        const hasInline=Boolean(quickFixForFinding(finding));
+        const fix=quickFixForFinding(finding);
+        const linkedQuantity=fix?.kind==='line'&&fix.field==='quantity'&&
+          quote.lines.some(line=>line.id===fix.id&&line.quantitySource?.syncMode==='live');
+        const hasInline=Boolean(fix&&!linkedQuantity);
         const expanded=expandedId===finding.id;
         return <article className={'qmb-audit-finding '+kind+(expanded?' is-expanded':'')} key={finding.id}>
           <div className="qmb-audit-finding-summary">
