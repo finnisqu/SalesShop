@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { scopedStorageKey } from '../lib/developerPlayground';
 import type { MaterialLevelGuideDocument, MaterialLevelGuideVersion, MaterialLevelRule } from '../types/materialLevelGuide';
 
 interface MaterialLevelGuideState {
@@ -13,7 +14,7 @@ interface MaterialLevelGuideState {
   restoreVersion: (versionId: string) => void;
 }
 
-const LOCAL_KEY = 'salesshop-material-level-guide-v1';
+const LOCAL_KEY = scopedStorageKey('salesshop-material-level-guide-v1');
 const SEED_TIME = '2026-10-06T15:52:00.000Z';
 const uid = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
