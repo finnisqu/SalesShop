@@ -183,7 +183,7 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
           <input autoFocus type="number" inputMode="decimal" step={fix.field==='quantity'?'1':'.01'}
             min="0" value={main} onChange={e=>setMain(e.target.value)}/>
         </label>
-        {fix.field==='rate'&&<div className="qmb-audit-rate-chooser">
+        {fix.field==='rate'&&line?.kind==='material'&&<div className="qmb-audit-rate-chooser">
           <button type="button" className="qmb-outline qmb-audit-rate-toggle"
             aria-label="Choose from Rates in Review" aria-expanded={rateOptionsOpen}
             onClick={()=>setRateOptionsOpen(open=>!open)}>
@@ -191,7 +191,6 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
           </button>
           {rateOptionsOpen&&line&&<div className="qmb-audit-rate-panel">
             <QuoteSfRateChoices division={quote.pricingDivision}
-              includeBuilderLevels={line.kind==='material'}
               selectedRateId={line.rateReference?.rateBookItemId}
               materialType={line.materialReference?.snapshot?.materialType}
               materialCostPerSf={line.materialReference?.sourceCostPerSf??line.materialReference?.snapshot?.costPerSf}
