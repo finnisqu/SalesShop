@@ -1,4 +1,6 @@
-export type CloudDocumentKey = 'crm' | 'quotes' | 'signatures' | 'notebook';
+import { scopedStorageKey } from '../lib/developerPlayground';
+
+ = 'crm' | 'quotes' | 'signatures' | 'notebook';
 
 export const CLOUD_DOCUMENT_SAVED_EVENT = 'salesshop:document-saved';
 
@@ -16,7 +18,7 @@ export interface CloudDocumentSavedDetail {
 
 export function readLocalDocument(key: CloudDocumentKey): unknown | null {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEYS[key]);
+    const raw = localStorage.getItem(scopedStorageKey(LOCAL_STORAGE_KEYS[key]));
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -24,7 +26,7 @@ export function readLocalDocument(key: CloudDocumentKey): unknown | null {
 }
 
 export function writeLocalDocument(key: CloudDocumentKey, document: unknown, notify = true) {
-  localStorage.setItem(LOCAL_STORAGE_KEYS[key], JSON.stringify(document));
+  localStorage.setItem(scopedStorageKey(LOCAL_STORAGE_KEYS[key]), JSON.stringify(document));
   if (!notify || typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent<CloudDocumentSavedDetail>(CLOUD_DOCUMENT_SAVED_EVENT, {
     detail: { key, document },
@@ -32,5 +34,5 @@ export function writeLocalDocument(key: CloudDocumentKey, document: unknown, not
 }
 
 export function removeLocalDocument(key: CloudDocumentKey) {
-  localStorage.removeItem(LOCAL_STORAGE_KEYS[key]);
+  localStorage.removeItem(scopedStorageKey(LOCAL_STORAGE_KEYS[key]));
 }
