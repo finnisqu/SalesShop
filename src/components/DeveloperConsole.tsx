@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
+import { playgroundUrl } from '../lib/developerPlayground';
 import '../developer-console.css';
 
 type TenantStatus = 'not_configured' | 'trial' | 'active' | 'past_due' | 'suspended';
@@ -13,7 +14,7 @@ type TenantMetadata = {
   plan: Plan;
 };
 type Overview = { organizations: TenantMetadata[]; organizationCount: number };
-type ConsoleTab = 'overview' | 'companies';
+type ConsoleTab = 'overview' | 'companies' | 'playground';
 
 const label = (value: string) => value === 'not_configured' ? 'Not configured'
   : value.replaceAll('_', ' ').replace(/^\w/, (c) => c.toUpperCase());
@@ -73,6 +74,8 @@ export function DeveloperConsole() {
           className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')}>Overview</button>
         <button type="button" aria-current={tab === 'companies' ? 'page' : undefined}
           className={tab === 'companies' ? 'active' : ''} onClick={() => setTab('companies')}>Companies</button>
+        <button type="button" aria-current={tab === 'playground' ? 'page' : undefined}
+          className={tab === 'playground' ? 'active' : ''} onClick={() => setTab('playground')}>Developer Playground</button>
         <span className="developer-console-nav-caption">FUTURE MODULES</span>
         <div className="developer-console-disabled">Subscriptions <span>Planned</span></div>
         <div className="developer-console-disabled">Releases <span>Planned</span></div>
@@ -87,13 +90,14 @@ export function DeveloperConsole() {
     <main className="developer-console-main">
       <header className="developer-console-header">
         <div><span className="developer-console-eyebrow">SALESSHOP / DEVELOPER CONSOLE</span>
-          <h1>{tab === 'overview' ? 'Platform overview' : 'Companies'}</h1>
+          <h1>{tab === 'overview' ? 'Platform overview' : tab === 'companies' ? 'Companies' : 'Developer Playground'}</h1>
           <p>{tab === 'overview' ? 'Manage the product, not your customers’ private work.'
-            : 'Customer workspace metadata only. No access to employee or sales records.'}</p>
+            : tab === 'companies' ? 'Customer workspace metadata only. No access to employee or sales records.'
+              : 'Run the actual SalesShop app in an isolated, editable local sandbox.'}</p>
         </div>
-        <button type="button" onClick={() => void refresh()} disabled={loading}>
+        {tab !== 'playground' && <button type="button" onClick={() => void refresh()} disabled={loading}>
           {loading ? 'Refreshing…' : '↻ Refresh'}
-        </button>
+        </button>}
       </header>
       {error && <div className="developer-console-error" role="alert">
         <strong>Could not load platform metadata</strong><span>{error}</span>
@@ -106,6 +110,10 @@ export function DeveloperConsole() {
             <small>No billing provider connected yet</small></article>
           <article><span>Customer data access</span><strong>None</strong>
             <small>Developer account is not a tenant member</small></article>
+        </section>
+        <section className="developer-console-playground-invite">
+          <div><strong>Developer Playground</strong><p>Explore every SalesShop workspace with fictional customers and quotes. No connection to company data.</p></div>
+          <button type="button" onClick={() => window.location.assign(playgroundUrl())}>Open sandbox app →</button>
         </section>
         <section className="developer-console-feature">
           <div><span className="developer-console-eyebrow">BUILT FOR MULTIPLE COMPANIES</span>
@@ -128,6 +136,26 @@ export function DeveloperConsole() {
           <button type="button" onClick={() => setTab('companies')}>View all companies →</button></div>
         <TenantList tenants={(overview?.organizations ?? []).slice(0, 5)} loading={loading}/>
       </div>}
+      {tab === 'playground' && <section className="developer-console-playground">
+        <div className="developer-console-playground-hero">
+          <span className="developer-console-eyebrow">SAFE TO EXPERIMENT</span>
+          <h2>The real SalesShop interface. Fictional data.</h2>
+          <p>Open a local-only demo workspace with sample construction accounts, project boards,
+            three editable quotes, notebook pages, Catalog, rates, sinks and Settings.
+            Changes persist only in this browser until you reset the sandbox.</p>
+          <button type="button" onClick={() => window.location.assign(playgroundUrl())}>
+            Launch Playground →
+          </button>
+        </div>
+        <div className="developer-console-playground-cards">
+          <article><strong>Full app preview</strong><p>Use the same React screens as your company workspaces, including mobile navigation.</p></article>
+          <article><strong>Isolated test content</strong><p>All starter customers, projects and proposals are fictional. Sandbox records use separate local storage keys.</p></article>
+          <article><strong>Reset anytime</strong><p>Inside the Playground, erase its local demo changes and restore the default samples in one tap.</p></article>
+        </div>
+        <p className="developer-console-footnote">The Playground tests local UI behavior and calculations.
+          It does not exercise cloud invitations, sharing, live team permissions, subscriptions or server-side RLS.
+          Those need a separate staging backend and test identities in a future batch.</p>
+      </section>}
       {tab === 'companies' && <section className="developer-console-companies">
         <div className="developer-console-company-tools">
           <label><span>Find a company</span><input type="search" value={search}
