@@ -13,12 +13,14 @@ export function BuilderLevelChoices({division,selectedRateId,onSelect,materialTy
   onSelect:(rate:number,reference:QuoteLineRateReference)=>void;
 }) {
   const guide=useMaterialLevelGuideStore(state=>state.guide);
+  const hydrated=useMaterialLevelGuideStore(state=>state.hydrated);
   const hydrate=useMaterialLevelGuideStore(state=>state.hydrate);
   const levels=useMemo(()=>selectableBuilderLevels(guide.rules),[guide.rules]);
   const recommendation=materialCostPerSf!==undefined
     ?resolveMaterialPricingRecommendation(guide,materialCostPerSf,undefined,materialType)
     :undefined;
   useEffect(()=>{hydrate();},[hydrate]);
+  if(!hydrated)return <p className="qmb-help" role="status">Loading company pricing levels…</p>;
 
   return <div className="qmb-builder-levels">
     <div className="qmb-builder-levels-heading">
