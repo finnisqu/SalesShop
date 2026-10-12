@@ -23,6 +23,7 @@ import {
 } from '../services/normalizedQuoteSync';
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
+import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
 import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
 import { relinkQuotesForCompany, relinkQuotesForContact } from '../services/crmIdentity';
 import {
@@ -67,6 +68,7 @@ interface QuoteState {
   updateLine: (quoteId: string, lineId: string, patch: Partial<Omit<QuoteLine, 'id'>>) => void;
   deleteLine: (quoteId: string, lineId: string) => void;
   addSection: (quoteId: string) => string;
+  duplicateArea: (quoteId: string, sourceAreaId: string) => string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   updateTakeoffPieces: (quoteId: string, sectionId: string, pieces: QuoteTakeoffPiece[]) => void;
   updateTakeoffSinks: (quoteId: string, sectionId: string, sinks: QuoteTakeoffSink[]) => void;
@@ -693,6 +695,18 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,updatedAt:now()}:q);
     persist(quotes,get().activeQuoteId);set({quotes,...history});
     return line?.id??'';
+  },
+  duplicateArea: (quoteId, sourceAreaId) => {
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return '';
+    const duplicate=duplicateQuoteArea(current,sourceAreaId);
+    if(!duplicate)return '';
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId
+      ?{...duplicate.quote,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
+    return duplicate.newAreaId;
   },
   reorderSection: (quoteId, sectionId, targetSectionId) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
