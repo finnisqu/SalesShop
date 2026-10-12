@@ -59,3 +59,18 @@
   .qmb .qmb-builder-levels-heading {gap:2px;}
   .qmb .qmb-builder-level-grid .qmb-builder-level-choice strong {font-size:10px;}
 }
+
+/* In material line items the RATE control and dropdown share the full line width
+   without floating over subsequent charge controls. */
+.qmb .qmb-material-rate-cell {
+  display:grid;grid-template-columns:minmax(0,1fr) 70px;align-items:end;gap:6px;
+}
+.qmb .qmb-material-rate-cell>.qmb-field {grid-column:1;grid-row:1;min-width:0;}
+.qmb .qmb-material-rate-cell>.qmb-builder-rate-control {display:contents;}
+.qmb .qmb-material-rate-cell .qmb-builder-rate-toggle {
+  grid-column:2;grid-row:1;margin-bottom:13px;
+}
+.qmb .qmb-material-rate-cell .qmb-builder-rate-menu {
+  grid-column:1/-1;grid-row:2;width:100%;max-width:none;
+  margin:0 0 11px;
+}
