@@ -1,7 +1,7 @@
 import { describe,expect,it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { patchQuoteTakeoffSinks,syncManagedSinkLineEdit } from './quoteTakeoffsLite';
+import { patchQuoteTakeoffSinks,syncManagedSinkLineEdit,unpriceDeletedTakeoffSink } from './quoteTakeoffsLite';
 import type { Quote,QuoteTakeoffSink } from '../types/quote';
 
 const at='2026-10-12T13:00:00Z';
@@ -48,6 +48,19 @@ describe('Takeoffs Lite small polish batch',()=>{
    expect(after.lines.find(l=>l.takeoffSinkId==='s1')).toMatchObject({
       rate:275,quantity:2,description:'Sink · 3218 Undermount'});
    expect(after.lines.find(l=>l.id==='manual')?.amount).toBe(100);
+ });
+ it('does not resurrect a sink charge after deleting its linked Quote line',()=>{
+   const priced=patchQuoteTakeoffSinks(quote(),'kitchen',[sink()]);
+   const linked=priced.lines.find(l=>l.takeoffSinkId==='s1')!;
+   const unpriced=unpriceDeletedTakeoffSink(priced,linked.id);
+   expect(unpriced.sections[0].scope?.takeoffSinks?.[0]).toMatchObject({
+      id:'s1',includeInPricing:false,unitPrice:220
+   });
+   const withoutRow={...unpriced,lines:unpriced.lines.filter(l=>l.id!==linked.id)};
+   const afterEdit=patchQuoteTakeoffSinks(withoutRow,'kitchen',withoutRow.sections[0].scope?.takeoffSinks??[]);
+   expect(afterEdit.lines).toHaveLength(1);
+   expect(afterEdit.lines[0].id).toBe('manual');
+   expect(unpriceDeletedTakeoffSink(priced,'manual')).toEqual(priced);
  });
  it('does not change unrelated manual lines or invalid sink counts in storage',()=>{
    const first=patchQuoteTakeoffSinks(quote(),'kitchen',[sink()]);
