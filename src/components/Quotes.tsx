@@ -536,7 +536,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
         {Array.isArray(section.scope?.takeoffPieces) && <small className="quote-takeoffs-scope-note">Countertop SF is calculated by Takeoffs Lite. Edit dimensions there.</small>}
       </div>}
     </div>
-    {takeoffOpen && <QuoteTakeoffsLite quote={quote} section={section}/>}
+    {takeoffOpen && <QuoteTakeoffsLite quote={quote} section={section} onClose={() => setTakeoffOpen(false)}/>}
     </>
   );
 }
