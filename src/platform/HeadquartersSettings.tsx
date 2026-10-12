@@ -54,10 +54,10 @@ export function HeadquartersSettings({store,notebook,crm,email,verified,
     };
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
     const url=URL.createObjectURL(blob);
-    const anchor=document.createElement('a');
+    const anchor=window.document.createElement('a');
     anchor.href=url;
     anchor.download=`salesshop-headquarters-${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(anchor);
+    window.document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
     window.setTimeout(()=>URL.revokeObjectURL(url),3000);
