@@ -206,3 +206,11 @@
  .qmb .qmb-measure-row .qmb-grid-name {font-size:12px;padding-left:3px;}
  .qmb .qmb-row-menu-trigger {font-size:11px;}
 }
+
+/* Keep numeric cells on the same vertical baseline as the name input.
+   The auxiliary SF value occupies space BELOW the grid's input row. */
+.qmb .qmb-measure-row { align-items:start; min-height:69px; }
+.qmb .qmb-measure-row > .qmb-grid-input,
+.qmb .qmb-measure-row > .qmb-row-menu-trigger { margin-top:0; }
+.qmb .qmb-row-piece { grid-template-rows:38px 14px; row-gap:3px; align-content:start; }
+.qmb .qmb-row-piece small {line-height:14px;padding-left:3px;align-self:start;}
