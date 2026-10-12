@@ -54,6 +54,8 @@ import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteProjectMaterials } from './QuoteProjectMaterials';
 import { takeoffCustomerSpecs } from '../services/quoteTakeoffsLite';
 import { isGeneralTakeoffSection, presentItemizedQuoteLines, presentGeneralSummary, type PresentedQuoteLine } from '../services/quoteCustomerPresentation';
+import { customerSelectionsForQuote } from '../services/quoteCustomerSelections';
+import { QuoteCustomerSelectionsSheet } from './QuoteCustomerSelectionsSheet';
 import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteSignatureDialog } from './QuoteSignatureDialog';
 
@@ -665,6 +667,7 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
         })}
       </div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
+      <QuoteCustomerSelectionsSheet rows={customerSelectionsForQuote(quote)}/>
       {quote.customerNotes&&<div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
       <footer>{quote.status==='Signed'?'Accepted electronically with SalesShop.':`Prepared with SalesShop · Electronic acceptance is available for this ${documentLabel.toLowerCase()}.`}</footer>
     </article>
