@@ -39,7 +39,6 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
   const detachTakeoff=useQuoteStore(s=>s.detachTakeoff);
   const [help,setHelp]=useState(false);
   const dialog=useRef<HTMLDivElement>(null);
-  const addNameRef=useRef<HTMLInputElement>(null);
   const returnFocus=useRef<Element|null>(null);
   const editable=quoteIsCommerciallyEditable(quote);
   const owned=takeoffOwnedScope(section.scope);
