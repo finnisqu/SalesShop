@@ -136,8 +136,9 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   </article>;
 }
 
-function AreaWorkspace({quote,section,tab,setTab,goBack}:{
-  quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;goBack:()=>void;
+function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:{
+  quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;
+  goBack:()=>void;onNextArea:()=>void;onDuplicate:()=>void;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
   const general=isGeneralTakeoffSection(section);
@@ -160,12 +161,23 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
   const amount=quoteLinesTotal(lines);
   const measured=totalBillableTakeoffSf(pieces);
   const savePieces=(next:QuoteTakeoffPiece[])=>updatePieces(quote.id,section.id,next);
+  const advanceArea=()=>{
+    if(tab==='pricing'){onNextArea();return;}
+    setTab(tab==='measure'?'materials':'pricing');
+    const scroll=areaScrollRef.current;
+    const tabs=scroll?.querySelector<HTMLElement>('.qmb-tabs');
+    if(scroll&&tabs)scroll.scrollTo({top:tabs.offsetTop,behavior:'auto'});
+  };
   const patchPiece=(id:string,patch:Partial<QuoteTakeoffPiece>)=>savePieces(pieces.map(p=>p.id===id?{...p,...patch}:p));
   return <div className="qmb-editor qmb-area-editor">
     <div ref={areaScrollRef} className="qmb-area-scroll">
     <header className="qmb-pagehead">
       <button type="button" className="qmb-back" onClick={goBack}>‹ Quote</button>
-      <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>
+      <div className="qmb-area-header-actions">
+        {editable&&!general&&<button type="button" className="qmb-area-duplicate-action"
+          aria-label="Duplicate this Area" onClick={onDuplicate}>⧉ Duplicate</button>}
+        <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>
+      </div>
     </header>
     <div className="qmb-pad qmb-titlepad">
       {general?<div className="qmb-kicker">GENERAL · TAKEOFFS & PRICING</div>:<>
@@ -258,8 +270,16 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
       </>}
     </div>
     </div>
-    <footer className="qmb-footer"><div><small>Area total</small><strong>{money.format(amount)}</strong></div>
-      <button type="button" className="qmb-primary" onClick={goBack}>Done · Quote ›</button></footer>
+    <footer className="qmb-footer qmb-area-footer">
+      <div className="qmb-footer-area-total"><small>Area total</small><strong>{money.format(amount)}</strong></div>
+      <div className="qmb-area-footer-actions">
+        {editable&&<button type="button" className="qmb-outline qmb-area-next"
+          onClick={advanceArea}>
+          {tab==='measure'?'Materials ›':tab==='materials'?'Pricing ›':'+ Next Area ›'}
+        </button>}
+        <button type="button" className="qmb-primary" onClick={goBack}>Done · Quote ›</button>
+      </div>
+    </footer>
     {advanced&&<QuoteTakeoffsLite quote={quote} section={section} onClose={()=>setAdvanced(false)}/>}
   </div>;
 }
@@ -273,6 +293,7 @@ export function QuotesMobileBeta() {
   const select=useQuoteStore(s=>s.selectQuote);
   const update=useQuoteStore(s=>s.updateQuote);
   const addSection=useQuoteStore(s=>s.addSection);
+  const duplicateArea=useQuoteStore(s=>s.duplicateArea);
   const deleteSection=useQuoteStore(s=>s.deleteSection);
   const addLine=useQuoteStore(s=>s.addLine);
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
@@ -361,6 +382,11 @@ export function QuotesMobileBeta() {
       });
       openArea(id);
     }
+  };
+  const duplicateCurrentArea=()=>{
+    if(!quote||!area||!editable)return;
+    const copy=duplicateArea(quote.id,area.id);
+    if(copy)openArea(copy);
   };
   useEffect(()=>{
     if(page==='area'&&!area)setPage('quote');
@@ -496,7 +522,8 @@ export function QuotesMobileBeta() {
           Review {audit?.blockers.length?'· '+audit.blockers.length+' to resolve':'quote'} ›</button>
       </footer>
       {selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
-    </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab} setTab={setAreaTab} goBack={goBack}/>:page==='review'&&quote?<QuoteBetaReview
+    </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
+      setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}/>:page==='review'&&quote?<QuoteBetaReview
       quote={quote} canIssue={canIssue} sending={sending} error={error}
       onBack={()=>setPage('quote')} onFix={fixAudit}
       onPreview={()=>{setQuoteTab('preview');setPage('quote');}}
