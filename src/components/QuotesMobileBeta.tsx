@@ -96,7 +96,8 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
           </>:<Field label="Amount ($)"><input type="number" inputMode="decimal" step=".01" value={line.amount??''}
             placeholder="Not set" onChange={e=>update(quote.id,line.id,{amount:e.target.value===''?undefined:Number(e.target.value)})}/></Field>}
         </div>}
-        <label className="qmb-check"><input type="checkbox" checked={line.includeInTotal} onChange={e=>update(quote.id,line.id,{includeInTotal:e.target.checked})}/> Include in quote total</label>
+        {line.takeoffSinkId?<p className="qmb-help">Sink charge is always included in the quote total.</p>
+          :<label className="qmb-check"><input type="checkbox" checked={line.includeInTotal} onChange={e=>update(quote.id,line.id,{includeInTotal:e.target.checked})}/> Include in quote total</label>}
         <label className="qmb-check"><input type="checkbox" checked={line.customerVisible} onChange={e=>update(quote.id,line.id,{customerVisible:e.target.checked})}/> Show this line to customer (itemized view)</label>
         <button type="button" className="qmb-danger" onClick={()=>{if(window.confirm('Remove this quote line? You can undo the change.'))remove(quote.id,line.id);}}>Remove line</button>
       </fieldset>
@@ -152,7 +153,15 @@ function AreaWorkspace({quote,section,tab,setTab,goBack}:{
     </nav>
     <div className="qmb-pad qmb-pagecontent">
       {tab==='measure'&&<QuoteBetaMeasureGrid pieces={pieces} editable={editable}
-        onSave={savePieces} onAdvanced={()=>setAdvanced(true)}/>}
+        onSave={savePieces} onAdvanced={()=>setAdvanced(true)}
+        defaults={{splashHeightIn:section.scope?.takeoffDefaultSplashHeightIn??4,
+          edgeProfile:section.scope?.takeoffDefaultEdgeProfile??'Flat'}}
+        onSetDefaults={(next,applyAll)=>{
+          updateSection(quote.id,section.id,{scope:{...section.scope,
+            takeoffDefaultSplashHeightIn:next.splashHeightIn,takeoffDefaultEdgeProfile:next.edgeProfile}});
+          if(applyAll)savePieces(pieces.map(piece=>({...piece,splashHeightIn:next.splashHeightIn,
+            edgeProfile:next.edgeProfile})));
+        }}/>}
       {tab==='materials'&&<QuoteBetaMaterials quote={quote} section={section} editable={editable}/>}
       {tab==='pricing'&&<>
         <div className="qmb-section-head"><div><h3>Pricing & presentation</h3><p>Finish pricing here—or leave it undecided.</p></div></div>
@@ -210,6 +219,7 @@ export function QuotesMobileBeta() {
   const addSection=useQuoteStore(s=>s.addSection);
   const deleteSection=useQuoteStore(s=>s.deleteSection);
   const addLine=useQuoteStore(s=>s.addLine);
+  const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
   const undo=useQuoteStore(s=>s.undoQuote);
   const redo=useQuoteStore(s=>s.redoQuote);
   const recordSent=useQuoteStore(s=>s.recordSent);
@@ -238,6 +248,26 @@ export function QuotesMobileBeta() {
   const myQuotes=useMemo(()=>authMode==='cloud'?quotes.filter(q=>q.ownerUserId===userId):quotes,
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
+  // One-time upgrade when opening old Beta takeoffs: historical specifications
+  // should not silently remain unpriced. Normal Catalog/manually priced rows are
+  // preserved; only missing takeoff-managed sink charges are created.
+  useEffect(()=>{
+    if(!quote||!quoteIsCommerciallyEditable(quote))return;
+    for(const section of quote.sections){
+      const sinks=section.scope?.takeoffSinks;
+      if(!sinks?.some(s=>!s.includeInPricing))continue;
+      const updated=sinks.map(sink=>{
+        if(sink.includeInPricing)return sink;
+        const alreadyCharged=quote.lines.some(line=>line.sectionId===section.id
+          &&line.includeInTotal
+          &&(line.takeoffSinkId===sink.id
+            ||(line.kind==='sink' && !!sink.name.trim()
+              &&line.description.toLowerCase().includes(sink.name.trim().toLowerCase()))));
+        return alreadyCharged?sink:{...sink,includeInPricing:true};
+      });
+      if(updated.some((sink,i)=>sink!==sinks[i]))updateSinks(quote.id,section.id,updated);
+    }
+  },[quote,updateSinks]);
   const area=quote?.sections.find(s=>s.id===areaId)??null;
   const editable=Boolean(quote&&quoteIsCommerciallyEditable(quote));
   const canBrowseTeam=authMode==='cloud'&&(teamRole==='owner'||teamRole==='admin')&&!previewRole;
@@ -262,6 +292,12 @@ export function QuotesMobileBeta() {
     if(page!=='library'&&!quote)setPage('library');
   },[page,area,quote]);
   const reminders=quote?[
+    ...quote.sections.flatMap(section=>[
+      ...(section.scope?.takeoffPieces??[]).filter(p=>p.count===0||!p.lengthIn||!p.widthIn)
+        .map(p=>`Unfinished piece in ${section.title}: ${p.name||'Unnamed'}`),
+      ...(section.scope?.takeoffSinks??[]).filter(s=>s.includeInPricing&&s.unitPrice===undefined)
+        .map(s=>`Sink needs selling price: ${s.name||'Unnamed sink'}`),
+    ]),
     ...(!quote.companyName&&!quote.contactName?['Customer not selected']:[]),
     ...(!quote.contactEmail?['Contact email not entered']:[]),
     ...(!quote.lines.some(l=>l.includeInTotal&&quoteLineAmount(l)!==0)?['No priced work yet']:[]),
