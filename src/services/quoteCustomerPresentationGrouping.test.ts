@@ -26,6 +26,14 @@ describe('quote grouping is presentation only',()=>{
     expect(result).toHaveLength(1);
     expect(result[0].amount).toBe(1595);
   });
+  it('does not show excluded priced work on the customer document',()=>{
+    const lines=[priced('top','material',1780),
+      {...priced('excluded','sink',220),includeInTotal:false}];
+    const presented=presentItemizedQuoteLines(lines);
+    expect(presented).toHaveLength(1);
+    expect(presented[0].amount).toBe(1780);
+    expect(quoteLinesTotal(lines)).toBe(1780);
+  });
   it('gives a safe unnamed fallback when an Area has no customer-visible priced row',()=>{
     const result=presentItemizedQuoteLines([priced('sink','sink',220,false)]);
     expect(result).toMatchObject([{description:'Included work',amount:220}]);
