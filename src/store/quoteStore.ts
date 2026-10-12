@@ -36,8 +36,8 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
-import { detachQuoteTakeoff, patchQuoteTakeoff, sectionTakeoffSf } from '../services/quoteTakeoffsLite';
-import type { QuoteTakeoffPiece } from '../types/quote';
+import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, sectionTakeoffSf } from '../services/quoteTakeoffsLite';
+import type { QuoteTakeoffPiece, QuoteTakeoffSink } from '../types/quote';
 
 interface QuoteState {
   quotes: Quote[];
@@ -67,6 +67,7 @@ interface QuoteState {
   addSection: (quoteId: string) => string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   updateTakeoffPieces: (quoteId: string, sectionId: string, pieces: QuoteTakeoffPiece[]) => void;
+  updateTakeoffSinks: (quoteId: string, sectionId: string, sinks: QuoteTakeoffSink[]) => void;
   addTakeoffLine: (quoteId: string, sectionId: string) => string;
   detachTakeoff: (quoteId: string, sectionId: string) => void;
   reorderSection: (quoteId: string, sectionId: string, targetSectionId: string) => void;
@@ -558,6 +559,18 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quotes = get().quotes.map(quote => quote.id === quoteId
       ? {...updated,updatedAt:now()} : quote);
     persist(quotes, get().activeQuoteId);
+    set({quotes,...history});
+  },
+  updateTakeoffSinks: (quoteId, sectionId, sinks) => {
+    const current=get().quotes.find(quote=>quote.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)
+       ||!current.sections.some(section=>section.id===sectionId)||sinks.length>100
+       ||sinks.some(sink=>!Number.isInteger(sink.count)||sink.count<1||sink.count>1000
+         ||(sink.unitPrice!==undefined&&(!Number.isFinite(sink.unitPrice)||sink.unitPrice<0))))return;
+    const updated=patchQuoteTakeoffSinks(current,sectionId,sinks);
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(quote=>quote.id===quoteId?updated:quote);
+    persist(quotes,get().activeQuoteId);
     set({quotes,...history});
   },
   updateTakeoffPieces: (quoteId, sectionId, pieces) => {
