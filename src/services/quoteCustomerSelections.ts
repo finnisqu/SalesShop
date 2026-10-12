@@ -29,8 +29,6 @@ export function customerSelectionsForSections(sections:readonly QuoteSection[]):
       if(hasSplash)splashes.add((piece.splashHeightIn??scope?.takeoffDefaultSplashHeightIn??4)+'″');
     }
     if(!edges.size&&scope?.takeoffDefaultEdgeProfile)edges.add(scope.takeoffDefaultEdgeProfile);
-    if(!splashes.size&&scope?.takeoffDefaultSplashHeightIn!==undefined)
-      splashes.add(scope.takeoffDefaultSplashHeightIn+'″ default');
     return {id:section.id,area:section.title.toLowerCase()==='general takeoffs'?'General':section.title,
       material:materialLabel,sinkModels:sinks,edgeProfiles:[...edges],splashHeights:[...splashes]};
   }).filter(row=>row.material||row.sinkModels.length||row.edgeProfiles.length||row.splashHeights.length);
