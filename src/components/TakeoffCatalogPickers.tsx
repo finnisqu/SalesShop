@@ -21,6 +21,7 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
   const hydrate=useCompanySettingsStore(s=>s.hydrate);
   const root=useRef<HTMLDivElement>(null);
   const [open,setOpen]=useState(false);
+  const [searchTerm,setSearchTerm]=useState('');
   const [materialId,setMaterialId]=useState<string|null>(null);
   const [variantId,setVariantId]=useState<string|null>(null);
   useEffect(()=>{void hydrate();},[hydrate]);
@@ -30,7 +31,7 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
     return()=>document.removeEventListener('pointerdown',dismiss);
   },[open]);
   const active=useMemo(()=>materials.filter(m=>m.active),[materials]);
-  const query=value.trim().toLowerCase();
+  const query=searchTerm.trim().toLowerCase();
   const ordered=useMemo(()=>{
     const pinnedIds=new Set(pinned.map(m=>m.reference?.materialId).filter(Boolean));
     return active.filter(m=>!query||[
@@ -57,8 +58,8 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
     <input type="text" role="combobox" aria-expanded={open} aria-controls="qtl-material-choices"
       autoComplete="off" disabled={disabled} value={value} maxLength={300}
       placeholder="Search catalog colors or type a custom material…"
-      aria-label="Material: type to search Catalog" onFocus={e=>{e.currentTarget.select();setOpen(true);}}
-      onChange={e=>{onTextChange(e.target.value);setMaterialId(null);setVariantId(null);setOpen(true);}}/>
+      aria-label="Material: type to search Catalog" onFocus={e=>{e.currentTarget.select();setSearchTerm('');setOpen(true);}}
+      onChange={e=>{onTextChange(e.target.value);setSearchTerm(e.target.value);setMaterialId(null);setVariantId(null);setOpen(true);}}/>
     {open&&<div className="qtl-combobox-menu" id="qtl-material-choices" role="listbox">
       {material?<div className="qtl-combobox-results">
         <button type="button" onClick={()=>{if(variant)setVariantId(null);else setMaterialId(null);}}>← Back to {variant?'variants':'materials'}</button>
@@ -93,6 +94,7 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
   const hydrate=useSinkCatalogStore(s=>s.hydrate);
   const root=useRef<HTMLDivElement>(null);
   const [open,setOpen]=useState(false);
+  const [searchTerm,setSearchTerm]=useState('');
   useEffect(()=>{void hydrate();},[hydrate]);
   useEffect(()=>{if(!open)return;
     const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node))setOpen(false);};
@@ -100,7 +102,7 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
     return()=>document.removeEventListener('pointerdown',dismiss);
   },[open]);
   const results=useMemo(()=>{
-    const query=value.trim().toLowerCase();
+    const query=searchTerm.trim().toLowerCase();
     return models.filter(m=>m.active).flatMap(model=>
       model.variants.filter(variant=>variant.active).map(variant=>({model,variant})))
       .filter(({model,variant})=>!query||[
@@ -109,7 +111,7 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
       ].filter(Boolean).join(' ').toLowerCase().includes(query))
       .sort((a,b)=>a.model.name.localeCompare(b.model.name)||a.variant.label.localeCompare(b.variant.label))
       .slice(0,40);
-  },[models,value]);
+  },[models,searchTerm]);
   const choose=(model:SinkModel,variant:SinkVariant)=>{
     const snapshot=createQuoteSinkSnapshot(model,variant);
     onSelect({name:sinkSnapshotDescription(snapshot),category:model.category,
@@ -121,8 +123,8 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
     <input type="text" role="combobox" aria-expanded={open} aria-controls="qtl-sink-choices"
       autoComplete="off" disabled={disabled} value={value} maxLength={160}
       placeholder="Search sink catalog…" aria-label="Sink model: type to search Catalog"
-      onFocus={e=>{e.currentTarget.select();setOpen(true);}}
-      onChange={e=>{onTextChange(e.target.value);setOpen(true);}}/>
+      onFocus={e=>{e.currentTarget.select();setSearchTerm('');setOpen(true);}}
+      onChange={e=>{onTextChange(e.target.value);setSearchTerm(e.target.value);setOpen(true);}}/>
     {open&&<div className="qtl-combobox-menu" id="qtl-sink-choices" role="listbox">
       <div className="qtl-combobox-results">
         {results.map(({model,variant})=><button key={variant.id} type="button"
