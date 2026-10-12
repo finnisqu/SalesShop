@@ -135,3 +135,62 @@ Catalog costs are internal references, not inferred selling prices.
 Cloud persistence uses the existing Area `scope` JSON and sink line
 `takeoff_sink_id` link; no new schema or tenant permission changes are
 needed for these catalog selection fields.
+
+## v3 — Smart Area-first quoting workflow
+
+**Workflow**: Open Takeoffs from the prominent button by General or any
+Area title. General's button creates (or reopens) a genuine "General takeoffs"
+Area, so everything is still persisted as a standard customer-visible Area
+and can later be renamed or split. General's unrelated manual lines remain
+unchanged.
+
+New takeoffs begin as **one lump-sum customer Area** by default. Measuring
+the first complete piece automatically creates **one** ordinary priced SF
+line with live measurement linkage and no assumed selling rate.
+Select an SF selling rate directly inside the popup, either manually or
+from the same Rate Book store used by normal Quote Rate lines. Source-cost
+references never silently become selling prices. If an Area already has a
+manually priced material/item row, adding another live SF price is **opt-in**
+to prevent an accidental double charge. Legacy quotes are unaffected by
+opening the popup.
+
+Material and sink selection are now **searchable input fields**. Tapping
+either shows Catalog suggestions (pinned project colors first); typing
+filters the Catalog, while continuing to support custom descriptions.
+Catalog material variants and purchase options retain their source snapshots;
+sink variants retain their catalog sell price and an independent
+"Price separately?" decision.
+
+**Project Materials**: Each Quote has its own pinned material list,
+automatically populated when a material is selected in Takeoffs or a
+standard Material line. You can also add and remove manual entries. The
+shortlist is saved in `public.quotes.project_materials` JSONB, scoped to
+the existing tenant RLS, not as a company-wide catalog mutation.
+The shortlist appears first in both Takeoffs Lite and standard Material
+Catalog search results.
+
+**Itemization**: The default lump-sum view presents one customer price
+from underlying billable Area lines. Choose "Area header · Itemized" to
+show individual prices; each item can be visible or folded into one
+"Other included work" remainder row without changing the total. The same
+remainder behavior is applied by the public quote-sharing function, and
+hidden descriptions are not exposed.
+
+**Split into Areas**: Select any subset of takeoff piece rows and choose
+"Move to new Area". A new Area inherits the selected material, contains
+only those pieces, and has its own live-linked SF row. If the source
+Area had a sell rate, it is copied to the new Area. Source SF updates
+atomically in the same quote transaction. You can also move all pieces,
+which leaves the source Area with 0 measured SF and preserves its other
+items, sink selections and pricing.
+
+**Smart vs Manual**: Smart is intentionally a *source and linkage* for
+ordinary quote lines, **not** a replacement for the familiar Manual,
+Material, Sink, Rate, and other Quote line types. This avoids a breaking
+schema migration and preserves editing, undo/redo, customer visibility,
+versions and pricing controls in one coherent model.
+
+This is an incremental, first release of flexible customer
+grouping—not a fully recursive arbitrary-depth quote hierarchy.
+Nested, repeatable line groups can be added later without destabilizing
+the standard Area summary and detailed presentation.
