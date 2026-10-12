@@ -65,6 +65,9 @@ function matchesDefault(actual:MaterialLevelRule, baseline:MaterialLevelRule){
  * Never rewrite an already migrated guide on subsequent openings.
  */
 export function upgradeBuilderLevelGuide(guide: MaterialLevelGuideDocument): MaterialLevelGuideDocument {
+  // A completed migration is not repeated: this is particularly important for
+  // manager-customized old guides that have since received the missing levels.
+  if(guide.history.some(v=>v.id==='guide_version_before_cost_band_restore'))return guide;
   const current=guide.rules;
   const exactOldSeven=current.length===LEGACY_BASELINE_RULES.length
     &&LEGACY_BASELINE_RULES.every(old=>current.some(rule=>matchesDefault(rule,old)));
