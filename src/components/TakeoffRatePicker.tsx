@@ -4,10 +4,10 @@ import { createQuoteRateSnapshot } from '../services/quoteRateSnapshot';
 import type { QuoteLineRateReference,Quote } from '../types/quote';
 import { BuilderLevelChoices } from './BuilderLevelChoices';
 
-export function TakeoffRatePicker({quote,rate,disabled,onSelect,selectedRateId,materialType}:{
+export function TakeoffRatePicker({quote,rate,disabled,onSelect,selectedRateId,materialType,materialCostPerSf}:{
   quote:Quote;rate?:number;disabled:boolean;
   onSelect:(rate:number|undefined,ref?:QuoteLineRateReference)=>void;
-  selectedRateId?:string;materialType?:string;
+  selectedRateId?:string;materialType?:string;materialCostPerSf?:number;
 }){
   const items=useRateBookStore(s=>s.items);
   const hydrate=useRateBookStore(s=>s.hydrate);
@@ -30,7 +30,8 @@ export function TakeoffRatePicker({quote,rate,disabled,onSelect,selectedRateId,m
       <button type="button" disabled={disabled} aria-expanded={open}
         onClick={()=>setOpen(v=>!v)}>Choose from Rates ▾</button>
       {open&&<div className="qtl-rate-options">
-        <BuilderLevelChoices division={quote.pricingDivision} selectedRateId={selectedRateId} materialType={materialType}
+        <BuilderLevelChoices division={quote.pricingDivision} selectedRateId={selectedRateId}
+          materialType={materialType} materialCostPerSf={materialCostPerSf}
           onSelect={(price,ref)=>{onSelect(price,ref);setOpen(false);}}/>
         <div className="qmb-other-rate-heading">Other SF rates</div>
         {choices.map(({item,snapshot})=><button type="button" key={item.id}
