@@ -79,22 +79,37 @@ export function QuoteTakeoffsLite({quote,section}:{
         <span>PIECE</span><span>LENGTH (in)</span><span>WIDTH (in)</span><span>COUNT</span><span>SF</span><span className="sr-only">Piece actions</span>
       </div>
       {pieces.map((piece,i)=><div className="quote-takeoffs-grid-row" key={piece.id}>
-        <input type="text" aria-label={`Piece ${i+1} name`} placeholder={`Piece ${i+1}`}
-          value={piece.name} disabled={!editable} maxLength={120}
-          onChange={event=>patch(piece.id,{name:event.target.value})}/>
-        <DimensionInput label={`${piece.name||'Piece '+(i+1)} length in inches`} value={piece.lengthIn}
-          disabled={!editable} onCommit={lengthIn=>patch(piece.id,{lengthIn})}/>
-        <DimensionInput label={`${piece.name||'Piece '+(i+1)} width in inches`} value={piece.widthIn}
-          disabled={!editable} onCommit={widthIn=>patch(piece.id,{widthIn})}/>
-        <input type="number" aria-label={`${piece.name||'Piece '+(i+1)} count`}
-          min="1" max="1000" step="1" disabled={!editable}
-          value={piece.count} onChange={event=>{
-            const count=Number(event.target.value);
-            if(Number.isInteger(count)&&count>=1&&count<=1000)patch(piece.id,{count});
-          }}/>
-        <output aria-label={`${piece.name||'Piece '+(i+1)} square feet`}>{sfFormat.format(takeoffPieceSf(piece))}</output>
+        <label className="quote-takeoffs-cell is-name">
+          <span className="quote-takeoffs-mobile-caption">Piece</span>
+          <input type="text" aria-label={`Piece ${i+1} name`} placeholder={`Piece ${i+1}`}
+            value={piece.name} disabled={!editable} maxLength={120}
+            onChange={event=>patch(piece.id,{name:event.target.value})}/>
+        </label>
+        <label className="quote-takeoffs-cell is-length">
+          <span className="quote-takeoffs-mobile-caption">Length (in)</span>
+          <DimensionInput label={`${piece.name||'Piece '+(i+1)} length in inches`} value={piece.lengthIn}
+            disabled={!editable} onCommit={lengthIn=>patch(piece.id,{lengthIn})}/>
+        </label>
+        <label className="quote-takeoffs-cell is-width">
+          <span className="quote-takeoffs-mobile-caption">Width (in)</span>
+          <DimensionInput label={`${piece.name||'Piece '+(i+1)} width in inches`} value={piece.widthIn}
+            disabled={!editable} onCommit={widthIn=>patch(piece.id,{widthIn})}/>
+        </label>
+        <label className="quote-takeoffs-cell is-count">
+          <span className="quote-takeoffs-mobile-caption">Count</span>
+          <input type="number" aria-label={`${piece.name||'Piece '+(i+1)} count`}
+            min="1" max="1000" step="1" disabled={!editable}
+            value={piece.count} onChange={event=>{
+              const count=Number(event.target.value);
+              if(Number.isInteger(count)&&count>=1&&count<=1000)patch(piece.id,{count});
+            }}/>
+        </label>
+        <div className="quote-takeoffs-cell is-sf">
+          <span className="quote-takeoffs-mobile-caption">Square feet</span>
+          <output aria-label={`${piece.name||'Piece '+(i+1)} square feet`}>{sfFormat.format(takeoffPieceSf(piece))}</output>
+        </div>
         <div className="quote-takeoffs-row-actions">
-          <button type="button" disabled={!editable} aria-label={`Duplicate ${piece.name}`}
+          <button type="button" disabled={!editable||pieces.length>=500} aria-label={`Duplicate ${piece.name}`}
             title="Duplicate piece" onClick={()=>update([...pieces.slice(0,i+1),
               {...piece,id:newTakeoffPiece(i+2).id},...pieces.slice(i+1)])}>⧉</button>
           <button type="button" disabled={!editable} aria-label={`Delete ${piece.name}`}
