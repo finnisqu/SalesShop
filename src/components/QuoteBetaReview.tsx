@@ -3,6 +3,7 @@ import type {Quote} from '../types/quote';
 import {quoteTotal} from '../types/quote';
 import {QuoteShareControl} from './QuoteShareControl';
 import {auditQuoteDraft,type QuoteAuditDestination,type QuoteAuditFinding} from '../services/quoteDraftAudit';
+import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEditor';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
@@ -15,8 +16,12 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
 }){
   const report=auditQuoteDraft(quote);
   const [acknowledged,setAcknowledged]=useState(false);
+  const [expandedId,setExpandedId]=useState<string|null>(null);
   const issueSet=report.findings.map(f=>f.id+':'+f.severity).join('|');
   useEffect(()=>setAcknowledged(false),[quote.id,issueSet]);
+  useEffect(()=>{
+    if(expandedId&&!report.findings.some(f=>f.id===expandedId))setExpandedId(null);
+  },[expandedId,issueSet,report.findings]);
   const editable=quote.status==='Draft'||quote.status==='Ready';
   const ready=report.blockers.length===0&&(!report.review.length||acknowledged);
   const renderFindings=(items:QuoteAuditFinding[],heading:string,description:string,kind:string)=>(
@@ -25,14 +30,26 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
         <strong>{heading}</strong><span>{items.length}</span>
       </div>
       <small className="qmb-audit-help">{description}</small>
-      {items.map(finding=><article className={'qmb-audit-finding '+kind} key={finding.id}>
-        <div className="qmb-audit-finding-copy">
-          <strong>{finding.title}</strong>
-          <p>{finding.detail}</p>
-        </div>
-        <button type="button" onClick={()=>onFix(finding.destination)}
-          aria-label={'Fix '+finding.title}>Fix ›</button>
-      </article>)}
+      {items.map(finding=>{
+        const hasInline=Boolean(quickFixForFinding(finding));
+        const expanded=expandedId===finding.id;
+        return <article className={'qmb-audit-finding '+kind+(expanded?' is-expanded':'')} key={finding.id}>
+          <div className="qmb-audit-finding-summary">
+            <div className="qmb-audit-finding-copy">
+              <strong>{finding.title}</strong>
+              <p>{finding.detail}</p>
+            </div>
+            <button type="button" className="qmb-audit-resolve" aria-expanded={hasInline?expanded:undefined}
+              aria-label={(hasInline?'Resolve ':'Go to ')+finding.title}
+              onClick={()=>hasInline?setExpandedId(expanded?null:finding.id):onFix(finding.destination)}>
+              {hasInline?(expanded?'Close':'Resolve'):'Go ›'}
+            </button>
+          </div>
+          {hasInline&&expanded&&<QuoteAuditInlineEditor key={finding.id}
+            quote={quote} finding={finding} onClose={()=>setExpandedId(null)}
+            onGoTo={destination=>{setExpandedId(null);onFix(destination);}}/>}
+        </article>;
+      })}
     </section>
   );
   return <div className="qmb-editor qmb-review-editor">
