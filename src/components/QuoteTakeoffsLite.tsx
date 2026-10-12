@@ -1,138 +1,223 @@
-import { useEffect, useState } from 'react';
+import { useEffect,useRef,useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import {
-  newTakeoffPiece, parseInches, takeoffOwnedScope, takeoffPieceSf, totalTakeoffSf,
-  isValidTakeoffPiece,
+  isValidTakeoffPiece,newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,
+  totalSplashLf,totalTakeoffSf,takeoffOwnedScope,takeoffCustomerSpecs,
 } from '../services/quoteTakeoffsLite';
-import type { Quote, QuoteTakeoffPiece, QuoteSection } from '../types/quote';
+import type { Quote,QuoteSection,QuoteTakeoffPiece,QuoteTakeoffSink } from '../types/quote';
 
-const sfFormat=new Intl.NumberFormat('en-US',{maximumFractionDigits:2,minimumFractionDigits:2});
-
-function DimensionInput({label,value,disabled,onCommit}:{
-  label:string;value:number|undefined;disabled:boolean;onCommit:(value:number|undefined)=>void;
+const sfFmt=new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const cash=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
+function Dim({value,label,disabled,onChange}:{
+  value?:number;label:string;disabled:boolean;onChange:(next:number|undefined)=>void;
 }){
   const [draft,setDraft]=useState(value===undefined?'':String(value));
   const [focused,setFocused]=useState(false);
   useEffect(()=>{if(!focused)setDraft(value===undefined?'':String(value));},[value,focused]);
-  const valid=!draft.trim() || parseInches(draft)!==undefined;
-  return <input aria-label={label} title="Inches: 25.5, 25 1/2, or 25½"
-    inputMode="decimal" type="text" autoComplete="off" value={draft}
-    disabled={disabled} aria-invalid={!valid}
-    placeholder="in"
-    onFocus={()=>setFocused(true)}
-    onChange={event=>{
-      const next=event.target.value;
-      setDraft(next);
-      if(!next.trim())onCommit(undefined);
-      else{
-        const parsed=parseInches(next);
-        if(parsed!==undefined && parsed!==value)onCommit(parsed);
-      }
+  const invalid=Boolean(draft.trim())&&parseInches(draft)===undefined;
+  return <input className="qtl-dimension" type="text" inputMode="decimal" autoComplete="off"
+    aria-label={label} aria-invalid={invalid} disabled={disabled} placeholder="in"
+    title="Inches: 25.5, 25 1/2, or 25½" value={draft}
+    onFocus={e=>{setFocused(true);e.currentTarget.select();}}
+    onChange={e=>{
+      const raw=e.target.value;setDraft(raw);
+      if(!raw.trim())onChange(undefined);
+      else{const n=parseInches(raw);if(n!==undefined&&n!==value)onChange(n);}
     }}
-    onBlur={()=>{
-      setFocused(false);
-      const parsed=parseInches(draft);
-      setDraft(parsed===undefined ? (value===undefined?'':String(value)) : String(parsed));
-    }}
+    onBlur={()=>{setFocused(false);const n=parseInches(draft);setDraft(n===undefined?(value===undefined?'':String(value)):String(n));}}
   />;
 }
-export function QuoteTakeoffsLite({quote,section}:{
-  quote:Quote;section:QuoteSection;
+export function QuoteTakeoffsLite({quote,section,onClose}:{
+  quote:Quote;section:QuoteSection;onClose:()=>void;
 }){
-  const edit=useQuoteStore(s=>s.updateTakeoffPieces);
+  const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
+  const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
+  const updateSection=useQuoteStore(s=>s.updateSection);
   const addSfLine=useQuoteStore(s=>s.addTakeoffLine);
   const detachTakeoff=useQuoteStore(s=>s.detachTakeoff);
-  const [showHelp,setShowHelp]=useState(false);
+  const [help,setHelp]=useState(false);
+  const dialog=useRef<HTMLDivElement>(null);
+  const addNameRef=useRef<HTMLInputElement>(null);
+  const returnFocus=useRef<Element|null>(null);
   const editable=quoteIsCommerciallyEditable(quote);
-  const enabled=takeoffOwnedScope(section.scope);
+  const owned=takeoffOwnedScope(section.scope);
   const pieces=section.scope?.takeoffPieces??[];
-  const total=totalTakeoffSf(pieces);
-  const completed=pieces.filter(isValidTakeoffPiece).length;
-  const linked=quote.lines.filter(line=>line.sectionId===section.id
-    &&line.quantitySource?.syncMode==='live'
-    &&line.quantitySource.field==='countertopSf');
-  const update=(nextPieces:QuoteTakeoffPiece[])=>{
-    if(nextPieces.length<=500)edit(quote.id,section.id,nextPieces);
+  const sinks=section.scope?.takeoffSinks??[];
+  const totalSf=totalTakeoffSf(pieces);
+  const splashLf=totalSplashLf(pieces);
+  const validCount=pieces.filter(isValidTakeoffPiece).length;
+  const customerMode=section.customerDisplayMode==='summary'?'summary':'detail';
+  const linkedSf=quote.lines.filter(l=>l.sectionId===section.id&&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
+  const pricedSinks=sinks.filter(s=>s.includeInPricing);
+  const pendingPrice=pricedSinks.some(s=>s.unitPrice===undefined);
+  const areaPrice=quote.lines.filter(l=>l.sectionId===section.id&&l.includeInTotal)
+    .reduce((n,l)=>n+(l.pricingMode==='quantity-rate'?(l.quantity??0)*(l.rate??0):(l.amount??0)),0);
+
+  useEffect(()=>{
+    returnFocus.current=document.activeElement;
+    dialog.current?.focus();
+    if(!section.scope?.takeoffPieces?.length&&editable){
+      updatePieces(quote.id,section.id,[newTakeoffPiece(1)]);
+    }
+    const handle=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){event.preventDefault();onClose();return;}
+      if(event.key!=='Tab'||!dialog.current)return;
+      const nodes=[...dialog.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]'
+      )].filter(x=>x.getClientRects().length>0);
+      if(nodes.length===0)return;
+      const first=nodes[0],last=nodes[nodes.length-1];
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    };
+    document.addEventListener('keydown',handle);
+    return()=>{document.removeEventListener('keydown',handle);(returnFocus.current as HTMLElement|null)?.focus?.();};
+    // Open/close lifecycle; no dependency on dimension edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+  const savePieces=(next:QuoteTakeoffPiece[])=>{
+    if(editable&&next.length<=500)updatePieces(quote.id,section.id,next);
   };
-  const patch=(id:string,values:Partial<QuoteTakeoffPiece>)=>
-    update(pieces.map(piece=>piece.id===id?{...piece,...values}:piece));
-  return <div className="quote-takeoffs-lite" aria-label={`Takeoffs Lite for ${section.title}`}>
-    <div className="quote-takeoffs-top">
-      <div><span className="quote-takeoffs-eyebrow">TAKEOFFS LITE · {section.title}</span>
-        <h4>Quick piece takeoff</h4><p>Measure rectangles in inches. Total SF feeds this Area's countertop scope.</p></div>
-      <div className="quote-takeoffs-total"><small>AREA TOTAL</small><strong>{sfFormat.format(total)} <span>SF</span></strong>
-        <small>{completed} of {pieces.length} pieces measured</small></div>
-    </div>
-    <div className="quote-takeoffs-help-row">
-      <button type="button" onClick={()=>setShowHelp(s=>!s)} aria-expanded={showHelp}>? How it works</button>
-      {linked.length>0&&<span>{linked.length} priced {linked.length===1?'line':'lines'} live-linked</span>}
-    </div>
-    {showHelp&&<p className="quote-takeoffs-help">
-      Each piece: length × width × count ÷ 144 = SF. Enter inches such as 25.5 or 25 1/2.
-      Incomplete pieces contribute 0 SF. Rounding happens once after all measured pieces.
-      A line linked to this live takeoff updates automatically; manual pricing quantities and existing captured values stay unchanged.
-      This measures rectangular surface area only—not material waste or slab yield.
-    </p>}
-    <div className="quote-takeoffs-scroll">
-      <div className="quote-takeoffs-grid-head">
-        <span>PIECE</span><span>LENGTH (in)</span><span>WIDTH (in)</span><span>COUNT</span><span>SF</span><span className="sr-only">Piece actions</span>
+  const patchPiece=(id:string,patch:Partial<QuoteTakeoffPiece>)=>
+    savePieces(pieces.map(p=>p.id===id?{...p,...patch}:p));
+  const addPiece=()=>{
+    if(pieces.length>=500)return;
+    savePieces([...pieces,newTakeoffPiece(pieces.length+1)]);
+    window.requestAnimationFrame(()=>dialog.current?.querySelector<HTMLInputElement>(
+      '.qtl-pieces .qtl-piece:last-child .qtl-name input')?.focus());
+  };
+  const patchSink=(id:string,patch:Partial<QuoteTakeoffSink>)=>
+    updateSinks(quote.id,section.id,sinks.map(s=>s.id===id?{...s,...patch}:s));
+  const mode=(next:'summary'|'detail')=>
+    updateSection(quote.id,section.id,{customerDisplayMode:next});
+  return createPortal(<div className="qtl-backdrop" role="presentation"
+      onPointerDown={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div ref={dialog} className="qtl-dialog" role="dialog" aria-modal="true"
+      aria-label={`Takeoffs Lite for ${section.title}`} tabIndex={-1}>
+      <header className="qtl-topbar">
+        <div><span className="qtl-kicker">SALESSHOP · QUICK TAKEOFF</span>
+          <h2>{section.title}</h2><p>Dimensions, splash edges, sinks & quote presentation</p></div>
+        <button type="button" className="qtl-close" onClick={onClose} aria-label="Close Takeoffs Lite">×</button>
+      </header>
+      <div className="qtl-scrollbody">
+        <section className="qtl-summary-strip" aria-label="Area measurements">
+          <div><small>Countertop</small><strong>{sfFmt.format(totalSf)} <em>SF</em></strong></div>
+          <div><small>4″ Splash</small><strong>{sfFmt.format(splashLf)} <em>LF</em></strong></div>
+          <div><small>Sinks</small><strong>{sinks.reduce((n,s)=>n+s.count,0)}</strong></div>
+          <div><small>Area quote total</small><strong>{cash.format(areaPrice)}</strong></div>
+        </section>
+
+        <section className="qtl-panel qtl-pieces">
+          <div className="qtl-section-title"><div><h3>Pieces</h3><p>Inches · optional name · check the exposed splash edges</p></div>
+            <button type="button" onClick={()=>setHelp(p=>!p)} aria-expanded={help}>? Tips</button></div>
+          {help&&<p className="qtl-help">Length × width × count ÷ 144 = SF. For a typical 4″ splash, back adds the piece length, and left/right add the piece width. Check only edges needing splash. Enter 25½, 25 1/2, or 25.5. Incomplete pieces count as zero.</p>}
+          <div className="qtl-table-wrap">
+            <div className="qtl-table-header"><span>PIECE NAME</span><span>LENGTH</span><span>WIDTH</span><span>QTY</span><span>BACK</span><span>LEFT</span><span>RIGHT</span><span>SF</span><span/></div>
+            {pieces.map((piece,i)=><div className="qtl-piece" key={piece.id}>
+              <label className="qtl-name"><span>Piece name</span><input type="text" maxLength={120} disabled={!editable}
+                aria-label={`Piece ${i+1} name`} value={piece.name}
+                placeholder={`Piece ${i+1} (optional)`}
+                onFocus={e=>e.currentTarget.select()}
+                onChange={e=>patchPiece(piece.id,{name:e.target.value})}/></label>
+              <label className="qtl-length"><span>Length</span><Dim label={`Piece ${i+1} length in inches`}
+                value={piece.lengthIn} disabled={!editable} onChange={lengthIn=>patchPiece(piece.id,{lengthIn})}/></label>
+              <label className="qtl-width"><span>Width</span><Dim label={`Piece ${i+1} width in inches`}
+                value={piece.widthIn} disabled={!editable} onChange={widthIn=>patchPiece(piece.id,{widthIn})}/></label>
+              <label className="qtl-count"><span>Qty</span><input type="number" min="1" max="1000" step="1"
+                aria-label={`Piece ${i+1} count`} disabled={!editable} value={piece.count}
+                onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchPiece(piece.id,{count:n});}}/></label>
+              {(['backsplash','leftSplash','rightSplash'] as const).map((edge)=><label key={edge} className={`qtl-edge qtl-${edge}`}>
+                <span>{edge==='backsplash'?'Back':edge==='leftSplash'?'Left':'Right'}</span>
+                <input type="checkbox" aria-label={`Piece ${i+1} ${edge}`} disabled={!editable}
+                  checked={Boolean(piece[edge])} onChange={e=>patchPiece(piece.id,{[edge]:e.target.checked})}/>
+              </label>)}
+              <output className="qtl-row-sf" aria-label={`Piece ${i+1} square feet`}>{sfFmt.format(takeoffPieceSf(piece))}</output>
+              <div className="qtl-row-buttons">
+                <button type="button" title="Duplicate piece" disabled={!editable||pieces.length>=500}
+                  aria-label={`Duplicate piece ${i+1}`} onClick={()=>savePieces([...pieces.slice(0,i+1),
+                    {...piece,id:newTakeoffPiece(i+2).id},...pieces.slice(i+1)])}>⧉</button>
+                <button type="button" title="Remove piece" disabled={!editable}
+                  aria-label={`Remove piece ${i+1}`} onClick={()=>savePieces(pieces.filter(p=>p.id!==piece.id))}>×</button>
+              </div>
+            </div>)}
+          </div>
+          <button type="button" className="qtl-add" disabled={!editable||pieces.length>=500} onClick={addPiece}>+ Add piece</button>
+        </section>
+
+        <section className="qtl-panel">
+          <div className="qtl-section-title"><div><h3>Material & sinks</h3>
+            <p>Specs can appear on a single lump-sum line. Add sink pricing only when needed.</p></div></div>
+          <label className="qtl-material"><span>Material / finish specification</span><input type="text"
+            value={section.scope?.takeoffMaterial??''} maxLength={300} disabled={!editable}
+            placeholder="e.g. Carrara White Quartz · 3cm · Polished"
+            onChange={e=>updateSection(quote.id,section.id,{
+              scope:{...section.scope,takeoffMaterial:e.target.value}
+            })}/></label>
+          <div className="qtl-sinks">
+            {sinks.map((sink,i)=><div className="qtl-sink-card" key={sink.id}>
+              <label><span>Type</span><select value={sink.category} disabled={!editable}
+                onChange={e=>patchSink(sink.id,{category:e.target.value as QuoteTakeoffSink['category']})}>
+                <option value="kitchen">Kitchen</option><option value="vanity">Vanity</option>
+              </select></label>
+              <label className="qtl-sink-name"><span>Sink model / spec</span><input type="text"
+                maxLength={160} disabled={!editable} value={sink.name}
+                placeholder="e.g. 3218 Single Bowl" onFocus={e=>e.currentTarget.select()}
+                onChange={e=>patchSink(sink.id,{name:e.target.value})}/></label>
+              <label><span>Qty</span><input type="number" min="1" max="1000" step="1"
+                value={sink.count} disabled={!editable}
+                onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchSink(sink.id,{count:n});}}/></label>
+              <label className="qtl-sink-charge"><span>Price separately?</span><input type="checkbox" disabled={!editable}
+                checked={sink.includeInPricing} onChange={e=>patchSink(sink.id,{includeInPricing:e.target.checked})}/></label>
+              <label><span>Sell price / sink</span><input type="number" min="0" step=".01"
+                inputMode="decimal" aria-label={`Sink ${i+1} selling price`}
+                disabled={!editable||!sink.includeInPricing} value={sink.unitPrice??''}
+                placeholder="Set price" onChange={e=>{const n=Number(e.target.value);
+                  patchSink(sink.id,{unitPrice:e.target.value===''?undefined:Math.max(0,Number.isFinite(n)?n:0)});
+                }}/></label>
+              <button type="button" title="Remove sink" disabled={!editable}
+                aria-label={`Remove sink ${i+1}`}
+                onClick={()=>updateSinks(quote.id,section.id,sinks.filter(s=>s.id!==sink.id))}>×</button>
+            </div>)}
+          </div>
+          {pendingPrice&&<p className="qtl-unpriced" role="status">A sink is marked for separate pricing but has no sell price yet.</p>}
+          <button type="button" className="qtl-add" disabled={!editable||sinks.length>=100}
+            onClick={()=>updateSinks(quote.id,section.id,[...sinks,newTakeoffSink()])}>+ Add sink</button>
+          <p className="qtl-note">Sinks always appear in the area's scope. Checking <strong>Price separately</strong> adds a managed, priced quote row. Unchecked sinks add no extra charge—useful when your lump-sum price already includes them.</p>
+        </section>
+
+        <section className="qtl-panel">
+          <div className="qtl-section-title"><div><h3>How should this Area appear on the quote?</h3>
+            <p>Presentation only—switching views does not change existing prices.</p></div></div>
+          <div className="qtl-mode-options" role="radiogroup" aria-label="Area quote presentation">
+            <label className={customerMode==='summary'?'active':''}>
+              <input type="radio" name={`qtl-mode-${section.id}`} checked={customerMode==='summary'}
+                disabled={!editable} onChange={()=>mode('summary')}/>
+              <span><strong>One line · Lump sum</strong><small>Show this Area's combined price, material, and sink specifications. Hide its detailed pricing rows from the customer.</small></span>
+            </label>
+            <label className={customerMode==='detail'?'active':''}>
+              <input type="radio" name={`qtl-mode-${section.id}`} checked={customerMode==='detail'}
+                disabled={!editable} onChange={()=>mode('detail')}/>
+              <span><strong>Area header · Itemized</strong><small>Show the Area heading, then its material, sink, and other quote lines with individual pricing.</small></span>
+            </label>
+          </div>
+          <p className="qtl-preview-spec"><strong>Customer description:</strong> {takeoffCustomerSpecs(section)||'Add material or sink specifications above.'}</p>
+          <div className="qtl-price-actions">
+            <button type="button" disabled={!editable||!owned||validCount===0}
+              onClick={()=>addSfLine(quote.id,section.id)}>+ Add SF pricing row</button>
+            <span>{linkedSf.length} live SF {linkedSf.length===1?'row':'rows'} · Amounts are summed from the Area's pricing rows.</span>
+          </div>
+        </section>
+        {owned&&editable&&<button type="button" className="qtl-manual"
+          onClick={()=>{
+            if(window.confirm('Return to manual countertop SF? Measured pieces are removed and live SF pricing becomes a captured quantity. Sink selections and other prices remain.')){
+              detachTakeoff(quote.id,section.id);onClose();
+            }
+          }}>Switch countertop SF to manual entry</button>}
       </div>
-      {pieces.map((piece,i)=><div className="quote-takeoffs-grid-row" key={piece.id}>
-        <label className="quote-takeoffs-cell is-name">
-          <span className="quote-takeoffs-mobile-caption">Piece</span>
-          <input type="text" aria-label={`Piece ${i+1} name`} placeholder={`Piece ${i+1}`}
-            value={piece.name} disabled={!editable} maxLength={120}
-            onChange={event=>patch(piece.id,{name:event.target.value})}/>
-        </label>
-        <label className="quote-takeoffs-cell is-length">
-          <span className="quote-takeoffs-mobile-caption">Length (in)</span>
-          <DimensionInput label={`${piece.name||'Piece '+(i+1)} length in inches`} value={piece.lengthIn}
-            disabled={!editable} onCommit={lengthIn=>patch(piece.id,{lengthIn})}/>
-        </label>
-        <label className="quote-takeoffs-cell is-width">
-          <span className="quote-takeoffs-mobile-caption">Width (in)</span>
-          <DimensionInput label={`${piece.name||'Piece '+(i+1)} width in inches`} value={piece.widthIn}
-            disabled={!editable} onCommit={widthIn=>patch(piece.id,{widthIn})}/>
-        </label>
-        <label className="quote-takeoffs-cell is-count">
-          <span className="quote-takeoffs-mobile-caption">Count</span>
-          <input type="number" aria-label={`${piece.name||'Piece '+(i+1)} count`}
-            min="1" max="1000" step="1" disabled={!editable}
-            value={piece.count} onChange={event=>{
-              const count=Number(event.target.value);
-              if(Number.isInteger(count)&&count>=1&&count<=1000)patch(piece.id,{count});
-            }}/>
-        </label>
-        <div className="quote-takeoffs-cell is-sf">
-          <span className="quote-takeoffs-mobile-caption">Square feet</span>
-          <output aria-label={`${piece.name||'Piece '+(i+1)} square feet`}>{sfFormat.format(takeoffPieceSf(piece))}</output>
-        </div>
-        <div className="quote-takeoffs-row-actions">
-          <button type="button" disabled={!editable||pieces.length>=500} aria-label={`Duplicate ${piece.name}`}
-            title="Duplicate piece" onClick={()=>update([...pieces.slice(0,i+1),
-              {...piece,id:newTakeoffPiece(i+2).id},...pieces.slice(i+1)])}>⧉</button>
-          <button type="button" disabled={!editable} aria-label={`Delete ${piece.name}`}
-            title="Remove piece" onClick={()=>update(pieces.filter(p=>p.id!==piece.id))}>×</button>
-        </div>
-      </div>)}
-      {!pieces.length&&<div className="quote-takeoffs-empty">No pieces yet. Add a rectangular piece to start your takeoff.</div>}
+      <footer className="qtl-footer"><span><strong>{sfFmt.format(totalSf)} SF</strong> · {sfFmt.format(splashLf)} splash LF · {sinks.length} sink selections</span>
+        <button type="button" onClick={onClose}>Done · Back to quote</button></footer>
     </div>
-    <div className="quote-takeoffs-bottom">
-      <button type="button" className="quote-takeoffs-add" disabled={!editable||pieces.length>=500}
-        onClick={()=>update([...pieces,newTakeoffPiece(pieces.length+1)])}>+ Add Piece</button>
-      <div className="quote-takeoffs-actions">
-        <span>Measured area: <strong>{sfFormat.format(total)} SF</strong></span>
-        <button type="button" disabled={!editable||!enabled||completed===0}
-          title="Create a priced quantity × rate line linked to this takeoff; set the selling rate in the quote."
-          onClick={()=>addSfLine(quote.id,section.id)}>+ Quote SF line</button>
-      </div>
-    </div>
-    {enabled&&editable&&<button type="button" className="quote-takeoffs-manual" onClick={()=>{
-      if(window.confirm('Return this Area to manual countertop SF? The last measured total and current quote pricing will stay, but piece measurements will be removed and live links will become captured quantities.')){
-        detachTakeoff(quote.id,section.id);
-      }
-    }}>Switch to manual SF</button>}
-    <p className="quote-takeoffs-note">Internal takeoff only. It does not automatically add waste or reveal piece dimensions in the customer proposal. Add a selling rate to any new SF line.</p>
-  </div>;
+  </div>,document.body);
 }
