@@ -78,7 +78,9 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
         add('line:'+line.id+':quantity',
           line.kind==='material'||line.kind==='sink'?'blocker':'review',
           'Zero or missing charge quantity: '+title,
-          'The charge currently contributes nothing to the quote total.',where);
+          'The charge currently contributes nothing to the quote total.',
+          line.quantitySource?.syncMode==='live'&&line.sectionId
+            ?{view:'area',areaId:line.sectionId,tab:'measure'}:where);
       }
     }else if(line.pricingMode==='direct'||line.pricingMode==='slab-multiplier'){
       if(!isValidPrice(line.amount)){
