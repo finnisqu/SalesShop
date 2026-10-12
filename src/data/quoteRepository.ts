@@ -1,4 +1,6 @@
 import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
+import { isDeveloperPlaygroundRoute } from '../lib/developerPlayground';
+import { seedPlaygroundQuotes } from '../services/playgroundFixtures';
 import { quoteLinesTotal, type PricingScheduleData, type Quote, type QuoteDocument } from '../types/quote';
 
 export interface QuoteRepository {
@@ -49,7 +51,8 @@ function normalizeDocument(value: unknown): QuoteDocument | null {
 
 export const localQuoteRepository: QuoteRepository = {
   load() {
-    const normalized = normalizeDocument(readLocalDocument('quotes'));
+    const normalized = normalizeDocument(readLocalDocument('quotes'))
+      ?? (isDeveloperPlaygroundRoute() ? seedPlaygroundQuotes() : null);
     if (normalized) this.save(normalized);
     return normalized;
   },
