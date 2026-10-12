@@ -101,7 +101,7 @@ export function upgradeBuilderLevelGuide(guide: MaterialLevelGuideDocument): Mat
       customerRate:wasPreviousPrice?reference.customerRate:rule.customerRate,
       ...(rule.id==='builder_level_0'?{graniteOnly:true}:{}),
       ...(rule.id==='builder_level_7'||rule.id==='builder_level_8'
-        ?{costBandConfirmed:wasPreviousCeiling?false:rule.costBandConfirmed??true}:{}),
+        ?{costBandConfirmed:rule.costBandConfirmed??(wasPreviousCeiling?false:true)}:{}),
     };
     return updated.maxMaterialCost===rule.maxMaterialCost
       &&updated.customerRate===rule.customerRate
