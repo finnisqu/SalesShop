@@ -73,6 +73,7 @@ export function applyAreaScopeQuantity(
     field,
     capturedValue: value,
     appliedAt,
+    ...(field === 'countertopSf' && Array.isArray(section.scope?.takeoffPieces) ? { syncMode: 'live' as const } : {}),
   };
   return { quantity: value, quantitySource };
 }
