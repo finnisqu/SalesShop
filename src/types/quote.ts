@@ -92,7 +92,7 @@ export interface QuoteTakeoffPiece {
 
 export interface QuoteTakeoffSink {
   id: string;
-  category: 'kitchen' | 'vanity';
+  category: SinkCategory;
   name: string;
   count: number;
   /** Optional sell price per sink, not cost. */
