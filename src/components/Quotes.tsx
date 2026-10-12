@@ -396,7 +396,7 @@ function LineEditor({
                   })}
                 </select>
               </label>
-              {line.quantitySource && <small>{QUOTE_AREA_SCOPE_META[line.quantitySource.field].label} · captured {line.quantitySource.capturedValue} {QUOTE_AREA_SCOPE_META[line.quantitySource.field].unit}</small>}
+              {line.quantitySource && <small>{QUOTE_AREA_SCOPE_META[line.quantitySource.field].label} · {line.quantitySource.syncMode === 'live' ? 'live from Takeoffs Lite' : 'captured'} {line.quantitySource.capturedValue} {QUOTE_AREA_SCOPE_META[line.quantitySource.field].unit}</small>}
               {quantityScopeState?.changed && quantityScopeState.currentValue !== undefined && <button type="button" onClick={() => {
                 const patch = applyAreaScopeQuantity(areaSection, line.quantitySource!.field);
                 if (patch) updateLine(quote.id, line.id, patch);
