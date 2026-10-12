@@ -87,3 +87,53 @@
 @media(max-width:350px){
   .qmb .qmb-builder-level-choice .qmb-builder-cost {font-size:8px;}
 }
+
+/* A small, readable internal cost reference above the selling-price editor. */
+.qmb .qmb-area-material-cost {
+  display:grid;gap:4px;margin:11px 0 4px;padding:9px 10px;
+  border:1px solid var(--qmb-border);border-radius:10px;
+  background:var(--qmb-tint);min-width:0;color:var(--qmb-ink);
+}
+.qmb .qmb-area-cost-top {
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  font-weight:800;font-size:12px;min-width:0;
+}
+.qmb .qmb-area-cost-top small {font-size:10px;color:var(--qmb-muted);font-weight:500;}
+.qmb .qmb-area-cost-top strong {
+  font-size:16px;font-weight:900;white-space:nowrap;
+  font-variant-numeric:tabular-nums;letter-spacing:-.15px;
+}
+.qmb .qmb-area-cost-detail,
+.qmb .qmb-area-cost-updated,
+.qmb .qmb-area-cost-missing small {
+  font-size:10px;line-height:1.35;color:var(--qmb-muted);
+  overflow-wrap:anywhere;
+}
+.qmb .qmb-area-cost-updated {color:var(--qmb-accent);font-weight:800;}
+.qmb .qmb-area-cost-missing {
+  display:flex;align-items:center;gap:8px;justify-content:space-between;
+  min-width:0;
+}
+.qmb .qmb-area-cost-missing button {
+  background:transparent;border:0;flex:0 0 auto;
+  color:var(--qmb-accent);font-size:11px;font-weight:850;
+  min-height:30px;padding:2px 0;
+}
+/* Visible immediately above all nine choices when choosing a RATE. */
+.qmb .qmb-builder-cost-context {
+  border:1px solid var(--qmb-border);border-radius:9px;
+  background:var(--qmb-tint);padding:8px 9px;
+  color:var(--qmb-ink);display:grid;gap:3px;
+}
+.qmb .qmb-builder-cost-context > div {
+  display:flex;justify-content:space-between;align-items:baseline;gap:7px;
+}
+.qmb .qmb-builder-cost-context span {font-size:11px;font-weight:800;}
+.qmb .qmb-builder-cost-context strong {
+  font-size:14px;font-variant-numeric:tabular-nums;font-weight:900;
+}
+.qmb .qmb-builder-cost-context small {font-size:10px;color:var(--qmb-muted);line-height:1.25;}
+.qmb .qmb-builder-level-grid button.qmb-builder-level-choice.is-suggested:not(.is-active) {
+  border-color:var(--qmb-accent);border-style:dashed;
+}
+.qmb .qmb-builder-level-choice.is-suggested span {color:var(--qmb-accent);}
