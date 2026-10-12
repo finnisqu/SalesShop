@@ -116,7 +116,7 @@
   border-radius:8px;background:#fff0ec;color:#7c3229;font-size:13px}
 .developer-console-footnote {margin:6px 0;color:var(--dc-sub);font-size:12px;line-height:1.5}
 @media(max-width:840px) {
-  .developer-console {grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  .developer-console {grid-template-columns:1fr;grid-template-rows:auto auto;align-content:start}
   .developer-console-sidebar {
     position:sticky;top:0;z-index:5;
     padding:11px 14px;min-height:auto;gap:10px;
