@@ -36,6 +36,8 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
+import { patchQuoteTakeoff, sectionTakeoffSf } from '../services/quoteTakeoffsLite';
+import type { QuoteTakeoffPiece } from '../types/quote';
 
 interface QuoteState {
   quotes: Quote[];
@@ -64,6 +66,8 @@ interface QuoteState {
   deleteLine: (quoteId: string, lineId: string) => void;
   addSection: (quoteId: string) => string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
+  updateTakeoffPieces: (quoteId: string, sectionId: string, pieces: QuoteTakeoffPiece[]) => void;
+  addTakeoffLine: (quoteId: string, sectionId: string) => string;
   reorderSection: (quoteId: string, sectionId: string, targetSectionId: string) => void;
   deleteSection: (quoteId: string, sectionId: string) => void;
   setCustomerColumns: (quoteId: string, patch: Partial<QuoteCustomerColumns>) => void;
@@ -544,6 +548,43 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, ...history });
   },
 
+  updateTakeoffPieces: (quoteId, sectionId, pieces) => {
+    const current = get().quotes.find(quote => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)
+      || !current.sections.some(section => section.id === sectionId)) return;
+    const updated = { ...patchQuoteTakeoff(current, sectionId, pieces), updatedAt: now() };
+    const history = historyPatch(get(), quoteId, current);
+    const quotes = get().quotes.map(quote => quote.id === quoteId ? updated : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes, ...history });
+  },
+  addTakeoffLine: (quoteId, sectionId) => {
+    const current = get().quotes.find(quote => quote.id === quoteId);
+    const section = current?.sections.find(section => section.id === sectionId);
+    if (!current || !section || !quoteIsCommerciallyEditable(current)
+      || current.documentType === 'pricing-schedule') return '';
+    const quantity = sectionTakeoffSf(section);
+    if (quantity === undefined) return '';
+    const line: QuoteLine = {
+      ...newLine('item', sectionId),
+      description: `Countertop SF · ${section.title}`,
+      pricingMode: 'quantity-rate',
+      amount: undefined,
+      quantity,
+      rate: undefined,
+      quantitySource: {
+        kind: 'area-scope', sectionId, field: 'countertopSf',
+        capturedValue: quantity, appliedAt: now(), syncMode: 'live',
+      },
+    };
+    const history = historyPatch(get(), quoteId, current);
+    const quotes = get().quotes.map(quote => quote.id === quoteId
+      ? { ...quote, lines: [...quote.lines, line], updatedAt: now() }
+      : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes, ...history });
+    return line.id;
+  },
   reorderSection: (quoteId, sectionId, targetSectionId) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current) || sectionId === targetSectionId) return;
