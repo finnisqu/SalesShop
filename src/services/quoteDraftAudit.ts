@@ -1,5 +1,5 @@
-import type {Quote,QuoteLine,QuoteSection} from '../types/quote';
-import {quoteLineAmount,quoteLinesTotal,quoteTotal} from '../types/quote';
+import type {Quote,QuoteSection} from '../types/quote';
+import {quoteLinesTotal,quoteTotal} from '../types/quote';
 import {totalBillableTakeoffSf} from './quoteTakeoffsLite';
 
 /** Drafting is always free-form. These findings are evaluated only at Review/Issue. */
@@ -73,12 +73,21 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
           'This item is included at $0. Confirm it is intentionally complimentary.',where);
       }
       if(!Number.isFinite(line.quantity??NaN)||(line.quantity??0)<=0){
-        add('line:'+line.id+':quantity','review','Zero or missing charge quantity: '+title,
+        // An included material or sink with no billable units cannot be silently
+        // approved as a $0 portion of a larger positive quote.
+        add('line:'+line.id+':quantity',
+          line.kind==='material'||line.kind==='sink'?'blocker':'review',
+          'Zero or missing charge quantity: '+title,
           'The charge currently contributes nothing to the quote total.',where);
       }
-    }else if(line.pricingMode==='direct'&&!isValidPrice(line.amount)){
-      add('line:'+line.id+':amount','blocker','Missing amount: '+title,
-        'This charge has no valid selling amount.',where);
+    }else if(line.pricingMode==='direct'||line.pricingMode==='slab-multiplier'){
+      if(!isValidPrice(line.amount)){
+        add('line:'+line.id+':amount','blocker','Missing amount: '+title,
+          'This charge has no valid selling amount.',where);
+      }else if(line.amount===0&&line.kind!=='discount'){
+        add('line:'+line.id+':zero','review','Zero-price charge: '+title,
+          'Confirm this charge is intentionally complimentary, not an unfinished price.',where);
+      }
     }
   }
   for(const section of quote.sections){
@@ -138,4 +147,16 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
     review:issues.filter(f=>f.severity==='review'),
     optional:issues.filter(f=>f.severity==='optional'),
     pricedLineCount:priced.length,total};
+}
+
+/** Shared safety gate for any path issuing a quote: Beta, Classic, or customer links.
+ * Non-quote pricing schedules use their existing dedicated validator.
+ * Optional and acknowledged review findings never prevent draft editing. */
+export function assertQuoteHasNoPricingBlockers(quote:Quote):void {
+  if(quote.documentType==='pricing-schedule')return;
+  const blockers=auditQuoteDraft(quote).blockers;
+  if(!blockers.length)return;
+  throw new Error('Cannot issue quote: '+blockers.slice(0,3).map(item=>item.title).join('; ')+
+    (blockers.length>3?' (and '+(blockers.length-3)+' more)':'')+
+    '. Open Review to resolve pricing.');
 }
