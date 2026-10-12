@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { scopedStorageKey } from '../lib/developerPlayground';
 import {
   type SinkCategory,
   type SinkConfiguration,
@@ -23,7 +24,7 @@ interface SinkCatalogState {
   deleteVariant: (modelId: string, variantId: string) => void;
 }
 
-const LOCAL_KEY = 'salesshop-sink-catalog-v1';
+const LOCAL_KEY = scopedStorageKey('salesshop-sink-catalog-v1');
 const SEED_TIME = '2026-10-07T00:00:00.000Z';
 const SEED_DATE = '2026-10-07';
 let saveTimer: number | undefined;
