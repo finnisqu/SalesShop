@@ -26,7 +26,7 @@ import { QuoteShareControl } from './QuoteShareControl';
 import { CustomerPreview } from './Quotes';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
-import { BuilderLevelRateButton } from './BuilderLevelChoices';
+import { QuoteSfRateChoices } from './QuoteSfRateChoices';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
@@ -73,6 +73,7 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   const update = useQuoteStore(s=>s.updateLine);
   const remove = useQuoteStore(s=>s.deleteLine);
   const [expanded,setExpanded] = useState(false);
+  const [ratesOpen,setRatesOpen] = useState(false);
   const textOnly = line.pricingMode === 'none';
   return <article className="qmb-line" data-quote-line-id={line.id}>
     <div className="qmb-line-top">
@@ -102,16 +103,28 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
                 onChange={e=>update(quote.id,line.id,{
                   rate:e.target.value===''?undefined:Number(e.target.value),rateReference:undefined,
                 })}/></Field>
-              {line.kind==='material'&&<BuilderLevelRateButton disabled={!editable}
-                division={quote.pricingDivision}
-                selectedRateId={line.rateReference?.rateBookItemId}
-                materialType={line.materialReference?.snapshot?.materialType}
-                materialCostPerSf={line.materialReference?.sourceCostPerSf??line.materialReference?.snapshot?.costPerSf}
-                onSelect={(price,ref)=>update(quote.id,line.id,{rate:price,rateReference:ref})}/>}
+              {line.kind==='material'&&<button type="button"
+                className="qmb-builder-rate-toggle qmb-line-rate-trigger"
+                disabled={!editable} aria-expanded={ratesOpen}
+                aria-label="Choose rate for material line"
+                onClick={()=>setRatesOpen(open=>!open)}>
+                RATE {ratesOpen?'⌃':'▾'}
+              </button>}
             </div>
           </>:<Field label="Amount ($)"><input type="number" inputMode="decimal" step=".01" value={line.amount??''}
             placeholder="Not set" onChange={e=>update(quote.id,line.id,{amount:e.target.value===''?undefined:Number(e.target.value)})}/></Field>}
         </div>}
+        {ratesOpen&&line.kind==='material'&&line.pricingMode==='quantity-rate'&&
+          <div className="qmb-line-rate-drawer" aria-label="Material line rate options">
+            <QuoteSfRateChoices division={quote.pricingDivision}
+              selectedRateId={line.rateReference?.rateBookItemId}
+              materialType={line.materialReference?.snapshot?.materialType}
+              materialCostPerSf={line.materialReference?.sourceCostPerSf??line.materialReference?.snapshot?.costPerSf}
+              onSelect={(price,ref)=>{
+                update(quote.id,line.id,{rate:price,rateReference:ref});
+                setRatesOpen(false);
+              }}/>
+          </div>}
         {line.takeoffSinkId?<p className="qmb-help">Sink charge is always included in the quote total.</p>
           :<label className="qmb-check"><input type="checkbox" checked={line.includeInTotal} onChange={e=>update(quote.id,line.id,{includeInTotal:e.target.checked})}/> Include in quote total</label>}
         <label className="qmb-check"><input type="checkbox" checked={line.customerVisible} onChange={e=>update(quote.id,line.id,{customerVisible:e.target.checked})}/> Show this line to customer (itemized view)</label>
