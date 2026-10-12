@@ -220,6 +220,7 @@ export function QuotesMobileBeta() {
   const deleteSection=useQuoteStore(s=>s.deleteSection);
   const addLine=useQuoteStore(s=>s.addLine);
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
+  const updateManagedSinkLine=useQuoteStore(s=>s.updateLine);
   const undo=useQuoteStore(s=>s.undoQuote);
   const redo=useQuoteStore(s=>s.redoQuote);
   const recordSent=useQuoteStore(s=>s.recordSent);
@@ -253,6 +254,12 @@ export function QuotesMobileBeta() {
   // preserved; only missing takeoff-managed sink charges are created.
   useEffect(()=>{
     if(!quote||!quoteIsCommerciallyEditable(quote))return;
+    // Beta always includes the managed sink sell charge in the quote amount.
+    // Classic retains its earlier manual Include behavior for compatibility.
+    for(const line of quote.lines){
+      if(line.takeoffSinkId&&!line.includeInTotal)
+        updateManagedSinkLine(quote.id,line.id,{includeInTotal:true});
+    }
     for(const section of quote.sections){
       const sinks=section.scope?.takeoffSinks;
       if(!sinks?.length)continue;
@@ -271,7 +278,7 @@ export function QuotesMobileBeta() {
       if(updated.some((sink,i)=>sink!==sinks[i])||hasExcludedCharge)
         updateSinks(quote.id,section.id,updated);
     }
-  },[quote,updateSinks]);
+  },[quote,updateSinks,updateManagedSinkLine]);
   const area=quote?.sections.find(s=>s.id===areaId)??null;
   const editable=Boolean(quote&&quoteIsCommerciallyEditable(quote));
   const canBrowseTeam=authMode==='cloud'&&(teamRole==='owner'||teamRole==='admin')&&!previewRole;
