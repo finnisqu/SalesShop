@@ -371,6 +371,9 @@ test('mobile material RATE dropdown never stretches Quantity or overlays followi
   await beta.getByRole('button',{name:'+ Add line'}).click();
   const row=beta.locator('.qmb-line').first();
   await row.getByRole('button',{name:'Edit line'}).click();
+  // A brand-new material has Catalog search open by default. Its outside
+  // pointer-down listener must not cancel the RATE button's click.
+  await expect(row.locator('.quote-catalog-popover')).toBeVisible();
   const qty=row.getByRole('spinbutton',{name:'Quantity'});
   const before=await qty.evaluate(el=>({height:el.getBoundingClientRect().height,
     top:el.getBoundingClientRect().top}));
@@ -425,4 +428,34 @@ test('Review missing material rate offers same Builder Levels and other SF rates
   await levels.getByRole('button',{name:/Level 2.*54\.00\/SF/}).click();
   await expect(beta.getByRole('button',{name:/Resolve Missing sell rate/})).toHaveCount(0);
   await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
+});
+
+
+test('Area workflow advances to Materials and Pricing, creates Next Area and safely duplicates',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Fast mobile quoting workflow');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen A');
+  await beta.getByRole('button',{name:'Materials ›'}).click();
+  await expect(beta.locator('.qmb-area-editor .qmb-tabs')
+    .getByRole('button',{name:'Materials'})).toHaveAttribute('aria-current','page');
+  await beta.getByRole('button',{name:'Pricing ›'}).click();
+  await expect(beta.locator('.qmb-area-editor .qmb-tabs')
+    .getByRole('button',{name:'Pricing'})).toHaveAttribute('aria-current','page');
+  await beta.getByRole('button',{name:'+ Next Area ›'}).click();
+  await expect(beta.getByRole('textbox',{name:'Area name'})).not.toHaveValue('Kitchen A');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await expect(beta.locator('.qmb-area-card')).toHaveCount(2);
+  await beta.locator('.qmb-area-card').first().click();
+  await beta.getByRole('button',{name:'Duplicate this Area'}).click();
+  await expect(beta.getByRole('textbox',{name:'Area name'})).toHaveValue('Kitchen A copy');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await expect(beta.locator('.qmb-area-card')).toHaveCount(3);
 });
