@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
+import { useNavigationStore } from '../store/navigationStore';
 import { useRateBookStore } from '../store/rateBookStore';
 import { materialLevelCostBand } from '../types/materialLevelGuide';
 import {
@@ -72,7 +73,8 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [expandedRateId, setExpandedRateId] = useState<string | null>(null);
   const [expandedLevelId, setExpandedLevelId] = useState<string | null>(null);
-  const [category, setCategory] = useState<ReferenceCategory>('all');
+  const ratesFocus = useNavigationStore(s=>s.ratesFocus);
+  const [category, setCategory] = useState<ReferenceCategory>(()=>ratesFocus==='material'?'material':'all');
   const [query, setQuery] = useState('');
   const [rateSort, setRateSort] = useState<RateSort>('category');
   const [behaviorFilter, setBehaviorFilter] = useState<'all' | RateBookPricingBehavior>('all');
@@ -174,6 +176,8 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
             ? 'See the standard material cost bands and customer square-foot pricing without opening the supplier catalog.'
             : 'Look up a price without worrying about accidentally changing it.'}
         actions={<div className="rates-mode-actions">
+          {!showingMaterialPricing&&<Button variant="secondary" className="rates-builder-level-shortcut"
+            onClick={()=>selectCategory('material')}>Builder Levels ↗</Button>}
           <span className={`rates-mode-badge ${editing ? 'is-editing' : ''}`} role="status">{editing ? 'Editing' : 'Reference mode'}</span>
           {editing && !showingMaterialPricing && <Button variant="secondary" className="rates-add-button" onClick={addCurrentRate}>+ Rate row</Button>}
           <Button variant={editing ? 'primary' : 'secondary'} className={editing ? 'rates-done-button' : 'rates-edit-button'} onClick={() => {
