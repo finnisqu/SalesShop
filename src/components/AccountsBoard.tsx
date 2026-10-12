@@ -259,6 +259,8 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
         boardRef={boardRef}
         stages={ACCOUNT_STAGES}
         counts={ACCOUNT_STAGES.map((stage) => (accountsByStage.get(stage) ?? []).length)}
+        actions={<button type="button" className="accounts-mobile-tools"
+          onClick={()=>setCleanupOpen(true)} aria-label="Open CRM cleanup">⋯</button>}
       />
       <section
         ref={boardRef}
