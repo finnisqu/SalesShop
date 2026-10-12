@@ -61,3 +61,57 @@
   .qmb .qmb-audit-counts span {font-size:9px;gap:3px;}
   .qmb .qmb-audit-total strong {font-size:18px;}
 }
+
+/* Inline Review quick fixes stay within the normal scrolling workspace,
+   unlike a floating dialog which can be obscured by the mobile keyboard. */
+.qmb .qmb-audit-finding {
+  display:block;min-width:0;padding:0;overflow:visible;
+}
+.qmb .qmb-audit-finding-summary {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:10px 11px;min-width:0;
+}
+.qmb .qmb-audit-finding-summary .qmb-audit-finding-copy {flex:1 1 0;}
+.qmb .qmb-audit-finding-summary button.qmb-audit-resolve {
+  min-height:36px;flex:0 0 auto;padding:6px 10px;
+  border:1px solid var(--qmb-border);background:var(--qmb-tint);
+  color:var(--qmb-accent);border-radius:8px;
+  font-weight:850;font-size:12px;
+}
+.qmb .qmb-audit-finding.is-expanded .qmb-audit-resolve {
+  background:var(--qmb-accent);color:var(--qmb-card);
+}
+.qmb .qmb-audit-inline {
+  border-top:1px solid var(--qmb-border);padding:11px 12px 13px;
+  display:grid;gap:10px;background:var(--qmb-card);
+  border-radius:0 0 10px 10px;min-width:0;
+}
+.qmb .qmb-audit-inline form {display:grid;gap:10px;min-width:0;}
+.qmb .qmb-audit-inline label {display:grid;gap:5px;font-size:12px;
+  font-weight:750;color:var(--qmb-ink);min-width:0;}
+.qmb .qmb-audit-inline label>small {font-weight:450;color:var(--qmb-muted);}
+.qmb .qmb-audit-inline input {
+  display:block;min-height:42px;width:100%;min-width:0;
+  border:1px solid var(--qmb-border);border-radius:9px;
+  background:var(--qmb-card);color:var(--qmb-ink);
+  padding:8px 10px;font-size:16px;font-weight:550;
+}
+.qmb .qmb-audit-inline-pair {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.qmb .qmb-audit-inline p {font-size:12px;color:var(--qmb-muted);line-height:1.45;margin:0;}
+.qmb .qmb-audit-inline-actions {display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:2px;}
+.qmb .qmb-audit-inline-actions button {
+  min-height:40px;flex:1 0 auto;padding:6px 11px;font-size:12px;
+}
+.qmb .qmb-audit-input-error {font-size:11px;color:var(--ss-danger,#a6473e);}
+.qmb .qmb-audit-input-label {font-size:12px;font-weight:850;}
+.qmb .qmb-audit-inline .qtl-combobox {min-width:0;width:100%;}
+.qmb .qmb-audit-inline .qtl-combobox>input {width:100%;font-size:16px;}
+.qmb .qmb-audit-inline .qtl-combobox-menu {
+  position:relative;max-height:min(240px,37dvh);
+  overflow-y:auto;width:100%;z-index:2;
+}
+.qmb .qmb-audit-inline .qtl-combobox-results button {min-height:40px;}
+@media(max-width:350px){
+  .qmb .qmb-audit-inline-actions button {padding-inline:7px;font-size:11px;}
+  .qmb .qmb-audit-finding-summary {gap:6px;padding:9px;}
+}
