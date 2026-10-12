@@ -4,6 +4,7 @@ import {useQuoteStore} from '../store/quoteStore';
 import {useCrmStore} from '../store/crmStore';
 import {parseInches} from '../services/quoteTakeoffsLite';
 import {TakeoffMaterialCatalog} from './TakeoffCatalogPickers';
+import {QuoteSfRateChoices} from './QuoteSfRateChoices';
 import type {QuoteAuditDestination,QuoteAuditFinding} from '../services/quoteDraftAudit';
 
 export type AuditQuickFix=
@@ -67,6 +68,7 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
   const [secondary,setSecondary]=useState(fix?.kind==='customer'?quote.contactName??'':String(piece?.lengthIn??''));
   const [tertiary,setTertiary]=useState(String(piece?.widthIn??''));
   const [materialDraft,setMaterialDraft]=useState(section?.scope?.takeoffMaterial??'');
+  const [rateOptionsOpen,setRateOptionsOpen]=useState(false);
   const [error,setError]=useState('');
   const crmMatches=fix?.kind==='customer'&&main.trim().length>=2
     ?crmCompanies.filter(company=>company.name.toLowerCase().includes(main.trim().toLowerCase())
@@ -176,10 +178,31 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
           onChange={e=>setMain(e.target.value)}/>
       </label>:fix.kind==='title'?<label>Project / quote title
         <input autoFocus value={main} maxLength={300} onChange={e=>setMain(e.target.value)}/>
-      </label>:fix.kind==='line'?<label>{
-        fix.field==='quantity'?'Quantity':fix.field==='amount'?'Line amount ($)':'Selling rate ($)'
-      }<input autoFocus type="number" inputMode="decimal" step={fix.field==='quantity'?'1':'.01'}
-        min="0" value={main} onChange={e=>setMain(e.target.value)}/></label>
+      </label>:fix.kind==='line'?<div className="qmb-audit-rate-fix">
+        <label>{fix.field==='quantity'?'Quantity':fix.field==='amount'?'Line amount ($)':'Selling rate ($/SF)'}
+          <input autoFocus type="number" inputMode="decimal" step={fix.field==='quantity'?'1':'.01'}
+            min="0" value={main} onChange={e=>setMain(e.target.value)}/>
+        </label>
+        {fix.field==='rate'&&<div className="qmb-audit-rate-chooser">
+          <button type="button" className="qmb-outline qmb-audit-rate-toggle"
+            aria-label="Choose from Rates in Review" aria-expanded={rateOptionsOpen}
+            onClick={()=>setRateOptionsOpen(open=>!open)}>
+            Choose from Rates {rateOptionsOpen?'⌃':'▾'}
+          </button>
+          {rateOptionsOpen&&line&&<div className="qmb-audit-rate-panel">
+            <QuoteSfRateChoices division={quote.pricingDivision}
+              includeBuilderLevels={line.kind==='material'}
+              selectedRateId={line.rateReference?.rateBookItemId}
+              materialType={line.materialReference?.snapshot?.materialType}
+              materialCostPerSf={line.materialReference?.sourceCostPerSf??line.materialReference?.snapshot?.costPerSf}
+              onSelect={(price,ref)=>{
+                updateLine(quote.id,line.id,{rate:price,rateReference:ref});
+                setRateOptionsOpen(false);
+                onClose();
+              }}/>
+          </div>}
+        </div>}
+      </div>
       :fix.kind==='sink'?<label>Sink selling price / each ($)
         <input autoFocus type="number" inputMode="decimal" step=".01" min="0"
           value={main} onChange={e=>setMain(e.target.value)}/>
