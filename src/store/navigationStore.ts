@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { scopedStorageKey } from '../lib/developerPlayground';
 import { useNotebookStore } from './notebookStore';
 import { useQuoteStore } from './quoteStore';
 
@@ -21,8 +22,8 @@ interface NavigationState {
   clearFocusedCompany: () => void;
 }
 
-const VIEW_STORAGE_KEY = 'salesshop-active-view-v1';
-const CATALOG_SECTION_STORAGE_KEY = 'salesshop-catalog-section-v1';
+const VIEW_STORAGE_KEY = scopedStorageKey('salesshop-active-view-v1');
+const CATALOG_SECTION_STORAGE_KEY = scopedStorageKey('salesshop-catalog-section-v1');
 const APP_VIEWS: AppView[] = ['notebook', 'board', 'quotes', 'catalog', 'dashboard', 'settings'];
 const CATALOG_SECTIONS: CatalogSection[] = ['materials', 'sinks', 'other', 'rates', 'suppliers'];
 
