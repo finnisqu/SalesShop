@@ -5,6 +5,7 @@ import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { syncNormalizedCrm } from './normalizedCrmSync';
 import { syncNormalizedQuotes } from './normalizedQuoteSync';
+import { auditQuoteDraft } from './quoteDraftAudit';
 
 export interface QuoteShare {
   id: string;
@@ -72,6 +73,13 @@ async function prepareCurrentRevision(quoteId: string) {
   }
 
   if (quote.status === 'Draft' || quote.status === 'Ready') {
+    if (quote.documentType !== 'pricing-schedule') {
+      const outstanding = auditQuoteDraft(quote);
+      if (outstanding.review.length) {
+        throw new Error('Review this draft and issue it from Quotes before sharing. '+
+          outstanding.review.length+' item(s) need an intentional decision.');
+      }
+    }
     await state.recordSent(quoteId);
     state = useQuoteStore.getState();
     quote = state.quotes.find((candidate) => candidate.id === quoteId);
