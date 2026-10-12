@@ -36,7 +36,7 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
-import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces, syncManagedSinkLineEdit } from '../services/quoteTakeoffsLite';
+import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces, syncManagedSinkLineEdit, unpriceDeletedTakeoffSink } from '../services/quoteTakeoffsLite';
 import type { QuoteTakeoffPiece, QuoteTakeoffSink, QuoteLineMaterialReference, QuoteLineRateReference } from '../types/quote';
 
 interface QuoteState {
@@ -520,8 +520,9 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const organizationId = cloudOrganizationId();
     const history = historyPatch(get(), quoteId, current);
     const timestamp = now();
+    const safeDelete = unpriceDeletedTakeoffSink(current,lineId);
     const quotes = get().quotes.map((quote) => quote.id === quoteId
-      ? { ...quote, lines: quote.lines.filter((line) => line.id !== lineId), updatedAt: timestamp }
+      ? { ...quote, sections: safeDelete.sections, lines: quote.lines.filter((line) => line.id !== lineId), updatedAt: timestamp }
       : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes, ...history });
