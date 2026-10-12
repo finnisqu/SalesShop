@@ -36,8 +36,8 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
-import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, sectionTakeoffSf } from '../services/quoteTakeoffsLite';
-import type { QuoteTakeoffPiece, QuoteTakeoffSink } from '../types/quote';
+import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf } from '../services/quoteTakeoffsLite';
+import type { QuoteTakeoffPiece, QuoteTakeoffSink, QuoteLineMaterialReference } from '../types/quote';
 
 interface QuoteState {
   quotes: Quote[];
@@ -68,6 +68,7 @@ interface QuoteState {
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   updateTakeoffPieces: (quoteId: string, sectionId: string, pieces: QuoteTakeoffPiece[]) => void;
   updateTakeoffSinks: (quoteId: string, sectionId: string, sinks: QuoteTakeoffSink[]) => void;
+  selectTakeoffMaterial: (quoteId: string, sectionId: string, label: string, reference?: QuoteLineMaterialReference) => void;
   addTakeoffLine: (quoteId: string, sectionId: string) => string;
   detachTakeoff: (quoteId: string, sectionId: string) => void;
   reorderSection: (quoteId: string, sectionId: string, targetSectionId: string) => void;
@@ -561,6 +562,15 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     persist(quotes, get().activeQuoteId);
     set({quotes,...history});
   },
+  selectTakeoffMaterial: (quoteId, sectionId, label, reference) => {
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)||!current.sections.some(area=>area.id===sectionId))return;
+    const updated={...patchQuoteTakeoffMaterial(current,sectionId,label.slice(0,300),reference),updatedAt:now()};
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(quote=>quote.id===quoteId?updated:quote);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
+  },
   updateTakeoffSinks: (quoteId, sectionId, sinks) => {
     const current=get().quotes.find(quote=>quote.id===quoteId);
     if(!current||!quoteIsCommerciallyEditable(current)
@@ -591,8 +601,9 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quantity = sectionTakeoffSf(section);
     if (quantity === undefined) return '';
     const line: QuoteLine = {
-      ...newLine('item', sectionId),
-      description: `Countertop SF · ${section.title}`,
+      ...newLine(section.scope?.takeoffMaterialReference ? 'material' : 'item', sectionId),
+      description: section.scope?.takeoffMaterial?.trim() || `Countertop and 4″ splash SF · ${section.title}`,
+      materialReference: section.scope?.takeoffMaterialReference,
       pricingMode: 'quantity-rate',
       amount: undefined,
       quantity,
