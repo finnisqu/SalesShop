@@ -36,7 +36,7 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
-import { patchQuoteTakeoff, sectionTakeoffSf } from '../services/quoteTakeoffsLite';
+import { detachQuoteTakeoff, patchQuoteTakeoff, sectionTakeoffSf } from '../services/quoteTakeoffsLite';
 import type { QuoteTakeoffPiece } from '../types/quote';
 
 interface QuoteState {
@@ -68,6 +68,7 @@ interface QuoteState {
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   updateTakeoffPieces: (quoteId: string, sectionId: string, pieces: QuoteTakeoffPiece[]) => void;
   addTakeoffLine: (quoteId: string, sectionId: string) => string;
+  detachTakeoff: (quoteId: string, sectionId: string) => void;
   reorderSection: (quoteId: string, sectionId: string, targetSectionId: string) => void;
   deleteSection: (quoteId: string, sectionId: string) => void;
   setCustomerColumns: (quoteId: string, patch: Partial<QuoteCustomerColumns>) => void;
@@ -548,6 +549,17 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, ...history });
   },
 
+  detachTakeoff: (quoteId, sectionId) => {
+    const current = get().quotes.find(quote => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return;
+    const updated = detachQuoteTakeoff(current, sectionId);
+    if (updated === current) return;
+    const history = historyPatch(get(), quoteId, current);
+    const quotes = get().quotes.map(quote => quote.id === quoteId
+      ? {...updated,updatedAt:now()} : quote);
+    persist(quotes, get().activeQuoteId);
+    set({quotes,...history});
+  },
   updateTakeoffPieces: (quoteId, sectionId, pieces) => {
     const current = get().quotes.find(quote => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)
