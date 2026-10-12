@@ -116,6 +116,7 @@ export function patchQuoteTakeoff(
   const section=quote.sections.find(s=>s.id===sectionId);
   if(!section)return quote;
   const total=totalTakeoffSf(pieces);
+  const splash=totalSplashLf(pieces);
   return {
     ...quote,
     sections:quote.sections.map(s=>s.id===sectionId
@@ -125,8 +126,9 @@ export function patchQuoteTakeoff(
       const source=line.quantitySource;
       if(line.sectionId!==sectionId||line.pricingMode!=='quantity-rate'
         ||source?.kind!=='area-scope'||source.sectionId!==sectionId
-        ||source.field!=='countertopSf'||source.syncMode!=='live')return line;
-      return {...line,quantity:total,quantitySource:{...source,capturedValue:total,appliedAt}};
+        ||(source.field!=='countertopSf'&&source.field!=='splashLf')||source.syncMode!=='live')return line;
+      const quantity=source.field==='splashLf'?splash:total;
+      return {...line,quantity,quantitySource:{...source,capturedValue:quantity,appliedAt}};
     }),
   };
 }
@@ -148,7 +150,7 @@ export function detachQuoteTakeoff(quote:Quote, sectionId:string):Quote {
     lines:quote.lines.map(line=>{
       const source=line.quantitySource;
       if(line.sectionId!==sectionId || source?.kind!=='area-scope'
-        ||source.field!=='countertopSf'||source.sectionId!==sectionId||source.syncMode!=='live')return line;
+        ||(source.field!=='countertopSf'&&source.field!=='splashLf')||source.sectionId!==sectionId||source.syncMode!=='live')return line;
       const {syncMode: _live, ...snapshot}=source;
       void _live;
       return {...line,quantitySource:snapshot};
