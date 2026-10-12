@@ -525,7 +525,7 @@ function AreaEditor({ quote, sectionId, lines, onAddLine, onMoveArea }: { quote:
             return <label key={field}>
               <span>{meta.label}</span>
               <div><input type="number" min="0" step={integerField ? '1' : '0.01'} value={section.scope?.[field] ?? ''}
-                disabled={(field === 'countertopSf'||field === 'splashLf') && Array.isArray(section.scope?.takeoffPieces)}
+                disabled={((field === 'countertopSf'||field === 'splashLf') && Array.isArray(section.scope?.takeoffPieces)) || ((field === 'kitchenSinkCount'||field === 'vanitySinkCount') && Array.isArray(section.scope?.takeoffSinks))}
                 title={(field === 'countertopSf'||field === 'splashLf') && Array.isArray(section.scope?.takeoffPieces) ? 'Controlled by Takeoffs Lite' : undefined}
                 onChange={(event) => {
                 const next = numberValue(event.target.value);
@@ -640,7 +640,7 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
           return <div className="customer-quote-section is-summary" key={section.id}>{renderAreaSummary(section.title, total, takeoffCustomerSpecs(section))}</div>;
         }
         if (!sectionLines.length) return null;
-        return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{section.scope?.takeoffMaterial && <p className="customer-area-spec">{section.scope.takeoffMaterial}</p>}{renderLines(sectionLines)}</div>;
+        return <div className="customer-quote-section" key={section.id}><h3>{section.title}</h3>{takeoffCustomerSpecs(section) && <p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}{renderLines(sectionLines)}</div>;
       })}</div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
       {quote.customerNotes && <div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
