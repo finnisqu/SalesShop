@@ -282,3 +282,41 @@ test('mobile Quote RATE picker shows Stock Builder Level 0–8 and records selec
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(beta.getByLabel('Current quote total')).toContainText('$432.00');
 });
+
+
+test('mobile quote Review highlights blockers, deep-links to fixes and never blocks draft edits',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Focused mobile audit navigation');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:/Review quote/}).click();
+  const review=beta.getByRole('group',{name:'Resolve before issuing'}).or(
+    beta.getByRole('region',{name:'Resolve before issuing'}));
+  await expect(beta.getByRole('button',{name:'Fix No priced work yet'})).toBeVisible();
+  await expect(beta.getByRole('button',{name:'Resolve pricing issues to issue'})).toBeDisabled();
+  await beta.getByRole('button',{name:'Fix No priced work yet'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
+  await beta.getByRole('textbox',{name:'Length (in)'}).blur();
+  await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
+  await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await beta.getByRole('button',{name:'Pricing'}).click();
+  await beta.getByRole('button',{name:/Choose from Rates/}).click();
+  await beta.getByRole('group',{name:'Stock Builder pricing levels'})
+    .getByRole('button',{name:/Level 1.*44\.00\/SF/}).click();
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:/Review quote/}).click();
+  await expect(beta.getByText('Resolve before issuing',{exact:true})).toHaveCount(0);
+  await expect(beta.getByRole('checkbox',{name:/I reviewed the remaining items/})).toBeVisible();
+  await expect(beta.getByRole('button',{name:'Review remaining items to issue'})).toBeDisabled();
+  await beta.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await expect(beta.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
+  await beta.getByRole('button',{name:/Fix Material not selected:/}).click();
+  await expect(beta.getByRole('button',{name:'Materials'})).toHaveAttribute('aria-current','page');
+});
