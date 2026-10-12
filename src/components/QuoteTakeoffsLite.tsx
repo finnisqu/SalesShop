@@ -173,7 +173,7 @@ export function QuoteTakeoffsLite({quote,section,onClose}:{
           </div>
           <div className="qtl-piece-actions"><button type="button" className="qtl-add" disabled={!editable||pieces.length>=500} onClick={addPiece}>+ Add piece</button>
             {selectedPieceIds.length>0&&<div className="qtl-split-actions"><input aria-label="New Area name" placeholder="New Area name" value={newAreaTitle} onChange={e=>setNewAreaTitle(e.target.value)}/>
-              <button type="button" onClick={movePieces} disabled={!editable||selectedPieceIds.length===pieces.length}>Move {selectedPieceIds.length} to new Area</button></div>}
+              <button type="button" onClick={movePieces} disabled={!editable}>Move {selectedPieceIds.length} to new Area</button></div>}
           </div>
         </section>
 
