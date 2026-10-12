@@ -502,6 +502,11 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   updateLine: (quoteId, lineId, patch) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;
+    // Live SF is owned by Takeoffs: a generic line editor cannot desynchronize
+    // the measured square feet and the quote amount.
+    const sourceLine=current.lines.find(l=>l.id===lineId);
+    if(sourceLine?.quantitySource?.syncMode==='live'
+      &&Object.prototype.hasOwnProperty.call(patch,'quantity'))return;
     const history = historyPatch(get(), quoteId, current);
     const synchronized = syncManagedSinkLineEdit(current,lineId,patch);
     const timestamp = now();
