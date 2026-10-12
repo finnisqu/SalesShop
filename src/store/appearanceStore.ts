@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { scopedStorageKey } from '../lib/developerPlayground';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from './authStore';
 import {
@@ -22,7 +23,7 @@ export const DEFAULT_APPEARANCE: AppearancePreferences = {
   highContrast: false,
   largerControls: false,
 };
-const STORAGE_KEY = 'salesshop-appearance-v1';
+const STORAGE_KEY = scopedStorageKey('salesshop-appearance-v1');
 
 export function normalizeAppearance(value: unknown): AppearancePreferences {
   if (!value || typeof value !== 'object') return { ...DEFAULT_APPEARANCE };
