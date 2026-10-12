@@ -67,7 +67,7 @@ type Snapshot = {
   contactName?: string;
   contactEmail?: string;
   address?: string;
-  sections?: Array<{ id: string; title: string; customerVisible: boolean; customerDisplayMode?: 'detail' | 'summary'; customerTotal?: number }>;
+  sections?: Array<{ id: string; title: string; customerVisible: boolean; customerDisplayMode?: 'detail' | 'summary'; customerTotal?: number; scope?: unknown; specification?: string }>;
   lines?: SnapshotLine[];
   customerColumns?: { quantity: boolean; rate: boolean; lineAmount: boolean };
   customerNotes?: string;
@@ -103,8 +103,25 @@ function safePublicLine(line: SnapshotLine) {
   };
 }
 
+function safeSectionSpecs(scope: unknown, existing: unknown): string | undefined {
+  if(typeof existing==='string')return existing.slice(0,1300).trim()||undefined;
+  if(!scope || typeof scope!=='object')return undefined;
+  const obj=scope as Record<string,unknown>;
+  const material=typeof obj.takeoffMaterial==='string'?obj.takeoffMaterial.slice(0,300).trim():'';
+  const sinks=Array.isArray(obj.takeoffSinks)?obj.takeoffSinks.slice(0,100):[];
+  const descriptors=sinks.filter(s=>s&&typeof s==='object').map(item=>{
+    const sink=item as Record<string,unknown>;
+    const count=Number(sink.count);
+    if(!Number.isInteger(count)||count<1||count>1000)return '';
+    const name=typeof sink.name==='string'&&sink.name.trim()?sink.name.trim().slice(0,160):
+      sink.category==='vanity'?'Vanity sink':'Kitchen sink';
+    return `${count} × ${name}`;
+  }).filter(Boolean);
+  return [material,...descriptors].filter(Boolean).join(' · ')||undefined;
+}
+
 function safePublicSection(
-  section: { id?: unknown; title?: unknown; customerVisible?: unknown; customerDisplayMode?: unknown; customerTotal?: unknown },
+  section: { id?: unknown; title?: unknown; customerVisible?: unknown; customerDisplayMode?: unknown; customerTotal?: unknown; scope?: unknown; specification?: unknown },
   calculatedTotal?: number,
 ) {
   const customerDisplayMode = section.customerDisplayMode === 'summary' ? 'summary' : 'detail';
@@ -116,6 +133,7 @@ function safePublicSection(
     title: String(section.title ?? ''),
     customerVisible: Boolean(section.customerVisible),
     customerDisplayMode,
+    specification: safeSectionSpecs(section.scope,section.specification),
     customerTotal: customerDisplayMode === 'summary'
       ? roundCurrency(calculatedTotal ?? existingTotal ?? 0)
       : undefined,
@@ -127,7 +145,7 @@ function safeAcceptedSnapshot(value: unknown) {
   const snapshot = value as Record<string, unknown>;
   const allLines = Array.isArray(snapshot.lines) ? snapshot.lines as SnapshotLine[] : [];
   const rawSections = Array.isArray(snapshot.sections)
-    ? snapshot.sections as Array<{ id?: unknown; title?: unknown; customerVisible?: unknown; customerDisplayMode?: unknown; customerTotal?: unknown }>
+    ? snapshot.sections as Array<{ id?: unknown; title?: unknown; customerVisible?: unknown; customerDisplayMode?: unknown; customerTotal?: unknown; scope?: unknown; specification?: unknown }>
     : [];
   const summarySectionIds = new Set(rawSections
     .filter((section) => section.customerDisplayMode === 'summary')
