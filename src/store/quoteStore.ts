@@ -665,7 +665,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   addTakeoffLine: (quoteId, sectionId) => {
     const current=get().quotes.find(q=>q.id===quoteId);
     if(!current||!quoteIsCommerciallyEditable(current))return '';
-    const updated=ensureSmartTakeoffLine(current,sectionId);
+    const updated=ensureSmartTakeoffLine(current,sectionId,true);
     const line=updated.lines.find(l=>l.sectionId===sectionId
       &&l.quantitySource?.field==='countertopSf'&&l.quantitySource.syncMode==='live');
     if(updated===current)return line?.id??'';
