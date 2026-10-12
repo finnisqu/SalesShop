@@ -25,7 +25,10 @@ export function isGeneralTakeoffSection(section: Pick<QuoteSection,'title'>): bo
  * Hidden descriptions and internal prices are not exposed as separate entries.
  */
 export function presentItemizedQuoteLines(lines: QuoteLine[]): PresentedQuoteLine[] {
-  const visible=lines.filter(line=>line.customerVisible);
+  // Excluded charge amounts must never appear as billable customer rows.
+  // Pure informational notes remain visible regardless of Include setting.
+  const visible=lines.filter(line=>line.customerVisible &&
+    (line.includeInTotal || line.pricingMode==='none'));
   const hiddenTotal=quoteLinesTotal(lines.filter(line=>!line.customerVisible));
   const candidates=visible.filter(line=>line.includeInTotal&&line.pricingMode!=='none');
   const host=candidates.find(line=>line.kind==='material'||line.kind==='item')
