@@ -323,3 +323,92 @@
  .qmb .qmb-commerce-segment{padding:10px}
  .qmb .qmb-sink-primary{gap:3px}
 }
+
+/* Coherent sequential scope / selling / cost workspace. The center pane
+ * always owns Calculator; right inspector is navigation/summary only. */
+.qmb .qmb-area-editor .qmb-pagecontent:has([data-center-calculator]){width:100%;min-width:0}
+.qmb .qmb-calculator-workspace,.qmb .qmb-calculator-main{
+ width:100%;display:grid!important;min-width:0;max-width:none;visibility:visible}
+.qmb .qmb-calculator-workspace .qmb-private-cost{width:100%;min-width:0}
+.qmb .qmb-workspace-intro{padding:4px 2px 8px}
+.qmb .qmb-workspace-intro h2{margin:3px 0 5px;font-size:21px;line-height:1.2;color:var(--qmb-ink)}
+.qmb .qmb-workspace-intro p{max-width:680px;margin:0;font-size:12px;line-height:1.55;color:var(--qmb-muted)}
+.qmb .qmb-commerce-stack,.qmb .qmb-measure-rework{display:grid;gap:14px;min-width:0}
+.qmb .qmb-commerce-segment{display:grid;gap:0;padding:0;overflow:visible;min-width:0}
+.qmb .qmb-commerce-segment>.qmb-commerce-heading{display:flex;align-items:center;justify-content:space-between;
+ padding:13px 16px;border-bottom:1px solid var(--qmb-border);background:var(--qmb-tint);
+ border-radius:12px 12px 0 0}
+.qmb .qmb-commerce-heading h3{font-size:15px;line-height:1.25;margin:0}
+.qmb .qmb-commerce-heading>span{font-size:10px;font-weight:850;color:var(--qmb-muted)}
+.qmb .qmb-commerce-stage{display:grid;gap:9px;padding:13px 16px;min-width:0}
+.qmb .qmb-commerce-stage.is-pricing{border-top:1px solid var(--qmb-border);
+ background:color-mix(in srgb,var(--qmb-card) 92%,var(--qmb-tint))}
+.qmb .qmb-stage-heading{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.qmb .qmb-stage-heading b{font-size:11px;text-transform:uppercase;letter-spacing:.055em;color:var(--qmb-accent)}
+.qmb .qmb-stage-heading small{font-size:10px;color:var(--qmb-muted);text-align:right}
+.qmb .qmb-commerce-stage .qmb-desktop-pricing-lab{gap:9px}
+.qmb .qmb-commerce-stage .qmb-pricing-lab-heading h3{display:none}
+.qmb .qmb-commerce-stage .qmb-pricing-lab-heading{justify-content:flex-end}
+.qmb .qmb-commerce-stage .qmb-pricing-lab-heading small{display:none}
+.qmb .qmb-commerce-stage .qmb-pricing-formula{max-width:none}
+.qmb .qmb-commerce-segment>.qmb-materials-sheet{padding:13px 16px;min-width:0}
+.qmb .qmb-commerce-segment>.qmb-desktop-pricing-lab{padding:13px 16px}
+.qmb .qmb-commerce-segment .qmb-desktop-lab-extras{border:0;padding:0;background:transparent}
+.qmb .qmb-commerce-segment .qmb-desktop-lab-extras>header>strong{display:none}
+.qmb .qmb-commerce-segment .qmb-desktop-lab-extras>header{justify-content:flex-end}
+.qmb .qmb-sink-select-heading,.qmb .qmb-sink-pricing-heading{
+ font-weight:820;color:var(--qmb-accent);letter-spacing:.04em;
+ text-transform:uppercase;font-size:10px}
+.qmb .qmb-sink-select-heading{display:flex;justify-content:space-between;
+ padding:0 0 5px;grid-column:1/-1}
+.qmb .qmb-sink-select-heading>span{font-weight:500;color:var(--qmb-muted)}
+.qmb .qmb-sink-pricing-heading{width:100%;flex:0 0 100%}
+.qmb .qmb-sink-line{border:1px solid var(--qmb-border);border-radius:10px;padding:12px;margin-bottom:8px;
+ background:var(--qmb-card)}
+.qmb .qmb-sink-primary{width:100%}
+.qmb .qmb-sink-secondary{display:flex;gap:9px;flex-wrap:wrap;align-items:end;
+ padding-top:10px;margin-top:10px;border-top:1px solid var(--qmb-border)}
+.qmb .qmb-sink-qty input{min-width:55px}
+.qmb .qmb-sink-price input{min-width:96px}
+.qmb .qmb-sink-scope-only .qmb-sink-secondary{padding-top:8px;margin-top:8px}
+.qmb .qmb-sink-scope-only .qmb-sink-price{display:none}
+.qmb .qmb-sink-private-cost{justify-content:flex-start}
+.qmb .qmb-material-cost-caption strong{font-weight:750}
+.qmb .qmb-commerce-segment .qmb-material-picker{border:1px solid var(--qmb-border);border-radius:10px;
+ padding:10px;background:var(--qmb-card)}
+.qmb .qmb-calculator-source-stack{display:grid;gap:13px;padding-top:10px;min-width:0}
+.qmb .qmb-calculator-source-stack>section{padding:12px;border:1px solid var(--qmb-border);border-radius:10px}
+.qmb .qmb-calculator-source-stack h3{margin:0 0 10px;font-size:13px}
+.qmb .qmb-scope-pieces-container .qmb-grid-toolbar{padding:12px 13px 5px}
+.qmb .qmb-scope-pieces-container .qmb-measure-sheet{margin:9px 12px 13px}
+.qmb .qmb-scope-description{font-size:11px;margin:10px 14px 0;color:var(--qmb-muted)}
+.qmb .qmb-measure-rework .qmb-commerce-segment>.qmb-materials-sheet{padding:12px}
+.qmb .qmb-scope-extras{padding:12px;display:grid;gap:9px}
+.qmb .qmb-scope-add-controls{display:flex;justify-content:space-between;gap:9px;align-items:end;flex-wrap:wrap}
+.qmb .qmb-scope-add-controls label{display:grid;gap:4px;font-size:10px;flex:1;min-width:130px;color:var(--qmb-muted)}
+.qmb .qmb-scope-add-controls select,.qmb .qmb-scope-extra-row input{
+ height:35px;border:1px solid var(--qmb-border);background:var(--qmb-card);color:var(--qmb-ink);
+ border-radius:8px;padding:6px;min-width:0;width:100%;font-size:12px}
+.qmb .qmb-scope-add-controls>button{height:35px;padding:6px 14px;border:1px solid var(--qmb-border);
+ border-radius:8px;background:var(--qmb-tint);color:var(--qmb-accent);font-size:11px;font-weight:750}
+.qmb .qmb-scope-extra-row{display:grid;grid-template-columns:minmax(0,1fr) 66px 30px;
+ gap:9px;align-items:end;padding:8px;border:1px solid var(--qmb-border);border-radius:10px}
+.qmb .qmb-scope-extra-row label{display:grid;gap:5px;font-size:10px;color:var(--qmb-muted);min-width:0}
+.qmb .qmb-scope-extra-row button{height:35px;border:1px solid var(--qmb-border);border-radius:8px;
+ background:var(--qmb-card);color:var(--ss-danger,#ae5545)}
+.qmb .qmb-inspector-open-calculator{min-height:34px;border:1px solid var(--qmb-border);
+ color:var(--qmb-accent);background:var(--qmb-tint);border-radius:9px;display:flex;
+ justify-content:space-between;align-items:center;font-size:11px;font-weight:750;padding:8px 10px}
+@media(min-width:1000px) and (min-height:550px){
+ .qmb .qmb-commerce-stack .qmb-sink-primary{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.5fr) 25px}
+ .qmb .qmb-commerce-stack .qmb-sink-secondary{display:flex}
+ .qmb .qmb-commerce-stack .qmb-sink-line{display:block}
+ .qmb .qmb-commerce-stack .qmb-sink-primary>.qmb-sink-type-field{min-width:0}
+ .qmb .qmb-commerce-stack .qmb-sink-catalog{min-width:0}
+ .qmb .qmb-commerce-stack .qmb-sink-qty input{width:75px}
+ .qmb .qmb-commerce-stack .qmb-sink-price input{width:130px}
+ .qmb .qmb-commerce-stack .qmb-sinks-sheet{container-type:normal}
+ .qmb .qmb-calculator-main>.qmb-desktop-pricing-lab{max-width:none}
+ .qmb .qmb-calculator-main .qmb-pricing-double{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){.qmb .qmb-workspace-intro h2{font-size:18px}}

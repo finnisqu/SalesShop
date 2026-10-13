@@ -143,6 +143,8 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
               onClick={()=>onAreaTab(id)}>{label}</button>)}
         </nav>
       </section>}
+      {area&&page==='area'&&<button type="button" className="qmb-inspector-open-calculator"
+        onClick={()=>onAreaTab('calculator')}>Open Calculator in workspace <span>›</span></button>}
       <details className="qmb-desktop-private-profit" aria-label="Private quote cost and margin">
         <summary>Private cost &amp; margin <span>{privateMargin===undefined?'Cost coverage needed':privateMargin.toFixed(1)+'% margin'}</span></summary>
         <div><span>Known buying cost</span><strong>{money.format(knownCost)}</strong></div>

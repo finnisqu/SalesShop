@@ -29,6 +29,7 @@ import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
 import { QuoteBetaDesktopCommerce } from './QuoteBetaDesktopCommerce';
+import { QuoteBetaAdditionalScope } from './QuoteBetaAdditionalScope';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { selectedMaterialCost } from '../services/selectedMaterialCost';
 import { QuoteBetaSelections } from './QuoteBetaSelections';
@@ -261,7 +262,12 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
         }}>{label}</button>)}
     </nav>
     <div className="qmb-pad qmb-pagecontent">
-      {tab==='measure'&&<QuoteBetaMeasureGrid pieces={pieces} editable={editable}
+      {tab==='measure'&&<div className={desktopLab?'qmb-measure-rework':'qmb-mobile-measure-existing'}>
+        {desktopLab&&<header className="qmb-workspace-intro"><div className="qmb-kicker">SCOPE WORKSPACE</div>
+          <h2>Measure &amp; define work</h2>
+          <p>Set dimensions, sink models and additional work first. Set customer selling prices in Materials.</p></header>}
+        <section className={desktopLab?'qmb-commerce-segment qmb-scope-pieces-container':''}>
+        <QuoteBetaMeasureGrid pieces={pieces} editable={editable}
         onSave={savePieces} onAdvanced={()=>setAdvanced(true)}
         defaults={{splashHeightIn:section.scope?.takeoffDefaultSplashHeightIn??4,
           edgeProfile:section.scope?.takeoffDefaultEdgeProfile??'Flat'}}
@@ -270,11 +276,24 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
             takeoffDefaultSplashHeightIn:next.splashHeightIn,takeoffDefaultEdgeProfile:next.edgeProfile}});
           if(applyAll)savePieces(pieces.map(piece=>({...piece,splashHeightIn:next.splashHeightIn,
             edgeProfile:next.edgeProfile})));
-        }}/>}
+        }}/>
+        </section>
+        {desktopLab&&<><section className="qmb-commerce-segment">
+          <header className="qmb-commerce-heading"><h3>Sinks</h3><span>02</span></header>
+          <p className="qmb-scope-description">Select models and quantities. Selling prices are set on the Materials step.</p>
+          <QuoteBetaMaterials quote={quote} section={section} editable={editable}
+            part="sinks" scopeOnly showHeading={false}/>
+        </section>
+        <section className="qmb-commerce-segment">
+          <header className="qmb-commerce-heading"><h3>Additional</h3><span>03</span></header>
+          <p className="qmb-scope-description">Define extra work and quantities; price it later.</p>
+          <QuoteBetaAdditionalScope quote={quote} section={section} editable={editable}/>
+        </section></>}
+      </div>}
       {tab==='materials'&&(desktopLab
         ?<QuoteBetaDesktopCommerce quote={quote} section={section} editable={editable} tab="materials"/>
         :<QuoteBetaMaterials quote={quote} section={section} editable={editable}/>)}
-      {tab==='calculator'&&desktopLab&&<QuoteBetaDesktopCommerce quote={quote} section={section}
+      {tab==='calculator'&&<QuoteBetaDesktopCommerce quote={quote} section={section}
         editable={editable} tab="calculator"/>}
       {tab==='pricing'&&<div className="qmb-mobile-pricing-legacy">
         <div className="qmb-section-head"><div><h3>Pricing & presentation</h3><p>Finish pricing here—or leave it undecided.</p></div></div>

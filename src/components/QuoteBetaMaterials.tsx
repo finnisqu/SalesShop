@@ -10,9 +10,9 @@ import {selectedMaterialCost} from '../services/selectedMaterialCost';
 import {useCompanySettingsStore} from '../store/companySettingsStore';
 
 /** Compact, live-store-connected Material and Sink editor for mobile Quotes Beta. */
-export function QuoteBetaMaterials({quote,section,editable,part='all',separateSinkPricing=false}:{
+export function QuoteBetaMaterials({quote,section,editable,part='all',separateSinkPricing=false,scopeOnly=false,showHeading=true}:{
   quote:Quote;section:QuoteSection;editable:boolean;
-  part?:'all'|'material'|'sinks';separateSinkPricing?:boolean;
+  part?:'all'|'material'|'sinks';separateSinkPricing?:boolean;scopeOnly?:boolean;showHeading?:boolean;
 }) {
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
   const selectMaterial=useQuoteStore(s=>s.selectTakeoffMaterial);
@@ -26,11 +26,11 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
   const patchSink=(id:string,patch:Partial<QuoteTakeoffSink>)=>
     updateSinks(quote.id,section.id,sinks.map(s=>s.id===id?{...s,...patch}:s));
   const addSink=()=>updateSinks(quote.id,section.id,[...sinks,newTakeoffSink()]);
-  return <div className={'qmb-materials-sheet'+(separateSinkPricing?' qmb-sink-selling-separated':'')}>
+  return <div className={'qmb-materials-sheet'+(separateSinkPricing?' qmb-sink-selling-separated':'')+(scopeOnly?' qmb-sink-scope-only':'')}>
     {part!=='sinks'&&<>
-    <div className="qmb-grid-toolbar">
+    {showHeading&&<div className="qmb-grid-toolbar">
       <div><strong>Material</strong><small>Catalog search or custom description</small></div>
-    </div>
+    </div>}
     <div className="qmb-material-picker">
       <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
         selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
@@ -45,14 +45,15 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
     </div>
     </>}
     {part!=='material'&&<>
-    <div className="qmb-grid-toolbar qmb-sink-headline">
+    {showHeading&&<div className="qmb-grid-toolbar qmb-sink-headline">
       <div><strong>Sinks</strong><small>{sinks.length} selected · optional specifications</small></div>
       <button className="qmb-quiet" type="button" onClick={()=>setShowHelp(v=>!v)}
         aria-expanded={showHelp}>ⓘ</button>
-    </div>
-    {showHelp&&<p className="qmb-help">Each selected sink creates a price line automatically. Choose quantities and customer selling prices beside the models; faucet holes are fabrication-only selections.</p>}
+    </div>}
+    {showHelp&&showHeading&&<p className="qmb-help">Each selected sink creates a price line automatically. Choose quantities and customer selling prices beside the models; faucet holes are fabrication-only selections.</p>}
     <div className="qmb-sinks-sheet">
       {sinks.map((sink,index)=><div className="qmb-sink-line" key={sink.id}>
+        <div className="qmb-sink-select-heading">Selection <span>Sink {index+1}</span></div>
         <div className="qmb-sink-primary">
           <label className="qmb-sink-type-field"><small>Type</small><select aria-label={'Sink '+(index+1)+' type'} disabled={!editable} value={sink.category}
             onChange={e=>patchSink(sink.id,{category:e.target.value as QuoteTakeoffSink['category'],sinkReference:undefined})}>
@@ -67,14 +68,15 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
             disabled={!editable} onClick={()=>updateSinks(quote.id,section.id,sinks.filter(s=>s.id!==sink.id))}>×</button>
         </div>
         <div className="qmb-sink-secondary">
+          {!scopeOnly&&<span className="qmb-sink-pricing-heading">Pricing</span>}
           <label className="qmb-sink-qty">Qty <input type="number" inputMode="numeric" min="1" max="1000"
             aria-label={'Sink '+(index+1)+' quantity'} value={sink.count} disabled={!editable}
             onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchSink(sink.id,{count:n});}}/></label>
-          <label className="qmb-sink-price">
+          {!scopeOnly&&<label className="qmb-sink-price">
             $/each <input aria-label={'Sink '+(index+1)+' sell price'} type="number" inputMode="decimal"
               min="0" step=".01" value={sink.unitPrice??''} placeholder="—" disabled={!editable}
               onChange={e=>{const n=Number(e.target.value);if(e.target.value===''||(Number.isFinite(n)&&n>=0))patchSink(sink.id,{unitPrice:e.target.value===''?undefined:n});}}/>
-          </label>
+          </label>}
           <FloatingRowMenu width={338} label={'Faucet holes for Sink '+(index+1)}
             caption={'Holes · '+((sink.faucetHoleOffsetsIn??[0]).length||'None')}>
             {close=><div className="qmb-holes-menu">
@@ -100,7 +102,7 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
             </div>}
           </FloatingRowMenu>
         </div>
-        <div className="qmb-sink-private-cost" aria-label={'Sink '+(index+1)+' private buying cost'}>
+        {!scopeOnly&&<div className="qmb-sink-private-cost" aria-label={'Sink '+(index+1)+' private buying cost'}>
           <span>Buying cost</span>
           <label>$/each <input type="number" min="0" step=".01"
             aria-label={'Sink '+(index+1)+' buying cost'} disabled={!editable}
@@ -112,7 +114,7 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
             ?'$'+((sink.internalCostOverride??sink.sinkReference!.snapshot!.internalCost!)*sink.count).toFixed(2)
             :'Unknown'}</strong>
           <small>× {sink.count}</small>
-        </div>
+        </div>}
       </div>)}
       {!sinks.length&&<div className="qmb-grid-empty">No sinks yet. You can leave this empty.</div>}
       <button type="button" className="qmb-grid-add" disabled={!editable||sinks.length>=100}
