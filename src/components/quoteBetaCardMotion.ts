@@ -105,7 +105,7 @@ export function useQuoteBetaCardReflow<T extends HTMLElement=HTMLDivElement>(ids
       after.set(id,top);
       const from=previous.current.get(id);
       if(from!==undefined&&Math.abs(from-top)>2&&!reduceMotion&&
-        !row.classList.contains('is-dragging')&&current.height){
+        !row.classList.contains('is-drag-source')&&current.height){
         row.animate(
           [{transform:'translate3d(0,'+(from-top)+'px,0)'},{transform:'translate3d(0,0,0)'}],
           {duration:175,easing:'cubic-bezier(.2,.8,.2,1)'}
