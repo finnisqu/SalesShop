@@ -9,7 +9,7 @@ import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { canIssueTeamQuote } from '../services/teamDepartments';
-import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
+import {quoteIsCommerciallyEditable,canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
 import {
   parseInches, takeoffCustomerSpecs,
   totalBillableTakeoffSf, totalSplashSf, totalTakeoffSf,
@@ -392,6 +392,10 @@ export function QuotesMobileBeta() {
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
   const [search,setSearch]=useState('');
   const [showArchived,setShowArchived]=useState(false);
+  const [libraryAction,setLibraryAction]=useState<{id:string;kind:'archive'|'delete'}|null>(null);
+  const archiveQuote=useQuoteStore(s=>s.archiveQuote);
+  const restoreQuote=useQuoteStore(s=>s.restoreQuote);
+  const deleteQuote=useQuoteStore(s=>s.deleteQuote);
 
   const [selectionsOpen,setSelectionsOpen]=useState(false);
   const [reviewOpen,setReviewOpen]=useState(false);
@@ -551,12 +555,24 @@ export function QuotesMobileBeta() {
         <label className="qmb-search"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a quote or customer" aria-label="Search my quotes"/></label>
         <div className="qmb-section-head"><h3>My quotes</h3><button type="button" className="qmb-quiet" onClick={()=>setShowArchived(v=>!v)}>{showArchived?'Hide archived':'Show archived'}</button></div>
         <div className="qmb-library-grid">
-        {list.map(q=><button type="button" key={q.id} className="qmb-card qmb-listcard" onClick={()=>openQuote(q.id)}>
-          <div className="qmb-split"><small>{displayQuoteNumber(q)}</small><span className="qmb-chip">{q.status}</span></div>
-          <strong>{q.title||'Untitled quote'}</strong>
-          <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {q.sections.length} Areas</small>
-            <b>{money.format(quoteTotal(q))}</b></div>
-        </button>)}
+        {list.map(q=><div className="qmb-library-entry" key={q.id}>
+          <button type="button" className="qmb-card qmb-listcard"
+            onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
+            <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
+              <span className="qmb-chip">{q.archivedAt?'Archived':q.status}</span></div>
+            <strong>{q.title||'Untitled quote'}</strong>
+            <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {q.sections.length} Areas</small>
+              <b>{money.format(quoteTotal(q))}</b></div>
+          </button>
+          <div className="qmb-library-card-actions">
+            {q.archivedAt?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore</button>:
+              <>
+                <button type="button" onClick={()=>setLibraryAction({id:q.id,kind:'archive'})}>Archive</button>
+                {canPermanentlyDeleteQuote(q,quotes)&&<button type="button" className="is-danger"
+                  onClick={()=>setLibraryAction({id:q.id,kind:'delete'})}>Delete draft</button>}
+              </>}
+          </div>
+        </div>)}
         </div>
         {!list.length&&<div className="qmb-empty">No matching quotes. Start one without filling in any required fields.</div>}
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
@@ -701,6 +717,38 @@ export function QuotesMobileBeta() {
             onClick={()=>setShowDeleteGeneralTakeoff(false)}>Cancel</button></footer>
         </section>
       </div>,document.body)}
+    {libraryAction&&(()=>{
+      const chosen=quotes.find(q=>q.id===libraryAction.id);
+      if(!chosen)return null;
+      const removing=libraryAction.kind==='delete';
+      return createPortal(<div className="qmb qmb-area-manager-backdrop" onPointerDown={e=>{
+        if(e.target===e.currentTarget)setLibraryAction(null);}}>
+        <section className="qmb-area-manager qmb-inline-delete-dialog" role="dialog"
+          aria-modal="true" aria-label={removing?'Delete draft quote':'Archive quote'}>
+          <header className="qmb-area-manager-head"><div>
+            <strong>{removing?'Delete unsent draft?':'Archive this quote?'}</strong>
+            <small>{chosen.title||'Untitled quote'}</small></div>
+            <button type="button" aria-label="Close quote action" onClick={()=>setLibraryAction(null)}>×</button>
+          </header>
+          <div className="qmb-area-manager-delete">
+            <p>{removing?'This draft has never been issued. Permanent deletion cannot be undone.':
+              'The quote and its revisions will be retained, and you can restore them from Show archived.'}</p>
+            <button type="button" className={'qmb-area-deletion-choice'+(removing?' is-destructive':'')}
+              onClick={()=>{
+                if(removing){
+                  if(canPermanentlyDeleteQuote(chosen,useQuoteStore.getState().quotes))deleteQuote(chosen.id);
+                }else archiveQuote(chosen.id);
+                setLibraryAction(null);
+              }}>
+              <strong>{removing?'Permanently delete draft':'Archive quote'}</strong>
+            </button>
+          </div>
+          <footer className="qmb-area-manager-foot">
+            <button type="button" onClick={()=>setLibraryAction(null)}>Keep quote</button>
+          </footer>
+        </section>
+      </div>,document.body);
+    })()}
     <QuoteBetaAreaDeleteDialog manager={areaManager} quote={quote}/>
     <QuoteBetaGeneralDeleteDialog manager={generalManager} quote={quote}/>
     {quote&&page!=='library'&&reviewOpen&&<QuoteBetaReviewOverlay quote={quote} focusId={reviewFocus}
