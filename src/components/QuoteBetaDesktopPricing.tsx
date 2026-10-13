@@ -7,6 +7,7 @@ import {QuoteSfRateChoices} from './QuoteSfRateChoices';
 import {QuoteBetaRateCatalog,rateItemToQuotePatch} from './QuoteBetaRateCatalog';
 import {useCompanySettingsStore} from '../store/companySettingsStore';
 import {selectedMaterialCost} from '../services/selectedMaterialCost';
+import {isDeveloperPlaygroundRoute} from '../lib/developerPlayground';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const decimal=(n:number|undefined)=>n===undefined?'':String(n);
@@ -153,6 +154,21 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const areaTotal=quoteLinesTotal(lines);
   const priceDiff=projection.grossSpread;
   const perc=projection.marginPercent;
+  const desiredMargin=section.scope?.targetMargin??.25;
+  const separateSell=quoteLinesTotal(lines.filter(l=>l!==primary));
+  const marginTotal=projection.complete&&desiredMargin<1?
+    projection.totalKnownCost/(1-desiredMargin):undefined;
+  const marginMaterialAmount=marginTotal===undefined?undefined:
+    Math.max(0,Math.round((marginTotal-separateSell)*100)/100);
+  const sfScenario=primary?.rate===undefined?undefined:
+    projection.measuredSf*primary.rate+separateSell;
+  const multiplierScenario=projection.slabCount!==undefined&&projection.slabCost!==undefined?
+    projection.slabCount*projection.slabCost*multiplier+separateSell:undefined;
+  const applyMargin=()=>{
+    if(marginMaterialAmount===undefined)return;
+    setPrice('manual',marginMaterialAmount);
+  };
+
   const addCharge=(kind:QuoteLineKind)=>{
     addLine(quote.id,kind,section.id);
     setMoreLines(false);
@@ -225,6 +241,12 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     </>}
     {(view==='all'||view==='calculator')&&<>
     <div className="qmb-private-cost" aria-label="Private Area cost and margin">
+      {isDeveloperPlaygroundRoute()&&<button className="qmb-demo-preset" type="button" disabled={!editable}
+        onClick={()=>updateScope({slabYield:.65,targetMargin:.25,
+          shopCostRateSf:14,installCostRateSf:5.5,
+          shopCostOverride:undefined,installCostOverride:undefined})}>
+        Use spreadsheet example assumptions · 65% yield · 25% margin · $14 shop / $5.50 install per SF
+      </button>}
       <header><strong>Buying cost & production</strong><span>Internal only · not on customer quote</span></header>
       <div className="qmb-pricing-double">
         <label>Slab yield %
@@ -268,7 +290,23 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
           <small>{projection.purchaseSlabs??'—'} slab(s) · buying basis</small></div>
       </div>
       <div className="qmb-optional-labor">
-        <strong>Additional shop & field costs <small>Optional · totals for this Area</small></strong>
+        <strong>Fabrication &amp; installation <small>Per-SF assumptions or optional total overrides</small></strong>
+        <div className="qmb-pricing-double">
+          <label>Shop cost / measured SF
+            <div className="qmb-currency-field"><span>$</span><input type="number" min="0" step=".01"
+              aria-label="Area shop cost per SF" disabled={!editable}
+              value={decimal(section.scope?.shopCostRateSf)} placeholder="Not set"
+              onChange={e=>{const v=numeric(e.target.value);if(v===undefined||v>=0)
+                updateScope({shopCostRateSf:v,shopCostOverride:undefined});}}/></div>
+          </label>
+          <label>Install cost / measured SF
+            <div className="qmb-currency-field"><span>$</span><input type="number" min="0" step=".01"
+              aria-label="Area install cost per SF" disabled={!editable}
+              value={decimal(section.scope?.installCostRateSf)} placeholder="Not set"
+              onChange={e=>{const v=numeric(e.target.value);if(v===undefined||v>=0)
+                updateScope({installCostRateSf:v,installCostOverride:undefined});}}/></div>
+          </label>
+        </div>
         <div className="qmb-pricing-double">
           <label>Shop / fabrication cost
             <div className="qmb-currency-field"><span aria-hidden="true">$</span>
@@ -298,6 +336,34 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
         <span className="qmb-private-margin">Gross margin <b>{perc!==undefined?perc.toFixed(1)+'%':'Incomplete cost coverage'}</b></span>
       </div>
       {!projection.complete&&<p className="qmb-cost-warning">Margin stays provisional until material, sink and other priced work have buying costs.</p>}
+    </div>
+    <div className="qmb-pricing-comparison" aria-label="Compare project selling methods">
+      <header><strong>Compare pricing methods</strong>
+        <small>Suggested totals · no change until applied</small>
+      </header>
+      <label>Target gross margin %
+        <input type="number" min="0" max="95" step=".5" aria-label="Area target margin"
+          disabled={!editable} value={Math.round(desiredMargin*10000)/100}
+          onChange={e=>{const v=numeric(e.target.value);
+            if(v!==undefined&&v>=0&&v<=95)updateScope({targetMargin:v/100});}}/>
+      </label>
+      <div className="qmb-pricing-comparison-grid">
+        <div><small>Margin</small>
+          <strong>{marginTotal===undefined?'Costs incomplete':money.format(marginTotal)}</strong>
+          <span>{Math.round(desiredMargin*100)}% of customer price retained as gross spread</span>
+        </div>
+        <div><small>Square feet</small>
+          <strong>{sfScenario===undefined?'Set SF rate':money.format(sfScenario)}</strong>
+          <span>{projection.measuredSf.toFixed(2)} SF × {money.format(primary?.rate??0)}/SF + other charges</span>
+        </div>
+        <div><small>Multiplier</small>
+          <strong>{multiplierScenario===undefined?'Slab data missing':money.format(multiplierScenario)}</strong>
+          <span>{projection.slabCount??'—'} whole slabs × {money.format(projection.slabCost??0)} × {multiplier} + others</span>
+        </div>
+      </div>
+      <button type="button" className="qmb-apply-margin" disabled={!editable||marginMaterialAmount===undefined}
+        onClick={applyMargin}>Apply margin estimate to quote</button>
+      <small>Applying Margin sets the countertop material price, subtracting separately charged Sinks and Add-ons. Later cost changes do not silently reprice the customer quote.</small>
     </div>
 
     </>}
