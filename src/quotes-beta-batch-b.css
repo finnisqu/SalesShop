@@ -1,0 +1,160 @@
+/* Batch B — desktop Area buying/selling laboratory; intentionally opt-in to
+   wide desktop layouts. Phone keeps its existing stepped flow. */
+.qmb .qmb-area-desktop-pricing,.qmb .qmb-area-pricing-route,
+.qmb .qmb-area-desktop-pricing-material{display:none}
+.qmb .qmb-mobile-pricing-legacy{display:block}
+.qmb .qmb-area-commerce-columns{min-width:0}
+.qmb .qmb-general-heading{align-items:start;flex-wrap:wrap}
+.qmb .qmb-general-quick-add{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:wrap}
+.qmb .qmb-general-quick-add>button:not(.qmb-area-mode-button){
+  border:1px solid var(--qmb-border);background:var(--qmb-card);
+  color:var(--qmb-accent);border-radius:9px;font-size:11px;font-weight:760;
+  min-height:32px;padding:6px 9px}
+.qmb .qmb-area-visibility-toggle{
+  border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card);
+  color:var(--qmb-accent);font-size:10px;font-weight:780;min-width:48px;
+  min-height:38px;white-space:nowrap;padding:5px}
+.qmb .qmb-area-visibility-toggle[aria-pressed=false]{
+  color:var(--ss-danger,#b25145);border-color:currentColor;background:var(--qmb-tint)}
+.qmb .qmb-inline-area-row>.qmb-area-visibility-toggle{flex:0 0 auto;align-self:stretch}
+.qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-visibility-toggle{
+ min-width:38px;padding:3px 1px;font-size:9px;line-height:1.2}
+.qmb .qmb-area-extra-buttons{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.qmb .qmb-area-extra-buttons button{
+ border:1px solid var(--qmb-border);background:var(--qmb-card);
+ border-radius:8px;padding:6px 9px;color:var(--qmb-accent);font-size:11px;min-height:34px}
+.qmb .qmb-material-cost-caption{display:flex;flex-wrap:wrap;align-items:center;gap:4px 9px;
+ margin-top:9px;color:var(--qmb-muted);font-size:10px;line-height:1.4}
+.qmb .qmb-material-cost-caption strong{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-material-cost-caption span{white-space:nowrap}
+.qmb .qmb-material-cost-caption span+span:before{content:"· ";color:var(--qmb-muted)}
+.qmb .qmb-material-cost-caption span:last-child{color:var(--qmb-accent);font-weight:770}
+.qmb .qmb-sink-type-field{min-width:0;display:grid;gap:4px}
+.qmb .qmb-sink-type-field small,.qmb .qmb-sink-catalog>small{
+ font-size:10px;line-height:1.3;color:var(--qmb-muted);font-weight:750}
+.qmb .qmb-sink-type-field select{
+ min-width:0;width:100%;height:40px;min-height:40px;border:1px solid var(--qmb-border);
+ border-radius:7px;background:var(--qmb-card);color:var(--qmb-ink);font-size:12px;padding:5px 4px}
+.qmb .qmb-sink-catalog{display:grid;gap:4px;align-content:start}
+.qmb .qmb-sink-primary{align-items:end}
+.qmb .qmb-sink-secondary{align-items:end}
+.qmb .qmb-sink-private-cost{
+ display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:5px 8px;
+ color:var(--qmb-muted);font-size:10px;line-height:1.45;padding:0 1px 3px}
+.qmb .qmb-sink-private-cost>span{font-weight:760}
+.qmb .qmb-sink-private-cost>label{display:flex;gap:5px;align-items:center}
+.qmb .qmb-sink-private-cost input{
+ min-height:27px;width:76px;background:var(--qmb-card);color:var(--qmb-ink);
+ border:1px solid var(--qmb-border);border-radius:7px;padding:5px;font-size:11px}
+.qmb .qmb-sink-private-cost>strong{font-size:11px;color:var(--qmb-accent)}
+/* Suggestions *overlay* other sink rows; they never push the field/container
+   downward. Root z-index lifts above neighboring cards without a portal. */
+.qmb .qmb-materials-sheet .qtl-combobox{position:relative;min-width:0}
+.qmb .qmb-materials-sheet .qtl-combobox:has(.qtl-combobox-menu){
+ z-index:200;isolation:isolate}
+.qmb .qmb-materials-sheet .qtl-combobox-menu,
+.qmb .qmb-sink-catalog .qtl-combobox-menu{
+ position:absolute!important;top:calc(100% + 5px)!important;left:0!important;right:auto!important;
+ display:block;width:max(100%,min(330px,80vw));max-width:min(430px,85vw);
+ z-index:2000;margin:0;border:1px solid var(--qmb-border);
+ box-shadow:0 13px 35px rgba(0,0,0,.2);border-radius:10px;
+ background:var(--qmb-card);overflow:auto;max-height:min(390px,55vh)}
+.qmb .qmb-materials-sheet .qtl-combobox-results{max-height:min(375px,53vh);overflow:auto}
+.qmb .qmb-sink-line:has(.qtl-combobox-menu){position:relative;z-index:400}
+.qmb .qmb-material-picker:has(.qtl-combobox-menu){position:relative;z-index:400}
+.qmb .qmb-sinks-sheet:has(.qtl-combobox-menu){isolation:isolate}
+@media(min-width:1000px) and (min-height:550px){
+ .qmb .qmb-area-editor .qmb-tabs[aria-label="Area sections"]>button:nth-child(3){display:none}
+ .qmb .qmb-area-commerce-columns{
+   display:grid;grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);
+   gap:15px;align-items:start;min-width:0}
+ .qmb .qmb-area-commerce-columns>.qmb-materials-sheet,
+ .qmb .qmb-area-desktop-pricing-material{min-width:0}
+ .qmb .qmb-area-desktop-pricing,.qmb .qmb-area-desktop-pricing-material{display:block;min-width:0}
+ .qmb .qmb-area-commerce-columns.qmb-area-pricing-route{display:grid}
+ .qmb .qmb-mobile-pricing-legacy{display:none}
+ .qmb .qmb-area-editor .qmb-pagecontent{padding-block:17px 24px}
+ .qmb .qmb-sinks-sheet{container-type:inline-size}
+ /* In roomier workspaces use a single compact sink input rail. */
+ @container(min-width:605px){
+   .qmb .qmb-sink-line{display:grid;
+     grid-template-columns:minmax(96px,.82fr) minmax(170px,1.55fr)
+       64px 80px minmax(112px,.8fr) 28px;
+     column-gap:7px;row-gap:5px;align-items:end}
+   .qmb .qmb-sink-primary,.qmb .qmb-sink-secondary{display:contents}
+   .qmb .qmb-sink-type-field{grid-column:1;grid-row:1}
+   .qmb .qmb-sink-catalog{grid-column:2;grid-row:1}
+   .qmb .qmb-sink-primary>.qmb-sink-remove{grid-column:6;grid-row:1;align-self:end}
+   .qmb .qmb-sink-qty{grid-column:3;grid-row:1}
+   .qmb .qmb-sink-price{grid-column:4;grid-row:1}
+   .qmb .qmb-sink-secondary>*:last-child{grid-column:5;grid-row:1}
+   .qmb .qmb-sink-secondary label{display:grid;gap:4px;font-size:10px}
+   .qmb .qmb-sink-private-cost{grid-column:1/-1;grid-row:2}
+ }
+}
+.qmb .qmb-desktop-pricing-lab{display:grid;gap:13px;min-width:0}
+.qmb .qmb-pricing-lab-heading{display:flex;justify-content:space-between;gap:10px;align-items:start}
+.qmb .qmb-pricing-lab-heading h3{margin:0;font-size:16px}
+.qmb .qmb-pricing-lab-heading small{font-size:11px;color:var(--qmb-muted)}
+.qmb .qmb-pricing-lab-heading strong{font-size:17px;white-space:nowrap}
+.qmb .qmb-pricing-modes{display:flex;gap:5px;min-width:0}
+.qmb .qmb-pricing-modes>button{flex:1;min-width:0;min-height:36px;
+ padding:6px 3px;font-size:11px;font-weight:750;color:var(--qmb-muted);
+ border:1px solid var(--qmb-border);border-radius:9px;background:var(--qmb-card)}
+.qmb .qmb-pricing-modes>button[aria-pressed=true]{
+ color:var(--qmb-accent);background:var(--qmb-tint);border-color:var(--qmb-accent)}
+.qmb .qmb-pricing-hint,.qmb .qmb-math-ledger,.qmb .qmb-cost-warning{
+ font-size:11px;line-height:1.55;color:var(--qmb-muted);margin:4px 0}
+.qmb .qmb-cost-warning{color:var(--ss-danger,#b85145)}
+.qmb .qmb-pricing-formula{display:grid;gap:8px;min-width:0;
+ border:1px solid var(--qmb-border);border-radius:11px;
+ background:var(--qmb-card);padding:12px}
+.qmb .qmb-pricing-formula>label,.qmb .qmb-pricing-double>label{
+ display:grid;gap:5px;min-width:0;color:var(--qmb-muted);font-size:10px;font-weight:750}
+.qmb .qmb-pricing-formula input,.qmb .qmb-pricing-double input{
+ width:100%;min-width:0;min-height:36px;padding:6px 8px;
+ background:var(--qmb-card);border:1px solid var(--qmb-border);
+ color:var(--qmb-ink);border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums}
+.qmb .qmb-pricing-double{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.qmb .qmb-pricing-formula .qmb-math-ledger{font-family:ui-monospace,monospace;
+ letter-spacing:-.03em;font-size:11px;overflow-wrap:anywhere;
+ padding:9px;border-radius:8px;background:var(--qmb-bg);color:var(--qmb-ink)}
+.qmb .qmb-pricing-rate-toggle{border:1px solid var(--qmb-border);border-radius:8px;
+ background:var(--qmb-tint);color:var(--qmb-accent);padding:8px;font-size:11px;font-weight:770}
+.qmb .qmb-pricing-rate-popup{max-height:290px;overflow-y:auto;
+ padding:6px;border:1px solid var(--qmb-border);border-radius:9px}
+.qmb .qmb-private-cost{display:grid;gap:11px;padding:13px;
+ background:color-mix(in srgb,var(--qmb-card) 90%,var(--qmb-tint));
+ border:1px solid var(--qmb-border);border-radius:12px}
+.qmb .qmb-private-cost>header{display:flex;justify-content:space-between;flex-wrap:wrap;
+ gap:5px;align-items:center}
+.qmb .qmb-private-cost>header strong{font-size:13px}
+.qmb .qmb-private-cost>header span{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-private-calc-result{min-width:0;display:grid;align-content:center;gap:5px;
+ color:var(--qmb-ink);font-size:11px}
+.qmb .qmb-private-calc-result strong{font-size:13px;overflow-wrap:anywhere}
+.qmb .qmb-private-calc-result small{color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-private-cost-lines{display:grid;gap:6px;border-top:1px solid var(--qmb-border);padding-top:9px}
+.qmb .qmb-private-cost-lines>span{display:flex;justify-content:space-between;gap:7px;
+ color:var(--qmb-muted);font-size:11px;line-height:1.45}
+.qmb .qmb-private-cost-lines>span b{color:var(--qmb-ink);white-space:nowrap}
+.qmb .qmb-private-cost-lines>span.qmb-private-margin{
+ font-weight:800;color:var(--qmb-ink);font-size:12px;border-top:1px solid var(--qmb-border);padding-top:8px}
+.qmb .qmb-desktop-lab-customer,.qmb .qmb-desktop-lab-extras{
+ display:grid;gap:9px;padding:12px;border:1px solid var(--qmb-border);
+ border-radius:12px;background:var(--qmb-card)}
+.qmb .qmb-desktop-lab-customer>strong,.qmb .qmb-desktop-lab-extras>header strong{font-size:12px}
+.qmb .qmb-desktop-lab-extras>header{display:flex;align-items:center;justify-content:space-between}
+.qmb .qmb-desktop-lab-extras>header button{border:1px solid var(--qmb-border);
+ background:var(--qmb-tint);color:var(--qmb-accent);border-radius:8px;
+ padding:6px 11px;font-size:11px;font-weight:750}
+.qmb .qmb-desktop-extra-row{display:flex;justify-content:space-between;gap:8px;
+ border-top:1px solid var(--qmb-border);padding-top:9px;min-width:0;font-size:11px}
+.qmb .qmb-desktop-extra-row>span{min-width:0;overflow-wrap:anywhere}
+.qmb .qmb-desktop-extra-row>strong{white-space:nowrap}
+.qmb .qmb-desktop-lab-extras>small{color:var(--qmb-muted);font-size:10px;line-height:1.5}
+@media(max-width:700px){
+ .qmb .qmb-general-quick-add{justify-content:flex-start}
+ .qmb .qmb-general-quick-add>button:not(.qmb-area-mode-button){font-size:10px;padding:6px}
+ .qmb .qmb-area-visibility-toggle{min-width:40px;font-size:9px}
+}
