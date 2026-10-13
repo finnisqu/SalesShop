@@ -669,7 +669,7 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
       <section className="customer-quote-recipient"><div><span>Prepared for</span><strong>{quote.companyName || quote.contactName || 'Customer'}</strong>{quote.contactName && quote.companyName && <p>{quote.contactName}</p>}{quote.address && <p>{quote.address}</p>}</div><div><span>Project</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div></section>
       <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}>
         <div className="customer-quote-row customer-quote-table-head"><div>Description</div>{quote.customerColumns.quantity&&<div>Qty</div>}{quote.customerColumns.rate&&<div>Rate</div>}{quote.customerColumns.lineAmount&&<div>Amount</div>}</div>
-        {renderLines(presentItemizedQuoteLines(looseLines))}
+        {renderLines(presentItemizedQuoteLines(customerGeneral))}
         {visibleSections.map(section=>{
           const allSectionLines=quote.lines.filter(line=>line.sectionId===section.id);
           if(!allSectionLines.length)return null;
