@@ -42,7 +42,7 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
   const cancel=()=>{
     setDeletingId(null);motion.clear();setEditing(false);setOrder([]);
   };
-  const move=(id:string,toId:string)=>{
+  const move=(id:string,toId:string,after=false)=>{
     if(id===toId)return;
     setOrder(previous=>{
       const result=previous.filter(s=>original.includes(s));
@@ -50,7 +50,7 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
       const from=result.indexOf(id),to=result.indexOf(toId);
       if(from<0||to<0||from===to)return previous;
       result.splice(from,1);
-      result.splice(to,0,id);
+      result.splice(to+(after?1:0),0,id);
       return result;
     });
   };
@@ -58,7 +58,7 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
   const moveStep=(id:string,step:-1|1)=>{
     const current=syncedOrder.indexOf(id);
     const neighbor=syncedOrder[current+step];
-    if(neighbor)move(id,neighbor);
+    if(neighbor)move(id,neighbor,step===1);
   };
   useEffect(()=>{
     setEditing(false);setOrder([]);setDeletingId(null);motion.clear();
