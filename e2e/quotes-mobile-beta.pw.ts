@@ -713,7 +713,7 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   await expect(beta.locator('.qmb-area-card')).toHaveCount(1);
   await beta.locator('.qmb-line').filter({hasText:'Taxes'}).getByRole('button',{name:'Edit line'}).click();
   await expect(beta.locator('.qmb-line').filter({hasText:'Taxes'}).getByRole('combobox',{name:'Move line to Area'})).toHaveValue('');
-  await expect(beta.getByRole('strong',{name:'$75.00'})).toHaveCount(0);
+  await expect(beta.locator('.qmb-quote-total')).toHaveText('$75.00');
   await beta.getByRole('button',{name:'Undo'}).click();
   await expect(beta.locator('.qmb-area-card')).toHaveCount(2);
 });
