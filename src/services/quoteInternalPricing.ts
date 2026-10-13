@@ -80,7 +80,8 @@ function rateInternalCost(line: QuoteLine) {
 }
 
 function internalCostForLine(line: QuoteLine) {
-  if (line.kind === 'item' && validNumber(line.internalCost)) {
+  // Manual private total-cost overrides apply to all line kinds.
+  if (validNumber(line.internalCost)) {
     return {
       value: roundCurrency(line.internalCost ?? 0),
       source: 'manual-total' as const,

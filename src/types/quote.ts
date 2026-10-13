@@ -128,6 +128,10 @@ export interface QuoteAreaScope {
   /** Default for newly added pieces; individually overridden pieces keep their own choices. */
   takeoffDefaultSplashHeightIn?: number;
   takeoffDefaultEdgeProfile?: string;
+  /** Fraction of slab surface expected to be usable; 0.65 by default. */
+  slabYield?: number;
+  /** Optional manually adjusted whole-slab purchase count. */
+  slabCountOverride?: number;
   /** In Takeoffs Lite, the combined top + checked 4-inch splash material SF. */
   countertopSf?: number;
   /** Retained separately for optional splash labor/linear-foot estimating. */
