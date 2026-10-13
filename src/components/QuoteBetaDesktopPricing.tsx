@@ -3,7 +3,6 @@ import type {Quote,QuoteLine,QuoteLineKind,QuoteSection,QuotePricingMode} from '
 import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {calculateAreaCustomerPrice,projectAreaCost,type AreaPricingChoice} from '../services/quoteAreaCost';
-import {TakeoffRatePicker} from './TakeoffRatePicker';
 import {QuoteSfRateChoices} from './QuoteSfRateChoices';
 import {useCompanySettingsStore} from '../store/companySettingsStore';
 import {selectedMaterialCost} from '../services/selectedMaterialCost';
