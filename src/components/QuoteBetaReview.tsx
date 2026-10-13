@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {quoteTotal} from '../types/quote';
 import {QuoteShareControl} from './QuoteShareControl';
@@ -125,7 +126,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
           <small className="qmb-audit-help">Resolve {report.blockers.length} pricing issue{report.blockers.length===1?'':'s'} before issuing. Your draft is still saved.</small>}
       </section>
       <button type="button" className="qmb-quiet qmb-block" onClick={onClassic}>Continue in Classic Quotes</button>
-      {signatureOpen&&<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>}
+      {signatureOpen&&createPortal(<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>,document.body)}
 
     </div>
     <footer className="qmb-footer qmb-footer-single">
