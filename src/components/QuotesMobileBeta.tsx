@@ -405,10 +405,11 @@ export function QuotesMobileBeta() {
   const myQuotes=useMemo(()=>authMode==='cloud'?quotes.filter(q=>q.ownerUserId===userId):quotes,
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
+  const generalTakeoff=quote?.sections.find(isGeneralTakeoffSection);
   const areaManager=useQuoteBetaAreaManager(quote);
   const generalManager=useQuoteBetaGeneralManager(quote);
   const mobileAreaRef=useQuoteBetaCardReflow<HTMLDivElement>(
-    (areaManager.editing?areaManager.orderedSections:quote?.sections??[]).map(s=>s.id));
+    (areaManager.editing?areaManager.orderedSections:quote?.sections.filter(s=>!isGeneralTakeoffSection(s))??[]).map(s=>s.id));
   const mobileGeneralRef=useQuoteBetaCardReflow<HTMLDivElement>(
     (generalManager.editing?generalManager.lines:(quote?.lines??[]).filter(l=>
       !l.sectionId||!quote?.sections.some(s=>s.id===l.sectionId))).map(l=>l.id));
@@ -615,11 +616,21 @@ export function QuotesMobileBeta() {
           {!quote.sections.length&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
           <div className="qmb-section-head qmb-general-heading" data-general-edit-workspace><h3>General</h3>
             <div className="qmb-general-quick-add" aria-label="Add General line">
+              {editable&&!generalManager.editing&&<button type="button"
+                aria-label="General takeoffs" onClick={()=>{
+                  const id=ensureGeneralTakeoff(quote.id);
+                  if(id)openArea(id);
+                }}>{generalTakeoff?'Edit takeoff':'Takeoff'}</button>}
               {editable&&!generalManager.editing&&([['item','Custom'],['material','Material'],['sink','Sink'],['rate','Rate'],['note','Note']] as const)
                 .map(([id,label])=><button type="button" key={id} onClick={()=>addLine(quote.id,id)}>{label}</button>)}
               <QuoteBetaGeneralModeButton manager={generalManager}/>
             </div>
           </div>
+          {generalTakeoff&&<button type="button" className="qmb-general-takeoff-ref"
+            onClick={()=>openArea(generalTakeoff.id)}>
+            <strong>General takeoff · {sf.format(generalTakeoff.scope?.countertopSf??0)} SF</strong>
+            <span>{money.format(quoteLinesTotal(quote.lines.filter(l=>l.sectionId===generalTakeoff.id)))} · Edit measurements and pricing ›</span>
+          </button>}
           <div ref={mobileGeneralRef} className={'qmb-inline-general-list'+(generalManager.editing?' is-managing-general':'')}
             data-general-edit-workspace aria-label="General line cards">
             {(generalManager.editing?generalManager.lines:
