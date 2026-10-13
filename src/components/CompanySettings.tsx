@@ -232,13 +232,13 @@ export function CompanySettings() {
         </section>}
         {tab === 'beta' && <section className="settings-panel-grid" aria-label="Beta features">
           <article className="company-settings-card settings-main-card">
-            <header><div><strong>Quotes 2.0 · Mobile Beta</strong>
+            <header><div><strong>Quotes 2.0 · Responsive Beta</strong>
               <small>A more flexible, Area-first quote builder. Your existing quotes and Catalog stay connected.</small></div>
               <span className="settings-card-save">{quotesBetaEnabled ? 'Opted in' : 'Off by default'}</span>
             </header>
             <label className="settings-preference-row">
-              <div><strong>Use mobile Quotes Beta</strong>
-                <small>Only on phone-sized layouts, including phone landscape. Desktop and the original Quotes editor are unchanged.</small></div>
+              <div><strong>Use Quotes Beta on phone & desktop</strong>
+                <small>Uses the compact editor on phones and a spacious three-pane workspace on desktop. Classic Quotes stays available.</small></div>
               <input type="checkbox" checked={quotesBetaEnabled}
                 onChange={event=>setQuotesBetaEnabled(event.target.checked)} />
             </label>
@@ -247,7 +247,7 @@ export function CompanySettings() {
               <Button variant="primary" onClick={()=>{setQuotesBetaEnabled(true);setAppView('quotes');}}>Open Quotes Beta</Button>
               <Button variant="secondary" onClick={()=>{setQuotesBetaEnabled(false);setAppView('quotes');}}>Open classic Quotes</Button>
             </div>
-            <small className="settings-muted">Preference is saved on this device. In the mobile Beta, tap Classic to exit immediately.</small>
+            <small className="settings-muted">Preference is saved on this device. Tap Classic in Beta to switch back on any screen size.</small>
           </article>
         </section>}
         {tab === 'advanced' && mode === 'cloud' && actualRole === 'owner' && (
