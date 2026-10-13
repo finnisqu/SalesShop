@@ -86,3 +86,49 @@
   .qmb .qmb-preview-seller-toolbar,.qmb .qmb-preview-edit-trigger,
   .qmb .qmb-preview-edit-backdrop,.qmb .qmb-preview-name-edit button{display:none!important}
 }
+
+
+/* Compact Preview tools: just one title, device-size toggle and edit action. */
+.qmb .qmb-preview-action-group{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qmb .qmb-preview-view-label{display:grid;gap:3px}
+.qmb .qmb-preview-device-toggle{display:flex;gap:3px;padding:3px;border:1px solid var(--qmb-border);
+  border-radius:10px;background:var(--qmb-bg)}
+.qmb .qmb-preview-device-toggle button{border:0;border-radius:7px;
+  padding:7px 9px;min-height:30px;white-space:nowrap;font-size:11px;color:var(--qmb-muted);
+  background:transparent}
+.qmb .qmb-preview-device-toggle button[aria-pressed=true]{
+  background:var(--qmb-card);color:var(--qmb-accent);font-weight:800;
+  box-shadow:0 1px 4px rgba(0,0,0,.08)}
+@media(max-width:999px), (max-height:549px){
+  .qmb .qmb-preview-device-toggle{display:none}
+}
+/* A narrow document view inside the same desktop viewport. Use container
+   queries so phone document layout responds to the DOCUMENT width rather than
+   relying on a physically narrow browser window. */
+@media(min-width:1000px) and (min-height:550px){
+  .qmb .qmb-preview.is-phone-view{box-sizing:border-box;width:min(390px,100%)!important;
+    margin-inline:auto;max-width:390px!important;min-width:0;
+    padding:0!important;border:1px solid var(--qmb-border);border-radius:15px;
+    box-shadow:0 8px 30px rgba(0,0,0,.1);overflow:hidden;
+    container-type:inline-size;container-name:quote-phone-preview}
+  .qmb .qmb-preview.is-phone-view>.customer-quote-paper{width:100%!important;min-width:0;
+    box-sizing:border-box;margin:0;box-shadow:none;padding:19px 13px 23px}
+}
+@container quote-phone-preview (max-width:410px){
+  .customer-quote-paper{max-width:100%;padding:18px 12px}
+  .customer-quote-letterhead{display:grid;grid-template-columns:1fr;gap:12px;padding-bottom:15px}
+  .customer-quote-letterhead>div>strong{font-size:22px}
+  .customer-quote-letterhead dl{min-width:0}
+  .customer-quote-recipient{display:grid;grid-template-columns:1fr;gap:11px;padding:14px 0}
+  .customer-quote-row,
+  .columns-q1-r0-a1 .customer-quote-row,
+  .columns-q0-r1-a1 .customer-quote-row,
+  .columns-q1-r1-a1 .customer-quote-row{font-size:10px;gap:6px}
+  .customer-quote-table-head{font-size:9px}
+  .customer-quote-total{display:flex;justify-content:space-between;gap:10px}
+  .customer-quote-total strong{min-width:0}
+  .customer-quote-row>div:first-child{min-width:0;overflow-wrap:anywhere}
+}
+@media print{
+  .qmb .qmb-preview-device-toggle{display:none!important}
+}

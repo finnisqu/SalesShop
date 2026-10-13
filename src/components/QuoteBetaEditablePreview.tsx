@@ -120,6 +120,7 @@ export function QuoteBetaEditablePreview({quote}:{quote:Quote}){
   const editable=quoteIsCommerciallyEditable(quote)&&quote.documentType!=='pricing-schedule';
   const updateSection=useQuoteStore(s=>s.updateSection);
   const [editing,setEditing]=useState(false);
+  const [device,setDevice]=useState<'desktop'|'phone'>('desktop');
   const [nameId,setNameId]=useState<string|null>(null);
   const [target,setTarget]=useState<PriceTarget|null>(null);
   const [selectedLineId,setSelectedLineId]=useState('');
@@ -170,12 +171,21 @@ export function QuoteBetaEditablePreview({quote}:{quote:Quote}){
     target?.kind==='general'?'General charges':selected?.description||'Line price';
   return <div className="qmb-editable-preview">
     <div className="qmb-preview-seller-toolbar">
-      <div><strong>Customer document</strong><small>{editing?'Editing the live quote · changes save everywhere':'Preview exactly what the customer sees'}</small></div>
-      {editable&&<button type="button" aria-pressed={editing} onClick={()=>{
-        setEditing(current=>!current);setTarget(null);setNameId(null);
-      }}>{editing?'✓ Done editing':'✎ Make edits'}</button>}
+      <div className="qmb-preview-view-label"><strong>Customer document</strong>
+        {editing&&<small>Live quote editing</small>}</div>
+      <div className="qmb-preview-action-group">
+        <div className="qmb-preview-device-toggle" role="group" aria-label="Customer preview device">
+          <button type="button" aria-label="Desktop quote preview" aria-pressed={device==='desktop'}
+            onClick={()=>setDevice('desktop')}>▣ Desktop</button>
+          <button type="button" aria-label="Phone quote preview" aria-pressed={device==='phone'}
+            onClick={()=>setDevice('phone')}>▯ Phone</button>
+        </div>
+        {editable&&<button type="button" aria-pressed={editing} onClick={()=>{
+          setEditing(current=>!current);setTarget(null);setNameId(null);
+        }}>{editing?'✓ Done editing':'✎ Make edits'}</button>}
+      </div>
     </div>
-    <div className={'qmb-preview'+(editing?' is-live-editing':'')}>
+    <div className={'qmb-preview'+(editing?' is-live-editing':'')+(device==='phone'?' is-phone-view':'')}>
       <CustomerPreview quote={quote} editing={paperEditing}/>
     </div>
     {target&&editing&&<div className="qmb-preview-edit-backdrop"

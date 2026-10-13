@@ -151,3 +151,62 @@
 .qmb .qmb-audit-delivery .quote-share-control.is-inline :is(button,input){max-width:100%}
 .qmb .qmb-audit-delivery .quote-share-review-needed{margin:5px 0 11px;color:var(--ss-danger,#ae574f);
  font-size:11px;line-height:1.5}
+
+
+/* Inspector expansion: the actual live inspector component is reused in the
+   pulled rail, not independently recomputed in the review sheet. */
+.qmb .qmb-review-flyout-shell{display:flex;min-height:0;max-width:100%;
+  height:100%;width:min(490px,100%)}
+.qmb .qmb-review-flyout-shell>.qmb-review-sheet{flex:1 1 0;min-width:0;width:auto;height:100%}
+.qmb .qmb-review-pulled-inspector{display:none}
+@media(min-width:1000px) and (min-height:550px){
+  .qmb.is-review-expanded .qmb-desktop-frame>.qmb-desktop-inspector{
+    visibility:hidden;pointer-events:none
+  }
+  .qmb .qmb-review-flyout-shell{
+    width:min(734px,100%);max-width:calc(100vw - 24px);
+    animation:qmb-review-pull .21s ease-out both
+  }
+  .qmb .qmb-review-pulled-inspector{display:flex;flex-direction:column;
+    width:244px;flex:0 0 244px;min-height:0;min-width:0;
+    background:var(--qmb-card,#fff);border-left:1px solid var(--qmb-border);
+    border-right:1px solid var(--qmb-border)}
+  .qmb .qmb-review-pulled-inspector>.qmb-desktop-inspector{
+    display:flex;flex-direction:column;gap:15px;width:100%;
+    height:100%;min-height:0;overflow:hidden;box-sizing:border-box;
+    padding:22px 17px;background:var(--qmb-card,#fff);
+    color:var(--qmb-ink);border:0
+  }
+  .qmb .qmb-review-pulled-inspector .qmb-desktop-readiness{flex:1 1 0;
+    min-height:0;overflow:auto;overscroll-behavior:contain}
+  .qmb .qmb-review-flyout-shell .qmb-review-sheet{width:auto;max-width:none}
+  .qmb .qmb-review-flyout-shell .qmb-audit-overview,
+  .qmb .qmb-review-flyout-shell .qmb-audit-clean{display:none}
+  .qmb .qmb-desktop-navigation .qmb-desktop-history{display:grid;grid-template-columns:1fr 1fr;
+    gap:8px;margin-top:9px}
+  .qmb .qmb-desktop-navigation .qmb-desktop-history button{
+    min-width:0;min-height:35px;border:1px solid var(--qmb-border);
+    border-radius:8px;background:var(--qmb-card);color:var(--qmb-ink);
+    font-size:11px;font-weight:750;padding:7px 4px}
+  .qmb .qmb-desktop-navigation .qmb-desktop-history button:disabled{opacity:.35}
+  .qmb .qmb-desktop-main>.qmb-desktop-worktools{display:none!important}
+  .qmb .qmb-desktop-inspector{overflow:hidden}
+  .qmb .qmb-desktop-inspector>.qmb-desktop-readiness{flex:1 1 0;
+    min-height:0;overflow:auto;overscroll-behavior:contain}
+}
+@keyframes qmb-review-pull{
+ from{transform:translateX(65px);opacity:.86}
+ to{transform:translateX(0);opacity:1}
+}
+.qmb .qmb-inspector-send-block{display:grid;gap:8px;flex:0 0 auto;
+  margin-top:auto;padding:13px 0 4px;border-top:1px solid var(--qmb-border)}
+.qmb .qmb-inspector-send{display:flex;align-items:center;justify-content:space-between;
+  gap:8px;min-height:44px;width:100%;border:1px solid var(--qmb-accent);
+  border-radius:11px;background:var(--qmb-accent);color:var(--qmb-on-accent);
+  padding:10px 12px;font-size:13px;font-weight:850;cursor:pointer}
+.qmb .qmb-inspector-send:hover{filter:brightness(1.06)}
+.qmb .qmb-inspector-send-block>small{font-size:10px;line-height:1.45;
+  color:var(--qmb-muted)}
+@media(prefers-reduced-motion:reduce){
+ .qmb .qmb-review-flyout-shell{animation:none!important}
+}
