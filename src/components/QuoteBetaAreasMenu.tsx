@@ -1,5 +1,6 @@
 import {useEffect,useState,type KeyboardEvent as ReactKeyboardEvent} from 'react';
 import {useQuoteBetaCardDrag} from './quoteBetaCardMotion';
+import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {createPortal} from 'react-dom';
 import type {Quote,QuoteSection} from '../types/quote';
 import {quoteLinesTotal} from '../types/quote';
