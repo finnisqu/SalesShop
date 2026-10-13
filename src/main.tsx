@@ -106,6 +106,7 @@ import './quotes-mobile-details.css';
 import './quotes-beta-desktop.css';
 import './quotes-beta-structure.css';
 import './quotes-beta-management.css';
+import './quotes-beta-preview-edit.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
