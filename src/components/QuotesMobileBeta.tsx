@@ -461,6 +461,7 @@ export function QuotesMobileBeta() {
   const editable=Boolean(quote&&quoteIsCommerciallyEditable(quote));
   const canBrowseTeam=authMode==='cloud'&&(teamRole==='owner'||teamRole==='admin')&&!previewRole;
   const canIssue=authMode!=='cloud'||canIssueTeamQuote(teamRole,department);
+  const canManageLibrary=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,department));
   const list=myQuotes.filter(q=>(showArchived||!q.archivedAt)&&
     [q.title,q.companyName,q.quoteNumber].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
@@ -564,14 +565,14 @@ export function QuotesMobileBeta() {
             <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {q.sections.length} Areas</small>
               <b>{money.format(quoteTotal(q))}</b></div>
           </button>
-          <div className="qmb-library-card-actions">
+          {canManageLibrary&&<div className="qmb-library-card-actions">
             {q.archivedAt?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore</button>:
               <>
                 <button type="button" onClick={()=>setLibraryAction({id:q.id,kind:'archive'})}>Archive</button>
                 {canPermanentlyDeleteQuote(q,quotes)&&<button type="button" className="is-danger"
                   onClick={()=>setLibraryAction({id:q.id,kind:'delete'})}>Delete draft</button>}
               </>}
-          </div>
+          </div>}
         </div>)}
         </div>
         {!list.length&&<div className="qmb-empty">No matching quotes. Start one without filling in any required fields.</div>}
