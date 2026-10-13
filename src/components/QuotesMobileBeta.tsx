@@ -22,7 +22,7 @@ import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteShareControl } from './QuoteShareControl';
-import { CustomerPreview } from './Quotes';
+import { QuoteBetaEditablePreview } from './QuoteBetaEditablePreview';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { QuoteSfRateChoices } from './QuoteSfRateChoices';
@@ -588,8 +588,8 @@ export function QuotesMobileBeta() {
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
           <div className="qmb-section-head"><h3>Customer preview</h3><span className="qmb-chip">Live totals</span></div>
-          <div className="qmb-preview"><CustomerPreview quote={quote}/></div>
-          <p className="qmb-help">This uses the same customer document renderer as Classic Quotes. Private internal notes and dimensions remain internal.</p>
+          <QuoteBetaEditablePreview quote={quote}/>
+          <p className="qmb-help">Make edits updates the live quote in every view. Private internal notes, source costs, and dimensions remain internal.</p>
           <QuoteShareControl/>
         </>}
         </div>
