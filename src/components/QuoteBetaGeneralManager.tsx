@@ -29,7 +29,9 @@ export function useQuoteBetaGeneralManager(quote:Quote|null){
       for(const key of original)if(!ids.includes(key))ids.push(key);
       const from=ids.indexOf(id),target=ids.indexOf(to);
       if(from<0||target<0||from===target)return old;
-      ids.splice(from,1);ids.splice(target+(after?1:0),0,id);
+      ids.splice(from,1);
+      const targetAfterRemoval=ids.indexOf(to);
+      ids.splice(targetAfterRemoval+(after?1:0),0,id);
       return ids;
     });
   };
