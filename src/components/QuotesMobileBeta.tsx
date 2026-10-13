@@ -327,7 +327,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
               onClick={()=>addLinked(quote.id,section.id)}>+ Add linked SF price</button>
           </>}
         </section>
-        <section className="qmb-card">
+        <section className="qmb-card qmb-legacy-customer-display">
           <strong>Customer display</strong>
           <p className="qmb-help">Changes visibility, never the underlying total.</p>
           <div className="qmb-choice">
