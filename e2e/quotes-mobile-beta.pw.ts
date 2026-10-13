@@ -185,13 +185,9 @@ test('Materials sink rows stay compact and Rate picker pushes content instead of
   await expect(beta.getByLabel('Buying cost comparison')).toBeVisible();
   const options=beta.locator('.qtl-rate-options');
   await expect(options).toBeVisible();
-  const result=await page.evaluate(()=>{
-    const options=document.querySelector('.qmb .qtl-rate-options')!.getBoundingClientRect();
-    const customer=Array.from(document.querySelectorAll('.qmb .qmb-card'))
-      .find(el=>el.textContent?.includes('Customer display'))!.getBoundingClientRect();
-    return {optionsBottom:options.bottom,customerTop:customer.top};
-  });
-  expect(result.optionsBottom).toBeLessThanOrEqual(result.customerTop+2);
+  // The legacy Customer display box was moved to Customer Preview.
+  // The inline rate options should remain usable without horizontal overflow.
+  expect(await options.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeLessThanOrEqual(3);
 });
 
 
@@ -664,7 +660,7 @@ test('desktop Beta uses full center workspace across Build, Details, Preview and
   const pulled=page.locator('.qmb-review-pulled-inspector .qmb-desktop-inspector');
   await expect(pulled).toBeVisible();
   const pulledBounds=await pulled.boundingBox(),detailBounds=await review.boundingBox();
-  expect(pulledBounds!.right).toBeLessThanOrEqual(detailBounds!.left+2);
+  expect(pulledBounds!.x+pulledBounds!.width).toBeLessThanOrEqual(detailBounds!.x+2);
   expect(detailBounds!.width).toBeLessThan(520);
   const reviewShare=review.locator('.quote-share-control.is-inline');
   await expect(reviewShare).toBeVisible();
@@ -891,7 +887,7 @@ test('Area management modal stays opaque above its dimmed background',async ({pa
   expect(style.background).not.toBe('transparent');
   expect(style.opacity).toBe('1');
   expect(style.isolation).toBe('isolate');
-  await dialog.getByRole('button',{name:'Cancel'}).click();
+  await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
   await expect(dialog).toHaveCount(0);
   await expect(rail.getByRole('button',{name:'Done reordering and deleting Areas'})).toBeVisible();
   await rail.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
@@ -1090,7 +1086,7 @@ test('Desktop Batch B: paired Materials and Calculator share editable quotes and
   await expect(calculator.locator('.qmb-private-margin')).toContainText('44.0%');
   await calculator.getByRole('spinbutton',{name:'Area manually purchased slabs'}).fill('1.25');
   await expect(calculator.locator('.qmb-private-cost')).toContainText('$875.00');
-  await calculator.getByRole('spinbutton',{name:'Area shop cost'}).fill('100');
+  await calculator.getByRole('spinbutton',{name:'Area shop cost',exact:true}).fill('100');
   await calculator.getByRole('spinbutton',{name:'Area installation cost'}).fill('200');
   await expect(beta.locator('.qmb-desktop-grand-total')).toContainText('$2,500.00');
   await tabs.getByRole('button',{name:'Materials'}).click();
@@ -1139,10 +1135,10 @@ test('Desktop Batch B: sink catalog and materials suggestions overlay instead of
   await page.keyboard.press('Escape');
   const sinks=beta.getByRole('region',{name:'Sink selection and pricing'});
   await sinks.getByRole('button',{name:'+ Add sink'}).click();
-  const row=sinks.locator('.qmb-sink-line').first();
+  const row=sinks.locator('.qmb-compact-sink-row').first();
   const before=await row.boundingBox();
   await row.getByRole('combobox',{name:'Sink model: type to search Catalog'}).click();
-  const menu=row.locator('.qmb-sink-catalog .qtl-combobox-menu');
+  const menu=row.locator('.qtl-combobox-menu');
   await expect(menu).toBeVisible();
   expect(await menu.evaluate(node=>getComputedStyle(node).position)).toBe('absolute');
   const after=await row.boundingBox();
@@ -1150,11 +1146,11 @@ test('Desktop Batch B: sink catalog and materials suggestions overlay instead of
   await page.keyboard.press('Escape');
   await row.getByRole('spinbutton',{name:'Sink 1 quantity'}).fill('2');
   await row.getByRole('spinbutton',{name:'Sink 1 sell price'}).fill('220');
-  await row.getByRole('spinbutton',{name:'Sink 1 buying cost'}).fill('85');
-  await expect(row.locator('.qmb-sink-private-cost')).toContainText('$170.00');
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Calculator'}).click();
+  const costEditor=beta.locator('.qmb-lab-calculator');
   await expect(beta.locator('.qmb-area-scroll [data-center-calculator]')).toBeVisible();
-  await expect(beta.locator('.qmb-lab-calculator .qmb-private-cost')).toContainText('$170.00');
+  await costEditor.getByRole('spinbutton',{name:'Sink 1 buying cost'}).fill('85');
+  await expect(costEditor).toContainText('$170.00');
 });
 
 
@@ -1174,7 +1170,7 @@ test('desktop General precedes Areas and inline sidebar management stays within 
   await expect(g).toBeVisible();
   await expect(a).toBeVisible();
   const generalRect=await g.boundingBox(),areasRect=await a.boundingBox();
-  expect(generalRect!.top).toBeLessThan(areasRect!.top);
+  expect(generalRect!.y).toBeLessThan(areasRect!.y);
   for(const name of ['Kitchen Island','Baths','Bathrooms']){
     await rail.getByRole('button',{name:'Add Area from navigator'}).click();
     await beta.getByRole('textbox',{name:'Area name'}).fill(name);
@@ -1248,7 +1244,7 @@ test('desktop Measure scope and Materials prices share sinks and additional work
   const pricedSinks=materials.getByRole('region',{name:'Sink selection and pricing'});
   await expect(pricedSinks.getByRole('spinbutton',{name:'Sink 1 quantity'})).toHaveValue('2');
   await pricedSinks.getByRole('spinbutton',{name:'Sink 1 sell price'}).fill('220');
-  await expect(pricedSinks).toContainText('Buying cost');
+  await expect(pricedSinks.locator('.qmb-compact-sink-row')).toHaveCount(1);
   const extras=materials.getByRole('region',{name:'Additional work and pricing'});
   await expect(extras.getByRole('textbox',{name:/Area line .* description/})).toHaveValue('Template adjustment');
   await extras.getByRole('spinbutton',{name:/Area line .* sell rate/}).fill('25');
@@ -1288,7 +1284,7 @@ test('desktop Area Calculator occupies center workspace, not only inspector',asy
   const calculator=workspace.locator('[data-center-calculator="true"]');
   await expect(calculator).toBeVisible();
   await expect(calculator.getByRole('spinbutton',{name:'Area buying cost per slab'})).toBeVisible();
-  await expect(calculator.getByRole('spinbutton',{name:'Area shop cost'})).toBeVisible();
+  await expect(calculator.getByRole('spinbutton',{name:'Area shop cost',exact:true})).toBeVisible();
   const shell=beta.locator('.qmb-desktop-main');
   const inner=await calculator.boundingBox(),outer=await shell.boundingBox();
   expect(inner!.width).toBeGreaterThan(450);
