@@ -695,7 +695,11 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await beta.getByRole('button',{name:'Move Bath up'}).click();
+  await beta.getByRole('button',{name:'Manage Areas'}).click();
+  const manager=page.getByRole('dialog',{name:'Manage quote Areas'});
+  await manager.getByRole('button',{name:/Reorder Areas/}).click();
+  await manager.getByRole('button',{name:'Move Bath up'}).click();
+  await manager.getByRole('button',{name:'Save order'}).click();
   await expect(beta.locator('.qmb-area-card .qmb-area-text strong').first()).toHaveText('Bath');
   await beta.locator('.qmb-area-card').filter({hasText:'Kitchen'}).click();
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
@@ -707,9 +711,11 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   await beta.locator('.qmb-area-card').filter({hasText:'Bath'}).click();
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
   await expect(beta.locator('.qmb-area-editor .qmb-line').filter({hasText:'Taxes'})).toHaveCount(1);
-  await beta.locator('.qmb-area-options summary').click();
-  page.once('dialog',dialog=>dialog.accept());
-  await beta.getByRole('button',{name:'Delete this Area'}).click();
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:'Manage Areas'}).click();
+  await manager.getByRole('button',{name:/Delete an Area/}).click();
+  await manager.getByRole('combobox',{name:'Area to delete'}).selectOption({label:'Bath'});
+  await manager.getByRole('button',{name:/Move charges to General/}).click();
   await expect(beta.locator('.qmb-area-card')).toHaveCount(1);
   await beta.locator('.qmb-line').filter({hasText:'Taxes'}).getByRole('button',{name:'Edit line'}).click();
   await expect(beta.locator('.qmb-line').filter({hasText:'Taxes'}).getByRole('combobox',{name:'Move line to Area'})).toHaveValue('');
@@ -718,3 +724,92 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   await expect(beta.locator('.qmb-area-card')).toHaveCount(2);
 });
 
+
+
+test('Beta Area management permits deliberate delete-all without retaining prices',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Area deletion choice and undo');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Delete me');
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
+  await beta.locator('.qmb-addcharge').getByRole('button',{name:'+ Add line to Area'}).click();
+  const charge=beta.locator('.qmb-area-editor .qmb-line').filter({hasText:'New line item'});
+  await charge.getByRole('button',{name:'Edit line'}).click();
+  await charge.getByRole('spinbutton',{name:'Amount ($)'}).fill('225');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await expect(beta.locator('.qmb-quote-total')).toHaveText('$225.00');
+  await beta.getByRole('button',{name:'Manage Areas'}).click();
+  const dialog=page.getByRole('dialog',{name:'Manage quote Areas'});
+  await dialog.getByRole('button',{name:/Delete an Area/}).click();
+  await dialog.getByRole('button',{name:/Delete Area and all contents/}).click();
+  await expect(beta.locator('.qmb-area-card')).toHaveCount(0);
+  await expect(beta.locator('.qmb-quote-total')).toHaveText('$0.00');
+  await beta.getByRole('button',{name:'Undo'}).click();
+  await expect(beta.locator('.qmb-area-card')).toHaveCount(1);
+  await expect(beta.locator('.qmb-quote-total')).toHaveText('$225.00');
+});
+
+test('Beta Preview edits live Area title and Takeoffs sell rate without leaving paper',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Preview inline quote changes');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
+  await beta.getByRole('textbox',{name:'Length (in)'}).blur();
+  await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
+  await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
+  await beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'}).fill('50');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview'}).click();
+  await beta.getByRole('button',{name:/Make edits/}).click();
+  await beta.getByRole('button',{name:/Edit Area name New area/}).click();
+  await beta.getByRole('textbox',{name:'Edit Area name in preview'}).fill('Kitchen');
+  await beta.getByRole('button',{name:'Done editing Area name'}).click();
+  await beta.getByRole('button',{name:'Edit Area price Kitchen'}).click();
+  const dialog=beta.getByRole('dialog',{name:'Edit quote price from preview'});
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('spinbutton',{name:'Preview sell rate'}).fill('60');
+  await expect(dialog.locator('.qmb-preview-edit-total')).toContainText('$480.00');
+  await dialog.getByRole('button',{name:'Done',exact:true}).click();
+  await expect(beta.locator('.qmb-preview .customer-quote-paper')).toContainText('Kitchen');
+  await expect(beta.locator('.qmb-preview .customer-quote-total')).toContainText('$480.00');
+});
+
+test('desktop Beta toolbar and Job Selections remain accessible outside Build',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1280','Desktop toolbar and cross-view selections');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const toolbar=beta.getByRole('toolbar',{name:'Quote editing tools'});
+  await expect(toolbar.getByRole('button',{name:'Undo quote change'})).toBeVisible();
+  await expect(toolbar.getByRole('button',{name:'Redo quote change'})).toBeVisible();
+  await expect(toolbar.getByRole('button',{name:/Collapse/})).toBeVisible();
+  await beta.getByRole('complementary',{name:'Quote workspace navigation'})
+    .getByRole('button',{name:/Job Selections/}).click();
+  await expect(beta.getByRole('dialog',{name:'Quote selections'})).toBeVisible();
+  await beta.getByRole('button',{name:'Close selections'}).click();
+  await toolbar.getByRole('button',{name:/Preview/}).click();
+  await expect(beta.locator('.qmb-preview')).toBeVisible();
+  await toolbar.getByRole('button',{name:/Job Selections/}).click();
+  await expect(beta.getByRole('dialog',{name:'Quote selections'})).toBeVisible();
+});
