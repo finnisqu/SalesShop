@@ -32,7 +32,7 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const suggestedSlabs=measuredSf>0&&usablePerSlab?Math.ceil(measuredSf/usablePerSlab):undefined;
   const override=scope?.slabCountOverride;
   const count=override!==undefined&&Number.isInteger(override)&&override>0?override:suggestedSlabs;
-  const slabCost=nonnegative(ref?.sourceSlabCost)??nonnegative(snapshot?.slabCost)
+  const slabCost=nonnegative(scope?.slabCostOverride)??nonnegative(ref?.sourceSlabCost)??nonnegative(snapshot?.slabCost)
     ??nonnegative(ref?.catalogSlabCost);
   const costSf=nonnegative(ref?.sourceCostPerSf)??nonnegative(snapshot?.costPerSf);
   const fromSlab=slabCost!==undefined&&count!==undefined?roundCurrency(slabCost*count):undefined;
