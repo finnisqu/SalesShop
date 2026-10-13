@@ -666,8 +666,7 @@ export function QuotesMobileBeta() {
                   {!s.customerVisible&&<small className="qmb-area-hidden-label">Hidden from customer</small>}</span>
                 <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b>{!areaManager.editing&&<span>›</span>}</span>
               </button>
-              {areaManager.editing&&<><QuoteBetaAreaVisibilityButton quote={quote} area={s}/>
-                <QuoteBetaAreaDeleteButton manager={areaManager} area={s}/></>}
+              {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={s}/>} 
             </div>;
           })}
           {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
