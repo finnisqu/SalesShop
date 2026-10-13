@@ -105,6 +105,7 @@ import './quotes-mobile-details.css';
 // Opted-in desktop Quotes Beta shares the mobile workflow and quote records.
 import './quotes-beta-desktop.css';
 import './quotes-beta-structure.css';
+import './quotes-beta-management.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();

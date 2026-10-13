@@ -1,0 +1,47 @@
+/* Quotes Beta structural management. Dialog is a portal so the narrow desktop rail
+   cannot clip it and touch users get a scrollable, reachable surface. */
+.qmb .qmb-area-menu-trigger{border:1px solid var(--qmb-border);border-radius:10px;min-width:38px;
+  min-height:36px;background:var(--qmb-card);color:var(--qmb-accent);font-size:21px;line-height:1;}
+.qmb .qmb-area-menu-trigger:disabled{opacity:.35}
+.qmb.qmb-area-manager-backdrop{position:fixed;inset:0;z-index:10050;
+  display:flex;align-items:center;justify-content:center;padding:14px;
+  background:rgba(8,19,14,.52);overflow:auto}
+.qmb .qmb-area-manager{width:min(475px,100%);max-height:min(86dvh,760px);display:flex;
+  flex-direction:column;overflow:hidden;border-radius:17px;
+  background:var(--qmb-card);color:var(--qmb-ink);
+  border:1px solid var(--qmb-border);box-shadow:0 18px 60px rgba(0,0,0,.22)}
+.qmb .qmb-area-manager-head{padding:17px 18px;display:flex;justify-content:space-between;
+  align-items:start;gap:12px;border-bottom:1px solid var(--qmb-border)}
+.qmb .qmb-area-manager-head div{display:grid;gap:5px}
+.qmb .qmb-area-manager-head strong{font-size:17px}
+.qmb .qmb-area-manager-head small{font-size:12px;line-height:1.5;color:var(--qmb-muted)}
+.qmb .qmb-area-manager-head button{border:0;background:transparent;color:var(--qmb-ink);font-size:23px;min-width:35px}
+.qmb .qmb-area-manager-menu,.qmb .qmb-area-manager-delete,.qmb .qmb-area-manager-list{
+  min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:9px;padding:16px}
+.qmb .qmb-area-manager-menu button,.qmb .qmb-area-deletion-choice{
+  border:1px solid var(--qmb-border);border-radius:12px;text-align:left;
+  padding:14px;background:var(--qmb-card);color:var(--qmb-ink);display:grid;gap:5px}
+.qmb .qmb-area-manager-menu button:hover,.qmb .qmb-area-deletion-choice:hover{background:var(--qmb-tint)}
+.qmb .qmb-area-manager-menu strong,.qmb .qmb-area-deletion-choice strong{font-size:14px}
+.qmb .qmb-area-manager-menu small,.qmb .qmb-area-deletion-choice small{
+  font-size:12px;line-height:1.5;color:var(--qmb-muted)}
+.qmb .qmb-area-deletion-choice.is-destructive{border-color:var(--ss-danger,#af5045)}
+.qmb .qmb-area-deletion-choice.is-destructive strong{color:var(--ss-danger,#af5045)}
+.qmb .qmb-area-reorder-row{display:flex;align-items:center;gap:8px;
+  padding:10px;border:1px solid var(--qmb-border);border-radius:11px;background:var(--qmb-card)}
+.qmb .qmb-area-reorder-handle{font-size:23px;cursor:grab;color:var(--qmb-accent);user-select:none;touch-action:none;padding:4px}
+.qmb .qmb-area-reorder-label{flex:1;min-width:0;display:grid;gap:3px;font-size:13px}
+.qmb .qmb-area-reorder-label strong{overflow-wrap:anywhere}
+.qmb .qmb-area-reorder-label small{color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-area-reorder-row button{border:1px solid var(--qmb-border);border-radius:8px;
+  min-height:36px;min-width:36px;background:var(--qmb-card);color:var(--qmb-accent)}
+.qmb .qmb-area-reorder-row button:disabled{opacity:.35}
+.qmb .qmb-area-manager-impact{display:grid;gap:5px;padding:12px;border-radius:11px;
+  background:var(--qmb-bg);border:1px solid var(--qmb-border)}
+.qmb .qmb-area-manager-impact span{font-weight:750;font-size:13px}
+.qmb .qmb-area-manager-impact small{font-size:12px;color:var(--qmb-muted);line-height:1.5}
+.qmb .qmb-area-manager-foot{display:flex;justify-content:flex-end;gap:10px;padding:13px 16px;
+  border-top:1px solid var(--qmb-border)}
+.qmb .qmb-area-manager-foot button{border:1px solid var(--qmb-border);border-radius:10px;
+  min-height:40px;min-width:88px;padding:8px 13px;background:var(--qmb-card);color:var(--qmb-ink)}
+.qmb .qmb-area-manager-foot .qmb-primary{background:var(--qmb-accent);color:var(--qmb-on-accent)}
