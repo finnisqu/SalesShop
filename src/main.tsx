@@ -102,6 +102,8 @@ import './quotes-mobile-audit.css';
 // Mobile Quotes Beta area progression and duplication shortcuts.
 import './quotes-mobile-speed.css';
 import './quotes-mobile-details.css';
+// Opted-in desktop Quotes Beta shares the mobile workflow and quote records.
+import './quotes-beta-desktop.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
