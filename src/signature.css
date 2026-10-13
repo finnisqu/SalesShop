@@ -1,7 +1,7 @@
 .signature-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 4000;
+  z-index: 11050; /* Above Beta Review slideout (10045), including when portaled. */
   display: grid;
   place-items: center;
   padding: 28px;
