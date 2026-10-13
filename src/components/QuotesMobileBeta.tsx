@@ -612,8 +612,12 @@ export function QuotesMobileBeta() {
           {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
           </div>
           {!quote.sections.length&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
-          <div className="qmb-section-head" data-general-edit-workspace><h3>General</h3>
-            <QuoteBetaGeneralModeButton manager={generalManager}/>
+          <div className="qmb-section-head qmb-general-heading" data-general-edit-workspace><h3>General</h3>
+            <div className="qmb-general-quick-add" aria-label="Add General line">
+              {editable&&!generalManager.editing&&([['item','Custom'],['material','Material'],['sink','Sink'],['rate','Rate'],['note','Note']] as const)
+                .map(([id,label])=><button type="button" key={id} onClick={()=>addLine(quote.id,id)}>{label}</button>)}
+              <QuoteBetaGeneralModeButton manager={generalManager}/>
+            </div>
           </div>
           <div ref={mobileGeneralRef} className={'qmb-inline-general-list'+(generalManager.editing?' is-managing-general':'')}
             data-general-edit-workspace aria-label="General line cards">
@@ -626,13 +630,7 @@ export function QuotesMobileBeta() {
               </div>)}
             {generalManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
           </div>
-          {editable&&<section className="qmb-card">
-            <div className="qmb-two"><select aria-label="General line type" value={newLineKind}
-              onChange={e=>setNewLineKind(e.target.value as QuoteLineKind)}>
-              {([['item','Custom charge'],['material','Material'],['sink','Sink'],['rate','Rate'],['allowance','Allowance'],['discount','Discount'],['tax','Tax'],['scope','Scope'],['warranty','Warranty'],['note','Note']] as const)
-                .map(([id,label])=><option value={id} key={id}>{label}</option>)}
-            </select><button type="button" className="qmb-outline" onClick={()=>addLine(quote.id,newLineKind)}>+ Add line</button></div>
-          </section>}
+
         </>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
