@@ -50,6 +50,37 @@ describe('Area slab yield and internal margin',()=>{
     expect(c.complete).toBe(false);
     expect(c.marginPercent).toBeUndefined();
   });
+  it('accepts fractional bought slabs without changing the rounded selling slab count or price',()=>{
+    const q=fixture();
+    const original=projectAreaCost(q,q.sections[0]);
+    const selling=calculateAreaCustomerPrice('multiplier',{sf:50,slabs:original.slabCount,
+      costPerSlab:700,multiplier:2});
+    expect(selling).toBe(2800);
+    q.sections[0].scope!.slabPurchaseQuantityOverride=1.25;
+    const revised=projectAreaCost(q,q.sections[0]);
+    expect(revised.suggestedSlabs).toBe(2);
+    expect(revised.slabCount).toBe(2);
+    expect(revised.purchaseSlabs).toBe(1.25);
+    expect(revised.materialCost).toBe(875);
+    expect(revised.totalKnownCost).toBe(1035);
+    expect(revised.priceTotal).toBe(original.priceTotal);
+    expect(calculateAreaCustomerPrice('multiplier',{sf:50,slabs:revised.slabCount,
+      costPerSlab:700,multiplier:2})).toBe(selling);
+  });
+  it('adds optional shop and installation costs without changing selling amount',()=>{
+    const q=fixture();
+    const base=projectAreaCost(q,q.sections[0]);
+    q.sections[0].scope!.shopCostOverride=125.5;
+    q.sections[0].scope!.installCostOverride=180;
+    const cost=projectAreaCost(q,q.sections[0]);
+    expect(cost.shopCost).toBe(125.5);
+    expect(cost.installCost).toBe(180);
+    expect(cost.totalKnownCost).toBeCloseTo(base.totalKnownCost+305.5,2);
+    expect(cost.priceTotal).toBe(base.priceTotal);
+    expect(cost.marginPercent).toBeLessThan(base.marginPercent!);
+    q.sections[0].scope!.takeoffSinks![0].internalCostOverride=50;
+    expect(projectAreaCost(q,q.sections[0]).sinkCost).toBe(100);
+  });
   it('prices three calculator modes but rejects unfinished multiplier inputs',()=>{
     expect(calculateAreaCustomerPrice('manual',{sf:50,amount:2500})).toBe(2500);
     expect(calculateAreaCustomerPrice('sf',{sf:50,rate:49})).toBe(2450);
