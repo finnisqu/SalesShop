@@ -57,6 +57,7 @@ interface QuoteState {
   selectQuote: (quoteId: string) => void;
   setQuoteAssignmentFromCloud: (quoteId: string, patch: Pick<Quote, 'ownerUserId' | 'divisionId' | 'teamId'>) => void;
   updateQuote: (quoteId: string, patch: QuotePatch) => void;
+  archiveQuote: (quoteId: string) => void;
   deleteQuote: (quoteId: string) => void;
   restoreQuote: (quoteId: string) => void;
   touchQuote: (quoteId: string) => void;
@@ -386,6 +387,19 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if (Object.prototype.hasOwnProperty.call(safePatch, 'projectId') && safePatch.projectId && safePatch.projectId !== current.projectId) {
       recordQuoteLinked(updated);
     }
+  },
+
+  archiveQuote: (quoteId) => {
+    const current=get().quotes.find(quote=>quote.id===quoteId);
+    if(!current||current.archivedAt)return;
+    const timestamp=now();
+    const quotes=get().quotes.map(quote=>quote.id===quoteId
+      ?{...quote,archivedAt:timestamp,updatedAt:timestamp}:quote);
+    const nextActive=get().activeQuoteId===quoteId
+      ?(quotes.find(quote=>quote.id!==quoteId&&!quote.archivedAt)?.id??quoteId)
+      :get().activeQuoteId;
+    persist(quotes,nextActive);
+    set({quotes,activeQuoteId:nextActive});
   },
 
   deleteQuote: (quoteId) => {
