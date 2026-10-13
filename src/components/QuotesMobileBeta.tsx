@@ -327,22 +327,6 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
               onClick={()=>addLinked(quote.id,section.id)}>+ Add linked SF price</button>
           </>}
         </section>
-        <section className="qmb-card qmb-legacy-customer-display">
-          <strong>Customer display</strong>
-          <p className="qmb-help">Changes visibility, never the underlying total.</p>
-          <div className="qmb-choice">
-            <button type="button" disabled={!editable} aria-pressed={section.customerDisplayMode!=='detail'}
-              className={section.customerDisplayMode!=='detail'?'active':''}
-              onClick={()=>updateSection(quote.id,section.id,{customerDisplayMode:'summary'})}>One lump sum</button>
-            <button type="button" disabled={!editable} aria-pressed={section.customerDisplayMode==='detail'}
-              className={section.customerDisplayMode==='detail'?'active':''}
-              onClick={()=>updateSection(quote.id,section.id,{customerDisplayMode:'detail'})}>Itemized</button>
-          </div>
-          <p className="qmb-help">{general?'General has no customer-facing heading or specification blurb.':takeoffCustomerSpecs(section)||'Material and sink specifications can be added anytime.'}</p>
-          {section.customerDisplayMode==='detail'&&lines.filter(l=>l.includeInTotal).map(l=>
-            <label key={l.id} className="qmb-check"><input type="checkbox" disabled={!editable} checked={l.customerVisible}
-              onChange={e=>updateLine(quote.id,l.id,{customerVisible:e.target.checked})}/>{l.description||'Line item'}</label>)}
-        </section>
         <div className="qmb-section-head"><h3>Area charges</h3><strong>{money.format(amount)}</strong></div>
         {lines.map(l=><BetaLine key={l.id} quote={quote} line={l} editable={editable}/>)}
         <section className="qmb-card qmb-addcharge">
