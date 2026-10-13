@@ -1,135 +1,196 @@
-import { useEffect, useState, type DragEvent } from 'react';
-import { createPortal } from 'react-dom';
-import type { Quote } from '../types/quote';
-import { quoteLinesTotal } from '../types/quote';
-import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
-import { useQuoteStore } from '../store/quoteStore';
+import {useEffect,useRef,useState,type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent} from 'react';
+import {createPortal} from 'react-dom';
+import type {Quote,QuoteSection} from '../types/quote';
+import {quoteLinesTotal} from '../types/quote';
+import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {useQuoteStore} from '../store/quoteStore';
 
-type Panel = 'menu' | 'reorder' | 'delete';
-const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+type DeleteChoice='transfer'|'delete';
 
 /**
- * One Area-level entry point for reordering and deleting in Quotes Beta.
- * The reorder is local until Save, and deletion always asks how to handle
- * the contents rather than hiding a destructive choice behind a confirmation.
+ * Shared desktop / phone inline Area mode. Reordering is a draft until Done,
+ * Enter, or a click outside the Area workspace. Escape cancels the draft.
+ * Deletions are explicit, immediate, independently undoable quote operations.
  */
-export function QuoteBetaAreasMenu({quote,onDeleted}:{quote:Quote;onDeleted?:(areaId:string)=>void}) {
-  const [open,setOpen] = useState(false);
-  const [panel,setPanel] = useState<Panel>('menu');
-  const [order,setOrder] = useState<string[]>([]);
-  const [selected,setSelected] = useState('');
-  const [dragging,setDragging] = useState<string|null>(null);
+export function useQuoteBetaAreaManager(quote:Quote|null){
+  const [editing,setEditing]=useState(false);
+  const [order,setOrder]=useState<string[]>([]);
+  const [deletingId,setDeletingId]=useState<string|null>(null);
+  const [dragging,setDragging]=useState<string|null>(null);
+  const pointerId=useRef<number|null>(null);
   const setSectionOrder=useQuoteStore(s=>s.setSectionOrder);
   const deleteSection=useQuoteStore(s=>s.deleteSection);
-  const editable=quoteIsCommerciallyEditable(quote)&&quote.documentType!=='pricing-schedule';
-  const originalOrder=quote.sections.map(s=>s.id);
-  const validOrder=order.length===originalOrder.length&&
-    order.every(id=>originalOrder.includes(id))&&new Set(order).size===order.length;
-  const dirty=validOrder&&order.some((id,i)=>id!==originalOrder[i]);
-  const target=quote.sections.find(s=>s.id===selected);
-  const targetLines=quote.lines.filter(line=>line.sectionId===selected);
-  const close=()=>{setOpen(false);setDragging(null);setPanel('menu');};
-  useEffect(()=>{
-    if(!open)return;
-    const key=(event:KeyboardEvent)=>{if(event.key==='Escape')close();};
-    document.addEventListener('keydown',key);
-    return ()=>document.removeEventListener('keydown',key);
-  },[open]);
-  const show=(next:Panel)=>{
-    setPanel(next);
-    if(next==='reorder')setOrder(originalOrder);
-    if(next==='delete')setSelected(quote.sections[0]?.id??'');
+  const editable=Boolean(quote&&quoteIsCommerciallyEditable(quote)&&quote.documentType!=='pricing-schedule');
+  const original=quote?.sections.map(s=>s.id)??[];
+  const syncedOrder=order.filter(id=>original.includes(id));
+  for(const id of original)if(!syncedOrder.includes(id))syncedOrder.push(id);
+  const orderedSections=syncedOrder.map(id=>quote?.sections.find(s=>s.id===id))
+    .filter((s):s is QuoteSection=>Boolean(s));
+  const dirty=syncedOrder.some((id,i)=>id!==original[i]);
+  const start=()=>{
+    if(!editable)return;
+    setOrder(original);
+    setDeletingId(null);
+    setEditing(true);
   };
-  const move=(from:number,to:number)=>{
-    if(from<0||to<0||from>=order.length||to>=order.length||from===to)return;
-    setOrder(current=>{
-      const result=[...current], [area]=result.splice(from,1);
-      result.splice(to,0,area);
+  const finish=()=>{
+    if(quote&&editing&&dirty)setSectionOrder(quote.id,syncedOrder);
+    setDeletingId(null);setDragging(null);pointerId.current=null;setEditing(false);
+  };
+  const cancel=()=>{
+    setDeletingId(null);setDragging(null);pointerId.current=null;setEditing(false);setOrder([]);
+  };
+  const move=(id:string,toId:string)=>{
+    if(id===toId)return;
+    setOrder(previous=>{
+      const result=previous.filter(s=>original.includes(s));
+      for(const originalId of original)if(!result.includes(originalId))result.push(originalId);
+      const from=result.indexOf(id),to=result.indexOf(toId);
+      if(from<0||to<0||from===to)return previous;
+      result.splice(from,1);
+      result.splice(to,0,id);
       return result;
     });
   };
-  const drop=(event:DragEvent,onto:string)=>{
-    event.preventDefault();
-    if(!dragging)return;
-    move(order.indexOf(dragging),order.indexOf(onto));
-    setDragging(null);
+  const moveStep=(id:string,step:-1|1)=>{
+    const current=syncedOrder.indexOf(id);
+    const neighbor=syncedOrder[current+step];
+    if(neighbor)move(id,neighbor);
   };
-  const deleteArea=(disposition:'transfer'|'delete')=>{
-    if(!target)return;
-    deleteSection(quote.id,target.id,disposition);
-    onDeleted?.(target.id);
-    close();
+  useEffect(()=>{
+    setEditing(false);setOrder([]);setDeletingId(null);setDragging(null);
+    pointerId.current=null;
+  },[quote?.id]);
+  useEffect(()=>{
+    if(!editing)return;
+    const key=(event:globalThis.KeyboardEvent)=>{
+      if(deletingId){
+        if(event.key==='Escape'){event.preventDefault();event.stopPropagation();setDeletingId(null);}
+        return;
+      }
+      if(event.key==='Escape'){
+        event.preventDefault();event.stopPropagation();cancel();
+      }else if(event.key==='Enter'&&!event.repeat&&
+        !(event.target as Element)?.closest('button,input,select,textarea,[contenteditable="true"]')){
+        event.preventDefault();finish();
+      }
+    };
+    // The editing surfaces are marked in *both* renderers, but only one
+    // is visible. Outside pointer-down commits before navigating elsewhere.
+    const outside=(event:PointerEvent)=>{
+      if(deletingId)return;
+      const target=event.target;
+      if(!(target instanceof Element))return;
+      if(target.closest('[data-area-edit-workspace],[data-area-edit-toggle],[data-area-deletion-dialog]'))return;
+      finish();
+    };
+    document.addEventListener('keydown',key);
+    document.addEventListener('pointerdown',outside,true);
+    return ()=>{document.removeEventListener('keydown',key);
+      document.removeEventListener('pointerdown',outside,true);};
+  },[editing,deletingId,quote?.id,dirty,syncedOrder.join('|')]);
+  const requestDelete=(id:string)=>{if(editable&&editing)setDeletingId(id);};
+  const chooseDelete=(choice:DeleteChoice)=>{
+    if(!quote||!deletingId||!editable)return;
+    deleteSection(quote.id,deletingId,choice);
+    setOrder(old=>old.filter(id=>id!==deletingId));
+    setDeletingId(null);
+    if(quote.sections.length===1){setEditing(false);setOrder([]);}
   };
-  return <>
-    <button type="button" className="qmb-area-menu-trigger"
-      aria-label="Manage Areas" title="Reorder or delete Areas"
-      disabled={!editable||!quote.sections.length}
-      onClick={()=>{show('menu');setOpen(true);}}>⋯</button>
-    {open&&createPortal(<div className="qmb qmb-area-manager-backdrop"
-      onPointerDown={event=>{if(event.target===event.currentTarget)close();}}>
-      <section className="qmb-area-manager" role="dialog" aria-modal="true" aria-label="Manage quote Areas">
-        <header className="qmb-area-manager-head">
-          <div><strong>{panel==='menu'?'Manage Areas':panel==='reorder'?'Reorder Areas':'Delete an Area'}</strong>
-            <small>{panel==='menu'?'Choose how to organize your quote':panel==='reorder'?'Drag a row or use the arrows, then Save':'Choose what happens to its contents'}</small></div>
-          <button type="button" onClick={close} aria-label="Close Area management">×</button>
-        </header>
-        {panel==='menu'&&<div className="qmb-area-manager-menu">
-          <button type="button" onClick={()=>show('reorder')}><strong>↕ Reorder Areas</strong><small>Arrange the quote before saving</small></button>
-          <button type="button" onClick={()=>show('delete')}><strong>⊗ Delete an Area</strong><small>Keep its charges or remove them</small></button>
-        </div>}
-        {panel==='reorder'&&<>
-          <div className="qmb-area-manager-list" role="list" aria-label="Area reorder list">
-            {order.map((id,index)=>{
-              const area=quote.sections.find(s=>s.id===id);
-              if(!area)return null;
-              return <div key={id} role="listitem" className="qmb-area-reorder-row"
-                onDragOver={event=>{if(dragging)event.preventDefault();}}
-                onDrop={event=>drop(event,id)}>
-                <span className="qmb-area-reorder-handle" draggable
-                  onDragStart={event=>{setDragging(id);event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',id);}}
-                  onDragEnd={()=>setDragging(null)} title="Drag to reorder" aria-hidden="true">⠿</span>
-                <span className="qmb-area-reorder-label"><strong>{area.title||'Untitled Area'}</strong><small>{index+1} of {order.length}</small></span>
-                <button type="button" aria-label={'Move '+area.title+' up'} disabled={index===0}
-                  onClick={()=>move(index,index-1)}>↑</button>
-                <button type="button" aria-label={'Move '+area.title+' down'} disabled={index===order.length-1}
-                  onClick={()=>move(index,index+1)}>↓</button>
-              </div>;
-            })}
-          </div>
-          <footer className="qmb-area-manager-foot">
-            <button type="button" onClick={()=>show('menu')}>Back</button>
-            <button type="button" className="qmb-primary" disabled={!dirty}
-              onClick={()=>{setSectionOrder(quote.id,order);close();}}>Save order</button>
-          </footer>
-        </>}
-        {panel==='delete'&&<>
-          <div className="qmb-area-manager-delete">
-            <label className="qmb-field"><span>Area to delete</span>
-              <select aria-label="Area to delete" value={selected} onChange={e=>setSelected(e.target.value)}>
-                {quote.sections.map(s=><option key={s.id} value={s.id}>{s.title||'Untitled Area'}</option>)}
-              </select></label>
-            {target&&<div className="qmb-area-manager-impact">
-              <strong>{target.title||'Untitled Area'}</strong>
-              <span>{targetLines.length} line{targetLines.length===1?'':'s'} · {money.format(quoteLinesTotal(targetLines))}</span>
-              <small>Area measurements, sink specifications, and selections belong to this Area and will be removed with it.</small>
-            </div>}
-            <button type="button" className="qmb-area-deletion-choice"
-              onClick={()=>deleteArea('transfer')} disabled={!target}>
-              <strong>Move charges to General</strong>
-              <small>Keep every existing priced and informational line in General. Remove the Area and its takeoff data.</small>
-            </button>
-            <button type="button" className="qmb-area-deletion-choice is-destructive"
-              onClick={()=>deleteArea('delete')} disabled={!target}>
-              <strong>Delete Area and all contents</strong>
-              <small>Remove its lines and charges from the quote total, along with the takeoff data. You can Undo.</small>
-            </button>
-          </div>
-          <footer className="qmb-area-manager-foot">
-            <button type="button" onClick={()=>show('menu')}>Back</button>
-            <button type="button" onClick={close}>Cancel</button>
-          </footer>
-        </>}
-      </section>
-    </div>,document.body)}
-  </>;
+  const onPointerDown=(id:string,event:ReactPointerEvent<HTMLButtonElement>)=>{
+    if(event.button!==0||!editing)return;
+    event.preventDefault();event.stopPropagation();
+    pointerId.current=event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragging(id);
+  };
+  const onPointerMove=(id:string,event:ReactPointerEvent<HTMLButtonElement>)=>{
+    if(pointerId.current!==event.pointerId||dragging!==id)return;
+    const el=document.elementFromPoint(event.clientX,event.clientY);
+    const over=el?.closest<HTMLElement>('[data-area-sort-id]')?.dataset.areaSortId;
+    if(over&&over!==id)move(id,over);
+  };
+  const onPointerEnd=(event:ReactPointerEvent<HTMLButtonElement>)=>{
+    if(pointerId.current!==event.pointerId)return;
+    if(event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    pointerId.current=null;setDragging(null);
+  };
+  const onGripKey=(id:string,event:ReactKeyboardEvent<HTMLButtonElement>)=>{
+    if(event.key==='ArrowUp'||event.key==='ArrowDown'){
+      event.preventDefault();event.stopPropagation();
+      moveStep(id,event.key==='ArrowUp'?-1:1);
+    }else if(event.key==='Enter'){event.preventDefault();event.stopPropagation();finish();}
+  };
+  return {editing,editable,dirty,orderedSections,dragging,deletingId,
+    start,finish,cancel,moveStep,requestDelete,chooseDelete,
+    setDeletingId,onPointerDown,onPointerMove,onPointerEnd,onGripKey};
+}
+export type QuoteBetaAreaManager=ReturnType<typeof useQuoteBetaAreaManager>;
+
+export function QuoteBetaAreaModeButton({manager}:{manager:QuoteBetaAreaManager}){
+  return <button type="button" data-area-edit-toggle className={'qmb-area-mode-button'+(manager.editing?' is-active':'')}
+    aria-label={manager.editing?'Done reordering and deleting Areas':'Reorder or delete Areas'}
+    aria-pressed={manager.editing}
+    disabled={!manager.editable}
+    onClick={()=>manager.editing?manager.finish():manager.start()}>
+    {manager.editing?'✓ Done':'↕ Reorder / Delete'}
+  </button>;
+}
+
+export function QuoteBetaAreaGrip({manager,area}:{manager:QuoteBetaAreaManager;area:QuoteSection}){
+  return <button type="button" className={'qmb-area-grip'+(manager.dragging===area.id?' is-dragging':'')}
+    aria-label={'Drag '+(area.title||'Untitled Area')+' to reorder; use arrow keys to move'}
+    title="Drag to reorder · arrow keys to move · Enter to save" aria-roledescription="drag handle"
+    onPointerDown={event=>manager.onPointerDown(area.id,event)}
+    onPointerMove={event=>manager.onPointerMove(area.id,event)}
+    onPointerUp={manager.onPointerEnd} onPointerCancel={manager.onPointerEnd}
+    onKeyDown={event=>manager.onGripKey(area.id,event)}>⠿</button>;
+}
+
+export function QuoteBetaAreaDeleteButton({manager,area}:{manager:QuoteBetaAreaManager;area:QuoteSection}){
+  return <button type="button" className="qmb-area-remove-x"
+    aria-label={'Delete '+(area.title||'Untitled Area')+' Area'}
+    title="Delete Area" onClick={()=>manager.requestDelete(area.id)}>×</button>;
+}
+
+export function QuoteBetaAreaDeleteDialog({manager,quote}:{
+  manager:QuoteBetaAreaManager;quote:Quote|null;
+}){
+  const section=quote?.sections.find(s=>s.id===manager.deletingId);
+  if(!section)return null;
+  const lines=quote!.lines.filter(l=>l.sectionId===section.id);
+  const close=()=>manager.setDeletingId(null);
+  return createPortal(<div className="qmb qmb-area-manager-backdrop"
+    onPointerDown={e=>{if(e.target===e.currentTarget)close();}}>
+    <section className="qmb-area-manager qmb-inline-delete-dialog" role="dialog"
+      data-area-deletion-dialog aria-modal="true" aria-label={'Delete Area '+(section.title||'Untitled Area')}>
+      <header className="qmb-area-manager-head">
+        <div><strong>Delete {section.title||'this Area'}?</strong>
+          <small>How should SalesShop handle its contents?</small></div>
+        <button type="button" onClick={close} aria-label="Cancel deleting Area">×</button>
+      </header>
+      <div className="qmb-area-manager-delete">
+        <div className="qmb-area-manager-impact">
+          <strong>{section.title||'Untitled Area'}</strong>
+          <span>{lines.length} quote line{lines.length===1?'':'s'} · {money.format(quoteLinesTotal(lines))}</span>
+          <small>Measurements, specifications and Area selections are removed with the Area in either choice.</small>
+        </div>
+        <button type="button" className="qmb-area-deletion-choice" onClick={()=>manager.chooseDelete('transfer')}>
+          <strong>Delete Area only · keep contents</strong>
+          <small>Move priced and informational lines to General. Keep their current prices and quote total.</small>
+        </button>
+        <button type="button" className="qmb-area-deletion-choice is-destructive"
+          onClick={()=>manager.chooseDelete('delete')}>
+          <strong>Delete Area and its contents</strong>
+          <small>Remove its line items and charges from the quote total. You can Undo.</small>
+        </button>
+      </div>
+      <footer className="qmb-area-manager-foot">
+        <button type="button" onClick={close}>Cancel</button>
+      </footer>
+    </section>
+  </div>,document.body);
 }
