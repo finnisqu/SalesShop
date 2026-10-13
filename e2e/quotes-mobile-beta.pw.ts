@@ -421,8 +421,7 @@ test('mobile material RATE dropdown never stretches Quantity or overlays followi
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
-  await beta.getByRole('combobox',{name:'General line type'}).selectOption('material');
-  await beta.getByRole('button',{name:'+ Add line'}).click();
+  await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Material',exact:true}).click();
   const row=beta.locator('.qmb-line').first();
   await row.getByRole('button',{name:'Edit line'}).click();
   // A brand-new material has Catalog search open by default. Its outside
@@ -465,8 +464,7 @@ test('Review missing material rate offers same Builder Levels and other SF rates
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
-  await beta.getByRole('combobox',{name:'General line type'}).selectOption('material');
-  await beta.getByRole('button',{name:'+ Add line'}).click();
+  await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Material',exact:true}).click();
   const row=beta.locator('.qmb-line').first();
   await row.getByRole('button',{name:'Edit line'}).click();
   await row.getByRole('spinbutton',{name:'Quantity'}).fill('8');
@@ -977,12 +975,12 @@ test('General inline Reorder/Delete keeps its charge cards and supports Undo',as
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
-  await beta.getByRole('button',{name:'+ Add line'}).click();
+  await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Custom',exact:true}).click();
   let rows=beta.locator('.qmb-inline-general-row');
   await rows.first().getByRole('button',{name:'Edit line'}).click();
   await rows.first().getByRole('textbox',{name:'Description'}).fill('Material delivery');
   await rows.first().getByRole('spinbutton',{name:'Amount ($)'}).fill('85');
-  await beta.getByRole('button',{name:'+ Add line'}).click();
+  await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Custom',exact:true}).click();
   rows=beta.locator('.qmb-inline-general-row');
   await rows.nth(1).getByRole('button',{name:'Edit line'}).click();
   await rows.nth(1).getByRole('textbox',{name:'Description'}).fill('Jobsite cleanup');
