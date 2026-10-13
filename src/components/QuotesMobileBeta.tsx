@@ -689,6 +689,35 @@ export function QuotesMobileBeta() {
       </div>
     </div>
     {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
+    {showDeleteGeneralTakeoff&&generalTakeoff&&quote&&createPortal(
+      <div className="qmb qmb-area-manager-backdrop" onPointerDown={e=>{
+        if(e.target===e.currentTarget)setShowDeleteGeneralTakeoff(false);}}>
+        <section className="qmb-area-manager qmb-inline-delete-dialog"
+          role="dialog" aria-modal="true" aria-label="Delete General takeoff"
+          data-general-takeoff-delete>
+          <header className="qmb-area-manager-head"><div>
+            <strong>Remove General takeoff</strong>
+            <small>Choose what happens to its contents.</small>
+          </div><button type="button" aria-label="Cancel General takeoff deletion"
+            onClick={()=>setShowDeleteGeneralTakeoff(false)}>×</button></header>
+          <div className="qmb-area-manager-delete">
+            <button type="button" className="qmb-area-deletion-choice" onClick={()=>{
+              deleteGeneralTakeoff(quote.id,generalTakeoff.id,'transfer');
+              setShowDeleteGeneralTakeoff(false);}}>
+              <strong>Remove takeoff, keep charges</strong>
+              <small>Preserve its line items as regular General charges.</small>
+            </button>
+            <button type="button" className="qmb-area-deletion-choice is-destructive" onClick={()=>{
+              deleteGeneralTakeoff(quote.id,generalTakeoff.id,'delete');
+              setShowDeleteGeneralTakeoff(false);}}>
+              <strong>Remove takeoff and charges</strong>
+              <small>Remove the measurements and all of its quote lines. Undo is available.</small>
+            </button>
+          </div>
+          <footer className="qmb-area-manager-foot"><button type="button"
+            onClick={()=>setShowDeleteGeneralTakeoff(false)}>Cancel</button></footer>
+        </section>
+      </div>,document.body)}
     <QuoteBetaAreaDeleteDialog manager={areaManager} quote={quote}/>
     <QuoteBetaGeneralDeleteDialog manager={generalManager} quote={quote}/>
     {quote&&page!=='library'&&reviewOpen&&<QuoteBetaReviewOverlay quote={quote} focusId={reviewFocus}
