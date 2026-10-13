@@ -22,7 +22,6 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
   const updateSection=useQuoteStore(s=>s.updateSection);
   const addCatalogLine=useQuoteStore(s=>s.addCatalogLine);
   const addLine=useQuoteStore(s=>s.addLine);
-  const setTakeoffRate=useQuoteStore(s=>s.setTakeoffRate);
   const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
   const primary=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf')
