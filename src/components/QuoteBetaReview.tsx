@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react';
 import type {Quote} from '../types/quote';
 import {quoteTotal} from '../types/quote';
 import {QuoteShareControl} from './QuoteShareControl';
+import {QuoteSignatureDialog} from './QuoteSignatureDialog';
 import {auditQuoteDraft,type QuoteAuditDestination,type QuoteAuditFinding} from '../services/quoteDraftAudit';
 import {quoteCanCreateRevision} from '../services/quoteIntegrity';
 import {useQuoteStore} from '../store/quoteStore';
@@ -20,6 +21,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [acknowledged,setAcknowledged]=useState(false);
+  const [signatureOpen,setSignatureOpen]=useState(false);
   const [lastCheckedAt,setLastCheckedAt]=useState(quote.updatedAt);
   const needsRecheck=lastCheckedAt!==quote.updatedAt;
   const [expandedId,setExpandedId]=useState<string|null>(initialFindingId??null);
@@ -108,6 +110,11 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         <p className="qmb-help">Preview and draft links are available at any time. Issuing records a formal quote revision.</p>
         <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer preview ›</button>
         <QuoteShareControl inline allowCreation={!editable||(ready&&canIssue)}/>
+        {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&
+          <button type="button" className="qmb-outline qmb-block"
+            onClick={()=>setSignatureOpen(true)}>
+            {quote.status==='Signed'?'View signed receipt':'Sign in person'}
+          </button>}
         {editable&&<button type="button" className="qmb-primary qmb-block"
           disabled={sending||!canIssue||!ready} onClick={onIssue}>
           {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':report.blockers.length?'Resolve pricing issues to issue':
@@ -118,6 +125,8 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
           <small className="qmb-audit-help">Resolve {report.blockers.length} pricing issue{report.blockers.length===1?'':'s'} before issuing. Your draft is still saved.</small>}
       </section>
       <button type="button" className="qmb-quiet qmb-block" onClick={onClassic}>Continue in Classic Quotes</button>
+      {signatureOpen&&<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>}
+
     </div>
     <footer className="qmb-footer qmb-footer-single">
       <button type="button" className="qmb-primary" onClick={onBack}>Done reviewing</button>
