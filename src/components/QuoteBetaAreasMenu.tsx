@@ -50,7 +50,8 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
       const from=result.indexOf(id),to=result.indexOf(toId);
       if(from<0||to<0||from===to)return previous;
       result.splice(from,1);
-      result.splice(to+(after?1:0),0,id);
+      const targetAfterRemoval=result.indexOf(toId);
+      result.splice(targetAfterRemoval+(after?1:0),0,id);
       return result;
     });
   };
