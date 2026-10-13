@@ -1338,3 +1338,65 @@ test('desktop Measures Pieces Sinks and Add-ons as compact tables without overfl
   await expect(selling.locator('.qmb-compact-table.is-materials .qmb-compact-sink-row')).toHaveCount(1);
   await expect(selling.locator('.qmb-lab-extras')).toContainText('Trip Fee');
 });
+
+
+test('Customer Preview owns document columns, Area detail and optional quote-sheet wording',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Desktop customer presentation controls');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
+  await rail.getByRole('button',{name:'Customer preview'}).click();
+  const opts=beta.getByRole('group',{name:'Customer viewing options'});
+  // Details summary is also a group in some browser engines; scope by CSS for stability.
+  const panel=beta.locator('.qmb-preview-customer-options');
+  await panel.locator('summary').click();
+  await expect(panel.getByRole('checkbox',{name:'Quantity'})).not.toBeChecked();
+  await panel.getByRole('checkbox',{name:'Quantity'}).check();
+  await panel.getByRole('checkbox',{name:'Rate per unit'}).check();
+  await expect(beta.locator('.customer-quote-table-head')).toContainText('Qty');
+  await expect(beta.locator('.customer-quote-table-head')).toContainText('Rate');
+  await panel.getByRole('checkbox',{name:'Included scope'}).check();
+  await panel.getByRole('checkbox',{name:'30-day estimate validity'}).check();
+  await expect(beta.locator('.customer-quote-terms')).toContainText('THIS PROJECT ESTIMATE IS VALID FOR 30 DAYS.');
+  await panel.getByRole('checkbox',{name:'Show Kitchen to customer'}).uncheck();
+  await expect(beta.locator('.customer-quote-section')).toHaveCount(0);
+  await panel.getByRole('checkbox',{name:'Show Kitchen to customer'}).check();
+  await panel.getByRole('button',{name:'Lump sum'}).click();
+  await expect(panel.getByRole('button',{name:'Lump sum'})).toHaveAttribute('aria-pressed','true');
+  await panel.getByRole('checkbox',{name:'Included scope'}).uncheck();
+  await expect(beta.locator('.customer-quote-terms')).not.toContainText('Price includes provision');
+  void opts;
+});
+
+test('General takeoff can be removed with or without retaining its charges',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','General takeoff deletion');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'General takeoffs'}).click();
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await expect(beta.getByRole('button',{name:'Delete General takeoff'})).toBeVisible();
+  await beta.getByRole('button',{name:'Delete General takeoff'}).click();
+  const dialog=page.getByRole('dialog',{name:'Delete General takeoff'});
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button',{name:/Remove takeoff and charges/}).click();
+  await expect(beta.locator('.qmb-general-takeoff-ref')).toHaveCount(0);
+  await beta.getByRole('button',{name:'General takeoffs'}).click();
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:'Delete General takeoff'}).click();
+  await dialog.getByRole('button',{name:/Remove takeoff, keep charges/}).click();
+  await expect(beta.locator('.qmb-general-takeoff-ref')).toHaveCount(0);
+});
