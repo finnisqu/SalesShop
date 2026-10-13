@@ -60,11 +60,12 @@ test('desktop Quotes Beta is fully opted in and Classic remains selectable', asy
     const main=node.querySelector('.qmb-desktop-main')!.getBoundingClientRect();
     const inspector=node.querySelector('.qmb-desktop-inspector')!.getBoundingClientRect();
     return {railRight:rail.right,mainLeft:main.left,mainRight:main.right,
-      inspectorLeft:inspector.left,mainWidth:main.width};
+      inspectorLeft:inspector.left,mainWidth:main.width,inspectorWidth:inspector.width};
   });
   expect(geometry.mainLeft).toBeGreaterThanOrEqual(geometry.railRight-2);
   expect(geometry.inspectorLeft).toBeGreaterThanOrEqual(geometry.mainRight-2);
-  expect(geometry.mainWidth).toBeGreaterThan(390);
+  expect(geometry.mainWidth).toBeGreaterThan(650);
+  expect(geometry.inspectorWidth).toBeLessThan(300);
   await navigator.getByRole('button',{name:'Add Area from navigator'}).click();
   await expect(beta.getByRole('textbox',{name:'Area name'})).toBeVisible();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen A');
@@ -596,4 +597,64 @@ test('desktop Beta selections drawer stays inside editor and preserves live quot
   await drawer.getByRole('button',{name:'Close selections'}).click();
   await expect(drawer).toHaveCount(0);
   await expect(navigator.getByRole('button',{name:/Unit Type A/})).toBeVisible();
+});
+
+
+test('desktop Beta uses full center workspace across Build, Details, Preview and Review',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Desktop 3-column regression from user screenshots');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  const inspector=beta.getByRole('complementary',{name:'Live quote summary'});
+  const main=beta.locator('.qmb-desktop-main');
+  await expect(main).toBeVisible();
+  const base=await beta.evaluate(root=>{
+    const nav=root.querySelector('.qmb-desktop-navigation')!.getBoundingClientRect();
+    const work=root.querySelector('.qmb-desktop-main')!.getBoundingClientRect();
+    const info=root.querySelector('.qmb-desktop-inspector')!.getBoundingClientRect();
+    const frame=root.querySelector('.qmb-desktop-frame')!.getBoundingClientRect();
+    return {navRight:nav.right,workLeft:work.left,workRight:work.right,
+      workWidth:work.width,infoLeft:info.left,infoRight:info.right,frameRight:frame.right};
+  });
+  expect(base.workLeft).toBeGreaterThanOrEqual(base.navRight-2);
+  expect(base.infoLeft).toBeGreaterThanOrEqual(base.workRight-2);
+  expect(base.infoRight).toBeLessThanOrEqual(base.frameRight+2);
+  expect(base.workWidth).toBeGreaterThan(800);
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  const card=beta.locator('.qmb-area-card').first();
+  await expect(card).toBeVisible();
+  expect((await card.boundingBox())!.width).toBeGreaterThan(500);
+  await rail.getByRole('button',{name:'Customer & project'}).click();
+  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  await expect(details).toBeVisible();
+  const areas=await details.locator('.qmb-details-section').evaluateAll(nodes=>
+    nodes.slice(0,2).map(node=>{const r=node.getBoundingClientRect();
+      return {left:r.left,right:r.right,width:r.width};}));
+  expect(areas[0].width).toBeGreaterThan(270);
+  expect(areas[1].width).toBeGreaterThan(270);
+  expect(areas[0].right).toBeLessThanOrEqual(areas[1].left+2);
+  await rail.getByRole('button',{name:'Customer preview'}).click();
+  const preview=beta.locator('.qmb-preview');
+  const paper=preview.locator('.customer-quote-paper');
+  await expect(paper).toBeVisible();
+  expect((await preview.boundingBox())!.width).toBeGreaterThan(600);
+  expect((await paper.boundingBox())!.width).toBeGreaterThan(490);
+  const share=preview.locator('.quote-share-control').or(
+    beta.locator('.qmb-quote-editor .quote-share-control'));
+  await expect(share).toBeVisible();
+  expect(await share.evaluate(node=>getComputedStyle(node).position)).not.toBe('fixed');
+  await inspector.getByRole('button',{name:/Review & issue/}).click();
+  await expect(beta.locator('.qmb-review-editor .qmb-audit-overview')).toBeVisible();
+  expect((await beta.locator('.qmb-audit-overview').boundingBox())!.width).toBeGreaterThan(500);
+  const reviewShare=beta.locator('.qmb-review-editor .quote-share-control');
+  await expect(reviewShare).toBeVisible();
+  expect(await reviewShare.evaluate(node=>getComputedStyle(node).position)).not.toBe('fixed');
 });
