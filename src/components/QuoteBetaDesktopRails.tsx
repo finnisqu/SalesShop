@@ -15,20 +15,17 @@ const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 export function QuoteBetaDesktopRails({
   quote,page,quoteTab,areaTab,areaId,
   onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onReviewFinding,onReviewIssue,
+  onUndo,onRedo,undoDepth,redoDepth,onSend,canIssue,
 }:{
   quote:Quote;page:Page;quoteTab:QuoteTab;areaTab:AreaTab;areaId:string|null;
   onLibrary:()=>void;onQuoteTab:(tab:QuoteTab)=>void;onArea:(id:string)=>void;
   onAreaTab:(tab:AreaTab)=>void;onReview:()=>void;onAddArea:()=>void;
   onSelections:()=>void;onReviewFinding:(kind:'blockers'|'review'|'optional')=>void;
   onReviewIssue:(id:string)=>void;
+  onUndo:()=>void;onRedo:()=>void;undoDepth:number;redoDepth:number;
+  onSend:()=>void;canIssue:boolean;
 }){
-  const audit=auditQuoteDraft(quote);
-  const area=quote.sections.find(s=>s.id===areaId);
   const editable=quoteIsCommerciallyEditable(quote);
-  const totalSf=quote.sections.reduce((sum,section)=>
-    sum+totalBillableTakeoffSf(section.scope?.takeoffPieces??[]),0);
-  const sinkCount=quote.sections.reduce((sum,s)=>
-    sum+(s.scope?.takeoffSinks??[]).reduce((n,sink)=>n+sink.count,0),0);
   const steps=[['build','Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
   const areas=quote.sections;
   return <>
@@ -37,6 +34,12 @@ export function QuoteBetaDesktopRails({
         <button type="button" className="qmb-desktop-library-link" onClick={onLibrary}>‹ All quotes</button>
         <strong>Quotes <span>Beta</span></strong>
         <small>{displayQuoteNumber(quote)} · {quote.status}</small>
+        <div className="qmb-desktop-history" role="toolbar" aria-label="Quote history controls">
+          <button type="button" onClick={onUndo} disabled={!editable||!undoDepth}
+            aria-label="Undo quote change">↶ Undo</button>
+          <button type="button" onClick={onRedo} disabled={!editable||!redoDepth}
+            aria-label="Redo quote change">↷ Redo</button>
+        </div>
       </div>
       <nav className="qmb-desktop-mainsteps" aria-label="Quote workflow">
         {steps.map(([id,label])=><button type="button" key={id}
@@ -49,10 +52,6 @@ export function QuoteBetaDesktopRails({
         <button type="button" className="qmb-desktop-selections-step" onClick={onSelections}>
           <span className="qmb-desktop-step-icon">◇</span> Job Selections
           {!!quote.projectMaterials?.length&&<small>{quote.projectMaterials.length}</small>}
-        </button>
-        <button type="button" onClick={onReview}>
-          <span className="qmb-desktop-step-icon">✓</span> Review & issue
-          {audit.blockers.length>0&&<span className="qmb-desktop-issue-count">{audit.blockers.length}</span>}
         </button>
       </nav>
       <div className="qmb-desktop-areas-head"><strong>Areas</strong>
@@ -77,6 +76,29 @@ export function QuoteBetaDesktopRails({
         {!areas.length&&<p className="qmb-desktop-empty">Add an Area to begin measuring and pricing.</p>}
       </nav>
     </aside>
+    <QuoteBetaInspector quote={quote} page={page} areaTab={areaTab} areaId={areaId}
+      onAreaTab={onAreaTab} onReview={onReview}
+      onReviewFinding={onReviewFinding} onReviewIssue={onReviewIssue} onSend={onSend} canIssue={canIssue}/>
+
+  </>;
+}
+
+/** One inspector component is used both at rest and when pulled left by Review. */
+export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview,
+  onReviewFinding,onReviewIssue,onSend,canIssue}:{
+  quote:Quote;page:Page;areaTab:AreaTab;areaId:string|null;
+  onAreaTab:(tab:AreaTab)=>void;onReview:()=>void;
+  onReviewFinding:(kind:'blockers'|'review'|'optional')=>void;
+  onReviewIssue:(id:string)=>void;onSend:()=>void;canIssue:boolean;
+}){
+  const audit=auditQuoteDraft(quote);
+  const area=quote.sections.find(s=>s.id===areaId);
+  const editable=quoteIsCommerciallyEditable(quote);
+  const areas=quote.sections;
+  const totalSf=areas.reduce((sum,section)=>sum+totalBillableTakeoffSf(section.scope?.takeoffPieces??[]),0);
+  const sinkCount=areas.reduce((sum,s)=>
+    sum+(s.scope?.takeoffSinks??[]).reduce((n,sink)=>n+sink.count,0),0);
+  return (
     <aside className="qmb-desktop-inspector" aria-label="Live quote summary">
       <div className="qmb-desktop-inspector-heading">
         <span>LIVE ESTIMATE</span><span className="qmb-chip">{quote.status}</span>
@@ -127,10 +149,17 @@ export function QuoteBetaDesktopRails({
           <small>{audit.blockers.length
             ?audit.blockers.length+' blocking issue'+(audit.blockers.length===1?'':'s')+' to resolve before sending'
             :'Check the customer document and issue or share the quote'}</small>
-          <button type="button" onClick={onReview}>Open review &amp; delivery ›</button>
+          <button type="button" onClick={onReview}>See delivery details ›</button>
         </div>
       </section>
-      <small className="qmb-desktop-autosaved">Review updates live as you edit. Internal pricing and measurements stay private.</small>
+      <div className="qmb-inspector-send-block">
+        <button type="button" className="qmb-inspector-send" onClick={onSend}
+          aria-label="Send quote">{editable?'Send quote':'Share issued quote'} <span aria-hidden="true">›</span></button>
+        <small>{!canIssue?'Your team role cannot issue quotes.':audit.blockers.length
+          ?audit.blockers.length+' pricing blocker'+(audit.blockers.length===1?'':'s')+' must be resolved'
+          :audit.review.length?'Review items before sending'
+          :'Opens delivery options and customer sharing'}</small>
+      </div>
     </aside>
-  </>;
+  );
 }
