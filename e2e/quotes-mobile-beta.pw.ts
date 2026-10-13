@@ -1071,14 +1071,16 @@ test('Desktop Batch B: paired Materials and Calculator share editable quotes and
   await beta.getByRole('textbox',{name:'Width (in)'}).blur();
   const tabs=beta.locator('.qmb-area-editor .qmb-tabs');
   await tabs.getByRole('button',{name:'Materials'}).click();
-  await expect(beta.locator('.qmb-commerce-segment')).toHaveCount(3);
-  const selling=beta.locator('.qmb-lab-selling');
+  await expect(beta.locator('.qmb-materials-commerce .qmb-commerce-segment')).toHaveCount(3);
+  await expect(tabs.getByRole('button',{name:'Calculator'})).toBeVisible();
+  const selling=beta.locator('.qmb-materials-commerce .qmb-lab-selling');
   await expect(selling).toBeVisible();
   await selling.getByRole('button',{name:'Manual',exact:true}).click();
   await selling.getByRole('spinbutton',{name:'Area manual selling price'}).fill('2500');
   await expect(beta.locator('.qmb-desktop-grand-total')).toContainText('$2,500.00');
   await tabs.getByRole('button',{name:'Calculator'}).click();
-  const calculator=beta.locator('.qmb-lab-calculator');
+  const calculator=beta.locator('.qmb-area-scroll [data-center-calculator] .qmb-lab-calculator');
+  await expect(beta.locator('.qmb-area-scroll [data-center-calculator]')).toBeVisible();
   await expect(calculator).toBeVisible();
   await expect(calculator.getByRole('spinbutton',{name:'Area slab yield percent'})).toHaveValue('65');
   await calculator.getByRole('spinbutton',{name:'Area supplier slab area SF'}).fill('50');
@@ -1134,7 +1136,7 @@ test('Desktop Batch B: sink catalog and materials suggestions overlay instead of
   await expect(materialMenu).toBeVisible();
   expect(await materialMenu.evaluate(node=>getComputedStyle(node).position)).toBe('absolute');
   await page.keyboard.press('Escape');
-  const sinks=beta.locator('.qmb-commerce-sink-pair');
+  const sinks=beta.getByRole('region',{name:'Sink selection and pricing'});
   await sinks.getByRole('button',{name:'+ Add sink'}).click();
   const row=sinks.locator('.qmb-sink-line').first();
   const before=await row.boundingBox();
@@ -1145,14 +1147,13 @@ test('Desktop Batch B: sink catalog and materials suggestions overlay instead of
   const after=await row.boundingBox();
   expect(Math.abs(after!.height-before!.height)).toBeLessThan(4);
   await page.keyboard.press('Escape');
-  const prices=sinks.locator('.qmb-sink-selling-sheet');
-  await prices.getByRole('spinbutton',{name:'Sink 1 quantity'}).fill('2');
-  await prices.getByRole('spinbutton',{name:'Sink 1 sell price'}).fill('220');
-  await expect(prices).toContainText('$440.00');
+  await row.getByRole('spinbutton',{name:'Sink 1 quantity'}).fill('2');
+  await row.getByRole('spinbutton',{name:'Sink 1 sell price'}).fill('220');
+  await row.getByRole('spinbutton',{name:'Sink 1 buying cost'}).fill('85');
+  await expect(row.locator('.qmb-sink-private-cost')).toContainText('$170.00');
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Calculator'}).click();
-  const source=beta.locator('.qmb-sink-selling-cost');
-  await source.getByRole('spinbutton',{name:'Sink 1 buying cost'}).fill('85');
-  await expect(source).toContainText('$170.00');
+  await expect(beta.locator('.qmb-area-scroll [data-center-calculator]')).toBeVisible();
+  await expect(beta.locator('.qmb-lab-calculator .qmb-private-cost')).toContainText('$170.00');
 });
 
 
@@ -1212,4 +1213,48 @@ test('new measured Areas keep itemized presentation instead of becoming lump sum
   await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'General takeoffs'}).click();
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(beta.locator('.qmb-general-takeoff-ref')).toBeVisible();
+});
+
+
+test('desktop Measure scope and Materials prices share sinks and additional work',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Scope-first desktop workflow');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  const tabs=beta.locator('.qmb-area-editor .qmb-tabs');
+  await expect(tabs.getByRole('button',{name:'Calculator'})).toBeVisible();
+  const scope=beta.locator('.qmb-measure-rework');
+  await expect(scope.locator('.qmb-commerce-segment')).toHaveCount(3);
+  const sinks=scope.locator('.qmb-commerce-segment').nth(1);
+  await sinks.getByRole('button',{name:'+ Add sink'}).click();
+  await expect(sinks.getByRole('spinbutton',{name:'Sink 1 sell price'})).toHaveCount(0);
+  await sinks.getByRole('spinbutton',{name:'Sink 1 quantity'}).fill('2');
+  const work=scope.locator('.qmb-scope-extras');
+  await work.getByRole('button',{name:'+ Add work'}).click();
+  await work.getByRole('textbox',{name:'Additional work 1 description'}).fill('Template adjustment');
+  await work.getByRole('spinbutton',{name:'Additional work 1 quantity'}).fill('3');
+  await tabs.getByRole('button',{name:'Materials'}).click();
+  const materials=beta.locator('.qmb-materials-commerce');
+  await expect(materials.getByRole('region',{name:'Material selection and pricing'})).toBeVisible();
+  const pricedSinks=materials.getByRole('region',{name:'Sink selection and pricing'});
+  await expect(pricedSinks.getByRole('spinbutton',{name:'Sink 1 quantity'})).toHaveValue('2');
+  await pricedSinks.getByRole('spinbutton',{name:'Sink 1 sell price'}).fill('220');
+  await expect(pricedSinks).toContainText('Buying cost');
+  const extras=materials.getByRole('region',{name:'Additional work and pricing'});
+  await expect(extras.getByRole('textbox',{name:/Area line .* description/})).toHaveValue('Template adjustment');
+  await extras.getByRole('spinbutton',{name:/Area line .* sell rate/}).fill('25');
+  await expect(beta.locator('.qmb-desktop-grand-total')).toContainText('$515.00');
+  await tabs.getByRole('button',{name:'Calculator'}).click();
+  const workspace=beta.locator('.qmb-area-scroll [data-center-calculator]');
+  await expect(workspace).toBeVisible();
+  const width=await workspace.boundingBox();
+  expect(width!.width).toBeGreaterThan(550);
+  await expect(workspace.getByRole('spinbutton',{name:'Area slab yield percent'})).toBeVisible();
 });
