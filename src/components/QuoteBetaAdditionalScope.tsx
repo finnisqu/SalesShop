@@ -27,7 +27,7 @@ export function QuoteBetaAdditionalScope({quote,section,editable}:{quote:Quote;s
   };
   return <div className="qmb-scope-extras" aria-label="Area Add-ons scope">
     <div className="qmb-addon-toolbar">
-      <QuoteBetaRateCatalog disabled={!editable} label="Add an item from Rates"
+      <QuoteBetaRateCatalog disabled={!editable} division={quote.pricingDivision} label="Add an item from Rates"
         onChoose={item=>{if(item)addCatalog(quote.id,'rate',{
           ...rateItemToQuotePatch(item,quote),sectionId:section.id,quantity:1,
         });}}/>
