@@ -134,7 +134,7 @@
 .qmb .qmb-audit-delivery .quote-share-control.is-inline>.quote-share-launcher{
  width:100%;min-height:43px;justify-content:center;box-shadow:none;
  border-radius:10px;border:1px solid var(--qmb-border);
- background:var(--qmb-card);color:var(--qmb-accent);font:750 12px/1.4 inherit}
+ background:var(--qmb-card);color:var(--qmb-accent);font-family:inherit;font-size:12px;font-weight:750;line-height:1.4}
 .qmb .qmb-audit-delivery .quote-share-control.is-inline>.quote-share-panel{
  position:static!important;inset:auto!important;display:block;box-sizing:border-box;
  margin:8px 0 0;width:100%;max-width:100%;max-height:none;overflow:visible;
