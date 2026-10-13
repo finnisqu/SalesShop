@@ -704,9 +704,10 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   const rows=beta.locator('.qmb-area-editor .qmb-line-name strong');
   await expect(rows.first()).toHaveText('Warranty');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await beta.getByRole('button',{name:'Reorder or delete Areas'}).click();
-  await beta.getByRole('button',{name:'Hide Kitchen on customer quote'}).click();
-  await beta.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
+  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Preview'}).click();
+  await beta.getByText('Customer viewing options').click();
+  await beta.getByRole('checkbox',{name:'Show Kitchen to customer'}).uncheck();
+  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Build'}).click();
   await expect(beta.locator('.qmb-area-card .qmb-area-hidden-label')).toHaveText('Hidden from customer');
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
@@ -1185,10 +1186,11 @@ test('desktop General precedes Areas and inline sidebar management stays within 
   expect(overflow.actual-overflow.viewport).toBeLessThanOrEqual(3);
   const cards=rail.locator('.qmb-desktop-area-list .qmb-desktop-area-card');
   expect((await cards.first().boundingBox())!.width).toBeGreaterThan(80);
-  await expect(rail.getByRole('button',{name:'Hide Kitchen Island on customer quote'})).toBeVisible();
   await expect(rail.getByRole('button',{name:'Delete Kitchen Island Area'})).toBeVisible();
   await rail.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
-  await expect(rail.getByRole('button',{name:'Hide Kitchen Island on customer quote'})).toHaveCount(0);
+  await rail.getByRole('button',{name:'Customer preview'}).click();
+  await beta.getByText('Customer viewing options').click();
+  await expect(beta.getByRole('checkbox',{name:'Show Kitchen Island to customer'})).toBeVisible();
 });
 
 test('new measured Areas keep itemized presentation instead of becoming lump sum',async({page},testInfo)=>{
