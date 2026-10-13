@@ -1,5 +1,5 @@
-import {useEffect,useRef,useState,type KeyboardEvent as ReactKeyboardEvent,
-  type PointerEvent as ReactPointerEvent} from 'react';
+import {useEffect,useState,type KeyboardEvent as ReactKeyboardEvent} from 'react';
+import {useQuoteBetaCardDrag} from './quoteBetaCardMotion';
 import {createPortal} from 'react-dom';
 import type {Quote,QuoteSection} from '../types/quote';
 import {quoteLinesTotal} from '../types/quote';
@@ -18,8 +18,6 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
   const [editing,setEditing]=useState(false);
   const [order,setOrder]=useState<string[]>([]);
   const [deletingId,setDeletingId]=useState<string|null>(null);
-  const [dragging,setDragging]=useState<string|null>(null);
-  const pointerId=useRef<number|null>(null);
   const setSectionOrder=useQuoteStore(s=>s.setSectionOrder);
   const deleteSection=useQuoteStore(s=>s.deleteSection);
   const editable=Boolean(quote&&quoteIsCommerciallyEditable(quote)&&quote.documentType!=='pricing-schedule');
@@ -37,10 +35,10 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
   };
   const finish=()=>{
     if(quote&&editing&&dirty)setSectionOrder(quote.id,syncedOrder);
-    setDeletingId(null);setDragging(null);pointerId.current=null;setEditing(false);
+    setDeletingId(null);motion.clear();setEditing(false);
   };
   const cancel=()=>{
-    setDeletingId(null);setDragging(null);pointerId.current=null;setEditing(false);setOrder([]);
+    setDeletingId(null);motion.clear();setEditing(false);setOrder([]);
   };
   const move=(id:string,toId:string)=>{
     if(id===toId)return;
@@ -54,14 +52,14 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
       return result;
     });
   };
+  const motion=useQuoteBetaCardDrag(move);
   const moveStep=(id:string,step:-1|1)=>{
     const current=syncedOrder.indexOf(id);
     const neighbor=syncedOrder[current+step];
     if(neighbor)move(id,neighbor);
   };
   useEffect(()=>{
-    setEditing(false);setOrder([]);setDeletingId(null);setDragging(null);
-    pointerId.current=null;
+    setEditing(false);setOrder([]);setDeletingId(null);motion.clear();
   },[quote?.id]);
   useEffect(()=>{
     if(!editing)return;
@@ -99,34 +97,16 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
     setDeletingId(null);
     if(quote.sections.length===1){setEditing(false);setOrder([]);}
   };
-  const onPointerDown=(id:string,event:ReactPointerEvent<HTMLButtonElement>)=>{
-    if(event.button!==0||!editing)return;
-    event.preventDefault();event.stopPropagation();
-    pointerId.current=event.pointerId;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDragging(id);
-  };
-  const onPointerMove=(id:string,event:ReactPointerEvent<HTMLButtonElement>)=>{
-    if(pointerId.current!==event.pointerId||dragging!==id)return;
-    const el=document.elementFromPoint(event.clientX,event.clientY);
-    const over=el?.closest<HTMLElement>('[data-area-sort-id]')?.dataset.areaSortId;
-    if(over&&over!==id)move(id,over);
-  };
-  const onPointerEnd=(event:ReactPointerEvent<HTMLButtonElement>)=>{
-    if(pointerId.current!==event.pointerId)return;
-    if(event.currentTarget.hasPointerCapture(event.pointerId))
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    pointerId.current=null;setDragging(null);
-  };
   const onGripKey=(id:string,event:ReactKeyboardEvent<HTMLButtonElement>)=>{
     if(event.key==='ArrowUp'||event.key==='ArrowDown'){
       event.preventDefault();event.stopPropagation();
       moveStep(id,event.key==='ArrowUp'?-1:1);
     }else if(event.key==='Enter'){event.preventDefault();event.stopPropagation();finish();}
   };
-  return {editing,editable,dirty,orderedSections,dragging,deletingId,
+  return {editing,editable,dirty,orderedSections,dragging:motion.dragging,deletingId,
     start,finish,cancel,moveStep,requestDelete,chooseDelete,
-    setDeletingId,onPointerDown,onPointerMove,onPointerEnd,onGripKey};
+    setDeletingId,onPointerDown:motion.onPointerDown,
+    onPointerMove:motion.onPointerMove,onPointerEnd:motion.onPointerEnd,onGripKey};
 }
 export type QuoteBetaAreaManager=ReturnType<typeof useQuoteBetaAreaManager>;
 
