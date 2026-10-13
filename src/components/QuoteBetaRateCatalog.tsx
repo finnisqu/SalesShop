@@ -39,8 +39,8 @@ export function QuoteBetaRateCatalog({value='',onChoose,disabled,label,includeCu
         .sort((a,b)=>a.name.localeCompare(b.name))
         .map(item=><option key={item.id} value={item.id}>
           {item.name} · {item.unit.toUpperCase()}
-          {createQuoteRateSnapshot(item).sellRate!==undefined
-            ?' · $'+createQuoteRateSnapshot(item).sellRate!.toFixed(2):' · set price'}
+          {resolveRateBookValues(item,division).sellRate!==undefined
+            ?' · $'+resolveRateBookValues(item,division).sellRate!.toFixed(2):' · set price'}
         </option>)}
     </optgroup>)}
   </select>;
