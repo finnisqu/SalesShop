@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { quoteTotal, type Quote } from '../types/quote';
-import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder } from './quoteStructure';
+import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder } from './quoteStructure';
 
 function sample(): Quote {
   return {
@@ -78,5 +78,27 @@ describe('explicit Area deletion and atomic order',()=>{
     expect(setQuoteAreaOrder(q,['k'])).toBe(q);
     expect(setQuoteAreaOrder(q,['k','bogus'])).toBe(q);
     expect(setQuoteAreaOrder(q,['k','b'])).toBe(q);
+  });
+});
+
+
+describe('General charge management',()=>{
+  it('reorders only General slots while preserving every Area line and amount',()=>{
+    const q=sample();
+    const extra={
+      id:'g2',kind:'item',description:'Delivery upgrade',
+      pricingMode:'direct',amount:42,customerVisible:true,includeInTotal:true,
+    } as Quote['lines'][number];
+    const orphan={...extra,id:'orphan',sectionId:'historical-deleted-area'};
+    const source={...q,lines:[...q.lines,extra,orphan]};
+    const result=setQuoteGeneralLineOrder(source,['orphan','g2','g']);
+    expect(result.lines.map(l=>l.id)).toEqual(['a','orphan','s','l','b1','g2','g']);
+    expect(result.lines.find(l=>l.id==='orphan')?.sectionId).toBe('historical-deleted-area');
+    expect(result.lines.find(l=>l.id==='l')).toEqual(q.lines.find(l=>l.id==='l'));
+    expect(quoteTotal(result)).toBe(quoteTotal(source));
+    expect(setQuoteGeneralLineOrder(source,['g','g2'])).toBe(source);
+    expect(setQuoteGeneralLineOrder(source,['g','g','orphan'])).toBe(source);
+    expect(setQuoteGeneralLineOrder(source,['g','g2','unknown'])).toBe(source);
+    expect(setQuoteGeneralLineOrder(source,['g','g2','orphan'])).toBe(source);
   });
 });
