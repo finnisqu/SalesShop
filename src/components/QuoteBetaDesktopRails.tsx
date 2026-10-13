@@ -5,7 +5,7 @@ import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
-import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,QuoteBetaAreaVisibilityButton,
+import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,
   type QuoteBetaAreaManager} from './QuoteBetaAreasMenu';
 
 type QuoteTab='build'|'details'|'preview';
