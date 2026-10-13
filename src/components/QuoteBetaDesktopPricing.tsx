@@ -215,7 +215,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
         <label>Slab buying cost
           <div className="qmb-currency-field"><span aria-hidden="true">$</span>
             <input type="number" aria-label="Area buying cost per slab" min="0" step=".01"
-              disabled={!editable} value={slabPrice===undefined?'':Number(slabPrice.toFixed(2))}
+              disabled={!editable} value={decimal(slabPrice)}
               onChange={e=>{const v=numeric(e.target.value);
                 if(v===undefined||v>=0)updateScope({slabCostOverride:v});}}/>
           </div>
