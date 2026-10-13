@@ -3,6 +3,7 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {slabReferencePatch} from './QuoteMaterialLineFields';
 import {QuoteSfRateChoices} from './QuoteSfRateChoices';
 import {CustomerPreview,type CustomerPreviewEditing} from './Quotes';
+import {QuoteBetaCustomerOptions} from './QuoteBetaCustomerOptions';
 import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteLineAmount,quoteLinesTotal,quoteTotal,type Quote,type QuoteLine,type QuotePricingMode} from '../types/quote';
