@@ -52,6 +52,8 @@ export function MobileAppChrome() {
   const scopedMember = mode === 'cloud' && effectiveRole === 'member' && effectiveDepartment !== 'general';
   const quoteReadOnly = viewer || (scopedMember && !canEditTeamArea(effectiveRole, effectiveDepartment, 'quotes'));
   const setView = useNavigationStore((state) => state.setView);
+  const goBack = useNavigationStore((state) => state.goBack);
+  const canGoBack = useNavigationStore((state) => state.history.length > 0);
   const catalogSection = useNavigationStore((state) => state.catalogSection);
   const setCatalogSection = useNavigationStore((state) => state.setCatalogSection);
 
@@ -115,6 +117,8 @@ export function MobileAppChrome() {
   return (
     <>
       <WorkspaceToolbar mode="legacy" className="mobile-app-commandbar">
+        {canGoBack&&<button type="button" className="mobile-app-back-button"
+          onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
         <button type="button" className="mobile-app-menu-button" onClick={openNavigation} aria-label="Open SalesShop navigation">☰</button>
         <div className="mobile-app-current">
           <span>SalesShop</span>
