@@ -174,6 +174,7 @@
   .qmb .qmb-desktop-inspector-actions button {width:100%;font-size:12px;min-height:41px;}
   .qmb .qmb-desktop-autosaved {line-height:1.5;font-size:10px;color:var(--qmb-muted);}
   .qmb .qmb-editor {width:100%;min-width:0;}
+  .qmb .qmb-quote-editor {position:relative;isolation:isolate;}
   .qmb .qmb-quote-scroll,.qmb .qmb-area-scroll {
     display:flex;flex-direction:column;flex:1 1 0;
     min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;
@@ -278,7 +279,7 @@
   }
   .qmb .qmb-library-grid .qmb-listcard {margin:0;min-height:112px;}
   .qmb .is-library .qmb-desktop-main>.qmb-pagecontent {
-    display:block;max-width:1160px;width:100%;margin:auto;
+    display:block;max-width:1160px;width:100%;margin:0 auto;
     padding:24px 35px;overflow-y:auto;
   }
   .qmb .is-library .qmb-desktop-main>.qmb-top {padding-inline:36px;}
