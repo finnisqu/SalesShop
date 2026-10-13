@@ -33,6 +33,7 @@ import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { selectedMaterialCost } from '../services/selectedMaterialCost';
 import { QuoteBetaSelections } from './QuoteBetaSelections';
 import { QuoteBetaReview } from './QuoteBetaReview';
+import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
 import { QuoteBetaDesktopRails } from './QuoteBetaDesktopRails';
 import { QuoteBetaAreasMenu } from './QuoteBetaAreasMenu';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
@@ -375,6 +376,8 @@ export function QuotesMobileBeta() {
   const [showArchived,setShowArchived]=useState(false);
   const [newLineKind,setNewLineKind]=useState<QuoteLineKind>('item');
   const [selectionsOpen,setSelectionsOpen]=useState(false);
+  const [reviewOpen,setReviewOpen]=useState(false);
+  const [reviewFocus,setReviewFocus]=useState<string|null>(null);
   const quoteScrollRef=useRef<HTMLDivElement>(null);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
@@ -429,7 +432,7 @@ export function QuotesMobileBeta() {
   const list=myQuotes.filter(q=>(showArchived||!q.archivedAt)&&
     [q.title,q.companyName,q.quoteNumber].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
-  const openQuote=(id:string)=>{select(id);setQuoteTab('build');setPage('quote');setSelectionsOpen(false);setError('');};
+  const openQuote=(id:string)=>{select(id);setQuoteTab('build');setPage('quote');setSelectionsOpen(false);setReviewOpen(false);setError('');};
   const createQuote=()=>{const id=create();useQuoteStore.getState().updateQuote(id,{lines:[]});openQuote(id);};
   const openArea=(id:string)=>{setAreaId(id);setAreaTab('measure');setPage('area');};
   const goBack=()=>{setPage('quote');setAreaId(null);};
@@ -457,7 +460,12 @@ export function QuotesMobileBeta() {
     if(page!=='library'&&!quote)setPage('library');
   },[page,area,quote]);
   const audit=quote?auditQuoteDraft(quote):null;
+  const openReview=(focusId:string|null=null)=>{setError('');setSelectionsOpen(false);setReviewFocus(focusId);setReviewOpen(true);};
+  const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
+    const item=audit?.[kind][0];openReview(item?.id??null);
+  };
   const fixAudit=(destination:QuoteAuditDestination)=>{
+    setReviewOpen(false);
     if(destination.view==='area'){
       setAreaId(destination.areaId);setAreaTab(destination.tab);setPage('area');
     }else{
@@ -489,7 +497,8 @@ export function QuotesMobileBeta() {
         onQuoteTab={tab=>{setPage('quote');setQuoteTab(tab);setAreaId(null);}}
         onArea={id=>{if(page==='area'&&id===areaId)return;openArea(id);}}
         onAreaTab={tab=>{setPage('area');setAreaTab(tab);}}
-        onReview={()=>{setError('');setSelectionsOpen(false);setPage('review');}}
+        onReview={()=>openReview()}
+        onReviewFinding={openReviewCategory}
         onAddArea={newArea}
         onSelections={()=>setSelectionsOpen(true)}
         />}
@@ -497,12 +506,8 @@ export function QuotesMobileBeta() {
     {quote&&page!=='library'&&<div className="qmb-desktop-worktools" role="toolbar" aria-label="Quote editing tools">
       <button type="button" disabled={!editable||!undoDepth} aria-label="Undo quote change" onClick={()=>undo(quote.id)}>↶ Undo</button>
       <button type="button" disabled={!editable||!redoDepth} aria-label="Redo quote change" onClick={()=>redo(quote.id)}>↷ Redo</button>
-      <button type="button" onClick={()=>window.dispatchEvent(new Event('sales-shop:quote-collapse-all'))}>⌃ Collapse</button>
       <span className="qmb-worktools-divider" aria-hidden="true"/>
       <button type="button" disabled={!editable||quote.documentType==='pricing-schedule'} onClick={newArea}>+ Area</button>
-      <button type="button" onClick={()=>setSelectionsOpen(true)}>◇ Job Selections</button>
-      <button type="button" onClick={()=>{setPage('quote');setQuoteTab('preview');setAreaId(null);}}>▧ Preview</button>
-      <button type="button" onClick={()=>{setError('');setPage('review');}}>✓ Review</button>
     </div>}
     {page==='library'?<>
       <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Quotes <span>Beta</span></strong></div>
@@ -595,20 +600,19 @@ export function QuotesMobileBeta() {
         </div>
       </div>
       <footer className="qmb-footer qmb-quote-footer">
-        <button type="button" className="qmb-primary" onClick={()=>{setError('');setPage('review');}}>
+        <button type="button" className="qmb-primary" onClick={()=>openReview()}>
           Review {audit?.blockers.length?'· '+audit.blockers.length+' to resolve':'quote'} ›</button>
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
-      setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}/>:page==='review'&&quote?<QuoteBetaReview
-      quote={quote} canIssue={canIssue} sending={sending} error={error}
-      onBack={()=>setPage('quote')} onFix={fixAudit}
-      onPreview={()=>{setQuoteTab('preview');setPage('quote');}}
-      onClassic={()=>{exitBeta(false);setView('quotes');}}
-      onIssue={issueQuote}
-    />:null}
+      setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}/>:null}
       </div>
     </div>
     {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
+    {quote&&page!=='library'&&reviewOpen&&<QuoteBetaReviewOverlay quote={quote} focusId={reviewFocus}
+      canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
+      onClose={()=>{setReviewOpen(false);setReviewFocus(null);}}
+      onFix={fixAudit} onPreview={()=>{setReviewOpen(false);setQuoteTab('preview');setPage('quote');setAreaId(null);}}
+      onClassic={()=>{setReviewOpen(false);exitBeta(false);setView('quotes');}}/>}
     {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
       <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>

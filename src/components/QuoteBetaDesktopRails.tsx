@@ -14,12 +14,12 @@ const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 
 export function QuoteBetaDesktopRails({
   quote,page,quoteTab,areaTab,areaId,
-  onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,
+  onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onReviewFinding,
 }:{
   quote:Quote;page:Page;quoteTab:QuoteTab;areaTab:AreaTab;areaId:string|null;
   onLibrary:()=>void;onQuoteTab:(tab:QuoteTab)=>void;onArea:(id:string)=>void;
   onAreaTab:(tab:AreaTab)=>void;onReview:()=>void;onAddArea:()=>void;
-  onSelections:()=>void;
+  onSelections:()=>void;onReviewFinding:(kind:'blockers'|'review'|'optional')=>void;
 }){
   const audit=auditQuoteDraft(quote);
   const area=quote.sections.find(s=>s.id===areaId);
@@ -49,8 +49,7 @@ export function QuoteBetaDesktopRails({
           <span className="qmb-desktop-step-icon">◇</span> Job Selections
           {!!quote.projectMaterials?.length&&<small>{quote.projectMaterials.length}</small>}
         </button>
-        <button type="button" className={page==='review'?'is-active':''}
-          aria-current={page==='review'?'page':undefined} onClick={onReview}>
+        <button type="button" onClick={onReview}>
           <span className="qmb-desktop-step-icon">✓</span> Review & issue
           {audit.blockers.length>0&&<span className="qmb-desktop-issue-count">{audit.blockers.length}</span>}
         </button>
@@ -101,18 +100,13 @@ export function QuoteBetaDesktopRails({
       </section>}
       <section className="qmb-desktop-readiness">
         <strong>Quote readiness</strong>
-        <div className="qmb-desktop-review-row"><span>Pricing to resolve</span>
-          <b className={audit.blockers.length?'is-warning':''}>{audit.blockers.length}</b></div>
-        <div className="qmb-desktop-review-row"><span>Review items</span><b>{audit.review.length}</b></div>
-        <div className="qmb-desktop-review-row"><span>Optional details</span><b>{audit.optional.length}</b></div>
+        {([['blockers','Pricing to resolve',audit.blockers.length],['review','Review items',audit.review.length],['optional','Optional details',audit.optional.length]] as const)
+          .map(([kind,label,count])=><button type="button" key={kind} className="qmb-desktop-review-row"
+            aria-label={'Open '+label.toLowerCase()} onClick={()=>onReviewFinding(kind)}>
+            <span>{label}</span><b className={kind==='blockers'&&count?'is-warning':''}>{count}</b><span aria-hidden="true">›</span>
+          </button>)}
         {!audit.findings.length&&<small className="qmb-desktop-ready">✓ No audit findings</small>}
       </section>
-      <div className="qmb-desktop-inspector-actions">
-        <button type="button" className="qmb-outline" onClick={()=>onQuoteTab('preview')}>View customer quote ↗</button>
-        <button type="button" className="qmb-primary" onClick={onReview}>
-          Review & issue {audit.blockers.length?'· '+audit.blockers.length+' to resolve':'›'}
-        </button>
-      </div>
       <small className="qmb-desktop-autosaved">Changes save automatically. Internal costs and measurements stay out of the customer document.</small>
     </aside>
   </>;

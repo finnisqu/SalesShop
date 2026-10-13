@@ -9,19 +9,21 @@ import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEd
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
-export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
+export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialFindingId,
   canIssue,sending,error,onIssue}:{
   quote:Quote;
   onBack:()=>void;onFix:(destination:QuoteAuditDestination)=>void;
+  initialFindingId?:string|null;
   onPreview:()=>void;onClassic:()=>void;
   canIssue:boolean;sending:boolean;error:string;onIssue:()=>void;
 }){
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [acknowledged,setAcknowledged]=useState(false);
-  const [expandedId,setExpandedId]=useState<string|null>(null);
+  const [expandedId,setExpandedId]=useState<string|null>(initialFindingId??null);
   const issueSet=report.findings.map(f=>f.id+':'+f.severity).join('|');
   useEffect(()=>setAcknowledged(false),[quote.id,issueSet]);
+  useEffect(()=>{setExpandedId(initialFindingId??null);},[initialFindingId]);
   useEffect(()=>{
     if(expandedId&&!report.findings.some(f=>f.id===expandedId))setExpandedId(null);
   },[expandedId,issueSet,report.findings]);
@@ -39,7 +41,8 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
           quote.lines.some(line=>line.id===fix.id&&line.quantitySource?.syncMode==='live');
         const hasInline=Boolean(fix&&!linkedQuantity&&editable);
         const expanded=expandedId===finding.id;
-        return <article className={'qmb-audit-finding '+kind+(expanded?' is-expanded':'')} key={finding.id}>
+        return <article className={'qmb-audit-finding '+kind+(expanded?' is-expanded':'')} key={finding.id}
+          data-audit-id={finding.id}>
           <div className="qmb-audit-finding-summary">
             <div className="qmb-audit-finding-copy">
               <strong>{finding.title}</strong>
@@ -60,8 +63,8 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
   );
   return <div className="qmb-editor qmb-review-editor">
     <header className="qmb-pagehead">
-      <button type="button" className="qmb-back" onClick={onBack}>‹ Quote</button>
-      <span className="qmb-chip">Review</span>
+      <strong>Review &amp; Issue</strong>
+      <button type="button" className="qmb-back" onClick={onBack} aria-label="Close Review and Issue">× Close</button>
     </header>
     <div className="qmb-pad qmb-pagecontent">
       <div className="qmb-audit-overview">
@@ -110,7 +113,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,
       <button type="button" className="qmb-quiet qmb-block" onClick={onClassic}>Continue in Classic Quotes</button>
     </div>
     <footer className="qmb-footer qmb-footer-single">
-      <button type="button" className="qmb-primary" onClick={onBack}>Back to draft</button>
+      <button type="button" className="qmb-primary" onClick={onBack}>Done reviewing</button>
     </footer>
   </div>;
 }
