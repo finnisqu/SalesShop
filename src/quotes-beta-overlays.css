@@ -210,3 +210,21 @@
 @media(prefers-reduced-motion:reduce){
  .qmb .qmb-review-flyout-shell{animation:none!important}
 }
+
+
+/* Keep Job Selections in the center workspace, never covering the inspector
+   or leaping to the far viewport edge on larger desktops. */
+@media(min-width:1200px) and (min-height:550px){
+ .qmb .qmb-selections-backdrop{
+   position:fixed;top:52px;bottom:0;left:222px;right:244px;
+   width:auto;height:auto;box-sizing:border-box;z-index:60;
+   background:rgba(8,19,14,.26)
+ }
+ .qmb .qmb-selections-drawer{max-width:min(485px,100%);}
+}
+@media(min-width:1000px) and (max-width:1199px) and (min-height:550px){
+ .qmb .qmb-selections-backdrop{
+   position:fixed;top:52px;bottom:0;left:208px;right:0;
+   width:auto;height:auto;box-sizing:border-box;z-index:60
+ }
+}
