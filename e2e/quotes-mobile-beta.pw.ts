@@ -80,9 +80,9 @@ test('desktop Quotes Beta is fully opted in and Classic remains selectable', asy
   await expect(inspector.locator('.qmb-desktop-grand-total > strong')).toHaveText('$400.00');
   await navigator.getByRole('button',{name:'Customer & project'}).click();
   await expect(beta.getByRole('region',{name:'Quote customer and project details'})).toBeVisible();
-  await navigator.getByRole('button',{name:/Review & issue/}).click();
+  await inspector.getByRole('button',{name:'Send quote'}).click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
-  await expect(review.locator('.qmb-audit-overview')).toBeVisible();
+  await expect(review.locator('.qmb-audit-finding').first()).toBeVisible();
   await review.getByRole('button',{name:'Close Review and Issue'}).click();
   await navigator.getByRole('button',{name:'Customer preview'}).click();
   await expect(beta.locator('.qmb-preview')).toBeVisible();
@@ -346,10 +346,11 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
-  await beta.getByRole('button',{name:/^Review /}).click();
-  await expect(beta.getByRole('button',{name:'Go to No priced work yet'})).toBeVisible();
-  await expect(beta.getByRole('button',{name:'Resolve pricing issues to issue'})).toBeDisabled();
-  await beta.getByRole('button',{name:'Go to No priced work yet'}).click();
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await expect(review.getByRole('button',{name:'Go to No priced work yet'})).toBeVisible();
+  await expect(review.getByRole('button',{name:'Resolve pricing issues to issue'})).toBeDisabled();
+  await review.getByRole('button',{name:'Go to No priced work yet'}).click();
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'+ Add piece'}).click();
   await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
@@ -361,15 +362,15 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await beta.getByRole('group',{name:'Stock Builder pricing levels'})
     .getByRole('button',{name:/Level 1.*44\.00\/SF/}).click();
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await beta.getByRole('button',{name:/Review quote/}).click();
-  await expect(beta.getByText('Resolve before issuing',{exact:true})).toHaveCount(0);
-  await expect(beta.getByRole('checkbox',{name:/I reviewed the remaining items/})).toBeVisible();
-  await expect(beta.getByRole('button',{name:'Review remaining items to issue'})).toBeDisabled();
-  await beta.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
-  await expect(beta.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
-  await beta.getByRole('button',{name:/Resolve Material not selected:/}).click();
-  await expect(beta.getByRole('region',{name:/Resolve Material not selected:/})).toBeVisible();
-  await beta.getByRole('region',{name:/Resolve Material not selected:/})
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  await expect(review.getByText('Resolve before issuing',{exact:true})).toHaveCount(0);
+  await expect(review.getByRole('checkbox',{name:/I reviewed the remaining items/})).toBeVisible();
+  await expect(review.getByRole('button',{name:'Review remaining items to issue'})).toBeDisabled();
+  await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await expect(review.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
+  await review.getByRole('button',{name:/Resolve Material not selected:/}).click();
+  await expect(review.getByRole('region',{name:/Resolve Material not selected:/})).toBeVisible();
+  await review.getByRole('region',{name:/Resolve Material not selected:/})
     .getByRole('button',{name:'Full editor ›'}).click();
   await expect(beta.getByRole('button',{name:'Materials'})).toHaveAttribute('aria-current','page');
 });
@@ -385,27 +386,28 @@ test('Review resolves customer name and sink price inline without leaving Review
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
-  await beta.getByRole('button',{name:/^Review /}).click();
-  await beta.getByRole('button',{name:'Resolve Customer not selected'}).click();
-  const customer=beta.getByRole('region',{name:'Resolve Customer not selected'});
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await review.getByRole('button',{name:'Resolve Customer not selected'}).click();
+  const customer=review.getByRole('region',{name:'Resolve Customer not selected'});
   await expect(customer).toBeVisible();
   await customer.getByRole('textbox',{name:'Customer / company'}).fill('Acme Builder');
   await customer.getByRole('button',{name:'Save'}).click();
-  await expect(beta.getByRole('button',{name:'Resolve Customer not selected'})).toHaveCount(0);
-  await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
+  await expect(review.getByRole('button',{name:'Resolve Customer not selected'})).toHaveCount(0);
+  await expect(review.getByRole('button',{name:'Close Review and Issue'})).toBeVisible();
   // Still on Review, and no navigation through Details was required.
-  await beta.getByRole('button',{name:'Back to draft'}).click();
+  await review.getByRole('button',{name:'Close Review and Issue'}).click();
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'Materials'}).click();
   await beta.getByRole('button',{name:'+ Add sink'}).click();
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await beta.getByRole('button',{name:/^Review /}).click();
-  await beta.getByRole('button',{name:/Resolve .*needs a selling price/}).click();
-  const sink=beta.getByRole('region',{name:/Resolve .*needs a selling price/});
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  await review.getByRole('button',{name:/Resolve .*needs a selling price/}).click();
+  const sink=review.getByRole('region',{name:/Resolve .*needs a selling price/});
   await sink.getByRole('spinbutton',{name:'Sink selling price / each ($)'}).fill('220');
   await sink.getByRole('button',{name:'Save'}).click();
-  await expect(beta.getByRole('button',{name:/Resolve .*needs a selling price/})).toHaveCount(0);
-  await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
+  await expect(review.getByRole('button',{name:/Resolve .*needs a selling price/})).toHaveCount(0);
+  await expect(review.getByRole('button',{name:'Close Review and Issue'})).toBeVisible();
 });
 
 
@@ -468,9 +470,10 @@ test('Review missing material rate offers same Builder Levels and other SF rates
   const row=beta.locator('.qmb-line').first();
   await row.getByRole('button',{name:'Edit line'}).click();
   await row.getByRole('spinbutton',{name:'Quantity'}).fill('8');
-  await beta.getByRole('button',{name:/^Review /}).click();
-  await beta.getByRole('button',{name:/Resolve Missing sell rate/}).click();
-  const editor=beta.getByRole('region',{name:/Resolve Missing sell rate/});
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await review.getByRole('button',{name:/Resolve Missing sell rate/}).click();
+  const editor=review.getByRole('region',{name:/Resolve Missing sell rate/});
   await editor.getByRole('button',{name:'Choose from Rates in Review'}).click();
   const choices=editor.getByRole('region',{name:'Available selling rates'});
   await expect(choices).toBeVisible();
@@ -478,8 +481,8 @@ test('Review missing material rate offers same Builder Levels and other SF rates
   await expect(levels.getByRole('button')).toHaveCount(9);
   await expect(choices.getByText('Other SF rates')).toBeVisible();
   await levels.getByRole('button',{name:/Level 2.*54\.00\/SF/}).click();
-  await expect(beta.getByRole('button',{name:/Resolve Missing sell rate/})).toHaveCount(0);
-  await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
+  await expect(review.getByRole('button',{name:/Resolve Missing sell rate/})).toHaveCount(0);
+  await expect(review.getByRole('button',{name:'Close Review and Issue'})).toBeVisible();
 });
 
 
@@ -649,16 +652,21 @@ test('desktop Beta uses full center workspace across Build, Details, Preview and
   await expect(paper).toBeVisible();
   expect((await preview.boundingBox())!.width).toBeGreaterThan(600);
   expect((await paper.boundingBox())!.width).toBeGreaterThan(490);
-  const share=preview.locator('.quote-share-control').or(
-    beta.locator('.qmb-quote-editor .quote-share-control'));
-  await expect(share).toBeVisible();
-  expect(await share.evaluate(node=>getComputedStyle(node).position)).not.toBe('fixed');
+  await beta.getByRole('button',{name:'Phone quote preview'}).click();
+  const phone=beta.locator('.qmb-preview.is-phone-view');
+  await expect(phone).toBeVisible();
+  expect((await phone.boundingBox())!.width).toBeLessThanOrEqual(400);
+  await beta.getByRole('button',{name:'Desktop quote preview'}).click();
   // The right inspector now contains real findings, not just Review counters.
   await expect(inspector.getByRole('button',{name:/Resolve No priced work yet/})).toBeVisible();
   await inspector.getByRole('button',{name:/Resolve No priced work yet/}).click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
-  await expect(review.locator('.qmb-audit-overview')).toBeVisible();
-  expect((await review.boundingBox())!.width).toBeLessThan(520);
+  await expect(review.locator('.qmb-audit-overview')).toBeHidden();
+  const pulled=page.locator('.qmb-review-pulled-inspector .qmb-desktop-inspector');
+  await expect(pulled).toBeVisible();
+  const pulledBounds=await pulled.boundingBox(),detailBounds=await review.boundingBox();
+  expect(pulledBounds!.right).toBeLessThanOrEqual(detailBounds!.left+2);
+  expect(detailBounds!.width).toBeLessThan(520);
   const reviewShare=review.locator('.quote-share-control.is-inline');
   await expect(reviewShare).toBeVisible();
   await reviewShare.getByRole('button',{name:/Customer link & sharing/}).click();
@@ -809,11 +817,10 @@ test('desktop Beta toolbar and Job Selections remain accessible outside Build',a
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
-  const toolbar=beta.getByRole('toolbar',{name:'Quote editing tools'});
-  await expect(toolbar.getByRole('button',{name:'Undo quote change'})).toBeVisible();
-  await expect(toolbar.getByRole('button',{name:'Redo quote change'})).toBeVisible();
-  await expect(toolbar.getByRole('button',{name:/Collapse/})).toHaveCount(0);
-  await expect(toolbar.getByRole('button',{name:'+ Area'})).toBeVisible();
+  const history=beta.getByRole('toolbar',{name:'Quote history controls'});
+  await expect(history.getByRole('button',{name:'Undo quote change'})).toBeVisible();
+  await expect(history.getByRole('button',{name:'Redo quote change'})).toBeVisible();
+  await expect(beta.getByRole('toolbar',{name:'Quote editing tools'})).toHaveCount(0);
   await beta.getByRole('complementary',{name:'Quote workspace navigation'})
     .getByRole('button',{name:/Job Selections/}).click();
   await expect(beta.getByRole('dialog',{name:'Quote selections'})).toBeVisible();
