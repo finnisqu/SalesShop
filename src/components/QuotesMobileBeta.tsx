@@ -36,6 +36,9 @@ import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
 import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRails';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
   QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
+import {useQuoteBetaGeneralManager,QuoteBetaGeneralModeButton,QuoteBetaGeneralGrip,
+  QuoteBetaGeneralDelete,QuoteBetaGeneralDeleteDialog} from './QuoteBetaGeneralManager';
+import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
@@ -396,6 +399,12 @@ export function QuotesMobileBeta() {
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
   const areaManager=useQuoteBetaAreaManager(quote);
+  const generalManager=useQuoteBetaGeneralManager(quote);
+  const mobileAreaRef=useQuoteBetaCardReflow<HTMLDivElement>(
+    (areaManager.editing?areaManager.orderedSections:quote?.sections??[]).map(s=>s.id));
+  const mobileGeneralRef=useQuoteBetaCardReflow<HTMLDivElement>(
+    (generalManager.editing?generalManager.lines:(quote?.lines??[]).filter(l=>
+      !l.sectionId||!quote?.sections.some(s=>s.id===l.sectionId))).map(l=>l.id));
   // One-time upgrade when opening old Beta takeoffs: historical specifications
   // should not silently remain unpriced. Normal Catalog/manually priced rows are
   // preserved; only missing takeoff-managed sink charges are created.
@@ -575,11 +584,11 @@ export function QuotesMobileBeta() {
               {!areaManager.editing&&<button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>}
             </div>
           </div>
-          <div className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
+          <div ref={mobileAreaRef} className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
             data-area-edit-workspace aria-label="Quote Area cards">
           {(areaManager.editing?areaManager.orderedSections:quote.sections).map(s=>{
             const lines=quote.lines.filter(l=>l.sectionId===s.id);
-            return <div className="qmb-inline-area-row" data-area-sort-id={s.id} key={s.id}>
+            return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}>
               {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
               <button type="button" className="qmb-card qmb-area-card"
                 aria-disabled={areaManager.editing}
@@ -596,9 +605,20 @@ export function QuotesMobileBeta() {
           {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
           </div>
           {!quote.sections.length&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
-          <div className="qmb-section-head"><h3>General charges</h3><small>Outside named Areas</small></div>
-          {quote.lines.filter(l=>!l.sectionId||!quote.sections.some(s=>s.id===l.sectionId))
-            .map(l=><BetaLine key={l.id} quote={quote} line={l} editable={editable}/>)}
+          <div className="qmb-section-head" data-general-edit-workspace><h3>General</h3>
+            <QuoteBetaGeneralModeButton manager={generalManager}/>
+          </div>
+          <div ref={mobileGeneralRef} className={'qmb-inline-general-list'+(generalManager.editing?' is-managing-general':'')}
+            data-general-edit-workspace aria-label="General line cards">
+            {(generalManager.editing?generalManager.lines:
+              quote.lines.filter(l=>!l.sectionId||!quote.sections.some(s=>s.id===l.sectionId)))
+              .map(l=><div className="qmb-inline-general-row" data-qmb-sort-row={l.id} key={l.id}>
+                {generalManager.editing&&<QuoteBetaGeneralGrip manager={generalManager} line={l}/>}
+                <div className="qmb-general-inline-item"><BetaLine quote={quote} line={l} editable={editable&&!generalManager.editing}/></div>
+                {generalManager.editing&&<QuoteBetaGeneralDelete manager={generalManager} line={l}/>}
+              </div>)}
+            {generalManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
+          </div>
           {editable&&<section className="qmb-card">
             <div className="qmb-two"><select aria-label="General line type" value={newLineKind}
               onChange={e=>setNewLineKind(e.target.value as QuoteLineKind)}>
@@ -623,6 +643,7 @@ export function QuotesMobileBeta() {
     </div>
     {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
     <QuoteBetaAreaDeleteDialog manager={areaManager} quote={quote}/>
+    <QuoteBetaGeneralDeleteDialog manager={generalManager} quote={quote}/>
     {quote&&page!=='library'&&reviewOpen&&<QuoteBetaReviewOverlay quote={quote} focusId={reviewFocus}
       inspector={<QuoteBetaInspector quote={quote} page={page} areaTab={areaTab} areaId={areaId}
         onAreaTab={tab=>{setPage('area');setAreaTab(tab);}} onReview={()=>openReview()}

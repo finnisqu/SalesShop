@@ -127,3 +127,27 @@
  .qmb .qmb-inline-area-row>.qmb-area-card{padding-left:6px;padding-right:6px}
  .qmb .qmb-inline-area-row>.qmb-area-grip,.qmb .qmb-inline-area-row>.qmb-area-remove-x{flex-basis:31px;width:31px;min-width:31px}
 }
+
+
+/* Raised *whole-card* drag, with neighboring rows animated using FLIP. */
+.qmb [data-qmb-sort-row] {will-change:transform;transform-origin:center center;}
+.qmb [data-qmb-sort-row].is-dragging {
+  position:relative;z-index:8;pointer-events:none;
+  transform:translate3d(0,var(--qmb-sort-delta,0px),0) scale(1.018);
+  filter:drop-shadow(0 9px 12px rgba(0,0,0,.19));
+}
+.qmb [data-qmb-sort-row].is-dragging .qmb-area-grip{background:var(--qmb-tint);border-color:var(--qmb-accent)}
+.qmb [data-qmb-sort-row] .qmb-area-grip{touch-action:none;cursor:grab}
+.qmb [data-qmb-sort-row].is-dragging .qmb-area-grip{cursor:grabbing}
+.qmb .qmb-inline-general-list{display:grid;gap:8px;min-width:0}
+.qmb .qmb-inline-general-row{display:flex;align-items:stretch;gap:7px;min-width:0}
+.qmb .qmb-general-inline-item{flex:1 1 0;min-width:0}
+.qmb .qmb-general-inline-item>.qmb-line{margin:0;height:100%}
+.qmb .qmb-inline-general-list.is-managing-general .qmb-line-fields{display:none!important}
+.qmb .qmb-inline-general-list.is-managing-general .qmb-line{pointer-events:none}
+.qmb .qmb-inline-general-row>.qmb-area-grip,.qmb .qmb-inline-general-row>.qmb-area-remove-x{
+  flex:0 0 34px;min-width:34px;width:34px}
+.qmb .qmb-inline-delete-explanation{font-size:12px;line-height:1.5;color:var(--qmb-muted);margin:0}
+@media(prefers-reduced-motion:reduce){
+ .qmb [data-qmb-sort-row].is-dragging{transition:none;filter:none}
+}

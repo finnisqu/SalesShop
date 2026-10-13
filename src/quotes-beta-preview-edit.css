@@ -132,3 +132,18 @@
 @media print{
   .qmb .qmb-preview-device-toggle{display:none!important}
 }
+
+
+/* On desktop the viewport switch and Make Edits belong to one action row.
+   The generic toolbar child display:grid must not override this flex layout. */
+.qmb .qmb-preview-seller-toolbar>.qmb-preview-action-group {
+  display:flex;flex-direction:row;justify-content:flex-end;
+  align-items:center;gap:8px;flex-wrap:wrap;min-width:0;
+}
+.qmb .qmb-preview-action-group>.qmb-preview-device-toggle{flex:0 0 auto}
+.qmb .qmb-preview-action-group>button{flex:0 0 auto}
+@media(max-width:560px){
+ .qmb .qmb-preview-seller-toolbar{gap:8px}
+ .qmb .qmb-preview-seller-toolbar>.qmb-preview-action-group{
+   justify-content:flex-start;width:100%;flex-wrap:wrap}
+}

@@ -66,8 +66,8 @@ export function useQuoteBetaCardDrag(move:(source:string,target:string)=>void){
 
 /** FLIP the cards around the lifted card when a provisional order changes.
  * Respects reduced-motion preferences and avoids a reflow jump on mobile. */
-export function useQuoteBetaCardReflow(ids:string[]){
-  const listRef=useRef<HTMLElement|null>(null);
+export function useQuoteBetaCardReflow<T extends HTMLElement=HTMLDivElement>(ids:string[]){
+  const listRef=useRef<T|null>(null);
   const previous=useRef(new Map<string,number>());
   useLayoutEffect(()=>{
     const list=listRef.current;

@@ -3,6 +3,7 @@ import {quoteLinesTotal,quoteTotal,displayQuoteNumber} from '../types/quote';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,
   type QuoteBetaAreaManager} from './QuoteBetaAreasMenu';
 
@@ -29,6 +30,7 @@ export function QuoteBetaDesktopRails({
   const editable=quoteIsCommerciallyEditable(quote);
   const steps=[['build','Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
   const areas=areaManager.editing?areaManager.orderedSections:quote.sections;
+  const desktopAreaRef=useQuoteBetaCardReflow<HTMLElement>(areas.map(s=>s.id));
   return <>
     <aside className="qmb-desktop-navigation" aria-label="Quote workspace navigation">
       <div className="qmb-desktop-rail-head">
@@ -60,12 +62,12 @@ export function QuoteBetaDesktopRails({
         {!areaManager.editing&&<button type="button" disabled={!editable||quote.documentType==='pricing-schedule'}
           onClick={onAddArea} aria-label="Add Area from navigator">+ Add</button>}
       </div>
-      <nav className={'qmb-desktop-area-list'+(areaManager.editing?' is-managing-areas':'')}
+      <nav ref={desktopAreaRef} className={'qmb-desktop-area-list'+(areaManager.editing?' is-managing-areas':'')}
         aria-label="Quote Areas" data-area-edit-workspace>
         {areas.map(section=>{
           const active=page==='area'&&section.id===areaId;
           const lines=quote.lines.filter(l=>l.sectionId===section.id);
-          return <div key={section.id} className="qmb-inline-area-row" data-area-sort-id={section.id}>
+          return <div key={section.id} className="qmb-inline-area-row" data-qmb-sort-row={section.id} data-area-sort-id={section.id}>
             {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={section}/>}
             <button type="button" className={'qmb-desktop-area-card'+(active?' is-active':'')}
               aria-disabled={areaManager.editing}
