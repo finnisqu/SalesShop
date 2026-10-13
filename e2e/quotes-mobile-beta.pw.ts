@@ -29,7 +29,7 @@ test('phone Quotes Beta uses the same quote records and returns to Classic', asy
   await beta.getByRole('button',{name:'Pricing'}).click();
   await beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'}).fill('50');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await expect(beta.getByText('$416.50').first()).toBeVisible();
+  await expect(beta.locator('.qmb-area-card .qmb-area-price').getByText('$416.50')).toBeVisible();
   await beta.getByRole('button',{name:'Preview'}).click();
   await expect(beta.locator('.qmb-preview')).toBeVisible();
   await beta.getByRole('button',{name:'Classic',exact:true}).click();
