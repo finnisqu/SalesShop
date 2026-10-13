@@ -466,7 +466,6 @@ export function QuotesMobileBeta() {
       const jobDefaults=quote.sections.find(s=>s.scope?.takeoffDefaultSplashHeightIn!==undefined||
         s.scope?.takeoffDefaultEdgeProfile!==undefined)?.scope;
       useQuoteStore.getState().updateSection(quote.id,id,{
-        customerDisplayMode:'summary',
         ...(jobDefaults?{scope:{takeoffDefaultSplashHeightIn:jobDefaults.takeoffDefaultSplashHeightIn,
           takeoffDefaultEdgeProfile:jobDefaults.takeoffDefaultEdgeProfile}}:{}),
       });
