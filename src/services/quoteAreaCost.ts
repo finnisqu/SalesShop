@@ -35,8 +35,10 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const override=scope?.slabCountOverride;
   const count=override!==undefined&&Number.isInteger(override)&&override>0?override:suggestedSlabs;
   const purchaseSlabs=positive(scope?.slabPurchaseQuantityOverride)??count;
-  const shopCost=nonnegative(scope?.shopCostOverride);
-  const installCost=nonnegative(scope?.installCostOverride);
+  const shopCost=nonnegative(scope?.shopCostOverride)??
+    (nonnegative(scope?.shopCostRateSf)!==undefined?roundCurrency(measuredSf*scope!.shopCostRateSf!):undefined);
+  const installCost=nonnegative(scope?.installCostOverride)??
+    (nonnegative(scope?.installCostRateSf)!==undefined?roundCurrency(measuredSf*scope!.installCostRateSf!):undefined);
   const slabCost=nonnegative(scope?.slabCostOverride)??nonnegative(ref?.sourceSlabCost)??nonnegative(snapshot?.slabCost)
     ??nonnegative(ref?.catalogSlabCost);
   const costSf=nonnegative(ref?.sourceCostPerSf)??nonnegative(snapshot?.costPerSf);
