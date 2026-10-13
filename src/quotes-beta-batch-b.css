@@ -208,8 +208,118 @@
 .qmb .qmb-desktop-private-profit>div strong{color:var(--qmb-ink);font-size:11px}
 .qmb .qmb-desktop-private-profit>small{color:var(--qmb-muted);
  font-size:10px;line-height:1.4}
+
+
+
+/* Batch B.1 — Material and its price are one visual unit, same for sinks. */
+.qmb .qmb-commerce-stack{display:grid;gap:16px;min-width:0}
+.qmb .qmb-commerce-segment{display:grid;gap:10px;min-width:0;
+ border:1px solid var(--qmb-border);background:var(--qmb-card);
+ border-radius:13px;padding:14px}
+.qmb .qmb-commerce-heading{display:flex;align-items:start;justify-content:space-between;gap:10px}
+.qmb .qmb-commerce-heading h3{margin:0;font-size:16px;color:var(--qmb-ink)}
+.qmb .qmb-commerce-heading small{display:block;margin-top:4px;
+ font-size:11px;color:var(--qmb-muted);line-height:1.4}
+.qmb .qmb-commerce-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+ gap:13px;min-width:0;align-items:start}
+.qmb .qmb-commerce-pair>.qmb-materials-sheet,
+.qmb .qmb-commerce-pair>.qmb-desktop-pricing-lab,
+.qmb .qmb-commerce-pair>.qmb-sink-selling-sheet{min-width:0}
+.qmb .qmb-commerce-pair .qmb-materials-sheet .qmb-grid-toolbar:first-child{margin-top:0}
+.qmb .qmb-commerce-segment .qmb-desktop-pricing-lab{gap:8px}
+.qmb .qmb-commerce-segment .qmb-pricing-lab-heading h3{font-size:13px}
+.qmb .qmb-commerce-segment .qmb-pricing-lab-heading strong{font-size:14px}
+.qmb .qmb-commerce-segment .qmb-pricing-lab-heading small{font-size:10px}
+.qmb .qmb-commerce-segment .qmb-pricing-formula{padding:9px}
+.qmb .qmb-commerce-segment .qmb-pricing-modes button{min-height:32px;font-size:10px}
+.qmb .qmb-commerce-segment .qmb-material-cost-caption{display:flex;font-size:10px}
+.qmb .qmb-sink-selling-sheet{display:grid;gap:9px}
+.qmb .qmb-sink-selling-rows{display:grid;gap:0;min-width:0;
+ border:1px solid var(--qmb-border);border-radius:12px;overflow:hidden;
+ background:var(--qmb-card)}
+.qmb .qmb-sink-selling-row{min-height:125px;padding:10px 9px 8px;
+ border-bottom:1px solid var(--qmb-border);display:grid;align-content:start;gap:8px}
+.qmb .qmb-sink-selling-row:last-child{border-bottom:0}
+.qmb .qmb-sink-selling-row:nth-child(even){background:var(--qmb-tint)}
+.qmb .qmb-sink-sell-main{display:grid;grid-template-columns:62px minmax(0,1fr);
+ gap:7px;min-width:0}
+.qmb .qmb-sink-selling-row label{display:grid;align-content:start;gap:5px;
+ font-size:10px;font-weight:750;color:var(--qmb-muted);min-width:0}
+.qmb .qmb-sink-selling-row input{min-width:0;width:100%;height:38px;
+ border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card);
+ color:var(--qmb-ink);font-size:13px;padding:5px 6px}
+.qmb .qmb-sink-selling-total{margin:0;font-size:11px;
+ color:var(--qmb-ink);font-weight:760;line-height:1.4}
+.qmb .qmb-sink-selling-cost{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-sink-cost-editor{display:flex;align-items:end;justify-content:space-between;
+ gap:7px;flex-wrap:wrap}
+.qmb .qmb-sink-cost-editor label{flex:1;min-width:100px}
+.qmb .qmb-sink-cost-editor strong{font-size:12px;color:var(--qmb-ink)}
+.qmb .qmb-sink-selling-sheet .qmb-grid-toolbar{margin:2px 0 6px}
+.qmb .qmb-sink-selling-separated .qmb-sink-qty,
+.qmb .qmb-sink-selling-separated .qmb-sink-price,
+.qmb .qmb-sink-selling-separated .qmb-sink-private-cost{display:none!important}
+.qmb .qmb-sink-selling-separated .qmb-sink-secondary{display:flex;align-items:center}
+.qmb .qmb-sink-selling-separated .qmb-sink-line{min-height:125px;align-content:start}
+.qmb .qmb-sink-selling-separated .qmb-sink-secondary>.qmb-row-menu-trigger{
+  min-height:34px;flex:0 0 100%;width:100%}
+.qmb .qmb-currency-field{position:relative;display:flex;align-items:center;min-width:0}
+.qmb .qmb-currency-field>span{position:absolute;left:10px;pointer-events:none;
+ color:var(--qmb-muted);font-size:12px;font-weight:800;z-index:1}
+.qmb .qmb-currency-field>input{padding-left:23px!important;min-width:0}
+.qmb .qmb-optional-labor{display:grid;gap:10px;padding-top:10px;
+ border-top:1px solid var(--qmb-border)}
+.qmb .qmb-optional-labor>strong{font-size:12px}
+.qmb .qmb-optional-labor>strong small{display:block;margin-top:3px;font-size:10px;
+ color:var(--qmb-muted);font-weight:500}
+.qmb .qmb-calculator-workspace{gap:13px}
+.qmb .qmb-calculator-main>.qmb-desktop-pricing-lab{gap:9px}
+.qmb .qmb-calculator-source-editor{border:1px solid var(--qmb-border);border-radius:12px;
+ background:var(--qmb-card);padding:12px}
+.qmb .qmb-calculator-source-editor>summary{font-size:12px;font-weight:800;
+ color:var(--qmb-accent);cursor:pointer;padding-bottom:5px}
+.qmb .qmb-calculator-source-editor[open]{display:grid;gap:14px}
+.qmb .qmb-calculator-source-editor .qmb-commerce-pair{padding-top:4px;
+ border-top:1px solid var(--qmb-border)}
+.qmb .qmb-desktop-lab-customer summary{font-size:11px;font-weight:800;
+ cursor:pointer;color:var(--qmb-accent)}
+.qmb .qmb-desktop-lab-customer summary small{font-size:10px;color:var(--qmb-muted);font-weight:500}
+.qmb .qmb-desktop-lab-customer[open]{display:grid;gap:10px}
 @media(min-width:1000px) and (min-height:550px){
-  /* Desktop Materials contains the selling calculator; avoid an orphan Pricing
-     navigation button now that both parts are visible together. */
-  .qmb .qmb-desktop-active-area nav button:last-child{display:none}
+ .qmb .qmb-commerce-stack .qmb-sink-line{display:grid;grid-template-columns:minmax(0,1fr)}
+ .qmb .qmb-commerce-stack .qmb-sink-primary{display:grid;
+   grid-template-columns:minmax(75px,.65fr) minmax(0,1.35fr) 22px;gap:5px}
+ .qmb .qmb-commerce-stack .qmb-sink-secondary{display:flex}
+ .qmb .qmb-commerce-stack .qmb-sinks-sheet{container-type:normal}
+ .qmb .qmb-area-editor .qmb-pagecontent{padding-block:16px 28px}
+ /* Fixed, responsive edit-mode grid: grab / card / remove. Show status is
+    an overlay in the card's free lower right, never an extra width column. */
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row:has(.qmb-area-grip){
+   display:grid!important;grid-template-columns:23px minmax(0,1fr) 25px;
+   gap:4px;width:100%;min-width:0;align-items:stretch}
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-grip{
+   grid-column:1;grid-row:1;width:23px;min-width:23px;min-height:59px}
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-desktop-area-card{
+   grid-column:2;grid-row:1;width:100%;min-width:0;min-height:59px;
+   padding:8px 35px 8px 4px;gap:3px;overflow:hidden}
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-remove-x{
+   grid-column:3;grid-row:1;min-width:25px;width:25px;min-height:59px}
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-visibility-toggle{
+   position:absolute;right:30px;bottom:4px;z-index:3;
+   width:39px;min-width:39px;max-height:26px;min-height:25px;
+   padding:2px;font-size:8px;line-height:1}
+ .qmb .qmb-desktop-area-list.is-managing-areas .qmb-desktop-area-dot,
+ .qmb .qmb-desktop-area-list.is-managing-areas .qmb-desktop-area-value{display:none}
+ .qmb .qmb-desktop-area-list.is-managing-areas .qmb-desktop-area-title strong{
+   display:block;overflow-wrap:anywhere;font-size:10px;line-height:1.25}
+ .qmb .qmb-desktop-area-list.is-managing-areas .qmb-desktop-area-title small{
+   font-size:9px}
+ .qmb .qmb-desktop-area-list{overflow-x:hidden}
+ .qmb .qmb-desktop-navigation{overflow-x:hidden}
+}
+/* The two paired columns stack gracefully on moderate desktop widths. */
+@media(min-width:1000px) and (max-width:1200px){
+ .qmb .qmb-commerce-pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px}
+ .qmb .qmb-commerce-segment{padding:10px}
+ .qmb .qmb-sink-primary{gap:3px}
 }
