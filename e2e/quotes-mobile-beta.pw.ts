@@ -80,9 +80,11 @@ test('desktop Quotes Beta is fully opted in and Classic remains selectable', asy
   await expect(inspector.locator('.qmb-desktop-grand-total > strong')).toHaveText('$400.00');
   await navigator.getByRole('button',{name:'Customer & project'}).click();
   await expect(beta.getByRole('region',{name:'Quote customer and project details'})).toBeVisible();
-  await inspector.getByRole('button',{name:/Review & issue/}).click();
-  await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
-  await inspector.getByRole('button',{name:'View customer quote ↗'}).click();
+  await navigator.getByRole('button',{name:/Review & issue/}).click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await expect(review.locator('.qmb-audit-overview')).toBeVisible();
+  await review.getByRole('button',{name:'Close Review and Issue'}).click();
+  await navigator.getByRole('button',{name:'Customer preview'}).click();
   await expect(beta.locator('.qmb-preview')).toBeVisible();
   await beta.getByRole('button',{name:'Classic',exact:true}).click();
   await expect(page.locator('.quotes-workbench')).toBeVisible();
@@ -582,7 +584,7 @@ test('desktop Beta selections drawer stays inside editor and preserves live quot
   await navigator.getByRole('button',{name:'Add Area from navigator'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Unit Type A');
   await navigator.getByRole('button',{name:/Build quote/}).click();
-  await navigator.getByRole('button',{name:/Job selections/}).click();
+  await navigator.getByRole('button',{name:/Job Selections/}).click();
   const drawer=beta.getByRole('dialog',{name:'Quote selections'});
   await expect(drawer).toBeVisible();
   const bounds=await beta.evaluate(node=>{
@@ -651,12 +653,19 @@ test('desktop Beta uses full center workspace across Build, Details, Preview and
     beta.locator('.qmb-quote-editor .quote-share-control'));
   await expect(share).toBeVisible();
   expect(await share.evaluate(node=>getComputedStyle(node).position)).not.toBe('fixed');
-  await inspector.getByRole('button',{name:/Review & issue/}).click();
-  await expect(beta.locator('.qmb-review-editor .qmb-audit-overview')).toBeVisible();
-  expect((await beta.locator('.qmb-audit-overview').boundingBox())!.width).toBeGreaterThan(500);
-  const reviewShare=beta.locator('.qmb-review-editor .quote-share-control');
+  // The right inspector now contains real findings, not just Review counters.
+  await expect(inspector.getByRole('button',{name:/Resolve No priced work yet/})).toBeVisible();
+  await inspector.getByRole('button',{name:/Resolve No priced work yet/}).click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await expect(review.locator('.qmb-audit-overview')).toBeVisible();
+  expect((await review.boundingBox())!.width).toBeLessThan(520);
+  const reviewShare=review.locator('.quote-share-control.is-inline');
   await expect(reviewShare).toBeVisible();
-  expect(await reviewShare.evaluate(node=>getComputedStyle(node).position)).not.toBe('fixed');
+  await reviewShare.getByRole('button',{name:/Customer link & sharing/}).click();
+  await expect(reviewShare.getByRole('region',{name:'Customer quote link'})).toBeVisible();
+  expect(await reviewShare.locator('.quote-share-panel').evaluate(node=>getComputedStyle(node).position)).toBe('static');
+  await review.getByRole('button',{name:'Close Review and Issue'}).click();
+  await expect(beta.locator('.qmb-preview')).toBeVisible();
 });
 
 
@@ -803,13 +812,76 @@ test('desktop Beta toolbar and Job Selections remain accessible outside Build',a
   const toolbar=beta.getByRole('toolbar',{name:'Quote editing tools'});
   await expect(toolbar.getByRole('button',{name:'Undo quote change'})).toBeVisible();
   await expect(toolbar.getByRole('button',{name:'Redo quote change'})).toBeVisible();
-  await expect(toolbar.getByRole('button',{name:/Collapse/})).toBeVisible();
+  await expect(toolbar.getByRole('button',{name:/Collapse/})).toHaveCount(0);
+  await expect(toolbar.getByRole('button',{name:'+ Area'})).toBeVisible();
   await beta.getByRole('complementary',{name:'Quote workspace navigation'})
     .getByRole('button',{name:/Job Selections/}).click();
   await expect(beta.getByRole('dialog',{name:'Quote selections'})).toBeVisible();
   await beta.getByRole('button',{name:'Close selections'}).click();
-  await toolbar.getByRole('button',{name:/Preview/}).click();
+  await beta.getByRole('complementary',{name:'Quote workspace navigation'})
+    .getByRole('button',{name:'Customer preview'}).click();
   await expect(beta.locator('.qmb-preview')).toBeVisible();
-  await toolbar.getByRole('button',{name:/Job Selections/}).click();
+  await beta.getByRole('complementary',{name:'Quote workspace navigation'})
+    .getByRole('button',{name:/Job Selections/}).click();
   await expect(beta.getByRole('dialog',{name:'Quote selections'})).toBeVisible();
+});
+
+
+test('Quotes Beta Review opens at a specific readiness finding and rechecks changes',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Desktop always-visible Review and live recheck');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const inspector=beta.getByRole('complementary',{name:'Live quote summary'});
+  const finding=inspector.getByRole('button',{name:'Resolve Customer not selected'});
+  await expect(finding).toBeVisible();
+  await finding.click();
+  const drawer=page.getByRole('dialog',{name:'Review and issue quote'});
+  await expect(drawer).toBeVisible();
+  const inline=drawer.locator('.qmb-audit-finding[data-audit-id="quote:customer"]');
+  await expect(inline).toHaveClass(/is-expanded/);
+  // The embedded Review quick-fix changes the live quote while drawer remains open.
+  await expect(drawer.locator('.qmb-audit-finding[data-audit-id="quote:customer"]')).toBeVisible();
+  const customerField=inline.locator('input').first();
+  await expect(customerField).toBeVisible();
+  await customerField.fill('Sample Construction');
+  await expect(drawer.getByRole('status').filter({hasText:'Quote changed since this review'})).toBeVisible();
+  await expect(drawer.getByRole('button',{name:/Recheck now/})).toBeVisible();
+  await drawer.getByRole('button',{name:/Recheck now/}).click();
+  await expect(drawer.getByText('Quote changed since this review')).toHaveCount(0);
+  await drawer.getByRole('button',{name:'Close Review and Issue'}).click();
+  await expect(inspector.getByRole('button',{name:'Resolve Customer not selected'})).toHaveCount(0);
+});
+
+test('Area management modal stays opaque above its dimmed background',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Portaled Area modal opacity');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('complementary',{name:'Quote workspace navigation'})
+    .getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('complementary',{name:'Quote workspace navigation'})
+    .getByRole('button',{name:'Manage Areas'}).click();
+  const dialog=page.getByRole('dialog',{name:'Manage quote Areas'});
+  await expect(dialog).toBeVisible();
+  const style=await dialog.evaluate(node=>{
+    const s=getComputedStyle(node);
+    return {background:s.backgroundColor,opacity:s.opacity,isolation:s.isolation};
+  });
+  expect(style.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(style.background).not.toBe('transparent');
+  expect(style.opacity).toBe('1');
+  expect(style.isolation).toBe('isolate');
+  await dialog.getByRole('button',{name:/Reorder Areas/}).click();
+  await expect(dialog.getByRole('list',{name:'Area reorder list'})).toBeVisible();
 });
