@@ -16,7 +16,7 @@ export interface QuotesBetaLocation {
   quoteId?:string;
   page:'library'|'quote'|'area'|'review';
   quoteTab:'build'|'details'|'preview';
-  areaTab:'measure'|'materials'|'pricing';
+  areaTab:'measure'|'materials'|'pricing'|'calculator';
   areaId:string|null;
 }
 

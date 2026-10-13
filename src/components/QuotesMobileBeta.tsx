@@ -28,7 +28,7 @@ import { QuoteSfRateChoices } from './QuoteSfRateChoices';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
-import { QuoteBetaDesktopPricing } from './QuoteBetaDesktopPricing';
+import { QuoteBetaDesktopCommerce } from './QuoteBetaDesktopCommerce';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { selectedMaterialCost } from '../services/selectedMaterialCost';
 import { QuoteBetaSelections } from './QuoteBetaSelections';
@@ -47,7 +47,7 @@ const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
 type Page = 'library' | 'quote' | 'area' | 'review';
 type QuoteTab = 'build' | 'details' | 'preview';
-type AreaTab = 'measure' | 'materials' | 'pricing';
+type AreaTab = 'measure' | 'materials' | 'pricing' | 'calculator';
 
 function AppMenu() {
   const setView = useNavigationStore(s=>s.setView);
@@ -216,7 +216,8 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
   const measured=totalBillableTakeoffSf(pieces);
   const savePieces=(next:QuoteTakeoffPiece[])=>updatePieces(quote.id,section.id,next);
   const advanceArea=()=>{
-    if(tab==='pricing'||(desktopLab&&tab==='materials')){onNextArea();return;}
+    if(tab==='pricing'||tab==='calculator'){onNextArea();return;}
+    if(desktopLab&&tab==='materials'){setTab('calculator');return;}
     setTab(tab==='measure'?'materials':'pricing');
     const scroll=areaScrollRef.current;
     const tabs=scroll?.querySelector<HTMLElement>('.qmb-tabs');
@@ -245,7 +246,8 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
 
     </div>
     <nav className="qmb-tabs" aria-label="Area sections">
-      {([['measure','Measure'],['materials','Materials'],['pricing','Pricing']] as const).map(([id,label])=>
+      {(desktopLab?([['measure','Measure'],['materials','Materials'],['calculator','Calculator']] as const)
+        :([['measure','Measure'],['materials','Materials'],['pricing','Pricing']] as const)).map(([id,label])=>
         <button key={id} type="button" className={tab===id?'active':''} aria-current={tab===id?'page':undefined} onClick={()=>{
           setTab(id);
           const scroll=areaScrollRef.current;
@@ -264,14 +266,11 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
           if(applyAll)savePieces(pieces.map(piece=>({...piece,splashHeightIn:next.splashHeightIn,
             edgeProfile:next.edgeProfile})));
         }}/>}
-      {tab==='materials'&&<div className="qmb-area-commerce-columns">
-        <QuoteBetaMaterials quote={quote} section={section} editable={editable}/>
-        <div className="qmb-area-desktop-pricing"><QuoteBetaDesktopPricing quote={quote} section={section} editable={editable}/></div>
-      </div>}
-      {tab==='pricing'&&<div className="qmb-area-commerce-columns qmb-area-pricing-route">
-        <div className="qmb-area-desktop-pricing-material"><QuoteBetaMaterials quote={quote} section={section} editable={editable}/></div>
-        <div className="qmb-area-desktop-pricing"><QuoteBetaDesktopPricing quote={quote} section={section} editable={editable}/></div>
-      </div>}
+      {tab==='materials'&&(desktopLab
+        ?<QuoteBetaDesktopCommerce quote={quote} section={section} editable={editable} tab="materials"/>
+        :<QuoteBetaMaterials quote={quote} section={section} editable={editable}/>)}
+      {tab==='calculator'&&desktopLab&&<QuoteBetaDesktopCommerce quote={quote} section={section}
+        editable={editable} tab="calculator"/>}
       {tab==='pricing'&&<div className="qmb-mobile-pricing-legacy">
         <div className="qmb-section-head"><div><h3>Pricing & presentation</h3><p>Finish pricing here—or leave it undecided.</p></div></div>
         <section className="qmb-card">
@@ -336,9 +335,10 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
       <div className="qmb-footer-area-total"><small>Area total</small><strong>{money.format(amount)}</strong></div>
       <div className="qmb-area-footer-actions">
         {editable&&<button type="button" className="qmb-outline qmb-area-next"
-          aria-label={tab==='pricing'?'Create next Area':'Continue to next Area step'}
+          aria-label={tab==='pricing'||tab==='calculator'?'Create next Area':'Continue to next Area step'}
           onClick={advanceArea}>
-          {tab==='measure'?'Materials ›':tab==='materials'&&!desktopLab?'Pricing ›':'+ Next Area ›'}
+          {tab==='measure'?'Materials ›':tab==='materials'&&!desktopLab?'Pricing ›':
+            tab==='materials'&&desktopLab?'Calculator ›':'+ Next Area ›'}
         </button>}
         <button type="button" className="qmb-primary" onClick={goBack}>Done · Quote ›</button>
       </div>
@@ -586,34 +586,6 @@ export function QuotesMobileBeta() {
         {quote.documentType==='pricing-schedule'&&<div className="qmb-card"><strong>Pricing Schedule</strong><p>Use Classic Quotes for the full schedule workbook. This Beta editor does not alter its special pricing data.</p>
           <button type="button" className="qmb-outline" onClick={()=>exitBeta(false)}>Open classic editor</button></div>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
-          <div className="qmb-section-head" data-area-edit-workspace><h3>Areas</h3>
-            <div className="qmb-areas-actions">
-              <QuoteBetaAreaModeButton manager={areaManager}/>
-              {!areaManager.editing&&<button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>}
-            </div>
-          </div>
-          <div ref={mobileAreaRef} className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
-            data-area-edit-workspace aria-label="Quote Area cards">
-          {(areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s))).map(s=>{
-            const lines=quote.lines.filter(l=>l.sectionId===s.id);
-            return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}>
-              {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
-              <button type="button" className="qmb-card qmb-area-card"
-                aria-disabled={areaManager.editing}
-                onClick={()=>{if(!areaManager.editing)openArea(s.id);}}>
-                <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
-                  <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
-                  <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small>
-                  {!s.customerVisible&&<small className="qmb-area-hidden-label">Hidden from customer</small>}</span>
-                <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b>{!areaManager.editing&&<span>›</span>}</span>
-              </button>
-              {areaManager.editing&&<><QuoteBetaAreaVisibilityButton quote={quote} area={s}/>
-                <QuoteBetaAreaDeleteButton manager={areaManager} area={s}/></>}
-            </div>;
-          })}
-          {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
-          </div>
-          {!quote.sections.length&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
           <div className="qmb-section-head qmb-general-heading" data-general-edit-workspace><h3>General</h3>
             <div className="qmb-general-quick-add" aria-label="Add General line">
               {editable&&!generalManager.editing&&<button type="button"
@@ -643,6 +615,35 @@ export function QuotesMobileBeta() {
             {generalManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
           </div>
 
+
+          <div className="qmb-section-head" data-area-edit-workspace><h3>Areas</h3>
+            <div className="qmb-areas-actions">
+              <QuoteBetaAreaModeButton manager={areaManager}/>
+              {!areaManager.editing&&<button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>}
+            </div>
+          </div>
+          <div ref={mobileAreaRef} className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
+            data-area-edit-workspace aria-label="Quote Area cards">
+          {(areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s))).map(s=>{
+            const lines=quote.lines.filter(l=>l.sectionId===s.id);
+            return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}>
+              {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
+              <button type="button" className="qmb-card qmb-area-card"
+                aria-disabled={areaManager.editing}
+                onClick={()=>{if(!areaManager.editing)openArea(s.id);}}>
+                <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
+                  <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
+                  <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small>
+                  {!s.customerVisible&&<small className="qmb-area-hidden-label">Hidden from customer</small>}</span>
+                <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b>{!areaManager.editing&&<span>›</span>}</span>
+              </button>
+              {areaManager.editing&&<><QuoteBetaAreaVisibilityButton quote={quote} area={s}/>
+                <QuoteBetaAreaDeleteButton manager={areaManager} area={s}/></>}
+            </div>;
+          })}
+          {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
+          </div>
+          {!quote.sections.some(s=>!isGeneralTakeoffSection(s))&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
         </>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>

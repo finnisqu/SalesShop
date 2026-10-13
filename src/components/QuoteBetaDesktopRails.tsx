@@ -11,7 +11,7 @@ import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,Quot
   type QuoteBetaAreaManager} from './QuoteBetaAreasMenu';
 
 type QuoteTab='build'|'details'|'preview';
-type AreaTab='measure'|'materials'|'pricing';
+type AreaTab='measure'|'materials'|'pricing'|'calculator';
 type Page='library'|'quote'|'area'|'review';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -138,7 +138,7 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
         <span>WORKING AREA</span><strong>{area.title||'Untitled Area'}</strong>
         <small>{money.format(quoteLinesTotal(quote.lines.filter(l=>l.sectionId===area.id)))}</small>
         <nav aria-label="Area workflow shortcuts">
-          {([['measure','Measure'],['materials','Materials'],['pricing','Pricing']] as const)
+          {([['measure','Measure'],['materials','Materials'],['calculator','Calculator']] as const)
             .map(([id,label])=><button key={id} type="button" aria-pressed={areaTab===id}
               onClick={()=>onAreaTab(id)}>{label}</button>)}
         </nav>
