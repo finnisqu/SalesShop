@@ -711,15 +711,10 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const current = get().quotes.find(quote => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)
       || !current.sections.some(section => section.id === sectionId)) return;
-    const wasEmpty=!Array.isArray(current.sections.find(s=>s.id===sectionId)?.scope?.takeoffPieces);
-    const priorLines=current.lines.filter(l=>l.sectionId===sectionId);
+    // Measuring an Area never changes how the salesperson chose to present it.
+    // New Areas (including General takeoffs) start itemized by default.
     const measured=patchQuoteTakeoff(current,sectionId,pieces);
-    const section=measured.sections.find(s=>s.id===sectionId);
-    const summarized=wasEmpty&&priorLines.length===0
-      ?{...measured,sections:measured.sections.map(s=>s.id===sectionId?{...s,customerDisplayMode:'summary' as const}:s)}
-      :measured;
-    const updated={...ensureSmartTakeoffLine(summarized,sectionId),updatedAt:now()};
-    void section;
+    const updated={...ensureSmartTakeoffLine(measured,sectionId),updatedAt:now()};
     const history = historyPatch(get(), quoteId, current);
     const quotes = get().quotes.map(quote => quote.id === quoteId ? updated : quote);
     persist(quotes, get().activeQuoteId);

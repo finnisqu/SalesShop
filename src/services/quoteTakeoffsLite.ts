@@ -304,7 +304,7 @@ export function splitTakeoffPieces(
   const remaining=source.scope.takeoffPieces.filter(p=>!picked.has(p.id));
   const id=`section_${crypto.randomUUID()}`;
   const newArea:QuoteSection={
-    id,title:title.trim()||'New area',customerVisible:true,customerDisplayMode:'summary',
+    id,title:title.trim()||'New area',customerVisible:true,customerDisplayMode:'detail',
     scope:{takeoffPieces:[],takeoffMaterial:source.scope.takeoffMaterial,
       takeoffMaterialReference:source.scope.takeoffMaterialReference},
   };
