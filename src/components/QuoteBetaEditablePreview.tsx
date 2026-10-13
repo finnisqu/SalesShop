@@ -186,6 +186,7 @@ export function QuoteBetaEditablePreview({quote}:{quote:Quote}){
         }}>{editing?'✓ Done editing':'✎ Make edits'}</button>}
       </div>
     </div>
+    <QuoteBetaCustomerOptions quote={quote}/>
     <div className={'qmb-preview'+(editing?' is-live-editing':'')+(device==='phone'?' is-phone-view':'')}>
       <CustomerPreview quote={quote} editing={paperEditing}/>
     </div>
