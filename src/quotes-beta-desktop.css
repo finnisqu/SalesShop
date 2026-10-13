@@ -313,3 +313,21 @@
 }
 /* A reduced-height or narrow browser reverts to the tried-and-tested mobile-
    style editor with no side rails. */
+
+/* Quote sharing is part of the scrolling Preview/Review, never a viewport-fixed
+   widget that obscures mobile/desktop bottom actions. Applies at every width. */
+.sales-app .qmb .quote-share-control {
+  position:relative;top:auto;right:auto;bottom:auto;left:auto;
+  z-index:4;display:flex;justify-content:flex-end;
+  width:100%;max-width:100%;margin:12px 0 16px;
+}
+.sales-app .qmb .quote-share-launcher {min-height:40px;max-width:100%;}
+.sales-app .qmb .quote-share-panel {
+  position:absolute;right:0;left:auto;top:auto;
+  bottom:calc(100% + 8px);width:min(390px,100%);
+  max-width:100%;max-height:min(65dvh,540px);overflow:auto;
+}
+@media (max-width:700px) {
+  .sales-app .qmb .quote-share-control {margin-bottom:12px;}
+  .sales-app .qmb .quote-share-panel {max-height:60dvh;}
+}
