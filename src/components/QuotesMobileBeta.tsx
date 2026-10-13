@@ -384,7 +384,7 @@ export function QuotesMobileBeta() {
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
   const [search,setSearch]=useState('');
   const [showArchived,setShowArchived]=useState(false);
-  const [newLineKind,setNewLineKind]=useState<QuoteLineKind>('item');
+
   const [selectionsOpen,setSelectionsOpen]=useState(false);
   const [reviewOpen,setReviewOpen]=useState(false);
   const [reviewFocus,setReviewFocus]=useState<string|null>(null);
