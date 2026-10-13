@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type TouchEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type TouchEvent, type ReactNode } from 'react';
 import { createPricingScheduleData } from '../services/pricingSchedule';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
@@ -621,20 +621,35 @@ function GeneralAreaHeader({ lines, onAddLine, onAddArea, onTakeoffs }: { lines:
   );
 }
 
-function StandardCustomerPreview({ quote }: { quote: Quote }) {
+/** Optional seller-only interactive slots. Never supplied to Classic, public sharing
+ * or a printed customer document. They edit the underlying quote, not its paper. */
+export interface CustomerPreviewEditing {
+  areaTitle?: (section: Quote['sections'][number]) => ReactNode;
+  areaPrice?: (section: Quote['sections'][number]) => ReactNode;
+  linePrice?: (line: QuoteLine) => ReactNode;
+  generalPrice?: () => ReactNode;
+}
+
+function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: CustomerPreviewEditing }) {
   const visibleSections = quote.sections.filter(section=>section.customerVisible);
   const renderLines = (rows: PresentedQuoteLine[]) => rows.map(row => {
     const line=row.source;
     return <div key={row.id} className={`customer-quote-row kind-${row.kind}`}>
-      <div className="customer-line-description">{row.description||'—'}</div>
+      <div className="customer-line-description">{row.description||'—'}
+        {!quote.customerColumns.lineAmount&&line&&editing?.linePrice?.(line)}
+        {!quote.customerColumns.lineAmount&&row.id==='general-summary'&&editing?.generalPrice?.()}
+      </div>
       {quote.customerColumns.quantity&&<div>{!row.aggregated&&line?.pricingMode==='quantity-rate'?line.quantity??'':''}</div>}
       {quote.customerColumns.rate&&<div>{!row.aggregated&&line?.pricingMode==='quantity-rate'&&line.rate!==undefined?money.format(line.rate):''}</div>}
-      {quote.customerColumns.lineAmount&&<div className="customer-line-amount">{row.priced?money.format(row.amount):''}</div>}
+      {quote.customerColumns.lineAmount&&<div className="customer-line-amount">{row.priced?money.format(row.amount):''}
+        {line&&editing?.linePrice?.(line)}
+        {row.id==='general-summary'&&editing?.generalPrice?.()}
+      </div>}
     </div>;
   });
-  const renderAreaSummary=(title:string,total:number,specification='')=><div className="customer-quote-row customer-area-summary-row">
-    <div className="customer-line-description"><strong>{title}</strong>{specification&&<small className="customer-area-spec">{specification}</small>}</div>
-    <div className="customer-line-amount">{money.format(total)}</div>
+  const renderAreaSummary=(section: Quote['sections'][number],total:number,specification='')=><div className="customer-quote-row customer-area-summary-row">
+    <div className="customer-line-description"><strong>{editing?.areaTitle?.(section)??section.title}</strong>{specification&&<small className="customer-area-spec">{specification}</small>}</div>
+    <div className="customer-line-amount">{money.format(total)}{editing?.areaPrice?.(section)}</div>
   </div>;
   const allSectionIds=new Set(quote.sections.map(section=>section.id));
   const looseLines=quote.lines.filter(line=>!line.sectionId||!allSectionIds.has(line.sectionId));
@@ -655,13 +670,13 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
               {renderLines(presentGeneralSummary(allSectionLines))}
             </div>;
             return <div className="customer-quote-section is-summary" key={section.id}>
-              {renderAreaSummary(section.title,quoteLinesTotal(allSectionLines),takeoffCustomerSpecs(section))}
+              {renderAreaSummary(section,quoteLinesTotal(allSectionLines),takeoffCustomerSpecs(section))}
             </div>;
           }
           const rows=presentItemizedQuoteLines(allSectionLines);
           if(!rows.length)return null;
           return <div className={general?'customer-quote-section is-general':'customer-quote-section'} key={section.id}>
-            {!general&&<><h3>{section.title}</h3>{takeoffCustomerSpecs(section)&&<p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}</>}
+            {!general&&<><h3>{editing?.areaTitle?.(section)??section.title}</h3>{takeoffCustomerSpecs(section)&&<p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}</>}
             {renderLines(rows)}
           </div>;
         })}
@@ -674,8 +689,8 @@ function StandardCustomerPreview({ quote }: { quote: Quote }) {
   );
 }
 
-export function CustomerPreview({ quote }: { quote: Quote }) {
-  return quote.documentType === 'pricing-schedule' ? <PricingScheduleCustomerPreview quote={quote} /> : <StandardCustomerPreview quote={quote} />;
+export function CustomerPreview({ quote, editing }: { quote: Quote; editing?: CustomerPreviewEditing }) {
+  return quote.documentType === 'pricing-schedule' ? <PricingScheduleCustomerPreview quote={quote} /> : <StandardCustomerPreview quote={quote} editing={editing} />;
 }
 
 function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quote: Quote; mode: QuoteViewMode; onModeChange: (mode: QuoteViewMode) => void; onOpenMobileNavigator: () => void }) {
