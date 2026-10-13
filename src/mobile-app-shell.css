@@ -837,3 +837,16 @@
     flex: 1 1 auto;
   }
 }
+
+/* Tab history: compact Back control only while an in-app return target exists. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .sales-app:not(.view-quotes) > .mobile-app-commandbar:has(.mobile-app-back-button) {
+    grid-template-columns: 38px 40px minmax(0,1fr) 40px 40px;
+  }
+  .mobile-app-back-button {
+    display:grid;place-items:center;min-height:38px;width:38px;
+    border:1px solid rgba(91,78,58,.16);border-radius:7px;
+    background:rgba(255,252,244,.82);color:#5f584d;
+    font-size:25px;line-height:1;font-weight:700;
+  }
+}
