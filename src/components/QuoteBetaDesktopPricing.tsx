@@ -18,6 +18,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
   quote:Quote;section:QuoteSection;editable:boolean;
 }){
   const updateLine=useQuoteStore(s=>s.updateLine);
+  const deleteLine=useQuoteStore(s=>s.deleteLine);
   const updateSection=useQuoteStore(s=>s.updateSection);
   const addCatalogLine=useQuoteStore(s=>s.addCatalogLine);
   const addLine=useQuoteStore(s=>s.addLine);
@@ -224,9 +225,34 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
           .map(([kind,label])=><button type="button" key={kind} onClick={()=>addCharge(kind)}>{label}</button>)}
       </div>}
       {lines.filter(l=>l!==primary).map(l=><div className="qmb-desktop-extra-row" key={l.id}>
-        <span>{l.description||'Untitled line'}</span><strong>{money.format(quoteLineAmount(l))}</strong>
+        <input type="text" value={l.description} aria-label={'Area line '+l.id+' description'}
+          disabled={!editable} onChange={e=>updateLine(quote.id,l.id,{description:e.target.value})}/>
+        {l.pricingMode==='quantity-rate'?<div className="qmb-extra-qty-rate">
+          <label>Qty<input type="number" step="1" min="0" value={l.quantity??''}
+            aria-label={'Area line '+l.id+' quantity'} disabled={!editable||!!l.takeoffSinkId}
+            onChange={e=>updateLine(quote.id,l.id,{quantity:numeric(e.target.value)})}/></label>
+          <label>Rate<input type="number" step=".01" min="0" value={l.rate??''}
+            aria-label={'Area line '+l.id+' sell rate'} disabled={!editable}
+            onChange={e=>updateLine(quote.id,l.id,{rate:numeric(e.target.value)})}/></label>
+        </div>:l.pricingMode!=='none'?<label>Price<input type="number" step=".01"
+          value={l.amount??''} aria-label={'Area line '+l.id+' price'} disabled={!editable}
+          onChange={e=>updateLine(quote.id,l.id,{amount:numeric(e.target.value)})}/></label>:<small>No price</small>}
+        <label>Cost · private<input type="number" step=".01" min="0"
+          aria-label={'Area line '+l.id+' private cost'} disabled={!editable}
+          value={l.internalCost??''} placeholder="—"
+          onChange={e=>updateLine(quote.id,l.id,{internalCost:numeric(e.target.value)})}/></label>
+        <div className="qmb-extra-line-actions">
+          <strong>{money.format(quoteLineAmount(l))}</strong>
+          <label className="qmb-check"><input type="checkbox" checked={l.customerVisible}
+            disabled={!editable} aria-label={'Area line '+l.id+' show to customer'}
+            onChange={e=>updateLine(quote.id,l.id,{customerVisible:e.target.checked})}/>Show</label>
+          {!l.takeoffSinkId&&<button type="button" className="qmb-extra-delete" disabled={!editable}
+            aria-label={'Remove Area line '+l.id} onClick={()=>{
+              if(window.confirm('Remove this Area line? You can Undo.'))deleteLine(quote.id,l.id);
+            }}>Remove</button>}
+        </div>
       </div>)}
-      <small>Edit additional lines from the Pricing step on mobile or open an individual line in the Area's line editor.</small>
+      <small>Prices, source costs and customer visibility save on the quote. Sink quantities remain linked to Materials.</small>
     </div>
   </section>;
 }
