@@ -4,6 +4,8 @@ import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
+import {projectAreaCost} from '../services/quoteAreaCost';
+import {summarizeQuoteInternalPricing} from '../services/quoteInternalPricing';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,QuoteBetaAreaVisibilityButton,
   type QuoteBetaAreaManager} from './QuoteBetaAreasMenu';
@@ -107,7 +109,15 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
   const area=quote.sections.find(s=>s.id===areaId);
   const editable=quoteIsCommerciallyEditable(quote);
   const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
-  const totalSf=areas.reduce((sum,section)=>sum+totalBillableTakeoffSf(section.scope?.takeoffPieces??[]),0);
+  const totalSf=quote.sections.reduce((sum,section)=>sum+totalBillableTakeoffSf(section.scope?.takeoffPieces??[]),0);
+  const assigned=new Set(quote.sections.map(s=>s.id));
+  const generalLines=quote.lines.filter(line=>!line.sectionId||!assigned.has(line.sectionId));
+  const generalCost=summarizeQuoteInternalPricing(generalLines);
+  const projections=quote.sections.map(s=>projectAreaCost(quote,s));
+  const knownCost=projections.reduce((sum,p)=>sum+p.totalKnownCost,0)+generalCost.knownInternalCost;
+  const coverage=projections.every(p=>p.complete)&&generalCost.costRequiredLineCount===generalCost.costedLineCount;
+  const customerTotal=quoteTotal(quote);
+  const privateMargin=coverage&&customerTotal>0?(customerTotal-knownCost)/customerTotal*100:undefined;
   const sinkCount=areas.reduce((sum,s)=>
     sum+(s.scope?.takeoffSinks??[]).reduce((n,sink)=>n+sink.count,0),0);
   return (
@@ -133,6 +143,13 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
               onClick={()=>onAreaTab(id)}>{label}</button>)}
         </nav>
       </section>}
+      <details className="qmb-desktop-private-profit" aria-label="Private quote cost and margin">
+        <summary>Private cost &amp; margin <span>{privateMargin===undefined?'Cost coverage needed':privateMargin.toFixed(1)+'% margin'}</span></summary>
+        <div><span>Known buying cost</span><strong>{money.format(knownCost)}</strong></div>
+        <div><span>Gross spread on known cost</span><strong>{money.format(customerTotal-knownCost)}</strong></div>
+        <div><span>Gross margin</span><strong>{privateMargin!==undefined?privateMargin.toFixed(1)+'%':'Incomplete'}</strong></div>
+        {!coverage&&<small>Complete supplier slab sizes, sink costs and other internal costs in each Area to finalize margin.</small>}
+      </details>
       <section className="qmb-desktop-readiness" aria-label="Live quote review">
         <div className="qmb-inspector-review-heading">
           <strong>Review &amp; readiness</strong>
