@@ -1237,7 +1237,7 @@ test('desktop Measure scope and Materials prices share sinks and additional work
   await expect(sinks.getByRole('spinbutton',{name:'Sink 1 sell price'})).toHaveCount(0);
   await sinks.getByRole('spinbutton',{name:'Sink 1 quantity'}).fill('2');
   const work=scope.locator('.qmb-scope-extras');
-  await work.getByRole('button',{name:'+ Add work'}).click();
+  await work.getByRole('button',{name:'+ Custom'}).click();
   await work.getByRole('textbox',{name:'Additional work 1 description'}).fill('Template adjustment');
   await work.getByRole('spinbutton',{name:'Additional work 1 quantity'}).fill('3');
   await tabs.getByRole('button',{name:'Materials'}).click();
@@ -1251,6 +1251,15 @@ test('desktop Measure scope and Materials prices share sinks and additional work
   await expect(extras.getByRole('textbox',{name:/Area line .* description/})).toHaveValue('Template adjustment');
   await extras.getByRole('spinbutton',{name:/Area line .* sell rate/}).fill('25');
   await expect(beta.locator('.qmb-desktop-grand-total')).toContainText('$515.00');
+  // New Add-ons are also available from the Rates catalog without re-typing.
+  await tabs.getByRole('button',{name:'Measure'}).click();
+  await work.getByRole('combobox',{name:'Add an item from Rates'}).selectOption('rate_trip');
+  await expect(work.getByRole('textbox',{name:'Additional work 2 description'})).toHaveValue('Trip Fee');
+  await expect(work.getByRole('spinbutton',{name:'Additional work 2 quantity'})).toHaveValue('1');
+  await tabs.getByRole('button',{name:'Materials'}).click();
+  await expect(extras.getByRole('combobox',{name:/Choose Rates item for/}).last()).toHaveValue('rate_trip');
+  await expect(extras.getByRole('spinbutton',{name:/Area line .* sell rate/}).last()).toHaveValue('150');
+  await expect(beta.locator('.qmb-desktop-grand-total')).toContainText('$665.00');
   await tabs.getByRole('button',{name:'Calculator'}).click();
   const workspace=beta.locator('.qmb-area-scroll [data-center-calculator]');
   await expect(workspace).toBeVisible();
@@ -1288,4 +1297,42 @@ test('desktop Area Calculator occupies center workspace, not only inspector',asy
   await expect(workspace.getByRole('region',{name:'Material selection and pricing'})).toBeVisible();
   await expect(workspace.getByRole('region',{name:'Sink selection and pricing'})).toBeVisible();
   await expect(workspace.getByRole('region',{name:'Additional work and pricing'})).toBeVisible();
+});
+
+
+test('desktop Measures Pieces Sinks and Add-ons as compact tables without overflow',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Compact desktop scope tables');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  const measure=beta.locator('.qmb-measure-rework');
+  await measure.getByRole('button',{name:'+ Add piece'}).click();
+  await measure.getByRole('button',{name:'+ Add sink'}).click();
+  await measure.getByRole('button',{name:'+ Custom'}).click();
+  const names=['.qmb-measure-sheet','.qmb-compact-sinks','.qmb-compact-addon-table'];
+  for(const name of names){
+    const el=measure.locator(name);
+    await expect(el).toBeVisible();
+    const sizes=await el.evaluate(node=>({width:node.getBoundingClientRect().width,
+      parentWidth:node.parentElement?.getBoundingClientRect().width||0,
+      contents:node.scrollWidth}));
+    expect(sizes.width).toBeLessThanOrEqual(sizes.parentWidth+3);
+    expect(sizes.contents).toBeLessThanOrEqual(sizes.width+3);
+  }
+  expect((await measure.locator('.qmb-compact-sink-row').first().boundingBox())!.height).toBeLessThan(62);
+  expect((await measure.locator('.qmb-compact-addon-row').first().boundingBox())!.height).toBeLessThan(62);
+  expect((await measure.locator('.qmb-measure-row').first().boundingBox())!.height).toBeLessThan(64);
+  await measure.getByRole('combobox',{name:'Add an item from Rates'}).selectOption('rate_trip');
+  await expect(measure.locator('.qmb-compact-addon-row')).toHaveCount(2);
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Materials'}).click();
+  const selling=beta.locator('.qmb-materials-commerce');
+  await expect(selling.locator('.qmb-compact-table.is-materials .qmb-compact-sink-row')).toHaveCount(1);
+  await expect(selling.locator('.qmb-lab-extras')).toContainText('Trip Fee');
 });
