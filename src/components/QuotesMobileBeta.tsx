@@ -204,6 +204,11 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
     media.addEventListener('change',update);
     return()=>media.removeEventListener('change',update);
   },[]);
+  useEffect(()=>{
+    // Keep a useful tab visible when moving between desktop and phone widths.
+    if(!desktopLab&&tab==='calculator')setTab('pricing');
+    if(desktopLab&&tab==='pricing')setTab('materials');
+  },[desktopLab,tab,setTab]);
   const areaScrollRef=useRef<HTMLDivElement>(null);
   const catalogMaterials=useCompanySettingsStore(state=>state.settings.stockMaterials);
   const selectedCost=selectedMaterialCost(
