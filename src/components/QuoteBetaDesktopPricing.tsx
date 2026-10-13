@@ -330,7 +330,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
         <div className="qmb-extra-description">
           <input type="text" value={l.description} aria-label={'Area line '+l.id+' description'}
             disabled={!editable} onChange={e=>updateLine(quote.id,l.id,{description:e.target.value})}/>
-          <QuoteBetaRateCatalog label={'Choose Rates item for '+l.id}
+          <QuoteBetaRateCatalog division={quote.pricingDivision} label={'Choose Rates item for '+l.id}
             disabled={!editable} value={l.rateReference?.rateBookItemId??''}
             onChoose={item=>{if(item)updateLine(quote.id,l.id,{
               ...rateItemToQuotePatch(item,quote),quantity:l.quantity??1,
