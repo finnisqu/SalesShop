@@ -461,3 +461,58 @@ test('Area workflow advances to Materials and Pricing, creates Next Area and saf
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(beta.locator('.qmb-area-card')).toHaveCount(3);
 });
+
+
+test('mobile Details are ordered, CRM links do not navigate, and Back restores the quote',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Details and tab-back regression');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
+  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  await expect(details).toBeVisible();
+  const headings=await details.locator('.qmb-details-heading h3').allTextContents();
+  expect(headings).toEqual(['Customer','Project','Notes']);
+  await expect(details.getByRole('textbox',{name:'Project / quote title'})).toHaveCount(0);
+  await expect(details.getByRole('textbox',{name:'Company / customer'})).toBeVisible();
+  await expect(details.getByRole('textbox',{name:'Contact person'})).toBeVisible();
+  await expect(details.getByRole('textbox',{name:'Contact email'})).toBeVisible();
+  await details.getByRole('textbox',{name:'Company / customer'}).fill('Sample Builder');
+  await details.getByRole('textbox',{name:'Contact person'}).fill('Contact for Sample');
+  await expect(details.locator('.quote-crm-connection-grid button')).toHaveCount(0);
+  await expect(page.locator('.board-workspace')).toHaveCount(0);
+  const title=beta.getByRole('textbox',{name:'Quote title'});
+  await title.fill('Sample Apartment Phase I');
+  await beta.getByLabel('Open SalesShop navigation').click();
+  await beta.getByRole('navigation',{name:'SalesShop destinations'}).getByRole('button',{name:'Board'}).click();
+  await expect(beta).toHaveCount(0);
+  await page.getByRole('button',{name:'Back to previous SalesShop tab'}).click();
+  const restored=page.getByRole('main',{name:'Quotes mobile beta'});
+  await expect(restored).toBeVisible();
+  await expect(restored.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}))
+    .toHaveAttribute('aria-current','page');
+  await expect(restored.getByRole('textbox',{name:'Quote title'})).toHaveValue('Sample Apartment Phase I');
+  await expect(restored.getByRole('textbox',{name:'Company / customer'})).toHaveValue('Sample Builder');
+});
+
+test('mobile Details CRM project link is a selection, not a Board shortcut',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','CRM quick selection safety');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
+  await beta.getByText('CRM project link').click();
+  await expect(beta.getByRole('textbox',{name:'Find existing CRM project (optional)'})).toBeVisible();
+  await expect(beta.locator('.quote-crm-connections')).toHaveCount(0);
+  await expect(beta.getByRole('button',{name:/View company in Board/})).toHaveCount(0);
+});
