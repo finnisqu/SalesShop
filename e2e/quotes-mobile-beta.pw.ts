@@ -39,12 +39,61 @@ test('phone Quotes Beta uses the same quote records and returns to Classic', asy
   expect(errors).toEqual([]);
 });
 
-test('Quotes Beta never replaces desktop Quotes, even when opted in', async ({page},testInfo)=>{
-  test.skip(testInfo.project.name!=='desktop-1280','Desktop fallback contract');
+test('desktop Quotes Beta is fully opted in and Classic remains selectable', async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1280','Desktop opt-in contract');
   await page.goto('/');
   await page.evaluate(()=>{
     localStorage.setItem('salesshop-active-view-v1','quotes');
     localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await expect(beta).toBeVisible();
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const navigator=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  const inspector=beta.getByRole('complementary',{name:'Live quote summary'});
+  await expect(navigator).toBeVisible();
+  await expect(inspector).toBeVisible();
+  await expect(beta.locator('.qmb-desktop-main')).toBeVisible();
+  const geometry=await beta.evaluate(node=>{
+    const rail=node.querySelector('.qmb-desktop-navigation')!.getBoundingClientRect();
+    const main=node.querySelector('.qmb-desktop-main')!.getBoundingClientRect();
+    const inspector=node.querySelector('.qmb-desktop-inspector')!.getBoundingClientRect();
+    return {railRight:rail.right,mainLeft:main.left,mainRight:main.right,
+      inspectorLeft:inspector.left,mainWidth:main.width};
+  });
+  expect(geometry.mainLeft).toBeGreaterThanOrEqual(geometry.railRight-2);
+  expect(geometry.inspectorLeft).toBeGreaterThanOrEqual(geometry.mainRight-2);
+  expect(geometry.mainWidth).toBeGreaterThan(390);
+  await navigator.getByRole('button',{name:'Add Area from navigator'}).click();
+  await expect(beta.getByRole('textbox',{name:'Area name'})).toBeVisible();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen A');
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
+  await beta.getByRole('textbox',{name:'Length (in)'}).blur();
+  await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
+  await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await inspector.getByRole('navigation',{name:'Area workflow shortcuts'}).getByRole('button',{name:'Pricing'}).click();
+  await expect(beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'})).toBeVisible();
+  await beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'}).fill('50');
+  await expect(inspector.getByText('$400.00')).toBeVisible();
+  await navigator.getByRole('button',{name:'Customer & project'}).click();
+  await expect(beta.getByRole('region',{name:'Quote customer and project details'})).toBeVisible();
+  await inspector.getByRole('button',{name:/Review & issue/}).click();
+  await expect(beta.getByRole('button',{name:'Back to draft'})).toBeVisible();
+  await inspector.getByRole('button',{name:'View customer quote ↗'}).click();
+  await expect(beta.locator('.qmb-preview')).toBeVisible();
+  await beta.getByRole('button',{name:'Classic',exact:true}).click();
+  await expect(page.locator('.quotes-workbench')).toBeVisible();
+  await expect(page.locator('.qmb')).toHaveCount(0);
+});
+
+test('Classic Quotes stays available on desktop when Beta is disabled',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1280','Classic desktop fallback');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','0');
   });
   await page.reload();
   await expect(page.locator('.quotes-workbench')).toBeVisible();
