@@ -47,11 +47,17 @@ export function QuoteBetaDesktopCommerce({quote,section,editable,tab}:{
     </section>
     <section className="qmb-commerce-segment" aria-label="Sink selection and pricing">
       <header className="qmb-commerce-heading"><h3>Sinks</h3><span>02</span></header>
-      <QuoteBetaMaterials quote={quote} section={section} editable={editable} part="sinks" showHeading={false}/>
+      <div className="qmb-commerce-stage">
+        <div className="qmb-stage-heading"><b>Selection &amp; pricing</b><small>Model, quantity and selling price in each sink card</small></div>
+        <QuoteBetaMaterials quote={quote} section={section} editable={editable} part="sinks" showHeading={false}/>
+      </div>
     </section>
     <section className="qmb-commerce-segment" aria-label="Additional work and pricing">
       <header className="qmb-commerce-heading"><h3>Additional</h3><span>03</span></header>
-      <QuoteBetaDesktopPricing quote={quote} section={section} editable={editable} view="extras"/>
+      <div className="qmb-commerce-stage">
+        <div className="qmb-stage-heading"><b>Pricing</b><small>Scope and quantities are editable here, too</small></div>
+        <QuoteBetaDesktopPricing quote={quote} section={section} editable={editable} view="extras"/>
+      </div>
     </section>
   </div>;
 }
