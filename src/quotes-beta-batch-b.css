@@ -638,3 +638,76 @@
 .qmb .qmb-pricing-comparison-grid>div span{font-size:10px;color:var(--qmb-muted);line-height:1.4}
 .qmb .qmb-apply-margin,.qmb .qmb-demo-preset{padding:9px;border-radius:8px;border:1px solid var(--qmb-border);background:var(--qmb-tint);color:var(--qmb-accent);font-size:11px;font-weight:780}
 @media(max-width:650px){.qmb .qmb-pricing-comparison-grid{grid-template-columns:1fr}}
+
+
+/* Batch C — quote library lifecycle controls and frozen revision viewer. */
+.qmb .qmb-library-entry{display:grid;gap:0;min-width:0;position:relative;
+  border-radius:12px;border:1px solid var(--qmb-border);background:var(--qmb-card);overflow:hidden}
+.qmb .qmb-library-entry>.qmb-listcard{border:0!important;border-radius:0!important;
+  width:100%;min-width:0;margin:0;text-align:left}
+.qmb .qmb-library-card-actions{display:flex;justify-content:flex-end;gap:6px;padding:7px 10px;
+  border-top:1px solid var(--qmb-border);background:var(--qmb-card)}
+.qmb .qmb-library-card-actions button{background:transparent;border:1px solid var(--qmb-border);
+  border-radius:7px;min-height:30px;padding:5px 10px;font-size:11px;font-weight:750;
+  color:var(--qmb-accent)}
+.qmb .qmb-library-card-actions button.is-danger{color:#a94a40}
+.qmb .qmb-lifecycle-card{display:grid;gap:12px}
+.qmb .qmb-lifecycle-revisions{border:1px solid var(--qmb-border);border-radius:10px;
+  background:var(--qmb-card);overflow:hidden}
+.qmb .qmb-lifecycle-revisions>summary{padding:12px;cursor:pointer;display:flex;
+  justify-content:space-between;font-size:12px;font-weight:800;gap:10px}
+.qmb .qmb-lifecycle-revisions>summary span{color:var(--qmb-muted)}
+.qmb .qmb-lifecycle-revision{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 12px;border-top:1px solid var(--qmb-border)}
+.qmb .qmb-lifecycle-revision>div{display:grid;gap:4px;min-width:0}
+.qmb .qmb-lifecycle-revision strong{font-size:12px}
+.qmb .qmb-lifecycle-revision small{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-lifecycle-revision button,.qmb .qmb-lifecycle-change-order{
+  padding:8px 10px;min-height:34px;border:1px solid var(--qmb-border);border-radius:8px;
+  background:var(--qmb-card);color:var(--qmb-accent);font-size:11px;font-weight:800}
+.qmb-history-modal-backdrop{position:fixed;inset:0;z-index:3050;background:rgba(0,0,0,.6);
+  display:grid;place-items:center;padding:16px}
+.qmb .qmb-history-modal{width:min(960px,100%);height:min(90vh,850px);min-width:0;
+  overflow:hidden;border-radius:14px;background:var(--qmb-card);color:var(--qmb-ink);
+  border:1px solid var(--qmb-border);display:flex;flex-direction:column;box-shadow:0 16px 50px rgba(0,0,0,.2)}
+.qmb .qmb-history-modal-heading{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;border-bottom:1px solid var(--qmb-border);padding:14px}
+.qmb .qmb-history-modal-heading>div{display:grid;gap:5px}
+.qmb .qmb-history-modal-heading strong{font-size:13px}
+.qmb .qmb-history-modal-heading small{font-size:11px;color:var(--qmb-muted)}
+.qmb .qmb-history-modal-heading button{border:1px solid var(--qmb-border);
+  border-radius:8px;background:var(--qmb-card);padding:7px;color:var(--qmb-ink)}
+.qmb .qmb-history-document{overflow-y:auto;background:#eee;padding:24px;flex:1;
+  display:grid;align-content:start;justify-items:center}
+.qmb .qmb-history-document .customer-quote-paper{width:min(100%,770px);max-width:100%}
+@media(max-width:999px){
+ /* Two short editing rows + one compact buying-cost row, not a tall stacked card. */
+ .qmb .qmb-sink-line{padding:7px!important;margin-bottom:7px!important;
+   display:grid;gap:4px!important;min-height:0}
+ .qmb .qmb-sink-line .qmb-sink-select-heading,
+ .qmb .qmb-sink-line .qmb-sink-pricing-heading{display:none!important}
+ .qmb .qmb-sink-line .qmb-sink-primary{display:grid!important;
+   grid-template-columns:minmax(0,.8fr) minmax(0,1.55fr) 22px;
+   align-items:end;gap:5px;min-width:0}
+ .qmb .qmb-sink-line .qmb-sink-primary .qmb-sink-catalog{min-width:0}
+ .qmb .qmb-sink-line .qmb-sink-primary small{font-size:9px}
+ .qmb .qmb-sink-line .qmb-sink-secondary{display:flex!important;
+   flex-wrap:nowrap;gap:8px;align-items:end;padding-top:2px!important;margin-top:0!important}
+ .qmb .qmb-sink-line .qmb-sink-secondary label{display:grid;gap:2px;font-size:9px;min-width:0}
+ .qmb .qmb-sink-line .qmb-sink-secondary .qmb-sink-qty{flex:0 0 55px}
+ .qmb .qmb-sink-line .qmb-sink-secondary .qmb-sink-price{flex:0 0 79px}
+ .qmb .qmb-sink-line .qmb-sink-secondary input{width:100%!important;
+   min-width:0!important;height:32px;min-height:32px}
+ .qmb .qmb-sink-line .qmb-sink-secondary .qmb-row-menu-trigger{
+   margin-left:auto;min-height:32px;height:32px;min-width:0;flex:1}
+ .qmb .qmb-sink-line .qmb-sink-private-cost{display:flex;align-items:center;
+   gap:5px;min-height:0;margin-top:0;padding:4px 2px!important;
+   border-top:1px solid var(--qmb-border)}
+ .qmb .qmb-sink-line .qmb-sink-private-cost>span{font-size:9px}
+ .qmb .qmb-sink-line .qmb-sink-private-cost>label{margin-left:auto;font-size:9px;
+   display:flex;align-items:center;gap:4px}
+ .qmb .qmb-sink-line .qmb-sink-private-cost input{width:65px;height:29px;min-height:29px}
+ .qmb .qmb-sink-line .qmb-sink-private-cost strong{font-size:10px}
+ .qmb .qmb-sink-line .qmb-sink-private-cost small{font-size:9px}
+ .qmb .qmb-history-document{padding:8px}
+}
