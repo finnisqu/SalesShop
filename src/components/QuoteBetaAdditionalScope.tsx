@@ -53,7 +53,7 @@ export function QuoteBetaAdditionalScope({quote,section,editable}:{quote:Quote;s
           <input value={line.description} aria-label={'Additional work '+(index+1)+' description'}
             disabled={!editable} placeholder="Work description"
             onChange={e=>update(quote.id,line.id,{description:e.target.value})}/>
-          <QuoteBetaRateCatalog label={'Choose Rate for additional work '+(index+1)}
+          <QuoteBetaRateCatalog division={quote.pricingDivision} label={'Choose Rate for additional work '+(index+1)}
             value={line.rateReference?.rateBookItemId??''} disabled={!editable}
             onChoose={item=>{if(item)attach(line,item);}}/>
         </div>
