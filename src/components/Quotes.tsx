@@ -693,7 +693,14 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
       </div>
       <div className="customer-quote-total"><span>Total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
       <QuoteCustomerSelectionsSheet rows={customerSelectionsForQuote(quote)}/>
-      {quote.customerNotes&&<div className="customer-quote-notes"><strong>Notes</strong><p>{quote.customerNotes}</p></div>}
+      {freeCustomerNotes(quote.customerNotes)&&<div className="customer-quote-notes">
+        <strong>Notes</strong><p>{freeCustomerNotes(quote.customerNotes)}</p></div>}
+      {QUOTE_STANDARD_TERMS.some(term=>termsEnabled(quote.customerNotes,term.id))&&
+        <div className="customer-quote-terms">
+          <strong>Scope, payment and policies</strong>
+          {QUOTE_STANDARD_TERMS.filter(term=>termsEnabled(quote.customerNotes,term.id)).map(term=>
+            <p key={term.id}>{term.text}</p>)}
+        </div>}
       <footer>{quote.status==='Signed'?'Accepted electronically with SalesShop.':`Prepared with SalesShop · Electronic acceptance is available for this ${documentLabel.toLowerCase()}.`}</footer>
     </article>
   );
