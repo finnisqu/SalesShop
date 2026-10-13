@@ -61,7 +61,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const [moreLines,setMoreLines]=useState(false);
   const mode:AreaPricingChoice=primary?.pricingMode==='direct'?'manual':
     primary?.pricingMode==='slab-multiplier'?'multiplier':'sf';
-  const multiplier=primary?.materialReference?.slabMultiplier??2;
+  const multiplier=primary?.materialReference?.slabMultiplier??(isDeveloperPlaygroundRoute()?2.2:2);
   const slabPrice=section.scope?.slabCostOverride??projection.slabCost;
   const slabCount=projection.slabCount;
   const activeAmount=primary?quoteLineAmount(primary):0;
@@ -112,7 +112,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     const effectiveSf=projection.measuredSf;
     const effectiveRate=rate??previous?.rate;
     const effectiveCount=qty??projection.slabCount;
-    const effectiveMultiplier=mult??previous?.materialReference?.slabMultiplier??2;
+    const effectiveMultiplier=mult??previous?.materialReference?.slabMultiplier??(isDeveloperPlaygroundRoute()?2.2:2);
     const effectiveCost=sourceCost??slabPrice;
     const value=calculateAreaCustomerPrice(choice,{
       amount:amount??(previous?.pricingMode==='direct'?previous.amount:activeAmount),
@@ -244,7 +244,12 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       {isDeveloperPlaygroundRoute()&&<button className="qmb-demo-preset" type="button" disabled={!editable}
         onClick={()=>updateScope({slabYield:.65,targetMargin:.25,
           shopCostRateSf:14,installCostRateSf:5.5,
-          shopCostOverride:undefined,installCostOverride:undefined})}>
+          shopCostOverride:undefined,installCostOverride:undefined,
+          ...(section.scope?.takeoffMaterialReference?{}:{
+            slabAreaOverrideSf:section.scope?.slabAreaOverrideSf??(130*65/144),
+            slabCostOverride:section.scope?.slabCostOverride??(39*130*65/144),
+          }),
+        })}>
         Use spreadsheet example assumptions · 65% yield · 25% margin · $14 shop / $5.50 install per SF
       </button>}
       <header><strong>Buying cost & production</strong><span>Internal only · not on customer quote</span></header>
