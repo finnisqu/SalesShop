@@ -101,6 +101,7 @@ import './quotes-mobile-builder-levels.css';
 import './quotes-mobile-audit.css';
 // Mobile Quotes Beta area progression and duplication shortcuts.
 import './quotes-mobile-speed.css';
+import './quotes-mobile-details.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
