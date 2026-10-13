@@ -33,6 +33,7 @@ import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { selectedMaterialCost } from '../services/selectedMaterialCost';
 import { QuoteBetaSelections } from './QuoteBetaSelections';
 import { QuoteBetaReview } from './QuoteBetaReview';
+import { QuoteBetaDesktopRails } from './QuoteBetaDesktopRails';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
@@ -445,6 +446,19 @@ export function QuotesMobileBeta() {
     <TeamQuotesWorkspace quotes={quotes} onShowMine={()=>setLibraryMode('mine')}/>
   </main>;
   return <main className="quotes-view qmb" aria-label="Quotes mobile beta">
+    <div className={'qmb-desktop-frame'+(page==='library'?' is-library':'')}>
+      {quote&&page!=='library'&&<QuoteBetaDesktopRails
+        quote={quote} page={page} quoteTab={quoteTab} areaTab={areaTab} areaId={areaId}
+        onLibrary={()=>{setSelectionsOpen(false);setPage('library');setAreaId(null);}}
+        onQuoteTab={tab=>{setPage('quote');setQuoteTab(tab);setAreaId(null);}}
+        onArea={id=>{if(page==='area'&&id===areaId)return;openArea(id);}}
+        onAreaTab={tab=>{setPage('area');setAreaTab(tab);}}
+        onReview={()=>{setError('');setSelectionsOpen(false);setPage('review');}}
+        onAddArea={newArea}
+        onSelections={()=>{setQuoteTab('build');setPage('quote');setAreaId(null);setSelectionsOpen(true);}}
+        onUndo={()=>undo(quote.id)} onRedo={()=>redo(quote.id)}
+        undoDepth={undoDepth} redoDepth={redoDepth}/>}
+      <div className="qmb-desktop-main">
     {page==='library'?<>
       <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Quotes <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
@@ -453,12 +467,14 @@ export function QuotesMobileBeta() {
         <p className="qmb-subtitle">Pick up where you left off, or start with a blank idea.</p>
         <label className="qmb-search"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a quote or customer" aria-label="Search my quotes"/></label>
         <div className="qmb-section-head"><h3>My quotes</h3><button type="button" className="qmb-quiet" onClick={()=>setShowArchived(v=>!v)}>{showArchived?'Hide archived':'Show archived'}</button></div>
+        <div className="qmb-library-grid">
         {list.map(q=><button type="button" key={q.id} className="qmb-card qmb-listcard" onClick={()=>openQuote(q.id)}>
           <div className="qmb-split"><small>{displayQuoteNumber(q)}</small><span className="qmb-chip">{q.status}</span></div>
           <strong>{q.title||'Untitled quote'}</strong>
           <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {q.sections.length} Areas</small>
             <b>{money.format(quoteTotal(q))}</b></div>
         </button>)}
+        </div>
         {!list.length&&<div className="qmb-empty">No matching quotes. Start one without filling in any required fields.</div>}
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
       </div>
@@ -543,6 +559,8 @@ export function QuotesMobileBeta() {
       onClassic={()=>{exitBeta(false);setView('quotes');}}
       onIssue={issueQuote}
     />:null}
+      </div>
+    </div>
     {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
       <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>
