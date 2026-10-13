@@ -50,7 +50,7 @@ describe('Takeoffs v3 smart workflow',()=>{
     const kitchen=split.sections[0],bath=split.sections[1];
     expect(kitchen.scope?.takeoffPieces?.map(x=>x.id)).toEqual(['a1','a3']);
     expect(bath.scope?.takeoffPieces?.map(x=>x.id)).toEqual(['a2']);
-    expect(bath.customerDisplayMode).toBe('summary');
+    expect(bath.customerDisplayMode).toBe('detail');
     const twoLines=split.lines.filter(l=>l.quantitySource?.field==='countertopSf');
     expect(twoLines).toHaveLength(2);
     expect(twoLines.map(l=>l.rate)).toEqual([42,42]);
