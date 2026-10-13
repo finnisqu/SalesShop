@@ -74,3 +74,18 @@ export function setQuoteAreaOrder(quote: Quote, orderedIds: string[]): Quote {
   const byId = new Map(quote.sections.map(section => [section.id, section]));
   return { ...quote, sections: orderedIds.map(id => byId.get(id)!) };
 }
+
+
+/** Reorder the loose / General line slots without disturbing Area-owned rows. */
+export function setQuoteGeneralLineOrder(quote: Quote, ids: string[]): Quote {
+  const sectionIds=new Set(quote.sections.map(section=>section.id));
+  const isGeneral=(line:QuoteLine)=>!line.sectionId||!sectionIds.has(line.sectionId);
+  const original=quote.lines.filter(isGeneral);
+  const prior=original.map(line=>line.id);
+  if(prior.length!==ids.length || new Set(ids).size!==ids.length ||
+    ids.some(id=>!prior.includes(id)) || ids.every((id,index)=>id===prior[index]))return quote;
+  const selected=new Map(original.map(line=>[line.id,line]));
+  let slot=0;
+  return {...quote,lines:quote.lines.map(line=>isGeneral(line)
+    ?selected.get(ids[slot++])!:line)};
+}
