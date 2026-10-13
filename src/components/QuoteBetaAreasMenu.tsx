@@ -116,7 +116,7 @@ export function QuoteBetaAreaModeButton({manager}:{manager:QuoteBetaAreaManager}
     aria-pressed={manager.editing}
     disabled={!manager.editable}
     onClick={()=>manager.editing?manager.finish():manager.start()}>
-    {manager.editing?'✓ Done':'↕ Reorder / Delete'}
+    {manager.editing?'Done':'Reorder / Delete'}
   </button>;
 }
 
