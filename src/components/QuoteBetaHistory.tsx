@@ -1,4 +1,7 @@
 import {useState} from 'react';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {canIssueTeamQuote} from '../services/teamDepartments';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
@@ -13,6 +16,11 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
   const createChangeOrder=useQuoteStore(s=>s.createChangeOrder);
   const [selected,setSelected]=useState<number|null>(null);
   const editable=quoteIsCommerciallyEditable(quote);
+  const authMode=useAuthStore(s=>s.mode);
+  const teamRole=useAuthStore(s=>s.teamRole);
+  const teamDepartment=useAuthStore(s=>s.teamDepartment);
+  const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
+  const canCreateOrder=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,teamDepartment));
   const history=[...quote.history].sort((a,b)=>b.capturedAt.localeCompare(a.capturedAt));
   const snapshot=selected===null?undefined:history[selected];
   const frozen:Quote|undefined=snapshot?{
@@ -39,13 +47,14 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
       </label>
       <label><span>Draft status</span>
         <select aria-label="Draft status" disabled={!editable}
-          value={editable&&quote.status==='Ready'?'Ready':'Draft'}
+          value={editable&&quote.status==='Ready'?'Ready':editable?'Draft':quote.status}
           onChange={e=>update(quote.id,{status:e.target.value as 'Draft'|'Ready'})}>
           <option value="Draft">Draft</option><option value="Ready">Ready for review</option>
+          {!editable&&quote.status!=='Ready'&&quote.status!=='Draft'&&<option value={quote.status}>{quote.status}</option>}
         </select>
       </label>
     </div>
-    {quote.status==='Signed'&&<button type="button" className="qmb-lifecycle-change-order"
+    {quote.status==='Signed'&&canCreateOrder&&<button type="button" className="qmb-lifecycle-change-order"
       onClick={()=>createChangeOrder(quote.id)}>+ Create Change Order from signed quote</button>}
     <details className="qmb-lifecycle-revisions">
       <summary>Sent revision history <span>{history.length}</span></summary>
