@@ -511,7 +511,7 @@ test('mobile Details CRM project link is a selection, not a Board shortcut',asyn
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New quote'}).click();
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
-  await beta.getByText('CRM project link').click();
+  await beta.locator('.qmb-details-project-lookup summary').click();
   await expect(beta.getByRole('textbox',{name:'Find existing CRM project (optional)'})).toBeVisible();
   await expect(beta.locator('.quote-crm-connections')).toHaveCount(0);
   await expect(beta.getByRole('button',{name:/View company in Board/})).toHaveCount(0);
