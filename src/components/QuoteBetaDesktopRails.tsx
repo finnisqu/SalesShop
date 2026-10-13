@@ -3,6 +3,7 @@ import {quoteLinesTotal,quoteTotal,displayQuoteNumber} from '../types/quote';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,QuoteBetaAreaVisibilityButton,
   type QuoteBetaAreaManager} from './QuoteBetaAreasMenu';
