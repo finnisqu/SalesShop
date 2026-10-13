@@ -194,3 +194,22 @@
   align-items:center;flex-wrap:wrap}
 .qmb .qmb-general-takeoff-ref strong{font-size:12px}
 .qmb .qmb-general-takeoff-ref span{font-size:11px;color:var(--qmb-muted)}
+
+/* Compact private whole-quote rollup in the permanent right inspector. */
+.qmb .qmb-desktop-private-profit{border:1px solid var(--qmb-border);border-radius:11px;
+ padding:8px 10px;color:var(--qmb-ink);background:var(--qmb-card)}
+.qmb .qmb-desktop-private-profit summary{font-size:11px;font-weight:850;cursor:pointer;
+ display:flex;justify-content:space-between;gap:6px;align-items:center}
+.qmb .qmb-desktop-private-profit summary span{font-size:10px;color:var(--qmb-muted);
+ font-weight:700;text-align:right}
+.qmb .qmb-desktop-private-profit[open]{display:grid;gap:7px}
+.qmb .qmb-desktop-private-profit>div{display:flex;justify-content:space-between;
+ gap:6px;color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-desktop-private-profit>div strong{color:var(--qmb-ink);font-size:11px}
+.qmb .qmb-desktop-private-profit>small{color:var(--qmb-muted);
+ font-size:10px;line-height:1.4}
+@media(min-width:1000px) and (min-height:550px){
+  /* Desktop Materials contains the selling calculator; avoid an orphan Pricing
+     navigation button now that both parts are visible together. */
+  .qmb .qmb-desktop-active-area nav button:last-child{display:none}
+}
