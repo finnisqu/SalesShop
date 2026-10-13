@@ -132,6 +132,9 @@ export interface QuoteAreaScope {
   slabYield?: number;
   /** Optional manually adjusted whole-slab purchase count. */
   slabCountOverride?: number;
+  /** Explicit shop slab size and buying cost when the catalog lacks them. */
+  slabAreaOverrideSf?: number;
+  slabCostOverride?: number;
   /** In Takeoffs Lite, the combined top + checked 4-inch splash material SF. */
   countertopSf?: number;
   /** Retained separately for optional splash labor/linear-foot estimating. */
