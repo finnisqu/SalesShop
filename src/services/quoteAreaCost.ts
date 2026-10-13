@@ -9,6 +9,8 @@ export type AreaPricingChoice='manual'|'sf'|'multiplier';
 export interface AreaCostProjection {
   measuredSf:number;slabAreaSf?:number;yield:number;usableSfPerSlab?:number;
   suggestedSlabs?:number;slabCount?:number;slabCost?:number;
+  /** Physical buying quantity, optionally manually fractional. */
+  purchaseSlabs?:number;shopCost?:number;installCost?:number;
   materialCost?:number;costSource:'slab'|'derived-sf'|'manual'|'unknown';
   sinkCost?:number;missingSinkCosts:number;otherCost:number;
   totalKnownCost:number;priceTotal:number;grossSpread:number;
@@ -32,14 +34,18 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const suggestedSlabs=measuredSf>0&&usablePerSlab?Math.ceil(measuredSf/usablePerSlab):undefined;
   const override=scope?.slabCountOverride;
   const count=override!==undefined&&Number.isInteger(override)&&override>0?override:suggestedSlabs;
+  const purchaseSlabs=positive(scope?.slabPurchaseQuantityOverride)??count;
+  const shopCost=nonnegative(scope?.shopCostOverride);
+  const installCost=nonnegative(scope?.installCostOverride);
   const slabCost=nonnegative(scope?.slabCostOverride)??nonnegative(ref?.sourceSlabCost)??nonnegative(snapshot?.slabCost)
     ??nonnegative(ref?.catalogSlabCost);
   const costSf=nonnegative(ref?.sourceCostPerSf)??nonnegative(snapshot?.costPerSf);
-  const fromSlab=slabCost!==undefined&&count!==undefined?roundCurrency(slabCost*count):undefined;
+  const fromSlab=slabCost!==undefined&&purchaseSlabs!==undefined
+    ?roundCurrency(slabCost*purchaseSlabs):undefined;
   // A catalog SF buying cost can provide a clearly labeled fallback. The
   // real slab count is still required before estimating purchase cost.
-  const fromSf=area!==undefined&&count!==undefined&&costSf!==undefined
-    ?roundCurrency(costSf*area*count):undefined;
+  const fromSf=area!==undefined&&purchaseSlabs!==undefined&&costSf!==undefined
+    ?roundCurrency(costSf*area*purchaseSlabs):undefined;
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
   const primary=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf')
     ??lines.find(l=>l.kind==='material'&&!l.takeoffSinkId);
@@ -55,14 +61,15 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const other=lines.filter(l=>l!==primary&&!l.takeoffSinkId);
   const otherSummary=summarizeQuoteInternalPricing(other);
   const priceTotal=roundCurrency(lines.reduce((total,l)=>total+quoteLineTotal(l),0));
-  const known=roundCurrency((materialCost??0)+sinkCost+otherSummary.knownInternalCost);
+  const known=roundCurrency((materialCost??0)+sinkCost+otherSummary.knownInternalCost+
+    (shopCost??0)+(installCost??0));
   const complete=materialCost!==undefined&&missingSinkCosts===0
     &&otherSummary.costedLineCount===otherSummary.costRequiredLineCount;
   const spread=roundCurrency(priceTotal-known);
   const margin=complete&&priceTotal>0?Math.round(spread/priceTotal*1000)/10:undefined;
   return {
     measuredSf,slabAreaSf:area,yield:yieldFraction,usableSfPerSlab:usablePerSlab,
-    suggestedSlabs,slabCount:count,slabCost,materialCost,
+    suggestedSlabs,slabCount:count,purchaseSlabs,slabCost,shopCost,installCost,materialCost,
     costSource:manualOverride!==undefined?'manual':fromSlab!==undefined?'slab':
       fromSf!==undefined?'derived-sf':'unknown',
     sinkCost:missingSinkCosts===(scope?.takeoffSinks?.length??0)&&missingSinkCosts>0?undefined:sinkCost,

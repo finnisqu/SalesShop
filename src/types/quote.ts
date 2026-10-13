@@ -134,6 +134,11 @@ export interface QuoteAreaScope {
   slabYield?: number;
   /** Optional manually adjusted whole-slab purchase count. */
   slabCountOverride?: number;
+  /** Optional fractional physical slabs purchased for internal costs. Does not affect the whole-slab selling calculator. */
+  slabPurchaseQuantityOverride?: number;
+  /** Optional private work costs, entered as totals for this Area. */
+  shopCostOverride?: number;
+  installCostOverride?: number;
   /** Explicit shop slab size and buying cost when the catalog lacks them. */
   slabAreaOverrideSf?: number;
   slabCostOverride?: number;

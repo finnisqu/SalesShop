@@ -663,7 +663,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const existing=current.sections.find(s=>s.title==='General takeoffs');
     if(existing)return existing.id;
     const id=uid('section');
-    const section:QuoteSection={id,title:'General takeoffs',customerVisible:true,customerDisplayMode:'summary'};
+    const section:QuoteSection={id,title:'General takeoffs',customerVisible:true,customerDisplayMode:'detail'};
     const history=historyPatch(get(),quoteId,current);
     const quotes=get().quotes.map(q=>q.id===quoteId
       ?{...q,sections:[section,...q.sections],updatedAt:now()}:q);
