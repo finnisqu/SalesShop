@@ -64,7 +64,7 @@
 .qmb .qmb-material-picker:has(.qtl-combobox-menu){position:relative;z-index:400}
 .qmb .qmb-sinks-sheet:has(.qtl-combobox-menu){isolation:isolate}
 @media(min-width:1000px) and (min-height:550px){
- .qmb .qmb-area-editor .qmb-tabs[aria-label="Area sections"]>button:nth-child(3){display:none}
+ /* The third tab is Calculator on desktop. Never hide it. */
  .qmb .qmb-area-commerce-columns{
    display:grid;grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);
    gap:15px;align-items:start;min-width:0}
