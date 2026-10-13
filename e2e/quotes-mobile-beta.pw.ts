@@ -1154,3 +1154,62 @@ test('Desktop Batch B: sink catalog and materials suggestions overlay instead of
   await source.getByRole('spinbutton',{name:'Sink 1 buying cost'}).fill('85');
   await expect(source).toContainText('$170.00');
 });
+
+
+test('desktop General precedes Areas and inline sidebar management stays within its width',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Batch B desktop layout integrity');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  const g=beta.locator('.qmb-general-heading');
+  const a=beta.locator('.qmb-section-head[data-area-edit-workspace]');
+  await expect(g).toBeVisible();
+  await expect(a).toBeVisible();
+  const generalRect=await g.boundingBox(),areasRect=await a.boundingBox();
+  expect(generalRect!.top).toBeLessThan(areasRect!.top);
+  for(const name of ['Kitchen Island','Baths','Bathrooms']){
+    await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+    await beta.getByRole('textbox',{name:'Area name'}).fill(name);
+  }
+  await rail.getByRole('button',{name:'Reorder or delete Areas'}).click();
+  const overflow=await rail.evaluate(node=>({
+    actual:node.scrollWidth,viewport:node.clientWidth,
+  }));
+  expect(overflow.actual-overflow.viewport).toBeLessThanOrEqual(3);
+  const cards=rail.locator('.qmb-desktop-area-list .qmb-desktop-area-card');
+  expect((await cards.first().boundingBox())!.width).toBeGreaterThan(80);
+  await expect(rail.getByRole('button',{name:'Hide Kitchen Island on customer quote'})).toBeVisible();
+  await expect(rail.getByRole('button',{name:'Delete Kitchen Island Area'})).toBeVisible();
+  await rail.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
+  await expect(rail.getByRole('button',{name:'Hide Kitchen Island on customer quote'})).toHaveCount(0);
+});
+
+test('new measured Areas keep itemized presentation instead of becoming lump sum',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Quote presentation defaults after first measurement');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
+  await beta.getByRole('textbox',{name:'Length (in)'}).blur();
+  await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
+  await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await expect(beta.locator('.qmb-area-card')).toContainText('Itemized');
+  await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'General takeoffs'}).click();
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await expect(beta.locator('.qmb-general-takeoff-ref')).toBeVisible();
+});
