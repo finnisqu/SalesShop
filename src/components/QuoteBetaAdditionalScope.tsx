@@ -1,9 +1,10 @@
 import {useState} from 'react';
-import type {Quote,QuoteSection,QuoteLineKind,QuoteLine} from '../types/quote';
+import {quoteLineAmount,type Quote, type QuoteSection, type QuoteLineKind, type QuoteLine} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {QuoteBetaRateCatalog,rateItemToQuotePatch} from './QuoteBetaRateCatalog';
 import type {RateBookItem} from '../types/rateBook';
 
+const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const extraKinds:[QuoteLineKind,string][]=[
   ['item','Custom work'],['allowance','Allowance'],['discount','Discount'],['tax','Tax'],
   ['note','Customer note'],['scope','Scope'],['warranty','Warranty'],
@@ -46,7 +47,7 @@ export function QuoteBetaAdditionalScope({quote,section,editable}:{quote:Quote;s
     </div>}
     <div className="qmb-compact-addon-table" aria-label="Add-on line table">
       <div className="qmb-compact-addon-columns" aria-hidden="true">
-        <span>Add-on / Rate</span><span>Qty</span><span>Unit</span><span></span>
+        <span>Add-on / Rate</span><span>Qty</span><span>Unit</span><span>Amount</span><span></span>
       </div>
       {rows.map((line,index)=><div className="qmb-compact-addon-row" key={line.id}>
         <div className="qmb-compact-addon-description">
@@ -69,6 +70,9 @@ export function QuoteBetaAdditionalScope({quote,section,editable}:{quote:Quote;s
               }else update(quote.id,line.id,{quantity:amount});
             }}/>}
         <small>{line.rateReference?.snapshot?.unit??(line.kind==='note'?'—':'each')}</small>
+        <strong className="qmb-compact-addon-amount" title="Selling amount; edit in Materials">
+          {line.includeInTotal?money.format(quoteLineAmount(line)):'—'}
+        </strong>
         <button type="button" className="qmb-compact-remove" disabled={!editable}
           aria-label={'Remove additional work '+(index+1)}
           onClick={()=>{if(window.confirm('Remove this Add-on and its charge? You can Undo.'))
