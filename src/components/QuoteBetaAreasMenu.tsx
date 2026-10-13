@@ -36,7 +36,7 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
     setEditing(true);
   };
   const finish=()=>{
-    if(quote&&editing&&dirty)setSectionOrder(quote.id,syncedOrder);
+    if(quote&&editing&&dirty)setSectionOrder(quote.id,[...generalIds,...syncedOrder]);
     setDeletingId(null);motion.clear();setEditing(false);
   };
   const cancel=()=>{
