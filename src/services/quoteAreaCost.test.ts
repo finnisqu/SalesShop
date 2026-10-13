@@ -81,6 +81,20 @@ describe('Area slab yield and internal margin',()=>{
     q.sections[0].scope!.takeoffSinks![0].internalCostOverride=50;
     expect(projectAreaCost(q,q.sections[0]).sinkCost).toBe(100);
   });
+  it('applies spreadsheet sample per-SF shop and installation costs without repricing customers',()=>{
+    const q=fixture();const base=projectAreaCost(q,q.sections[0]);
+    q.sections[0].scope!.shopCostRateSf=14;
+    q.sections[0].scope!.installCostRateSf=5.5;
+    q.sections[0].scope!.targetMargin=.25;
+    const cost=projectAreaCost(q,q.sections[0]);
+    expect(cost.shopCost).toBe(700);
+    expect(cost.installCost).toBe(275);
+    expect(cost.totalKnownCost).toBe(base.totalKnownCost+975);
+    expect(cost.priceTotal).toBe(base.priceTotal);
+    expect(cost.marginPercent).toBeLessThan(base.marginPercent!);
+    q.sections[0].scope!.shopCostOverride=100;
+    expect(projectAreaCost(q,q.sections[0]).shopCost).toBe(100);
+  });
   it('prices three calculator modes but rejects unfinished multiplier inputs',()=>{
     expect(calculateAreaCustomerPrice('manual',{sf:50,amount:2500})).toBe(2500);
     expect(calculateAreaCustomerPrice('sf',{sf:50,rate:49})).toBe(2450);
