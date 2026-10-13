@@ -20,7 +20,7 @@ export function rateItemToQuotePatch(item:RateBookItem,quote:Quote):Partial<Quot
 
 /** Rate selections are available during Measure and again next to Materials
  * pricing. No popover clipping, and list includes every active Rates category. */
-export function QuoteBetaRateCatalog({value='',onChoose,disabled,label,includeCustom=false}:{
+export function QuoteBetaRateCatalog({value='',onChoose,disabled,label,includeCustom=false,division}:{
   value?:string;onChoose:(item:RateBookItem|null)=>void;disabled:boolean;
   label:string;includeCustom?:boolean;
 }){
