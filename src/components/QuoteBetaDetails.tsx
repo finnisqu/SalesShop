@@ -5,6 +5,7 @@ import { useQuoteStore } from '../store/quoteStore';
 import { RATE_BOOK_DIVISIONS, type RateBookDivision } from '../types/rateBook';
 import type { Quote } from '../types/quote';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
+import {QUOTE_STANDARD_TERMS,freeCustomerNotes,termsEnabled,withCustomerTerms} from '../services/quoteCustomerTerms';
 
 /** Mobile-first Details: customer -> project -> notes.
  * Never navigates away to Board from a CRM link or selection. */
@@ -52,9 +53,13 @@ export function QuoteBetaDetails({quote}:{quote:Quote}) {
           <small>Customer-facing and private information</small></div>
       </header>
       <fieldset className="qmb-details-notes-fields" disabled={!editable}>
-        <QuoteNotesFields customerNotes={quote.customerNotes}
+        <QuoteNotesFields customerNotes={freeCustomerNotes(quote.customerNotes)}
           internalNotes={quote.internalNotes}
-          onCustomerChange={value=>update(quote.id,{customerNotes:value})}
+          onCustomerChange={value=>{
+            const enabled=QUOTE_STANDARD_TERMS.filter(term=>termsEnabled(quote.customerNotes,term.id))
+              .map(term=>term.id);
+            update(quote.id,{customerNotes:withCustomerTerms(value,enabled)});
+          }}
           onInternalChange={value=>update(quote.id,{internalNotes:value})}/>
       </fieldset>
     </section>
