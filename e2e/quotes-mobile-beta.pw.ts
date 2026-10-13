@@ -965,3 +965,87 @@ test('desktop Area mode edits existing sidebar cards without opening a reorder m
   await expect(rail.locator('.qmb-desktop-area-title strong').first()).toHaveText('Bath');
   await expect(rail.getByRole('button',{name:'Delete Bath Area'})).toHaveCount(0);
 });
+
+
+test('General inline Reorder/Delete keeps its charge cards and supports Undo',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','General line structure on mobile');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add line'}).click();
+  let rows=beta.locator('.qmb-inline-general-row');
+  await rows.first().getByRole('button',{name:'Edit line'}).click();
+  await rows.first().getByRole('textbox',{name:'Description'}).fill('Material delivery');
+  await rows.first().getByRole('spinbutton',{name:'Amount ($)'}).fill('85');
+  await beta.getByRole('button',{name:'+ Add line'}).click();
+  rows=beta.locator('.qmb-inline-general-row');
+  await rows.nth(1).getByRole('button',{name:'Edit line'}).click();
+  await rows.nth(1).getByRole('textbox',{name:'Description'}).fill('Jobsite cleanup');
+  await rows.nth(1).getByRole('spinbutton',{name:'Amount ($)'}).fill('40');
+  await expect(beta.locator('.qmb-quote-total')).toHaveText('$125.00');
+  await beta.getByRole('button',{name:'Reorder or delete General'}).click();
+  await expect(beta.getByRole('button',{name:'Delete General line Jobsite cleanup'})).toBeVisible();
+  const handle=beta.getByRole('button',{name:/Drag General line Jobsite cleanup/});
+  await handle.press('ArrowUp');
+  await expect(rows.first()).toContainText('Jobsite cleanup');
+  await beta.getByRole('button',{name:'Done reordering General'}).click();
+  await expect(rows.first()).toContainText('Jobsite cleanup');
+  await beta.getByRole('button',{name:'Reorder or delete General'}).click();
+  await beta.getByRole('button',{name:'Delete General line Jobsite cleanup'}).click();
+  const dialog=page.getByRole('dialog',{name:'Delete General line'});
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button',{name:'Keep line'}).click();
+  await expect(rows).toHaveCount(2);
+  await beta.getByRole('button',{name:'Delete General line Jobsite cleanup'}).click();
+  await dialog.getByRole('button',{name:/Delete this line and its charge/}).click();
+  await expect(beta.locator('.qmb-quote-total')).toHaveText('$85.00');
+  await beta.getByRole('button',{name:'Undo'}).click();
+  await expect(beta.locator('.qmb-quote-total')).toHaveText('$125.00');
+});
+
+test('Area drag lifts the full card, and compact customer document aligns text',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Drag geometry and document polish');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen Island');
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Bathrooms');
+  await rail.getByRole('button',{name:'Reorder or delete Areas'}).click();
+  const grip=rail.getByRole('button',{name:/Drag Bathrooms to reorder/});
+  const bounds=(await grip.boundingBox())!;
+  await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
+  await page.mouse.down();
+  await expect(rail.locator('[data-qmb-sort-row].is-dragging')).toBeVisible();
+  await page.mouse.move(bounds.x+bounds.width/2,bounds.y-14,{steps:3});
+  const grabbed=rail.locator('[data-qmb-sort-row].is-dragging');
+  const transform=await grabbed.evaluate(node=>getComputedStyle(node).transform);
+  expect(transform).not.toBe('none');
+  await page.mouse.up();
+  await rail.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
+  await rail.getByRole('button',{name:'Customer preview'}).click();
+  const controls=beta.locator('.qmb-preview-action-group');
+  const groupStyle=await controls.evaluate(node=>getComputedStyle(node).display);
+  expect(groupStyle).toBe('flex');
+  const previewToggle=await beta.getByRole('button',{name:'Phone quote preview'}).boundingBox();
+  const makeEdits=await beta.getByRole('button',{name:'✎ Make edits'}).boundingBox();
+  expect(Math.abs(previewToggle!.y-makeEdits!.y)).toBeLessThan(14);
+  await beta.getByRole('button',{name:'Phone quote preview'}).click();
+  const paper=beta.locator('.qmb-preview .customer-quote-paper');
+  const font=await paper.locator('.customer-quote-table-head').evaluate(node=>getComputedStyle(node).fontSize);
+  expect(parseFloat(font)).toBeGreaterThanOrEqual(8);
+  const header=await paper.locator('.customer-quote-table-head').evaluate(node=>getComputedStyle(node).backgroundColor);
+  expect(header).not.toBe('rgb(243, 243, 241)');
+});
