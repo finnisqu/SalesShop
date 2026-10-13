@@ -16,11 +16,12 @@ function recentFirst<T extends { updatedAt: string }>(items: T[]) {
   return [...items].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
-function EntityField({ label, value, suggestions, onChange }: {
+function EntityField({ label, value, suggestions, onChange, disabled=false }: {
   label: string;
   value: string;
   suggestions: Suggestion[];
   onChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(-1);
@@ -30,6 +31,7 @@ function EntityField({ label, value, suggestions, onChange }: {
       <span>{label}</span>
       <div className="quote-crm-input-wrap">
         <input
+          disabled={disabled}
           value={value}
           autoComplete="off"
           onFocus={() => setOpen(true)}
@@ -62,7 +64,9 @@ function matches(value: string, query: string) {
   return value.toLowerCase().includes(query.trim().toLowerCase());
 }
 
-export function QuoteCrmFields({ quote }: { quote: Quote }) {
+export function QuoteCrmFields({ quote, compactSection, editable=true }: {
+  quote: Quote; compactSection?: 'customer'|'project';editable?:boolean;
+}) {
   const projects = useCrmStore((state) => state.projects);
   const companies = useCrmStore((state) => state.companies);
   const contacts = useCrmStore((state) => state.contacts);
@@ -72,7 +76,9 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
   const linkedProject = quote.projectId ? projects.find((project) => project.id === quote.projectId) : undefined;
   const linkedCompany = quote.companyId ? companies.find((company) => company.id === quote.companyId) : undefined;
   const linkedContact = quote.contactId ? contacts.find((contact) => contact.id === quote.contactId) : undefined;
-  const projectQuery = !quote.projectId && quote.title.trim().toLowerCase() === 'untitled quote' ? '' : quote.title;
+  const [projectLookup,setProjectLookup]=useState('');
+  const projectQuery = compactSection==='project' ? projectLookup :
+    !quote.projectId && quote.title.trim().toLowerCase() === 'untitled quote' ? '' : quote.title;
 
   const projectSuggestions = useMemo(() => recentFirst(projects)
     .filter((project) => matches(`${project.name} ${project.companyName ?? ''}`, projectQuery))
@@ -124,6 +130,39 @@ export function QuoteCrmFields({ quote }: { quote: Quote }) {
       };
     }), [contacts, companies, quote.id, quote.companyId, quote.companyName, quote.contactName, quote.contactEmail, quote.projectId, linkedProject, updateQuote]);
 
+  if(compactSection==='customer')return (
+    <div className="qmb-details-crm" aria-label="Customer details">
+      <div className="qmb-details-linked-status" aria-label="CRM link status">
+        <span className={linkedCompany?'is-linked':''}>{linkedCompany?'✓':'○'} Account {linkedCompany?'linked':'not linked'}</span>
+        <span className={linkedContact?'is-linked':''}>{linkedContact?'✓':'○'} Contact {linkedContact?'linked':'not linked'}</span>
+      </div>
+      <fieldset disabled={!editable} className="qmb-details-fields">
+        <EntityField label="Company / customer" value={quote.companyName??''}
+          suggestions={companySuggestions} disabled={!editable}
+          onChange={value=>updateQuote(quote.id,{companyName:value,companyId:undefined,projectId:undefined})}/>
+        <EntityField label="Contact person" value={quote.contactName??''}
+          suggestions={contactSuggestions} disabled={!editable}
+          onChange={value=>updateQuote(quote.id,{contactName:value,contactId:undefined})}/>
+        <label><span>Contact email</span><input type="email" autoComplete="email"
+          disabled={!editable} placeholder="name@company.com" value={quote.contactEmail??''}
+          onChange={event=>updateQuote(quote.id,{contactEmail:event.target.value})}/></label>
+      </fieldset>
+    </div>
+  );
+  if(compactSection==='project')return (
+    <div className="qmb-details-crm" aria-label="Project CRM link">
+      {linkedProject?<div className="qmb-details-project-link">
+        <div><small>Linked CRM project</small><strong>{linkedProject.name}</strong></div>
+        {editable&&<button type="button" className="qmb-quiet"
+          onClick={()=>updateQuote(quote.id,{projectId:undefined})}>Unlink</button>}
+      </div>:<p className="qmb-details-optional">No CRM project linked. This quote can still be saved and sent.</p>}
+      <fieldset disabled={!editable} className="qmb-details-fields">
+        <EntityField label="Find existing CRM project (optional)" value={projectLookup}
+          disabled={!editable} suggestions={projectSuggestions}
+          onChange={setProjectLookup}/>
+      </fieldset>
+    </div>
+  );
   return (
     <>
       <section className="quote-crm-connections" aria-label="CRM record links">
