@@ -1128,6 +1128,7 @@ test('Desktop Batch B: sink catalog and materials suggestions overlay instead of
   expect(await menu.evaluate(node=>getComputedStyle(node).position)).toBe('absolute');
   const after=await row.boundingBox();
   expect(Math.abs(after!.height-before!.height)).toBeLessThan(4);
+  await page.keyboard.press('Escape');
   await row.getByRole('spinbutton',{name:'Sink 1 buying cost'}).fill('85');
   await row.getByRole('spinbutton',{name:'Sink 1 quantity'}).fill('2');
   await expect(row.locator('.qmb-sink-private-cost')).toContainText('$170.00');
