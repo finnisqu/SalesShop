@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import {createPortal} from 'react-dom';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useQuoteStore } from '../store/quoteStore';
 import { useCrmStore } from '../store/crmStore';
@@ -429,6 +430,8 @@ export function QuotesMobileBeta() {
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
   const generalTakeoff=quote?.sections.find(isGeneralTakeoffSection);
+  const [showDeleteGeneralTakeoff,setShowDeleteGeneralTakeoff]=useState(false);
+  const deleteGeneralTakeoff=useQuoteStore(s=>s.deleteSection);
   const areaManager=useQuoteBetaAreaManager(quote);
   const generalManager=useQuoteBetaGeneralManager(quote);
   const mobileAreaRef=useQuoteBetaCardReflow<HTMLDivElement>(
@@ -620,11 +623,15 @@ export function QuotesMobileBeta() {
               <QuoteBetaGeneralModeButton manager={generalManager}/>
             </div>
           </div>
-          {generalTakeoff&&<button type="button" className="qmb-general-takeoff-ref"
-            onClick={()=>openArea(generalTakeoff.id)}>
-            <strong>General takeoff · {sf.format(generalTakeoff.scope?.countertopSf??0)} SF</strong>
-            <span>{money.format(quoteLinesTotal(quote.lines.filter(l=>l.sectionId===generalTakeoff.id)))} · Edit measurements and pricing ›</span>
-          </button>}
+          {generalTakeoff&&<div className="qmb-general-takeoff-actions">
+            <button type="button" className="qmb-general-takeoff-ref"
+              onClick={()=>openArea(generalTakeoff.id)}>
+              <strong>General takeoff · {sf.format(generalTakeoff.scope?.countertopSf??0)} SF</strong>
+              <span>{money.format(quoteLinesTotal(quote.lines.filter(l=>l.sectionId===generalTakeoff.id)))} · Edit measurements and pricing ›</span>
+            </button>
+            <button type="button" className="qmb-general-takeoff-remove" disabled={!editable}
+              aria-label="Delete General takeoff" onClick={()=>setShowDeleteGeneralTakeoff(true)}>×</button>
+          </div>}
           <div ref={mobileGeneralRef} className={'qmb-inline-general-list'+(generalManager.editing?' is-managing-general':'')}
             data-general-edit-workspace aria-label="General line cards">
             {(generalManager.editing?generalManager.lines:
