@@ -78,6 +78,11 @@ function Field({label,children}:{label:string;children:React.ReactNode}) {
 function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boolean}) {
   const update = useQuoteStore(s=>s.updateLine);
   const remove = useQuoteStore(s=>s.deleteLine);
+  const reorderLine = useQuoteStore(s=>s.reorderLine);
+  const moveLine = useQuoteStore(s=>s.moveLine);
+  const peers = quote.lines.filter(candidate => candidate.sectionId === line.sectionId);
+  const position = peers.findIndex(candidate => candidate.id === line.id);
+  const canRelocate = !line.takeoffSinkId && line.quantitySource?.syncMode !== 'live';
   const [expanded,setExpanded] = useState(false);
   const [ratesOpen,setRatesOpen] = useState(false);
   const textOnly = line.pricingMode === 'none';
@@ -143,6 +148,23 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
         {line.takeoffSinkId?<p className="qmb-help">Sink charge is always included in the quote total.</p>
           :<label className="qmb-check"><input type="checkbox" checked={line.includeInTotal} onChange={e=>update(quote.id,line.id,{includeInTotal:e.target.checked})}/> Include in quote total</label>}
         <label className="qmb-check"><input type="checkbox" checked={line.customerVisible} onChange={e=>update(quote.id,line.id,{customerVisible:e.target.checked})}/> Show this line to customer (itemized view)</label>
+        <div className="qmb-line-structure" aria-label="Line arrangement">
+          <div className="qmb-line-order">
+            <span>Line order</span>
+            <button type="button" aria-label="Move line up" disabled={position<=0}
+              onClick={()=>reorderLine(quote.id,line.id,-1)}>↑</button>
+            <button type="button" aria-label="Move line down" disabled={position>=peers.length-1}
+              onClick={()=>reorderLine(quote.id,line.id,1)}>↓</button>
+          </div>
+          {canRelocate?<label className="qmb-line-destination">
+            <span>Move line to</span>
+            <select aria-label="Move line to Area" value={line.sectionId??''}
+              onChange={e=>moveLine(quote.id,line.id,e.target.value||undefined)}>
+              <option value="">General charges</option>
+              {quote.sections.map(area=><option key={area.id} value={area.id}>{area.title||'Untitled Area'}</option>)}
+            </select>
+          </label>:<p className="qmb-help">This charge follows its Takeoffs source. Move or remove that source under Materials or Measure.</p>}
+        </div>
         {line.takeoffSinkId
           ?<p className="qmb-help">Remove the sink itself from Materials if it is no longer needed.</p>
           :<button type="button" className="qmb-danger" onClick={()=>{if(window.confirm('Remove this quote line? You can undo the change.'))remove(quote.id,line.id);}}>Remove line</button>}
@@ -158,6 +180,19 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
   const editable=quoteIsCommerciallyEditable(quote);
   const general=isGeneralTakeoffSection(section);
   const updateSection=useQuoteStore(s=>s.updateSection);
+  const reorderSection=useQuoteStore(s=>s.reorderSection);
+  const deleteSection=useQuoteStore(s=>s.deleteSection);
+  const sectionIndex=quote.sections.findIndex(area=>area.id===section.id);
+  const moveArea=(direction:-1|1)=>{
+    const target=quote.sections[sectionIndex+direction];
+    if(target)reorderSection(quote.id,section.id,target.id);
+  };
+  const removeArea=()=>{
+    if(window.confirm('Delete this Area? Its priced lines will move to General charges. Measurements and sink selections on this Area will be removed. You can Undo.')){
+      deleteSection(quote.id,section.id);
+      goBack();
+    }
+  };
   const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
   const addLinked=useQuoteStore(s=>s.addTakeoffLine);
   const setRate=useQuoteStore(s=>s.setTakeoffRate);
@@ -203,6 +238,25 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
         </Field>
       </>}
       <div className="qmb-area-summary"><span>{sf.format(measured)} SF measured</span><strong>{money.format(amount)}</strong></div>
+      {!general&&<details className="qmb-area-options">
+        <summary>Area options <span>{section.customerVisible?'Visible to customer':'Hidden from customer'}</span></summary>
+        <div className="qmb-area-options-body">
+          <label className="qmb-check"><input type="checkbox" disabled={!editable}
+            checked={section.customerVisible}
+            onChange={e=>updateSection(quote.id,section.id,{customerVisible:e.target.checked})}/>
+            Show this Area on the customer quote
+          </label>
+          <div className="qmb-area-option-actions">
+            <button type="button" disabled={!editable||sectionIndex===0}
+              aria-label="Move current Area up" onClick={()=>moveArea(-1)}>↑ Move up</button>
+            <button type="button" disabled={!editable||sectionIndex>=quote.sections.length-1}
+              aria-label="Move current Area down" onClick={()=>moveArea(1)}>↓ Move down</button>
+            <button type="button" className="qmb-area-delete" disabled={!editable}
+              aria-label="Delete this Area" onClick={removeArea}>Delete Area</button>
+          </div>
+          <small>Deleting an Area keeps its quote charges in General. Takeoff measurements and selections belong to the Area.</small>
+        </div>
+      </details>}
     </div>
     <nav className="qmb-tabs" aria-label="Area sections">
       {([['measure','Measure'],['materials','Materials'],['pricing','Pricing']] as const).map(([id,label])=>
@@ -277,7 +331,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
         {lines.map(l=><BetaLine key={l.id} quote={quote} line={l} editable={editable}/>)}
         <section className="qmb-card qmb-addcharge">
           <Field label="Add a line"><select disabled={!editable} value={kind} onChange={e=>setKind(e.target.value as QuoteLineKind)}>
-            {([['item','Custom charge'],['material','Catalog material'],['sink','Catalog sink'],['rate','Rate Book item'],['allowance','Allowance'],['discount','Discount'],['note','Customer note']] as const)
+            {([['item','Custom charge'],['material','Catalog material'],['sink','Catalog sink'],['rate','Rate Book item'],['allowance','Allowance'],['discount','Discount'],['tax','Tax'],['scope','Scope'],['warranty','Warranty'],['note','Customer note']] as const)
               .map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></Field>
           <button type="button" className="qmb-outline qmb-block" disabled={!editable}
             onClick={()=>addLine(quote.id,kind,section.id)}>+ Add line to Area</button>
@@ -310,6 +364,7 @@ export function QuotesMobileBeta() {
   const update=useQuoteStore(s=>s.updateQuote);
   const addSection=useQuoteStore(s=>s.addSection);
   const duplicateArea=useQuoteStore(s=>s.duplicateArea);
+  const reorderSection=useQuoteStore(s=>s.reorderSection);
   const deleteSection=useQuoteStore(s=>s.deleteSection);
   const addLine=useQuoteStore(s=>s.addLine);
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
@@ -516,14 +571,21 @@ export function QuotesMobileBeta() {
             <span aria-hidden="true">›</span>
           </button>
           <div className="qmb-section-head"><h3>Areas</h3><button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button></div>
-          {quote.sections.map(s=>{
+          {quote.sections.map((s,index)=>{
             const lines=quote.lines.filter(l=>l.sectionId===s.id);
-            return <button type="button" key={s.id} className="qmb-card qmb-area-card" onClick={()=>openArea(s.id)}>
-              <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
-                <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
-                <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small></span>
-              <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b><span>›</span></span>
-            </button>;
+            return <div className="qmb-area-list-row" key={s.id}>
+              <button type="button" className="qmb-card qmb-area-card" onClick={()=>openArea(s.id)}>
+                <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
+                  <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
+                  <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small>
+                  {!s.customerVisible&&<small className="qmb-area-hidden-label">Hidden from customer</small>}</span>
+                <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b><span>›</span></span>
+              </button>
+              {editable&&<div className="qmb-area-order-actions" aria-label={'Reorder '+(s.title||'Area')}>
+                <button type="button" disabled={index===0} aria-label={'Move '+s.title+' up'} onClick={()=>reorderSection(quote.id,s.id,quote.sections[index-1].id)}>↑</button>
+                <button type="button" disabled={index===quote.sections.length-1} aria-label={'Move '+s.title+' down'} onClick={()=>reorderSection(quote.id,s.id,quote.sections[index+1].id)}>↓</button>
+              </div>}
+            </div>;
           })}
           {!quote.sections.length&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
           <div className="qmb-section-head"><h3>General charges</h3><small>Outside named Areas</small></div>
@@ -532,7 +594,7 @@ export function QuotesMobileBeta() {
           {editable&&<section className="qmb-card">
             <div className="qmb-two"><select aria-label="General line type" value={newLineKind}
               onChange={e=>setNewLineKind(e.target.value as QuoteLineKind)}>
-              {([['item','Custom charge'],['material','Material'],['sink','Sink'],['rate','Rate'],['discount','Discount'],['note','Note']] as const)
+              {([['item','Custom charge'],['material','Material'],['sink','Sink'],['rate','Rate'],['allowance','Allowance'],['discount','Discount'],['tax','Tax'],['scope','Scope'],['warranty','Warranty'],['note','Note']] as const)
                 .map(([id,label])=><option value={id} key={id}>{label}</option>)}
             </select><button type="button" className="qmb-outline" onClick={()=>addLine(quote.id,newLineKind)}>+ Add line</button></div>
           </section>}

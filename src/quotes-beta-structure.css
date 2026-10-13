@@ -1,0 +1,60 @@
+/* Quotes Beta — Batch A: accessible Area/line management.
+   Scope strictly to the opt-in editor, never Classic or customer paper. */
+.qmb .qmb-area-list-row {
+  display:flex;align-items:stretch;gap:7px;margin-bottom:10px;min-width:0;
+}
+.qmb .qmb-area-list-row > .qmb-area-card {
+  flex:1 1 0;min-width:0;margin:0;
+}
+.qmb .qmb-area-order-actions {
+  display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:5px;
+  width:38px;flex:0 0 38px;
+}
+.qmb .qmb-area-order-actions button,
+.qmb .qmb-line-order button,
+.qmb .qmb-area-option-actions button {
+  border:1px solid var(--qmb-border);border-radius:9px;
+  background:var(--qmb-card);color:var(--qmb-accent);font-weight:750;
+  min-height:34px;
+}
+.qmb .qmb-area-order-actions button:disabled,
+.qmb .qmb-line-order button:disabled,
+.qmb .qmb-area-option-actions button:disabled {opacity:.35;cursor:not-allowed;}
+.qmb .qmb-area-hidden-label {color:var(--ss-danger,#a6473e)!important;font-weight:750;}
+.qmb .qmb-area-options {
+  margin-top:12px;padding:0;border:1px solid var(--qmb-border);
+  border-radius:11px;color:var(--qmb-ink);background:var(--qmb-card);
+}
+.qmb .qmb-area-options summary {
+  cursor:pointer;padding:10px 12px;display:flex;justify-content:space-between;
+  gap:9px;align-items:center;font-weight:750;font-size:12px;
+}
+.qmb .qmb-area-options summary span {
+  font-size:10px;color:var(--qmb-muted);font-weight:650;text-align:right;
+}
+.qmb .qmb-area-options-body {
+  display:grid;gap:7px;padding:10px 12px 12px;
+  border-top:1px solid var(--qmb-border);
+}
+.qmb .qmb-area-options-body .qmb-check {margin:0;}
+.qmb .qmb-area-option-actions {display:flex;flex-wrap:wrap;gap:7px;}
+.qmb .qmb-area-option-actions button {padding:8px 10px;font-size:12px;flex:1 1 auto;}
+.qmb .qmb-area-option-actions .qmb-area-delete {color:var(--ss-danger,#a6473e);}
+.qmb .qmb-area-options-body > small {color:var(--qmb-muted);font-size:11px;line-height:1.5;}
+.qmb .qmb-line-structure {
+  display:grid;gap:10px;padding:12px 0;margin-top:8px;
+  border-top:1px solid var(--qmb-border);
+}
+.qmb .qmb-line-order {display:flex;align-items:center;gap:7px;}
+.qmb .qmb-line-order > span {color:var(--qmb-muted);font-size:12px;margin-right:auto;}
+.qmb .qmb-line-order button {width:40px;min-height:38px;font-size:18px;}
+.qmb .qmb-line-destination {display:grid;gap:6px;font-size:12px;color:var(--qmb-muted);}
+.qmb .qmb-line-destination select {
+  width:100%;min-width:0;min-height:42px;padding:8px 10px;
+  border:1px solid var(--qmb-border);border-radius:10px;
+  background:var(--qmb-card);color:var(--qmb-ink);font-size:15px;
+}
+@media (min-width:1000px) and (min-height:550px) {
+  .qmb .qmb-area-list-row {margin-bottom:9px;}
+  .qmb .qmb-area-order-actions {width:35px;flex-basis:35px;}
+}
