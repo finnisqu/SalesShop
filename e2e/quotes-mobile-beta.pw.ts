@@ -712,11 +712,10 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await beta.getByRole('button',{name:'Manage Areas'}).click();
-  const manager=page.getByRole('dialog',{name:'Manage quote Areas'});
-  await manager.getByRole('button',{name:/Reorder Areas/}).click();
-  await manager.getByRole('button',{name:'Move Bath up'}).click();
-  await manager.getByRole('button',{name:'Save order'}).click();
+  await beta.getByRole('button',{name:'Reorder or delete Areas'}).click();
+  await beta.getByRole('button',{name:/Drag Bath to reorder/}).press('ArrowUp');
+  await expect(beta.locator('.qmb-inline-area-list .qmb-area-text strong').first()).toHaveText('Bath');
+  await beta.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
   await expect(beta.locator('.qmb-area-card .qmb-area-text strong').first()).toHaveText('Bath');
   await beta.locator('.qmb-area-card').filter({hasText:'Kitchen'}).click();
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
@@ -729,10 +728,11 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
   await expect(beta.locator('.qmb-area-editor .qmb-line').filter({hasText:'Taxes'})).toHaveCount(1);
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await beta.getByRole('button',{name:'Manage Areas'}).click();
-  await manager.getByRole('button',{name:/Delete an Area/}).click();
-  await manager.getByRole('combobox',{name:'Area to delete'}).selectOption({label:'Bath'});
-  await manager.getByRole('button',{name:/Move charges to General/}).click();
+  await beta.getByRole('button',{name:'Reorder or delete Areas'}).click();
+  await beta.getByRole('button',{name:'Delete Bath Area'}).click();
+  const deleteChoice=page.getByRole('dialog',{name:'Delete Area Bath'});
+  await expect(deleteChoice).toBeVisible();
+  await deleteChoice.getByRole('button',{name:/Delete Area only · keep contents/}).click();
   await expect(beta.locator('.qmb-area-card')).toHaveCount(1);
   await beta.locator('.qmb-line').filter({hasText:'Taxes'}).getByRole('button',{name:'Edit line'}).click();
   await expect(beta.locator('.qmb-line').filter({hasText:'Taxes'}).getByRole('combobox',{name:'Move line to Area'})).toHaveValue('');
@@ -762,10 +762,10 @@ test('Beta Area management permits deliberate delete-all without retaining price
   await charge.getByRole('spinbutton',{name:'Amount ($)'}).fill('225');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(beta.locator('.qmb-quote-total')).toHaveText('$225.00');
-  await beta.getByRole('button',{name:'Manage Areas'}).click();
-  const dialog=page.getByRole('dialog',{name:'Manage quote Areas'});
-  await dialog.getByRole('button',{name:/Delete an Area/}).click();
-  await dialog.getByRole('button',{name:/Delete Area and all contents/}).click();
+  await beta.getByRole('button',{name:'Reorder or delete Areas'}).click();
+  await beta.getByRole('button',{name:'Delete Delete me Area'}).click();
+  const dialog=page.getByRole('dialog',{name:'Delete Area Delete me'});
+  await dialog.getByRole('button',{name:'Delete Area and its contents'}).click();
   await expect(beta.locator('.qmb-area-card')).toHaveCount(0);
   await expect(beta.locator('.qmb-quote-total')).toHaveText('$0.00');
   await beta.getByRole('button',{name:'Undo'}).click();
@@ -878,9 +878,10 @@ test('Area management modal stays opaque above its dimmed background',async ({pa
   await beta.getByRole('button',{name:'+ New quote'}).click();
   await beta.getByRole('complementary',{name:'Quote workspace navigation'})
     .getByRole('button',{name:'Add Area from navigator'}).click();
-  await beta.getByRole('complementary',{name:'Quote workspace navigation'})
-    .getByRole('button',{name:'Manage Areas'}).click();
-  const dialog=page.getByRole('dialog',{name:'Manage quote Areas'});
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:'Reorder or delete Areas'}).click();
+  await rail.getByRole('button',{name:'Delete New area Area'}).click();
+  const dialog=page.getByRole('dialog',{name:'Delete Area New area'});
   await expect(dialog).toBeVisible();
   const style=await dialog.evaluate(node=>{
     const s=getComputedStyle(node);
@@ -890,6 +891,77 @@ test('Area management modal stays opaque above its dimmed background',async ({pa
   expect(style.background).not.toBe('transparent');
   expect(style.opacity).toBe('1');
   expect(style.isolation).toBe('isolate');
-  await dialog.getByRole('button',{name:/Reorder Areas/}).click();
-  await expect(dialog.getByRole('list',{name:'Area reorder list'})).toBeVisible();
+  await dialog.getByRole('button',{name:'Cancel'}).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(rail.getByRole('button',{name:'Done reordering and deleting Areas'})).toBeVisible();
+  await rail.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
+  await expect(rail.getByRole('button',{name:'Reorder or delete Areas'})).toBeVisible();
+});
+
+
+test('inline Area mode saves on Enter/outside and cancels pending order on Escape',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Inline touch and keyboard Area controls');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  const names=beta.locator('.qmb-inline-area-list .qmb-area-text strong');
+  const mode=()=>beta.getByRole('button',{name:'Reorder or delete Areas'});
+  await mode().click();
+  const bath=beta.getByRole('button',{name:/Drag Bath to reorder/});
+  await bath.focus();
+  await bath.press('ArrowUp');
+  await expect(names.first()).toHaveText('Bath');
+  await page.keyboard.press('Escape');
+  await expect(mode()).toBeVisible();
+  await expect(names.first()).toHaveText('Kitchen');
+  await mode().click();
+  await beta.getByRole('button',{name:/Drag Bath to reorder/}).press('ArrowUp');
+  await page.keyboard.press('Enter');
+  await expect(mode()).toBeVisible();
+  await expect(names.first()).toHaveText('Bath');
+  await mode().click();
+  await beta.getByRole('button',{name:/Drag Kitchen to reorder/}).press('ArrowUp');
+  await expect(names.first()).toHaveText('Kitchen');
+  // Clicking outside Area workspace saves the temporary new order.
+  await beta.getByRole('textbox',{name:'Quote title'}).click();
+  await expect(mode()).toBeVisible();
+  await expect(names.first()).toHaveText('Kitchen');
+});
+
+test('desktop Area mode edits existing sidebar cards without opening a reorder modal',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Desktop inline management parity');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
+  await rail.getByRole('button',{name:'Reorder or delete Areas'}).click();
+  await expect(page.getByRole('dialog',{name:'Manage quote Areas'})).toHaveCount(0);
+  await expect(rail.locator('[data-area-sort-id]')).toHaveCount(2);
+  await expect(rail.getByRole('button',{name:/Drag Bath to reorder/})).toBeVisible();
+  await expect(rail.getByRole('button',{name:'Delete Bath Area'})).toBeVisible();
+  await rail.getByRole('button',{name:/Drag Bath to reorder/}).press('ArrowUp');
+  await expect(rail.locator('.qmb-desktop-area-title strong').first()).toHaveText('Bath');
+  await rail.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
+  await expect(rail.locator('.qmb-desktop-area-title strong').first()).toHaveText('Bath');
+  await expect(rail.getByRole('button',{name:'Delete Bath Area'})).toHaveCount(0);
 });
