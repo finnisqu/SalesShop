@@ -1,0 +1,85 @@
+/* Customer paper typography and alignment normalization.
+ * Applies to preview AND public customer quote; presentation only. */
+.customer-quote-paper .customer-quote-row {
+  font-size:10px;
+  line-height:1.5;
+  padding:9px 9px;
+  gap:9px;
+  align-items:start;
+}
+.customer-quote-paper .customer-quote-row .customer-line-description{
+  min-width:0;overflow-wrap:anywhere;line-height:1.5;
+}
+.customer-quote-paper .customer-quote-table-head{
+  min-height:32px;
+  background:#dfe3de;
+  color:#3d483e;
+  font-size:8px;
+  line-height:1.35;
+  font-weight:850;
+  letter-spacing:.07em;
+  align-items:center;
+}
+.customer-quote-paper .customer-quote-table-head>div:last-child{text-align:right}
+.customer-quote-paper .customer-quote-section h3{
+  margin:0;
+  padding:10px 9px 8px;
+  border-top:1px solid #c8cac5;
+  color:#252825;
+  background:#e7e8e2;
+  font:700 11px/1.4 Georgia,serif;
+  letter-spacing:.025em;
+  text-transform:uppercase;
+}
+.customer-quote-paper .customer-quote-section.is-summary{
+  border-top:1px solid #c8cac5;
+}
+.customer-quote-paper .customer-area-summary-row{
+  background:#e7e8e2;
+  min-height:42px;
+  padding:10px 9px;
+  align-items:start;
+  grid-template-columns:minmax(0,1fr) auto!important;
+}
+.customer-quote-paper .customer-area-summary-row .customer-line-description{
+  min-width:0;
+  font:700 11px/1.4 Georgia,serif;
+  letter-spacing:.025em;
+}
+.customer-quote-paper .customer-area-summary-row .customer-line-amount{
+  font:700 11px/1.4 Georgia,serif;
+  text-align:right;white-space:nowrap;
+}
+.customer-quote-paper .customer-quote-section:not(.is-summary)>.customer-quote-row{
+  margin:0;
+  padding-inline:9px;
+}
+.customer-quote-paper .customer-quote-section:not(.is-summary) .customer-line-description{
+  padding:0;
+  margin:0;
+}
+.customer-quote-paper .customer-area-spec{
+  font-size:9px;
+  line-height:1.45;
+  letter-spacing:0;
+}
+@media(max-width:500px){
+  .customer-quote-paper .customer-quote-section h3,
+  .customer-quote-paper .customer-area-summary-row .customer-line-description,
+  .customer-quote-paper .customer-area-summary-row .customer-line-amount{font-size:11px}
+  .customer-quote-paper .customer-quote-row{font-size:10px}
+}
+@container quote-phone-preview (max-width:410px){
+  .customer-quote-paper .customer-quote-section h3,
+  .customer-quote-paper .customer-area-summary-row .customer-line-description{
+    font-size:11px;line-height:1.4}
+  .customer-quote-paper .customer-area-summary-row .customer-line-amount{font-size:11px}
+  .customer-quote-paper .customer-quote-row{font-size:10px}
+}
+@media print {
+  .customer-quote-paper .customer-quote-table-head,
+  .customer-quote-paper .customer-area-summary-row,
+  .customer-quote-paper .customer-quote-section h3{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+}

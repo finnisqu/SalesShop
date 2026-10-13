@@ -108,6 +108,7 @@ import './quotes-beta-structure.css';
 import './quotes-beta-management.css';
 import './quotes-beta-preview-edit.css';
 import './quotes-beta-overlays.css';
+import './customer-quote-polish.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
