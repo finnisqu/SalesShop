@@ -22,14 +22,14 @@ export function useQuoteBetaGeneralManager(quote:Quote|null){
   for(const id of original)if(!current.includes(id))current.push(id);
   const lines=current.map(id=>general.find(line=>line.id===id)).filter((l):l is QuoteLine=>Boolean(l));
   const dirty=current.some((id,i)=>id!==original[i]);
-  const move=(id:string,to:string)=>{
+  const move=(id:string,to:string,after=false)=>{
     if(id===to)return;
     setOrder(old=>{
       const ids=old.filter(key=>original.includes(key));
       for(const key of original)if(!ids.includes(key))ids.push(key);
       const from=ids.indexOf(id),target=ids.indexOf(to);
       if(from<0||target<0||from===target)return old;
-      ids.splice(from,1);ids.splice(target,0,id);
+      ids.splice(from,1);ids.splice(target+(after?1:0),0,id);
       return ids;
     });
   };
@@ -41,7 +41,7 @@ export function useQuoteBetaGeneralManager(quote:Quote|null){
     motion.clear();setEditing(false);setDeletingId(null);setOrder([]);
   };
   const moveStep=(id:string,step:-1|1)=>{
-    const i=current.indexOf(id),other=current[i+step];if(other)move(id,other);
+    const i=current.indexOf(id),other=current[i+step];if(other)move(id,other,step===1);
   };
   useEffect(()=>{cancel();},[quote?.id]);
   useEffect(()=>{
