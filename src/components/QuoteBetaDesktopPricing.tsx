@@ -121,7 +121,8 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
     updateLine(quote.id,id,patch);
     // Re-entering SF mode after a manual or slab estimate must catch up with
     // any changed Takeoffs measurements, without detaching the live source.
-    if(choice==='sf'&&wasLive&&section.scope?.takeoffPieces)
+    if(choice==='sf'&&wasLive&&section.scope?.takeoffPieces&&
+      (previous?.pricingMode!=='quantity-rate'||previous?.quantity!==projection.measuredSf))
       updatePieces(quote.id,section.id,section.scope.takeoffPieces);
   };
   const areaTotal=quoteLinesTotal(lines);
