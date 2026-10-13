@@ -1400,3 +1400,39 @@ test('General takeoff can be removed with or without retaining its charges',asyn
   await dialog.getByRole('button',{name:/Remove takeoff, keep charges/}).click();
   await expect(beta.locator('.qmb-general-takeoff-ref')).toHaveCount(0);
 });
+
+
+test('Area drag moves first-to-last and last-to-first without a stuck lifted card',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Area drag reorder regression');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  for(const title of ['Kitchen','Bath','Island']){
+    await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+    await beta.getByRole('textbox',{name:'Area name'}).fill(title);
+  }
+  await rail.getByRole('button',{name:'Reorder or delete Areas'}).click();
+  const list=rail.locator('.qmb-desktop-area-list');
+  const move=async (from:string,target:string,beyond:'before'|'after')=>{
+    const grip=rail.getByRole('button',{name:new RegExp('Drag '+from+' to reorder')});
+    const dest=list.locator('[data-qmb-sort-row]').filter({hasText:target});
+    const a=(await grip.boundingBox())!,b=(await dest.boundingBox())!;
+    await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
+    await page.mouse.down();
+    await page.mouse.move(a.x+a.width/2,b.y+(beyond==='before'?4:b.height-3),{steps:10});
+    await page.mouse.up();
+    await expect(page.locator('.qmb-drag-ghost')).toHaveCount(0);
+  };
+  await move('Island','Kitchen','before');
+  await expect(list.locator('[data-qmb-sort-row]').first()).toContainText('Island');
+  await move('Island','Bath','after');
+  await expect(list.locator('[data-qmb-sort-row]').last()).toContainText('Island');
+  await rail.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
+  await expect(list.locator('[data-qmb-sort-row]').last()).toContainText('Island');
+});
