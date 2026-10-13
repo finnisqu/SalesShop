@@ -357,6 +357,7 @@ export function QuotesMobileBeta() {
   const update=useQuoteStore(s=>s.updateQuote);
   const addSection=useQuoteStore(s=>s.addSection);
   const duplicateArea=useQuoteStore(s=>s.duplicateArea);
+  const ensureGeneralTakeoff=useQuoteStore(s=>s.ensureGeneralTakeoff);
   const addLine=useQuoteStore(s=>s.addLine);
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
   const updateManagedSinkLine=useQuoteStore(s=>s.updateLine);
