@@ -565,3 +565,35 @@ test('mobile Details CRM project link is a selection, not a Board shortcut',asyn
   await expect(beta.locator('.quote-crm-connections')).toHaveCount(0);
   await expect(beta.getByRole('button',{name:/View company in Board/})).toHaveCount(0);
 });
+
+
+test('desktop Beta selections drawer stays inside editor and preserves live quote state',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Dedicated wide desktop beta experience');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const navigator=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await navigator.getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Unit Type A');
+  await navigator.getByRole('button',{name:/Build quote/}).click();
+  await navigator.getByRole('button',{name:/Job selections/}).click();
+  const drawer=beta.getByRole('dialog',{name:'Quote selections'});
+  await expect(drawer).toBeVisible();
+  const bounds=await beta.evaluate(node=>{
+    const a=node.querySelector('.qmb-desktop-main')!.getBoundingClientRect();
+    const b=node.querySelector('.qmb-selections-drawer')!.getBoundingClientRect();
+    return {left:a.left,right:a.right,drawerLeft:b.left,drawerRight:b.right,
+      top:a.top,drawerTop:b.top};
+  });
+  expect(bounds.drawerLeft).toBeGreaterThanOrEqual(bounds.left-2);
+  expect(bounds.drawerRight).toBeLessThanOrEqual(bounds.right+2);
+  expect(bounds.drawerTop).toBeGreaterThanOrEqual(bounds.top-2);
+  await drawer.getByRole('button',{name:'Close selections'}).click();
+  await expect(drawer).toHaveCount(0);
+  await expect(navigator.getByRole('button',{name:/Unit Type A/})).toBeVisible();
+});
