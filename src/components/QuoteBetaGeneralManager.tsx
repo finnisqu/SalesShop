@@ -94,7 +94,7 @@ export function QuoteBetaGeneralModeButton({manager}:{manager:QuoteBetaGeneralMa
     aria-label={manager.editing?'Done reordering General':'Reorder or delete General'}
     aria-pressed={manager.editing} disabled={!manager.editable||(!manager.editing&&!manager.lines.length)}
     onClick={()=>manager.editing?manager.finish():manager.start()}>
-    {manager.editing?'✓ Done':'↕ Reorder / Delete'}
+    {manager.editing?'Done':'Reorder / Delete'}
   </button>;
 }
 export function QuoteBetaGeneralGrip({manager,line}:{manager:QuoteBetaGeneralManager;line:QuoteLine}){
