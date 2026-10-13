@@ -312,7 +312,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     {(view==='all'||view==='extras')&&<div className="qmb-desktop-lab-extras">
       <header><strong>Additional line prices</strong>
         <div className="qmb-addon-toolbar qmb-addon-price-toolbar">
-          <QuoteBetaRateCatalog label="Add another item from Rates" disabled={!editable}
+          <QuoteBetaRateCatalog label="Add another item from Rates" division={quote.pricingDivision} disabled={!editable}
             onChoose={item=>{if(item)addCatalogLine(quote.id,'rate',{
               ...rateItemToQuotePatch(item,quote),sectionId:section.id,quantity:1,
             });}}/>
