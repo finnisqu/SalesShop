@@ -47,7 +47,7 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const materialCost=manualOverride??fromSlab??fromSf;
   let sinkCost=0,missingSinkCosts=0;
   for(const sink of scope?.takeoffSinks??[]){
-    const cost=nonnegative(sink.sinkReference?.snapshot?.internalCost);
+    const cost=nonnegative(sink.internalCostOverride)??nonnegative(sink.sinkReference?.snapshot?.internalCost);
     if(cost===undefined){missingSinkCosts++;continue;}
     sinkCost+=cost*sink.count;
   }
