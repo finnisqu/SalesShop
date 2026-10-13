@@ -174,3 +174,17 @@ export function QuoteBetaAreaDeleteDialog({manager,quote}:{
     </section>
   </div>,document.body);
 }
+
+
+/** Salesperson-only Area disclosure control. Hidden prices are shown in the
+ * General customer document line; the quote total is never reduced. */
+export function QuoteBetaAreaVisibilityButton({quote,area}:{quote:Quote;area:QuoteSection}){
+  const update=useQuoteStore(s=>s.updateSection);
+  return <button type="button" className="qmb-area-visibility-toggle"
+    aria-label={(area.customerVisible?'Hide ':'Show ')+(area.title||'Untitled Area')+' on customer quote'}
+    aria-pressed={area.customerVisible}
+    title={area.customerVisible?'Hide Area details; keep its price under General':'Show Area on customer quote'}
+    onClick={()=>update(quote.id,area.id,{customerVisible:!area.customerVisible})}>
+    {area.customerVisible?'Shown':'Hidden'}
+  </button>;
+}
