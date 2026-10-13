@@ -34,6 +34,7 @@ import { selectedMaterialCost } from '../services/selectedMaterialCost';
 import { QuoteBetaSelections } from './QuoteBetaSelections';
 import { QuoteBetaReview } from './QuoteBetaReview';
 import { QuoteBetaDesktopRails } from './QuoteBetaDesktopRails';
+import { QuoteBetaAreasMenu } from './QuoteBetaAreasMenu';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
@@ -85,6 +86,9 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   const canRelocate = !line.takeoffSinkId && line.quantitySource?.syncMode !== 'live';
   const [expanded,setExpanded] = useState(false);
   const [ratesOpen,setRatesOpen] = useState(false);
+  useEffect(()=>{const collapse=()=>{setExpanded(false);setRatesOpen(false);};
+    window.addEventListener('sales-shop:quote-collapse-all',collapse);
+    return ()=>window.removeEventListener('sales-shop:quote-collapse-all',collapse);},[]);
   const textOnly = line.pricingMode === 'none';
   return <article className="qmb-line" data-quote-line-id={line.id}>
     <div className="qmb-line-top">
@@ -180,19 +184,6 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
   const editable=quoteIsCommerciallyEditable(quote);
   const general=isGeneralTakeoffSection(section);
   const updateSection=useQuoteStore(s=>s.updateSection);
-  const reorderSection=useQuoteStore(s=>s.reorderSection);
-  const deleteSection=useQuoteStore(s=>s.deleteSection);
-  const sectionIndex=quote.sections.findIndex(area=>area.id===section.id);
-  const moveArea=(direction:-1|1)=>{
-    const target=quote.sections[sectionIndex+direction];
-    if(target)reorderSection(quote.id,section.id,target.id);
-  };
-  const removeArea=()=>{
-    if(window.confirm('Delete this Area? Its priced lines will move to General charges. Measurements and sink selections on this Area will be removed. You can Undo.')){
-      deleteSection(quote.id,section.id);
-      goBack();
-    }
-  };
   const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
   const addLinked=useQuoteStore(s=>s.addTakeoffLine);
   const setRate=useQuoteStore(s=>s.setTakeoffRate);
@@ -246,15 +237,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
             onChange={e=>updateSection(quote.id,section.id,{customerVisible:e.target.checked})}/>
             Show this Area on the customer quote
           </label>
-          <div className="qmb-area-option-actions">
-            <button type="button" disabled={!editable||sectionIndex===0}
-              aria-label="Move current Area up" onClick={()=>moveArea(-1)}>↑ Move up</button>
-            <button type="button" disabled={!editable||sectionIndex>=quote.sections.length-1}
-              aria-label="Move current Area down" onClick={()=>moveArea(1)}>↓ Move down</button>
-            <button type="button" className="qmb-area-delete" disabled={!editable}
-              aria-label="Delete this Area" onClick={removeArea}>Delete Area</button>
-          </div>
-          <small>Deleting an Area keeps its quote charges in General. Takeoff measurements and selections belong to the Area.</small>
+          <small>Area visibility changes the customer document only. Reorder and deletion are managed from Areas ···.</small>
         </div>
       </details>}
     </div>
@@ -364,8 +347,6 @@ export function QuotesMobileBeta() {
   const update=useQuoteStore(s=>s.updateQuote);
   const addSection=useQuoteStore(s=>s.addSection);
   const duplicateArea=useQuoteStore(s=>s.duplicateArea);
-  const reorderSection=useQuoteStore(s=>s.reorderSection);
-  const deleteSection=useQuoteStore(s=>s.deleteSection);
   const addLine=useQuoteStore(s=>s.addLine);
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
   const updateManagedSinkLine=useQuoteStore(s=>s.updateLine);
@@ -510,10 +491,19 @@ export function QuotesMobileBeta() {
         onAreaTab={tab=>{setPage('area');setAreaTab(tab);}}
         onReview={()=>{setError('');setSelectionsOpen(false);setPage('review');}}
         onAddArea={newArea}
-        onSelections={()=>{setQuoteTab('build');setPage('quote');setAreaId(null);setSelectionsOpen(true);}}
-        onUndo={()=>undo(quote.id)} onRedo={()=>redo(quote.id)}
-        undoDepth={undoDepth} redoDepth={redoDepth}/>}
+        onSelections={()=>setSelectionsOpen(true)}
+        />}
       <div className="qmb-desktop-main">
+    {quote&&page!=='library'&&<div className="qmb-desktop-worktools" role="toolbar" aria-label="Quote editing tools">
+      <button type="button" disabled={!editable||!undoDepth} aria-label="Undo quote change" onClick={()=>undo(quote.id)}>↶ Undo</button>
+      <button type="button" disabled={!editable||!redoDepth} aria-label="Redo quote change" onClick={()=>redo(quote.id)}>↷ Redo</button>
+      <button type="button" onClick={()=>window.dispatchEvent(new Event('sales-shop:quote-collapse-all'))}>⌃ Collapse</button>
+      <span className="qmb-worktools-divider" aria-hidden="true"/>
+      <button type="button" disabled={!editable||quote.documentType==='pricing-schedule'} onClick={newArea}>+ Area</button>
+      <button type="button" onClick={()=>setSelectionsOpen(true)}>◇ Job Selections</button>
+      <button type="button" onClick={()=>{setPage('quote');setQuoteTab('preview');setAreaId(null);}}>▧ Preview</button>
+      <button type="button" onClick={()=>{setError('');setPage('review');}}>✓ Review</button>
+    </div>}
     {page==='library'?<>
       <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Quotes <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
@@ -559,33 +549,29 @@ export function QuotesMobileBeta() {
                   const identity=scroll?.querySelector<HTMLElement>('.qmb-quote-sticky');
                   if(scroll&&identity)scroll.scrollTop=identity.offsetTop;
                 }}>{label}</button>)}
+            <button type="button" className="qmb-selections-tab"
+              aria-label="Open quote selections" onClick={()=>setSelectionsOpen(true)}>◇ Selections</button>
           </nav>
         </div>
         <div className="qmb-pad qmb-pagecontent">
         {quote.documentType==='pricing-schedule'&&<div className="qmb-card"><strong>Pricing Schedule</strong><p>Use Classic Quotes for the full schedule workbook. This Beta editor does not alter its special pricing data.</p>
           <button type="button" className="qmb-outline" onClick={()=>exitBeta(false)}>Open classic editor</button></div>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
-          <button type="button" className="qmb-selections-launch" aria-label="Open quote selections"
-            onClick={()=>setSelectionsOpen(true)}>
-            <span><strong>◇ Selections</strong><small>{(quote.projectMaterials??[]).length} materials · Job defaults</small></span>
-            <span aria-hidden="true">›</span>
-          </button>
-          <div className="qmb-section-head"><h3>Areas</h3><button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button></div>
-          {quote.sections.map((s,index)=>{
+          <div className="qmb-section-head"><h3>Areas</h3>
+            <div className="qmb-areas-actions">
+              <QuoteBetaAreasMenu quote={quote}/>
+              <button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>
+            </div>
+          </div>
+          {quote.sections.map(s=>{
             const lines=quote.lines.filter(l=>l.sectionId===s.id);
-            return <div className="qmb-area-list-row" key={s.id}>
-              <button type="button" className="qmb-card qmb-area-card" onClick={()=>openArea(s.id)}>
+            return <button type="button" className="qmb-card qmb-area-card" key={s.id} onClick={()=>openArea(s.id)}>
                 <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
                   <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
                   <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small>
                   {!s.customerVisible&&<small className="qmb-area-hidden-label">Hidden from customer</small>}</span>
                 <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b><span>›</span></span>
-              </button>
-              {editable&&<div className="qmb-area-order-actions" aria-label={'Reorder '+(s.title||'Area')}>
-                <button type="button" disabled={index===0} aria-label={'Move '+s.title+' up'} onClick={()=>reorderSection(quote.id,s.id,quote.sections[index-1].id)}>↑</button>
-                <button type="button" disabled={index===quote.sections.length-1} aria-label={'Move '+s.title+' down'} onClick={()=>reorderSection(quote.id,s.id,quote.sections[index+1].id)}>↓</button>
-              </div>}
-            </div>;
+            </button>;
           })}
           {!quote.sections.length&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
           <div className="qmb-section-head"><h3>General charges</h3><small>Outside named Areas</small></div>
@@ -612,7 +598,6 @@ export function QuotesMobileBeta() {
         <button type="button" className="qmb-primary" onClick={()=>{setError('');setPage('review');}}>
           Review {audit?.blockers.length?'· '+audit.blockers.length+' to resolve':'quote'} ›</button>
       </footer>
-      {selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}/>:page==='review'&&quote?<QuoteBetaReview
       quote={quote} canIssue={canIssue} sending={sending} error={error}
@@ -623,6 +608,7 @@ export function QuotesMobileBeta() {
     />:null}
       </div>
     </div>
+    {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
     {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
       <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>

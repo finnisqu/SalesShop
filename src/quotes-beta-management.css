@@ -45,3 +45,27 @@
 .qmb .qmb-area-manager-foot button{border:1px solid var(--qmb-border);border-radius:10px;
   min-height:40px;min-width:88px;padding:8px 13px;background:var(--qmb-card);color:var(--qmb-ink)}
 .qmb .qmb-area-manager-foot .qmb-primary{background:var(--qmb-accent);color:var(--qmb-on-accent)}
+
+/* One quiet Area management entry point; no permanent shuffle arrows. */
+.qmb .qmb-areas-actions{display:flex;align-items:center;gap:9px}
+.qmb .qmb-desktop-areas-head .qmb-area-menu-trigger{min-height:30px;min-width:32px;font-size:19px;padding:0}
+.qmb .qmb-desktop-areas-head>strong{flex:1}
+.qmb .qmb-selections-tab{white-space:nowrap}
+.qmb .qmb-desktop-worktools{display:none}
+@media (min-width:1000px) and (min-height:550px){
+  .qmb .qmb-desktop-worktools{display:flex;flex:0 0 auto;align-items:center;flex-wrap:wrap;gap:6px;
+    padding:9px 21px;background:var(--qmb-card);border-bottom:1px solid var(--qmb-border)}
+  .qmb .qmb-desktop-worktools button{min-height:35px;padding:6px 10px;border:1px solid var(--qmb-border);
+    border-radius:8px;background:var(--qmb-card);color:var(--qmb-ink);font-size:12px;font-weight:750}
+  .qmb .qmb-desktop-worktools button:hover{background:var(--qmb-tint);color:var(--qmb-accent)}
+  .qmb .qmb-desktop-worktools button:disabled{opacity:.35}
+  .qmb .qmb-worktools-divider{height:22px;border-left:1px solid var(--qmb-border);margin:0 4px}
+  .qmb .qmb-desktop-selections-step{font-weight:850!important;color:var(--qmb-ink)!important}
+  .qmb .qmb-desktop-selections-step small{margin-left:auto;font-size:10px}
+  /* Central workspace owns the toolbar while rails continue to scroll independently. */
+  .qmb .qmb-desktop-main{position:relative}
+}
+@media (max-width:700px){
+  .qmb .qmb-quote-sticky .qmb-tabs button{min-width:0;font-size:11px}
+  .qmb .qmb-quote-sticky .qmb-selections-tab{font-size:11px;padding-inline:4px}
+}

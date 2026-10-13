@@ -3,6 +3,7 @@ import {quoteLinesTotal,quoteTotal,displayQuoteNumber} from '../types/quote';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {QuoteBetaAreasMenu} from './QuoteBetaAreasMenu';
 
 type QuoteTab='build'|'details'|'preview';
 type AreaTab='measure'|'materials'|'pricing';
@@ -13,14 +14,12 @@ const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 
 export function QuoteBetaDesktopRails({
   quote,page,quoteTab,areaTab,areaId,
-  onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onUndo,onRedo,
-  undoDepth,redoDepth,
+  onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,
 }:{
   quote:Quote;page:Page;quoteTab:QuoteTab;areaTab:AreaTab;areaId:string|null;
   onLibrary:()=>void;onQuoteTab:(tab:QuoteTab)=>void;onArea:(id:string)=>void;
   onAreaTab:(tab:AreaTab)=>void;onReview:()=>void;onAddArea:()=>void;
-  onSelections:()=>void;onUndo:()=>void;onRedo:()=>void;
-  undoDepth:number;redoDepth:number;
+  onSelections:()=>void;
 }){
   const audit=auditQuoteDraft(quote);
   const area=quote.sections.find(s=>s.id===areaId);
@@ -46,6 +45,10 @@ export function QuoteBetaDesktopRails({
           <span className="qmb-desktop-step-icon">{id==='build'?'▤':id==='details'?'♙':'▧'}</span>
           {label}
         </button>)}
+        <button type="button" className="qmb-desktop-selections-step" onClick={onSelections}>
+          <span className="qmb-desktop-step-icon">◇</span> Job Selections
+          {!!quote.projectMaterials?.length&&<small>{quote.projectMaterials.length}</small>}
+        </button>
         <button type="button" className={page==='review'?'is-active':''}
           aria-current={page==='review'?'page':undefined} onClick={onReview}>
           <span className="qmb-desktop-step-icon">✓</span> Review & issue
@@ -53,6 +56,7 @@ export function QuoteBetaDesktopRails({
         </button>
       </nav>
       <div className="qmb-desktop-areas-head"><strong>Areas</strong>
+        <QuoteBetaAreasMenu quote={quote}/>
         <button type="button" disabled={!editable||quote.documentType==='pricing-schedule'}
           onClick={onAddArea} aria-label="Add Area from navigator">+ Add</button>
       </div>
@@ -72,13 +76,6 @@ export function QuoteBetaDesktopRails({
         })}
         {!areas.length&&<p className="qmb-desktop-empty">Add an Area to begin measuring and pricing.</p>}
       </nav>
-      <div className="qmb-desktop-rail-bottom">
-        <button type="button" className="qmb-outline" onClick={onSelections}>◇ Job selections</button>
-        <div className="qmb-desktop-undo">
-          <button type="button" onClick={onUndo} disabled={!editable||!undoDepth} aria-label="Undo quote change">↶ Undo</button>
-          <button type="button" onClick={onRedo} disabled={!editable||!redoDepth} aria-label="Redo quote change">↷ Redo</button>
-        </div>
-      </div>
     </aside>
     <aside className="qmb-desktop-inspector" aria-label="Live quote summary">
       <div className="qmb-desktop-inspector-heading">
