@@ -5,19 +5,20 @@ import {useLayoutEffect,useRef,useState,type PointerEvent as ReactPointerEvent} 
  * Only a threshold-crossing changes the draft ordering. */
 export function useQuoteBetaCardDrag(move:(source:string,target:string)=>void){
   const [dragging,setDragging]=useState<string|null>(null);
-  const active=useRef<{id:string;pointerId:number;startY:number;startTop:number;
-    row:HTMLElement;handle:HTMLButtonElement}|null>(null);
+  const active=useRef<{id:string;pointerId:number;row:HTMLElement;handle:HTMLButtonElement;
+    wrapper:HTMLDivElement;startY:number;startTop:number;startX:number;startLeft:number;
+  }|null>(null);
   const moveRef=useRef(move);
   moveRef.current=move;
   const clear=()=>{
     const held=active.current;
     if(held){
-      held.row.classList.remove('is-dragging');
-      held.row.style.removeProperty('--qmb-sort-delta');
+      held.row.classList.remove('is-drag-source');
+      held.wrapper.remove();
       try{
         if(held.handle.hasPointerCapture(held.pointerId))
           held.handle.releasePointerCapture(held.pointerId);
-      }catch{ /* pointer capture can be lost when a quote switches views */ }
+      }catch{ /* capture can be released by a view change */ }
     }
     active.current=null;
     setDragging(null);
@@ -29,34 +30,54 @@ export function useQuoteBetaCardDrag(move:(source:string,target:string)=>void){
     if(!row)return;
     event.preventDefault();event.stopPropagation();
     const rect=row.getBoundingClientRect();
-    active.current={id,pointerId:event.pointerId,startY:event.clientY,startTop:rect.top,row,handle};
+    // Drag a floating *copy*. The real row stays in the list as a placeholder.
+    // This prevents the captured pointer from being repositioned by React
+    // when a row crosses another row's midpoint.
+    const wrapper=document.createElement('div');
+    wrapper.className='qmb qmb-drag-ghost';
+    wrapper.setAttribute('aria-hidden','true');
+    const root=row.closest<HTMLElement>('.qmb');
+    if(root){
+      const computed=getComputedStyle(root);
+      for(const token of ['--qmb-card','--qmb-ink','--qmb-border','--qmb-accent','--qmb-tint','--qmb-muted']){
+        wrapper.style.setProperty(token,computed.getPropertyValue(token));
+      }
+    }
+    const copy=row.cloneNode(true) as HTMLElement;
+    copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    copy.removeAttribute('data-qmb-sort-row');
+    wrapper.appendChild(copy);
+    wrapper.style.width=rect.width+'px';
+    wrapper.style.left=rect.left+'px';
+    wrapper.style.top=rect.top+'px';
+    document.body.appendChild(wrapper);
+    row.classList.add('is-drag-source');
+    active.current={id,pointerId:event.pointerId,row,handle,wrapper,
+      startY:event.clientY,startTop:rect.top,startX:event.clientX,startLeft:rect.left};
     handle.setPointerCapture(event.pointerId);
-    row.classList.add('is-dragging');
     setDragging(id);
   };
   const onPointerMove=(id:string,event:ReactPointerEvent<HTMLButtonElement>)=>{
     const held=active.current;
     if(!held||held.id!==id||held.pointerId!==event.pointerId)return;
     event.preventDefault();
-    const row=held.row;
-    const oldDelta=Number.parseFloat(row.style.getPropertyValue('--qmb-sort-delta'))||0;
-    // The row can change its natural layout position when neighbors switch.
-    // Correct for that displacement so the lifted card follows the finger.
-    const naturalTop=row.getBoundingClientRect().top-oldDelta;
-    const delta=held.startTop+(event.clientY-held.startY)-naturalTop;
-    row.style.setProperty('--qmb-sort-delta',delta.toFixed(1)+'px');
-    const parent=row.parentElement;
+    const deltaY=event.clientY-held.startY;
+    const deltaX=event.clientX-held.startX;
+    held.wrapper.style.transform='translate3d('+deltaX+'px,'+deltaY+'px,0) scale(1.025)';
+    const parent=held.row.parentElement;
     if(!parent)return;
-    const others=Array.from(parent.querySelectorAll<HTMLElement>('[data-qmb-sort-row]'))
-      .filter(item=>item!==row);
+    const all=Array.from(parent.querySelectorAll<HTMLElement>(':scope > [data-qmb-sort-row]'));
+    const others=all.filter(item=>item!==held.row);
+    if(!others.length)return;
+    let insertion=0;
     for(const other of others){
-      const bounds=other.getBoundingClientRect();
-      if(event.clientY>=bounds.top+3&&event.clientY<=bounds.bottom-3){
-        const to=other.dataset.qmbSortRow;
-        if(to)moveRef.current(id,to);
-        break;
-      }
+      const rect=other.getBoundingClientRect();
+      if(event.clientY>rect.top+rect.height/2)insertion++;
     }
+    const sourceIndex=all.indexOf(held.row);
+    if(sourceIndex===insertion)return;
+    const target=others[Math.min(insertion,others.length-1)].dataset.qmbSortRow;
+    if(target)moveRef.current(id,target);
   };
   const onPointerEnd=(event:ReactPointerEvent<HTMLButtonElement>)=>{
     if(active.current?.pointerId===event.pointerId)clear();
