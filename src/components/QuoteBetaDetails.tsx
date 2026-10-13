@@ -10,7 +10,7 @@ import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 export function QuoteBetaDetails({quote}:{quote:Quote}) {
   const update=useQuoteStore(state=>state.updateQuote);
   const editable=quoteIsCommerciallyEditable(quote);
-  return <div className="qmb-details-page" aria-label="Quote customer and project details">
+  return <div className="qmb-details-page" role="region" aria-label="Quote customer and project details">
     <section className="qmb-details-section qmb-card" aria-labelledby="qmb-details-customer">
       <header className="qmb-details-heading">
         <span className="qmb-details-step">1</span>
