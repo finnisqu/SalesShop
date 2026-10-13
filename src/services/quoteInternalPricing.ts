@@ -64,7 +64,9 @@ function rateInternalCost(line: QuoteLine) {
 
   if (snapshot.unit === 'flat') {
     return {
-      value: roundCurrency(snapshot.internalCost ?? 0),
+      // Quantity-rate flat fees may be ordered multiple times (e.g., trips).
+      value: roundCurrency((snapshot.internalCost ?? 0) *
+        (line.pricingMode === 'quantity-rate' ? line.quantity ?? 1 : 1)),
       source: 'rate-flat' as const,
     };
   }
