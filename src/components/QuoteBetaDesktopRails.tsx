@@ -4,7 +4,7 @@ import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
-import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,
+import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,QuoteBetaAreaVisibilityButton,
   type QuoteBetaAreaManager} from './QuoteBetaAreasMenu';
 
 type QuoteTab='build'|'details'|'preview';
