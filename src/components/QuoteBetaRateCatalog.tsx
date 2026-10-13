@@ -22,7 +22,7 @@ export function rateItemToQuotePatch(item:RateBookItem,quote:Quote):Partial<Quot
  * pricing. No popover clipping, and list includes every active Rates category. */
 export function QuoteBetaRateCatalog({value='',onChoose,disabled,label,includeCustom=false,division}:{
   value?:string;onChoose:(item:RateBookItem|null)=>void;disabled:boolean;
-  label:string;includeCustom?:boolean;
+  label:string;includeCustom?:boolean;division?:RateBookDivision;
 }){
   const items=useRateBookStore(s=>s.items);
   const hydrate=useRateBookStore(s=>s.hydrate);
