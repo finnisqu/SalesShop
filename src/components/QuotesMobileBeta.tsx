@@ -34,7 +34,8 @@ import { QuoteBetaSelections } from './QuoteBetaSelections';
 import { QuoteBetaReview } from './QuoteBetaReview';
 import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
 import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRails';
-import { QuoteBetaAreasMenu } from './QuoteBetaAreasMenu';
+import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
+  QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
@@ -394,6 +395,7 @@ export function QuotesMobileBeta() {
   const myQuotes=useMemo(()=>authMode==='cloud'?quotes.filter(q=>q.ownerUserId===userId):quotes,
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
+  const areaManager=useQuoteBetaAreaManager(quote);
   // One-time upgrade when opening old Beta takeoffs: historical specifications
   // should not silently remain unpriced. Normal Catalog/manually priced rows are
   // preserved; only missing takeoff-managed sink charges are created.
@@ -499,6 +501,7 @@ export function QuotesMobileBeta() {
     <div className={'qmb-desktop-frame'+(page==='library'?' is-library':'')}>
       {quote&&page!=='library'&&<QuoteBetaDesktopRails
         quote={quote} page={page} quoteTab={quoteTab} areaTab={areaTab} areaId={areaId}
+        areaManager={areaManager}
         onLibrary={()=>{setSelectionsOpen(false);setPage('library');setAreaId(null);}}
         onQuoteTab={tab=>{setPage('quote');setQuoteTab(tab);setAreaId(null);}}
         onArea={id=>{if(page==='area'&&id===areaId)return;openArea(id);}}
@@ -566,22 +569,32 @@ export function QuotesMobileBeta() {
         {quote.documentType==='pricing-schedule'&&<div className="qmb-card"><strong>Pricing Schedule</strong><p>Use Classic Quotes for the full schedule workbook. This Beta editor does not alter its special pricing data.</p>
           <button type="button" className="qmb-outline" onClick={()=>exitBeta(false)}>Open classic editor</button></div>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
-          <div className="qmb-section-head"><h3>Areas</h3>
+          <div className="qmb-section-head" data-area-edit-workspace><h3>Areas</h3>
             <div className="qmb-areas-actions">
-              <QuoteBetaAreasMenu quote={quote}/>
-              <button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>
+              <QuoteBetaAreaModeButton manager={areaManager}/>
+              {!areaManager.editing&&<button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>}
             </div>
           </div>
-          {quote.sections.map(s=>{
+          <div className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
+            data-area-edit-workspace aria-label="Quote Area cards">
+          {(areaManager.editing?areaManager.orderedSections:quote.sections).map(s=>{
             const lines=quote.lines.filter(l=>l.sectionId===s.id);
-            return <button type="button" className="qmb-card qmb-area-card" key={s.id} onClick={()=>openArea(s.id)}>
+            return <div className="qmb-inline-area-row" data-area-sort-id={s.id} key={s.id}>
+              {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
+              <button type="button" className="qmb-card qmb-area-card"
+                aria-disabled={areaManager.editing}
+                onClick={()=>{if(!areaManager.editing)openArea(s.id);}}>
                 <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
                   <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
                   <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small>
                   {!s.customerVisible&&<small className="qmb-area-hidden-label">Hidden from customer</small>}</span>
-                <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b><span>›</span></span>
-            </button>;
+                <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b>{!areaManager.editing&&<span>›</span>}</span>
+              </button>
+              {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={s}/>}
+            </div>;
           })}
+          {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
+          </div>
           {!quote.sections.length&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
           <div className="qmb-section-head"><h3>General charges</h3><small>Outside named Areas</small></div>
           {quote.lines.filter(l=>!l.sectionId||!quote.sections.some(s=>s.id===l.sectionId))
@@ -609,6 +622,7 @@ export function QuotesMobileBeta() {
       </div>
     </div>
     {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
+    <QuoteBetaAreaDeleteDialog manager={areaManager} quote={quote}/>
     {quote&&page!=='library'&&reviewOpen&&<QuoteBetaReviewOverlay quote={quote} focusId={reviewFocus}
       inspector={<QuoteBetaInspector quote={quote} page={page} areaTab={areaTab} areaId={areaId}
         onAreaTab={tab=>{setPage('area');setAreaTab(tab);}} onReview={()=>openReview()}

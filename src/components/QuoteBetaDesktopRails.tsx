@@ -3,7 +3,8 @@ import {quoteLinesTotal,quoteTotal,displayQuoteNumber} from '../types/quote';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
-import {QuoteBetaAreasMenu} from './QuoteBetaAreasMenu';
+import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,
+  type QuoteBetaAreaManager} from './QuoteBetaAreasMenu';
 
 type QuoteTab='build'|'details'|'preview';
 type AreaTab='measure'|'materials'|'pricing';
@@ -15,7 +16,7 @@ const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 export function QuoteBetaDesktopRails({
   quote,page,quoteTab,areaTab,areaId,
   onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onReviewFinding,onReviewIssue,
-  onUndo,onRedo,undoDepth,redoDepth,onSend,canIssue,
+  onUndo,onRedo,undoDepth,redoDepth,onSend,canIssue,areaManager,
 }:{
   quote:Quote;page:Page;quoteTab:QuoteTab;areaTab:AreaTab;areaId:string|null;
   onLibrary:()=>void;onQuoteTab:(tab:QuoteTab)=>void;onArea:(id:string)=>void;
@@ -23,11 +24,11 @@ export function QuoteBetaDesktopRails({
   onSelections:()=>void;onReviewFinding:(kind:'blockers'|'review'|'optional')=>void;
   onReviewIssue:(id:string)=>void;
   onUndo:()=>void;onRedo:()=>void;undoDepth:number;redoDepth:number;
-  onSend:()=>void;canIssue:boolean;
+  onSend:()=>void;canIssue:boolean;areaManager:QuoteBetaAreaManager;
 }){
   const editable=quoteIsCommerciallyEditable(quote);
   const steps=[['build','Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
-  const areas=quote.sections;
+  const areas=areaManager.editing?areaManager.orderedSections:quote.sections;
   return <>
     <aside className="qmb-desktop-navigation" aria-label="Quote workspace navigation">
       <div className="qmb-desktop-rail-head">
@@ -54,26 +55,33 @@ export function QuoteBetaDesktopRails({
           {!!quote.projectMaterials?.length&&<small>{quote.projectMaterials.length}</small>}
         </button>
       </nav>
-      <div className="qmb-desktop-areas-head"><strong>Areas</strong>
-        <QuoteBetaAreasMenu quote={quote}/>
-        <button type="button" disabled={!editable||quote.documentType==='pricing-schedule'}
-          onClick={onAddArea} aria-label="Add Area from navigator">+ Add</button>
+      <div className="qmb-desktop-areas-head" data-area-edit-workspace><strong>Areas</strong>
+        <QuoteBetaAreaModeButton manager={areaManager}/>
+        {!areaManager.editing&&<button type="button" disabled={!editable||quote.documentType==='pricing-schedule'}
+          onClick={onAddArea} aria-label="Add Area from navigator">+ Add</button>}
       </div>
-      <nav className="qmb-desktop-area-list" aria-label="Quote Areas">
+      <nav className={'qmb-desktop-area-list'+(areaManager.editing?' is-managing-areas':'')}
+        aria-label="Quote Areas" data-area-edit-workspace>
         {areas.map(section=>{
           const active=page==='area'&&section.id===areaId;
           const lines=quote.lines.filter(l=>l.sectionId===section.id);
-          return <button type="button" key={section.id} className={active?'is-active':''}
-            aria-current={active?'page':undefined} onClick={()=>onArea(section.id)}>
-            <span className="qmb-desktop-area-dot">▤</span>
-            <span className="qmb-desktop-area-title">
-              <strong>{section.title.trim().toLowerCase()==='general takeoffs'?'General':section.title||'Untitled Area'}</strong>
-              <small>{sf.format(section.scope?.countertopSf??0)} SF</small>
-            </span>
-            <span className="qmb-desktop-area-value">{money.format(quoteLinesTotal(lines))}</span>
-          </button>;
+          return <div key={section.id} className="qmb-inline-area-row" data-area-sort-id={section.id}>
+            {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={section}/>}
+            <button type="button" className={'qmb-desktop-area-card'+(active?' is-active':'')}
+              aria-disabled={areaManager.editing}
+              aria-current={active?'page':undefined} onClick={()=>{if(!areaManager.editing)onArea(section.id);}}>
+              <span className="qmb-desktop-area-dot">▤</span>
+              <span className="qmb-desktop-area-title">
+                <strong>{section.title.trim().toLowerCase()==='general takeoffs'?'General':section.title||'Untitled Area'}</strong>
+                <small>{sf.format(section.scope?.countertopSf??0)} SF</small>
+              </span>
+              <span className="qmb-desktop-area-value">{money.format(quoteLinesTotal(lines))}</span>
+            </button>
+            {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={section}/>}
+          </div>;
         })}
         {!areas.length&&<p className="qmb-desktop-empty">Add an Area to begin measuring and pricing.</p>}
+        {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Esc cancels</p>}
       </nav>
     </aside>
     <QuoteBetaInspector quote={quote} page={page} areaTab={areaTab} areaId={areaId}
