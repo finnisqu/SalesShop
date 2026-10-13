@@ -1432,3 +1432,59 @@ test('Area drag moves first-to-last and last-to-first without a stuck lifted car
   await rail.getByRole('button',{name:'Done reordering and deleting Areas'}).click();
   await expect(list.locator('[data-qmb-sort-row]').last()).toContainText('Island');
 });
+
+
+test('Beta quote library archives, restores and safely deletes an unsent draft',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Quote lifecycle controls on desktop');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:/All quotes/}).click();
+  const entry=beta.locator('.qmb-library-entry').filter({hasText:'Untitled quote'}).first();
+  await expect(entry).toBeVisible();
+  await entry.getByRole('button',{name:'Archive'}).click();
+  const archiveDialog=page.getByRole('dialog',{name:'Archive quote'});
+  await expect(archiveDialog).toContainText('retained');
+  await archiveDialog.getByRole('button',{name:'Archive quote'}).click();
+  await expect(entry).toHaveCount(0);
+  await beta.getByRole('button',{name:'Show archived'}).click();
+  const restored=beta.locator('.qmb-library-entry').filter({hasText:'Untitled quote'}).first();
+  await expect(restored).toContainText('Archived');
+  await restored.getByRole('button',{name:'Restore'}).click();
+  await expect(restored.getByRole('button',{name:'Archive'})).toBeVisible();
+  await restored.getByRole('button',{name:'Delete draft'}).click();
+  const deleteDialog=page.getByRole('dialog',{name:'Delete draft quote'});
+  await expect(deleteDialog).toContainText('Permanent deletion');
+  await deleteDialog.getByRole('button',{name:'Permanently delete draft'}).click();
+  await expect(restored).toHaveCount(0);
+});
+
+test('Details gives access to editable revision labels without confusing issued status',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Quote Details document setup');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:'Customer & project'}).click();
+  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  const revision=details.getByRole('textbox',{name:'Revision or option label'});
+  await revision.fill('Alternate A');
+  await details.getByRole('combobox',{name:'Draft status'}).selectOption('Ready');
+  await expect(details.getByRole('combobox',{name:'Draft status'})).toHaveValue('Ready');
+  await details.locator('.qmb-lifecycle-revisions summary').click();
+  await expect(details.locator('.qmb-lifecycle-revisions')).toContainText('No issued revisions yet');
+  await rail.getByRole('button',{name:'Build quote'}).click();
+  await rail.getByRole('button',{name:'Customer & project'}).click();
+  await expect(details.getByRole('textbox',{name:'Revision or option label'})).toHaveValue('Alternate A');
+});
