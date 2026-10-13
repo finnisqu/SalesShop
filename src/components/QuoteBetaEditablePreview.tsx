@@ -168,7 +168,7 @@ export function QuoteBetaEditablePreview({quote}:{quote:Quote}){
   const selected=candidateLines.find(line=>line.id===selectedLineId)??candidateLines[0];
   const activeSection=target?.kind==='area'?quote.sections.find(s=>s.id===target.id):null;
   const title=target?.kind==='area'?activeSection?.title||'Area charges':
-    target?.kind==='general'?'General charges':selected?.description||'Line price';
+    target?.kind==='general'?'General':selected?.description||'Line price';
   return <div className="qmb-editable-preview">
     <div className="qmb-preview-seller-toolbar">
       <div className="qmb-preview-view-label"><strong>Customer document</strong>
