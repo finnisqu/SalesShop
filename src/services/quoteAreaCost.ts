@@ -25,7 +25,7 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const yieldFraction=setting!==undefined&&Number.isFinite(setting)&&setting>0&&setting<=1
     ?setting:DEFAULT_SLAB_YIELD;
   const snapshot=ref?.snapshot;
-  const area=positive(snapshot?.areaSf)
+  const area=positive(scope?.slabAreaOverrideSf)??positive(snapshot?.areaSf)
     ??(positive(snapshot?.lengthIn)&&positive(snapshot?.widthIn)
       ?snapshot!.lengthIn!*snapshot!.widthIn!/144:undefined);
   const usablePerSlab=area?area*yieldFraction:undefined;
