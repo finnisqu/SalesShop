@@ -16,7 +16,7 @@ function dateLabel(value: string | null) {
   return new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export function QuoteShareControl() {
+export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boolean;allowCreation?:boolean}={}) {
   const mode = useAuthStore((state) => state.mode);
   const organizationId = useAuthStore((state) => state.organizationId);
   const quotes = useQuoteStore((state) => state.quotes);
@@ -115,14 +115,15 @@ export function QuoteShareControl() {
   const active = share?.status === 'active' || share?.status === 'signed';
 
   return (
-    <div className="quote-share-control">
+    <div className={'quote-share-control'+(inline?' is-inline':'')}>
       <button
         type="button"
         className="quote-share-launcher"
+        aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         title={cloudReady ? 'Create or manage the customer quote link' : 'Customer links require Cloud mode'}
       >
-        <span>↗</span> Share quote
+        <span>↗</span> {inline?'Customer link & sharing':'Share quote'}
       </button>
 
       {open && (
@@ -147,7 +148,8 @@ export function QuoteShareControl() {
                   <p>{quote.status === 'Draft' || quote.status === 'Ready'
                     ? 'Creating the link will send and freeze this exact revision before it becomes customer-accessible.'
                     : 'Create a secure link to this frozen quote revision.'}</p>
-                  <button type="button" onClick={() => void makeLink(false)} disabled={working || quote.status === 'Declined' || quote.status === 'Expired'}>
+                  {!allowCreation&&<p className="quote-share-review-needed">Recheck and complete Review before creating a new customer link.</p>}
+                  <button type="button" onClick={() => void makeLink(false)} disabled={working || !allowCreation || quote.status === 'Declined' || quote.status === 'Expired'}>
                     {working ? 'Creating…' : 'Create customer link'}
                   </button>
                 </div>
@@ -179,7 +181,7 @@ export function QuoteShareControl() {
 
                   <div className="quote-share-secondary-actions">
                     {share.status !== 'revoked' && <button type="button" onClick={() => void revoke()} disabled={working}>Revoke</button>}
-                    <button type="button" onClick={() => void makeLink(true)} disabled={working || quote.status === 'Declined' || quote.status === 'Expired'}>
+                    <button type="button" onClick={() => void makeLink(true)} disabled={working || !allowCreation || quote.status === 'Declined' || quote.status === 'Expired'}>
                       {working ? 'Working…' : share.status === 'revoked' ? 'Create new link' : 'Regenerate link'}
                     </button>
                   </div>

@@ -72,3 +72,82 @@
   background:var(--qmb-tint);color:var(--qmb-accent);border-color:var(--qmb-border)
  }
 }
+
+/* Never let the darkening backdrop affect a portaled dialogue's foreground. */
+.qmb.qmb-area-manager-backdrop {isolation:isolate;opacity:1;mix-blend-mode:normal;}
+.qmb.qmb-area-manager-backdrop>.qmb-area-manager {
+  background-color:var(--qmb-card,#fff);isolation:isolate;
+  backdrop-filter:none;mix-blend-mode:normal;opacity:1;
+}
+/* Desktop inspector is the always-visible live review list; nav Review opens
+   the full detail, quick fixes, and delivery sheet without leaving the quote. */
+@media(min-width:1000px) and (min-height:550px){
+ .qmb .qmb-desktop-readiness{display:flex;flex-direction:column;gap:11px;padding:16px 0 6px;
+   border-top:1px solid var(--qmb-border);min-height:0}
+ .qmb .qmb-inspector-review-heading{display:grid;gap:5px}
+ .qmb .qmb-inspector-review-heading strong{font-size:13px;line-height:1.3}
+ .qmb .qmb-inspector-review-heading small{font-size:10px;color:var(--qmb-accent);font-weight:750}
+ .qmb .qmb-inspector-review-categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .qmb .qmb-inspector-review-categories button{border:1px solid var(--qmb-border);background:var(--qmb-bg);
+  border-radius:8px;display:grid;gap:4px;min-height:52px;padding:7px 2px;text-align:center;
+  color:var(--qmb-ink);cursor:pointer}
+ .qmb .qmb-inspector-review-categories button strong{font-size:17px;line-height:1;font-weight:850}
+ .qmb .qmb-inspector-review-categories button span{color:var(--qmb-muted);font-size:10px}
+ .qmb .qmb-inspector-finding-list{display:grid;gap:6px}
+ .qmb .qmb-inspector-finding-list button.qmb-inspector-finding{
+  display:flex;gap:7px;align-items:flex-start;width:100%;border:1px solid var(--qmb-border);
+  border-radius:9px;padding:9px 7px;text-align:left;background:var(--qmb-card);
+  color:var(--qmb-ink);font-size:11px;line-height:1.4;cursor:pointer}
+ .qmb .qmb-inspector-finding-list button.qmb-inspector-finding:hover,
+ .qmb .qmb-inspector-finding-list button.qmb-inspector-finding:focus-visible,
+ .qmb .qmb-inspector-review-categories button:hover,
+ .qmb .qmb-inspector-review-categories button:focus-visible{
+  background:var(--qmb-tint);border-color:var(--qmb-accent)}
+ .qmb .qmb-inspector-finding-dot{color:var(--qmb-accent);font-weight:900;flex:0 0 14px;text-align:center}
+ .qmb .qmb-inspector-finding.is-blocker .qmb-inspector-finding-dot{color:var(--ss-danger,#ae574f)}
+ .qmb .qmb-inspector-finding-list button.qmb-inspector-finding>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
+ .qmb .qmb-inspector-finding-chevron{color:var(--qmb-accent)}
+ .qmb .qmb-inspector-finding-list button.qmb-inspector-more{border:0;background:transparent;
+  color:var(--qmb-accent);padding:8px;font-size:11px;font-weight:800;text-align:left}
+ .qmb .qmb-inspector-no-issues{margin:0;font-size:11px;line-height:1.6;color:var(--qmb-muted)}
+ .qmb .qmb-inspector-delivery{display:grid;gap:8px;border-top:1px solid var(--qmb-border);padding-top:13px}
+ .qmb .qmb-inspector-delivery strong{font-size:12px}
+ .qmb .qmb-inspector-delivery small{font-size:10px;line-height:1.5;color:var(--qmb-muted)}
+ .qmb .qmb-inspector-delivery button{min-height:38px;border:1px solid var(--qmb-accent);
+  border-radius:9px;color:var(--qmb-accent);background:var(--qmb-card);font-size:11px;font-weight:750}
+}
+/* Pricing recheck gate: only appears after this review's quote has changed. */
+.qmb .qmb-review-recheck{display:flex;align-items:center;gap:10px;padding:12px;
+ border:1px solid var(--qmb-accent);border-radius:11px;background:var(--qmb-tint);
+ color:var(--qmb-ink);margin-bottom:12px}
+.qmb .qmb-review-recheck>div{display:grid;gap:5px;flex:1;min-width:0}
+.qmb .qmb-review-recheck strong{font-size:12px}
+.qmb .qmb-review-recheck small{font-size:11px;line-height:1.4;color:var(--qmb-muted)}
+.qmb .qmb-review-recheck button{flex:0 0 auto;border:1px solid var(--qmb-accent);border-radius:8px;
+ background:var(--qmb-card);color:var(--qmb-accent);padding:8px;font-size:12px;font-weight:800}
+@media(max-width:420px){.qmb .qmb-review-recheck{flex-wrap:wrap}.qmb .qmb-review-recheck button{width:100%}}
+/* Inline share controls stay inside Customer Delivery and scroll with Review.
+   Legacy floating quote-share remains unchanged in Classic. */
+.qmb .qmb-audit-delivery .quote-share-control.is-inline{
+ position:relative;inset:auto!important;z-index:auto;display:block;
+ width:100%;max-width:100%;margin:2px 0 0;padding:0}
+.qmb .qmb-audit-delivery .quote-share-control.is-inline>.quote-share-launcher{
+ width:100%;min-height:43px;justify-content:center;box-shadow:none;
+ border-radius:10px;border:1px solid var(--qmb-border);
+ background:var(--qmb-card);color:var(--qmb-accent);font:750 12px/1.4 inherit}
+.qmb .qmb-audit-delivery .quote-share-control.is-inline>.quote-share-panel{
+ position:static!important;inset:auto!important;display:block;box-sizing:border-box;
+ margin:8px 0 0;width:100%;max-width:100%;max-height:none;overflow:visible;
+ background:var(--qmb-card);border:1px solid var(--qmb-border);
+ box-shadow:none;border-radius:11px;color:var(--qmb-ink)}
+.qmb .qmb-audit-delivery .quote-share-control.is-inline .quote-share-panel>header{padding:12px;
+ background:var(--qmb-bg);border-color:var(--qmb-border)}
+.qmb .qmb-audit-delivery .quote-share-control.is-inline .quote-share-panel>header strong{font-size:13px}
+.qmb .qmb-audit-delivery .quote-share-control.is-inline .quote-share-empty,
+.qmb .qmb-audit-delivery .quote-share-control.is-inline .quote-share-active{padding:12px}
+.qmb .qmb-audit-delivery .quote-share-control.is-inline .quote-share-primary-actions,
+.qmb .qmb-audit-delivery .quote-share-control.is-inline .quote-share-secondary-actions{flex-wrap:wrap}
+.qmb .qmb-audit-delivery .quote-share-control.is-inline .quote-share-empty p{color:var(--qmb-muted)}
+.qmb .qmb-audit-delivery .quote-share-control.is-inline :is(button,input){max-width:100%}
+.qmb .qmb-audit-delivery .quote-share-review-needed{margin:5px 0 11px;color:var(--ss-danger,#ae574f);
+ font-size:11px;line-height:1.5}

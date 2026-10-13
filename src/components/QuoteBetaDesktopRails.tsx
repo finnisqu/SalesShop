@@ -14,12 +14,13 @@ const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 
 export function QuoteBetaDesktopRails({
   quote,page,quoteTab,areaTab,areaId,
-  onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onReviewFinding,
+  onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onReviewFinding,onReviewIssue,
 }:{
   quote:Quote;page:Page;quoteTab:QuoteTab;areaTab:AreaTab;areaId:string|null;
   onLibrary:()=>void;onQuoteTab:(tab:QuoteTab)=>void;onArea:(id:string)=>void;
   onAreaTab:(tab:AreaTab)=>void;onReview:()=>void;onAddArea:()=>void;
   onSelections:()=>void;onReviewFinding:(kind:'blockers'|'review'|'optional')=>void;
+  onReviewIssue:(id:string)=>void;
 }){
   const audit=auditQuoteDraft(quote);
   const area=quote.sections.find(s=>s.id===areaId);
@@ -98,16 +99,38 @@ export function QuoteBetaDesktopRails({
               onClick={()=>onAreaTab(id)}>{label}</button>)}
         </nav>
       </section>}
-      <section className="qmb-desktop-readiness">
-        <strong>Quote readiness</strong>
-        {([['blockers','Pricing to resolve',audit.blockers.length],['review','Review items',audit.review.length],['optional','Optional details',audit.optional.length]] as const)
-          .map(([kind,label,count])=><button type="button" key={kind} className="qmb-desktop-review-row"
-            aria-label={'Open '+label.toLowerCase()} onClick={()=>onReviewFinding(kind)}>
-            <span>{label}</span><b className={kind==='blockers'&&count?'is-warning':''}>{count}</b><span aria-hidden="true">›</span>
+      <section className="qmb-desktop-readiness" aria-label="Live quote review">
+        <div className="qmb-inspector-review-heading">
+          <strong>Review &amp; readiness</strong>
+          <small>{audit.blockers.length?'Needs attention':'Live checked'}</small>
+        </div>
+        <div className="qmb-inspector-review-categories" aria-label="Review categories">
+          {([['blockers','Resolve',audit.blockers.length],['review','Review',audit.review.length],['optional','Optional',audit.optional.length]] as const)
+            .map(([kind,label,count])=><button type="button" key={kind}
+              aria-label={'Open '+label.toLowerCase()+' items'} onClick={()=>onReviewFinding(kind)}>
+              <strong>{count}</strong><span>{label}</span>
+            </button>)}
+        </div>
+        <div className="qmb-inspector-finding-list" aria-label="Current quote findings">
+          {!audit.findings.length&&<p className="qmb-inspector-no-issues">✓ No outstanding review findings. Customer delivery is ready to check.</p>}
+          {audit.findings.slice(0,9).map(f=><button type="button" key={f.id}
+            className={'qmb-inspector-finding is-'+f.severity}
+            aria-label={'Resolve '+f.title} onClick={()=>onReviewIssue(f.id)}>
+            <span className="qmb-inspector-finding-dot" aria-hidden="true">{f.severity==='blocker'?'!':f.severity==='review'?'•':'○'}</span>
+            <span>{f.title}</span><span className="qmb-inspector-finding-chevron" aria-hidden="true">›</span>
           </button>)}
-        {!audit.findings.length&&<small className="qmb-desktop-ready">✓ No audit findings</small>}
+          {audit.findings.length>9&&<button type="button" className="qmb-inspector-more"
+            onClick={onReview}>View all {audit.findings.length} findings ›</button>}
+        </div>
+        <div className="qmb-inspector-delivery">
+          <strong>Customer delivery</strong>
+          <small>{audit.blockers.length
+            ?audit.blockers.length+' blocking issue'+(audit.blockers.length===1?'':'s')+' to resolve before sending'
+            :'Check the customer document and issue or share the quote'}</small>
+          <button type="button" onClick={onReview}>Open review &amp; delivery ›</button>
+        </div>
       </section>
-      <small className="qmb-desktop-autosaved">Changes save automatically. Internal costs and measurements stay out of the customer document.</small>
+      <small className="qmb-desktop-autosaved">Review updates live as you edit. Internal pricing and measurements stay private.</small>
     </aside>
   </>;
 }

@@ -499,6 +499,7 @@ export function QuotesMobileBeta() {
         onAreaTab={tab=>{setPage('area');setAreaTab(tab);}}
         onReview={()=>openReview()}
         onReviewFinding={openReviewCategory}
+        onReviewIssue={id=>openReview(id)}
         onAddArea={newArea}
         onSelections={()=>setSelectionsOpen(true)}
         />}

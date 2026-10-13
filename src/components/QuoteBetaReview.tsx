@@ -20,15 +20,17 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [acknowledged,setAcknowledged]=useState(false);
+  const [lastCheckedAt,setLastCheckedAt]=useState(quote.updatedAt);
+  const needsRecheck=lastCheckedAt!==quote.updatedAt;
   const [expandedId,setExpandedId]=useState<string|null>(initialFindingId??null);
   const issueSet=report.findings.map(f=>f.id+':'+f.severity).join('|');
-  useEffect(()=>setAcknowledged(false),[quote.id,issueSet]);
+  useEffect(()=>setAcknowledged(false),[quote.id,issueSet,quote.updatedAt]);
   useEffect(()=>{setExpandedId(initialFindingId??null);},[initialFindingId]);
   useEffect(()=>{
     if(expandedId&&!report.findings.some(f=>f.id===expandedId))setExpandedId(null);
   },[expandedId,issueSet,report.findings]);
   const editable=quote.status==='Draft'||quote.status==='Ready';
-  const ready=report.blockers.length===0&&(!report.review.length||acknowledged);
+  const ready=!needsRecheck&&report.blockers.length===0&&(!report.review.length||acknowledged);
   const renderFindings=(items:QuoteAuditFinding[],heading:string,description:string,kind:string)=>(
     <section className="qmb-audit-group" aria-label={heading}>
       <div className="qmb-audit-group-heading">
@@ -75,6 +77,11 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
           <span><b>{report.optional.length}</b> Optional</span>
         </div>
       </div>
+      {needsRecheck&&<section className="qmb-review-recheck" role="status">
+        <div><strong>Quote changed since this review</strong>
+          <small>Recheck the latest amounts and findings before issuing or creating a new customer link.</small></div>
+        <button type="button" onClick={()=>{setLastCheckedAt(quote.updatedAt);setAcknowledged(false);}}>Recheck now</button>
+      </section>}
       {!report.findings.length&&<section className="qmb-audit-clean">
         <strong>✓ Ready to issue</strong>
         <p>No missing pricing or unfinished details detected. Check the customer preview before sending.</p>
@@ -100,10 +107,10 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
           onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
         <p className="qmb-help">Preview and draft links are available at any time. Issuing records a formal quote revision.</p>
         <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer preview ›</button>
-        <QuoteShareControl/>
+        <QuoteShareControl inline allowCreation={!editable||(ready&&canIssue)}/>
         {editable&&<button type="button" className="qmb-primary qmb-block"
           disabled={sending||!canIssue||!ready} onClick={onIssue}>
-          {sending?'Issuing…':report.blockers.length?'Resolve pricing issues to issue':
+          {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':report.blockers.length?'Resolve pricing issues to issue':
             report.review.length&&!acknowledged?'Review remaining items to issue':'Issue quote / mark sent'}
         </button>}
         {!canIssue&&editable&&<small className="qmb-audit-help">Your current team role cannot issue quotes.</small>}
