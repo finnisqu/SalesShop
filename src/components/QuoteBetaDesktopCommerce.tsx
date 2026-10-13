@@ -1,6 +1,7 @@
 import type {Quote,QuoteSection} from '../types/quote';
 import {QuoteBetaMaterials} from './QuoteBetaMaterials';
 import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
+import {QuoteBetaCompactSinks} from './QuoteBetaCompactSinks';
 
 /** One scrollable center workspace, one column. Selection precedes price inside
  * each category; Calculator is optional detailed costing, not a right-rail panel. */
@@ -47,13 +48,12 @@ export function QuoteBetaDesktopCommerce({quote,section,editable,tab}:{
     </section>
     <section className="qmb-commerce-segment" aria-label="Sink selection and pricing">
       <header className="qmb-commerce-heading"><h3>Sinks</h3><span>02</span></header>
-      <div className="qmb-commerce-stage">
-        <div className="qmb-stage-heading"><b>Selection &amp; pricing</b><small>Model, quantity and selling price in each sink card</small></div>
-        <QuoteBetaMaterials quote={quote} section={section} editable={editable} part="sinks" showHeading={false}/>
+      <div className="qmb-commerce-stage qmb-compact-sink-stage">
+        <QuoteBetaCompactSinks quote={quote} section={section} editable={editable} stage="materials"/>
       </div>
     </section>
     <section className="qmb-commerce-segment" aria-label="Additional work and pricing">
-      <header className="qmb-commerce-heading"><h3>Additional</h3><span>03</span></header>
+      <header className="qmb-commerce-heading"><h3>Add-ons</h3><span>03</span></header>
       <div className="qmb-commerce-stage">
         <div className="qmb-stage-heading"><b>Pricing</b><small>Scope and quantities are editable here, too</small></div>
         <QuoteBetaDesktopPricing quote={quote} section={section} editable={editable} view="extras"/>

@@ -28,6 +28,7 @@ import { QuoteSfRateChoices } from './QuoteSfRateChoices';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
+import {QuoteBetaCompactSinks} from './QuoteBetaCompactSinks';
 import { QuoteBetaDesktopCommerce } from './QuoteBetaDesktopCommerce';
 import { QuoteBetaAdditionalScope } from './QuoteBetaAdditionalScope';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
@@ -281,12 +282,10 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
         {desktopLab&&<><section className="qmb-commerce-segment">
           <header className="qmb-commerce-heading"><h3>Sinks</h3><span>02</span></header>
           <p className="qmb-scope-description">Select models and quantities. Selling prices are set on the Materials step.</p>
-          <QuoteBetaMaterials quote={quote} section={section} editable={editable}
-            part="sinks" scopeOnly showHeading={false}/>
+          <QuoteBetaCompactSinks quote={quote} section={section} editable={editable} stage="measure"/>
         </section>
         <section className="qmb-commerce-segment">
-          <header className="qmb-commerce-heading"><h3>Additional</h3><span>03</span></header>
-          <p className="qmb-scope-description">Define extra work and quantities; price it later.</p>
+          <header className="qmb-commerce-heading"><h3>Add-ons</h3><span>03</span></header>
           <QuoteBetaAdditionalScope quote={quote} section={section} editable={editable}/>
         </section></>}
       </div>}

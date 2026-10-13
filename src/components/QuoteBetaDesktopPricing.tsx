@@ -4,6 +4,7 @@ import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {calculateAreaCustomerPrice,projectAreaCost,type AreaPricingChoice} from '../services/quoteAreaCost';
 import {QuoteSfRateChoices} from './QuoteSfRateChoices';
+import {QuoteBetaRateCatalog,rateItemToQuotePatch} from './QuoteBetaRateCatalog';
 import {useCompanySettingsStore} from '../store/companySettingsStore';
 import {selectedMaterialCost} from '../services/selectedMaterialCost';
 
@@ -309,16 +310,33 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     </details>
     </>}
     {(view==='all'||view==='extras')&&<div className="qmb-desktop-lab-extras">
-      <header><strong>Additional Area lines</strong><button type="button"
-        aria-expanded={moreLines} disabled={!editable} onClick={()=>setMoreLines(v=>!v)}>+ Add</button></header>
+      <header><strong>Additional line prices</strong>
+        <div className="qmb-addon-toolbar qmb-addon-price-toolbar">
+          <QuoteBetaRateCatalog label="Add another item from Rates" disabled={!editable}
+            onChoose={item=>{if(item)addCatalogLine(quote.id,'rate',{
+              ...rateItemToQuotePatch(item,quote),sectionId:section.id,quantity:1,
+            });}}/>
+          <button type="button" disabled={!editable} onClick={()=>addCharge('item')}>+ Custom</button>
+          <button type="button" aria-expanded={moreLines} disabled={!editable}
+            onClick={()=>setMoreLines(v=>!v)}>Other…</button>
+        </div>
+      </header>
       {moreLines&&<div className="qmb-area-extra-buttons">
         {([['item','Custom'],['material','Material'],['sink','Sink'],['rate','Rate'],['allowance','Allowance'],
           ['discount','Discount'],['tax','Tax'],['note','Note'],['scope','Scope'],['warranty','Warranty']] as const)
           .map(([kind,label])=><button type="button" key={kind} onClick={()=>addCharge(kind)}>{label}</button>)}
       </div>}
       {lines.filter(l=>l!==primary&&!l.takeoffSinkId).map(l=><div className="qmb-desktop-extra-row" key={l.id}>
-        <input type="text" value={l.description} aria-label={'Area line '+l.id+' description'}
-          disabled={!editable} onChange={e=>updateLine(quote.id,l.id,{description:e.target.value})}/>
+        <div className="qmb-extra-description">
+          <input type="text" value={l.description} aria-label={'Area line '+l.id+' description'}
+            disabled={!editable} onChange={e=>updateLine(quote.id,l.id,{description:e.target.value})}/>
+          <QuoteBetaRateCatalog label={'Choose Rates item for '+l.id}
+            disabled={!editable} value={l.rateReference?.rateBookItemId??''}
+            onChoose={item=>{if(item)updateLine(quote.id,l.id,{
+              ...rateItemToQuotePatch(item,quote),quantity:l.quantity??1,
+              customerVisible:l.customerVisible,includeInTotal:l.includeInTotal,
+            });}}/>
+        </div>
         {l.pricingMode==='quantity-rate'?<div className="qmb-extra-qty-rate">
           <label>Qty<input type="number" step="1" min="0" value={l.quantity??''}
             aria-label={'Area line '+l.id+' quantity'} disabled={!editable||!!l.takeoffSinkId}
