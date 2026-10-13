@@ -14,8 +14,8 @@ const canUse=(n:number|undefined)=>n!==undefined&&Number.isFinite(n)&&n>=0;
 
 /** Internal desktop sales math, distinct from the customer-facing quote paper.
  * Slab yield is an Area-specific override; absent means the 65% default. */
-export function QuoteBetaDesktopPricing({quote,section,editable}:{
-  quote:Quote;section:QuoteSection;editable:boolean;
+export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
+  quote:Quote;section:QuoteSection;editable:boolean;view?:'all'|'selling'|'calculator'|'extras';
 }){
   const updateLine=useQuoteStore(s=>s.updateLine);
   const deleteLine=useQuoteStore(s=>s.deleteLine);
@@ -131,7 +131,12 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
     addLine(quote.id,kind,section.id);
     setMoreLines(false);
   };
-  return <section className="qmb-desktop-pricing-lab" aria-label="Area pricing and internal costs">
+  return <section className={'qmb-desktop-pricing-lab qmb-lab-'+view} aria-label="Area pricing and internal costs">
+    {view==='calculator'&&<header className="qmb-pricing-lab-heading">
+      <div><h3>Buying costs & margin</h3><small>Optional private estimating · sell price stays unchanged</small></div>
+      <strong>{perc!==undefined?perc.toFixed(1)+'%':'—'}</strong>
+    </header>}
+    {(view==='all'||view==='selling')&&<>
     <header className="qmb-pricing-lab-heading">
       <div><h3>Pricing</h3><small>Customer price and private production cost</small></div>
       <strong>{money.format(areaTotal)}</strong>
@@ -191,8 +196,10 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
         <strong> {money.format(activeAmount)}</strong></p>
       {!canUse(slabPrice)&&<small className="qmb-cost-warning">Enter a slab cost below to calculate the selling price.</small>}
     </div>}
+    </>}
+    {(view==='all'||view==='calculator')&&<>
     <div className="qmb-private-cost" aria-label="Private Area cost and margin">
-      <header><strong>Internal cost</strong><span>Private · never on the customer quote</span></header>
+      <header><strong>Buying cost & production</strong><span>Internal only · not on customer quote</span></header>
       <div className="qmb-pricing-double">
         <label>Slab yield %
           <input type="number" aria-label="Area slab yield percent" min="1" max="100" step="1"
@@ -205,23 +212,27 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
             onChange={e=>{const v=numeric(e.target.value);
               if(v===undefined||v>0)updateScope({slabAreaOverrideSf:v});}}/>
         </label>
-        <label>Buying cost / slab
-          <input type="number" aria-label="Area buying cost per slab" min="0" step=".01"
-            disabled={!editable} value={decimal(slabPrice)}
-            onChange={e=>{const v=numeric(e.target.value);
-              if(v===undefined||v>=0)updateScope({slabCostOverride:v});}}/>
+        <label>Slab buying cost
+          <div className="qmb-currency-field"><span aria-hidden="true">$</span>
+            <input type="number" aria-label="Area buying cost per slab" min="0" step=".01"
+              disabled={!editable} value={slabPrice===undefined?'':Number(slabPrice.toFixed(2))}
+              onChange={e=>{const v=numeric(e.target.value);
+                if(v===undefined||v>=0)updateScope({slabCostOverride:v});}}/>
+          </div>
         </label>
-        <label>Slabs to purchase
-          <input type="number" aria-label="Area slab quantity override" min="1" step="1"
+        <label>Purchased slabs · manual
+          <input type="number" aria-label="Area manually purchased slabs" min=".01" step=".25"
             disabled={!editable} placeholder={decimal(projection.suggestedSlabs)}
-            value={decimal(section.scope?.slabCountOverride)}
+            value={decimal(section.scope?.slabPurchaseQuantityOverride)}
             onChange={e=>{const v=numeric(e.target.value);
-              if(v===undefined||(Number.isInteger(v)&&v>0)){
-                updateScope({slabCountOverride:v});
-              }}}/>
+              if(v===undefined||v>0)updateScope({slabPurchaseQuantityOverride:v});}}/>
         </label>
       </div>
-      <p className="qmb-math-ledger">{projection.explanation}</p>
+      <p className="qmb-math-ledger">{projection.explanation}
+        <br/>Buying basis: {projection.purchaseSlabs??'—'} slabs × {money.format(projection.slabCost??0)}
+        = {projection.materialCost!==undefined?money.format(projection.materialCost):'Needs supplier cost'}.
+        Manual buying quantity may be fractional; selling multiplier uses whole slabs.
+      </p>
       <div className="qmb-pricing-double">
         <label>Manual material cost override
           <input type="number" aria-label="Area total material cost override" min="0" step=".01"
@@ -232,9 +243,32 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
         </label>
         <div className="qmb-private-calc-result"><small>Material purchase</small>
           <strong>{projection.materialCost!==undefined?money.format(projection.materialCost):'Needs slab cost & size'}</strong>
-          <small>{projection.slabCount??'—'} slab(s) estimated</small></div>
+          <small>{projection.purchaseSlabs??'—'} slab(s) · buying basis</small></div>
+      </div>
+      <div className="qmb-optional-labor">
+        <strong>Additional shop & field costs <small>Optional · totals for this Area</small></strong>
+        <div className="qmb-pricing-double">
+          <label>Shop / fabrication cost
+            <div className="qmb-currency-field"><span aria-hidden="true">$</span>
+              <input aria-label="Area shop cost" type="number" min="0" step=".01"
+                disabled={!editable} value={decimal(section.scope?.shopCostOverride)}
+                placeholder="Not included" onChange={e=>{const n=numeric(e.target.value);
+                  if(n===undefined||n>=0)updateScope({shopCostOverride:n});}}/>
+            </div>
+          </label>
+          <label>Installation cost
+            <div className="qmb-currency-field"><span aria-hidden="true">$</span>
+              <input aria-label="Area installation cost" type="number" min="0" step=".01"
+                disabled={!editable} value={decimal(section.scope?.installCostOverride)}
+                placeholder="Not included" onChange={e=>{const n=numeric(e.target.value);
+                  if(n===undefined||n>=0)updateScope({installCostOverride:n});}}/>
+            </div>
+          </label>
+        </div>
       </div>
       <div className="qmb-private-cost-lines">
+        <span>Shop / fabrication cost <b>{money.format(projection.shopCost??0)}</b></span>
+        <span>Installation cost <b>{money.format(projection.installCost??0)}</b></span>
         <span>Known sink buying cost <b>{projection.sinkCost!==undefined?money.format(projection.sinkCost):'Missing'}</b></span>
         <span>Other known costs <b>{money.format(projection.otherCost)}</b></span>
         <span>Known total cost <b>{money.format(projection.totalKnownCost)}</b></span>
@@ -243,16 +277,17 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
       </div>
       {!projection.complete&&<p className="qmb-cost-warning">Margin stays provisional until material, sink and other priced work have buying costs.</p>}
     </div>
-    <div className="qmb-desktop-lab-customer">
-      <strong>Customer presentation</strong>
+    <details className="qmb-desktop-lab-customer">
+      <summary>Customer presentation <small>Optional display settings</small></summary>
       <div className="qmb-pricing-modes">
         <button type="button" disabled={!editable} aria-pressed={section.customerDisplayMode!=='detail'}
           onClick={()=>updateSection(quote.id,section.id,{customerDisplayMode:'summary'})}>Lump sum</button>
         <button type="button" disabled={!editable} aria-pressed={section.customerDisplayMode==='detail'}
           onClick={()=>updateSection(quote.id,section.id,{customerDisplayMode:'detail'})}>Itemized</button>
       </div>
-    </div>
-    <div className="qmb-desktop-lab-extras">
+    </details>
+    </>}
+    {(view==='all'||view==='extras')&&<div className="qmb-desktop-lab-extras">
       <header><strong>Additional Area lines</strong><button type="button"
         aria-expanded={moreLines} disabled={!editable} onClick={()=>setMoreLines(v=>!v)}>+ Add</button></header>
       {moreLines&&<div className="qmb-area-extra-buttons">
@@ -260,7 +295,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
           ['discount','Discount'],['tax','Tax'],['note','Note'],['scope','Scope'],['warranty','Warranty']] as const)
           .map(([kind,label])=><button type="button" key={kind} onClick={()=>addCharge(kind)}>{label}</button>)}
       </div>}
-      {lines.filter(l=>l!==primary).map(l=><div className="qmb-desktop-extra-row" key={l.id}>
+      {lines.filter(l=>l!==primary&&!l.takeoffSinkId).map(l=><div className="qmb-desktop-extra-row" key={l.id}>
         <input type="text" value={l.description} aria-label={'Area line '+l.id+' description'}
           disabled={!editable} onChange={e=>updateLine(quote.id,l.id,{description:e.target.value})}/>
         {l.pricingMode==='quantity-rate'?<div className="qmb-extra-qty-rate">
@@ -288,7 +323,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
             }}>Remove</button>}
         </div>
       </div>)}
-      <small>Prices, source costs and customer visibility save on the quote. Sink quantities remain linked to Materials.</small>
-    </div>
+      <small>Selling prices, buying costs and customer visibility save together. Managed sink charges stay with their sink selections.</small>
+    </div>}
   </section>;
 }
