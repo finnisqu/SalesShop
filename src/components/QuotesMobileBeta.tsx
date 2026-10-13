@@ -159,7 +159,7 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
           </div>}
         {line.takeoffSinkId?<p className="qmb-help">Sink charge is always included in the quote total.</p>
           :<label className="qmb-check"><input type="checkbox" checked={line.includeInTotal} onChange={e=>update(quote.id,line.id,{includeInTotal:e.target.checked})}/> Include in quote total</label>}
-        <label className="qmb-check"><input type="checkbox" checked={line.customerVisible} onChange={e=>update(quote.id,line.id,{customerVisible:e.target.checked})}/> Show this line to customer (itemized view)</label>
+
         <div className="qmb-line-structure" aria-label="Line arrangement">
           <div className="qmb-line-order">
             <span>Line order</span>
