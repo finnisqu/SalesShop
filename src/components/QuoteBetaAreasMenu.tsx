@@ -64,7 +64,7 @@ export function QuoteBetaAreasMenu({quote,onDeleted}:{quote:Quote;onDeleted?:(ar
     <button type="button" className="qmb-area-menu-trigger"
       aria-label="Manage Areas" title="Reorder or delete Areas"
       disabled={!editable||!quote.sections.length}
-      onClick={()=>show('menu')||setOpen(true)}>⋯</button>
+      onClick={()=>{show('menu');setOpen(true);}}>⋯</button>
     {open&&createPortal(<div className="qmb qmb-area-manager-backdrop"
       onPointerDown={event=>{if(event.target===event.currentTarget)close();}}>
       <section className="qmb-area-manager" role="dialog" aria-modal="true" aria-label="Manage quote Areas">
