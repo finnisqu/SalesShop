@@ -99,6 +99,8 @@ export interface QuoteTakeoffSink {
   category: SinkCategory;
   name: string;
   count: number;
+  /** Optional private supplier cost per sink (overrides catalog cost). */
+  internalCostOverride?: number;
   /** Optional sell price per sink, not cost. */
   unitPrice?: number;
   /** Legacy catalog compatibility flag. New mobile Beta sinks always receive a priced quote line. */
