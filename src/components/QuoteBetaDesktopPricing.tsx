@@ -23,6 +23,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
   const addCatalogLine=useQuoteStore(s=>s.addCatalogLine);
   const addLine=useQuoteStore(s=>s.addLine);
   const setTakeoffRate=useQuoteStore(s=>s.setTakeoffRate);
+  const updatePieces=useQuoteStore(s=>s.updateTakeoffPieces);
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
   const primary=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf')
     ??lines.find(l=>l.kind==='material'&&!l.takeoffSinkId);
@@ -68,6 +69,10 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
       materialReference:materialRef,
       pricingMode:choice==='sf'?'quantity-rate':choice==='multiplier'?'slab-multiplier':'direct',
       quantity:projection.measuredSf,
+      quantitySource:section.scope?.takeoffPieces?.length?{
+        kind:'area-scope',sectionId:section.id,field:'countertopSf',
+        syncMode:'live',capturedValue:projection.measuredSf,appliedAt:new Date().toISOString(),
+      }:undefined,
       amount:choice==='manual'?0:undefined,
       customerVisible:true,includeInTotal:true,
     });
@@ -96,14 +101,28 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
     };
     // The measured SF belongs to Takeoffs; the selling mode never removes
     // its source association or changes its measured quantity.
+    const wasLive=previous?.quantitySource?.syncMode==='live';
+    const addLink=choice==='sf'&&!wasLive&&section.scope?.takeoffPieces?.length?{
+      quantity:projection.measuredSf,
+      quantitySource:{
+        kind:'area-scope' as const,sectionId:section.id,field:'countertopSf' as const,
+        syncMode:'live' as const,capturedValue:projection.measuredSf,
+        appliedAt:new Date().toISOString(),
+      },
+    }:{};
     const patch:Partial<Omit<QuoteLine,'id'>>={
       pricingMode:nextMode,materialReference:mat,
+      ...addLink,
       ...(choice==='sf'?{rateReference:undefined}:{}),
       ...(choice==='sf'
         ?{rate:effectiveRate,amount:undefined}
         :{amount:value,rate:undefined}),
     };
     updateLine(quote.id,id,patch);
+    // Re-entering SF mode after a manual or slab estimate must catch up with
+    // any changed Takeoffs measurements, without detaching the live source.
+    if(choice==='sf'&&wasLive&&section.scope?.takeoffPieces)
+      updatePieces(quote.id,section.id,section.scope.takeoffPieces);
   };
   const areaTotal=quoteLinesTotal(lines);
   const priceDiff=projection.grossSpread;
