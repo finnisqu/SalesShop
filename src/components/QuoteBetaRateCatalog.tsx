@@ -1,6 +1,6 @@
 import {useEffect} from 'react';
 import {useRateBookStore} from '../store/rateBookStore';
-import {RATE_BOOK_CATEGORY_LABELS,type RateBookCategory,type RateBookItem} from '../types/rateBook';
+import {RATE_BOOK_CATEGORY_LABELS,resolveRateBookValues,type RateBookCategory,type RateBookItem,type RateBookDivision} from '../types/rateBook';
 import {createQuoteRateSnapshot,rateSnapshotLinePatch} from '../services/quoteRateSnapshot';
 import type {Quote,QuoteLine} from '../types/quote';
 
