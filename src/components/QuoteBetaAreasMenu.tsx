@@ -22,7 +22,8 @@ export function useQuoteBetaAreaManager(quote:Quote|null){
   const setSectionOrder=useQuoteStore(s=>s.setSectionOrder);
   const deleteSection=useQuoteStore(s=>s.deleteSection);
   const editable=Boolean(quote&&quoteIsCommerciallyEditable(quote)&&quote.documentType!=='pricing-schedule');
-  const original=quote?.sections.map(s=>s.id)??[];
+  const original=quote?.sections.filter(s=>!isGeneralTakeoffSection(s)).map(s=>s.id)??[];
+  const generalIds=quote?.sections.filter(isGeneralTakeoffSection).map(s=>s.id)??[];
   const syncedOrder=order.filter(id=>original.includes(id));
   for(const id of original)if(!syncedOrder.includes(id))syncedOrder.push(id);
   const orderedSections=syncedOrder.map(id=>quote?.sections.find(s=>s.id===id))
