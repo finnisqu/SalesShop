@@ -24,7 +24,7 @@ import {
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
-import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder } from '../services/quoteStructure';
+import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder } from '../services/quoteStructure';
 import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
 import { relinkQuotesForCompany, relinkQuotesForContact } from '../services/crmIdentity';
 import {
@@ -69,6 +69,7 @@ interface QuoteState {
   updateLine: (quoteId: string, lineId: string, patch: Partial<Omit<QuoteLine, 'id'>>) => void;
   deleteLine: (quoteId: string, lineId: string) => void;
   reorderLine: (quoteId: string, lineId: string, direction: -1 | 1) => void;
+  setGeneralLineOrder: (quoteId: string, lineIds: string[]) => void;
   moveLine: (quoteId: string, lineId: string, sectionId?: string) => void;
   addSection: (quoteId: string) => string;
   duplicateArea: (quoteId: string, sourceAreaId: string) => string;
@@ -524,6 +525,18 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
           updatedAt: timestamp,
         }
       : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes, ...history });
+  },
+
+  setGeneralLineOrder: (quoteId, lineIds) => {
+    const current = get().quotes.find(quote => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return;
+    const updated = setQuoteGeneralLineOrder(current, lineIds);
+    if (updated === current) return;
+    const history = historyPatch(get(), quoteId, current);
+    const quotes = get().quotes.map(quote => quote.id === quoteId
+      ? { ...updated, updatedAt: now() } : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes, ...history });
   },
