@@ -24,7 +24,7 @@ import {
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
-import { deleteQuoteAreaToGeneral, moveQuoteLineToArea, reorderQuoteLine } from '../services/quoteStructure';
+import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder } from '../services/quoteStructure';
 import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
 import { relinkQuotesForCompany, relinkQuotesForContact } from '../services/crmIdentity';
 import {
@@ -85,7 +85,8 @@ interface QuoteState {
   splitTakeoff: (quoteId: string, sectionId: string, pieceIds: string[], title: string) => string;
   detachTakeoff: (quoteId: string, sectionId: string) => void;
   reorderSection: (quoteId: string, sectionId: string, targetSectionId: string) => void;
-  deleteSection: (quoteId: string, sectionId: string) => void;
+  setSectionOrder: (quoteId: string, orderedIds: string[]) => void;
+  deleteSection: (quoteId: string, sectionId: string, disposition?: 'transfer' | 'delete') => void;
   setCustomerColumns: (quoteId: string, patch: Partial<QuoteCustomerColumns>) => void;
   recordSent: (quoteId: string) => Promise<void>;
   createRevision: (quoteId: string) => void;
@@ -754,10 +755,24 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, ...history });
   },
 
-  deleteSection: (quoteId, sectionId) => {
+  setSectionOrder: (quoteId, orderedIds) => {
+    const current = get().quotes.find(quote => quote.id === quoteId);
+    if (!current || !quoteIsCommerciallyEditable(current)) return;
+    const updated = setQuoteAreaOrder(current, orderedIds);
+    if (updated === current) return;
+    const history = historyPatch(get(), quoteId, current);
+    const quotes = get().quotes.map(quote => quote.id === quoteId
+      ? { ...updated, updatedAt: now() } : quote);
+    persist(quotes, get().activeQuoteId);
+    set({ quotes, ...history });
+  },
+
+  deleteSection: (quoteId, sectionId, disposition = 'transfer') => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;
-    const updated = deleteQuoteAreaToGeneral(current, sectionId);
+    const updated = disposition === 'delete'
+      ? deleteQuoteAreaWithContents(current, sectionId)
+      : deleteQuoteAreaToGeneral(current, sectionId);
     if (updated === current) return;
     const organizationId = cloudOrganizationId();
     const history = historyPatch(get(), quoteId, current);
@@ -765,7 +780,13 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       ? { ...updated, updatedAt: now() } : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes, ...history });
-    if (organizationId) void deleteNormalizedQuoteSection(organizationId, sectionId).catch(reportCloudDeleteError);
+    if (organizationId) void (async () => {
+      if (disposition === 'delete') {
+        await Promise.all(current.lines.filter(line => line.sectionId === sectionId)
+          .map(line => deleteNormalizedQuoteLine(organizationId, line.id)));
+      }
+      await deleteNormalizedQuoteSection(organizationId, sectionId);
+    })().catch(reportCloudDeleteError);
   },
 
   setCustomerColumns: (quoteId, patch) => {

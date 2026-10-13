@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { quoteTotal, type Quote } from '../types/quote';
-import { deleteQuoteAreaToGeneral, moveQuoteLineToArea, reorderQuoteLine } from './quoteStructure';
+import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder } from './quoteStructure';
 
 function sample(): Quote {
   return {
@@ -56,5 +56,27 @@ describe('Quotes Beta structure parity',()=>{
     expect(removed.lines.find(l=>l.id==='l')?.quantitySource).toBeUndefined();
     expect(quoteTotal(removed)).toBe(quoteTotal(subject));
     expect(deleteQuoteAreaToGeneral(subject,'not-an-area')).toBe(subject);
+  });
+});
+
+describe('explicit Area deletion and atomic order',()=>{
+  it('deletes Area and all billable rows only when chosen',()=>{
+    const q=sample();
+    const removed=deleteQuoteAreaWithContents(q,'k');
+    expect(removed.sections.map(x=>x.id)).toEqual(['b']);
+    expect(removed.lines.map(x=>x.id)).toEqual(['g','b1']);
+    expect(quoteTotal(removed)).toBe(150);
+    expect(quoteTotal(q)).toBe(2170);
+    expect(deleteQuoteAreaWithContents(q,'missing')).toBe(q);
+  });
+  it('reorders in one operation and rejects duplicate, unknown or partial ids',()=>{
+    const q=sample();
+    const ordered=setQuoteAreaOrder(q,['b','k']);
+    expect(ordered.sections.map(x=>x.id)).toEqual(['b','k']);
+    expect(quoteTotal(ordered)).toBe(quoteTotal(q));
+    expect(setQuoteAreaOrder(q,['k','k'])).toBe(q);
+    expect(setQuoteAreaOrder(q,['k'])).toBe(q);
+    expect(setQuoteAreaOrder(q,['k','bogus'])).toBe(q);
+    expect(setQuoteAreaOrder(q,['k','b'])).toBe(q);
   });
 });

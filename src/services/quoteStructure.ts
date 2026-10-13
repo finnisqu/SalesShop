@@ -53,3 +53,24 @@ export function deleteQuoteAreaToGeneral(quote: Quote, sectionId: string): Quote
     }),
   };
 }
+
+/** Deliberate destructive choice: remove the Area and every quote row it owns. */
+export function deleteQuoteAreaWithContents(quote: Quote, sectionId: string): Quote {
+  if (!quote.sections.some(section => section.id === sectionId)) return quote;
+  return {
+    ...quote,
+    sections: quote.sections.filter(section => section.id !== sectionId),
+    lines: quote.lines.filter(line => line.sectionId !== sectionId),
+  };
+}
+
+/** Commit the reorder panel in one atomic undoable change, never partial movement. */
+export function setQuoteAreaOrder(quote: Quote, orderedIds: string[]): Quote {
+  const originalIds = quote.sections.map(section => section.id);
+  if (originalIds.length !== orderedIds.length ||
+    orderedIds.some(id => !originalIds.includes(id)) ||
+    new Set(orderedIds).size !== originalIds.length ||
+    originalIds.every((id, i) => id === orderedIds[i])) return quote;
+  const byId = new Map(quote.sections.map(section => [section.id, section]));
+  return { ...quote, sections: orderedIds.map(id => byId.get(id)!) };
+}
