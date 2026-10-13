@@ -17,8 +17,7 @@ import {
   displayQuoteNumber, quoteLineAmount, quoteLinesTotal, quoteTotal,
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
 } from '../types/quote';
-import { QuoteCrmFields } from './QuoteCrmFields';
-import { QuoteNotesFields } from './QuoteEditorFields';
+import { QuoteBetaDetails } from './QuoteBetaDetails';
 import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
@@ -45,12 +44,18 @@ type AreaTab = 'measure' | 'materials' | 'pricing';
 
 function AppMenu() {
   const setView = useNavigationStore(s=>s.setView);
-  return <details className="qmb-appnav"><summary aria-label="Open SalesShop navigation">☰</summary>
+  const goBack = useNavigationStore(s=>s.goBack);
+  const canGoBack = useNavigationStore(s=>s.history.length>0);
+  return <div className="qmb-appnav-actions">
+    {canGoBack&&<button type="button" className="qmb-app-back"
+      onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
+    <details className="qmb-appnav"><summary aria-label="Open SalesShop navigation">☰</summary>
     <nav aria-label="SalesShop destinations">
       {([['notebook','Notebook'],['board','Board'],['quotes','Quotes'],['catalog','Catalog'],['dashboard','Connections'],['settings','Settings']] as const).map(([id,name])=>
         <button type="button" key={id} onClick={()=>setView(id)}>{name}</button>)}
     </nav>
-  </details>;
+    </details>
+  </div>;
 }
 function InchField({value,onChange,disabled,label}:{
   value?:number;onChange:(next:number|undefined)=>void;disabled:boolean;label:string;
@@ -323,10 +328,12 @@ export function QuotesMobileBeta() {
   const libraryMode=useQuoteLibraryStore(s=>s.mode);
   const setLibraryMode=useQuoteLibraryStore(s=>s.setMode);
   const setView=useNavigationStore(s=>s.setView);
-  const [page,setPage]=useState<Page>('library');
-  const [quoteTab,setQuoteTab]=useState<QuoteTab>('build');
-  const [areaTab,setAreaTab]=useState<AreaTab>('measure');
-  const [areaId,setAreaId]=useState<string|null>(null);
+  const restoredLocation=useRef(useQuotesMobileBetaStore.getState().location);
+  const setLocation=useQuotesMobileBetaStore(s=>s.setLocation);
+  const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
+  const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
+  const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
+  const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
   const [search,setSearch]=useState('');
   const [showArchived,setShowArchived]=useState(false);
   const [newLineKind,setNewLineKind]=useState<QuoteLineKind>('item');
@@ -335,6 +342,16 @@ export function QuotesMobileBeta() {
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
   useEffect(()=>{hydrate();hydrateCrm();},[hydrate,hydrateCrm]);
+  useEffect(()=>{
+    if(!hydrated)return;
+    const previous=restoredLocation.current.quoteId;
+    if(previous&&previous!==activeQuoteId&&page!=='library'){
+      setPage('quote');setQuoteTab('build');setAreaId(null);
+      restoredLocation.current={...restoredLocation.current,quoteId:activeQuoteId??undefined};
+      return;
+    }
+    setLocation({quoteId:activeQuoteId??undefined,page,quoteTab,areaTab,areaId});
+  },[hydrated,activeQuoteId,page,quoteTab,areaTab,areaId,setLocation]);
   const myQuotes=useMemo(()=>authMode==='cloud'?quotes.filter(q=>q.ownerUserId===userId):quotes,
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
@@ -504,21 +521,7 @@ export function QuotesMobileBeta() {
             </select><button type="button" className="qmb-outline" onClick={()=>addLine(quote.id,newLineKind)}>+ Add line</button></div>
           </section>}
         </>}
-        {quoteTab==='details'&&<>
-          <div className="qmb-section-head"><h3>Customer & project</h3><span className="qmb-chip">Optional while drafting</span></div>
-          <section className="qmb-card qmb-native-fields"><QuoteCrmFields quote={quote}/></section>
-          <section className="qmb-card">
-            <Field label="Project / quote title"><input disabled={!editable} maxLength={300} value={quote.title}
-              onChange={e=>update(quote.id,{title:e.target.value})}/></Field>
-            <Field label="Quote date"><input disabled={!editable} type="date" value={quote.quoteDate}
-              onChange={e=>update(quote.id,{quoteDate:e.target.value})}/></Field>
-            <Field label="Job address"><input disabled={!editable} value={quote.address??''}
-              onChange={e=>update(quote.id,{address:e.target.value})} placeholder="Can be added later"/></Field>
-          </section>
-          <section className="qmb-card qmb-native-fields"><QuoteNotesFields customerNotes={quote.customerNotes}
-            internalNotes={quote.internalNotes} onCustomerChange={v=>update(quote.id,{customerNotes:v})}
-            onInternalChange={v=>update(quote.id,{internalNotes:v})}/></section>
-        </>}
+        {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
           <div className="qmb-section-head"><h3>Customer preview</h3><span className="qmb-chip">Live totals</span></div>
           <div className="qmb-preview"><CustomerPreview quote={quote}/></div>
