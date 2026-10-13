@@ -139,6 +139,11 @@ export interface QuoteAreaScope {
   /** Optional private work costs, entered as totals for this Area. */
   shopCostOverride?: number;
   installCostOverride?: number;
+  /** Optional per-measured-SF internal shop and installation assumptions. */
+  shopCostRateSf?: number;
+  installCostRateSf?: number;
+  /** Target project gross margin, stored as a fraction (0.25 = 25%). */
+  targetMargin?: number;
   /** Explicit shop slab size and buying cost when the catalog lacks them. */
   slabAreaOverrideSf?: number;
   slabCostOverride?: number;
