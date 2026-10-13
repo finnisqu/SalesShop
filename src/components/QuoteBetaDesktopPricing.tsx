@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import type {Quote,QuoteLine,QuoteLineKind,QuoteSection,QuotePricingMode} from '../types/quote';
 import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
@@ -11,6 +11,31 @@ const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const decimal=(n:number|undefined)=>n===undefined?'':String(n);
 const numeric=(raw:string)=>raw===''?undefined:Number(raw);
 const canUse=(n:number|undefined)=>n!==undefined&&Number.isFinite(n)&&n>=0;
+
+/** Dollar-formatted at rest, raw and non-jumping while the user types. */
+function SlabBuyingCostInput({value,editable,onChange}:{
+  value?:number;editable:boolean;onChange:(value:number|undefined)=>void;
+}){
+  const format=(n:number|undefined)=>n===undefined?'':n.toFixed(2);
+  const [draft,setDraft]=useState(()=>format(value));
+  const focused=useRef(false);
+  useEffect(()=>{if(!focused.current)setDraft(format(value));},[value]);
+  return <div className="qmb-currency-field"><span aria-hidden="true">$</span>
+    <input type="number" aria-label="Area buying cost per slab" min="0" step=".01"
+      disabled={!editable} value={draft} placeholder="0.00"
+      onFocus={e=>{focused.current=true;e.currentTarget.select();}}
+      onChange={e=>{
+        const raw=e.target.value;
+        if(raw!==''){
+          const amount=Number(raw);
+          if(!Number.isFinite(amount)||amount<0)return;
+          setDraft(raw);onChange(amount);
+        }else{setDraft('');onChange(undefined);}
+      }}
+      onBlur={()=>{focused.current=false;setDraft(format(value));}}/>
+  </div>;
+}
+
 
 /** Internal desktop sales math, distinct from the customer-facing quote paper.
  * Slab yield is an Area-specific override; absent means the 65% default. */
@@ -213,12 +238,8 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
               if(v===undefined||v>0)updateScope({slabAreaOverrideSf:v});}}/>
         </label>
         <label>Slab buying cost
-          <div className="qmb-currency-field"><span aria-hidden="true">$</span>
-            <input type="number" aria-label="Area buying cost per slab" min="0" step=".01"
-              disabled={!editable} value={decimal(slabPrice)}
-              onChange={e=>{const v=numeric(e.target.value);
-                if(v===undefined||v>=0)updateScope({slabCostOverride:v});}}/>
-          </div>
+          <SlabBuyingCostInput value={slabPrice} editable={editable}
+            onChange={v=>updateScope({slabCostOverride:v})}/>
         </label>
         <label>Purchased slabs · manual
           <input type="number" aria-label="Area manually purchased slabs" min=".01" step=".25"
