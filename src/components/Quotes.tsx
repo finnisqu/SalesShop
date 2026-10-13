@@ -686,7 +686,7 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
           const rows=presentItemizedQuoteLines(allSectionLines);
           if(!rows.length)return null;
           return <div className={general?'customer-quote-section is-general':'customer-quote-section'} key={section.id}>
-            {!general&&<><h3>{editing?.areaTitle?.(section)??section.title}</h3>{takeoffCustomerSpecs(section)&&<p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}</>}
+            {!general&&<><h3>{editing?.areaTitle?.(section)??section.title}{editing?.areaPrice?.(section)}</h3>{takeoffCustomerSpecs(section)&&<p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}</>}
             {renderLines(rows)}
           </div>;
         })}
