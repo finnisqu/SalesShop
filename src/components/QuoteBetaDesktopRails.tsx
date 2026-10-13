@@ -144,13 +144,6 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
           {audit.findings.length>9&&<button type="button" className="qmb-inspector-more"
             onClick={onReview}>View all {audit.findings.length} findings ›</button>}
         </div>
-        <div className="qmb-inspector-delivery">
-          <strong>Customer delivery</strong>
-          <small>{audit.blockers.length
-            ?audit.blockers.length+' blocking issue'+(audit.blockers.length===1?'':'s')+' to resolve before sending'
-            :'Check the customer document and issue or share the quote'}</small>
-          <button type="button" onClick={onReview}>See delivery details ›</button>
-        </div>
       </section>
       <div className="qmb-inspector-send-block">
         <button type="button" className="qmb-inspector-send" onClick={onSend}

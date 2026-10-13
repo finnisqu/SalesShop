@@ -21,7 +21,6 @@ import { QuoteBetaDetails } from './QuoteBetaDetails';
 import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
-import { QuoteShareControl } from './QuoteShareControl';
 import { QuoteBetaEditablePreview } from './QuoteBetaEditablePreview';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
@@ -34,7 +33,7 @@ import { selectedMaterialCost } from '../services/selectedMaterialCost';
 import { QuoteBetaSelections } from './QuoteBetaSelections';
 import { QuoteBetaReview } from './QuoteBetaReview';
 import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
-import { QuoteBetaDesktopRails } from './QuoteBetaDesktopRails';
+import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRails';
 import { QuoteBetaAreasMenu } from './QuoteBetaAreasMenu';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
@@ -464,6 +463,13 @@ export function QuotesMobileBeta() {
   const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
     const item=audit?.[kind][0];openReview(item?.id??null);
   };
+  // Send is always a visible entry point. Drafts with issues drill into their
+  // first finding; a clear draft opens delivery, never silently dispatches email.
+  const openSend=()=>{
+    if(audit?.blockers.length){openReview(audit.blockers[0].id);return;}
+    if(audit?.review.length){openReview(audit.review[0].id);return;}
+    openReview('__delivery__');
+  };
   const fixAudit=(destination:QuoteAuditDestination)=>{
     setReviewOpen(false);
     if(destination.view==='area'){
@@ -489,7 +495,7 @@ export function QuotesMobileBeta() {
     <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes Beta</button></div>
     <TeamQuotesWorkspace quotes={quotes} onShowMine={()=>setLibraryMode('mine')}/>
   </main>;
-  return <main className="quotes-view qmb" aria-label="Quotes mobile beta">
+  return <main className={"quotes-view qmb"+(reviewOpen?" is-review-expanded":"")} aria-label="Quotes mobile beta">
     <div className={'qmb-desktop-frame'+(page==='library'?' is-library':'')}>
       {quote&&page!=='library'&&<QuoteBetaDesktopRails
         quote={quote} page={page} quoteTab={quoteTab} areaTab={areaTab} areaId={areaId}
@@ -500,16 +506,13 @@ export function QuotesMobileBeta() {
         onReview={()=>openReview()}
         onReviewFinding={openReviewCategory}
         onReviewIssue={id=>openReview(id)}
+        onSend={openSend} canIssue={canIssue}
+        onUndo={()=>undo(quote.id)} onRedo={()=>redo(quote.id)}
+        undoDepth={undoDepth} redoDepth={redoDepth}
         onAddArea={newArea}
         onSelections={()=>setSelectionsOpen(true)}
         />}
       <div className="qmb-desktop-main">
-    {quote&&page!=='library'&&<div className="qmb-desktop-worktools" role="toolbar" aria-label="Quote editing tools">
-      <button type="button" disabled={!editable||!undoDepth} aria-label="Undo quote change" onClick={()=>undo(quote.id)}>↶ Undo</button>
-      <button type="button" disabled={!editable||!redoDepth} aria-label="Redo quote change" onClick={()=>redo(quote.id)}>↷ Redo</button>
-      <span className="qmb-worktools-divider" aria-hidden="true"/>
-      <button type="button" disabled={!editable||quote.documentType==='pricing-schedule'} onClick={newArea}>+ Area</button>
-    </div>}
     {page==='library'?<>
       <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Quotes <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
@@ -593,16 +596,13 @@ export function QuotesMobileBeta() {
         </>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
-          <div className="qmb-section-head"><h3>Customer preview</h3><span className="qmb-chip">Live totals</span></div>
           <QuoteBetaEditablePreview quote={quote}/>
-          <p className="qmb-help">Make edits updates the live quote in every view. Private internal notes, source costs, and dimensions remain internal.</p>
-          <QuoteShareControl/>
         </>}
         </div>
       </div>
       <footer className="qmb-footer qmb-quote-footer">
-        <button type="button" className="qmb-primary" onClick={()=>openReview()}>
-          Review {audit?.blockers.length?'· '+audit.blockers.length+' to resolve':'quote'} ›</button>
+        <button type="button" className="qmb-primary" onClick={openSend}>
+          {audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Send quote ›'}</button>
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}/>:null}
@@ -610,6 +610,10 @@ export function QuotesMobileBeta() {
     </div>
     {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
     {quote&&page!=='library'&&reviewOpen&&<QuoteBetaReviewOverlay quote={quote} focusId={reviewFocus}
+      inspector={<QuoteBetaInspector quote={quote} page={page} areaTab={areaTab} areaId={areaId}
+        onAreaTab={tab=>{setPage('area');setAreaTab(tab);}} onReview={()=>openReview()}
+        onReviewFinding={openReviewCategory} onReviewIssue={id=>openReview(id)}
+        onSend={openSend} canIssue={canIssue}/>}
       canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
       onClose={()=>{setReviewOpen(false);setReviewFocus(null);}}
       onFix={fixAudit} onPreview={()=>{setReviewOpen(false);setQuoteTab('preview');setPage('quote');setAreaId(null);}}

@@ -65,7 +65,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
   );
   return <div className="qmb-editor qmb-review-editor">
     <header className="qmb-pagehead">
-      <strong>Review &amp; Issue</strong>
+      <strong>Review details &amp; delivery</strong>
       <button type="button" className="qmb-back" onClick={onBack} aria-label="Close Review and Issue">× Close</button>
     </header>
     <div className="qmb-pad qmb-pagecontent">
@@ -100,7 +100,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         <span>I reviewed the remaining items and intend to leave them as shown.</span>
       </label>}
       {error&&<p role="alert" className="qmb-error">{error}</p>}
-      <section className="qmb-card qmb-audit-delivery">
+      <section className="qmb-card qmb-audit-delivery" data-review-delivery>
         <strong>Customer delivery</strong>
         {!editable&&<p className="qmb-audit-help">This revision is {quote.status.toLowerCase()} and its customer-facing values are frozen. To change pricing or selections, start a new revision.</p>}
         {!editable&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
