@@ -151,3 +151,29 @@
 @media(prefers-reduced-motion:reduce){
  .qmb [data-qmb-sort-row].is-dragging{transition:none;filter:none}
 }
+
+
+/* Drag ghost lives in document.body, independent from list reflow and pointer
+ * capture. The original row is a stable placeholder until release. */
+.qmb [data-qmb-sort-row].is-drag-source {
+  opacity:.35;filter:none;transform:none!important;outline:1px dashed var(--qmb-accent);
+  outline-offset:2px;
+}
+.qmb.qmb-drag-ghost {
+  position:fixed!important;display:block!important;z-index:14000!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  background:transparent!important;padding:0!important;margin:0!important;
+  pointer-events:none!important;user-select:none;
+  transform:translate3d(0,0,0) scale(1.025);
+  transform-origin:center;
+  filter:drop-shadow(0 13px 16px rgba(0,0,0,.26));
+  overflow:visible!important;will-change:transform;
+}
+.qmb.qmb-drag-ghost [data-area-sort-id],.qmb.qmb-drag-ghost>.qmb-inline-general-row {
+  width:100%;opacity:1!important;pointer-events:none;
+  background:var(--qmb-card);border-radius:12px;
+}
+.qmb.qmb-drag-ghost .qmb-area-grip{cursor:grabbing;background:var(--qmb-tint)}
+@media(prefers-reduced-motion:reduce){
+ .qmb.qmb-drag-ghost{transition:none;filter:none}
+}
