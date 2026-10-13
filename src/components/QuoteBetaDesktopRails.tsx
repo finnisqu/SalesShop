@@ -79,7 +79,8 @@ export function QuoteBetaDesktopRails({
               </span>
               <span className="qmb-desktop-area-value">{money.format(quoteLinesTotal(lines))}</span>
             </button>
-            {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={section}/>}
+            {areaManager.editing&&<><QuoteBetaAreaVisibilityButton quote={quote} area={section}/>
+              <QuoteBetaAreaDeleteButton manager={areaManager} area={section}/></>}
           </div>;
         })}
         {!areas.length&&<p className="qmb-desktop-empty">Add an Area to begin measuring and pricing.</p>}
