@@ -653,6 +653,15 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
   </div>;
   const allSectionIds=new Set(quote.sections.map(section=>section.id));
   const looseLines=quote.lines.filter(line=>!line.sectionId||!allSectionIds.has(line.sectionId));
+  // Hide room specifications but keep the customer's visible sum consistent:
+  // prices for hidden Areas are consolidated into a General line.
+  const hiddenPrice=quote.sections.filter(s=>!s.customerVisible)
+    .reduce((sum,s)=>sum+quoteLinesTotal(quote.lines.filter(l=>l.sectionId===s.id)),0);
+  const customerGeneral=hiddenPrice!==0?[...looseLines,{
+    id:'hidden-area-consolidated',kind:'item' as const,description:'General project scope',
+    pricingMode:'direct' as const,amount:hiddenPrice,
+    customerVisible:true,includeInTotal:true,
+  }]:looseLines;
   const documentLabel=commercialDocumentLabel(quote);
   return (
     <article className="customer-quote-paper">
