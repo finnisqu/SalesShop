@@ -39,7 +39,25 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
   const slabCount=projection.slabCount;
   const activeAmount=primary?quoteLineAmount(primary):0;
   const updateScope=(patch:Partial<NonNullable<QuoteSection['scope']>>)=>{
-    updateSection(quote.id,section.id,{scope:{...section.scope,...patch}});
+    const nextSection={...section,scope:{...section.scope,...patch}};
+    const nextCost=projectAreaCost(quote,nextSection);
+    updateSection(quote.id,section.id,{scope:nextSection.scope});
+    // In multiplier mode, yield / cost / purchased slab-count edits affect
+    // the actual customer price. Other pricing modes stay untouched.
+    if(mode==='multiplier'&&primary){
+      const updatedPrice=calculateAreaCustomerPrice('multiplier',{
+        sf:nextCost.measuredSf,slabs:nextCost.slabCount,
+        costPerSlab:nextCost.slabCost,multiplier,
+      });
+      if(updatedPrice!==undefined&&Math.abs((primary.amount??0)-updatedPrice)>=.005)
+        updateLine(quote.id,primary.id,{
+          amount:updatedPrice,materialReference:{
+            ...(primary.materialReference??materialRef??{stockProgram:false,pricingSource:'slab-multiplier'}),
+            pricingSource:'slab-multiplier',sourceSlabCost:nextCost.slabCost,
+            slabCount:nextCost.slabCount,slabMultiplier:multiplier,
+          },
+        });
+    }
   };
   const materialRef=section.scope?.takeoffMaterialReference;
   const ensurePrimary=(choice:AreaPricingChoice)=>{
@@ -80,6 +98,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
     // its source association or changes its measured quantity.
     const patch:Partial<Omit<QuoteLine,'id'>>={
       pricingMode:nextMode,materialReference:mat,
+      ...(choice==='sf'?{rateReference:undefined}:{}),
       ...(choice==='sf'
         ?{rate:effectiveRate,amount:undefined}
         :{amount:value,rate:undefined}),
@@ -145,7 +164,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
           <input aria-label="Area multiplier slab count" type="number" min="1" step="1"
             disabled={!editable||!primary} value={decimal(slabCount)}
             onChange={e=>{const n=numeric(e.target.value);if(n!==undefined&&Number.isInteger(n)&&n>0){
-              updateScope({slabCountOverride:n});setPrice('multiplier',undefined,undefined,n);
+              updateScope({slabCountOverride:n});
             }}}/>
         </label>
       </div>
@@ -171,8 +190,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
           <input type="number" aria-label="Area buying cost per slab" min="0" step=".01"
             disabled={!editable} value={decimal(slabPrice)}
             onChange={e=>{const v=numeric(e.target.value);
-              if(v===undefined||v>=0){updateScope({slabCostOverride:v});
-                if(mode==='multiplier'&&primary)setPrice('multiplier',undefined,undefined,undefined,undefined,v);}}}/>
+              if(v===undefined||v>=0)updateScope({slabCostOverride:v});}}/>
         </label>
         <label>Slabs to purchase
           <input type="number" aria-label="Area slab quantity override" min="1" step="1"
@@ -181,7 +199,6 @@ export function QuoteBetaDesktopPricing({quote,section,editable}:{
             onChange={e=>{const v=numeric(e.target.value);
               if(v===undefined||(Number.isInteger(v)&&v>0)){
                 updateScope({slabCountOverride:v});
-                if(mode==='multiplier'&&primary&&v)setPrice('multiplier',undefined,undefined,v);
               }}}/>
         </label>
       </div>
