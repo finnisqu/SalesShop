@@ -168,7 +168,7 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
             <span>Move line to</span>
             <select aria-label="Move line to Area" value={line.sectionId??''}
               onChange={e=>moveLine(quote.id,line.id,e.target.value||undefined)}>
-              <option value="">General charges</option>
+              <option value="">General</option>
               {quote.sections.map(area=><option key={area.id} value={area.id}>{area.title||'Untitled Area'}</option>)}
             </select>
           </label>:<p className="qmb-help">This charge follows its Takeoffs source. Move or remove that source under Materials or Measure.</p>}
