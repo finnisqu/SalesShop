@@ -43,6 +43,7 @@ import {
 } from '../types/quote';
 import { CustomerDocumentBrand } from './CustomerDocumentBrand';
 import { PricingScheduleCustomerPreview } from './PricingScheduleCustomerPreview';
+import {QUOTE_STANDARD_TERMS,termsEnabled,freeCustomerNotes} from '../services/quoteCustomerTerms';
 import { PricingScheduleWorkbook } from './PricingScheduleWorkbook';
 import { QuoteCrmFields } from './QuoteCrmFields';
 import { QuoteDocumentSetupFields, QuoteRevisionLabelField, QuoteNotesFields } from './QuoteEditorFields';
