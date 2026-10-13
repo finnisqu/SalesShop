@@ -593,7 +593,7 @@ export function QuotesMobileBeta() {
           </div>
           <div ref={mobileAreaRef} className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
             data-area-edit-workspace aria-label="Quote Area cards">
-          {(areaManager.editing?areaManager.orderedSections:quote.sections).map(s=>{
+          {(areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s))).map(s=>{
             const lines=quote.lines.filter(l=>l.sectionId===s.id);
             return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}>
               {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
