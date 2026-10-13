@@ -1,84 +1,103 @@
 import {useLayoutEffect,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
 
-/** A lifting pointer interaction shared by Area and General charge cards.
- * The drag handle captures the pointer while the entire card row follows it.
- * Only a threshold-crossing changes the draft ordering. */
-export function useQuoteBetaCardDrag(move:(source:string,target:string)=>void){
+/** Track the pointer on document, NOT the React row being reordered.
+ * Moving an element with pointer capture can drop move/up events, leaving the
+ * lifted card stuck. The ghost follows the pointer independently of DOM moves.
+ * Targets are insertion slots (before/after a sibling), including after last. */
+export function useQuoteBetaCardDrag(
+  move:(source:string,target:string,after?:boolean)=>void,
+){
   const [dragging,setDragging]=useState<string|null>(null);
-  const active=useRef<{id:string;pointerId:number;row:HTMLElement;handle:HTMLButtonElement;
-    wrapper:HTMLDivElement;startY:number;startTop:number;startX:number;startLeft:number;
+  const active=useRef<{
+    id:string;pointerId:number;row:HTMLElement;ghost:HTMLDivElement;
+    initialY:number;initialX:number;clean:()=>void;
   }|null>(null);
   const moveRef=useRef(move);
   moveRef.current=move;
   const clear=()=>{
-    const held=active.current;
-    if(held){
-      held.row.classList.remove('is-drag-source');
-      held.wrapper.remove();
-      try{
-        if(held.handle.hasPointerCapture(held.pointerId))
-          held.handle.releasePointerCapture(held.pointerId);
-      }catch{ /* capture can be released by a view change */ }
-    }
+    const state=active.current;
+    if(!state)return;
     active.current=null;
+    state.clean();
+    state.row.classList.remove('is-drag-source');
+    state.ghost.remove();
+    document.body.classList.remove('qmb-card-dragging');
     setDragging(null);
   };
   const onPointerDown=(id:string,event:ReactPointerEvent<HTMLButtonElement>)=>{
     if(event.button!==0||active.current)return;
-    const handle=event.currentTarget;
-    const row=handle.closest<HTMLElement>('[data-qmb-sort-row]');
+    const row=event.currentTarget.closest<HTMLElement>('[data-qmb-sort-row]');
     if(!row)return;
     event.preventDefault();event.stopPropagation();
     const rect=row.getBoundingClientRect();
-    // Drag a floating *copy*. The real row stays in the list as a placeholder.
-    // This prevents the captured pointer from being repositioned by React
-    // when a row crosses another row's midpoint.
-    const wrapper=document.createElement('div');
-    wrapper.className='qmb qmb-drag-ghost';
-    wrapper.setAttribute('aria-hidden','true');
-    const root=row.closest<HTMLElement>('.qmb');
-    if(root){
-      const computed=getComputedStyle(root);
-      for(const token of ['--qmb-card','--qmb-ink','--qmb-border','--qmb-accent','--qmb-tint','--qmb-muted']){
-        wrapper.style.setProperty(token,computed.getPropertyValue(token));
-      }
+    const ghost=document.createElement('div');
+    ghost.className='qmb qmb-drag-ghost';
+    ghost.setAttribute('aria-hidden','true');
+    ghost.style.pointerEvents='none';
+    const sourceRoot=row.closest<HTMLElement>('.qmb');
+    if(sourceRoot){
+      const tokens=['--qmb-card','--qmb-ink','--qmb-border',
+        '--qmb-accent','--qmb-tint','--qmb-muted'];
+      const computed=getComputedStyle(sourceRoot);
+      tokens.forEach(token=>ghost.style.setProperty(token,computed.getPropertyValue(token)));
     }
     const copy=row.cloneNode(true) as HTMLElement;
-    copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    copy.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
     copy.removeAttribute('data-qmb-sort-row');
-    wrapper.appendChild(copy);
-    wrapper.style.width=rect.width+'px';
-    wrapper.style.left=rect.left+'px';
-    wrapper.style.top=rect.top+'px';
-    document.body.appendChild(wrapper);
+    ghost.appendChild(copy);
+    ghost.style.position='fixed';
+    ghost.style.left=rect.left+'px';
+    ghost.style.top=rect.top+'px';
+    ghost.style.width=rect.width+'px';
+    ghost.style.zIndex='2800';
+    document.body.appendChild(ghost);
     row.classList.add('is-drag-source');
-    active.current={id,pointerId:event.pointerId,row,handle,wrapper,
-      startY:event.clientY,startTop:rect.top,startX:event.clientX,startLeft:rect.left};
-    handle.setPointerCapture(event.pointerId);
+    document.body.classList.add('qmb-card-dragging');
+    const initialX=event.clientX,initialY=event.clientY;
+    let previousSlot='';
+    const onMove=(e:globalThis.PointerEvent)=>{
+      const held=active.current;
+      if(!held||e.pointerId!==held.pointerId)return;
+      e.preventDefault();
+      held.ghost.style.transform='translate3d('+
+        (e.clientX-initialX)+'px,'+(e.clientY-initialY)+'px,0) scale(1.02)';
+      const parent=held.row.parentElement;
+      if(!parent)return;
+      const rows=Array.from(parent.querySelectorAll<HTMLElement>(':scope > [data-qmb-sort-row]'));
+      const others=rows.filter(el=>el!==held.row);
+      if(!others.length)return;
+      const index=others.filter(el=>{
+        const box=el.getBoundingClientRect();
+        return e.clientY>box.top+box.height/2;
+      }).length;
+      const current=rows.indexOf(held.row);
+      if(index===current){previousSlot='';return;}
+      const target=others[Math.min(index,others.length-1)];
+      if(!target?.dataset.qmbSortRow)return;
+      const after=index===others.length;
+      const slot=target.dataset.qmbSortRow+':'+after;
+      if(slot===previousSlot)return;
+      previousSlot=slot;
+      moveRef.current(id,target.dataset.qmbSortRow,after);
+    };
+    const end=(e:globalThis.PointerEvent)=>{
+      if(e.pointerId===active.current?.pointerId)clear();
+    };
+    const cancel=()=>clear();
+    document.addEventListener('pointermove',onMove,{passive:false});
+    document.addEventListener('pointerup',end);
+    document.addEventListener('pointercancel',end);
+    window.addEventListener('blur',cancel);
+    const clean=()=>{
+      document.removeEventListener('pointermove',onMove);
+      document.removeEventListener('pointerup',end);
+      document.removeEventListener('pointercancel',end);
+      window.removeEventListener('blur',cancel);
+    };
+    active.current={id,pointerId:event.pointerId,row,ghost,initialY,initialX,clean};
     setDragging(id);
   };
-  const onPointerMove=(id:string,event:ReactPointerEvent<HTMLButtonElement>)=>{
-    const held=active.current;
-    if(!held||held.id!==id||held.pointerId!==event.pointerId)return;
-    event.preventDefault();
-    const deltaY=event.clientY-held.startY;
-    const deltaX=event.clientX-held.startX;
-    held.wrapper.style.transform='translate3d('+deltaX+'px,'+deltaY+'px,0) scale(1.025)';
-    const parent=held.row.parentElement;
-    if(!parent)return;
-    const all=Array.from(parent.querySelectorAll<HTMLElement>(':scope > [data-qmb-sort-row]'));
-    const others=all.filter(item=>item!==held.row);
-    if(!others.length)return;
-    let insertion=0;
-    for(const other of others){
-      const rect=other.getBoundingClientRect();
-      if(event.clientY>rect.top+rect.height/2)insertion++;
-    }
-    const sourceIndex=all.indexOf(held.row);
-    if(sourceIndex===insertion)return;
-    const target=others[Math.min(insertion,others.length-1)].dataset.qmbSortRow;
-    if(target)moveRef.current(id,target);
-  };
+  const onPointerMove=(_id:string,_event:ReactPointerEvent<HTMLButtonElement>)=>{};
   const onPointerEnd=(event:ReactPointerEvent<HTMLButtonElement>)=>{
     if(active.current?.pointerId===event.pointerId)clear();
   };
