@@ -76,11 +76,11 @@
  .qmb .qmb-area-editor .qmb-pagecontent{padding-block:17px 24px}
  .qmb .qmb-sinks-sheet{container-type:inline-size}
  /* In roomier workspaces use a single compact sink input rail. */
- @container(min-width:605px){
+ @container(min-width:465px){
    .qmb .qmb-sink-line{display:grid;
-     grid-template-columns:minmax(96px,.82fr) minmax(170px,1.55fr)
-       64px 80px minmax(112px,.8fr) 28px;
-     column-gap:7px;row-gap:5px;align-items:end}
+     grid-template-columns:minmax(78px,.72fr) minmax(120px,1.35fr)
+       49px 67px minmax(90px,.7fr) 23px;
+     column-gap:5px;row-gap:5px;align-items:end}
    .qmb .qmb-sink-primary,.qmb .qmb-sink-secondary{display:contents}
    .qmb .qmb-sink-type-field{grid-column:1;grid-row:1}
    .qmb .qmb-sink-catalog{grid-column:2;grid-row:1}
@@ -158,3 +158,39 @@
  .qmb .qmb-general-quick-add>button:not(.qmb-area-mode-button){font-size:10px;padding:6px}
  .qmb .qmb-area-visibility-toggle{min-width:40px;font-size:9px}
 }
+
+@media(min-width:1000px) and (min-height:550px){
+ .qmb .qmb-sink-line{padding-inline:7px}
+ .qmb .qmb-sink-type-field select{font-size:11px;padding-inline:2px}
+ .qmb .qmb-sink-catalog .qtl-combobox>input{font-size:12px;padding-inline:5px}
+ .qmb .qmb-sink-secondary .qmb-sink-qty input{width:45px}
+ .qmb .qmb-sink-secondary .qmb-sink-price input{width:63px}
+ .qmb .qmb-sink-secondary>.qmb-row-menu-trigger{
+   min-width:0;width:100%;padding:5px 2px;font-size:10px;min-height:40px}
+}
+/* Compact invoice-style extra line editor, fully private costs included. */
+.qmb .qmb-desktop-extra-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:end;gap:7px 9px;padding:10px 0}
+.qmb .qmb-desktop-extra-row>input[type="text"]{grid-column:1/-1;min-height:35px}
+.qmb .qmb-desktop-extra-row input:not([type="checkbox"]){
+  min-width:0;width:100%;color:var(--qmb-ink);background:var(--qmb-card);
+  border:1px solid var(--qmb-border);border-radius:8px;padding:7px;font-size:12px}
+.qmb .qmb-desktop-extra-row>label,
+.qmb .qmb-desktop-extra-row .qmb-extra-qty-rate label{
+  display:grid;gap:4px;font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-extra-qty-rate{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.qmb .qmb-extra-line-actions{grid-column:1/-1;display:flex;align-items:center;
+  justify-content:space-between;gap:7px;flex-wrap:wrap}
+.qmb .qmb-extra-line-actions>strong{font-size:12px}
+.qmb .qmb-extra-line-actions label.qmb-check{display:flex;gap:5px;align-items:center;
+  margin:0;font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-extra-line-actions .qmb-extra-delete{font-size:10px;min-height:28px;
+  padding:4px 7px;border:1px solid var(--qmb-border);border-radius:7px;
+  background:var(--qmb-card);color:var(--ss-danger,#b25145)}
+.qmb .qmb-general-takeoff-ref{display:flex;justify-content:space-between;gap:10px;
+  width:100%;min-height:46px;padding:10px;margin-bottom:9px;
+  border:1px solid var(--qmb-border);border-radius:9px;
+  background:var(--qmb-tint);color:var(--qmb-ink);text-align:left;
+  align-items:center;flex-wrap:wrap}
+.qmb .qmb-general-takeoff-ref strong{font-size:12px}
+.qmb .qmb-general-takeoff-ref span{font-size:11px;color:var(--qmb-muted)}
