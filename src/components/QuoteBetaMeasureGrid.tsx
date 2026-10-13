@@ -169,7 +169,7 @@ export function QuoteBetaMeasureGrid({pieces,editable,onSave,onAdvanced,defaults
     <div className="qmb-grid-toolbar">
       <div><strong>Pieces</strong><small>{pieces.length} total · edit any cell</small></div>
       <div className="qmb-grid-toolbar-actions">
-        <FloatingRowMenu label="Area fabrication defaults" caption="⚙ Defaults" width={298}>
+        <FloatingRowMenu label="Area fabrication defaults" caption="Defaults" width={298}>
           {close=><div className="qmb-fabrication-options">
             <div className="qmb-row-menu-title"><strong>Area defaults</strong><small>Used for new pieces</small></div>
             <label>Backsplash height (in)
