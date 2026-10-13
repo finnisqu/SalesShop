@@ -40,7 +40,7 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
         <strong>Buying cost</strong>
         <span>{materialSfCost===undefined?'$ / SF unknown':'$'+materialSfCost.toFixed(2)+'/SF'}</span>
         <span>{projected.slabCost===undefined?'Slab cost unknown':'$'+projected.slabCost.toFixed(2)+'/slab'}</span>
-        <span>{projected.slabCount??'—'} slab(s) · {projected.materialCost===undefined?'Cost incomplete':'$'+projected.materialCost.toFixed(2)+' estimated purchase cost'}</span>
+        <span>{projected.purchaseSlabs??'—'} buying slab(s) · {projected.materialCost===undefined?'Cost incomplete':'$'+projected.materialCost.toFixed(2)+' projected purchase cost'}</span>
       </div>
     </div>
     </>}
