@@ -329,7 +329,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
         </div>:l.pricingMode!=='none'?<label>Price<input type="number" step=".01"
           value={l.amount??''} aria-label={'Area line '+l.id+' price'} disabled={!editable}
           onChange={e=>updateLine(quote.id,l.id,{amount:numeric(e.target.value)})}/></label>:<small>No price</small>}
-        <label>Cost · private<input type="number" step=".01" min="0"
+        <label>Buying cost<input type="number" step=".01" min="0"
           aria-label={'Area line '+l.id+' private cost'} disabled={!editable}
           value={l.internalCost??''} placeholder="—"
           onChange={e=>updateLine(quote.id,l.id,{internalCost:numeric(e.target.value)})}/></label>
