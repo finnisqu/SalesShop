@@ -106,7 +106,7 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
   const audit=auditQuoteDraft(quote);
   const area=quote.sections.find(s=>s.id===areaId);
   const editable=quoteIsCommerciallyEditable(quote);
-  const areas=quote.sections;
+  const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
   const totalSf=areas.reduce((sum,section)=>sum+totalBillableTakeoffSf(section.scope?.takeoffPieces??[]),0);
   const sinkCount=areas.reduce((sum,s)=>
     sum+(s.scope?.takeoffSinks??[]).reduce((n,sink)=>n+sink.count,0),0);
