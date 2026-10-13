@@ -6,12 +6,22 @@ import { useQuoteStore } from './quoteStore';
 export type CatalogSection = 'materials' | 'sinks' | 'other' | 'rates' | 'suppliers';
 export type AppView = 'notebook' | 'board' | 'quotes' | 'catalog' | 'dashboard' | 'settings';
 
+export interface NavigationLocation {
+  view: AppView;
+  catalogSection: CatalogSection;
+  ratesFocus?: 'material';
+  focusedProjectId: string | null;
+  focusedCompanyId: string | null;
+}
+
 interface NavigationState {
   view: AppView;
   catalogSection: CatalogSection;
   ratesFocus?: 'material';
   focusedProjectId: string | null;
   focusedCompanyId: string | null;
+  history: NavigationLocation[];
+  goBack: () => void;
   setView: (view: AppView) => void;
   setCatalogSection: (section: CatalogSection) => void;
   openCatalog: (section?: CatalogSection) => void;
@@ -60,43 +70,50 @@ function rememberCatalogSection(section: CatalogSection) {
 const initial = readInitialNavigation();
 
 export const useNavigationStore = create<NavigationState>((set) => {
-  const navigate = (view: AppView, patch: Partial<NavigationState> = {}) => {
-    rememberView(view);
-    set({ view, focusedProjectId: null, focusedCompanyId: null, ...patch });
+  const snapshot=(state:NavigationState):NavigationLocation=>({
+    view:state.view,catalogSection:state.catalogSection,ratesFocus:state.ratesFocus,
+    focusedProjectId:state.focusedProjectId,focusedCompanyId:state.focusedCompanyId,
+  });
+  const navigate=(view:AppView,patch:Partial<NavigationLocation>={})=>{
+    set(state=>{
+      const next:NavigationLocation={...snapshot(state),view,
+        ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,...patch};
+      const current=snapshot(state);
+      const changed=Object.keys(current).some(key=>
+        current[key as keyof NavigationLocation]!==next[key as keyof NavigationLocation]);
+      if(!changed)return state;
+      rememberView(view);
+      rememberCatalogSection(next.catalogSection);
+      return {...next,history:[...state.history,current].slice(-20)};
+    });
   };
-
   return {
-    view: initial.view,
-    catalogSection: initial.catalogSection,
-    ratesFocus: undefined,
-    focusedProjectId: null,
-    focusedCompanyId: null,
-    setView: (view) => navigate(view),
-    setCatalogSection: (catalogSection) => {
-      rememberCatalogSection(catalogSection);
-      rememberView('catalog');
-      set({ view: 'catalog', catalogSection, focusedProjectId: null, focusedCompanyId: null });
-    },
-    openCatalog: (catalogSection = 'materials') => {
-      rememberCatalogSection(catalogSection);
-      navigate('catalog', { catalogSection });
-    },
-    openBuilderRates: () => {
-      rememberCatalogSection('rates');
-      navigate('catalog',{catalogSection:'rates',ratesFocus:'material'});
-    },
-    openProject: (projectId) => navigate('board', { focusedProjectId: projectId }),
-    openCompany: (companyId) => navigate('board', { focusedCompanyId: companyId }),
-    openNotebookPage: (pageId) => {
+    view:initial.view,catalogSection:initial.catalogSection,
+    ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,
+    history:[],
+    goBack:()=>set(state=>{
+      if(!state.history.length)return state;
+      const previous=state.history[state.history.length-1];
+      rememberView(previous.view);
+      rememberCatalogSection(previous.catalogSection);
+      return {...previous,history:state.history.slice(0,-1)};
+    }),
+    setView:view=>navigate(view),
+    setCatalogSection:catalogSection=>navigate('catalog',{catalogSection}),
+    openCatalog:(catalogSection='materials')=>navigate('catalog',{catalogSection}),
+    openBuilderRates:()=>navigate('catalog',{catalogSection:'rates',ratesFocus:'material'}),
+    openProject:projectId=>navigate('board',{focusedProjectId:projectId}),
+    openCompany:companyId=>navigate('board',{focusedCompanyId:companyId}),
+    openNotebookPage:pageId=>{
       useNotebookStore.getState().selectEntry(pageId);
       navigate('notebook');
     },
-    openQuote: (quoteId) => {
+    openQuote:quoteId=>{
       useQuoteStore.getState().hydrate();
       useQuoteStore.getState().selectQuote(quoteId);
       navigate('quotes');
     },
-    clearFocusedProject: () => set({ focusedProjectId: null }),
-    clearFocusedCompany: () => set({ focusedCompanyId: null }),
+    clearFocusedProject:()=>set({focusedProjectId:null}),
+    clearFocusedCompany:()=>set({focusedCompanyId:null}),
   };
 });
