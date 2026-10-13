@@ -8,6 +8,8 @@ const fixture = vi.hoisted(() => ({
     catalogSection: 'materials',
     setView: () => {},
     setCatalogSection: () => {},
+    goBack: () => {},
+    history: [] as Array<{view:string}>,
   },
   notebook: {
     entries: [] as Array<{ id: string; title: string; hidden: boolean; favorite: boolean; updatedAt: string }>,
@@ -72,6 +74,16 @@ describe('mobile shared navigation for restricted roles', () => {
     expect(html).toContain('aria-label="Open SalesShop navigation"');
     // Mobile role switcher is in the drawer, never a fifth header control.
     expect(html).not.toContain('Preview SalesShop as a team role');
+  });
+
+  it('offers Back to the previous SalesShop tab when navigation history exists', () => {
+    fixture.navigation.view='board';
+    fixture.navigation.history=[{view:'quotes'}];
+    fixture.auth.teamRole='viewer';
+    const html=renderToStaticMarkup(<MobileAppChrome/>);
+    expect(html).toContain('aria-label="Back to previous SalesShop tab"');
+    expect(html).toContain('class="mobile-app-back-button"');
+    fixture.navigation.history=[];
   });
 
   it('gives restricted Quotes routes an explicit CSS navigation fallback', () => {
