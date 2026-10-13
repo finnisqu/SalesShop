@@ -299,15 +299,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       </div>
       {!projection.complete&&<p className="qmb-cost-warning">Margin stays provisional until material, sink and other priced work have buying costs.</p>}
     </div>
-    <details className="qmb-desktop-lab-customer">
-      <summary>Customer presentation <small>Optional display settings</small></summary>
-      <div className="qmb-pricing-modes">
-        <button type="button" disabled={!editable} aria-pressed={section.customerDisplayMode!=='detail'}
-          onClick={()=>updateSection(quote.id,section.id,{customerDisplayMode:'summary'})}>Lump sum</button>
-        <button type="button" disabled={!editable} aria-pressed={section.customerDisplayMode==='detail'}
-          onClick={()=>updateSection(quote.id,section.id,{customerDisplayMode:'detail'})}>Itemized</button>
-      </div>
-    </details>
+
     </>}
     {(view==='all'||view==='extras')&&<div className="qmb-desktop-lab-extras">
       <header><strong>Additional line prices</strong>
