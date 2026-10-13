@@ -1,4 +1,5 @@
 import { QuoteCrmFields } from './QuoteCrmFields';
+import {QuoteBetaHistory} from './QuoteBetaHistory';
 import { QuoteNotesFields } from './QuoteEditorFields';
 import { useQuoteStore } from '../store/quoteStore';
 import { RATE_BOOK_DIVISIONS, type RateBookDivision } from '../types/rateBook';
@@ -57,5 +58,6 @@ export function QuoteBetaDetails({quote}:{quote:Quote}) {
           onInternalChange={value=>update(quote.id,{internalNotes:value})}/>
       </fieldset>
     </section>
+    <QuoteBetaHistory quote={quote}/>
   </div>;
 }
