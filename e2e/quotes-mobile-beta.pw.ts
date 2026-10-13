@@ -850,6 +850,7 @@ test('Quotes Beta Review opens at a specific readiness finding and rechecks chan
   const customerField=inline.locator('input').first();
   await expect(customerField).toBeVisible();
   await customerField.fill('Sample Construction');
+  await inline.getByRole('button',{name:'Save',exact:true}).click();
   await expect(drawer.getByRole('status').filter({hasText:'Quote changed since this review'})).toBeVisible();
   await expect(drawer.getByRole('button',{name:/Recheck now/})).toBeVisible();
   await drawer.getByRole('button',{name:/Recheck now/}).click();
