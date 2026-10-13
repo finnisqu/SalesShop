@@ -1,0 +1,87 @@
+
+/* Quotes Beta — ordered, compact Details, no cross-workspace CRM navigation. */
+.qmb .qmb-details-page {display:grid;gap:11px;padding-bottom:12px;}
+.qmb .qmb-details-section {padding:13px;min-width:0;margin:0;border-radius:13px;}
+.qmb .qmb-details-heading {
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid var(--qmb-border);
+}
+.qmb .qmb-details-heading>div {display:grid;gap:2px;min-width:0;}
+.qmb .qmb-details-heading h3 {font-size:15px;font-weight:850;line-height:1.3;margin:0;}
+.qmb .qmb-details-heading small {font-size:11px;line-height:1.4;color:var(--qmb-muted);}
+.qmb .qmb-details-step {
+  display:grid;place-items:center;flex:0 0 27px;height:27px;border-radius:9px;
+  background:var(--qmb-tint);color:var(--qmb-accent);font-weight:900;font-size:12px;
+}
+.qmb .qmb-details-crm,
+.qmb .qmb-details-fields {display:grid;gap:11px;min-width:0;}
+.qmb fieldset.qmb-details-fields,.qmb fieldset.qmb-details-notes-fields {
+  border:0;padding:0;margin:0;min-width:0;
+}
+.qmb .qmb-details-fields>label,
+.qmb .qmb-details-fields>.quote-crm-combobox,
+.qmb .qmb-details-notes-fields .quote-foundation-note {
+  display:grid;gap:5px;min-width:0;margin:0;
+}
+.qmb .qmb-details-fields label>span,
+.qmb .qmb-details-notes-fields label {
+  font-size:11px;font-weight:800;line-height:1.3;color:var(--qmb-muted);
+}
+.qmb .qmb-details-fields input,.qmb .qmb-details-fields select,
+.qmb .qmb-details-notes-fields textarea {
+  min-width:0;max-width:100%;width:100%;min-height:42px;
+  border:1px solid var(--qmb-border);border-radius:9px;
+  padding:8px 11px;color:var(--qmb-ink);background:var(--qmb-card);
+  font-size:16px;font-weight:500;line-height:1.35;
+}
+.qmb .qmb-details-notes-fields textarea {min-height:75px;resize:vertical;font-size:14px;}
+.qmb .qmb-details-notes-fields .quote-notes-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:11px;}
+.qmb .qmb-details-linked-status {
+  display:flex;flex-wrap:wrap;gap:6px;
+}
+.qmb .qmb-details-linked-status span {
+  padding:5px 8px;border-radius:7px;background:var(--qmb-tint);
+  color:var(--qmb-muted);font-size:10px;font-weight:750;line-height:1.3;
+}
+.qmb .qmb-details-linked-status span.is-linked {color:var(--qmb-accent);}
+.qmb .qmb-details-project-lookup {
+  margin-top:12px;padding-top:11px;border-top:1px solid var(--qmb-border);
+}
+.qmb .qmb-details-project-lookup summary {
+  cursor:pointer;min-height:34px;display:flex;align-items:center;
+  gap:8px;font-size:12px;font-weight:800;color:var(--qmb-ink);
+}
+.qmb .qmb-details-project-lookup summary::before {content:'›';color:var(--qmb-accent);font-size:19px;line-height:1;}
+.qmb .qmb-details-project-lookup[open] summary::before {content:'⌄';}
+.qmb .qmb-details-project-lookup summary span {font-size:10px;color:var(--qmb-muted);font-weight:600;margin-left:auto;}
+.qmb .qmb-details-project-lookup[open] .qmb-details-crm {padding-top:8px;}
+.qmb .qmb-details-project-link {
+  display:flex;justify-content:space-between;gap:8px;align-items:center;
+  border:1px solid var(--qmb-border);border-radius:9px;
+  padding:9px 10px;background:var(--qmb-tint);
+}
+.qmb .qmb-details-project-link>div {display:grid;gap:2px;min-width:0;}
+.qmb .qmb-details-project-link small,
+.qmb .qmb-details-optional {color:var(--qmb-muted);font-size:11px;line-height:1.4;}
+.qmb .qmb-details-project-link strong {font-size:12px;color:var(--qmb-ink);overflow-wrap:anywhere;}
+.qmb .qmb-details-optional {margin:0;}
+.qmb .qmb-details-fields .quote-crm-input-wrap {min-width:0;}
+.qmb .qmb-details-fields .quote-crm-suggestions {
+  z-index:50;max-height:215px;overflow-y:auto;
+  border-color:var(--qmb-border);border-radius:9px;
+  background:var(--qmb-card);color:var(--qmb-ink);
+  box-shadow:0 8px 22px rgba(0,0,0,.13);
+}
+.qmb .qmb-details-fields .quote-crm-suggestions button {min-height:42px;border-radius:7px;padding:8px;}
+.qmb .qmb-details-fields .quote-crm-suggestions button small {white-space:normal;color:var(--qmb-muted);}
+.qmb .qmb-appnav-actions {display:flex;align-items:center;gap:6px;min-width:0;}
+.qmb .qmb-app-back {
+  display:grid;place-items:center;min-width:36px;height:36px;
+  padding:0;border:1px solid var(--qmb-border);border-radius:9px;
+  color:var(--qmb-accent);background:var(--qmb-card);font-size:25px;line-height:1;
+}
+@media(max-width:350px){
+  .qmb .qmb-details-section {padding:10px;}
+  .qmb .qmb-appnav-actions {gap:4px;}
+  .qmb .qmb-app-back {min-width:33px;height:34px;}
+}
