@@ -1258,3 +1258,34 @@ test('desktop Measure scope and Materials prices share sinks and additional work
   expect(width!.width).toBeGreaterThan(550);
   await expect(workspace.getByRole('spinbutton',{name:'Area slab yield percent'})).toBeVisible();
 });
+
+
+test('desktop Area Calculator occupies center workspace, not only inspector',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Area workflow center-panel ownership');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await beta.getByRole('button',{name:'Add Area from navigator'}).click();
+  const workspace=beta.locator('.qmb-desktop-main .qmb-area-editor');
+  await expect(workspace).toBeVisible();
+  await workspace.getByRole('navigation',{name:'Area sections'}).getByRole('button',{name:'Calculator'}).click();
+  const calculator=workspace.locator('[data-center-calculator="true"]');
+  await expect(calculator).toBeVisible();
+  await expect(calculator.getByRole('spinbutton',{name:'Area buying cost per slab'})).toBeVisible();
+  await expect(calculator.getByRole('spinbutton',{name:'Area shop cost'})).toBeVisible();
+  const shell=beta.locator('.qmb-desktop-main');
+  const inner=await calculator.boundingBox(),outer=await shell.boundingBox();
+  expect(inner!.width).toBeGreaterThan(450);
+  expect(inner!.x).toBeGreaterThanOrEqual(outer!.x-2);
+  expect(inner!.x+inner!.width).toBeLessThanOrEqual(outer!.x+outer!.width+2);
+  await workspace.getByRole('navigation',{name:'Area sections'}).getByRole('button',{name:'Materials'}).click();
+  await expect(workspace.locator('.qmb-commerce-segment')).toHaveCount(3);
+  await expect(workspace.getByRole('region',{name:'Material selection and pricing'})).toBeVisible();
+  await expect(workspace.getByRole('region',{name:'Sink selection and pricing'})).toBeVisible();
+  await expect(workspace.getByRole('region',{name:'Additional work and pricing'})).toBeVisible();
+});
