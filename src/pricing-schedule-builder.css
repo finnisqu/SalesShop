@@ -272,6 +272,48 @@
   justify-self: start;
 }
 
+/* Keep plan/package exclusions discoverable without crowding everyday takeoffs. */
+.pricing-builder-component-scope {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line, rgba(58, 51, 43, .16));
+  border-radius: 8px;
+}
+.pricing-builder-component-scope > summary,
+.pricing-builder-component-package > summary {
+  cursor: pointer;
+  font-weight: 650;
+  padding: 4px 0;
+}
+.pricing-builder-component-scope > p {
+  color: var(--ink-muted, #746e64);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 7px 0 11px;
+}
+.pricing-builder-component-package {
+  border-top: 1px solid var(--line, rgba(58, 51, 43, .12));
+  padding: 8px 0;
+}
+.pricing-builder-component-list { display: grid; gap: 6px; margin: 8px 0; }
+.pricing-builder-component-choice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border: 1px solid var(--line, rgba(58, 51, 43, .1));
+  border-radius: 6px;
+  cursor: pointer;
+}
+.pricing-builder-component-choice input[type='checkbox'] {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  accent-color: var(--accent, #356a92);
+}
+.pricing-builder-component-choice span { min-width: 0; overflow-wrap: anywhere; }
+.pricing-builder-component-choice small { color: var(--ink-muted, #746e64); }
+
 .pricing-builder-plans-layout {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
