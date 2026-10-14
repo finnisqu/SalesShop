@@ -686,6 +686,14 @@ export function QuotesMobileBeta() {
               onChange={e=>update(quote.id,{title:e.target.value})}/>
             <strong className="qmb-quote-total" aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>{quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}</strong>
           </div>
+          <div className="qmb-pad qmb-document-identity-note">
+            <button type="button" className="qmb-document-customer-link" onClick={()=>navigateDocument('details')}
+              title="Edit customer and project details">
+              {quote.companyName||'Assign a customer'}{quote.contactName?' · '+quote.contactName:''}
+              <span aria-hidden="true"> ›</span>
+            </button>
+            <span>{quote.status} · Revision {quote.revision}</span>
+          </div>
           {quote.templateOrigin&&<div className="qmb-pad qmb-document-origin">
             <span>Based on {quote.templateOrigin.sourceTitle} · Rev {quote.templateOrigin.sourceRevision}</span>
             <span>· Independent working copy</span>
