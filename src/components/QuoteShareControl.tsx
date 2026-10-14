@@ -11,6 +11,8 @@ import {
 import { displayQuoteNumber } from '../types/quote';
 import { reviewItemsBlockingDirectShare } from '../services/quoteShareReadiness';
 import {shareMatchesQuoteRevision} from '../services/quoteDeliveryApproval';
+import {useCrmStore} from '../store/crmStore';
+import {confirmedQuoteDeliveries} from '../services/quoteDeliveryLifecycle';
 import '../quote-share.css';
 
 function dateLabel(value: string | null) {
@@ -20,6 +22,7 @@ function dateLabel(value: string | null) {
 
 export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIssue=false}:{inline?:boolean;allowCreation?:boolean;autoOpenOnIssue?:boolean}={}) {
   const mode = useAuthStore((state) => state.mode);
+  const activities=useCrmStore(state=>state.activities);
   const organizationId = useAuthStore((state) => state.organizationId);
   const quotes = useQuoteStore((state) => state.quotes);
   const activeQuoteId = useQuoteStore((state) => state.activeQuoteId);
@@ -126,6 +129,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
   const url = share ? quoteShareUrl(share) : '';
   const correctRevision=Boolean(share&&shareMatchesQuoteRevision(quote,share));
   const active = correctRevision&&(share?.status === 'active' || share?.status === 'signed');
+  const deliveries=confirmedQuoteDeliveries(quote,activities);
   const reviewedItemsNeedingIssue=reviewItemsBlockingDirectShare(quote);
   const creationReady=allowCreation&&reviewedItemsNeedingIssue===0;
 
@@ -204,6 +208,10 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
                     </>
                   )}
 
+                  <small>{deliveries.length
+                    ? 'Delivery confirmed by salesperson · '+new Date(deliveries[0].occurredAt).toLocaleString()
+                    :share.firstViewedAt?'Customer opened this link. Delivery was not manually confirmed.'
+                    :'Link created. No customer delivery has been confirmed.'}</small>
                   {share.firstViewedAt && <small>First opened {new Date(share.firstViewedAt).toLocaleString()}</small>}
                   {share.signedAt && <small>Accepted {new Date(share.signedAt).toLocaleString()}</small>}
 
