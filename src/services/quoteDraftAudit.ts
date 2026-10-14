@@ -64,11 +64,18 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
     const where:QuoteAuditDestination=line.sectionId&&quote.sections.some(s=>s.id===line.sectionId)
       ?{view:'area',areaId:line.sectionId,tab:'pricing'}:{view:'build'};
     const title=line.description.trim()||'Unnamed charge';
+    const takeoffSink=line.takeoffSinkId
+      ?quote.sections.find(s=>s.id===line.sectionId)?.scope?.takeoffSinks
+        ?.find(sink=>sink.id===line.takeoffSinkId&&sink.includeInPricing)
+      :undefined;
+    // A takeoff-owned sink has its own actionable selling-price finding below.
+    // Avoid reporting the same missing/free price twice when snapshots agree.
+    const sinkPriceCovered=!!takeoffSink&&takeoffSink.unitPrice===line.rate;
     if(line.pricingMode==='quantity-rate'){
-      if(!isValidPrice(line.rate)){
+      if(!isValidPrice(line.rate)&&!sinkPriceCovered){
         add('line:'+line.id+':rate','blocker','Missing sell rate: '+title,
           'This charge has no valid selling rate and is not fully priced.',where);
-      } else if(line.rate===0&&(line.quantity??0)>0){
+      } else if(line.rate===0&&(line.quantity??0)>0&&!sinkPriceCovered){
         add('line:'+line.id+':zero','review','Zero-price charge: '+title,
           'This item is included at $0. Confirm it is intentionally complimentary.',where);
       }
@@ -132,6 +139,8 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
       }
     }
     for(const [i,sink] of sinks.entries()){
+      // Older, specification-only sink selections do not create a billable line.
+      if(!sink.includeInPricing)continue;
       const name=sink.name.trim()||'Sink '+(i+1);
       // A blank price on a selected sink must never be mistaken for a free sink.
       if(!isValidPrice(sink.unitPrice)){
