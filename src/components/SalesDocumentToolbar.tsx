@@ -33,7 +33,7 @@ export function SalesDocumentToolbar({quote,onLibrary,onBuild,onDetails,onPrevie
     </div>
     <div className="sales-document-toolbar-actions">
       <button type="button" onClick={onBuild} title="Return to the document editor">Edit</button>
-      <button type="button" onClick={onPreview} title="View exactly what the customer sees">Preview</button>
+      <button type="button" aria-label="View customer document" onClick={onPreview} title="View exactly what the customer sees">Preview</button>
       <details ref={menu} className="sales-document-actions-menu">
         <summary aria-label="More document actions">More <span aria-hidden="true">⌄</span></summary>
         <div className="sales-document-actions-popover">
