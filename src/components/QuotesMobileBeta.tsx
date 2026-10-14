@@ -49,6 +49,8 @@ import {salesDocumentTemplate,salesTemplateLabel,SALES_DOCUMENT_TEMPLATES,create
   type SalesTemplateStart} from '../services/salesDocumentTemplates';
 import {NewSalesDocumentPicker} from './NewSalesDocumentPicker';
 import {useRateBookStore} from '../store/rateBookStore';
+import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
+import {snapshotStockBuilderLevels} from '../services/stockBuilderRateTemplate';
 import type {SalesDocumentTemplate,SalesDocumentTemplateChoice} from '../types/quote';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
@@ -405,6 +407,14 @@ export function QuotesMobileBeta() {
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
   const stockRates=useRateBookStore(s=>s.items);
   const hydrateRateBook=useRateBookStore(s=>s.hydrate);
+  const companyStock=useCompanySettingsStore(s=>s.settings.stockMaterials);
+  const companyReady=useCompanySettingsStore(s=>s.hydrated);
+  const hydrateCompany=useCompanySettingsStore(s=>s.hydrate);
+  const levelGuide=useMaterialLevelGuideStore(s=>s.guide);
+  const levelGuideReady=useMaterialLevelGuideStore(s=>s.hydrated);
+  const hydrateLevelGuide=useMaterialLevelGuideStore(s=>s.hydrate);
+  const stockLevelPreview=useMemo(()=>snapshotStockBuilderLevels(companyStock,levelGuide),
+    [companyStock,levelGuide]);
   const [libraryAction,setLibraryAction]=useState<{id:string;kind:'archive'|'delete'}|null>(null);
   const archiveQuote=useQuoteStore(s=>s.archiveQuote);
   const restoreQuote=useQuoteStore(s=>s.restoreQuote);
@@ -416,7 +426,10 @@ export function QuotesMobileBeta() {
   const quoteScrollRef=useRef<HTMLDivElement>(null);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
-  useEffect(()=>{hydrate();hydrateCrm();hydrateRateBook();},[hydrate,hydrateCrm,hydrateRateBook]);
+  useEffect(()=>{
+    hydrate();hydrateCrm();hydrateRateBook();
+    void hydrateCompany();hydrateLevelGuide();
+  },[hydrate,hydrateCrm,hydrateRateBook,hydrateCompany,hydrateLevelGuide]);
   useEffect(()=>{
     if(!hydrated)return;
     const previous=restoredLocation.current.quoteId;
@@ -486,6 +499,10 @@ export function QuotesMobileBeta() {
   )=>{
     const source=myQuotes.find(item=>item.id===sourceId);
     if(start==='previous'&&!source)return;
+    if(start==='company-rates'&&template==='builder-rates'&&(!companyReady||!levelGuideReady)){
+      setError('Company stock materials and builder level pricing are not loaded yet.');
+      return;
+    }
     const documentType=template==='quick-quote'?'quote':'pricing-schedule';
     const title=source?source.title+' · New agreement':template==='quick-quote'?'Untitled quote':
       salesTemplateLabel(template);
@@ -499,7 +516,8 @@ export function QuotesMobileBeta() {
       lines:[],
       ...(template!=='quick-quote'?{
         pricingSchedule:createTemplateSchedule(id,template,start,source,
-          stockRates.filter(rate=>rate.active)),
+          stockRates.filter(rate=>rate.active),companyStock,
+          template==='builder-rates'?levelGuide:undefined),
       }:{}),
     });
     setShowNewDocument(false);openQuote(id);
@@ -776,6 +794,10 @@ export function QuotesMobileBeta() {
       </div>,document.body)}
     {showNewDocument&&<NewSalesDocumentPicker quotes={myQuotes}
       stockRateCount={stockRates.filter(item=>item.active).length}
+      stockLevelReady={companyReady&&levelGuideReady}
+      stockMaterialCount={stockLevelPreview.summary.stockCount}
+      stockLevelCount={stockLevelPreview.summary.levelCount}
+      unassignedStockCount={stockLevelPreview.summary.unassigned.length}
       onClose={()=>setShowNewDocument(false)} onCreate={createFromTemplate}/>}
     {libraryAction&&(()=>{
       const chosen=quotes.find(q=>q.id===libraryAction.id);
