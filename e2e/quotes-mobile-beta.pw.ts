@@ -544,7 +544,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await followups.getByRole('button',{name:'Plan / log follow-up'}).click();
   const nextDate=followups.getByLabel('Next follow-up date');
   const today=await nextDate.getAttribute('min');
-  expect(today).toMatch(/^\\d{4}-\\d{2}-\\d{2}$/);
+  expect(today).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
   await nextDate.fill(today!);
   await followups.getByRole('button',{name:'Schedule',exact:true}).click();
   await expect(followups).toContainText('Follow-up today');
