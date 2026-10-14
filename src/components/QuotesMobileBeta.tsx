@@ -631,7 +631,7 @@ export function QuotesMobileBeta() {
         {quoteTab==='build'&&quote.documentType==='pricing-schedule'&&
           <section className="qmb-pricing-schedule-beta" aria-label="Pricing Schedule workspace">
             <Suspense fallback={<div className="qmb-card">Opening Pricing Schedule…</div>}>
-              <PricingScheduleWorkspace quote={quote}/>
+              <PricingScheduleWorkspace key={quote.id} quote={quote}/>
             </Suspense>
           </section>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
