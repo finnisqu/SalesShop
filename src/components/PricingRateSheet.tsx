@@ -123,7 +123,7 @@ export function PricingRateSheet({ quote }: { quote: Quote }) {
     <div className="pricing-rate-sheet">
       <header className="pricing-builder-header">
         <div>
-          <span className="quote-control-heading">Simple Rate Sheet</span>
+          <span className="quote-control-heading">Builder Rate Schedule</span>
           <small>Material levels + approved colors + sinks and add-ons. No plan takeoffs required.</small>
         </div>
         <div className="pricing-builder-header-meta">
