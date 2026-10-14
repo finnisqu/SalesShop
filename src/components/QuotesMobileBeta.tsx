@@ -730,7 +730,7 @@ export function QuotesMobileBeta() {
         </div>)}
         </div>
         {!list.length&&<div className="qmb-empty">
-          {statusFilter==='archived'&&!hasLibraryFilters?
+          {statusFilter==='archived'&&!search.trim()&&documentFilter==='all'?
             'No archived documents yet. Archiving keeps agreements available for later.':
             hasLibraryFilters?'No documents match these filters. Try clearing the search or selecting a different status.':
               'No documents yet. Start with a purpose-built template.'}
