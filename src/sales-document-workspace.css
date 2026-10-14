@@ -184,3 +184,20 @@
 @media(min-width:641px){
   .sales-app .qmb .qmb-desktop-frame.is-library .qmb-footer-single{display:none}
 }
+
+/* Persistent New-document shortcut on editor pageheads; library already owns primary CTA. */
+.sales-app .qmb .qmb-document-new-shortcut{
+  min-height:33px;border-radius:7px;border:1px solid var(--qmb-border);
+  background:var(--qmb-card);color:var(--qmb-accent);font-size:11px;
+  font-weight:800;white-space:nowrap;padding:6px 10px;
+}
+.sales-app .qmb .qmb-document-new-shortcut:hover,
+.sales-app .qmb .qmb-document-new-shortcut:focus-visible{
+  border-color:var(--qmb-accent);background:var(--qmb-tint);
+}
+@media(max-width:510px){
+  .sales-app .qmb .qmb-pagehead .qmb-headeractions{
+    gap:5px;min-width:0;flex-wrap:wrap;justify-content:flex-end;
+  }
+  .sales-app .qmb .qmb-document-new-shortcut{padding:5px 8px;min-height:30px;font-size:10px}
+}
