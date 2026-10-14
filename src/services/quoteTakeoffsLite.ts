@@ -75,13 +75,24 @@ export function newTakeoffSink():QuoteTakeoffSink {
   return {id:`sinktakeoff_${crypto.randomUUID()}`,category:'kitchen',name:'',count:1,
     includeInPricing:true,faucetHoleOffsetsIn:[0]};
 }
+/** Customer-facing material and fixture selections only. Never expose internal
+ * measurements, labor assumptions, takeoff pricing or supplier cost. */
+export function takeoffCustomerDetails(section:QuoteSection):{
+  material:string;
+  sinks:string[];
+} {
+  return {
+    material:section.scope?.takeoffMaterial?.trim()??'',
+    sinks:(section.scope?.takeoffSinks??[])
+      .filter(sink=>Number.isFinite(sink.count)&&sink.count>0)
+      .map(sink=>`${sink.count} × ${sink.name.trim()||
+        (sink.category==='vanity'?'Vanity sink':'Kitchen sink')}`),
+  };
+}
+/** Retain the compact string form for older presentation consumers. */
 export function takeoffCustomerSpecs(section:QuoteSection):string {
-  const material=section.scope?.takeoffMaterial?.trim()??'';
-  const sinks=(section.scope?.takeoffSinks??[])
-    .filter(s=>s.count>0)
-    .map(s=>`${s.count} × ${s.name.trim()|| (s.category==='vanity'?'Vanity sink':'Kitchen sink')}`);
-  const elements=[material,...sinks].filter(Boolean);
-  return elements.join(' · ');
+  const {material,sinks}=takeoffCustomerDetails(section);
+  return [material,...sinks].filter(Boolean).join(' · ');
 }
 /** Sink rows are explicitly opted in to pricing. Existing manual sink rows
  * and catalog sink selections are NEVER modified or deleted. */

@@ -53,7 +53,7 @@ import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteProjectMaterials } from './QuoteProjectMaterials';
-import { takeoffCustomerSpecs } from '../services/quoteTakeoffsLite';
+import { takeoffCustomerDetails } from '../services/quoteTakeoffsLite';
 import { isGeneralTakeoffSection, presentItemizedQuoteLines, presentGeneralSummary, type PresentedQuoteLine } from '../services/quoteCustomerPresentation';
 import { customerSelectionsForQuote } from '../services/quoteCustomerSelections';
 import { QuoteCustomerSelectionsSheet } from './QuoteCustomerSelectionsSheet';
@@ -631,6 +631,22 @@ export interface CustomerPreviewEditing {
   generalPrice?: () => ReactNode;
 }
 
+/** Identical customer-facing spec hierarchy in detail and lump-sum modes. */
+function CustomerAreaDetails({section}:{section:Quote['sections'][number]}) {
+  const {material,sinks}=takeoffCustomerDetails(section);
+  if(!material&&!sinks.length)return null;
+  return <div className="customer-area-details" aria-label="Area material and sink selections">
+    {material&&<div className="customer-area-detail">
+      <span className="customer-area-detail-label">Surface</span>
+      <span className="customer-area-detail-value">{material}</span>
+    </div>}
+    {sinks.length>0&&<div className="customer-area-detail">
+      <span className="customer-area-detail-label">Sinks</span>
+      <span className="customer-area-detail-value">{sinks.join(' · ')}</span>
+    </div>}
+  </div>;
+}
+
 function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: CustomerPreviewEditing }) {
   const visibleSections = quote.sections.filter(section=>section.customerVisible);
   const renderLines = (rows: PresentedQuoteLine[]) => rows.map(row => {
@@ -648,11 +664,11 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
       </div>}
     </div>;
   });
-  const renderAreaSummary=(section: Quote['sections'][number],total:number,specification='')=>
+  const renderAreaSummary=(section: Quote['sections'][number],total:number)=>
     <div className={'customer-quote-row customer-area-summary-row'+(!quote.customerColumns.lineAmount?' is-no-amount':'')}>
       <div className="customer-line-description">
         <strong>{editing?.areaTitle?.(section)??section.title}</strong>
-        {specification&&<small className="customer-area-spec">{specification}</small>}
+        <CustomerAreaDetails section={section}/>
         {!quote.customerColumns.lineAmount&&editing?.areaPrice?.(section)}
       </div>
       {quote.customerColumns.lineAmount&&<div className="customer-line-amount">
@@ -675,6 +691,7 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
     <article className="customer-quote-paper">
       <header className="customer-quote-letterhead"><div><CustomerDocumentBrand /><strong>{documentLabel.toUpperCase()}</strong></div><dl><div><dt>Document</dt><dd>{displayQuoteNumber(quote)}</dd></div><div><dt>Date</dt><dd>{quote.quoteDate}</dd></div></dl></header>
       <section className="customer-quote-recipient"><div><span>Prepared for</span><strong>{quote.companyName || quote.contactName || 'Customer'}</strong>{quote.contactName && quote.companyName && <p>{quote.contactName}</p>}{quote.address && <p>{quote.address}</p>}</div><div><span>Project</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div></section>
+      <h2 className="customer-quote-scope-heading">Scope &amp; pricing</h2>
       <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}>
         <div className="customer-quote-row customer-quote-table-head"><div>Description</div>{quote.customerColumns.quantity&&<div>Qty</div>}{quote.customerColumns.rate&&<div>Rate</div>}{quote.customerColumns.lineAmount&&<div>Amount</div>}</div>
         {renderLines(presentItemizedQuoteLines(customerGeneral))}
@@ -687,13 +704,16 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
               {renderLines(presentGeneralSummary(allSectionLines))}
             </div>;
             return <div className="customer-quote-section is-summary" key={section.id}>
-              {renderAreaSummary(section,quoteLinesTotal(allSectionLines),takeoffCustomerSpecs(section))}
+              {renderAreaSummary(section,quoteLinesTotal(allSectionLines))}
             </div>;
           }
           const rows=presentItemizedQuoteLines(allSectionLines);
           if(!rows.length)return null;
           return <div className={general?'customer-quote-section is-general':'customer-quote-section'} key={section.id}>
-            {!general&&<><h3>{editing?.areaTitle?.(section)??section.title}{editing?.areaPrice?.(section)}</h3>{takeoffCustomerSpecs(section)&&<p className="customer-area-spec">{takeoffCustomerSpecs(section)}</p>}</>}
+            {!general&&<div className="customer-area-intro">
+              <h3>{editing?.areaTitle?.(section)??section.title}{editing?.areaPrice?.(section)}</h3>
+              <CustomerAreaDetails section={section}/>
+            </div>}
             {renderLines(rows)}
           </div>;
         })}

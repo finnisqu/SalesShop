@@ -1475,6 +1475,67 @@ test('Customer presentation keeps hidden line amounts private and quote totals u
   await expect(beta.locator('.customer-quote-total')).toContainText('$175.00');
 });
 
+test('Customer paper keeps structured specifications in detail, lump sum and print',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Phone customer document / printed paper contract');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await createQuickQuote(page);
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Materials'}).click();
+  const material=beta.getByRole('combobox',{name:'Material: type to search Catalog'});
+  await material.fill('Glacier White Quartz');
+  await material.blur();
+  await beta.getByRole('button',{name:'+ Add sink'}).click();
+  const sink=beta.getByRole('combobox',{name:'Sink model: type to search Catalog'});
+  await sink.fill('3218 Single');
+  await sink.blur();
+  await beta.getByRole('spinbutton',{name:'Sink 1 quantity'}).fill('2');
+  await beta.getByRole('spinbutton',{name:'Sink 1 sell price'}).fill('75');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('navigation',{name:'Quote views'})
+    .getByRole('button',{name:'Preview',exact:true}).click();
+  const paper=beta.locator('.qmb-preview .customer-quote-paper');
+  await expect(paper.getByRole('heading',{name:'Scope & pricing'})).toBeVisible();
+  const section=paper.locator('.customer-quote-section').filter({hasText:'Kitchen'});
+  await expect(section.locator('.customer-area-intro')).toBeVisible();
+  const details=section.getByLabel('Area material and sink selections');
+  await expect(details).toContainText('Surface');
+  await expect(details).toContainText('Glacier White Quartz');
+  await expect(details).toContainText('Sinks');
+  await expect(details).toContainText('2 × 3218 Single');
+  await expect(paper).not.toContainText('Private material buying cost');
+
+  const options=beta.locator('.qmb-preview-customer-options');
+  await options.locator('summary').click();
+  await options.getByRole('group',{name:'Presentation for Kitchen'})
+    .getByRole('button',{name:'Lump sum'}).click();
+  await expect(section.locator('.customer-area-summary-row')).toContainText('Glacier White Quartz');
+  await expect(section.locator('.customer-area-summary-row')).toContainText('2 × 3218 Single');
+  await expect(section.locator('.customer-area-intro')).toHaveCount(0);
+  await page.emulateMedia({media:'print'});
+  expect(await options.evaluate(node=>getComputedStyle(node).display)).toBe('none');
+  const print=await paper.evaluate(node=>{
+    const pageStyle=getComputedStyle(node);
+    const row=node.querySelector('.customer-area-summary-row')!;
+    return {
+      shadow:pageStyle.boxShadow,minHeight:pageStyle.minHeight,
+      breakInside:getComputedStyle(row).breakInside,
+      label:getComputedStyle(node.querySelector('.customer-quote-scope-heading')!).breakAfter,
+    };
+  });
+  expect(print.shadow).toBe('none');
+  expect(print.minHeight).toBe('0px');
+  expect(print.breakInside).toMatch(/avoid/);
+  expect(print.label).toMatch(/avoid/);
+  await page.emulateMedia({media:'screen'});
+});
+
 test('Customer Preview owns document columns, Area detail and optional quote-sheet wording',async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='desktop-1440','Desktop customer presentation controls');
   await page.goto('/');
