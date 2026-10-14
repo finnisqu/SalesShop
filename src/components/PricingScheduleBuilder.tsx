@@ -112,7 +112,6 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
   const variantGroups = pricingTakeoffGroups(builder);
   const materialRates = builder.rates.filter(rate=>rate.kind==='material-level' && rate.unit==='sf');
   const otherRateItems = builder.rates.filter(rate=>rate.kind!=='material-level');
-  const [showLegacyRuleEditor,setShowLegacyRuleEditor] = useState(false);
   const addMaterialRate = (label='New material',type:PricingMaterialType='Other',rate?:number) => {
     const next = createPricingRateItem('Countertops','material-level');
     next.name=label;next.materialType=type;next.rate=rate;next.unit='sf';
@@ -235,27 +234,73 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
       {tab === 'contract' && <PricingContractTable builder={builder} onChange={saveBuilder}/>}
 
       {tab === 'rates' && (
-        <section className="pricing-builder-panel">
+        <section className="pricing-builder-panel pricing-builder-simple-rates">
           <header className="pricing-builder-panel-heading">
-            <div><strong>Rate Book</strong><small>Reusable rates for stone, backsplash, sinks, bowls, supports, and flat items.</small></div>
-            <button type="button" onClick={addRate}>+ Rate</button>
+            <div><strong>1 · Set your material and add-on rates</strong>
+              <small>Enter one rate per material in $/SF. It applies to kitchen tops, bath tops, and every included 4-inch or full-height splash. Sink bowls, supports, and other add-ons are charged separately.</small>
+            </div>
+            <div className="pricing-builder-quick-actions">
+              <button type="button" onClick={addStarterRates}>Add example $20 / $25 / $32 materials</button>
+              <button type="button" onClick={()=>addMaterialRate()}>+ Material</button>
+            </div>
           </header>
-          <label className="pricing-builder-name-field"><span>Rate Book name</span><input value={builder.rateBookName} onChange={(event) => saveBuilder({ ...builder, rateBookName: event.target.value })} /></label>
-          <div className="pricing-builder-rate-list">
-            <div className="pricing-builder-rate-row is-head"><span>Type</span><span>Product</span><span>Unit</span><span>Rate</span><span /></div>
-            {builder.rates.map((rate) => (
-              <div className="pricing-builder-rate-row" key={rate.id}>
-                <select value={rate.productType} onChange={(event) => updateRate(rate.id, { productType: event.target.value as PricingBuilderProductType })}>
-                  {PRICING_BUILDER_PRODUCT_TYPES.map((type) => <option value={type} key={type}>{type}</option>)}
-                </select>
-                <input value={rate.name} onChange={(event) => updateRate(rate.id, { name: event.target.value })} placeholder="Granite Lvl 1" />
-                <select value={rate.unit} onChange={(event) => updateRate(rate.id, { unit: event.target.value as PricingRateItem['unit'] })}><option value="sf">SF</option><option value="each">Each</option><option value="flat">Flat</option></select>
-                <label className="quote-money-input"><span>$</span><input type="number" step="0.01" value={rate.rate ?? ''} onChange={(event) => updateRate(rate.id, { rate: numberValue(event.target.value) })} /></label>
-                <button type="button" className="pricing-builder-delete" onClick={() => saveBuilder({ ...builder, rates: builder.rates.filter((item) => item.id !== rate.id) })}>×</button>
-              </div>
-            ))}
-            {!builder.rates.length && <div className="pricing-builder-empty">Add the products and rates you use for this agreement. Rates stay internal.</div>}
+          <label className="pricing-builder-name-field"><span>Agreement rate book name</span>
+            <input value={builder.rateBookName} onChange={e=>saveBuilder({...builder,rateBookName:e.target.value})}/>
+          </label>
+          <div className="pricing-builder-rate-section">
+            <header><strong>Materials · universal $/SF</strong><small>Examples: Cultured Marble $20, Granite $25, Quartz $32. These are example sell prices, not automatically applied.</small></header>
+            <div className="pricing-builder-material-list">
+              {materialRates.map(rate=><div key={rate.id} className="pricing-builder-material-rate">
+                <label><span>Material</span><input aria-label={`Material name ${rate.id}`} value={rate.name}
+                  onChange={e=>updateRate(rate.id,{name:e.target.value})}/></label>
+                <label><span>Family</span><select value={rate.materialType??'Other'}
+                  onChange={e=>updateRate(rate.id,{materialType:e.target.value as PricingMaterialType})}>
+                  {(['Cultured Marble','Granite','Quartz','Quartzite','Marble','Dolomite','Natural Stone',
+                    'Porcelain','Sintered Stone','Solid Surface','Other'] as PricingMaterialType[]).map(type=>
+                    <option key={type} value={type}>{type}</option>)}
+                </select></label>
+                <label><span>Price per SF</span><input aria-label={`${rate.name} per SF`} type="number" min="0" step="0.01"
+                  value={rate.rate??''} onChange={e=>updateRate(rate.id,{rate:numberValue(e.target.value)})}/></label>
+                <button type="button" className="pricing-builder-delete-text" onClick={()=>saveBuilder({
+                  ...builder,rates:builder.rates.filter(item=>item.id!==rate.id),
+                })}>Remove</button>
+              </div>)}
+            </div>
+            {!materialRates.length&&<div className="pricing-builder-empty">Start here: add Cultured Marble, Granite and Quartz (or whatever material families the builder offers).</div>}
           </div>
+          <div className="pricing-builder-rate-section">
+            <header><strong>Add-on unit rates</strong><small>Vanity bowls and sinks are counted from the selected physical takeoffs; other extra charges can be added to specific option packages.</small></header>
+            <div className="pricing-builder-quick-actions">
+              <button type="button" onClick={()=>addAddonRate('Vanity Sink')}>+ Vanity bowl</button>
+              <button type="button" onClick={()=>addAddonRate('Kitchen Sink')}>+ Kitchen sink</button>
+              <button type="button" onClick={()=>addAddonRate('Support')}>+ Support</button>
+              <button type="button" onClick={()=>addAddonRate('Other')}>+ Other add-on</button>
+            </div>
+            <div className="pricing-builder-material-list">
+              {otherRateItems.map(rate=><div key={rate.id} className="pricing-builder-material-rate">
+                <label><span>Add-on</span><input value={rate.name} aria-label={`Add-on name ${rate.id}`}
+                  onChange={e=>updateRate(rate.id,{name:e.target.value})}/></label>
+                <label><span>Type</span><select value={rate.productType}
+                  onChange={e=>updateRate(rate.id,{productType:e.target.value as PricingBuilderProductType})}>
+                  {PRICING_BUILDER_PRODUCT_TYPES.filter(t=>t!=='Countertops'&&t!=='Backsplash').map(t=>
+                    <option key={t} value={t}>{t}</option>)}
+                </select></label>
+                <label><span>Unit</span><select value={rate.unit}
+                  onChange={e=>updateRate(rate.id,{unit:e.target.value as PricingRateItem['unit']})}>
+                  <option value="each">Each</option><option value="sf">SF</option><option value="flat">Flat</option>
+                </select></label>
+                <label><span>Sell rate</span><input type="number" min="0" step="0.01"
+                  aria-label={`${rate.name} sell rate`} value={rate.rate??''}
+                  onChange={e=>updateRate(rate.id,{rate:numberValue(e.target.value)})}/></label>
+                <button type="button" className="pricing-builder-delete-text" onClick={()=>saveBuilder({
+                  ...builder,rates:builder.rates.filter(item=>item.id!==rate.id),
+                })}>Remove</button>
+              </div>)}
+            </div>
+          </div>
+          <div className="pricing-builder-step-footer"><button type="button" onClick={()=>setTab('plans')}>
+            Next: Enter plan takeoffs →
+          </button></div>
         </section>
       )}
 
