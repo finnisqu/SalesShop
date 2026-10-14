@@ -23,10 +23,12 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
   const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
   const canCreateOrder=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,teamDepartment));
   const history=[...quote.history].sort((a,b)=>b.capturedAt.localeCompare(a.capturedAt));
-  const canChangeType=editable&&!history.length&&quote.documentType!=='change-order';
+  const canChangeType=editable&&!quote.templateId&&!history.length&&quote.documentType!=='change-order';
   const snapshot=selected===null?undefined:history[selected];
   const frozen:Quote|undefined=snapshot?{
     ...quote,...snapshot,
+    templateId:snapshot.templateId??quote.templateId,
+    templateOrigin:snapshot.templateOrigin??quote.templateOrigin,
     revision:snapshot.revision,
     revisionLabel:snapshot.label,
     status:snapshot.status,
