@@ -160,6 +160,16 @@
   .customer-quote-paper .customer-area-detail{grid-template-columns:45px minmax(0,1fr);gap:6px}
 }
 @media print {
+  /* The phone preview frame must not constrain the printed paper even when
+     the browser prints from a wide desktop viewport. */
+  .qmb .qmb-preview.is-phone-view{
+    box-sizing:border-box;width:100%!important;max-width:none!important;
+    border:0!important;border-radius:0!important;box-shadow:none!important;
+    container-type:normal!important;
+  }
+  .qmb .qmb-preview.is-phone-view>.customer-quote-paper{
+    width:100%!important;max-width:none!important;padding:0!important;
+  }
   /* Print on paper instead of an inset mock page; let itemized Areas span
      pages naturally, but never orphan a heading/spec from its next line. */
   .customer-quote-paper{
