@@ -44,7 +44,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
       </div>
       <small className="qmb-audit-help">{description}</small>
       {items.map(finding=>{
-        const fix=quickFixForFinding(finding);
+        const fix=quickFixForFinding(finding,quote);
         const linkedQuantity=fix?.kind==='line'&&fix.field==='quantity'&&
           quote.lines.some(line=>line.id===fix.id&&line.quantitySource?.syncMode==='live');
         const hasInline=Boolean(fix&&!linkedQuantity&&editable);
