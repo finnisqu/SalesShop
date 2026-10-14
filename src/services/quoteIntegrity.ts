@@ -52,6 +52,8 @@ export function createQuoteRevisionSnapshot(
   status: QuoteStatus = quote.status,
 ): QuoteRevisionSnapshot {
   return {
+    templateId:quote.templateId,
+    templateOrigin:quote.templateOrigin?{...quote.templateOrigin}:undefined,
     revision: quote.revision,
     label: quote.revisionLabel,
     quoteDate: quote.quoteDate,
