@@ -527,7 +527,7 @@ test('mobile Details are ordered, CRM links do not navigate, and Back restores t
   const details=beta.getByRole('region',{name:'Quote customer and project details'});
   await expect(details).toBeVisible();
   const headings=await details.locator('.qmb-details-heading h3').allTextContents();
-  expect(headings).toEqual(['Customer','Project','Notes']);
+  expect(headings).toEqual(['Customer','Project','Notes','Document & revisions']);
   await expect(details.getByRole('textbox',{name:'Project / quote title'})).toHaveCount(0);
   await expect(details.getByRole('textbox',{name:'Company / customer'})).toBeVisible();
   await expect(details.getByRole('textbox',{name:'Contact person'})).toBeVisible();
@@ -657,10 +657,12 @@ test('desktop Beta uses full center workspace across Build, Details, Preview and
   await inspector.getByRole('button',{name:/Resolve No priced work yet/}).click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await expect(review.locator('.qmb-audit-overview')).toBeHidden();
-  const pulled=page.locator('.qmb-review-pulled-inspector .qmb-desktop-inspector');
-  await expect(pulled).toBeVisible();
-  const pulledBounds=await pulled.boundingBox(),detailBounds=await review.boundingBox();
+  const pulled=page.locator('.qmb-review-pulled-inspector');
+  const pulledInspector=pulled.locator('.qmb-desktop-inspector');
+  await expect(pulledInspector).toBeVisible();
+  const pulledBounds=await pulled.boundingBox(),innerBounds=await pulledInspector.boundingBox(),detailBounds=await review.boundingBox();
   expect(pulledBounds!.x+pulledBounds!.width).toBeLessThanOrEqual(detailBounds!.x+2);
+  expect(innerBounds!.x+innerBounds!.width).toBeLessThanOrEqual(pulledBounds!.x+pulledBounds!.width+2);
   expect(detailBounds!.width).toBeLessThan(520);
   const reviewShare=review.locator('.quote-share-control.is-inline');
   await expect(reviewShare).toBeVisible();
@@ -1106,8 +1108,7 @@ test('Desktop Batch B: paired Materials and Calculator share editable quotes and
   await expect(selling.locator('.qmb-pricing-formula')).toContainText('$7,000.00');
   await expect(beta.locator('.qmb-lab-extras')).toBeVisible();
   const extras=beta.locator('.qmb-lab-extras');
-  await extras.getByRole('button',{name:'+ Add'}).click();
-  await extras.getByRole('button',{name:'Custom',exact:true}).click();
+  await extras.getByRole('button',{name:'+ Custom'}).click();
   await expect(extras.locator('.qmb-desktop-extra-row')).toHaveCount(1);
   await extras.locator('.qmb-desktop-extra-row input[aria-label$=" price"]').fill('150');
   await expect(beta.locator('.qmb-desktop-grand-total')).toContainText('$7,150.00');
@@ -1147,10 +1148,12 @@ test('Desktop Batch B: sink catalog and materials suggestions overlay instead of
   await row.getByRole('spinbutton',{name:'Sink 1 quantity'}).fill('2');
   await row.getByRole('spinbutton',{name:'Sink 1 sell price'}).fill('220');
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Calculator'}).click();
-  const costEditor=beta.locator('.qmb-lab-calculator');
   await expect(beta.locator('.qmb-area-scroll [data-center-calculator]')).toBeVisible();
-  await costEditor.getByRole('spinbutton',{name:'Sink 1 buying cost'}).fill('85');
-  await expect(costEditor).toContainText('$170.00');
+  const sourceEditor=beta.locator('.qmb-calculator-source-editor');
+  await sourceEditor.locator('summary').click();
+  const buyingCost=sourceEditor.getByRole('spinbutton',{name:'Sink 1 buying cost'});
+  await buyingCost.fill('85');
+  await expect(sourceEditor).toContainText('$170.00');
 });
 
 
