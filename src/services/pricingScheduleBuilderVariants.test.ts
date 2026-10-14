@@ -66,6 +66,31 @@ describe('calculated builder universal material rates and selectable takeoffs',(
     expect(calc.lines.find(l=>l.id==='bs-Backsplash-Backsplash')?.rate).toBe(20);
     expect(includedPricingTakeoffs(builder,plan,next).takeoffs).toHaveLength(4);
   });
+  it('excludes an individual component for one plan and one package only',()=>{
+    const {builder,plan,basic,next}=fixtures();
+    const customizedPlan:PricingPlan={...plan,excludedTakeoffIdsByOption:{[basic.id]:['ks']}};
+    const original=calculatePlanOption(builder,plan,basic);
+    const customized=calculatePlanOption(builder,customizedPlan,basic);
+    expect(customized.warnings).toEqual([]);
+    expect(customized.lines.some(line=>line.id.startsWith('ks-'))).toBe(false);
+    expect(customized.total).toBeCloseTo(original.total!-6*25,3);
+    expect(calculatePlanOption(builder,customizedPlan,next).total).toBeCloseTo(1680,3);
+    expect(calculatePlanOption(builder,plan,basic).total).toBeCloseTo(original.total!,3);
+    expect(builder.takeoffs).toHaveLength(6);
+    // The same package remains complete on a different plan with its own measured rows.
+    const otherPlan={...plan,id:'other',name:'Other house'};
+    const otherTakeoffs=builder.takeoffs.map(t=>({...t,id:'other-'+t.id,planId:'other'}));
+    const otherBuilder={...builder,takeoffs:[...builder.takeoffs,...otherTakeoffs]};
+    expect(calculatePlanOption(otherBuilder,otherPlan,basic).total).toBeCloseTo(original.total!,3);
+  });
+  it('permits excluding an entire variant group without charging its alternatives',()=>{
+    const {builder,plan,basic}=fixtures();
+    const customizedPlan={...plan,excludedTakeoffIdsByOption:{[basic.id]:['master-base','master-double']}};
+    const calc=calculatePlanOption(builder,customizedPlan,basic);
+    expect(calc.warnings).toEqual([]);
+    expect(calc.lines.some(line=>line.id.startsWith('master-'))).toBe(false);
+    expect(calc.total).toBeCloseTo(1470,3);
+  });
   it('allows quartz everywhere, excludes bath splashes, and adds a flat package extra once',()=>{
     const {builder,plan,basic}=fixtures();
     const option:PricingOptionPackage={...basic,kitchenMaterialRateId:'quartz',
