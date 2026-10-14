@@ -1519,6 +1519,7 @@ test('Customer paper keeps structured specifications in detail, lump sum and pri
   await expect(section.locator('.customer-area-summary-row')).toContainText('2 × 3218 Single');
   await expect(section.locator('.customer-area-intro')).toHaveCount(0);
   await page.emulateMedia({media:'print'});
+  expect(await options.evaluate(node=>getComputedStyle(node).display)).toBe('none');
   const print=await paper.evaluate(node=>{
     const pageStyle=getComputedStyle(node);
     const row=node.querySelector('.customer-area-summary-row')!;
