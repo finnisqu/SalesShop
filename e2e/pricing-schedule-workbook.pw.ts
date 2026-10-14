@@ -87,3 +87,42 @@ test('mobile price mapping remains accessible without consuming the workbook vie
   expect(limits.workbookRight).toBeLessThanOrEqual(limits.availableRight+2);
   expect(limits.pageWidth).toBeLessThanOrEqual(390+2);
 });
+
+
+test('recalculation updates cached customer price and exported XLSX after stale formula import',async({page},info)=>{
+  test.skip(info.project.name!=='desktop-1280','Univer formula result and export regression');
+  const excel=new ExcelJS.Workbook();
+  const sheet=excel.addWorksheet('Builder Pricing');
+  sheet.addRow(['Description','Customer Price']);
+  sheet.addRow(['Kitchen quartz',{formula:'250*4',result:1}]);
+  const bytes=new Uint8Array(await excel.xlsx.writeBuffer() as ArrayBuffer);
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ Advanced Pricing Schedule'}).click();
+  const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
+  await workspace.getByRole('button',{name:/Spreadsheet/}).click();
+  await workspace.locator('input[type="file"]').setInputFiles({
+    name:'stale-builder.xlsx',
+    mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer:Buffer.from(bytes),
+  });
+  const published=workspace.locator('.pricing-schedule-mapped-preview');
+  await expect(published).toContainText('Kitchen quartz');
+  // The imported cached formula result is intentionally incorrect.
+  await expect(published).toContainText('$1.00');
+  await workspace.getByRole('button',{name:'Recalculate formulas'}).click();
+  await expect(published).toContainText('$1,000.00');
+  const downloaded=page.waitForEvent('download');
+  await workspace.getByRole('button',{name:'Export .xlsx'}).click();
+  const exportResult=await downloaded;
+  const exported=new ExcelJS.Workbook();
+  await exported.xlsx.readFile(await exportResult.path());
+  expect(exported.worksheets[0].getCell('B2').value).toMatchObject({
+    formula:'250*4',result:1000,
+  });
+});
