@@ -592,7 +592,7 @@ export function QuotesMobileBeta() {
         />}
       <div className="qmb-desktop-main">
     {page==='library'?<>
-      <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Quotes <span>Beta</span></strong></div>
+      <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
