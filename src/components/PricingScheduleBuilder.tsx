@@ -11,6 +11,7 @@ import {
   planOptionEnabled,
   pricingBuilderHealth,
   pricingBuilderMatrix,
+  pricingTakeoffGroups,
   takeoffSquareFeet,
 } from '../services/pricingScheduleBuilder';
 import { useQuoteStore } from '../store/quoteStore';
@@ -21,6 +22,7 @@ import {
   type PricingPlan,
   type PricingPlanTakeoff,
   type PricingRateItem,
+  type PricingMaterialType,
   type PricingScheduleBuilderData,
   type Quote,
 } from '../types/quote';
@@ -31,6 +33,17 @@ import '../pricing-schedule.css';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 type BuilderTab = 'manual' | 'addons' | 'matrix' | 'plans' | 'options' | 'rates' | 'contract';
+const CALCULATED_TABS: Array<{key:BuilderTab;label:string;caption:string}> = [
+  {key:'rates',label:'1 · Rates',caption:'Material $/SF and add-on prices'},
+  {key:'plans',label:'2 · Plan Takeoffs',caption:'Measurements and replacement variants'},
+  {key:'options',label:'3 · Options & Scope',caption:'Materials, splashes and alternate vanities'},
+  {key:'matrix',label:'4 · Calculated Matrix',caption:'Auditable prices and customer preview'},
+];
+const CONTRACT_TABS: Array<{key:BuilderTab;label:string;caption:string}> = [
+  {key:'manual',label:'Manual Matrix',caption:'Enter negotiated full-house prices'},
+  {key:'addons',label:'Add-on Rates',caption:'Separate contract upgrade price list'},
+  {key:'contract',label:'Contract Table',caption:'Edit/import/export contract rows'},
+];
 
 function numberValue(value: string) {
   if (value.trim() === '') return undefined;
@@ -45,7 +58,7 @@ function builderFor(quote: Quote) {
 export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const builder = builderFor(quote);
-  const [tab, setTab] = useState<BuilderTab>(builder.outputMode==='contract'&&builder.contractRows?.length&&!builder.manualPlans?.length?'contract':builder.outputMode==='matrix'?'matrix':'manual');
+  const [tab, setTab] = useState<BuilderTab>(builder.outputMode==='contract'&&builder.contractRows?.length&&!builder.manualPlans?.length?'contract':builder.outputMode==='contract'?'manual':'rates');
   const [selectedPlanId, setSelectedPlanId] = useState(builder.plans[0]?.id ?? '');
   const [selectedCell, setSelectedCell] = useState<{ planId: string; optionId: string } | null>(null);
 
@@ -96,6 +109,62 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
     ? matrix.find((calculation) => calculation.plan.id === selectedCell.planId && calculation.option.id === selectedCell.optionId)
     : undefined;
   const roomOptions = [...new Set(builder.takeoffs.map((takeoff) => takeoff.room).filter(Boolean))];
+  const variantGroups = pricingTakeoffGroups(builder);
+  const materialRates = builder.rates.filter(rate=>rate.kind==='material-level' && rate.unit==='sf');
+  const otherRateItems = builder.rates.filter(rate=>rate.kind!=='material-level');
+  const [showLegacyRuleEditor,setShowLegacyRuleEditor] = useState(false);
+  const addMaterialRate = (label='New material',type:PricingMaterialType='Other',rate?:number) => {
+    const next = createPricingRateItem('Countertops','material-level');
+    next.name=label;next.materialType=type;next.rate=rate;next.unit='sf';
+    saveBuilder({...builder,outputMode:'matrix',rates:[...builder.rates,next]});
+  };
+  const addAddonRate = (productType:PricingBuilderProductType='Other') => {
+    const next=createPricingRateItem(productType,'add-on');
+    next.name=productType==='Other'?'New add-on':productType;
+    saveBuilder({...builder,outputMode:'matrix',rates:[...builder.rates,next]});
+  };
+  const addStarterRates = () => {
+    const presets: Array<[string,PricingMaterialType,number]> = [
+      ['Cultured Marble','Cultured Marble',20],['Granite','Granite',25],['Quartz','Quartz',32],
+    ];
+    const missing=presets.filter(([name])=>!builder.rates.some(r=>r.kind==='material-level'&&r.name.toLowerCase()===name.toLowerCase()));
+    const rows=missing.map(([name,type,amount])=>{
+      const item=createPricingRateItem('Countertops','material-level');
+      return {...item,name,materialType:type,rate:amount};
+    });
+    saveBuilder({...builder,outputMode:'matrix',rates:[...builder.rates,...rows]});
+  };
+  const addSixPackages=()=>{
+    const granite=materialRates.find(r=>r.materialType==='Granite');
+    const quartz=materialRates.find(r=>r.materialType==='Quartz');
+    if(!granite||!quartz)return;
+    const mixes=[['Granite','Granite',true],['Granite','Granite',false],
+      ['Granite','Quartz',true],['Granite','Quartz',false],
+      ['Quartz','Quartz',true],['Quartz','Quartz',false]] as const;
+    const next=mixes.map(([kitchen,bath,allSplashes],index)=>{
+      const option=createPricingOptionPackage(index);
+      option.name=`${kitchen} kitchen · ${bath} bathrooms · ${allSplashes?'All splashes':'Bathroom splashes only'}`;
+      option.description=option.name;
+      option.kitchenMaterialRateId=kitchen==='Granite'?granite.id:quartz.id;
+      option.bathroomMaterialRateId=bath==='Granite'?granite.id:quartz.id;
+      option.includeKitchenSplash=allSplashes;
+      option.includeBathroomSplash=true;
+      return option;
+    });
+    saveBuilder({...builder,outputMode:'matrix',options:next});
+  };
+  const addMasterVanityChoices=(plan:PricingPlan)=>{
+    const existing=builder.takeoffs.some(t=>t.planId===plan.id&&t.variantGroup==='Master Vanity');
+    if(existing)return;
+    const make=(code:string,length:number,bowls:number):PricingPlanTakeoff=>({
+      ...createPricingTakeoff(plan.id),room:'Master Bathroom',piece:'Vanity Top',
+      category:'Master Vanity',variantGroup:'Master Vanity',variantCode:code,
+      length,width:22,vanityBowls:bowls,
+    });
+    saveBuilder({...builder,outputMode:'matrix',takeoffs:[
+      ...builder.takeoffs,make('BASE',48,1),make('DOUBLE',72,2),
+    ]});
+  };
 
   const addRate = () => {
     const rate = createPricingRateItem();
@@ -132,20 +201,34 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
         </div>
       </header>
 
-      <nav className="pricing-builder-tabs">
-        {(['manual','addons','contract','matrix','plans','options','rates'] as BuilderTab[]).map((item) => (
-          <button type="button" className={tab === item ? 'active' : ''} key={item} onClick={() => {
-            setTab(item);
-            if(item==='contract'||item==='manual'||item==='addons')
-              saveBuilder({...builder,outputMode:'contract'});
-            else if(item==='matrix')saveBuilder({...builder,outputMode:'matrix'});
-          }}>
-            {item==='manual'?'Manual Matrix':item==='addons'?'Add-on Rates':
-              item==='contract'?'Contract Table':item==='matrix'?'Calculated Matrix':
-              item==='plans'?'Plan Takeoffs':item==='options'?'Option Rules':'Rate Book'}
-          </button>
-        ))}
-      </nav>
+      <section className="pricing-builder-workflow">
+        <header><strong>Calculated builder · recommended</strong>
+          <small>One rate per material, shared by kitchen, bathrooms and splashes. Create physical takeoffs once; choose which variants each option uses.</small>
+        </header>
+        <nav className="pricing-builder-step-tabs" aria-label="Calculated builder workflow">
+          {CALCULATED_TABS.map(item=><button type="button" key={item.key}
+            className={tab===item.key?'active':''}
+            onClick={()=>{setTab(item.key);
+              if(builder.outputMode!=='matrix')saveBuilder({...builder,outputMode:'matrix'});
+            }}>
+            <strong>{item.label}</strong><small>{item.caption}</small>
+          </button>)}
+        </nav>
+        <details className="pricing-builder-alternatives" open={['manual','addons','contract'].includes(tab)}>
+          <summary>Alternative agreement workflows <small>· Manual negotiated prices and contract rows</small></summary>
+          <p>These are alternatives to automatic calculations. Manual Matrix is for approved complete-house prices; Add-on Rates is its optional, separate upgrade schedule. Contract Table is the row editor/export for manual or imported agreements. Your data stays saved when switching methods.</p>
+          <nav className="pricing-builder-tabs">
+            {CONTRACT_TABS.map(item=><button type="button" key={item.key}
+              className={tab===item.key?'active':''}
+              onClick={()=>{setTab(item.key);
+                if(builder.outputMode!=='contract')saveBuilder({...builder,outputMode:'contract'});
+              }} title={item.caption}>{item.label}</button>)}
+          </nav>
+        </details>
+        <div className="pricing-builder-mode-indicator">
+          Customer schedule source: <strong>{builder.outputMode==='contract'?'Manual / contract prices':'Calculated plan × option prices'}</strong>
+        </div>
+      </section>
 
       {tab === 'manual' && <PricingManualSchedule builder={builder} onChange={saveBuilder} mode="matrix"/>}
       {tab === 'addons' && <PricingManualSchedule builder={builder} onChange={saveBuilder} mode="addons"/>}
