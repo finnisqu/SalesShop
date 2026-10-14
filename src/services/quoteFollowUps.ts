@@ -10,7 +10,6 @@ export interface QuoteFollowUpItem{
   dueDate?:string;lastContactAt?:string;
 }
 const DAY=86_400_000;
-const dateOnly=(date:Date)=>date.toISOString().slice(0,10);
 const validDate=(value?:string)=>Boolean(value&&/^\d{4}-\d\d-\d\d$/.test(value)&&!Number.isNaN(Date.parse(value+'T12:00:00Z')));
 export const followUpLocalDate=(date=new Date())=>date.getFullYear()+'-'+
   String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
@@ -40,7 +39,12 @@ export function buildQuoteFollowUpQueue(quotes:readonly Quote[],activities:reado
     }
     const contacted=last?.metadata?.followUpAction==='contacted';
     const cleared=last?.metadata?.followUpAction==='cleared';
-    if(contacted||cleared)continue;
+    if(contacted||cleared){
+      entries.push({quote,priority:'awaiting-reply',label:contacted?'Contact logged':'Reminder cleared',
+        lastContactAt:last?.occurredAt,
+        reason:'No next follow-up is scheduled. Plan the next check-in or open the quote.'});
+      continue;
+    }
     const dueDate=last?.metadata?.followUpAction==='scheduled'&&validDate(last.metadata.followUpDueDate)
       ?last.metadata.followUpDueDate:undefined;
     if(dueDate){
