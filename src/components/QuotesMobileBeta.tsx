@@ -19,7 +19,8 @@ import {
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
 } from '../types/quote';
 import { QuoteBetaDetails } from './QuoteBetaDetails';
-import {SalesDocumentToolbar} from './SalesDocumentToolbar';
+import {SalesDocumentSaveStatus} from './SalesDocumentToolbar';
+import {SalesDocumentActionsMenu} from './SalesDocumentActionsMenu';
 import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
@@ -419,6 +420,9 @@ export function QuotesMobileBeta() {
   const stockLevelPreview=useMemo(()=>snapshotStockBuilderLevels(companyStock,levelGuide),
     [companyStock,levelGuide]);
   const [libraryAction,setLibraryAction]=useState<{id:string;kind:'archive'|'delete'}|null>(null);
+  const [deletePhrase,setDeletePhrase]=useState('');
+  const [copyRequest,setCopyRequest]=useState<{id:string;title:string}|null>(null);
+  const [copyName,setCopyName]=useState('');
   const archiveQuote=useQuoteStore(s=>s.archiveQuote);
   const restoreQuote=useQuoteStore(s=>s.restoreQuote);
   const deleteQuote=useQuoteStore(s=>s.deleteQuote);
@@ -506,9 +510,26 @@ export function QuotesMobileBeta() {
   };
   const copyCurrentDocument=()=>{
     if(!quote||!canManageLibrary)return;
-    const newId=duplicateDocument(quote.id);
-    if(newId)openQuote(newId);
+    // Copy is never executed from a menu click. Explicit confirmation required.
+    setCopyRequest({id:quote.id,title:quote.title});
+    const base=(quote.title||'Untitled').replace(/(?:\\s*· Copy)+$/i,'').trim();
+    setCopyName(base+' · Copy');
+  };
+  const confirmDocumentCopy=()=>{
+    if(!copyRequest||!canManageLibrary||!copyName.trim())return;
+    const newId=duplicateDocument(copyRequest.id,copyName.trim());
+    if(newId){setCopyRequest(null);setCopyName('');openQuote(newId);}
     else setError('Could not create an independent document copy.');
+  };
+  const requestDocumentDelete=()=>{
+    if(quote&&canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)){
+      setDeletePhrase('');setLibraryAction({id:quote.id,kind:'delete'});
+    }
+  };
+  const requestDocumentArchive=()=>{
+    if(quote&&canManageLibrary){
+      setDeletePhrase('');setLibraryAction({id:quote.id,kind:'archive'});
+    }
   };
   const reviseCurrentDocument=()=>{
     if(!quote||!canIssue)return;
@@ -630,6 +651,10 @@ export function QuotesMobileBeta() {
         onSend={openSend} canIssue={canIssue}
         onUndo={()=>undo(quote.id)} onRedo={()=>redo(quote.id)}
         undoDepth={undoDepth} redoDepth={redoDepth}
+        onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
+        onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}
+        canManage={canManageLibrary}
+        canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
         onAddArea={newArea}
         onSelections={()=>setSelectionsOpen(true)}
         />}
@@ -696,19 +721,12 @@ export function QuotesMobileBeta() {
               <span aria-hidden="true"> ›</span>
             </button>
             <span>{quote.status} · Revision {quote.revision}</span>
+            <SalesDocumentSaveStatus quote={quote} cloudMode={authMode==='cloud'}/>
           </div>
           {quote.templateOrigin&&<div className="qmb-pad qmb-document-origin">
             <span>Based on {quote.templateOrigin.sourceTitle} · Rev {quote.templateOrigin.sourceRevision}</span>
             <span>· Independent working copy</span>
           </div>}
-          <SalesDocumentToolbar quote={quote}
-            onLibrary={()=>{setPage('library');setAreaId(null);setSelectionsOpen(false);}}
-            onBuild={()=>navigateDocument('build')}
-            onDetails={()=>navigateDocument('details')}
-            onPreview={()=>navigateDocument('preview')}
-            onDuplicate={copyCurrentDocument}
-            onCreateRevision={reviseCurrentDocument}
-            canCreateRevision={canIssue} canDuplicate={canManageLibrary} cloudMode={authMode==='cloud'}/>
           <nav className="qmb-tabs" aria-label="Quote views">
             {([['build','Build'],['details','Details'],['preview','Preview']] as const).map(([id,label])=>
               <button key={id} type="button" className={quoteTab===id?'active':''}
@@ -885,6 +903,10 @@ export function QuotesMobileBeta() {
     {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
       <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>
+      <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
+        canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
+        onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
+        onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
     </div>}
   </main>;
 }
