@@ -953,7 +953,10 @@ export function QuotesMobileBeta() {
                     deleteQuote(chosen.id);
                     if(quote?.id===chosen.id){setPage('library');setAreaId(null);}
                   }
-                }else archiveQuote(chosen.id);
+                }else {
+                  archiveQuote(chosen.id);
+                  if(quote?.id===chosen.id){setPage('library');setAreaId(null);}
+                }
                 setLibraryAction(null);setDeletePhrase('');
               }}>
               <strong>{removing?'Permanently delete draft':'Archive quote'}</strong>
