@@ -1,4 +1,4 @@
-import type {Activity} from '../types/crm';
+import type {Activity,ProjectStage} from '../types/crm';
 import type {Quote} from '../types/quote';
 
 export type QuoteDeliveryMethod='email'|'text'|'in-person'|'other';
@@ -27,4 +27,20 @@ export function quoteDeliveryLabel(quote:Pick<Quote,'status'>,deliveries:readonl
   if(quote.status==='Signed')return 'Signed by customer';
   if(quote.status==='Viewed')return 'Customer viewed';
   return deliveries.length?'Customer delivery confirmed':'Issued — delivery not confirmed';
+}
+
+/** Issuing a revision is an internal preparation step. Only an explicitly
+ * confirmed delivery may advance an opportunity to Bid Sent/Negotiation.
+ * Never push an already advanced, won, lost, or closed project backward. */
+export function projectStageAfterDelivery(
+  stage:ProjectStage,revision:number,
+):ProjectStage|null{
+  if(stage==='Discovery'||stage==='Intent to Bid'||stage==='Bid Development')return 'Bid Sent';
+  if(stage==='Bid Sent'&&revision>0)return 'Negotiation';
+  return null;
+}
+
+/** A prepared quote means bid development, never customer delivery. */
+export function projectStageAfterIssue(stage:ProjectStage):ProjectStage|null{
+  return stage==='Discovery'||stage==='Intent to Bid'?'Bid Development':null;
 }
