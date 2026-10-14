@@ -115,10 +115,10 @@ describe('Takeoffs Lite: precise fractional-inch piece measurements',()=>{
       ...section.scope,takeoffMaterial:'  Glacier White Quartz  ',
       takeoffPieces:[piece('Private measurements',48,25)],
       takeoffSinks:[
-        {id:'s1',category:'kitchen' as const,name:'3218 Single',count:2,
+        {id:'s1',category:'kitchen' as const,name:'3218 Single',count:2,includeInPricing:true,
           unitPrice:240,internalCostOverride:110},
-        {id:'s2',category:'vanity' as const,name:'',count:1,unitPrice:85},
-        {id:'s3',category:'vanity' as const,name:'Unused sink',count:0,unitPrice:99},
+        {id:'s2',category:'vanity' as const,name:'',count:1,includeInPricing:true,unitPrice:85},
+        {id:'s3',category:'vanity' as const,name:'Unused sink',count:0,includeInPricing:true,unitPrice:99},
       ],
     }};
     const detail=takeoffCustomerDetails(withSpecs);
