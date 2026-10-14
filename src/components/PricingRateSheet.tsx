@@ -22,7 +22,7 @@ import {
 import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
 import { RateBookImportPanel } from './RateBookImportPanel';
 
-const MATERIAL_TYPES: PricingMaterialType[] = ['Granite', 'Quartz', 'Marble', 'Quartzite', 'Other'];
+const MATERIAL_TYPES: PricingMaterialType[] = ['Granite', 'Quartz', 'Cultured Marble', 'Quartzite', 'Marble', 'Dolomite', 'Natural Stone', 'Sintered Stone', 'Porcelain', 'Solid Surface', 'Terrazzo', 'Other'];
 const PRICE_MODES: Array<{ value: PricingRatePriceMode; label: string }> = [
   { value: 'priced', label: 'Priced' },
   { value: 'included', label: 'Included' },
