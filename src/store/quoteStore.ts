@@ -55,7 +55,7 @@ interface QuoteState {
   hydrate: () => void;
   createQuote: (prefill?: Partial<Pick<Quote, 'documentType' | 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>>) => string;
   createChangeOrder: (sourceQuoteId: string) => string | null;
-  duplicateDocument: (sourceQuoteId: string) => string | null;
+  duplicateDocument: (sourceQuoteId: string, requestedTitle: string) => string | null;
   selectQuote: (quoteId: string) => void;
   setQuoteAssignmentFromCloud: (quoteId: string, patch: Pick<Quote, 'ownerUserId' | 'divisionId' | 'teamId'>) => void;
   updateQuote: (quoteId: string, patch: QuotePatch) => void;
@@ -314,12 +314,13 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
   },
 
   /** A new independent draft. Keep scopes/prices, not sent identity, revisions or signature history. */
-  duplicateDocument: (sourceQuoteId) => {
+  duplicateDocument: (sourceQuoteId, requestedTitle) => {
+    if(!requestedTitle.trim())return null;
     const source=get().quotes.find(q=>q.id===sourceQuoteId);
     if(!source||source.archivedAt)return null;
     const shell=newQuote({
       documentType:source.documentType==='pricing-schedule'?'pricing-schedule':'quote',
-      title:(source.title||'Untitled')+' · Copy',
+      title:requestedTitle.trim().slice(0,300),
       companyId:source.companyId,companyName:source.companyName,
       contactId:source.contactId,contactName:source.contactName,
       contactEmail:source.contactEmail,projectId:source.projectId,
