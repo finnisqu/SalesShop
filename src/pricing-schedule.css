@@ -589,3 +589,19 @@
   .pricing-builder-option-config{grid-template-columns:1fr}
   .pricing-builder-step-tabs button{min-width:145px;flex-basis:145px}
 }
+
+/* Builder Rates: source-of-truth level snapshot and safe unmapped-color review. */
+.pricing-stock-level-summary{display:grid;gap:8px;min-width:0;
+  border-left:3px solid var(--accent,#607e6e)}
+.pricing-stock-level-summary>header>div{display:grid;gap:3px}
+.pricing-stock-level-summary>header small,.pricing-stock-level-summary>p,
+.pricing-stock-level-review>small{font-size:12px;color:var(--ink-muted,#706b63);line-height:1.5}
+.pricing-stock-level-summary>p{margin:0}
+.pricing-stock-level-review{border:1px solid rgba(136,108,60,.24);
+  border-radius:7px;padding:10px;background:rgba(151,124,65,.045)}
+.pricing-stock-level-review>summary{cursor:pointer;font-weight:650;font-size:12px}
+.pricing-stock-level-review-items{display:grid;gap:8px;max-height:190px;
+  overflow:auto;margin:10px 0}
+.pricing-stock-level-review-items>div{display:grid;gap:2px}
+.pricing-stock-level-review-items strong{font-size:12px}
+.pricing-stock-level-review-items small{font-size:11px;color:var(--ink-muted,#706b63)}
