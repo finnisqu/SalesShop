@@ -2,6 +2,8 @@ import {supabase} from '../lib/supabase';
 import {useAuthStore} from '../store/authStore';
 import {useCrmStore} from '../store/crmStore';
 import {useQuoteStore} from '../store/quoteStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {canIssueTeamQuote} from './teamDepartments';
 import type {Activity} from '../types/crm';
 import {confirmedQuoteDeliveries} from './quoteDeliveryLifecycle';
 import {followUpLocalDate,type FollowUpAction, type FollowUpMethod} from './quoteFollowUps';
@@ -15,6 +17,10 @@ export async function recordQuoteFollowUp(input:FollowUpInput):Promise<void>{
   const auth=useAuthStore.getState();
   const crm=useCrmStore.getState();
   crm.hydrate();
+  if(auth.mode==='cloud'&&(
+    useRolePerspectiveStore.getState().activePerspective ||
+    !canIssueTeamQuote(auth.teamRole,auth.teamDepartment)
+  ))throw new Error('Your team role cannot record quote follow-ups.');
   if(!current||current.revision!==input.revision||current.archivedAt||
     !['Sent','Viewed'].includes(current.status)||
     !confirmedQuoteDeliveries(current,useCrmStore.getState().activities).length){
@@ -53,4 +59,8 @@ export async function recordQuoteFollowUp(input:FollowUpInput):Promise<void>{
   }
   // Cloud-first: never display a successful follow-up if the database rejected it.
   useCrmStore.getState().recordActivity(activity);
+  if(input.action==='contacted'&&current.projectId&&
+    useCrmStore.getState().projects.some(p=>p.id===current.projectId)){
+    useCrmStore.getState().updateProject(current.projectId,{lastTouchpoint:followUpLocalDate()});
+  }
 }
