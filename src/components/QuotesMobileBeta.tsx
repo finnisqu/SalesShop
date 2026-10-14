@@ -565,9 +565,12 @@ export function QuotesMobileBeta() {
     if(copy)openArea(copy);
   };
   useEffect(()=>{
+    // A restored editor location must not be discarded before quote hydration
+    // has supplied its saved active document.
+    if(!hydrated)return;
     if(page==='area'&&!area)setPage('quote');
     if(page!=='library'&&!quote)setPage('library');
-  },[page,area,quote]);
+  },[hydrated,page,area,quote]);
   const audit=quote&&quote.documentType!=='pricing-schedule'?auditQuoteDraft(quote):null;
   const openReview=(focusId:string|null=null)=>{setError('');setSelectionsOpen(false);setReviewFocus(focusId);setReviewOpen(true);};
   const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
