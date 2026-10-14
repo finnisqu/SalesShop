@@ -1,7 +1,8 @@
 import {useEffect,useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
-import {quoteTotal} from '../types/quote';
+import {quoteTotal,displayQuoteNumber} from '../types/quote';
+import {approvedCustomerDraft,quoteDeliveryApprovalKey} from '../services/quoteDeliveryApproval';
 import {QuoteShareControl} from './QuoteShareControl';
 import {QuoteSignatureDialog} from './QuoteSignatureDialog';
 import {auditQuoteDraft,type QuoteAuditDestination,type QuoteAuditFinding} from '../services/quoteDraftAudit';
@@ -13,12 +14,13 @@ import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEd
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
 export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialFindingId,
-  canIssue,sending,error,onIssue}:{
+  canIssue,sending,error,onIssue,previewedKey,approvedKey,onApprove}:{
   quote:Quote;
   onBack:()=>void;onFix:(destination:QuoteAuditDestination)=>void;
   initialFindingId?:string|null;
   onPreview:()=>void;onClassic:()=>void;
   canIssue:boolean;sending:boolean;error:string;onIssue:()=>void;
+  previewedKey:string|null;approvedKey:string|null;onApprove:(approved:boolean)=>void;
 }){
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
@@ -37,6 +39,10 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
   const scheduleError=quote.documentType==='pricing-schedule'
     ?pricingScheduleValidationError(quote.pricingSchedule):null;
   const ready=!needsRecheck&&report.blockers.length===0&&(!report.review.length||acknowledged);
+  const deliveryKey=quoteDeliveryApprovalKey(quote);
+  const previewed=previewedKey===deliveryKey;
+  const approved=approvedCustomerDraft(quote,previewedKey,approvedKey);
+  const canApprove=editable&&previewed&&ready&&canIssue;
   const renderFindings=(items:QuoteAuditFinding[],heading:string,description:string,kind:string)=>(
     <section className="qmb-audit-group" aria-label={heading}>
       <div className="qmb-audit-group-heading">
@@ -152,26 +158,56 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
       </label>}
       {error&&<p role="alert" className="qmb-error">{error}</p>}
       <section className="qmb-card qmb-audit-delivery" data-review-delivery>
-        <strong>Customer delivery</strong>
-        {!editable&&<p className="qmb-audit-help">This revision is {quote.status.toLowerCase()} and its customer-facing values are frozen. To change pricing or selections, start a new revision.</p>}
+        <strong>Customer delivery · Preview → Approve → Share</strong>
+        <div className="qmb-delivery-version" aria-label="Customer document revision">
+          <span>{editable?'Draft awaiting approval':'Issued customer revision'}</span>
+          <strong>{displayQuoteNumber(quote)}</strong>
+          <small>{quote.title}{quote.revisionLabel?' · '+quote.revisionLabel:''} · Revision {quote.revision} · {money.format(quoteTotal(quote))}</small>
+        </div>
+        {!editable&&<p className="qmb-audit-help">
+          This customer-facing revision is frozen. The link below is created for the issued revision shown above.
+        </p>}
         {!editable&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
           onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
-        <p className="qmb-help">Preview and draft links are available at any time. Issuing records a formal quote revision.</p>
-        <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer preview ›</button>
-        {editable&&report.review.length>0&&acknowledged&&<p className="qmb-audit-help">
-          These items are acknowledged for issuing. Select <strong>Issue quote / mark sent</strong> first, then create your customer link. This keeps the released revision immutable.
-        </p>}
-        <QuoteShareControl inline allowCreation={canIssue&&(!editable||(ready&&report.review.length===0))}/>
+        {editable?<div className="qmb-delivery-steps" aria-label="Customer delivery steps">
+          <div className="qmb-delivery-step">
+            <div className="qmb-delivery-step-title"><span>1</span><strong>Preview customer copy</strong>
+              <small>{previewed?'✓ Reviewed':'Required'}</small></div>
+            <p>Check the customer name, visible scope, pricing, total and policies as the customer will see them.</p>
+            <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>
+              {previewed?'Preview again ›':'Open customer preview ›'}</button>
+          </div>
+          <div className="qmb-delivery-step">
+            <div className="qmb-delivery-step-title"><span>2</span><strong>Approve this draft</strong>
+              <small>{approved?'✓ Approved':previewed?'Confirm':'Preview first'}</small></div>
+            <label className="qmb-delivery-approval"><input type="checkbox"
+              aria-label="Approve customer document for issuing"
+              checked={approved} disabled={!canApprove}
+              onChange={e=>onApprove(e.target.checked)}/>
+              <span>I approve the customer document shown in Preview, including this revision's price and scope.</span>
+            </label>
+            {!previewed&&<small>Open Preview, then return to Review to confirm this exact draft.</small>}
+            {previewed&&!ready&&<small>Resolve or acknowledge outstanding findings and recheck changes before approving.</small>}
+            <small>Any new edit invalidates this approval until you preview the updated version again.</small>
+          </div>
+          <div className="qmb-delivery-step">
+            <div className="qmb-delivery-step-title"><span>3</span><strong>Issue and share</strong><small>After approval</small></div>
+            <p>Issuing freezes the approved revision. It does not send an email or automatically create a link.</p>
+            <button type="button" className="qmb-primary qmb-block"
+              disabled={sending||!canIssue||!ready||!approved} onClick={onIssue}>
+              {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':report.blockers.length?'Resolve pricing issues to issue':
+                report.review.length&&!acknowledged?'Review remaining items to issue':
+                !previewed?'Preview customer document to issue':!approved?'Approve customer document to issue':
+                  'Issue quote / mark sent'}
+            </button>
+          </div>
+        </div>:<button type="button" className="qmb-outline qmb-block" onClick={onPreview}>View issued customer revision ›</button>}
+        {!editable&&<p className="qmb-audit-help">Share only this issued revision. Creating a link does not change the accepted price or contents.</p>}
+        <QuoteShareControl inline allowCreation={canIssue&&!editable} autoOpenOnIssue/>
         {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&
-          <button type="button" className="qmb-outline qmb-block"
-            onClick={()=>setSignatureOpen(true)}>
+          <button type="button" className="qmb-outline qmb-block" onClick={()=>setSignatureOpen(true)}>
             {quote.status==='Signed'?'View signed receipt':'Sign in person'}
           </button>}
-        {editable&&<button type="button" className="qmb-primary qmb-block"
-          disabled={sending||!canIssue||!ready} onClick={onIssue}>
-          {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':report.blockers.length?'Resolve pricing issues to issue':
-            report.review.length&&!acknowledged?'Review remaining items to issue':'Issue quote / mark sent'}
-        </button>}
         {!canIssue&&editable&&<small className="qmb-audit-help">Your current team role cannot issue quotes.</small>}
         {report.blockers.length>0&&editable&&
           <small className="qmb-audit-help">Resolve {report.blockers.length} pricing issue{report.blockers.length===1?'':'s'} before issuing. Your draft is still saved.</small>}
