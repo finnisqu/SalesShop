@@ -40,7 +40,7 @@ test('phone Quotes Beta uses the same quote records and returns to Classic', asy
   await beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'}).fill('50');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(beta.locator('.qmb-area-card .qmb-area-price').getByText('$416.50')).toBeVisible();
-  await beta.getByRole('button',{name:'Preview'}).click();
+  await beta.getByRole('button',{name:'Preview',exact:true}).click();
   await expect(beta.locator('.qmb-preview')).toBeVisible();
   await beta.getByRole('button',{name:'Classic',exact:true}).click();
   await expect(page.locator('.quotes-workbench')).toBeVisible();
@@ -719,7 +719,7 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   const rows=beta.locator('.qmb-area-editor .qmb-line-name strong');
   await expect(rows.first()).toHaveText('Warranty');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Preview'}).click();
+  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Preview',exact:true}).click();
   await beta.getByText('Customer viewing options').click();
   await beta.getByRole('checkbox',{name:'Show Kitchen to customer'}).uncheck();
   await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Build'}).click();
@@ -807,7 +807,7 @@ test('Beta Preview edits live Area title and Takeoffs sell rate without leaving 
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
   await beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'}).fill('50');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
-  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview'}).click();
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview',exact:true}).click();
   await beta.getByRole('button',{name:/Make edits/}).click();
   await beta.getByRole('button',{name:/Edit Area name New area/}).click();
   await beta.getByRole('textbox',{name:'Edit Area name in preview'}).fill('Kitchen');
@@ -1571,7 +1571,7 @@ test('Pricing Schedule is accessible through phone Beta Details without changing
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Build'}).click();
   await expect(beta.getByRole('region',{name:'Pricing Schedule workspace'})).toBeVisible();
   await expect(beta.getByLabel('Published pricing rows')).toContainText('0 price rows');
-  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview'}).click();
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview',exact:true}).click();
   await expect(beta.locator('.pricing-schedule-customer-preview')).toBeVisible();
   await beta.getByRole('button',{name:'Review Pricing Schedule'}).click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
