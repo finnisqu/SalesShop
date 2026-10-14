@@ -512,7 +512,9 @@
   box-shadow:inset 0 0 0 1px var(--accent,#607e6e);
   background:color-mix(in srgb,var(--accent,#607e6e) 8%,var(--surface,#fff))}
 .pricing-builder-alternatives{border-top:1px solid rgba(76,69,58,.16);padding-top:9px}
-.pricing-builder-alternatives summary{font-weight:700;cursor:pointer}
+.pricing-builder-alternatives>header{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pricing-builder-alternatives>header strong{font-weight:700}
+.pricing-builder-alternatives>header small{color:var(--ink-muted,#746e64);font-size:12px}
 .pricing-builder-alternatives summary small{font-weight:400;color:var(--ink-muted,#746e64)}
 .pricing-builder-alternatives p{margin:7px 0 10px}
 .pricing-builder-mode-indicator{padding:8px 10px;border-radius:5px;
