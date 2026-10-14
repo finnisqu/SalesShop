@@ -123,7 +123,7 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
     const source=quote.pricingSchedule?.publishSource??'rate-sheet';
     const sourceLabel=source==='workbook'?'Custom Spreadsheet':source==='builder'?'Community Plan Pricing':'Builder Rate Schedule';
     const issue=pricingScheduleValidationError(quote.pricingSchedule);
-    return <aside className="qmb-desktop-inspector" aria-label="Live quote summary">
+    return <aside className="qmb-desktop-inspector is-pricing" aria-label="Live quote summary">
       <div className="qmb-desktop-inspector-heading"><span>PRICING SCHEDULE</span><span className="qmb-chip">{quote.status}</span></div>
       <div className="qmb-desktop-grand-total"><small>Published price rows</small>
         <strong>{published}</strong><span>{quote.companyName||'Customer not selected'}</span></div>
