@@ -6,10 +6,11 @@ import {quoteCanCreateRevision} from '../services/quoteIntegrity';
 import '../sales-document-workspace.css';
 
 export function SalesDocumentToolbar({quote,onLibrary,onBuild,onDetails,onPreview,onDuplicate,
-  onCreateRevision,canCreateRevision,cloudMode}:{
+  onCreateRevision,canCreateRevision,canDuplicate,cloudMode}:{
   quote:Quote;
   onLibrary:()=>void;onBuild:()=>void;onDetails:()=>void;onPreview:()=>void;
   onDuplicate:()=>void;onCreateRevision:()=>void;canCreateRevision:boolean;
+  canDuplicate:boolean;
   cloudMode:boolean;
 }){
   const menu=useRef<HTMLDetailsElement>(null);
@@ -37,7 +38,7 @@ export function SalesDocumentToolbar({quote,onLibrary,onBuild,onDetails,onPrevie
         <summary aria-label="More document actions">More <span aria-hidden="true">⌄</span></summary>
         <div className="sales-document-actions-popover">
           <button type="button" onClick={()=>closeThen(onDetails)}>Customer, project & revisions</button>
-          <button type="button" onClick={()=>closeThen(onDuplicate)}>Make independent copy</button>
+          {canDuplicate&&<button type="button" onClick={()=>closeThen(onDuplicate)}>Make independent copy</button>}
           {canRevise&&<button type="button" onClick={()=>closeThen(onCreateRevision)}>
             Create next revision
           </button>}
