@@ -14,6 +14,10 @@ import type {
   PricingScheduleItem,
   PricingScheduleMapping,
 } from '../types/quote';
+import {
+  applyPricingStyleToExcel,excelCellStyleToPricing,resolvedPricingCellStyle,
+  type PricingCellStyle,
+} from './pricingScheduleFormatting';
 
 export const PRICING_SCHEDULE_FIELD_LABELS: Record<PricingScheduleField, string> = {
   series: 'Series',
@@ -35,7 +39,7 @@ const STARTER_COLUMNS: Array<{ field: PricingScheduleField; label: string; width
   { field: 'customerPrice', label: 'Customer Price', width: 120 },
 ];
 
-type Cell = { v?: unknown; f?: string };
+type Cell = { v?: unknown; f?: string; s?: string | PricingCellStyle };
 type Sheet = {
   id?: string;
   name?: string;
@@ -46,7 +50,7 @@ type Sheet = {
   rowData?: Record<string, { h?: number }>;
   mergeData?: Array<{ startRow: number; startColumn: number; endRow: number; endColumn: number }>;
 };
-type Workbook = { sheetOrder?: string[]; sheets?: Record<string, Sheet> };
+type Workbook = { sheetOrder?: string[]; sheets?: Record<string, Sheet>; styles?: Record<string,PricingCellStyle> };
 
 function workbook(value: unknown) {
   return value && typeof value === 'object' ? value as Workbook : null;
@@ -384,8 +388,9 @@ export async function importExcelPricingWorkbook(file: File): Promise<IWorkbookD
       if (row.height) rowData[String(rowNumber - 1)] = { h: row.height };
       row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
         const raw = cell.value as unknown;
-        if (raw === null || raw === undefined) return;
         const target: Cell = {};
+        const style=excelCellStyleToPricing(cell);
+        if(style)target.s=style;
         if (typeof raw === 'object' && raw && 'formula' in (raw as Record<string, unknown>)) {
           const formula = String((raw as Record<string, unknown>).formula ?? '');
           if (formula) target.f = formula.startsWith('=') ? formula : `=${formula}`;
@@ -395,7 +400,7 @@ export async function importExcelPricingWorkbook(file: File): Promise<IWorkbookD
           const scalar = excelScalar(raw);
           if (scalar !== null) target.v = scalar;
         }
-        if (target.v === undefined && target.f === undefined) return;
+        if (target.v === undefined && target.f === undefined && target.s === undefined) return;
         const r = String(rowNumber - 1);
         cellData[r] ??= {};
         cellData[r][String(columnNumber - 1)] = target;
@@ -427,6 +432,7 @@ export async function buildExcelPricingWorkbook(value: unknown) {
         const target = sheet.getCell(Number(rowKey) + 1, Number(columnKey) + 1);
         if (cell.f) target.value = { formula: cell.f.replace(/^=/, ''), result: cell.v as never };
         else if (cell.v !== undefined) target.value = cell.v as never;
+        applyPricingStyleToExcel(target,resolvedPricingCellStyle(cell,data.styles));
       }
     }
     for (const [columnKey, column] of Object.entries(source.columnData ?? {})) {
