@@ -193,7 +193,7 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
       </section>
       <div className="qmb-inspector-send-block">
         <button type="button" className="qmb-inspector-send" onClick={onSend}
-          aria-label="Send quote">{editable?'Send quote':'Share issued quote'} <span aria-hidden="true">›</span></button>
+          aria-label={editable?'Review and issue quote':'Review customer sharing'}>{editable?'Review & issue':'Share issued quote'} <span aria-hidden="true">›</span></button>
         <small>{!canIssue?'Your team role cannot issue quotes.':audit.blockers.length
           ?audit.blockers.length+' pricing blocker'+(audit.blockers.length===1?'':'s')+' must be resolved'
           :audit.review.length?'Review items before sending'
