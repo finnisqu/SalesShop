@@ -7,6 +7,9 @@ on:
     paths:
       - 'src/services/pricingSchedule*'
       - 'src/components/PricingSchedule*'
+      - 'src/components/PricingContract*'
+      - 'src/services/pricingScheduleContract*'
+      - 'src/services/pricingScheduleCombinations*'
       - 'src/pricing-schedule.css'
       - 'e2e/pricing-schedule-workbook.pw.ts'
       - 'e2e/pricing-schedule-contract.pw.ts'
