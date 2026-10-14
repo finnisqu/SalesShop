@@ -179,3 +179,8 @@
   .sales-app .qmb .qmb-library-tools select{width:100%;max-width:none}
   .sales-app .qmb .qmb-library-results-head .qmb-library-new-inline{display:none}
 }
+
+/* One clear creation action per breakpoint: near results on desktop, sticky on phones. */
+@media(min-width:641px){
+  .sales-app .qmb .qmb-desktop-frame.is-library .qmb-footer-single{display:none}
+}
