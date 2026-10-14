@@ -77,6 +77,8 @@ jobs:
         run: npx playwright test e2e/pricing-schedule-workbook.pw.ts e2e/pricing-schedule-contract.pw.ts e2e/pricing-schedule-manual.pw.ts e2e/pricing-schedule-calculated.pw.ts e2e/sales-document-templates.pw.ts e2e/sales-document-workspace.pw.ts e2e/sales-document-library.pw.ts --project=desktop-1280 --project=phone-390
       - name: Quick Quote inline review browser regression
         run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Review fixes zero-priced flat charges|Review resolves customer name and sink price inline without leaving Review|Review missing material rate'
+      - name: Quick Quote Area price-fastpath browser regressions
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 --project=desktop-1280 -g 'phone Quotes Beta uses the same quote records|desktop Quotes Beta is fully opted in'
       - name: Upload workbook failure traces
         if: failure()
         uses: actions/upload-artifact@v4

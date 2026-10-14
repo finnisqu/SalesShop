@@ -37,8 +37,13 @@ test('phone Quotes Beta uses the same quote records and returns to Classic', asy
   const width=beta.getByRole('textbox',{name:'Width (in)'});
   await width.fill('25');await width.blur();
   await expect(beta.getByText('8.33 SF measured')).toBeVisible();
-  await beta.getByRole('button',{name:'Pricing'}).click();
+  const pricingAlert=beta.getByRole('button',{name:'Resolve Area pricing issues'});
+  await expect(pricingAlert).toContainText('Missing sell rate');
+  await pricingAlert.click();
+  await expect(beta.locator('.qmb-area-editor .qmb-tabs')
+    .getByRole('button',{name:'Pricing'})).toHaveAttribute('aria-current','page');
   await beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'}).fill('50');
+  await expect(pricingAlert).toHaveCount(0);
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(beta.locator('.qmb-area-card .qmb-area-price').getByText('$416.50')).toBeVisible();
   await beta.getByRole('button',{name:'Preview',exact:true}).click();
@@ -85,10 +90,22 @@ test('desktop Quotes Beta is fully opted in and Classic remains selectable', asy
   await beta.getByRole('textbox',{name:'Length (in)'}).blur();
   await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
   await beta.getByRole('textbox',{name:'Width (in)'}).blur();
-  await inspector.getByRole('navigation',{name:'Area workflow shortcuts'}).getByRole('button',{name:'Materials'}).click();
+  const desktopPricingAlert=beta.getByRole('button',{name:'Resolve Area pricing issues'});
+  await expect(desktopPricingAlert).toBeVisible();
+  await desktopPricingAlert.click();
+  await expect(beta.locator('.qmb-area-editor .qmb-tabs')
+    .getByRole('button',{name:'Materials'})).toHaveAttribute('aria-current','page');
   const selling=beta.locator('.qmb-lab-selling');
   await expect(selling.getByRole('spinbutton',{name:'Area selling rate per SF'})).toBeVisible();
   await selling.getByRole('spinbutton',{name:'Area selling rate per SF'}).fill('50');
+  await expect(inspector.locator('.qmb-desktop-grand-total > strong')).toHaveText('$400.00');
+  await expect(desktopPricingAlert).toHaveCount(0);
+  // Undo a Rate Book selection as one edit, including its stored snapshot.
+  await selling.getByRole('button',{name:'Choose builder rate'}).click();
+  await selling.getByRole('group',{name:'Stock Builder pricing levels'})
+    .getByRole('button',{name:/Level 2.*54\.00\/SF/}).click();
+  await expect(inspector.locator('.qmb-desktop-grand-total > strong')).toHaveText('$432.00');
+  await navigator.getByRole('button',{name:'Undo quote change'}).click();
   await expect(inspector.locator('.qmb-desktop-grand-total > strong')).toHaveText('$400.00');
   await navigator.getByRole('button',{name:'Customer & project'}).click();
   await expect(beta.getByRole('region',{name:'Quote customer and project details'})).toBeVisible();

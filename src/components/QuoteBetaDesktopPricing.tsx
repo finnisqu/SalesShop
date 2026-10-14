@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import type {Quote,QuoteLine,QuoteLineKind,QuoteSection,QuotePricingMode} from '../types/quote';
+import type {Quote,QuoteLine,QuoteLineKind,QuoteSection,QuotePricingMode,QuoteLineRateReference} from '../types/quote';
 import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {calculateAreaCustomerPrice,projectAreaCost,type AreaPricingChoice} from '../services/quoteAreaCost';
@@ -104,7 +104,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     });
   };
   const setPrice=(choice:AreaPricingChoice,amount?:number,rate?:number,qty?:number,
-    mult?:number,sourceCost?:number)=>{
+    mult?:number,sourceCost?:number,rateReference?:QuoteLineRateReference)=>{
     const id=ensurePrimary(choice);if(!id)return;
     const previous=primary??useQuoteStore.getState().quotes.find(q=>q.id===quote.id)?.lines.find(l=>l.id===id);
     const nextMode:QuotePricingMode=choice==='manual'?'direct':
@@ -139,7 +139,8 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     const patch:Partial<Omit<QuoteLine,'id'>>={
       pricingMode:nextMode,materialReference:mat,
       ...addLink,
-      ...(choice==='sf'?{rateReference:undefined}:{}),
+      // Save the selected sell price and its Rate Book snapshot as one undoable edit.
+      ...(choice==='sf'?{rateReference}:{}),
       ...(choice==='sf'
         ?{rate:effectiveRate,amount:undefined}
         :{amount:value,rate:undefined}),
@@ -211,8 +212,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
           materialType={selectedCost.materialType}
           materialCostPerSf={selectedCost.quotedCostPerSf??selectedCost.currentCatalogCostPerSf}
           onSelect={(price,ref)=>{
-            const id=ensurePrimary('sf');
-            if(id){setPrice('sf',undefined,price);if(ref)updateLine(quote.id,id,{rateReference:ref});}
+            setPrice('sf',undefined,price,undefined,undefined,undefined,ref);
             setRatesOpen(false);
           }}/>
       </div>}
