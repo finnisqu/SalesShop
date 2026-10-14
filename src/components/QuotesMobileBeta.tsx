@@ -669,7 +669,10 @@ export function QuotesMobileBeta() {
       setError('Resolve pricing blockers before issuing this quote.');return;
     }
     setSending(true);setError('');
-    try{await recordSent(quote.id);setApprovedDeliveryKey(null);}
+    try{
+      await recordSent(quote.id,latest.documentType==='pricing-schedule'?undefined:approvedDeliveryKey??undefined);
+      setApprovedDeliveryKey(null);
+    }
     catch(e){setError(e instanceof Error?e.message:'Could not issue quote');}
     finally{setSending(false);}
   };

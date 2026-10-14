@@ -23,6 +23,7 @@ import {
 } from '../services/normalizedQuoteSync';
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
+import {assertMatchingApprovedDraft} from '../services/quoteIssueGuard';
 import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
 import {copySalesDocument} from '../services/quoteDocumentCopy';
 import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder } from '../services/quoteStructure';
@@ -93,7 +94,7 @@ interface QuoteState {
   setSectionOrder: (quoteId: string, orderedIds: string[]) => void;
   deleteSection: (quoteId: string, sectionId: string, disposition?: 'transfer' | 'delete') => void;
   setCustomerColumns: (quoteId: string, patch: Partial<QuoteCustomerColumns>) => void;
-  recordSent: (quoteId: string) => Promise<void>;
+  recordSent: (quoteId: string, expectedDraftKey?:string) => Promise<void>;
   createRevision: (quoteId: string) => void;
   undoQuote: (quoteId: string) => void;
   redoQuote: (quoteId: string) => void;
@@ -862,8 +863,9 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, ...history });
   },
 
-  recordSent: async (quoteId) => {
+  recordSent: async (quoteId,expectedDraftKey) => {
     const initial = get().quotes.find((quote) => quote.id === quoteId);
+    assertMatchingApprovedDraft(initial,expectedDraftKey);
     if (!initial || (initial.status !== 'Draft' && initial.status !== 'Ready')) return;
     const auth = useAuthStore.getState();
     if (supabase && auth.mode === 'cloud' && auth.organizationId) {
@@ -883,6 +885,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     });
 
     const current = get().quotes.find((quote) => quote.id === quoteId);
+    assertMatchingApprovedDraft(current,expectedDraftKey);
     if (!current || (current.status !== 'Draft' && current.status !== 'Ready')) return;
     // Revalidate after the asynchronous number assignment. The quote may have
     // changed while the server request was in progress.
