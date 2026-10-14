@@ -9,6 +9,7 @@ import {
 } from '../services/pricingScheduleManual';
 import {contractPublishedPrice,deriveContractCustomerItems} from '../services/pricingScheduleContract';
 import {PricingScheduleCustomerTable} from './PricingScheduleCustomerTable';
+import '../pricing-schedule-manual.css';
 
 const dollar=(value:number)=>new Intl.NumberFormat('en-US',{
   style:'currency',currency:'USD',maximumFractionDigits:2,
