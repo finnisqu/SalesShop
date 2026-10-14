@@ -1,0 +1,54 @@
+name: Pricing Schedule Workbook QC
+
+on:
+  push:
+    branches:
+      - architecture/react-foundation
+    paths:
+      - 'src/services/pricingSchedule*'
+      - 'src/components/PricingSchedule*'
+      - 'src/pricing-schedule.css'
+      - 'e2e/pricing-schedule-workbook.pw.ts'
+      - '.github/workflows/pricing-schedule-qc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workbook-qc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workbook-qc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: ''
+      VITE_SUPABASE_ANON_KEY: ''
+      VITE_BASE_PATH: '/'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Workbook unit tests
+        run: npx vitest run src/services/pricingSchedule.test.ts
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Focused workbook browser tests
+        run: npx playwright test e2e/pricing-schedule-workbook.pw.ts --project=desktop-1280 --project=phone-390
+      - name: Upload workbook failure traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pricing-schedule-browser-qc
+          path: |
+            artifacts/playwright-results/
+            artifacts/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 10
