@@ -21,6 +21,9 @@ on:
       - 'src/services/salesDocumentLibrary*'
       - 'src/services/stockBuilderRateTemplate*'
       - 'src/sales-documents.css'
+      - 'src/components/QuoteAuditInlineEditor*'
+      - 'src/services/quoteDraftAudit*'
+      - 'e2e/quotes-mobile-beta.pw.ts'
       - 'src/components/PricingManual*'
       - 'src/components/PricingContract*'
       - 'src/services/pricingScheduleContract*'
@@ -35,6 +38,9 @@ on:
       - 'e2e/sales-document-workspace.pw.ts'
       - 'e2e/sales-document-library.pw.ts'
       - '.github/workflows/pricing-schedule-qc.yml'
+  pull_request:
+    branches:
+      - architecture/react-foundation
   workflow_dispatch:
 
 permissions:
@@ -63,10 +69,14 @@ jobs:
         run: npm install
       - name: Workbook unit tests
         run: npx vitest run src/services/pricingSchedule.test.ts src/services/pricingScheduleContract.test.ts src/services/pricingScheduleManual.test.ts src/services/pricingScheduleBuilderVariants.test.ts src/services/salesDocumentTemplates.test.ts src/services/stockBuilderRateTemplate.test.ts src/services/quoteDocumentCopy.test.ts src/services/salesDocumentLibrary.test.ts
+      - name: Quote review unit regressions
+        run: npx vitest run src/services/quoteDraftAudit.test.ts src/components/QuoteAuditInlineEditor.test.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Focused workbook browser tests
         run: npx playwright test e2e/pricing-schedule-workbook.pw.ts e2e/pricing-schedule-contract.pw.ts e2e/pricing-schedule-manual.pw.ts e2e/pricing-schedule-calculated.pw.ts e2e/sales-document-templates.pw.ts e2e/sales-document-workspace.pw.ts e2e/sales-document-library.pw.ts --project=desktop-1280 --project=phone-390
+      - name: Quick Quote inline review browser regression
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Review fixes zero-priced flat charges|Review resolves customer name and sink price inline without leaving Review|Review missing material rate'
       - name: Upload workbook failure traces
         if: failure()
         uses: actions/upload-artifact@v4
