@@ -66,7 +66,7 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
           <p>This document type is reserved for supplier quotes, cut-to-size material pricing, wholesale purchasing and project cost modeling. It cannot create a draft or publish prices until its calculator and contract rules are ready.</p>
         </div>:<>
           <p className="sales-document-template-description">{template?.description}</p>
-          <div className="sales-document-starter-options" role="group" aria-label="Starting point">
+          {selected!=='quick-quote'&&<div className="sales-document-starter-options" role="group" aria-label="Starting point">
             <button type="button" className={start==='blank'?'active':''} onClick={()=>{setStart('blank');setSourceId('');}}>
               <strong>Blank</strong><small>Start with an empty editable document.</small>
             </button>
@@ -85,7 +85,7 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
               disabled={!previous.length} onClick={()=>{setStart('previous');setDocumentName('');}}>
               <strong>Copy previous agreement</strong><small>{previous.length?previous.length+' compatible documents':'No matching documents yet'}</small>
             </button>}
-          </div>
+          </div>}
           {start==='previous'&&<label className="sales-document-source-picker"><span>Choose the agreement to copy</span>
             <select aria-label="Previous agreement" value={sourceId} onChange={e=>{
               setSourceId(e.target.value);
