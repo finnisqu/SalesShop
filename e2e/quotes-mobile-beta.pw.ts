@@ -540,7 +540,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await beta.getByRole('button',{name:/All documents/}).click();
   const followups=beta.getByRole('region',{name:'Quote follow-up dashboard'});
   await expect(followups).toContainText('Quote follow-ups');
-  await expect(followups).toContainText('Awaiting customer response');
+  await expect(followups.locator('.qmb-followups-item')).toContainText('Awaiting reply');
   await followups.getByRole('button',{name:'Plan / log follow-up'}).click();
   const nextDate=followups.getByLabel('Next follow-up date');
   const today=await nextDate.getAttribute('min');
