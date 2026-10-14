@@ -436,6 +436,8 @@ export function QuotesMobileBeta() {
   const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
+  // Keep the new-document library first; follow-ups are a secondary destination.
+  const [followUpsTab,setFollowUpsTab]=useState(false);
   const stockRates=useRateBookStore(s=>s.items);
   const hydrateRateBook=useRateBookStore(s=>s.hydrate);
   const companyStock=useCompanySettingsStore(s=>s.settings.stockMaterials);
@@ -711,19 +713,24 @@ export function QuotesMobileBeta() {
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
         <p className="qmb-subtitle">Open an existing agreement, quote or workbook—or create a new document from a purpose-built template.</p>
-        <label className="qmb-search"><span aria-hidden="true">⌕</span>
+        {!followUpsTab&&<label className="qmb-search"><span aria-hidden="true">⌕</span>
            <input value={search} onChange={e=>setSearch(e.target.value)}
              placeholder="Search documents, customers, contacts…" aria-label="Search my documents"/>
            {search&&<button type="button" className="qmb-library-search-clear"
              aria-label="Clear document search" onClick={()=>setSearch('')}>×</button>}
-         </label>
-         <nav className="qmb-library-filter-row" aria-label="Filter document templates">
+         </label>}
+         <nav className="qmb-library-filter-row" aria-label="Document library sections">
            {[{id:'all' as const,title:'All'},...SALES_DOCUMENT_TEMPLATES.filter(t=>t.available).map(t=>({
              id:t.id as SalesDocumentTemplate,title:t.title}))].map(item=>
-             <button key={item.id} type="button" className={documentFilter===item.id?'active':''}
-               aria-pressed={documentFilter===item.id}
-               onClick={()=>setDocumentFilter(item.id)}>{item.title}</button>)}
+             <button key={item.id} type="button" className={!followUpsTab&&documentFilter===item.id?'active':''}
+               aria-pressed={!followUpsTab&&documentFilter===item.id}
+               onClick={()=>{setFollowUpsTab(false);setDocumentFilter(item.id);}}>{item.title}</button>)}
+           <button type="button" className={'qmb-library-followups-tab'+(followUpsTab?' active':'')}
+             aria-pressed={followUpsTab} onClick={()=>setFollowUpsTab(true)}>Follow-ups</button>
          </nav>
+         {followUpsTab
+           ?<QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>
+           :<>
          <div className="qmb-library-tools">
            <label><span>Show</span>
              <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
@@ -741,8 +748,6 @@ export function QuotesMobileBeta() {
              <option value="oldest">Oldest edited</option>
            </select></label>
          </div>
-         {statusFilter==='active'&&documentFilter==='all'&&!search.trim()&&
-           <QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>}
          <div className="qmb-section-head qmb-library-results-head">
            <div><h3>{statusFilter==='archived'?'Archived documents':'My documents'}</h3>
              <small>{list.length} {list.length===1?'document':'documents'} shown</small></div>
@@ -781,6 +786,7 @@ export function QuotesMobileBeta() {
           </button>}
         </div>}
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
+         </>}
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary"
           onClick={()=>setShowNewDocument(true)}>+ New document</button></footer>

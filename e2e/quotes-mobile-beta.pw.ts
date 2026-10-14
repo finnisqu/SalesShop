@@ -538,6 +538,10 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await expect(timeline).toContainText('Customer delivery confirmed');
   await expect(timeline).toContainText('Email');
   await beta.getByRole('button',{name:/All documents/}).click();
+  const libraryTabs=beta.getByRole('navigation',{name:'Document library sections'});
+  await expect(libraryTabs.getByRole('button',{name:'All',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(beta.getByRole('region',{name:'Quote follow-up dashboard'})).toHaveCount(0);
+  await libraryTabs.getByRole('button',{name:'Follow-ups'}).click();
   const followups=beta.getByRole('region',{name:'Quote follow-up dashboard'});
   await expect(followups).toContainText('Quote follow-ups');
   await expect(followups.locator('.qmb-followups-item')).toContainText('Awaiting reply');
@@ -557,6 +561,34 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   });
   expect(stored.map((a:{metadata:{followUpAction:string}})=>a.metadata.followUpAction))
     .toEqual(['scheduled','contacted']);
+  await libraryTabs.getByRole('button',{name:'All',exact:true}).click();
+  await expect(followups).toHaveCount(0);
+  await expect(beta.getByRole('textbox',{name:'Search my documents'})).toBeVisible();
+});
+
+test('phone library defaults to documents with follow-ups in a secondary tab',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Phone library secondary tab navigation');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  const tabs=beta.getByRole('navigation',{name:'Document library sections'});
+  await expect(tabs.getByRole('button',{name:'All',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(beta.getByRole('region',{name:'Quote follow-up dashboard'})).toHaveCount(0);
+  await expect(beta.getByRole('textbox',{name:'Search my documents'})).toBeVisible();
+  await tabs.getByRole('button',{name:'Follow-ups'}).click();
+  await expect(tabs.getByRole('button',{name:'Follow-ups'})).toHaveAttribute('aria-pressed','true');
+  await expect(beta.getByRole('region',{name:'Quote follow-up dashboard'})).toBeVisible();
+  await expect(beta.getByRole('textbox',{name:'Search my documents'})).toHaveCount(0);
+  await tabs.getByRole('button',{name:'Quick Quote',exact:true}).click();
+  await expect(beta.getByRole('region',{name:'Quote follow-up dashboard'})).toHaveCount(0);
+  await expect(tabs.getByRole('button',{name:'Quick Quote',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(beta.getByRole('textbox',{name:'Search my documents'})).toBeVisible();
+  await tabs.getByRole('button',{name:'All',exact:true}).click();
+  await expect(beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first()).toBeVisible();
 });
 
 test('Review preview returns directly to the same quote delivery checklist',async ({page},testInfo)=>{

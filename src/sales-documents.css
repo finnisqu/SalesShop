@@ -82,3 +82,19 @@
 }
 .sales-document-name-field small{color:var(--ss-theme-muted,#617369);font-size:11px}
 .sales-document-name-field input::placeholder{color:var(--ss-theme-muted,#617369);opacity:.9}
+
+/* Follow-up management is intentionally secondary during the new-quotes beta. */
+.qmb .qmb-library-filter-row .qmb-library-followups-tab{
+  margin-inline-start:auto;
+  font-size:.9em;
+  opacity:.78;
+  border-style:dashed;
+}
+.qmb .qmb-library-filter-row .qmb-library-followups-tab:hover,
+.qmb .qmb-library-filter-row .qmb-library-followups-tab:focus-visible,
+.qmb .qmb-library-filter-row .qmb-library-followups-tab.active{
+  opacity:1;
+}
+@media(max-width:620px){
+  .qmb .qmb-library-filter-row .qmb-library-followups-tab{margin-inline-start:0}
+}
