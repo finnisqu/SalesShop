@@ -8,11 +8,16 @@ import '../sales-documents.css';
 const symbols:Record<SalesDocumentTemplateChoice,string>={
   'quick-quote':'▤','builder-rates':'≡','community-pricing':'▦','spreadsheet':'▥','multifamily':'▧',
 };
-export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount}:{
+export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
+  stockLevelReady,stockMaterialCount,stockLevelCount,unassignedStockCount}:{
   quotes:Quote[];onClose:()=>void;
   onCreate:(template:Exclude<SalesDocumentTemplateChoice,'multifamily'>,
     start:SalesTemplateStart,sourceQuoteId?:string)=>void;
   stockRateCount:number;
+  stockLevelReady:boolean;
+  stockMaterialCount:number;
+  stockLevelCount:number;
+  unassignedStockCount:number;
 }){
   const [selected,setSelected]=useState<SalesDocumentTemplateChoice|null>(null);
   const [start,setStart]=useState<SalesTemplateStart>('blank');
@@ -27,9 +32,13 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount}:
   const choose=(id:SalesDocumentTemplateChoice)=>{
     setSelected(id);setStart('blank');setSourceId('');
   };
+  const stockStarterSelected=selected==='builder-rates';
+  const stockStarterReady=stockStarterSelected
+    ?stockLevelReady&&stockMaterialCount>0
+    :stockRateCount>0;
   const canCreate=selected!==null&&selected!=='multifamily'&&
     (start!=='previous'||!!sourceId)&&
-    (start!=='company-rates'||stockRateCount>0);
+    (start!=='company-rates'||stockStarterReady);
   return createPortal(<div className="sales-document-modal-backdrop"
     onPointerDown={e=>{if(e.currentTarget===e.target)onClose();}}>
     <section className="sales-document-picker" role="dialog" aria-modal="true"
@@ -61,10 +70,15 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount}:
               <strong>Blank</strong><small>Start with an empty editable document.</small>
             </button>
             {selected!=='spreadsheet'&&selected!=='quick-quote'&&<button type="button"
-              className={start==='company-rates'?'active':''} disabled={!stockRateCount}
+              className={start==='company-rates'?'active':''} disabled={!stockStarterReady}
               onClick={()=>{setStart('company-rates');setSourceId('');}}>
-              <strong>Company stock rates</strong>
-              <small>{stockRateCount?stockRateCount+' available company rates, copied as a snapshot':'No rates in the company Rate Book'}</small>
+              <strong>{stockStarterSelected?'Company stock levels':'Company stock rates'}</strong>
+              <small>{stockStarterSelected
+                ?!stockLevelReady?'Loading stock materials and level pricing…'
+                  :!stockMaterialCount?'No active stock materials in the company catalog'
+                  :stockMaterialCount+' stock colors · '+stockLevelCount+' priced level groups'
+                :stockRateCount?stockRateCount+' available company rates, copied as a snapshot'
+                  :'No rates in the company Rate Book'}</small>
             </button>}
             {selected!=='quick-quote'&&<button type="button" className={start==='previous'?'active':''}
               disabled={!previous.length} onClick={()=>setStart('previous')}>
@@ -80,6 +94,13 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount}:
             </select>
             <small>Copies its current pricing as an independent draft. Later changes to the original will not change this document.</small>
           </label>}
+          {selected==='builder-rates'&&start==='company-rates'&&
+            <p className="sales-document-starter-note">
+              Prices come from the current company Builder Level Guide ($/SF), with its approved
+              stock colors grouped by level. General Rate Book sinks and add-ons are included separately.
+              {unassignedStockCount>0?' '+unassignedStockCount+' stock color(s) need a level assignment and will be listed for review.':''}
+              Everything becomes an editable snapshot for this builder.
+            </p>}
           {selected==='community-pricing'&&<p className="sales-document-starter-note">
             Start from a prior Builder Rate Schedule to reuse negotiated material/add-on rates, then add this community's house plans and takeoffs.
           </p>}
