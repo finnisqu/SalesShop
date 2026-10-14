@@ -464,7 +464,6 @@ test('Previewed customer revision approval expires after a change before issue',
   await beta.getByRole('button',{name:'Back to Review'}).click();
   await expect(review.getByRole('button',{name:'Open customer preview ›'})).toBeVisible();
   await expect(approval).toBeDisabled();
-  await review.getByRole('button',{name:'Recheck now'}).click();
   await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
   await expect(approval).toBeDisabled();
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
@@ -496,6 +495,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await beta.getByRole('textbox',{name:'Length (in)'}).blur();
   await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
   await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await beta.getByRole('button',{name:'Resolve Area pricing issues'}).click();
   await beta.locator('.qmb-lab-selling')
     .getByRole('spinbutton',{name:'Area selling rate per SF'}).fill('50');
   await beta.getByRole('complementary',{name:'Live quote summary'})
