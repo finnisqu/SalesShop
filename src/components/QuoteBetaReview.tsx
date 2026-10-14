@@ -100,7 +100,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
           {!editable&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
             onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
           <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer schedule preview ›</button>
-          <QuoteShareControl inline allowCreation={!editable||(scheduleReady&&canIssue)}/>
+          <QuoteShareControl inline allowCreation={canIssue&&(!editable||scheduleReady)}/>
           {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&<button type="button" className="qmb-outline qmb-block"
             onClick={()=>setSignatureOpen(true)}>{quote.status==='Signed'?'View signed receipt':'Sign in person'}</button>}
           {editable&&<button type="button" className="qmb-primary qmb-block"
@@ -161,7 +161,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         {editable&&report.review.length>0&&acknowledged&&<p className="qmb-audit-help">
           These items are acknowledged for issuing. Select <strong>Issue quote / mark sent</strong> first, then create your customer link. This keeps the released revision immutable.
         </p>}
-        <QuoteShareControl inline allowCreation={!editable||(ready&&canIssue&&report.review.length===0)}/>
+        <QuoteShareControl inline allowCreation={canIssue&&(!editable||(ready&&report.review.length===0))}/>
         {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&
           <button type="button" className="qmb-outline qmb-block"
             onClick={()=>setSignatureOpen(true)}>
