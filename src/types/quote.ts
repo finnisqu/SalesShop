@@ -51,6 +51,7 @@ export type PricingMaterialType =
   | 'Travertine'
   | 'Limestone'
   | 'Natural Stone'
+  | 'Cultured Marble'
   | 'Quartz'
   | 'Sintered Stone'
   | 'Porcelain'
@@ -363,6 +364,16 @@ export interface PricingOptionRule {
 
 export interface PricingOptionPackage {
   id: string;
+  /** Rate Book IDs shared across tops and matching splash pieces. */
+  kitchenMaterialRateId?: string;
+  bathroomMaterialRateId?: string;
+  otherMaterialRateId?: string;
+  includeKitchenSplash?: boolean;
+  includeBathroomSplash?: boolean;
+  /** Select exactly one physical variant per takeoff group, e.g. Master Vanity -> Double Bowl. */
+  takeoffVariants?: Record<string,string>;
+  /** Additional quantity-based option charges, separate from physical takeoff sinks. */
+  extraRateQuantities?: Record<string,number>;
   code: string;
   name: string;
   description?: string;
@@ -383,6 +394,12 @@ export interface PricingPlan {
 
 export interface PricingPlanTakeoff {
   id: string;
+  /** Optional logical component category, e.g. Master Vanity. */
+  category?: string;
+  /** Alternate components share a group. Only one variant is charged per option. */
+  variantGroup?: string;
+  /** BASE (default) or a named variation such as DOUBLE. */
+  variantCode?: string;
   planId: string;
   room: string;
   piece?: string;
