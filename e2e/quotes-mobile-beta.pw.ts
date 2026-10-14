@@ -109,7 +109,7 @@ test('desktop Quotes Beta is fully opted in and Classic remains selectable', asy
   await expect(inspector.locator('.qmb-desktop-grand-total > strong')).toHaveText('$400.00');
   await navigator.getByRole('button',{name:'Customer & project'}).click();
   await expect(beta.getByRole('region',{name:'Quote customer and project details'})).toBeVisible();
-  await inspector.getByRole('button',{name:'Send quote'}).click();
+  await inspector.getByRole('button',{name:'Review and issue quote'}).click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await expect(review.locator('.qmb-audit-finding').first()).toBeVisible();
   await review.getByRole('button',{name:'Close Review and Issue'}).click();
@@ -502,7 +502,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await beta.locator('.qmb-lab-selling')
     .getByRole('spinbutton',{name:'Area selling rate per SF'}).fill('50');
   await beta.getByRole('complementary',{name:'Live quote summary'})
-    .getByRole('button',{name:'Send quote'}).click();
+    .getByRole('button',{name:'Review and issue quote'}).click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeDisabled();
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
