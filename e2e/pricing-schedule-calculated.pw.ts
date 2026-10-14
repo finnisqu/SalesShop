@@ -55,6 +55,21 @@ test('calculate Sanford configurations with shared material rates and replacemen
   await expect(ws.locator('.pricing-builder-audit')).toContainText('Master Bathroom');
   await expect(ws.locator('.pricing-builder-audit')).toContainText('Calculated price');
   await expect(ws.locator('.pricing-builder-mode-indicator')).toContainText('Calculated');
+  // Plan-specific takeoff exclusions must recalculate only their chosen package.
+  const aBefore=await cells.nth(0).innerText();
+  const bBefore=await cells.nth(1).innerText();
+  await ws.getByRole('button',{name:/2 · Plan Takeoffs/}).click();
+  await ws.getByText('Customize measured scope for each package').click();
+  await ws.locator('.pricing-builder-component-package').first().locator('summary').click();
+  const kitchenSplash=ws.getByRole('checkbox',{name:'A: include Kitchen Backsplash'});
+  await kitchenSplash.uncheck();
+  await ws.getByRole('button',{name:/4 · Calculated Matrix/}).click();
+  await expect(cells.nth(0)).not.toHaveText(aBefore);
+  await expect(cells.nth(1)).toHaveText(bBefore);
+  await ws.getByRole('button',{name:/2 · Plan Takeoffs/}).click();
+  await kitchenSplash.check();
+  await ws.getByRole('button',{name:/4 · Calculated Matrix/}).click();
+  await expect(cells.nth(0)).toHaveText(aBefore);
 });
 test('calculated builder stages stay accessible on mobile',async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','Mobile navigation QC');
