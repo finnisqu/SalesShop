@@ -17,7 +17,6 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount}:
   const [selected,setSelected]=useState<SalesDocumentTemplateChoice|null>(null);
   const [start,setStart]=useState<SalesTemplateStart>('blank');
   const [sourceId,setSourceId]=useState('');
-  const [title,setTitle]=useState('');
   const template=SALES_DOCUMENT_TEMPLATES.find(t=>t.id===selected);
   const previous=useMemo(()=>quotes.filter(q=>{
     if(q.archivedAt||!q.pricingSchedule)return false;
@@ -26,7 +25,7 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount}:
     return type===selected;
   }).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[selected,quotes]);
   const choose=(id:SalesDocumentTemplateChoice)=>{
-    setSelected(id);setStart('blank');setSourceId('');setTitle('');
+    setSelected(id);setStart('blank');setSourceId('');
   };
   const canCreate=selected!==null&&selected!=='multifamily'&&
     (start!=='previous'||!!sourceId)&&
