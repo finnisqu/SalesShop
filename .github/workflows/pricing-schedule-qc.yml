@@ -35,6 +35,9 @@ on:
       - 'e2e/sales-document-workspace.pw.ts'
       - 'e2e/sales-document-library.pw.ts'
       - '.github/workflows/pricing-schedule-qc.yml'
+  pull_request:
+    branches:
+      - architecture/react-foundation
   workflow_dispatch:
 
 permissions:
