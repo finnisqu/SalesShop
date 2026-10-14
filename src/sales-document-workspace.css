@@ -128,3 +128,54 @@
 @media(max-width:1100px){
   .sales-app .qmb .qmb-desktop-history{gap:4px}
 }
+
+/* Library: compact discovery and explicit sorting / status without an extra full-width CTA. */
+.sales-app .qmb .qmb-library-tools{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;
+  padding:2px 0 0;margin:0 0 10px;min-width:0;
+}
+.sales-app .qmb .qmb-library-tools label{
+  display:flex;align-items:center;gap:8px;min-width:0;
+  color:var(--qmb-muted);font-size:12px;font-weight:700;
+}
+.sales-app .qmb .qmb-library-tools select{
+  max-width:min(235px,100%);min-width:0;min-height:34px;
+  background:var(--qmb-card);color:var(--qmb-ink);
+  border:1px solid var(--qmb-border);border-radius:8px;
+  padding:7px 26px 7px 9px;font-size:12px;
+}
+.sales-app .qmb .qmb-library-filter-row{max-width:100%;min-width:0}
+.sales-app .qmb .qmb-library-filter-row button{flex:0 0 auto}
+.sales-app .qmb .qmb-library-search-clear{
+  flex:0 0 auto;border:0;background:transparent;color:var(--qmb-muted);
+  padding:6px 9px;min-width:32px;font-size:20px;line-height:1
+}
+.sales-app .qmb .qmb-library-results-head{margin:13px 0 9px}
+.sales-app .qmb .qmb-library-results-head>div{display:grid;gap:3px}
+.sales-app .qmb .qmb-library-new-inline{
+  border:1px solid var(--qmb-border);border-radius:9px;
+  color:var(--qmb-accent);background:var(--qmb-card);
+  font-size:12px;font-weight:800;padding:8px 13px;min-height:35px;
+}
+.sales-app .qmb .qmb-library-updated{
+  font-size:11px;line-height:1.2;color:var(--qmb-muted);
+}
+.sales-app .qmb .qmb-library-reset{
+  display:block;margin:12px auto 0;padding:9px 14px;
+  border:1px solid var(--qmb-border);background:var(--qmb-bg);
+  border-radius:9px;color:var(--qmb-accent);font-size:12px;font-weight:750;
+}
+.sales-app .qmb .qmb-listcard:hover,.sales-app .qmb .qmb-listcard:focus-visible{
+  border-color:var(--qmb-accent);background:color-mix(in srgb,var(--qmb-card) 87%,var(--qmb-tint));
+}
+.sales-app .qmb .qmb-listcard:has(+.qmb-library-card-actions) {cursor:pointer}
+@media(max-width:640px){
+  .sales-app .qmb .qmb-library-filter-row{
+    flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+    padding:3px 1px 9px;scrollbar-width:thin;
+  }
+  .sales-app .qmb .qmb-library-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .sales-app .qmb .qmb-library-tools label{display:grid;gap:4px;min-width:0}
+  .sales-app .qmb .qmb-library-tools select{width:100%;max-width:none}
+  .sales-app .qmb .qmb-library-results-head .qmb-library-new-inline{display:none}
+}
