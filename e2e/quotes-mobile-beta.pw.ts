@@ -394,7 +394,8 @@ test('Review fixes zero-priced flat charges by editing their real amount',async 
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await createQuickQuote(page);
-  // A fresh Quick Quote starts with a $0 fixed-price "New line item".
+  // Add an intentional $0 fixed-price line; Quick Quote templates start empty.
+  await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Custom'}).click();
   await beta.locator('.qmb-quote-footer .qmb-primary').click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await review.getByRole('button',{name:/Resolve Zero-price charge: New line item/}).click();
