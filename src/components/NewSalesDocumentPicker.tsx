@@ -70,7 +70,7 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
             <button type="button" className={start==='blank'?'active':''} onClick={()=>{setStart('blank');setSourceId('');}}>
               <strong>Blank</strong><small>Start with an empty editable document.</small>
             </button>
-            {selected!=='spreadsheet'&&selected!=='quick-quote'&&<button type="button"
+            {selected!=='spreadsheet'&&<button type="button"
               className={start==='company-rates'?'active':''} disabled={!stockStarterReady}
               onClick={()=>{setStart('company-rates');setSourceId('');}}>
               <strong>{stockStarterSelected?'Company stock levels':'Company stock rates'}</strong>
@@ -81,10 +81,10 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
                 :stockRateCount?stockRateCount+' available company rates, copied as a snapshot'
                   :'No rates in the company Rate Book'}</small>
             </button>}
-            {selected!=='quick-quote'&&<button type="button" className={start==='previous'?'active':''}
+            <button type="button" className={start==='previous'?'active':''}
               disabled={!previous.length} onClick={()=>{setStart('previous');setDocumentName('');}}>
               <strong>Copy previous agreement</strong><small>{previous.length?previous.length+' compatible documents':'No matching documents yet'}</small>
-            </button>}
+            </button>
           </div>}
           {start==='previous'&&<label className="sales-document-source-picker"><span>Choose the agreement to copy</span>
             <select aria-label="Previous agreement" value={sourceId} onChange={e=>{
