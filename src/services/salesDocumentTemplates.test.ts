@@ -5,9 +5,9 @@ import {createPricingScheduleBuilderData,createPricingRateItem} from './pricingS
 import {
   SALES_DOCUMENT_TEMPLATES,createTemplateSchedule,salesDocumentTemplate,snapshotCompanyRates,
 } from './salesDocumentTemplates';
-const legacy=(route:'rate-sheet'|'plan-builder'|'workbook')=>({
+const legacy=(route:'rate-sheet'|'plan-builder'|'workbook'):Pick<Quote,'documentType'|'pricingSchedule'|'templateId'>=>({
   documentType:'pricing-schedule' as const,
-  pricingSchedule:{route,publishSource:route==='rate-sheet'?'rate-sheet':route==='workbook'?'workbook':'builder',customerItems:[]},
+  pricingSchedule:{route,publishSource:route==='rate-sheet'?'rate-sheet' as const:route==='workbook'?'workbook' as const:'builder' as const,customerItems:[]},
 });
 describe('SalesShop document templates',()=>{
   it('defines exactly five clear starting points; Multi-Family is deliberately not executable',()=>{
@@ -78,7 +78,7 @@ describe('SalesShop document templates',()=>{
       {id:'cut',name:'Vanity bowl',unit:'each',active:true,category:'sink',
         pricingBehavior:'manual',sellRate:70,internalCost:20,divisionOverrides:[],history:[],
         effectiveDate:'2026-10-01'},
-    ] as Parameters<typeof snapshotCompanyRates>[0];
+    ] as unknown as Parameters<typeof snapshotCompanyRates>[0];
     const rates=snapshotCompanyRates(source);
     expect(rates).toHaveLength(2);
     expect(rates[0]).toMatchObject({
