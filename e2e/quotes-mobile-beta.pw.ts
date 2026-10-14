@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 async function createQuickQuote(page: import('@playwright/test').Page) {
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Quick Quote/}).click();
   await picker.getByRole('textbox',{name:'Quote name'}).fill('Test Quick Quote');
@@ -1525,7 +1525,7 @@ test('Builder Rates and Custom Spreadsheet keep separate workspaces and pricing 
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   const newTemplate=async(name:string)=>{
-    await beta.getByRole('button',{name:'+ New document'}).click();
+    await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
     const picker=page.getByRole('dialog',{name:'New Sales Document'});
     await picker.getByRole('button',{name:new RegExp('^'+name)}).click();
     await picker.getByRole('textbox',{name:'Document name'}).fill(name+' QC');
@@ -1582,7 +1582,7 @@ test('phone Quick Quote and Builder Rates are distinct fixed template documents'
   await expect(type).toHaveValue('quote');
   await expect(type).toBeDisabled();
   await beta.locator('.qmb-pagehead .qmb-back').click();
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Builder Rate Schedule/}).click();
   await picker.getByRole('textbox',{name:'Document name'}).fill('Builder Rate QC');
