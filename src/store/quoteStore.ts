@@ -24,6 +24,7 @@ import {
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
+import {copySalesDocument} from '../services/quoteDocumentCopy';
 import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder } from '../services/quoteStructure';
 import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
 import { relinkQuotesForCompany, relinkQuotesForContact } from '../services/crmIdentity';
@@ -323,27 +324,7 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       contactId:source.contactId,contactName:source.contactName,
       contactEmail:source.contactEmail,projectId:source.projectId,
     });
-    const copy:Quote={
-      ...structuredClone(source),
-      ...shell,
-      // The copied document retains its original template/editor identity.
-      templateId:source.templateId,
-      templateOrigin:{sourceQuoteId:source.id,sourceRevision:source.revision,
-        sourceTitle:source.title},
-      status:'Draft',revision:0,revisionLabel:'',
-      quoteNumber:shell.quoteNumber,
-      originalQuoteDate:shell.originalQuoteDate,quoteDate:shell.quoteDate,
-      ownerUserId:shell.ownerUserId,
-      // New draft owns separate objects; never reuse issued history.
-      sections:structuredClone(source.sections),
-      lines:structuredClone(source.lines),
-      customerColumns:{...source.customerColumns},
-      projectMaterials:source.projectMaterials?structuredClone(source.projectMaterials):undefined,
-      pricingSchedule:source.pricingSchedule?structuredClone(source.pricingSchedule):undefined,
-      history:[],
-      sentAt:undefined,viewedAt:undefined,signedAt:undefined,archivedAt:undefined,
-      parentQuoteId:undefined,changeOrderNumber:undefined,
-    };
+    const copy=copySalesDocument(source,shell);
     const quotes=[copy,...get().quotes];
     persist(quotes,copy.id);
     set({quotes,activeQuoteId:copy.id});
