@@ -41,12 +41,12 @@ export function snapshotStockBuilderLevels(
     // Guide's automatic bands are intended for granite/quartz. Other
     // material families must have an explicit approved assignment.
     const automaticallyEligible=material.materialType==='Granite'||material.materialType==='Quartz';
+    const recommended=!explicit&&automaticallyEligible
+      ?resolveMaterialPricingRecommendation(guide,sourceCost,undefined,material.materialType):undefined;
     const selected=explicit
       ?rules.find(r=>r.id===explicit)
-      :automaticallyEligible
-        ?resolveMaterialPricingRecommendation(guide,sourceCost,undefined,material.materialType).mode==='level'
-          ?rules.find(r=>r.id===resolveMaterialPricingRecommendation(guide,sourceCost,undefined,material.materialType).level.rule.id)
-          :undefined
+      :recommended?.mode==='level'
+        ?rules.find(r=>r.id===recommended.level.rule.id)
         :undefined;
     if(!selected){
       let reason:string;
