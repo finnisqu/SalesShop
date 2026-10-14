@@ -186,3 +186,39 @@
   .customer-quote-paper .quote-customer-selections {break-before:auto;}
   .customer-quote-paper .quote-customer-selection-area {break-inside:avoid;}
 }
+
+/* Version-aware customer delivery flow (seller interface only). */
+.qmb .qmb-delivery-version{
+  display:grid;gap:4px;padding:12px;border-radius:10px;
+  background:var(--qmb-tint);border:1px solid var(--qmb-border);
+  color:var(--qmb-ink);min-width:0;
+}
+.qmb .qmb-delivery-version>span{font-size:10px;font-weight:800;color:var(--qmb-accent);text-transform:uppercase;letter-spacing:.045em}
+.qmb .qmb-delivery-version>strong{font-size:15px;overflow-wrap:anywhere}
+.qmb .qmb-delivery-version>small{font-size:11px;line-height:1.45;color:var(--qmb-muted);overflow-wrap:anywhere}
+.qmb .qmb-delivery-steps{display:grid;gap:9px;min-width:0}
+.qmb .qmb-delivery-step{display:grid;gap:8px;min-width:0;padding:12px;
+  background:var(--qmb-card);border:1px solid var(--qmb-border);border-radius:10px}
+.qmb .qmb-delivery-step-title{display:flex;align-items:center;gap:8px;min-width:0}
+.qmb .qmb-delivery-step-title>span{width:23px;height:23px;flex:0 0 23px;
+  display:grid;place-items:center;border-radius:50%;background:var(--qmb-tint);
+  color:var(--qmb-accent);font-size:11px;font-weight:850}
+.qmb .qmb-delivery-step-title>strong{flex:1;min-width:0;font-size:12px}
+.qmb .qmb-delivery-step-title>small{font-size:10px;font-weight:750;color:var(--qmb-accent);text-align:right}
+.qmb .qmb-delivery-step p,.qmb .qmb-delivery-step>small{margin:0;color:var(--qmb-muted);font-size:11px;line-height:1.5}
+.qmb .qmb-delivery-approval{display:flex;align-items:flex-start;gap:10px;
+  padding:10px;border:1px solid var(--qmb-border);border-radius:9px;
+  background:var(--qmb-bg);color:var(--qmb-ink);font-size:12px;line-height:1.5}
+.qmb .qmb-delivery-approval input{flex:0 0 19px;width:19px;height:19px;accent-color:var(--qmb-accent)}
+.qmb .qmb-delivery-approval:has(input:disabled){opacity:.66}
+.qmb .qmb-delivery-steps button{min-height:41px}
+.qmb .qmb-delivery-steps :is(button,input):focus-visible{outline:2px solid var(--qmb-accent);outline-offset:2px}
+.quote-share-control.is-inline .quote-share-revision{display:grid;gap:4px;
+  margin-bottom:11px;border:1px solid var(--qmb-border);border-radius:8px;
+  background:var(--qmb-tint);padding:10px;color:var(--qmb-ink)}
+.quote-share-control.is-inline .quote-share-revision strong{font-size:12px}
+.quote-share-control.is-inline .quote-share-revision span{font-size:11px;color:var(--qmb-muted);line-height:1.45}
+@media(max-width:420px){
+  .qmb .qmb-delivery-step-title{gap:5px}
+  .qmb .qmb-delivery-step-title>small{font-size:9px}
+}
