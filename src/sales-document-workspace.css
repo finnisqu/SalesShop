@@ -1,0 +1,57 @@
+/* Shared chrome; calculators remain isolated inside their template editors. */
+.qmb .sales-document-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;
+  padding:7px 14px;border-bottom:1px solid var(--qmb-border);
+  background:color-mix(in srgb,var(--qmb-card) 94%,var(--qmb-bg));
+}
+.qmb .sales-document-toolbar-meta{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.qmb .sales-document-toolbar-meta>strong{font-size:12px;white-space:nowrap}
+.qmb .sales-document-toolbar-meta>span{font-size:11px;color:var(--qmb-muted);white-space:nowrap}
+.qmb .sales-document-save-status{display:inline-flex;gap:4px;align-items:center}
+.qmb .sales-document-save-status>span{color:var(--qmb-accent);font-weight:800}
+.qmb .sales-document-toolbar-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.qmb .sales-document-toolbar-actions>button,
+.qmb .sales-document-actions-menu>summary{
+  display:inline-flex;gap:5px;align-items:center;justify-content:center;
+  min-height:34px;padding:6px 11px;color:var(--qmb-ink);cursor:pointer;
+  background:var(--qmb-card);border:1px solid var(--qmb-border);
+  border-radius:8px;font-size:12px;font-weight:750;white-space:nowrap
+}
+.qmb .sales-document-actions-menu{position:relative;z-index:16}
+.qmb .sales-document-actions-menu>summary{list-style:none}
+.qmb .sales-document-actions-menu>summary::-webkit-details-marker{display:none}
+.qmb .sales-document-actions-popover{
+  display:grid;gap:3px;position:absolute;right:0;top:calc(100% + 5px);
+  width:min(290px,75vw);max-height:min(350px,60dvh);overflow:auto;
+  padding:7px;border:1px solid var(--qmb-border);border-radius:11px;
+  box-shadow:0 10px 30px rgba(0,0,0,.16);background:var(--qmb-card);
+}
+.qmb .sales-document-actions-popover>button{
+  display:block;text-align:left;width:100%;padding:9px 11px;border:0;
+  border-radius:7px;background:transparent;color:var(--qmb-ink);
+  font-size:12px;font-weight:700;min-height:35px
+}
+.qmb .sales-document-actions-popover>button:hover,
+.qmb .sales-document-actions-popover>button:focus-visible{background:var(--qmb-tint)}
+.qmb .sales-document-actions-popover>small{border-top:1px solid var(--qmb-border);
+  margin-top:5px;padding:8px;font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-document-origin{display:flex;flex-wrap:wrap;gap:5px;
+  align-items:center;padding:4px 0 0;color:var(--qmb-muted);font-size:11px}
+.qmb .qmb-document-identity-note{display:flex;gap:8px;min-width:0;
+  flex-wrap:wrap;align-items:center;font-size:11px;color:var(--qmb-muted)}
+.qmb .qmb-document-identity-note strong{font-weight:700;color:var(--qmb-ink)}
+.qmb .qmb-quote-sticky{position:relative}
+@media(max-width:900px){
+  .qmb .sales-document-toolbar{flex-wrap:wrap;padding:7px 11px;gap:6px}
+  .qmb .sales-document-toolbar-meta{flex:1 1 auto;gap:5px 9px}
+  .qmb .sales-document-toolbar-actions{margin-left:auto}
+}
+@media(max-width:470px){
+  .qmb .sales-document-toolbar-meta>strong{display:none}
+  .qmb .sales-document-toolbar-meta>span{font-size:10px}
+  .qmb .sales-document-toolbar-actions>button,
+  .qmb .sales-document-actions-menu>summary{padding:6px 9px;min-height:32px}
+  .qmb .qmb-quote-identity{gap:6px}
+  .qmb .qmb-quote-name{font-size:18px!important}
+  .qmb .qmb-quote-total{font-size:14px!important}
+}
