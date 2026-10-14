@@ -465,8 +465,9 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
                       {builder.options.filter(option=>planOptionEnabled(selectedPlan,option)).map(option=>{
                         const excluded = new Set(selectedPlan.excludedTakeoffIdsByOption?.[option.id] ?? []);
                         const planTakeoffs = builder.takeoffs.filter(t=>t.planId===selectedPlan.id);
+                        const includedCount = planTakeoffs.filter(t=>!excluded.has(t.id)).length;
                         return <details className="pricing-builder-component-package" key={option.id}>
-                          <summary><strong>{option.code || option.name}</strong> · {planTakeoffs.length-excluded.size} of {planTakeoffs.length} components eligible</summary>
+                          <summary><strong>{option.code || option.name}</strong> · {includedCount} of {planTakeoffs.length} components eligible</summary>
                           <div className="pricing-builder-component-list">
                             {planTakeoffs.map(takeoff=><label className="pricing-builder-component-choice" key={takeoff.id}>
                               <input type="checkbox" checked={!excluded.has(takeoff.id)}
