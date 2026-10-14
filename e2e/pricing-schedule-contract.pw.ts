@@ -39,7 +39,7 @@ test('D.R. Horton contract rows import, recalculate 12 Sanford configurations, a
   await expect(contract.locator('.pricing-contract-table')).toContainText('$1,285.00');
   await expect(contract.locator('.pricing-contract-table')).toContainText('$960.00');
   await contract.locator('.pricing-contract-rates summary').click();
-  await contract.getByRole('spinbutton',{name:'Quartz bathrooms / SF'}).fill('28');
+  await contract.locator('.pricing-contract-rates').getByRole('spinbutton',{name:'Quartz bathrooms / SF'}).fill('28');
   await contract.getByRole('spinbutton',{name:'Kitchen backsplash SF (when included)'}).fill('6');
   await contract.getByRole('button',{name:'Generate 12 configurations'}).click();
   await expect(contract).toContainText('15 contract rows');
