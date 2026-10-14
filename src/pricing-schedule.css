@@ -496,3 +496,94 @@
     grid-template-columns:repeat(2,minmax(0,1fr))}
   .pricing-contract-scroller{max-height:300px}
 }
+
+/* Calculated-builder authoring: progressive stages, deliberate alternatives. */
+.pricing-builder-workflow{display:grid;gap:10px;border:1px solid rgba(76,69,58,.15);
+  background:color-mix(in srgb,var(--surface,#fff) 75%,transparent);padding:11px;border-radius:9px}
+.pricing-builder-workflow>header{display:grid;gap:3px}
+.pricing-builder-workflow>header small,.pricing-builder-alternatives p,
+.pricing-builder-mode-indicator,.pricing-builder-step-tabs small{
+  color:var(--ink-muted,#746e64);font-size:12px;line-height:1.4}
+.pricing-builder-step-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.pricing-builder-step-tabs button{display:grid;gap:4px;align-content:start;text-align:left;
+  padding:10px;border:1px solid rgba(76,69,58,.18);background:var(--surface,#fff);
+  border-radius:6px;color:inherit;font:inherit;cursor:pointer}
+.pricing-builder-step-tabs button.active{border-color:var(--accent,#607e6e);
+  box-shadow:inset 0 0 0 1px var(--accent,#607e6e);
+  background:color-mix(in srgb,var(--accent,#607e6e) 8%,var(--surface,#fff))}
+.pricing-builder-alternatives{border-top:1px solid rgba(76,69,58,.16);padding-top:9px}
+.pricing-builder-alternatives summary{font-weight:700;cursor:pointer}
+.pricing-builder-alternatives summary small{font-weight:400;color:var(--ink-muted,#746e64)}
+.pricing-builder-alternatives p{margin:7px 0 10px}
+.pricing-builder-mode-indicator{padding:8px 10px;border-radius:5px;
+  background:rgba(80,93,87,.06)}
+.pricing-builder-simple-rates,.pricing-builder-option-scope{display:grid;gap:14px;min-width:0}
+.pricing-builder-rate-section{display:grid;gap:10px;padding:12px;
+  border:1px solid rgba(75,68,59,.15);border-radius:8px;min-width:0}
+.pricing-builder-rate-section>header{display:grid;gap:3px}
+.pricing-builder-rate-section>header small,.pricing-builder-takeoff-hint,
+.pricing-builder-variant-choices small,.pricing-builder-legacy-rules small{
+  font-size:12px;color:var(--ink-muted,#746e64);line-height:1.45}
+.pricing-builder-material-list{display:grid;gap:8px}
+.pricing-builder-material-rate{display:grid;grid-template-columns:minmax(150px,1.3fr)
+  minmax(140px,1fr) minmax(140px,.8fr) minmax(86px,auto);
+  gap:8px;align-items:end}
+.pricing-builder-material-rate:has(label:nth-child(4)){
+  grid-template-columns:minmax(130px,1.4fr) minmax(115px,.8fr)
+    minmax(75px,.6fr) minmax(130px,.75fr) minmax(75px,auto)}
+.pricing-builder-material-rate label,.pricing-builder-option-config label,
+.pricing-builder-variant-choices label,.pricing-builder-option-note{
+  display:grid;gap:4px;min-width:0;font-size:12px}
+.pricing-builder-material-rate label span,.pricing-builder-option-config label>span,
+.pricing-builder-variant-choices label>span,.pricing-builder-option-note>span{
+  color:var(--ink-muted,#746e64);font-weight:600}
+.pricing-builder-material-rate input,.pricing-builder-material-rate select,
+.pricing-builder-option-config select,.pricing-builder-variant-choices input,
+.pricing-builder-variant-choices select,.pricing-builder-option-note input,
+.pricing-builder-option-card header input{
+  width:100%;min-width:0;box-sizing:border-box;padding:8px 9px;
+  background:var(--surface,#fff);color:inherit;border:1px solid rgba(75,68,59,.21);
+  border-radius:5px;font:inherit}
+.pricing-builder-option-config{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.pricing-builder-option-check{display:flex!important;align-items:center;gap:7px;cursor:pointer}
+.pricing-builder-option-check input{width:16px;height:16px;accent-color:var(--accent,#607e6e)}
+.pricing-builder-option-card header .pricing-builder-option-name{flex:1}
+.pricing-builder-option-card header label{min-width:0}
+.pricing-builder-option-card header label>span{font-size:11px;color:var(--ink-muted,#746e64)}
+.pricing-builder-option-card header .pricing-builder-option-code{min-width:50px;width:64px}
+.pricing-builder-option-card header input[type=checkbox]{width:auto}
+.pricing-builder-variant-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:9px;padding:11px;border:1px solid rgba(75,68,59,.13);border-radius:7px}
+.pricing-builder-variant-choices>strong,.pricing-builder-variant-choices>small{grid-column:1/-1}
+.pricing-builder-option-extras,.pricing-builder-legacy-rules{padding:10px;
+  border:1px solid rgba(75,68,59,.13);border-radius:7px}
+.pricing-builder-option-extras summary,.pricing-builder-legacy-rules summary{cursor:pointer;font-weight:650}
+.pricing-builder-option-extras>div,.pricing-builder-legacy-rules>div{margin-top:10px}
+.pricing-builder-step-footer{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;
+  padding-top:10px;border-top:1px solid rgba(75,68,59,.13)}
+.pricing-builder-step-footer button{padding:8px 12px;border-radius:6px;
+  border:1px solid rgba(75,68,59,.2);background:var(--surface,#fff);cursor:pointer;color:inherit}
+.pricing-builder-takeoff-actions{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:8px}
+.pricing-builder-takeoff-hint{padding:8px 10px;margin:4px 0;
+  background:rgba(75,100,83,.07);border-radius:6px}
+.pricing-builder-takeoff-scroller{width:100%;min-width:0;overflow-x:auto;
+  border:1px solid rgba(75,68,59,.13);border-radius:6px}
+.pricing-builder-takeoff-scroller .pricing-builder-takeoff-table{min-width:1480px}
+.pricing-builder-takeoff-scroller .pricing-builder-takeoff-row{
+  display:grid;grid-template-columns:130px 140px 125px 135px 90px
+    78px 78px 85px 105px 100px 78px 36px;min-width:1440px;gap:6px;align-items:center}
+.pricing-builder-takeoff-scroller .pricing-builder-takeoff-row input{width:100%;
+  min-width:0;box-sizing:border-box;padding:7px 6px}
+.pricing-builder-takeoff-scroller .pricing-builder-sf{min-width:0}
+@media(max-width:850px){
+  .pricing-builder-step-tabs{display:flex;overflow-x:auto;padding-bottom:4px}
+  .pricing-builder-step-tabs button{min-width:160px;flex:0 0 160px}
+  .pricing-builder-material-rate,.pricing-builder-material-rate:has(label:nth-child(4)){
+    grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pricing-builder-material-rate>button{grid-column:1/-1}
+}
+@media(max-width:550px){
+  .pricing-builder-option-config{grid-template-columns:1fr}
+  .pricing-builder-step-tabs button{min-width:145px;flex-basis:145px}
+}
