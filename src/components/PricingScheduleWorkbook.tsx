@@ -20,18 +20,13 @@ import {
   type PricingScheduleData,
   type PricingScheduleField,
   type PricingScheduleMapping,
-  type PricingScheduleRoute,
   type Quote,
 } from '../types/quote';
-import { PricingRateSheet } from './PricingRateSheet';
-import { PricingScheduleBuilder } from './PricingScheduleBuilder';
 import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import '../pricing-schedule.css';
 
 const SAVE_DEBOUNCE_MS = 500;
-
-type WorkspaceMode = PricingScheduleRoute;
 
 function positiveInteger(value: string, fallback: number) {
   const parsed = Number(value);
@@ -48,19 +43,6 @@ function baseMapping(schedule: PricingScheduleData): PricingScheduleMapping {
   };
 }
 
-function initialMode(schedule: PricingScheduleData): WorkspaceMode {
-  if (schedule.route) return schedule.route;
-  if (schedule.publishSource === 'workbook') return 'workbook';
-  if (schedule.publishSource === 'builder') return 'plan-builder';
-  return 'rate-sheet';
-}
-
-const ROUTES: Array<{ id: WorkspaceMode; title: string; description: string }> = [
-  { id: 'rate-sheet', title: 'Simple Rates', description: 'Material levels, approved colors, sinks and add-ons.' },
-  { id: 'plan-builder', title: 'Plan Pricing', description: 'Rate Book + plan takeoffs + reusable option packages.' },
-  { id: 'workbook', title: 'Spreadsheet', description: 'Advanced or builder-required workbook and mapping.' },
-];
-
 export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const schedule = quote.pricingSchedule ?? createPricingScheduleData(quote.id);
@@ -72,7 +54,6 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   const recalculateRef = useRef<null | (()=>Promise<void>)>(null);
   const [recalculating,setRecalculating]=useState(false);
   const [mappingOpen,setMappingOpen]=useState(false);
-  const [mode, setMode] = useState<WorkspaceMode>(initialMode(schedule));
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -86,18 +67,6 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
     updateQuote(quote.id, { pricingSchedule: next });
   };
 
-  const selectRoute = (route: WorkspaceMode) => {
-    // Snapshot any in-flight spreadsheet edits before changing the published route.
-    if (mode==='workbook' && liveWorkbookRef.current)
-      saveSchedule({workbookData:liveWorkbookRef.current()});
-    setMode(route);
-    setMessage('');
-    saveSchedule({
-      route,
-      publishSource: route === 'workbook' ? 'workbook' : route === 'plan-builder' ? 'builder' : 'rate-sheet',
-    });
-  };
-
   const sheets = useMemo(() => pricingScheduleSheets(schedule.workbookData), [schedule.workbookData]);
   const columnOptions = useMemo(
     () => pricingScheduleColumnOptions(schedule.workbookData, schedule.mapping),
@@ -105,7 +74,6 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   );
 
   useEffect(() => {
-    if (mode !== 'workbook') return;
     const host = hostRef.current;
     const workbookData = scheduleRef.current.workbookData;
     if (!host || !workbookData) return;
@@ -169,7 +137,7 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
         container.remove();
       });
     };
-  }, [mode, quote.id, quote.pricingSchedule?.importedAt]);
+  }, [quote.id, quote.pricingSchedule?.importedAt]);
 
   const recalculateAndSave=async()=>{
     if(!recalculateRef.current)return;
@@ -236,7 +204,6 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
         sourceFileName: file.name,
         importedAt: new Date().toISOString(),
       });
-      setMode('workbook');
       setMessage(mapping
         ? 'Workbook imported and commercial columns auto-mapped.'
         : 'Workbook imported. Map the customer-facing columns below.');
@@ -261,38 +228,13 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   return (
     <div className="pricing-schedule-workspace">
       <header className="pricing-schedule-workspace-header pricing-schedule-route-header">
-        <div>
-          <span className="quote-control-heading">How does this customer price work?</span>
-          <small>Choose the lightest workflow that matches the builder. You can change routes while the document is still a draft.</small>
+        <div><span className="quote-control-heading">Custom Spreadsheet</span>
+          <small>Univer workbook with customer-facing mapping. This document stays a spreadsheet; other templates have their own editors.</small>
         </div>
       </header>
-
-      <div className="pricing-schedule-route-grid" aria-label="Pricing Schedule route">
-        {ROUTES.map((route) => (
-          <button type="button" key={route.id} className={`pricing-schedule-route-card ${mode === route.id ? 'active' : ''}`} onClick={() => selectRoute(route.id)}>
-            <strong>{route.title}</strong>
-            <span>{route.description}</span>
-            {mode === route.id && <small>✓ Published route</small>}
-          </button>
-        ))}
-      </div>
-
       {message && <div className="pricing-schedule-message">{message}</div>}
 
-      {mode === 'rate-sheet' && <PricingRateSheet quote={quote} />}
-
-      {mode === 'plan-builder' && (
-        <>
-          <div className="pricing-schedule-source-banner">
-            <div><strong>Plan Pricing</strong><span>Use the shared Rate Book to calculate plan and option prices from takeoffs.</span></div>
-            <strong className="is-published">✓ Published route</strong>
-          </div>
-          <PricingScheduleBuilder quote={quote} />
-        </>
-      )}
-
-      {mode === 'workbook' && (
-        <>
+      <>
           <header className="pricing-schedule-workspace-header pricing-schedule-spreadsheet-toolbar">
             <div>
               <span className="quote-control-heading">Advanced spreadsheet</span>
@@ -337,8 +279,6 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
             <header><div><span className="quote-control-heading">Spreadsheet publish preview</span><small>These mapped rows become the contractual customer schedule.</small></div></header>
             <PricingScheduleCustomerTable items={schedule.customerItems} compact />
           </section>
-        </>
-      )}
     </div>
   );
 }
