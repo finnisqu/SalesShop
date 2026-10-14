@@ -35,7 +35,7 @@ describe('actionable quote follow-up queue',()=>{
   const q=quote('a');
   const events=[delivery('a'),event('a','scheduled','2026-10-10'),
    event('a','contacted',undefined,1,'2026-10-13T10:00:00Z')];
-  expect(buildQuoteFollowUpQueue([q],events,today)).toEqual([]);
+  expect(buildQuoteFollowUpQueue([q],events,today)[0].priority).toBe('awaiting-reply');
   events.push(event('a','scheduled','2026-10-17',1,'2026-10-14T10:00:00Z'));
   expect(latestQuoteFollowUp(q,events)?.metadata?.followUpDueDate).toBe('2026-10-17');
   expect(buildQuoteFollowUpQueue([q],events,today)[0].priority).toBe('upcoming');
