@@ -54,6 +54,7 @@ interface QuoteState {
   hydrate: () => void;
   createQuote: (prefill?: Partial<Pick<Quote, 'documentType' | 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>>) => string;
   createChangeOrder: (sourceQuoteId: string) => string | null;
+  duplicateDocument: (sourceQuoteId: string) => string | null;
   selectQuote: (quoteId: string) => void;
   setQuoteAssignmentFromCloud: (quoteId: string, patch: Pick<Quote, 'ownerUserId' | 'divisionId' | 'teamId'>) => void;
   updateQuote: (quoteId: string, patch: QuotePatch) => void;
@@ -311,6 +312,45 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     return quote.id;
   },
 
+  /** A new independent draft. Keep scopes/prices, not sent identity, revisions or signature history. */
+  duplicateDocument: (sourceQuoteId) => {
+    const source=get().quotes.find(q=>q.id===sourceQuoteId);
+    if(!source||source.archivedAt)return null;
+    const shell=newQuote({
+      documentType:source.documentType==='pricing-schedule'?'pricing-schedule':'quote',
+      title:(source.title||'Untitled')+' · Copy',
+      companyId:source.companyId,companyName:source.companyName,
+      contactId:source.contactId,contactName:source.contactName,
+      contactEmail:source.contactEmail,projectId:source.projectId,
+    });
+    const copy:Quote={
+      ...structuredClone(source),
+      ...shell,
+      // The copied document retains its original template/editor identity.
+      templateId:source.templateId,
+      templateOrigin:{sourceQuoteId:source.id,sourceRevision:source.revision,
+        sourceTitle:source.title},
+      status:'Draft',revision:0,revisionLabel:'',
+      quoteNumber:shell.quoteNumber,
+      originalQuoteDate:shell.originalQuoteDate,quoteDate:shell.quoteDate,
+      ownerUserId:shell.ownerUserId,
+      // New draft owns separate objects; never reuse issued history.
+      sections:structuredClone(source.sections),
+      lines:structuredClone(source.lines),
+      customerColumns:{...source.customerColumns},
+      projectMaterials:source.projectMaterials?structuredClone(source.projectMaterials):undefined,
+      pricingSchedule:source.pricingSchedule?structuredClone(source.pricingSchedule):undefined,
+      history:[],
+      sentAt:undefined,viewedAt:undefined,signedAt:undefined,archivedAt:undefined,
+      parentQuoteId:undefined,changeOrderNumber:undefined,
+    };
+    const quotes=[copy,...get().quotes];
+    persist(quotes,copy.id);
+    set({quotes,activeQuoteId:copy.id});
+    recordQuoteCreated(copy);
+    if(copy.projectId)recordQuoteLinked(copy);
+    return copy.id;
+  },
   createChangeOrder: (sourceQuoteId) => {
     const source = get().quotes.find((quote) => quote.id === sourceQuoteId);
     if (!source) return null;
