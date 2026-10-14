@@ -55,3 +55,11 @@
   .qmb .qmb-quote-name{font-size:18px!important}
   .qmb .qmb-quote-total{font-size:14px!important}
 }
+
+.qmb .qmb-document-customer-link{
+  max-width:100%;min-width:0;padding:0;border:0;background:transparent;
+  color:var(--qmb-accent);font:inherit;font-weight:730;font-size:11px;
+  text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.qmb .qmb-document-identity-note{padding-top:1px;padding-bottom:4px}
+.qmb .qmb-document-customer-link:hover{text-decoration:underline;text-underline-offset:3px}
