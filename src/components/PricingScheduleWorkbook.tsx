@@ -68,6 +68,8 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   const scheduleRef = useRef(schedule);
   const hostRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const liveWorkbookRef = useRef<null | (()=>IWorkbookData)>(null);
+  const [mappingOpen,setMappingOpen]=useState(false);
   const [mode, setMode] = useState<WorkspaceMode>(initialMode(schedule));
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState('');
@@ -83,6 +85,9 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   };
 
   const selectRoute = (route: WorkspaceMode) => {
+    // Snapshot any in-flight spreadsheet edits before changing the published route.
+    if (mode==='workbook' && liveWorkbookRef.current)
+      saveSchedule({workbookData:liveWorkbookRef.current()});
     setMode(route);
     setMessage('');
     saveSchedule({
@@ -123,19 +128,27 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
       ],
     });
 
+    const mountedImportId=scheduleRef.current.importedAt;
     const workbook = univerAPI.createWorkbook(workbookData as IWorkbookData);
+    const readLive=()=>workbook.save();
+    liveWorkbookRef.current=readLive;
     let saveTimer: number | undefined;
+    const persistLive = () => {
+      // A replacement XLSX has already been imported: never copy the old editor's
+      // cells over the new file as the previous Univer instance unmounts.
+      if (scheduleRef.current.importedAt !== mountedImportId) return;
+      saveSchedule({workbookData:readLive()});
+    };
     const queueSave = () => {
       window.clearTimeout(saveTimer);
-      saveTimer = window.setTimeout(() => saveSchedule({ workbookData: workbook.save() }), SAVE_DEBOUNCE_MS);
+      saveTimer = window.setTimeout(persistLive, SAVE_DEBOUNCE_MS);
     };
     const commandSubscription = workbook.onCommandExecuted(queueSave);
 
     return () => {
       window.clearTimeout(saveTimer);
-      const next = mergePricingScheduleData(quote.id, scheduleRef.current, { workbookData: workbook.save() });
-      scheduleRef.current = next;
-      updateQuote(quote.id, { pricingSchedule: next });
+      if(liveWorkbookRef.current===readLive)liveWorkbookRef.current=null;
+      persistLive();
       commandSubscription.dispose();
       queueMicrotask(() => {
         univer.dispose();
@@ -158,12 +171,14 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   };
 
   const autoMap = () => {
-    const mapping = autoDetectPricingScheduleMapping(scheduleRef.current.workbookData);
+    const currentWorkbook=liveWorkbookRef.current?.()??scheduleRef.current.workbookData;
+    const mapping = autoDetectPricingScheduleMapping(currentWorkbook);
     if (!mapping) {
       setMessage('I could not confidently identify the commercial columns. Map them manually below.');
       return;
     }
-    saveSchedule({ route: 'workbook', publishSource: 'workbook', mapping });
+    saveSchedule({route:'workbook',publishSource:'workbook',
+      workbookData:currentWorkbook,mapping});
     setMessage('Headers mapped. Unmapped workbook columns remain internal.');
   };
 
@@ -177,7 +192,10 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
         route: 'workbook',
         publishSource: 'workbook',
         workbookData,
-        mapping,
+        // A failed auto-map must not reuse the sheet ID and price columns from
+        // the previously imported file.
+        mapping: mapping??{sheetId:pricingScheduleSheets(workbookData)[0]?.id??'',
+          headerRow:1,firstDataRow:2,columns:{}},
         sourceFileName: file.name,
         importedAt: new Date().toISOString(),
       });
@@ -242,6 +260,7 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
             <div>
               <span className="quote-control-heading">Advanced spreadsheet</span>
               <small>{schedule.sourceFileName || 'Built in SalesShop'} · import a builder template or do custom calculations here.</small>
+              <small>Excel formulas use cached results when imported. Recalculate in Excel before import when pricing changes; advanced Excel styling and unsupported features may not round-trip.</small>
             </div>
             <div className="pricing-schedule-workbook-actions">
               <input ref={fileRef} type="file" accept=".xlsx" hidden onChange={(event) => {
@@ -249,7 +268,10 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
                 if (file) void importFile(file);
               }} />
               <button type="button" onClick={() => fileRef.current?.click()} disabled={importing}>{importing ? 'Importing…' : 'Import .xlsx'}</button>
-              <button type="button" onClick={() => void exportExcelPricingWorkbook(scheduleRef.current.workbookData, scheduleRef.current.sourceFileName || `${quote.title}.xlsx`)}>Export .xlsx</button>
+              <button type="button" onClick={() => void exportExcelPricingWorkbook(
+                liveWorkbookRef.current?.()??scheduleRef.current.workbookData,
+                scheduleRef.current.sourceFileName || `${quote.title}.xlsx`
+              ).catch(reason=>setMessage(reason instanceof Error?reason.message:'Could not export the workbook.'))}>Export .xlsx</button>
               <button type="button" onClick={autoMap}>Auto-map headers</button>
               <strong className="pricing-schedule-published-pill">✓ Published</strong>
             </div>
@@ -257,8 +279,12 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
 
           <div className="pricing-schedule-workbook-layout">
             <div ref={hostRef} className="pricing-schedule-workbook-host" aria-label="Pricing schedule workbook" />
-            <aside className="pricing-schedule-mapping-panel">
-              <header><strong>Publish mapping</strong><small>Only mapped fields become customer contract data. Everything else stays internal.</small></header>
+            <aside className={'pricing-schedule-mapping-panel'+(mappingOpen?' is-open':'')}>
+              <header><strong>Publish mapping</strong>
+                <button type="button" className="pricing-schedule-mapping-toggle" aria-expanded={mappingOpen}
+                  onClick={()=>setMappingOpen(v=>!v)}>{mappingOpen?'Hide columns':'Map columns'} ▾</button>
+                <small>Only mapped fields become customer contract data. Everything else stays internal.</small>
+              </header>
               <label><span>Sheet</span><select value={schedule.mapping?.sheetId ?? sheets[0]?.id ?? ''} onChange={(event) => setMapping({ sheetId: event.target.value })}>{sheets.map((sheet) => <option key={sheet.id} value={sheet.id}>{sheet.name}</option>)}</select></label>
               <div className="pricing-schedule-row-map">
                 <label><span>Header row</span><input type="number" min="1" value={schedule.mapping?.headerRow ?? 1} onChange={(event) => setMapping({ headerRow: positiveInteger(event.target.value, 1) })} /></label>
