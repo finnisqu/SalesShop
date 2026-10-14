@@ -207,7 +207,7 @@ test('Materials sink rows stay compact and Rate picker pushes content instead of
   expect(height).toBeLessThan(190);
   await expect(row.getByRole('checkbox',{name:'Charge on quote'})).toHaveCount(0);
   await expect(row.getByRole('spinbutton',{name:'Sink 1 sell price'})).toBeVisible();
-  await beta.getByRole('button',{name:'Pricing'}).click();
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
   await expect(beta.getByLabel('Selected material cost reference')).toBeVisible();
   await beta.getByRole('button',{name:/Choose from Rates/}).click();
   await expect(beta.getByLabel('Buying cost comparison')).toBeVisible();
@@ -259,7 +259,7 @@ test('mobile quote fabrication options persist while zero quantity stays editabl
   await expect(holes.getByRole('checkbox',{name:'2 inches left'})).toBeChecked();
   await expect(holes.getByRole('checkbox',{name:'2 inches right'})).toBeChecked();
   await holes.getByRole('button',{name:'Done'}).click();
-  await beta.getByRole('button',{name:'Pricing'}).click();
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
   await expect(beta.getByText('Sink ·', {exact:false}).first()).toBeVisible();
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Materials'}).click();
   await beta.getByRole('button',{name:'Faucet holes for Sink 1'}).click();
@@ -347,7 +347,7 @@ test('mobile Quote RATE picker shows Stock Builder Level 0–8 and records selec
   await beta.getByRole('textbox',{name:'Length (in)'}).blur();
   await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
   await beta.getByRole('textbox',{name:'Width (in)'}).blur();
-  await beta.getByRole('button',{name:'Pricing'}).click();
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
   await beta.getByRole('button',{name:/Choose from Rates/}).click();
   const levels=beta.getByRole('group',{name:'Stock Builder pricing levels'});
   await expect(levels.getByRole('button')).toHaveCount(9);
@@ -382,7 +382,7 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await beta.getByRole('textbox',{name:'Length (in)'}).blur();
   await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
   await beta.getByRole('textbox',{name:'Width (in)'}).blur();
-  await beta.getByRole('button',{name:'Pricing'}).click();
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
   await beta.getByRole('button',{name:/Choose from Rates/}).click();
   await beta.getByRole('group',{name:'Stock Builder pricing levels'})
     .getByRole('button',{name:/Level 1.*44\.00\/SF/}).click();
