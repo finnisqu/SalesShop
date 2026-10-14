@@ -391,3 +391,39 @@
     grid-row: 2;
   }
 }
+
+/* Quotes Beta's advanced workbook: mapping is collapsible only on phone-sized screens.
+   Leave desktop fields visible for side-by-side spreadsheet review. */
+.pricing-schedule-mapping-panel .pricing-schedule-mapping-toggle {
+  display:none;
+  justify-self:end;
+  border-radius:7px;
+  color:inherit;
+  background:transparent;
+  font-size:12px;
+  padding:5px 9px;
+}
+.qmb-pricing-schedule-beta { min-width:0;max-width:100%; }
+.qmb-pricing-schedule-beta .pricing-schedule-workspace {min-width:0;max-width:100%}
+@media (max-width:720px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .qmb-pricing-schedule-beta .pricing-schedule-mapping-panel {
+    min-width:0;
+    overflow:hidden;
+  }
+  .qmb-pricing-schedule-beta .pricing-schedule-mapping-panel>header {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+    gap:6px;
+  }
+  .qmb-pricing-schedule-beta .pricing-schedule-mapping-panel>header>small {
+    grid-column:1/-1;
+  }
+  .qmb-pricing-schedule-beta .pricing-schedule-mapping-toggle {
+    display:inline-flex;
+    align-items:center;
+  }
+  .qmb-pricing-schedule-beta .pricing-schedule-mapping-panel:not(.is-open)>:not(header):not(.pricing-schedule-publish-note) {
+    display:none;
+  }
+}
