@@ -1423,6 +1423,58 @@ test('desktop Measures Pieces Sinks and Add-ons as compact tables without overfl
 });
 
 
+test('Customer presentation keeps hidden line amounts private and quote totals unchanged',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Customer document mobile presentation regression');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await createQuickQuote(page);
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
+  await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
+  const add=beta.locator('.qmb-addcharge');
+  await add.getByRole('combobox',{name:'Add a line'}).selectOption('tax');
+  await add.getByRole('button',{name:'+ Add line to Area'}).click();
+  const tax=beta.locator('.qmb-area-editor .qmb-line').filter({hasText:'Taxes'});
+  await tax.getByRole('button',{name:'Edit line'}).click();
+  await tax.getByRole('spinbutton',{name:'Amount ($)'}).fill('175');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+
+  await beta.getByRole('navigation',{name:'Quote views'})
+    .getByRole('button',{name:'Preview',exact:true}).click();
+  const options=beta.locator('.qmb-preview-customer-options');
+  await options.locator('summary').click();
+  await expect(options.getByRole('button',{name:'All itemized'})).toHaveAttribute('aria-pressed','true');
+  await options.getByRole('button',{name:'All lump sum'}).click();
+  await expect(options.getByRole('button',{name:'All lump sum'})).toHaveAttribute('aria-pressed','true');
+  const kitchen=beta.locator('.customer-quote-section.is-summary');
+  await expect(kitchen).toContainText('Kitchen');
+  await expect(kitchen).toContainText('$175.00');
+  await options.getByRole('checkbox',{name:'Line amounts'}).uncheck();
+  await expect(kitchen).not.toContainText('$175.00');
+  await expect(beta.locator('.customer-quote-total')).toContainText('$175.00');
+  await options.getByRole('checkbox',{name:'Line amounts'}).check();
+  await options.getByRole('button',{name:'All itemized'}).click();
+  await expect(options.getByRole('button',{name:'All itemized'})).toHaveAttribute('aria-pressed','true');
+  await options.getByRole('button',{name:'Choose visible lines'}).click();
+  const kitchenLines=options.getByRole('group',{name:'Line visibility for Kitchen'});
+  await expect(kitchenLines).toContainText('Taxes');
+  await kitchenLines.getByRole('checkbox',{name:'Show Taxes in Kitchen'}).uncheck();
+  await expect(beta.locator('.customer-quote-table')).not.toContainText('Taxes');
+  await expect(beta.locator('.customer-quote-table')).toContainText('Included work');
+  await expect(beta.locator('.customer-quote-total')).toContainText('$175.00');
+  await kitchenLines.getByRole('checkbox',{name:'Show Taxes in Kitchen'}).check();
+  await expect(beta.locator('.customer-quote-table')).toContainText('Taxes');
+  await expect(beta.locator('.customer-quote-total')).toContainText('$175.00');
+});
+
 test('Customer Preview owns document columns, Area detail and optional quote-sheet wording',async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='desktop-1440','Desktop customer presentation controls');
   await page.goto('/');
