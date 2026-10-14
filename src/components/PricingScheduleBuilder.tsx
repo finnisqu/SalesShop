@@ -305,41 +305,116 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
       )}
 
       {tab === 'options' && (
-        <section className="pricing-builder-panel">
+        <section className="pricing-builder-panel pricing-builder-option-scope">
           <header className="pricing-builder-panel-heading">
-            <div><strong>Option Packages</strong><small>Define a package once, then choose which plans actually offer it.</small></div>
-            <button type="button" onClick={addOption}>+ Option</button>
+            <div><strong>3 · Configure materials and scope</strong>
+              <small>Package selections reuse your universal $/SF prices. A different vanity variant replaces—not adds to—the base vanity. You can reuse the same package across many house plans.</small>
+            </div>
+            <div className="pricing-builder-quick-actions">
+              <button type="button" disabled={builder.options.length>0||!materialRates.some(r=>r.materialType==='Granite')||!materialRates.some(r=>r.materialType==='Quartz')}
+                onClick={addSixPackages}>Create six stone/splash packages</button>
+              <button type="button" onClick={addOption}>+ Option package</button>
+            </div>
           </header>
+          {!builder.options.length&&<div className="pricing-builder-empty">Create the six standard packages after entering Granite and Quartz rates, or add a custom option. Each package chooses kitchen and bathroom materials plus included scope.</div>}
           <div className="pricing-builder-option-list">
-            {builder.options.map((option) => (
-              <article className="pricing-builder-option-card" key={option.id}>
-                <header>
-                  <input className="pricing-builder-option-code" value={option.code} onChange={(event) => updateOption(option.id, { code: event.target.value })} />
-                  <input value={option.name} onChange={(event) => updateOption(option.id, { name: event.target.value })} placeholder="Base House" />
-                  <label><input type="checkbox" checked={Boolean(option.isBase)} onChange={(event) => updateOption(option.id, { isBase: event.target.checked })} /> Base</label>
-                  <button type="button" className="pricing-builder-delete" onClick={() => saveBuilder({ ...builder, options: builder.options.filter((item) => item.id !== option.id) })}>×</button>
-                </header>
-                <textarea value={option.description ?? ''} onChange={(event) => updateOption(option.id, { description: event.target.value })} placeholder="Customer-facing option description" />
-                <div className="pricing-builder-flat-adjustment"><span>Flat adjustment</span><label className="quote-money-input"><span>$</span><input type="number" step="0.01" value={option.flatAdjustment ?? ''} onChange={(event) => updateOption(option.id, { flatAdjustment: numberValue(event.target.value) })} /></label></div>
+            {builder.options.map(option=><article className="pricing-builder-option-card" key={option.id}>
+              <header>
+                <label><span>Code</span><input className="pricing-builder-option-code" aria-label="Option code" value={option.code}
+                  onChange={e=>updateOption(option.id,{code:e.target.value})}/></label>
+                <label className="pricing-builder-option-name"><span>Package</span><input aria-label="Package name"
+                  value={option.name} onChange={e=>updateOption(option.id,{name:e.target.value})}/></label>
+                <label><input type="checkbox" checked={!!option.isBase}
+                  onChange={e=>updateOption(option.id,{isBase:e.target.checked})}/> Base</label>
+                <button type="button" className="pricing-builder-delete" title="Delete package"
+                  onClick={()=>saveBuilder({...builder,options:builder.options.filter(item=>item.id!==option.id)})}>×</button>
+              </header>
+              <div className="pricing-builder-option-config">
+                <label><span>Kitchen tops and splashes</span>
+                  <select aria-label={`${option.code} kitchen material`} value={option.kitchenMaterialRateId??''}
+                    onChange={e=>updateOption(option.id,{kitchenMaterialRateId:e.target.value||undefined})}>
+                    <option value="">Select material rate</option>
+                    {materialRates.map(rate=><option key={rate.id} value={rate.id}>{rate.name} · {rate.rate===undefined?'Needs rate':money.format(rate.rate)+'/SF'}</option>)}
+                  </select></label>
+                <label><span>Bathroom tops and splashes</span>
+                  <select aria-label={`${option.code} bathroom material`} value={option.bathroomMaterialRateId??''}
+                    onChange={e=>updateOption(option.id,{bathroomMaterialRateId:e.target.value||undefined})}>
+                    <option value="">Select material rate</option>
+                    {materialRates.map(rate=><option key={rate.id} value={rate.id}>{rate.name} · {rate.rate===undefined?'Needs rate':money.format(rate.rate)+'/SF'}</option>)}
+                  </select></label>
+                <label className="pricing-builder-option-check"><input type="checkbox"
+                  checked={option.includeKitchenSplash!==false}
+                  onChange={e=>updateOption(option.id,{includeKitchenSplash:e.target.checked})}/>
+                  <span>Include kitchen splashes</span></label>
+                <label className="pricing-builder-option-check"><input type="checkbox"
+                  checked={option.includeBathroomSplash!==false}
+                  onChange={e=>updateOption(option.id,{includeBathroomSplash:e.target.checked})}/>
+                  <span>Include bathroom splashes</span></label>
+              </div>
+              {variantGroups.length>0&&<div className="pricing-builder-variant-choices">
+                <strong>Choose takeoff alternatives</strong>
+                <small>Only one variant in each category is billed. BASE is the default unless you select a replacement.</small>
+                {variantGroups.map(group=><label key={group.name}>
+                  <span>{group.name}</span><select aria-label={`${option.code} ${group.name} variant`}
+                    value={option.takeoffVariants?.[group.name]??group.defaultCode??''}
+                    onChange={e=>updateOption(option.id,{takeoffVariants:{
+                      ...option.takeoffVariants,[group.name]:e.target.value,
+                    }})}>
+                    {!group.defaultCode&&<option value="">Choose a variant</option>}
+                    {group.codes.map(code=><option key={code} value={code}>{code}</option>)}
+                  </select>
+                </label>)}
+              </div>}
+              {otherRateItems.filter(rate=>rate.productType==='Other').length>0&&
+                <details className="pricing-builder-option-extras"><summary>Additional package charges</summary>
+                  <div className="pricing-builder-variant-choices">
+                    {otherRateItems.filter(rate=>rate.productType==='Other').map(rate=><label key={rate.id}>
+                      <span>{rate.name} · {rate.rate===undefined?'Needs rate':money.format(rate.rate)} / {rate.unit}</span>
+                      <input type="number" min="0" step={rate.unit==='sf'?'0.01':'1'}
+                        aria-label={`${option.code} ${rate.name} quantity`}
+                        value={option.extraRateQuantities?.[rate.id]??0}
+                        onChange={e=>updateOption(option.id,{extraRateQuantities:{
+                          ...option.extraRateQuantities,[rate.id]:Math.max(0,Number(e.target.value)||0),
+                        }})}/>
+                    </label>)}
+                  </div></details>}
+              <label className="pricing-builder-option-note"><span>Customer-facing description (optional)</span>
+                <input value={option.description??''} onChange={e=>updateOption(option.id,{description:e.target.value})}
+                  placeholder="Granite kitchen, quartz bathrooms, all splashes"/></label>
+              <details className="pricing-builder-legacy-rules">
+                <summary>Advanced / legacy rate rules <small>(optional: existing negotiated overrides)</small></summary>
                 <div className="pricing-builder-rule-list">
-                  <div className="pricing-builder-rule-row is-head"><span>Scope</span><span>Product type</span><span>Rate item</span><span /></div>
-                  {option.rules.map((rule) => {
-                    const matchingRates = builder.rates.filter((rate) => rate.productType === rule.productType);
-                    return (
-                      <div className="pricing-builder-rule-row" key={rule.id}>
-                        <input list={`rooms-${option.id}`} value={rule.scope} onChange={(event) => updateOption(option.id, { rules: option.rules.map((item) => item.id === rule.id ? { ...item, scope: event.target.value } : item) })} />
-                        <select value={rule.productType} onChange={(event) => updateOption(option.id, { rules: option.rules.map((item) => item.id === rule.id ? { ...item, productType: event.target.value as PricingBuilderProductType, rateItemId: '' } : item) })}>{PRICING_BUILDER_PRODUCT_TYPES.map((type) => <option key={type}>{type}</option>)}</select>
-                        <select value={rule.rateItemId} onChange={(event) => updateOption(option.id, { rules: option.rules.map((item) => item.id === rule.id ? { ...item, rateItemId: event.target.value } : item) })}><option value="">Choose rate…</option>{matchingRates.map((rate) => <option value={rate.id} key={rate.id}>{rate.name}{rate.rate === undefined ? '' : ` · ${money.format(rate.rate)}/${rate.unit === 'sf' ? 'SF' : 'EA'}`}</option>)}</select>
-                        <button type="button" className="pricing-builder-delete" onClick={() => updateOption(option.id, { rules: option.rules.filter((item) => item.id !== rule.id) })}>×</button>
-                      </div>
-                    );
+                  <div className="pricing-builder-rule-row is-head"><span>Scope</span><span>Product type</span><span>Rate item</span><span/></div>
+                  {option.rules.map(rule=>{
+                    const matchingRates=builder.rates.filter(rate=>rate.productType===rule.productType);
+                    return <div className="pricing-builder-rule-row" key={rule.id}>
+                      <input list={`rooms-${option.id}`} value={rule.scope} onChange={e=>updateOption(option.id,{rules:
+                        option.rules.map(item=>item.id===rule.id?{...item,scope:e.target.value}:item)})}/>
+                      <select value={rule.productType} onChange={e=>updateOption(option.id,{rules:option.rules.map(item=>
+                        item.id===rule.id?{...item,productType:e.target.value as PricingBuilderProductType,rateItemId:''}:item)})}>
+                        {PRICING_BUILDER_PRODUCT_TYPES.map(type=><option key={type}>{type}</option>)}
+                      </select>
+                      <select value={rule.rateItemId} onChange={e=>updateOption(option.id,{rules:option.rules.map(item=>
+                        item.id===rule.id?{...item,rateItemId:e.target.value}:item)})}>
+                        <option value="">Choose rate…</option>
+                        {matchingRates.map(rate=><option key={rate.id} value={rate.id}>{rate.name}</option>)}
+                      </select>
+                      <button type="button" className="pricing-builder-delete" onClick={()=>updateOption(option.id,{rules:
+                        option.rules.filter(item=>item.id!==rule.id)})}>×</button>
+                    </div>;
                   })}
-                  <datalist id={`rooms-${option.id}`}><option value="All" /><option value="Kitchen" /><option value="Bathrooms" /><option value="Other" />{roomOptions.map((room) => <option value={room} key={room} />)}</datalist>
-                  <button type="button" className="pricing-builder-inline-add" onClick={() => updateOption(option.id, { rules: [...option.rules, createPricingOptionRule()] })}>+ Pricing rule</button>
+                  <datalist id={`rooms-${option.id}`}><option value="All"/><option value="Kitchen"/><option value="Bathrooms"/>
+                    {roomOptions.map(room=><option key={room} value={room}/>)}</datalist>
+                  <button type="button" className="pricing-builder-inline-add" onClick={()=>updateOption(option.id,{rules:[
+                    ...option.rules,createPricingOptionRule(),
+                  ]})}>+ Advanced pricing rule</button>
                 </div>
-              </article>
-            ))}
-            {!builder.options.length && <div className="pricing-builder-empty">Create Base, Quartz Kitchen, Double Bowl, or whatever packages this builder requires.</div>}
+              </details>
+            </article>)}
+          </div>
+          <div className="pricing-builder-step-footer">
+            <button type="button" onClick={()=>setTab('plans')}>← Plan takeoffs</button>
+            <button type="button" onClick={()=>setTab('matrix')}>Next: Review calculated matrix →</button>
           </div>
         </section>
       )}
