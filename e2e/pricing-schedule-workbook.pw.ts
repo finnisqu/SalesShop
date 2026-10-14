@@ -73,7 +73,7 @@ test('spreadsheet import keeps cached formulas, customer-only prices and XLSX ex
   const savedCard=reopened.locator('.qmb-listcard').filter({hasText:'QC Builder Workbook'});
   if(await savedCard.count())await savedCard.click();
   await reopened.getByRole('complementary',{name:'Quote workspace navigation'})
-    .getByRole('button',{name:'Pricing Schedule'}).click();
+    .getByRole('button',{name:/Edit Custom Spreadsheet/}).click();
   await expect(reopened.locator('.pricing-schedule-mapped-preview')).toContainText('$800.00');
 });
 
