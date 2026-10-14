@@ -397,7 +397,7 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
   await expect(beta.locator('.customer-quote-paper')).toBeVisible();
   await beta.getByRole('button',{name:'Back to Review'}).click();
-  await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await expect(review.getByRole('checkbox',{name:/I reviewed the remaining items/})).toBeChecked();
   await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeEnabled();
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
   await expect(review.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
@@ -456,7 +456,9 @@ test('Previewed customer revision approval expires after a change before issue',
   await beta.locator('.qmb-quote-footer .qmb-primary').click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   const approval=review.getByRole('checkbox',{name:'Approve customer document for issuing'});
+  const acknowledgement=review.getByRole('checkbox',{name:/I reviewed the remaining items/});
   await expect(approval).toBeDisabled();
+  await acknowledgement.check();
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
   const options=beta.locator('.qmb-preview-customer-options');
   await options.locator('summary').click();
@@ -464,11 +466,12 @@ test('Previewed customer revision approval expires after a change before issue',
   await beta.getByRole('button',{name:'Back to Review'}).click();
   await expect(review.getByRole('button',{name:'Open customer preview ›'})).toBeVisible();
   await expect(approval).toBeDisabled();
-  await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await expect(acknowledgement).not.toBeChecked();
+  await acknowledgement.check();
   await expect(approval).toBeDisabled();
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
   await beta.getByRole('button',{name:'Back to Review'}).click();
-  await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await expect(acknowledgement).toBeChecked();
   await approval.check();
   await expect(review.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
   await review.getByRole('button',{name:'Issue quote / mark sent'}).click();
