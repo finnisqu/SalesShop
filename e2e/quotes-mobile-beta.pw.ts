@@ -472,7 +472,7 @@ test('Previewed customer revision approval expires after a change before issue',
   await approval.check();
   await expect(review.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
   await review.getByRole('button',{name:'Issue quote / mark sent'}).click();
-  await expect(review.getByText('Issued customer revision')).toBeVisible();
+  await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
   await expect(review.locator('.quote-share-control.is-inline')
     .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');
 });
@@ -501,7 +501,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await beta.getByRole('complementary',{name:'Live quote summary'})
     .getByRole('button',{name:'Send quote'}).click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
-  await expect(review.getByRole('button',{name:'Preview customer document to issue'})).toBeDisabled();
+  await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeDisabled();
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
   const paper=beta.locator('.customer-quote-paper');
   await expect(paper).toContainText('Kitchen');
@@ -510,7 +510,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
   await review.getByRole('button',{name:'Issue quote / mark sent'}).click();
-  await expect(review.getByText('Issued customer revision')).toBeVisible();
+  await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
   await expect(review.getByLabel('Customer document revision')).toContainText('$400.00');
   await expect(review.locator('.quote-share-control.is-inline')
     .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');
