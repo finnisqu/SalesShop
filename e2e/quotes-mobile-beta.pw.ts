@@ -28,7 +28,7 @@ test('phone Quotes Beta uses the same quote records and returns to Classic', asy
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await expect(beta).toBeVisible();
   await createQuickQuote(page);
-  await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue('');
+  await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue('Test Quick Quote');
   await expect(beta.getByText('No Areas yet.')).toBeVisible();
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'+ Add piece'}).click();
@@ -1474,10 +1474,11 @@ test('Beta quote library archives, restores and safely deletes an unsent draft',
   await expect(archiveDialog).toContainText('retained');
   await archiveDialog.getByRole('button',{name:'Archive quote'}).click();
   await expect(entry).toHaveCount(0);
-  await beta.getByRole('button',{name:'Show archived'}).click();
+  await beta.getByRole('combobox',{name:'Document status'}).selectOption('archived');
   const restored=beta.locator('.qmb-library-entry').filter({hasText:'Test Quick Quote'}).first();
   await expect(restored).toContainText('Archived');
-  await restored.getByRole('button',{name:'Restore'}).click();
+  await restored.getByRole('button',{name:'Restore to active'}).click();
+  await beta.getByRole('combobox',{name:'Document status'}).selectOption('active');
   await expect(restored.getByRole('button',{name:'Archive'})).toBeVisible();
   await restored.getByRole('button',{name:'Delete draft'}).click();
   const deleteDialog=page.getByRole('dialog',{name:'Delete draft quote'});
