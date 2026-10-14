@@ -271,13 +271,19 @@ export function includedPricingTakeoffs(
 ): { takeoffs: PricingPlanTakeoff[]; warnings: string[] } {
   const all = builder.takeoffs.filter(takeoff => takeoff.planId === plan.id);
   const warnings: string[] = [];
+  // These exclusions belong to the plan/package pair, not the reusable package.
+  const excluded = new Set(plan.excludedTakeoffIdsByOption?.[option.id] ?? []);
   const groups = pricingTakeoffGroups(builder, plan.id);
   for (const group of groups) {
+    const available = all.filter(row => row.variantGroup?.trim() === group.name && !excluded.has(row.id));
+    // Omitting an entire group intentionally removes it from this option.
+    if (!available.length) continue;
     const chosen = option.takeoffVariants?.[group.name] || group.defaultCode;
-    if (!chosen || !group.codes.includes(chosen))
+    if (!chosen || !available.some(row => (row.variantCode?.trim() || 'BASE') === chosen))
       warnings.push(`Select an available ${group.name} configuration for ${option.code || option.name}.`);
   }
   const selected = all.filter(takeoff => {
+    if (excluded.has(takeoff.id)) return false;
     if (takeoff.variantGroup?.trim()) {
       const name = takeoff.variantGroup.trim();
       const group = groups.find(candidate => candidate.name === name);
