@@ -67,6 +67,8 @@ test('calculate Sanford configurations with shared material rates and replacemen
   await expect(cells.nth(0)).not.toHaveText(aBefore);
   await expect(cells.nth(1)).toHaveText(bBefore);
   await ws.getByRole('button',{name:/2 · Plan Takeoffs/}).click();
+  await ws.getByText('Customize measured scope for each package').click();
+  await ws.locator('.pricing-builder-component-package').first().locator('summary').click();
   await kitchenSplash.check();
   await ws.getByRole('button',{name:/4 · Calculated Matrix/}).click();
   await expect(cells.nth(0)).toHaveText(aBefore);
