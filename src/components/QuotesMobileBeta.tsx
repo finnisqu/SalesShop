@@ -517,7 +517,7 @@ export function QuotesMobileBeta() {
   };
   const createFromTemplate=(
     template:Exclude<SalesDocumentTemplateChoice,'multifamily'>,
-    start:SalesTemplateStart='blank',sourceId?:string,
+    start:SalesTemplateStart='blank',sourceId?:string,requestedTitle='',
   )=>{
     const source=myQuotes.find(item=>item.id===sourceId);
     if(start==='previous'&&!source)return;
@@ -526,8 +526,8 @@ export function QuotesMobileBeta() {
       return;
     }
     const documentType=template==='quick-quote'?'quote':'pricing-schedule';
-    const title=source?source.title+' · New agreement':template==='quick-quote'?'Untitled quote':
-      salesTemplateLabel(template);
+    const title=requestedTitle.trim();
+    if(!title){setError('Enter a document name before creating it.');return;}
     const id=create({documentType,title,
       ...(source?{companyId:source.companyId,companyName:source.companyName,
         contactId:source.contactId,contactName:source.contactName,
