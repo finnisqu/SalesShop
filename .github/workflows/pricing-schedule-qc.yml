@@ -15,6 +15,7 @@ on:
       - 'src/components/QuoteBetaDesktopRails.tsx'
       - 'src/store/quoteStore.ts'
       - 'src/services/quoteIntegrity.ts'
+      - 'src/services/quoteDocumentCopy*'
       - 'src/sales-document-workspace.css'
       - 'src/services/salesDocumentTemplates*'
       - 'src/services/stockBuilderRateTemplate*'
@@ -59,7 +60,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Workbook unit tests
-        run: npx vitest run src/services/pricingSchedule.test.ts src/services/pricingScheduleContract.test.ts src/services/pricingScheduleManual.test.ts src/services/pricingScheduleBuilderVariants.test.ts src/services/salesDocumentTemplates.test.ts src/services/stockBuilderRateTemplate.test.ts
+        run: npx vitest run src/services/pricingSchedule.test.ts src/services/pricingScheduleContract.test.ts src/services/pricingScheduleManual.test.ts src/services/pricingScheduleBuilderVariants.test.ts src/services/salesDocumentTemplates.test.ts src/services/stockBuilderRateTemplate.test.ts src/services/quoteDocumentCopy.test.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Focused workbook browser tests
