@@ -158,7 +158,7 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
     const make=(code:string,length:number,bowls:number):PricingPlanTakeoff=>({
       ...createPricingTakeoff(plan.id),room:'Master Bathroom',piece:'Vanity Top',
       category:'Master Vanity',variantGroup:'Master Vanity',variantCode:code,
-      length,width:22,vanityBowls:bowls,
+      length,vanityBowls:bowls,
     });
     saveBuilder({...builder,outputMode:'matrix',takeoffs:[
       ...builder.takeoffs,make('BASE',48,1),make('DOUBLE',72,2),
@@ -422,14 +422,17 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
       {tab === 'plans' && (
         <section className="pricing-builder-plans-layout">
           <aside className="pricing-builder-plan-list">
-            <header><strong>Plans</strong><button type="button" onClick={addPlan}>+ Plan</button></header>
+            <header><strong>2 · House plans</strong><button type="button" onClick={addPlan}>+ Plan</button></header>
             {builder.plans.map((plan) => <button type="button" className={selectedPlan?.id === plan.id ? 'active' : ''} key={plan.id} onClick={() => setSelectedPlanId(plan.id)}><strong>{plan.planNumber || 'No #'}</strong><span>{plan.name}</span></button>)}
             {!builder.plans.length && <div className="pricing-builder-empty">Add the house plans included in this agreement.</div>}
           </aside>
           <div className="pricing-builder-plan-editor">
             {selectedPlan ? (
               <>
-                <header className="pricing-builder-panel-heading"><div><strong>{selectedPlan.planNumber || 'New plan'} · {selectedPlan.name}</strong><small>Enter only the lightweight quantities Sales needs for pricing.</small></div><button type="button" className="pricing-builder-delete-text" onClick={() => { saveBuilder({ ...builder, plans: builder.plans.filter((plan) => plan.id !== selectedPlan.id), takeoffs: builder.takeoffs.filter((takeoff) => takeoff.planId !== selectedPlan.id) }); setSelectedPlanId(''); }}>Delete plan</button></header>
+                <header className="pricing-builder-panel-heading"><div>
+                    <strong>{selectedPlan.planNumber || 'New plan'} · {selectedPlan.name}</strong>
+                    <small>Measure each top and splash as a separate row. Give interchangeable pieces the same Variant group and distinct Variant labels (BASE and DOUBLE). Selecting DOUBLE replaces BASE, including both surface area and sink quantities.</small>
+                  </div><button type="button" className="pricing-builder-delete-text" onClick={() => { saveBuilder({ ...builder, plans: builder.plans.filter((plan) => plan.id !== selectedPlan.id), takeoffs: builder.takeoffs.filter((takeoff) => takeoff.planId !== selectedPlan.id) }); setSelectedPlanId(''); }}>Delete plan</button></header>
                 <div className="pricing-builder-plan-fields">
                   <label><span>Series</span><input value={selectedPlan.series ?? ''} onChange={(event) => updatePlan(selectedPlan.id, { series: event.target.value })} /></label>
                   <label><span>Plan #</span><input value={selectedPlan.planNumber} onChange={(event) => updatePlan(selectedPlan.id, { planNumber: event.target.value })} /></label>
@@ -451,12 +454,36 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
                   {!builder.options.length && <div className="pricing-builder-empty">Add option packages first, then choose which ones this plan offers.</div>}
                 </section>
 
-                <div className="pricing-builder-takeoff-table">
-                  <div className="pricing-builder-takeoff-row is-head"><span>Room</span><span>Piece</span><span>L</span><span>W</span><span>SF</span><span>Kitchen sinks</span><span>Vanity bowls</span><span>Supports</span><span /></div>
+                <div className="pricing-builder-takeoff-actions">
+                  <strong>Measured components</strong>
+                  <div className="pricing-builder-quick-actions">
+                    <button type="button" disabled={builder.takeoffs.some(t=>t.planId===selectedPlan.id&&t.variantGroup==='Master Vanity')}
+                      onClick={()=>addMasterVanityChoices(selectedPlan)}>+ Master Vanity BASE / DOUBLE</button>
+                    <button type="button" onClick={()=>saveBuilder({...builder,takeoffs:[...builder.takeoffs,{
+                      ...createPricingTakeoff(selectedPlan.id),piece:'Backsplash',category:'Backsplash',
+                    }]})}>+ Splash</button>
+                    <button type="button" onClick={()=>saveBuilder({...builder,takeoffs:[
+                      ...builder.takeoffs,createPricingTakeoff(selectedPlan.id),
+                    ]})}>+ Component</button>
+                  </div>
+                </div>
+                <p className="pricing-builder-takeoff-hint">Example: Master Vanity · BASE · 48” long · 1 bowl, and Master Vanity · DOUBLE · 72” long · 2 bowls. Enter the actual width; only the selected row is priced. For backsplashes, enter their own dimensions or SF.</p>
+                <div className="pricing-builder-takeoff-scroller"><div className="pricing-builder-takeoff-table">
+                  <div className="pricing-builder-takeoff-row is-head">
+                    <span>Room</span><span>Component</span><span>Category</span><span>Variant group</span><span>Variant</span>
+                    <span>L (in)</span><span>W (in)</span><span>SF</span>
+                    <span>Kitchen sinks</span><span>Vanity bowls</span><span>Supports</span><span />
+                  </div>
                   {builder.takeoffs.filter((takeoff) => takeoff.planId === selectedPlan.id).map((takeoff) => (
                     <div className="pricing-builder-takeoff-row" key={takeoff.id}>
                       <input value={takeoff.room} onChange={(event) => updateTakeoff(takeoff.id, { room: event.target.value })} />
-                      <input value={takeoff.piece ?? ''} onChange={(event) => updateTakeoff(takeoff.id, { piece: event.target.value })} placeholder="Countertop / Splash" />
+                      <input value={takeoff.piece ?? ''} onChange={(event) => updateTakeoff(takeoff.id, { piece: event.target.value })} placeholder="Countertop / Backsplash" />
+                      <input aria-label="Component category" value={takeoff.category??''}
+                        onChange={e=>updateTakeoff(takeoff.id,{category:e.target.value})} placeholder="Master Vanity" />
+                      <input aria-label="Variant group" value={takeoff.variantGroup??''}
+                        onChange={e=>updateTakeoff(takeoff.id,{variantGroup:e.target.value})} placeholder="Master Vanity / blank" />
+                      <input aria-label="Variant" value={takeoff.variantCode??'BASE'}
+                        onChange={e=>updateTakeoff(takeoff.id,{variantCode:e.target.value})} placeholder="BASE / DOUBLE" />
                       <input type="number" step="0.01" value={takeoff.length ?? ''} onChange={(event) => updateTakeoff(takeoff.id, { length: numberValue(event.target.value) })} />
                       <input type="number" step="0.01" value={takeoff.width ?? ''} onChange={(event) => updateTakeoff(takeoff.id, { width: numberValue(event.target.value) })} />
                       <label className="pricing-builder-sf"><input type="number" step="0.01" value={takeoff.squareFeet ?? ''} placeholder={takeoffSquareFeet(takeoff) ? takeoffSquareFeet(takeoff).toFixed(2) : 'Auto'} onChange={(event) => updateTakeoff(takeoff.id, { squareFeet: numberValue(event.target.value) })} /></label>
@@ -466,7 +493,10 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
                       <button type="button" className="pricing-builder-delete" onClick={() => saveBuilder({ ...builder, takeoffs: builder.takeoffs.filter((item) => item.id !== takeoff.id) })}>×</button>
                     </div>
                   ))}
-                  <button type="button" className="pricing-builder-inline-add" onClick={() => saveBuilder({ ...builder, takeoffs: [...builder.takeoffs, createPricingTakeoff(selectedPlan.id)] })}>+ Takeoff row</button>
+                </div></div>
+                <div className="pricing-builder-step-footer">
+                  <button type="button" onClick={()=>setTab('rates')}>← Material and add-on rates</button>
+                  <button type="button" onClick={()=>setTab('options')}>Next: Configure option scope →</button>
                 </div>
               </>
             ) : <div className="pricing-builder-empty">Select or add a plan to enter its takeoff.</div>}
@@ -477,7 +507,9 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
       {tab === 'matrix' && (
         <section className="pricing-builder-matrix-layout">
           <div className="pricing-builder-matrix-main">
-            <header className="pricing-builder-panel-heading"><div><strong>Calculated Plan × Option Matrix</strong><small>Not every option has to apply to every plan. Click an offered price to audit its math.</small></div><div className="pricing-builder-quick-actions"><button type="button" onClick={addPlan}>+ Plan</button><button type="button" onClick={addOption}>+ Option</button><button type="button" onClick={addRate}>+ Rate</button></div></header>
+            <header className="pricing-builder-panel-heading"><div><strong>4 · Calculated house price matrix</strong>
+              <small>Each amount sums only the takeoff pieces selected by that option, using one material $/SF rate for tops and included splashes, plus sink and add-on counts. Click any price to audit every line.</small></div>
+              <div className="pricing-builder-quick-actions"><button type="button" onClick={()=>setTab('rates')}>Edit rates</button><button type="button" onClick={()=>setTab('plans')}>Edit takeoffs</button><button type="button" onClick={()=>setTab('options')}>Edit scope</button></div></header>
             {builder.plans.length && builder.options.length ? (
               <div className="pricing-builder-matrix-scroll">
                 <div className="pricing-builder-matrix" style={{ gridTemplateColumns: `minmax(180px, 1.4fr) repeat(${builder.options.length}, minmax(128px, 1fr))` }}>
