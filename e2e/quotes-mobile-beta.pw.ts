@@ -1491,3 +1491,77 @@ test('Details gives access to editable revision labels without confusing issued 
   await rail.getByRole('button',{name:'Customer & project'}).click();
   await expect(details.getByRole('textbox',{name:'Revision or option label'})).toHaveValue('Alternate A');
 });
+
+
+test('Pricing Schedule Beta keeps full workbook tools separate from normal quote totals',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1280','Pricing Schedule desktop Beta parity');
+  const errors:string[]=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ Advanced Pricing Schedule'}).click();
+  const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
+  await expect(workspace).toBeVisible();
+  await expect(workspace.getByRole('button',{name:/Simple Rates/})).toBeVisible();
+  await expect(workspace.getByRole('button',{name:/Plan Pricing/})).toBeVisible();
+  await expect(workspace.getByRole('button',{name:/Spreadsheet/})).toBeVisible();
+  const inspector=beta.getByRole('complementary',{name:'Live quote summary'});
+  await expect(inspector).toContainText('Published price rows');
+  await expect(inspector.getByText('Quote total')).toHaveCount(0);
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await expect(rail.getByRole('button',{name:'Add Area from navigator'})).toHaveCount(0);
+  await rail.getByRole('button',{name:'Customer & project'}).click();
+  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  await expect(details.getByRole('combobox',{name:'Document type'})).toHaveValue('pricing-schedule');
+  await rail.getByRole('button',{name:'Customer preview'}).click();
+  await expect(beta.locator('.pricing-schedule-customer-preview')).toBeVisible();
+  await inspector.getByRole('button',{name:'Review Pricing Schedule delivery'}).click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await expect(review).toContainText('Review Pricing Schedule');
+  await expect(review).toContainText('Resolve before issuing');
+  await expect(review.getByRole('button',{name:'Issue Pricing Schedule / mark sent'})).toBeDisabled();
+  await expect(review.getByText('Quote total')).toHaveCount(0);
+  await review.getByRole('button',{name:'Open pricing workspace'}).click();
+  await expect(workspace).toBeVisible();
+  await workspace.getByRole('button',{name:/Plan Pricing/}).click();
+  await expect(workspace.getByText('Plan Pricing',{exact:true}).first()).toBeVisible();
+  await workspace.getByRole('button',{name:/Spreadsheet/}).click();
+  await expect(workspace.getByLabel('Pricing schedule workbook')).toBeVisible();
+  await expect(workspace.getByRole('button',{name:'Import .xlsx'})).toBeVisible();
+  await expect(workspace.getByRole('button',{name:'Export .xlsx'})).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('Pricing Schedule is accessible through phone Beta Details without changing Quick Quote defaults',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Pricing Schedule mobile document setup');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await expect(beta.getByLabel('Pricing Schedule workspace')).toHaveCount(0);
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
+  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  await details.getByRole('combobox',{name:'Document type'}).selectOption('pricing-schedule');
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Build'}).click();
+  await expect(beta.getByRole('region',{name:'Pricing Schedule workspace'})).toBeVisible();
+  await expect(beta.getByLabel('Published pricing rows')).toContainText('0 price rows');
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview'}).click();
+  await expect(beta.locator('.pricing-schedule-customer-preview')).toBeVisible();
+  await beta.getByRole('button',{name:'Review Pricing Schedule'}).click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await expect(review).toContainText('Resolve before issuing');
+  await review.getByRole('button',{name:'Close Review and Issue'}).click();
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
+  await details.getByRole('combobox',{name:'Document type'}).selectOption('quote');
+  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Build'}).click();
+  await expect(beta.getByRole('region',{name:'Pricing Schedule workspace'})).toHaveCount(0);
+});
