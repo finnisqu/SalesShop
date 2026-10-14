@@ -705,7 +705,7 @@ export function QuotesMobileBeta() {
             onPreview={()=>navigateDocument('preview')}
             onDuplicate={copyCurrentDocument}
             onCreateRevision={reviseCurrentDocument}
-            canCreateRevision={canIssue} cloudMode={authMode==='cloud'}/>
+            canCreateRevision={canIssue} canDuplicate={canManageLibrary} cloudMode={authMode==='cloud'}/>
           <nav className="qmb-tabs" aria-label="Quote views">
             {([['build','Build'],['details','Details'],['preview','Preview']] as const).map(([id,label])=>
               <button key={id} type="button" className={quoteTab===id?'active':''}
