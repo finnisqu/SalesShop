@@ -26,6 +26,7 @@ import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteBetaEditablePreview } from './QuoteBetaEditablePreview';
+import {approvedCustomerDraft,quoteDeliveryApprovalKey} from '../services/quoteDeliveryApproval';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { QuoteSfRateChoices } from './QuoteSfRateChoices';
@@ -456,6 +457,9 @@ export function QuotesMobileBeta() {
   const [reviewOpen,setReviewOpen]=useState(false);
   const [reviewFocus,setReviewFocus]=useState<string|null>(null);
   const [previewReturnQuoteId,setPreviewReturnQuoteId]=useState<string|null>(null);
+  const [previewStartedKey,setPreviewStartedKey]=useState<string|null>(null);
+  const [previewedDeliveryKey,setPreviewedDeliveryKey]=useState<string|null>(null);
+  const [approvedDeliveryKey,setApprovedDeliveryKey]=useState<string|null>(null);
   const quoteScrollRef=useRef<HTMLDivElement>(null);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
@@ -531,7 +535,8 @@ export function QuotesMobileBeta() {
   };
   const openQuote=(id:string)=>{
     select(id);setQuoteTab('build');setPage('quote');setAreaId(null);
-    setSelectionsOpen(false);setReviewOpen(false);setPreviewReturnQuoteId(null);setError('');
+    setSelectionsOpen(false);setReviewOpen(false);setPreviewReturnQuoteId(null);
+    setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const navigateDocument=(tab:QuoteTab)=>{
@@ -651,6 +656,10 @@ export function QuotesMobileBeta() {
     const latest=useQuoteStore.getState().quotes.find(q=>q.id===quote.id);
     // Recheck at the moment of issuing, not just when the screen rendered.
     if(!latest){setError('This document is no longer available.');return;}
+    if(latest.documentType!=='pricing-schedule'&&
+      !approvedCustomerDraft(latest,previewedDeliveryKey,approvedDeliveryKey)){
+      setError('Preview and approve this exact customer document in Review before issuing.');return;
+    }
     if(latest.documentType==='pricing-schedule'){
       const issue=pricingScheduleValidationError(latest.pricingSchedule);
       if(issue){setError(issue);return;}
@@ -658,7 +667,7 @@ export function QuotesMobileBeta() {
       setError('Resolve pricing blockers before issuing this quote.');return;
     }
     setSending(true);setError('');
-    try{await recordSent(quote.id);}
+    try{await recordSent(quote.id);setApprovedDeliveryKey(null);}
     catch(e){setError(e instanceof Error?e.message:'Could not issue quote');}
     finally{setSending(false);}
   };
@@ -881,7 +890,9 @@ export function QuotesMobileBeta() {
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
             onReturnToReview={previewReturnQuoteId===quote.id?()=>{
-              setPreviewReturnQuoteId(null);openReview('__delivery__');
+              setPreviewReturnQuoteId(null);
+              setPreviewedDeliveryKey(previewStartedKey);
+              openReview('__delivery__');
             }:undefined}/>
         </>}
         </div>
@@ -1007,8 +1018,14 @@ export function QuotesMobileBeta() {
         onReviewFinding={openReviewCategory} onReviewIssue={id=>openReview(id)}
         onSend={openSend} canIssue={canIssue}/>}
       canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
+      previewedKey={previewedDeliveryKey} approvedKey={approvedDeliveryKey}
+      onApprove={approved=>setApprovedDeliveryKey(approved?quoteDeliveryApprovalKey(quote):null)}
       onClose={()=>{setReviewOpen(false);setReviewFocus(null);}}
-      onFix={fixAudit} onPreview={()=>{setReviewOpen(false);setPreviewReturnQuoteId(quote.id);setQuoteTab('preview');setPage('quote');setAreaId(null);}}
+      onFix={fixAudit} onPreview={()=>{
+        setReviewOpen(false);setPreviewReturnQuoteId(quote.id);
+        setPreviewStartedKey(quoteDeliveryApprovalKey(quote));
+        setQuoteTab('preview');setPage('quote');setAreaId(null);
+      }}
       onClassic={()=>{setReviewOpen(false);exitBeta(false);setView('quotes');}}/>}
     {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
