@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useQuoteStore } from '../store/quoteStore';
 import {
@@ -10,6 +10,7 @@ import {
 } from '../services/quoteShareService';
 import { displayQuoteNumber } from '../types/quote';
 import { reviewItemsBlockingDirectShare } from '../services/quoteShareReadiness';
+import {shareMatchesQuoteRevision} from '../services/quoteDeliveryApproval';
 import '../quote-share.css';
 
 function dateLabel(value: string | null) {
@@ -17,7 +18,7 @@ function dateLabel(value: string | null) {
   return new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boolean;allowCreation?:boolean}={}) {
+export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIssue=false}:{inline?:boolean;allowCreation?:boolean;autoOpenOnIssue?:boolean}={}) {
   const mode = useAuthStore((state) => state.mode);
   const organizationId = useAuthStore((state) => state.organizationId);
   const quotes = useQuoteStore((state) => state.quotes);
@@ -32,6 +33,16 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
   const [working, setWorking] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const previousStatus=useRef<{id:string;status:string}|null>(null);
+  useEffect(()=>{
+    const previous=previousStatus.current;
+    if(inline&&autoOpenOnIssue&&quote&&previous?.id===quote.id&&
+      (previous.status==='Draft'||previous.status==='Ready')&&
+      (quote.status==='Sent'||quote.status==='Viewed'||quote.status==='Signed')){
+      setOpen(true);
+    }
+    previousStatus.current=quote?{id:quote.id,status:quote.status}:null;
+  },[quote?.id,quote?.status,inline,autoOpenOnIssue]);
 
   useEffect(() => {
     setOpen(false);
@@ -49,7 +60,7 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
       .catch((reason: unknown) => { if (!cancelled) setError(reason instanceof Error ? reason.message : 'Could not load customer link.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [open, quote, mode, organizationId]);
+  }, [open, quote?.id, quote?.revision, mode, organizationId]);
 
   if (!quote) return null;
 
@@ -113,7 +124,8 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
 
   const cloudReady = mode === 'cloud' && Boolean(organizationId);
   const url = share ? quoteShareUrl(share) : '';
-  const active = share?.status === 'active' || share?.status === 'signed';
+  const correctRevision=Boolean(share&&shareMatchesQuoteRevision(quote,share));
+  const active = correctRevision&&(share?.status === 'active' || share?.status === 'signed');
   const reviewedItemsNeedingIssue=reviewItemsBlockingDirectShare(quote);
   const creationReady=allowCreation&&reviewedItemsNeedingIssue===0;
 
@@ -149,7 +161,9 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
                 <div className="quote-share-empty">
                   <strong>No customer link yet</strong>
                   <p>{quote.status === 'Draft' || quote.status === 'Ready'
-                    ? reviewedItemsNeedingIssue>0
+                    ? !allowCreation
+                      ? 'Approve and issue the customer revision from Review before creating a link.'
+                      : reviewedItemsNeedingIssue>0
                       ? 'Issue the draft from Review to freeze this exact revision before sharing it.'
                       : 'Creating the link will issue and freeze this exact revision before it becomes customer-accessible.'
                     : 'Create a secure link to this frozen quote revision.'}</p>
@@ -164,6 +178,13 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
 
               {share && (
                 <div className="quote-share-active">
+                  <div className="quote-share-revision" aria-label="Customer link revision">
+                    <strong>{correctRevision?'Link for current revision':'Link for a different revision'}</strong>
+                    <span>Revision {share.revision} · {share.status==='revoked'?'Revoked':'Customer-visible content is frozen at issue'}</span>
+                  </div>
+                  {!correctRevision&&<p className="quote-share-review-needed" role="status">
+                    This link is for revision {share.revision}, not revision {quote.revision}. It cannot be shared as the current quote. Create a link for this revision instead.
+                  </p>}
                   <div className="quote-share-status-row">
                     <span className={`quote-share-status status-${share.status}`}>{share.status === 'signed' ? 'Signed' : share.status === 'revoked' ? 'Revoked' : share.viewCount > 0 ? 'Viewed' : 'Ready'}</span>
                     {share.viewCount > 0 && <span>{share.viewCount} view{share.viewCount === 1 ? '' : 's'}</span>}

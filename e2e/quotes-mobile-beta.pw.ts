@@ -392,6 +392,14 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await expect(review.getByRole('checkbox',{name:/I reviewed the remaining items/})).toBeVisible();
   await expect(review.getByRole('button',{name:'Review remaining items to issue'})).toBeDisabled();
   await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await expect(review.getByRole('button',{name:'Preview customer document to issue'})).toBeDisabled();
+  await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeDisabled();
+  await review.getByRole('button',{name:'Open customer preview ›'}).click();
+  await expect(beta.locator('.customer-quote-paper')).toBeVisible();
+  await beta.getByRole('button',{name:'Back to Review'}).click();
+  await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeEnabled();
+  await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
   await expect(review.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
   await review.getByRole('button',{name:/Resolve Material not selected:/}).click();
   await expect(review.getByRole('region',{name:/Resolve Material not selected:/})).toBeVisible();
@@ -425,6 +433,89 @@ test('Review fixes zero-priced flat charges by editing their real amount',async 
   await expect(review.getByRole('button',{name:'Close Review and Issue'})).toBeVisible();
 });
 
+test('Previewed customer revision approval expires after a change before issue',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Phone preview approval invalidation');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await createQuickQuote(page);
+  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
+  await beta.getByRole('textbox',{name:'Length (in)'}).blur();
+  await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
+  await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await beta.locator('.qmb-area-editor .qmb-tabs')
+    .getByRole('button',{name:'Pricing'}).click();
+  await beta.getByRole('spinbutton',{name:'Takeoff selling rate per square foot'}).fill('50');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  const approval=review.getByRole('checkbox',{name:'Approve customer document for issuing'});
+  await expect(approval).toBeDisabled();
+  await review.getByRole('button',{name:'Open customer preview ›'}).click();
+  const options=beta.locator('.qmb-preview-customer-options');
+  await options.locator('summary').click();
+  await options.getByRole('checkbox',{name:'Line amounts'}).uncheck();
+  await beta.getByRole('button',{name:'Back to Review'}).click();
+  await expect(review.getByRole('button',{name:'Open customer preview ›'})).toBeVisible();
+  await expect(approval).toBeDisabled();
+  await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await expect(approval).toBeDisabled();
+  await review.getByRole('button',{name:'Open customer preview ›'}).click();
+  await beta.getByRole('button',{name:'Back to Review'}).click();
+  await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await approval.check();
+  await expect(review.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
+  await review.getByRole('button',{name:'Issue quote / mark sent'}).click();
+  await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
+  await expect(review.locator('.quote-share-control.is-inline')
+    .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');
+});
+
+test('desktop Quote Review issues only a previewed and approved revision',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1440','Desktop customer issue approval flow');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await createQuickQuote(page);
+  const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
+  await rail.getByRole('button',{name:'Add Area from navigator'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
+  await beta.getByRole('button',{name:'+ Add piece'}).click();
+  await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
+  await beta.getByRole('textbox',{name:'Length (in)'}).blur();
+  await beta.getByRole('textbox',{name:'Width (in)'}).fill('24');
+  await beta.getByRole('textbox',{name:'Width (in)'}).blur();
+  await beta.getByRole('button',{name:'Resolve Area pricing issues'}).click();
+  await beta.locator('.qmb-lab-selling')
+    .getByRole('spinbutton',{name:'Area selling rate per SF'}).fill('50');
+  await beta.getByRole('complementary',{name:'Live quote summary'})
+    .getByRole('button',{name:'Send quote'}).click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeDisabled();
+  await review.getByRole('button',{name:'Open customer preview ›'}).click();
+  const paper=beta.locator('.customer-quote-paper');
+  await expect(paper).toContainText('Kitchen');
+  await expect(paper.locator('.customer-quote-total')).toContainText('$400.00');
+  await beta.getByRole('button',{name:'Back to Review'}).click();
+  await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
+  await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
+  await review.getByRole('button',{name:'Issue quote / mark sent'}).click();
+  await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
+  await expect(review.getByLabel('Customer document revision')).toContainText('$400.00');
+  await expect(review.locator('.quote-share-control.is-inline')
+    .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');
+});
+
 test('Review preview returns directly to the same quote delivery checklist',async ({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','Phone Review-to-preview navigation contract');
   await page.goto('/');
@@ -438,7 +529,7 @@ test('Review preview returns directly to the same quote delivery checklist',asyn
   await beta.locator('.qmb-quote-footer .qmb-primary').click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await expect(review).toBeVisible();
-  await review.getByRole('button',{name:'Customer preview ›'}).click();
+  await review.getByRole('button',{name:'Open customer preview ›'}).click();
   await expect(review).toHaveCount(0);
   await expect(beta.locator('.customer-quote-paper')).toBeVisible();
   await beta.getByRole('button',{name:'Back to Review'}).click();
