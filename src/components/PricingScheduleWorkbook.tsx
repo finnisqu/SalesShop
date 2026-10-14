@@ -234,8 +234,7 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
       </header>
       {message && <div className="pricing-schedule-message">{message}</div>}
 
-      <>
-          <header className="pricing-schedule-workspace-header pricing-schedule-spreadsheet-toolbar">
+      <header className="pricing-schedule-workspace-header pricing-schedule-spreadsheet-toolbar">
             <div>
               <span className="quote-control-heading">Advanced spreadsheet</span>
               <small>{schedule.sourceFileName || 'Built in SalesShop'} · import a builder template or do custom calculations here.</small>
