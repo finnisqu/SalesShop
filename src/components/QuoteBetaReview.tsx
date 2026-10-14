@@ -158,7 +158,10 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
           onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
         <p className="qmb-help">Preview and draft links are available at any time. Issuing records a formal quote revision.</p>
         <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer preview ›</button>
-        <QuoteShareControl inline allowCreation={!editable||(ready&&canIssue)}/>
+        {editable&&report.review.length>0&&acknowledged&&<p className="qmb-audit-help">
+          These items are acknowledged for issuing. Select <strong>Issue quote / mark sent</strong> first, then create your customer link. This keeps the released revision immutable.
+        </p>}
+        <QuoteShareControl inline allowCreation={!editable||(ready&&canIssue&&report.review.length===0)}/>
         {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&
           <button type="button" className="qmb-outline qmb-block"
             onClick={()=>setSignatureOpen(true)}>
