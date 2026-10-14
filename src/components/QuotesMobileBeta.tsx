@@ -510,7 +510,9 @@ export function QuotesMobileBeta() {
   // Send is always a visible entry point. Drafts with issues drill into their
   // first finding; a clear draft opens delivery, never silently dispatches email.
   const openSend=()=>{
-    if(quote?.documentType==='pricing-schedule'){openReview('__delivery__');return;}
+    if(quote?.documentType==='pricing-schedule'){
+      openReview(pricingScheduleValidationError(quote.pricingSchedule)?null:'__delivery__');return;
+    }
     if(audit?.blockers.length){openReview(audit.blockers[0].id);return;}
     if(audit?.review.length){openReview(audit.review[0].id);return;}
     openReview('__delivery__');
@@ -578,7 +580,7 @@ export function QuotesMobileBeta() {
             <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
               <span className="qmb-chip">{q.archivedAt?'Archived':q.status}</span></div>
             <strong>{q.title||'Untitled quote'}</strong>
-            <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {q.sections.length} Areas</small>
+            <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {q.documentType==='pricing-schedule'?'Pricing Schedule':q.sections.length+' Areas'}</small>
               <b>{q.documentType==='pricing-schedule'?`${q.pricingSchedule?.customerItems.length??0} published rows`:money.format(quoteTotal(q))}</b></div>
           </button>
           {canManageLibrary&&<div className="qmb-library-card-actions">

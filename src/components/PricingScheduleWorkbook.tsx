@@ -26,6 +26,7 @@ import {
 import { PricingRateSheet } from './PricingRateSheet';
 import { PricingScheduleBuilder } from './PricingScheduleBuilder';
 import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
+import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import '../pricing-schedule.css';
 
 const SAVE_DEBOUNCE_MS = 500;
@@ -63,6 +64,7 @@ const ROUTES: Array<{ id: WorkspaceMode; title: string; description: string }> =
 export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const schedule = quote.pricingSchedule ?? createPricingScheduleData(quote.id);
+  const editable=quoteIsCommerciallyEditable(quote);
   const scheduleRef = useRef(schedule);
   const hostRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -190,6 +192,16 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
       if (fileRef.current) fileRef.current.value = '';
     }
   };
+
+  // Issued and archived schedules must not mount interactive pricing controls.
+  // A new commercial revision is required before changing published rows.
+  if(!editable)return <section className="pricing-schedule-workspace" aria-label="Read-only Pricing Schedule">
+    <header className="pricing-schedule-workspace-header">
+      <div><strong>{quote.archivedAt?'Archived':'Issued'} Pricing Schedule · read-only</strong>
+        <small>Published customer prices are frozen. Use Details to review earlier documents or create a new revision.</small></div>
+    </header>
+    <PricingScheduleCustomerTable items={schedule.customerItems} compact/>
+  </section>;
 
   return (
     <div className="pricing-schedule-workspace">
