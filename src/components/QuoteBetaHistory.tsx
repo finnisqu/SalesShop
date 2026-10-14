@@ -77,7 +77,7 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
       <summary>Sent revision history <span>{history.length}</span></summary>
       {history.length?history.map((item,index)=><div className="qmb-lifecycle-revision" key={item.revision+'-'+item.capturedAt}>
         <div><strong>{item.label||('Revision '+item.revision)}</strong>
-          <small>{item.status} · {item.quoteDate} · {money.format(item.customerTotal)}</small></div>
+          <small>{item.status} · {item.quoteDate} · {quote.documentType==='pricing-schedule'?`${item.pricingSchedule?.customerItems.length??0} price rows`:money.format(item.customerTotal)}</small></div>
         <button type="button" onClick={()=>setSelected(index)}
           aria-label={'View sent revision '+item.revision}>View document</button>
       </div>):<p className="qmb-help">No issued revisions yet. Sending the quote will freeze a copy here.</p>}

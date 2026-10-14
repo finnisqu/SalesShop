@@ -299,6 +299,16 @@ export function validatePricingScheduleForSend(data?: PricingScheduleData) {
   }
 }
 
+/** A non-throwing readiness report shared by Beta's inspector and delivery flow. */
+export function pricingScheduleValidationError(data?: PricingScheduleData): string | null {
+  try {
+    validatePricingScheduleForSend(data);
+    return null;
+  } catch (reason) {
+    return reason instanceof Error ? reason.message : 'Review the published pricing schedule.';
+  }
+}
+
 function excelScalar(value: unknown): string | number | boolean | null {
   if (value === null || value === undefined) return null;
   if (value instanceof Date) return value.toISOString().slice(0, 10);

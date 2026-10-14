@@ -44,7 +44,7 @@ import {useQuoteBetaGeneralManager,QuoteBetaGeneralModeButton,QuoteBetaGeneralGr
   QuoteBetaGeneralDelete,QuoteBetaGeneralDeleteDialog} from './QuoteBetaGeneralManager';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
-import { createPricingScheduleData } from '../services/pricingSchedule';
+import { createPricingScheduleData, pricingScheduleValidationError } from '../services/pricingSchedule';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
 // Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
@@ -502,7 +502,7 @@ export function QuotesMobileBeta() {
     if(page==='area'&&!area)setPage('quote');
     if(page!=='library'&&!quote)setPage('library');
   },[page,area,quote]);
-  const audit=quote?auditQuoteDraft(quote):null;
+  const audit=quote&&quote.documentType!=='pricing-schedule'?auditQuoteDraft(quote):null;
   const openReview=(focusId:string|null=null)=>{setError('');setSelectionsOpen(false);setReviewFocus(focusId);setReviewOpen(true);};
   const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
     const item=audit?.[kind][0];openReview(item?.id??null);
@@ -510,6 +510,7 @@ export function QuotesMobileBeta() {
   // Send is always a visible entry point. Drafts with issues drill into their
   // first finding; a clear draft opens delivery, never silently dispatches email.
   const openSend=()=>{
+    if(quote?.documentType==='pricing-schedule'){openReview('__delivery__');return;}
     if(audit?.blockers.length){openReview(audit.blockers[0].id);return;}
     if(audit?.review.length){openReview(audit.review[0].id);return;}
     openReview('__delivery__');
@@ -526,7 +527,11 @@ export function QuotesMobileBeta() {
     if(!quote||sending)return;
     const latest=useQuoteStore.getState().quotes.find(q=>q.id===quote.id);
     // Recheck at the moment of issuing, not just when the screen rendered.
-    if(!latest||auditQuoteDraft(latest).blockers.length){
+    if(!latest){setError('This document is no longer available.');return;}
+    if(latest.documentType==='pricing-schedule'){
+      const issue=pricingScheduleValidationError(latest.pricingSchedule);
+      if(issue){setError(issue);return;}
+    }else if(auditQuoteDraft(latest).blockers.length){
       setError('Resolve pricing blockers before issuing this quote.');return;
     }
     setSending(true);setError('');
@@ -698,7 +703,7 @@ export function QuotesMobileBeta() {
       </div>
       <footer className="qmb-footer qmb-quote-footer">
         <button type="button" className="qmb-primary" onClick={openSend}>
-          {audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Send quote ›'}</button>
+          {quote.documentType==='pricing-schedule'?'Review Pricing Schedule ›':audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Send quote ›'}</button>
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}/>:null}

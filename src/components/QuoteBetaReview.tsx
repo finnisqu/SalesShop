@@ -6,6 +6,7 @@ import {QuoteShareControl} from './QuoteShareControl';
 import {QuoteSignatureDialog} from './QuoteSignatureDialog';
 import {auditQuoteDraft,type QuoteAuditDestination,type QuoteAuditFinding} from '../services/quoteDraftAudit';
 import {quoteCanCreateRevision} from '../services/quoteIntegrity';
+import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {useQuoteStore} from '../store/quoteStore';
 import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEditor';
 
@@ -33,6 +34,8 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
     if(expandedId&&!report.findings.some(f=>f.id===expandedId))setExpandedId(null);
   },[expandedId,issueSet,report.findings]);
   const editable=quote.status==='Draft'||quote.status==='Ready';
+  const scheduleError=quote.documentType==='pricing-schedule'
+    ?pricingScheduleValidationError(quote.pricingSchedule):null;
   const ready=!needsRecheck&&report.blockers.length===0&&(!report.review.length||acknowledged);
   const renderFindings=(items:QuoteAuditFinding[],heading:string,description:string,kind:string)=>(
     <section className="qmb-audit-group" aria-label={heading}>
@@ -66,6 +69,51 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
       })}
     </section>
   );
+  if(quote.documentType==='pricing-schedule'){
+    const source=quote.pricingSchedule?.publishSource??'rate-sheet';
+    const sourceLabel=source==='workbook'?'Spreadsheet':source==='builder'?'Plan Pricing':'Simple Rates';
+    const published=quote.pricingSchedule?.customerItems.length??0;
+    const scheduleReady=!needsRecheck&&!scheduleError;
+    return <div className="qmb-editor qmb-review-editor">
+      <header className="qmb-pagehead"><strong>Review Pricing Schedule</strong>
+        <button type="button" className="qmb-back" onClick={onBack} aria-label="Close Review and Issue">× Close</button></header>
+      <div className="qmb-pad qmb-pagecontent">
+        <div className="qmb-audit-overview"><div className="qmb-audit-total">
+          <span>Published customer price rows</span><strong>{published}</strong></div>
+          <div className="qmb-audit-counts"><span>{sourceLabel}</span><span>{quote.status}</span></div>
+        </div>
+        {needsRecheck&&<section className="qmb-review-recheck" role="status">
+          <div><strong>Schedule changed since this review</strong><small>Check the latest published prices before issuing.</small></div>
+          <button type="button" onClick={()=>setLastCheckedAt(quote.updatedAt)}>Recheck now</button>
+        </section>}
+        {scheduleError?<section className="qmb-audit-group" aria-label="Pricing Schedule validation">
+          <div className="qmb-audit-group-heading"><strong>Resolve before issuing</strong></div>
+          <p className="qmb-cost-warning">{scheduleError}</p>
+          <button type="button" className="qmb-outline qmb-block" onClick={()=>onFix({view:'build'})}>Open pricing workspace ›</button>
+        </section>:<section className="qmb-audit-clean"><strong>✓ Pricing Schedule validated</strong>
+          <p>Only the published customer rows appear in the customer document. Internal workbook formulas and cost details stay private.</p>
+        </section>}
+        {error&&<p role="alert" className="qmb-error">{error}</p>}
+        <section className="qmb-card qmb-audit-delivery" data-review-delivery>
+          <strong>Customer delivery</strong>
+          {!editable&&<p className="qmb-audit-help">This issued schedule is frozen. Create a revision to change published pricing.</p>}
+          {!editable&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
+            onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
+          <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer schedule preview ›</button>
+          <QuoteShareControl inline allowCreation={!editable||(scheduleReady&&canIssue)}/>
+          {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&<button type="button" className="qmb-outline qmb-block"
+            onClick={()=>setSignatureOpen(true)}>{quote.status==='Signed'?'View signed receipt':'Sign in person'}</button>}
+          {editable&&<button type="button" className="qmb-primary qmb-block"
+            disabled={sending||!canIssue||!scheduleReady} onClick={onIssue}>
+            {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':scheduleError?'Complete the schedule to issue':'Issue Pricing Schedule / mark sent'}</button>}
+          {!canIssue&&editable&&<small className="qmb-audit-help">Your current team role cannot issue schedules.</small>}
+        </section>
+        <button type="button" className="qmb-quiet qmb-block" onClick={onClassic}>Continue in Classic Quotes</button>
+        {signatureOpen&&createPortal(<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>,document.body)}
+      </div>
+      <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={onBack}>Done reviewing</button></footer>
+    </div>;
+  }
   return <div className="qmb-editor qmb-review-editor">
     <header className="qmb-pagehead">
       <strong>Review details &amp; delivery</strong>

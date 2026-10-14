@@ -1,6 +1,7 @@
 import type {Quote} from '../types/quote';
 import {quoteLinesTotal,quoteTotal,displayQuoteNumber} from '../types/quote';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
+import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
@@ -109,6 +110,30 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
   const totalSf=quote.sections.reduce((sum,section)=>sum+totalBillableTakeoffSf(section.scope?.takeoffPieces??[]),0);
   const sinkCount=areas.reduce((sum,s)=>
     sum+(s.scope?.takeoffSinks??[]).reduce((n,sink)=>n+sink.count,0),0);
+  if(quote.documentType==='pricing-schedule'){
+    const published=quote.pricingSchedule?.customerItems.length??0;
+    const source=quote.pricingSchedule?.publishSource??'rate-sheet';
+    const sourceLabel=source==='workbook'?'Spreadsheet':source==='builder'?'Plan Pricing':'Simple Rates';
+    const issue=pricingScheduleValidationError(quote.pricingSchedule);
+    return <aside className="qmb-desktop-inspector" aria-label="Live quote summary">
+      <div className="qmb-desktop-inspector-heading"><span>PRICING SCHEDULE</span><span className="qmb-chip">{quote.status}</span></div>
+      <div className="qmb-desktop-grand-total"><small>Published price rows</small>
+        <strong>{published}</strong><span>{quote.companyName||'Customer not selected'}</span></div>
+      <div className="qmb-desktop-stat-grid"><div><strong>{sourceLabel}</strong><small>Price source</small></div>
+        <div><strong>{issue?'Needs review':'Ready'}</strong><small>Validation</small></div></div>
+      <section className="qmb-desktop-readiness" aria-label="Live quote review">
+        <div className="qmb-inspector-review-heading"><strong>Review &amp; readiness</strong></div>
+        {issue?<p className="qmb-cost-warning">{issue}</p>
+          :<p className="qmb-inspector-no-issues">✓ Published prices passed schedule validation.</p>}
+        <button type="button" className="qmb-inspector-more" onClick={onReview}>Review customer schedule ›</button>
+      </section>
+      <div className="qmb-inspector-send-block">
+        <button type="button" className="qmb-inspector-send" onClick={onSend}
+          aria-label="Review Pricing Schedule delivery">{editable?'Review schedule':'Share issued schedule'} <span aria-hidden="true">›</span></button>
+        <small>{!canIssue?'Your team role cannot issue documents.':issue?'Complete the published pricing before issue':'Opens review, preview and customer sharing'}</small>
+      </div>
+    </aside>;
+  }
   return (
     <aside className="qmb-desktop-inspector" aria-label="Live quote summary">
       <div className="qmb-desktop-inspector-heading">
