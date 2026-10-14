@@ -1,5 +1,15 @@
 import { test, expect } from '@playwright/test';
 
+async function createQuickQuote(page: import('@playwright/test').Page) {
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('button',{name:'+ New document'}).click();
+  const picker=page.getByRole('dialog',{name:'New Sales Document'});
+  await picker.getByRole('button',{name:/^Quick Quote/}).click();
+  await picker.getByRole('button',{name:/Create document/}).click();
+  await expect(picker).not.toBeVisible();
+}
+
+
 /**
  * This tests the opt-in presentation with the local QC workspace only.
  * No production customer, organization, Auth or Supabase state is ever read.
@@ -16,7 +26,7 @@ test('phone Quotes Beta uses the same quote records and returns to Classic', asy
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await expect(beta).toBeVisible();
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue('');
   await expect(beta.getByText('No Areas yet.')).toBeVisible();
   await beta.getByRole('button',{name:'+ Add Area'}).click();
@@ -49,7 +59,7 @@ test('desktop Quotes Beta is fully opted in and Classic remains selectable', asy
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await expect(beta).toBeVisible();
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const navigator=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   const inspector=beta.getByRole('complementary',{name:'Live quote summary'});
   await expect(navigator).toBeVisible();
@@ -116,7 +126,7 @@ test('Area takeoff grid keeps tabs visible and splash popover updates billable S
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'+ Add piece'}).click();
   await beta.getByRole('textbox',{name:'Piece 1 name'}).fill('Island');
@@ -164,7 +174,7 @@ test('Materials sink rows stay compact and Rate picker pushes content instead of
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'+ Add piece'}).click();
   await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
@@ -200,7 +210,7 @@ test('mobile quote fabrication options persist while zero quantity stays editabl
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'+ Add piece'}).click();
   const qty=beta.getByRole('textbox',{name:'Piece 1 quantity'});
@@ -249,7 +259,7 @@ test('mobile quote scroll retains title, total and tabs while hiding larger head
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const sticky=beta.locator('.qmb-quote-sticky');
   await expect(sticky.getByRole('textbox',{name:'Quote title'})).toBeVisible();
   await expect(sticky.getByRole('navigation',{name:'Quote views'})).toBeVisible();
@@ -312,7 +322,7 @@ test('mobile Quote RATE picker shows Stock Builder Level 0–8 and records selec
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'+ Add piece'}).click();
   await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
@@ -342,7 +352,7 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.locator('.qmb-quote-footer .qmb-primary').click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await expect(review.getByRole('button',{name:'Go to No priced work yet'})).toBeVisible();
@@ -382,7 +392,7 @@ test('Review resolves customer name and sink price inline without leaving Review
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.locator('.qmb-quote-footer .qmb-primary').click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await review.getByRole('button',{name:'Resolve Customer not selected'}).click();
@@ -417,7 +427,7 @@ test('mobile material RATE dropdown never stretches Quantity or overlays followi
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Material',exact:true}).click();
   const row=beta.locator('.qmb-line').first();
   await row.getByRole('button',{name:'Edit line'}).click();
@@ -460,7 +470,7 @@ test('Review missing material rate offers same Builder Levels and other SF rates
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Material',exact:true}).click();
   const row=beta.locator('.qmb-line').first();
   await row.getByRole('button',{name:'Edit line'}).click();
@@ -490,7 +500,7 @@ test('Area workflow advances to Materials and Pricing, creates Next Area and saf
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen A');
   await expect(beta.getByRole('button',{name:'Continue to next Area step'})).toContainText('Materials');
@@ -522,7 +532,7 @@ test('mobile Details are ordered, CRM links do not navigate, and Back restores t
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
   const details=beta.getByRole('region',{name:'Quote customer and project details'});
   await expect(details).toBeVisible();
@@ -559,7 +569,7 @@ test('mobile Details CRM project link is a selection, not a Board shortcut',asyn
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
   await beta.locator('.qmb-details-project-lookup summary').click();
   await expect(beta.getByRole('textbox',{name:'Find existing CRM project (optional)'})).toBeVisible();
@@ -577,7 +587,7 @@ test('desktop Beta selections drawer stays inside editor and preserves live quot
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const navigator=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await navigator.getByRole('button',{name:'Add Area from navigator'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Unit Type A');
@@ -609,7 +619,7 @@ test('desktop Beta uses full center workspace across Build, Details, Preview and
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   const inspector=beta.getByRole('complementary',{name:'Live quote summary'});
   const main=beta.locator('.qmb-desktop-main');
@@ -690,7 +700,7 @@ test('Beta Batch A: Area visibility, order, lines, move and delete preserve tota
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
@@ -757,7 +767,7 @@ test('Beta Area management permits deliberate delete-all without retaining price
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Delete me');
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Pricing'}).click();
@@ -787,7 +797,7 @@ test('Beta Preview edits live Area title and Takeoffs sell rate without leaving 
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('button',{name:'+ Add piece'}).click();
   await beta.getByRole('textbox',{name:'Length (in)'}).fill('48');
@@ -821,7 +831,7 @@ test('desktop Beta toolbar and Job Selections remain accessible outside Build',a
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const history=beta.getByRole('toolbar',{name:'Quote history controls'});
   await expect(history.getByRole('button',{name:'Undo quote change'})).toBeVisible();
   await expect(history.getByRole('button',{name:'Redo quote change'})).toBeVisible();
@@ -848,7 +858,7 @@ test('Quotes Beta Review opens at a specific readiness finding and rechecks chan
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const inspector=beta.getByRole('complementary',{name:'Live quote summary'});
   const finding=inspector.getByRole('button',{name:'Resolve Customer not selected'});
   await expect(finding).toBeVisible();
@@ -880,7 +890,7 @@ test('Area management modal stays opaque above its dimmed background',async ({pa
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('complementary',{name:'Quote workspace navigation'})
     .getByRole('button',{name:'Add Area from navigator'}).click();
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
@@ -913,7 +923,7 @@ test('inline Area mode saves on Enter/outside and cancels pending order on Escap
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
   await beta.getByRole('button',{name:/Done · Quote/}).click();
@@ -953,7 +963,7 @@ test('desktop Area mode edits existing sidebar cards without opening a reorder m
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:'Add Area from navigator'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
@@ -981,7 +991,7 @@ test('General inline Reorder/Delete keeps its charge cards and supports Undo',as
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Custom',exact:true}).click();
   let rows=beta.locator('.qmb-inline-general-row');
   await rows.first().getByRole('button',{name:'Edit line'}).click();
@@ -1022,7 +1032,7 @@ test('Area drag lifts the full card, and compact customer document aligns text',
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:'Add Area from navigator'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen Island');
@@ -1066,7 +1076,7 @@ test('Desktop Batch B: paired Materials and Calculator share editable quotes and
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:'Add Area from navigator'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
@@ -1130,7 +1140,7 @@ test('Desktop Batch B: sink catalog and materials suggestions overlay instead of
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:'Add Area from navigator'}).click();
   await beta.locator('.qmb-area-editor .qmb-tabs').getByRole('button',{name:'Materials'}).click();
@@ -1173,7 +1183,7 @@ test('desktop General precedes Areas and inline sidebar management stays within 
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   const g=beta.locator('.qmb-general-heading');
   const a=beta.locator('.qmb-section-head[data-area-edit-workspace]');
@@ -1208,7 +1218,7 @@ test('new measured Areas keep itemized presentation instead of becoming lump sum
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'+ Add Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
   await beta.getByRole('button',{name:'+ Add piece'}).click();
@@ -1233,7 +1243,7 @@ test('desktop Measure scope and Materials prices share sinks and additional work
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:'Add Area from navigator'}).click();
   const tabs=beta.locator('.qmb-area-editor .qmb-tabs');
@@ -1286,7 +1296,7 @@ test('desktop Area Calculator occupies center workspace, not only inspector',asy
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'Add Area from navigator'}).click();
   const workspace=beta.locator('.qmb-desktop-main .qmb-area-editor');
   await expect(workspace).toBeVisible();
@@ -1317,7 +1327,7 @@ test('desktop Measures Pieces Sinks and Add-ons as compact tables without overfl
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:'Add Area from navigator'}).click();
   const measure=beta.locator('.qmb-measure-rework');
@@ -1355,7 +1365,7 @@ test('Customer Preview owns document columns, Area detail and optional quote-she
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:'Add Area from navigator'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Kitchen');
@@ -1391,7 +1401,7 @@ test('General takeoff can be removed with or without retaining its charges',asyn
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await beta.getByRole('button',{name:'General takeoffs'}).click();
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(beta.getByRole('button',{name:'Delete General takeoff'})).toBeVisible();
@@ -1417,7 +1427,7 @@ test('Area drag moves first-to-last and last-to-first without a stuck lifted car
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   for(const title of ['Kitchen','Bath','Island']){
     await rail.getByRole('button',{name:'Add Area from navigator'}).click();
@@ -1453,7 +1463,7 @@ test('Beta quote library archives, restores and safely deletes an unsent draft',
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:/All quotes/}).click();
   const entry=beta.locator('.qmb-library-entry').filter({hasText:'Untitled quote'}).first();
@@ -1484,7 +1494,7 @@ test('Details gives access to editable revision labels without confusing issued 
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:'Customer & project'}).click();
   const details=beta.getByRole('region',{name:'Quote customer and project details'});
@@ -1553,7 +1563,7 @@ test('Pricing Schedule is accessible through phone Beta Details without changing
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New quote'}).click();
+  await createQuickQuote(page);
   await expect(beta.getByLabel('Pricing Schedule workspace')).toHaveCount(0);
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
   const details=beta.getByRole('region',{name:'Quote customer and project details'});
