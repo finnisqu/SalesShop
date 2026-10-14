@@ -3,6 +3,9 @@ import type {
   SalesDocumentTemplateChoice, PricingBuilderProductType, PricingMaterialType,
 } from '../types/quote';
 import type {RateBookItem, RateBookDivision} from '../types/rateBook';
+import type {StockMaterial} from '../types/settings';
+import type {MaterialLevelGuideDocument} from '../types/materialLevelGuide';
+import {snapshotStockBuilderLevels} from './stockBuilderRateTemplate';
 import {resolveRateBookValues} from '../types/rateBook';
 import {createPricingRateItem,deriveBuilderCustomerItems,deriveRateSheetCustomerItems} from './pricingScheduleBuilder';
 import {createPricingScheduleData,mergePricingScheduleData} from './pricingSchedule';
@@ -82,6 +85,7 @@ export function snapshotCompanyRates(items:RateBookItem[],division?:RateBookDivi
 export function createTemplateSchedule(
   id:string,template:Exclude<SalesDocumentTemplate,'quick-quote'>,
   starting:SalesTemplateStart='blank',source?:Quote,companyRates:RateBookItem[]=[],
+  stockMaterials:StockMaterial[]=[],levelGuide?:MaterialLevelGuideDocument,
 ):PricingScheduleData{
   const route=template==='builder-rates'?'rate-sheet':template==='community-pricing'?'plan-builder':'workbook';
   const publishSource=template==='builder-rates'?'rate-sheet':template==='community-pricing'?'builder':'workbook';
@@ -104,7 +108,19 @@ export function createTemplateSchedule(
       mapping=copied.mapping??mapping;
     }
   }else if(starting==='company-rates'&&template!=='spreadsheet'){
-    builder={...builder,rates:snapshotCompanyRates(companyRates)};
+    const standard=snapshotCompanyRates(companyRates);
+    if(template==='builder-rates'&&levelGuide){
+      const stock=snapshotStockBuilderLevels(stockMaterials,levelGuide);
+      // The Builder Level Guide owns stock material SELL pricing. Company Rate
+      // Book contributes sinks/services only; its generic material rows must
+      // not duplicate or replace approved level prices.
+      builder={...builder,rates:[
+        ...stock.rates,...standard.filter(rate=>rate.kind!=='material-level'),
+      ],stockLevelImport:stock.summary,
+        rateBookName:levelGuide.name};
+    }else{
+      builder={...builder,rates:standard};
+    }
   }
   // Community uses the calculated matrix unless copying a prior, intentionally
   // manually priced community. Rate-sheets always use the same shared rates model.
