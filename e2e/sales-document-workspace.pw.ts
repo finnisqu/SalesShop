@@ -33,7 +33,7 @@ test('Quick Quote stays in its own shell through edit, preview, details, copy an
   await expect(toolbar).toContainText('Quick Quote');
   await expect(toolbar).toContainText('Saved on device');
   await expect(beta.getByRole('button',{name:/Assign a customer/})).toBeVisible();
-  await toolbar.getByRole('button',{name:'Preview',exact:true}).click();
+  await toolbar.getByRole('button',{name:'View customer document'}).click();
   await expect(beta.locator('.qmb-preview')).toBeVisible();
   await toolbar.getByRole('button',{name:'Edit',exact:true}).click();
   await expect(title).toHaveValue('Sample Retail Countertops');
@@ -62,7 +62,7 @@ test('Builder Rates has template-specific editor, direct customer preview and re
   await expect(beta.getByRole('region',{name:'Builder Rate Schedule editor'})).toBeVisible();
   await expect(toolbar).toContainText('Builder Rate Schedule');
   await expect(toolbar).toContainText('Saved on device');
-  await toolbar.getByRole('button',{name:'Preview',exact:true}).click();
+  await toolbar.getByRole('button',{name:'View customer document'}).click();
   await expect(beta.getByRole('region',{name:'Builder Rate Schedule editor'})).toHaveCount(0);
   await toolbar.getByRole('button',{name:'More document actions'}).click();
   await toolbar.getByRole('button',{name:'Customer, project & revisions'}).click();
