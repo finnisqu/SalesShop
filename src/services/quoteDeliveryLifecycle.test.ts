@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import type {Activity} from '../types/crm';
-import {confirmedQuoteDeliveries,quoteDeliveryLabel,quoteIssued} from './quoteDeliveryLifecycle';
+import {confirmedQuoteDeliveries,quoteDeliveryLabel,quoteIssued,projectStageAfterDelivery,projectStageAfterIssue} from './quoteDeliveryLifecycle';
 
 const event=(overrides:Partial<Activity>={}):Activity=>({
   id:'a1',type:'quote-sent',summary:'Customer delivery confirmed',
@@ -34,4 +34,28 @@ describe('revision-specific customer delivery reporting',()=>{
     expect(quoteDeliveryLabel({status:'Viewed'},[])).toBe('Customer viewed');
     expect(quoteDeliveryLabel({status:'Signed'},[])).toBe('Signed by customer');
   });
+  it('keeps project in bid development until actual customer delivery',()=>{
+    for(const stage of ['Discovery','Intent to Bid'] as const){
+      expect(projectStageAfterIssue(stage)).toBe('Bid Development');
+      expect(projectStageAfterDelivery(stage,0)).toBe('Bid Sent');
+    }
+    expect(projectStageAfterIssue('Bid Development')).toBe(null);
+    expect(projectStageAfterIssue('Bid Sent')).toBe(null);
+    expect(projectStageAfterIssue('Negotiation')).toBe(null);
+  });
+  it('moves first delivery to Bid Sent and delivered revisions to Negotiation',()=>{
+    expect(projectStageAfterDelivery('Bid Development',0)).toBe('Bid Sent');
+    expect(projectStageAfterDelivery('Bid Development',2)).toBe('Bid Sent');
+    expect(projectStageAfterDelivery('Bid Sent',0)).toBe(null);
+    expect(projectStageAfterDelivery('Bid Sent',1)).toBe('Negotiation');
+    expect(projectStageAfterDelivery('Negotiation',2)).toBe(null);
+  });
+  it('never regresses completed, won, lost, or inactive accounts',()=>{
+    for(const stage of ['Closed Won','Completed','Closed Lost','Discarded'] as const){
+      expect(projectStageAfterIssue(stage)).toBe(null);
+      expect(projectStageAfterDelivery(stage,0)).toBe(null);
+      expect(projectStageAfterDelivery(stage,5)).toBe(null);
+    }
+  });
+
 });

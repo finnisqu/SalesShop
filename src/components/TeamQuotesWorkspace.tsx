@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { useQuoteStore } from '../store/quoteStore';
+import {useCrmStore} from '../store/crmStore';
 import { displayQuoteNumber, quoteLineTotal, quoteTotal, QUOTE_STATUSES, type Quote } from '../types/quote';
 import {
   filterTeamQuotes, summarizeTeamQuotes, validQuoteTeamAssignment,
@@ -13,6 +14,7 @@ type MembershipRow = { user_id: string; role: string; job_function: string };
 
 export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Quote[]; onShowMine: () => void }) {
   const organizationId = useAuthStore(s=>s.organizationId);
+  const activities=useCrmStore(s=>s.activities);
   const currentRole = useAuthStore(s=>s.teamRole);
   const [divisions,setDivisions] = useState<SalesDivision[]>([]);
   const [teams,setTeams] = useState<SalesTeam[]>([]);
@@ -83,7 +85,7 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
   },[organizationId,selectedId,currentRole]);
 
   const filtered=useMemo(()=>filterTeamQuotes(quotes,filters),[quotes,filters]);
-  const metrics=useMemo(()=>summarizeTeamQuotes(filtered),[filtered]);
+  const metrics=useMemo(()=>summarizeTeamQuotes(filtered,activities),[filtered,activities]);
   const selected=quotes.find(q=>q.id===selectedId);
   const availableTeams=teams.filter(team=>filters.division==='all'||filters.division==='unassigned'||team.division_id===filters.division);
   const teamName=(id?:string)=>teams.find(t=>t.id===id)?.name??'Unassigned team';
@@ -144,7 +146,8 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
     <section className="team-quotes-summary" aria-label="Filtered quote totals">
       <div><span>Quotes</span><strong>{metrics.total}</strong></div>
       <div><span>Draft / ready</span><strong>{metrics.active}</strong></div>
-      <div><span>Sent / viewed</span><strong>{metrics.sent}</strong></div>
+      <div><span>Issued</span><strong>{metrics.issued}</strong></div>
+      <div><span>Delivery confirmed</span><strong>{metrics.delivered}</strong></div>
       <div><span>Signed</span><strong>{metrics.signed}</strong></div>
       <div><span>Quoted value</span><strong>{money.format(metrics.value)}</strong></div>
     </section>
@@ -165,7 +168,7 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
       </select></label>
       <label><span>Status</span><select aria-label="Filter by quote status" value={filters.status}
         onChange={e=>updateFilters({status:e.target.value as TeamQuoteFilters['status']})}>
-        <option value="all">All statuses</option>{QUOTE_STATUSES.map(status=><option key={status}>{status}</option>)}
+        <option value="all">All statuses</option>{QUOTE_STATUSES.map(status=><option value={status} key={status}>{status==='Sent'?'Issued':status}</option>)}
       </select></label>
       <label className="team-quotes-archive"><input type="checkbox" checked={filters.showArchived}
         onChange={e=>updateFilters({showArchived:e.target.checked})}/> Show archived</label>
@@ -177,7 +180,7 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
     <div className="team-quotes-list">
       {filtered.map(quote=><article className="team-quote-card" key={quote.id}>
         <div className="team-quote-card-heading">
-          <div><small>{displayQuoteNumber(quote)} · {quote.status}</small><h2>{quote.title||'Untitled quote'}</h2>
+          <div><small>{displayQuoteNumber(quote)} · {quote.status==='Sent'?'Issued':quote.status}</small><h2>{quote.title||'Untitled quote'}</h2>
             <p>{quote.companyName||'No customer'} · {ownerName(quote.ownerUserId)}</p>
             <small>{divisionName(quote.divisionId)} · {teamName(quote.teamId)}</small></div>
           <div className="team-quote-card-total"><strong>{money.format(quoteTotal(quote))}</strong><span>{quote.quoteDate}</span></div>

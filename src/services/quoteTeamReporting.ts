@@ -1,4 +1,6 @@
 import { quoteTotal, type Quote, type QuoteStatus } from '../types/quote';
+import type {Activity} from '../types/crm';
+import {confirmedQuoteDeliveries} from './quoteDeliveryLifecycle';
 
 export type SalesDivision = { id: string; organization_id: string; name: string };
 export type SalesTeam = { id: string; organization_id: string; name: string; division_id: string | null };
@@ -28,10 +30,12 @@ export function filterTeamQuotes(quotes: readonly Quote[], filters: TeamQuoteFil
   }).slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
-export function summarizeTeamQuotes(quotes: readonly Quote[]) {
+export function summarizeTeamQuotes(quotes: readonly Quote[],activities:readonly Activity[] = []) {
   return {
     total: quotes.length,
     active: quotes.filter((q) => ['Draft', 'Ready'].includes(q.status)).length,
+    issued: quotes.filter((q) => !['Draft', 'Ready'].includes(q.status)).length,
+    delivered: quotes.filter((q)=>confirmedQuoteDeliveries(q,activities).length>0).length,
     sent: quotes.filter((q) => ['Sent', 'Viewed'].includes(q.status)).length,
     signed: quotes.filter((q) => q.status === 'Signed').length,
     value: quotes.reduce((sum, q) => sum + quoteTotal(q), 0),
