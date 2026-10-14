@@ -5,6 +5,7 @@ async function createQuickQuote(page: import('@playwright/test').Page) {
   await beta.getByRole('button',{name:'+ New document'}).click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Quick Quote/}).click();
+  await picker.getByRole('textbox',{name:'Quote name'}).fill('Test Quick Quote');
   await picker.getByRole('button',{name:/Create document/}).click();
   await expect(picker).not.toBeVisible();
 }
@@ -1466,7 +1467,7 @@ test('Beta quote library archives, restores and safely deletes an unsent draft',
   await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await rail.getByRole('button',{name:/All documents/}).click();
-  const entry=beta.locator('.qmb-library-entry').filter({hasText:'Untitled quote'}).first();
+  const entry=beta.locator('.qmb-library-entry').filter({hasText:'Test Quick Quote'}).first();
   await expect(entry).toBeVisible();
   await entry.getByRole('button',{name:'Archive'}).click();
   const archiveDialog=page.getByRole('dialog',{name:'Archive quote'});
@@ -1474,14 +1475,15 @@ test('Beta quote library archives, restores and safely deletes an unsent draft',
   await archiveDialog.getByRole('button',{name:'Archive quote'}).click();
   await expect(entry).toHaveCount(0);
   await beta.getByRole('button',{name:'Show archived'}).click();
-  const restored=beta.locator('.qmb-library-entry').filter({hasText:'Untitled quote'}).first();
+  const restored=beta.locator('.qmb-library-entry').filter({hasText:'Test Quick Quote'}).first();
   await expect(restored).toContainText('Archived');
   await restored.getByRole('button',{name:'Restore'}).click();
   await expect(restored.getByRole('button',{name:'Archive'})).toBeVisible();
   await restored.getByRole('button',{name:'Delete draft'}).click();
   const deleteDialog=page.getByRole('dialog',{name:'Delete draft quote'});
   await expect(deleteDialog).toContainText('Permanent deletion');
-  await deleteDialog.getByRole('button',{name:'Permanently delete draft'}).click();
+  await deleteDialog.getByRole('textbox',{name:'Type DELETE to confirm'}).fill('DELETE');
+   await deleteDialog.getByRole('button',{name:'Permanently delete draft'}).click();
   await expect(restored).toHaveCount(0);
 });
 
@@ -1525,6 +1527,7 @@ test('Builder Rates and Custom Spreadsheet keep separate workspaces and pricing 
     await beta.getByRole('button',{name:'+ New document'}).click();
     const picker=page.getByRole('dialog',{name:'New Sales Document'});
     await picker.getByRole('button',{name:new RegExp('^'+name)}).click();
+    await picker.getByRole('textbox',{name:'Document name'}).fill(name+' QC');
     await picker.getByRole('button',{name:/Create document/}).click();
   };
   await newTemplate('Builder Rate Schedule');
@@ -1581,13 +1584,14 @@ test('phone Quick Quote and Builder Rates are distinct fixed template documents'
   await beta.getByRole('button',{name:'+ New document'}).click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Builder Rate Schedule/}).click();
+  await picker.getByRole('textbox',{name:'Document name'}).fill('Builder Rate QC');
   await picker.getByRole('button',{name:/Create document/}).click();
   await expect(beta.getByRole('region',{name:'Pricing Schedule workspace'})).toBeVisible();
   await expect(beta.getByLabel('Published pricing rows')).toContainText('0 price rows');
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview',exact:true}).click();
   await expect(beta.locator('.pricing-schedule-customer-preview')).toBeVisible();
   await beta.locator('.qmb-pagehead .qmb-back').click();
-  await beta.locator('.qmb-listcard').filter({hasText:'Untitled quote'}).first().click();
+  await beta.locator('.qmb-listcard').filter({hasText:'Test Quick Quote'}).first().click();
   await expect(beta.getByLabel('Pricing Schedule workspace')).toHaveCount(0);
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toBeVisible();
 });
