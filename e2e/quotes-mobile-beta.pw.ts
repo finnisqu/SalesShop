@@ -537,6 +537,26 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await expect(timeline).toContainText('Revision timeline');
   await expect(timeline).toContainText('Customer delivery confirmed');
   await expect(timeline).toContainText('Email');
+  await beta.getByRole('button',{name:/All documents/}).click();
+  const followups=beta.getByRole('region',{name:'Quote follow-up dashboard'});
+  await expect(followups).toContainText('Quote follow-ups');
+  await expect(followups).toContainText('Awaiting customer response');
+  await followups.getByRole('button',{name:'Plan / log follow-up'}).click();
+  const nextDate=followups.getByRole('textbox',{name:'Next follow-up date'});
+  const today=await nextDate.getAttribute('min');
+  expect(today).toMatch(/^\\d{4}-\\d{2}-\\d{2}$/);
+  await nextDate.fill(today!);
+  await followups.getByRole('button',{name:'Schedule',exact:true}).click();
+  await expect(followups).toContainText('Follow-up today');
+  await followups.getByRole('button',{name:'Plan / log follow-up'}).click();
+  await followups.getByRole('button',{name:'Log customer contact'}).click();
+  await expect(followups).toContainText('No next follow-up is scheduled');
+  const stored=await page.evaluate(()=>{
+    const crm=JSON.parse(localStorage.getItem('salesshop-react-crm-v1')||'{}');
+    return crm.activities?.filter((a:{type:string})=>a.type==='quote-follow-up')??[];
+  });
+  expect(stored.map((a:{metadata:{followUpAction:string}})=>a.metadata.followUpAction))
+    .toEqual(['scheduled','contacted']);
 });
 
 test('Review preview returns directly to the same quote delivery checklist',async ({page},testInfo)=>{
