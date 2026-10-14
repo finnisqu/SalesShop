@@ -14,7 +14,7 @@ export function documentMatchesSearch(quote:Quote,query:string):boolean{
   if(!words.length)return true;
   const haystack=[
     quote.title,quote.quoteNumber,quote.companyName,quote.contactName,
-    quote.contactEmail,quote.projectName,salesTemplateLabel(salesDocumentTemplate(quote)),
+    quote.contactEmail,quote.projectId,salesTemplateLabel(salesDocumentTemplate(quote)),
   ].filter(Boolean).join(' ').toLocaleLowerCase();
   return words.every(word=>haystack.includes(word));
 }
