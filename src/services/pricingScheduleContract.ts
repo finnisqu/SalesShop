@@ -1,4 +1,5 @@
 import type {PricingContractRateKey,PricingContractQuantities,PricingContractRow,PricingScheduleBuilderData,PricingScheduleItem} from '../types/quote';
+import {manualAddonCustomerItems,manualPackageOffered,manualPricingHealth} from './pricingScheduleManual';
 
 export const CONTRACT_COLUMNS:PricingContractRateKey[]=[
   'corbels','kitchenSinks','graniteKitchenSf','quartzKitchenSf','bathSf','bathBowls',
@@ -79,16 +80,25 @@ export function calculateContractRow(row:PricingContractRow,rates:PricingContrac
 export function contractPublishedPrice(row:PricingContractRow,rates:PricingContractQuantities){
   return row.priceMode==='manual'?row.customerPrice:calculateContractRow(row,rates).total;
 }
+export function activeContractRows(builder:PricingScheduleBuilderData):PricingContractRow[]{
+  return (builder.contractRows??[]).filter(row=>{
+    if(!row.manualPlanId||!row.manualPackageId)return true;
+    const plan=builder.manualPlans?.find(p=>p.id===row.manualPlanId);
+    const pkg=builder.manualPackages?.find(p=>p.id===row.manualPackageId);
+    return !!(plan&&pkg&&manualPackageOffered(plan,pkg));
+  });
+}
 export function deriveContractCustomerItems(builder:PricingScheduleBuilderData):PricingScheduleItem[]{
-  return (builder.contractRows??[]).map((row,index)=>({
+  const priced=activeContractRows(builder).map((row,index)=>({
     sourceRow:row.sourceRow??index+1,series:row.series||undefined,itemType:row.itemType,
     planNumber:row.planNumber||undefined,planName:row.planName||undefined,
     optionCode:row.optionCode||undefined,description:row.description||undefined,
     customerPrice:contractPublishedPrice(row,builder.contractRates??{}),displayType:'schedule-item' as const,
   }));
+  return [...priced,...manualAddonCustomerItems(builder)];
 }
 export function contractScheduleHealth(builder:PricingScheduleBuilderData){
-  const rows=builder.contractRows??[],rates=builder.contractRates??{};
+  const rows=activeContractRows(builder),rates=builder.contractRates??{};
   const warnings:string[]=[];
   if(!rows.length)warnings.push('Import or create at least one contract row.');
   const known=new Set<string>();
@@ -107,7 +117,7 @@ export function contractScheduleHealth(builder:PricingScheduleBuilderData){
     const amount=contractPublishedPrice(row,rates);
     if(amount===undefined||amount<0)warnings.push(label+': missing customer price.');
   });
-  return [...new Set(warnings)];
+  return [...new Set([...warnings,...manualPricingHealth(builder)])];
 }
 export function newContractRow():PricingContractRow{
   return {id:crypto.randomUUID(),series:'',itemType:'Base',planNumber:'',
