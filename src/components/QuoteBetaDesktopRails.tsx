@@ -61,7 +61,7 @@ export function QuoteBetaDesktopRails({
       </nav>
       {quote.documentType!=='pricing-schedule'&&<><div className="qmb-desktop-areas-head" data-area-edit-workspace><strong>Areas</strong>
         <QuoteBetaAreaModeButton manager={areaManager}/>
-        {!areaManager.editing&&<button type="button" disabled={!editable||quote.documentType==='pricing-schedule'}
+        {!areaManager.editing&&<button type="button" disabled={!editable}
           onClick={onAddArea} aria-label="Add Area from navigator">+ Add</button>}
       </div>
       <nav ref={desktopAreaRef} className={'qmb-desktop-area-list'+(areaManager.editing?' is-managing-areas':'')}
