@@ -9,6 +9,7 @@ import {
   type QuoteShare,
 } from '../services/quoteShareService';
 import { displayQuoteNumber } from '../types/quote';
+import { reviewItemsBlockingDirectShare } from '../services/quoteShareReadiness';
 import '../quote-share.css';
 
 function dateLabel(value: string | null) {
@@ -113,6 +114,8 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
   const cloudReady = mode === 'cloud' && Boolean(organizationId);
   const url = share ? quoteShareUrl(share) : '';
   const active = share?.status === 'active' || share?.status === 'signed';
+  const reviewedItemsNeedingIssue=reviewItemsBlockingDirectShare(quote);
+  const creationReady=allowCreation&&reviewedItemsNeedingIssue===0;
 
   return (
     <div className={'quote-share-control'+(inline?' is-inline':'')}>
@@ -146,10 +149,14 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
                 <div className="quote-share-empty">
                   <strong>No customer link yet</strong>
                   <p>{quote.status === 'Draft' || quote.status === 'Ready'
-                    ? 'Creating the link will send and freeze this exact revision before it becomes customer-accessible.'
+                    ? reviewedItemsNeedingIssue>0
+                      ? 'Issue the draft from Review to freeze this exact revision before sharing it.'
+                      : 'Creating the link will issue and freeze this exact revision before it becomes customer-accessible.'
                     : 'Create a secure link to this frozen quote revision.'}</p>
-                  {!allowCreation&&<p className="quote-share-review-needed">Recheck and complete Review before creating a new customer link.</p>}
-                  <button type="button" onClick={() => void makeLink(false)} disabled={working || !allowCreation || quote.status === 'Declined' || quote.status === 'Expired'}>
+                  {reviewedItemsNeedingIssue>0
+                    ?<p className="quote-share-review-needed">This quote has {reviewedItemsNeedingIssue} review {reviewedItemsNeedingIssue===1?'item':'items'} to acknowledge. Issue it from Review first; then create the customer link here.</p>
+                    :!allowCreation&&<p className="quote-share-review-needed">Recheck and complete Review before creating a new customer link.</p>}
+                  <button type="button" onClick={() => void makeLink(false)} disabled={working || !creationReady || quote.status === 'Declined' || quote.status === 'Expired'}>
                     {working ? 'Creating…' : 'Create customer link'}
                   </button>
                 </div>
@@ -181,7 +188,7 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
 
                   <div className="quote-share-secondary-actions">
                     {share.status !== 'revoked' && <button type="button" onClick={() => void revoke()} disabled={working}>Revoke</button>}
-                    <button type="button" onClick={() => void makeLink(true)} disabled={working || !allowCreation || quote.status === 'Declined' || quote.status === 'Expired'}>
+                    <button type="button" onClick={() => void makeLink(true)} disabled={working || !creationReady || quote.status === 'Declined' || quote.status === 'Expired'}>
                       {working ? 'Working…' : share.status === 'revoked' ? 'Create new link' : 'Regenerate link'}
                     </button>
                   </div>

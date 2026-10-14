@@ -425,6 +425,31 @@ test('Review fixes zero-priced flat charges by editing their real amount',async 
   await expect(review.getByRole('button',{name:'Close Review and Issue'})).toBeVisible();
 });
 
+test('Review preview returns directly to the same quote delivery checklist',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Phone Review-to-preview navigation contract');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await createQuickQuote(page);
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await expect(review).toBeVisible();
+  await review.getByRole('button',{name:'Customer preview ›'}).click();
+  await expect(review).toHaveCount(0);
+  await expect(beta.locator('.customer-quote-paper')).toBeVisible();
+  await beta.getByRole('button',{name:'Back to Review'}).click();
+  await expect(review).toBeVisible();
+  await expect(review.locator('[data-review-delivery]')).toBeVisible();
+  await review.getByRole('button',{name:'Close Review and Issue'}).click();
+  await beta.getByRole('button',{name:'Build',exact:true}).click();
+  await beta.getByRole('button',{name:'Preview',exact:true}).click();
+  await expect(beta.getByRole('button',{name:'Back to Review'})).toHaveCount(0);
+});
+
 test('Review resolves customer name and sink price inline without leaving Review',async ({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','Mobile quick fix workflow');
   await page.goto('/');
