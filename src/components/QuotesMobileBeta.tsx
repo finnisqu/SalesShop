@@ -739,7 +739,7 @@ export function QuotesMobileBeta() {
           {hasLibraryFilters&&<button type="button" className="qmb-library-reset" onClick={resetLibraryFilters}>
             Clear filters
           </button>}
-        </div>
+        </div>}
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary"
