@@ -8,9 +8,10 @@ async function openBuilder(page:import('@playwright/test').Page){
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ Advanced Pricing Schedule'}).click();
+  await beta.getByRole('button',{name:'+ New document'}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Community Plan Pricing/}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Create document/}).click();
   const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
-  await workspace.getByRole('button',{name:/Plan Pricing/}).click();
   return workspace;
 }
 test('calculate Sanford configurations with shared material rates and replacement vanity takeoffs',async({page},testInfo)=>{
