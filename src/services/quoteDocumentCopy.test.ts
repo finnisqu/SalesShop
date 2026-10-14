@@ -9,7 +9,7 @@ function original():Quote{
     title:'Sanford House',status:'Sent',ownerUserId:'old-user',
     sections:[{id:'area-1',title:'Master Bathroom',customerVisible:true,
       scope:{takeoffPieces:[{id:'piece-1',name:'Vanity',count:1,lengthIn:72,widthIn:22}],
-        takeoffSinks:[{id:'sink-1',category:'bathroom',name:'Vanity bowl',count:2,
+        takeoffSinks:[{id:'sink-1',category:'vanity',name:'Vanity bowl',count:2,
           includeInPricing:true}]}}],
     lines:[
       {id:'line-1',sectionId:'area-1',kind:'material',description:'Quartz',pricingMode:'quantity-rate',
