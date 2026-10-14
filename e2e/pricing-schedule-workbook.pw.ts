@@ -24,6 +24,7 @@ async function setup(page:import('@playwright/test').Page){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New document'}).click();
   await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Custom Spreadsheet/}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('textbox',{name:'Document name'}).fill('QC 5 Document');
   await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Create document/}).click();
   await beta.getByRole('textbox',{name:'Quote title'}).fill('QC Builder Workbook');
   const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
@@ -114,6 +115,7 @@ test('recalculation updates cached customer price and exported XLSX after stale 
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ New document'}).click();
   await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Custom Spreadsheet/}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('textbox',{name:'Document name'}).fill('QC 5 Document');
   await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Create document/}).click();
   const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
   await workspace.locator('input[type="file"]').setInputFiles({
