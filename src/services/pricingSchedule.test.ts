@@ -11,7 +11,7 @@ import {
   validatePricingScheduleForSend,
 } from './pricingSchedule';
 
-type TestCell={v?:unknown;f?:string};
+type TestCell={v?:unknown;f?:string;s?:unknown};
 type TestSheet={
   cellData:Record<string,Record<string,TestCell>>;
   columnData:Record<string,{w?:number}>;
