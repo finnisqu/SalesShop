@@ -24,9 +24,10 @@ test('D.R. Horton contract rows import, recalculate 12 Sanford configurations, a
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ Advanced Pricing Schedule'}).click();
+  await beta.getByRole('button',{name:'+ New document'}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Community Plan Pricing/}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Create document/}).click();
   const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
-  await workspace.getByRole('button',{name:/Plan Pricing/}).click();
   await workspace.getByRole('button',{name:'Contract Table'}).click();
   const contract=workspace.getByRole('region',{name:'Builder contract schedule'});
   await contract.locator('input[type="file"]').setInputFiles({
