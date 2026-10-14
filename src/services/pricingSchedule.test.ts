@@ -103,3 +103,64 @@ describe('Pricing Schedule workbook correctness and Excel parity',()=>{
     expect(final.worksheets[0].getRow(2).height).toBe(35);
   });
 });
+
+
+describe('Pricing Schedule XLSX appearance parity',()=>{
+  it('retains styled headers, currency formats, alignments, wraps and colored borders',async()=>{
+    const {data,sheet}=fixture();
+    sheet.cellData['0']['5']={
+      v:'DESCRIPTION',
+      s:{ff:'Arial',fs:13,bl:1,cl:{rgb:'#FFFFFF'},bg:{rgb:'#17324D'},
+        ht:2,vt:2,tb:3,
+        bd:{b:{s:8,cl:{rgb:'#204060'}}}},
+    };
+    sheet.cellData['1']={'5':{v:'Countertop'} ,'6':{
+      v:2400,
+      s:{n:{pattern:'"$"#,##0.00'},fs:11,it:1,cl:{rgb:'#006633'},
+        bd:{t:{s:1,cl:{rgb:'#DDDDDD'}}}},
+    }};
+    // Number formats and style-only blank cells must not disappear.
+    sheet.cellData['2']={'6':{s:{bg:{rgb:'#FFF2CC'}}}};
+    const excel=await buildExcelPricingWorkbook(data);
+    const bytes=new Uint8Array(await excel.xlsx.writeBuffer() as ArrayBuffer);
+    const imported=await importExcelPricingWorkbook(new File([bytes],'styled.xlsx'));
+    const id=pricingScheduleSheets(imported)[0].id;
+    const model=(imported as unknown as {sheets:Record<string,TestSheet>}).sheets[id];
+    expect(model.cellData['0']['5'].s).toMatchObject({
+      ff:'Arial',fs:13,bl:1,cl:{rgb:'#FFFFFF'},bg:{rgb:'#17324D'},
+      ht:2,vt:2,tb:3,bd:{b:{s:8,cl:{rgb:'#204060'}}},
+    });
+    expect(model.cellData['1']['6'].s).toMatchObject({
+      n:{pattern:'"$"#,##0.00'},it:1,cl:{rgb:'#006633'},
+      bd:{t:{s:1,cl:{rgb:'#DDDDDD'}}},
+    });
+    expect(model.cellData['2']['6'].s).toMatchObject({bg:{rgb:'#FFF2CC'}});
+    const reexported=await buildExcelPricingWorkbook(imported);
+    const header=reexported.worksheets[0].getCell('F1');
+    expect(header.font).toMatchObject({name:'Arial',size:13,bold:true,
+      color:{argb:'FFFFFFFF'}});
+    expect(header.fill).toMatchObject({type:'pattern',pattern:'solid',
+      fgColor:{argb:'FF17324D'}});
+    expect(header.alignment).toMatchObject({horizontal:'center',vertical:'middle',wrapText:true});
+    expect(header.border.bottom).toMatchObject({style:'medium',
+      color:{argb:'FF204060'}});
+    const price=reexported.worksheets[0].getCell('G2');
+    expect(price.numFmt).toBe('"$"#,##0.00');
+    expect(price.font).toMatchObject({italic:true,color:{argb:'FF006633'}});
+    expect(reexported.worksheets[0].getCell('G3').fill)
+      .toMatchObject({type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF2CC'}});
+  });
+
+  it('resolves style IDs written by Univer back into XLSX',async()=>{
+    const {data,sheet}=fixture();
+    sheet.cellData['1']={'5':{v:'Quartz'},'6':{v:850,s:'currency-accent'}};
+    (data as unknown as {styles:Record<string,unknown>}).styles={
+      'currency-accent':{n:{pattern:'$#,##0.00'},bl:1,bg:{rgb:'#DAF4E7'}},
+    };
+    const excel=await buildExcelPricingWorkbook(data);
+    const cell=excel.worksheets[0].getCell('G2');
+    expect(cell.numFmt).toBe('$#,##0.00');
+    expect(cell.font.bold).toBe(true);
+    expect(cell.fill).toMatchObject({fgColor:{argb:'FFDAF4E7'}});
+  });
+});
