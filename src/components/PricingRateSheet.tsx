@@ -133,12 +133,33 @@ export function PricingRateSheet({ quote }: { quote: Quote }) {
         </div>
       </header>
 
+      {builder.stockLevelImport&&<section className="pricing-builder-panel pricing-stock-level-summary"
+        aria-label="Company stock level import summary">
+        <header><div><strong>Company stock levels · saved snapshot</strong>
+          <small>{builder.stockLevelImport.guideName} · {builder.stockLevelImport.assignedCount} of
+            {' '+builder.stockLevelImport.stockCount} stocked colors assigned across
+            {' '+builder.stockLevelImport.levelCount} level group(s)</small></div></header>
+        <p>Level rates were copied from the company's approved Builder Level Guide. Each level lists
+          its assigned stock colors. Edits in this builder agreement do not change the company guide
+          or other agreements.</p>
+        {builder.stockLevelImport.unassigned.length>0&&<details className="pricing-stock-level-review">
+          <summary>{builder.stockLevelImport.unassigned.length} stock color(s) need review · not included in customer prices</summary>
+          <div className="pricing-stock-level-review-items">
+            {builder.stockLevelImport.unassigned.map(item=><div key={item.materialId}>
+              <strong>{item.name}</strong><small>{item.reason}</small>
+            </div>)}
+          </div>
+          <small>Assign or correct these levels in Catalog, then create a new stock-level snapshot
+            or add a color manually to this agreement after confirming its price.</small>
+        </details>}
+      </section>}
       <section className="pricing-builder-panel rate-book-name-panel">
         <label className="pricing-builder-name-field">
           <span>Customer Rate Book name</span>
           <input value={builder.rateBookName} onChange={(event) => saveBuilder({ ...builder, rateBookName: event.target.value })} placeholder="DeVane Builders 2026" />
         </label>
-        <small>This Pricing Schedule keeps its own editable snapshot. Copy standard rates from the company Rate Book below, then tailor them for this customer without changing company defaults.</small>
+        <small>This agreement has its own editable rate snapshot. You can tailor levels,
+          colors and add-ons for the builder without changing company defaults.</small>
       </section>
 
       <RateBookImportPanel existingRates={builder.rates} onImport={importMasterRates} />
@@ -146,7 +167,8 @@ export function PricingRateSheet({ quote }: { quote: Quote }) {
       <section className="pricing-builder-panel">
         <header className="pricing-builder-panel-heading pricing-rate-section-heading">
           <button type="button" className="pricing-clean-collapse" onClick={() => setMaterialsCollapsed((value) => !value)} aria-expanded={!materialsCollapsed}>{materialsCollapsed ? '▸' : '▾'}</button>
-          <div><strong>Material levels</strong><small>Type or paste approved colors freely, choose stocked colors, or copy material rates from the company Rate Book.</small></div>
+          <div><strong>Material levels</strong><small>Each level's customer $/SF rate and approved stock
+            colors can be edited independently for this builder. Add or remove colors as needed.</small></div>
           <button type="button" onClick={addMaterialLevel}>+ Material level</button>
         </header>
         {!materialsCollapsed && <div className="pricing-rate-level-list">
@@ -183,7 +205,8 @@ export function PricingRateSheet({ quote }: { quote: Quote }) {
               </article>
             );
           })}
-          {!materials.length && <div className="pricing-builder-empty">Add Level 1 Granite, Level 2 Quartz, or copy company material rates above.</div>}
+          {!materials.length && <div className="pricing-builder-empty">No stock colors were assigned to a priced builder level.
+              Review the stock level report above, or add a material level manually.</div>}
         </div>}
       </section>
 
