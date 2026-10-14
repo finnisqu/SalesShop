@@ -26,10 +26,11 @@ import {
 } from '../types/quote';
 import { PricingScheduleCustomerTable } from './PricingScheduleCustomerTable';
 import { PricingContractTable } from './PricingContractTable';
+import {PricingManualSchedule} from './PricingManualSchedule';
 import '../pricing-schedule.css';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-type BuilderTab = 'matrix' | 'plans' | 'options' | 'rates' | 'contract';
+type BuilderTab = 'manual' | 'addons' | 'matrix' | 'plans' | 'options' | 'rates' | 'contract';
 
 function numberValue(value: string) {
   if (value.trim() === '') return undefined;
@@ -44,7 +45,7 @@ function builderFor(quote: Quote) {
 export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const builder = builderFor(quote);
-  const [tab, setTab] = useState<BuilderTab>(builder.outputMode==='contract'?'contract':'matrix');
+  const [tab, setTab] = useState<BuilderTab>(builder.outputMode==='contract'&&builder.contractRows?.length&&!builder.manualPlans?.length?'contract':builder.outputMode==='matrix'?'matrix':'manual');
   const [selectedPlanId, setSelectedPlanId] = useState(builder.plans[0]?.id ?? '');
   const [selectedCell, setSelectedCell] = useState<{ planId: string; optionId: string } | null>(null);
 
@@ -120,29 +121,34 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
       <header className="pricing-builder-header">
         <div>
           <span className="quote-control-heading">Structured schedule builder</span>
-          <small>Build plan × option pricing or import and author detailed builder contract price files.</small>
+          <small>Enter complete house prices in a matrix, set shared add-on rates, or use calculated plan takeoffs when needed.</small>
         </div>
         <div className="pricing-builder-header-meta">
-          <span>{builder.plans.length} plans</span>
-          <span>{builder.options.length} options</span>
-          <span>{builder.rates.length} rates</span>
+          <span>{builder.manualPlans?.length??builder.plans.length} house plans</span>
+          <span>{builder.manualPackages?.length??builder.options.length} packages</span>
+          <span>{builder.manualAddons?.length??0} add-on rates</span>
           {builder.outputMode==='contract'&&<span>{builder.contractRows?.length??0} contract rows</span>}
           <strong>{quote.pricingSchedule?.publishSource === 'builder' ? 'Publishing Builder' : 'Builder available'}</strong>
         </div>
       </header>
 
       <nav className="pricing-builder-tabs">
-        {(['matrix', 'contract', 'plans', 'options', 'rates'] as BuilderTab[]).map((item) => (
+        {(['manual','addons','contract','matrix','plans','options','rates'] as BuilderTab[]).map((item) => (
           <button type="button" className={tab === item ? 'active' : ''} key={item} onClick={() => {
             setTab(item);
-            if(item==='contract')saveBuilder({...builder,outputMode:'contract'});
+            if(item==='contract'||item==='manual'||item==='addons')
+              saveBuilder({...builder,outputMode:'contract'});
             else if(item==='matrix')saveBuilder({...builder,outputMode:'matrix'});
           }}>
-            {item === 'matrix' ? 'Price Matrix' : item==='contract'?'Contract Table':item[0].toUpperCase() + item.slice(1)}
+            {item==='manual'?'Manual Matrix':item==='addons'?'Add-on Rates':
+              item==='contract'?'Contract Table':item==='matrix'?'Calculated Matrix':
+              item==='plans'?'Plan Takeoffs':item==='options'?'Option Rules':'Rate Book'}
           </button>
         ))}
       </nav>
 
+      {tab === 'manual' && <PricingManualSchedule builder={builder} onChange={saveBuilder} mode="matrix"/>}
+      {tab === 'addons' && <PricingManualSchedule builder={builder} onChange={saveBuilder} mode="addons"/>}
       {tab === 'contract' && <PricingContractTable builder={builder} onChange={saveBuilder}/>}
 
       {tab === 'rates' && (
