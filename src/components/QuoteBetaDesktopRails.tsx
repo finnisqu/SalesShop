@@ -35,14 +35,14 @@ export function QuoteBetaDesktopRails({
   areaManager:QuoteBetaAreaManager;
 }){
   const editable=quoteIsCommerciallyEditable(quote);
-  const steps=[['build',quote.documentType==='pricing-schedule'?'Edit '+salesTemplateLabel(salesDocumentTemplate(quote)):'Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
+  const steps=[['build',quote.documentType==='pricing-schedule'?'Editor':'Quote editor'],['details','Customer & project'],['preview','Customer preview']] as const;
   const areas=areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s));
   const desktopAreaRef=useQuoteBetaCardReflow<HTMLElement>(areas.map(s=>s.id));
   return <>
     <aside className="qmb-desktop-navigation" aria-label="Quote workspace navigation">
       <div className="qmb-desktop-rail-head">
         <button type="button" className="qmb-desktop-library-link" onClick={onLibrary}>‹ All documents</button>
-        <strong>Sales Documents <span>Beta</span></strong>
+        <strong>{salesTemplateLabel(salesDocumentTemplate(quote))} <span>Beta</span></strong>
         <small>{displayQuoteNumber(quote)} · {quote.status}</small>
         <div className="qmb-desktop-history" role="toolbar" aria-label="Quote history controls">
           <button type="button" onClick={onUndo} disabled={!editable||!undoDepth}
@@ -56,8 +56,8 @@ export function QuoteBetaDesktopRails({
       </div>
       <nav className="qmb-desktop-mainsteps" aria-label="Quote workflow">
         {steps.map(([id,label])=><button type="button" key={id}
-          className={page==='quote'&&quoteTab===id?'is-active':''}
-          aria-current={page==='quote'&&quoteTab===id?'page':undefined}
+          className={(page==='quote'&&quoteTab===id)||(page==='area'&&id==='build')?'is-active':''}
+          aria-current={(page==='quote'&&quoteTab===id)||(page==='area'&&id==='build')?'page':undefined}
           onClick={()=>onQuoteTab(id)}>
           <span className="qmb-desktop-step-icon">{id==='build'?'▤':id==='details'?'♙':'▧'}</span>
           {label}
