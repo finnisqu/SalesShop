@@ -41,7 +41,7 @@ test('document library creates independent Quick Quote and Builder Rate editors'
   await create(page,'Builder Rate Schedule','Company stock rates');
   await expect(beta.getByRole('region',{name:'Builder Rate Schedule editor'})).toBeVisible();
   await expect(beta.getByRole('region',{name:'Pricing Schedule workspace'})
-    .getByText('Simple Rate Sheet')).toBeVisible();
+    .getByText('Builder Rate Schedule')).toBeVisible();
   await expect(beta.getByRole('button',{name:/Plan Pricing|Spreadsheet/})).toHaveCount(0);
   await beta.getByRole('button',{name:/Documents/}).first().click();
   await expect(beta.getByRole('button',{name:/Builder Rate Schedule/}).first()).toBeVisible();
