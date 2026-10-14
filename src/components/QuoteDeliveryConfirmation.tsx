@@ -2,6 +2,7 @@ import {useState} from 'react';
 import type {Quote} from '../types/quote';
 import {useAuthStore} from '../store/authStore';
 import {useCrmStore} from '../store/crmStore';
+import {recordQuoteDelivered} from '../services/quoteCrmService';
 import {useQuoteStore} from '../store/quoteStore';
 import {
   confirmedQuoteDeliveries,QUOTE_DELIVERY_METHOD_LABELS,
@@ -15,7 +16,6 @@ export function QuoteDeliveryConfirmation({quote,canRecord}:{quote:Quote;canReco
   const [error,setError]=useState('');
   const [confirming,setConfirming]=useState(false);
   const activities=useCrmStore(state=>state.activities);
-  const recordActivity=useCrmStore(state=>state.recordActivity);
   const mode=useAuthStore(state=>state.mode);
   const deliveries=confirmedQuoteDeliveries(quote,activities);
   if(!quoteIssued(quote))return null;
@@ -37,18 +37,9 @@ export function QuoteDeliveryConfirmation({quote,canRecord}:{quote:Quote;canReco
     ))return;
     setConfirming(true);
     try{
-      recordActivity({
-        type:'quote-sent',
-        summary:'Customer delivery confirmed · '+QUOTE_DELIVERY_METHOD_LABELS[method]+' · Revision '+quote.revision,
-        quoteId:quote.id,
-        projectId:quote.projectId,
-        companyId:quote.companyId,
-        contactId:quote.contactId,
-        metadata:{
-          source:'manual',quoteNumber:quote.quoteNumber,revision:quote.revision,
-          documentType:quote.documentType,deliveryConfirmed:true,deliveryMethod:method,
-        },
-      });
+      if(!recordQuoteDelivered(latest,method)){
+        setError('Customer delivery was already confirmed for this revision.');
+      }
     }catch(reason){
       setError(reason instanceof Error?reason.message:'Could not record customer delivery.');
     }finally{setConfirming(false);}
