@@ -17,6 +17,7 @@ async function create(page:import('@playwright/test').Page,template:string,start
   const dialog=page.getByRole('dialog',{name:'New Sales Document'});
   await dialog.getByRole('button',{name:new RegExp('^'+template)}).click();
   if(starting)await dialog.getByRole('button',{name:new RegExp(starting)}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('textbox',{name:'Document name'}).fill('QC 1 Document');
   await dialog.getByRole('button',{name:/Create document/}).click();
   await expect(dialog).not.toBeVisible();
   return beta;
@@ -34,6 +35,7 @@ test('document library creates independent Quick Quote and Builder Rate editors'
   await expect(dialog.getByRole('button',{name:/Create document/})).toHaveCount(0);
   await dialog.getByRole('button',{name:'← All templates'}).click();
   await dialog.getByRole('button',{name:/^Quick Quote/}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('textbox',{name:'Quote name'}).fill('QC 1 Document');
   await dialog.getByRole('button',{name:/Create document/}).click();
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toBeVisible();
   await expect(beta.getByRole('region',{name:'Pricing Schedule workspace'})).toHaveCount(0);
@@ -59,6 +61,7 @@ test('create new community from a previous builder rate agreement without making
   await dialog.getByRole('button',{name:/^Community Plan Pricing/}).click();
   await dialog.getByRole('button',{name:/Copy previous agreement/}).click();
   await dialog.getByRole('combobox',{name:'Previous agreement'}).selectOption({index:1});
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('textbox',{name:'Document name'}).fill('QC 1 Document');
   await dialog.getByRole('button',{name:/Create document/}).click();
   await expect(beta.getByRole('region',{name:'Community Plan Pricing editor'})).toBeVisible();
   await expect(beta.getByRole('navigation',{name:'Calculated builder workflow'})).toBeVisible();
@@ -115,6 +118,7 @@ test('Builder Rate company template snapshots stock colors and approved level se
   await expect(company).toContainText('2 stock colors');
   await expect(company).toContainText('2 priced level groups');
   await company.click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('textbox',{name:'Document name'}).fill('QC 1 Document');
   await picker.getByRole('button',{name:/Create document/}).click();
   const editor=beta.getByRole('region',{name:'Builder Rate Schedule editor'});
   const cards=editor.locator('.pricing-rate-level-card');
