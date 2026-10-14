@@ -32,7 +32,8 @@ function readLocation():QuotesBetaLocation{
     if(value.page!=='library'&&!value.quoteId)return {...DEFAULT_LOCATION};
     return {
       quoteId:typeof value.quoteId==='string'?value.quoteId:undefined,
-      page:value.page,
+      // Runtime validator above guarantees this is a supported page.
+      page:value.page as QuotesBetaLocation['page'],
       quoteTab:['build','details','preview'].includes(String(value.quoteTab))
         ?value.quoteTab as QuotesBetaLocation['quoteTab']:'build',
       areaTab:['measure','materials','pricing','calculator'].includes(String(value.areaTab))
