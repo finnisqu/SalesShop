@@ -4,6 +4,7 @@ import { applyAreaScopeQuantity,resolveLineAreaScopeState } from './quoteAreaSco
 import {
   parseInches,isValidTakeoffPiece,takeoffPieceSf,totalTakeoffSf,
   patchQuoteTakeoff,detachQuoteTakeoff,sectionTakeoffSf,newTakeoffPiece,
+  takeoffCustomerDetails,takeoffCustomerSpecs,
 } from './quoteTakeoffsLite';
 
 const at='2026-10-12T18:30:00.000Z';
@@ -108,4 +109,34 @@ describe('Takeoffs Lite: precise fractional-inch piece measurements',()=>{
     expect(a).toMatchObject({name:'',count:1});
     expect(a.id).not.toBe(b.id);
   });
+  it('uses only selected surface and sink labels in the customer document',()=>{
+    const section=quote().sections[0];
+    const withSpecs={...section,scope:{
+      ...section.scope,takeoffMaterial:'  Glacier White Quartz  ',
+      takeoffPieces:[piece('Private measurements',48,25)],
+      takeoffSinks:[
+        {id:'s1',category:'kitchen' as const,name:'3218 Single',count:2,
+          unitPrice:240,internalCostOverride:110},
+        {id:'s2',category:'vanity' as const,name:'',count:1,unitPrice:85},
+        {id:'s3',category:'vanity' as const,name:'Unused sink',count:0,unitPrice:99},
+      ],
+    }};
+    const detail=takeoffCustomerDetails(withSpecs);
+    expect(detail).toEqual({
+      material:'Glacier White Quartz',
+      sinks:['2 × 3218 Single','1 × Vanity sink'],
+    });
+    expect(takeoffCustomerSpecs(withSpecs))
+      .toBe('Glacier White Quartz · 2 × 3218 Single · 1 × Vanity sink');
+    const displayed=JSON.stringify(detail);
+    expect(displayed).not.toContain('Private measurements');
+    expect(displayed).not.toContain('internalCost');
+    expect(displayed).not.toContain('110');
+    expect(displayed).not.toContain('Unused sink');
+  });
+  it('emits no customer details for an unselected Area',()=>{
+    expect(takeoffCustomerDetails(quote().sections[1])).toEqual({material:'',sinks:[]});
+    expect(takeoffCustomerSpecs(quote().sections[1])).toBe('');
+  });
+
 });
