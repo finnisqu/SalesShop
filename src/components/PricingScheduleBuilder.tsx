@@ -182,7 +182,7 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
     <div className="pricing-builder">
       <header className="pricing-builder-header">
         <div>
-          <span className="quote-control-heading">Structured schedule builder</span>
+          <span className="quote-control-heading">Community Plan Pricing</span>
           <small>Enter complete house prices in a matrix, set shared add-on rates, or use calculated plan takeoffs when needed.</small>
         </div>
         <div className="pricing-builder-header-meta">
