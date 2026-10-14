@@ -10,6 +10,7 @@ on:
       - 'src/components/PricingDocumentEditor.tsx'
       - 'src/components/NewSalesDocumentPicker.tsx'
       - 'src/services/salesDocumentTemplates*'
+      - 'src/services/stockBuilderRateTemplate*'
       - 'src/sales-documents.css'
       - 'src/components/PricingManual*'
       - 'src/components/PricingContract*'
@@ -50,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Workbook unit tests
-        run: npx vitest run src/services/pricingSchedule.test.ts src/services/pricingScheduleContract.test.ts src/services/pricingScheduleManual.test.ts src/services/pricingScheduleBuilderVariants.test.ts src/services/salesDocumentTemplates.test.ts
+        run: npx vitest run src/services/pricingSchedule.test.ts src/services/pricingScheduleContract.test.ts src/services/pricingScheduleManual.test.ts src/services/pricingScheduleBuilderVariants.test.ts src/services/salesDocumentTemplates.test.ts src/services/stockBuilderRateTemplate.test.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Focused workbook browser tests
