@@ -23,6 +23,7 @@ async function setup(page:import('@playwright/test').Page){
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await beta.getByRole('button',{name:'+ Advanced Pricing Schedule'}).click();
+  await beta.getByRole('textbox',{name:'Quote title'}).fill('QC Builder Workbook');
   const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
   await workspace.getByRole('button',{name:/Spreadsheet/}).click();
   await expect(workspace.getByLabel('Pricing schedule workbook')).toBeVisible();
@@ -64,8 +65,15 @@ test('spreadsheet import keeps cached formulas, customer-only prices and XLSX ex
   await rail.getByRole('button',{name:'Pricing Schedule'}).click();
   await expect(workspace.getByText('builder-pricing.xlsx')).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('main',{name:'Quotes mobile beta'})).toBeVisible();
-  await expect(page.locator('.pricing-schedule-mapped-preview')).toContainText('$800.00');
+  const reopened=page.getByRole('main',{name:'Quotes mobile beta'});
+  await expect(reopened).toBeVisible();
+  // Reload may return to the library or a previously selected quote tab.
+  // Explicitly reopen the saved schedule before inspecting its spreadsheet.
+  const savedCard=reopened.locator('.qmb-listcard').filter({hasText:'QC Builder Workbook'});
+  if(await savedCard.count())await savedCard.click();
+  await reopened.getByRole('complementary',{name:'Quote workspace navigation'})
+    .getByRole('button',{name:'Pricing Schedule'}).click();
+  await expect(reopened.locator('.pricing-schedule-mapped-preview')).toContainText('$800.00');
 });
 
 test('mobile price mapping remains accessible without consuming the workbook viewport',async({page},info)=>{
