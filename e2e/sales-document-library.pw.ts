@@ -34,7 +34,7 @@ test('mobile documents search by name/template and filter by status without losi
   await expect(beta.locator('.qmb-library-entry')).toHaveCount(1);
   await expect(beta.locator('.qmb-library-entry')).toContainText('Smith Kitchen');
   await beta.getByRole('button',{name:'Clear document search'}).click();
-  await beta.getByRole('navigation',{name:'Filter document templates'})
+  await beta.getByRole('navigation',{name:'Document library sections'})
     .getByRole('button',{name:'Community Plan Pricing'}).click();
   await expect(beta.locator('.qmb-library-entry')).toHaveCount(1);
   await expect(beta.locator('.qmb-library-entry')).toContainText('Oakwood Pricing');
