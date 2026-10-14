@@ -63,3 +63,68 @@
 }
 .qmb .qmb-document-identity-note{padding-top:1px;padding-bottom:4px}
 .qmb .qmb-document-customer-link:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* Document options live as third control beside Undo / Redo. */
+.sales-app .qmb .qmb-desktop-history{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.sales-app .qmb .qmb-desktop-history>button,
+.sales-app .qmb .sales-document-rail-actions>summary{
+  display:flex;align-items:center;justify-content:center;gap:4px;min-width:0;
+  min-height:33px;padding:5px 6px;border:1px solid var(--qmb-border);
+  border-radius:7px;background:var(--qmb-bg);color:var(--qmb-accent);
+  font-size:11px;font-weight:750;white-space:nowrap;cursor:pointer;
+}
+.sales-app .qmb .sales-document-rail-actions{
+  position:relative;z-index:35;min-width:0;align-self:stretch
+}
+.sales-app .qmb .sales-document-rail-actions>summary{height:100%;list-style:none}
+.sales-app .qmb .sales-document-rail-actions>summary::-webkit-details-marker{display:none}
+.sales-app .qmb .sales-document-rail-actions>summary>span{font-size:11px}
+.sales-app .qmb .sales-document-rail-menu{
+  display:grid;gap:3px;position:absolute;left:0;top:calc(100% + 5px);
+  width:min(275px,calc(100vw - 25px));min-width:210px;
+  z-index:80;padding:7px;background:var(--qmb-card);border:1px solid var(--qmb-border);
+  border-radius:10px;box-shadow:0 12px 26px rgba(0,0,0,.23)
+}
+.sales-app .qmb .sales-document-rail-menu>button{
+  width:100%;min-width:0;display:block;text-align:left;border:0;
+  padding:10px 9px;border-radius:6px;color:var(--qmb-ink);
+  background:transparent;font-size:12px;font-weight:690;white-space:normal
+}
+.sales-app .qmb .sales-document-rail-menu>button:hover,
+.sales-app .qmb .sales-document-rail-menu>button:focus-visible{
+  background:var(--qmb-tint)
+}
+.sales-app .qmb .sales-document-rail-menu>button.is-danger{
+  color:var(--ss-danger,#db766c);
+}
+.sales-app .qmb .sales-document-rail-menu>small{
+  padding:8px;border-top:1px solid var(--qmb-border);color:var(--qmb-muted);
+  line-height:1.45;font-size:10px
+}
+.sales-app .qmb .qmb-history .sales-document-rail-actions>summary{
+  width:42px;height:42px;font-size:21px;
+  border:1px solid var(--qmb-border);border-radius:12px;
+  background:var(--qmb-card)
+}
+.sales-app .qmb .qmb-history .sales-document-rail-actions>summary>span{display:none}
+.sales-app .qmb .qmb-history .sales-document-rail-menu{left:auto;right:0;bottom:calc(100% + 5px);top:auto}
+.sales-app .qmb .qmb-desktop-navigation{overflow:visible}
+.sales-app .qmb .qmb-desktop-rail-head{position:relative;z-index:22}
+.sales-app .qmb .qmb-document-confirm-dialog{max-width:min(480px,calc(100vw - 28px))}
+.sales-app .qmb .qmb-document-confirm-body{padding:15px;display:grid;gap:13px;min-width:0}
+.sales-app .qmb .qmb-document-confirm-body p{font-size:13px;line-height:1.5;margin:0}
+.sales-app .qmb .qmb-document-confirm-body label,
+.sales-app .qmb .qmb-document-delete-phrase{display:grid;gap:6px;font-size:12px}
+.sales-app .qmb .qmb-document-confirm-body label span,
+.sales-app .qmb .qmb-document-delete-phrase span{font-weight:780}
+.sales-app .qmb .qmb-document-confirm-body input,
+.sales-app .qmb .qmb-document-delete-phrase input{
+  box-sizing:border-box;min-height:40px;width:100%;border-radius:7px;
+  border:1px solid var(--qmb-border);padding:8px 10px;
+  color:var(--qmb-ink);background:var(--qmb-bg);font:inherit
+}
+.sales-app .qmb .qmb-document-delete-phrase{margin:12px 0}
+.sales-app .qmb .qmb-area-deletion-choice:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:1100px){
+  .sales-app .qmb .qmb-desktop-history{gap:4px}
+}
