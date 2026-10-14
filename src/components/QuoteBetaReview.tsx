@@ -109,7 +109,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
             onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
           <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer schedule preview ›</button>
           <QuoteShareControl inline allowCreation={canIssue&&(!editable||scheduleReady)}/>
-          {!editable&&<QuoteDeliveryConfirmation quote={quote} canRecord={canIssue}/>} 
+          {!editable&&<QuoteDeliveryConfirmation quote={quote} canRecord={canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&!quote.archivedAt}/>} 
           {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&<button type="button" className="qmb-outline qmb-block"
             onClick={()=>setSignatureOpen(true)}>{quote.status==='Signed'?'View signed receipt':'Sign in person'}</button>}
           {editable&&<button type="button" className="qmb-primary qmb-block"
@@ -207,7 +207,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         </div>:<button type="button" className="qmb-outline qmb-block" onClick={onPreview}>View issued customer revision ›</button>}
         {!editable&&<p className="qmb-audit-help">Share only this issued revision. Creating a link does not change the accepted price or contents.</p>}
         <QuoteShareControl inline allowCreation={canIssue&&!editable} autoOpenOnIssue/>
-        {!editable&&<QuoteDeliveryConfirmation quote={quote} canRecord={canIssue}/>} 
+        {!editable&&<QuoteDeliveryConfirmation quote={quote} canRecord={canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&!quote.archivedAt}/>} 
         {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&
           <button type="button" className="qmb-outline qmb-block" onClick={()=>setSignatureOpen(true)}>
             {quote.status==='Signed'?'View signed receipt':'Sign in person'}
