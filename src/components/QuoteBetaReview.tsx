@@ -4,6 +4,7 @@ import type {Quote} from '../types/quote';
 import {quoteTotal,displayQuoteNumber} from '../types/quote';
 import {approvedCustomerDraft,quoteDeliveryApprovalKey,quoteDeliveryReviewKey} from '../services/quoteDeliveryApproval';
 import {QuoteShareControl} from './QuoteShareControl';
+import {QuoteDeliveryConfirmation} from './QuoteDeliveryConfirmation';
 import {QuoteSignatureDialog} from './QuoteSignatureDialog';
 import {auditQuoteDraft,type QuoteAuditDestination,type QuoteAuditFinding} from '../services/quoteDraftAudit';
 import {quoteCanCreateRevision} from '../services/quoteIntegrity';
@@ -108,11 +109,12 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
             onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
           <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer schedule preview ›</button>
           <QuoteShareControl inline allowCreation={canIssue&&(!editable||scheduleReady)}/>
+          {!editable&&<QuoteDeliveryConfirmation quote={quote} canRecord={canIssue}/>} 
           {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&<button type="button" className="qmb-outline qmb-block"
             onClick={()=>setSignatureOpen(true)}>{quote.status==='Signed'?'View signed receipt':'Sign in person'}</button>}
           {editable&&<button type="button" className="qmb-primary qmb-block"
             disabled={sending||!canIssue||!scheduleReady} onClick={onIssue}>
-            {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':scheduleError?'Complete the schedule to issue':'Issue Pricing Schedule / mark sent'}</button>}
+            {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':scheduleError?'Complete the schedule to issue':'Issue Pricing Schedule · no message sent'}</button>}
           {!canIssue&&editable&&<small className="qmb-audit-help">Your current team role cannot issue schedules.</small>}
         </section>
         <button type="button" className="qmb-quiet qmb-block" onClick={onClassic}>Continue in Classic Quotes</button>
@@ -199,12 +201,13 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
               {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':report.blockers.length?'Resolve pricing issues to issue':
                 report.review.length&&!acknowledged?'Review remaining items to issue':
                 !previewed?'Preview customer document to issue':!approved?'Approve customer document to issue':
-                  'Issue quote / mark sent'}
+                  'Issue quote · no message sent'}
             </button>
           </div>
         </div>:<button type="button" className="qmb-outline qmb-block" onClick={onPreview}>View issued customer revision ›</button>}
         {!editable&&<p className="qmb-audit-help">Share only this issued revision. Creating a link does not change the accepted price or contents.</p>}
         <QuoteShareControl inline allowCreation={canIssue&&!editable} autoOpenOnIssue/>
+        {!editable&&<QuoteDeliveryConfirmation quote={quote} canRecord={canIssue}/>} 
         {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&
           <button type="button" className="qmb-outline qmb-block" onClick={()=>setSignatureOpen(true)}>
             {quote.status==='Signed'?'View signed receipt':'Sign in person'}
