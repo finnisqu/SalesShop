@@ -749,7 +749,7 @@ export function QuotesMobileBeta() {
             title={q.archivedAt?'Restore from Archived to reopen':'Open '+(q.title||'document')}
             onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
             <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
-              <span className="qmb-chip">{q.archivedAt?'Archived':q.status}</span></div>
+              <span className="qmb-chip">{q.archivedAt?'Archived':q.status==='Sent'?'Issued':q.status}</span></div>
             <strong>{q.title||'Untitled document'}</strong>
             <div className="qmb-library-updated">Edited {new Date(q.updatedAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</div>
             <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}{q.documentType==='quote'?' · '+q.sections.length+' Areas':''}</small>
@@ -782,7 +782,7 @@ export function QuotesMobileBeta() {
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
           <button type="button" className="qmb-back" onClick={()=>setPage('library')}>‹ Documents</button>
-          <span className="qmb-chip">{salesTemplateLabel(salesDocumentTemplate(quote))} · {quote.status}</span>
+          <span className="qmb-chip">{salesTemplateLabel(salesDocumentTemplate(quote))} · {quote.status==='Sent'?'Issued':quote.status}</span>
           <div className="qmb-headeractions">
             <button type="button" className="qmb-document-new-shortcut" onClick={()=>setShowNewDocument(true)}>+ New document</button>
             <AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button>
@@ -802,7 +802,7 @@ export function QuotesMobileBeta() {
               {quote.companyName||'Assign a customer'}{quote.contactName?' · '+quote.contactName:''}
               <span aria-hidden="true"> ›</span>
             </button>
-            <span>{quote.status} · Revision {quote.revision}</span>
+            <span>{quote.status==='Sent'?'Issued':quote.status} · Revision {quote.revision}</span>
             <SalesDocumentSaveStatus quote={quote} cloudMode={authMode==='cloud'}/>
           </div>
           {quote.templateOrigin&&<div className="qmb-pad qmb-document-origin">
