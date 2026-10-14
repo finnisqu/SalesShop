@@ -198,7 +198,7 @@ export function PricingContractTable({builder,onChange}:{builder:PricingSchedule
         {showTakeoffs?'Hide':'Edit'} kitchen / bathroom takeoff details
       </button>
       {showTakeoffs&&<div className="pricing-contract-takeoffs">
-        {[['Kitchen sink count',16],['Kitchen perimeter SF',17],['Kitchen island SF',18],['Kitchen splash SF',19],
+        {([['Kitchen sink count',16],['Kitchen perimeter SF',17],['Kitchen island SF',18],['Kitchen splash SF',19],
           ['Owner vanity size',20],['Owner splash sides',21],['Owner top SF',22],['Owner bowls',23],
           ['Bath 2 vanity size',24],['Bath 2 splash sides',25],['Bath 2 top SF',26],['Bath 2 bowls',27],
           ['Bath 3 vanity size',28],['Bath 3 splash sides',29],['Bath 3 top SF',30],['Bath 3 bowls',31],
