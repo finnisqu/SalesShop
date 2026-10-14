@@ -10,6 +10,12 @@
   border-radius:9px;border:1px solid var(--qmb-border);background:var(--qmb-card);
   color:var(--qmb-accent);font-weight:750;font-size:12px}
 .qmb .qmb-preview-seller-toolbar button[aria-pressed=true]{background:var(--qmb-tint)}
+.qmb .qmb-preview-seller-toolbar .qmb-preview-back-review{
+  background:var(--qmb-tint);border-color:var(--qmb-border);color:var(--qmb-ink);
+}
+.qmb .qmb-preview-seller-toolbar .qmb-preview-back-review:focus-visible{
+  outline:2px solid var(--qmb-accent);outline-offset:2px;
+}
 .qmb .qmb-preview.is-live-editing .customer-quote-row{position:relative}
 .qmb .qmb-preview-title-edit{padding:1px 3px;border:1px solid transparent;background:transparent;
   color:inherit;cursor:pointer;text-align:left;font:inherit;font-weight:inherit}
