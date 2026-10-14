@@ -400,7 +400,7 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await expect(review.getByRole('checkbox',{name:/I reviewed the remaining items/})).toBeChecked();
   await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeEnabled();
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
-  await expect(review.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
+  await expect(review.getByRole('button',{name:'Issue quote · no message sent'})).toBeEnabled();
   await review.getByRole('button',{name:/Resolve Material not selected:/}).click();
   await expect(review.getByRole('region',{name:/Resolve Material not selected:/})).toBeVisible();
   await review.getByRole('region',{name:/Resolve Material not selected:/})
@@ -473,8 +473,8 @@ test('Previewed customer revision approval expires after a change before issue',
   await beta.getByRole('button',{name:'Back to Review'}).click();
   await expect(acknowledgement).toBeChecked();
   await approval.check();
-  await expect(review.getByRole('button',{name:'Issue quote / mark sent'})).toBeEnabled();
-  await review.getByRole('button',{name:'Issue quote / mark sent'}).click();
+  await expect(review.getByRole('button',{name:'Issue quote · no message sent'})).toBeEnabled();
+  await review.getByRole('button',{name:'Issue quote · no message sent'}).click();
   await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
   await expect(review.locator('.quote-share-control.is-inline')
     .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');
@@ -512,11 +512,17 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await beta.getByRole('button',{name:'Back to Review'}).click();
   await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
-  await review.getByRole('button',{name:'Issue quote / mark sent'}).click();
+  await review.getByRole('button',{name:'Issue quote · no message sent'}).click();
   await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
   await expect(review.getByLabel('Customer document revision')).toContainText('$400.00');
   await expect(review.locator('.quote-share-control.is-inline')
     .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');
+  const delivery=review.getByRole('region',{name:'Customer delivery confirmation'});
+  await expect(delivery).toContainText('Issued — delivery not confirmed');
+  page.once('dialog',dialog=>dialog.accept());
+  await delivery.getByRole('button',{name:'Confirm customer delivery'}).click();
+  await expect(delivery).toContainText('Customer delivery confirmed');
+  await expect(delivery).toContainText('Email');
 });
 
 test('Review preview returns directly to the same quote delivery checklist',async ({page},testInfo)=>{
