@@ -384,6 +384,29 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
 });
 
 
+test('Review fixes zero-priced flat charges by editing their real amount',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Mobile zero-price Quick Quote regression');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await createQuickQuote(page);
+  // A fresh Quick Quote starts with a $0 fixed-price "New line item".
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await review.getByRole('button',{name:/Resolve Zero-price charge: New line item/}).click();
+  const editor=review.getByRole('region',{name:/Resolve Zero-price charge: New line item/});
+  await expect(editor.getByRole('spinbutton',{name:'Line amount ($)'})).toHaveValue('0');
+  await editor.getByRole('spinbutton',{name:'Line amount ($)'}).fill('175');
+  await editor.getByRole('button',{name:'Save'}).click();
+  await expect(review.getByRole('button',{name:/Resolve Zero-price charge: New line item/})).toHaveCount(0);
+  await expect(review.locator('.qmb-audit-total')).toContainText('$175.00');
+  await expect(review.getByRole('button',{name:'Close Review and Issue'})).toBeVisible();
+});
+
 test('Review resolves customer name and sink price inline without leaving Review',async ({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','Mobile quick fix workflow');
   await page.goto('/');
