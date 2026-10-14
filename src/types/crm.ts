@@ -99,6 +99,9 @@ export interface ActivityMetadata {
   fromStage?: ProjectStage;
   toStage?: ProjectStage;
   source?: 'manual' | 'quote' | 'system';
+  /** Only a salesperson's explicit, revision-specific confirmation is delivery. */
+  deliveryConfirmed?: boolean;
+  deliveryMethod?: 'email' | 'text' | 'in-person' | 'other';
 }
 
 export interface Activity {
