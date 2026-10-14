@@ -44,11 +44,16 @@ import {useQuoteBetaGeneralManager,QuoteBetaGeneralModeButton,QuoteBetaGeneralGr
   QuoteBetaGeneralDelete,QuoteBetaGeneralDeleteDialog} from './QuoteBetaGeneralManager';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
-import { createPricingScheduleData, pricingScheduleValidationError } from '../services/pricingSchedule';
+import {pricingScheduleValidationError} from '../services/pricingSchedule';
+import {salesDocumentTemplate,salesTemplateLabel,SALES_DOCUMENT_TEMPLATES,createTemplateSchedule,
+  type SalesTemplateStart} from '../services/salesDocumentTemplates';
+import {NewSalesDocumentPicker} from './NewSalesDocumentPicker';
+import {useRateBookStore} from '../store/rateBookStore';
+import type {SalesDocumentTemplate,SalesDocumentTemplateChoice} from '../types/quote';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 
 // Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
-const PricingScheduleWorkspace=lazy(()=>import('./PricingScheduleWorkbook').then(module=>({default:module.PricingScheduleWorkbook})));
+const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(module=>({default:module.PricingDocumentEditor})));
 
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
@@ -396,6 +401,10 @@ export function QuotesMobileBeta() {
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
   const [search,setSearch]=useState('');
   const [showArchived,setShowArchived]=useState(false);
+  const [showNewDocument,setShowNewDocument]=useState(false);
+  const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
+  const stockRates=useRateBookStore(s=>s.items);
+  const hydrateRateBook=useRateBookStore(s=>s.hydrate);
   const [libraryAction,setLibraryAction]=useState<{id:string;kind:'archive'|'delete'}|null>(null);
   const archiveQuote=useQuoteStore(s=>s.archiveQuote);
   const restoreQuote=useQuoteStore(s=>s.restoreQuote);
@@ -407,7 +416,7 @@ export function QuotesMobileBeta() {
   const quoteScrollRef=useRef<HTMLDivElement>(null);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
-  useEffect(()=>{hydrate();hydrateCrm();},[hydrate,hydrateCrm]);
+  useEffect(()=>{hydrate();hydrateCrm();hydrateRateBook();},[hydrate,hydrateCrm,hydrateRateBook]);
   useEffect(()=>{
     if(!hydrated)return;
     const previous=restoredLocation.current.quoteId;
@@ -467,16 +476,33 @@ export function QuotesMobileBeta() {
   const canIssue=authMode!=='cloud'||canIssueTeamQuote(teamRole,department);
   const canManageLibrary=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,department));
   const list=myQuotes.filter(q=>(showArchived||!q.archivedAt)&&
+    (documentFilter==='all'||salesDocumentTemplate(q)===documentFilter)&&
     [q.title,q.companyName,q.quoteNumber].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
   const openQuote=(id:string)=>{select(id);setQuoteTab('build');setPage('quote');setSelectionsOpen(false);setReviewOpen(false);setError('');};
-  const createQuote=(documentType:'quote'|'pricing-schedule'='quote')=>{
-    const id=create({documentType});
+  const createFromTemplate=(
+    template:Exclude<SalesDocumentTemplateChoice,'multifamily'>,
+    start:SalesTemplateStart='blank',sourceId?:string,
+  )=>{
+    const source=myQuotes.find(item=>item.id===sourceId);
+    if(start==='previous'&&!source)return;
+    const documentType=template==='quick-quote'?'quote':'pricing-schedule';
+    const title=source?source.title+' · New agreement':template==='quick-quote'?'Untitled quote':
+      salesTemplateLabel(template);
+    const id=create({documentType,title,
+      ...(source?{companyId:source.companyId,companyName:source.companyName,
+        contactId:source.contactId,contactName:source.contactName,
+        contactEmail:source.contactEmail,projectId:source.projectId}:{})});
     useQuoteStore.getState().updateQuote(id,{
+      templateId:template,
+      ...(source?{templateOrigin:{sourceQuoteId:source.id,sourceRevision:source.revision,sourceTitle:source.title}}:{}),
       lines:[],
-      ...(documentType==='pricing-schedule'?{pricingSchedule:createPricingScheduleData(id)}:{}),
+      ...(template!=='quick-quote'?{
+        pricingSchedule:createTemplateSchedule(id,template,start,source,
+          stockRates.filter(rate=>rate.active)),
+      }:{}),
     });
-    openQuote(id);
+    setShowNewDocument(false);openQuote(id);
   };
   const openArea=(id:string)=>{setAreaId(id);setAreaTab('measure');setPage('area');};
   const goBack=()=>{setPage('quote');setAreaId(null);};
@@ -569,18 +595,24 @@ export function QuotesMobileBeta() {
       <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Quotes <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
       <div className="qmb-pad qmb-pagecontent">
-        <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Quotes</h1>
-        <p className="qmb-subtitle">Pick up where you left off, or start with a blank idea.</p>
-        <label className="qmb-search"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a quote or customer" aria-label="Search my quotes"/></label>
-        <div className="qmb-section-head"><h3>My quotes</h3><button type="button" className="qmb-quiet" onClick={()=>setShowArchived(v=>!v)}>{showArchived?'Hide archived':'Show archived'}</button></div>
+        <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
+        <p className="qmb-subtitle">Open an existing agreement, quote or workbook—or create a new document from a purpose-built template.</p>
+        <label className="qmb-search"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a document or customer" aria-label="Search my documents"/></label>
+        <nav className="qmb-library-filter-row" aria-label="Filter document templates">
+           {[{id:'all' as const,title:'All'},...SALES_DOCUMENT_TEMPLATES.filter(t=>t.available).map(t=>({
+             id:t.id as SalesDocumentTemplate,title:t.title}))].map(item=>
+             <button key={item.id} type="button" className={documentFilter===item.id?'active':''}
+               onClick={()=>setDocumentFilter(item.id)}>{item.title}</button>)}
+         </nav>
+         <div className="qmb-section-head"><h3>My documents</h3><button type="button" className="qmb-quiet" onClick={()=>setShowArchived(v=>!v)}>{showArchived?'Hide archived':'Show archived'}</button></div>
         <div className="qmb-library-grid">
         {list.map(q=><div className="qmb-library-entry" key={q.id}>
           <button type="button" className="qmb-card qmb-listcard"
             onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
             <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
               <span className="qmb-chip">{q.archivedAt?'Archived':q.status}</span></div>
-            <strong>{q.title||'Untitled quote'}</strong>
-            <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {q.documentType==='pricing-schedule'?'Pricing Schedule':q.sections.length+' Areas'}</small>
+            <strong>{q.title||'Untitled document'}</strong>
+            <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}{q.documentType==='quote'?' · '+q.sections.length+' Areas':''}</small>
               <b>{q.documentType==='pricing-schedule'?`${q.pricingSchedule?.customerItems.length??0} published rows`:money.format(quoteTotal(q))}</b></div>
           </button>
           {canManageLibrary&&<div className="qmb-library-card-actions">
@@ -593,16 +625,17 @@ export function QuotesMobileBeta() {
           </div>}
         </div>)}
         </div>
-        {!list.length&&<div className="qmb-empty">No matching quotes. Start one without filling in any required fields.</div>}
+        {!list.length&&<div className="qmb-empty">No matching documents. Create a new one from a template.</div>}
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
-        <button type="button" className="qmb-quiet qmb-block" onClick={()=>createQuote('pricing-schedule')}>+ Advanced Pricing Schedule</button>
+        <button type="button" className="qmb-outline qmb-block" onClick={()=>setShowNewDocument(true)}>Browse document templates</button>
       </div>
-      <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={()=>createQuote()}>+ New quote</button></footer>
+      <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary"
+          onClick={()=>setShowNewDocument(true)}>+ New document</button></footer>
     </>:page==='quote'&&quote?<div className="qmb-editor qmb-quote-editor">
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
-          <button type="button" className="qmb-back" onClick={()=>setPage('library')}>‹ My quotes</button>
-          <span className="qmb-chip">{quote.status}</span>
+          <button type="button" className="qmb-back" onClick={()=>setPage('library')}>‹ Documents</button>
+          <span className="qmb-chip">{salesTemplateLabel(salesDocumentTemplate(quote))} · {quote.status}</span>
           <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button></div>
         </header>
         <div className="qmb-quote-sticky">
@@ -741,6 +774,9 @@ export function QuotesMobileBeta() {
             onClick={()=>setShowDeleteGeneralTakeoff(false)}>Cancel</button></footer>
         </section>
       </div>,document.body)}
+    {showNewDocument&&<NewSalesDocumentPicker quotes={myQuotes}
+      stockRateCount={stockRates.filter(item=>item.active).length}
+      onClose={()=>setShowNewDocument(false)} onCreate={createFromTemplate}/>}
     {libraryAction&&(()=>{
       const chosen=quotes.find(q=>q.id===libraryAction.id);
       if(!chosen)return null;
