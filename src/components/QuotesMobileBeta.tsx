@@ -710,9 +710,9 @@ export function QuotesMobileBeta() {
             {([['build','Build'],['details','Details'],['preview','Preview']] as const).map(([id,label])=>
               <button key={id} type="button" className={quoteTab===id?'active':''}
                 aria-current={quoteTab===id?'page':undefined}
-                onClick={()=>navigateDocument(id)}>{label}</button>)}
-            <button type="button" className="qmb-selections-tab"
-              aria-label="Open quote selections" onClick={()=>setSelectionsOpen(true)}>◇ Selections</button>
+                onClick={()=>navigateDocument(id)}>{id==='build'&&quote.documentType==='pricing-schedule'?'Editor':label}</button>)}
+            {quote.documentType!=='pricing-schedule'&&<button type="button" className="qmb-selections-tab"
+              aria-label="Open quote selections" onClick={()=>setSelectionsOpen(true)}>◇ Selections</button>}
           </nav>
         </div>
         <div className="qmb-pad qmb-pagecontent">
