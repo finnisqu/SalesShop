@@ -379,8 +379,14 @@ export function calculatePlanOption(
       warning: numericRate === undefined ? `${rate.name} is missing its rate.` : undefined,
     });
   }
+  const measurementWarnings = takeoffs.filter(takeoff=>
+    takeoff.squareFeet === undefined &&
+    (takeoff.length !== undefined || takeoff.width !== undefined) &&
+    !(typeof takeoff.length === 'number' && typeof takeoff.width === 'number')
+  ).map(takeoff=>`${plan.name} / ${takeoff.room} / ${takeoff.piece || 'Surface'} needs both length and width, or a direct SF measurement.`);
   const warnings = [
     ...selection.warnings,
+    ...measurementWarnings,
     ...lines.flatMap((line) => line.warning ? [line.warning] : []),
   ];
   if (!builder.takeoffs.some(takeoff => takeoff.planId === plan.id))
