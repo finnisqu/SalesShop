@@ -19,6 +19,7 @@ import {
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
 } from '../types/quote';
 import { QuoteBetaDetails } from './QuoteBetaDetails';
+import {SalesDocumentToolbar} from './SalesDocumentToolbar';
 import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
@@ -372,6 +373,8 @@ export function QuotesMobileBeta() {
   const quotes=useQuoteStore(s=>s.quotes);
   const activeQuoteId=useQuoteStore(s=>s.activeQuoteId);
   const create=useQuoteStore(s=>s.createQuote);
+  const duplicateDocument=useQuoteStore(s=>s.duplicateDocument);
+  const createRevision=useQuoteStore(s=>s.createRevision);
   const select=useQuoteStore(s=>s.selectQuote);
   const update=useQuoteStore(s=>s.updateQuote);
   const addSection=useQuoteStore(s=>s.addSection);
@@ -492,7 +495,26 @@ export function QuotesMobileBeta() {
     (documentFilter==='all'||salesDocumentTemplate(q)===documentFilter)&&
     [q.title,q.companyName,q.quoteNumber].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
-  const openQuote=(id:string)=>{select(id);setQuoteTab('build');setPage('quote');setSelectionsOpen(false);setReviewOpen(false);setError('');};
+  const openQuote=(id:string)=>{
+    select(id);setQuoteTab('build');setPage('quote');setAreaId(null);
+    setSelectionsOpen(false);setReviewOpen(false);setError('');
+    if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
+  };
+  const navigateDocument=(tab:QuoteTab)=>{
+    setPage('quote');setQuoteTab(tab);setAreaId(null);
+    if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
+  };
+  const copyCurrentDocument=()=>{
+    if(!quote||!canManageLibrary)return;
+    const newId=duplicateDocument(quote.id);
+    if(newId)openQuote(newId);
+    else setError('Could not create an independent document copy.');
+  };
+  const reviseCurrentDocument=()=>{
+    if(!quote||!canIssue)return;
+    createRevision(quote.id);
+    navigateDocument('build');
+  };
   const createFromTemplate=(
     template:Exclude<SalesDocumentTemplateChoice,'multifamily'>,
     start:SalesTemplateStart='blank',sourceId?:string,
@@ -523,7 +545,7 @@ export function QuotesMobileBeta() {
     setShowNewDocument(false);openQuote(id);
   };
   const openArea=(id:string)=>{setAreaId(id);setAreaTab('measure');setPage('area');};
-  const goBack=()=>{setPage('quote');setAreaId(null);};
+  const goBack=()=>{navigateDocument('build');};
   const newArea=()=>{
     if(!quote||!editable)return;
     const id=addSection(quote.id);
@@ -596,7 +618,7 @@ export function QuotesMobileBeta() {
         quote={quote} page={page} quoteTab={quoteTab} areaTab={areaTab} areaId={areaId}
         areaManager={areaManager}
         onLibrary={()=>{setSelectionsOpen(false);setPage('library');setAreaId(null);}}
-        onQuoteTab={tab=>{setPage('quote');setQuoteTab(tab);setAreaId(null);}}
+        onQuoteTab={navigateDocument}
         onArea={id=>{if(page==='area'&&id===areaId)return;openArea(id);}}
         onAreaTab={tab=>{setPage('area');setAreaTab(tab);}}
         onReview={()=>openReview()}
@@ -664,16 +686,23 @@ export function QuotesMobileBeta() {
               onChange={e=>update(quote.id,{title:e.target.value})}/>
             <strong className="qmb-quote-total" aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>{quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}</strong>
           </div>
+          {quote.templateOrigin&&<div className="qmb-pad qmb-document-origin">
+            <span>Based on {quote.templateOrigin.sourceTitle} · Rev {quote.templateOrigin.sourceRevision}</span>
+            <span>· Independent working copy</span>
+          </div>}
+          <SalesDocumentToolbar quote={quote}
+            onLibrary={()=>{setPage('library');setAreaId(null);setSelectionsOpen(false);}}
+            onBuild={()=>navigateDocument('build')}
+            onDetails={()=>navigateDocument('details')}
+            onPreview={()=>navigateDocument('preview')}
+            onDuplicate={copyCurrentDocument}
+            onCreateRevision={reviseCurrentDocument}
+            canCreateRevision={canIssue} cloudMode={authMode==='cloud'}/>
           <nav className="qmb-tabs" aria-label="Quote views">
             {([['build','Build'],['details','Details'],['preview','Preview']] as const).map(([id,label])=>
               <button key={id} type="button" className={quoteTab===id?'active':''}
                 aria-current={quoteTab===id?'page':undefined}
-                onClick={()=>{
-                  setQuoteTab(id);
-                  const scroll=quoteScrollRef.current;
-                  const identity=scroll?.querySelector<HTMLElement>('.qmb-quote-sticky');
-                  if(scroll&&identity)scroll.scrollTop=identity.offsetTop;
-                }}>{label}</button>)}
+                onClick={()=>navigateDocument(id)}>{label}</button>)}
             <button type="button" className="qmb-selections-tab"
               aria-label="Open quote selections" onClick={()=>setSelectionsOpen(true)}>◇ Selections</button>
           </nav>
