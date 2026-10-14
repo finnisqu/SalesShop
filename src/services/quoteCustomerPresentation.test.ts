@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { QuoteLine } from '../types/quote';
 import { quoteLineAmount, quoteLineTotal, quoteLinesTotal } from '../types/quote';
+import { presentItemizedQuoteLines, presentGeneralSummary } from './quoteCustomerPresentation';
 
 function line(overrides: Partial<QuoteLine> = {}): QuoteLine {
   return {
@@ -35,4 +36,24 @@ describe('quote customer presentation math', () => {
       line({ id: 'excluded', quantity: 1, rate: 500, customerVisible: true, includeInTotal: false }),
     ])).toBe(4500);
   });
+  it('folds hidden billed charges into visible priced rows without changing the total',()=>{
+    const lines=[
+      line({id:'top',kind:'material',description:'Countertops',quantity:1,rate:700}),
+      line({id:'splash',description:'Fabrication',quantity:1,rate:125,customerVisible:false}),
+      line({id:'excluded',description:'Nonbillable alternate',quantity:1,rate:500,
+        customerVisible:true,includeInTotal:false}),
+    ];
+    const rows=presentItemizedQuoteLines(lines);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({id:'top',amount:825,aggregated:true});
+    expect(quoteLinesTotal(lines)).toBe(825);
+  });
+  it('uses a generic Included work row if every priced line is hidden',()=>{
+    const lines=[line({id:'private',description:'Private labor',customerVisible:false})];
+    const rows=presentItemizedQuoteLines(lines);
+    expect(rows).toMatchObject([{description:'Included work',amount:200,aggregated:true}]);
+    expect(rows.some(row=>row.description==='Private labor')).toBe(false);
+    expect(presentGeneralSummary(lines)[0].amount).toBe(200);
+  });
+
 });
