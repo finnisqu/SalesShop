@@ -524,7 +524,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await expect(delivery).toContainText('Customer delivery confirmed');
   await expect(delivery).toContainText('Email');
   await review.getByRole('button',{name:'Close Review and Issue'}).click();
-  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Details'}).click();
+  await beta.getByRole('navigation',{name:'Quote workflow'}).getByRole('button',{name:'Customer & project'}).click();
   const timeline=beta.getByRole('region',{name:'Quote document and history'});
   await expect(timeline).toContainText('Revision timeline');
   await expect(timeline).toContainText('Customer delivery confirmed');
