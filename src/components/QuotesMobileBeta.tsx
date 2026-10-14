@@ -901,7 +901,7 @@ export function QuotesMobileBeta() {
       </div>
       <footer className="qmb-footer qmb-quote-footer">
         <button type="button" className="qmb-primary" onClick={openSend}>
-          {quote.documentType==='pricing-schedule'?'Review Pricing Schedule ›':audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Send quote ›'}</button>
+          {quote.documentType==='pricing-schedule'?'Review Pricing Schedule ›':audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Review & issue ›'}</button>
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}/>:null}
