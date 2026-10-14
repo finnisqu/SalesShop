@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {createPortal} from 'react-dom';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useQuoteStore } from '../store/quoteStore';
@@ -44,7 +44,11 @@ import {useQuoteBetaGeneralManager,QuoteBetaGeneralModeButton,QuoteBetaGeneralGr
   QuoteBetaGeneralDelete,QuoteBetaGeneralDeleteDialog} from './QuoteBetaGeneralManager';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
+import { createPricingScheduleData } from '../services/pricingSchedule';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
+
+// Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
+const PricingScheduleWorkspace=lazy(()=>import('./PricingScheduleWorkbook').then(module=>({default:module.PricingScheduleWorkbook})));
 
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
@@ -466,7 +470,14 @@ export function QuotesMobileBeta() {
     [q.title,q.companyName,q.quoteNumber].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
   const openQuote=(id:string)=>{select(id);setQuoteTab('build');setPage('quote');setSelectionsOpen(false);setReviewOpen(false);setError('');};
-  const createQuote=()=>{const id=create();useQuoteStore.getState().updateQuote(id,{lines:[]});openQuote(id);};
+  const createQuote=(documentType:'quote'|'pricing-schedule'='quote')=>{
+    const id=create({documentType});
+    useQuoteStore.getState().updateQuote(id,{
+      lines:[],
+      ...(documentType==='pricing-schedule'?{pricingSchedule:createPricingScheduleData(id)}:{}),
+    });
+    openQuote(id);
+  };
   const openArea=(id:string)=>{setAreaId(id);setAreaTab('measure');setPage('area');};
   const goBack=()=>{setPage('quote');setAreaId(null);};
   const newArea=()=>{
@@ -563,7 +574,7 @@ export function QuotesMobileBeta() {
               <span className="qmb-chip">{q.archivedAt?'Archived':q.status}</span></div>
             <strong>{q.title||'Untitled quote'}</strong>
             <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {q.sections.length} Areas</small>
-              <b>{money.format(quoteTotal(q))}</b></div>
+              <b>{q.documentType==='pricing-schedule'?`${q.pricingSchedule?.customerItems.length??0} published rows`:money.format(quoteTotal(q))}</b></div>
           </button>
           {canManageLibrary&&<div className="qmb-library-card-actions">
             {q.archivedAt?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore</button>:
@@ -577,8 +588,9 @@ export function QuotesMobileBeta() {
         </div>
         {!list.length&&<div className="qmb-empty">No matching quotes. Start one without filling in any required fields.</div>}
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
+        <button type="button" className="qmb-quiet qmb-block" onClick={()=>createQuote('pricing-schedule')}>+ Advanced Pricing Schedule</button>
       </div>
-      <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={createQuote}>+ New quote</button></footer>
+      <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={()=>createQuote()}>+ New quote</button></footer>
     </>:page==='quote'&&quote?<div className="qmb-editor qmb-quote-editor">
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
@@ -592,7 +604,7 @@ export function QuotesMobileBeta() {
               disabled={!editable} placeholder="Untitled quote"
               value={quote.title==='Untitled quote'?'':quote.title}
               onChange={e=>update(quote.id,{title:e.target.value})}/>
-            <strong className="qmb-quote-total" aria-label="Current quote total">{money.format(quoteTotal(quote))}</strong>
+            <strong className="qmb-quote-total" aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>{quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}</strong>
           </div>
           <nav className="qmb-tabs" aria-label="Quote views">
             {([['build','Build'],['details','Details'],['preview','Preview']] as const).map(([id,label])=>
@@ -609,8 +621,12 @@ export function QuotesMobileBeta() {
           </nav>
         </div>
         <div className="qmb-pad qmb-pagecontent">
-        {quote.documentType==='pricing-schedule'&&<div className="qmb-card"><strong>Pricing Schedule</strong><p>Use Classic Quotes for the full schedule workbook. This Beta editor does not alter its special pricing data.</p>
-          <button type="button" className="qmb-outline" onClick={()=>exitBeta(false)}>Open classic editor</button></div>}
+        {quoteTab==='build'&&quote.documentType==='pricing-schedule'&&
+          <section className="qmb-pricing-schedule-beta" aria-label="Pricing Schedule workspace">
+            <Suspense fallback={<div className="qmb-card">Opening Pricing Schedule…</div>}>
+              <PricingScheduleWorkspace quote={quote}/>
+            </Suspense>
+          </section>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
           <div className="qmb-section-head qmb-general-heading" data-general-edit-workspace><h3>General</h3>
             <div className="qmb-general-quick-add" aria-label="Add General line">

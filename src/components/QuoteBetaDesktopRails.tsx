@@ -29,7 +29,7 @@ export function QuoteBetaDesktopRails({
   onSend:()=>void;canIssue:boolean;areaManager:QuoteBetaAreaManager;
 }){
   const editable=quoteIsCommerciallyEditable(quote);
-  const steps=[['build','Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
+  const steps=[['build',quote.documentType==='pricing-schedule'?'Pricing Schedule':'Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
   const areas=areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s));
   const desktopAreaRef=useQuoteBetaCardReflow<HTMLElement>(areas.map(s=>s.id));
   return <>
@@ -53,12 +53,12 @@ export function QuoteBetaDesktopRails({
           <span className="qmb-desktop-step-icon">{id==='build'?'▤':id==='details'?'♙':'▧'}</span>
           {label}
         </button>)}
-        <button type="button" className="qmb-desktop-selections-step" onClick={onSelections}>
+        {quote.documentType!=='pricing-schedule'&&<button type="button" className="qmb-desktop-selections-step" onClick={onSelections}>
           <span className="qmb-desktop-step-icon">◇</span> Job Selections
           {!!quote.projectMaterials?.length&&<small>{quote.projectMaterials.length}</small>}
-        </button>
+        </button>}
       </nav>
-      <div className="qmb-desktop-areas-head" data-area-edit-workspace><strong>Areas</strong>
+      {quote.documentType!=='pricing-schedule'&&<><div className="qmb-desktop-areas-head" data-area-edit-workspace><strong>Areas</strong>
         <QuoteBetaAreaModeButton manager={areaManager}/>
         {!areaManager.editing&&<button type="button" disabled={!editable||quote.documentType==='pricing-schedule'}
           onClick={onAddArea} aria-label="Add Area from navigator">+ Add</button>}
@@ -85,7 +85,7 @@ export function QuoteBetaDesktopRails({
         })}
         {!areas.length&&<p className="qmb-desktop-empty">Add an Area to begin measuring and pricing.</p>}
         {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Esc cancels</p>}
-      </nav>
+      </nav></>}
     </aside>
     <QuoteBetaInspector quote={quote} page={page} areaTab={areaTab} areaId={areaId}
       onAreaTab={onAreaTab} onReview={onReview}

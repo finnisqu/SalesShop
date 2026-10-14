@@ -7,6 +7,7 @@ import type {Quote} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {CustomerPreview} from './Quotes';
+import {createPricingScheduleData} from '../services/pricingSchedule';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 /** Historical snapshots are frozen: viewing a prior customer document must
@@ -22,6 +23,7 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
   const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
   const canCreateOrder=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,teamDepartment));
   const history=[...quote.history].sort((a,b)=>b.capturedAt.localeCompare(a.capturedAt));
+  const canChangeType=editable&&!history.length&&quote.documentType!=='change-order';
   const snapshot=selected===null?undefined:history[selected];
   const frozen:Quote|undefined=snapshot?{
     ...quote,...snapshot,
@@ -40,6 +42,21 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
         <small>Current document setup and immutable sent history</small></div>
     </header>
     <div className="qmb-details-fields">
+      <label><span>Document type</span>
+        <select aria-label="Document type" disabled={!canChangeType} value={quote.documentType}
+          onChange={event=>{
+            const documentType=event.target.value as 'quote'|'pricing-schedule';
+            update(quote.id,{
+              documentType,
+              ...(documentType==='pricing-schedule'&&!quote.pricingSchedule?
+                {pricingSchedule:createPricingScheduleData(quote.id)}:{}),
+            });
+          }}>
+          <option value="quote">Quick Quote</option>
+          <option value="pricing-schedule">Pricing Schedule</option>
+          {quote.documentType==='change-order'&&<option value="change-order">Change Order</option>}
+        </select>
+      </label>
       <label><span>Revision / option label</span>
         <input aria-label="Revision or option label" disabled={!editable} maxLength={120}
           placeholder="Optional · Example: VE Option A" value={quote.revisionLabel??''}
