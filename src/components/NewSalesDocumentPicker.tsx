@@ -90,7 +90,7 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount}:
       </div>}
       <footer className="sales-document-picker-footer">
         <span>{selected&&selected!=='multifamily'?'Workspace: '+template?.title:'Templates retain their own editing tools.'}</span>
-        {canCreate&&selected!=='multifamily'&&<button type="button" className="sales-document-picker-create"
+        {canCreate&&<button type="button" className="sales-document-picker-create"
           onClick={()=>onCreate(selected,start,sourceId||undefined)}>Create document →</button>}
         {selected==='multifamily'&&<button type="button" onClick={onClose}>Close</button>}
       </footer>
