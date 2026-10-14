@@ -660,10 +660,17 @@ test('desktop Beta uses full center workspace across Build, Details, Preview and
   const pulled=page.locator('.qmb-review-pulled-inspector');
   const pulledInspector=pulled.locator('.qmb-desktop-inspector');
   await expect(pulledInspector).toBeVisible();
-  const pulledBounds=await pulled.boundingBox(),innerBounds=await pulledInspector.boundingBox(),detailBounds=await review.boundingBox();
-  expect(pulledBounds!.x+pulledBounds!.width).toBeLessThanOrEqual(detailBounds!.x+2);
-  expect(innerBounds!.x+innerBounds!.width).toBeLessThanOrEqual(pulledBounds!.x+pulledBounds!.width+2);
-  expect(detailBounds!.width).toBeLessThan(520);
+  // Measure every part in one layout frame: the entire shell animates left on open.
+  // Sequential boundingBox calls sample different animation offsets.
+  const geometry=await page.locator('.qmb-review-flyout-shell').evaluate(shell=>{
+    const rail=shell.querySelector('.qmb-review-pulled-inspector')!.getBoundingClientRect();
+    const inner=shell.querySelector('.qmb-review-pulled-inspector .qmb-desktop-inspector')!.getBoundingClientRect();
+    const sheet=shell.querySelector('.qmb-review-sheet')!.getBoundingClientRect();
+    return {railRight:rail.right,innerRight:inner.right,sheetLeft:sheet.left,sheetWidth:sheet.width};
+  });
+  expect(geometry.railRight).toBeLessThanOrEqual(geometry.sheetLeft+2);
+  expect(geometry.innerRight).toBeLessThanOrEqual(geometry.railRight+2);
+  expect(geometry.sheetWidth).toBeLessThan(520);
   const reviewShare=review.locator('.quote-share-control.is-inline');
   await expect(reviewShare).toBeVisible();
   await reviewShare.getByRole('button',{name:/Customer link & sharing/}).click();
@@ -1524,7 +1531,7 @@ test('Pricing Schedule Beta keeps full workbook tools separate from normal quote
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await expect(review).toContainText('Review Pricing Schedule');
   await expect(review).toContainText('Resolve before issuing');
-  await expect(review.getByRole('button',{name:'Issue Pricing Schedule / mark sent'})).toBeDisabled();
+  await expect(review.getByRole('button',{name:'Complete the schedule to issue'})).toBeDisabled();
   await expect(review.getByText('Quote total')).toHaveCount(0);
   await review.getByRole('button',{name:'Open pricing workspace'}).click();
   await expect(workspace).toBeVisible();
