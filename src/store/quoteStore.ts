@@ -77,6 +77,7 @@ interface QuoteState {
   addSection: (quoteId: string) => string;
   duplicateArea: (quoteId: string, sourceAreaId: string) => string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
+  setAllCustomerDisplayModes: (quoteId: string, mode: 'detail' | 'summary') => void;
   updateTakeoffPieces: (quoteId: string, sectionId: string, pieces: QuoteTakeoffPiece[]) => void;
   updateTakeoffSinks: (quoteId: string, sectionId: string, sinks: QuoteTakeoffSink[]) => void;
   selectTakeoffMaterial: (quoteId: string, sectionId: string, label: string, reference?: QuoteLineMaterialReference) => void;
@@ -644,6 +645,22 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       : quote);
     persist(quotes, get().activeQuoteId);
     set({ quotes, ...history });
+  },
+
+  setAllCustomerDisplayModes: (quoteId, mode) => {
+    const current=get().quotes.find(quote=>quote.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)||!current.sections.length)return;
+    const same=current.sections.every(section=>
+      (section.customerDisplayMode==='summary'?'summary':'detail')===mode);
+    if(same)return;
+    const history=historyPatch(get(),quoteId,current);
+    const timestamp=now();
+    const quotes=get().quotes.map(quote=>quote.id===quoteId?{
+      ...quote,sections:quote.sections.map(section=>({...section,customerDisplayMode:mode})),
+      updatedAt:timestamp,
+    }:quote);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
   },
 
   detachTakeoff: (quoteId, sectionId) => {
