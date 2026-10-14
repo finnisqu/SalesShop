@@ -15,13 +15,23 @@ export type AuditQuickFix=
   |{kind:'material'|'visibility'|'breakout';areaId:string};
 
 /** An explicit model separate from labels, so presentation text can change safely. */
-export function quickFixForFinding(finding:QuoteAuditFinding):AuditQuickFix|undefined {
+export function quickFixForFinding(finding:QuoteAuditFinding,quote:Quote):AuditQuickFix|undefined {
   if(finding.id==='quote:customer')return {kind:'customer'};
   if(finding.id==='quote:email')return {kind:'email'};
   if(finding.id==='quote:title')return {kind:'title'};
   const [prefix,id,field]=finding.id.split(':');
-  if(prefix==='line'&&['rate','amount','quantity','zero'].includes(field))
-    return {kind:'line',id,field:field==='zero'?'rate':field as 'rate'|'amount'|'quantity'};
+  if(prefix==='line'&&['rate','amount','quantity','zero'].includes(field)){
+    // A zero-price finding describes the charge's active pricing mode.
+    // Editing an unused rate on a direct/flat-price line does not resolve it.
+    if(field==='zero'){
+      const line=quote.lines.find(candidate=>candidate.id===id);
+      if(line?.pricingMode==='direct')return {kind:'line',id,field:'amount'};
+      if(line?.pricingMode==='quantity-rate')return {kind:'line',id,field:'rate'};
+      // Slab-multiplier charges are derived: send the user to the pricing editor.
+      return undefined;
+    }
+    return {kind:'line',id,field:field as 'rate'|'amount'|'quantity'};
+  }
   if(prefix==='sink'&&['price','complimentary'].includes(field))return {kind:'sink',id};
   if(prefix==='piece'&&(field==='zero'||field==='dimensions'))return {kind:'piece',id,field};
   if(prefix==='area'&&['material','visibility','breakout'].includes(field))
@@ -39,7 +49,7 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
   quote:Quote;finding:QuoteAuditFinding;onClose:()=>void;
   onGoTo:(destination:QuoteAuditDestination)=>void;
 }) {
-  const fix=quickFixForFinding(finding);
+  const fix=quickFixForFinding(finding,quote);
   const updateQuote=useQuoteStore(s=>s.updateQuote);
   const crmCompanies=useCrmStore(s=>s.companies);
   const updateLine=useQuoteStore(s=>s.updateLine);
@@ -179,7 +189,7 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
       </label>:fix.kind==='title'?<label>Project / quote title
         <input autoFocus value={main} maxLength={300} onChange={e=>setMain(e.target.value)}/>
       </label>:fix.kind==='line'?<div className="qmb-audit-rate-fix">
-        <label>{fix.field==='quantity'?'Quantity':fix.field==='amount'?'Line amount ($)':'Selling rate ($/SF)'}
+        <label>{fix.field==='quantity'?'Quantity':fix.field==='amount'?'Line amount ($)':'Selling rate ($/unit)'}
           <input autoFocus type="number" inputMode="decimal" step={fix.field==='quantity'?'1':'.01'}
             min="0" value={main} onChange={e=>setMain(e.target.value)}/>
         </label>
