@@ -149,7 +149,9 @@ export function QuoteShareControl({inline=false,allowCreation=true}:{inline?:boo
                 <div className="quote-share-empty">
                   <strong>No customer link yet</strong>
                   <p>{quote.status === 'Draft' || quote.status === 'Ready'
-                    ? 'Creating the link will send and freeze this exact revision before it becomes customer-accessible.'
+                    ? reviewedItemsNeedingIssue>0
+                      ? 'Issue the draft from Review to freeze this exact revision before sharing it.'
+                      : 'Creating the link will issue and freeze this exact revision before it becomes customer-accessible.'
                     : 'Create a secure link to this frozen quote revision.'}</p>
                   {reviewedItemsNeedingIssue>0
                     ?<p className="quote-share-review-needed">This quote has {reviewedItemsNeedingIssue} review {reviewedItemsNeedingIssue===1?'item':'items'} to acknowledge. Issue it from Review first; then create the customer link here.</p>
