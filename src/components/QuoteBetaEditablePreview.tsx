@@ -117,7 +117,7 @@ function QuotePreviewPriceForm({quote,line}:{quote:Quote;line:QuoteLine}){
   </div>;
 }
 
-export function QuoteBetaEditablePreview({quote}:{quote:Quote}){
+export function QuoteBetaEditablePreview({quote,onReturnToReview}:{quote:Quote;onReturnToReview?:()=>void}){
   const editable=quoteIsCommerciallyEditable(quote)&&quote.documentType!=='pricing-schedule';
   const updateSection=useQuoteStore(s=>s.updateSection);
   const [editing,setEditing]=useState(false);
@@ -175,6 +175,8 @@ export function QuoteBetaEditablePreview({quote}:{quote:Quote}){
       <div className="qmb-preview-view-label"><strong>Customer document</strong>
         {editing&&<small>Live quote editing</small>}</div>
       <div className="qmb-preview-action-group">
+        {onReturnToReview&&<button type="button" className="qmb-preview-back-review"
+          onClick={onReturnToReview} aria-label="Back to Review">‹ Back to Review</button>}
         <div className="qmb-preview-device-toggle" role="group" aria-label="Customer preview device">
           <button type="button" aria-label="Desktop quote preview" aria-pressed={device==='desktop'}
             onClick={()=>setDevice('desktop')}>▣ Desktop</button>
