@@ -69,7 +69,7 @@ test('create new community from a previous builder rate agreement without making
   await beta.getByRole('button',{name:/Documents/}).first().click();
   await beta.getByRole('button',{name:'Community Plan Pricing',exact:true}).click();
   await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
-  await expect(beta.locator('.qmb-listcard').filter({hasText:'New agreement'})).toBeVisible();
+  await expect(beta.locator('.qmb-listcard').filter({hasText:'QC 1 Document'})).toBeVisible();
 });
 
 test('Custom Spreadsheet opens directly in isolated Univer editor',async({page},info)=>{
