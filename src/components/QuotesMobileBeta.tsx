@@ -50,6 +50,8 @@ import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDr
 import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {salesDocumentTemplate,salesTemplateLabel,SALES_DOCUMENT_TEMPLATES,createTemplateSchedule,
   type SalesTemplateStart} from '../services/salesDocumentTemplates';
+import {filterSalesDocuments,salesDocumentCounts,
+  type SalesDocumentStatusFilter,type SalesDocumentSort} from '../services/salesDocumentLibrary';
 import {NewSalesDocumentPicker} from './NewSalesDocumentPicker';
 import {useRateBookStore} from '../store/rateBookStore';
 import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
@@ -407,7 +409,8 @@ export function QuotesMobileBeta() {
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
   const [search,setSearch]=useState('');
-  const [showArchived,setShowArchived]=useState(false);
+  const [statusFilter,setStatusFilter]=useState<SalesDocumentStatusFilter>('active');
+  const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
   const stockRates=useRateBookStore(s=>s.items);
@@ -496,10 +499,14 @@ export function QuotesMobileBeta() {
   const canBrowseTeam=authMode==='cloud'&&(teamRole==='owner'||teamRole==='admin')&&!previewRole;
   const canIssue=authMode!=='cloud'||canIssueTeamQuote(teamRole,department);
   const canManageLibrary=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,department));
-  const list=myQuotes.filter(q=>(showArchived||!q.archivedAt)&&
-    (documentFilter==='all'||salesDocumentTemplate(q)===documentFilter)&&
-    [q.title,q.companyName,q.quoteNumber].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
-    .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
+  const counts=salesDocumentCounts(myQuotes);
+  const list=filterSalesDocuments(myQuotes,{
+    query:search,template:documentFilter,status:statusFilter,sort:documentSort,
+  });
+  const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active';
+  const resetLibraryFilters=()=>{
+    setSearch('');setDocumentFilter('all');setStatusFilter('active');setDocumentSort('recent');
+  };
   const openQuote=(id:string)=>{
     select(id);setQuoteTab('build');setPage('quote');setAreaId(null);
     setSelectionsOpen(false);setReviewOpen(false);setError('');
@@ -666,26 +673,54 @@ export function QuotesMobileBeta() {
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
         <p className="qmb-subtitle">Open an existing agreement, quote or workbook—or create a new document from a purpose-built template.</p>
-        <label className="qmb-search"><span>⌕</span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a document or customer" aria-label="Search my documents"/></label>
-        <nav className="qmb-library-filter-row" aria-label="Filter document templates">
+        <label className="qmb-search"><span aria-hidden="true">⌕</span>
+           <input value={search} onChange={e=>setSearch(e.target.value)}
+             placeholder="Search documents, customers, contacts…" aria-label="Search my documents"/>
+           {search&&<button type="button" className="qmb-library-search-clear"
+             aria-label="Clear document search" onClick={()=>setSearch('')}>×</button>}
+         </label>
+         <nav className="qmb-library-filter-row" aria-label="Filter document templates">
            {[{id:'all' as const,title:'All'},...SALES_DOCUMENT_TEMPLATES.filter(t=>t.available).map(t=>({
              id:t.id as SalesDocumentTemplate,title:t.title}))].map(item=>
              <button key={item.id} type="button" className={documentFilter===item.id?'active':''}
+               aria-pressed={documentFilter===item.id}
                onClick={()=>setDocumentFilter(item.id)}>{item.title}</button>)}
          </nav>
-         <div className="qmb-section-head"><h3>My documents</h3><button type="button" className="qmb-quiet" onClick={()=>setShowArchived(v=>!v)}>{showArchived?'Hide archived':'Show archived'}</button></div>
-        <div className="qmb-library-grid">
+         <div className="qmb-library-tools">
+           <label><span>Show</span>
+             <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
+               <option value="active">Active ({counts.active})</option>
+               <option value="drafts">Drafts ({counts.drafts})</option>
+               <option value="issued">Issued ({counts.issued})</option>
+               <option value="archived">Archived ({counts.archived})</option>
+             </select>
+           </label>
+           <label><span>Sort</span><select aria-label="Sort documents" value={documentSort}
+             onChange={e=>setDocumentSort(e.target.value as SalesDocumentSort)}>
+             <option value="recent">Recently edited</option>
+             <option value="name">Document name</option>
+             <option value="company">Customer / company</option>
+             <option value="oldest">Oldest edited</option>
+           </select></label>
+         </div>
+         <div className="qmb-section-head qmb-library-results-head">
+           <div><h3>{statusFilter==='archived'?'Archived documents':'My documents'}</h3>
+             <small>{list.length} {list.length===1?'document':'documents'} shown</small></div>
+           <button type="button" className="qmb-library-new-inline" onClick={()=>setShowNewDocument(true)}>+ New</button>
+         </div>
+         <div className="qmb-library-grid">
         {list.map(q=><div className="qmb-library-entry" key={q.id}>
           <button type="button" className="qmb-card qmb-listcard"
             onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
             <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
               <span className="qmb-chip">{q.archivedAt?'Archived':q.status}</span></div>
             <strong>{q.title||'Untitled document'}</strong>
+            <div className="qmb-library-updated">Edited {new Date(q.updatedAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</div>
             <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}{q.documentType==='quote'?' · '+q.sections.length+' Areas':''}</small>
               <b>{q.documentType==='pricing-schedule'?`${q.pricingSchedule?.customerItems.length??0} published rows`:money.format(quoteTotal(q))}</b></div>
           </button>
           {canManageLibrary&&<div className="qmb-library-card-actions">
-            {q.archivedAt?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore</button>:
+            {q.archivedAt?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore to active</button>:
               <>
                 <button type="button" onClick={()=>setLibraryAction({id:q.id,kind:'archive'})}>Archive</button>
                 {canPermanentlyDeleteQuote(q,quotes)&&<button type="button" className="is-danger"
@@ -694,9 +729,16 @@ export function QuotesMobileBeta() {
           </div>}
         </div>)}
         </div>
-        {!list.length&&<div className="qmb-empty">No matching documents. Create a new one from a template.</div>}
+        {!list.length&&<div className="qmb-empty">
+          {statusFilter==='archived'&&!hasLibraryFilters?
+            'No archived documents yet. Archiving keeps agreements available for later.':
+            hasLibraryFilters?'No documents match these filters. Try clearing the search or selecting a different status.':
+              'No documents yet. Start with a purpose-built template.'}
+          {hasLibraryFilters&&<button type="button" className="qmb-library-reset" onClick={resetLibraryFilters}>
+            Clear filters
+          </button>}
+        </div>
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
-        <button type="button" className="qmb-outline qmb-block" onClick={()=>setShowNewDocument(true)}>Browse document templates</button>
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary"
           onClick={()=>setShowNewDocument(true)}>+ New document</button></footer>
@@ -710,8 +752,8 @@ export function QuotesMobileBeta() {
         <div className="qmb-quote-sticky">
           <div className="qmb-quote-identity">
             <input className="qmb-quote-name" aria-label="Quote title" maxLength={300}
-              disabled={!editable} placeholder="Untitled quote"
-              value={quote.title==='Untitled quote'?'':quote.title}
+              disabled={!editable} placeholder="Document name"
+              value={quote.title}
               onChange={e=>update(quote.id,{title:e.target.value})}/>
             <strong className="qmb-quote-total" aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>{quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}</strong>
           </div>
