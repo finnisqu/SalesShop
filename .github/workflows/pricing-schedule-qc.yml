@@ -70,7 +70,7 @@ jobs:
       - name: Workbook unit tests
         run: npx vitest run src/services/pricingSchedule.test.ts src/services/pricingScheduleContract.test.ts src/services/pricingScheduleManual.test.ts src/services/pricingScheduleBuilderVariants.test.ts src/services/salesDocumentTemplates.test.ts src/services/stockBuilderRateTemplate.test.ts src/services/quoteDocumentCopy.test.ts src/services/salesDocumentLibrary.test.ts
       - name: Quote review unit regressions
-        run: npx vitest run src/services/quoteDraftAudit.test.ts src/components/QuoteAuditInlineEditor.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteCustomerPresentation.test.ts src/services/quoteTakeoffsLite.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteDeliveryLifecycle.test.ts src/services/quoteIssueGuard.test.ts
+        run: npx vitest run src/services/quoteDraftAudit.test.ts src/components/QuoteAuditInlineEditor.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteCustomerPresentation.test.ts src/services/quoteTakeoffsLite.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteDeliveryLifecycle.test.ts src/services/quoteIssueGuard.test.ts src/services/quoteFollowUps.test.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Focused workbook browser tests
