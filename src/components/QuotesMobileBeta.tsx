@@ -28,6 +28,7 @@ import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteBetaEditablePreview } from './QuoteBetaEditablePreview';
 import {approvedCustomerDraft,quoteDeliveryApprovalKey} from '../services/quoteDeliveryApproval';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
+import {QuotesFollowUpDashboard} from './QuotesFollowUpDashboard';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { QuoteSfRateChoices } from './QuoteSfRateChoices';
 import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
@@ -740,6 +741,8 @@ export function QuotesMobileBeta() {
              <option value="oldest">Oldest edited</option>
            </select></label>
          </div>
+         {statusFilter==='active'&&documentFilter==='all'&&!search.trim()&&
+           <QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>}
          <div className="qmb-section-head qmb-library-results-head">
            <div><h3>{statusFilter==='archived'?'Archived documents':'My documents'}</h3>
              <small>{list.length} {list.length===1?'document':'documents'} shown</small></div>
