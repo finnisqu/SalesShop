@@ -1,9 +1,7 @@
 import { useCrmStore } from '../store/crmStore';
 import { commercialDocumentLabel, displayQuoteNumber, quoteTotal, type Quote, type QuoteStatus } from '../types/quote';
 import type { ActivityType, Project, ProjectStage } from '../types/crm';
-
-const CLOSED_STAGES = new Set<ProjectStage>(['Closed Won', 'Completed', 'Closed Lost', 'Discarded']);
-const EARLY_STAGES = new Set<ProjectStage>(['Discovery', 'Intent to Bid', 'Bid Development']);
+import {confirmedQuoteDeliveries,projectStageAfterDelivery,projectStageAfterIssue,QUOTE_DELIVERY_METHOD_LABELS,type QuoteDeliveryMethod} from './quoteDeliveryLifecycle';
 
 export interface QuoteIdentitySync {
   projectId?: string;
@@ -92,15 +90,14 @@ function touchProject(projectId?: string) {
   getCrm().updateProject(projectId, { lastTouchpoint: new Date().toISOString().slice(0, 10) });
 }
 
-function moveForSentQuote(projectId: string, quote: Quote) {
-  const crm = getCrm();
-  const project = crm.projects.find((candidate) => candidate.id === projectId);
-  if (!project || CLOSED_STAGES.has(project.stage)) return;
-  if (quote.revision > 0) {
-    if (project.stage !== 'Negotiation') crm.moveProject(projectId, 'Negotiation', { source: 'quote', quoteId: quote.id, quoteNumber: displayQuoteNumber(quote) });
-    return;
-  }
-  if (EARLY_STAGES.has(project.stage)) crm.moveProject(projectId, 'Bid Sent', { source: 'quote', quoteId: quote.id, quoteNumber: displayQuoteNumber(quote) });
+function moveForIssuedQuote(projectId:string,quote:Quote){
+  const crm=getCrm();
+  const project=crm.projects.find(candidate=>candidate.id===projectId);
+  if(!project)return;
+  const nextStage=projectStageAfterIssue(project.stage);
+  if(nextStage)crm.moveProject(projectId,nextStage,{
+    source:'quote',quoteId:quote.id,quoteNumber:displayQuoteNumber(quote),
+  });
 }
 
 function recordCommercialActivity(quote: Quote, type: ActivityType, summary: string, identity: QuoteIdentitySync = {}) {
@@ -152,14 +149,14 @@ export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
     const projectId = project?.id ?? quote.projectId;
     const companyId = project?.companyId ?? identity.companyId ?? quote.companyId;
     touchProject(projectId);
-    recordCommercialActivity(quote, 'change-order-sent', `Change Order ${displayQuoteNumber(quote)} sent${amountText(quote)}`, { projectId, companyId, contactId: identity.contactId ?? quote.contactId });
+    recordCommercialActivity(quote, 'change-order-sent', `Change Order ${displayQuoteNumber(quote)} issued${amountText(quote)}`, { projectId, companyId, contactId: identity.contactId ?? quote.contactId });
     return { projectId, companyId, contactId: identity.contactId ?? quote.contactId };
   }
 
   let crm = getCrm();
   let project = existingProject(quote, identity.companyId);
   let projectId = project?.id;
-  const targetStage: ProjectStage = quote.revision > 0 ? 'Negotiation' : 'Bid Sent';
+  const targetStage: ProjectStage = 'Bid Development';
   if (!projectId) {
     projectId = crm.createProject(quote.title, targetStage, {
       companyName: quote.companyName,
@@ -173,13 +170,42 @@ export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
     project = projectId ? crm.projects.find((candidate) => candidate.id === projectId) : undefined;
   } else {
     syncQuoteDetails(projectId, quote);
-    moveForSentQuote(projectId, quote);
+    moveForIssuedQuote(projectId, quote);
     project = getCrm().projects.find((candidate) => candidate.id === projectId);
   }
 
   const companyId = project?.companyId ?? identity.companyId;
-  recordCommercialActivity(quote, 'quote-sent', `${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} sent${amountText(quote)}`, { projectId, companyId, contactId: identity.contactId });
+  recordCommercialActivity(quote, 'quote-sent', `${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} issued${amountText(quote)}`, { projectId, companyId, contactId: identity.contactId });
   return { projectId: projectId ?? quote.projectId, companyId, contactId: identity.contactId };
+}
+
+/** Called only after a salesperson confirms that an issued revision was
+ * actually delivered. Link creation, copy, preview and issuing do not call it.
+ * Revision-specific CRM metadata is durable and keeps this action idempotent. */
+export function recordQuoteDelivered(quote:Quote,method:QuoteDeliveryMethod):boolean{
+  const crm=getCrm();
+  if(confirmedQuoteDeliveries(quote,crm.activities).length)return false;
+  const project=quote.projectId
+    ?crm.projects.find(item=>item.id===quote.projectId)
+    :existingProject(quote,quote.companyId);
+  crm.recordActivity({
+    type:'quote-sent',
+    summary:`${commercialDocumentLabel(quote)} ${displayQuoteNumber(quote)} delivered · ${QUOTE_DELIVERY_METHOD_LABELS[method]} · Revision ${quote.revision}`,
+    quoteId:quote.id,
+    projectId:project?.id??quote.projectId,
+    companyId:project?.companyId??quote.companyId,
+    contactId:quote.contactId,
+    metadata:{
+      ...metadata(quote),source:'manual',deliveryConfirmed:true,deliveryMethod:method,
+    },
+  });
+  if(project&&!isChangeOrder(quote)){
+    const stage=projectStageAfterDelivery(project.stage,quote.revision);
+    if(stage)getCrm().moveProject(project.id,stage,{
+      source:'quote',quoteId:quote.id,quoteNumber:displayQuoteNumber(quote),
+    });
+  }
+  return true;
 }
 
 export function applyQuoteStatusChange(quote: Quote, previousStatus: QuoteStatus): QuoteIdentitySync {
