@@ -13,7 +13,7 @@ async function library(page:import('@playwright/test').Page){
 }
 async function create(page:import('@playwright/test').Page,template:string,starting?:string){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const dialog=page.getByRole('dialog',{name:'New Sales Document'});
   await dialog.getByRole('button',{name:new RegExp('^'+template)}).click();
   if(starting)await dialog.getByRole('button',{name:new RegExp(starting)}).click();
@@ -26,7 +26,7 @@ async function create(page:import('@playwright/test').Page,template:string,start
 test('document library creates independent Quick Quote and Builder Rate editors',async({page},info)=>{
   test.skip(info.project.name!=='desktop-1280','Desktop new-template workflow');
   const beta=await library(page);
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const dialog=page.getByRole('dialog',{name:'New Sales Document'});
   await expect(dialog.getByRole('button',{name:/^Quick Quote/})).toContainText(/commercial projects/i);
   await expect(dialog.getByRole('button',{name:/^Multi-Family/})).toContainText(/wholesale/i);
@@ -56,7 +56,7 @@ test('create new community from a previous builder rate agreement without making
   const editor=beta.getByRole('region',{name:'Builder Rate Schedule editor'});
   await editor.getByRole('button',{name:/Add material|\+ Material|material level/i}).first().click();
   await beta.getByRole('button',{name:/Documents/}).first().click();
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const dialog=page.getByRole('dialog',{name:'New Sales Document'});
   await dialog.getByRole('button',{name:/^Community Plan Pricing/}).click();
   await dialog.getByRole('button',{name:/Copy previous agreement/}).click();
@@ -110,7 +110,7 @@ test('Builder Rate company template snapshots stock colors and approved level se
     }));
   });
   const beta=await library(page);
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Builder Rate Schedule/}).click();
   const company=picker.getByRole('button',{name:/Company stock levels/});
