@@ -251,7 +251,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   recordActivity: (input) => {
     const activity: Activity = {
       ...input,
-      id: id('activity'),
+      id: input.id ?? id('activity'),
       occurredAt: input.occurredAt ?? now(),
     };
     const activities = [...get().activities, activity];
