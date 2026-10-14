@@ -404,8 +404,37 @@ export const PRICING_CONTRACT_RATE_KEYS = [
 ] as const;
 export type PricingContractRateKey = typeof PRICING_CONTRACT_RATE_KEYS[number];
 export type PricingContractQuantities = Partial<Record<PricingContractRateKey,number>>;
+/** Reusable manual matrix metadata. Actual package prices live in contractRows. */
+export interface PricingManualPlan {
+  id: string;
+  series: string;
+  planNumber: string;
+  name: string;
+  excludedPackageIds?: string[];
+}
+export interface PricingManualPackage {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+}
+export interface PricingManualAddon {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  unit: 'flat' | 'each' | 'sf';
+  /** Increment means additional charge; standalone is a replacement price. */
+  behavior: 'increment' | 'standalone';
+  defaultRate?: number;
+  planRates?: Record<string, number>;
+  excludedPlanIds?: string[];
+}
 export interface PricingContractRow {
   id: string;
+  /** Stable manual matrix relationships; source-imported rows may omit these. */
+  manualPlanId?: string;
+  manualPackageId?: string;
   series: string;
   itemType: 'Base' | 'Option';
   planNumber: string;
@@ -425,6 +454,9 @@ export interface PricingContractRow {
 }
 export interface PricingScheduleBuilderData {
   outputMode?: 'matrix' | 'contract';
+  manualPlans?: PricingManualPlan[];
+  manualPackages?: PricingManualPackage[];
+  manualAddons?: PricingManualAddon[];
   contractRows?: PricingContractRow[];
   contractRates?: PricingContractQuantities;
   sourceContractFile?: string;
