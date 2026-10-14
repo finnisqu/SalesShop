@@ -9,6 +9,13 @@ on:
       - 'src/components/PricingSchedule*'
       - 'src/components/PricingDocumentEditor.tsx'
       - 'src/components/NewSalesDocumentPicker.tsx'
+      - 'src/components/SalesDocumentToolbar.tsx'
+      - 'src/components/QuotesMobileBeta.tsx'
+      - 'src/components/QuoteBetaHistory.tsx'
+      - 'src/components/QuoteBetaDesktopRails.tsx'
+      - 'src/store/quoteStore.ts'
+      - 'src/services/quoteIntegrity.ts'
+      - 'src/sales-document-workspace.css'
       - 'src/services/salesDocumentTemplates*'
       - 'src/services/stockBuilderRateTemplate*'
       - 'src/sales-documents.css'
@@ -23,6 +30,7 @@ on:
       - 'e2e/pricing-schedule-manual.pw.ts'
       - 'e2e/pricing-schedule-calculated.pw.ts'
       - 'e2e/sales-document-templates.pw.ts'
+      - 'e2e/sales-document-workspace.pw.ts'
       - '.github/workflows/pricing-schedule-qc.yml'
   workflow_dispatch:
 
@@ -55,7 +63,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Focused workbook browser tests
-        run: npx playwright test e2e/pricing-schedule-workbook.pw.ts e2e/pricing-schedule-contract.pw.ts e2e/pricing-schedule-manual.pw.ts e2e/pricing-schedule-calculated.pw.ts e2e/sales-document-templates.pw.ts --project=desktop-1280 --project=phone-390
+        run: npx playwright test e2e/pricing-schedule-workbook.pw.ts e2e/pricing-schedule-contract.pw.ts e2e/pricing-schedule-manual.pw.ts e2e/pricing-schedule-calculated.pw.ts e2e/sales-document-templates.pw.ts e2e/sales-document-workspace.pw.ts --project=desktop-1280 --project=phone-390
       - name: Upload workbook failure traces
         if: failure()
         uses: actions/upload-artifact@v4
