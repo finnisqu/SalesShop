@@ -44,7 +44,7 @@ import {
 import { CustomerDocumentBrand } from './CustomerDocumentBrand';
 import { PricingScheduleCustomerPreview } from './PricingScheduleCustomerPreview';
 import {QUOTE_STANDARD_TERMS,termsEnabled,freeCustomerNotes} from '../services/quoteCustomerTerms';
-import { PricingScheduleWorkbook } from './PricingScheduleWorkbook';
+import { PricingDocumentEditor } from './PricingDocumentEditor';
 import { QuoteCrmFields } from './QuoteCrmFields';
 import { QuoteDocumentSetupFields, QuoteRevisionLabelField, QuoteNotesFields } from './QuoteEditorFields';
 import { QuoteInternalPricingSummary } from './QuoteInternalPricingSummary';
@@ -922,7 +922,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
   const setupDateLabel = quote.quoteDate
     ? new Date(`${quote.quoteDate}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     : 'No date';
-  const documentTypeLocked = !commerciallyEditable;
+  const documentTypeLocked = !commerciallyEditable || !!quote.templateId;
   const permanentDelete = canPermanentlyDeleteQuote(quote, quotes);
   const validAreaIds = new Set(quote.sections.map((section) => section.id));
   const generalLines = quote.lines.filter((line) => !line.sectionId || !validAreaIds.has(line.sectionId));
@@ -1080,7 +1080,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
       {!canIssueQuote && (quote.status === 'Draft' || quote.status === 'Ready') && <div className="quote-share-error" role="status">Estimate preparation only — ask a Salesperson, General Member, Admin or Owner to issue this customer quote.</div>}
       {sendError && <div className="quote-share-error" role="alert">{sendError}</div>}
       <div className={`quote-workbench-body ${pricingSchedule ? 'is-swipeable' : ''}`} style={{ '--quote-workspace-zoom': workspaceZoom / 100 } as CSSProperties} onTouchStart={beginPricingSwipe} onTouchEnd={finishPricingSwipe} onTouchCancel={() => { swipeStart.current = null; }}>
-        {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingScheduleWorkbook quote={quote} /></div> : effectiveMode !== 'customer' ? (
+        {pricingSchedule && effectiveMode === 'workbook' ? <div className="quote-editor-pane pricing-schedule-editor-pane"><PricingDocumentEditor quote={quote} /></div> : effectiveMode !== 'customer' ? (
           <div className="quote-editor-pane">
             <section className="quote-configuration-strip" ref={metaHostRef}>
               <button type="button" className={metaPanel === 'document' ? 'active' : ''} aria-expanded={metaPanel === 'document'} aria-controls="quote-setup-document" onClick={() => setMetaPanel((current) => current === 'document' ? null : 'document')}>
