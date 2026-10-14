@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 async function createQuickQuote(page: import('@playwright/test').Page) {
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Quick Quote/}).click();
   await picker.getByRole('textbox',{name:'Quote name'}).fill('Test Quick Quote');
@@ -383,6 +383,30 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await expect(beta.getByRole('button',{name:'Materials'})).toHaveAttribute('aria-current','page');
 });
 
+
+test('Review fixes zero-priced flat charges by editing their real amount',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Mobile zero-price Quick Quote regression');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await createQuickQuote(page);
+  // Add an intentional $0 fixed-price line; Quick Quote templates start empty.
+  await beta.locator('.qmb-general-quick-add').getByRole('button',{name:'Custom'}).click();
+  await beta.locator('.qmb-quote-footer .qmb-primary').click();
+  const review=page.getByRole('dialog',{name:'Review and issue quote'});
+  await review.getByRole('button',{name:/Resolve Zero-price charge: New line item/}).click();
+  const editor=review.getByRole('region',{name:/Resolve Zero-price charge: New line item/});
+  await expect(editor.getByRole('spinbutton',{name:'Line amount ($)'})).toHaveValue('0');
+  await editor.getByRole('spinbutton',{name:'Line amount ($)'}).fill('175');
+  await editor.getByRole('button',{name:'Save'}).click();
+  await expect(review.getByRole('button',{name:/Resolve Zero-price charge: New line item/})).toHaveCount(0);
+  await expect(review.locator('.qmb-audit-total')).toContainText('$175.00');
+  await expect(review.getByRole('button',{name:'Close Review and Issue'})).toBeVisible();
+});
 
 test('Review resolves customer name and sink price inline without leaving Review',async ({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','Mobile quick fix workflow');
@@ -1525,7 +1549,7 @@ test('Builder Rates and Custom Spreadsheet keep separate workspaces and pricing 
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   const newTemplate=async(name:string)=>{
-    await beta.getByRole('button',{name:'+ New document'}).click();
+    await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
     const picker=page.getByRole('dialog',{name:'New Sales Document'});
     await picker.getByRole('button',{name:new RegExp('^'+name)}).click();
     await picker.getByRole('textbox',{name:'Document name'}).fill(name+' QC');
@@ -1582,7 +1606,7 @@ test('phone Quick Quote and Builder Rates are distinct fixed template documents'
   await expect(type).toHaveValue('quote');
   await expect(type).toBeDisabled();
   await beta.locator('.qmb-pagehead .qmb-back').click();
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Builder Rate Schedule/}).click();
   await picker.getByRole('textbox',{name:'Document name'}).fill('Builder Rate QC');

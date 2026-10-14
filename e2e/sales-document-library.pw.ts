@@ -15,7 +15,7 @@ async function openLibrary(page:Page){
 }
 async function makeDocument(page:Page,template:string,name:string){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:new RegExp('^'+template)}).click();
   await picker.getByRole('textbox',{name:template==='Quick Quote'?'Quote name':'Document name'}).fill(name);
@@ -43,7 +43,7 @@ test('mobile documents search by name/template and filter by status without losi
   await beta.getByRole('button',{name:'Clear filters'}).click();
   await expect(beta.locator('.qmb-library-entry').filter({hasText:'Smith Kitchen'})).toBeVisible();
   await expect(beta.locator('.qmb-library-entry').filter({hasText:'Oakwood Pricing'})).toBeVisible();
-  await expect(beta.getByRole('button',{name:'+ New document'})).toBeVisible();
+  await expect(beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first()).toBeVisible();
 });
 test('desktop library sorts documents and safely restores an archived draft',async({page},info)=>{
   test.skip(info.project.name!=='desktop-1280','Desktop document list and archive controls');

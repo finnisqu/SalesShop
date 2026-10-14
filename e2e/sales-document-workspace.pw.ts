@@ -15,7 +15,7 @@ async function library(page:Page){
 }
 async function newTemplate(page:Page,title:string,name:string){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:new RegExp('^'+title)}).click();
   const input=picker.getByRole('textbox',{name:title==='Quick Quote'?'Quote name':'Document name'});

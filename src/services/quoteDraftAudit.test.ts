@@ -82,6 +82,30 @@ describe('Quotes Beta Review audit',()=>{
     expect(result.optional.map(issue=>issue.id)).toEqual(
       expect.arrayContaining(['quote:email','quote:title']));
   });
+  it('reports a takeoff sink price once rather than duplicating the linked line warning',()=>{
+    const selected=sink('s1',undefined);
+    const section={...quote().sections[0],scope:{takeoffPieces:[],takeoffSinks:[selected]}};
+    const linked=line('sink-line',{sectionId:'kitchen',kind:'sink',
+      description:'Sink · Kitchen 3218',takeoffSinkId:'s1',pricingMode:'quantity-rate',
+      quantity:1,rate:undefined});
+    const missing=auditQuoteDraft(quote({sections:[section],lines:[...quote().lines,linked]}));
+    expect(missing.blockers.map(issue=>issue.id)).toContain('sink:s1:price');
+    expect(missing.blockers.map(issue=>issue.id)).not.toContain('line:sink-line:rate');
+    const complimentary=auditQuoteDraft(quote({
+      sections:[{...section,scope:{...section.scope,takeoffSinks:[sink('s1',0)]}}],
+      lines:[...quote().lines,{...linked,rate:0}],
+    }));
+    expect(complimentary.review.map(issue=>issue.id)).toContain('sink:s1:complimentary');
+    expect(complimentary.review.map(issue=>issue.id)).not.toContain('line:sink-line:zero');
+  });
+  it('does not block issuing because a legacy sink is specification-only',()=>{
+    const reference={...sink('spec-only',undefined),includeInPricing:false};
+    const input=quote({sections:[{...quote().sections[0],
+      scope:{takeoffPieces:[],takeoffSinks:[reference]}}]});
+    const report=auditQuoteDraft(input);
+    expect(report.blockers).toHaveLength(0);
+    expect(report.findings.some(issue=>issue.id.startsWith('sink:spec-only:'))).toBe(false);
+  });
   it('ignores excluded, non-priced note rows instead of issuing false missing-rate blockers',()=>{
     const result=auditQuoteDraft(quote({lines:[
       ...quote().lines,
