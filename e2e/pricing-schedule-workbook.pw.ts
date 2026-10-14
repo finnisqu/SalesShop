@@ -22,10 +22,11 @@ async function setup(page:import('@playwright/test').Page){
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ Advanced Pricing Schedule'}).click();
+  await beta.getByRole('button',{name:'+ New document'}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Custom Spreadsheet/}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Create document/}).click();
   await beta.getByRole('textbox',{name:'Quote title'}).fill('QC Builder Workbook');
   const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
-  await workspace.getByRole('button',{name:/Spreadsheet/}).click();
   await expect(workspace.getByLabel('Pricing schedule workbook')).toBeVisible();
   const bytes=await exampleXlsx();
   await workspace.locator('input[type="file"]').setInputFiles({
@@ -111,9 +112,10 @@ test('recalculation updates cached customer price and exported XLSX after stale 
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ Advanced Pricing Schedule'}).click();
+  await beta.getByRole('button',{name:'+ New document'}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Custom Spreadsheet/}).click();
+  await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Create document/}).click();
   const workspace=beta.getByRole('region',{name:'Pricing Schedule workspace'});
-  await workspace.getByRole('button',{name:/Spreadsheet/}).click();
   await workspace.locator('input[type="file"]').setInputFiles({
     name:'stale-builder.xlsx',
     mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
