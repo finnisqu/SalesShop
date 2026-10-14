@@ -83,11 +83,9 @@ export function PricingManualSchedule({builder,onChange,mode}:{
     try{onChange(fn());setFeedback(success??'');return true;}
     catch(e){setFeedback(e instanceof Error?e.message:'Could not save changes.');return false;}
   };
-  const startPackages=()=>run(()=>({
-    ...builder,manualPackages:standardManualPackages(),outputMode:'contract',
-    // This starter is offered only when no package definitions or plan rows
-    // exist, so no previously entered prices are ever destroyed.
-  }),'Six standard material/splash packages are ready. Add a house plan to begin.');
+  const startPackages=()=>run(()=>
+    standardManualPackages().reduce((next,pkg)=>addManualPackage(next,pkg.code,pkg.name),builder),
+    'Six standard material/splash packages are ready, with blank pricing cells for each existing plan.');
   const createPlan=()=>{
     if(run(()=>addManualPlan(builder,{name:newName,planNumber:newNumber,series:newSeries}),
       'House plan added. Enter prices across its offered packages.')){
