@@ -4,6 +4,7 @@ import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {salesDocumentTemplate,salesTemplateLabel} from '../services/salesDocumentTemplates';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,
@@ -30,14 +31,14 @@ export function QuoteBetaDesktopRails({
   onSend:()=>void;canIssue:boolean;areaManager:QuoteBetaAreaManager;
 }){
   const editable=quoteIsCommerciallyEditable(quote);
-  const steps=[['build',quote.documentType==='pricing-schedule'?'Pricing Schedule':'Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
+  const steps=[['build',quote.documentType==='pricing-schedule'?'Edit '+salesTemplateLabel(salesDocumentTemplate(quote)):'Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
   const areas=areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s));
   const desktopAreaRef=useQuoteBetaCardReflow<HTMLElement>(areas.map(s=>s.id));
   return <>
     <aside className="qmb-desktop-navigation" aria-label="Quote workspace navigation">
       <div className="qmb-desktop-rail-head">
-        <button type="button" className="qmb-desktop-library-link" onClick={onLibrary}>‹ All quotes</button>
-        <strong>Quotes <span>Beta</span></strong>
+        <button type="button" className="qmb-desktop-library-link" onClick={onLibrary}>‹ All documents</button>
+        <strong>Sales Documents <span>Beta</span></strong>
         <small>{displayQuoteNumber(quote)} · {quote.status}</small>
         <div className="qmb-desktop-history" role="toolbar" aria-label="Quote history controls">
           <button type="button" onClick={onUndo} disabled={!editable||!undoDepth}
@@ -113,7 +114,7 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
   if(quote.documentType==='pricing-schedule'){
     const published=quote.pricingSchedule?.customerItems.length??0;
     const source=quote.pricingSchedule?.publishSource??'rate-sheet';
-    const sourceLabel=source==='workbook'?'Spreadsheet':source==='builder'?'Plan Pricing':'Simple Rates';
+    const sourceLabel=source==='workbook'?'Custom Spreadsheet':source==='builder'?'Community Plan Pricing':'Builder Rate Schedule';
     const issue=pricingScheduleValidationError(quote.pricingSchedule);
     return <aside className="qmb-desktop-inspector" aria-label="Live quote summary">
       <div className="qmb-desktop-inspector-heading"><span>PRICING SCHEDULE</span><span className="qmb-chip">{quote.status}</span></div>
