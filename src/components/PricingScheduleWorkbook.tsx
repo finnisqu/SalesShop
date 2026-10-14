@@ -69,6 +69,8 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const liveWorkbookRef = useRef<null | (()=>IWorkbookData)>(null);
+  const recalculateRef = useRef<null | (()=>Promise<void>)>(null);
+  const [recalculating,setRecalculating]=useState(false);
   const [mappingOpen,setMappingOpen]=useState(false);
   const [mode, setMode] = useState<WorkspaceMode>(initialMode(schedule));
   const [importing, setImporting] = useState(false);
@@ -144,18 +146,53 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
       saveTimer = window.setTimeout(persistLive, SAVE_DEBOUNCE_MS);
     };
     const commandSubscription = workbook.onCommandExecuted(queueSave);
+    // Calculation completes asynchronously. Persist *after* the resulting
+    // formulas are applied, not only when the input-edit command executes.
+    const formulaAPI=univerAPI.getFormula();
+    const calculationSubscription=formulaAPI.calculationResultApplied(queueSave);
+    const recalculate=async()=>{
+      formulaAPI.executeCalculation();
+      await formulaAPI.onCalculationResultApplied();
+      persistLive();
+    };
+    recalculateRef.current=recalculate;
 
     return () => {
       window.clearTimeout(saveTimer);
       if(liveWorkbookRef.current===readLive)liveWorkbookRef.current=null;
+      if(recalculateRef.current===recalculate)recalculateRef.current=null;
       persistLive();
       commandSubscription.dispose();
+      calculationSubscription.dispose();
       queueMicrotask(() => {
         univer.dispose();
         container.remove();
       });
     };
   }, [mode, quote.id, quote.pricingSchedule?.importedAt]);
+
+  const recalculateAndSave=async()=>{
+    if(!recalculateRef.current)return;
+    setRecalculating(true);
+    try{
+      await recalculateRef.current();
+      setMessage('Formulas recalculated; published prices and the saved workbook are updated.');
+    }catch(reason){
+      setMessage(reason instanceof Error?reason.message:'Formula calculation failed.');
+    }finally{setRecalculating(false);}
+  };
+
+  const exportCurrentWorkbook=async()=>{
+    try{
+      // Do not export an earlier cached result while recalculation is pending.
+      if(recalculateRef.current)await recalculateRef.current();
+      await exportExcelPricingWorkbook(liveWorkbookRef.current?.()??scheduleRef.current.workbookData,
+        scheduleRef.current.sourceFileName || `${quote.title}.xlsx`);
+      setMessage('Workbook exported. Review unsupported Excel features in the downloaded file.');
+    }catch(reason){
+      setMessage(reason instanceof Error?reason.message:'Could not export the workbook.');
+    }
+  };
 
   const setMapping = (patch: Partial<PricingScheduleMapping>) => {
     const current = baseMapping(scheduleRef.current);
@@ -260,7 +297,7 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
             <div>
               <span className="quote-control-heading">Advanced spreadsheet</span>
               <small>{schedule.sourceFileName || 'Built in SalesShop'} · import a builder template or do custom calculations here.</small>
-              <small>Excel formulas use cached results when imported. Recalculate in Excel before import when pricing changes; advanced Excel styling and unsupported features may not round-trip.</small>
+              <small>Excel formulas use cached results on import. Recalculate here after editing; verify unsupported Excel features in the exported file.</small>
             </div>
             <div className="pricing-schedule-workbook-actions">
               <input ref={fileRef} type="file" accept=".xlsx" hidden onChange={(event) => {
@@ -268,10 +305,8 @@ export function PricingScheduleWorkbook({ quote }: { quote: Quote }) {
                 if (file) void importFile(file);
               }} />
               <button type="button" onClick={() => fileRef.current?.click()} disabled={importing}>{importing ? 'Importing…' : 'Import .xlsx'}</button>
-              <button type="button" onClick={() => void exportExcelPricingWorkbook(
-                liveWorkbookRef.current?.()??scheduleRef.current.workbookData,
-                scheduleRef.current.sourceFileName || `${quote.title}.xlsx`
-              ).catch(reason=>setMessage(reason instanceof Error?reason.message:'Could not export the workbook.'))}>Export .xlsx</button>
+              <button type="button" onClick={()=>void exportCurrentWorkbook()}>Export .xlsx</button>
+              <button type="button" disabled={recalculating} onClick={()=>void recalculateAndSave()}>{recalculating?'Calculating…':'Recalculate formulas'}</button>
               <button type="button" onClick={autoMap}>Auto-map headers</button>
               <strong className="pricing-schedule-published-pill">✓ Published</strong>
             </div>
