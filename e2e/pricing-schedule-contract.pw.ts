@@ -24,7 +24,7 @@ test('D.R. Horton contract rows import, recalculate 12 Sanford configurations, a
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:'+ New document'}).click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Community Plan Pricing/}).click();
   await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('textbox',{name:'Document name'}).fill('QC 4 Document');
   await page.getByRole('dialog',{name:'New Sales Document'}).getByRole('button',{name:/Create document/}).click();
