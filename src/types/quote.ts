@@ -353,6 +353,9 @@ export interface PricingRateItem {
   detailsLayout?: PricingDetailsLayout;
   sourceRateBookItemId?: string;
   sourceRateBookEffectiveDate?: string;
+  /** Source of an approved Builder Level $/SF snapshot, not a material purchase cost. */
+  sourceBuilderLevelRuleId?: string;
+  sourceBuilderLevelGuideUpdatedAt?: string;
   sourcePricingBehavior?: RateBookPricingBehavior;
   pricingDivision?: RateBookDivision;
   internalCost?: number;
@@ -474,6 +477,15 @@ export interface PricingContractRow {
   optionBehavior?: 'standalone' | 'increment';
 }
 export interface PricingScheduleBuilderData {
+  /** Frozen metadata for stock-level template creation; never auto-refreshes customer pricing. */
+  stockLevelImport?: {
+    guideName: string;
+    guideUpdatedAt: string;
+    stockCount: number;
+    assignedCount: number;
+    levelCount: number;
+    unassigned: Array<{ materialId:string; name:string; reason:string }>;
+  };
   outputMode?: 'matrix' | 'contract';
   manualPlans?: PricingManualPlan[];
   manualPackages?: PricingManualPackage[];
