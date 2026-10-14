@@ -104,6 +104,7 @@ export function createPricingTakeoff(planId: string): PricingPlanTakeoff {
     planId,
     room: 'Kitchen',
     piece: 'Countertop',
+    variantCode: 'BASE',
   };
 }
 
@@ -222,14 +223,75 @@ function findRule(option: PricingOptionPackage, room: string, productType: Prici
 }
 
 function rateFor(builder: PricingScheduleBuilderData, option: PricingOptionPackage, room: string, productType: PricingBuilderProductType) {
+  const surface = productType === 'Countertops' || productType === 'Backsplash';
+  const scope = normalized(room);
+  const materialRateId = scope.includes('kitchen')
+    ? option.kitchenMaterialRateId
+    : scope.includes('bath') ? option.bathroomMaterialRateId : option.otherMaterialRateId;
+  if (surface && materialRateId) return {
+    rule: undefined,
+    rate: builder.rates.find(candidate => candidate.id === materialRateId),
+  };
   const rule = findRule(option, room, productType);
-  const rate = rule ? builder.rates.find((candidate) => candidate.id === rule.rateItemId) : undefined;
-  return { rule, rate };
+  if (rule) return { rule, rate: builder.rates.find(candidate => candidate.id === rule.rateItemId) };
+  // For simple builder agreements, one price is shared by tops and splashes,
+  // and a unique per-each item rate is the default for that add-on type.
+  const candidates = builder.rates.filter(rate => surface
+    ? rate.kind === 'material-level' && rate.unit === 'sf'
+    : rate.productType === productType && rate.kind !== 'material-level');
+  return { rule: undefined, rate: candidates.length === 1 ? candidates[0] : undefined };
 }
 
 function pieceProductType(takeoff: PricingPlanTakeoff): PricingBuilderProductType {
   const piece = normalized(takeoff.piece);
-  return piece.includes('splash') ? 'Backsplash' : 'Countertops';
+  return piece.includes('splash') || normalized(takeoff.category).includes('splash')
+    ? 'Backsplash' : 'Countertops';
+}
+
+export function pricingTakeoffGroups(builder: PricingScheduleBuilderData, planId?: string) {
+  const grouped = new Map<string, Set<string>>();
+  for (const takeoff of builder.takeoffs) {
+    if (planId && takeoff.planId !== planId) continue;
+    const group = takeoff.variantGroup?.trim();
+    if (!group) continue;
+    if (!grouped.has(group)) grouped.set(group, new Set());
+    grouped.get(group)!.add(takeoff.variantCode?.trim() || 'BASE');
+  }
+  return [...grouped.entries()].map(([name,codes]) => ({
+    name,
+    codes: [...codes],
+    defaultCode: [...codes].find(c => c.toUpperCase() === 'BASE'),
+  }));
+}
+
+export function includedPricingTakeoffs(
+  builder: PricingScheduleBuilderData,
+  plan: PricingPlan,
+  option: PricingOptionPackage,
+): { takeoffs: PricingPlanTakeoff[]; warnings: string[] } {
+  const all = builder.takeoffs.filter(takeoff => takeoff.planId === plan.id);
+  const warnings: string[] = [];
+  const groups = pricingTakeoffGroups(builder, plan.id);
+  for (const group of groups) {
+    const chosen = option.takeoffVariants?.[group.name] || group.defaultCode;
+    if (!chosen || !group.codes.includes(chosen))
+      warnings.push(`Select an available ${group.name} configuration for ${option.code || option.name}.`);
+  }
+  const selected = all.filter(takeoff => {
+    if (takeoff.variantGroup?.trim()) {
+      const name = takeoff.variantGroup.trim();
+      const group = groups.find(candidate => candidate.name === name);
+      const variant = option.takeoffVariants?.[name] || group?.defaultCode;
+      if (!variant || (takeoff.variantCode?.trim() || 'BASE') !== variant) return false;
+    }
+    if (pieceProductType(takeoff) === 'Backsplash') {
+      const room = normalized(takeoff.room);
+      if (room.includes('kitchen') && option.includeKitchenSplash === false) return false;
+      if (room.includes('bath') && option.includeBathroomSplash === false) return false;
+    }
+    return true;
+  });
+  return { takeoffs: selected, warnings };
 }
 
 function addCharge(
@@ -267,7 +329,8 @@ export function calculatePlanOption(
   option: PricingOptionPackage,
 ): PricingPlanOptionCalculation {
   const lines: PricingCalculationLine[] = [];
-  const takeoffs = builder.takeoffs.filter((takeoff) => takeoff.planId === plan.id);
+  const selection = includedPricingTakeoffs(builder,plan,option);
+  const takeoffs = selection.takeoffs;
 
   takeoffs.forEach((takeoff) => {
     const sf = takeoffSquareFeet(takeoff);
@@ -298,8 +361,30 @@ export function calculatePlanOption(
     });
   }
 
-  const warnings = lines.flatMap((line) => line.warning ? [line.warning] : []);
-  if (!takeoffs.length) warnings.push(`${plan.planNumber || plan.name} has no takeoff rows.`);
+  // Flat means one lump-sum charge, while /EA and /SF use quantity × rate.
+  for (const [rateId, quantity] of Object.entries(option.extraRateQuantities ?? {})) {
+    if (!quantity) continue;
+    const rate = builder.rates.find(candidate => candidate.id === rateId);
+    if (!rate || rate.kind === 'material-level') {
+      selection.warnings.push(`A selected add-on rate is missing from the Rate Book.`);
+      continue;
+    }
+    const billedQuantity = rate.unit === 'flat' ? 1 : quantity;
+    const numericRate = rateItemNumericRate(rate);
+    lines.push({
+      id: `${option.id}-addon-${rateId}`, label: rate.name, room: 'Option extras',
+      productType: rate.productType, productName: rate.name,
+      quantity: billedQuantity, unit: rate.unit === 'sf' ? 'SF' : rate.unit === 'flat' ? 'Flat' : 'EA',
+      rate: numericRate, amount: numericRate === undefined ? undefined : billedQuantity * numericRate,
+      warning: numericRate === undefined ? `${rate.name} is missing its rate.` : undefined,
+    });
+  }
+  const warnings = [
+    ...selection.warnings,
+    ...lines.flatMap((line) => line.warning ? [line.warning] : []),
+  ];
+  if (!builder.takeoffs.some(takeoff => takeoff.planId === plan.id))
+    warnings.push(`${plan.planNumber || plan.name} has no takeoff rows.`);
   const total = warnings.length || lines.some((line) => line.amount === undefined)
     ? undefined
     : lines.reduce((sum, line) => sum + (line.amount ?? 0), 0);
@@ -343,7 +428,12 @@ export function pricingBuilderHealth(builder?: PricingScheduleBuilderData) {
   });
   builder.options.forEach((option) => {
     const used = builder.plans.some((plan) => planOptionEnabled(plan, option));
-    if (used && !option.rules.length && !option.flatAdjustment) warnings.push(`${option.code || option.name} has no pricing rules.`);
+    // Explicit shared-material selectors and uniquely defined add-on rates
+    // replace the old requirement to manually attach a pricing rule per scope.
+    if (used && !option.rules.length && !option.flatAdjustment &&
+        !option.kitchenMaterialRateId && !option.bathroomMaterialRateId &&
+        !builder.rates.some(rate => rate.kind === 'material-level'))
+      warnings.push(`${option.code || option.name} needs material rates.`);
   });
   pricingBuilderMatrix(builder).forEach((calculation) => warnings.push(...calculation.warnings));
   return [...new Set(warnings)];
