@@ -33,6 +33,7 @@ export const ACTIVITY_TYPES = [
   'quote-created',
   'quote-linked',
   'quote-sent',
+  'quote-follow-up',
   'quote-revision-created',
   'quote-viewed',
   'quote-signed',
@@ -102,6 +103,10 @@ export interface ActivityMetadata {
   /** Only a salesperson's explicit, revision-specific confirmation is delivery. */
   deliveryConfirmed?: boolean;
   deliveryMethod?: 'email' | 'text' | 'in-person' | 'other';
+  /** Revision-scoped salesperson follow-up events, not quote lifecycle events. */
+  followUpAction?: 'scheduled' | 'contacted' | 'cleared';
+  followUpDueDate?: string;
+  followUpMethod?: 'call' | 'email' | 'text' | 'meeting' | 'other';
 }
 
 export interface Activity {
@@ -158,7 +163,7 @@ export type ProjectPatch = Partial<Pick<
   'name' | 'companyName' | 'stage' | 'dueDate' | 'amount' | 'nextAction' | 'lastTouchpoint'
 >>;
 
-export type ActivityInput = Omit<Activity, 'id' | 'occurredAt'> & { occurredAt?: string };
+export type ActivityInput = Omit<Activity, 'id' | 'occurredAt'> & { id?: string; occurredAt?: string };
 
 export function companyAnnualPotential(company: Pick<Company, 'annualUnits' | 'averageUnitValue'>) {
   if (company.annualUnits === undefined || company.averageUnitValue === undefined) return undefined;
