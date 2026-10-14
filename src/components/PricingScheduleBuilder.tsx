@@ -207,8 +207,9 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
             <strong>{item.label}</strong><small>{item.caption}</small>
           </button>)}
         </nav>
-        <details className="pricing-builder-alternatives" open={['manual','addons','contract'].includes(tab)}>
-          <summary>Alternative agreement workflows <small>· Manual negotiated prices and contract rows</small></summary>
+        <section className="pricing-builder-alternatives">
+          <header><strong>Alternative agreement workflows</strong>
+            <small>Manual negotiated prices and contract rows — optional alternatives</small></header>
           <p>These are alternatives to automatic calculations. Manual Matrix is for approved complete-house prices; Add-on Rates is its optional, separate upgrade schedule. Contract Table is the row editor/export for manual or imported agreements. Your data stays saved when switching methods.</p>
           <nav className="pricing-builder-tabs">
             {CONTRACT_TABS.map(item=><button type="button" key={item.key}
@@ -217,7 +218,7 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
                 if(builder.outputMode!=='contract')saveBuilder({...builder,outputMode:'contract'});
               }} title={item.caption}>{item.label}</button>)}
           </nav>
-        </details>
+        </section>
         <div className="pricing-builder-mode-indicator">
           Customer schedule source: <strong>{builder.outputMode==='contract'?'Manual / contract prices':'Calculated plan × option prices'}</strong>
         </div>
