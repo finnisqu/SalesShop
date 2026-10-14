@@ -165,12 +165,6 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
     ]});
   };
 
-  const addRate = () => {
-    const rate = createPricingRateItem();
-    saveBuilder({ ...builder, rates: [...builder.rates, rate] });
-    setTab('rates');
-  };
-
   const addOption = () => {
     const option = createPricingOptionPackage(builder.options.length);
     saveBuilder({ ...builder, options: [...builder.options, option] });
