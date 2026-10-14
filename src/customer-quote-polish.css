@@ -160,6 +160,11 @@
   .customer-quote-paper .customer-area-detail{grid-template-columns:45px minmax(0,1fr);gap:6px}
 }
 @media print {
+  /* Seller-only preview controls must never appear on a customer's printout. */
+  .qmb:has(.qmb-preview .customer-quote-paper) .qmb-preview-customer-options,
+  .qmb:has(.qmb-preview .customer-quote-paper) .qmb-preview-seller-toolbar{
+    display:none!important;
+  }
   /* The phone preview frame must not constrain the printed paper even when
      the browser prints from a wide desktop viewport. */
   .qmb .qmb-preview.is-phone-view{
