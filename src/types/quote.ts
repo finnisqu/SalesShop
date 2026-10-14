@@ -394,7 +394,40 @@ export interface PricingPlanTakeoff {
   supports?: number;
 }
 
+/**
+ * D.R. Horton-style contract schedules have base and option price rows, not
+ * necessarily additive upgrades. Source columns are preserved for XLSX export.
+ */
+export const PRICING_CONTRACT_RATE_KEYS = [
+  'corbels','kitchenSinks','graniteKitchenSf','quartzKitchenSf','bathSf','bathBowls',
+  'graniteBathSf','quartzBathSf','kitchenSplashSf','bathSplashSf',
+] as const;
+export type PricingContractRateKey = typeof PRICING_CONTRACT_RATE_KEYS[number];
+export type PricingContractQuantities = Partial<Record<PricingContractRateKey,number>>;
+export interface PricingContractRow {
+  id: string;
+  series: string;
+  itemType: 'Base' | 'Option';
+  planNumber: string;
+  planName: string;
+  optionCode: string;
+  description: string;
+  /** Explicit contract price is authoritative when priceMode is manual. */
+  customerPrice?: number;
+  priceMode: 'manual' | 'calculated';
+  /** Negative quantity in a replacement option is scope metadata, not an automatic discount. */
+  quantities: PricingContractQuantities;
+  sourceRow?: number;
+  /** Original A:AJ cells, retained for detailed builder-takeoff export. */
+  sourceCells?: Array<string | number | null>;
+  /** Upgrade row can replace an item; a base option price is not always additive. */
+  optionBehavior?: 'standalone' | 'increment';
+}
 export interface PricingScheduleBuilderData {
+  outputMode?: 'matrix' | 'contract';
+  contractRows?: PricingContractRow[];
+  contractRates?: PricingContractQuantities;
+  sourceContractFile?: string;
   rateBookName: string;
   rates: PricingRateItem[];
   options: PricingOptionPackage[];
