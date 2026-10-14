@@ -70,7 +70,7 @@ jobs:
       - name: Workbook unit tests
         run: npx vitest run src/services/pricingSchedule.test.ts src/services/pricingScheduleContract.test.ts src/services/pricingScheduleManual.test.ts src/services/pricingScheduleBuilderVariants.test.ts src/services/salesDocumentTemplates.test.ts src/services/stockBuilderRateTemplate.test.ts src/services/quoteDocumentCopy.test.ts src/services/salesDocumentLibrary.test.ts
       - name: Quote review unit regressions
-        run: npx vitest run src/services/quoteDraftAudit.test.ts src/components/QuoteAuditInlineEditor.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteCustomerPresentation.test.ts
+        run: npx vitest run src/services/quoteDraftAudit.test.ts src/components/QuoteAuditInlineEditor.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteCustomerPresentation.test.ts src/services/quoteTakeoffsLite.test.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Focused workbook browser tests
@@ -81,6 +81,8 @@ jobs:
         run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 --project=desktop-1280 -g 'phone Quotes Beta uses the same quote records|desktop Quotes Beta is fully opted in'
       - name: Customer quote document visibility browser regression
         run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Customer presentation keeps hidden line amounts private'
+      - name: Customer document scope and print browser regression
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Customer paper keeps structured specifications'
       - name: Upload workbook failure traces
         if: failure()
         uses: actions/upload-artifact@v4
