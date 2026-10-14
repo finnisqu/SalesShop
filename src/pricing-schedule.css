@@ -427,3 +427,72 @@
     display:none;
   }
 }
+
+/* A contract worksheet remains a readable scrollable table, with a focused
+   editor below it. All numeric contract-rate inputs stay private. */
+.pricing-contract{display:grid;gap:12px;min-width:0;max-width:100%}
+.pricing-contract .pricing-builder-panel-heading{flex-wrap:wrap;align-items:flex-start}
+.pricing-contract-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pricing-contract button{font:inherit;color:inherit;cursor:pointer}
+.pricing-contract-actions button,.pricing-contract-generator button,
+.pricing-contract-editor>.pricing-builder-inline-add{
+  padding:7px 11px;border:1px solid rgba(75,68,59,.2);
+  background:rgba(255,255,255,.65);border-radius:6px
+}
+.pricing-contract-actions button:disabled{opacity:.5;cursor:not-allowed}
+.pricing-contract-status{display:flex;flex-wrap:wrap;gap:7px}
+.pricing-contract-status span{padding:5px 9px;border-radius:6px;
+  background:rgba(70,79,78,.07);font-size:12px;color:inherit}
+.pricing-contract-rates,.pricing-contract-editor,.pricing-contract-issues{
+  border:1px solid rgba(75,68,59,.15);border-radius:8px;
+  background:rgba(255,255,255,.38);padding:12px;min-width:0
+}
+.pricing-contract-rates summary{cursor:pointer;font-weight:700}
+.pricing-contract-rates summary small{font-weight:400;color:var(--ink-muted,#716c65)}
+.pricing-contract-rates>small{display:block;margin-top:10px;color:var(--ink-muted,#716c65)}
+.pricing-contract-rates-grid,.pricing-contract-quantities,.pricing-contract-takeoffs,
+.pricing-contract-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:12px}
+.pricing-contract label{display:grid;gap:4px;min-width:0;font-size:12px}
+.pricing-contract label>span{font-weight:600;color:var(--ink-muted,#746e64)}
+.pricing-contract input,.pricing-contract select{box-sizing:border-box;min-width:0;width:100%;
+  border:1px solid rgba(74,68,61,.21);border-radius:5px;padding:7px 8px;
+  font:inherit;color:inherit;background:var(--surface,#fff)}
+.pricing-contract-filter{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.pricing-contract-filter label{min-width:220px}
+.pricing-contract-filter small,.pricing-contract-generator small,.pricing-contract-quantity-title small{
+  color:var(--ink-muted,#746e64)}
+.pricing-contract-scroller{max-width:100%;overflow:auto;max-height:380px;
+  border:1px solid rgba(75,68,59,.16);border-radius:7px}
+.pricing-contract-table{border-collapse:collapse;min-width:920px;width:100%;font-size:12px}
+.pricing-contract-table th{position:sticky;top:0;z-index:1;
+  text-align:left;padding:10px 9px;background:var(--surface,#f8f7f3);
+  border-bottom:1px solid rgba(75,68,59,.22);white-space:nowrap}
+.pricing-contract-table td{padding:8px 9px;border-bottom:1px solid rgba(75,68,59,.1);
+  vertical-align:top}
+.pricing-contract-table td:nth-child(6){min-width:210px;max-width:320px}
+.pricing-contract-table td:nth-child(7){font-variant-numeric:tabular-nums;white-space:nowrap}
+.pricing-contract-table tbody tr.active{background:rgba(72,112,94,.14)}
+.pricing-contract-row-open{background:transparent;border:0;padding:0;
+  text-decoration:underline;text-underline-offset:2px;text-align:left;font-weight:700}
+.pricing-contract-editor{display:grid;gap:12px}
+.pricing-contract-editor>header{display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:8px;padding-bottom:8px;border-bottom:1px solid rgba(75,68,59,.1)}
+.pricing-contract-quantity-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin-top:5px}
+.pricing-contract-price-check{display:flex;gap:12px;flex-wrap:wrap;padding:10px;
+  border-radius:6px;background:rgba(77,113,80,.08);font-size:12px}
+.pricing-contract-generator{display:flex;align-items:end;flex-wrap:wrap;gap:12px;
+  border-top:1px solid rgba(75,68,59,.15);padding-top:14px}
+.pricing-contract-generator>div{display:grid;gap:4px;flex:1 1 220px}
+.pricing-contract-generator label{max-width:190px}
+.pricing-contract-generator>small{flex-basis:100%}
+.pricing-contract-takeoffs{padding:10px;border-radius:6px;background:rgba(80,82,79,.045)}
+.pricing-contract-takeoffs>small{grid-column:1/-1;color:var(--ink-muted,#746e64)}
+.pricing-contract-issues{border-left:3px solid #9b7045}
+.pricing-contract-issues p{font-size:12px;margin:5px 0}
+@media(max-width:720px){
+  .pricing-contract-actions{width:100%}
+  .pricing-contract-actions button{flex:1}
+  .pricing-contract-fields,.pricing-contract-rates-grid,.pricing-contract-quantities,.pricing-contract-takeoffs{
+    grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pricing-contract-scroller{max-height:300px}
+}
