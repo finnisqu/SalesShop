@@ -455,6 +455,7 @@ export function QuotesMobileBeta() {
   const [selectionsOpen,setSelectionsOpen]=useState(false);
   const [reviewOpen,setReviewOpen]=useState(false);
   const [reviewFocus,setReviewFocus]=useState<string|null>(null);
+  const [previewReturnQuoteId,setPreviewReturnQuoteId]=useState<string|null>(null);
   const quoteScrollRef=useRef<HTMLDivElement>(null);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
@@ -530,10 +531,11 @@ export function QuotesMobileBeta() {
   };
   const openQuote=(id:string)=>{
     select(id);setQuoteTab('build');setPage('quote');setAreaId(null);
-    setSelectionsOpen(false);setReviewOpen(false);setError('');
+    setSelectionsOpen(false);setReviewOpen(false);setPreviewReturnQuoteId(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const navigateDocument=(tab:QuoteTab)=>{
+    setPreviewReturnQuoteId(null);
     setPage('quote');setQuoteTab(tab);setAreaId(null);
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
@@ -877,7 +879,10 @@ export function QuotesMobileBeta() {
         </>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
-          <QuoteBetaEditablePreview quote={quote}/>
+          <QuoteBetaEditablePreview quote={quote}
+            onReturnToReview={previewReturnQuoteId===quote.id?()=>{
+              setPreviewReturnQuoteId(null);openReview('__delivery__');
+            }:undefined}/>
         </>}
         </div>
       </div>
@@ -1003,7 +1008,7 @@ export function QuotesMobileBeta() {
         onSend={openSend} canIssue={canIssue}/>}
       canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
       onClose={()=>{setReviewOpen(false);setReviewFocus(null);}}
-      onFix={fixAudit} onPreview={()=>{setReviewOpen(false);setQuoteTab('preview');setPage('quote');setAreaId(null);}}
+      onFix={fixAudit} onPreview={()=>{setReviewOpen(false);setPreviewReturnQuoteId(quote.id);setQuoteTab('preview');setPage('quote');setAreaId(null);}}
       onClassic={()=>{setReviewOpen(false);exitBeta(false);setView('quotes');}}/>}
     {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
