@@ -43,6 +43,7 @@ type Sheet = {
   columnCount?: number;
   cellData?: Record<string, Record<string, Cell>>;
   columnData?: Record<string, { w?: number }>;
+  rowData?: Record<string, { h?: number }>;
   mergeData?: Array<{ startRow: number; startColumn: number; endRow: number; endColumn: number }>;
 };
 type Workbook = { sheetOrder?: string[]; sheets?: Record<string, Sheet> };
@@ -188,7 +189,10 @@ export function autoDetectPricingScheduleMapping(value: unknown): PricingSchedul
       }
     }
   }
-  if (!bestSheet || bestScore < 3) return undefined;
+  // Simple builder price lists often have only Description and Customer Price.
+  // Accept those two exact commercial fields, but not arbitrary two-column sheets.
+  const simplePriceList = bestColumns.description !== undefined && bestColumns.customerPrice !== undefined;
+  if (!bestSheet || (bestScore < 3 && !simplePriceList)) return undefined;
   return { sheetId: bestSheet, headerRow: bestHeaderRow, firstDataRow: bestHeaderRow + 1, lastDataRow: lastUsedRow(value, bestSheet), columns: bestColumns };
 }
 
@@ -217,7 +221,12 @@ function mappedNumber(value: unknown, mapping: PricingScheduleMapping, row: numb
   if (column === undefined) return undefined;
   const raw = cellValue(value, mapping.sheetId, row, column);
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-  const number = Number(text(raw).replace(/[$,]/g, '').trim());
+  // A missing cached formula result, an empty cell, or whitespace is not $0.
+  // Explicit numeric zero is valid, and remains distinct from missing pricing.
+  if (raw === undefined || raw === null || typeof raw === 'boolean') return undefined;
+  const cleaned = text(raw).replace(/[$,]/g, '').trim();
+  if (!cleaned) return undefined;
+  const number = Number(cleaned);
   return Number.isFinite(number) ? number : undefined;
 }
 
@@ -269,6 +278,23 @@ export function mergePricingScheduleData(quoteId: string, current: PricingSchedu
   };
 }
 
+/** Formula cells without a calculated cache cannot be published as a fabricated $0.
+ * ExcelJS carries cached results but does not itself calculate formulas. */
+export function uncalculatedPricingFormulaRows(value: unknown, mapping?: PricingScheduleMapping): number[] {
+  if (!mapping?.sheetId || mapping.columns.customerPrice === undefined) return [];
+  const column = String(mapping.columns.customerPrice);
+  const sheet = workbook(value)?.sheets?.[mapping.sheetId];
+  if (!sheet) return [];
+  const first = Math.max(1, mapping.firstDataRow) - 1;
+  const last = Math.max(first, (mapping.lastDataRow ?? lastUsedRow(value, mapping.sheetId)) - 1);
+  const rows: number[] = [];
+  for (let index = first; index <= last; index += 1) {
+    const cell = sheet.cellData?.[String(index)]?.[column];
+    if (cell?.f && (cell.v === undefined || cell.v === null || cell.v === '')) rows.push(index + 1);
+  }
+  return rows;
+}
+
 export function validatePricingScheduleForSend(data?: PricingScheduleData) {
   if (!data) throw new Error('Configure the pricing schedule before sending.');
   const source = data.publishSource ?? (data.route === 'workbook' ? 'workbook' : data.route === 'plan-builder' ? 'builder' : 'rate-sheet');
@@ -283,6 +309,12 @@ export function validatePricingScheduleForSend(data?: PricingScheduleData) {
   } else {
     if (!data.workbookData) throw new Error('Add or import the pricing workbook before sending this schedule.');
     if (!data.mapping?.sheetId) throw new Error('Map the pricing workbook before sending this schedule.');
+    if (!workbook(data.workbookData)?.sheets?.[data.mapping.sheetId]) throw new Error('Choose a valid workbook sheet before issuing.');
+    const uncalculated = uncalculatedPricingFormulaRows(data.workbookData, data.mapping);
+    if (uncalculated.length) {
+      throw new Error('Customer-price formulas on row(s) ' + uncalculated.slice(0, 4).join(', ') +
+        ' have no calculated result. Open the source file in Excel, recalculate and save, then reimport before issuing.');
+    }
     if (data.mapping.columns.description === undefined || data.mapping.columns.customerPrice === undefined) throw new Error('Map at least Description and Customer price before sending this schedule.');
     if (!data.customerItems.length) throw new Error('The mapped pricing schedule does not contain any customer rows.');
   }
@@ -347,7 +379,9 @@ export async function importExcelPricingWorkbook(file: File): Promise<IWorkbookD
     sheetOrder.push(id);
     const cellData: Record<string, Record<string, Cell>> = {};
     const columnData: Record<string, { w?: number }> = {};
+    const rowData: Record<string, { h?: number }> = {};
     worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+      if (row.height) rowData[String(rowNumber - 1)] = { h: row.height };
       row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
         const raw = cell.value as unknown;
         if (raw === null || raw === undefined) return;
@@ -371,13 +405,14 @@ export async function importExcelPricingWorkbook(file: File): Promise<IWorkbookD
       if (column.width) columnData[String(index)] = { w: Math.max(50, Math.round(column.width * 7.2)) };
     });
     const merges = ((worksheet.model as unknown as { merges?: string[] }).merges ?? []).map(mergeRange).filter((item): item is NonNullable<ReturnType<typeof mergeRange>> => Boolean(item));
-    sheets[id] = { id, name: worksheet.name || `Sheet ${sheetOrder.length}`, rowCount: Math.max(worksheet.rowCount, 200), columnCount: Math.max(worksheet.columnCount, 24), cellData, columnData, mergeData: merges };
+    sheets[id] = { id, name: worksheet.name || `Sheet ${sheetOrder.length}`, rowCount: Math.max(worksheet.rowCount, 200), columnCount: Math.max(worksheet.columnCount, 24), cellData, columnData, rowData, mergeData: merges };
   });
   if (!sheetOrder.length) return createBlankPricingScheduleWorkbook(`import_${crypto.randomUUID()}`);
   return { id: `schedule_workbook_${crypto.randomUUID()}`, name: file.name.replace(/\.xlsx?$/i, '') || 'Pricing Schedule', appVersion: '1.0.3', locale: LocaleType.EN_US, styles: {}, sheetOrder, sheets, resources: [] } as IWorkbookData;
 }
 
-export async function exportExcelPricingWorkbook(value: unknown, suggestedName = 'pricing-schedule.xlsx') {
+/** Separate the in-memory XLSX writer for reliable round-trip tests without DOM downloads. */
+export async function buildExcelPricingWorkbook(value: unknown) {
   const ExcelJS = await import('exceljs');
   const excel = new ExcelJS.Workbook();
   const data = workbook(value);
@@ -397,8 +432,16 @@ export async function exportExcelPricingWorkbook(value: unknown, suggestedName =
     for (const [columnKey, column] of Object.entries(source.columnData ?? {})) {
       if (column.w) sheet.getColumn(Number(columnKey) + 1).width = Math.max(6, column.w / 7.2);
     }
+    for (const [rowKey, row] of Object.entries(source.rowData ?? {})) {
+      if (row.h) sheet.getRow(Number(rowKey) + 1).height = row.h;
+    }
     for (const merge of source.mergeData ?? []) sheet.mergeCells(merge.startRow + 1, merge.startColumn + 1, merge.endRow + 1, merge.endColumn + 1);
   }
+  return excel;
+}
+
+export async function exportExcelPricingWorkbook(value: unknown, suggestedName = 'pricing-schedule.xlsx') {
+  const excel = await buildExcelPricingWorkbook(value);
   const buffer = await excel.xlsx.writeBuffer();
   const blob = new Blob([buffer as unknown as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const url = URL.createObjectURL(blob);
