@@ -749,7 +749,10 @@ export function QuotesMobileBeta() {
         <header className="qmb-pagehead">
           <button type="button" className="qmb-back" onClick={()=>setPage('library')}>‹ Documents</button>
           <span className="qmb-chip">{salesTemplateLabel(salesDocumentTemplate(quote))} · {quote.status}</span>
-          <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button></div>
+          <div className="qmb-headeractions">
+            <button type="button" className="qmb-document-new-shortcut" onClick={()=>setShowNewDocument(true)}>+ New document</button>
+            <AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button>
+          </div>
         </header>
         <div className="qmb-quote-sticky">
           <div className="qmb-quote-identity">
