@@ -10,6 +10,7 @@ import type {
   PricingScheduleBuilderData,
   PricingScheduleItem,
 } from '../types/quote';
+import {contractScheduleHealth,deriveContractCustomerItems} from './pricingScheduleContract';
 
 export interface PricingCalculationLine {
   id: string;
@@ -314,6 +315,7 @@ export function pricingBuilderMatrix(builder: PricingScheduleBuilderData) {
 
 export function deriveBuilderCustomerItems(builder?: PricingScheduleBuilderData): PricingScheduleItem[] {
   if (!builder) return [];
+  if (builder.outputMode === 'contract') return deriveContractCustomerItems(builder);
   return pricingBuilderMatrix(builder).map((calculation, index) => ({
     sourceRow: index + 1,
     series: calculation.plan.series,
@@ -329,6 +331,7 @@ export function deriveBuilderCustomerItems(builder?: PricingScheduleBuilderData)
 
 export function pricingBuilderHealth(builder?: PricingScheduleBuilderData) {
   if (!builder) return ['Structured Builder has not been configured.'];
+  if (builder.outputMode === 'contract') return contractScheduleHealth(builder);
   const warnings: string[] = [];
   if (!builder.rates.length) warnings.push('Add at least one rate to the Rate Book.');
   if (!builder.options.length) warnings.push('Add at least one option package.');
