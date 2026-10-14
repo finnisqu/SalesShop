@@ -102,6 +102,16 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
     if (!enabled && selectedCell?.planId === plan.id && selectedCell.optionId === option.id) setSelectedCell(null);
   };
 
+  const togglePlanTakeoff = (plan: PricingPlan, option: PricingOptionPackage, takeoff: PricingPlanTakeoff, included: boolean) => {
+    const byOption = { ...(plan.excludedTakeoffIdsByOption ?? {}) };
+    const excluded = new Set(byOption[option.id] ?? []);
+    if (included) excluded.delete(takeoff.id);
+    else excluded.add(takeoff.id);
+    if (excluded.size) byOption[option.id] = [...excluded];
+    else delete byOption[option.id];
+    updatePlan(plan.id, { excludedTakeoffIdsByOption: Object.keys(byOption).length ? byOption : undefined });
+  };
+
   const warnings = useMemo(() => pricingBuilderHealth(builder), [builder]);
   const matrix = useMemo(() => pricingBuilderMatrix(builder), [builder]);
   const selectedPlan = builder.plans.find((plan) => plan.id === selectedPlanId) ?? builder.plans[0];
@@ -447,6 +457,30 @@ export function PricingScheduleBuilder({ quote }: { quote: Quote }) {
                     ))}
                   </div>
                   {!builder.options.length && <div className="pricing-builder-empty">Add option packages first, then choose which ones this plan offers.</div>}
+                  {builder.takeoffs.some(t=>t.planId===selectedPlan.id) &&
+                    builder.options.some(option=>planOptionEnabled(selectedPlan,option)) &&
+                    <details className="pricing-builder-component-scope">
+                      <summary>Customize measured scope for each package</summary>
+                      <p>Exclude individual components only from this house plan and package. The original takeoff stays intact, and calculated prices update automatically. Material, splash and variant rules still apply.</p>
+                      {builder.options.filter(option=>planOptionEnabled(selectedPlan,option)).map(option=>{
+                        const excluded = new Set(selectedPlan.excludedTakeoffIdsByOption?.[option.id] ?? []);
+                        const planTakeoffs = builder.takeoffs.filter(t=>t.planId===selectedPlan.id);
+                        return <details className="pricing-builder-component-package" key={option.id}>
+                          <summary><strong>{option.code || option.name}</strong> · {planTakeoffs.length-excluded.size} of {planTakeoffs.length} components eligible</summary>
+                          <div className="pricing-builder-component-list">
+                            {planTakeoffs.map(takeoff=><label className="pricing-builder-component-choice" key={takeoff.id}>
+                              <input type="checkbox" checked={!excluded.has(takeoff.id)}
+                                aria-label={`${option.code || option.name}: include ${takeoff.room} ${takeoff.piece || 'component'}${takeoff.variantGroup ? ` ${takeoff.variantCode || 'BASE'}` : ''}`}
+                                onChange={event=>togglePlanTakeoff(selectedPlan,option,takeoff,event.target.checked)}/>
+                              <span><strong>{takeoff.room || 'Unassigned room'}</strong> · {takeoff.piece || 'Component'}
+                                {takeoff.variantGroup && <small> · {takeoff.variantGroup} / {takeoff.variantCode || 'BASE'}</small>}
+                                <small> · {takeoffSquareFeet(takeoff).toFixed(2)} SF</small>
+                              </span>
+                            </label>)}
+                          </div>
+                        </details>;
+                      })}
+                    </details>}
                 </section>
 
                 <div className="pricing-builder-takeoff-actions">
