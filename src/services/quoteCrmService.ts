@@ -183,6 +183,7 @@ export function applyQuoteSent(quote: Quote): QuoteIdentitySync {
  * actually delivered. Link creation, copy, preview and issuing do not call it.
  * Revision-specific CRM metadata is durable and keeps this action idempotent. */
 export function recordQuoteDelivered(quote:Quote,method:QuoteDeliveryMethod):boolean{
+  if(quote.archivedAt||!['Sent','Viewed','Signed'].includes(quote.status))return false;
   const crm=getCrm();
   if(confirmedQuoteDeliveries(quote,crm.activities).length)return false;
   const project=quote.projectId
