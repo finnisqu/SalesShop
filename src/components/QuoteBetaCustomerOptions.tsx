@@ -8,6 +8,7 @@ import {QUOTE_STANDARD_TERMS,termsEnabled,toggleCustomerTerm,
 export function QuoteBetaCustomerOptions({quote}:{quote:Quote}){
   const updateQuote=useQuoteStore(s=>s.updateQuote);
   const setColumns=useQuoteStore(s=>s.setCustomerColumns);
+  const setAllCustomerDisplayModes=useQuoteStore(s=>s.setAllCustomerDisplayModes);
   const updateSection=useQuoteStore(s=>s.updateSection);
   const updateLine=useQuoteStore(s=>s.updateLine);
   const [showLines,setShowLines]=useState(false);
@@ -24,10 +25,7 @@ export function QuoteBetaCustomerOptions({quote}:{quote:Quote}){
       lines:quote.lines.filter(line=>line.sectionId===section.id),
     })),
   ].filter(group=>group.lines.length>0);
-  const applyAllModes=(mode:'detail'|'summary')=>
-    updateQuote(quote.id,{sections:quote.sections.map(section=>({
-      ...section,customerDisplayMode:mode,
-    }))});
+  const applyAllModes=(mode:'detail'|'summary')=>setAllCustomerDisplayModes(quote.id,mode);
   const termsCount=QUOTE_STANDARD_TERMS.filter(t=>termsEnabled(quote.customerNotes,t.id)).length;
   const setTerm=(id:typeof QUOTE_STANDARD_TERMS[number]['id'],on:boolean)=>
     updateQuote(quote.id,{customerNotes:toggleCustomerTerm(quote.customerNotes,id,on)});
