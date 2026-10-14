@@ -857,6 +857,29 @@ export function QuotesMobileBeta() {
       stockLevelCount={stockLevelPreview.summary.levelCount}
       unassignedStockCount={stockLevelPreview.summary.unassigned.length}
       onClose={()=>setShowNewDocument(false)} onCreate={createFromTemplate}/>}
+    {copyRequest&&createPortal(<div className="qmb qmb-area-manager-backdrop"
+      onPointerDown={e=>{if(e.currentTarget===e.target)setCopyRequest(null);}}>
+      <section className="qmb-area-manager qmb-document-confirm-dialog" role="dialog"
+        aria-modal="true" aria-label="Copy document">
+        <header className="qmb-area-manager-head"><div>
+          <strong>Make an independent copy</strong>
+          <small>Nothing will be copied until you confirm.</small></div>
+          <button type="button" aria-label="Close copy dialog" onClick={()=>setCopyRequest(null)}>×</button>
+        </header>
+        <div className="qmb-document-confirm-body">
+          <p>Copying <strong>{copyRequest.title}</strong> creates a separate draft.
+            The original document, its issued revisions, and signatures remain unchanged.</p>
+          <label><span>New document name</span><input autoFocus required maxLength={300}
+            aria-label="New document name" value={copyName}
+            onChange={e=>setCopyName(e.target.value)}
+            onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();confirmDocumentCopy();}}}/></label>
+        </div>
+        <footer className="qmb-area-manager-foot">
+          <button type="button" onClick={()=>setCopyRequest(null)}>Cancel</button>
+          <button type="button" disabled={!copyName.trim()} onClick={confirmDocumentCopy}>Create independent copy</button>
+        </footer>
+      </section>
+    </div>,document.body)}
     {libraryAction&&(()=>{
       const chosen=quotes.find(q=>q.id===libraryAction.id);
       if(!chosen)return null;
@@ -873,12 +896,22 @@ export function QuotesMobileBeta() {
           <div className="qmb-area-manager-delete">
             <p>{removing?'This draft has never been issued. Permanent deletion cannot be undone.':
               'The quote and its revisions will be retained, and you can restore them from Show archived.'}</p>
-            <button type="button" className={'qmb-area-deletion-choice'+(removing?' is-destructive':'')}
+            {removing&&<label className="qmb-document-delete-phrase">
+              <span>Type DELETE to permanently remove this draft.</span>
+              <input autoFocus autoComplete="off" aria-label="Type DELETE to confirm"
+                value={deletePhrase} onChange={e=>setDeletePhrase(e.target.value)}/>
+            </label>}
+            <button type="button" disabled={removing&&deletePhrase!=='DELETE'}
+              className={'qmb-area-deletion-choice'+(removing?' is-destructive':'')}
               onClick={()=>{
                 if(removing){
-                  if(canPermanentlyDeleteQuote(chosen,useQuoteStore.getState().quotes))deleteQuote(chosen.id);
+                  if(deletePhrase!=='DELETE')return;
+                  if(canPermanentlyDeleteQuote(chosen,useQuoteStore.getState().quotes)){
+                    deleteQuote(chosen.id);
+                    if(quote?.id===chosen.id){setPage('library');setAreaId(null);}
+                  }
                 }else archiveQuote(chosen.id);
-                setLibraryAction(null);
+                setLibraryAction(null);setDeletePhrase('');
               }}>
               <strong>{removing?'Permanently delete draft':'Archive quote'}</strong>
             </button>
