@@ -711,6 +711,8 @@ export function QuotesMobileBeta() {
          <div className="qmb-library-grid">
         {list.map(q=><div className="qmb-library-entry" key={q.id}>
           <button type="button" className="qmb-card qmb-listcard"
+            aria-disabled={!!q.archivedAt}
+            title={q.archivedAt?'Restore from Archived to reopen':'Open '+(q.title||'document')}
             onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
             <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
               <span className="qmb-chip">{q.archivedAt?'Archived':q.status}</span></div>
