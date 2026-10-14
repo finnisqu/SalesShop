@@ -7,7 +7,7 @@ import {
 } from './salesDocumentTemplates';
 const legacy=(route:'rate-sheet'|'plan-builder'|'workbook')=>({
   documentType:'pricing-schedule' as const,
-  pricingSchedule:{route,publishSource:route==='rate-sheet'?'rate-sheet':route==='workbook'?'workbook':'builder'},
+  pricingSchedule:{route,publishSource:route==='rate-sheet'?'rate-sheet':route==='workbook'?'workbook':'builder',customerItems:[]},
 });
 describe('SalesShop document templates',()=>{
   it('defines exactly five clear starting points; Multi-Family is deliberately not executable',()=>{
