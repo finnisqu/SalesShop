@@ -1,0 +1,34 @@
+/* Quote follow-up worklist; scoped to library, mobile-friendly and theme-aware. */
+.qmb .qmb-followups{display:grid;gap:12px;padding:15px;margin:14px 0 20px;border:1px solid var(--qmb-border,var(--border-color,#d7dce1));border-radius:14px;background:var(--qmb-card,var(--surface,#fff));color:var(--qmb-ink,inherit);min-width:0}
+.qmb .qmb-followups-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.qmb .qmb-followups-heading span{font-size:10px;letter-spacing:.11em;font-weight:750;color:var(--qmb-muted,#66717a)}
+.qmb .qmb-followups-heading h2{margin:4px 0;font-size:18px;line-height:1.24}
+.qmb .qmb-followups-heading p,.qmb .qmb-followups-item p{margin:4px 0 0;font-size:12px;line-height:1.45;color:var(--qmb-muted,#66717a)}
+.qmb .qmb-followups-heading>strong{flex-shrink:0;font-size:11px;padding:6px 8px;border:1px solid var(--qmb-border,#ccc);border-radius:99px}
+.qmb .qmb-followups-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.qmb .qmb-followups-stats>div{display:grid;gap:4px;padding:9px 8px;border:1px solid var(--qmb-border,#ccc);border-radius:9px}
+.qmb .qmb-followups-stats b{font-size:19px;line-height:1;font-variant-numeric:tabular-nums}
+.qmb .qmb-followups-stats span{font-size:10px;color:var(--qmb-muted,#66717a)}
+.qmb .qmb-followups-filters{display:flex;gap:6px;flex-wrap:wrap}
+.qmb .qmb-followups-filters button{border:1px solid var(--qmb-border,#ccc);border-radius:99px;background:transparent;color:inherit;font-size:11px;padding:7px 11px}
+.qmb .qmb-followups-filters button.active{background:var(--qmb-ink,#27333e);color:var(--qmb-card,#fff);border-color:transparent}
+.qmb .qmb-followups-list{display:grid;gap:9px}
+.qmb .qmb-followups-item{display:grid;gap:8px;min-width:0;border:1px solid var(--qmb-border,#ccc);border-radius:10px;padding:12px}
+.qmb .qmb-followups-item-top,.qmb .qmb-followups-row{display:flex;align-items:center;justify-content:space-between;gap:9px;min-width:0}
+.qmb .qmb-followups-item-top small,.qmb .qmb-followups-row small,.qmb .qmb-followups-row time,.qmb .qmb-followups-latest{font-size:11px;color:var(--qmb-muted,#66717a)}
+.qmb .qmb-followups-row>div{display:grid;gap:4px;min-width:0}
+.qmb .qmb-followups-row strong{font-size:13px;overflow-wrap:anywhere}
+.qmb .qmb-followups-row time{flex-shrink:0;font-variant-numeric:tabular-nums}
+.qmb .qmb-followups-label{padding:5px 8px;border-radius:7px;font-weight:700;font-size:10px;border:1px solid var(--qmb-border,#ccc)}
+.qmb .qmb-followups-label.is-due,.qmb .qmb-followups-label.is-needs-delivery{border-color:#b97e59}
+.qmb .qmb-followups-actions{display:flex;gap:8px;flex-wrap:wrap}
+.qmb .qmb-followups-actions button,.qmb .qmb-followups-editor-actions button,.qmb .qmb-followups-more{border:1px solid var(--qmb-border,#ccc);background:var(--qmb-bg,#f5f6f7);color:var(--qmb-ink,inherit);border-radius:8px;min-height:37px;padding:8px 11px;font-size:12px}
+.qmb .qmb-followups-actions button:first-child{font-weight:700}
+.qmb .qmb-followups-editor{display:grid;gap:10px;padding:12px;border:1px solid var(--qmb-border,#ccc);border-radius:9px;background:var(--qmb-bg,#f5f6f7)}
+.qmb .qmb-followups-editor label{display:grid;gap:5px;font-size:11px}
+.qmb .qmb-followups-editor input,.qmb .qmb-followups-editor select,.qmb .qmb-followups-editor textarea{width:100%;min-width:0;padding:9px;border:1px solid var(--qmb-border,#ccc);background:var(--qmb-card,#fff);color:var(--qmb-ink,inherit);border-radius:7px;font:inherit}
+.qmb .qmb-followups-editor-actions{display:flex;flex-wrap:wrap;gap:6px}
+.qmb .qmb-followups-editor>small,.qmb .qmb-followups-empty{font-size:11px;line-height:1.4;color:var(--qmb-muted,#66717a)}
+.qmb .qmb-followups-error{color:#b42318;font-size:12px}
+.qmb .qmb-followups-notice{font-size:12px}
+@media(max-width:520px){.qmb .qmb-followups{padding:11px;margin:10px 0 18px}.qmb .qmb-followups-stats{gap:5px}.qmb .qmb-followups-stats>div{padding:8px 5px}.qmb .qmb-followups-stats span{font-size:9px}.qmb .qmb-followups-row{align-items:flex-start}.qmb .qmb-followups-actions button{flex:1}}
