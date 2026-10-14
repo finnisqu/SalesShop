@@ -77,7 +77,7 @@ describe('UI Foundation Batch 9 — Quotes internal editor',()=>{
       '<QuoteShareControl','<QuoteSignatureDialog',
       '<QuoteInternalPricingSummary','<QuoteSinkLineFields',
       '<QuoteMaterialLineFields','<QuoteRateLineFields',
-      '<PricingScheduleWorkbook','<CustomerPreview',
+      '<PricingDocumentEditor','<CustomerPreview',
       '<LineEditor','quoteLineAmount(', 'quoteTotal(', 'reorderLine(',
       'canIssueQuote','commerciallyEditable',
     ])expect(source,`Quotes operation lost: ${action}`).toContain(action);
