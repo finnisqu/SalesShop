@@ -76,7 +76,7 @@ export function PricingManualSchedule({builder,onChange,mode}:{
     if(!manualPackageOffered(plan,p))return false;
     const r=manualPriceRow(builder,plan.id,p.id);
     return r?.priceMode==='manual'
-      ?r.customerPrice!==undefined:Number.isFinite(r?.customerPrice??NaN)
+      ?r.customerPrice!==undefined&&Number.isFinite(r.customerPrice)
       :r!==undefined&&contractPublishedPrice(r,builder.contractRates??{})!==undefined;
   }).length,0);
   const run=(fn:()=>PricingScheduleBuilderData,success?:string)=>{
