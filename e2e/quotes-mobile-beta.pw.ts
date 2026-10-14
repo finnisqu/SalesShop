@@ -517,12 +517,20 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await expect(review.getByLabel('Customer document revision')).toContainText('$400.00');
   await expect(review.locator('.quote-share-control.is-inline')
     .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');
+  const currentProjectStage=()=>page.evaluate(()=>{
+    const quotes=JSON.parse(localStorage.getItem('salesshop-react-quotes-v1')||'{}');
+    const crm=JSON.parse(localStorage.getItem('salesshop-react-crm-v1')||'{}');
+    const selected=quotes.quotes?.find((item:{id:string})=>item.id===quotes.activeQuoteId);
+    return crm.projects?.find((item:{id:string})=>item.id===selected?.projectId)?.stage??null;
+  });
   const delivery=review.getByRole('region',{name:'Customer delivery confirmation'});
   await expect(delivery).toContainText('Issued — delivery not confirmed');
+  expect(await currentProjectStage()).toBe('Bid Development');
   page.once('dialog',dialog=>dialog.accept());
   await delivery.getByRole('button',{name:'Confirm customer delivery'}).click();
   await expect(delivery).toContainText('Customer delivery confirmed');
   await expect(delivery).toContainText('Email');
+  expect(await currentProjectStage()).toBe('Bid Sent');
   await review.getByRole('button',{name:'Close Review and Issue'}).click();
   await beta.getByRole('navigation',{name:'Quote workflow'}).getByRole('button',{name:'Customer & project'}).click();
   const timeline=beta.getByRole('region',{name:'Quote document and history'});
