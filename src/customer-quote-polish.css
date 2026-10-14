@@ -83,3 +83,33 @@
     -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
 }
+
+/* Lump-sum prices obey the same Line amounts column toggle as detail rows;
+   keep the Area name on one full-width grid track when its amount is hidden. */
+.customer-quote-paper .customer-area-summary-row.is-no-amount{
+  grid-template-columns:minmax(0,1fr)!important;
+}
+@media (max-width:500px){
+  .customer-quote-paper .columns-q1-r1-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 30px 60px 72px;gap:5px;
+  }
+  .customer-quote-paper .columns-q1-r0-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 30px 72px;gap:5px;
+  }
+  .customer-quote-paper .columns-q0-r1-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 60px 72px;gap:5px;
+  }
+  .customer-quote-paper .customer-quote-row>div{min-width:0;overflow-wrap:anywhere}
+}
+@container quote-phone-preview (max-width:410px){
+  .customer-quote-paper .columns-q1-r1-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 30px 60px 72px;gap:5px;
+  }
+  .customer-quote-paper .columns-q1-r0-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 30px 72px;gap:5px;
+  }
+  .customer-quote-paper .columns-q0-r1-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 60px 72px;gap:5px;
+  }
+  .customer-quote-paper .customer-quote-row>div{min-width:0;overflow-wrap:anywhere}
+}
