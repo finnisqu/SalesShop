@@ -238,6 +238,20 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
   const linked=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf');
   const amount=quoteLinesTotal(lines);
   const measured=totalBillableTakeoffSf(pieces);
+  // Keep unresolved priced work visible *inside* the Area, not only at the
+  // final quote Review. The same shared audit still guards formal issuing.
+  const areaPriceBlockers=useMemo(()=>auditQuoteDraft(quote).blockers.filter(f=>
+    f.destination.view==='area'&&f.destination.areaId===section.id),[quote,section.id]);
+  const goToPriceFix=()=>{
+    const first=areaPriceBlockers[0];
+    if(!first||first.destination.view!=='area')return;
+    const target=first.destination.tab==='measure'?'measure':
+      first.destination.tab==='materials'||desktopLab?'materials':'pricing';
+    setTab(target);
+    const scroll=areaScrollRef.current;
+    const tabs=scroll?.querySelector<HTMLElement>('.qmb-tabs');
+    if(scroll&&tabs)scroll.scrollTo({top:tabs.offsetTop,behavior:'auto'});
+  };
   const savePieces=(next:QuoteTakeoffPiece[])=>updatePieces(quote.id,section.id,next);
   const advanceArea=()=>{
     if(tab==='pricing'||tab==='calculator'){onNextArea();return;}
@@ -267,7 +281,14 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
         </Field>
       </>}
       <div className="qmb-area-summary"><span>{sf.format(measured)} SF measured</span><strong>{money.format(amount)}</strong></div>
-
+      {editable&&areaPriceBlockers.length>0&&<button type="button"
+        className="qmb-area-pricing-alert" aria-label="Resolve Area pricing issues"
+        onClick={goToPriceFix}>
+        <span className="qmb-area-pricing-alert-icon" aria-hidden="true">!</span>
+        <span><strong>{areaPriceBlockers.length} pricing {areaPriceBlockers.length===1?'item needs':'items need'} attention</strong>
+          <small>{areaPriceBlockers[0].title}</small></span>
+        <span aria-hidden="true">›</span>
+      </button>}
     </div>
     <nav className="qmb-tabs" aria-label="Area sections">
       {(desktopLab?([['measure','Measure'],['materials','Materials'],['calculator','Calculator']] as const)
