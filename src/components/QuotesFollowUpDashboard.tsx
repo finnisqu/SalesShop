@@ -13,7 +13,7 @@ const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maxim
 type QueueFilter='attention'|'all'|'scheduled';
 function badge(item:QuoteFollowUpItem){
   return item.priority==='due'?'Due':item.priority==='needs-delivery'?'Not delivered':
-    item.priority==='ready-to-review'?'Review':item.priority==='upcoming'?'Scheduled':'Waiting';
+    item.priority==='ready-to-review'?'Review':item.priority==='upcoming'?'Scheduled':'Awaiting reply';
 }
 
 export function QuotesFollowUpDashboard({
