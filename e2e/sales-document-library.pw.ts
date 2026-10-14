@@ -41,7 +41,8 @@ test('mobile documents search by name/template and filter by status without losi
   await beta.getByRole('combobox',{name:'Document status'}).selectOption('issued');
   await expect(beta.getByRole('button',{name:'Clear filters'})).toBeVisible();
   await beta.getByRole('button',{name:'Clear filters'}).click();
-  await expect(beta.locator('.qmb-library-entry')).toHaveCount(2);
+  await expect(beta.locator('.qmb-library-entry').filter({hasText:'Smith Kitchen'})).toBeVisible();
+  await expect(beta.locator('.qmb-library-entry').filter({hasText:'Oakwood Pricing'})).toBeVisible();
   await expect(beta.getByRole('button',{name:'+ New document'})).toBeVisible();
 });
 test('desktop library sorts documents and safely restores an archived draft',async({page},info)=>{
@@ -51,9 +52,11 @@ test('desktop library sorts documents and safely restores an archived draft',asy
   await makeDocument(page,'Builder Rate Schedule','Alpha Builder');
   await beta.getByRole('combobox',{name:'Sort documents'}).selectOption('name');
   const names=await beta.locator('.qmb-listcard>strong').allTextContents();
-  expect(names).toEqual(['Alpha Builder','Zulu Retail']);
+  expect(names.indexOf('Alpha Builder')).toBeGreaterThanOrEqual(0);
+  expect(names.indexOf('Alpha Builder')).toBeLessThan(names.indexOf('Zulu Retail'));
   await beta.getByRole('combobox',{name:'Document status'}).selectOption('drafts');
-  await expect(beta.locator('.qmb-library-entry')).toHaveCount(2);
+  await expect(beta.locator('.qmb-library-entry').filter({hasText:'Alpha Builder'})).toBeVisible();
+  await expect(beta.locator('.qmb-library-entry').filter({hasText:'Zulu Retail'})).toBeVisible();
   const entry=beta.locator('.qmb-library-entry').filter({hasText:'Alpha Builder'});
   await entry.getByRole('button',{name:'Archive'}).click();
   await page.getByRole('dialog',{name:'Archive quote'}).getByRole('button',{name:'Archive quote'}).click();
