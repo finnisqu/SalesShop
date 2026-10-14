@@ -63,7 +63,7 @@ test('spreadsheet import keeps cached formulas, customer-only prices and XLSX ex
   await expect(paper).toContainText('$800.00');
   await expect(paper).toContainText('$1,500.00');
   await expect(paper).not.toContainText('Internal Supplier Cost');
-  await rail.getByRole('button',{name:'Pricing Schedule'}).click();
+  await rail.getByRole('button',{name:/Edit Custom Spreadsheet/}).click();
   await expect(workspace.getByText('builder-pricing.xlsx')).toBeVisible();
   await page.reload();
   const reopened=page.getByRole('main',{name:'Quotes mobile beta'});
