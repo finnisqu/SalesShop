@@ -5,6 +5,8 @@ import {canIssueTeamQuote} from '../services/teamDepartments';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
+import {useCrmStore} from '../store/crmStore';
+import {confirmedQuoteDeliveries,quoteDeliveryLabel,QUOTE_DELIVERY_METHOD_LABELS} from '../services/quoteDeliveryLifecycle';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {CustomerPreview} from './Quotes';
 import {createPricingScheduleData} from '../services/pricingSchedule';
@@ -14,6 +16,7 @@ const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
  * never substitute it into the active quote or mutate its latest revision. */
 export function QuoteBetaHistory({quote}:{quote:Quote}){
   const update=useQuoteStore(s=>s.updateQuote);
+  const activities=useCrmStore(s=>s.activities);
   const createChangeOrder=useQuoteStore(s=>s.createChangeOrder);
   const [selected,setSelected]=useState<number|null>(null);
   const editable=quoteIsCommerciallyEditable(quote);
@@ -23,6 +26,8 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
   const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
   const canCreateOrder=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,teamDepartment));
   const history=[...quote.history].sort((a,b)=>b.capturedAt.localeCompare(a.capturedAt));
+  const currentDeliveries=confirmedQuoteDeliveries(quote,activities);
+  const currentInHistory=history.some(item=>item.revision===quote.revision);
   const canChangeType=editable&&!quote.templateId&&!history.length&&quote.documentType!=='change-order';
   const snapshot=selected===null?undefined:history[selected];
   const frozen:Quote|undefined=snapshot?{
@@ -41,7 +46,7 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
   return <section className="qmb-details-section qmb-card qmb-lifecycle-card" aria-label="Quote document and history">
     <header className="qmb-details-heading">
       <span className="qmb-details-step">4</span><div><h3>Document &amp; revisions</h3>
-        <small>Current document setup and immutable sent history</small></div>
+        <small>Current revision, issued snapshots and confirmed customer deliveries</small></div>
     </header>
     <div className="qmb-details-fields">
       <label><span>Document type</span>
@@ -75,21 +80,38 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
     </div>
     {quote.status==='Signed'&&canCreateOrder&&<button type="button" className="qmb-lifecycle-change-order"
       onClick={()=>createChangeOrder(quote.id)}>+ Create Change Order from signed quote</button>}
-    <details className="qmb-lifecycle-revisions">
-      <summary>Sent revision history <span>{history.length}</span></summary>
-      {history.length?history.map((item,index)=><div className="qmb-lifecycle-revision" key={item.revision+'-'+item.capturedAt}>
-        <div><strong>{item.label||('Revision '+item.revision)}</strong>
-          <small>{item.status} · {item.quoteDate} · {quote.documentType==='pricing-schedule'?`${item.pricingSchedule?.customerItems.length??0} price rows`:money.format(item.customerTotal)}</small></div>
-        <button type="button" onClick={()=>setSelected(index)}
-          aria-label={'View sent revision '+item.revision}>View document</button>
-      </div>):<p className="qmb-help">No issued revisions yet. Sending the quote will freeze a copy here.</p>}
+    <details className="qmb-lifecycle-revisions" open>
+      <summary>Revision timeline <span>{history.length} issued</span></summary>
+      {!currentInHistory&&<div className="qmb-lifecycle-revision qmb-lifecycle-current">
+        <div><strong>Current revision {quote.revision}{quote.revisionLabel?' · '+quote.revisionLabel:''}</strong>
+          <small>{quote.status==='Ready'?'Ready for approval':'Draft'} · Not yet issued or delivered</small>
+        </div>
+      </div>}
+      {history.length?history.map((item,index)=>{
+        const deliveries=confirmedQuoteDeliveries({id:quote.id,revision:item.revision},activities);
+        const latest=deliveries[0];
+        const live=item.revision===quote.revision;
+        const lifecycle=quoteDeliveryLabel({status:live?quote.status:item.status},deliveries);
+        return <div className="qmb-lifecycle-revision qmb-lifecycle-entry" key={item.revision+'-'+item.capturedAt}>
+          <div className="qmb-lifecycle-entry-content">
+            <strong>{item.label||('Revision '+item.revision)}{live?' · Current':''}</strong>
+            <small>{item.quoteDate} · {quote.documentType==='pricing-schedule'?`${item.pricingSchedule?.customerItems.length??0} price rows`:money.format(item.customerTotal)}</small>
+            <span>Issued · {new Date(item.capturedAt).toLocaleString()}</span>
+            <span>{lifecycle}{latest?' · '+QUOTE_DELIVERY_METHOD_LABELS[latest.metadata?.deliveryMethod??'other']+' · '+new Date(latest.occurredAt).toLocaleString():''}</span>
+            {live&&quote.viewedAt&&<span>Viewed · {new Date(quote.viewedAt).toLocaleString()}</span>}
+            {live&&quote.signedAt&&<span>Signed · {new Date(quote.signedAt).toLocaleString()}</span>}
+          </div>
+          <button type="button" onClick={()=>setSelected(index)}
+            aria-label={'View issued revision '+item.revision}>View document</button>
+        </div>;
+      }):<p className="qmb-help">No issued revisions yet. Issuing will freeze a copy here but will not deliver it to a customer.</p>}
     </details>
     {snapshot&&frozen&&createPortal(<div className="qmb qmb-history-modal-backdrop"
       onPointerDown={e=>{if(e.target===e.currentTarget)setSelected(null);}}>
       <section role="dialog" aria-modal="true" aria-label="Historical customer quote" className="qmb-history-modal">
         <header className="qmb-history-modal-heading">
           <div><strong>Frozen customer document · Revision {snapshot.revision}</strong>
-            <small>Issued {new Date(snapshot.capturedAt).toLocaleString()} · Read-only</small></div>
+            <small>Frozen on {new Date(snapshot.capturedAt).toLocaleString()} · Read-only · Opening this does not alter the live quote</small></div>
           <button type="button" aria-label="Close historical document" onClick={()=>setSelected(null)}>× Close</button>
         </header>
         <div className="qmb-history-document"><CustomerPreview quote={frozen}/></div>
