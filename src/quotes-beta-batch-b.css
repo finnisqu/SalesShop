@@ -711,3 +711,43 @@
  .qmb .qmb-sink-line .qmb-sink-private-cost small{font-size:9px}
  .qmb .qmb-history-document{padding:8px}
 }
+
+/* Customer Preview options: sell-price presentation and charge visibility
+   are intentionally separate; controls remain readable in every theme. */
+.qmb .qmb-preview-options-hint{
+  display:block;color:var(--qmb-muted);font-size:11px;line-height:1.55;
+}
+.qmb .qmb-preview-presentation-all{
+  display:flex;gap:6px;flex-wrap:wrap;
+}
+.qmb .qmb-preview-presentation-all button{
+  border:1px solid var(--qmb-border);background:var(--qmb-card);
+  color:var(--qmb-accent);border-radius:8px;min-height:35px;
+  padding:7px 12px;font-size:11px;font-weight:800;
+}
+.qmb .qmb-preview-presentation-all button[aria-pressed=true]{
+  background:var(--qmb-tint);border-color:var(--qmb-accent);
+}
+.qmb .qmb-preview-presentation-all button:disabled{opacity:.52;cursor:default}
+.qmb .qmb-preview-line-group{
+  border:1px solid var(--qmb-border);border-radius:9px;overflow:hidden;
+  background:var(--qmb-card);min-width:0;
+}
+.qmb .qmb-preview-line-group>header{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--qmb-tint);padding:9px 11px;color:var(--qmb-ink);font-size:11px;
+}
+.qmb .qmb-preview-line-group>header span{color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-preview-line-group>small{
+  display:block;padding:7px 11px;color:var(--qmb-muted);font-size:10px;line-height:1.45;
+}
+.qmb .qmb-preview-line-group>label{
+  display:flex;gap:9px;align-items:center;min-height:35px;
+  padding:8px 11px;border-top:1px solid var(--qmb-border);
+  font-size:11px;color:var(--qmb-ink);overflow-wrap:anywhere;
+}
+.qmb .qmb-preview-line-group>label span{min-width:0;flex:1}
+.qmb .qmb-preview-line-group input{flex:0 0 auto}
+.qmb .qmb-preview-line-group :is(button,input):focus-visible{
+  outline:2px solid var(--qmb-accent);outline-offset:2px;
+}

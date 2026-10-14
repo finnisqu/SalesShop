@@ -648,10 +648,17 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
       </div>}
     </div>;
   });
-  const renderAreaSummary=(section: Quote['sections'][number],total:number,specification='')=><div className="customer-quote-row customer-area-summary-row">
-    <div className="customer-line-description"><strong>{editing?.areaTitle?.(section)??section.title}</strong>{specification&&<small className="customer-area-spec">{specification}</small>}</div>
-    <div className="customer-line-amount">{money.format(total)}{editing?.areaPrice?.(section)}</div>
-  </div>;
+  const renderAreaSummary=(section: Quote['sections'][number],total:number,specification='')=>
+    <div className={'customer-quote-row customer-area-summary-row'+(!quote.customerColumns.lineAmount?' is-no-amount':'')}>
+      <div className="customer-line-description">
+        <strong>{editing?.areaTitle?.(section)??section.title}</strong>
+        {specification&&<small className="customer-area-spec">{specification}</small>}
+        {!quote.customerColumns.lineAmount&&editing?.areaPrice?.(section)}
+      </div>
+      {quote.customerColumns.lineAmount&&<div className="customer-line-amount">
+        {money.format(total)}{editing?.areaPrice?.(section)}
+      </div>}
+    </div>;
   const allSectionIds=new Set(quote.sections.map(section=>section.id));
   const looseLines=quote.lines.filter(line=>!line.sectionId||!allSectionIds.has(line.sectionId));
   // Hide room specifications but keep the customer's visible sum consistent:
