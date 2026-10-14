@@ -5,6 +5,7 @@ import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {salesDocumentTemplate,salesTemplateLabel} from '../services/salesDocumentTemplates';
+import {SalesDocumentActionsMenu} from './SalesDocumentActionsMenu';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,
@@ -20,7 +21,8 @@ const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 export function QuoteBetaDesktopRails({
   quote,page,quoteTab,areaTab,areaId,
   onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onReviewFinding,onReviewIssue,
-  onUndo,onRedo,undoDepth,redoDepth,onSend,canIssue,areaManager,
+  onUndo,onRedo,undoDepth,redoDepth,onSend,canIssue,canManage,canDelete,
+  onCopy,onDelete,onArchive,onRevise,areaManager,
 }:{
   quote:Quote;page:Page;quoteTab:QuoteTab;areaTab:AreaTab;areaId:string|null;
   onLibrary:()=>void;onQuoteTab:(tab:QuoteTab)=>void;onArea:(id:string)=>void;
@@ -28,7 +30,9 @@ export function QuoteBetaDesktopRails({
   onSelections:()=>void;onReviewFinding:(kind:'blockers'|'review'|'optional')=>void;
   onReviewIssue:(id:string)=>void;
   onUndo:()=>void;onRedo:()=>void;undoDepth:number;redoDepth:number;
-  onSend:()=>void;canIssue:boolean;areaManager:QuoteBetaAreaManager;
+  onSend:()=>void;canIssue:boolean;canManage:boolean;canDelete:boolean;
+  onCopy:()=>void;onDelete:()=>void;onArchive:()=>void;onRevise:()=>void;
+  areaManager:QuoteBetaAreaManager;
 }){
   const editable=quoteIsCommerciallyEditable(quote);
   const steps=[['build',quote.documentType==='pricing-schedule'?'Edit '+salesTemplateLabel(salesDocumentTemplate(quote)):'Build quote'],['details','Customer & project'],['preview','Customer preview']] as const;
@@ -45,6 +49,9 @@ export function QuoteBetaDesktopRails({
             aria-label="Undo quote change">↶ Undo</button>
           <button type="button" onClick={onRedo} disabled={!editable||!redoDepth}
             aria-label="Redo quote change">↷ Redo</button>
+          <SalesDocumentActionsMenu quote={quote} canManage={canManage} canIssue={canIssue}
+            canDelete={canDelete} onCopy={onCopy} onDelete={onDelete}
+            onArchive={onArchive} onRevise={onRevise}/>
         </div>
       </div>
       <nav className="qmb-desktop-mainsteps" aria-label="Quote workflow">
