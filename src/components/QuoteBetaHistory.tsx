@@ -84,7 +84,7 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
       <summary>Revision timeline <span>{history.length} issued</span></summary>
       {!currentInHistory&&<div className="qmb-lifecycle-revision qmb-lifecycle-current">
         <div><strong>Current revision {quote.revision}{quote.revisionLabel?' · '+quote.revisionLabel:''}</strong>
-          <small>{quote.status==='Ready'?'Ready for approval':'Draft'} · Not yet issued or delivered</small>
+          <small>{quote.status==='Ready'?'Ready for approval · Not yet issued':quote.status==='Draft'?'Draft · Not yet issued':quoteDeliveryLabel(quote,currentDeliveries)+' · No frozen snapshot available'}</small>
         </div>
       </div>}
       {history.length?history.map((item,index)=>{
