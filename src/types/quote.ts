@@ -15,6 +15,10 @@ export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
 
 export const COMMERCIAL_DOCUMENT_TYPES = ['quote', 'pricing-schedule', 'change-order'] as const;
 export type CommercialDocumentType = (typeof COMMERCIAL_DOCUMENT_TYPES)[number];
+/** Fixed editing workspace chosen at creation; legacy documents are inferred once at render. */
+export type SalesDocumentTemplate = 'quick-quote' | 'builder-rates' | 'community-pricing' | 'spreadsheet';
+export type SalesDocumentTemplateChoice = SalesDocumentTemplate | 'multifamily';
+export interface SalesDocumentOrigin { sourceQuoteId: string; sourceRevision: number; sourceTitle: string; }
 
 export const PRICING_SCHEDULE_FIELDS = [
   'series',
@@ -496,6 +500,8 @@ export interface PricingScheduleData {
 }
 
 export interface QuoteRevisionSnapshot {
+  templateId?: SalesDocumentTemplate;
+  templateOrigin?: SalesDocumentOrigin;
   revision: number;
   label?: string;
   quoteDate: string;
@@ -525,6 +531,10 @@ export interface QuoteRevisionSnapshot {
 }
 
 export interface Quote {
+  /** Locked template/editor identity. Missing for old documents; derived from schedule route. */
+  templateId?: SalesDocumentTemplate;
+  /** Identifies the agreement copied as a versioned starting point, never a live rate link. */
+  templateOrigin?: SalesDocumentOrigin;
   /** Quote-scoped pinned material picks; never company-global. */
   projectMaterials?: QuoteProjectMaterial[];
   /** Explicit opt-in to attach a sanitized customer-facing selections appendix. */
@@ -575,6 +585,8 @@ export interface QuoteDocument {
 }
 
 export type QuotePatch = Partial<Pick<Quote,
+  | 'templateId'
+  | 'templateOrigin'
   | 'documentType'
   | 'title'
   | 'projectId'
