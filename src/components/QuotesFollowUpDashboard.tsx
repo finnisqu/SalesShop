@@ -12,7 +12,7 @@ import '../quotes-follow-up.css';
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
 type QueueFilter='attention'|'all'|'scheduled';
 function badge(item:QuoteFollowUpItem){
-  return item.priority==='due'?'Due':item.priority==='needs-delivery'?'Not delivered':
+  return item.priority==='due'?item.label:item.priority==='needs-delivery'?'Not delivered':
     item.priority==='ready-to-review'?'Review':item.priority==='upcoming'?'Scheduled':'Awaiting reply';
 }
 
