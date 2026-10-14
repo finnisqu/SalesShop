@@ -7,11 +7,12 @@ import {QuoteBetaReview} from './QuoteBetaReview';
 /** Seller-only review sheet. Keeps Build or Preview mounted beneath a dimmed
  * backdrop so inline quick fixes can work without losing quote context. */
 export function QuoteBetaReviewOverlay({quote,focusId,inspector,canIssue,sending,error,onIssue,
-  onClose,onFix,onPreview,onClassic,previewedKey,approvedKey,onApprove}:{
+  onClose,onFix,onPreview,onClassic,previewedKey,approvedKey,onApprove,reviewedKey,onReview}:{
   quote:Quote;focusId:string|null;inspector:ReactNode;canIssue:boolean;sending:boolean;error:string;
   onIssue:()=>void;onClose:()=>void;onFix:(destination:QuoteAuditDestination)=>void;
   onPreview:()=>void;onClassic:()=>void;
   previewedKey:string|null;approvedKey:string|null;onApprove:(approved:boolean)=>void;
+  reviewedKey:string|null;onReview:(key:string|null)=>void;
 }){
   const drawerRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
@@ -36,7 +37,8 @@ export function QuoteBetaReviewOverlay({quote,focusId,inspector,canIssue,sending
       <QuoteBetaReview quote={quote} initialFindingId={focusId}
         onBack={onClose} onFix={onFix} onPreview={onPreview} onClassic={onClassic}
         canIssue={canIssue} sending={sending} error={error} onIssue={onIssue}
-        previewedKey={previewedKey} approvedKey={approvedKey} onApprove={onApprove}/>
+        previewedKey={previewedKey} approvedKey={approvedKey} onApprove={onApprove}
+        reviewedKey={reviewedKey} onReview={onReview}/>
       </div>
     </div>
   </div>,document.body);

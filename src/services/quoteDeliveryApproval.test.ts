@@ -1,7 +1,7 @@
 import {describe,expect,it} from 'vitest';
 import type {Quote} from '../types/quote';
 import {
-  approvedCustomerDraft,quoteDeliveryApprovalKey,shareMatchesQuoteRevision,
+  approvedCustomerDraft,quoteDeliveryApprovalKey,quoteDeliveryReviewKey,shareMatchesQuoteRevision,
 } from './quoteDeliveryApproval';
 
 const draft=(overrides:Partial<Quote>={}):Quote=>({
@@ -25,6 +25,17 @@ describe('Preview → Approve → Share revision binding',()=>{
       draft({revision:1}),
       draft({id:'different-quote'}),
     ])expect(approvedCustomerDraft(changed,key,key)).toBe(false);
+  });
+  it('keeps reviewed findings checked across preview without carrying them through changes',()=>{
+    const quote=draft();
+    const findings=[{id:'unselected-material',severity:'review'}];
+    const key=quoteDeliveryReviewKey(quote,findings);
+    expect(quoteDeliveryReviewKey(draft(),findings)).toBe(key);
+    expect(quoteDeliveryReviewKey(draft({updatedAt:'2026-10-14T19:30:01.000Z'}),findings)).not.toBe(key);
+    expect(quoteDeliveryReviewKey(draft({revision:1}),findings)).not.toBe(key);
+    expect(quoteDeliveryReviewKey(draft({id:'quote-2'}),findings)).not.toBe(key);
+    expect(quoteDeliveryReviewKey(quote,[{id:'price-missing',severity:'blocker'}])).not.toBe(key);
+    expect(quoteDeliveryReviewKey(quote,[{id:'unselected-material',severity:'blocker'}])).not.toBe(key);
   });
   it('does not mistake an issued document for an approvable draft',()=>{
     const sent=draft({status:'Sent'});

@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {quoteTotal,displayQuoteNumber} from '../types/quote';
-import {approvedCustomerDraft,quoteDeliveryApprovalKey} from '../services/quoteDeliveryApproval';
+import {approvedCustomerDraft,quoteDeliveryApprovalKey,quoteDeliveryReviewKey} from '../services/quoteDeliveryApproval';
 import {QuoteShareControl} from './QuoteShareControl';
 import {QuoteSignatureDialog} from './QuoteSignatureDialog';
 import {auditQuoteDraft,type QuoteAuditDestination,type QuoteAuditFinding} from '../services/quoteDraftAudit';
@@ -14,23 +14,24 @@ import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEd
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
 export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialFindingId,
-  canIssue,sending,error,onIssue,previewedKey,approvedKey,onApprove}:{
+  canIssue,sending,error,onIssue,previewedKey,approvedKey,onApprove,reviewedKey,onReview}:{
   quote:Quote;
   onBack:()=>void;onFix:(destination:QuoteAuditDestination)=>void;
   initialFindingId?:string|null;
   onPreview:()=>void;onClassic:()=>void;
   canIssue:boolean;sending:boolean;error:string;onIssue:()=>void;
   previewedKey:string|null;approvedKey:string|null;onApprove:(approved:boolean)=>void;
+  reviewedKey:string|null;onReview:(key:string|null)=>void;
 }){
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
-  const [acknowledged,setAcknowledged]=useState(false);
   const [signatureOpen,setSignatureOpen]=useState(false);
   const [lastCheckedAt,setLastCheckedAt]=useState(quote.updatedAt);
   const needsRecheck=lastCheckedAt!==quote.updatedAt;
   const [expandedId,setExpandedId]=useState<string|null>(initialFindingId??null);
   const issueSet=report.findings.map(f=>f.id+':'+f.severity).join('|');
-  useEffect(()=>setAcknowledged(false),[quote.id,issueSet,quote.updatedAt]);
+  const reviewKey=quoteDeliveryReviewKey(quote,report.findings);
+  const acknowledged=reviewedKey===reviewKey;
   useEffect(()=>{setExpandedId(initialFindingId??null);},[initialFindingId]);
   useEffect(()=>{
     if(expandedId&&!report.findings.some(f=>f.id===expandedId))setExpandedId(null);
@@ -137,7 +138,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
       {needsRecheck&&<section className="qmb-review-recheck" role="status">
         <div><strong>Quote changed since this review</strong>
           <small>Recheck the latest amounts and findings before issuing or creating a new customer link.</small></div>
-        <button type="button" onClick={()=>{setLastCheckedAt(quote.updatedAt);setAcknowledged(false);}}>Recheck now</button>
+        <button type="button" onClick={()=>{setLastCheckedAt(quote.updatedAt);onReview(null);}}>Recheck now</button>
       </section>}
       {!report.findings.length&&<section className="qmb-audit-clean">
         <strong>✓ Ready to issue</strong>
@@ -153,7 +154,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         'Helpful for the customer, but not required for issuing.',
         'is-optional')}
       {!!report.review.length&&<label className="qmb-audit-ack">
-        <input type="checkbox" checked={acknowledged} onChange={event=>setAcknowledged(event.target.checked)}/>
+        <input type="checkbox" checked={acknowledged} onChange={event=>onReview(event.target.checked?reviewKey:null)}/>
         <span>I reviewed the remaining items and intend to leave them as shown.</span>
       </label>}
       {error&&<p role="alert" className="qmb-error">{error}</p>}

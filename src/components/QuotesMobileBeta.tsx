@@ -460,6 +460,7 @@ export function QuotesMobileBeta() {
   const [previewStartedKey,setPreviewStartedKey]=useState<string|null>(null);
   const [previewedDeliveryKey,setPreviewedDeliveryKey]=useState<string|null>(null);
   const [approvedDeliveryKey,setApprovedDeliveryKey]=useState<string|null>(null);
+  const [reviewedDeliveryKey,setReviewedDeliveryKey]=useState<string|null>(null);
   const quoteScrollRef=useRef<HTMLDivElement>(null);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
@@ -536,7 +537,8 @@ export function QuotesMobileBeta() {
   const openQuote=(id:string)=>{
     select(id);setQuoteTab('build');setPage('quote');setAreaId(null);
     setSelectionsOpen(false);setReviewOpen(false);setPreviewReturnQuoteId(null);
-    setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);setError('');
+    setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
+    setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const navigateDocument=(tab:QuoteTab)=>{
@@ -1023,6 +1025,7 @@ export function QuotesMobileBeta() {
       canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
       previewedKey={previewedDeliveryKey} approvedKey={approvedDeliveryKey}
       onApprove={approved=>setApprovedDeliveryKey(approved?quoteDeliveryApprovalKey(quote):null)}
+      reviewedKey={reviewedDeliveryKey} onReview={setReviewedDeliveryKey}
       onClose={()=>{setReviewOpen(false);setReviewFocus(null);}}
       onFix={fixAudit} onPreview={()=>{
         setReviewOpen(false);setPreviewReturnQuoteId(quote.id);

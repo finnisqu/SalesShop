@@ -8,6 +8,19 @@ export function quoteDeliveryApprovalKey(
   return JSON.stringify([quote.id,quote.revision,quote.updatedAt]);
 }
 
+/** Review-item acknowledgement survives Preview navigation only while the
+ * quote contents and actual findings are unchanged. Never persist the decision
+ * to cloud storage or across a different quote/revision. */
+export function quoteDeliveryReviewKey(
+  quote: Pick<Quote,'id'|'revision'|'updatedAt'>,
+  findings: ReadonlyArray<{id:string;severity:string}>,
+): string {
+  return JSON.stringify([
+    quoteDeliveryApprovalKey(quote),
+    findings.map(finding=>[finding.id,finding.severity]),
+  ]);
+}
+
 export function approvedCustomerDraft(
   quote: Pick<Quote,'id'|'revision'|'updatedAt'|'status'>,
   previewedKey:string|null,approvedKey:string|null,
