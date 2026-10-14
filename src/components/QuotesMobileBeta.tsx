@@ -21,6 +21,7 @@ import {
 import { QuoteBetaDetails } from './QuoteBetaDetails';
 import {SalesDocumentSaveStatus} from './SalesDocumentToolbar';
 import {SalesDocumentActionsMenu} from './SalesDocumentActionsMenu';
+import '../sales-document-ux-qc.css';
 import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
@@ -512,7 +513,7 @@ export function QuotesMobileBeta() {
     if(!quote||!canManageLibrary)return;
     // Copy is never executed from a menu click. Explicit confirmation required.
     setCopyRequest({id:quote.id,title:quote.title});
-    const base=(quote.title||'Untitled').replace(/(?:\\s*· Copy)+$/i,'').trim();
+    const base=(quote.title||'Untitled').replace(/(?:\s*· Copy)+$/i,'').trim();
     setCopyName(base+' · Copy');
   };
   const confirmDocumentCopy=()=>{
