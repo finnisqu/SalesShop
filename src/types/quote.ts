@@ -397,6 +397,8 @@ export interface PricingPlan {
   description?: string;
   notes?: string;
   excludedOptionIds?: string[];
+  /** Per-plan, per-package omitted measured component IDs. Unset means every component is eligible. */
+  excludedTakeoffIdsByOption?: Record<string, string[]>;
 }
 
 export interface PricingPlanTakeoff {
