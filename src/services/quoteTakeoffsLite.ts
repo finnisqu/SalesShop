@@ -324,11 +324,17 @@ export function splitTakeoffPieces(
   const ready=ensureSmartTakeoffLine(updated,id);
   const oldLive=ready.lines.find(line=>line.sectionId===sourceId
     &&line.quantitySource?.field==='countertopSf'&&line.quantitySource.syncMode==='live');
-  const rate=oldLive?.rate;
-  if(rate===undefined)return ready;
-  return {...ready,lines:ready.lines.map(line=>{
-    if(line.sectionId!==id||line.quantitySource?.field!=='countertopSf'
-      ||line.quantitySource.syncMode!=='live')return line;
-    return {...line,rate,rateReference:oldLive?.rateReference};
+  const newLive=ready.lines.find(line=>line.sectionId===id
+    &&line.quantitySource?.field==='countertopSf'&&line.quantitySource.syncMode==='live');
+  // Moving *every* piece should not leave an empty charged SF row behind.
+  // Remove the old managed row only after the new Area has a valid replacement.
+  // Other manual/sink rows in the original Area remain untouched.
+  const noPiecesLeft=remaining.length===0;
+  const lines=ready.lines.filter(line=>!(noPiecesLeft&&oldLive&&newLive&&line.id===oldLive.id));
+  if(!oldLive||!newLive)return {...ready,lines};
+  return {...ready,lines:lines.map(line=>{
+    if(line.id!==newLive.id)return line;
+    return {...line,rate:oldLive.rate,rateReference:oldLive.rateReference,
+      customerVisible:oldLive.customerVisible,includeInTotal:oldLive.includeInTotal};
   })};
 }
