@@ -18,8 +18,8 @@ export function buildHomeAgenda(
      priority:task.dueDate&&task.dueDate<today?0:task.dueDate===today?1:2}));
  const quote:HomeAgendaItem[]=followUps.map(followUp=>({
    kind:'quote',id:'quote:'+followUp.quote.id,followUp,dueDate:followUp.dueDate,
-   priority:followUp.priority==='due'?1:followUp.priority==='needs-delivery'?3:
-     followUp.priority==='ready-to-review'?4:followUp.priority==='awaiting-reply'?5:6,
+   priority:followUp.priority==='due'?3:followUp.priority==='needs-delivery'?4:
+     followUp.priority==='ready-to-review'?5:followUp.priority==='awaiting-reply'?6:7,
  }));
  return [...manual,...quote].sort((a,b)=>a.priority-b.priority||
    (a.dueDate??'9999').localeCompare(b.dueDate??'9999')||a.id.localeCompare(b.id)).slice(0,limit);
