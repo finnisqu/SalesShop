@@ -77,6 +77,8 @@ jobs:
         run: npx playwright test e2e/pricing-schedule-workbook.pw.ts e2e/pricing-schedule-contract.pw.ts e2e/pricing-schedule-manual.pw.ts e2e/pricing-schedule-calculated.pw.ts e2e/sales-document-templates.pw.ts e2e/sales-document-workspace.pw.ts e2e/sales-document-library.pw.ts --project=desktop-1280 --project=phone-390
       - name: Quick Quote inline review browser regression
         run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Review fixes zero-priced flat charges|Review resolves customer name and sink price inline without leaving Review|Review missing material rate|Review preview returns directly|phone library defaults to documents with follow-ups in a secondary tab'
+      - name: Classic and Beta quote editor round-trip regressions
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 --project=desktop-1280 -g 'Classic desktop offers|Classic phone View menu opens'
       - name: Quick Quote Area price-fastpath browser regressions
         run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 --project=desktop-1280 -g 'phone Quotes Beta uses the same quote records|desktop Quotes Beta is fully opted in'
       - name: Customer quote document visibility browser regression
