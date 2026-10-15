@@ -21,12 +21,13 @@ export interface QuoteHandoffStatus {
  * proves actual delivery; only a revision-matched manual CRM confirmation does.
  * A viewed link also does not silently backfill that manual confirmation. */
 export function quoteHandoffStatus(
-  quote:Pick<Quote,'revision'|'status'>,
-  share:Pick<QuoteShare,'revision'|'status'|'viewCount'|'signedAt'|'expiresAt'>|null,
+  quote:Pick<Quote,'id'|'revision'|'status'>,
+  share:Pick<QuoteShare,'quoteId'|'revision'|'status'|'viewCount'|'signedAt'|'expiresAt'>|null,
   deliveryConfirmed:boolean,
 ):QuoteHandoffStatus{
   const issued=quoteIssued(quote);
-  const validShare=share&&shareMatchesQuoteRevision(quote,share)?share:null;
+  // Never expose the URL for a different quote, even when revision numbers match.
+  const validShare=share&&share.quoteId===quote.id&&shareMatchesQuoteRevision(quote,share)?share:null;
   const linkCreated=Boolean(validShare);
   const linkRevoked=validShare?.status==='revoked';
   // Public quote links stop working after expiry unless the document was signed.
