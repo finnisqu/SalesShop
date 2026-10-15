@@ -20,6 +20,7 @@ The new quote policies will hide *owned* drafts from other company owners/admins
 - Inserts attribute their creator; no self-service reassignment of someone else's quote.
 - Quote access grants remain explicitly read-only. Staff can intentionally grant access to a quote they can edit; management cannot silently give itself access to a colleague's private quote.
 - Quote-activity insertion must be authorized for the referenced quote. Quote children (lines, sections, revisions, signatures, links) continue to inherit quote-level authorization through existing policies.
+- The internal `private.assign_commercial_document_number` SECURITY DEFINER function gets its own per-quote edit check. Its public wrapper already checks ownership, but direct invocation through granted private-schema privileges could otherwise number a colleague's quote.
 - Legacy `org_documents` JSON keys `quotes`, `signatures` and `crm` become unreadable and unwriteable via authenticated Data API; the existing raw records are left intact for database-level recovery.
 - `assign_unowned_quote` is an owner/admin-only **compare-and-set** action that works only on quotes without an owner and records an audit entry. It cannot transfer an owned quote.
 
