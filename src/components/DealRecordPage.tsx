@@ -146,7 +146,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         <div className="connections-record-entity-list">
           {related.quoteContacts.map(person => <button type="button" key={person.id} onClick={() => openPerson(person.id)}>
             <strong>{person.name || person.email || 'Unnamed contact'}</strong>
-            <small>{person.title || person.email || 'Open person'} →</small>
+            <small>Quote contact · {related.linkedQuotes.filter(quote => quote.contactId === person.id).length} linked {related.linkedQuotes.filter(quote => quote.contactId === person.id).length === 1 ? 'quote' : 'quotes'} →</small>
           </button>)}
           {!related.quoteContacts.length && <p className="connections-record-empty">No quote contacts linked yet.</p>}
         </div>

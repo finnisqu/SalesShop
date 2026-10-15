@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
+import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 
 const dateLabel = (value: string) => {
@@ -16,6 +17,9 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const people = useCrmStore((state) => state.contacts);
   const companies = useCrmStore((state) => state.companies);
   const activities = useCrmStore((state) => state.activities);
+  const projects = useCrmStore((state) => state.projects);
+  const quotes = useQuoteStore((state) => state.quotes);
+  const hydrateQuotes = useQuoteStore((state) => state.hydrate);
   const updateContact = useCrmStore((state) => state.updateContact);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const openProject = useNavigationStore((state) => state.openProject);
@@ -29,9 +33,10 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
     title: person?.title ?? '', companyId: person?.companyId ?? '',
   });
   const related = useMemo(
-    () => person ? personRecordView(person, companies, activities) : null,
-    [person, companies, activities],
+    () => person ? personRecordView(person, companies, activities, projects, quotes) : null,
+    [person, companies, activities, projects, quotes],
   );
+  useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
 
   useEffect(() => {
     setEditing(false);
@@ -104,6 +109,17 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             <small>{related.company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'} · View company record →</small>
           </button>
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
+      </RecordCard>
+      <RecordCard title="Deals linked through quotes" extra={<span>{related.linkedDeals.length}</span>}>
+        <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
+        <div className="connections-record-entity-list">
+          {related.linkedDeals.map(({ project, quoteCount }) =>
+            <button type="button" key={project.id} onClick={() => openProject(project.id)}>
+              <strong>{project.name}</strong>
+              <small>Quote contact · {quoteCount} {quoteCount === 1 ? 'linked quote' : 'linked quotes'} →</small>
+            </button>)}
+          {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
+        </div>
       </RecordCard>
     </>}
     right={<>
