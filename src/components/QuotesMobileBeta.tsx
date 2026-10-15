@@ -61,6 +61,7 @@ import {snapshotStockBuilderLevels} from '../services/stockBuilderRateTemplate';
 import type {SalesDocumentTemplate,SalesDocumentTemplateChoice} from '../types/quote';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 import { GlobalPostItLauncher } from './GlobalPostIt';
+import {formatPersonalDate,readPersonalDateTimePreferences} from '../services/personalDateTimePreferences';
 
 // Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
 const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(module=>({default:module.PricingDocumentEditor})));
@@ -765,7 +766,7 @@ export function QuotesMobileBeta() {
             <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
               <span className="qmb-chip">{q.archivedAt?'Archived':q.status==='Sent'?'Issued':q.status}</span></div>
             <strong>{q.title||'Untitled document'}</strong>
-            <div className="qmb-library-updated">Edited {new Date(q.updatedAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</div>
+            <div className="qmb-library-updated">Edited {formatPersonalDate(new Date(q.updatedAt),readPersonalDateTimePreferences(useAuthStore.getState().user?.id??null))}</div>
             <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}{q.documentType==='quote'?' · '+q.sections.length+' Areas':''}</small>
               <b>{q.documentType==='pricing-schedule'?`${q.pricingSchedule?.customerItems.length??0} published rows`:money.format(quoteTotal(q))}</b></div>
           </button>
