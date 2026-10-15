@@ -126,6 +126,13 @@ grant execute on function public.merge_crm_contact_identity(uuid,text,text) to a
 
 -- Apply exact staged SQL against disposable database only.
 \i supabase/migrations/20261015162000_private_crm_ownership_gate.sql
+-- Disposable test-only assertion helper. Production audit table stays hidden
+-- from authenticated users; this function exists only in the CI fixture.
+create or replace function private.test_crm_audit_count(p_org uuid)
+returns integer language sql stable security definer set search_path=''
+as $testaudit$ select count(*)::integer from private.crm_recovery_audit where organization_id=p_org $testaudit$;
+grant execute on function private.test_crm_audit_count(uuid) to authenticated;
+
 -- New owned records: seed as privileged test fixture after RLS policy installation.
 insert into public.companies(organization_id,id,name,owner_user_id) values
 ('11111111-1111-4111-8111-111111111111','alice-company','Alice customer','00000000-0000-4000-8000-000000000003'),
