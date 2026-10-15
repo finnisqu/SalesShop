@@ -60,6 +60,7 @@ import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
 import {snapshotStockBuilderLevels} from '../services/stockBuilderRateTemplate';
 import type {SalesDocumentTemplate,SalesDocumentTemplateChoice} from '../types/quote';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
+import { GlobalPostItLauncher } from './GlobalPostIt';
 
 // Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
 const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(module=>({default:module.PricingDocumentEditor})));
@@ -74,7 +75,7 @@ function AppMenu() {
   const setView = useNavigationStore(s=>s.setView);
   const goBack = useNavigationStore(s=>s.goBack);
   const canGoBack = useNavigationStore(s=>s.history.length>0);
-  return <div className="qmb-appnav-actions">
+  return <div className="qmb-appnav-actions"><GlobalPostItLauncher />
     {canGoBack&&<button type="button" className="qmb-app-back"
       onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
     <details className="qmb-appnav"><summary aria-label="Open SalesShop navigation">☰</summary>
@@ -269,6 +270,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,o
     <header className="qmb-pagehead">
       <button type="button" className="qmb-back" onClick={goBack}>‹ Quote</button>
       <div className="qmb-area-header-actions">
+        <GlobalPostItLauncher />
         {editable&&!general&&<button type="button" className="qmb-area-duplicate-action"
           aria-label="Duplicate this Area" onClick={onDuplicate}>⧉ Duplicate</button>}
         <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>

@@ -1003,6 +1003,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
               <button type="button" disabled={!commerciallyEditable || redoDepth === 0} onClick={() => redoQuote(quote.id)}><span>↷</span><small>Redo</small></button>
               <button type="button" onClick={() => { collapseAll(); setMobileMenu(null); }}><span>⌃</span><small>Collapse</small></button>
               <button type="button" disabled={!issueLineIds.length} onClick={() => { focusNextIssue(); setMobileMenu(null); }}><span>!</span><small>Next issue{issueLineIds.length ? ` · ${issueLineIds.length}` : ''}</small></button>
+              <button type="button" onClick={() => {setMobileMenu(null);window.dispatchEvent(new Event('sales-shop:global-post-it'));}}><span>▧</span><small>Private Post-it</small></button>
             </div>
           </div>
 

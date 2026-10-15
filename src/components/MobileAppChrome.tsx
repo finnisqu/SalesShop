@@ -7,6 +7,7 @@ import { resolveMobileDrawerChoice } from '../lib/mobileDrawerNavigation';
 import { AuthStatus } from './AuthGate';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
+import { GlobalPostItLauncher } from './GlobalPostIt';
 import { useAuthStore } from '../store/authStore';
 import { canEditTeamArea } from '../services/teamDepartments';
 import { resolveOwnerPerspective } from '../services/rolePerspective';
@@ -125,6 +126,7 @@ export function MobileAppChrome() {
         </div>
         {!viewer && !preview && <GlobalSearch />}
         {!viewer && !scopedMember && !preview && <QuickCreate />}
+        {!preview && <GlobalPostItLauncher />}
       </WorkspaceToolbar>
 
       {open && <div className="mobile-app-drawer-backdrop" onPointerDown={() => setOpen(false)}>

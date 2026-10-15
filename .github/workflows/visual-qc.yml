@@ -49,6 +49,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Browser layout, appearance and scroll checks
         run: npm run test:visual
+      - name: Private Post-it cross-tab browser regression
+        run: npx playwright test e2e/global-postit.pw.ts --project=phone-390 --project=desktop-1280
       - name: Upload screenshots, layout measurements and browser traces
         if: always()
         uses: actions/upload-artifact@v4
