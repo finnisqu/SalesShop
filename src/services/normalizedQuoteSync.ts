@@ -251,10 +251,14 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   // cache. Never replay those records as edits when this device saves one
   // owned quote. RLS separately enforces this on the server.
   const auth = useAuthStore.getState();
-  const isAdmin = auth.mode === 'cloud' && (auth.teamRole === 'owner' || auth.teamRole === 'admin');
-  const actorId = auth.mode === 'cloud' ? auth.user?.id : null;
+  const actorId = auth.mode === 'cloud' && auth.organizationId === organizationId
+    ? auth.user?.id : null;
+  // Never permit a whole cached organization snapshot to be uploaded by an
+  // owner/admin. Their management role does NOT confer edit permission over
+  // other salespeople's private quotes. Never assign an ownerless quote during
+  // background sync; recovery uses the audited explicit server RPC instead.
   const acceptedQuotes = document.quotes.filter((quote) =>
-    (isAdmin || (actorId && quote.ownerUserId === actorId)) &&
+    Boolean(actorId && quote.ownerUserId === actorId) &&
     atLeastAsNew(quote.updatedAt, guards.get(quote.id)?.updatedAt));
   const acceptedIds = new Set(acceptedQuotes.map((quote) => quote.id));
 
