@@ -1871,8 +1871,9 @@ test('Beta quote library archives, restores and safely deletes an unsent draft',
   await restored.getByRole('button',{name:'Delete draft'}).click();
   const deleteDialog=page.getByRole('dialog',{name:'Delete draft quote'});
   await expect(deleteDialog).toContainText('Permanent deletion');
-  await deleteDialog.getByRole('textbox',{name:'Type DELETE to confirm'}).fill('DELETE');
-   await deleteDialog.getByRole('button',{name:'Permanently delete draft'}).click();
+  await expect(deleteDialog.getByRole('textbox',{name:'Type DELETE to confirm'})).toHaveCount(0);
+  await expect(deleteDialog.getByRole('button',{name:'Permanently delete draft'})).toBeEnabled();
+  await deleteDialog.getByRole('button',{name:'Permanently delete draft'}).click();
   await expect(restored).toHaveCount(0);
 });
 
