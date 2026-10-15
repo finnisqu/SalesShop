@@ -53,6 +53,7 @@ import { MobileAppChrome } from './components/MobileAppChrome';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
 import { AccountMenu } from './components/AccountMenu';
+import { GlobalPostItLauncher, GlobalPostItLayer } from './components/GlobalPostIt';
 import { Quotes } from './components/Quotes';
 import { QuotesMobileBeta } from './components/QuotesMobileBeta';
 import { useQuotesMobileBetaStore } from './store/quotesMobileBetaStore';
@@ -132,12 +133,14 @@ function App() {
         </nav>
         {!viewer && !inRolePreview && <GlobalSearch />}
         {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
+        {!inRolePreview && <GlobalPostItLauncher />}
         <div className="app-account-zone">
           <div className="migration-chip">React foundation</div>
           <AccountMenu />
         </div>
       </header>
       <MobileAppChrome />
+      {!inRolePreview && <GlobalPostItLayer />}
 
       <WorkspaceViewport mode="legacy" className="role-perspective-content" inert={inRolePreview && !readOnlyArea && view !== 'settings'}>
       {inRolePreview && view === 'settings' ? (

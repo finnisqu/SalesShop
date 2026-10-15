@@ -2,7 +2,7 @@ import { useMemo, useState, type DragEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
 import type { NotebookEntry, NotebookObject } from '../types/notebook';
 
-type PageFilter = 'all' | 'favorites' | 'project';
+type PageFilter = 'all' | 'favorites' | 'project' | 'postits';
 
 function plainHtml(value: string) {
   return value.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -49,6 +49,7 @@ export function Sidebar() {
       if (entry.hidden && !showHidden && entry.id !== activeEntryId) return false;
       if (filter === 'favorites' && !entry.favorite) return false;
       if (filter === 'project' && !entry.context?.projectId) return false;
+      if (filter === 'postits' && !entry.objects.some(object=>object.type==='post-it')) return false;
       if (needle && !entrySearchText(entry).includes(needle)) return false;
       return true;
     });
@@ -106,6 +107,8 @@ export function Sidebar() {
           <button type="button" className={filter === 'all'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('all');}}>All</button>
           <button type="button" className={filter === 'favorites'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('favorites');}}>★</button>
           <button type="button" className={filter === 'project'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('project');}}>Project</button>
+          <button type="button" className={filter === 'postits'&&!showTrash ? 'active' : ''}
+            onClick={() => {setShowTrash(false);setFilter('postits');}}>Post-its</button>
           <button type="button" className={showTrash ? 'active' : ''} onClick={() => setShowTrash(value=>!value)}>Recently Deleted ({trashedEntries.length})</button>
         </div>
         {!reorderEnabled && !showTrash && <small>Clear search/filter to reorder pages.</small>}

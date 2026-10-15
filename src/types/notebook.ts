@@ -27,6 +27,8 @@ export interface NotebookContext { projectId?: string; }
 
 export interface NotebookEntry {
   id: string;
+  /** Stable marker for the private global Post-it collection page. */
+  isPostItInbox?: boolean;
   title: string;
   contentHtml: string;
   strokes: InkStroke[];

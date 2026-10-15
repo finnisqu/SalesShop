@@ -63,3 +63,38 @@ describe('Notebook seven-day page recovery', () => {
     expect(useNotebookStore.getState().trashedEntries).toHaveLength(0);
   });
 });
+
+describe('Global personal Post-it capture', () => {
+  beforeEach(() => {
+    storage.document = null;
+    useNotebookStore.getState().hydrate();
+  });
+
+  it('creates a dedicated private collection without changing the active Notebook page', () => {
+    const currentId = useNotebookStore.getState().activeEntryId;
+    const id = useNotebookStore.getState().createGlobalPostIt();
+    const state = useNotebookStore.getState();
+    expect(state.activeEntryId).toBe(currentId);
+    const inbox = state.entries.find(entry => entry.isPostItInbox);
+    expect(inbox?.deletionLocked).toBe(true);
+    expect(inbox?.title).toBe('Post-its');
+    expect(inbox?.objects.find(item => item.id === id)?.type).toBe('post-it');
+    state.updateTextObject(inbox!.id, id, 'Call about kitchen sink');
+    state.hydrate();
+    const saved = useNotebookStore.getState().entries.find(entry => entry.isPostItInbox);
+    const persisted = saved?.objects.find(item => item.id === id);
+    expect(persisted?.type).toBe('post-it');
+    if (!persisted || persisted.type !== 'post-it') throw new Error('Post-it was not persisted');
+    expect(persisted.text).toBe('Call about kitchen sink');
+  });
+
+  it('appends further quick notes to one collection rather than creating extra pages', () => {
+    const before = useNotebookStore.getState().entries.length;
+    const one = useNotebookStore.getState().createGlobalPostIt();
+    const two = useNotebookStore.getState().createGlobalPostIt();
+    const next = useNotebookStore.getState();
+    expect(next.entries).toHaveLength(before + 1);
+    const notes = next.entries.find(entry => entry.isPostItInbox)?.objects ?? [];
+    expect(notes.map(item => item.id)).toEqual([one, two]);
+  });
+});

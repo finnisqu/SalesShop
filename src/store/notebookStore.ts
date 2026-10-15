@@ -57,6 +57,7 @@ interface NotebookState {
   setActiveTool: (tool: ActiveNotebookTool) => void;
   createPaperCard: (entryId: string) => void;
   createPostIt: (entryId: string, tone?: PostItTone) => void;
+  createGlobalPostIt: () => string;
   createBusinessCard: (entryId: string) => void;
   createPaperScrap: (entryId: string, variant?: PaperScrapVariant) => void;
   createShape: (entryId: string, shape?: ShapeKind) => void;
@@ -445,6 +446,27 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const entries = appendObject(get().entries, entryId, object, timestamp);
     persist(entries, get().activeEntryId);
     set({ entries, selectedObjectId: object.id, activeTool: 'select', ...historyFlags() });
+  },
+
+  createGlobalPostIt: () => {
+    checkpoint(get(), 'global-postit:create');
+    const timestamp = now();
+    const existing = get().entries.find(entry => entry.isPostItInbox);
+    const inbox: NotebookEntry = existing ?? {
+      ...newEntry(), title: 'Post-its', isPostItInbox: true,
+      deletionLocked: true, paperStyle: 'blank', tone: 'cream',
+    };
+    const object: PostItObject = {
+      id: id('object'), type: 'post-it', text: '', tone: 'yellow',
+      x: 12, y: 12, width: 28, height: 18, rotation: 0,
+      zIndex: nextZ(inbox), createdAt: timestamp, updatedAt: timestamp,
+    };
+    const startingEntries = existing ? get().entries : [inbox, ...get().entries];
+    const entries = appendObject(startingEntries, inbox.id, object, timestamp);
+    // Global capture does not hijack the currently open Notebook page.
+    persist(entries, get().activeEntryId);
+    set({ entries, ...historyFlags() });
+    return object.id;
   },
 
   createPostIt: (entryId, tone = 'yellow') => {
