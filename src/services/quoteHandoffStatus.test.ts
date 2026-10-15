@@ -1,9 +1,9 @@
 import {describe,expect,it} from 'vitest';
 import {quoteHandoffStatus} from './quoteHandoffStatus';
 
-const quote=(status:'Draft'|'Sent'|'Viewed'|'Signed',revision=0)=>({status,revision});
+const quote=(status:'Draft'|'Sent'|'Viewed'|'Signed',revision=0)=>({id:'quote_a',status,revision});
 const link=(revision=0,viewCount=0,status:'active'|'revoked'|'signed'='active',expiresAt:string|null=null)=>({
-  revision,viewCount,status,expiresAt,signedAt:status==='signed'?'2026-10-15T12:00:00.000Z':null,
+  quoteId:'quote_a',revision,viewCount,status,expiresAt,signedAt:status==='signed'?'2026-10-15T12:00:00.000Z':null,
 });
 
 describe('QUOTES issue-to-customer handoff status',()=>{
@@ -28,6 +28,14 @@ describe('QUOTES issue-to-customer handoff status',()=>{
     expect(progress.linkCreated).toBe(false);
     expect(progress.viewed).toBe(false);
     expect(progress.headline).toBe('Issued · not yet delivered');
+  });
+  it('rejects a bearer link belonging to another quote even when revisions match',()=>{
+    const foreign={...link(0,4,'active','2999-01-01T00:00:00Z'),quoteId:'quote_b'};
+    const state=quoteHandoffStatus(quote('Sent',0),foreign,false);
+    expect(state.linkCreated).toBe(false);
+    expect(state.linkUsable).toBe(false);
+    expect(state.viewed).toBe(false);
+    expect(state.headline).toBe('Issued · not yet delivered');
   });
   it('keeps delivery confirmation and link viewing as independent milestones',()=>{
     const done=quoteHandoffStatus(quote('Sent'),null,true);
