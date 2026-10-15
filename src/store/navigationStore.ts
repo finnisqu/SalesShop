@@ -51,6 +51,8 @@ function readInitialNavigation(): Pick<NavigationState, 'view' | 'catalogSection
     const storedSection = localStorage.getItem(CATALOG_SECTION_STORAGE_KEY) as CatalogSection | null;
     const catalogSection = storedSection && CATALOG_SECTIONS.includes(storedSection) ? storedSection : 'materials';
 
+    if(route?.view)return{view:route.view,catalogSection:route.catalogSection??catalogSection};
+
     // Migrate the three pre-Catalog top-level views without losing where the user was working.
     if (storedView === 'materials') return { view: 'catalog', catalogSection: 'materials' };
     if (storedView === 'sinks') return { view: 'catalog', catalogSection: 'sinks' };
@@ -104,8 +106,10 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
   };
   return {
     view:initial.view,catalogSection:initial.catalogSection,
-    ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,focusedQuoteId:
-      typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedQuoteId ?? null : null,
+    ratesFocus:undefined,
+    focusedProjectId:typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedProjectId ?? null : null,
+    focusedCompanyId:typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedCompanyId ?? null : null,
+    focusedQuoteId:typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedQuoteId ?? null : null,
     history:[],
     goBack:()=>{
       if(typeof window!=='undefined' && getNavigationHistoryLength() > 0)window.history.back();
