@@ -4,6 +4,7 @@ import {join} from 'node:path';
 
 const edge=readFileSync(join(process.cwd(),'supabase/functions/shop-outcomes/index.ts'),'utf8');
 const client=readFileSync(join(process.cwd(),'src/services/shopOutcomesService.ts'),'utf8');
+const projection=readFileSync(join(process.cwd(),'supabase/functions/shop-outcomes/projection.ts'),'utf8');
 
 /** Structural guards only; deployment requires real authenticated role tests. */
 describe('Shop Outcomes server boundary (pre-deployment contract)',()=>{
@@ -27,18 +28,19 @@ describe('Shop Outcomes server boundary (pre-deployment contract)',()=>{
     expect(edge).not.toContain(".from('quote_lines')");
     expect(edge).not.toContain(".select('*')");
     expect(edge).toContain('const outcomes = (signatures ?? [])');
+    expect(edge).toContain("import {signedOutcome, type SignatureSource} from './projection.ts'");
     expect(edge).toContain('return json({ outcomes, limit: 100 })');
   });
   it('returns a strict signed outcome allowlist, not signature rows',()=>{
     for(const field of ['signatureId','quoteId','quoteNumber','revision','documentType',
       'title','projectId','companyName','acceptedAt','acceptedTotal']) {
-      expect(edge).toContain(field);
+      expect(projection).toContain(field);
     }
-    expect(edge).not.toContain('...snapshot');
-    expect(edge).not.toContain('...row');
-    expect(edge).not.toContain('signerName:');
-    expect(edge).not.toContain('signerEmail:');
-    expect(edge).not.toContain('internalCost:');
+    expect(projection).not.toContain('...snapshot');
+    expect(projection).not.toContain('...row');
+    expect(projection).not.toContain('signerName:');
+    expect(projection).not.toContain('signerEmail:');
+    expect(projection).not.toContain('internalCost:');
     expect(edge).toContain("'Cache-Control': 'no-store'");
   });
   it('never uses broad quote stores as a substitute for server authorization',()=>{
