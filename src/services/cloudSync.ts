@@ -38,7 +38,7 @@ function localDateKey(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-function starterQuoteDocument(): QuoteDocument {
+function starterQuoteDocument(userId: string): QuoteDocument {
   const timestamp = new Date().toISOString();
   const date = localDateKey();
   const quoteId = `quote_${crypto.randomUUID()}`;
@@ -53,6 +53,7 @@ function starterQuoteDocument(): QuoteDocument {
       quoteDate: date,
       revision: 0,
       status: 'Draft',
+      ownerUserId: userId,
       title: 'Untitled quote',
       sections: [],
       lines: [{
@@ -120,7 +121,8 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   if (!supabase) return;
 
   const previousScope = readCacheScope();
-  const canSeedOrgFromLocal = options.allowCompanySeed === true && (!previousScope || previousScope.organizationId === orgId);
+  // A previously hydrated cloud cache is never an authoritative company seed.
+  const canSeedOrgFromLocal = options.allowCompanySeed === true && !previousScope;
   const canSeedNotebookFromLocal = options.allowNotebookSeed !== false && (!previousScope || previousScope.userId === userId);
 
   // CRM uses normalized tables. The old org_documents.crm row is rollback-only.
@@ -144,15 +146,16 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   const normalizedQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
   if (normalizedQuotes) {
     writeLocalDocument(QUOTES_DOCUMENT_KEY, normalizedQuotes, false);
-  } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2 && localQuotes.quotes.length) {
+  } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2 &&
+    localQuotes.quotes.length > 0 && localQuotes.quotes.every(quote=>quote.ownerUserId===userId)) {
     await syncNormalizedQuotes(orgId, localQuotes);
     const seededQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
     writeLocalDocument(QUOTES_DOCUMENT_KEY, seededQuotes ?? localQuotes, false);
   } else {
     // Collaborators never seed a company with their own local/demo data.
     // Only a workspace owner initializing a new shop creates the starter quote.
-    if (options.allowCompanySeed) {
-      const starter = starterQuoteDocument();
+    if (canSeedOrgFromLocal) {
+      const starter = starterQuoteDocument(userId);
       await syncNormalizedQuotes(orgId, starter);
       writeLocalDocument(QUOTES_DOCUMENT_KEY, starter, false);
     } else {
