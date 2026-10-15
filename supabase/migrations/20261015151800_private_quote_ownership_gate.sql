@@ -155,9 +155,11 @@ begin
   if not exists(
     select 1 from public.organization_members m
     where m.organization_id=target_organization
-      and m.user_id=target_user_id and m.role in ('owner','admin','member')
+      and m.user_id=target_user_id
+      and (m.role in ('owner','admin') or
+        (m.role='member' and m.job_function in ('general','salesperson','estimator')))
   ) then
-    raise exception 'Quote assignee must be a current editor in this company'
+    raise exception 'Quote assignee must have Quotes editing permissions in this company'
       using errcode='42501';
   end if;
   -- Atomic compare-and-set: never transfer an already owned private quote.
