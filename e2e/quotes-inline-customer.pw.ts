@@ -73,8 +73,8 @@ test('Quick Quote customer chip edits name, contact and email without navigation
       .getByRole('button',{name:'Details'})).toHaveAttribute('aria-current','page');
   }else{
     await expect(beta.getByRole('complementary',{name:'Quote workspace navigation'})
-      .getByRole('button',{name:'Customer & project'})).toBeVisible();
+      .getByRole('button',{name:'Customer & deal'})).toBeVisible();
   }
-  await expect(beta.getByRole('region',{name:'Quote customer and project details'})).toBeVisible();
+  await expect(beta.getByRole('region',{name:'Quote customer and deal details'})).toBeVisible();
   expect(errors).toEqual([]);
 });

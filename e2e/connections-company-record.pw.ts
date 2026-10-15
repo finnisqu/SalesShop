@@ -19,14 +19,21 @@ test('Company record supports edit, relationships, refresh and Back on mobile an
   await expect(page.getByRole('heading', { name: 'About this company' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Activity history/ })).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Deals' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Quotes' })).toBeVisible();
+  if (info.project.name === 'phone-390') {
+    const jump = page.getByRole('navigation', { name: 'Jump to record section' });
+    await expect(jump.getByRole('button', { name: 'Details' })).toBeVisible();
+    await expect(jump.getByRole('button', { name: 'Records' })).toBeVisible();
+    await jump.getByRole('button', { name: 'Related' }).click();
+    await expect(page.getByRole('heading', { name: 'People' })).toBeInViewport();
+  }
 
   await page.getByRole('button', { name: 'Edit company' }).click();
   await page.getByRole('spinbutton', { name: 'Annual units' }).fill('80');
   await page.getByRole('spinbutton', { name: 'Average revenue / unit' }).fill('3500');
   await page.getByRole('spinbutton', { name: 'Expected share (%)' }).fill('50');
-  await page.getByRole('button', { name: 'Save company' }).click();
+  await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByText('$140,000', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: '+ Add person' }).click();

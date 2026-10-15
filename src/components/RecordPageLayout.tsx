@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 
 /** Shared record sections. Company and Person pages use identical chrome and tokens. */
 export function RecordCard({ title, extra, children }: { title: string; extra?: ReactNode; children: ReactNode }) {
@@ -29,11 +29,18 @@ export function RecordPageLayout({
   center: ReactNode;
   right: ReactNode;
 }) {
+  const detailsRef = useRef<HTMLElement>(null);
+  const recordsRef = useRef<HTMLDivElement>(null);
+  const relatedRef = useRef<HTMLElement>(null);
+  const jumpTo = (area: 'details' | 'records' | 'related') => {
+    const element = area === 'details' ? detailsRef.current : area === 'records' ? recordsRef.current : relatedRef.current;
+    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   return <section className="connections-record-page" data-record-type={entityType} aria-label={(recordTypeLabel ?? (entityType === 'project' ? 'Deal' : entityType)) + ' record'}>
     <nav className="connections-record-breadcrumb" aria-label="Breadcrumb">
       <button type="button" onClick={onBack}>← Connections</button>
       <span aria-hidden="true">/</span>
-      <button type="button" onClick={onBack}>{collectionLabel ?? (entityType === 'company' ? 'Companies' : entityType === 'person' ? 'People' : 'Deals')}</button>
+      <span>{collectionLabel ?? (entityType === 'company' ? 'Companies' : entityType === 'person' ? 'People' : 'Deals')}</span>
       <span aria-hidden="true">/</span>
       <span aria-current="page">{title}</span>
     </nav>
@@ -46,10 +53,15 @@ export function RecordPageLayout({
       </div>
       {actions && <div className="connections-record-actions">{actions}</div>}
     </header>
+    <nav className="connections-record-jump-nav" aria-label="Jump to record section">
+      <button type="button" onClick={() => jumpTo('details')}>Details</button>
+      <button type="button" onClick={() => jumpTo('records')}>Records</button>
+      <button type="button" onClick={() => jumpTo('related')}>Related</button>
+    </nav>
     <div className="connections-record-columns">
-      <aside className="connections-record-properties" aria-label="Record properties">{left}</aside>
-      <div className="connections-record-center">{center}</div>
-      <aside className="connections-record-related" aria-label="Related records">{right}</aside>
+      <aside ref={detailsRef} className="connections-record-properties" aria-label="Record details">{left}</aside>
+      <div ref={recordsRef} className="connections-record-center" role="region" aria-label="Linked records">{center}</div>
+      <aside ref={relatedRef} className="connections-record-related" aria-label="Related records">{right}</aside>
     </div>
   </section>;
 }

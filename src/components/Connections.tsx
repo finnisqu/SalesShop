@@ -99,6 +99,7 @@ export function Connections() {
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
     setTab(next); setQuery(''); setNotice(''); setMoreOpen(false);
+    setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
     // Activity history is an on-demand utility, never the default landing page.
     if (CONNECTIONS_TABS.some((item) => item.id === next)) {
       try { window.sessionStorage.setItem(TAB_KEY, next); } catch { /* best effort */ }
@@ -209,7 +210,6 @@ export function Connections() {
         <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
       </div>}
 
-      {<>
           <div className="connections-directory-toolbar">
             <Field className="connections-search" id="connections-directory-search" label={`Search ${tab}`}>
               {(control) => <input {...control} type="search" value={query} onChange={(event) => setQuery(event.target.value)}
@@ -278,7 +278,7 @@ export function Connections() {
 
             </section>
           )}
-          {tab === 'deals' && <section className="connections-directory">
+          {tab === 'deals' && <section className="connections-directory" aria-label="Deals directory">
             {dealCreating && <form className="connections-add-form" onSubmit={addDeal}>
               <strong>New deal</strong>
               <label><span>Deal name</span><input autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
@@ -305,7 +305,7 @@ export function Connections() {
             </div>
             {!projectRows.length && <StatusText state="empty" className="connections-empty">No deals match your search.</StatusText>}
           </section>}
-          {tab === 'activity' && <section className="connections-directory">
+          {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
             <p className="connections-count">{activityRows.length} recorded events. This is reference history, not a follow-up checklist.</p>
             <div className="connections-activity-list">
               {activityRows.map((activity) => {
@@ -318,9 +318,6 @@ export function Connections() {
               {!activityRows.length && <StatusText state="empty" className="connections-empty">No recorded history is available.</StatusText>}
             </div>
           </section>}
-        </>
-      }
-
       <footer className="connections-footer">
         <span>People and sales records are managed here. Team accounts, permissions, and invitations belong in Settings.</span>
         <button type="button" onClick={() => setView('settings')}>Open team settings →</button>

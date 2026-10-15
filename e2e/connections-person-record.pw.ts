@@ -27,7 +27,7 @@ test('Person record links from directory and Company, edits fields, survives rel
     await page.getByRole('button', { name: 'Edit person' }).click();
     await page.getByRole('textbox', { name: 'Job title' }).fill('Estimator');
     await page.getByRole('textbox', { name: 'Phone' }).fill('5551230101');
-    await page.getByRole('button', { name: 'Save person' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('Estimator', { exact: true }).first()).toBeVisible();
 
     await page.reload();

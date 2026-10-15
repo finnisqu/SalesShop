@@ -15,13 +15,17 @@ test('Deal page creates, edits, links quotes, returns to directory and reloads',
     await expect(page.getByRole('heading', { name: deal, exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'About this deal' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Quotes' })).toBeVisible();
+    if (info.project.name === 'phone-390') {
+      await page.getByRole('navigation', { name: 'Jump to record section' }).getByRole('button', { name: 'Records' }).click();
+      await expect(page.getByRole('heading', { name: 'Quotes' })).toBeInViewport();
+    }
     await expect(page.getByRole('button', { name: /Activity history/ })).toHaveAttribute('aria-expanded', 'false');
 
     await page.getByRole('button', { name: 'Edit deal' }).click();
     await page.getByRole('combobox', { name: 'Stage' }).selectOption('Bid Development');
     await page.getByRole('spinbutton', { name: 'Amount' }).fill('120000');
     await page.getByRole('textbox', { name: 'Next action' }).fill('Estimate counters');
-    await page.getByRole('button', { name: 'Save deal' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('$120,000', { exact: true })).toBeVisible();
     await expect(page.getByText('Estimate counters')).toBeVisible();
     await page.reload();

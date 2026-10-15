@@ -72,6 +72,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       dueDate: draft.dueDate || undefined,
       nextAction: draft.nextAction.trim() || undefined,
       lastTouchpoint: draft.lastTouchpoint || undefined,
+      ...(!draft.companyId && deal.companyId ? { companyName: '' } : {}),
     });
     if (draft.companyId && draft.companyId !== deal.companyId) relinkCompany(deal.id, draft.companyId);
     setEditing(false);
@@ -104,7 +105,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </select></label>
           <label>Next action<textarea rows={3} value={draft.nextAction} onChange={event => setDraft({...draft,nextAction:event.target.value})} /></label>
           <label>Last touchpoint<input type="date" value={draft.lastTouchpoint} onChange={event => setDraft({...draft,lastTouchpoint:event.target.value})} /></label>
-          <button className="connections-record-primary" type="submit" disabled={!draft.name.trim()}>Save deal</button>
+          <div className="connections-record-form-actions">
+            <button type="button" onClick={() => setEditing(false)}>Cancel</button>
+            <button className="connections-record-primary" type="submit" disabled={!draft.name.trim()}>Save changes</button>
+          </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Stage">{deal.stage}</RecordProperty>
           <RecordProperty label="Amount">{deal.amount === undefined ? 'Not set' : money.format(deal.amount)}</RecordProperty>
@@ -124,7 +128,6 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </button>)}
           {!related.linkedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this deal.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={newQuote}>+ Quote for this deal</button>
       </RecordCard>
       <RecordCard title="Notebook">
         <ProjectNotebookLinks project={deal} />
@@ -151,7 +154,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       <section className="connections-record-panel connections-record-history">
         <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
           onClick={() => setHistoryOpen(value => !value)}>
-          <span>Activity history</span><small>{historyOpen ? 'Hide log' : 'View log'}</small>
+          <span>Activity history</span><small>{historyOpen ? 'Hide' : 'View'} <span aria-hidden="true">{historyOpen ? '▴' : '▾'}</span></small>
         </button>
         {historyOpen && <div className="connections-record-panel-body">
           <p className="connections-record-helper">Only events explicitly linked to this deal or its quotes.</p>

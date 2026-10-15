@@ -81,7 +81,10 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((item) =>
               <option key={item.id} value={item.id}>{item.name}</option>)}
           </select></label>
-          <button type="submit" className="connections-record-primary" disabled={!draft.name.trim() && !draft.email.trim()}>Save person</button>
+          <div className="connections-record-form-actions">
+            <button type="button" onClick={() => setEditing(false)}>Cancel</button>
+            <button type="submit" className="connections-record-primary" disabled={!draft.name.trim() && !draft.email.trim()}>Save changes</button>
+          </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Name">{displayName}</RecordProperty>
           <RecordProperty label="Job title">{person.title || 'Not set'}</RecordProperty>
@@ -102,9 +105,6 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           </button>
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
       </RecordCard>
-      <RecordCard title="Deal involvement">
-        <p className="connections-record-empty">Deal-specific contact roles are not yet supported. No company deals are automatically attributed to this person.</p>
-      </RecordCard>
     </>}
     right={<>
       <RecordCard title="Contact details">
@@ -117,7 +117,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
       <section className="connections-record-panel connections-record-history">
         <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
           onClick={() => setHistoryOpen((value) => !value)}>
-          <span>Activity history</span><small>{historyOpen ? 'Hide log' : 'View log'}</small>
+          <span>Activity history</span><small>{historyOpen ? 'Hide' : 'View'} <span aria-hidden="true">{historyOpen ? '▴' : '▾'}</span></small>
         </button>
         {historyOpen && <div className="connections-record-panel-body">
           <p className="connections-record-helper">Only events explicitly linked to this person appear here.</p>

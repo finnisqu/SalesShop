@@ -50,6 +50,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     setAddingContact(false);
     setActivityFilter('all');
     setHistoryOpen(false);
+    setContactName(''); setContactEmail(''); setNewAlias('');
   }, [companyId]);
   useEffect(() => {
     if (!editing && company) setDraft({
@@ -128,7 +129,10 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <label>Annual units<input type="number" min="0" step="1" value={draft.annualUnits} onChange={(event) => setDraft({ ...draft, annualUnits: event.target.value })} /></label>
           <label>Average revenue / unit<input type="number" min="0" step="0.01" value={draft.averageUnitValue} onChange={(event) => setDraft({ ...draft, averageUnitValue: event.target.value })} /></label>
           <label>Expected share (%)<input type="number" min="0" max="100" step="0.1" value={draft.expectedSharePct} onChange={(event) => setDraft({ ...draft, expectedSharePct: event.target.value })} /></label>
-          <button type="submit" className="connections-record-primary" disabled={!draft.name.trim()}>Save company</button>
+          <div className="connections-record-form-actions">
+            <button type="button" onClick={() => setEditing(false)}>Cancel</button>
+            <button type="submit" className="connections-record-primary" disabled={!draft.name.trim()}>Save changes</button>
+          </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Relationship">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</RecordProperty>
           <RecordProperty label="Created">{dateLabel(company.createdAt)}</RecordProperty>
@@ -195,14 +199,17 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
         {addingContact && <form className="connections-record-edit-form" onSubmit={addContact}>
           <label>Name<input autoFocus value={contactName} onChange={(event) => setContactName(event.target.value)} /></label>
           <label>Email<input type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} /></label>
-          <button type="submit" className="connections-record-primary" disabled={!contactName.trim() && !contactEmail.trim()}>Save person</button>
+          <div className="connections-record-form-actions">
+            <button type="button" onClick={() => setAddingContact(false)}>Cancel</button>
+            <button type="submit" className="connections-record-primary" disabled={!contactName.trim() && !contactEmail.trim()}>Save person</button>
+          </div>
         </form>}
       </RecordCard>
 
       <section className="connections-record-panel connections-record-history">
         <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
           onClick={() => setHistoryOpen((value) => !value)}>
-          <span>Activity history</span><small>{historyOpen ? 'Hide log' : 'View log'}</small>
+          <span>Activity history</span><small>{historyOpen ? 'Hide' : 'View'} <span aria-hidden="true">{historyOpen ? '▴' : '▾'}</span></small>
         </button>
         {historyOpen && <div className="connections-record-panel-body">
 
