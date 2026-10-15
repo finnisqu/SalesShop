@@ -15,6 +15,49 @@ async function createQuickQuote(page: import('@playwright/test').Page) {
  * This tests the opt-in presentation with the local QC workspace only.
  * No production customer, organization, Auth or Supabase state is ever read.
  */
+test('Classic desktop offers a direct, lossless switch to Quotes Beta and back', async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='desktop-1280','Desktop editor switching contract');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','0');
+  });
+  await page.reload();
+  const classic=page.locator('.quotes-workbench');
+  await expect(classic).toBeVisible();
+  const originalTitle=await classic.getByRole('textbox',{name:'Quote title'}).inputValue();
+  const chooser=page.getByRole('group',{name:'Quote editor'});
+  await expect(chooser.getByRole('button',{name:'Classic'})).toHaveAttribute('aria-pressed','true');
+  await chooser.getByRole('button',{name:'Beta'}).click();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await expect(beta).toBeVisible();
+  await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue(originalTitle);
+  expect(await page.evaluate(()=>localStorage.getItem('salesshop:quotes-mobile-beta-v1'))).toBe('1');
+  await beta.getByRole('button',{name:'Classic',exact:true}).click();
+  await expect(classic.getByRole('textbox',{name:'Quote title'})).toHaveValue(originalTitle);
+  expect(await page.evaluate(()=>localStorage.getItem('salesshop:quotes-mobile-beta-v1'))).toBe('0');
+});
+
+test('Classic phone View menu opens Beta on the same quote and returns safely',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Phone editor switching contract');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','0');
+  });
+  await page.reload();
+  const classic=page.locator('.quotes-workbench');
+  await expect(classic).toBeVisible();
+  const title=await classic.locator('.quote-title-input').inputValue();
+  await classic.locator('.quote-mobile-view-button').click();
+  await page.getByRole('dialog',{name:'Quote view'}).getByRole('button',{name:'Open Quotes Beta'}).click();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await expect(beta).toBeVisible();
+  await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue(title);
+  await beta.getByRole('button',{name:'Classic',exact:true}).click();
+  await expect(classic.locator('.quote-title-input')).toHaveValue(title);
+});
+
 test('phone Quotes Beta uses the same quote records and returns to Classic', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'phone-390', 'Single representative phone viewport for interactive regression');
   const errors: string[] = [];

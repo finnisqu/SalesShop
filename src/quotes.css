@@ -1288,3 +1288,30 @@
 .customer-quote-paper .customer-area-summary-row .customer-line-description strong{
   color:inherit;font-weight:700;
 }
+
+/* Classic remains an accessible rollback editor until Beta feature parity is signed off. */
+.quotes-view .quote-editor-mode-chooser {
+  display:flex; align-items:center; gap:6px; padding:8px 10px;
+  border-bottom:1px solid rgba(82,71,54,.15); color:#554e43;
+}
+.quotes-view .quote-editor-mode-chooser > span {
+  font-size:9px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+}
+.quotes-view .quote-editor-mode-chooser button,
+.quotes-classic-team-switch button {
+  min-height:32px; border:1px solid #aaa18f; border-radius:6px;
+  background:#eee6d3; color:#514b40; padding:5px 10px; cursor:pointer;
+  font-size:11px; font-weight:800;
+}
+.quotes-view .quote-editor-mode-chooser button[aria-pressed="true"] {
+  background:#fff8e8; border-color:#88764b; color:#312c23;
+}
+.quotes-view .quote-editor-mode-chooser button:focus-visible,
+.quotes-classic-team-switch button:focus-visible {outline:2px solid #4b6b9d; outline-offset:2px;}
+.quotes-classic-team-shell {display:flex;flex:1;min-height:0;min-width:0;flex-direction:column;overflow:hidden;}
+.quotes-classic-team-switch {
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  background:#eee6d3;padding:8px 16px;min-height:48px;
+  color:#514b40;border-bottom:1px solid #c4bfb4;
+}
+.quotes-classic-team-shell > :last-child {flex:1;min-height:0;}

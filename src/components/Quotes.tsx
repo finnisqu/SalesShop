@@ -28,6 +28,7 @@ import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
+import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
 import {
   commercialDocumentLabel,
   displayQuoteNumber,
@@ -737,7 +738,7 @@ export function CustomerPreview({ quote, editing }: { quote: Quote; editing?: Cu
   return quote.documentType === 'pricing-schedule' ? <PricingScheduleCustomerPreview quote={quote} /> : <StandardCustomerPreview quote={quote} editing={editing} />;
 }
 
-function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quote: Quote; mode: QuoteViewMode; onModeChange: (mode: QuoteViewMode) => void; onOpenMobileNavigator: () => void }) {
+function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenBeta }: { quote: Quote; mode: QuoteViewMode; onModeChange: (mode: QuoteViewMode) => void; onOpenMobileNavigator: () => void; onOpenBeta: () => void }) {
   const quotes = useQuoteStore((state) => state.quotes);
   const updateQuote = useQuoteStore((state) => state.updateQuote);
   const deleteQuote = useQuoteStore((state) => state.deleteQuote);
@@ -987,6 +988,9 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator }: { quo
             <strong>{viewMode === 'customer' ? 'Customer' : viewMode[0].toUpperCase() + viewMode.slice(1)}</strong>
             <small>{viewMode === 'edit' ? 'Build the quote' : viewMode === 'split' ? 'Editor + customer sheet' : viewMode === 'workbook' ? 'Pricing workspace' : 'Customer document'}</small>
           </button>)}
+          <button type="button" className="quote-mobile-editor-beta-option" onClick={() => { setMobileMenu(null); onOpenBeta(); }}>
+            <strong>Open Quotes Beta</strong><small>Keep working with this same quote in the new editor</small>
+          </button>
         </div>}
 
         {mobileMenu === 'tools' && <div ref={mobileMenuRef} className="quote-mobile-menu quote-mobile-tools-menu" role="dialog" aria-modal="true" aria-label="Quote tools">
@@ -1270,6 +1274,15 @@ export function Quotes() {
   const userId = useAuthStore((state) => state.user?.id);
   const previewRole = useRolePerspectiveStore((state) => state.activePerspective);
   const canBrowseTeam = authMode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin') && !previewRole;
+  const setBetaEnabled = useQuotesMobileBetaStore((state) => state.setEnabled);
+  const openBeta = (quoteId?: string) => {
+    if (quoteId) selectQuote(quoteId);
+    useQuotesMobileBetaStore.getState().setLocation({
+      quoteId, page: quoteId ? 'quote' : 'library', quoteTab: 'build', areaTab: 'measure', areaId: null,
+    });
+    setQuoteLibraryMode('mine');
+    setBetaEnabled(true);
+  };
   useEffect(() => { hydrate(); hydrateCrm(); }, [hydrate, hydrateCrm]);
   // Own work is strictly attributed by user ID. Legacy quotes have no owner;
   // preserve them as "Unassigned" in the Team reference view.
@@ -1306,13 +1319,18 @@ export function Quotes() {
   }, [quote?.documentType, mode]);
   if (!hydrated) return <div className="quotes-loading">Opening quotes…</div>;
   if (canBrowseTeam && quoteLibraryMode === 'team') return (
-    <TeamQuotesWorkspace quotes={quotes} onShowMine={() => setQuoteLibraryMode('mine')} />
+    <section className="quotes-classic-team-shell">
+      <header className="quotes-classic-team-switch"><strong>Classic Quotes</strong>
+        <button type="button" onClick={() => openBeta()}>Open Quotes Beta</button></header>
+      <TeamQuotesWorkspace quotes={quotes} onShowMine={() => setQuoteLibraryMode('mine')} />
+    </section>
   );
   if (!quote) return <main className="quotes-view quote-my-quotes-empty">
     <section>
       <h1>My Quotes</h1>
       <p>You have no quotes assigned to you yet. Existing organization quotes are still available in Team Quotes, labeled Unassigned until an owner or admin assigns them.</p>
       <button type="button" onClick={() => createQuote()}>+ New Quote</button>
+      <button type="button" onClick={() => openBeta()}>Open Quotes Beta</button>
       {canBrowseTeam && <button type="button" onClick={() => setQuoteLibraryMode('team')}>View Team Quotes</button>}
     </section>
   </main>;
@@ -1362,10 +1380,15 @@ export function Quotes() {
       </section>
     </div>}
 
-    <aside className="quotes-sidebar"><header><div><span>My documents</span><strong>My Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>{canBrowseTeam && <div className="quote-library-mode-switch" role="group" aria-label="Quote library">
+    <aside className="quotes-sidebar"><header><div><span>My documents</span><strong>My Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>
+    <div className="quote-editor-mode-chooser" role="group" aria-label="Quote editor">
+      <span>Editor</span>
+      <button type="button" aria-pressed={true}>Classic</button>
+      <button type="button" aria-pressed={false} onClick={() => openBeta(quote.id)}>Beta</button>
+    </div>{canBrowseTeam && <div className="quote-library-mode-switch" role="group" aria-label="Quote library">
       <button type="button" aria-pressed={true}>My Quotes</button>
       <button type="button" onClick={() => setQuoteLibraryMode('team')}>Team Quotes</button>
     </div>}{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside>
-    <QuoteEditor quote={quote} mode={mode} onModeChange={setMode} onOpenMobileNavigator={() => setMobileNavigatorOpen(true)} />
+    <QuoteEditor quote={quote} mode={mode} onModeChange={setMode} onOpenMobileNavigator={() => setMobileNavigatorOpen(true)} onOpenBeta={() => openBeta(quote.id)} />
   </main>;
 }

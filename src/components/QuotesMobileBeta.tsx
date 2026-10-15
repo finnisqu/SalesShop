@@ -203,9 +203,9 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   </article>;
 }
 
-function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:{
+function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,onClassic}:{
   quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;
-  goBack:()=>void;onNextArea:()=>void;onDuplicate:()=>void;
+  goBack:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onClassic:()=>void;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
   const general=isGeneralTakeoffSection(section);
@@ -272,6 +272,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate}:
         {editable&&!general&&<button type="button" className="qmb-area-duplicate-action"
           aria-label="Duplicate this Area" onClick={onDuplicate}>⧉ Duplicate</button>}
         <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>
+        <button type="button" className="qmb-quiet" onClick={onClassic}>Classic</button>
       </div>
     </header>
     <div className="qmb-pad qmb-titlepad">
@@ -681,7 +682,8 @@ export function QuotesMobileBeta() {
   };
   if(!hydrated)return <main className="qmb"><p className="qmb-loading">Opening Quotes Beta…</p></main>;
   if(canBrowseTeam&&libraryMode==='team')return <main className="quotes-view qmb-team">
-    <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes Beta</button></div>
+    <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes Beta</button>
+      <button type="button" onClick={()=>exitBeta(false)}>Classic</button></div>
     <TeamQuotesWorkspace quotes={quotes} onShowMine={()=>setLibraryMode('mine')}/>
   </main>;
   return <main className={"quotes-view qmb"+(reviewOpen?" is-review-expanded":"")} aria-label="Quotes mobile beta">
@@ -916,7 +918,8 @@ export function QuotesMobileBeta() {
           {quote.documentType==='pricing-schedule'?'Review Pricing Schedule ›':audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Review & issue ›'}</button>
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
-      setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}/>:null}
+      setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}
+      onClassic={()=>exitBeta(false)}/>:null}
       </div>
     </div>
     {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
