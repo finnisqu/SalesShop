@@ -132,9 +132,10 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
   const cloudReady = mode === 'cloud' && Boolean(organizationId);
   const url = share ? quoteShareUrl(share) : '';
   const correctRevision=Boolean(share&&shareMatchesQuoteRevision(quote,share));
-  const active = correctRevision&&(share?.status === 'active' || share?.status === 'signed');
   const deliveries=confirmedQuoteDeliveries(quote,activities);
   const handoff=quoteHandoffStatus(quote,share,deliveries.length>0);
+  // Expired and mismatched-revision links must never appear copyable/shareable.
+  const active=handoff.linkUsable;
   const reviewedItemsNeedingIssue=reviewItemsBlockingDirectShare(quote);
   const creationReady=allowCreation&&reviewedItemsNeedingIssue===0;
 
@@ -206,15 +207,15 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
                 <div className="quote-share-active">
                   <div className="quote-share-revision" aria-label="Customer link revision">
                     <strong>{correctRevision?'Link for current revision':'Link for a different revision'}</strong>
-                    <span>Revision {share.revision} · {share.status==='revoked'?'Revoked':'Customer-visible content is frozen at issue'}</span>
+                    <span>Revision {share.revision} · {share.status==='revoked'?'Revoked':handoff.linkExpired?'Expired · generate a replacement link':'Customer-visible content is frozen at issue'}</span>
                   </div>
                   {!correctRevision&&<p className="quote-share-review-needed" role="status">
                     This link is for revision {share.revision}, not revision {quote.revision}. It cannot be shared as the current quote. Create a link for this revision instead.
                   </p>}
                   <div className="quote-share-status-row">
-                    <span className={`quote-share-status status-${share.status}`}>{share.status === 'signed' ? 'Signed' : share.status === 'revoked' ? 'Revoked' : share.viewCount > 0 ? 'Viewed' : 'Ready'}</span>
+                    <span className={`quote-share-status status-${handoff.linkExpired?'expired':share.status}`}>{share.status === 'signed' ? 'Signed' : share.status === 'revoked' ? 'Revoked' : handoff.linkExpired ? 'Expired' : share.viewCount > 0 ? 'Viewed' : 'Ready'}</span>
                     {share.viewCount > 0 && <span>{share.viewCount} view{share.viewCount === 1 ? '' : 's'}</span>}
-                    {share.expiresAt && share.status === 'active' && <span>Expires {dateLabel(share.expiresAt)}</span>}
+                    {share.expiresAt && share.status === 'active' && <span>{handoff.linkExpired?'Expired':'Expires'} {dateLabel(share.expiresAt)}</span>}
                   </div>
 
                   {active && (
@@ -231,6 +232,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
                     </>
                   )}
 
+                  {handoff.linkExpired&&<p className="quote-share-review-needed" role="alert">This URL is no longer customer-accessible. Create a new link before sharing; previously confirmed delivery remains in the CRM history.</p>}
                   <small>{deliveries.length
                     ? 'Delivery confirmed by salesperson · '+new Date(deliveries[0].occurredAt).toLocaleString()
                     :share.firstViewedAt?'Customer opened this link. Delivery was not manually confirmed.'
@@ -241,7 +243,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
                   <div className="quote-share-secondary-actions">
                     {share.status !== 'revoked' && <button type="button" onClick={() => void revoke()} disabled={working}>Revoke</button>}
                     <button type="button" onClick={() => void makeLink(true)} disabled={working || !creationReady || quote.status === 'Declined' || quote.status === 'Expired'}>
-                      {working ? 'Working…' : share.status === 'revoked' ? 'Create new link' : 'Regenerate link'}
+                      {working ? 'Working…' : share.status === 'revoked'||handoff.linkExpired ? 'Create new link' : 'Regenerate link'}
                     </button>
                   </div>
                 </div>
