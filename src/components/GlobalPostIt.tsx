@@ -8,11 +8,12 @@ import '../global-postit.css';
 const tones: PostItTone[] = ['yellow', 'pink', 'blue', 'green'];
 type Note = { entryId: string; entryTitle: string; object: PostItObject };
 const quickNoteEvent = 'sales-shop:global-post-it';
+export const newQuickNoteEvent = 'sales-shop:new-quick-note';
 
 /** Render a launcher in any toolbar; one shared layer stays mounted through navigation. */
 export function GlobalPostItLauncher() {
   return <button type="button" className="global-postit-launcher"
-    aria-label="Open private Post-its" aria-keyshortcuts="Alt+Shift+N" title="Private Post-its · Alt+Shift+N"
+    aria-label="Quick Note" aria-keyshortcuts="Alt+Shift+N" title="Open private Quick Notes · Alt+Shift+N"
     onClick={() => window.dispatchEvent(new Event(quickNoteEvent))}>
     <span aria-hidden="true">▧</span>
   </button>;
@@ -55,10 +56,16 @@ export function GlobalPostItLayer() {
       openNotes();
     };
     const onTrigger = () => openNotes();
+    const onCreate = () => {
+      const id=useNotebookStore.getState().createGlobalPostIt();
+      setSelectedId(id);setOpen(true);
+    };
     window.addEventListener(quickNoteEvent, onTrigger);
+    window.addEventListener(newQuickNoteEvent,onCreate);
     window.addEventListener('keydown', onShortcut);
     return () => {
       window.removeEventListener(quickNoteEvent, onTrigger);
+      window.removeEventListener(newQuickNoteEvent,onCreate);
       window.removeEventListener('keydown', onShortcut);
     };
   }, [open]);
@@ -102,12 +109,12 @@ export function GlobalPostItLayer() {
   return open ? createPortal(<>
     <div className="global-postit-mobile-backdrop" onPointerDown={() => setOpen(false)} />
     <section className={'global-postit-panel'+(docked?' is-docked':'')} role="region"
-      aria-label="Private Post-it workspace" style={docked?undefined:{left:position.x,top:position.y}}>
+      aria-label="Private Quick Notes" style={docked?undefined:{left:position.x,top:position.y}}>
       <header className="global-postit-heading" onPointerDown={startDrag} onPointerMove={moveDrag}
         onPointerUp={endDrag} onPointerCancel={endDrag}>
-        <div><strong>Post-its</strong><small>Private · saved automatically</small></div>
+        <div><strong>Quick Notes</strong><small>Private · saved to Notebook</small></div>
         <div className="global-postit-heading-actions">
-          <button type="button" onClick={addNote} aria-label="New Post-it" title="New Post-it">+</button>
+          <button type="button" onClick={addNote} aria-label="New Quick Note" title="New Quick Note">+</button>
           <button type="button" onClick={() => setDocked(value => !value)}
             aria-label={docked?'Undock Post-its':'Dock Post-its'} title={docked?'Float':'Dock'}>
             {docked?'◩':'⇥'}
@@ -143,7 +150,7 @@ export function GlobalPostItLayer() {
             setSelectedId(null);
           }}>Delete note</button>
         </footer>
-      </> : <div className="global-postit-empty">No Post-its yet. <button onClick={addNote}>Create one</button></div>}
+      </> : <div className="global-postit-empty">No Quick Notes yet. <button onClick={addNote}>Create one</button></div>}
     </section>
   </>,document.body) : null;
 }
