@@ -18,8 +18,8 @@ test('Settings remember personal date/time/calendar choices without altering quo
   await time.selectOption('24-hour');
   await week.selectOption('monday');
   await zone.selectOption('America/New_York');
-  await expect(page.getByLabel('Date and calendar preview')).toContainText('14/10/2026');
-  await expect(page.getByLabel('Date and calendar preview')).toContainText('15:30');
+  await expect(page.locator('.settings-datetime-preview')).toContainText('14/10/2026');
+  await expect(page.locator('.settings-datetime-preview')).toContainText('15:30');
 
   await page.reload();
   await page.getByRole('navigation', {name:'Settings sections'})
