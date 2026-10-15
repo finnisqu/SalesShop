@@ -48,14 +48,14 @@ test('Classic phone View menu opens Beta on the same quote and returns safely',a
   await page.reload();
   const classic=page.locator('.quotes-workbench');
   await expect(classic).toBeVisible();
-  const title=await classic.getByRole('textbox',{name:'Quote title'}).inputValue();
+  const title=await classic.locator('.quote-title-input').inputValue();
   await classic.locator('.quote-mobile-view-button').click();
   await page.getByRole('dialog',{name:'Quote view'}).getByRole('button',{name:'Open Quotes Beta'}).click();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await expect(beta).toBeVisible();
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue(title);
   await beta.getByRole('button',{name:'Classic',exact:true}).click();
-  await expect(classic.getByRole('textbox',{name:'Quote title'})).toHaveValue(title);
+  await expect(classic.locator('.quote-title-input')).toHaveValue(title);
 });
 
 test('phone Quotes Beta uses the same quote records and returns to Classic', async ({ page }, testInfo) => {
