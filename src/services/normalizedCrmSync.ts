@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../store/authStore';
+import { privateCrmRlsEnabled } from './crmPrivacyPilot';
 import type {
   Activity,
   ActivityMetadata,
@@ -58,6 +60,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
 
   const companies: Company[] = companyRows.map((row) => ({
     id: String(row.id),
+    ownerUserId: valueOrUndefined(row.owner_user_id),
     name: String(row.name),
     kind: (row.kind === 'non-customer' ? 'non-customer' : 'customer') as CompanyKind,
     aliases: Array.isArray(row.aliases) ? row.aliases.map(String).filter(Boolean) : [],
@@ -72,6 +75,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
 
   const contacts: Contact[] = contactRows.map((row) => ({
     id: String(row.id),
+    ownerUserId: valueOrUndefined(row.owner_user_id),
     companyId: valueOrUndefined(row.company_id),
     name: String(row.name),
     email: valueOrUndefined(row.email),
@@ -86,6 +90,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
     const companyId = valueOrUndefined(row.company_id);
     return {
       id: String(row.id),
+      ownerUserId: valueOrUndefined(row.owner_user_id),
       name: String(row.name),
       companyId,
       companyName: companyId ? companyNames.get(companyId) : undefined,
@@ -102,6 +107,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
 
   const activities: Activity[] = activityRows.map((row) => ({
     id: String(row.id),
+    ownerUserId: valueOrUndefined(row.owner_user_id),
     type: String(row.type) as ActivityType,
     summary: String(row.summary),
     projectId: valueOrUndefined(row.project_id),
@@ -165,12 +171,19 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
   if (document.schemaVersion !== 3) throw new Error('Unsupported CRM document schema.');
 
   const guards = await serverCrmGuards(organizationId);
+  const auth = useAuthStore.getState();
+  const actorId=auth.mode==='cloud' && auth.organizationId===organizationId ? auth.user?.id : undefined;
+  // Once CRM RLS is deployed, do not upload other salespeople's records or
+  // legacy unattributed records from the shared historical browser cache.
+  const maySync=(record:{ownerUserId?:string})=> !privateCrmRlsEnabled
+    || Boolean(actorId && record.ownerUserId===actorId);
 
   const companies = document.companies
-    .filter((company) => atLeastAsNew(company.updatedAt, guards.companies.get(company.id)))
+    .filter((company) => maySync(company) && atLeastAsNew(company.updatedAt, guards.companies.get(company.id)))
     .map((company, sortOrder) => ({
       organization_id: organizationId,
       id: company.id,
+      ...(privateCrmRlsEnabled?{owner_user_id: company.ownerUserId}:{}),
       name: company.name,
       kind: company.kind,
       aliases: company.aliases ?? [],
@@ -184,10 +197,11 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
     }));
 
   const contacts = document.contacts
-    .filter((contact) => atLeastAsNew(contact.updatedAt, guards.contacts.get(contact.id)))
+    .filter((contact) => maySync(contact) && atLeastAsNew(contact.updatedAt, guards.contacts.get(contact.id)))
     .map((contact, sortOrder) => ({
       organization_id: organizationId,
       id: contact.id,
+      ...(privateCrmRlsEnabled?{owner_user_id:contact.ownerUserId}:{}),
       company_id: contact.companyId ?? null,
       name: contact.name,
       email: contact.email ?? null,
@@ -200,7 +214,7 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
     }));
 
   const projects = document.projects
-    .filter((project) => atLeastAsNew(project.updatedAt, guards.projects.get(project.id)?.updatedAt))
+    .filter((project) => maySync(project) && atLeastAsNew(project.updatedAt, guards.projects.get(project.id)?.updatedAt))
     .map((project, sortOrder) => {
       const server = guards.projects.get(project.id);
       let stage = project.stage;
@@ -221,6 +235,7 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
       return {
         organization_id: organizationId,
         id: project.id,
+        ...(privateCrmRlsEnabled?{owner_user_id:project.ownerUserId}:{}),
         company_id: project.companyId ?? null,
         name: project.name,
         stage,
@@ -235,9 +250,10 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
       };
     });
 
-  const activities = document.activities.map((activity, sortOrder) => ({
+  const activities = document.activities.filter(maySync).map((activity, sortOrder) => ({
     organization_id: organizationId,
     id: activity.id,
+    ...(privateCrmRlsEnabled?{owner_user_id:activity.ownerUserId}:{}),
     type: activity.type,
     summary: activity.summary,
     project_id: activity.projectId ?? null,
