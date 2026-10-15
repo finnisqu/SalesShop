@@ -3,12 +3,11 @@ import { test, expect, type Page } from '@playwright/test';
 const supported = (project: string) => ['phone-390', 'desktop-1280'].includes(project);
 
 async function createAccount(page: Page, name: string) {
-  await page.goto('/home');
-  await page.getByRole('button', { name: 'Quick create' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Create in SalesShop' });
-  await dialog.getByRole('button', { name: /New Account/ }).click();
-  await dialog.getByRole('textbox', { name: 'Account / company name' }).fill(name);
-  await dialog.getByRole('button', { name: 'Create & open' }).click();
+  await page.goto('/connections');
+  await page.getByRole('button', { name: '+ Company' }).click();
+  const form = page.locator('.connections-add-form');
+  await form.getByRole('textbox', { name: 'Company name' }).fill(name);
+  await form.getByRole('button', { name: 'Save & open' }).click();
 }
 
 test('Company record supports edit, relationships, refresh and Back on mobile and desktop', async ({ page }, info) => {
@@ -35,12 +34,12 @@ test('Company record supports edit, relationships, refresh and Back on mobile an
   await contactForm.getByRole('textbox', { name: 'Name' }).fill('Record QC Estimator');
   await contactForm.getByRole('textbox', { name: 'Email' }).fill('records@example.com');
   await contactForm.getByRole('button', { name: 'Save person' }).click();
-  await expect(page.getByText('Record QC Estimator')).toBeVisible();
+  await expect(page.getByText('Record QC Estimator', { exact: true }).first()).toBeVisible();
 
   await page.reload();
   await expect(page).toHaveURL(/\/connections\/companies\/company_/);
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
-  await expect(page.getByText('Record QC Estimator')).toBeVisible();
+  await expect(page.getByText('Record QC Estimator', { exact: true }).first()).toBeVisible();
   await page.getByRole('button', { name: /Connections/ }).filter({ hasText: '← Connections' }).click();
   await expect(page).toHaveURL(/\/connections$/);
   await expect(page.getByRole('button', { name: name, exact: false })).toBeVisible();
