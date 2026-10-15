@@ -280,8 +280,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       .map(item=>item.parentId===folderId?{...item,parentId:folder.parentId}:item);
     const entries=get().entries.map(entry=>entry.folderId===folderId
       ?{...entry,folderId:folder.parentId}:entry);
-    persist(entries,get().activeEntryId,undefined,folders);
-    set({folders,entries,...historyFlags()});
+    const trashedEntries=get().trashedEntries.map(item=>item.entry.folderId===folderId
+      ?{...item,entry:{...item.entry,folderId:folder.parentId}}:item);
+    // Recently Deleted pages must also remain recoverable after removing a folder.
+    persist(entries,get().activeEntryId,trashedEntries,folders);
+    set({folders,entries,trashedEntries,...historyFlags()});
   },
 
   moveEntryToFolder: (entryId,folderId) => {
