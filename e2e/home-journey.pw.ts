@@ -36,6 +36,15 @@ test('HOME named quote opens Beta editor, supports mobile/desktop Back and resum
     await expect(page).toHaveURL(/\/quotes\/quote_/);
     await expect(page.locator('.qmb-desktop-frame.is-library')).toHaveCount(0);
 
+    // Library navigation must clear the quote URL, and browser Back should
+    // restore the same document (not leave the library on a stale deep link).
+    await page.locator('.qmb-quote-editor .qmb-back').click();
+    await expect(page).toHaveURL(/\\/quotes$/);
+    await expect(page.locator('.qmb-desktop-frame.is-library')).toBeVisible();
+    await page.goBack();
+    await expect(page).toHaveURL(/\\/quotes\\/quote_/);
+    await expect(page.locator('.qmb-desktop-frame.is-library')).toHaveCount(0);
+
     // Quotes Beta uses its own full-screen navigation, not the ordinary
     // mobile command bar. HOME must still be reachable from within Beta.
     await page.getByRole('button',{name:'Open SalesShop navigation'}).click();
