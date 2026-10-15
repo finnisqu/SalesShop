@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {quoteTotal,displayQuoteNumber} from '../types/quote';
@@ -27,6 +27,17 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [signatureOpen,setSignatureOpen]=useState(false);
+  const deliverySectionRef=useRef<HTMLElement>(null);
+  const previousStatusRef=useRef(quote.status);
+  useEffect(()=>{
+    const earlier=previousStatusRef.current;
+    previousStatusRef.current=quote.status;
+    if((earlier==='Draft'||earlier==='Ready')&&quote.status==='Sent'){
+      // Issuing completes an internal step. Bring the real next action —
+      // creating and sharing a link — into view without claiming delivery.
+      deliverySectionRef.current?.scrollIntoView({block:'start',behavior:'instant'});
+    }
+  },[quote.status]);
   const [lastCheckedAt,setLastCheckedAt]=useState(quote.updatedAt);
   const needsRecheck=lastCheckedAt!==quote.updatedAt;
   const [expandedId,setExpandedId]=useState<string|null>(initialFindingId??null);
@@ -160,8 +171,14 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         <span>I reviewed the remaining items and intend to leave them as shown.</span>
       </label>}
       {error&&<p role="alert" className="qmb-error">{error}</p>}
-      <section className="qmb-card qmb-audit-delivery" data-review-delivery>
+      <section ref={deliverySectionRef} className="qmb-card qmb-audit-delivery" data-review-delivery>
         <strong>Customer delivery · Preview → Approve → Share</strong>
+        {!editable&&quote.status==='Sent'&&<div className="qmb-issued-next" role="status">
+          <strong>✓ Quote issued successfully</strong>
+          <p>The approved revision is frozen. No email or customer link was sent or
+            created automatically. Create a secure link below, then share it using
+            your preferred method.</p>
+        </div>}
         <div className="qmb-delivery-version" aria-label="Customer document revision">
           <span>{editable?'Draft awaiting approval':'Issued customer revision'}</span>
           <strong>{displayQuoteNumber(quote)}</strong>
