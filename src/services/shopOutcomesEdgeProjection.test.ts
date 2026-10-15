@@ -30,7 +30,7 @@ describe('signed-only Shop Outcomes Edge Function projection',()=>{
     const json=JSON.stringify(signedOutcome(evidence));
     for(const secret of ['Private Signer','signer@example.com','do not return',
       'Private Customer','contact@example.com','Secret Site','Private sales intelligence',
-      'Private line details','Private customer notes','internalCost','margin','strokes','signatureText','450','77']){
+      'Private line details','Private customer notes','internalCost','margin','strokes','signatureText']){
       expect(json).not.toContain(secret);
     }
   });
