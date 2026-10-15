@@ -157,4 +157,14 @@ describe('Notebook 2.0 private folder organization', () => {
     expect(useNotebookStore.getState().entries[0].folderId).toBe(folder);
     expect(useNotebookStore.getState().entries[0].id).not.toBe(original.id);
   });
+
+  it('keeps one Post-it inbox even when that Notebook page is duplicated', () => {
+    const originalId=useNotebookStore.getState().createGlobalPostIt();
+    const inbox=useNotebookStore.getState().entries.find(entry=>entry.isPostItInbox)!;
+    expect(inbox.objects.some(object=>object.id===originalId)).toBe(true);
+    useNotebookStore.getState().duplicateEntry(inbox.id);
+    const after=useNotebookStore.getState();
+    expect(after.entries.filter(entry=>entry.isPostItInbox)).toHaveLength(1);
+    expect(after.entries.find(entry=>entry.id===after.activeEntryId)?.isPostItInbox).toBe(false);
+  });
 });
