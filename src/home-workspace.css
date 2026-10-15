@@ -47,3 +47,20 @@
 .sales-home button:focus-visible,.sales-home input:focus-visible{outline:2px solid var(--ss-theme-accent,#527663);outline-offset:2px}
 @media(max-width:760px){.sales-home{padding:14px;gap:18px}.sales-home-columns{grid-template-columns:1fr}.sales-home-shortcut-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.sales-home-shortcut-grid button{padding:10px;min-height:94px}.sales-home-shortcut-grid button small{font-size:10px}.sales-home-month{align-items:flex-start;flex-direction:column;gap:14px}.sales-home-metrics{width:100%;justify-content:space-between}.sales-home-metrics strong{font-size:18px}}
 @media(max-width:375px){.sales-home-shortcut-grid{grid-template-columns:1fr}.sales-home-shortcut-grid button{min-height:62px;grid-template-columns:30px 1fr;column-gap:10px}.sales-home-shortcut-grid button small{grid-column:2}}
+
+.sales-home-add-task{border:1px solid var(--ss-theme-border,#c6cec7);background:var(--ss-theme-tint,#edf2ed);border-radius:8px;padding:8px 12px;color:var(--ss-theme-ink,#25372d);font-weight:800!important;min-height:38px}
+.sales-home-task-form{display:grid;gap:10px;padding:13px;margin-bottom:8px;background:var(--ss-theme-tint,#f3f4f0);border-radius:10px}
+.sales-home-task-form label{font-size:12px;font-weight:700;display:grid;gap:4px}
+.sales-home-task-form input,.sales-home-task-form select{width:100%;min-height:38px;border:1px solid var(--ss-theme-border,#d5d9d4);border-radius:7px;padding:8px;background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#26382d);font:inherit;font-size:13px}
+.sales-home-task-form>div{display:flex;justify-content:flex-end;gap:9px}
+.sales-home-task-form button{min-height:36px;border:1px solid var(--ss-theme-border,#d5d9d4);padding:7px 10px;border-radius:7px;background:var(--ss-theme-card,#fff);color:inherit}
+.sales-home-task-form button[type=submit]{background:var(--ss-theme-accent,#527663);color:var(--ss-theme-accent-ink,#fff)}
+.sales-home-task-form small{font-size:11px;line-height:1.35;color:var(--ss-theme-muted,#66716b)}
+.sales-home-task-row{padding:12px 0;display:grid;gap:8px}
+.sales-home-task-check{display:flex;gap:10px;align-items:center;cursor:pointer}
+.sales-home-task-check input{width:19px;height:19px;accent-color:var(--ss-theme-accent,#527663);flex-shrink:0}
+.sales-home-task-check>span{display:grid;gap:3px}
+.sales-home-task-check strong{font-size:14px}
+.sales-home-task-check small{font-size:11px;color:var(--ss-theme-muted,#66716b)}
+.sales-home-task-actions{display:flex;gap:9px;padding-left:29px;flex-wrap:wrap}
+.sales-home-task-actions button{font-size:11px;border:1px solid var(--ss-theme-border,#d3d7d0);border-radius:7px;background:var(--ss-theme-tint,#edf0eb);color:var(--ss-theme-ink,#25372d);padding:6px 10px;min-height:32px}
