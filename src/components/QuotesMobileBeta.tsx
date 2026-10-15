@@ -29,6 +29,8 @@ import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteBetaEditablePreview } from './QuoteBetaEditablePreview';
 import {approvedCustomerDraft,quoteDeliveryApprovalKey} from '../services/quoteDeliveryApproval';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
+import { ShopOutcomesWorkspace } from './ShopOutcomesWorkspace';
+import { signedShopOutcomesEnabled } from '../services/shopOutcomesPilot';
 import {QuotesFollowUpDashboard} from './QuotesFollowUpDashboard';
 import { TakeoffRatePicker } from './TakeoffRatePicker';
 import { QuoteSfRateChoices } from './QuoteSfRateChoices';
@@ -697,7 +699,9 @@ export function QuotesMobileBeta() {
   if(canBrowseTeam&&libraryMode==='team')return <main className="quotes-view qmb-team">
     <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes Beta</button>
       <button type="button" onClick={()=>exitBeta(false)}>Classic</button></div>
-    <TeamQuotesWorkspace quotes={quotes} onShowMine={()=>setLibraryMode('mine')}/>
+    {signedShopOutcomesEnabled
+      ? <ShopOutcomesWorkspace onShowMine={()=>setLibraryMode('mine')}/>
+      : <TeamQuotesWorkspace quotes={quotes} onShowMine={()=>setLibraryMode('mine')}/>}
   </main>;
   return <main className={"quotes-view qmb"+(reviewOpen?" is-review-expanded":"")} aria-label="Quotes mobile beta">
     <div className={'qmb-desktop-frame'+(page==='library'?' is-library':'')}>
@@ -800,7 +804,7 @@ export function QuotesMobileBeta() {
             Clear filters
           </button>}
         </div>}
-        {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>Team Quotes ›</button>}
+        {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>{signedShopOutcomesEnabled ? 'Shop Outcomes ›' : 'Team Quotes ›'}</button>}
          </>}
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary"
