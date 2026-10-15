@@ -9,7 +9,7 @@ import {QUOTE_STANDARD_TERMS,freeCustomerNotes,termsEnabled,withCustomerTerms} f
 
 /** Mobile-first Details: customer -> deal -> notes.
  * Never navigates away to Board from a CRM link or selection. */
-export function QuoteBetaDetails({quote}:{quote:Quote}) {
+export function QuoteBetaDetails({quote,onContinueToArea,nextAreaLabel}:{quote:Quote;onContinueToArea?:()=>void;nextAreaLabel?:string}) {
   const update=useQuoteStore(state=>state.updateQuote);
   const editable=quoteIsCommerciallyEditable(quote);
   return <div className="qmb-details-page" role="region" aria-label="Quote customer and deal details">
@@ -63,6 +63,10 @@ export function QuoteBetaDetails({quote}:{quote:Quote}) {
           onInternalChange={value=>update(quote.id,{internalNotes:value})}/>
       </fieldset>
     </section>
+    {onContinueToArea&&nextAreaLabel&&<div className="qmb-details-next" aria-label="Next quote step">
+      <div><strong>Ready for takeoffs?</strong><small>Customer and Deal details save automatically. Continue measuring and pricing without returning to Build.</small></div>
+      <button type="button" className="qmb-primary" onClick={onContinueToArea}>{nextAreaLabel}</button>
+    </div>}
     <QuoteBetaHistory quote={quote}/>
   </div>;
 }

@@ -14,6 +14,11 @@ on:
       - 'src/quick-create.css'
       - 'e2e/home-journey.pw.ts'
       - 'e2e/connections-deal-record.pw.ts'
+      - 'e2e/quotes-beta-fast-path.pw.ts'
+      - 'src/services/quoteWorkflowShortcut.ts'
+      - 'src/components/QuoteBetaDetails.tsx'
+      - 'src/quotes-mobile-details.css'
+      - 'src/quotes-mobile-speed.css'
       - '.github/workflows/navigation-smoke.yml'
   workflow_dispatch:
 
@@ -43,7 +48,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: HOME and Deal record navigation (phone and desktop)
-        run: npx playwright test e2e/home-journey.pw.ts e2e/connections-deal-record.pw.ts --project=phone-390 --project=desktop-1280
+        run: npx playwright test e2e/home-journey.pw.ts e2e/connections-deal-record.pw.ts e2e/quotes-beta-fast-path.pw.ts --project=phone-390 --project=desktop-1280
       - name: Upload failed navigation traces
         if: failure()
         uses: actions/upload-artifact@v4

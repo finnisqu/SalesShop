@@ -22,3 +22,13 @@
   .qmb .qmb-area-footer .qmb-area-next,
   .qmb .qmb-area-footer .qmb-primary {padding-inline:6px;font-size:11px;}
 }
+
+/* 18C: Review is always one explicit tap away from an Area. No automatic issue. */
+.qmb .qmb-area-footer .qmb-area-review{padding:8px 10px;min-height:41px;font-size:12px;white-space:nowrap}
+@media(max-width:700px){
+ .qmb .qmb-area-footer{flex-wrap:wrap;row-gap:6px}
+ .qmb .qmb-area-footer .qmb-footer-area-total{flex:1 1 100%;display:flex;justify-content:space-between;align-items:center}
+ .qmb .qmb-area-footer .qmb-area-footer-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;flex:1 1 100%;gap:5px}
+ .qmb .qmb-area-footer-actions button{white-space:normal!important;min-width:0;line-height:1.25;text-align:center;font-size:11px;min-height:44px}
+ .qmb .qmb-area-footer-actions button:nth-child(2){grid-column:auto}
+}

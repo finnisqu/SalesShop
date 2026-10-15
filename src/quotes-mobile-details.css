@@ -85,3 +85,11 @@
   .qmb .qmb-appnav-actions {gap:4px;}
   .qmb .qmb-app-back {min-width:33px;height:34px;}
 }
+
+/* 18C: finish customer/deal details and advance directly to the Area workspace. */
+.qmb .qmb-details-next{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;border:1px solid var(--qmb-border);background:var(--qmb-card);border-radius:13px;padding:13px}
+.qmb .qmb-details-next>div{display:grid;gap:4px;min-width:0}
+.qmb .qmb-details-next strong{font-size:14px;color:var(--qmb-ink)}
+.qmb .qmb-details-next small{font-size:12px;line-height:1.45;color:var(--qmb-muted)}
+.qmb .qmb-details-next button{min-width:155px;white-space:normal}
+@media(max-width:650px){.qmb .qmb-details-next{grid-template-columns:minmax(0,1fr)}.qmb .qmb-details-next button{width:100%;min-height:44px}}

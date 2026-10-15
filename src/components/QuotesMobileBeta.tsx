@@ -63,6 +63,7 @@ import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
 import {snapshotStockBuilderLevels} from '../services/stockBuilderRateTemplate';
 import type {SalesDocumentTemplate,SalesDocumentTemplateChoice} from '../types/quote';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
+import { nextQuoteAreaShortcut } from '../services/quoteWorkflowShortcut';
 import { GlobalPostItLauncher } from './GlobalPostIt';
 import {formatPersonalDate,readPersonalDateTimePreferences} from '../services/personalDateTimePreferences';
 
@@ -208,9 +209,9 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   </article>;
 }
 
-function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,onClassic}:{
+function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,onReview,onClassic}:{
   quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;
-  goBack:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onClassic:()=>void;
+  goBack:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onReview:()=>void;onClassic:()=>void;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
   const general=isGeneralTakeoffSection(section);
@@ -394,6 +395,8 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,o
           {tab==='measure'?'Materials ›':tab==='materials'&&!desktopLab?'Pricing ›':
             tab==='materials'&&desktopLab?'Calculator ›':'+ Next Area ›'}
         </button>}
+        <button type="button" className="qmb-outline qmb-area-review"
+          aria-label="Review quote from Area" onClick={onReview}>Review ›</button>
         <button type="button" className="qmb-primary" onClick={goBack}>Done · Quote ›</button>
       </div>
     </footer>
@@ -668,6 +671,12 @@ export function QuotesMobileBeta() {
     if(page!=='library'&&!quote)setPage('library');
   },[hydrated,page,area,quote]);
   const audit=quote&&quote.documentType!=='pricing-schedule'?auditQuoteDraft(quote):null;
+  const detailsNextArea=quote?nextQuoteAreaShortcut(quote):null;
+  const continueFromDetails=()=>{
+    if(!detailsNextArea)return;
+    if(detailsNextArea.kind==='open')openArea(detailsNextArea.areaId);
+    else newArea();
+  };
   const openReview=(focusId:string|null=null)=>{setError('');setSelectionsOpen(false);setReviewFocus(focusId);setReviewOpen(true);};
   const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
     const item=audit?.[kind][0];openReview(item?.id??null);
@@ -948,7 +957,8 @@ export function QuotesMobileBeta() {
           </div>
           {!quote.sections.some(s=>!isGeneralTakeoffSection(s))&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
         </>}
-        {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
+        {quoteTab==='details'&&<QuoteBetaDetails quote={quote}
+          nextAreaLabel={detailsNextArea?.label} onContinueToArea={detailsNextArea?continueFromDetails:undefined}/>} 
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
             onReturnToReview={previewReturnQuoteId===quote.id?returnFromReviewPreview:undefined}/>
@@ -963,7 +973,7 @@ export function QuotesMobileBeta() {
             {quote.documentType==='pricing-schedule'?'Review Pricing Schedule ›':audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Review & issue ›'}</button>}
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
-      setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}
+      setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
       onClassic={()=>exitBeta(false)}/>:null}
       </div>
     </div>
