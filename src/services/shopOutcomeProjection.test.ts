@@ -29,7 +29,7 @@ const source: SignatureRecord = {
     lines: [{
       id:'line-1',kind:'material',sectionId:'kitchen',
       description:'Private margin and brand reference',
-      pricingMode:'lump-sum',amount:1750,customerVisible:true,
+      pricingMode:'direct',amount:1750,customerVisible:true,
       includeInTotal:true,internalCost:499,
     }],
     customerColumns: {quantity:true,rate:true,lineAmount:true},
