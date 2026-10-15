@@ -1049,11 +1049,11 @@ export function QuotesMobileBeta() {
                 if(removing){
                   if(canPermanentlyDeleteQuote(chosen,useQuoteStore.getState().quotes)){
                     deleteQuote(chosen.id);
-                    if(quote?.id===chosen.id){setPage('library');setAreaId(null);}
+                    if(quote?.id===chosen.id)showLibrary();
                   }
                 }else {
                   archiveQuote(chosen.id);
-                  if(quote?.id===chosen.id){setPage('library');setAreaId(null);}
+                  if(quote?.id===chosen.id)showLibrary();
                 }
                 setLibraryAction(null);
               }}>
