@@ -1,74 +1,65 @@
 import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { SectionTabs, Field, PageHeader, Panel, Button, StatusText } from './components';
+import { SectionTabs, Field, PageHeader, StatusText } from './components';
 
 const page = readFileSync(new URL('../components/Connections.tsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./connections-adapter.css', import.meta.url), 'utf8');
+const recordsCss = readFileSync(new URL('../connections-record-pages.css', import.meta.url), 'utf8');
 const entry = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
 
-describe('UI Foundation Batch 4 — Connections', () => {
-  it('renders shared section navigation with a clear current page and all sections', () => {
+describe('Connections foundation — privacy-first navigation', () => {
+  it('uses shared section navigation for Companies, People and Projects only', () => {
     const items = [
-      { id:'overview',label:'Overview',description:'Sales dashboard' },
       { id:'companies',label:'Companies',description:'Accounts & partners' },
       { id:'people',label:'People',description:'Contacts' },
+      { id:'projects',label:'Projects',description:'Opportunities' },
     ] as const;
     const html = renderToStaticMarkup(<SectionTabs aria-label="Connections sections"
       items={items} selected="companies" onSelect={() => {}} className="connections-tabs" />);
     expect(html).toContain('class="ss-section-tabs connections-tabs"');
     expect(html).toContain('aria-label="Connections sections"');
     expect(html).toContain('aria-current="page"');
-    expect(html).toContain('Companies');
     expect(html).toContain('Accounts &amp; partners');
     expect((html.match(/aria-current="page"/g) ?? [])).toHaveLength(1);
     expect((html.match(/type="button"/g) ?? [])).toHaveLength(items.length);
   });
 
-  it('composes the header, reporting panel and accessible directory fields', () => {
+  it('composes the readable header and accessible directory fields without reporting panels', () => {
     const header = renderToStaticMarkup(<PageHeader className="connections-heading"
-      eyebrow="SalesShop" title="Connections" description="Customer relationships"
-      actions={<strong>12 companies</strong>} />);
+      eyebrow="SalesShop" title="Connections" description="Relationships" />);
     expect(header).toContain('ss-page-header__title');
     expect(header).toContain('connections-heading');
-    expect(header).toContain('Customer relationships');
-    const panel = renderToStaticMarkup(<Panel className="connections-scope-strip"
-      heading={<strong>Reporting view</strong>}>
-      <Button variant="quiet">Workspace</Button>
-    </Panel>);
-    expect(panel).toContain('ss-panel__header');
-    expect(panel).toContain('ss-panel__body');
-    expect(panel).toContain('Reporting view');
-    expect(panel).toContain('type="button"');
+    expect(header).toContain('Relationships');
     const field = renderToStaticMarkup(<Field id="connections-directory-search" label="Search companies">
       {(props) => <input {...props} type="search" value="stone" readOnly />}
     </Field>);
     expect(field).toContain('for="connections-directory-search"');
     expect(field).toContain('id="connections-directory-search"');
     expect(field).toContain('type="search"');
-    expect(renderToStaticMarkup(<StatusText state="empty">No people match</StatusText>))
-      .toContain('role="status"');
+    expect(renderToStaticMarkup(<StatusText state="empty">No people match</StatusText>)).toContain('role="status"');
   });
 
-  it('preserves five CRM sections, company filters, linked quote counts and actual record actions', () => {
-    for (const text of [
-      'overview', 'companies', 'people', 'projects', 'activity',
-      '<SectionTabs', '<PageHeader', '<Panel', '<Field', '<StatusText',
+  it('keeps CRM creation, search, filters, quote links and an optional history utility', () => {
+    for (const code of [
+      "'companies'", "'people'", "'projects'", '<SectionTabs', '<PageHeader', '<Field', '<StatusText',
       'resolveCompany(name, newCompanyKind)', 'createContact({', 'updateContact(editingPersonId',
       'openCompany(company.id)', 'openProject(project.id)',
       'quotesForCompany(company, projects, quotes)', 'quotesForProject(project, quotes)',
-      'setCompanyFilter', 'setQuery', '<Dashboard />',
-    ]) {
-      expect(page, `Missing Connections feature or component: ${text}`).toContain(text);
-    }
+      'setCompanyFilter', 'setQuery', 'connections-section-more', "chooseTab('activity')",
+    ]) expect(page, `Missing Connections capability: ${code}`).toContain(code);
+    expect(page).not.toContain("id: 'overview'");
+    expect(page).not.toContain("id: 'activity'");
+    expect(page).not.toContain('<Dashboard />');
+    expect(page).not.toContain('connections-workspace-summary');
   });
 
-  it('uses only route-scoped palette tokens and no fixed viewport subtraction', () => {
+  it('preserves design tokens and legacy dashboard styles without rendering that dashboard', () => {
     expect(css).toContain('.sales-app.view-dashboard');
-    for (const part of ['.connections-tabs.ss-section-tabs','.connections-foundation-scope.ss-panel',
+    for (const part of ['.connections-tabs.ss-section-tabs',
       '.connections-record','.dashboard-kpi','.dashboard-panel',
       '.connections-directory-toolbar .ss-field','.connections-overview']) {
-      expect(css, `Missing shared design contract for ${part}`).toContain(part);
+      expect(css, `Missing preserved design contract for ${part}`).toContain(part);
     }
     expect(css).toContain('--ss-connections-ink');
     expect(css).toContain('--ss-connections-card');
@@ -77,9 +68,12 @@ describe('UI Foundation Batch 4 — Connections', () => {
     expect(css).not.toContain('!important');
     expect(entry.indexOf("import './design-system/connections-adapter.css'"))
       .toBeGreaterThan(entry.indexOf("import './appearance-contrast.css'"));
+    expect(recordsCss).toContain('connections-section-row');
+    expect(recordsCss).toContain('connections-more-menu');
+    expect(recordsCss).toContain('connections-record-history');
   });
 
-  it('keeps mobile tabs scrollable and empty states/navigation touch accessible', () => {
+  it('retains mobile directory scrolling, accessible tools and settings navigation', () => {
     expect(css).toContain('overflow-x:auto');
     expect(css).toContain('scroll-snap-type:x proximity');
     expect(css).toContain('min-height:44px');
