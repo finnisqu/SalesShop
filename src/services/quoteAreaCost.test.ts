@@ -28,7 +28,10 @@ describe('Area slab yield and internal margin',()=>{
     expect(cost.sinkCost).toBe(160);
     expect(cost.totalKnownCost).toBe(1560);
     expect(cost.priceTotal).toBe(2530);
-    expect(cost.marginPercent).toBeCloseTo(38.3,1);
+    expect(cost.knownCostSpreadPercent).toBeCloseTo(38.3,1);
+    expect(cost.marginPercent).toBeUndefined();
+    expect(cost.complete).toBe(false);
+    expect(cost.missingCostItems).toEqual(['Fabrication / shop cost','Installation cost']);
   });
   it('slab quantity override and customer pricing choice do not impact physical cost',()=>{
     const q=fixture();
@@ -77,7 +80,9 @@ describe('Area slab yield and internal margin',()=>{
     expect(cost.installCost).toBe(180);
     expect(cost.totalKnownCost).toBeCloseTo(base.totalKnownCost+305.5,2);
     expect(cost.priceTotal).toBe(base.priceTotal);
-    expect(cost.marginPercent).toBeLessThan(base.marginPercent!);
+    expect(cost.complete).toBe(true);
+    expect(cost.missingCostItems).toEqual([]);
+    expect(cost.marginPercent).toBeLessThan(base.knownCostSpreadPercent!);
     q.sections[0].scope!.takeoffSinks![0].internalCostOverride=50;
     expect(projectAreaCost(q,q.sections[0]).sinkCost).toBe(100);
   });
@@ -91,9 +96,54 @@ describe('Area slab yield and internal margin',()=>{
     expect(cost.installCost).toBe(275);
     expect(cost.totalKnownCost).toBe(base.totalKnownCost+975);
     expect(cost.priceTotal).toBe(base.priceTotal);
-    expect(cost.marginPercent).toBeLessThan(base.marginPercent!);
+    expect(cost.complete).toBe(true);
+    expect(cost.missingCostItems).toEqual([]);
+    expect(cost.marginPercent).toBeLessThan(base.knownCostSpreadPercent!);
     q.sections[0].scope!.shopCostOverride=100;
     expect(projectAreaCost(q,q.sections[0]).shopCost).toBe(100);
+  });
+  it('explicit zero labor costs count as entered; blank costs are still unknown',()=>{
+    const q=fixture(),first=projectAreaCost(q,q.sections[0]);
+    expect(first.costCoverage).toEqual({
+      material:true,sinks:true,shop:false,install:false,other:true,
+    });
+    expect(first.complete).toBe(false);
+    q.sections[0].scope!.shopCostRateSf=0;
+    q.sections[0].scope!.installCostOverride=0;
+    const second=projectAreaCost(q,q.sections[0]);
+    expect(second.complete).toBe(true);
+    expect(second.missingCostItems).toEqual([]);
+    expect(second.marginPercent).toBeCloseTo(38.3,1);
+    expect(second.priceTotal).toBe(first.priceTotal);
+  });
+  it('does not require a buying cost for a specification-only sink',()=>{
+    const q=fixture();
+    const source=q.sections[0].scope!.takeoffSinks![0];
+    q.sections[0].scope!.takeoffSinks=[
+      {...source,includeInPricing:false,sinkReference:undefined},
+    ];
+    q.lines=q.lines.filter(line=>!line.takeoffSinkId);
+    q.sections[0].scope!.shopCostOverride=0;
+    q.sections[0].scope!.installCostOverride=0;
+    const cost=projectAreaCost(q,q.sections[0]);
+    expect(cost.missingSinkCosts).toBe(0);
+    expect(cost.sinkCost).toBe(0);
+    expect(cost.costCoverage.sinks).toBe(true);
+    expect(cost.complete).toBe(true);
+  });
+  it('reports missing charged sink and additional work costs separately',()=>{
+    const q=fixture();
+    q.sections[0].scope!.shopCostOverride=0;
+    q.sections[0].scope!.installCostOverride=0;
+    q.sections[0].scope!.takeoffSinks![0].sinkReference=undefined;
+    q.lines.push({id:'extra',sectionId:'k',kind:'item',description:'Extra work',
+      pricingMode:'direct',amount:100,includeInTotal:true,customerVisible:true});
+    const cost=projectAreaCost(q,q.sections[0]);
+    expect(cost.missingSinkCosts).toBe(1);
+    expect(cost.missingCostItems).toEqual(['Sink buying costs','Other priced work costs']);
+    expect(cost.complete).toBe(false);
+    expect(cost.marginPercent).toBeUndefined();
+    expect(cost.knownCostSpreadPercent).toBeUndefined();
   });
   it('prices three calculator modes but rejects unfinished multiplier inputs',()=>{
     expect(calculateAreaCustomerPrice('manual',{sf:50,amount:2500})).toBe(2500);
