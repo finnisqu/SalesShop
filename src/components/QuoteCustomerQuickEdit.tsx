@@ -15,7 +15,8 @@ export function QuoteCustomerQuickEdit({quote,editable,onClose,onDetails}:{
   useEffect(()=>{
     const source=document.activeElement instanceof HTMLElement
       ?document.activeElement:null;
-    dialogRef.current?.querySelector<HTMLInputElement>('input:not([disabled])')?.focus();
+    (dialogRef.current?.querySelector<HTMLInputElement>('input:not([disabled])')
+      ??dialogRef.current?.querySelector<HTMLButtonElement>('button'))?.focus();
     const handleKey=(event:KeyboardEvent)=>{
       if(event.key==='Escape'){
         event.preventDefault();

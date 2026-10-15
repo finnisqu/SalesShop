@@ -818,7 +818,7 @@ export function QuotesMobileBeta() {
             <button type="button" className="qmb-document-customer-link"
               aria-label="Quick edit quote customer" aria-haspopup="dialog" aria-expanded={customerQuickOpen}
               onClick={()=>setCustomerQuickOpen(true)} title="Quick edit customer without leaving this quote">
-              {quote.companyName||'Assign a customer'}{quote.contactName?' · '+quote.contactName:''}
+              {quote.companyName||quote.contactName||'Assign a customer'}{quote.companyName&&quote.contactName?' · '+quote.contactName:''}
               <span aria-hidden="true"> ›</span>
             </button>
             <span>{quote.status==='Sent'?'Issued':quote.status} · Revision {quote.revision}</span>
