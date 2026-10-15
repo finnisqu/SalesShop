@@ -273,7 +273,8 @@ export function Board() {
     if (focusedProjectId && projects.some((project) => project.id === focusedProjectId)) {
       setBoardMode('projects');
       setEditingId(focusedProjectId);
-      clearFocusedProject();
+      // Keep this focus until the detail is closed so the URL and open
+      // editor agree, including when navigating Back/Forward.
     }
   }, [focusedProjectId, projects, clearFocusedProject]);
   useEffect(() => {
@@ -384,7 +385,10 @@ export function Board() {
         })}
       </section>
 
-      {editingProject && <ProjectEditor project={editingProject} onClose={() => setEditingId(null)} />}
+      {editingProject && <ProjectEditor project={editingProject} onClose={() => {
+        setEditingId(null);
+        if(focusedProjectId===editingProject.id)clearFocusedProject();
+      }} />}
     </main>
   );
 }
