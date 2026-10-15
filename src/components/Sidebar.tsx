@@ -5,7 +5,7 @@ import type { NotebookEntry, NotebookObject } from '../types/notebook';
 type PageFilter = 'all' | 'favorites' | 'project';
 
 function plainHtml(value: string) {
-  return value.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/s+/g, ' ').trim();
+  return value.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function objectSearchText(object: NotebookObject) {
@@ -30,16 +30,18 @@ export function Sidebar() {
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
   const createEntry = useNotebookStore((state) => state.createEntry);
   const selectEntry = useNotebookStore((state) => state.selectEntry);
-  const deleteEntry = useNotebookStore((state) => state.deleteEntry);
+  const trashedEntries = useNotebookStore((state) => state.trashedEntries);
+  const restoreEntry = useNotebookStore((state) => state.restoreEntry);
   const reorderEntry = useNotebookStore((state) => state.reorderEntry);
   const [showHidden, setShowHidden] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<PageFilter>('all');
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ id: string; placement: 'before' | 'after' } | null>(null);
 
   const hiddenCount = entries.filter((entry) => entry.hidden).length;
-  const reorderEnabled = !query.trim() && filter === 'all';
+  const reorderEnabled = !showTrash && !query.trim() && filter === 'all';
 
   const visibleEntries = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -101,15 +103,26 @@ export function Sidebar() {
           aria-label="Search notebook pages"
         />
         <div className="notebook-page-filters" aria-label="Notebook page filters">
-          <button type="button" className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>All</button>
-          <button type="button" className={filter === 'favorites' ? 'active' : ''} onClick={() => setFilter('favorites')}>★</button>
-          <button type="button" className={filter === 'project' ? 'active' : ''} onClick={() => setFilter('project')}>Project</button>
+          <button type="button" className={filter === 'all'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('all');}}>All</button>
+          <button type="button" className={filter === 'favorites'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('favorites');}}>★</button>
+          <button type="button" className={filter === 'project'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('project');}}>Project</button>
+          <button type="button" className={showTrash ? 'active' : ''} onClick={() => setShowTrash(value=>!value)}>Recently Deleted ({trashedEntries.length})</button>
         </div>
-        {!reorderEnabled && <small>Clear search/filter to reorder pages.</small>}
+        {!reorderEnabled && !showTrash && <small>Clear search/filter to reorder pages.</small>}
       </div>
 
       <div className="page-list">
-        {visibleEntries.map((entry) => {
+        {showTrash ? (
+          <div className="notebook-trash-list" aria-label="Recently deleted Notebook pages">
+            <p>Pages are recoverable here for seven days. Locked pages cannot be deleted.</p>
+            {trashedEntries.map(item=><div className="notebook-trash-row" key={item.entry.id}>
+              <span><strong>{item.entry.title||'Untitled page'}</strong>
+                <small>Deleted {new Date(item.deletedAt).toLocaleDateString()}</small></span>
+              <button type="button" onClick={()=>{restoreEntry(item.entry.id);setShowTrash(false);}}>Restore</button>
+            </div>)}
+            {!trashedEntries.length&&<p>Nothing recently deleted.</p>}
+          </div>
+        ) : visibleEntries.map((entry) => {
           const active = entry.id === activeEntryId;
           const text = plainHtml(entry.contentHtml);
           const before = dropTarget?.id === entry.id && dropTarget.placement === 'before';
@@ -151,31 +164,11 @@ export function Sidebar() {
                 {entry.deletionLocked && <span title="Deletion locked">▣</span>}
               </span>
               <span className="page-tab-favorite" aria-hidden="true">★</span>
-              {!entry.deletionLocked && (
-                <span
-                  className="page-tab-delete"
-                  role="button"
-                  tabIndex={0}
-                  title="Delete page"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (window.confirm(`Delete “${entry.title || 'Untitled page'}”? This can be undone.`)) deleteEntry(entry.id);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      if (window.confirm(`Delete “${entry.title || 'Untitled page'}”? This can be undone.`)) deleteEntry(entry.id);
-                    }
-                  }}
-                >
-                  ×
-                </span>
-              )}
+
             </button>
           );
         })}
-        {!visibleEntries.length && (
+        {!showTrash && !visibleEntries.length && (
           <div className="notebook-page-empty">
             <strong>No pages found</strong>
             <span>Try another search or filter.</span>

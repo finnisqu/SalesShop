@@ -850,3 +850,6 @@
     font-size:25px;line-height:1;font-weight:700;
   }
 }
+
+.mobile-app-account-footer {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.mobile-app-settings-link {display:flex;align-items:center;min-height:42px;border:1px solid var(--ss-theme-border,#aaa);border-radius:8px;padding:7px 12px;background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#283c31);font-size:13px;font-weight:700;cursor:pointer;}

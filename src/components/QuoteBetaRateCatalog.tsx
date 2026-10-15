@@ -34,7 +34,7 @@ export function QuoteBetaRateCatalog({value='',onChoose,disabled,label,includeCu
       if(item)onChoose(item);
     }}>
     <option value="">{includeCustom?'Custom / select Rate…':'Select from Rates…'}</option>
-    {categories.map(category=><optgroup key={category} label={RATE_BOOK_CATEGORY_LABELS[category]}>
+    {categories.filter(category=>items.some(item=>item.active&&item.category===category)).map(category=><optgroup key={category} label={RATE_BOOK_CATEGORY_LABELS[category]}>
       {items.filter(item=>item.active&&item.category===category)
         .sort((a,b)=>a.name.localeCompare(b.name))
         .map(item=><option key={item.id} value={item.id}>

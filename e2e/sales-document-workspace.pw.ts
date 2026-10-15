@@ -70,7 +70,7 @@ test('mobile Quick Quote requires a name; defended copy retains original and res
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue('Smith Residence Copy A');
   expect(errors).toEqual([]);
 });
-test('desktop document options appear beside Undo/Redo, with typed delete safeguard',async({page},info)=>{
+test('desktop document options appear beside Undo/Redo, with confirm-click delete safeguard',async({page},info)=>{
   test.skip(info.project.name!=='desktop-1280','Focused desktop document QC');
   const beta=await library(page);
   await newTemplate(page,'Builder Rate Schedule','Builder Levels 2027');
@@ -83,9 +83,9 @@ test('desktop document options appear beside Undo/Redo, with typed delete safegu
   await toolbar.getByRole('button',{name:'Document options'}).click();
   await toolbar.getByRole('button',{name:/Delete draft/}).click();
   const dialog=page.getByRole('dialog',{name:'Delete draft quote'});
-  await expect(dialog.getByRole('button',{name:'Permanently delete draft'})).toBeDisabled();
-  await dialog.getByRole('textbox',{name:'Type DELETE to confirm'}).fill('DELET');
-  await expect(dialog.getByRole('button',{name:'Permanently delete draft'})).toBeDisabled();
+  await expect(dialog.getByRole('textbox',{name:'Type DELETE to confirm'})).toHaveCount(0);
+  await expect(dialog.getByRole('button',{name:'Permanently delete draft'})).toBeEnabled();
+  // Leaving the confirmation retains the document, including its pricing rows.
   await dialog.getByRole('button',{name:'Keep quote'}).click();
   await expect(beta.getByRole('region',{name:'Builder Rate Schedule editor'})).toBeVisible();
   await rail.getByRole('button',{name:'Customer preview'}).click();

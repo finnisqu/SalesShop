@@ -11,7 +11,7 @@ export function SalesDocumentActionsMenu({quote,canManage,canIssue,canDelete,
   const ref=useRef<HTMLDetailsElement>(null);
   const run=(fn:()=>void)=>{ref.current?.removeAttribute('open');fn();};
   return <details ref={ref} className="sales-document-rail-actions">
-    <summary role="button" aria-label="Document options" title="Document options">⋯ <span>Options</span></summary>
+    <summary role="button" aria-label="Document options" title="Document options">⋯</summary>
     <div className="sales-document-rail-menu">
       {canManage&&<>
         <button type="button" onClick={()=>run(onCopy)}>Make independent copy…</button>

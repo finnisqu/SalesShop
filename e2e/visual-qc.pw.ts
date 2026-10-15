@@ -118,7 +118,9 @@ test('responsive navigation retains its escape path', async ({ page }, testInfo)
     const nav = page.getByRole('navigation', { name: 'SalesShop sections' });
     await nav.getByRole('button', { name: 'Catalog' }).click();
     await expect(page.locator('.sales-app.view-catalog')).toBeVisible();
-    await nav.getByRole('button', { name: 'Settings' }).click();
+    // Settings moved from primary navigation into the personal profile menu.
+    await page.getByRole('button', { name: 'Account and settings' }).click();
+    await page.getByRole('button', { name: /Settings.*Profile/ }).click();
     await expect(page.locator('.sales-app.view-settings')).toBeVisible();
   }
 });

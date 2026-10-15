@@ -9,6 +9,7 @@ import type {
   InkStroke,
   NotebookDocument,
   NotebookEntry,
+  TrashedNotebookEntry,
   NotebookObject,
   NotebookObjectFrame,
   PageTone,
@@ -26,6 +27,7 @@ import type {
 
 interface NotebookState {
   entries: NotebookEntry[];
+  trashedEntries: TrashedNotebookEntry[];
   activeEntryId: string | null;
   activeTool: ActiveNotebookTool;
   selectedObjectId: string | null;
@@ -38,6 +40,7 @@ interface NotebookState {
   reorderEntry: (sourceId: string, targetId: string, placement: 'before' | 'after') => void;
   selectEntry: (id: string) => void;
   deleteEntry: (id: string) => void;
+  restoreEntry: (id: string) => void;
   toggleFavorite: (id: string) => void;
   toggleOpenAtStart: (id: string) => void;
   toggleHidden: (id: string) => void;
@@ -77,6 +80,7 @@ interface NotebookState {
 
 interface HistorySnapshot {
   entries: NotebookEntry[];
+  trashedEntries: TrashedNotebookEntry[];
   activeEntryId: string | null;
 }
 
@@ -89,9 +93,10 @@ let lastCheckpointAt = 0;
 const now = () => new Date().toISOString();
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
-function snapshot(state: Pick<NotebookState, 'entries' | 'activeEntryId'>): HistorySnapshot {
+function snapshot(state: Pick<NotebookState, 'entries' | 'trashedEntries' | 'activeEntryId'>): HistorySnapshot {
   return {
     entries: structuredClone(state.entries),
+    trashedEntries: structuredClone(state.trashedEntries),
     activeEntryId: state.activeEntryId,
   };
 }
@@ -133,7 +138,7 @@ function newEntry(): NotebookEntry {
     favorite: false,
     openAtStart: false,
     hidden: false,
-    deletionLocked: true,
+    deletionLocked: false,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -149,7 +154,7 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
     favorite: false,
     openAtStart: false,
     hidden: false,
-    deletionLocked: true,
+    deletionLocked: false,
     strokes: clone.strokes.map((stroke) => ({ ...stroke, id: id('stroke') })),
     objects: clone.objects.map((object) => ({
       ...object,
@@ -162,8 +167,9 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
   };
 }
 
-function persist(entries: NotebookEntry[], activeEntryId: string | null) {
-  const document: NotebookDocument = { schemaVersion: 3, entries, activeEntryId };
+function persist(entries: NotebookEntry[], activeEntryId: string | null, trash?: TrashedNotebookEntry[]) {
+  const trashedEntries=trash??useNotebookStore.getState().trashedEntries;
+  const document: NotebookDocument = { schemaVersion: 3, entries, activeEntryId, trashedEntries };
   localNotebookRepository.save(document);
 }
 
@@ -191,6 +197,7 @@ function nextVisibleEntry(entries: NotebookEntry[], excludingId?: string) {
 
 export const useNotebookStore = create<NotebookState>((set, get) => ({
   entries: [],
+  trashedEntries: [],
   activeEntryId: null,
   activeTool: 'select',
   selectedObjectId: null,
@@ -206,6 +213,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       const fallback = stored.entries.find((entry) => entry.id === stored.activeEntryId) ?? stored.entries[0];
       set({
         entries: stored.entries,
+        trashedEntries: stored.trashedEntries??[],
         activeEntryId: startEntry?.id ?? fallback.id,
         activeTool: 'select',
         selectedObjectId: null,
@@ -215,8 +223,8 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       return;
     }
     const first = newEntry();
-    persist([first], first.id);
-    set({ entries: [first], activeEntryId: first.id, activeTool: 'select', selectedObjectId: null, hydrated: true, ...historyFlags() });
+    persist([first], first.id, []);
+    set({ trashedEntries: [], entries: [first], activeEntryId: first.id, activeTool: 'select', selectedObjectId: null, hydrated: true, ...historyFlags() });
   },
 
   createEntry: () => {
@@ -266,8 +274,20 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     if (!entries.length) entries = [newEntry()];
     const replacement = nextVisibleEntry(entries);
     const activeEntryId = get().activeEntryId === entryId ? (replacement?.id ?? entries[0].id) : get().activeEntryId;
-    persist(entries, activeEntryId);
-    set({ entries, activeEntryId, selectedObjectId: null, activeTool: 'select', ...historyFlags() });
+    const trashedEntries=[{entry:target,deletedAt:now()},...get().trashedEntries]
+      .filter(item=>Date.now()-Date.parse(item.deletedAt)<7*24*60*60*1000);
+    persist(entries, activeEntryId, trashedEntries);
+    set({ entries, trashedEntries, activeEntryId, selectedObjectId: null, activeTool: 'select', ...historyFlags() });
+  },
+
+  restoreEntry: (entryId) => {
+    const item=get().trashedEntries.find(value=>value.entry.id===entryId);
+    if(!item||get().entries.some(value=>value.id===entryId))return;
+    checkpoint(get(), 'page:restore:'+entryId);
+    const entries=[item.entry,...get().entries];
+    const trashedEntries=get().trashedEntries.filter(value=>value.entry.id!==entryId);
+    persist(entries, entryId, trashedEntries);
+    set({entries,trashedEntries,activeEntryId:entryId,selectedObjectId:null,activeTool:'select',...historyFlags()});
   },
 
   toggleFavorite: (entryId) => {
@@ -709,10 +729,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     if (!previous) return;
     future.push(snapshot(get()));
     if (future.length > HISTORY_LIMIT) future.shift();
-    persist(previous.entries, previous.activeEntryId);
+    persist(previous.entries, previous.activeEntryId, previous.trashedEntries);
     lastCheckpointKey = '';
     set({
       entries: previous.entries,
+      trashedEntries: previous.trashedEntries,
       activeEntryId: previous.activeEntryId,
       selectedObjectId: null,
       activeTool: 'select',
@@ -725,10 +746,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     if (!next) return;
     past.push(snapshot(get()));
     if (past.length > HISTORY_LIMIT) past.shift();
-    persist(next.entries, next.activeEntryId);
+    persist(next.entries, next.activeEntryId, next.trashedEntries);
     lastCheckpointKey = '';
     set({
       entries: next.entries,
+      trashedEntries: next.trashedEntries,
       activeEntryId: next.activeEntryId,
       selectedObjectId: null,
       activeTool: 'select',

@@ -605,3 +605,19 @@
 .pricing-stock-level-review-items>div{display:grid;gap:2px}
 .pricing-stock-level-review-items strong{font-size:12px}
 .pricing-stock-level-review-items small{font-size:11px;color:var(--ink-muted,#706b63)}
+
+/* Builder Rate Schedule cards contrast in dark UI; customer paper and Univer grid retain print colors. */
+:root[data-sales-theme="dark"] .sales-app .qmb-pricing-schedule-beta {
+  --surface:var(--qmb-card);--ink:var(--qmb-ink);--ink-muted:var(--qmb-muted);
+  color:var(--qmb-ink);
+}
+:root[data-sales-theme="dark"] .sales-app .qmb-pricing-schedule-beta :is(
+  .pricing-schedule-mapping-panel,.pricing-schedule-message,.pricing-contract,
+  .pricing-manual,.pricing-schedule-workbook-actions button,.pricing-schedule-mapping-panel button) {
+  background:var(--qmb-card);color:var(--qmb-ink);border-color:var(--qmb-border);
+}
+:root[data-sales-theme="dark"] .sales-app .qmb-pricing-schedule-beta :is(
+  .pricing-schedule-mapping-panel select,.pricing-schedule-mapping-panel input,
+  .pricing-contract input,.pricing-contract select,.pricing-manual input,.pricing-manual select) {
+  background:var(--qmb-bg);color:var(--qmb-ink);border-color:var(--qmb-border);
+}
