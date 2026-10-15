@@ -1,0 +1,56 @@
+name: SalesShop Navigation Smoke
+
+on:
+  pull_request:
+    branches:
+      - architecture/react-foundation
+    paths:
+      - 'src/components/HomeWorkspace.tsx'
+      - 'src/components/QuotesMobileBeta.tsx'
+      - 'src/components/QuickCreate.tsx'
+      - 'src/components/DealRecordPage.tsx'
+      - 'src/components/PrivateDealContactRoles.tsx'
+      - 'src/home-workspace.css'
+      - 'src/quick-create.css'
+      - 'e2e/home-journey.pw.ts'
+      - 'e2e/connections-deal-record.pw.ts'
+      - '.github/workflows/navigation-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: navigation-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  navigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    env:
+      VITE_SALES_SHOP_LOCAL_QC: '1'
+      VITE_SUPABASE_URL: ''
+      VITE_SUPABASE_ANON_KEY: ''
+      VITE_BASE_PATH: '/'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: HOME and Deal record navigation (phone and desktop)
+        run: npx playwright test e2e/home-journey.pw.ts e2e/connections-deal-record.pw.ts --project=phone-390 --project=desktop-1280
+      - name: Upload failed navigation traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: salesshop-navigation-smoke
+          path: |
+            artifacts/playwright-results/
+            artifacts/playwright-report/
+          retention-days: 10

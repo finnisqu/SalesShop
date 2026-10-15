@@ -15,6 +15,9 @@ test('Deal page creates, edits, links quotes, returns to directory and reloads',
     await expect(page.getByRole('heading', { name: deal, exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'About this deal' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Quotes' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'My Deal contact roles' })).toBeVisible();
+    await expect(page.getByText('Personal role editing requires a signed-in company account')).toBeVisible();
+    await expect(page.locator('.connections-private-role-list select')).toHaveCount(0);
     if (info.project.name === 'phone-390') {
       await page.getByRole('navigation', { name: 'Jump to record section' }).getByRole('button', { name: 'Records' }).click();
       await expect(page.getByRole('heading', { name: 'Quotes' })).toBeInViewport();
