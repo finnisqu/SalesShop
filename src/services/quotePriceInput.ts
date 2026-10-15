@@ -7,3 +7,12 @@ export function editedQuotePriceValue(
 ):number|undefined {
   return Object.prototype.hasOwnProperty.call(changes,field)?changes[field]:previous;
 }
+
+/** Missing configuration gets the default; an explicitly cleared stored
+ * multiplier must remain absent until the salesperson enters a new value. */
+export function savedAreaMultiplier(
+  material: {slabMultiplier?:number}|undefined, fallback:number,
+):number|undefined {
+  return material&&Object.prototype.hasOwnProperty.call(material,'slabMultiplier')
+    ?material.slabMultiplier:fallback;
+}

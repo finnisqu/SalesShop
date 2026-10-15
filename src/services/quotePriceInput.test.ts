@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {editedQuotePriceValue} from './quotePriceInput';
+import {editedQuotePriceValue,savedAreaMultiplier} from './quotePriceInput';
 import {calculateAreaCustomerPrice} from './quoteAreaCost';
 describe('18D Beta numeric editing cannot silently restore an old price',()=>{
   it('keeps unchanged inputs but treats a deleted rate as missing, not the last saved rate',()=>{
@@ -15,5 +15,9 @@ describe('18D Beta numeric editing cannot silently restore an old price',()=>{
     expect(editedQuotePriceValue({amount:0},'amount',1234)).toBe(0);
     expect(editedQuotePriceValue({multiplier:undefined},'multiplier',2.2)).toBeUndefined();
     expect(editedQuotePriceValue({},'multiplier',2.2)).toBe(2.2);
+    expect(savedAreaMultiplier(undefined,2.2)).toBe(2.2);
+    expect(savedAreaMultiplier({},2.2)).toBe(2.2);
+    expect(savedAreaMultiplier({slabMultiplier:undefined},2.2)).toBeUndefined();
+    expect(savedAreaMultiplier({slabMultiplier:2.5},2.2)).toBe(2.5);
   });
 });
