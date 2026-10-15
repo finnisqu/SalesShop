@@ -64,6 +64,14 @@ export function Sidebar() {
 
   const hiddenCount = entries.filter((entry) => entry.hidden).length;
   const folderRows=useMemo(()=>folderTree(folders),[folders]);
+  const visibleFolderIds=useMemo(()=>{
+    if(!activeFolderId)return null;
+    const ids=new Set<string>([activeFolderId]);
+    for(let i=0;i<folders.length;i++){
+      for(const folder of folders)if(folder.parentId&&ids.has(folder.parentId))ids.add(folder.id);
+    }
+    return ids;
+  },[activeFolderId,folders]);
   const askFolder=(parentId?:string)=>{
     const name=window.prompt(parentId?'New subfolder name':'New folder name');
     if(!name?.trim())return;
@@ -76,14 +84,14 @@ export function Sidebar() {
     const needle = query.trim().toLowerCase();
     return entries.filter((entry) => {
       if (entry.hidden && !showHidden && entry.id !== activeEntryId) return false;
-      if (filter==='all' && activeFolderId && entry.folderId!==activeFolderId) return false;
+      if (filter==='all' && visibleFolderIds && (!entry.folderId || !visibleFolderIds.has(entry.folderId))) return false;
       if (filter === 'favorites' && !entry.favorite) return false;
       if (filter === 'project' && !entry.context?.projectId) return false;
       if (filter === 'postits' && !entry.objects.some(object=>object.type==='post-it')) return false;
       if (needle && !entrySearchText(entry).includes(needle)) return false;
       return true;
     });
-  }, [activeEntryId, activeFolderId, entries, filter, query, showHidden]);
+  }, [activeEntryId, entries, filter, query, showHidden, visibleFolderIds]);
 
   const onDragOver = (event: DragEvent<HTMLButtonElement>, targetId: string) => {
     if (!draggingId || draggingId === targetId || !reorderEnabled) return;
