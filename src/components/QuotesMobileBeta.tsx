@@ -19,6 +19,7 @@ import {
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
 } from '../types/quote';
 import { QuoteBetaDetails } from './QuoteBetaDetails';
+import { QuoteCustomerQuickEdit } from './QuoteCustomerQuickEdit';
 import {SalesDocumentSaveStatus} from './SalesDocumentToolbar';
 import {SalesDocumentActionsMenu} from './SalesDocumentActionsMenu';
 import '../sales-document-ux-qc.css';
@@ -439,6 +440,7 @@ export function QuotesMobileBeta() {
   const [statusFilter,setStatusFilter]=useState<SalesDocumentStatusFilter>('active');
   const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
+  const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
   // Keep the new-document library first; follow-ups are a secondary destination.
   const [followUpsTab,setFollowUpsTab]=useState(false);
@@ -542,13 +544,13 @@ export function QuotesMobileBeta() {
   };
   const openQuote=(id:string)=>{
     select(id);setQuoteTab('build');setPage('quote');setAreaId(null);
-    setSelectionsOpen(false);setReviewOpen(false);setPreviewReturnQuoteId(null);
+    setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const navigateDocument=(tab:QuoteTab)=>{
-    setPreviewReturnQuoteId(null);
+    setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPage('quote');setQuoteTab(tab);setAreaId(null);
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
@@ -609,7 +611,7 @@ export function QuotesMobileBeta() {
     });
     setShowNewDocument(false);openQuote(id);
   };
-  const openArea=(id:string)=>{setAreaId(id);setAreaTab('measure');setPage('area');};
+  const openArea=(id:string)=>{setCustomerQuickOpen(false);setAreaId(id);setAreaTab('measure');setPage('area');};
   const goBack=()=>{navigateDocument('build');};
   const newArea=()=>{
     if(!quote||!editable)return;
@@ -813,8 +815,9 @@ export function QuotesMobileBeta() {
             <strong className="qmb-quote-total" aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>{quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}</strong>
           </div>
           <div className="qmb-pad qmb-document-identity-note">
-            <button type="button" className="qmb-document-customer-link" onClick={()=>navigateDocument('details')}
-              title="Edit customer and project details">
+            <button type="button" className="qmb-document-customer-link"
+              aria-label="Quick edit quote customer" aria-haspopup="dialog" aria-expanded={customerQuickOpen}
+              onClick={()=>setCustomerQuickOpen(true)} title="Quick edit customer without leaving this quote">
               {quote.companyName||'Assign a customer'}{quote.contactName?' · '+quote.contactName:''}
               <span aria-hidden="true"> ›</span>
             </button>
@@ -925,6 +928,10 @@ export function QuotesMobileBeta() {
       onClassic={()=>exitBeta(false)}/>:null}
       </div>
     </div>
+    {quote&&page==='quote'&&customerQuickOpen&&<QuoteCustomerQuickEdit
+      quote={quote} editable={editable}
+      onClose={()=>setCustomerQuickOpen(false)}
+      onDetails={()=>navigateDocument('details')}/>}
     {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
     {showDeleteGeneralTakeoff&&generalTakeoff&&quote&&createPortal(
       <div className="qmb qmb-area-manager-backdrop" onPointerDown={e=>{
