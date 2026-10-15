@@ -410,3 +410,20 @@
   border:0;border-radius:5px;background:transparent;color:#34463a;font-size:11px;cursor:pointer}
 .notebook-object-actions-menu button:hover,.notebook-object-actions-menu button:focus-visible{background:#edf2eb}
 .notebook-object-actions-menu button.danger{color:#a63c3c}
+
+/* Notebook 2.0 — private nested folder tree. No page is deleted by removing a folder. */
+.notebook-folder-panel{display:grid;gap:3px;min-width:0;padding:9px 6px 10px;border-bottom:1px solid var(--border)}
+.notebook-folder-panel>header{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:3px 4px 6px}
+.notebook-folder-panel>header strong{font-size:11px;letter-spacing:.04em}
+.notebook-folder-panel>header button{border:1px solid var(--border);background:var(--panel-soft);
+  border-radius:6px;color:var(--paper-ink);padding:5px 8px;font-size:10px;font-weight:700;cursor:pointer}
+.notebook-folder-row{display:flex;align-items:center;gap:1px;min-width:0;border-radius:6px}
+.notebook-folder-row.is-active{background:color-mix(in srgb,var(--tab-notebook) 17%,var(--panel))}
+.notebook-folder-row>button{flex:0 0 23px;min-width:0;min-height:27px;border:0;border-radius:5px;
+  background:transparent;color:var(--paper-ink);cursor:pointer;font-size:12px}
+.notebook-folder-row>button.notebook-folder-open{flex:1;display:flex;align-items:center;gap:5px;text-align:left;overflow:hidden}
+.notebook-folder-open>span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.notebook-folder-open small{font-size:9px;opacity:.65}
+.notebook-folder-row>button:hover,.notebook-folder-row>button:focus-visible{background:var(--panel-soft)}
+.notebook-folder-picker{margin:6px 0 9px}
+.notebook-folder-picker select{max-width:100%}

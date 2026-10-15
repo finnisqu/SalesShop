@@ -62,6 +62,8 @@ export function Toolbar({ entry, editor }: ToolbarProps) {
   const toggleHidden = useNotebookStore((state) => state.toggleHidden);
   const toggleDeletionLocked = useNotebookStore((state) => state.toggleDeletionLocked);
   const deleteEntry = useNotebookStore((state) => state.deleteEntry);
+  const folders = useNotebookStore((state) => state.folders);
+  const moveEntryToFolder = useNotebookStore((state) => state.moveEntryToFolder);
   const undo = useNotebookStore((state) => state.undo);
   const redo = useNotebookStore((state) => state.redo);
   const canUndo = useNotebookStore((state) => state.canUndo);
@@ -223,6 +225,16 @@ export function Toolbar({ entry, editor }: ToolbarProps) {
                 </select>
               </label>
             </div>
+            <label className="notebook-page-field notebook-folder-picker"><span>Folder</span>
+              <select className="paper-select" value={entry.folderId??''}
+                aria-label="Move Notebook page to folder"
+                onChange={event=>moveEntryToFolder(entry.id,event.target.value||null)}>
+                <option value="">Unfiled</option>
+                {folders.map(folder=><option key={folder.id} value={folder.id}>
+                  {folder.parentId?(folders.find(item=>item.id===folder.parentId)?.name??'Folder')+' / ':''}{folder.name}
+                </option>)}
+              </select>
+            </label>
             <div className="notebook-page-actions">
               <button type="button" className={`notebook-page-action ${entry.favorite ? 'active' : ''}`}
                 onClick={() => toggleFavorite(entry.id)} aria-pressed={entry.favorite}>

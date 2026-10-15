@@ -9,6 +9,7 @@ import type {
   InkStroke,
   NotebookDocument,
   NotebookEntry,
+  NotebookFolder,
   TrashedNotebookEntry,
   NotebookObject,
   NotebookObjectFrame,
@@ -27,6 +28,7 @@ import type {
 
 interface NotebookState {
   entries: NotebookEntry[];
+  folders: NotebookFolder[];
   trashedEntries: TrashedNotebookEntry[];
   activeEntryId: string | null;
   activeTool: ActiveNotebookTool;
@@ -35,7 +37,11 @@ interface NotebookState {
   canUndo: boolean;
   canRedo: boolean;
   hydrate: () => void;
-  createEntry: () => void;
+  createEntry: (folderId?: string) => void;
+  createFolder: (name: string, parentId?: string) => string;
+  renameFolder: (id: string, name: string) => void;
+  removeFolder: (id: string) => void;
+  moveEntryToFolder: (entryId: string, folderId: string | null) => void;
   duplicateEntry: (id: string) => void;
   reorderEntry: (sourceId: string, targetId: string, placement: 'before' | 'after') => void;
   selectEntry: (id: string) => void;
@@ -81,6 +87,7 @@ interface NotebookState {
 
 interface HistorySnapshot {
   entries: NotebookEntry[];
+  folders: NotebookFolder[];
   trashedEntries: TrashedNotebookEntry[];
   activeEntryId: string | null;
 }
@@ -94,9 +101,10 @@ let lastCheckpointAt = 0;
 const now = () => new Date().toISOString();
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
-function snapshot(state: Pick<NotebookState, 'entries' | 'trashedEntries' | 'activeEntryId'>): HistorySnapshot {
+function snapshot(state: Pick<NotebookState, 'entries' | 'folders' | 'trashedEntries' | 'activeEntryId'>): HistorySnapshot {
   return {
     entries: structuredClone(state.entries),
+    folders: structuredClone(state.folders),
     trashedEntries: structuredClone(state.trashedEntries),
     activeEntryId: state.activeEntryId,
   };
@@ -152,6 +160,8 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
     ...clone,
     id: id('page'),
     title: `${source.title || 'Untitled page'} copy`,
+    // A copy is a regular page; only the original may be the global Post-it inbox.
+    isPostItInbox: false,
     favorite: false,
     openAtStart: false,
     hidden: false,
@@ -168,9 +178,11 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
   };
 }
 
-function persist(entries: NotebookEntry[], activeEntryId: string | null, trash?: TrashedNotebookEntry[]) {
+function persist(entries: NotebookEntry[], activeEntryId: string | null,
+  trash?: TrashedNotebookEntry[], foldersOverride?: NotebookFolder[]) {
   const trashedEntries=trash??useNotebookStore.getState().trashedEntries;
-  const document: NotebookDocument = { schemaVersion: 3, entries, activeEntryId, trashedEntries };
+  const folders=foldersOverride??useNotebookStore.getState().folders;
+  const document: NotebookDocument = { schemaVersion: 3, entries, activeEntryId, trashedEntries, folders };
   localNotebookRepository.save(document);
 }
 
@@ -198,6 +210,7 @@ function nextVisibleEntry(entries: NotebookEntry[], excludingId?: string) {
 
 export const useNotebookStore = create<NotebookState>((set, get) => ({
   entries: [],
+  folders: [],
   trashedEntries: [],
   activeEntryId: null,
   activeTool: 'select',
@@ -214,6 +227,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       const fallback = stored.entries.find((entry) => entry.id === stored.activeEntryId) ?? stored.entries[0];
       set({
         entries: stored.entries,
+        folders: stored.folders??[],
         trashedEntries: stored.trashedEntries??[],
         activeEntryId: startEntry?.id ?? fallback.id,
         activeTool: 'select',
@@ -224,16 +238,64 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       return;
     }
     const first = newEntry();
-    persist([first], first.id, []);
-    set({ trashedEntries: [], entries: [first], activeEntryId: first.id, activeTool: 'select', selectedObjectId: null, hydrated: true, ...historyFlags() });
+    persist([first], first.id, [], []);
+    set({ folders: [], trashedEntries: [], entries: [first], activeEntryId: first.id, activeTool: 'select', selectedObjectId: null, hydrated: true, ...historyFlags() });
   },
 
-  createEntry: () => {
+  createEntry: (folderId) => {
     checkpoint(get(), 'page:create');
-    const entry = newEntry();
+    const targetFolder = get().folders.some(folder=>folder.id===folderId) ? folderId : undefined;
+    const entry = {...newEntry(), folderId:targetFolder};
     const entries = [entry, ...get().entries];
     persist(entries, entry.id);
     set({ entries, activeEntryId: entry.id, selectedObjectId: null, activeTool: 'select', ...historyFlags() });
+  },
+
+  createFolder: (name, parentId) => {
+    const safeName=name.trim().slice(0,80);
+    const parent=get().folders.find(folder=>folder.id===parentId);
+    if (!safeName) return '';
+    checkpoint(get(), 'folder:create');
+    const folder:NotebookFolder={id:id('folder'),name:safeName,
+      ...(parent?{parentId:parent.id}:{}),createdAt:now()};
+    const folders=[...get().folders,folder];
+    persist(get().entries,get().activeEntryId,undefined,folders);
+    set({folders,...historyFlags()});
+    return folder.id;
+  },
+
+  renameFolder: (folderId,name) => {
+    const safeName=name.trim().slice(0,80);
+    if(!safeName||!get().folders.some(folder=>folder.id===folderId))return;
+    checkpoint(get(),'folder:rename:'+folderId);
+    const folders=get().folders.map(folder=>folder.id===folderId?{...folder,name:safeName}:folder);
+    persist(get().entries,get().activeEntryId,undefined,folders);
+    set({folders,...historyFlags()});
+  },
+
+  removeFolder: (folderId) => {
+    const folder=get().folders.find(item=>item.id===folderId);
+    if(!folder)return;
+    checkpoint(get(),'folder:remove:'+folderId);
+    // A folder is organizational only. Removing it NEVER deletes its pages or children.
+    const folders=get().folders.filter(item=>item.id!==folderId)
+      .map(item=>item.parentId===folderId?{...item,parentId:folder.parentId}:item);
+    const entries=get().entries.map(entry=>entry.folderId===folderId
+      ?{...entry,folderId:folder.parentId}:entry);
+    const trashedEntries=get().trashedEntries.map(item=>item.entry.folderId===folderId
+      ?{...item,entry:{...item.entry,folderId:folder.parentId}}:item);
+    // Recently Deleted pages must also remain recoverable after removing a folder.
+    persist(entries,get().activeEntryId,trashedEntries,folders);
+    set({folders,entries,trashedEntries,...historyFlags()});
+  },
+
+  moveEntryToFolder: (entryId,folderId) => {
+    if(!get().entries.some(entry=>entry.id===entryId))return;
+    if(folderId&&!get().folders.some(folder=>folder.id===folderId))return;
+    checkpoint(get(),'page:folder:'+entryId);
+    const entries=mapEntry(get().entries,entryId,entry=>({...entry,folderId:folderId||undefined,updatedAt:now()}));
+    persist(entries,get().activeEntryId);
+    set({entries,...historyFlags()});
   },
 
   duplicateEntry: (entryId) => {
@@ -751,10 +813,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     if (!previous) return;
     future.push(snapshot(get()));
     if (future.length > HISTORY_LIMIT) future.shift();
-    persist(previous.entries, previous.activeEntryId, previous.trashedEntries);
+    persist(previous.entries, previous.activeEntryId, previous.trashedEntries, previous.folders);
     lastCheckpointKey = '';
     set({
       entries: previous.entries,
+      folders: previous.folders,
       trashedEntries: previous.trashedEntries,
       activeEntryId: previous.activeEntryId,
       selectedObjectId: null,
@@ -768,10 +831,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     if (!next) return;
     past.push(snapshot(get()));
     if (past.length > HISTORY_LIMIT) past.shift();
-    persist(next.entries, next.activeEntryId, next.trashedEntries);
+    persist(next.entries, next.activeEntryId, next.trashedEntries, next.folders);
     lastCheckpointKey = '';
     set({
       entries: next.entries,
+      folders: next.folders,
       trashedEntries: next.trashedEntries,
       activeEntryId: next.activeEntryId,
       selectedObjectId: null,

@@ -1,6 +1,6 @@
 import { useMemo, useState, type DragEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
-import type { NotebookEntry, NotebookObject } from '../types/notebook';
+import type { NotebookEntry, NotebookFolder, NotebookObject } from '../types/notebook';
 
 type PageFilter = 'all' | 'favorites' | 'project' | 'postits';
 
@@ -25,8 +25,29 @@ function entrySearchText(entry: NotebookEntry) {
   ].join(' ').toLowerCase();
 }
 
+function folderTree(folders:NotebookFolder[]): Array<{folder:NotebookFolder;depth:number}> {
+  const rows:Array<{folder:NotebookFolder;depth:number}>=[];
+  const visited=new Set<string>();
+  const walk=(parentId:string|undefined,depth:number)=>{
+    for(const folder of folders.filter(folder=>folder.parentId===parentId)){
+      if(visited.has(folder.id))continue;
+      visited.add(folder.id);rows.push({folder,depth});walk(folder.id,depth+1);
+    }
+  };
+  walk(undefined,0);
+  // Bad legacy or imported folder links cannot hide pages or recurse forever.
+  for(const folder of folders)if(!visited.has(folder.id)){
+    visited.add(folder.id);rows.push({folder,depth:0});walk(folder.id,1);
+  }
+  return rows;
+}
+
 export function Sidebar() {
   const entries = useNotebookStore((state) => state.entries);
+  const folders = useNotebookStore((state) => state.folders);
+  const createFolder = useNotebookStore((state) => state.createFolder);
+  const renameFolder = useNotebookStore((state) => state.renameFolder);
+  const removeFolder = useNotebookStore((state) => state.removeFolder);
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
   const createEntry = useNotebookStore((state) => state.createEntry);
   const selectEntry = useNotebookStore((state) => state.selectEntry);
@@ -34,6 +55,7 @@ export function Sidebar() {
   const restoreEntry = useNotebookStore((state) => state.restoreEntry);
   const reorderEntry = useNotebookStore((state) => state.reorderEntry);
   const [showHidden, setShowHidden] = useState(false);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [showTrash, setShowTrash] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<PageFilter>('all');
@@ -41,19 +63,35 @@ export function Sidebar() {
   const [dropTarget, setDropTarget] = useState<{ id: string; placement: 'before' | 'after' } | null>(null);
 
   const hiddenCount = entries.filter((entry) => entry.hidden).length;
+  const folderRows=useMemo(()=>folderTree(folders),[folders]);
+  const visibleFolderIds=useMemo(()=>{
+    if(!activeFolderId)return null;
+    const ids=new Set<string>([activeFolderId]);
+    for(let i=0;i<folders.length;i++){
+      for(const folder of folders)if(folder.parentId&&ids.has(folder.parentId))ids.add(folder.id);
+    }
+    return ids;
+  },[activeFolderId,folders]);
+  const askFolder=(parentId?:string)=>{
+    const name=window.prompt(parentId?'New subfolder name':'New folder name');
+    if(!name?.trim())return;
+    const id=createFolder(name,parentId);
+    if(id){setActiveFolderId(id);setFilter('all');setShowTrash(false);}
+  };
   const reorderEnabled = !showTrash && !query.trim() && filter === 'all';
 
   const visibleEntries = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return entries.filter((entry) => {
       if (entry.hidden && !showHidden && entry.id !== activeEntryId) return false;
+      if (filter==='all' && visibleFolderIds && (!entry.folderId || !visibleFolderIds.has(entry.folderId))) return false;
       if (filter === 'favorites' && !entry.favorite) return false;
       if (filter === 'project' && !entry.context?.projectId) return false;
       if (filter === 'postits' && !entry.objects.some(object=>object.type==='post-it')) return false;
       if (needle && !entrySearchText(entry).includes(needle)) return false;
       return true;
     });
-  }, [activeEntryId, entries, filter, query, showHidden]);
+  }, [activeEntryId, entries, filter, query, showHidden, visibleFolderIds]);
 
   const onDragOver = (event: DragEvent<HTMLButtonElement>, targetId: string) => {
     if (!draggingId || draggingId === targetId || !reorderEnabled) return;
@@ -89,7 +127,7 @@ export function Sidebar() {
               {showHidden ? '◉' : '○'}
             </button>
           )}
-          <button className="square-button" onClick={createEntry} title="New page" aria-label="New page">
+          <button className="square-button" onClick={() => createEntry(activeFolderId??undefined)} title="New page" aria-label="New page">
             +
           </button>
         </div>
@@ -104,16 +142,38 @@ export function Sidebar() {
           aria-label="Search notebook pages"
         />
         <div className="notebook-page-filters" aria-label="Notebook page filters">
-          <button type="button" className={filter === 'all'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('all');}}>All</button>
-          <button type="button" className={filter === 'favorites'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('favorites');}}>★</button>
-          <button type="button" className={filter === 'project'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('project');}}>Project</button>
+          <button type="button" className={filter === 'all'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setActiveFolderId(null);setFilter('all');}}>All</button>
+          <button type="button" className={filter === 'favorites'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setActiveFolderId(null);setFilter('favorites');}}>★</button>
+          <button type="button" className={filter === 'project'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setActiveFolderId(null);setFilter('project');}}>Project</button>
           <button type="button" className={filter === 'postits'&&!showTrash ? 'active' : ''}
-            onClick={() => {setShowTrash(false);setFilter('postits');}}>Post-its</button>
+            onClick={() => {setShowTrash(false);setActiveFolderId(null);setFilter('postits');}}>Post-its</button>
           <button type="button" className={showTrash ? 'active' : ''} onClick={() => setShowTrash(value=>!value)}>Recently Deleted ({trashedEntries.length})</button>
         </div>
         {!reorderEnabled && !showTrash && <small>Clear search/filter to reorder pages.</small>}
       </div>
 
+      {!showTrash&&<section className="notebook-folder-panel" aria-label="Notebook folders">
+        <header><strong>Folders</strong><button type="button" title="New folder" onClick={()=>askFolder()}>+ Folder</button></header>
+        {folderRows.map(({folder,depth})=><div className={'notebook-folder-row'+(activeFolderId===folder.id&&filter==='all'?' is-active':'')}
+          key={folder.id} style={{paddingLeft: Math.min(depth,6)*12+5}}>
+          <button className="notebook-folder-open" type="button"
+            aria-pressed={activeFolderId===folder.id&&filter==='all'}
+            onClick={()=>{setActiveFolderId(folder.id);setFilter('all');setShowTrash(false);}}>
+            <span aria-hidden="true">▸</span><span>{folder.name}</span><small>{entries.filter(entry=>entry.folderId===folder.id).length}</small>
+          </button>
+          <button type="button" title={'New subfolder in '+folder.name} aria-label={'New subfolder in '+folder.name}
+            onClick={()=>askFolder(folder.id)}>+</button>
+          <button type="button" title={'Rename '+folder.name} aria-label={'Rename '+folder.name} onClick={()=>{
+            const name=window.prompt('Rename folder',folder.name);
+            if(name?.trim())renameFolder(folder.id,name);
+          }}>✎</button>
+          <button type="button" title={'Remove '+folder.name} aria-label={'Remove '+folder.name} onClick={()=>{
+            if(!window.confirm('Remove “'+folder.name+'”? Its pages and subfolders will be moved up, not deleted.'))return;
+            removeFolder(folder.id);
+            if(activeFolderId===folder.id)setActiveFolderId(folder.parentId??null);
+          }}>×</button>
+        </div>)}
+      </section>}
       <div className="page-list">
         {showTrash ? (
           <div className="notebook-trash-list" aria-label="Recently deleted Notebook pages">

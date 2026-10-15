@@ -98,3 +98,73 @@ describe('Global personal Post-it capture', () => {
     expect(notes.map(item => item.id)).toEqual([one, two]);
   });
 });
+
+describe('Notebook 2.0 private folder organization', () => {
+  beforeEach(() => {
+    storage.document = null;
+    useNotebookStore.getState().hydrate();
+  });
+
+  it('creates nested folders and files an existing page without replacing its content', () => {
+    const id = useNotebookStore.getState().entries[0].id;
+    useNotebookStore.getState().updateContent(id, '<p>Kitchen drawings are private</p>');
+    const parent=useNotebookStore.getState().createFolder('Builders');
+    const child=useNotebookStore.getState().createFolder('East Coast',parent);
+    expect(useNotebookStore.getState().folders.find(folder=>folder.id===child)?.parentId).toBe(parent);
+    useNotebookStore.getState().moveEntryToFolder(id,child);
+    expect(useNotebookStore.getState().entries.find(entry=>entry.id===id)?.folderId).toBe(child);
+    useNotebookStore.getState().hydrate();
+    expect(useNotebookStore.getState().folders).toHaveLength(2);
+    expect(useNotebookStore.getState().entries.find(entry=>entry.id===id)?.contentHtml)
+      .toContain('Kitchen drawings are private');
+    expect(useNotebookStore.getState().entries.find(entry=>entry.id===id)?.folderId).toBe(child);
+  });
+
+  it('removing a folder safely moves pages and subfolders up without deleting data', () => {
+    const first=useNotebookStore.getState().entries[0];
+    const parent=useNotebookStore.getState().createFolder('Projects');
+    const sub=useNotebookStore.getState().createFolder('2026',parent);
+    useNotebookStore.getState().moveEntryToFolder(first.id,parent);
+    useNotebookStore.getState().removeFolder(parent);
+    const after=useNotebookStore.getState();
+    expect(after.entries.find(entry=>entry.id===first.id)?.folderId).toBeUndefined();
+    expect(after.folders.find(folder=>folder.id===sub)?.parentId).toBeUndefined();
+    expect(after.entries.some(entry=>entry.id===first.id)).toBe(true);
+    after.undo();
+    expect(useNotebookStore.getState().folders.some(folder=>folder.id===parent)).toBe(true);
+    expect(useNotebookStore.getState().entries.find(entry=>entry.id===first.id)?.folderId).toBe(parent);
+  });
+
+  it('keeps recently deleted pages recoverable if their folder is removed', () => {
+    const id=useNotebookStore.getState().entries[0].id;
+    const folder=useNotebookStore.getState().createFolder('Private drafts');
+    useNotebookStore.getState().moveEntryToFolder(id,folder);
+    useNotebookStore.getState().deleteEntry(id);
+    useNotebookStore.getState().removeFolder(folder);
+    expect(useNotebookStore.getState().trashedEntries[0].entry.folderId).toBeUndefined();
+    useNotebookStore.getState().restoreEntry(id);
+    const restored=useNotebookStore.getState().entries.find(entry=>entry.id===id);
+    expect(restored?.folderId).toBeUndefined();
+    expect(restored?.id).toBe(id);
+  });
+
+  it('rejects invalid folder targets and creates new pages in a selected folder', () => {
+    const original=useNotebookStore.getState().entries[0];
+    useNotebookStore.getState().moveEntryToFolder(original.id,'not-a-folder');
+    expect(useNotebookStore.getState().entries[0].folderId).toBeUndefined();
+    const folder=useNotebookStore.getState().createFolder('My work');
+    useNotebookStore.getState().createEntry(folder);
+    expect(useNotebookStore.getState().entries[0].folderId).toBe(folder);
+    expect(useNotebookStore.getState().entries[0].id).not.toBe(original.id);
+  });
+
+  it('keeps one Post-it inbox even when that Notebook page is duplicated', () => {
+    const originalId=useNotebookStore.getState().createGlobalPostIt();
+    const inbox=useNotebookStore.getState().entries.find(entry=>entry.isPostItInbox)!;
+    expect(inbox.objects.some(object=>object.id===originalId)).toBe(true);
+    useNotebookStore.getState().duplicateEntry(inbox.id);
+    const after=useNotebookStore.getState();
+    expect(after.entries.filter(entry=>entry.isPostItInbox)).toHaveLength(1);
+    expect(after.entries.find(entry=>entry.id===after.activeEntryId)?.isPostItInbox).toBe(false);
+  });
+});
