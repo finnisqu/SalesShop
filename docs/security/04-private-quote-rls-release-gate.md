@@ -8,6 +8,8 @@
 
 11 quotes; 0 unassigned quotes; 0 team-linked quotes; 0 explicit quote access grants; 3 signatures; 10 companies; 3 contacts; 15 projects; 49 CRM activities.
 
+The connected Supabase account currently lists only the live SalesShop project, not a disposable staging environment. Therefore the role matrix cannot be claimed as complete; no production SQL was applied.
+
 The new quote policies will hide *owned* drafts from other company owners/admins, not just ordinary members. Each existing quote keeps its existing `owner_user_id` — **no backfill or reassignment**. Signed documents are available to management only through the separate Shop Outcomes signed-only API, once that API is deployed and verified.
 
 ## Exact behavior of staged SQL
