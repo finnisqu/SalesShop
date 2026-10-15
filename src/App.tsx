@@ -31,7 +31,7 @@ import './viewer-workspace.css';
 import './role-perspective.css';
 import './appearance-themes.css';
 import './appearance-picker.css';
-import { AuthStatus } from './components/AuthGate';
+
 import { DeveloperPlaygroundToolbar } from './components/DeveloperPlaygroundToolbar';
 import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
 import './developer-playground.css';
@@ -52,6 +52,7 @@ import { GlobalSearch } from './components/GlobalSearch';
 import { MobileAppChrome } from './components/MobileAppChrome';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
+import { AccountMenu } from './components/AccountMenu';
 import { Quotes } from './components/Quotes';
 import { QuotesMobileBeta } from './components/QuotesMobileBeta';
 import { useQuotesMobileBetaStore } from './store/quotesMobileBetaStore';
@@ -123,19 +124,17 @@ function App() {
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
         <nav className="app-tabs" aria-label="SalesShop sections">
-          <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
-          <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
-          <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')}>Catalog</button>
+          <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Connections</button>
-          <button className={`app-tab ${view === 'settings' ? 'active' : ''}`} onClick={() => setView('settings')}>Settings</button>
-          <button className="app-tab" disabled title="Migrates in a later batch">Memory</button>
+          <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
+          <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')}>Catalog</button>
         </nav>
         {!viewer && !inRolePreview && <GlobalSearch />}
         {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
         <div className="app-account-zone">
           <div className="migration-chip">React foundation</div>
-          <AuthStatus />
+          <AccountMenu />
         </div>
       </header>
       <MobileAppChrome />
