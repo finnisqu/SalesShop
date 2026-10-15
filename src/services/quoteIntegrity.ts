@@ -72,6 +72,7 @@ export function createQuoteRevisionSnapshot(
     address: quote.address,
     pricingDivision: quote.pricingDivision,
     attachSelectionsSheet: quote.attachSelectionsSheet,
+    projectMaterials: quote.projectMaterials ? structuredClone(quote.projectMaterials) : undefined,
     sections: structuredClone(quote.sections),
     lines: structuredClone(quote.lines),
     customerColumns: { ...quote.customerColumns },

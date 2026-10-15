@@ -116,7 +116,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         <section className="qmb-card qmb-audit-delivery" data-review-delivery>
           <strong>Customer delivery</strong>
           {!editable&&<p className="qmb-audit-help">This issued schedule is frozen. Create a revision to change published pricing.</p>}
-          {!editable&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
+          {!editable&&!quote.archivedAt&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
             onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
           <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>Customer schedule preview ›</button>
           <QuoteShareControl inline allowCreation={canIssue&&(!editable||scheduleReady)}/>

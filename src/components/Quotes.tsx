@@ -943,7 +943,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
   };
 
   const canRevise = !quote.archivedAt && quoteCanCreateRevision(quote);
-  const canSign = !quote.archivedAt && quote.status !== 'Signed' && quote.status !== 'Declined' && quote.status !== 'Expired';
+  const canSign = !quote.archivedAt && (quote.status === 'Sent' || quote.status === 'Viewed');
   const parent = quote.parentQuoteId ? quotes.find((candidate) => candidate.id === quote.parentQuoteId) : null;
   const hasChangeOrders = quotes.some((candidate) => candidate.parentQuoteId === quote.id);
   const canCreateChangeOrder = quote.status === 'Signed';

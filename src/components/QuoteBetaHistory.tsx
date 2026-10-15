@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canIssueTeamQuote} from '../services/teamDepartments';
@@ -8,6 +8,7 @@ import {useQuoteStore} from '../store/quoteStore';
 import {useCrmStore} from '../store/crmStore';
 import {confirmedQuoteDeliveries,quoteDeliveryLabel,QUOTE_DELIVERY_METHOD_LABELS} from '../services/quoteDeliveryLifecycle';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {historicalCustomerQuote} from '../services/quoteRevisionView';
 import {CustomerPreview} from './Quotes';
 import {createPricingScheduleData} from '../services/pricingSchedule';
 
@@ -19,6 +20,7 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
   const activities=useCrmStore(s=>s.activities);
   const createChangeOrder=useQuoteStore(s=>s.createChangeOrder);
   const [selected,setSelected]=useState<number|null>(null);
+  useEffect(()=>{setSelected(null);},[quote.id]);
   const editable=quoteIsCommerciallyEditable(quote);
   const authMode=useAuthStore(s=>s.mode);
   const teamRole=useAuthStore(s=>s.teamRole);
@@ -29,20 +31,8 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
   const currentDeliveries=confirmedQuoteDeliveries(quote,activities);
   const currentInHistory=history.some(item=>item.revision===quote.revision);
   const canChangeType=editable&&!quote.templateId&&!history.length&&quote.documentType!=='change-order';
-  const snapshot=selected===null?undefined:history[selected];
-  const frozen:Quote|undefined=snapshot?{
-    ...quote,...snapshot,
-    templateId:snapshot.templateId??quote.templateId,
-    templateOrigin:snapshot.templateOrigin??quote.templateOrigin,
-    revision:snapshot.revision,
-    revisionLabel:snapshot.label,
-    status:snapshot.status,
-    sections:snapshot.sections,
-    lines:snapshot.lines,
-    customerColumns:snapshot.customerColumns,
-    customerNotes:snapshot.customerNotes,
-    pricingSchedule:snapshot.pricingSchedule,
-  }:undefined;
+  const snapshot=selected===null?undefined:history.find(item=>item.revision===selected);
+  const frozen=snapshot?historicalCustomerQuote(quote,snapshot):undefined;
   return <section className="qmb-details-section qmb-card qmb-lifecycle-card" aria-label="Quote document and history">
     <header className="qmb-details-heading">
       <span className="qmb-details-step">4</span><div><h3>Document &amp; revisions</h3>
@@ -87,7 +77,7 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
           <small>{quote.status==='Ready'?'Ready for approval · Not yet issued':quote.status==='Draft'?'Draft · Not yet issued':quoteDeliveryLabel(quote,currentDeliveries)+' · No frozen snapshot available'}</small>
         </div>
       </div>}
-      {history.length?history.map((item,index)=>{
+      {history.length?history.map(item=>{
         const deliveries=confirmedQuoteDeliveries({id:quote.id,revision:item.revision},activities);
         const latest=deliveries[0];
         const live=item.revision===quote.revision;
@@ -95,13 +85,13 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
         return <div className="qmb-lifecycle-revision qmb-lifecycle-entry" key={item.revision+'-'+item.capturedAt}>
           <div className="qmb-lifecycle-entry-content">
             <strong>{item.label||('Revision '+item.revision)}{live?' · Current':''}</strong>
-            <small>{item.quoteDate} · {quote.documentType==='pricing-schedule'?`${item.pricingSchedule?.customerItems.length??0} price rows`:money.format(item.customerTotal)}</small>
+            <small>{item.quoteDate} · {item.documentType==='pricing-schedule'?`${item.pricingSchedule?.customerItems.length??0} price rows`:money.format(item.customerTotal)}</small>
             <span>Issued · {new Date(item.capturedAt).toLocaleString()}</span>
             <span>{lifecycle}{latest?' · '+QUOTE_DELIVERY_METHOD_LABELS[latest.metadata?.deliveryMethod??'other']+' · '+new Date(latest.occurredAt).toLocaleString():''}</span>
             {live&&quote.viewedAt&&<span>Viewed · {new Date(quote.viewedAt).toLocaleString()}</span>}
             {live&&quote.signedAt&&<span>Signed · {new Date(quote.signedAt).toLocaleString()}</span>}
           </div>
-          <button type="button" onClick={()=>setSelected(index)}
+          <button type="button" onClick={()=>setSelected(item.revision)}
             aria-label={'View issued revision '+item.revision}>View document</button>
         </div>;
       }):<p className="qmb-help">No issued revisions yet. Issuing will freeze a copy here but will not deliver it to a customer.</p>}

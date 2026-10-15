@@ -134,7 +134,7 @@ export function QuoteSignatureDialog({ quote, onClose }: { quote: Quote; onClose
           </div>
         ) : (
           <div className="signature-form">
-            {(quote.status === 'Draft' || quote.status === 'Ready') && <div className="signature-info">Signing in person will assign the official number, send, and accept this {documentLabel.toLowerCase()} in one step.</div>}
+            {(quote.status === 'Draft' || quote.status === 'Ready') && <div className="signature-info">Preview and explicitly issue this {documentLabel.toLowerCase()} before collecting a customer signature. Signing never sends a link or email.</div>}
             <div className="signature-identity-grid">
               <label><span>Full name</span><input value={signerName} onChange={(event) => setSignerName(event.target.value)} autoFocus /></label>
               <label><span>Email</span><input type="email" value={signerEmail} onChange={(event) => setSignerEmail(event.target.value)} placeholder="Optional" /></label>

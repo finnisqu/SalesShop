@@ -12,6 +12,13 @@ on:
       - 'src/components/SalesDocumentToolbar.tsx'
       - 'src/components/QuotesMobileBeta.tsx'
       - 'src/components/QuoteBetaHistory.tsx'
+      - 'src/components/QuoteSignatureDialog.tsx'
+      - 'src/components/QuoteBetaReview.tsx'
+      - 'src/services/quoteRevisionView*'
+      - 'src/services/quoteSignatureLifecycle.test.ts'
+      - 'src/services/quoteRevisionArchive.test.ts'
+      - 'src/services/signatureService.ts'
+      - 'e2e/quotes-beta-historical-revision.pw.ts'
       - 'src/components/QuoteBetaDesktopRails.tsx'
       - 'src/store/quoteStore.ts'
       - 'src/services/quoteIntegrity.ts'
@@ -84,6 +91,8 @@ jobs:
         run: npx vitest run src/services/quotePricingParityMatrix.test.ts src/services/quotePriceInput.test.ts src/services/quoteDraftAudit.test.ts src/components/QuoteAuditInlineEditor.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteCustomerPresentation.test.ts src/services/quoteTakeoffsLite.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteDeliveryLifecycle.test.ts src/services/quoteIssueGuard.test.ts src/services/quoteFollowUps.test.ts
       - name: Customer document, frozen revision and sharing boundary
         run: npx vitest run src/services/quoteCustomerShareRelease.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteIssueGuard.test.ts src/services/quoteHandoffStatus.test.ts
+      - name: Frozen historical revisions and in-person signing tests
+        run: npx vitest run src/services/quoteRevisionView.test.ts src/services/quoteRevisionArchive.test.ts src/services/quoteSignatureLifecycle.test.ts src/services/quoteIntegrity.test.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Focused workbook browser tests
@@ -102,6 +111,8 @@ jobs:
         run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Customer paper keeps structured specifications'
       - name: Customer Preview Approve Share browser regressions
         run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 --project=desktop-1440 -g 'Previewed customer revision approval expires after a change before issue|desktop Quote Review issues only a previewed and approved revision|mobile quote Review highlights blockers'
+      - name: Issued historical document survives an editable revision
+        run: npx playwright test e2e/quotes-beta-historical-revision.pw.ts --project=desktop-1440
       - name: Upload workbook failure traces
         if: failure()
         uses: actions/upload-artifact@v4
