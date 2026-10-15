@@ -135,6 +135,19 @@ describe('Notebook 2.0 private folder organization', () => {
     expect(useNotebookStore.getState().entries.find(entry=>entry.id===first.id)?.folderId).toBe(parent);
   });
 
+  it('keeps recently deleted pages recoverable if their folder is removed', () => {
+    const id=useNotebookStore.getState().entries[0].id;
+    const folder=useNotebookStore.getState().createFolder('Private drafts');
+    useNotebookStore.getState().moveEntryToFolder(id,folder);
+    useNotebookStore.getState().deleteEntry(id);
+    useNotebookStore.getState().removeFolder(folder);
+    expect(useNotebookStore.getState().trashedEntries[0].entry.folderId).toBeUndefined();
+    useNotebookStore.getState().restoreEntry(id);
+    const restored=useNotebookStore.getState().entries.find(entry=>entry.id===id);
+    expect(restored?.folderId).toBeUndefined();
+    expect(restored?.id).toBe(id);
+  });
+
   it('rejects invalid folder targets and creates new pages in a selected folder', () => {
     const original=useNotebookStore.getState().entries[0];
     useNotebookStore.getState().moveEntryToFolder(original.id,'not-a-folder');
