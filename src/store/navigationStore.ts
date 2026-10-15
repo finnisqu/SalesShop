@@ -78,7 +78,6 @@ function rememberCatalogSection(section: CatalogSection) {
 const initial = readInitialNavigation();
 
 export const useNavigationStore = create<NavigationState>((set,get) => {
-  const getNavigationHistoryLength=()=>get().history.length;
   const snapshot=(state:NavigationState):NavigationLocation=>({
     view:state.view,catalogSection:state.catalogSection,ratesFocus:state.ratesFocus,
     focusedProjectId:state.focusedProjectId,focusedCompanyId:state.focusedCompanyId,
@@ -112,7 +111,15 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
     focusedQuoteId:typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedQuoteId ?? null : null,
     history:[],
     goBack:()=>{
-      if(typeof window!=='undefined' && getNavigationHistoryLength() > 0)window.history.back();
+      const state=get();
+      if(!state.history.length)return;
+      const previous=state.history[state.history.length-1];
+      rememberView(previous.view);
+      rememberCatalogSection(previous.catalogSection);
+      set({...previous,history:state.history.slice(0,-1)});
+      // Update the store immediately for keyboard/mobile controls. A later
+      // popstate for this same location must be a no-op, not another pop.
+      if(typeof window!=='undefined')window.history.back();
     },
     syncFromBrowser:()=>{
       if(typeof window==='undefined')return;
@@ -121,6 +128,9 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
       set(state=>{
         const next={...snapshot(state),ratesFocus:undefined,
           focusedQuoteId:null,focusedProjectId:null,focusedCompanyId:null,...parsed};
+        const current=snapshot(state);
+        if(Object.keys(current).every(key=>current[key as keyof NavigationLocation]===next[key as keyof NavigationLocation]))
+          return state;
         rememberView(next.view);
         rememberCatalogSection(next.catalogSection);
         return {...state,...next,history:state.history.slice(0,-1)};
