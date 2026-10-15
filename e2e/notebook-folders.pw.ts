@@ -9,7 +9,7 @@ test('private Notebook nested folders survive reload and never delete their page
   const folders=page.getByRole('region',{name:'Notebook folders'});
   await expect(folders).toBeVisible();
   page.once('dialog',dialog=>dialog.accept('Test project folder'));
-  await folders.getByRole('button',{name:'New folder'}).click();
+  await folders.getByTitle('New folder').click();
   const folder=folders.getByRole('button',{name:/Test project folder/});
   await expect(folder).toBeVisible();
   await expect(folder).toHaveAttribute('aria-pressed','true');
