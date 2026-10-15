@@ -70,9 +70,11 @@ describe('QUOTES issue-to-customer handoff status',()=>{
     expect(signed.signed).toBe(true);
   });
   it('a revoked link never becomes usable even with a future expiry',()=>{
-    const revoked=quoteHandoffStatus(quote('Sent'),link(0,0,'revoked','2999-01-01T00:00:00Z'),false);
+    const revoked=quoteHandoffStatus(quote('Sent'),link(0,4,'revoked','2999-01-01T00:00:00Z'),false);
     expect(revoked.linkUsable).toBe(false);
     expect(revoked.linkRevoked).toBe(true);
+    expect(revoked.viewed).toBe(true);
+    expect(revoked.headline).toBe('Customer link revoked');
   });
   it('retains signed status even without manual delivery confirmation',()=>{
     const signed=quoteHandoffStatus(quote('Signed'),link(0,5,'signed'),false);
