@@ -2,8 +2,8 @@ import {describe,expect,it} from 'vitest';
 import {quoteHandoffStatus} from './quoteHandoffStatus';
 
 const quote=(status:'Draft'|'Sent'|'Viewed'|'Signed',revision=0)=>({status,revision});
-const link=(revision=0,viewCount=0,status:'active'|'revoked'|'signed'='active')=>({
-  revision,viewCount,status,signedAt:status==='signed'?'2026-10-15T12:00:00.000Z':null,
+const link=(revision=0,viewCount=0,status:'active'|'revoked'|'signed'='active',expiresAt:string|null=null)=>({
+  revision,viewCount,status,expiresAt,signedAt:status==='signed'?'2026-10-15T12:00:00.000Z':null,
 });
 
 describe('QUOTES issue-to-customer handoff status',()=>{
@@ -39,6 +39,32 @@ describe('QUOTES issue-to-customer handoff status',()=>{
     const revoked=quoteHandoffStatus(quote('Sent'),link(0,0,'revoked'),false);
     expect(revoked.linkRevoked).toBe(true);
     expect(revoked.headline).toBe('Customer link revoked');
+  });
+  it('blocks sharing an expired active link and prompts a replacement',()=>{
+    const expired=quoteHandoffStatus(quote('Sent'),link(0,2,'active','2020-01-01T00:00:00Z'),false);
+    expect(expired.linkCreated).toBe(true);
+    expect(expired.linkExpired).toBe(true);
+    expect(expired.linkUsable).toBe(false);
+    expect(expired.headline).toBe('Customer link expired');
+    expect(expired.detail).toContain('Create a new link');
+  });
+  it('keeps future active links usable and mismatched-revision links unusable',()=>{
+    const live=link(0,0,'active','2999-01-01T00:00:00Z');
+    expect(quoteHandoffStatus(quote('Sent'),live,false).linkUsable).toBe(true);
+    const old=quoteHandoffStatus(quote('Sent',1),live,false);
+    expect(old.linkUsable).toBe(false);
+    expect(old.linkExpired).toBe(false);
+  });
+  it('does not expire an already signed customer receipt',()=>{
+    const signed=quoteHandoffStatus(quote('Signed'),link(0,1,'signed','2020-01-01T00:00:00Z'),false);
+    expect(signed.linkUsable).toBe(true);
+    expect(signed.linkExpired).toBe(false);
+    expect(signed.signed).toBe(true);
+  });
+  it('a revoked link never becomes usable even with a future expiry',()=>{
+    const revoked=quoteHandoffStatus(quote('Sent'),link(0,0,'revoked','2999-01-01T00:00:00Z'),false);
+    expect(revoked.linkUsable).toBe(false);
+    expect(revoked.linkRevoked).toBe(true);
   });
   it('retains signed status even without manual delivery confirmation',()=>{
     const signed=quoteHandoffStatus(quote('Signed'),link(0,5,'signed'),false);
