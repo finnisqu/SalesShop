@@ -2,9 +2,11 @@ import { create } from 'zustand';
 import { scopedStorageKey } from '../lib/developerPlayground';
 import { useNotebookStore } from './notebookStore';
 import { useQuoteStore } from './quoteStore';
+import { appPath,appRelativePath } from '../lib/appUrl';
+import {parseSalesShopRoute,salesShopRoutePath} from '../services/appRoutes';
 
 export type CatalogSection = 'materials' | 'sinks' | 'other' | 'rates' | 'suppliers';
-export type AppView = 'notebook' | 'board' | 'quotes' | 'catalog' | 'dashboard' | 'settings';
+export type AppView = 'home' | 'notebook' | 'board' | 'quotes' | 'catalog' | 'dashboard' | 'settings';
 
 export interface NavigationLocation {
   view: AppView;
@@ -12,6 +14,7 @@ export interface NavigationLocation {
   ratesFocus?: 'material';
   focusedProjectId: string | null;
   focusedCompanyId: string | null;
+  focusedQuoteId: string | null;
 }
 
 interface NavigationState {
@@ -22,6 +25,7 @@ interface NavigationState {
   focusedCompanyId: string | null;
   history: NavigationLocation[];
   goBack: () => void;
+  syncFromBrowser: () => void;
   setView: (view: AppView) => void;
   setCatalogSection: (section: CatalogSection) => void;
   openCatalog: (section?: CatalogSection) => void;
@@ -36,11 +40,12 @@ interface NavigationState {
 
 const VIEW_STORAGE_KEY = scopedStorageKey('salesshop-active-view-v1');
 const CATALOG_SECTION_STORAGE_KEY = scopedStorageKey('salesshop-catalog-section-v1');
-const APP_VIEWS: AppView[] = ['notebook', 'board', 'quotes', 'catalog', 'dashboard', 'settings'];
+const APP_VIEWS: AppView[] = ['home', 'notebook', 'board', 'quotes', 'catalog', 'dashboard', 'settings'];
 const CATALOG_SECTIONS: CatalogSection[] = ['materials', 'sinks', 'other', 'rates', 'suppliers'];
 
 function readInitialNavigation(): Pick<NavigationState, 'view' | 'catalogSection'> {
   try {
+    const route = typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath()) : null;
     const storedView = localStorage.getItem(VIEW_STORAGE_KEY);
     const storedSection = localStorage.getItem(CATALOG_SECTION_STORAGE_KEY) as CatalogSection | null;
     const catalogSection = storedSection && CATALOG_SECTIONS.includes(storedSection) ? storedSection : 'materials';
@@ -51,11 +56,11 @@ function readInitialNavigation(): Pick<NavigationState, 'view' | 'catalogSection
     if (storedView === 'rate-book') return { view: 'catalog', catalogSection: 'rates' };
 
     return {
-      view: storedView && APP_VIEWS.includes(storedView as AppView) ? storedView as AppView : 'notebook',
-      catalogSection,
+      view: route?.view ?? (storedView && APP_VIEWS.includes(storedView as AppView) ? storedView as AppView : 'home'),
+      catalogSection:route?.catalogSection ?? catalogSection,
     };
   } catch {
-    return { view: 'notebook', catalogSection: 'materials' };
+    return { view: 'home', catalogSection: 'materials' };
   }
 }
 
@@ -69,35 +74,58 @@ function rememberCatalogSection(section: CatalogSection) {
 
 const initial = readInitialNavigation();
 
-export const useNavigationStore = create<NavigationState>((set) => {
+export const useNavigationStore = create<NavigationState>((set,get) => {
+  const getNavigationHistoryLength=()=>get().history.length;
   const snapshot=(state:NavigationState):NavigationLocation=>({
     view:state.view,catalogSection:state.catalogSection,ratesFocus:state.ratesFocus,
     focusedProjectId:state.focusedProjectId,focusedCompanyId:state.focusedCompanyId,
+    focusedQuoteId:state.focusedQuoteId,
   });
   const navigate=(view:AppView,patch:Partial<NavigationLocation>={})=>{
+    let target:string|undefined;
     set(state=>{
       const next:NavigationLocation={...snapshot(state),view,
-        ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,...patch};
+        ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,focusedQuoteId:null,...patch};
       const current=snapshot(state);
       const changed=Object.keys(current).some(key=>
         current[key as keyof NavigationLocation]!==next[key as keyof NavigationLocation]);
       if(!changed)return state;
       rememberView(view);
       rememberCatalogSection(next.catalogSection);
+      target=salesShopRoutePath(next);
       return {...next,history:[...state.history,current].slice(-20)};
     });
+    // The store remains the source of truth. History is a navigation affordance,
+    // never an authorization mechanism.
+    if(target && typeof window!=='undefined' && appRelativePath()!==target){
+      window.history.pushState({salesShop:true},'',appPath(target));
+    }
   };
   return {
     view:initial.view,catalogSection:initial.catalogSection,
-    ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,
+    ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,focusedQuoteId:
+      typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedQuoteId ?? null : null,
     history:[],
-    goBack:()=>set(state=>{
-      if(!state.history.length)return state;
-      const previous=state.history[state.history.length-1];
-      rememberView(previous.view);
-      rememberCatalogSection(previous.catalogSection);
-      return {...previous,history:state.history.slice(0,-1)};
-    }),
+    goBack:()=>{
+      if(typeof window!=='undefined' && getNavigationHistoryLength() > 0)window.history.back();
+    },
+    syncFromBrowser:()=>{
+      if(typeof window==='undefined')return;
+      const parsed=parseSalesShopRoute(appRelativePath());
+      if(!parsed)return;
+      set(state=>{
+        const next={...snapshot(state),ratesFocus:undefined,
+          focusedQuoteId:null,focusedProjectId:null,focusedCompanyId:null,...parsed};
+        rememberView(next.view);
+        rememberCatalogSection(next.catalogSection);
+        return {...state,...next,history:state.history.slice(0,-1)};
+      });
+      const quoteId=parsed.focusedQuoteId;
+      if(quoteId){
+        const store=useQuoteStore.getState();
+        if(store.quotes.some(quote=>quote.id===quoteId))store.selectQuote(quoteId);
+      }
+    },
     setView:view=>navigate(view),
     setCatalogSection:catalogSection=>navigate('catalog',{catalogSection}),
     openCatalog:(catalogSection='materials')=>navigate('catalog',{catalogSection}),
@@ -111,7 +139,7 @@ export const useNavigationStore = create<NavigationState>((set) => {
     openQuote:quoteId=>{
       useQuoteStore.getState().hydrate();
       useQuoteStore.getState().selectQuote(quoteId);
-      navigate('quotes');
+      navigate('quotes',{focusedQuoteId:quoteId});
     },
     clearFocusedProject:()=>set({focusedProjectId:null}),
     clearFocusedCompany:()=>set({focusedCompanyId:null}),
