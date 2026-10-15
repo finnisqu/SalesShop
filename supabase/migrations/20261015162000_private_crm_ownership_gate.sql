@@ -245,4 +245,12 @@ end;
 $$;
 revoke all on function public.assign_unowned_crm_record(uuid,text,text,uuid) from public,anon;
 grant execute on function public.assign_unowned_crm_record(uuid,text,text,uuid) to authenticated;
+-- Existing identity-merge RPCs are SECURITY DEFINER and rewrite every
+-- linked quote/signature/project even when the caller doesn't own them.
+-- Quarantine until a privacy-scoped merge implementation is tested.
+revoke all on function public.merge_crm_company_identity(uuid,text,text)
+  from public,anon,authenticated;
+revoke all on function public.merge_crm_contact_identity(uuid,text,text)
+  from public,anon,authenticated;
+
 commit;
