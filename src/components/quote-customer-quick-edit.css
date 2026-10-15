@@ -1,0 +1,55 @@
+/* Fast customer update from the Quotes Beta header.
+   The panel stays inside the viewport on small touch screens. */
+.qmb-customer-quick-backdrop{
+  position:fixed;inset:0;z-index:2005;background:rgba(13,19,27,.43);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;overscroll-behavior:contain;
+}
+.qmb-customer-quick-sheet{
+  width:min(100%,510px);max-height:min(90dvh,780px);
+  display:flex;flex-direction:column;min-height:0;
+  border-radius:18px;overflow:hidden;
+  background:var(--ss-card,var(--paper,#fff));
+  color:var(--ss-ink,var(--ink,#222));
+  border:1px solid var(--ss-border,var(--border,#d6d4d0));
+  box-shadow:0 18px 50px rgba(0,0,0,.24);
+}
+.qmb-customer-quick-head{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:14px;padding:18px 20px 14px;
+  border-bottom:1px solid var(--ss-border,var(--border,#ddd));
+}
+.qmb-customer-quick-head h2{font-size:19px;line-height:1.25;margin:2px 0 4px}
+.qmb-customer-quick-head p{margin:0;font-size:12px;line-height:1.45;opacity:.75}
+.qmb-customer-quick-kicker{font-size:10px;letter-spacing:.11em;font-weight:800;opacity:.6}
+.qmb-customer-quick-close{flex:0 0 auto;width:40px;height:40px;cursor:pointer;
+  border-radius:10px;background:transparent;
+  border:1px solid var(--ss-border,var(--border,#ccc));
+  color:inherit;font-size:22px;line-height:1}
+.qmb-customer-quick-content{
+  overflow-y:auto;overscroll-behavior:contain;min-height:0;
+  padding:16px 20px 18px;
+}
+.qmb-customer-quick-content .qmb-details-crm{display:grid;gap:12px}
+.qmb-customer-quick-content .qmb-details-fields{display:grid;gap:12px}
+.qmb-customer-quick-content .qmb-details-fields input{width:100%;min-height:44px}
+.qmb-customer-quick-content .quote-crm-suggestions{z-index:8}
+.qmb-customer-quick-note{font-size:12px;opacity:.7;margin:8px 0 0}
+.qmb-customer-quick-actions{
+  display:flex;gap:10px;justify-content:space-between;padding:14px 20px;
+  border-top:1px solid var(--ss-border,var(--border,#ddd));
+  background:var(--ss-card,var(--paper,#fff));
+}
+.qmb-customer-quick-actions button{min-height:44px;flex:1 1 auto}
+.qmb .qmb-document-customer-link[aria-expanded="true"]{
+  text-decoration:underline;text-underline-offset:3px;
+}
+@media(max-width:640px){
+  .qmb-customer-quick-backdrop{align-items:flex-end;padding:0}
+  .qmb-customer-quick-sheet{width:100%;max-height:calc(100dvh - 12px);
+    border-radius:18px 18px 0 0;border-bottom:0}
+  .qmb-customer-quick-head{padding:17px 16px 12px}
+  .qmb-customer-quick-content{padding:14px 16px 18px}
+  .qmb-customer-quick-actions{padding:12px 16px max(14px,env(safe-area-inset-bottom))}
+  .qmb-customer-quick-actions button{min-width:0}
+}
