@@ -1,6 +1,18 @@
 /* Fast customer update from the Quotes Beta header.
    The panel stays inside the viewport on small touch screens. */
-.qmb-customer-quick-backdrop{
+/* Portals mount under <body>, outside .sales-app. Restore the same theme
+   bridge used by the in-workspace Beta, including in Dark/Warm/Contrast. */
+.qmb.qmb-customer-quick-backdrop{
+  --qmb-bg:var(--ss-theme-base,#f5f7f3);
+  --qmb-card:var(--ss-theme-card,#fff);
+  --qmb-ink:var(--ss-theme-ink,#26392e);
+  --qmb-muted:var(--ss-theme-muted,#63796b);
+  --qmb-border:var(--ss-theme-border,#cddcd1);
+  --qmb-accent:var(--ss-theme-accent,#286f5d);
+  --qmb-tint:var(--ss-theme-tint,#e5f2e8);
+  --qmb-on-accent:var(--ss-theme-contrast,#fff);
+  color:var(--qmb-ink);
+  font:14px/1.4 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   position:fixed;inset:0;z-index:2005;background:rgba(13,19,27,.43);
   display:flex;align-items:center;justify-content:center;
   padding:16px;overscroll-behavior:contain;
@@ -9,22 +21,22 @@
   width:min(100%,510px);max-height:min(90dvh,780px);
   display:flex;flex-direction:column;min-height:0;
   border-radius:18px;overflow:hidden;
-  background:var(--ss-card,var(--paper,#fff));
-  color:var(--ss-ink,var(--ink,#222));
-  border:1px solid var(--ss-border,var(--border,#d6d4d0));
+  background:var(--qmb-card);
+  color:var(--qmb-ink);
+  border:1px solid var(--qmb-border);
   box-shadow:0 18px 50px rgba(0,0,0,.24);
 }
 .qmb-customer-quick-head{
   display:flex;align-items:flex-start;justify-content:space-between;
   gap:14px;padding:18px 20px 14px;
-  border-bottom:1px solid var(--ss-border,var(--border,#ddd));
+  border-bottom:1px solid var(--qmb-border);
 }
 .qmb-customer-quick-head h2{font-size:19px;line-height:1.25;margin:2px 0 4px}
 .qmb-customer-quick-head p{margin:0;font-size:12px;line-height:1.45;opacity:.75}
 .qmb-customer-quick-kicker{font-size:10px;letter-spacing:.11em;font-weight:800;opacity:.6}
 .qmb-customer-quick-close{flex:0 0 auto;width:40px;height:40px;cursor:pointer;
   border-radius:10px;background:transparent;
-  border:1px solid var(--ss-border,var(--border,#ccc));
+  border:1px solid var(--qmb-border);
   color:inherit;font-size:22px;line-height:1}
 .qmb-customer-quick-content{
   overflow-y:auto;overscroll-behavior:contain;min-height:0;
@@ -37,8 +49,8 @@
 .qmb-customer-quick-note{font-size:12px;opacity:.7;margin:8px 0 0}
 .qmb-customer-quick-actions{
   display:flex;gap:10px;justify-content:space-between;padding:14px 20px;
-  border-top:1px solid var(--ss-border,var(--border,#ddd));
-  background:var(--ss-card,var(--paper,#fff));
+  border-top:1px solid var(--qmb-border);
+  background:var(--qmb-card);
 }
 .qmb-customer-quick-actions button{min-height:44px;flex:1 1 auto}
 .qmb .qmb-document-customer-link[aria-expanded="true"]{
