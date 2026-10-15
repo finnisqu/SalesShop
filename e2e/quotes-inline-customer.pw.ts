@@ -41,7 +41,12 @@ test('Quick Quote customer chip edits name, contact and email without navigation
   }
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue('Taylor Kitchen Proposal');
 
-  await beta.getByRole('button',{name:'+ Add Area'}).click();
+  if(info.project.name==='phone-390'){
+    await beta.getByRole('button',{name:'+ Add Area'}).click();
+  }else{
+    await beta.getByRole('complementary',{name:'Quote workspace navigation'})
+      .getByRole('button',{name:'Add Area from navigator'}).click();
+  }
   await expect(beta.getByRole('textbox',{name:'Area name'})).toBeVisible();
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(customer).toContainText('Taylor Residence');
