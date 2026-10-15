@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - architecture/react-foundation
+  # Development branch pushes build/test only; publish requires manual dispatch.
   workflow_dispatch:
 
 permissions:
@@ -31,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Configure GitHub Pages
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         id: pages
         uses: actions/configure-pages@v5
       - name: Supplier importer regression tests
@@ -50,18 +51,18 @@ jobs:
             exit 1
           fi
       - name: Add GitHub Pages SPA fallback
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         run: |
           cp dist/index.html dist/404.html
           touch dist/.nojekyll
       - name: Upload GitHub Pages artifact
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     environment:
