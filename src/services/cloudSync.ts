@@ -148,7 +148,7 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
     writeLocalDocument(QUOTES_DOCUMENT_KEY, normalizedQuotes, false);
   } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2 &&
     localQuotes.quotes.length > 0 && localQuotes.quotes.every(quote=>quote.ownerUserId===userId)) {
-    await syncNormalizedQuotes(orgId, localQuotes);
+    await syncNormalizedQuotes(orgId, localQuotes, userId);
     const seededQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
     writeLocalDocument(QUOTES_DOCUMENT_KEY, seededQuotes ?? localQuotes, false);
   } else {
@@ -156,7 +156,7 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
     // Only a workspace owner initializing a new shop creates the starter quote.
     if (canSeedOrgFromLocal) {
       const starter = starterQuoteDocument(userId);
-      await syncNormalizedQuotes(orgId, starter);
+      await syncNormalizedQuotes(orgId, starter, userId);
       writeLocalDocument(QUOTES_DOCUMENT_KEY, starter, false);
     } else {
       writeLocalDocument(QUOTES_DOCUMENT_KEY, { schemaVersion: 2, activeQuoteId: null, quotes: [] }, false);
