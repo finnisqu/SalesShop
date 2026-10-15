@@ -50,12 +50,13 @@ describe('UI Foundation Batch 4 — Connections', () => {
       .toContain('role="status"');
   });
 
-  it('preserves all six CRM sections, company filters, quote links and actual record actions', () => {
+  it('preserves five CRM sections, company filters, linked quote counts and actual record actions', () => {
     for (const text of [
-      'overview', 'companies', 'people', 'projects', 'quotes', 'activity',
+      'overview', 'companies', 'people', 'projects', 'activity',
       '<SectionTabs', '<PageHeader', '<Panel', '<Field', '<StatusText',
       'resolveCompany(name, newCompanyKind)', 'createContact({', 'updateContact(editingPersonId',
-      'openCompany(company.id)', 'openProject(project.id)', 'openQuote(quote.id)',
+      'openCompany(company.id)', 'openProject(project.id)',
+      'quotesForCompany(company, projects, quotes)', 'quotesForProject(project, quotes)',
       'setCompanyFilter', 'setQuery', '<Dashboard />',
     ]) {
       expect(page, `Missing Connections feature or component: ${text}`).toContain(text);
