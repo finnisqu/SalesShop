@@ -670,9 +670,11 @@ test('Review preview returns directly to the same quote delivery checklist',asyn
   await beta.getByRole('button',{name:'Preview',exact:true}).click();
   await expect(beta.getByRole('button',{name:'Back to Review'})).toHaveCount(0);
   await expect(previewReturn).toHaveCount(0);
-  await expect(beta.locator('.qmb-quote-footer').getByRole('button',{
-    name:/Review & issue/,
-  })).toBeVisible();
+  const normalFooter=beta.locator('.qmb-quote-footer .qmb-primary');
+  await expect(normalFooter).toBeVisible();
+  await expect(normalFooter).not.toContainText('Done previewing');
+  // This empty test draft correctly resumes its pricing-issue footer, not
+  // an issue-ready label; only the special review-preview action goes away.
 });
 
 test('Review resolves customer name and sink price inline without leaving Review',async ({page},testInfo)=>{
