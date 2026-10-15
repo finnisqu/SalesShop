@@ -68,7 +68,7 @@
 /* Desktop HOME uses the same Quick Create entry as mobile's command bar. */
 .sales-home-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .sales-home-header-create{display:flex;align-items:center;justify-content:flex-end;flex:0 0 auto}
-.sales-home-header-create .quick-create-launcher{min-width:44px;min-height:44px}
+.sales-home-header-create .quick-create-launcher{display:inline-grid;place-items:center;min-width:44px;min-height:44px}
 @media(max-width:700px),(orientation:landscape) and (max-height:520px) and (pointer:coarse){
   .sales-home-header-create{display:none}
 }

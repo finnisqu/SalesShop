@@ -82,7 +82,7 @@ function AppMenu() {
   return <div className="qmb-appnav-actions"><GlobalPostItLauncher />
     {canGoBack&&<button type="button" className="qmb-app-back"
       onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
-    <details className="qmb-appnav"><summary aria-label="Open SalesShop navigation">☰</summary>
+    <details className="qmb-appnav"><summary role="button" aria-label="Open SalesShop navigation">☰</summary>
     <nav aria-label="SalesShop destinations">
       {([['home','Home'],['quotes','Quotes'],['board','Board'],['dashboard','Connections'],['notebook','Notebook'],['catalog','Catalog'],['settings','Settings']] as const).map(([id,name])=>
         <button type="button" key={id} onClick={()=>setView(id)}>{name}</button>)}
