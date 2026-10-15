@@ -4,6 +4,7 @@ import {useCrmStore} from '../store/crmStore';
 import {useAuthStore} from '../store/authStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {useQuoteLibraryStore} from '../store/quoteLibraryStore';
+import {useQuotesMobileBetaStore} from '../store/quotesMobileBetaStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {homeMonthlyMetrics,homeQuoteAttention,homeRecentQuotes,personalHomeQuotes} from '../services/homeOverview';
@@ -36,6 +37,7 @@ export function HomeWorkspace(){
   const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
   const setView=useNavigationStore(s=>s.setView);
   const openQuote=useNavigationStore(s=>s.openQuote);
+  const betaEnabled=useQuotesMobileBetaStore(s=>s.enabled);
   const [creating,setCreating]=useState(false);
   const [newName,setNewName]=useState('');
   const [showTaskForm,setShowTaskForm]=useState(false);
@@ -64,6 +66,12 @@ export function HomeWorkspace(){
     setCreating(false);setNewName('');
     openQuote(id);
   };
+  const openTemplateLibrary=()=>{
+    if(betaEnabled)useQuotesMobileBetaStore.getState().setLocation({
+      page:'library',quoteTab:'build',areaTab:'measure',areaId:null,
+    });
+    setView('quotes');
+  };
   const openQuickNote=()=>window.dispatchEvent(new Event('sales-shop:global-post-it'));
   const saveTask=(event:FormEvent)=>{
     event.preventDefault();if(!taskName.trim()||!myTaskScope)return;
@@ -85,7 +93,8 @@ export function HomeWorkspace(){
     <section className="sales-home-shortcuts" aria-label="Quick starts">
       <h2>Quick starts</h2>
       <div className="sales-home-shortcut-grid">
-        <button type="button" onClick={()=>setView('quotes')}><span aria-hidden="true">▤</span><strong>Quote templates</strong><small>Open the document library</small></button>
+        <button type="button" onClick={openTemplateLibrary}><span aria-hidden="true">▤</span>
+          <strong>{betaEnabled?'Quote templates':'Quote library'}</strong><small>Open the document library</small></button>
         <button type="button" onClick={()=>setView('board')}><span aria-hidden="true">▦</span><strong>Board</strong><small>Projects and accounts</small></button>
         {!rolePreview&&<button type="button" onClick={openQuickNote}><span aria-hidden="true">▧</span><strong>Quick Note</strong><small>Capture without leaving</small></button>}
       </div>
