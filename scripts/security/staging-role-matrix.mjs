@@ -115,5 +115,27 @@ for(const role of ['salesperson_a','salesperson_b','viewer','outsider']){
   assert(status===403,`${role} unexpectedly reached company signed outcomes`);
 }
 
+// Batch 17G: a preseeded, private Deal role must be visible only to its
+// quote-owning salesperson. This staging check stays READ-ONLY and does not
+// mutate customer, quote or role data.
+async function privateDealRoles(role){
+  const {data,error}=await clients[role].from('deal_contact_roles')
+    .select('contact_id,owner_user_id,role')
+    .eq('organization_id',orgId)
+    .eq('deal_id',fixture.privateProjectA);
+  if(error)throw new Error(`Deal role RLS query failed for ${role}: ${error.code ?? 'unknown'}`);
+  return data??[];
+}
+const privateRolesForA=await privateDealRoles('salesperson_a');
+assert(privateRolesForA.length===1 &&
+  privateRolesForA[0].contact_id===fixture.privateContactA &&
+  privateRolesForA[0].owner_user_id===sessions.salesperson_a.user.id &&
+  privateRolesForA[0].role==='Estimator',
+  'Salesperson A cannot read exactly their one preseeded private Estimator role');
+for(const role of ['salesperson_b','owner','admin','viewer','outsider']){
+  const records=await privateDealRoles(role);
+  assert(records.length===0,`${role} can read salesperson A private Deal roles`);
+}
+
 for(const client of Object.values(clients))await client.auth.signOut();
-console.log('PASS: staging JWT role matrix — quotes, CRM, grants and signed-only Shop Outcomes.');
+console.log('PASS: staging JWT role matrix — quotes, CRM, grants, Deal roles and signed-only Shop Outcomes.');

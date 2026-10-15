@@ -23,6 +23,15 @@ describe('Private Deal contact role permissions gate',()=>{
     expect(isPrivateDealRole('Estimator')).toBe(true);
     expect(isPrivateDealRole('owner')).toBe(false);
   });
+  it('requires a real signed-in staging role-matrix read gate for private Deal labels',()=>{
+    const staged=readFileSync(join(process.cwd(),'scripts/security/staging-role-matrix.mjs'),'utf8');
+    expect(staged).toContain("parsed.hostname==='pvchgibllozuwickhfqz.supabase.co'");
+    expect(staged).toContain("from('deal_contact_roles')");
+    expect(staged).toContain('privateRolesForA.length===1');
+    expect(staged).toContain("sessions.salesperson_a.user.id");
+    expect(staged).toContain("['salesperson_b','owner','admin','viewer','outsider']");
+    expect(staged).toContain("records.length===0");
+  });
   it('creates a separate table with NO organization-wide CRM authorization inheritance',()=>{
     expect(sql).toContain('STAGED ONLY');
     expect(sql).toContain('create table public.deal_contact_roles');
