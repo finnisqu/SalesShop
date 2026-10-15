@@ -18,7 +18,7 @@ test('Company record supports edit, relationships, refresh and Back on mobile an
   await expect(page).toHaveURL(/\/connections\/companies\/company_/);
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'About this company' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Activity history/ })).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Quotes' })).toBeVisible();

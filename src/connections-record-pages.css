@@ -155,3 +155,77 @@
   .sales-app.view-dashboard .connections-record-panel-body{padding:12px}
   .sales-app.view-dashboard .connections-record-edit-form :is(input,select){font-size:16px}
 }
+
+/* Batch 17B: relationship directories are primary; history is an optional utility. */
+.sales-app.view-dashboard .connections-section-row{
+  display:flex;align-items:stretch;gap:8px;min-width:0;position:relative;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-section-row>.connections-tabs.ss-section-tabs{
+  flex:1 1 auto;min-width:0;width:auto;max-width:100%;
+}
+.sales-app.view-dashboard .connections-section-more{
+  display:flex;align-items:stretch;flex:0 0 auto;position:relative;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-section-more>button{
+  display:flex;align-items:center;gap:8px;justify-content:center;
+  min-width:76px;min-height:48px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  padding:8px 12px;border-radius:var(--ss-radius-md,8px);
+  background:var(--ss-connections-card,var(--ss-surface-raised));
+  color:var(--ss-connections-muted,var(--ss-text-muted));
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+.sales-app.view-dashboard .connections-section-more>button[aria-expanded="true"]{
+  color:var(--ss-connections-ink,var(--ss-text));
+  border-color:var(--ss-focus,var(--ss-border));
+}
+.sales-app.view-dashboard .connections-more-menu{
+  position:absolute;z-index:15;top:calc(100% + 5px);right:0;
+  width:max-content;min-width:168px;max-width:min(260px,calc(100vw - 24px));
+  border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:var(--ss-radius-md,8px);
+  background:var(--ss-connections-card,var(--ss-surface-raised));
+  box-shadow:0 10px 25px #0002;padding:5px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-more-menu>button{
+  display:block;width:100%;border:0;background:transparent;text-align:left;
+  border-radius:6px;min-height:42px;padding:10px;color:var(--ss-connections-ink,var(--ss-text));
+  font-size:12px;cursor:pointer;
+}
+.sales-app.view-dashboard .connections-more-menu>button:hover{
+  background:var(--ss-connections-tint,var(--ss-surface));
+}
+.sales-app.view-dashboard .connections-history-heading{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  border-bottom:1px solid var(--ss-connections-border,var(--ss-border));padding-bottom:10px;
+}
+.sales-app.view-dashboard .connections-history-heading strong{
+  font-size:15px;color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-history-heading p{
+  margin:4px 0 0;font-size:12px;color:var(--ss-connections-muted,var(--ss-text-muted));
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-history-heading>button{
+  min-height:38px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:7px;background:var(--ss-connections-card,var(--ss-surface-raised));
+  padding:8px 12px;color:var(--ss-connections-ink,var(--ss-text));cursor:pointer;
+}
+.sales-app.view-dashboard .connections-record-history{
+  box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-history>.connections-history-toggle{
+  display:flex;width:100%;min-height:48px;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;border:0;background:transparent;cursor:pointer;text-align:left;
+  color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-history-toggle>span{font-size:12px;font-weight:750}
+.sales-app.view-dashboard .connections-history-toggle>small{
+  font-size:11px;color:var(--ss-connections-muted,var(--ss-text-muted));white-space:nowrap;
+}
+.sales-app.view-dashboard .connections-history-toggle[aria-expanded="true"]{
+  border-bottom:1px solid var(--ss-connections-border,var(--ss-border));
+}
+@media(max-width:700px){
+  .sales-app.view-dashboard .connections-section-row{gap:5px}
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-section-more>button{min-width:63px;padding:7px 8px;min-height:49px}
+  .sales-app.view-dashboard .connections-record-history>.connections-history-toggle{min-height:47px}
+}

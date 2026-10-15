@@ -1,34 +1,32 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Dashboard } from './Dashboard';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { CompanyRecordPage } from './CompanyRecordPage';
-import { Button, Field, PageHeader, Panel, SectionTabs, StatusText } from '../design-system/components';
+import { Button, Field, PageHeader, SectionTabs, StatusText } from '../design-system/components';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
-import { useAuthStore } from '../store/authStore';
-import { inferAccountHealth } from '../services/accountHealth';
 import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
 import type { CompanyKind } from '../types/crm';
 
-type ConnectionsTab = 'overview' | 'companies' | 'people' | 'projects' | 'activity';
+type ConnectionsTab = 'companies' | 'people' | 'projects' | 'activity';
 type CompanyFilter = 'all' | 'customer' | 'non-customer';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
-  { id: 'overview', label: 'Overview', description: 'Sales dashboard' },
   { id: 'companies', label: 'Companies', description: 'Accounts & partners' },
   { id: 'people', label: 'People', description: 'Contacts' },
   { id: 'projects', label: 'Projects', description: 'Opportunities' },
-  { id: 'activity', label: 'Activity', description: 'Sales history' },
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
 
+/** Historical Overview/Activity selections must not revive hidden dashboard/log tabs. */
+export function resolveConnectionsLandingTab(stored: string | null): ConnectionsTab {
+  return CONNECTIONS_TABS.find((item) => item.id === stored)?.id ?? 'companies';
+}
+
 function initialTab(): ConnectionsTab {
-  if (typeof window === 'undefined') return 'overview';
-  try {
-    const stored = window.sessionStorage.getItem(TAB_KEY);
-    return CONNECTIONS_TABS.find((item) => item.id === stored)?.id ?? 'overview';
-  } catch { return 'overview'; }
+  if (typeof window === 'undefined') return 'companies';
+  try { return resolveConnectionsLandingTab(window.sessionStorage.getItem(TAB_KEY)); }
+  catch { return 'companies'; }
 }
 
 function timeLabel(value?: string) {
@@ -46,6 +44,23 @@ function findText(...items: Array<string | undefined>) {
 export function Connections() {
   const [tab, setTab] = useState<ConnectionsTab>(initialTab);
   const [query, setQuery] = useState('');
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!moreRef.current?.contains(event.target as Node)) setMoreOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMoreOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [moreOpen]);
   const [companyFilter, setCompanyFilter] = useState<CompanyFilter>('all');
   const [companyCreating, setCompanyCreating] = useState(false);
   const [newCompany, setNewCompany] = useState('');
@@ -77,13 +92,14 @@ export function Connections() {
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const setView = useNavigationStore((state) => state.setView);
-  const organizationId = useAuthStore((state) => state.organizationId);
-  const cloudMode = useAuthStore((state) => state.mode);
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
-    setTab(next); setQuery(''); setNotice(''); setEditingPersonId(null);
-    try { window.sessionStorage.setItem(TAB_KEY, next); } catch { /* best effort */ }
+    setTab(next); setQuery(''); setNotice(''); setEditingPersonId(null); setMoreOpen(false);
+    // Activity history is an on-demand utility, never the default landing page.
+    if (CONNECTIONS_TABS.some((item) => item.id === next)) {
+      try { window.sessionStorage.setItem(TAB_KEY, next); } catch { /* best effort */ }
+    }
   };
 
   const companiesById = useMemo(() => new Map(companies.map((company) => [company.id, company])), [companies]);
@@ -162,30 +178,26 @@ export function Connections() {
       <PageHeader className="connections-heading connections-foundation-heading"
         eyebrow="SalesShop · Relationships & information"
         title="Connections"
-        description="All the people, companies, projects, and conversations behind the work."
-        actions={<div className="connections-workspace-summary" title="Current workspace records">
-          <strong>{companies.length} companies</strong><span>{contacts.length} people · {projects.length} projects</span>
-        </div>}
+        description="Companies, people, and projects connected to your work."
       />
 
-      <SectionTabs className="connections-tabs" aria-label="Connections sections"
-        items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
-
-      {tab === 'overview' ? (
-        <div className="connections-overview">
-          <Panel className="connections-scope-strip connections-foundation-scope"
-            heading={<div><strong>Reporting view</strong><small>{cloudMode === 'cloud' && organizationId
-              ? 'Current company workspace' : 'Current local workspace'}</small></div>}>
-            <div className="connections-scope-buttons" role="group" aria-label="Reporting scope">
-              <Button variant="quiet" className="active" aria-pressed="true">Workspace</Button>
-              <Button variant="quiet" disabled title="Personal ownership and permission checks are not configured yet">Mine · Soon</Button>
-            </div>
-          </Panel>
-          <p className="connections-scope-note">Personal reporting will become available after each quote, project, and activity has a verified salesperson owner. Team-wide visibility will follow your assigned role.</p>
-          <Dashboard />
+      <div className="connections-section-row">
+        <SectionTabs className="connections-tabs" aria-label="Connections sections"
+          items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
+        <div ref={moreRef} className="connections-section-more">
+          <button type="button" aria-expanded={moreOpen} aria-controls="connections-more-menu"
+            onClick={() => setMoreOpen((value) => !value)}>More <span aria-hidden="true">⋯</span></button>
+          {moreOpen && <div id="connections-more-menu" className="connections-more-menu">
+            <button type="button" onClick={() => chooseTab('activity')}>Activity history</button>
+          </div>}
         </div>
-      ) : (
-        <>
+      </div>
+      {tab === 'activity' && <div className="connections-history-heading">
+        <div><strong>Activity history</strong><p>A reference log of existing record events.</p></div>
+        <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
+      </div>}
+
+      {<>
           <div className="connections-directory-toolbar">
             <Field className="connections-search" id="connections-directory-search" label={`Search ${tab}`}>
               {(control) => <input {...control} type="search" value={query} onChange={(event) => setQuery(event.target.value)}
@@ -215,12 +227,13 @@ export function Connections() {
               <p className="connections-count">{companyRows.length} companies · select to open the full account record</p>
               <div className="connections-card-grid">
                 {companyRows.map((company) => {
-                  const health = inferAccountHealth(company, contacts, projects, activities);
+                  const peopleCount = contacts.filter((person) => person.companyId === company.id).length;
+                  const projectCount = projects.filter((project) => project.companyId === company.id).length;
                   const companyQuotes = quotesForCompany(company, projects, quotes).filter((q) => !q.archivedAt);
                   return <button type="button" key={company.id} className="connections-record" onClick={() => openCompany(company.id)}>
-                    <span className="connections-record-eyebrow">{company.kind === 'non-customer' ? 'Partner / other' : health.stage}</span>
+                    <span className="connections-record-eyebrow">{company.kind === 'non-customer' ? 'Partner / other' : 'Customer / prospect'}</span>
                     <strong>{company.name}</strong>
-                    <small>{health.contactCount} people · {health.openProjectCount} open projects · {companyQuotes.length} quotes</small>
+                    <small>{peopleCount} people · {projectCount} projects · {companyQuotes.length} linked quotes</small>
                     <span className="connections-record-arrow" aria-hidden="true">↗</span>
                   </button>;
                 })}
@@ -279,7 +292,7 @@ export function Connections() {
             {!projectRows.length && <StatusText state="empty" className="connections-empty">No projects match your search.</StatusText>}
           </section>}
           {tab === 'activity' && <section className="connections-directory">
-            <p className="connections-count">Latest {activityRows.length} activity records · opened from the linked quote, project, or company</p>
+            <p className="connections-count">{activityRows.length} recorded events. This is reference history, not a follow-up checklist.</p>
             <div className="connections-activity-list">
               {activityRows.map((activity) => {
                 const actionable = Boolean(activity.quoteId || activity.projectId || activity.companyId);
@@ -288,11 +301,11 @@ export function Connections() {
                   <time>{timeLabel(activity.occurredAt)}</time>
                 </button>;
               })}
-              {!activityRows.length && <StatusText state="empty" className="connections-empty">Activity appears here as your team works on quotes and projects.</StatusText>}
+              {!activityRows.length && <StatusText state="empty" className="connections-empty">No recorded history is available.</StatusText>}
             </div>
           </section>}
         </>
-      )}
+      }
 
       <footer className="connections-footer">
         <span>People and sales records are managed here. Team accounts, permissions, and invitations belong in Settings.</span>

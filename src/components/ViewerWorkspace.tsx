@@ -133,10 +133,6 @@ export function ViewerWorkspace({ section, previewRole, previewDepartment }: { s
     </div>}
 
     {section === 'dashboard' && <div className="viewer-connections">
-      <div className="viewer-metrics"><div><strong>{companies.length}</strong><span>Companies</span></div>
-        <div><strong>{contacts.length}</strong><span>Contacts</span></div>
-        <div><strong>{projects.length}</strong><span>Projects</span></div>
-        <div><strong>{quotes.length}</strong><span>Quotes</span></div></div>
       <div className="viewer-record-grid">
         {filteredCompanies.map((company) => <article className="viewer-record" key={company.id}>
           <small>{company.kind === 'customer' ? 'Customer' : 'Other contact'}</small><h2>{company.name}</h2>

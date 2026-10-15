@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { RecordPageLayout } from './RecordPageLayout';
-import { inferAccountHealth } from '../services/accountHealth';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork, type CompanyKind } from '../types/crm';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
@@ -29,6 +28,7 @@ function Property({ label, children }: { label: string; children: ReactNode }) {
 
 export function CompanyRecordPage({ companyId, onBack }: { companyId: string; onBack: () => void }) {
   const companies = useCrmStore((state) => state.companies);
+  const crmHydrated = useCrmStore((state) => state.hydrated);
   const contacts = useCrmStore((state) => state.contacts);
   const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
@@ -45,6 +45,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const [contactEmail, setContactEmail] = useState('');
   const [newAlias, setNewAlias] = useState('');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
+  const [historyOpen, setHistoryOpen] = useState(false);
   const company = companies.find((candidate) => candidate.id === companyId);
   const [draft, setDraft] = useState({
     name: company?.name ?? '', kind: company?.kind ?? 'customer' as CompanyKind,
@@ -58,6 +59,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     setEditing(false);
     setAddingContact(false);
     setActivityFilter('all');
+    setHistoryOpen(false);
   }, [companyId]);
   useEffect(() => {
     if (!editing && company) setDraft({
@@ -72,13 +74,13 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     () => company ? companyRecordView(company, contacts, projects, activities, quotes) : null,
     [company, contacts, projects, activities, quotes],
   );
+  if (!crmHydrated) return <section className="connections-record-missing" role="status">Loading company record…</section>;
   if (!company || !related) return <section className="connections-record-missing" role="status">
     <h1>Company not available</h1>
     <p>This record may have been removed or you may not have access to it.</p>
     <button type="button" onClick={onBack}>Back to Companies</button>
   </section>;
 
-  const health = inferAccountHealth(company, contacts, projects, activities);
   const filteredActivities = related.relatedActivities.filter((activity) => {
     if (activityFilter === 'all') return true;
     if (activityFilter === 'contact') return activity.type.startsWith('contact-');
@@ -121,7 +123,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
 
   return <RecordPageLayout entityType="company" title={company.name} onBack={onBack}
     subtitle={company.kind === 'non-customer' ? 'Partner / non-customer relationship' : 'Customer / prospect'}
-    badge={<><span className="connections-record-stage">{health.stage}</span><span>{related.relatedProjects.length} projects</span><span>{related.relatedQuotes.length} linked quotes</span></>}
+    badge={<><span className="connections-record-stage">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</span><span>{related.relatedProjects.length} projects</span><span>{related.relatedQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => setEditing((current) => !current)}>{editing ? 'Cancel editing' : 'Edit company'}</button>
       {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>}
@@ -139,8 +141,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <button type="submit" className="connections-record-primary" disabled={!draft.name.trim()}>Save company</button>
         </form> : <div className="connections-record-properties-list">
           <Property label="Relationship">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</Property>
-          <Property label="Account stage">{health.stage}</Property>
-          <p className="connections-record-helper">{health.reason}</p>
           <Property label="Created">{dateLabel(company.createdAt)}</Property>
           <Property label="Last updated">{dateLabel(company.updatedAt)}</Property>
         </div>}
@@ -168,25 +168,24 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       </RecordCard>
     </>}
     center={<>
-      <RecordCard title="Activity" extra={<span>{filteredActivities.length} entries</span>}>
-        <div className="connections-record-filter" role="group" aria-label="Filter company activities">
-          {(['all', 'quote', 'project', 'contact'] as const).map((filter) =>
-            <button type="button" key={filter} aria-pressed={activityFilter === filter} onClick={() => setActivityFilter(filter)}>
-              {filter === 'all' ? 'All' : filter === 'quote' ? 'Quotes' : filter === 'project' ? 'Projects' : 'Contacts'}
-            </button>)}
+      <RecordCard title="Projects" extra={<span>{related.relatedProjects.length}</span>}>
+        <div className="connections-record-entity-list">
+          {related.relatedProjects.map((project) => <button type="button" key={project.id} onClick={() => openProject(project.id)}>
+            <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
+          </button>)}
+          {!related.relatedProjects.length && <p className="connections-record-empty">No projects linked yet.</p>}
         </div>
-        <ol className="connections-record-timeline">
-          {filteredActivities.map((activity) => <li key={activity.id}>
-            <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{dateLabel(activity.occurredAt)}</time></div>
-            <small>{activity.type.replaceAll('-', ' ')}</small>
-            {activity.quoteId && related.relatedQuotes.some((quote) => quote.id === activity.quoteId) &&
-              <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
-            {!activity.quoteId && activity.projectId && related.relatedProjects.some((project) => project.id === activity.projectId) &&
-              <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked project →</button>}
-          </li>)}
-        </ol>
-        {!filteredActivities.length && <p className="connections-record-empty">No matching activity yet. Project and quote history will appear here automatically.</p>}
       </RecordCard>
+      <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length}</span>}>
+        <div className="connections-record-entity-list">
+          {related.relatedQuotes.map((quote) => <button type="button" key={quote.id} onClick={() => openQuote(quote.id)}>
+            <strong>{quote.title || displayQuoteNumber(quote)}</strong>
+            <small>{displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
+          </button>)}
+          {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its projects.</p>}
+        </div>
+      </RecordCard>
+
     </>}
     right={<>
       <RecordCard title="People" extra={<span>{related.relatedContacts.length}</span>}>
@@ -206,23 +205,35 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <button type="submit" className="connections-record-primary" disabled={!contactName.trim() && !contactEmail.trim()}>Save person</button>
         </form>}
       </RecordCard>
-      <RecordCard title="Projects" extra={<span>{related.relatedProjects.length}</span>}>
-        <div className="connections-record-entity-list">
-          {related.relatedProjects.map((project) => <button type="button" key={project.id} onClick={() => openProject(project.id)}>
-            <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
-          </button>)}
-          {!related.relatedProjects.length && <p className="connections-record-empty">No projects linked yet.</p>}
+
+      <section className="connections-record-panel connections-record-history">
+        <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
+          onClick={() => setHistoryOpen((value) => !value)}>
+          <span>Activity history</span><small>{historyOpen ? 'Hide log' : 'View log'}</small>
+        </button>
+        {historyOpen && <div className="connections-record-panel-body">
+
+        <div className="connections-record-filter" role="group" aria-label="Filter company activities">
+          {(['all', 'quote', 'project', 'contact'] as const).map((filter) =>
+            <button type="button" key={filter} aria-pressed={activityFilter === filter} onClick={() => setActivityFilter(filter)}>
+              {filter === 'all' ? 'All' : filter === 'quote' ? 'Quotes' : filter === 'project' ? 'Projects' : 'Contacts'}
+            </button>)}
         </div>
-      </RecordCard>
-      <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length}</span>}>
-        <div className="connections-record-entity-list">
-          {related.relatedQuotes.map((quote) => <button type="button" key={quote.id} onClick={() => openQuote(quote.id)}>
-            <strong>{quote.title || displayQuoteNumber(quote)}</strong>
-            <small>{displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
-          </button>)}
-          {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its projects.</p>}
-        </div>
-      </RecordCard>
+        <ol className="connections-record-timeline">
+          {filteredActivities.map((activity) => <li key={activity.id}>
+            <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{dateLabel(activity.occurredAt)}</time></div>
+            <small>{activity.type.replaceAll('-', ' ')}</small>
+            {activity.quoteId && related.relatedQuotes.some((quote) => quote.id === activity.quoteId) &&
+              <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
+            {!activity.quoteId && activity.projectId && related.relatedProjects.some((project) => project.id === activity.projectId) &&
+              <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked project →</button>}
+          </li>)}
+        </ol>
+        {!filteredActivities.length && <p className="connections-record-empty">No activity history matches these filters.</p>}
+
+
+        </div>}
+      </section>
     </>}
   />;
 }

@@ -1,22 +1,34 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Connections, CONNECTIONS_TABS } from './Connections';
+import { Connections, CONNECTIONS_TABS, resolveConnectionsLandingTab } from './Connections';
 
-describe('Connections workspace', () => {
-  it('provides distinct locations for the business records and keeps Dashboard as Overview', () => {
-    expect(CONNECTIONS_TABS.map((tab) => tab.id)).toEqual([
-      'overview', 'companies', 'people', 'projects', 'activity',
-    ]);
+describe('Privacy-first Connections navigation', () => {
+  it('makes Companies, People and Projects the only prominent sections', () => {
+    expect(CONNECTIONS_TABS.map((tab) => tab.id)).toEqual(['companies', 'people', 'projects']);
     expect(new Set(CONNECTIONS_TABS.map((tab) => tab.id)).size).toBe(CONNECTIONS_TABS.length);
   });
 
-  it('renders a navigable Overview and an honest, disabled personal scope until ownership is implemented', () => {
+  it('migrates old dashboard/activity session selections to Companies', () => {
+    expect(resolveConnectionsLandingTab('overview')).toBe('companies');
+    expect(resolveConnectionsLandingTab('activity')).toBe('companies');
+    expect(resolveConnectionsLandingTab('unknown')).toBe('companies');
+    expect(resolveConnectionsLandingTab(null)).toBe('companies');
+    expect(resolveConnectionsLandingTab('people')).toBe('people');
+    expect(resolveConnectionsLandingTab('projects')).toBe('projects');
+  });
+
+  it('does not render the cross-company Sales Dashboard or activity as a top tab', () => {
     const html = renderToStaticMarkup(<Connections />);
     expect(html).toContain('Connections');
-    expect(html).toContain('Sales dashboard');
     expect(html).toContain('Companies');
     expect(html).toContain('People');
-    expect(html).toContain('Mine · Soon');
-    expect(html).toContain('disabled');
+    expect(html).toContain('Projects');
+    expect(html).toContain('More');
+    expect(html).not.toContain('Sales dashboard');
+    expect(html).not.toContain('Reporting view');
+    expect(html).not.toContain('leadership-dashboard');
+    expect(html).not.toContain('connections-overview');
+    expect(html).not.toContain('Activity history');
+    expect(html).not.toContain('connections-workspace-summary');
   });
 });
