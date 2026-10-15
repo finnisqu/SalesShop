@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { privateCrmRlsEnabled } from './crmPrivacyPilot';
+import {mayUploadCrmEntity} from './crmOwnerSyncGuard';
 import type {
   Activity,
   ActivityMetadata,
@@ -175,8 +176,8 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
   const actorId=auth.mode==='cloud' && auth.organizationId===organizationId ? auth.user?.id : undefined;
   // Once CRM RLS is deployed, do not upload other salespeople's records or
   // legacy unattributed records from the shared historical browser cache.
-  const maySync=(record:{ownerUserId?:string})=> !privateCrmRlsEnabled
-    || Boolean(actorId && record.ownerUserId===actorId);
+  const maySync=(record:{ownerUserId?:string})=>
+    mayUploadCrmEntity(record.ownerUserId,actorId,privateCrmRlsEnabled);
 
   const companies = document.companies
     .filter((company) => maySync(company) && atLeastAsNew(company.updatedAt, guards.companies.get(company.id)))
