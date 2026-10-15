@@ -130,7 +130,7 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   } else if (canSeedOrgFromLocal) {
     const localCrm = readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument | null;
     if (localCrm?.schemaVersion === 3) {
-      await syncNormalizedCrm(orgId, localCrm);
+      await syncNormalizedCrm(orgId, localCrm, userId);
     } else {
       writeLocalDocument(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
     }
