@@ -44,6 +44,7 @@ export function GlobalSearch() {
 
   const openProject = useNavigationStore((state) => state.openProject);
   const openCompany = useNavigationStore((state) => state.openCompany);
+  const openPerson = useNavigationStore((state) => state.openPerson);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const openNotebookPage = useNavigationStore((state) => state.openNotebookPage);
   const setView = useNavigationStore((state) => state.setView);
@@ -102,7 +103,7 @@ export function GlobalSearch() {
         title: contact.name || contact.email || 'Unnamed contact',
         detail: [contact.title, companyNames.get(contact.companyId ?? ''), contact.email].filter(Boolean).join(' · '),
         searchText: [contact.name, contact.title, contact.email, contact.phone, companyNames.get(contact.companyId ?? '')].filter(Boolean).join(' '),
-        open: () => contact.companyId ? openCompany(contact.companyId) : setView('board'),
+        open: () => openPerson(contact.id),
       })),
       ...quotes.map((quote): SearchResult => ({
         id: `quote:${quote.id}`,
@@ -121,7 +122,7 @@ export function GlobalSearch() {
         open: () => openNotebookPage(entry.id),
       })),
     ];
-  }, [projects, companies, contacts, quotes, entries, createQuote, openProject, openCompany, openQuote, openNotebookPage, setView]);
+  }, [projects, companies, contacts, quotes, entries, createQuote, openProject, openCompany, openPerson, openQuote, openNotebookPage, setView]);
 
   const results = useMemo(() => {
     const clean = query.trim().toLowerCase();

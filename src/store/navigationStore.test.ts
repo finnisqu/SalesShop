@@ -4,7 +4,7 @@ import {useNavigationStore} from './navigationStore';
 beforeEach(()=>{
   useNavigationStore.setState({
     view:'quotes',catalogSection:'materials',ratesFocus:undefined,
-    focusedProjectId:null,focusedCompanyId:null,focusedQuoteId:null,history:[],
+    focusedProjectId:null,focusedCompanyId:null,focusedContactId:null,focusedQuoteId:null,history:[],
   });
 });
 
@@ -28,6 +28,14 @@ describe('bounded in-app navigation history',()=>{
     expect(store.getState()).toMatchObject({
       view:'dashboard',focusedCompanyId:'company-one',focusedProjectId:null,
     });
+  });
+  it('opens a person on its own Connections route and returns to a company record',()=>{
+    const store=useNavigationStore;
+    store.getState().openCompany('builder-123');
+    store.getState().openPerson('person-456');
+    expect(store.getState()).toMatchObject({view:'dashboard',focusedCompanyId:null,focusedContactId:'person-456'});
+    store.getState().goBack();
+    expect(store.getState()).toMatchObject({view:'dashboard',focusedCompanyId:'builder-123',focusedContactId:null});
   });
   it('does not stack same-tab navigation or create a loop when going Back',()=>{
     const store=useNavigationStore;

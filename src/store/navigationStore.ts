@@ -14,6 +14,7 @@ export interface NavigationLocation {
   ratesFocus?: 'material';
   focusedProjectId: string | null;
   focusedCompanyId: string | null;
+  focusedContactId: string | null;
   focusedQuoteId: string | null;
 }
 
@@ -23,6 +24,7 @@ interface NavigationState {
   ratesFocus?: 'material';
   focusedProjectId: string | null;
   focusedCompanyId: string | null;
+  focusedContactId: string | null;
   focusedQuoteId: string | null;
   history: NavigationLocation[];
   goBack: () => void;
@@ -33,6 +35,7 @@ interface NavigationState {
   openBuilderRates: () => void;
   openProject: (projectId: string) => void;
   openCompany: (companyId: string) => void;
+  openPerson: (contactId: string) => void;
   openNotebookPage: (pageId: string) => void;
   openQuote: (quoteId: string) => void;
   clearFocusedProject: () => void;
@@ -81,14 +84,14 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
   const snapshot=(state:NavigationState):NavigationLocation=>({
     view:state.view,catalogSection:state.catalogSection,ratesFocus:state.ratesFocus,
     focusedProjectId:state.focusedProjectId,focusedCompanyId:state.focusedCompanyId,
-    focusedQuoteId:state.focusedQuoteId,
+    focusedContactId:state.focusedContactId,focusedQuoteId:state.focusedQuoteId,
   });
   const navigate=(view:AppView,patch:Partial<NavigationLocation>={})=>{
     let target:string|undefined;
     let origin:string|undefined;
     set(state=>{
       const next:NavigationLocation={...snapshot(state),view,
-        ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,focusedQuoteId:null,...patch};
+        ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,focusedContactId:null,focusedQuoteId:null,...patch};
       const current=snapshot(state);
       const changed=Object.keys(current).some(key=>
         current[key as keyof NavigationLocation]!==next[key as keyof NavigationLocation]);
@@ -114,6 +117,7 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
     ratesFocus:undefined,
     focusedProjectId:typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedProjectId ?? null : null,
     focusedCompanyId:typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedCompanyId ?? null : null,
+    focusedContactId:typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedContactId ?? null : null,
     focusedQuoteId:typeof window!=='undefined' ? parseSalesShopRoute(appRelativePath())?.focusedQuoteId ?? null : null,
     history:[],
     goBack:()=>{
@@ -134,7 +138,7 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
       if(!parsed)return;
       set(state=>{
         const next={...snapshot(state),ratesFocus:undefined,
-          focusedQuoteId:null,focusedProjectId:null,focusedCompanyId:null,...parsed};
+          focusedQuoteId:null,focusedProjectId:null,focusedCompanyId:null,focusedContactId:null,...parsed};
         const current=snapshot(state);
         if(Object.keys(current).every(key=>current[key as keyof NavigationLocation]===next[key as keyof NavigationLocation]))
           return state;
@@ -154,6 +158,7 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
     openBuilderRates:()=>navigate('catalog',{catalogSection:'rates',ratesFocus:'material'}),
     openProject:projectId=>navigate('board',{focusedProjectId:projectId}),
     openCompany:companyId=>navigate('dashboard',{focusedCompanyId:companyId}),
+    openPerson:contactId=>navigate('dashboard',{focusedContactId:contactId}),
     openNotebookPage:pageId=>{
       useNotebookStore.getState().selectEntry(pageId);
       navigate('notebook');

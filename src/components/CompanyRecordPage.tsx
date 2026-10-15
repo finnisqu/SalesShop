@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import { RecordPageLayout } from './RecordPageLayout';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork, type CompanyKind } from '../types/crm';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
@@ -15,17 +15,6 @@ const dateLabel = (value: string) => {
 const optionalNumber = (value: string) => value.trim() === '' ? undefined : Number(value);
 type ActivityFilter = 'all' | 'quote' | 'project' | 'contact';
 
-function RecordCard({ title, extra, children }: { title: string; extra?: ReactNode; children: ReactNode }) {
-  return <section className="connections-record-panel">
-    <header><h2>{title}</h2>{extra}</header>
-    <div className="connections-record-panel-body">{children}</div>
-  </section>;
-}
-
-function Property({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="connections-record-property"><span>{label}</span><strong>{children}</strong></div>;
-}
-
 export function CompanyRecordPage({ companyId, onBack }: { companyId: string; onBack: () => void }) {
   const companies = useCrmStore((state) => state.companies);
   const crmHydrated = useCrmStore((state) => state.hydrated);
@@ -39,6 +28,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const createQuote = useQuoteStore((state) => state.createQuote);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const openProject = useNavigationStore((state) => state.openProject);
+  const openPerson = useNavigationStore((state) => state.openPerson);
   const [editing, setEditing] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
   const [contactName, setContactName] = useState('');
@@ -140,18 +130,18 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <label>Expected share (%)<input type="number" min="0" max="100" step="0.1" value={draft.expectedSharePct} onChange={(event) => setDraft({ ...draft, expectedSharePct: event.target.value })} /></label>
           <button type="submit" className="connections-record-primary" disabled={!draft.name.trim()}>Save company</button>
         </form> : <div className="connections-record-properties-list">
-          <Property label="Relationship">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</Property>
-          <Property label="Created">{dateLabel(company.createdAt)}</Property>
-          <Property label="Last updated">{dateLabel(company.updatedAt)}</Property>
+          <RecordProperty label="Relationship">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</RecordProperty>
+          <RecordProperty label="Created">{dateLabel(company.createdAt)}</RecordProperty>
+          <RecordProperty label="Last updated">{dateLabel(company.updatedAt)}</RecordProperty>
         </div>}
       </RecordCard>
       {company.kind === 'customer' && <RecordCard title="Account forecast">
         <div className="connections-record-properties-list">
-          <Property label="Annual units">{company.annualUnits ?? 'Not set'}</Property>
-          <Property label="Revenue / unit">{company.averageUnitValue === undefined ? 'Not set' : money.format(company.averageUnitValue)}</Property>
-          <Property label="Expected share">{company.expectedSharePct === undefined ? 'Not set' : company.expectedSharePct + '%'}</Property>
-          <Property label="Annual potential">{companyAnnualPotential(company) === undefined ? 'Not set' : money.format(companyAnnualPotential(company)!)}</Property>
-          <Property label="Expected annual work">{companyEstimatedAnnualWork(company) === undefined ? 'Not set' : money.format(companyEstimatedAnnualWork(company)!)}</Property>
+          <RecordProperty label="Annual units">{company.annualUnits ?? 'Not set'}</RecordProperty>
+          <RecordProperty label="Revenue / unit">{company.averageUnitValue === undefined ? 'Not set' : money.format(company.averageUnitValue)}</RecordProperty>
+          <RecordProperty label="Expected share">{company.expectedSharePct === undefined ? 'Not set' : company.expectedSharePct + '%'}</RecordProperty>
+          <RecordProperty label="Annual potential">{companyAnnualPotential(company) === undefined ? 'Not set' : money.format(companyAnnualPotential(company)!)}</RecordProperty>
+          <RecordProperty label="Expected annual work">{companyEstimatedAnnualWork(company) === undefined ? 'Not set' : money.format(companyEstimatedAnnualWork(company)!)}</RecordProperty>
         </div>
       </RecordCard>}
       <RecordCard title="Known aliases">
@@ -191,7 +181,10 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       <RecordCard title="People" extra={<span>{related.relatedContacts.length}</span>}>
         <div className="connections-record-entity-list">
           {related.relatedContacts.map((person) => <article key={person.id}>
-            <strong>{person.name || person.email || 'Unnamed contact'}</strong>
+            <button type="button" className="connections-person-entity-open" onClick={() => openPerson(person.id)}>
+              <strong>{person.name || person.email || 'Unnamed contact'}</strong>
+              <small>Open person →</small>
+            </button>
             {person.title && <small>{person.title}</small>}
             {person.email && <a href={'mailto:' + person.email}>{person.email}</a>}
             {person.phone && <a href={'tel:' + person.phone}>{person.phone}</a>}

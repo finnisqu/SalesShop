@@ -1,5 +1,18 @@
 import type { ReactNode } from 'react';
 
+/** Shared record sections. Company and Person pages use identical chrome and tokens. */
+export function RecordCard({ title, extra, children }: { title: string; extra?: ReactNode; children: ReactNode }) {
+  return <section className="connections-record-panel">
+    <header><h2>{title}</h2>{extra}</header>
+    <div className="connections-record-panel-body">{children}</div>
+  </section>;
+}
+
+export function RecordProperty({ label, children }: { label: string; children: ReactNode }) {
+  return <div className="connections-record-property"><span>{label}</span><strong>{children}</strong></div>;
+}
+
+
 /** Reusable entity record shell: one scroll surface, three responsive information regions. */
 export function RecordPageLayout({
   entityType, title, subtitle, badge, actions, onBack, left, center, right,

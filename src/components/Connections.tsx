@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { CompanyRecordPage } from './CompanyRecordPage';
+import { PersonRecordPage } from './PersonRecordPage';
 import { Button, Field, PageHeader, SectionTabs, StatusText } from '../design-system/components';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -69,12 +70,6 @@ export function Connections() {
   const [newPerson, setNewPerson] = useState('');
   const [newPersonEmail, setNewPersonEmail] = useState('');
   const [newPersonCompany, setNewPersonCompany] = useState('');
-  const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
-  const [personName, setPersonName] = useState('');
-  const [personEmail, setPersonEmail] = useState('');
-  const [personPhone, setPersonPhone] = useState('');
-  const [personTitle, setPersonTitle] = useState('');
-  const [personCompany, setPersonCompany] = useState('');
   const [notice, setNotice] = useState('');
 
   const crmHydrate = useCrmStore((state) => state.hydrate);
@@ -86,16 +81,17 @@ export function Connections() {
   const quotes = useQuoteStore((state) => state.quotes);
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createContact = useCrmStore((state) => state.createContact);
-  const updateContact = useCrmStore((state) => state.updateContact);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
+  const focusedContactId = useNavigationStore((state) => state.focusedContactId);
+  const openPerson = useNavigationStore((state) => state.openPerson);
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const setView = useNavigationStore((state) => state.setView);
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
-    setTab(next); setQuery(''); setNotice(''); setEditingPersonId(null); setMoreOpen(false);
+    setTab(next); setQuery(''); setNotice(''); setMoreOpen(false);
     // Activity history is an on-demand utility, never the default landing page.
     if (CONNECTIONS_TABS.some((item) => item.id === next)) {
       try { window.sessionStorage.setItem(TAB_KEY, next); } catch { /* best effort */ }
@@ -142,22 +138,8 @@ export function Connections() {
     if (id) {
       setNewPerson(''); setNewPersonEmail(''); setNewPersonCompany('');
       setPersonCreating(false); setNotice('Person added to your directory.');
+      openPerson(id);
     } else setNotice('Could not add that person. Check the details and try again.');
-  };
-  const startEditingPerson = (person: (typeof contacts)[number]) => {
-    setEditingPersonId(person.id); setPersonName(person.name);
-    setPersonEmail(person.email ?? ''); setPersonPhone(person.phone ?? '');
-    setPersonTitle(person.title ?? ''); setPersonCompany(person.companyId ?? '');
-  };
-  const savePerson = (event: FormEvent) => {
-    event.preventDefault();
-    if (!editingPersonId || (!personName.trim() && !personEmail.trim())) return;
-    updateContact(editingPersonId, {
-      name: personName.trim(), email: personEmail.trim() || undefined,
-      phone: personPhone.trim() || undefined, title: personTitle.trim() || undefined,
-      companyId: personCompany || undefined,
-    });
-    setEditingPersonId(null); setNotice('Contact details saved.');
   };
   const openActivity = (activity: (typeof activities)[number]) => {
     if (activity.quoteId) openQuote(activity.quoteId);
@@ -165,10 +147,17 @@ export function Connections() {
     else if (activity.companyId) openCompany(activity.companyId);
   };
 
+  const backToPeople = () => {
+    chooseTab('people');
+    setView('dashboard');
+  };
   const backToCompanies = () => {
     chooseTab('companies');
     setView('dashboard');
   };
+  if (focusedContactId) return <main className="connections-workspace">
+    <PersonRecordPage contactId={focusedContactId} onBack={backToPeople} />
+  </main>;
   if (focusedCompanyId) return <main className="connections-workspace">
     <CompanyRecordPage companyId={focusedCompanyId} onBack={backToCompanies} />
   </main>;
@@ -252,27 +241,17 @@ export function Connections() {
                 </select></label>
                 <div><button type="button" onClick={() => setPersonCreating(false)}>Cancel</button><button className="primary" type="submit" disabled={!newPerson.trim() && !newPersonEmail.trim()}>Add person</button></div>
               </form>}
-              <p className="connections-count">{peopleRows.length} people · select a contact to edit their details</p>
+              <p className="connections-count">{peopleRows.length} people · select a person to open their full record</p>
               <div className="connections-card-grid">
-                {peopleRows.map((person) => <article className="connections-record connections-person-record" key={person.id}>
-                  <div><span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
-                    <strong>{person.name || person.email || 'Unnamed contact'}</strong>
-                    <small>{[person.title,person.email,person.phone].filter(Boolean).join(' · ') || 'No contact details'}</small></div>
-                  <button type="button" onClick={() => startEditingPerson(person)}>Edit</button>
-                </article>)}
+                {peopleRows.map((person) => <button type="button" className="connections-record connections-person-record" key={person.id} onClick={() => openPerson(person.id)}>
+                  <span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
+                  <strong>{person.name || person.email || 'Unnamed contact'}</strong>
+                  <small>{[person.title,person.email,person.phone].filter(Boolean).join(' · ') || 'No contact details'}</small>
+                  <span className="connections-record-arrow" aria-hidden="true">↗</span>
+                </button>)}
               </div>
               {!peopleRows.length && <StatusText state="empty" className="connections-empty">No contacts match. Adjust your search or add a person.</StatusText>}
-              {editingPersonId && <form className="connections-person-editor" onSubmit={savePerson}>
-                <header><strong>Edit contact</strong><button type="button" onClick={() => setEditingPersonId(null)} aria-label="Close contact editor">×</button></header>
-                <label><span>Name</span><input value={personName} onChange={(e) => setPersonName(e.target.value)} /></label>
-                <label><span>Email</span><input type="email" value={personEmail} onChange={(e) => setPersonEmail(e.target.value)} /></label>
-                <label><span>Phone</span><input type="tel" value={personPhone} onChange={(e) => setPersonPhone(e.target.value)} /></label>
-                <label><span>Title</span><input value={personTitle} onChange={(e) => setPersonTitle(e.target.value)} /></label>
-                <label><span>Company</span><select value={personCompany} onChange={(e) => setPersonCompany(e.target.value)}>
-                  <option value="">No company</option>{companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
-                </select></label>
-                <div><button type="button" onClick={() => setEditingPersonId(null)}>Cancel</button><button className="primary" type="submit" disabled={!personName.trim() && !personEmail.trim()}>Save contact</button></div>
-              </form>}
+
             </section>
           )}
           {tab === 'projects' && <section className="connections-directory">
