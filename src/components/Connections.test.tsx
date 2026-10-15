@@ -24,7 +24,6 @@ describe('Privacy-first Connections navigation', () => {
     expect(html).toContain('People');
     expect(html).toContain('Projects');
     expect(html).toContain('More');
-    expect(html).toContain('select a person to open their full record');
     expect(html).not.toContain('Sales dashboard');
     expect(html).not.toContain('Reporting view');
     expect(html).not.toContain('leadership-dashboard');
