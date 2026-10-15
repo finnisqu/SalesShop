@@ -1,5 +1,26 @@
 # SalesShop Prototype
 
+## Current React app and deferred Supabase staging
+
+> **Decision (October 15, 2026): HOLD.** Do **not** create a billable Supabase development branch or apply the staged privacy migrations to the live SalesShop database yet. The older browser-only prototype described below is historical; active React development is on `architecture/react-foundation` (`src/`).
+
+**Revisit staging when** we are ready to activate salesperson-private Quotes/CRM row-level security, deploy the signed-only Shop Outcomes Edge Function, turn on its feature flags, or make another production-sensitive authentication/data-access change. GitHub's disposable PostgreSQL tests are useful but do **not** replace signed-in Supabase tests.
+
+**When that time comes:**
+
+1. Recheck Supabase development-branch pricing and obtain explicit approval **before** creating any billable resource. The estimate on October 15, 2026 was **$0.01344/hour** (~$9.81 for 30.4 days running continuously); it may change.
+2. Create an isolated Supabase development branch. Confirm its separate URL, credentials, and migration state; never use real World Stone/customer data or logins for test fixtures.
+3. Apply the **staged** quote and CRM privacy migrations in order and deploy `shop-outcomes` to **staging only**, with JWT verification.
+4. Create synthetic organizations, users (owner, admin, two salespeople, viewer, outsider), quotes, CRM records, deliberate read-only grants, and signed/unsigned test revisions.
+5. Run the real-user role matrix in `scripts/security/staging-role-matrix.mjs`; check PostgREST, RLS, Edge Functions, cross-org isolation, permission revocation, quote sharing, signing, cloud sync, and Classic/Beta mobile/desktop flows.
+6. Verify rollback and release coordination. **Only after passing staging QA and a separate production approval** should live permissions, backend functions, and UI flags change together. Delete the staging branch when no longer needed to stop recurring charges.
+
+**Full instructions and release gates:** [Staging Auth Matrix / rollout checklist](docs/security/07-staging-auth-matrix-release.md) · [Private Quote RLS release gate](docs/security/04-private-quote-rls-release-gate.md) · [Shop Outcomes UI gate](docs/security/05-signed-shop-outcomes-ui-gate.md). CRM privacy is staged in [PR #39](https://github.com/finnisqu/SalesShop/pull/39) pending its own release checks.
+
+**Current status:** This README entry is a reminder, **not authorization** to provision staging or deploy any migration. Leave the staging environment uncreated until explicitly requested.
+
+---
+
 A browser-only prototype exploring a sales tool built around two primary user-facing surfaces:
 
 1. **Notebook** — a frictionless working memory where partial records are valid.
