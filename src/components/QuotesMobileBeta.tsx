@@ -651,6 +651,15 @@ export function QuotesMobileBeta() {
     if(audit?.review.length){openReview(audit.review[0].id);return;}
     openReview('__delivery__');
   };
+  // Review launched this exact Preview. Both the small top button and the
+  // persistent phone footer use the SAME path, so neither can bypass the
+  // content-keyed preview/approval guard when the customer copy was edited.
+  const returnFromReviewPreview=()=>{
+    if(!quote||previewReturnQuoteId!==quote.id)return;
+    setPreviewReturnQuoteId(null);
+    setPreviewedDeliveryKey(previewStartedKey);
+    openReview('__delivery__');
+  };
   const fixAudit=(destination:QuoteAuditDestination)=>{
     setReviewOpen(false);
     if(destination.view==='area'){
@@ -908,17 +917,16 @@ export function QuotesMobileBeta() {
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
-            onReturnToReview={previewReturnQuoteId===quote.id?()=>{
-              setPreviewReturnQuoteId(null);
-              setPreviewedDeliveryKey(previewStartedKey);
-              openReview('__delivery__');
-            }:undefined}/>
+            onReturnToReview={previewReturnQuoteId===quote.id?returnFromReviewPreview:undefined}/>
         </>}
         </div>
       </div>
       <footer className="qmb-footer qmb-quote-footer">
-        <button type="button" className="qmb-primary" onClick={openSend}>
-          {quote.documentType==='pricing-schedule'?'Review Pricing Schedule ›':audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Review & issue ›'}</button>
+        {quoteTab==='preview'&&previewReturnQuoteId===quote.id
+          ?<button type="button" className="qmb-primary"
+            onClick={returnFromReviewPreview}>Done previewing · Back to Review ›</button>
+          :<button type="button" className="qmb-primary" onClick={openSend}>
+            {quote.documentType==='pricing-schedule'?'Review Pricing Schedule ›':audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Review & issue ›'}</button>}
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onDuplicate={duplicateCurrentArea}
