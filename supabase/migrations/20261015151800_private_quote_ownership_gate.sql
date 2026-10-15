@@ -128,15 +128,11 @@ alter policy org_documents_delete_admins on public.org_documents
 -- Cannot steal or reassign an owned quote, and creates an auditable record.
 create table private.quote_recovery_assignments (
   id uuid primary key default gen_random_uuid(),
-  organization_id uuid not null,
+  organization_id uuid not null references public.organizations(id) on delete cascade,
   quote_id text not null,
   assigned_user_id uuid not null,
   assigned_by uuid not null,
-  assigned_at timestamptz not null default now(),
-  foreign key (organization_id,quote_id)
-    references public.quotes(organization_id,id) on delete cascade,
-  foreign key (organization_id,assigned_user_id)
-    references public.organization_members(organization_id,user_id)
+  assigned_at timestamptz not null default now()
 );
 alter table private.quote_recovery_assignments enable row level security;
 revoke all on private.quote_recovery_assignments from public,anon,authenticated;
