@@ -105,7 +105,7 @@ begin
    raise exception 'Admin cannot audit-assign genuinely unowned company';end if;
  if private.can_read_crm_entity(org,'companies','legacy-company') then
    raise exception 'Recovered company still visible to admin';end if;
- if (select count(*) from private.crm_recovery_audit where organization_id=org)<>1 then
+ if private.test_crm_audit_count(org)<>1 then
    raise exception 'Legacy CRM recovery lacked durable audit record';end if;
  begin
   perform public.assign_unowned_crm_record(org,'companies','bob-company',
