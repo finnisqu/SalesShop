@@ -25,8 +25,11 @@ export type BusinessCardField = 'name' | 'company' | 'title' | 'email' | 'phone'
 
 export interface NotebookContext { projectId?: string; }
 
+export interface NotebookFolder { id: string; name: string; parentId?: string; createdAt: string; }
+
 export interface NotebookEntry {
   id: string;
+  folderId?: string;
   /** Stable marker for the private global Post-it collection page. */
   isPostItInbox?: boolean;
   title: string;
@@ -49,4 +52,5 @@ export interface TrashedNotebookEntry { entry: NotebookEntry; deletedAt: string;
 export interface NotebookDocument {
   schemaVersion: 3; entries: NotebookEntry[]; activeEntryId: string | null;
   trashedEntries?: TrashedNotebookEntry[];
+  folders?: NotebookFolder[];
 }
