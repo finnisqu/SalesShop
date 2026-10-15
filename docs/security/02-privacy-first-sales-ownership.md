@@ -65,3 +65,23 @@ A user must never be able to grant themselves another person's private draft mer
 **Blocker:** Existing SQL security contract tests currently assert the old Owner/Admin broad-access model. They must change alongside new migrations, not be weakened or deleted in advance. A read-only UI swap while keeping the old RLS does **not** satisfy this security goal.
 
 **Rollback:** Snapshot policies, record counts, per-role read tests and current permissions before migration. Rollback must retain signed evidence and journal why/when privileges changed. Never overwrite `main` or directly deploy schema changes from an unreviewed feature branch.
+
+## Live database permission audit — read-only verification, October 14, 2026
+
+Read-only inspection of the connected SalesShop PostgreSQL 17 database confirmed the actual policy behavior (not just migration-file intent):
+
+| Table or data family | Present SELECT policy | Privacy-first disposition |
+| --- | --- | --- |
+| `private_documents` (Notebook) | `owner_id = auth.uid()` | Correct baseline for private Post-its; add reauthentication/cache tests |
+| `quotes`, `quote_lines`, `quote_sections`, `quote_revisions` | Delegates to `private.can_read_quote`, currently allowing Owner/Admin, owner, team membership or explicit grant | **Blocker** until unshared drafts become creator-private |
+| `quote_access_grants` | Owner/Admin can insert/revoke grants | **Blocker** until creator-controlled, scope-limited sharing replaces privilege-based grants |
+| `companies` and `contacts` | Any organization member can SELECT | **Blocker** for private salesperson customer intelligence |
+| `projects` | Any organization member can SELECT; includes next action and last touchpoint | **Blocker** where project records mix private outreach with operational delivery |
+| `activities` without a quote link | Organization members can SELECT ordinary activity types; quote-linked activities use quote-level access | **Blocker** for private follow-ups and account touches that do not have a quote link |
+| `org_documents` legacy JSON | Admin-only SELECT; may include historic customer intelligence | Retain for rollback only, then de-risk legacy snapshot exposure |
+| `signatures` | Can read only with `private.can_edit_quote` | Stronger baseline; signed-only outcome projection must not grant access to signer PII/strokes |
+| `quote_shares` | Quote editing and issuance permission required for link token SELECT | Preserve existing customer signing behavior; continue token-scoped tests |
+
+**These risks are present today.** The RFC and Batch 4B pure projection are not a patch for the existing database access policies. We must first split private CRM/process records from company-authorized operational facts and then migrate policies transactionally with role-simulation and real signed-in account tests.
+
+Recommended first safe data-model action: retain immutable signed acceptance evidence, add a separate allowlisted operational outcome read model, and prevent account-level CRM events from being treated as company productivity metrics. A frontend filter or TypeScript projection is defense in depth, **not** server-side permission enforcement.
