@@ -27,6 +27,8 @@ import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
+import { ShopOutcomesWorkspace } from './ShopOutcomesWorkspace';
+import { signedShopOutcomesEnabled } from '../services/shopOutcomesPilot';
 import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
 import {
@@ -1323,16 +1325,18 @@ export function Quotes() {
     <section className="quotes-classic-team-shell">
       <header className="quotes-classic-team-switch"><strong>Classic Quotes</strong>
         <button type="button" onClick={() => openBeta()}>Open Quotes Beta</button></header>
-      <TeamQuotesWorkspace quotes={quotes} onShowMine={() => setQuoteLibraryMode('mine')} />
+      {signedShopOutcomesEnabled
+          ? <ShopOutcomesWorkspace onShowMine={() => setQuoteLibraryMode('mine')} />
+          : <TeamQuotesWorkspace quotes={quotes} onShowMine={() => setQuoteLibraryMode('mine')} />}
     </section>
   );
   if (!quote) return <main className="quotes-view quote-my-quotes-empty">
     <section>
       <h1>My Quotes</h1>
-      <p>You have no quotes assigned to you yet. Existing organization quotes are still available in Team Quotes, labeled Unassigned until an owner or admin assigns them.</p>
+      <p>You have no quotes assigned to you yet. {signedShopOutcomesEnabled ? 'Shop Outcomes lists signed company commitments only.' : 'Existing organization quotes are still available in Team Quotes, labeled Unassigned until an owner or admin assigns them.'}</p>
       <button type="button" onClick={() => createQuote()}>+ New Quote</button>
       <button type="button" onClick={() => openBeta()}>Open Quotes Beta</button>
-      {canBrowseTeam && <button type="button" onClick={() => setQuoteLibraryMode('team')}>View Team Quotes</button>}
+      {canBrowseTeam && <button type="button" onClick={() => setQuoteLibraryMode('team')}>{signedShopOutcomesEnabled ? 'View Shop Outcomes' : 'View Team Quotes'}</button>}
     </section>
   </main>;
 
@@ -1363,7 +1367,7 @@ export function Quotes() {
 
         {canBrowseTeam && <button type="button" className="quote-navigator-team-link" onClick={() => {
           setMobileNavigatorOpen(false); setQuoteLibraryMode('team');
-        }}>Team Quotes · overview</button>}
+        }}>{signedShopOutcomesEnabled ? 'Shop Outcomes · signed work' : 'Team Quotes · overview'}</button>}
 
         <div className="quote-mobile-document-heading">
           <div><strong>Documents</strong><small>{sortedQuotes.length} shown</small></div>
@@ -1388,7 +1392,7 @@ export function Quotes() {
       <button type="button" aria-pressed={false} onClick={() => openBeta(quote.id)}>Beta</button>
     </div>{canBrowseTeam && <div className="quote-library-mode-switch" role="group" aria-label="Quote library">
       <button type="button" aria-pressed={true}>My Quotes</button>
-      <button type="button" onClick={() => setQuoteLibraryMode('team')}>Team Quotes</button>
+      <button type="button" onClick={() => setQuoteLibraryMode('team')}>{signedShopOutcomesEnabled ? 'Shop Outcomes' : 'Team Quotes'}</button>
     </div>}{archivedCount > 0 && <div className="quote-archive-filter"><button type="button" className={showArchived ? 'active' : ''} onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Archived · ${archivedCount}`}</button></div>}<div className="quote-list">{sortedQuotes.map((item) => <button key={item.id} type="button" className={`quote-list-item ${item.id === quote.id ? 'active' : ''} ${item.archivedAt ? 'is-archived' : ''}`} onClick={() => selectQuote(item.id)}><span>{displayQuoteNumber(item)}</span><strong>{item.title}</strong><small>{commercialDocumentLabel(item)} · {item.companyName || 'No customer'} · {item.archivedAt ? 'Archived' : item.status}</small><b>{item.documentType === 'pricing-schedule' ? `${item.pricingSchedule?.customerItems.length ?? 0} rows` : money.format(quoteTotal(item))}</b></button>)}</div></aside>
     <QuoteEditor quote={quote} mode={mode} onModeChange={setMode} onOpenMobileNavigator={() => setMobileNavigatorOpen(true)} onOpenBeta={() => openBeta(quote.id)} />
   </main>;
