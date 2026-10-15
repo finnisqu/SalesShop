@@ -243,7 +243,7 @@ async function serverQuoteGuards(organizationId: string) {
   return guards;
 }
 
-export async function syncNormalizedQuotes(organizationId: string, document: QuoteDocument) {
+export async function syncNormalizedQuotes(organizationId: string, document: QuoteDocument, bootstrapUserId?: string) {
   if (!supabase) return;
   if (document.schemaVersion !== 2) throw new Error('Unsupported Quote document schema.');
   const guards = await serverQuoteGuards(organizationId);
@@ -251,7 +251,12 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   // cache. Never replay those records as edits when this device saves one
   // owned quote. RLS separately enforces this on the server.
   const auth = useAuthStore.getState();
-  const actorId = auth.mode === 'cloud' && auth.organizationId === organizationId
+  // Workspace hydration precedes setting auth.organizationId. Only the
+  // explicitly verified bootstrap call may write in that short window.
+  // Every ordinary autosync still requires the matching active organization.
+  const activeWorkspace = auth.organizationId === organizationId;
+  const verifiedBootstrap = auth.organizationId === null && bootstrapUserId === auth.user?.id;
+  const actorId = auth.mode === 'cloud' && (activeWorkspace || verifiedBootstrap)
     ? auth.user?.id : null;
   // Never permit a whole cached organization snapshot to be uploaded by an
   // owner/admin. Their management role does NOT confer edit permission over
