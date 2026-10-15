@@ -11,6 +11,7 @@ import {displayQuoteNumber} from '../types/quote';
 import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {buildHomeAgenda,nextLocalDay} from '../services/homeAgenda';
 import {followUpLocalDate} from '../services/quoteFollowUps';
+import {newQuickNoteEvent} from './GlobalPostIt';
 import '../home-workspace.css';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
@@ -64,7 +65,7 @@ export function HomeWorkspace(){
     setCreating(false);setNewName('');
     openQuote(id);
   };
-  const openQuickNote=()=>window.dispatchEvent(new Event('sales-shop:global-post-it'));
+  const openQuickNote=()=>window.dispatchEvent(new Event(newQuickNoteEvent));
   const saveTask=(event:FormEvent)=>{
     event.preventDefault();if(!taskName.trim()||!myTaskScope)return;
     addTask(taskName,taskDue||undefined,taskQuoteId?{type:'quote',id:taskQuoteId}:undefined);
