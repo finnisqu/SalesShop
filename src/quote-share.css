@@ -73,7 +73,7 @@
 .quote-share-status-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 13px; font-size: 11px; color: #74695b; }
 .quote-share-status { padding: 3px 7px; border: 1px solid rgba(60,52,42,.2); border-radius: 999px; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; color: #4f594e; background: rgba(91,112,91,.08); }
 .quote-share-status.status-signed { color: #2f6544; background: rgba(55,130,80,.1); }
-.quote-share-status.status-revoked { color: #8a4d48; background: rgba(145,65,55,.08); }
+.quote-share-status.status-revoked, .quote-share-status.status-expired { color: #8a4d48; background: rgba(145,65,55,.08); }
 
 .quote-share-url { display: flex; flex-direction: column; gap: 5px; }
 .quote-share-url span { font-size: 11px; font-weight: 700; color: #62594e; }
