@@ -31,8 +31,14 @@ test('Quick Quote customer chip edits name, contact and email without navigation
   await expect(editor).toHaveCount(0);
   await expect(customer).toContainText('Taylor Residence');
   await expect(customer).toContainText('Taylor Customer');
-  await expect(beta.getByRole('navigation',{name:'Quote views'})
-    .getByRole('button',{name:'Build'})).toHaveAttribute('aria-current','page');
+  if(info.project.name==='phone-390'){
+    await expect(beta.getByRole('navigation',{name:'Quote views'})
+      .getByRole('button',{name:'Build'})).toHaveAttribute('aria-current','page');
+  }else{
+    // Desktop navigation is in the side rail rather than the mobile tabs.
+    await expect(beta.getByRole('complementary',{name:'Quote workspace navigation'}))
+      .getByRole('button',{name:/Build quote/})).toBeVisible();
+  }
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toHaveValue('Taylor Kitchen Proposal');
 
   await beta.getByRole('button',{name:'+ Add Area'}).click();
@@ -57,8 +63,13 @@ test('Quick Quote customer chip edits name, contact and email without navigation
   await customer.click();
   await page.getByRole('dialog',{name:'Quick customer details'})
     .getByRole('button',{name:'More project details'}).click();
-  await expect(beta.getByRole('navigation',{name:'Quote views'})
-    .getByRole('button',{name:'Details'})).toHaveAttribute('aria-current','page');
+  if(info.project.name==='phone-390'){
+    await expect(beta.getByRole('navigation',{name:'Quote views'})
+      .getByRole('button',{name:'Details'})).toHaveAttribute('aria-current','page');
+  }else{
+    await expect(beta.getByRole('complementary',{name:'Quote workspace navigation'}))
+      .getByRole('button',{name:'Customer & project'})).toBeVisible();
+  }
   await expect(beta.getByRole('region',{name:'Quote customer and project details'})).toBeVisible();
   expect(errors).toEqual([]);
 });
