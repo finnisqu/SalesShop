@@ -1,0 +1,43 @@
+name: Private CRM RLS SQL QC
+
+on:
+  pull_request:
+    branches: [architecture/react-foundation]
+    paths:
+      - 'supabase/migrations/20261015162000_private_crm_ownership_gate.sql'
+      - 'tests/security/private_crm_rls_*.sql'
+      - '.github/workflows/private-crm-rls-qc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-crm-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable_test_only
+          POSTGRES_DB: sales_shop_crm_rls_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sales_shop_crm_rls_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply staged CRM migration and prove owner/grant access
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: disposable_test_only
+          PGDATABASE: sales_shop_crm_rls_test
+        run: psql -v ON_ERROR_STOP=1 -f tests/security/private_crm_rls_bootstrap.sql
