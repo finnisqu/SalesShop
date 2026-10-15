@@ -506,7 +506,11 @@ test('Previewed customer revision approval expires after a change before issue',
   const options=beta.locator('.qmb-preview-customer-options');
   await options.locator('summary').click();
   await options.getByRole('checkbox',{name:'Line amounts'}).uncheck();
-  await beta.getByRole('button',{name:'Back to Review'}).click();
+  // A customer-visibility edit during Preview still invalidates that review
+  // even if the user returns via the convenient footer button.
+  await beta.locator('.qmb-quote-footer').getByRole('button',{
+    name:'Done previewing · Back to Review ›',
+  }).click();
   await expect(review.getByRole('button',{name:'Open customer preview ›'})).toBeVisible();
   await expect(approval).toBeDisabled();
   await expect(acknowledgement).not.toBeChecked();
@@ -650,13 +654,25 @@ test('Review preview returns directly to the same quote delivery checklist',asyn
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
   await expect(review).toHaveCount(0);
   await expect(beta.locator('.customer-quote-paper')).toBeVisible();
-  await beta.getByRole('button',{name:'Back to Review'}).click();
+  const previewReturn=beta.locator('.qmb-quote-footer').getByRole('button',{
+    name:'Done previewing · Back to Review ›',
+  });
+  await expect(previewReturn).toBeVisible();
+  await previewReturn.click();
   await expect(review).toBeVisible();
   await expect(review.locator('[data-review-delivery]')).toBeVisible();
+  // Returning from Preview never auto-approves or issues the quote.
+  await expect(review.getByRole('checkbox',{
+    name:'Approve customer document for issuing',
+  })).not.toBeChecked();
   await review.getByRole('button',{name:'Close Review and Issue'}).click();
   await beta.getByRole('button',{name:'Build',exact:true}).click();
   await beta.getByRole('button',{name:'Preview',exact:true}).click();
   await expect(beta.getByRole('button',{name:'Back to Review'})).toHaveCount(0);
+  await expect(previewReturn).toHaveCount(0);
+  await expect(beta.locator('.qmb-quote-footer').getByRole('button',{
+    name:/Review & issue/,
+  })).toBeVisible();
 });
 
 test('Review resolves customer name and sink price inline without leaving Review',async ({page},testInfo)=>{
