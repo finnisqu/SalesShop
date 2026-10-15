@@ -4,7 +4,7 @@ import {useNavigationStore} from './navigationStore';
 beforeEach(()=>{
   useNavigationStore.setState({
     view:'quotes',catalogSection:'materials',ratesFocus:undefined,
-    focusedProjectId:null,focusedCompanyId:null,history:[],
+    focusedProjectId:null,focusedCompanyId:null,focusedQuoteId:null,history:[],
   });
 });
 
