@@ -1,6 +1,7 @@
 import {supabase} from '../lib/supabase';
 import {useAuthStore} from '../store/authStore';
 import type {SignedShopOutcome} from './shopOutcomeProjection';
+import {sanitizeSignedShopOutcomes} from './shopOutcomesReader';
 
 type OutcomeResponse = {outcomes?: unknown;limit?: number;error?: string};
 
@@ -24,21 +25,5 @@ export async function loadSignedShopOutcomes():Promise<SignedShopOutcome[]> {
   });
   if(error)throw new Error('Could not load shop outcomes.');
   if(data?.error)throw new Error(data.error);
-  if(!Array.isArray(data?.outcomes))throw new Error('Invalid shop outcomes response.');
-
-  // The server enforces the actual permission and field allowlist. Validate the
-  // public schema again so malformed responses cannot reach operational UI.
-  return data.outcomes.filter((item:unknown):item is SignedShopOutcome=>{
-    if(!item||typeof item!=='object')return false;
-    const value=item as Partial<SignedShopOutcome>;
-    return value.kind==='signed-customer-commitment' &&
-      typeof value.signatureId==='string' &&
-      typeof value.quoteId==='string' &&
-      typeof value.quoteNumber==='string' &&
-      typeof value.revision==='number' &&
-      typeof value.title==='string' &&
-      typeof value.acceptedAt==='string' &&
-      typeof value.acceptedTotal==='number' &&
-      Number.isFinite(value.acceptedTotal);
-  });
+  return sanitizeSignedShopOutcomes(data?.outcomes);
 }
