@@ -1,6 +1,6 @@
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
 
-const WORKSPACES = ['notebook', 'board', 'quotes', 'catalog', 'dashboard', 'settings'] as const;
+const WORKSPACES = ['home', 'notebook', 'board', 'quotes', 'catalog', 'dashboard', 'settings'] as const;
 type Workspace = (typeof WORKSPACES)[number];
 const PHONE = (name: string) => name.startsWith('phone');
 
@@ -46,7 +46,7 @@ async function captureLayout(page: Page) {
     const classes = [
       '.sales-app', '.app-header', '.mobile-app-commandbar', '.quote-mobile-commandbar',
       '.role-perspective-content', '.quotes-view', '.quote-editor-pane', '.catalog-workspace',
-      '.materials-workspace', '.board-view', '.connections-workspace',
+      '.materials-workspace', '.board-view', '.connections-workspace', '.sales-home', '
       '.company-settings-view', '.notebook-workspace', '.paper-sheet',
     ];
     return {
@@ -72,7 +72,7 @@ async function captureLayout(page: Page) {
   });
 }
 
-test('six workspaces render with bounded page geometry and screenshots', async ({ page }, testInfo) => {
+test('seven workspaces render with bounded page geometry and screenshots', async ({ page }, testInfo) => {
   const crashes: string[] = [];
   page.on('pageerror', (error) => crashes.push(error.message));
   const measurements: Array<{ view: Workspace; layout: Awaited<ReturnType<typeof captureLayout>> }> = [];
