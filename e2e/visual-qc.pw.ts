@@ -46,7 +46,7 @@ async function captureLayout(page: Page) {
     const classes = [
       '.sales-app', '.app-header', '.mobile-app-commandbar', '.quote-mobile-commandbar',
       '.role-perspective-content', '.quotes-view', '.quote-editor-pane', '.catalog-workspace',
-      '.materials-workspace', '.board-view', '.connections-workspace', '.sales-home', '
+      '.materials-workspace', '.board-view', '.connections-workspace', '.sales-home',
       '.company-settings-view', '.notebook-workspace', '.paper-sheet',
     ];
     return {
