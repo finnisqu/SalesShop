@@ -155,6 +155,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const areaTotal=quoteLinesTotal(lines);
   const priceDiff=projection.grossSpread;
   const perc=projection.marginPercent;
+  const provisional=projection.knownCostSpreadPercent;
   const desiredMargin=section.scope?.targetMargin??.25;
   const separateSell=quoteLinesTotal(lines.filter(l=>l!==primary));
   const marginTotal=projection.complete&&desiredMargin<1?
@@ -176,8 +177,8 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   };
   return <section className={'qmb-desktop-pricing-lab qmb-lab-'+view} aria-label="Area pricing and internal costs">
     {view==='calculator'&&<header className="qmb-pricing-lab-heading">
-      <div><h3>Buying costs & margin</h3><small>Optional private estimating · sell price stays unchanged</small></div>
-      <strong>{perc!==undefined?perc.toFixed(1)+'%':'—'}</strong>
+      <div><h3>Buying costs &amp; margin</h3><small>Internal estimate · costs must be entered for a complete margin</small></div>
+      <strong>{perc!==undefined?perc.toFixed(1)+'%':'Costs incomplete'}</strong>
     </header>}
     {(view==='all'||view==='selling')&&<>
     <header className="qmb-pricing-lab-heading">
@@ -337,10 +338,17 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
         <span>Known sink buying cost <b>{projection.sinkCost!==undefined?money.format(projection.sinkCost):'Missing'}</b></span>
         <span>Other known costs <b>{money.format(projection.otherCost)}</b></span>
         <span>Known total cost <b>{money.format(projection.totalKnownCost)}</b></span>
-        <span>Spread on known costs <b>{money.format(priceDiff)}</b></span>
-        <span className="qmb-private-margin">Gross margin <b>{perc!==undefined?perc.toFixed(1)+'%':'Incomplete cost coverage'}</b></span>
+        <span>Spread on entered costs <b>{money.format(priceDiff)}</b></span>
+        {provisional!==undefined&&!projection.complete&&<span>
+          Known-cost spread · not a full margin <b>{provisional.toFixed(1)}%</b></span>}
+        <span className="qmb-private-margin">Estimated margin · all cost categories
+          <b>{perc!==undefined?perc.toFixed(1)+'%':'Costs incomplete'}</b></span>
       </div>
-      {!projection.complete&&<p className="qmb-cost-warning">Margin stays provisional until material, sink and other priced work have buying costs.</p>}
+      {!projection.complete&&<div className="qmb-cost-warning" role="status">
+        <strong>Complete these cost categories to calculate margin:</strong>
+        <ul>{projection.missingCostItems.map(label=><li key={label}>{label}</li>)}</ul>
+        <small>Blank costs are unknown, not zero. Enter $0 when a category truly has no cost.</small>
+      </div>}
     </div>
     <div className="qmb-pricing-comparison" aria-label="Compare project selling methods">
       <header><strong>Compare pricing methods</strong>
@@ -368,7 +376,9 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       </div>
       <button type="button" className="qmb-apply-margin" disabled={!editable||marginMaterialAmount===undefined}
         onClick={applyMargin}>Apply margin estimate to quote</button>
-      <small>Applying Margin sets the countertop material price, subtracting separately charged Sinks and Add-ons. Later cost changes do not silently reprice the customer quote.</small>
+      <small>Applying Margin requires material, sink, fabrication, installation and other priced-work costs.
+        It sets the countertop selling price after separately charged sinks and add-ons.
+        Cost changes never silently reprice the customer quote.</small>
     </div>
 
     </>}
