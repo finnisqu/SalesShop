@@ -115,6 +115,15 @@ insert into public.quotes(organization_id,id,owner_user_id) values
 insert into public.companies(organization_id,id,name)
 values('11111111-1111-4111-8111-111111111111','legacy-company','Legacy unnamed owner');
 
+-- Simulate legacy privileged merge functions. The staged privacy migration
+-- must revoke their authenticated EXECUTE capability.
+create or replace function public.merge_crm_company_identity(uuid,text,text)
+returns void language plpgsql security definer as $ begin null; end; $;
+create or replace function public.merge_crm_contact_identity(uuid,text,text)
+returns void language plpgsql security definer as $ begin null; end; $;
+grant execute on function public.merge_crm_company_identity(uuid,text,text) to authenticated;
+grant execute on function public.merge_crm_contact_identity(uuid,text,text) to authenticated;
+
 -- Apply exact staged SQL against disposable database only.
 \i supabase/migrations/20261015162000_private_crm_ownership_gate.sql
 -- New owned records: seed as privileged test fixture after RLS policy installation.
