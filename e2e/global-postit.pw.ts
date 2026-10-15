@@ -1,9 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
 
 async function openNotebookNote(page: Page) {
-  const launcher = page.getByRole('button', { name: 'Open private Post-its' });
+  const launcher = page.getByRole('button', { name: 'Quick Note' });
   await launcher.first().click();
-  const panel = page.getByRole('region', { name: 'Private Post-it workspace' });
+  const panel = page.getByRole('region', { name: 'Private Quick Notes' });
   await expect(panel).toBeVisible();
   return panel;
 }
@@ -33,5 +33,5 @@ test('private global Post-it survives tab navigation and a full reload', async (
   const reloaded = await openNotebookNote(page);
   await expect(reloaded.getByRole('textbox', { name: 'Private Post-it text' }))
     .toHaveValue('Call supplier about kitchen sink · private');
-  await expect(reloaded.getByText('Private · saved automatically')).toBeVisible();
+  await expect(reloaded.getByText('Private · saved to Notebook')).toBeVisible();
 });
