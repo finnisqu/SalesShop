@@ -6,3 +6,9 @@
 .app-profile-panel>button{text-align:left;min-height:39px;padding:8px 10px;border:0;border-radius:7px;background:var(--ss-theme-tint,#eef1eb);color:inherit;cursor:pointer;font-weight:700}
 .app-profile-session{padding-top:8px;border-top:1px solid var(--ss-theme-border,#ddd)}
 .app-profile-session .backend-account{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+.app-profile-theme-shortcuts{display:grid;gap:6px;padding:8px 0;border-block:1px solid var(--ss-theme-border,#ddd)}
+.app-profile-theme-shortcuts>span{font-size:11px;font-weight:800;color:var(--ss-theme-muted,#647168)}
+.app-profile-theme-shortcuts>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.app-profile-theme-shortcuts button{min-height:36px;border:1px solid var(--ss-theme-border,#ddd);background:var(--ss-theme-tint,#eff0ec);color:var(--ss-theme-ink,#29352f);border-radius:7px;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.app-profile-theme-shortcuts button[aria-pressed="true"]{border-color:var(--ss-theme-accent,#527663);box-shadow:inset 0 0 0 1px var(--ss-theme-accent,#527663)}

@@ -9,6 +9,7 @@ import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
 import { GlobalPostItLauncher } from './GlobalPostIt';
 import { useAuthStore } from '../store/authStore';
+import { useAppearanceStore } from '../store/appearanceStore';
 import { canEditTeamArea } from '../services/teamDepartments';
 import { resolveOwnerPerspective } from '../services/rolePerspective';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
@@ -41,6 +42,8 @@ function catalogLabel(section: CatalogSection) {
 export function MobileAppChrome() {
   const view = useNavigationStore((state) => state.view);
   const mode = useAuthStore((state) => state.mode);
+  const quickTheme = useAppearanceStore(state=>state.preferences.themeChoice);
+  const setAppearance = useAppearanceStore(state=>state.update);
   const teamRole = useAuthStore((state) => state.teamRole);
   const department = useAuthStore((state) => state.teamDepartment);
   const previewId = useRolePerspectiveStore((state) => state.activePerspective);
@@ -199,6 +202,16 @@ export function MobileAppChrome() {
           </section>}
 
           <footer className="mobile-app-account-footer">
+            <div className="app-profile-theme-shortcuts" aria-label="Quick appearance">
+              <span>Appearance</span>
+              <div role="group" aria-label="Switch appearance theme">
+                {(['warm','light','dark'] as const).map(choice=>
+                  <button type="button" key={choice} aria-pressed={quickTheme===choice}
+                    onClick={()=>setAppearance({themeChoice:choice})}>
+                    {choice==='warm'?'Warm':choice==='light'?'Light':'Dark'}
+                  </button>)}
+              </div>
+            </div>
             <button type="button" className="mobile-app-settings-link" onClick={() => {setOpen(false);setView('settings');}}>⚙ Settings &amp; Profile</button>
             <AuthStatus />
           </footer>

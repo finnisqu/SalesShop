@@ -7,10 +7,9 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useAuthStore } from '../store/authStore';
 import { inferAccountHealth } from '../services/accountHealth';
 import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
-import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import type { CompanyKind } from '../types/crm';
 
-type ConnectionsTab = 'overview' | 'companies' | 'people' | 'projects' | 'quotes' | 'activity';
+type ConnectionsTab = 'overview' | 'companies' | 'people' | 'projects' | 'activity';
 type CompanyFilter = 'all' | 'customer' | 'non-customer';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
@@ -18,7 +17,6 @@ export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; descri
   { id: 'companies', label: 'Companies', description: 'Accounts & partners' },
   { id: 'people', label: 'People', description: 'Contacts' },
   { id: 'projects', label: 'Projects', description: 'Opportunities' },
-  { id: 'quotes', label: 'Quotes', description: 'Commercial documents' },
   { id: 'activity', label: 'Activity', description: 'Sales history' },
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -100,10 +98,6 @@ export function Connections() {
   const projectRows = useMemo(() => projects
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction).includes(needle))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
-  const quoteRows = useMemo(() => quotes
-    .filter((quote) => !quote.archivedAt)
-    .filter((quote) => findText(quote.title, quote.companyName, quote.contactName, quote.quoteNumber, quote.status).includes(needle))
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [quotes, needle]);
   const activityRows = useMemo(() => [...activities]
     .filter((activity) => findText(activity.summary, activity.type,
       companiesById.get(activity.companyId ?? '')?.name,
@@ -273,19 +267,6 @@ export function Connections() {
               })}
             </div>
             {!projectRows.length && <StatusText state="empty" className="connections-empty">No projects match your search.</StatusText>}
-          </section>}
-          {tab === 'quotes' && <section className="connections-directory">
-            <p className="connections-count">{quoteRows.length} current documents · open a quote to edit or review</p>
-            <div className="connections-card-grid">
-              {quoteRows.map((quote) => <button type="button" key={quote.id} className="connections-record" onClick={() => openQuote(quote.id)}>
-                <span className="connections-record-eyebrow">{quote.status} · {quote.documentType.replace('-', ' ')}</span>
-                <strong>{quote.title || 'Untitled quote'}</strong>
-                <small>{[quote.companyName,displayQuoteNumber(quote)].filter(Boolean).join(' · ')}</small>
-                <b>{money.format(quoteTotal(quote))}</b>
-                <span className="connections-record-arrow" aria-hidden="true">↗</span>
-              </button>)}
-            </div>
-            {!quoteRows.length && <StatusText state="empty" className="connections-empty">No matching quotes.</StatusText>}
           </section>}
           {tab === 'activity' && <section className="connections-directory">
             <p className="connections-count">Latest {activityRows.length} activity records · opened from the linked quote, project, or company</p>
