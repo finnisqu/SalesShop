@@ -1732,3 +1732,14 @@
     grid-template-columns: minmax(0, 1fr) 118px;
   }
 }
+
+/* The Classic phone view menu is the compact entry point to Quotes Beta. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .quote-mobile-view-menu > .quote-mobile-editor-beta-option {
+    margin-top:6px; border-top:1px solid rgba(91,78,58,.17);
+    border-radius:0 0 5px 5px; background:#fff7e2; color:#3d4c66;
+  }
+  .quote-mobile-view-menu > .quote-mobile-editor-beta-option:focus-visible {
+    outline:2px solid #4b6b9d; outline-offset:-2px;
+  }
+}
