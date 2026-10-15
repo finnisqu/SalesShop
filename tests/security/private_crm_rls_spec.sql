@@ -1,6 +1,18 @@
 -- Executed ONLY against disposable PostgreSQL 17 in GitHub Actions.
 \set ON_ERROR_STOP on
 
+-- Privileged legacy CRM merge functions must lose authenticated execution:
+-- they otherwise update every linked quote and signature across salesperson
+-- ownership boundaries with SECURITY DEFINER privileges.
+do $
+begin
+ if has_function_privilege('authenticated','public.merge_crm_company_identity(uuid,text,text)','EXECUTE')
+   or has_function_privilege('authenticated','public.merge_crm_contact_identity(uuid,text,text)','EXECUTE') then
+   raise exception 'Privileged legacy CRM merge RPC still callable by employees';
+ end if;
+end
+$;
+
 -- Salesperson A sees their own CRM + associated records, not Bob's.
 begin;
 set local role authenticated;
