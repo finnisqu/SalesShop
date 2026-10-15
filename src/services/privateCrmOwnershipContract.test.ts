@@ -21,6 +21,9 @@ describe('private CRM ownership and cloud sync compatibility',()=>{
     expect(file('src/services/crmPrivacyPilot.ts')).toContain("VITE_PRIVATE_CRM_RLS==='1'");
     expect(sync).toContain('mayUploadCrmEntity(record.ownerUserId,actorId,privateCrmRlsEnabled)');
     expect(sync).toContain('auth.organizationId===organizationId');
+    expect(sync).toContain('auth.organizationId===null && bootstrapUserId===auth.user?.id');
+    expect(sync).toContain('activeWorkspace||verifiedBootstrap');
+    expect(file('src/services/cloudSync.ts')).toContain('syncNormalizedCrm(orgId, localCrm, userId)');
     expect(sync).toContain('privateCrmRlsEnabled?{owner_user_id:');
     expect(sync).toContain('ownerUserId: valueOrUndefined(row.owner_user_id)');
   });
