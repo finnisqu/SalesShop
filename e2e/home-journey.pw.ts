@@ -85,6 +85,18 @@ test('HOME task, floating Quick Note and named project preserve navigation and r
     await page.goBack();
     await expect(page).toHaveURL(/\/home$/);
 
+    await page.getByRole('button',{name:'Quick create'}).click();
+    const accountCreate=page.getByRole('dialog',{name:'Create in SalesShop'});
+    await accountCreate.getByRole('button',{name:/New Account/}).click();
+    await accountCreate.getByRole('textbox',{name:'Account / company name'}).fill('Batch 16G customer');
+    await accountCreate.getByRole('button',{name:'Create & open'}).click();
+    await expect(page).toHaveURL(/\/board\/accounts\//);
+    await expect(page.getByRole('button',{name:'Close account details'})).toBeVisible();
+    await page.getByRole('button',{name:'Close account details'}).click();
+    await expect(page).toHaveURL(/\/board$/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/home$/);
+
     const launcher=page.getByRole('button',{name:'Quick Note'});
     await launcher.last().click();
     await expect(page.getByRole('region',{name:'Private Quick Notes'}))
