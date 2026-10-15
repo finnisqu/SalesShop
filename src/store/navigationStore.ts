@@ -85,6 +85,7 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
   });
   const navigate=(view:AppView,patch:Partial<NavigationLocation>={})=>{
     let target:string|undefined;
+    let origin:string|undefined;
     set(state=>{
       const next:NavigationLocation={...snapshot(state),view,
         ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,focusedQuoteId:null,...patch};
@@ -92,6 +93,7 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
       const changed=Object.keys(current).some(key=>
         current[key as keyof NavigationLocation]!==next[key as keyof NavigationLocation]);
       if(!changed)return state;
+      origin=salesShopRoutePath(current);
       rememberView(view);
       rememberCatalogSection(next.catalogSection);
       target=salesShopRoutePath(next);
@@ -100,6 +102,10 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
     // The store remains the source of truth. History is a navigation affordance,
     // never an authorization mechanism.
     if(target && typeof window!=='undefined' && appRelativePath()!==target){
+      // The old SPA root has no route to restore on browser Back. Record its
+      // actual current workspace before leaving it, without adding a history step.
+      if(appRelativePath()==='/' && origin)
+        window.history.replaceState({salesShop:true},'',appPath(origin));
       window.history.pushState({salesShop:true},'',appPath(target));
     }
   };
@@ -123,7 +129,8 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
     },
     syncFromBrowser:()=>{
       if(typeof window==='undefined')return;
-      const parsed=parseSalesShopRoute(appRelativePath());
+      const path=appRelativePath();
+      const parsed=parseSalesShopRoute(path)??(path==='/'?{view:'home' as const}:null);
       if(!parsed)return;
       set(state=>{
         const next={...snapshot(state),ratesFocus:undefined,
@@ -156,7 +163,17 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
       useQuoteStore.getState().selectQuote(quoteId);
       navigate('quotes',{focusedQuoteId:quoteId});
     },
-    clearFocusedProject:()=>set({focusedProjectId:null}),
-    clearFocusedCompany:()=>set({focusedCompanyId:null}),
+    clearFocusedProject:()=>{
+      if(!get().focusedProjectId)return;
+      set({focusedProjectId:null});
+      if(typeof window!=='undefined'&&appRelativePath().startsWith('/board/projects/'))
+        window.history.replaceState({salesShop:true},'',appPath('/board'));
+    },
+    clearFocusedCompany:()=>{
+      if(!get().focusedCompanyId)return;
+      set({focusedCompanyId:null});
+      if(typeof window!=='undefined'&&appRelativePath().startsWith('/board/accounts/'))
+        window.history.replaceState({salesShop:true},'',appPath('/board'));
+    },
   };
 });
