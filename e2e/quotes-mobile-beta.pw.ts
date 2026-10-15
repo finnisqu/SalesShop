@@ -523,8 +523,19 @@ test('Previewed customer revision approval expires after a change before issue',
   await expect(review.getByRole('button',{name:'Issue quote · no message sent'})).toBeEnabled();
   await review.getByRole('button',{name:'Issue quote · no message sent'}).click();
   await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
+  await expect(review.locator('.qmb-issued-next')).toContainText('Quote issued successfully');
+  await expect(review.locator('.qmb-issued-next')).toContainText('No email or customer link was sent');
   await expect(review.locator('.quote-share-control.is-inline')
     .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');
+  // CI demo has no cloud credentials; the next action must NOT claim
+  // that a customer link exists or that anything has been delivered.
+  const handoff=review.getByRole('status',{name:'Quote delivery progress'});
+  await expect(handoff).toContainText('Issued · not yet delivered');
+  await expect(handoff.getByLabel('Issued completed')).toBeVisible();
+  await expect(handoff.getByLabel('Link created pending')).toBeVisible();
+  await expect(handoff.getByLabel('Delivery confirmed pending')).toBeVisible();
+  await expect(review.getByRole('region',{name:'Customer quote link'}))
+    .toContainText('Customer links are available when SalesShop is connected');
 });
 
 test('desktop Quote Review issues only a previewed and approved revision',async ({page},testInfo)=>{
@@ -561,6 +572,9 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
   await review.getByRole('button',{name:'Issue quote · no message sent'}).click();
   await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
+  await expect(review.locator('.qmb-issued-next')).toContainText('Quote issued successfully');
+  await expect(review.getByRole('status',{name:'Quote delivery progress'}))
+    .toContainText('Issued · not yet delivered');
   await expect(review.getByLabel('Customer document revision')).toContainText('$400.00');
   await expect(review.locator('.quote-share-control.is-inline')
     .getByRole('button',{name:/Customer link & sharing/})).toHaveAttribute('aria-expanded','true');

@@ -13,6 +13,7 @@ import { reviewItemsBlockingDirectShare } from '../services/quoteShareReadiness'
 import {shareMatchesQuoteRevision} from '../services/quoteDeliveryApproval';
 import {useCrmStore} from '../store/crmStore';
 import {confirmedQuoteDeliveries} from '../services/quoteDeliveryLifecycle';
+import {quoteHandoffStatus} from '../services/quoteHandoffStatus';
 import '../quote-share.css';
 
 function dateLabel(value: string | null) {
@@ -48,10 +49,13 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
   },[quote?.id,quote?.status,inline,autoOpenOnIssue]);
 
   useEffect(() => {
-    setOpen(false);
+    // Issued quotes reopen at their next *explicit* action, creating/sharing a
+    // secure link, even when Review is opened after a page refresh.
+    setOpen(Boolean(inline&&autoOpenOnIssue&&quote&&
+      ['Sent','Viewed','Signed'].includes(quote.status)));
     setShare(null);
     setError('');
-  }, [activeQuoteId]);
+  }, [activeQuoteId,inline,autoOpenOnIssue]);
 
   useEffect(() => {
     if (!open || !quote || mode !== 'cloud' || !organizationId) return;
@@ -130,6 +134,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
   const correctRevision=Boolean(share&&shareMatchesQuoteRevision(quote,share));
   const active = correctRevision&&(share?.status === 'active' || share?.status === 'signed');
   const deliveries=confirmedQuoteDeliveries(quote,activities);
+  const handoff=quoteHandoffStatus(quote,share,deliveries.length>0);
   const reviewedItemsNeedingIssue=reviewItemsBlockingDirectShare(quote);
   const creationReady=allowCreation&&reviewedItemsNeedingIssue===0;
 
@@ -155,6 +160,23 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
             <button type="button" onClick={() => setOpen(false)} aria-label="Close customer link panel">×</button>
           </header>
 
+          {(!cloudReady||!loading)&&<div className="quote-handoff-status" role="status" aria-label="Quote delivery progress">
+                <strong>{handoff.headline}</strong>
+                <p>{handoff.detail}</p>
+                <div className="quote-handoff-milestones" aria-label="Delivery milestones">
+                  {([
+                    ['Issued',handoff.issued],
+                    ['Link created',handoff.linkCreated],
+                    ['Delivery confirmed',handoff.deliveryConfirmed],
+                    ['Viewed',handoff.viewed],
+                    ['Signed',handoff.signed],
+                  ] as const).map(([label,reached])=>
+                    <span key={label} className={reached?'is-complete':'is-pending'}
+                      aria-label={label+(reached?' completed':' pending')}>
+                      <span aria-hidden="true">{reached?'✓':'○'}</span> {label}
+                    </span>)}
+                </div>
+              </div>}
           {!cloudReady ? (
             <p className="quote-share-message">Customer links are available when SalesShop is connected to your Cloud workspace.</p>
           ) : loading ? (
@@ -175,7 +197,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
                     ?<p className="quote-share-review-needed">This quote has {reviewedItemsNeedingIssue} review {reviewedItemsNeedingIssue===1?'item':'items'} to acknowledge. Issue it from Review first; then create the customer link here.</p>
                     :!allowCreation&&<p className="quote-share-review-needed">Recheck and complete Review before creating a new customer link.</p>}
                   <button type="button" onClick={() => void makeLink(false)} disabled={working || !creationReady || quote.status === 'Declined' || quote.status === 'Expired'}>
-                    {working ? 'Creating…' : 'Create customer link'}
+                    {working ? 'Creating…' : 'Create secure customer link'}
                   </button>
                 </div>
               )}
@@ -201,10 +223,11 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
                         <span>Secure customer URL</span>
                         <input readOnly value={url} onFocus={(event) => event.currentTarget.select()} />
                       </label>
-                      <div className="quote-share-primary-actions">
+                      <div className="quote-share-primary-actions" aria-label="Customer link actions">
                         <button type="button" className="primary" onClick={() => void nativeShare()}>Share…</button>
                         <button type="button" onClick={() => void copy()}>{copied ? 'Copied ✓' : 'Copy link'}</button>
                       </div>
+                      <small>Sharing or copying a link is not proof of delivery. Confirm receipt separately below.</small>
                     </>
                   )}
 

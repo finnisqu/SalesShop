@@ -222,3 +222,55 @@
   .qmb .qmb-delivery-step-title{gap:5px}
   .qmb .qmb-delivery-step-title>small{font-size:9px}
 }
+
+/* Post-issue handoff keeps five distinct facts rather than conflating the
+   existence of a link, a seller's delivery confirmation and customer activity. */
+.qmb .qmb-audit-delivery[data-review-delivery]{scroll-margin-top:15px}
+.qmb .qmb-issued-next{
+ display:grid;gap:5px;padding:13px;border:1px solid var(--qmb-accent);
+ border-radius:11px;background:var(--qmb-tint);color:var(--qmb-ink)
+}
+.qmb .qmb-issued-next strong{font-size:14px}
+.qmb .qmb-issued-next p{margin:0;font-size:11px;line-height:1.55;color:var(--qmb-muted)}
+.qmb .quote-share-control.is-inline .quote-handoff-status{
+ margin:12px 12px 0;padding:12px;border:1px solid var(--qmb-border);
+ border-radius:9px;background:var(--qmb-tint);color:var(--qmb-ink);
+ display:grid;gap:7px
+}
+.qmb .quote-handoff-status>strong{font-size:13px}
+.qmb .quote-handoff-status>p{font-size:11px;line-height:1.55;color:var(--qmb-muted);margin:0}
+.qmb .quote-handoff-milestones{
+ display:flex;gap:6px;align-items:center;flex-wrap:wrap
+}
+.qmb .quote-handoff-milestones>span{
+ display:inline-flex;gap:5px;align-items:center;padding:5px 7px;
+ border-radius:7px;border:1px solid var(--qmb-border);
+ font-size:10px;font-weight:750;line-height:1.35;
+ background:var(--qmb-card);color:var(--qmb-muted)
+}
+.qmb .quote-handoff-milestones>span.is-complete{
+ border-color:var(--qmb-accent);color:var(--qmb-accent)
+}
+.qmb .quote-share-control.is-inline .quote-share-empty>button{
+ width:100%;min-height:44px;border-radius:10px;
+ background:var(--qmb-accent);color:var(--qmb-on-accent);
+ border-color:var(--qmb-accent);font-weight:850
+}
+.qmb .quote-share-control.is-inline .quote-share-primary-actions{display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.qmb .quote-share-control.is-inline .quote-share-primary-actions button{
+ min-width:0;min-height:44px;border-radius:9px;font-weight:800
+}
+.qmb .quote-share-control.is-inline .quote-share-primary-actions .primary{
+ background:var(--qmb-accent);border-color:var(--qmb-accent);
+ color:var(--qmb-on-accent)
+}
+.qmb .quote-share-control.is-inline .quote-share-primary-actions button:not(.primary){
+ background:var(--qmb-card);border-color:var(--qmb-border);
+ color:var(--qmb-accent)
+}
+@media(max-width:350px){
+ .qmb .quote-share-control.is-inline .quote-share-primary-actions{
+  grid-template-columns:minmax(0,1fr)
+ }
+}
