@@ -40,9 +40,17 @@ test('Quick Quote customer chip edits name, contact and email without navigation
   await beta.getByRole('button',{name:/Done · Quote/}).click();
   await expect(customer).toContainText('Taylor Residence');
 
+  // The portal must inherit the company's palette, even though it mounts on <body>.
+  await page.evaluate(()=>document.documentElement.setAttribute('data-sales-theme','dark'));
   await customer.click();
   editor=page.getByRole('dialog',{name:'Quick customer details'});
   await expect(editor.getByRole('textbox',{name:'Contact email'})).toHaveValue('taylor@example.com');
+  const theme=await editor.evaluate(node=>({
+    background:getComputedStyle(node).backgroundColor,
+    color:getComputedStyle(node).color,
+  }));
+  expect(theme.background).toBe('rgb(48, 61, 70)');
+  expect(theme.color).toBe('rgb(246, 243, 234)');
   await page.keyboard.press('Escape');
   await expect(editor).toHaveCount(0);
 
