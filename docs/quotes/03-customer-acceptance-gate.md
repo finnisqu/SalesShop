@@ -8,7 +8,8 @@
 - Active links whose expiration timestamp is in the past are explicitly **Expired**, with a prominent **Create new link** action.
 - Expired URLs do not appear in the copy/share controls; a replacement is necessary before delivery.
 - Signed receipt links remain usable past their original expiry because the public quote endpoint intentionally keeps signed receipts accessible.
-- Revoked links and links for earlier revisions stay unshareable.
+- Revoked links, links for earlier revisions, and links belonging to **another quote** stay unshareable even if their revision numbers happen to match.
+- Late link-creation responses are ignored if the user switched to another quote while the network request was pending.
 - Link creation, copied URLs, delivery attestation, customer views, and signature remain independent states. No user action here auto-attests delivery.
 
 Unit regressions: `src/services/quoteHandoffStatus.test.ts`. App integration: `src/components/QuoteShareControl.tsx`.
