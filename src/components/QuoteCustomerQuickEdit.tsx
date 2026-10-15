@@ -21,6 +21,21 @@ export function QuoteCustomerQuickEdit({quote,editable,onClose,onDetails}:{
         event.preventDefault();
         onCloseRef.current();
       }
+      if(event.key==='Tab'){
+        const buttons=dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]',
+        );
+        const focusable=Array.from(buttons??[]).filter(node=>node.getClientRects().length>0);
+        if(!focusable.length)return;
+        const first=focusable[0],last=focusable[focusable.length-1];
+        if(event.shiftKey&&(document.activeElement===first
+          ||!dialogRef.current?.contains(document.activeElement))){
+          event.preventDefault();last.focus();
+        }else if(!event.shiftKey&&(document.activeElement===last
+          ||!dialogRef.current?.contains(document.activeElement))){
+          event.preventDefault();first.focus();
+        }
+      }
     };
     document.addEventListener('keydown',handleKey);
     return ()=>{
