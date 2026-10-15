@@ -8,7 +8,7 @@ describe('18E links and issue are distinct, client + Edge',()=>{
     expect(service).toContain('customerShareCreationBlocker(quote)');
     expect(service).not.toContain('state.recordSent(');
     expect(service).toContain('assertCurrentQuoteRevision');
-    expect(service).toContain('share.quoteId!==quote.id||share.revision!==quote.revision');
+    expect(service).toContain('response.share.quoteId!==quote.id||response.share.revision!==quote.revision');
   });
   it('service-role edge requires an issued status as well as exact frozen revision',()=>{
     const edge=code('supabase/functions/quote-share-admin/index.ts');
