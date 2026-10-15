@@ -160,6 +160,8 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
     ...clone,
     id: id('page'),
     title: `${source.title || 'Untitled page'} copy`,
+    // A copy is a regular page; only the original may be the global Post-it inbox.
+    isPostItInbox: false,
     favorite: false,
     openAtStart: false,
     hidden: false,
