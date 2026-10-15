@@ -38,9 +38,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - name: Install exact dependencies
-        run: npm ci
+      - name: Install dependencies
+        run: npm install
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: HOME and Deal record navigation (phone and desktop)
