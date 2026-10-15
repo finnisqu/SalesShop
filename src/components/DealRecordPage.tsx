@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import { ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { dealRecordView } from '../services/dealRecordView';
+import { PrivateDealContactRoles } from './PrivateDealContactRoles';
 import { PROJECT_STAGES, type ProjectStage } from '../types/crm';
 import { quoteTotal, displayQuoteNumber } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
@@ -151,6 +152,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           {!related.quoteContacts.length && <p className="connections-record-empty">No quote contacts linked yet.</p>}
         </div>
       </RecordCard>
+      <PrivateDealContactRoles dealId={deal.id} contacts={contacts} quotes={related.linkedQuotes} />
       <section className="connections-record-panel connections-record-history">
         <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
           onClick={() => setHistoryOpen(value => !value)}>

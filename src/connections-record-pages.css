@@ -416,3 +416,30 @@
   :root[data-sales-theme] .sales-app.view-dashboard .connections-directory .connections-record{transition:none}
   .sales-app.view-dashboard .connections-record-entity-list button:active{transform:none}
 }
+
+/* Batch 17G — private Deal role editor, secondary to quote contacts. */
+.sales-app.view-dashboard .connections-private-role-list{
+  display:grid;gap:10px;
+}
+.sales-app.view-dashboard .connections-private-role-row{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:7px;
+  padding:10px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:8px;background:var(--ss-connections-tint,var(--ss-surface));
+}
+.sales-app.view-dashboard .connections-private-role-row>span{
+  display:flex;flex-direction:column;gap:4px;min-width:0;
+}
+.sales-app.view-dashboard .connections-private-role-row strong{
+  font-size:13px;color:var(--ss-connections-ink,var(--ss-text));overflow-wrap:anywhere;
+}
+.sales-app.view-dashboard .connections-private-role-row small{
+  font-size:11px;color:var(--ss-connections-muted,var(--ss-text-muted));
+}
+.sales-app.view-dashboard .connections-private-role-row select{
+  display:block;width:100%;min-height:44px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:7px;padding:8px 9px;background:var(--ss-connections-card,var(--ss-surface-raised));
+  color:var(--ss-connections-ink,var(--ss-text));font:inherit;font-size:13px;
+}
+.sales-app.view-dashboard .connections-record-error{
+  color:var(--ss-danger,#ad4242);font-size:12px;
+}

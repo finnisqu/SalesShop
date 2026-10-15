@@ -1,0 +1,45 @@
+name: Private Deal Role RLS SQL QC
+
+on:
+  pull_request:
+    branches:
+      - architecture/react-foundation
+    paths:
+      - 'supabase/migrations/20261015173000_private_deal_contact_roles.sql'
+      - 'tests/security/private_deal_roles_*.sql'
+      - '.github/workflows/private-deal-roles-qc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-deal-roles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable_test_only
+          POSTGRES_DB: deal_roles_rls_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d deal_roles_rls_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Execute private Deal role RLS matrix in disposable Postgres
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: disposable_test_only
+          PGDATABASE: deal_roles_rls_test
+        run: psql -v ON_ERROR_STOP=1 -f tests/security/private_deal_roles_bootstrap.sql
