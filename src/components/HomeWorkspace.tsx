@@ -52,10 +52,10 @@ export function HomeWorkspace(){
   useEffect(()=>loadTasks(myTaskScope),[loadTasks,myTaskScope]);
 
   // Private home deliberately refuses unattributed legacy team records.
-  const mine=useMemo(()=>personalHomeQuotes(quotes,userId,isCloud),[quotes,userId,isCloud]);
+  const mine=useMemo(()=>rolePreview?[]:personalHomeQuotes(quotes,userId,isCloud),[quotes,userId,isCloud,rolePreview]);
   const attention=useMemo(()=>homeQuoteAttention(mine,activities),[mine,activities]);
   const recent=useMemo(()=>homeRecentQuotes(mine),[mine]);
-  const myTasks=storedScope===myTaskScope?storedTasks:[];
+  const myTasks=!rolePreview&&storedScope===myTaskScope?storedTasks:[];
   const agenda=useMemo(()=>buildHomeAgenda(myTasks,attention),[myTasks,attention]);
   const month=useMemo(()=>homeMonthlyMetrics(mine),[mine]);
   const create= (event:FormEvent)=>{
