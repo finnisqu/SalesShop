@@ -44,12 +44,8 @@ export function quoteHandoffStatus(
     detail='Issuing freezes the revision. It does not create a link, send a message or confirm delivery.';
   }
   if(linkCreated){
-    headline=linkRevoked?'Customer link revoked':linkExpired?'Customer link expired':'Customer link created';
-    detail=linkRevoked
-      ?'This link is revoked. Create a new link before sharing.'
-      :linkExpired
-      ?'This customer link has expired and can no longer be opened. Create a new link before sharing.'
-      :'A link exists for this revision, but delivery has not been confirmed.';
+    headline='Customer link created';
+    detail='A link exists for this revision, but delivery has not been confirmed.';
   }
   if(deliveryConfirmed){
     headline='Delivery confirmed';
@@ -66,6 +62,15 @@ export function quoteHandoffStatus(
     detail=deliveryConfirmed
       ?'The customer signed the issued revision; delivery was also confirmed.'
       :'The customer signed the issued revision. No separate manual delivery confirmation was recorded.';
+  }
+  // An unusable URL is the seller's current action, even if it was viewed,
+  // manually delivered, or signed earlier. Historical milestones are retained.
+  if(linkRevoked){
+    headline='Customer link revoked';
+    detail='This link is revoked. Create a new link before sharing.';
+  }else if(linkExpired){
+    headline='Customer link expired';
+    detail='This customer link has expired and can no longer be opened. Create a new link before sharing.';
   }
   return {issued,linkCreated,deliveryConfirmed,viewed,signed:Boolean(signed),
     linkRevoked:Boolean(linkRevoked),linkExpired:Boolean(linkExpired),linkUsable,headline,detail};
