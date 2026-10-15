@@ -1,0 +1,48 @@
+name: Supabase Staging Privacy Role Matrix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never trigger automatically from push/PR: staging secrets are only for a
+# manually approved isolated Supabase project with disposable accounts/data.
+jobs:
+  role-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: sales-shop-privacy-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Validate real signed-in users, direct RLS and Shop Outcomes
+        env:
+          STAGING_RELEASE_ACK: disposable-auth-fixtures
+          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          STAGING_ORG_ID: ${{ secrets.STAGING_ORG_ID }}
+          STAGING_OWNER_EMAIL: ${{ secrets.STAGING_OWNER_EMAIL }}
+          STAGING_OWNER_PASSWORD: ${{ secrets.STAGING_OWNER_PASSWORD }}
+          STAGING_ADMIN_EMAIL: ${{ secrets.STAGING_ADMIN_EMAIL }}
+          STAGING_ADMIN_PASSWORD: ${{ secrets.STAGING_ADMIN_PASSWORD }}
+          STAGING_SALESPERSON_A_EMAIL: ${{ secrets.STAGING_SALESPERSON_A_EMAIL }}
+          STAGING_SALESPERSON_A_PASSWORD: ${{ secrets.STAGING_SALESPERSON_A_PASSWORD }}
+          STAGING_SALESPERSON_B_EMAIL: ${{ secrets.STAGING_SALESPERSON_B_EMAIL }}
+          STAGING_SALESPERSON_B_PASSWORD: ${{ secrets.STAGING_SALESPERSON_B_PASSWORD }}
+          STAGING_VIEWER_EMAIL: ${{ secrets.STAGING_VIEWER_EMAIL }}
+          STAGING_VIEWER_PASSWORD: ${{ secrets.STAGING_VIEWER_PASSWORD }}
+          STAGING_OUTSIDER_EMAIL: ${{ secrets.STAGING_OUTSIDER_EMAIL }}
+          STAGING_OUTSIDER_PASSWORD: ${{ secrets.STAGING_OUTSIDER_PASSWORD }}
+          STAGING_PRIVATE_QUOTE_A: ${{ secrets.STAGING_PRIVATE_QUOTE_A }}
+          STAGING_PRIVATE_QUOTE_B: ${{ secrets.STAGING_PRIVATE_QUOTE_B }}
+          STAGING_SHARED_QUOTE_A: ${{ secrets.STAGING_SHARED_QUOTE_A }}
+          STAGING_PRIVATE_COMPANY_A: ${{ secrets.STAGING_PRIVATE_COMPANY_A }}
+          STAGING_PRIVATE_CONTACT_A: ${{ secrets.STAGING_PRIVATE_CONTACT_A }}
+          STAGING_PRIVATE_PROJECT_A: ${{ secrets.STAGING_PRIVATE_PROJECT_A }}
+          STAGING_PRIVATE_ACTIVITY_A: ${{ secrets.STAGING_PRIVATE_ACTIVITY_A }}
+          STAGING_SIGNED_SIGNATURE_ID: ${{ secrets.STAGING_SIGNED_SIGNATURE_ID }}
+        run: node scripts/security/staging-role-matrix.mjs
