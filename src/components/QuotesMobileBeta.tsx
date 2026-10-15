@@ -84,7 +84,7 @@ function AppMenu() {
       onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
     <details className="qmb-appnav"><summary aria-label="Open SalesShop navigation">☰</summary>
     <nav aria-label="SalesShop destinations">
-      {([['notebook','Notebook'],['board','Board'],['quotes','Quotes'],['catalog','Catalog'],['dashboard','Connections'],['settings','Settings']] as const).map(([id,name])=>
+      {([['home','Home'],['quotes','Quotes'],['board','Board'],['dashboard','Connections'],['notebook','Notebook'],['catalog','Catalog'],['settings','Settings']] as const).map(([id,name])=>
         <button type="button" key={id} onClick={()=>setView(id)}>{name}</button>)}
     </nav>
     </details>
