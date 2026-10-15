@@ -23,7 +23,7 @@ const piece=(id:string,lengthIn:number,widthIn:number,backsplash=false):QuoteTak
 });
 const material=(id:string,cost:number):QuoteLineMaterialReference=>({
   stockProgram:true,pricingSource:'manual-line-rate',sourceSlabCost:cost,
-  snapshot:{capturedAt:now,materialId:id,materialName:'Quartz '+id,materialType:'Quartz',
+  snapshot:{capturedAt:now,materialId:id,materialName:'Quartz '+id,materialType:'Quartz',stockProgram:true,
     areaSf:50,slabCost:cost},
 });
 const sink=(id:string,name:string,price:number,cost:number,kind:'kitchen'|'vanity'):QuoteTakeoffSink=>({
