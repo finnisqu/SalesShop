@@ -65,6 +65,7 @@ import { useCompanySettingsStore } from './store/companySettingsStore';
 import { useCrmStore } from './store/crmStore';
 import { useNavigationStore } from './store/navigationStore';
 import { useNotebookStore } from './store/notebookStore';
+import {useQuoteStore} from './store/quoteStore';
 
 function App() {
   const view = useNavigationStore((state) => state.view);
@@ -90,6 +91,9 @@ function App() {
     (view === 'catalog' && !(catalogSection === 'suppliers' && canEditTeamArea(effectiveRole, effectiveDepartment, 'supplier')))
   ));
   const setView = useNavigationStore((state) => state.setView);
+  const syncFromBrowser = useNavigationStore((state)=>state.syncFromBrowser);
+  const routeQuoteId=useNavigationStore((state)=>state.focusedQuoteId);
+  const quotesHydrated=useQuoteStore((state)=>state.hydrated);
   const openProject = useNavigationStore((state) => state.openProject);
   const hydrate = useNotebookStore((state) => state.hydrate);
   const hydrateCrm = useCrmStore((state) => state.hydrate);
@@ -106,6 +110,24 @@ function App() {
     hydrateCrm();
     void hydrateSettings();
   }, [hydrate, hydrateCrm, hydrateSettings]);
+
+  // Browser back/forward updates the same store used by internal navigation.
+  useEffect(()=>{
+    window.addEventListener('popstate',syncFromBrowser);
+    return()=>window.removeEventListener('popstate',syncFromBrowser);
+  },[syncFromBrowser]);
+
+  // Deep-linked quotes are selected only after the user's own authorized
+  // quote store has hydrated. Missing or inaccessible IDs stay unselected.
+  useEffect(()=>{
+    if(view!=='quotes'||!routeQuoteId)return;
+    const store=useQuoteStore.getState();
+    if(!store.hydrated)store.hydrate();
+    const current=useQuoteStore.getState();
+    if(current.quotes.some(q=>q.id===routeQuoteId)&&current.activeQuoteId!==routeQuoteId){
+      current.selectQuote(routeQuoteId);
+    }
+  },[view,routeQuoteId,quotesHydrated]);
 
   // Appearance is per device, but the default palette follows the active company.
   // The membership RLS lets all teammates read the default; only admins update it.
@@ -125,6 +147,7 @@ function App() {
       <header className="app-header">
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
         <nav className="app-tabs" aria-label="SalesShop sections">
+          <button className={`app-tab ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>Home</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Connections</button>
@@ -147,6 +170,9 @@ function App() {
         <RolePerspectiveSettings />
       ) : readOnlyArea && view !== 'notebook' && view !== 'settings' ? (
         <ViewerWorkspace section={view} previewRole={effectiveRole} previewDepartment={effectiveDepartment} />
+      ) : view === 'home' ? (
+        <main className="sales-home-workspace"><h1>Today</h1><p>Start with the work that matters.</p>
+          <button type="button" onClick={()=>setView('quotes')}>Open Quotes</button></main>
       ) : view === 'board' ? (
         <Board />
       ) : view === 'quotes' ? (
