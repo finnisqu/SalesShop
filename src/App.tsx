@@ -47,6 +47,7 @@ import { canEditTeamArea } from './services/teamDepartments';
 import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
 import { Connections } from './components/Connections';
+import {HomeWorkspace} from './components/HomeWorkspace';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
 import { MobileAppChrome } from './components/MobileAppChrome';
@@ -171,8 +172,7 @@ function App() {
       ) : readOnlyArea && view !== 'notebook' && view !== 'settings' ? (
         <ViewerWorkspace section={view} previewRole={effectiveRole} previewDepartment={effectiveDepartment} />
       ) : view === 'home' ? (
-        <main className="sales-home-workspace"><h1>Today</h1><p>Start with the work that matters.</p>
-          <button type="button" onClick={()=>setView('quotes')}>Open Quotes</button></main>
+        <HomeWorkspace />
       ) : view === 'board' ? (
         <Board />
       ) : view === 'quotes' ? (
