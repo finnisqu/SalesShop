@@ -1,5 +1,5 @@
 import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
-import type { NotebookDocument, NotebookEntry, PageTone, PaperStyle, PaperTexture } from '../types/notebook';
+import type { NotebookDocument, NotebookEntry, TrashedNotebookEntry, PageTone, PaperStyle, PaperTexture } from '../types/notebook';
 
 export interface NotebookRepository {
   load(): NotebookDocument | null;
@@ -28,7 +28,7 @@ function migrateEntry(entry: Partial<NotebookEntry> & Pick<NotebookEntry, 'id' |
 
 function migrateDocument(raw: unknown): NotebookDocument | null {
   if (!raw || typeof raw !== 'object') return null;
-  const candidate = raw as { schemaVersion?: number; entries?: unknown[]; activeEntryId?: string | null };
+  const candidate = raw as { schemaVersion?: number; entries?: unknown[]; activeEntryId?: string | null; trashedEntries?: unknown[] };
   if (!Array.isArray(candidate.entries)) return null;
 
   if ([1, 2, 3].includes(candidate.schemaVersion ?? 0)) {
@@ -36,6 +36,14 @@ function migrateDocument(raw: unknown): NotebookDocument | null {
       schemaVersion: 3,
       entries: candidate.entries.map((entry) => migrateEntry(entry as NotebookEntry)),
       activeEntryId: candidate.activeEntryId ?? null,
+      trashedEntries: Array.isArray(candidate.trashedEntries)
+        ?candidate.trashedEntries.filter((value):value is TrashedNotebookEntry=>{
+          if(!value||typeof value!=='object')return false;
+          const item=value as Partial<TrashedNotebookEntry>;
+          return typeof item.deletedAt==='string'&&typeof item.entry?.id==='string'
+            &&Number.isFinite(Date.parse(item.deletedAt))
+            &&Date.now()-Date.parse(item.deletedAt)<7*24*60*60*1000;
+        }).map(value=>({entry:migrateEntry(value.entry),deletedAt:value.deletedAt})) : [],
     };
   }
   return null;
