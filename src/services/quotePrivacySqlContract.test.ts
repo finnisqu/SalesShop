@@ -46,7 +46,7 @@ describe('Batch 14B staged quote privacy RLS contract (not live-deployed)',()=>{
   it('permits ONLY audited admin assignment of genuinely unowned legacy quotes',()=>{
     const assign=section('create or replace function public.assign_unowned_quote','revoke all on function public.assign_unowned_quote');
     expect(assign).toContain("m.role in ('owner','admin')");
-    expect(assign).toContain("m.role in ('owner','admin','member')");
+    expect(assign).toContain("m.job_function in ('general','salesperson','estimator')");
     expect(assign).toContain('actor uuid := auth.uid()');
     expect(assign).toContain('owner_user_id is null');
     expect(assign).toContain('insert into private.quote_recovery_assignments');
