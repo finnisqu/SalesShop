@@ -73,14 +73,14 @@ export function QuickCreate() {
       <section className="quick-create-sheet" role="dialog" aria-modal="true" aria-label="Create in SalesShop">
         <div className="quick-create-handle" aria-hidden="true" />
         <header className="quick-create-header">
-          <div><span>Quick create</span><strong>{namedMode ? `New ${namedMode}` : 'What are you working on?'}</strong></div>
+          <div><span>Quick create</span><strong>{namedMode ? `New ${namedMode === 'project' ? 'deal' : 'account'}` : 'What are you working on?'}</strong></div>
           <button type="button" onClick={close} aria-label="Close quick create">×</button>
         </header>
 
         {namedMode ? (
           <form className="quick-create-name-form" onSubmit={submitNamedCreate}>
             <label>
-              <span>{namedMode === 'project' ? 'Project name' : 'Account / company name'}</span>
+              <span>{namedMode === 'project' ? 'Deal name' : 'Account / company name'}</span>
               <input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : 'e.g. DeVane Builders'} />
             </label>
             <div>
@@ -101,7 +101,7 @@ export function QuickCreate() {
               <b>›</b>
             </button>
             <div className="quick-create-divider" />
-            <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('project')}><span className="quick-create-icon">P</span><span><strong>New Project</strong><small>Add an opportunity or job.</small></span><b>›</b></button>
+            <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('project')}><span className="quick-create-icon">D</span><span><strong>New Deal</strong><small>Add an opportunity or job.</small></span><b>›</b></button>
             <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('account')}><span className="quick-create-icon">A</span><span><strong>New Account</strong><small>Add a builder, customer, or prospect.</small></span><b>›</b></button>
             <button type="button" className="quick-create-option compact" onClick={makeNotebookPage}><span className="quick-create-icon">N</span><span><strong>New Notebook Page</strong><small>Capture the thought first.</small></span><b>›</b></button>
           </div>

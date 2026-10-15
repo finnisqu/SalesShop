@@ -253,3 +253,22 @@
   font:700 16px/1.3 var(--ss-font-editorial,Georgia,serif);
   color:var(--ss-connections-ink,var(--ss-text));overflow-wrap:anywhere;
 }
+
+/* Deal record editing and optional Board history disclosure. */
+.sales-app.view-dashboard .connections-record-edit-form textarea{
+  min-height:88px;min-width:0;width:100%;box-sizing:border-box;resize:vertical;
+  border:1px solid var(--ss-connections-border,var(--ss-border));border-radius:7px;
+  padding:9px;background:var(--ss-connections-tint,var(--ss-surface));
+  color:var(--ss-connections-ink,var(--ss-text));font:inherit;font-size:14px;
+}
+.sales-app.view-dashboard .connections-record-edit-form :is(input,select,textarea):focus-visible{
+  outline:3px solid var(--ss-focus,var(--ss-accent));outline-offset:2px;
+}
+.sales-app.view-board .project-activity-panel > summary{
+  cursor:pointer;min-height:44px;display:flex;align-items:center;
+  font-weight:750;font-size:12px;padding:10px 12px;
+}
+.sales-app.view-board .project-activity-panel:not([open]) > :not(summary){display:none}
+@media(max-width:700px){
+  .sales-app.view-dashboard .connections-record-edit-form textarea{font-size:16px}
+}

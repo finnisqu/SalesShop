@@ -15,9 +15,11 @@ export function RecordProperty({ label, children }: { label: string; children: R
 
 /** Reusable entity record shell: one scroll surface, three responsive information regions. */
 export function RecordPageLayout({
-  entityType, title, subtitle, badge, actions, onBack, left, center, right,
+  entityType, recordTypeLabel, collectionLabel, title, subtitle, badge, actions, onBack, left, center, right,
 }: {
   entityType: 'company' | 'person' | 'project';
+  recordTypeLabel?: string;
+  collectionLabel?: string;
   title: string;
   subtitle?: ReactNode;
   badge?: ReactNode;
@@ -31,13 +33,13 @@ export function RecordPageLayout({
     <nav className="connections-record-breadcrumb" aria-label="Breadcrumb">
       <button type="button" onClick={onBack}>← Connections</button>
       <span aria-hidden="true">/</span>
-      <button type="button" onClick={onBack}>{entityType === 'company' ? 'Companies' : entityType === 'person' ? 'People' : 'Projects'}</button>
+      <button type="button" onClick={onBack}>{collectionLabel ?? (entityType === 'company' ? 'Companies' : entityType === 'person' ? 'People' : 'Deals')}</button>
       <span aria-hidden="true">/</span>
       <span aria-current="page">{title}</span>
     </nav>
     <header className="connections-record-header">
       <div className="connections-record-heading">
-        <span className="connections-record-type">{entityType}</span>
+        <span className="connections-record-type">{recordTypeLabel ?? (entityType === 'project' ? 'Deal' : entityType)}</span>
         <h1>{title}</h1>
         {subtitle && <p>{subtitle}</p>}
         {badge && <div className="connections-record-badges">{badge}</div>}

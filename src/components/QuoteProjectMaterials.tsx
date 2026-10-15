@@ -11,8 +11,8 @@ export function QuoteProjectMaterials({quote}:{quote:Quote}){
   const [open,setOpen]=useState(false);
   const editable=quoteIsCommerciallyEditable(quote);
   const materials=quote.projectMaterials??[];
-  return <section className="quote-project-materials" aria-label="Project Materials">
-    <div className="quote-project-materials-heading"><div><strong>★ Project materials</strong>
+  return <section className="quote-project-materials" aria-label="Deal Materials">
+    <div className="quote-project-materials-heading"><div><strong>★ Deal materials</strong>
       <span>{materials.length} pinned · automatically suggested in material pickers</span></div>
       <button type="button" aria-expanded={open} onClick={()=>setOpen(x=>!x)}>
         {open?'Done':materials.length?'Edit materials':'+ Add material'}
@@ -25,7 +25,7 @@ export function QuoteProjectMaterials({quote}:{quote:Quote}){
     </div>}
     {open&&editable&&<form onSubmit={e=>{e.preventDefault();if(name.trim()){pin(quote.id,name);setName('');}}}>
       <input value={name} maxLength={300} onChange={e=>setName(e.target.value)}
-        aria-label="Material to pin" placeholder="Type a material or color to pin for this project"/>
+        aria-label="Material to pin" placeholder="Type a material or color to pin for this deal"/>
       <button type="submit">+ Pin</button>
     </form>}
   </section>;

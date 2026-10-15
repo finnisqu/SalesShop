@@ -693,7 +693,7 @@ function StandardCustomerPreview({ quote, editing }: { quote: Quote; editing?: C
   return (
     <article className="customer-quote-paper">
       <header className="customer-quote-letterhead"><div><CustomerDocumentBrand /><strong>{documentLabel.toUpperCase()}</strong></div><dl><div><dt>Document</dt><dd>{displayQuoteNumber(quote)}</dd></div><div><dt>Date</dt><dd>{quote.quoteDate}</dd></div></dl></header>
-      <section className="customer-quote-recipient"><div><span>Prepared for</span><strong>{quote.companyName || quote.contactName || 'Customer'}</strong>{quote.contactName && quote.companyName && <p>{quote.contactName}</p>}{quote.address && <p>{quote.address}</p>}</div><div><span>Project</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div></section>
+      <section className="customer-quote-recipient"><div><span>Prepared for</span><strong>{quote.companyName || quote.contactName || 'Customer'}</strong>{quote.contactName && quote.companyName && <p>{quote.contactName}</p>}{quote.address && <p>{quote.address}</p>}</div><div><span >Deal</span><strong>{quote.title}</strong>{quote.revisionLabel && <p>{quote.revisionLabel}</p>}</div></section>
       <h2 className="customer-quote-scope-heading">Scope &amp; pricing</h2>
       <div className={`customer-quote-table columns-q${Number(quote.customerColumns.quantity)}-r${Number(quote.customerColumns.rate)}-a${Number(quote.customerColumns.lineAmount)}`}>
         <div className="customer-quote-row customer-quote-table-head"><div>Description</div>{quote.customerColumns.quantity&&<div>Qty</div>}{quote.customerColumns.rate&&<div>Rate</div>}{quote.customerColumns.lineAmount&&<div>Amount</div>}</div>
@@ -1013,7 +1013,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
             <span className="quote-mobile-menu-heading">Quote setup</span>
             <div className="quote-mobile-setup-grid">
               <button type="button" onClick={() => { setMetaPanel('document'); setMobileMenu(null); }}><strong>Document</strong><small>{setupTypeLabel} · {quote.status}</small></button>
-              <button type="button" onClick={() => { setMetaPanel('project'); setMobileMenu(null); }}><strong>Project</strong><small>{projectDetailsSummary || 'Customer & project'}</small></button>
+              <button type="button" onClick={() => { setMetaPanel('project'); setMobileMenu(null); }}><strong >Deal</strong><small>{projectDetailsSummary || 'Customer & deal'}</small></button>
               {!pricingSchedule && <button type="button" onClick={() => { setMetaPanel('visibility'); setMobileMenu(null); }}><strong>Visibility</strong><small>{customerVisibilitySummary}</small></button>}
             </div>
           </div>
@@ -1122,8 +1122,8 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
                 <small>{setupTypeLabel} · {quote.status} · {setupDateLabel}</small>
               </button>
               <button type="button" className={metaPanel === 'project' ? 'active' : ''} aria-expanded={metaPanel === 'project'} aria-controls="quote-setup-project" onClick={() => setMetaPanel((current) => current === 'project' ? null : 'project')}>
-                <span>Project details</span>
-                <small>{projectDetailsSummary || 'Project · customer · contact'}</small>
+                <span>Deal details</span>
+                <small>{projectDetailsSummary || 'Deal · customer · contact'}</small>
               </button>
               {!pricingSchedule && <button type="button" className={metaPanel === 'visibility' ? 'active' : ''} aria-expanded={metaPanel === 'visibility'} aria-controls="quote-setup-visibility" onClick={() => setMetaPanel((current) => current === 'visibility' ? null : 'visibility')}>
                 <span>Customer visibility</span>
@@ -1151,7 +1151,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
               </div>}
 
               {metaPanel === 'project' && <div id="quote-setup-project" className="quote-config-popover is-project">
-                <div className="quote-config-popover-heading"><strong>Project details</strong><small>CRM links and project context stay tucked away after selection.</small></div>
+                <div className="quote-config-popover-heading"><strong>Project details</strong><small>CRM links and deal context stay tucked away after selection.</small></div>
                 <div className="quote-project-details-grid">
                   <QuoteCrmFields quote={quote} />
                   <QuoteRevisionLabelField value={quote.revisionLabel ?? ''}

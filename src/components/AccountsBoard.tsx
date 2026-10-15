@@ -120,7 +120,7 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
         {company.kind === 'customer' && (
           <section className="account-editor-section account-volume-section">
             <header><strong>Annual account forecast</strong><span>Relationship-level</span></header>
-            <p className="account-forecast-help">Use this for recurring builder volume that is bigger than any one project or community.</p>
+            <p className="account-forecast-help">Use this for recurring builder volume that is bigger than any one deal or community.</p>
             <div className="account-forecast-inputs">
               <label><span>Homes / units per year</span><input type="number" min="0" step="1" value={company.annualUnits ?? ''} onChange={(event) => updateCompany(company.id, { annualUnits: numericValue(event.target.value) })} placeholder="100" /></label>
               <label><span>Typical revenue / unit</span><div className="account-money-input"><span>$</span><input type="number" min="0" step="100" value={company.averageUnitValue ?? ''} onChange={(event) => updateCompany(company.id, { averageUnitValue: numericValue(event.target.value) })} placeholder="3500" /></div></label>
@@ -150,13 +150,13 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
         </section>
 
         <section className="account-editor-section">
-          <header><strong>Projects</strong><span>{companyProjects.length}</span></header>
+          <header><strong>Deals</strong><span>{companyProjects.length}</span></header>
           {companyProjects.map((project) => (
             <div className="account-project-row" key={project.id}>
               <strong>{project.name}</strong><span>{project.stage}</span>
             </div>
           ))}
-          {!companyProjects.length && <p className="account-empty">No projects yet.</p>}
+          {!companyProjects.length && <p className="account-empty">No deals yet.</p>}
         </section>
 
         <section className="account-editor-section crm-linked-quotes">
@@ -240,10 +240,10 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
     <main className="board-view accounts-view">
       <PageHeader className="board-header-panel accounts-header-panel board-foundation-header"
         eyebrow="Relationship health" title="Accounts"
-        description="Same CRM data, viewed by customer relationship instead of project lifecycle."
+        description="Same CRM data, viewed by customer relationship instead of deal stage."
         actions={<>
           <div className="board-view-toggle" role="group" aria-label="Board type">
-            <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Projects</Button>
+            <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Deals</Button>
             <Button variant="quiet" className="active" aria-pressed={true}>Accounts</Button>
           </div>
           <div className="accounts-header-actions">

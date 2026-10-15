@@ -104,7 +104,7 @@ export function MobileAppChrome() {
     : view === 'catalog'
       ? `Catalog · ${catalogLabel(catalogSection)}`
       : view === 'board'
-        ? `Board · ${boardMode === 'accounts' ? 'Accounts' : 'Projects'}`
+        ? `Board · ${boardMode === 'accounts' ? 'Accounts' : 'Deals'}`
         : viewLabel(view);
 
   const chooseView = (next: AppView) => {
@@ -177,7 +177,7 @@ export function MobileAppChrome() {
                 window.dispatchEvent(new CustomEvent('sales-shop:board-mode-request', { detail: { mode: 'projects' } }));
                 setOpen(false);
               }}>
-                <strong>Projects</strong><small>Work we are trying to win or perform</small>
+                <strong>Deals</strong><small>Work we are trying to win or perform</small>
               </button>
               <button type="button" className={boardMode === 'accounts' ? 'active' : ''} onClick={() => {
                 setBoardMode('accounts');

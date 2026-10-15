@@ -35,7 +35,7 @@ export function QuoteBetaDesktopRails({
   areaManager:QuoteBetaAreaManager;
 }){
   const editable=quoteIsCommerciallyEditable(quote);
-  const steps=[['build',quote.documentType==='pricing-schedule'?'Editor':'Quote editor'],['details','Customer & project'],['preview','Customer preview']] as const;
+  const steps=[['build',quote.documentType==='pricing-schedule'?'Editor':'Quote editor'],['details','Customer & deal'],['preview','Customer preview']] as const;
   const areas=areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s));
   const desktopAreaRef=useQuoteBetaCardReflow<HTMLElement>(areas.map(s=>s.id));
   return <>

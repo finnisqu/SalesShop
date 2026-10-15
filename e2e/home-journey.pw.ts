@@ -52,7 +52,7 @@ test('HOME named quote opens Beta editor, supports mobile/desktop Back and resum
     await expect(page.locator('.sales-app.view-home')).toBeVisible();
   });
 
-test('HOME task, floating Quick Note and named project preserve navigation and record URLs',
+test('HOME task, floating Quick Note and named deal preserve navigation and record URLs',
   async({page},info)=>{
     test.skip(!targeted(info.project.name),'Dedicated HOME journey QC');
     await home(page);
@@ -74,14 +74,12 @@ test('HOME task, floating Quick Note and named project preserve navigation and r
 
     await page.getByRole('button',{name:'Quick create'}).click();
     const create=page.getByRole('dialog',{name:'Create in SalesShop'});
-    await create.getByRole('button',{name:/New Project/}).click();
-    await create.getByRole('textbox',{name:'Project name'}).fill('Batch 16G project');
+    await create.getByRole('button',{name:/New Deal/}).click();
+    await create.getByRole('textbox',{name:'Deal name'}).fill('Batch 16G project');
     await create.getByRole('button',{name:'Create & open'}).click();
 
-    await expect(page).toHaveURL(/\/board\/projects\//);
-    await expect(page.getByRole('button',{name:'Close editor'})).toBeVisible();
-    await page.getByRole('button',{name:'Close editor'}).click();
-    await expect(page).toHaveURL(/\/board$/);
+    await expect(page).toHaveURL(/\/connections\/deals\//);
+    await expect(page.getByRole('heading',{name:'Batch 16G project'})).toBeVisible();
     await page.goBack();
     await expect(page).toHaveURL(/\/home$/);
 

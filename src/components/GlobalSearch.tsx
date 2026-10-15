@@ -7,7 +7,7 @@ import { useQuoteStore } from '../store/quoteStore';
 
 type SearchResult = {
   id: string;
-  kind: 'Project' | 'Account' | 'Contact' | 'Quote' | 'Notebook';
+  kind: 'Deal' | 'Account' | 'Contact' | 'Quote' | 'Notebook';
   title: string;
   detail?: string;
   searchText: string;
@@ -78,7 +78,7 @@ export function GlobalSearch() {
     return [
       ...projects.map((project): SearchResult => ({
         id: `project:${project.id}`,
-        kind: 'Project',
+        kind: 'Deal',
         title: project.name,
         detail: [project.companyName, project.stage].filter(Boolean).join(' · '),
         searchText: [project.name, project.companyName, project.stage, project.nextAction].filter(Boolean).join(' '),
@@ -176,13 +176,13 @@ export function GlobalSearch() {
             {!query.trim() && (
               <div className="global-search-empty">
                 <strong>Find anything</strong>
-                <span>Projects, accounts, contacts, quotes, and notebook pages.</span>
+                <span>Deals, accounts, contacts, quotes, and notebook pages.</span>
               </div>
             )}
             {query.trim() && !results.length && (
               <div className="global-search-empty">
                 <strong>No matches</strong>
-                <span>Try a customer, project, contact, quote number, or note title.</span>
+                <span>Try a company, deal, contact, quote number, or note title.</span>
               </div>
             )}
             {results.map((result) => (

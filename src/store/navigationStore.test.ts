@@ -37,6 +37,11 @@ describe('bounded in-app navigation history',()=>{
     store.getState().goBack();
     expect(store.getState()).toMatchObject({view:'dashboard',focusedCompanyId:'builder-123',focusedContactId:null});
   });
+  it('opens Deals on Connections while preserving the old Board project URL parser',()=>{
+    const store=useNavigationStore;
+    store.getState().openProject('project-old');
+    expect(store.getState()).toMatchObject({view:'dashboard',focusedProjectId:'project-old',focusedCompanyId:null,focusedContactId:null});
+  });
   it('does not stack same-tab navigation or create a loop when going Back',()=>{
     const store=useNavigationStore;
     store.getState().setView('quotes');

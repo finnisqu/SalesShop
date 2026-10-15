@@ -15,14 +15,14 @@ const notebookCss=load('./notebook-chrome-adapter.css');
 const main=load('../main.tsx');
 
 describe('UI Foundation Batch 7 — Board / Quotes / Notebook',()=>{
-  it('renders common Board heading, button toggle and accessible quick project field',()=>{
+  it('renders common Board heading, button toggle and accessible quick deal field',()=>{
     const header=renderToStaticMarkup(<PageHeader
-      eyebrow="Sales pipeline" title="Projects"
-      actions={<Button variant="quiet" aria-pressed={true}>Projects</Button>}
+      eyebrow="Sales pipeline" title="Deals"
+      actions={<Button variant="quiet" aria-pressed={true}>Deals</Button>}
     />);
     expect(header).toContain('ss-page-header__title');
     expect(header).toContain('aria-pressed="true"');
-    const field=renderToStaticMarkup(<Field label="Quick project" id="new-project-name">
+    const field=renderToStaticMarkup(<Field label="Quick deal" id="new-project-name">
       {(control)=><input {...control} value="Example" readOnly />}
     </Field>);
     expect(field).toContain('for="new-project-name"');

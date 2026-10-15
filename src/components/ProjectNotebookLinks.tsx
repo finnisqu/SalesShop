@@ -27,7 +27,7 @@ export function ProjectNotebookLinks({ project }: { project: Project }) {
           <span>{new Date(page.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
         </button>
       ))}
-      {!linkedPages.length && <div className="project-notebook-empty">No Notebook pages are linked to this project yet.</div>}
+      {!linkedPages.length && <div className="project-notebook-empty">No Notebook pages are linked to this deal yet.</div>}
     </section>
   );
 }

@@ -12,7 +12,7 @@ import {QUOTE_STANDARD_TERMS,freeCustomerNotes,termsEnabled,withCustomerTerms} f
 export function QuoteBetaDetails({quote}:{quote:Quote}) {
   const update=useQuoteStore(state=>state.updateQuote);
   const editable=quoteIsCommerciallyEditable(quote);
-  return <div className="qmb-details-page" role="region" aria-label="Quote customer and project details">
+  return <div className="qmb-details-page" role="region" aria-label="Quote customer and deal details">
     <section className="qmb-details-section qmb-card" aria-labelledby="qmb-details-customer">
       <header className="qmb-details-heading">
         <span className="qmb-details-step">1</span>
@@ -24,14 +24,14 @@ export function QuoteBetaDetails({quote}:{quote:Quote}) {
     <section className="qmb-details-section qmb-card" aria-labelledby="qmb-details-project">
       <header className="qmb-details-heading">
         <span className="qmb-details-step">2</span>
-        <div><h3 id="qmb-details-project">Project</h3>
+        <div><h3 id="qmb-details-project">Deal details</h3>
           <small>Quote date, job location and pricing context</small></div>
       </header>
       <div className="qmb-details-fields">
         <label><span>Quote date</span><input type="date" value={quote.quoteDate}
           disabled={!editable} onChange={e=>update(quote.id,{quoteDate:e.target.value})}/></label>
         <label><span>Job address</span><input value={quote.address??''} disabled={!editable}
-          placeholder="Street, city or project location"
+          placeholder="Street, city or jobsite location"
           onChange={e=>update(quote.id,{address:e.target.value})}/></label>
         <label><span>Division / pricing</span>
           <select disabled={!editable} value={quote.pricingDivision??''}
@@ -42,7 +42,7 @@ export function QuoteBetaDetails({quote}:{quote:Quote}) {
         </label>
       </div>
       <details className="qmb-details-project-lookup">
-        <summary>CRM project link <span>Optional</span></summary>
+        <summary>CRM deal link <span>Optional</span></summary>
         <QuoteCrmFields quote={quote} compactSection="project" editable={editable}/>
       </details>
     </section>

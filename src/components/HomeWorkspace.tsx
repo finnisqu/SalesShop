@@ -96,7 +96,7 @@ export function HomeWorkspace(){
       <div className="sales-home-shortcut-grid">
         <button type="button" onClick={openTemplateLibrary}><span aria-hidden="true">▤</span>
           <strong>{betaEnabled?'Quote templates':'Quote library'}</strong><small>Open the document library</small></button>
-        <button type="button" onClick={()=>setView('board')}><span aria-hidden="true">▦</span><strong>Board</strong><small>Projects and accounts</small></button>
+        <button type="button" onClick={()=>setView('board')}><span aria-hidden="true">▦</span><strong>Board</strong><small>Deals and accounts</small></button>
         {!rolePreview&&<button type="button" onClick={openQuickNote}><span aria-hidden="true">▧</span><strong>Quick Note</strong><small>Capture without leaving</small></button>}
       </div>
     </section>

@@ -56,7 +56,7 @@ export function ViewerWorkspace({ section, previewRole, previewDepartment }: { s
 
   const selectedQuote = quotes.find((quote) => quote.id === selectedQuoteId);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
-  const title = section === 'board' ? 'Project board' : section === 'quotes' ? 'Quotes'
+  const title = section === 'board' ? 'Deal board' : section === 'quotes' ? 'Quotes'
     : section === 'catalog' ? 'Material catalog' : 'Connections';
 
   return <main className="viewer-workspace">
@@ -94,7 +94,7 @@ export function ViewerWorkspace({ section, previewRole, previewDepartment }: { s
           <p><strong>Stage:</strong> {project.stage}</p>
         </div>}
       </article>)}
-      {!filteredProjects.length && <p className="viewer-empty">No matching projects.</p>}
+      {!filteredProjects.length && <p className="viewer-empty">No matching deals.</p>}
     </div>}
 
     {section === 'quotes' && <div className="viewer-record-grid">
@@ -136,7 +136,7 @@ export function ViewerWorkspace({ section, previewRole, previewDepartment }: { s
       <div className="viewer-record-grid">
         {filteredCompanies.map((company) => <article className="viewer-record" key={company.id}>
           <small>{company.kind === 'customer' ? 'Customer' : 'Other contact'}</small><h2>{company.name}</h2>
-          <p>{contacts.filter((contact) => contact.companyId === company.id).length} contacts · {projects.filter((project) => project.companyId === company.id).length} projects</p>
+          <p>{contacts.filter((contact) => contact.companyId === company.id).length} contacts · {projects.filter((project) => project.companyId === company.id).length} deals</p>
           {contacts.filter((contact) => contact.companyId === company.id).slice(0, 3).map((contact) =>
             <div className="viewer-line" key={contact.id}><span>{contact.name}</span><span>{contact.title || contact.email || ''}</span></div>)}
         </article>)}

@@ -150,8 +150,8 @@ test('desktop Quotes Beta is fully opted in and Classic remains selectable', asy
   await expect(inspector.locator('.qmb-desktop-grand-total > strong')).toHaveText('$432.00');
   await navigator.getByRole('button',{name:'Undo quote change'}).click();
   await expect(inspector.locator('.qmb-desktop-grand-total > strong')).toHaveText('$400.00');
-  await navigator.getByRole('button',{name:'Customer & project'}).click();
-  await expect(beta.getByRole('region',{name:'Quote customer and project details'})).toBeVisible();
+  await navigator.getByRole('button',{name:'Customer & deal'}).click();
+  await expect(beta.getByRole('region',{name:'Quote customer and deal details'})).toBeVisible();
   await inspector.getByRole('button',{name:'Review and issue quote'}).click();
   const review=page.getByRole('dialog',{name:'Review and issue quote'});
   await expect(review.locator('.qmb-audit-finding').first()).toBeVisible();
@@ -593,7 +593,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await expect(delivery).toContainText('Email');
   expect(await currentProjectStage()).toBe('Bid Sent');
   await review.getByRole('button',{name:'Close Review and Issue'}).click();
-  await beta.getByRole('navigation',{name:'Quote workflow'}).getByRole('button',{name:'Customer & project'}).click();
+  await beta.getByRole('navigation',{name:'Quote workflow'}).getByRole('button',{name:'Customer & deal'}).click();
   const timeline=beta.getByRole('region',{name:'Quote document and history'});
   await expect(timeline).toContainText('Revision timeline');
   await expect(timeline).toContainText('Customer delivery confirmed');
@@ -842,10 +842,10 @@ test('mobile Details are ordered, CRM links do not navigate, and Back restores t
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await createQuickQuote(page);
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
-  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  const details=beta.getByRole('region',{name:'Quote customer and deal details'});
   await expect(details).toBeVisible();
   const headings=await details.locator('.qmb-details-heading h3').allTextContents();
-  expect(headings).toEqual(['Customer','Project','Notes','Document & revisions']);
+  expect(headings).toEqual(['Customer','Deal details','Notes','Document & revisions']);
   await expect(details.getByRole('textbox',{name:'Project / quote title'})).toHaveCount(0);
   await expect(details.getByRole('textbox',{name:'Company / customer'})).toBeVisible();
   await expect(details.getByRole('textbox',{name:'Contact person'})).toBeVisible();
@@ -868,7 +868,7 @@ test('mobile Details are ordered, CRM links do not navigate, and Back restores t
   await expect(restored.getByRole('textbox',{name:'Company / customer'})).toHaveValue('Sample Builder');
 });
 
-test('mobile Details CRM project link is a selection, not a Board shortcut',async ({page},testInfo)=>{
+test('mobile Details CRM deal link is a selection, not a Board shortcut',async ({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','CRM quick selection safety');
   await page.goto('/');
   await page.evaluate(()=>{
@@ -880,7 +880,7 @@ test('mobile Details CRM project link is a selection, not a Board shortcut',asyn
   await createQuickQuote(page);
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
   await beta.locator('.qmb-details-project-lookup summary').click();
-  await expect(beta.getByRole('textbox',{name:'Find existing CRM project (optional)'})).toBeVisible();
+  await expect(beta.getByRole('textbox',{name:'Find existing CRM deal (optional)'})).toBeVisible();
   await expect(beta.locator('.quote-crm-connections')).toHaveCount(0);
   await expect(beta.getByRole('button',{name:/View company in Board/})).toHaveCount(0);
 });
@@ -950,8 +950,8 @@ test('desktop Beta uses full center workspace across Build, Details, Preview and
   const card=beta.locator('.qmb-area-card').first();
   await expect(card).toBeVisible();
   expect((await card.boundingBox())!.width).toBeGreaterThan(500);
-  await rail.getByRole('button',{name:'Customer & project'}).click();
-  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  await rail.getByRole('button',{name:'Customer & deal'}).click();
+  const details=beta.getByRole('region',{name:'Quote customer and deal details'});
   await expect(details).toBeVisible();
   const areas=await details.locator('.qmb-details-section').evaluateAll(nodes=>
     nodes.slice(0,2).map(node=>{const r=node.getBoundingClientRect();
@@ -1928,8 +1928,8 @@ test('Details gives access to editable revision labels without confusing issued 
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await createQuickQuote(page);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
-  await rail.getByRole('button',{name:'Customer & project'}).click();
-  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  await rail.getByRole('button',{name:'Customer & deal'}).click();
+  const details=beta.getByRole('region',{name:'Quote customer and deal details'});
   const revision=details.getByRole('textbox',{name:'Revision or option label'});
   await revision.fill('Alternate A');
   await details.getByRole('combobox',{name:'Draft status'}).selectOption('Ready');
@@ -1937,7 +1937,7 @@ test('Details gives access to editable revision labels without confusing issued 
   await details.locator('.qmb-lifecycle-revisions summary').click();
   await expect(details.locator('.qmb-lifecycle-revisions')).toContainText('No issued revisions yet');
   await rail.getByRole('button',{name:'Build quote'}).click();
-  await rail.getByRole('button',{name:'Customer & project'}).click();
+  await rail.getByRole('button',{name:'Customer & deal'}).click();
   await expect(details.getByRole('textbox',{name:'Revision or option label'})).toHaveValue('Alternate A');
 });
 
@@ -1970,8 +1970,8 @@ test('Builder Rates and Custom Spreadsheet keep separate workspaces and pricing 
   await expect(inspector.getByText('Quote total')).toHaveCount(0);
   const rail=beta.getByRole('complementary',{name:'Quote workspace navigation'});
   await expect(rail.getByRole('button',{name:'Add Area from navigator'})).toHaveCount(0);
-  await rail.getByRole('button',{name:'Customer & project'}).click();
-  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  await rail.getByRole('button',{name:'Customer & deal'}).click();
+  const details=beta.getByRole('region',{name:'Quote customer and deal details'});
   await expect(details.getByRole('combobox',{name:'Document type'})).toHaveValue('pricing-schedule');
   await expect(details.getByRole('combobox',{name:'Document type'})).toBeDisabled();
   await rail.getByRole('button',{name:'Customer preview'}).click();
@@ -2006,7 +2006,7 @@ test('phone Quick Quote and Builder Rates are distinct fixed template documents'
   await createQuickQuote(page);
   await expect(beta.getByLabel('Pricing Schedule workspace')).toHaveCount(0);
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details',exact:true}).click();
-  const details=beta.getByRole('region',{name:'Quote customer and project details'});
+  const details=beta.getByRole('region',{name:'Quote customer and deal details'});
   const type=details.getByRole('combobox',{name:'Document type'});
   await expect(type).toHaveValue('quote');
   await expect(type).toBeDisabled();

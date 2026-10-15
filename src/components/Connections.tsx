@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import { PersonRecordPage } from './PersonRecordPage';
+import { DealRecordPage } from './DealRecordPage';
 import { Button, Field, PageHeader, SectionTabs, StatusText } from '../design-system/components';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -8,13 +9,13 @@ import { useNavigationStore } from '../store/navigationStore';
 import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
 import type { CompanyKind } from '../types/crm';
 
-type ConnectionsTab = 'companies' | 'people' | 'projects' | 'activity';
+type ConnectionsTab = 'companies' | 'people' | 'deals' | 'activity';
 type CompanyFilter = 'all' | 'customer' | 'non-customer';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
   { id: 'companies', label: 'Companies', description: 'Accounts & partners' },
   { id: 'people', label: 'People', description: 'Contacts' },
-  { id: 'projects', label: 'Projects', description: 'Opportunities' },
+  { id: 'deals', label: 'Deals', description: 'Opportunities & jobs' },
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
@@ -67,6 +68,9 @@ export function Connections() {
   const [newCompany, setNewCompany] = useState('');
   const [newCompanyKind, setNewCompanyKind] = useState<CompanyKind>('customer');
   const [personCreating, setPersonCreating] = useState(false);
+  const [dealCreating, setDealCreating] = useState(false);
+  const [newDeal, setNewDeal] = useState('');
+  const [newDealCompanyId, setNewDealCompanyId] = useState('');
   const [newPerson, setNewPerson] = useState('');
   const [newPersonEmail, setNewPersonEmail] = useState('');
   const [newPersonCompany, setNewPersonCompany] = useState('');
@@ -81,9 +85,12 @@ export function Connections() {
   const quotes = useQuoteStore((state) => state.quotes);
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createContact = useCrmStore((state) => state.createContact);
+  const createDeal = useCrmStore((state) => state.createProject);
+  const relinkDealCompany = useCrmStore((state) => state.relinkProjectCompany);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const focusedContactId = useNavigationStore((state) => state.focusedContactId);
+  const focusedDealId = useNavigationStore((state) => state.focusedProjectId);
   const openPerson = useNavigationStore((state) => state.openPerson);
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
@@ -141,12 +148,25 @@ export function Connections() {
       openPerson(id);
     } else setNotice('Could not add that person. Check the details and try again.');
   };
+  const addDeal = (event: FormEvent) => {
+    event.preventDefault();
+    if (!newDeal.trim()) return;
+    const id = createDeal(newDeal.trim());
+    if (!id) { setNotice('Could not create this deal.'); return; }
+    if (newDealCompanyId) relinkDealCompany(id, newDealCompanyId);
+    setNewDeal(''); setNewDealCompanyId(''); setDealCreating(false);
+    openProject(id);
+  };
   const openActivity = (activity: (typeof activities)[number]) => {
     if (activity.quoteId) openQuote(activity.quoteId);
     else if (activity.projectId) openProject(activity.projectId);
     else if (activity.companyId) openCompany(activity.companyId);
   };
 
+  const backToDeals = () => {
+    chooseTab('deals');
+    setView('dashboard');
+  };
   const backToPeople = () => {
     chooseTab('people');
     setView('dashboard');
@@ -155,6 +175,9 @@ export function Connections() {
     chooseTab('companies');
     setView('dashboard');
   };
+  if (focusedDealId) return <main className="connections-workspace">
+    <DealRecordPage dealId={focusedDealId} onBack={backToDeals} />
+  </main>;
   if (focusedContactId) return <main className="connections-workspace">
     <PersonRecordPage contactId={focusedContactId} onBack={backToPeople} />
   </main>;
@@ -167,7 +190,7 @@ export function Connections() {
       <PageHeader className="connections-heading connections-foundation-heading"
         eyebrow="SalesShop · Relationships & information"
         title="Connections"
-        description="Companies, people, and projects connected to your work."
+        description="Companies, people, and deals connected to your work."
       />
 
       <div className="connections-section-row">
@@ -201,6 +224,7 @@ export function Connections() {
               <Button variant="primary" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</Button>
             </>}
             {tab === 'people' && <Button variant="primary" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</Button>}
+            {tab === 'deals' && <Button variant="primary" className="connections-add" onClick={() => setDealCreating((v) => !v)}>+ Deal</Button>}
           </div>
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab === 'companies' && (
@@ -222,7 +246,7 @@ export function Connections() {
                   return <button type="button" key={company.id} className="connections-record" onClick={() => openCompany(company.id)}>
                     <span className="connections-record-eyebrow">{company.kind === 'non-customer' ? 'Partner / other' : 'Customer / prospect'}</span>
                     <strong>{company.name}</strong>
-                    <small>{peopleCount} people · {projectCount} projects · {companyQuotes.length} linked quotes</small>
+                    <small>{peopleCount} people · {projectCount} deals · {companyQuotes.length} linked quotes</small>
                     <span className="connections-record-arrow" aria-hidden="true">↗</span>
                   </button>;
                 })}
@@ -254,8 +278,19 @@ export function Connections() {
 
             </section>
           )}
-          {tab === 'projects' && <section className="connections-directory">
-            <p className="connections-count">{projectRows.length} projects · project status and due dates live on Board</p>
+          {tab === 'deals' && <section className="connections-directory">
+            {dealCreating && <form className="connections-add-form" onSubmit={addDeal}>
+              <strong>New deal</strong>
+              <label><span>Deal name</span><input autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
+              <label><span>Company</span><select value={newDealCompanyId} onChange={event => setNewDealCompanyId(event.target.value)}>
+                <option value="">No company yet</option>
+                {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map(company =>
+                  <option key={company.id} value={company.id}>{company.name}</option>)}
+              </select></label>
+              <div><button type="button" onClick={() => setDealCreating(false)}>Cancel</button>
+                <button type="submit" className="primary" disabled={!newDeal.trim()}>Create & open</button></div>
+            </form>}
+            <p className="connections-count">{projectRows.length} deals · stage, bid dates and quotes on each deal record</p>
             <div className="connections-card-grid">
               {projectRows.map((project) => {
                 const linked = quotesForProject(project, quotes).filter((q) => !q.archivedAt);
@@ -268,7 +303,7 @@ export function Connections() {
                 </button>;
               })}
             </div>
-            {!projectRows.length && <StatusText state="empty" className="connections-empty">No projects match your search.</StatusText>}
+            {!projectRows.length && <StatusText state="empty" className="connections-empty">No deals match your search.</StatusText>}
           </section>}
           {tab === 'activity' && <section className="connections-directory">
             <p className="connections-count">{activityRows.length} recorded events. This is reference history, not a follow-up checklist.</p>

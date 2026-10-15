@@ -102,8 +102,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           </button>
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
       </RecordCard>
-      <RecordCard title="Project involvement">
-        <p className="connections-record-empty">Project-specific contact roles are not yet supported. No company projects are automatically attributed to this person.</p>
+      <RecordCard title="Deal involvement">
+        <p className="connections-record-empty">Deal-specific contact roles are not yet supported. No company deals are automatically attributed to this person.</p>
       </RecordCard>
     </>}
     right={<>
@@ -126,7 +126,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
               <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{dateLabel(activity.occurredAt)}</time></div>
               <small>{activity.type.replaceAll('-', ' ')}</small>
               {activity.quoteId && <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
-              {!activity.quoteId && activity.projectId && <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked project →</button>}
+              {!activity.quoteId && activity.projectId && <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked deal →</button>}
             </li>)}
           </ol>
           {!related.directActivities.length && <p className="connections-record-empty">No directly linked history on this contact.</p>}

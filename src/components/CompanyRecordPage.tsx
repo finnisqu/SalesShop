@@ -113,7 +113,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
 
   return <RecordPageLayout entityType="company" title={company.name} onBack={onBack}
     subtitle={company.kind === 'non-customer' ? 'Partner / non-customer relationship' : 'Customer / prospect'}
-    badge={<><span className="connections-record-stage">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</span><span>{related.relatedProjects.length} projects</span><span>{related.relatedQuotes.length} linked quotes</span></>}
+    badge={<><span className="connections-record-stage">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</span><span>{related.relatedProjects.length} deals</span><span>{related.relatedQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => setEditing((current) => !current)}>{editing ? 'Cancel editing' : 'Edit company'}</button>
       {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>}
@@ -158,12 +158,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       </RecordCard>
     </>}
     center={<>
-      <RecordCard title="Projects" extra={<span>{related.relatedProjects.length}</span>}>
+      <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
         <div className="connections-record-entity-list">
           {related.relatedProjects.map((project) => <button type="button" key={project.id} onClick={() => openProject(project.id)}>
             <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
           </button>)}
-          {!related.relatedProjects.length && <p className="connections-record-empty">No projects linked yet.</p>}
+          {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
         </div>
       </RecordCard>
       <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length}</span>}>
@@ -172,7 +172,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
             <strong>{quote.title || displayQuoteNumber(quote)}</strong>
             <small>{displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
           </button>)}
-          {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its projects.</p>}
+          {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its deals.</p>}
         </div>
       </RecordCard>
 
@@ -209,7 +209,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
         <div className="connections-record-filter" role="group" aria-label="Filter company activities">
           {(['all', 'quote', 'project', 'contact'] as const).map((filter) =>
             <button type="button" key={filter} aria-pressed={activityFilter === filter} onClick={() => setActivityFilter(filter)}>
-              {filter === 'all' ? 'All' : filter === 'quote' ? 'Quotes' : filter === 'project' ? 'Projects' : 'Contacts'}
+              {filter === 'all' ? 'All' : filter === 'quote' ? 'Quotes' : filter === 'project' ? 'Deals' : 'Contacts'}
             </button>)}
         </div>
         <ol className="connections-record-timeline">
@@ -219,7 +219,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
             {activity.quoteId && related.relatedQuotes.some((quote) => quote.id === activity.quoteId) &&
               <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
             {!activity.quoteId && activity.projectId && related.relatedProjects.some((project) => project.id === activity.projectId) &&
-              <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked project →</button>}
+              <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked deal →</button>}
           </li>)}
         </ol>
         {!filteredActivities.length && <p className="connections-record-empty">No activity history matches these filters.</p>}

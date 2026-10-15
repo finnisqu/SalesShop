@@ -10,7 +10,7 @@ test('Connections opens directly into relationships, without a Sales Dashboard o
     await expect(page.locator('.sales-app.view-dashboard')).toBeVisible();
     await expect(tabs(page).getByRole('button', { name: /Companies/ })).toHaveAttribute('aria-current', 'page');
     await expect(tabs(page).getByRole('button', { name: /People/ })).toBeVisible();
-    await expect(tabs(page).getByRole('button', { name: /Projects/ })).toBeVisible();
+    await expect(tabs(page).getByRole('button', { name: /Deals/ })).toBeVisible();
     await expect(tabs(page).getByRole('button', { name: /Overview|Activity|Dashboard/ })).toHaveCount(0);
     await expect(page.locator('.connections-overview')).toHaveCount(0);
     await expect(page.locator('.leadership-dashboard')).toHaveCount(0);

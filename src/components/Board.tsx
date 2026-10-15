@@ -75,7 +75,7 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
         </div>
       )}
       {project.nextAction && <div className="project-next-action">→ {project.nextAction}</div>}
-      {attention.length > 0 && <div className="project-attention-flags" aria-label="Project attention">
+      {attention.length > 0 && <div className="project-attention-flags" aria-label="Deal attention">
         {attention.map((flag) => <span key={flag.kind} className={`attention-${flag.kind}`}>{flag.label}</span>)}
       </div>}
       {project.lastTouchpoint && <div className="project-last-touch">Last touch {formatDate(project.lastTouchpoint)}</div>}
@@ -92,6 +92,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
   const createQuote = useQuoteStore((state) => state.createQuote);
   const openQuote = useNavigationStore((state) => state.openQuote);
+  const openDeal = useNavigationStore((state) => state.openProject);
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   const linkedQuotes = quotesForProject(project, quotes).filter((quote) => !quote.archivedAt);
   const dialogRef = useDismissibleLayer<HTMLElement>(true, onClose);
@@ -139,14 +140,14 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
 
   return (
     <div className="project-editor-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor" aria-label="Edit project">
+      <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor" aria-label="Edit deal">
         <header>
-          <div><span className="board-eyebrow">Project card</span><h2>{project.name}</h2></div>
+          <div><span className="board-eyebrow">Deal card</span><h2>{project.name}</h2></div>
           <button type="button" className="editor-close" data-dialog-initial-focus onClick={onClose} aria-label="Close editor">×</button>
         </header>
 
         <form onSubmit={submit}>
-          <label><span>Project name</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })}  /></label>
+          <label><span>Deal name</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })}  /></label>
           <label><span>Company</span><input value={draft.companyName} onChange={(event) => setDraft({ ...draft, companyName: event.target.value })} placeholder="Optional" /></label>
           <div className="editor-two-up">
             <label><span>Stage</span><select value={draft.stage} onChange={(event) => setDraft({ ...draft, stage: event.target.value as ProjectStage })}>{PROJECT_STAGES.map((stage) => <option key={stage}>{stage}</option>)}</select></label>
@@ -158,7 +159,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
           </div>
           <label><span>Next action</span><textarea value={draft.nextAction} onChange={(event) => setDraft({ ...draft, nextAction: event.target.value })} placeholder="What should happen next?" /></label>
 
-          <section className="crm-linked-quotes" aria-label="Project quotes">
+          <section className="crm-linked-quotes" aria-label="Deal quotes">
             <header><div><span className="board-eyebrow">Quotes and pipeline</span><h3>Linked quotes</h3></div><span>{linkedQuotes.length}</span></header>
             <p>Drafts stay in progress. Sending a quote records activity and updates the sales pipeline using the existing status rules.</p>
             <div className="crm-linked-quote-list">
@@ -176,14 +177,16 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
                 companyName: project.companyName,
               });
               openQuote(id);
-            }}>+ New quote for project</button>
+            }}>+ New quote for deal</button>
           </section>
 
+          <button type="button" className="crm-linked-create" onClick={() => { onClose(); openDeal(project.id); }}>Open full deal page →</button>
           <ProjectNotebookLinks project={project} />
 
-          <section className="project-activity-panel" aria-label="Project activity">
+          <details className="project-activity-panel" aria-label="Deal activity history">
+            <summary><span className="board-eyebrow">Activity history</span></summary>
             <header>
-              <div><span className="board-eyebrow">Automatic breadcrumbs</span><h3>Activity</h3></div>
+              <div><span className="board-eyebrow">Recorded history</span><h3>Activity</h3></div>
               <span>{projectActivities.length ? `${projectActivities.length} recent` : 'No activity yet'}</span>
             </header>
             <div className="project-activity-list">
@@ -204,9 +207,9 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
                   <time>{formatActivityTime(activity.occurredAt)}</time>
                 </button>
               ))}
-              {!projectActivities.length && <div className="project-activity-empty">Quote sends, signatures, and stage changes will appear here automatically.</div>}
+              {!projectActivities.length && <div className="project-activity-empty">No recorded history for this deal.</div>}
             </div>
-          </section>
+          </details>
 
           <div className="editor-actions">
             <button type="button" className="danger-button" onClick={() => {
@@ -218,7 +221,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
             }}>Delete</button>
             <div className="editor-action-spacer" />
             <button type="button" className="secondary-button" onClick={onClose}>Cancel</button>
-            <button type="submit" className="primary-button">Save project</button>
+            <button type="submit" className="primary-button">Save deal</button>
           </div>
         </form>
       </aside>
@@ -310,23 +313,23 @@ export function Board() {
     setDraggedId(null); setDragStage(null);
   };
 
-  if (!hydrated) return <WorkspaceLoadingState title="Opening Board" detail="Loading projects, accounts, and sales activity…" />;
+  if (!hydrated) return <WorkspaceLoadingState title="Opening Board" detail="Loading deals and accounts…" />;
   if (boardMode === 'accounts') return <AccountsBoard onShowProjects={() => setBoardMode('projects')} />;
 
   return (
     <main className="board-view">
       <PageHeader className="board-header-panel board-foundation-header"
-        eyebrow="Sales pipeline" title="Projects"
+        eyebrow="Sales pipeline" title="Deals"
         description="What work are we trying to win, perform, or finish?"
         actions={<>
           <div className="board-view-toggle" role="group" aria-label="Board type">
-            <Button variant="quiet" className="active" aria-pressed={true}>Projects</Button>
+            <Button variant="quiet" className="active" aria-pressed={true}>Deals</Button>
             <Button variant="quiet" aria-pressed={false} onClick={() => setBoardMode('accounts')}>Accounts</Button>
           </div>
           <form className="board-quick-add" onSubmit={quickAdd}>
-            <Field id="new-project-name" label="Quick project" className="board-foundation-quick-field">
+            <Field id="new-project-name" label="Quick deal" className="board-foundation-quick-field">
               {(control) => <div className="board-foundation-quick-row">
-                <input {...control} value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Type a project name…" />
+                <input {...control} value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Type a deal name…" />
                 <Button type="submit" variant="secondary" disabled={!newName.trim()}>Add</Button>
               </div>}
             </Field>
@@ -342,7 +345,7 @@ export function Board() {
       <section
         ref={boardRef}
         className="project-board"
-        aria-label="Project pipeline board"
+        aria-label="Deal pipeline board"
         onScroll={(event) => rememberMobileBoardStage(PROJECT_BOARD_POSITION_KEY, event.currentTarget)}
       >
         {PROJECT_STAGES.map((stage, stageIndex) => {
@@ -358,7 +361,7 @@ export function Board() {
               onDrop={(event) => dropOnStage(event, stage)}
             >
               <header className="board-column-header">
-                <div><h2>{stage}</h2><span>{stageProjects.length} {stageProjects.length === 1 ? 'project' : 'projects'}</span></div>
+                <div><h2>{stage}</h2><span>{stageProjects.length} {stageProjects.length === 1 ? 'deal' : 'deals'}</span></div>
                 <div className="board-column-trailing">
                   {stageTotal > 0 && <strong>{money.format(stageTotal)}</strong>}
                   <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {PROJECT_STAGES.length}</span>
@@ -378,7 +381,7 @@ export function Board() {
                     onDragStart={(event) => { setDraggedId(project.id); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', project.id); }}
                   />
                 ))}
-                {!stageProjects.length && <div className="board-empty-card">{mobileInteraction ? "No projects in this stage yet" : "Drop a project here"}</div>}
+                {!stageProjects.length && <div className="board-empty-card">{mobileInteraction ? "No deals in this stage yet" : "Drop a deal here"}</div>}
               </div>
             </section>
           );

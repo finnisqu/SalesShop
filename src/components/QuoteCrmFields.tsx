@@ -150,14 +150,14 @@ export function QuoteCrmFields({ quote, compactSection, editable=true }: {
     </div>
   );
   if(compactSection==='project')return (
-    <div className="qmb-details-crm" aria-label="Project CRM link">
+    <div className="qmb-details-crm" aria-label="Deal CRM link">
       {linkedProject?<div className="qmb-details-project-link">
-        <div><small>Linked CRM project</small><strong>{linkedProject.name}</strong></div>
+        <div><small>Linked CRM deal</small><strong>{linkedProject.name}</strong></div>
         {editable&&<button type="button" className="qmb-quiet"
           onClick={()=>updateQuote(quote.id,{projectId:undefined})}>Unlink</button>}
-      </div>:<p className="qmb-details-optional">No CRM project linked. This quote can still be saved and sent.</p>}
+      </div>:<p className="qmb-details-optional">No CRM deal linked. This quote can still be saved and sent.</p>}
       <fieldset disabled={!editable} className="qmb-details-fields">
-        <EntityField label="Find existing CRM project (optional)" value={projectLookup}
+        <EntityField label="Find existing CRM deal (optional)" value={projectLookup}
           disabled={!editable} suggestions={projectSuggestions}
           onChange={setProjectLookup}/>
       </fieldset>
@@ -169,16 +169,16 @@ export function QuoteCrmFields({ quote, compactSection, editable=true }: {
         <header><strong>CRM connections</strong><small>Keep this quote attached to the right records</small></header>
         <div className="quote-crm-connection-grid">
           {linkedProject ? <button type="button" onClick={() => openProject(linkedProject.id)}>
-            <span>Project <b>↗</b></span><strong>{linkedProject.name}</strong><small>{linkedProject.stage}</small>
-          </button> : <div><span>Project</span><strong>Not linked</strong><small>Choose an existing project below</small></div>}
+            <span>Deal <b>↗</b></span><strong>{linkedProject.name}</strong><small>{linkedProject.stage}</small>
+          </button> : <div><span>Deal</span><strong>Not linked</strong><small>Choose an existing deal below</small></div>}
           {linkedCompany ? <button type="button" onClick={() => openCompany(linkedCompany.id)}>
             <span>Account <b>↗</b></span><strong>{linkedCompany.name}</strong><small>View company in Board</small>
           </button> : <div><span>Account</span><strong>Not linked</strong><small>Select a company below</small></div>}
           <div><span>Contact</span><strong>{linkedContact?.name ?? (quote.contactName ? 'Name entered' : 'Not linked')}</strong><small>{linkedContact?.email || 'Choose a known contact below'}</small></div>
         </div>
-        <p>Sending, viewing, or signing the quote records sales activity. Sending and signing also update the project pipeline using existing rules.</p>
+        <p>Sending, viewing, or signing the quote records sales activity. Sending and signing also update the deal pipeline using existing rules.</p>
       </section>
-      <EntityField label="Project" value={quote.title} suggestions={projectSuggestions} onChange={(value) => updateQuote(quote.id, { title: value, projectId: undefined })} />
+      <EntityField label="Deal name" value={quote.title} suggestions={projectSuggestions} onChange={(value) => updateQuote(quote.id, { title: value, projectId: undefined })} />
       <label>
         <span>Division / pricing context</span>
         <select value={quote.pricingDivision ?? ''} onChange={(event) => updateQuote(quote.id, { pricingDivision: (event.target.value || undefined) as RateBookDivision | undefined })}>
@@ -189,7 +189,7 @@ export function QuoteCrmFields({ quote, compactSection, editable=true }: {
       <EntityField label="Company / customer" value={quote.companyName ?? ''} suggestions={companySuggestions} onChange={(value) => updateQuote(quote.id, { companyName: value, companyId: undefined, projectId: undefined })} />
       <EntityField label="Contact" value={quote.contactName ?? ''} suggestions={contactSuggestions} onChange={(value) => updateQuote(quote.id, { contactName: value, contactId: undefined })} />
       <label><span>Email</span><input type="email" value={quote.contactEmail ?? ''} onChange={(event) => updateQuote(quote.id, { contactEmail: event.target.value })} /></label>
-      <label><span>Project address</span><input value={quote.address ?? ''} onChange={(event) => updateQuote(quote.id, { address: event.target.value })} /></label>
+      <label><span>Jobsite address</span><input value={quote.address ?? ''} onChange={(event) => updateQuote(quote.id, { address: event.target.value })} /></label>
     </>
   );
 }

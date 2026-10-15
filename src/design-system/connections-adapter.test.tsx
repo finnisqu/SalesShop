@@ -9,11 +9,11 @@ const recordsCss = readFileSync(new URL('../connections-record-pages.css', impor
 const entry = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
 
 describe('Connections foundation — privacy-first navigation', () => {
-  it('uses shared section navigation for Companies, People and Projects only', () => {
+  it('uses shared section navigation for Companies, People and Deals only', () => {
     const items = [
       { id:'companies',label:'Companies',description:'Accounts & partners' },
       { id:'people',label:'People',description:'Contacts' },
-      { id:'projects',label:'Projects',description:'Opportunities' },
+      { id:'deals',label:'Deals',description:'Opportunities & jobs' },
     ] as const;
     const html = renderToStaticMarkup(<SectionTabs aria-label="Connections sections"
       items={items} selected="companies" onSelect={() => {}} className="connections-tabs" />);
@@ -42,7 +42,7 @@ describe('Connections foundation — privacy-first navigation', () => {
 
   it('keeps CRM creation, search, filters, quote links and an optional history utility', () => {
     for (const code of [
-      "'companies'", "'people'", "'projects'", '<SectionTabs', '<PageHeader', '<Field', '<StatusText',
+      "'companies'", "'people'", "'deals'", '<SectionTabs', '<PageHeader', '<Field', '<StatusText',
       'resolveCompany(name, newCompanyKind)', 'createContact({', 'openPerson(person.id)', 'openPerson(id)',
       'openCompany(company.id)', 'openProject(project.id)',
       'quotesForCompany(company, projects, quotes)', 'quotesForProject(project, quotes)',

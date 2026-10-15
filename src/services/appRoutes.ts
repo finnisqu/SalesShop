@@ -30,6 +30,10 @@ export function parseSalesShopRoute(pathname:string):Partial<NavigationLocation>
     const id=path.slice('/connections/companies/'.length);
     return id&&!id.includes('/')?{view:'dashboard',focusedCompanyId:clean(id)}:null;
   }
+  if(path.startsWith('/connections/deals/')){
+    const id=path.slice('/connections/deals/'.length);
+    return id&&!id.includes('/')&&clean(id)?{view:'dashboard',focusedProjectId:clean(id)}:null;
+  }
   if(path.startsWith('/connections/people/')){
     const id=path.slice('/connections/people/'.length);
     return id&&!id.includes('/')&&clean(id)?{view:'dashboard',focusedContactId:clean(id)}:null;
@@ -51,7 +55,8 @@ export function salesShopRoutePath(location:Pick<NavigationLocation,'view'|'cata
     case 'quotes':return location.focusedQuoteId?'/quotes/'+segment(location.focusedQuoteId):'/quotes';
     case 'board':return location.focusedProjectId?'/board/projects/'+segment(location.focusedProjectId):
       location.focusedCompanyId?'/board/accounts/'+segment(location.focusedCompanyId):'/board';
-    case 'dashboard':return location.focusedContactId?'/connections/people/'+segment(location.focusedContactId):
+    case 'dashboard':return location.focusedProjectId?'/connections/deals/'+segment(location.focusedProjectId):
+      location.focusedContactId?'/connections/people/'+segment(location.focusedContactId):
       location.focusedCompanyId?'/connections/companies/'+segment(location.focusedCompanyId):'/connections';
     case 'notebook':return '/notebook';
     case 'catalog':return '/catalog/'+location.catalogSection;
