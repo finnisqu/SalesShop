@@ -56,7 +56,10 @@ revoke all on function private.can_edit_quote(uuid,text) from public,anon;
 grant execute on function private.can_read_quote(uuid,text) to authenticated;
 grant execute on function private.can_edit_quote(uuid,text) to authenticated;
 
--- Harden the internal SECURITY DEFINER numbering helper too. Its public\n-- wrapper already checks quote-level permission, but callers with direct\n-- schema EXECUTE privileges must not bypass that check.\nCREATE OR REPLACE FUNCTION private.assign_commercial_document_number(p_organization_id uuid, p_quote_id text)
+-- Harden the internal SECURITY DEFINER numbering helper too. Its public
+-- wrapper already checks quote-level permission, but callers with direct
+-- schema EXECUTE privileges must not bypass that check.
+CREATE OR REPLACE FUNCTION private.assign_commercial_document_number(p_organization_id uuid, p_quote_id text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -76,7 +79,14 @@ begin
     raise exception 'Workspace access denied.' using errcode = '42501';
   end if;
 
-  -- Defense in depth: the internal numbering helper is executable by\n  -- authenticated roles, so it must independently authorize this quote.\n  if not private.can_edit_quote(p_organization_id,p_quote_id) then\n    raise exception 'This quote is not in your editing scope'\n      using errcode='42501';\n  end if;\n\n  select o.timezone into v_timezone
+  -- Defense in depth: the internal numbering helper is executable by
+  -- authenticated roles, so it must independently authorize this quote.
+  if not private.can_edit_quote(p_organization_id,p_quote_id) then
+    raise exception 'This quote is not in your editing scope'
+      using errcode='42501';
+  end if;
+
+  select o.timezone into v_timezone
   from public.organizations o
   where o.id = p_organization_id;
 
@@ -440,7 +450,9 @@ commit;
   );
 end;
 $function$
-\n\n-- Existing child SELECT/UPDATE policies already refer to these two functions.
+
+
+-- Existing child SELECT/UPDATE policies already refer to these two functions.
 -- Retighten the root INSERT: even an admin creates an OWNED quote, not a
 -- staff member's document under somebody else's user ID.
 alter policy quotes_insert_editor on public.quotes
