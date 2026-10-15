@@ -258,7 +258,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   recordActivity: (input) => {
     const activity: Activity = {
       ...input,
-      ownerUserId: input.ownerUserId ?? crmOwnerId(),
+      ownerUserId: crmOwnerId() ?? input.ownerUserId,
       id: input.id ?? id('activity'),
       occurredAt: input.occurredAt ?? now(),
     };
