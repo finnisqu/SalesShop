@@ -432,6 +432,7 @@ export function QuotesMobileBeta() {
   const libraryMode=useQuoteLibraryStore(s=>s.mode);
   const setLibraryMode=useQuoteLibraryStore(s=>s.setMode);
   const setView=useNavigationStore(s=>s.setView);
+  const openRoutedQuote=useNavigationStore(s=>s.openQuote);
   const routeQuoteId=useNavigationStore(s=>s.focusedQuoteId);
   const consumedRoute=useRef<string|null>(null);
   const restoredLocation=useRef(useQuotesMobileBetaStore.getState().location);
@@ -507,6 +508,9 @@ export function QuotesMobileBeta() {
   // remaining on a previously restored document-library tab. Consume once;
   // later quote edits must not bounce the user out of the library.
   useEffect(()=>{
+    if(!routeQuoteId)consumedRoute.current=null;
+  },[routeQuoteId]);
+  useEffect(()=>{
     if(!hydrated||!routeQuoteId||consumedRoute.current===routeQuoteId)return;
     if(!quotes.some(q=>q.id===routeQuoteId))return;
     consumedRoute.current=routeQuoteId;
@@ -558,11 +562,17 @@ export function QuotesMobileBeta() {
     setSearch('');setDocumentFilter('all');setStatusFilter('active');setDocumentSort('recent');
   };
   const openQuote=(id:string)=>{
-    select(id);setQuoteTab('build');setPage('quote');setAreaId(null);
+    openRoutedQuote(id);setQuoteTab('build');setPage('quote');setAreaId(null);
     setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
+  };
+  const showLibrary=()=>{
+    setSelectionsOpen(false);setPage('library');setAreaId(null);
+    // Clearing the route ID makes Back reopen the selected editor, rather than
+    // leaving a stale /quotes/:id URL on the document library.
+    setView('quotes');
   };
   const navigateDocument=(tab:QuoteTab)=>{
     setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
@@ -721,7 +731,7 @@ export function QuotesMobileBeta() {
       {quote&&page!=='library'&&<QuoteBetaDesktopRails
         quote={quote} page={page} quoteTab={quoteTab} areaTab={areaTab} areaId={areaId}
         areaManager={areaManager}
-        onLibrary={()=>{setSelectionsOpen(false);setPage('library');setAreaId(null);}}
+        onLibrary={showLibrary}
         onQuoteTab={navigateDocument}
         onArea={id=>{if(page==='area'&&id===areaId)return;openArea(id);}}
         onAreaTab={tab=>{setPage('area');setAreaTab(tab);}}
@@ -825,7 +835,7 @@ export function QuotesMobileBeta() {
     </>:page==='quote'&&quote?<div className="qmb-editor qmb-quote-editor">
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
-          <button type="button" className="qmb-back" onClick={()=>setPage('library')}>‹ Documents</button>
+          <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
           <span className="qmb-chip">{salesTemplateLabel(salesDocumentTemplate(quote))} · {quote.status==='Sent'?'Issued':quote.status}</span>
           <div className="qmb-headeractions">
             <button type="button" className="qmb-document-new-shortcut" onClick={()=>setShowNewDocument(true)}>+ New document</button>
