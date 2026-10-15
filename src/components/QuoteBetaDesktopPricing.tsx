@@ -3,6 +3,7 @@ import type {Quote,QuoteLine,QuoteLineKind,QuoteSection,QuotePricingMode,QuoteLi
 import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {calculateAreaCustomerPrice,projectAreaCost,type AreaPricingChoice} from '../services/quoteAreaCost';
+import {editedQuotePriceValue} from '../services/quotePriceInput';
 import {QuoteSfRateChoices} from './QuoteSfRateChoices';
 import {QuoteBetaRateCatalog,rateItemToQuotePatch} from './QuoteBetaRateCatalog';
 import {useCompanySettingsStore} from '../store/companySettingsStore';
@@ -103,19 +104,21 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       customerVisible:true,includeInTotal:true,
     });
   };
-  const setPrice=(choice:AreaPricingChoice,amount?:number,rate?:number,qty?:number,
-    mult?:number,sourceCost?:number,rateReference?:QuoteLineRateReference)=>{
+  const setPrice=(choice:AreaPricingChoice,
+    edits:{amount?:number;rate?:number;multiplier?:number;rateReference?:QuoteLineRateReference}={})=>{
     const id=ensurePrimary(choice);if(!id)return;
     const previous=primary??useQuoteStore.getState().quotes.find(q=>q.id===quote.id)?.lines.find(l=>l.id===id);
     const nextMode:QuotePricingMode=choice==='manual'?'direct':
       choice==='sf'?'quantity-rate':'slab-multiplier';
     const effectiveSf=projection.measuredSf;
-    const effectiveRate=rate??previous?.rate;
-    const effectiveCount=qty??projection.slabCount;
-    const effectiveMultiplier=mult??previous?.materialReference?.slabMultiplier??(isDeveloperPlaygroundRoute()?2.2:2);
-    const effectiveCost=sourceCost??slabPrice;
+    const effectiveRate=editedQuotePriceValue(edits,'rate',previous?.rate);
+    const effectiveCount=projection.slabCount;
+    const effectiveMultiplier=editedQuotePriceValue(edits,'multiplier',
+      previous?.materialReference?.slabMultiplier??(isDeveloperPlaygroundRoute()?2.2:2));
+    const effectiveCost=slabPrice;
     const value=calculateAreaCustomerPrice(choice,{
-      amount:amount??(previous?.pricingMode==='direct'?previous.amount:activeAmount),
+      amount:editedQuotePriceValue(edits,'amount',
+        previous?.pricingMode==='direct'?previous.amount:activeAmount),
       sf:effectiveSf,rate:effectiveRate,slabs:effectiveCount,
       costPerSlab:effectiveCost,multiplier:effectiveMultiplier,
     });
@@ -140,7 +143,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       pricingMode:nextMode,materialReference:mat,
       ...addLink,
       // Save the selected sell price and its Rate Book snapshot as one undoable edit.
-      ...(choice==='sf'?{rateReference}:{}),
+      ...(choice==='sf'?{rateReference:edits.rateReference}:{}),
       ...(choice==='sf'
         ?{rate:effectiveRate,amount:undefined}
         :{amount:value,rate:undefined}),
@@ -168,7 +171,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     projection.slabCount*projection.slabCost*multiplier+separateSell:undefined;
   const applyMargin=()=>{
     if(marginMaterialAmount===undefined)return;
-    setPrice('manual',marginMaterialAmount);
+    setPrice('manual',{amount:marginMaterialAmount});
   };
 
   const addCharge=(kind:QuoteLineKind)=>{
@@ -195,7 +198,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       <label>Manual selling price
         <input aria-label="Area manual selling price" type="number" step=".01" min="0"
           disabled={!editable||!primary} value={decimal(primary?.amount)}
-          onChange={e=>setPrice('manual',numeric(e.target.value))}/>
+          onChange={e=>setPrice('manual',{amount:numeric(e.target.value)})}/>
       </label>
       <p className="qmb-math-ledger">Customer price = {money.format(activeAmount)} · slab buying costs still calculated separately.</p>
     </div>}
@@ -203,7 +206,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       <label>Selling price per SF
         <input aria-label="Area selling rate per SF" type="number" step=".01" min="0"
           disabled={!editable||!primary} value={decimal(primary?.rate)}
-          onChange={e=>setPrice('sf',undefined,numeric(e.target.value))}/>
+          onChange={e=>setPrice('sf',{rate:numeric(e.target.value)})}/>
       </label>
       <button type="button" className="qmb-pricing-rate-toggle" disabled={!editable}
         aria-expanded={ratesOpen} onClick={()=>setRatesOpen(!ratesOpen)}>Choose builder rate</button>
@@ -213,7 +216,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
           materialType={selectedCost.materialType}
           materialCostPerSf={selectedCost.quotedCostPerSf??selectedCost.currentCatalogCostPerSf}
           onSelect={(price,ref)=>{
-            setPrice('sf',undefined,price,undefined,undefined,undefined,ref);
+            setPrice('sf',{rate:price,rateReference:ref});
             setRatesOpen(false);
           }}/>
       </div>}
@@ -224,8 +227,9 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       <div className="qmb-pricing-double">
         <label>Sell multiplier
           <input aria-label="Area sell multiplier" type="number" min=".01" step=".05"
-            disabled={!editable||!primary} value={decimal(primary?.materialReference?.slabMultiplier??2)}
-            onChange={e=>setPrice('multiplier',undefined,undefined,undefined,numeric(e.target.value))}/>
+            disabled={!editable||!primary} value={decimal(primary?.materialReference&&Object.prototype.hasOwnProperty.call(primary.materialReference,'slabMultiplier')
+              ?primary.materialReference.slabMultiplier:2)}
+            onChange={e=>setPrice('multiplier',{multiplier:numeric(e.target.value)})}/>
         </label>
         <label>Purchased slabs
           <input aria-label="Area multiplier slab count" type="number" min="1" step="1"
