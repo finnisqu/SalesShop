@@ -21,6 +21,8 @@ export function ShopOutcomesWorkspace({onShowMine}:{onShowMine:()=>void}){
   const orgId=useAuthStore(s=>s.organizationId);
   const userId=useAuthStore(s=>s.user?.id);
   const role=useAuthStore(s=>s.teamRole);
+  const currentScope=`${orgId??''}:${userId??''}:${role??''}`;
+  const [loadedScope,setLoadedScope]=useState('');
   const [outcomes,setOutcomes]=useState<SignedShopOutcome[]>([]);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
@@ -31,6 +33,7 @@ export function ShopOutcomesWorkspace({onShowMine}:{onShowMine:()=>void}){
     let cancelled=false;
     // Clear previously authorized data immediately on account/org change.
     setOutcomes([]);
+    setLoadedScope('');
     setError('');
     if(!orgId||!userId||(role!=='owner'&&role!=='admin')){
       setLoading(false);
@@ -39,24 +42,28 @@ export function ShopOutcomesWorkspace({onShowMine}:{onShowMine:()=>void}){
     }
     setLoading(true);
     void loadSignedShopOutcomes().then(result=>{
-      if(!cancelled){setOutcomes(result);setLoading(false);}
+      if(!cancelled){setOutcomes(result);setLoadedScope(currentScope);setLoading(false);}
     }).catch((cause:unknown)=>{
       if(!cancelled){
         setOutcomes([]);
+        setLoadedScope('');
         setError(cause instanceof Error?cause.message:'Shop outcomes could not be loaded.');
         setLoading(false);
       }
     });
     return ()=>{cancelled=true;};
-  },[orgId,userId,role,refresh]);
+  },[orgId,userId,role,currentScope,refresh]);
 
+  // A role/account switch must never show stale previous-user data, even for
+  // the single render that occurs before a React effect clears state.
+  const visibleOutcomes=loadedScope===currentScope&&(role==='owner'||role==='admin')?outcomes:[];
   const matches=useMemo(()=>{
     const search=query.trim().toLocaleLowerCase();
-    return outcomes.filter(outcome=>!search
+    return visibleOutcomes.filter(outcome=>!search
       ||[outcome.title,outcome.quoteNumber,outcome.companyName]
         .some(value=>value?.toLocaleLowerCase().includes(search)))
       .slice().sort((a,b)=>b.acceptedAt.localeCompare(a.acceptedAt));
-  },[outcomes,query]);
+  },[visibleOutcomes,query]);
   const total=matches.reduce((sum,outcome)=>sum+outcome.acceptedTotal,0);
 
   return <main className="shop-outcomes" aria-label="Signed Shop Outcomes">
