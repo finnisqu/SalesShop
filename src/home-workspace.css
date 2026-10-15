@@ -64,3 +64,11 @@
 .sales-home-task-check small{font-size:11px;color:var(--ss-theme-muted,#66716b)}
 .sales-home-task-actions{display:flex;gap:9px;padding-left:29px;flex-wrap:wrap}
 .sales-home-task-actions button{font-size:11px;border:1px solid var(--ss-theme-border,#d3d7d0);border-radius:7px;background:var(--ss-theme-tint,#edf0eb);color:var(--ss-theme-ink,#25372d);padding:6px 10px;min-height:32px}
+
+/* Desktop HOME uses the same Quick Create entry as mobile's command bar. */
+.sales-home-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.sales-home-header-create{display:flex;align-items:center;justify-content:flex-end;flex:0 0 auto}
+.sales-home-header-create .quick-create-launcher{min-width:44px;min-height:44px}
+@media(max-width:700px),(orientation:landscape) and (max-height:520px) and (pointer:coarse){
+  .sales-home-header-create{display:none}
+}

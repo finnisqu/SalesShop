@@ -515,7 +515,11 @@ export function QuotesMobileBeta() {
     if(!quotes.some(q=>q.id===routeQuoteId))return;
     consumedRoute.current=routeQuoteId;
     if(activeQuoteId!==routeQuoteId)select(routeQuoteId);
-    setPage('quote');setQuoteTab('build');setAreaId(null);
+    // Browser Back to the *same* quote should restore its last editor section.
+    // Opening a different document should still begin at Build.
+    const saved=useQuotesMobileBetaStore.getState().location;
+    if(saved.quoteId!==routeQuoteId||saved.page!=='quote')setQuoteTab('build');
+    setPage('quote');setAreaId(null);
   },[hydrated,routeQuoteId,quotes,activeQuoteId,select]);
 
   // One-time upgrade when opening old Beta takeoffs: historical specifications

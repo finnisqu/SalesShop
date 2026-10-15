@@ -13,6 +13,7 @@ import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {buildHomeAgenda,nextLocalDay} from '../services/homeAgenda';
 import {followUpLocalDate} from '../services/quoteFollowUps';
 import {newQuickNoteEvent} from './GlobalPostIt';
+import {QuickCreate} from './QuickCreate';
 import '../home-workspace.css';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
@@ -86,6 +87,7 @@ export function HomeWorkspace(){
       <div><span className="sales-home-eyebrow">MY WORKSPACE</span>
         <h1>Today</h1><p>{day.format(new Date())} · Everything you need to keep work moving.</p>
       </div>
+      {canCreate&&<div className="sales-home-header-create"><QuickCreate /></div>}
     </header>
 
     {canCreate&&<button type="button" className="sales-home-primary" onClick={()=>{setNewName('');setCreating(true);}}>

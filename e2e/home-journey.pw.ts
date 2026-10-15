@@ -27,7 +27,7 @@ test('HOME named quote opens Beta editor, supports mobile/desktop Back and resum
     await expect(page).toHaveURL(/\/quotes\/quote_/);
     await expect(page.locator('.sales-app.view-quotes')).toBeVisible();
     await expect(page.locator('.qmb-desktop-frame.is-library')).toHaveCount(0);
-    await expect(page.getByText('Batch 16G test quote').first()).toBeVisible();
+    await expect(page.getByRole('main',{name:'Quotes mobile beta'}).getByRole('textbox',{name:'Quote title'})).toHaveValue('Batch 16G test quote');
 
     await page.goBack();
     await expect(page).toHaveURL(/\/home$/);
@@ -72,14 +72,14 @@ test('HOME task, floating Quick Note and named deal preserve navigation and reco
       .fill('Batch 16G note persists through navigation');
     await notes.getByRole('button',{name:'Collapse Post-its'}).click();
 
-    await page.getByRole('button',{name:'Quick create'}).click();
+    await page.getByRole('button',{name:'Quick create'}).first().click();
     const create=page.getByRole('dialog',{name:'Create in SalesShop'});
     await create.getByRole('button',{name:/New Deal/}).click();
-    await create.getByRole('textbox',{name:'Deal name'}).fill('Batch 16G project');
+    await create.getByRole('textbox',{name:'Deal name'}).fill('Batch 16G deal');
     await create.getByRole('button',{name:'Create & open'}).click();
 
     await expect(page).toHaveURL(/\/connections\/deals\//);
-    await expect(page.getByRole('heading',{name:'Batch 16G project'})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Batch 16G deal'})).toBeVisible();
     await page.goBack();
     await expect(page).toHaveURL(/\/home$/);
 
