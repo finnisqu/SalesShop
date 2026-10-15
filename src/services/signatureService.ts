@@ -29,9 +29,7 @@ export async function completeQuoteSignature(quoteId: string, input: SignatureIn
   if(quote.status==='Signed')throw new Error('This quote is already signed but its receipt was not found. Restore the signed receipt before continuing.');
   const signature = useSignatureStore.getState().createSignature(quote, input);
 
-  if (quote.status !== 'Signed') {
-    useQuoteStore.getState().updateQuote(quoteId, { status: 'Signed' });
-  }
+  useQuoteStore.getState().updateQuote(quoteId, { status: 'Signed' });
 
   return signature;
 }
