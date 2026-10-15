@@ -26,6 +26,10 @@ export function parseSalesShopRoute(pathname:string):Partial<NavigationLocation>
     return id&&!id.includes('/')?{view:'board',focusedCompanyId:clean(id)}:null;
   }
   if(path==='/connections')return{view:'dashboard'};
+  if(path.startsWith('/connections/companies/')){
+    const id=path.slice('/connections/companies/'.length);
+    return id&&!id.includes('/')?{view:'dashboard',focusedCompanyId:clean(id)}:null;
+  }
   if(path==='/notebook')return{view:'notebook'};
   if(path==='/catalog')return{view:'catalog'};
   if(path.startsWith('/catalog/')){
@@ -43,7 +47,7 @@ export function salesShopRoutePath(location:Pick<NavigationLocation,'view'|'cata
     case 'quotes':return location.focusedQuoteId?'/quotes/'+segment(location.focusedQuoteId):'/quotes';
     case 'board':return location.focusedProjectId?'/board/projects/'+segment(location.focusedProjectId):
       location.focusedCompanyId?'/board/accounts/'+segment(location.focusedCompanyId):'/board';
-    case 'dashboard':return '/connections';
+    case 'dashboard':return location.focusedCompanyId?'/connections/companies/'+segment(location.focusedCompanyId):'/connections';
     case 'notebook':return '/notebook';
     case 'catalog':return '/catalog/'+location.catalogSection;
     case 'settings':return '/settings';

@@ -20,13 +20,13 @@ describe('bounded in-app navigation history',()=>{
     store.getState().goBack();
     expect(store.getState()).toMatchObject({view:'quotes',catalogSection:'materials',history:[]});
   });
-  it('preserves a focused Board record when returning from another tab',()=>{
+  it('preserves a focused Connections company record when returning from another tab',()=>{
     const store=useNavigationStore;
     store.getState().openCompany('company-one');
     store.getState().setView('settings');
     store.getState().goBack();
     expect(store.getState()).toMatchObject({
-      view:'board',focusedCompanyId:'company-one',focusedProjectId:null,
+      view:'dashboard',focusedCompanyId:'company-one',focusedProjectId:null,
     });
   });
   it('does not stack same-tab navigation or create a loop when going Back',()=>{

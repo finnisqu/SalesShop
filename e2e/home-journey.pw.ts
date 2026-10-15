@@ -90,10 +90,8 @@ test('HOME task, floating Quick Note and named project preserve navigation and r
     await accountCreate.getByRole('button',{name:/New Account/}).click();
     await accountCreate.getByRole('textbox',{name:'Account / company name'}).fill('Batch 16G customer');
     await accountCreate.getByRole('button',{name:'Create & open'}).click();
-    await expect(page).toHaveURL(/\/board\/accounts\//);
-    await expect(page.getByRole('button',{name:'Close account details'})).toBeVisible();
-    await page.getByRole('button',{name:'Close account details'}).click();
-    await expect(page).toHaveURL(/\/board$/);
+    await expect(page).toHaveURL(/\/connections\/companies\//);
+    await expect(page.getByRole('heading',{name:'Batch 16G customer'})).toBeVisible();
     await page.goBack();
     await expect(page).toHaveURL(/\/home$/);
 

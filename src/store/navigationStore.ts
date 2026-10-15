@@ -153,7 +153,7 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
     openCatalog:(catalogSection='materials')=>navigate('catalog',{catalogSection}),
     openBuilderRates:()=>navigate('catalog',{catalogSection:'rates',ratesFocus:'material'}),
     openProject:projectId=>navigate('board',{focusedProjectId:projectId}),
-    openCompany:companyId=>navigate('board',{focusedCompanyId:companyId}),
+    openCompany:companyId=>navigate('dashboard',{focusedCompanyId:companyId}),
     openNotebookPage:pageId=>{
       useNotebookStore.getState().selectEntry(pageId);
       navigate('notebook');

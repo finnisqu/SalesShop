@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Dashboard } from './Dashboard';
+import { CompanyRecordPage } from './CompanyRecordPage';
 import { Button, Field, PageHeader, Panel, SectionTabs, StatusText } from '../design-system/components';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -72,6 +73,7 @@ export function Connections() {
   const createContact = useCrmStore((state) => state.createContact);
   const updateContact = useCrmStore((state) => state.updateContact);
   const openCompany = useNavigationStore((state) => state.openCompany);
+  const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const setView = useNavigationStore((state) => state.setView);
@@ -146,6 +148,14 @@ export function Connections() {
     else if (activity.projectId) openProject(activity.projectId);
     else if (activity.companyId) openCompany(activity.companyId);
   };
+
+  const backToCompanies = () => {
+    chooseTab('companies');
+    setView('dashboard');
+  };
+  if (focusedCompanyId) return <main className="connections-workspace">
+    <CompanyRecordPage companyId={focusedCompanyId} onBack={backToCompanies} />
+  </main>;
 
   return (
     <main className="connections-workspace">

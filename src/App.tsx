@@ -7,6 +7,7 @@ import './notebook-patch.css';
 import './board.css';
 import './board-groups.css';
 import './accounts.css';
+import './connections-record-pages.css';
 import './notebook-project-links.css';
 import './quotes.css';
 import './customer-document-brand.css';
