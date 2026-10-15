@@ -90,7 +90,13 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
             ?{view:'area',areaId:line.sectionId,tab:'measure'}:where);
       }
     }else if(line.pricingMode==='direct'||line.pricingMode==='slab-multiplier'){
-      if(!isValidPrice(line.amount)){
+      // Quote math normalizes discounts to -abs(amount); existing quotes can
+      // store -$100 or +$100 for the same valid discount. Ordinary charges
+      // must remain nonnegative, and all amounts must be finite.
+      const amountValid=line.kind==='discount'
+        ?line.amount!==undefined&&Number.isFinite(line.amount)
+        :isValidPrice(line.amount);
+      if(!amountValid){
         add('line:'+line.id+':amount','blocker','Missing amount: '+title,
           'This charge has no valid selling amount.',where);
       }else if(line.amount===0&&line.kind!=='discount'){

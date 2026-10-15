@@ -98,6 +98,28 @@ describe('Quotes Beta Review audit',()=>{
     expect(complimentary.review.map(issue=>issue.id)).toContain('sink:s1:complimentary');
     expect(complimentary.review.map(issue=>issue.id)).not.toContain('line:sink-line:zero');
   });
+  it('permits positive or negative entered discounts but still rejects negative ordinary charges',()=>{
+    const base=quote().lines[0];
+    const negative=auditQuoteDraft(quote({lines:[base,
+      line('discount-negative',{kind:'discount',description:'Promotional savings',amount:-100}),
+    ]}));
+    const positive=auditQuoteDraft(quote({lines:[base,
+      line('discount-positive',{kind:'discount',description:'Promotional savings',amount:100}),
+    ]}));
+    expect(negative.total).toBe(980);
+    expect(positive.total).toBe(980);
+    expect(negative.blockers).toHaveLength(0);
+    expect(positive.blockers).toHaveLength(0);
+    const bad=auditQuoteDraft(quote({lines:[base,line('negative-charge',{amount:-100})]}));
+    expect(bad.blockers.map(item=>item.id)).toContain('line:negative-charge:amount');
+  });
+  it('rejects an unfinished or nonfinite discount amount just as other prices',()=>{
+    for(const value of [undefined,Number.NaN,Infinity,-Infinity]){
+      const report=auditQuoteDraft(quote({lines:[...quote().lines,
+        line('discount',{kind:'discount',amount:value})]}));
+      expect(report.blockers.map(item=>item.id)).toContain('line:discount:amount');
+    }
+  });
   it('does not block issuing because a legacy sink is specification-only',()=>{
     const reference={...sink('spec-only',undefined),includeInPricing:false};
     const input=quote({sections:[{...quote().sections[0],
