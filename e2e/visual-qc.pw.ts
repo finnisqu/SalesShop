@@ -73,6 +73,9 @@ async function captureLayout(page: Page) {
 }
 
 test('seven workspaces render with bounded page geometry and screenshots', async ({ page }, testInfo) => {
+  // Seven full reloads and tablet screenshots can exceed the global 60s budget
+  // on contended CI runners. Keep geometry assertions and crash checks intact.
+  test.setTimeout(120_000);
   const crashes: string[] = [];
   page.on('pageerror', (error) => crashes.push(error.message));
   const measurements: Array<{ view: Workspace; layout: Awaited<ReturnType<typeof captureLayout>> }> = [];
