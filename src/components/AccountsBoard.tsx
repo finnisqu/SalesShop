@@ -231,7 +231,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
   useEffect(() => {
     if (!focusedCompanyId) return;
     if (companies.some((company) => company.id === focusedCompanyId)) setEditingId(focusedCompanyId);
-    clearFocusedCompany();
+    // Do not discard the deep-link while the account dialog is visible.
   }, [focusedCompanyId, companies, clearFocusedCompany]);
 
   const editingCompany = companies.find((company) => company.id === editingId) ?? null;
@@ -323,7 +323,10 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
         })}
       </section>
 
-      {editingCompany && <AccountEditor company={editingCompany} onClose={() => setEditingId(null)} />}
+      {editingCompany && <AccountEditor company={editingCompany} onClose={() => {
+        setEditingId(null);
+        if(focusedCompanyId===editingCompany.id)clearFocusedCompany();
+      }} />}
       {cleanupOpen && <CrmCleanupPanel onClose={() => setCleanupOpen(false)} />}
     </main>
   );
