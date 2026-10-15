@@ -53,6 +53,10 @@ interface CrmState {
 
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 const now = () => new Date().toISOString();
+const crmOwnerId = () => {
+  const auth = useAuthStore.getState();
+  return auth.mode === 'cloud' ? auth.user?.id : undefined;
+};
 
 function persist(companies: Company[], contacts: Contact[], projects: Project[], activities: Activity[]) {
   const document: CrmDocument = { schemaVersion: 3, companies, contacts, projects, activities };
@@ -77,6 +81,7 @@ function ensureCompany(companies: Company[], companyName: string | undefined, ti
   if (matches.length > 1) return { companies, companyId: undefined, companyName: cleanName };
   const company: Company = {
     id: id('company'),
+    ownerUserId: crmOwnerId(),
     name: cleanName,
     kind,
     createdAt: timestamp,
@@ -165,6 +170,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const timestamp = now();
     const contact: Contact = {
       id: id('contact'),
+      ownerUserId: crmOwnerId(),
       companyId: input.companyId,
       name: cleanName,
       email: input.email?.trim() || undefined,
@@ -176,6 +182,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const contacts = [...get().contacts, contact];
     const activity: Activity = {
       id: id('activity'),
+      ownerUserId: crmOwnerId(),
       type: 'contact-created',
       summary: `${contact.name} added as a contact`,
       companyId: contact.companyId,
@@ -251,6 +258,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   recordActivity: (input) => {
     const activity: Activity = {
       ...input,
+      ownerUserId: input.ownerUserId ?? crmOwnerId(),
       id: input.id ?? id('activity'),
       occurredAt: input.occurredAt ?? now(),
     };
@@ -267,6 +275,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const ensured = ensureCompany(get().companies, details.companyName, timestamp);
     const project: Project = {
       id: id('project'),
+      ownerUserId: crmOwnerId(),
       name: cleanName,
       companyId: ensured.companyId,
       companyName: ensured.companyName,
@@ -280,6 +289,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const projects = [project, ...get().projects];
     const activity: Activity = {
       id: id('activity'),
+      ownerUserId: crmOwnerId(),
       type: 'project-created',
       summary: details.quoteNumber ? `Project created from ${details.quoteNumber} in ${stage}` : `Project created in ${stage}`,
       projectId: project.id,
@@ -352,6 +362,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     );
     const activity: Activity = {
       id: id('activity'),
+      ownerUserId: crmOwnerId(),
       type: 'project-stage-changed',
       summary: stageSummary(current.stage, transition.project.stage, context),
       projectId,
