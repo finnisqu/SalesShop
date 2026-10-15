@@ -118,9 +118,9 @@ values('11111111-1111-4111-8111-111111111111','legacy-company','Legacy unnamed o
 -- Simulate legacy privileged merge functions. The staged privacy migration
 -- must revoke their authenticated EXECUTE capability.
 create or replace function public.merge_crm_company_identity(uuid,text,text)
-returns void language plpgsql security definer as $ begin null; end; $;
+returns void language plpgsql security definer as $body$ begin null; end; $body$;
 create or replace function public.merge_crm_contact_identity(uuid,text,text)
-returns void language plpgsql security definer as $ begin null; end; $;
+returns void language plpgsql security definer as $body$ begin null; end; $body$;
 grant execute on function public.merge_crm_company_identity(uuid,text,text) to authenticated;
 grant execute on function public.merge_crm_contact_identity(uuid,text,text) to authenticated;
 
