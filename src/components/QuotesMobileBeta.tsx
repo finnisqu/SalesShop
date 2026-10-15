@@ -139,7 +139,7 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
               disabled={line.quantitySource?.syncMode==='live'} placeholder="—"
               onChange={e=>update(quote.id,line.id,{quantity:e.target.value===''?undefined:Number(e.target.value)})}/></Field>
             <div className="qmb-material-rate-cell">
-              <Field label="Sell rate ($/SF)"><input type="number" inputMode="decimal" min="0" step=".01"
+              <Field label={line.kind==='sink'?"Sell price ($/each)":line.kind==='material'?"Sell rate ($/SF)":"Sell rate ($/unit)"}><input type="number" inputMode="decimal" min="0" step=".01"
                 value={line.rate??''} placeholder="Not set"
                 onChange={e=>update(quote.id,line.id,{
                   rate:e.target.value===''?undefined:Number(e.target.value),rateReference:undefined,
@@ -450,7 +450,6 @@ export function QuotesMobileBeta() {
   const stockLevelPreview=useMemo(()=>snapshotStockBuilderLevels(companyStock,levelGuide),
     [companyStock,levelGuide]);
   const [libraryAction,setLibraryAction]=useState<{id:string;kind:'archive'|'delete'}|null>(null);
-  const [deletePhrase,setDeletePhrase]=useState('');
   const [copyRequest,setCopyRequest]=useState<{id:string;title:string}|null>(null);
   const [copyName,setCopyName]=useState('');
   const archiveQuote=useQuoteStore(s=>s.archiveQuote);
@@ -565,12 +564,12 @@ export function QuotesMobileBeta() {
   };
   const requestDocumentDelete=()=>{
     if(quote&&canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)){
-      setDeletePhrase('');setLibraryAction({id:quote.id,kind:'delete'});
+      setLibraryAction({id:quote.id,kind:'delete'});
     }
   };
   const requestDocumentArchive=()=>{
     if(quote&&canManageLibrary){
-      setDeletePhrase('');setLibraryAction({id:quote.id,kind:'archive'});
+      setLibraryAction({id:quote.id,kind:'archive'});
     }
   };
   const reviseCurrentDocument=()=>{
@@ -863,6 +862,7 @@ export function QuotesMobileBeta() {
           </div>}
           <div ref={mobileGeneralRef} className={'qmb-inline-general-list'+(generalManager.editing?' is-managing-general':'')}
             data-general-edit-workspace aria-label="General line cards">
+            {!generalManager.lines.length&&!generalTakeoff&&<div className="qmb-empty qmb-general-empty">No General items yet. Add a charge, material, sink, rate, note, or General takeoff to get started.</div>}
             {(generalManager.editing?generalManager.lines:
               quote.lines.filter(l=>!l.sectionId||!quote.sections.some(s=>s.id===l.sectionId)))
               .map(l=><div className="qmb-inline-general-row" data-qmb-sort-row={l.id} key={l.id}>
@@ -998,16 +998,10 @@ export function QuotesMobileBeta() {
           <div className="qmb-area-manager-delete">
             <p>{removing?'This draft has never been issued. Permanent deletion cannot be undone.':
               'The quote and its revisions will be retained, and you can restore them from Show archived.'}</p>
-            {removing&&<label className="qmb-document-delete-phrase">
-              <span>Type DELETE to permanently remove this draft.</span>
-              <input autoFocus autoComplete="off" aria-label="Type DELETE to confirm"
-                value={deletePhrase} onChange={e=>setDeletePhrase(e.target.value)}/>
-            </label>}
-            <button type="button" disabled={removing&&deletePhrase!=='DELETE'}
+            <button type="button"
               className={'qmb-area-deletion-choice'+(removing?' is-destructive':'')}
               onClick={()=>{
                 if(removing){
-                  if(deletePhrase!=='DELETE')return;
                   if(canPermanentlyDeleteQuote(chosen,useQuoteStore.getState().quotes)){
                     deleteQuote(chosen.id);
                     if(quote?.id===chosen.id){setPage('library');setAreaId(null);}
@@ -1016,7 +1010,7 @@ export function QuotesMobileBeta() {
                   archiveQuote(chosen.id);
                   if(quote?.id===chosen.id){setPage('library');setAreaId(null);}
                 }
-                setLibraryAction(null);setDeletePhrase('');
+                setLibraryAction(null);
               }}>
               <strong>{removing?'Permanently delete draft':'Archive quote'}</strong>
             </button>
