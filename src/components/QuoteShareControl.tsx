@@ -72,14 +72,18 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
   if (!quote) return null;
 
   const makeLink = async (regenerate = false) => {
+    const requestedQuoteId=quote.id;
     setWorking(true);
     setError('');
     setCopied(false);
     try {
-      const next = await createQuoteShare(quote.id, regenerate);
-      setShare(next);
+      const next = await createQuoteShare(requestedQuoteId, regenerate);
+      // Navigating to another quote while the network request is pending must
+      // never show the previous customer's bearer link in the new panel.
+      if(useQuoteStore.getState().activeQuoteId===requestedQuoteId)setShare(next);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not create customer link.');
+      if(useQuoteStore.getState().activeQuoteId===requestedQuoteId)
+        setError(reason instanceof Error ? reason.message : 'Could not create customer link.');
     } finally {
       setWorking(false);
     }
@@ -91,7 +95,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
     setError('');
     try {
       await revokeQuoteShare(quote.id, share.id);
-      setShare({ ...share, status: 'revoked' });
+      if(useQuoteStore.getState().activeQuoteId===quote.id)setShare({ ...share, status: 'revoked' });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not revoke customer link.');
     } finally {
@@ -100,7 +104,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
   };
 
   const copy = async () => {
-    if (!share) return;
+    if (!share || share.quoteId!==quote.id || !active) return;
     try {
       await navigator.clipboard.writeText(quoteShareUrl(share));
       setCopied(true);
@@ -111,7 +115,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
   };
 
   const nativeShare = async () => {
-    if (!share) return;
+    if (!share || share.quoteId!==quote.id || !active) return;
     const url = quoteShareUrl(share);
     if (!navigator.share) {
       await copy();
@@ -131,7 +135,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
 
   const cloudReady = mode === 'cloud' && Boolean(organizationId);
   const url = share ? quoteShareUrl(share) : '';
-  const correctRevision=Boolean(share&&shareMatchesQuoteRevision(quote,share));
+  const correctRevision=Boolean(share&&share.quoteId===quote.id&&shareMatchesQuoteRevision(quote,share));
   const deliveries=confirmedQuoteDeliveries(quote,activities);
   const handoff=quoteHandoffStatus(quote,share,deliveries.length>0);
   // Expired and mismatched-revision links must never appear copyable/shareable.
@@ -210,7 +214,7 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
                     <span>Revision {share.revision} · {share.status==='revoked'?'Revoked':handoff.linkExpired?'Expired · generate a replacement link':'Customer-visible content is frozen at issue'}</span>
                   </div>
                   {!correctRevision&&<p className="quote-share-review-needed" role="status">
-                    This link is for revision {share.revision}, not revision {quote.revision}. It cannot be shared as the current quote. Create a link for this revision instead.
+                    This link is for a different quote or revision ({share.revision} rather than the selected revision {quote.revision}). It cannot be shared as the current quote. Create a link for this quote instead.
                   </p>}
                   <div className="quote-share-status-row">
                     <span className={`quote-share-status status-${handoff.linkExpired?'expired':share.status}`}>{share.status === 'signed' ? 'Signed' : share.status === 'revoked' ? 'Revoked' : handoff.linkExpired ? 'Expired' : share.viewCount > 0 ? 'Viewed' : 'Ready'}</span>
