@@ -5,7 +5,7 @@ import { Connections, CONNECTIONS_TABS } from './Connections';
 describe('Connections workspace', () => {
   it('provides distinct locations for the business records and keeps Dashboard as Overview', () => {
     expect(CONNECTIONS_TABS.map((tab) => tab.id)).toEqual([
-      'overview', 'companies', 'people', 'projects', 'quotes', 'activity',
+      'overview', 'companies', 'people', 'projects', 'activity',
     ]);
     expect(new Set(CONNECTIONS_TABS.map((tab) => tab.id)).size).toBe(CONNECTIONS_TABS.length);
   });
