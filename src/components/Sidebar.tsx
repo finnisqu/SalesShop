@@ -103,8 +103,8 @@ export function Sidebar() {
           aria-label="Search notebook pages"
         />
         <div className="notebook-page-filters" aria-label="Notebook page filters">
-          <button type="button" className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>All</button>
-          <button type="button" className={filter === 'favorites' ? 'active' : ''} onClick={() => setFilter('favorites')}>★</button>
+          <button type="button" className={filter === 'all'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('all');}}>All</button>
+          <button type="button" className={filter === 'favorites'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('favorites');}}>★</button>
           <button type="button" className={filter === 'project'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setFilter('project');}}>Project</button>
           <button type="button" className={showTrash ? 'active' : ''} onClick={() => setShowTrash(value=>!value)}>Recently Deleted ({trashedEntries.length})</button>
         </div>
