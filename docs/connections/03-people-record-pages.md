@@ -11,8 +11,8 @@
 - Company selector and edits reuse `crmStore.updateContact` and current persistence; no migrations.
 - Contacts open from the People directory, newly created People, Global Search, and the Company record's People panel.
 - Company page and People page reuse `RecordPageLayout`, `RecordCard` and `RecordProperty` for consistent appearance and mobile behavior.
-- Primary contact page information: contact properties, company link and company projects.
-- **Company projects are explicitly marked as company-level context**. There is no contact-project assignment in today's CRM schema; no inferred salesperson/estimator attribution.
+- Primary contact page information: contact properties and explicit company association.
+- **Company projects are not surfaced on the Person page**. There is no contact-project assignment in today's CRM schema, and showing company-wide work here would risk misleading attribution or additional disclosure.
 - **Activity history stays collapsed and opt-in**, showing only directly linked `activity.contactId === contact.id` records. No company-wide communication history is silently inherited.
 - Email and telephone actions only open device handlers; they do not record interactions or suggest a tracking obligation.
 

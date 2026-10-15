@@ -15,7 +15,6 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const hydrated = useCrmStore((state) => state.hydrated);
   const people = useCrmStore((state) => state.contacts);
   const companies = useCrmStore((state) => state.companies);
-  const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
   const updateContact = useCrmStore((state) => state.updateContact);
   const openCompany = useNavigationStore((state) => state.openCompany);
@@ -30,8 +29,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
     title: person?.title ?? '', companyId: person?.companyId ?? '',
   });
   const related = useMemo(
-    () => person ? personRecordView(person, companies, projects, activities) : null,
-    [person, companies, projects, activities],
+    () => person ? personRecordView(person, companies, activities) : null,
+    [person, companies, activities],
   );
 
   useEffect(() => {
@@ -103,14 +102,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           </button>
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
       </RecordCard>
-      <RecordCard title="Projects at this company" extra={<span>{related.companyProjects.length}</span>}>
-        <p className="connections-record-helper">These projects belong to the company, not necessarily to this person. Project-specific contact roles are not yet recorded.</p>
-        <div className="connections-record-entity-list">
-          {related.companyProjects.map((project) => <button key={project.id} type="button" onClick={() => openProject(project.id)}>
-            <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
-          </button>)}
-          {!related.companyProjects.length && <p className="connections-record-empty">No company projects linked.</p>}
-        </div>
+      <RecordCard title="Project involvement">
+        <p className="connections-record-empty">Project-specific contact roles are not yet supported. No company projects are automatically attributed to this person.</p>
       </RecordCard>
     </>}
     right={<>
