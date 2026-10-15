@@ -97,10 +97,10 @@ create or replace function private.can_issue_org_quotes(p_org uuid)
 returns boolean language sql stable security definer set search_path=''
 as $$ select private.can_edit_org_area(p_org,'quotes') $$;
 -- Placeholders preserve the live policy shape and are replaced by the migration.
-create or replace function private.can_read_quote(p_org uuid,p_id text)
+create or replace function private.can_read_quote(p_org uuid,p_quote_id text)
 returns boolean language sql stable security definer set search_path=''
 as $$ select false $$;
-create or replace function private.can_edit_quote(p_org uuid,p_id text)
+create or replace function private.can_edit_quote(p_org uuid,p_quote_id text)
 returns boolean language sql stable security definer set search_path=''
 as $$ select false $$;
 create or replace function public.can_access_quote(p_organization_id uuid,p_quote_id text,p_action text default 'read')
