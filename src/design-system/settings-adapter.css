@@ -246,3 +246,37 @@
     min-height: 44px;
   }
 }
+
+/* Batch 7A — device-local personal formats and standard wording reference */
+.sales-app.view-settings .settings-datetime-card,
+.sales-app.view-settings .settings-terms-card{min-width:0}
+.sales-app.view-settings .settings-datetime-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sales-app.view-settings .settings-datetime-grid label{display:grid;gap:6px;min-width:0;font-size:12px}
+.sales-app.view-settings .settings-datetime-grid label>span{color:var(--ink-muted,#6d6a64);font-weight:700}
+.sales-app.view-settings .settings-datetime-grid select{max-width:100%;width:100%;min-height:44px;
+  border-radius:8px;border:1px solid var(--ss-border,var(--border,#bbb));
+  background:var(--ss-card,var(--paper,#fff));color:var(--ss-ink,var(--ink,#222));
+  padding:9px 10px;font:inherit}
+.sales-app.view-settings .settings-datetime-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;padding:13px 0}
+.sales-app.view-settings .settings-datetime-preview>div{display:grid;gap:4px;border-radius:8px;
+  border:1px solid var(--ss-border,var(--border,#ccc));padding:11px;min-width:0}
+.sales-app.view-settings .settings-datetime-preview strong{font-size:15px;font-variant-numeric:tabular-nums}
+.sales-app.view-settings .settings-datetime-preview .settings-calendar-week{grid-column:1/-1}
+.sales-app.view-settings .settings-calendar-week>div{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:2px;text-align:center;font-size:11px;font-weight:700;padding:5px 0}
+.sales-app.view-settings .settings-terms-card{grid-column:1/-1}
+.sales-app.view-settings .settings-terms-list{display:grid;gap:8px}
+.sales-app.view-settings .settings-term-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--ss-border,var(--border,#ccc))}
+.sales-app.view-settings .settings-term-row>div{display:grid;gap:5px;min-width:0}
+.sales-app.view-settings .settings-term-row strong{font-size:12px}
+.sales-app.view-settings .settings-term-row p{margin:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.sales-app.view-settings .settings-term-row button{flex:0 0 auto;min-width:62px;min-height:40px;border-radius:8px;
+  border:1px solid var(--ss-border,var(--border,#ccc));color:var(--ss-ink,var(--ink,#222));
+  background:var(--ss-card,var(--paper,#fff));cursor:pointer}
+@media(max-width:680px){
+  .sales-app.view-settings .settings-datetime-grid{grid-template-columns:minmax(0,1fr)}
+  .sales-app.view-settings .settings-term-row{align-items:stretch}
+  .sales-app.view-settings .settings-term-row button{align-self:flex-start}
+}

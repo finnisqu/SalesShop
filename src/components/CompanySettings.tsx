@@ -4,6 +4,8 @@ import { useNavigationStore } from '../store/navigationStore';
 import { supabase } from '../lib/supabase';
 import { useAppearanceStore } from '../store/appearanceStore';
 import { AppearanceThemePicker } from './AppearanceThemePicker';
+import { PersonalDateTimeSettings } from './PersonalDateTimeSettings';
+import { CompanyDocumentTermsReference } from './CompanyDocumentTermsReference';
 import { OwnerRolePreviewSettings } from './RolePerspectiveControls';
 import { PageHeader, Panel, Button } from '../design-system/components';
 import { SettingsIdentityFields, SettingsProfileFields } from './SettingsIdentityFields';
@@ -160,6 +162,7 @@ export function CompanySettings() {
               <label><span>Contact phone</span><input type="tel" value={settings.quoteContactPhone} onChange={(event) => update({ quoteContactPhone: event.target.value })} /></label>
             </fieldset>
           </article>
+          <CompanyDocumentTermsReference />
         </section>}
 
         {tab === 'account' && <section className="settings-panel-grid" aria-label="Salesperson account">
@@ -184,7 +187,7 @@ export function CompanySettings() {
           </Panel>
           <article className="company-settings-card settings-secondary-card">
             <header><div><strong>Account & privacy</strong><small>What belongs to you and what belongs to the shop.</small></div></header>
-            <p className="settings-help">Your notebook is private to your account. Company records, quotes, materials, and CRM contacts belong to the shared organization workspace.</p>
+            <p className="settings-help">Your Notebook and Post-its are private to your account. Quotes and CRM records still follow the company's current access policies; restricted salesperson sharing is being developed separately. Signing in to another company does not merge your workspaces.</p>
             <div className="settings-detail-line"><span>Connection</span><strong>{mode === 'cloud' ? organizationId ? 'Cloud connected' : 'Cloud needs attention' : 'Local mode'}</strong></div>
             {cloudReady && <div className="settings-workspace-selector">
               <strong>Current company</strong>
@@ -199,6 +202,7 @@ export function CompanySettings() {
               </> : <span>{workspaces.find((item) => item.id === organizationId)?.name || settings.organizationName || 'Your company'}</span>}
             </div>}
           </article>
+          <PersonalDateTimeSettings userId={user?.id ?? null} />
         </section>}
 
         {tab === 'team' && <><TeamAccessSettings /><SalesTeamManagement /></>}
