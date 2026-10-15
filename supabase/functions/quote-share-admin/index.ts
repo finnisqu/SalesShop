@@ -157,6 +157,10 @@ Deno.serve(async (req) => {
     if (quoteError) throw quoteError;
     if (!quote) return json({ error: 'Quote not found.' }, 404);
     if (quote.archived_at) return json({ error: 'Archived documents cannot create customer links. Restore the document first.' }, 409);
+    // Service-role calls bypass RLS. An old/frozen snapshot is NOT permission
+    // to turn a Draft/Ready document into an active customer link.
+    if (!['Sent', 'Viewed', 'Signed'].includes(String(quote.status)))
+      return json({ error: 'Only an issued quote revision can have a customer link.' }, 409);
     const revision = body.revision ?? Number(quote.revision) ?? 0;
     if (revision !== Number(quote.revision)) return json({ error: 'Only the current quote revision can be shared.' }, 409);
 

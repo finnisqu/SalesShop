@@ -5,7 +5,7 @@ import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { syncNormalizedCrm } from './normalizedCrmSync';
 import { syncNormalizedQuotes } from './normalizedQuoteSync';
-import { reviewItemsBlockingDirectShare } from './quoteShareReadiness';
+import { customerShareCreationBlocker } from './quoteShareReadiness';
 
 export interface QuoteShare {
   id: string;
@@ -59,6 +59,15 @@ async function invoke(body: Record<string, unknown>): Promise<ShareResponse> {
   return response;
 }
 
+function assertCurrentQuoteRevision(quoteId:string,expectedRevision:number) {
+  const current=useQuoteStore.getState().quotes.find(candidate=>candidate.id===quoteId);
+  if(!current||current.revision!==expectedRevision)
+    throw new Error('The quote revision changed while preparing the link. Reopen Review to share the current issued revision.');
+  const blocker=customerShareCreationBlocker(current);
+  if(blocker)throw new Error(blocker);
+  return current;
+}
+
 async function prepareCurrentRevision(quoteId: string) {
   const { organizationId } = requireCloudContext();
   const client = supabase;
@@ -67,24 +76,9 @@ async function prepareCurrentRevision(quoteId: string) {
   let state = useQuoteStore.getState();
   let quote = state.quotes.find((candidate) => candidate.id === quoteId);
   if (!quote) throw new Error('Commercial document not found.');
-  if (quote.archivedAt) throw new Error('Archived documents cannot be shared. Restore the document first.');
-  if (quote.status === 'Declined' || quote.status === 'Expired') {
-    throw new Error(`${quote.status} documents cannot be shared. Create or reopen a revision first.`);
-  }
-
-  if (quote.status === 'Draft' || quote.status === 'Ready') {
-    const pendingReviewItems = reviewItemsBlockingDirectShare(quote);
-    if (pendingReviewItems) {
-      throw new Error('Issue this draft from Review before sharing. '+
-        pendingReviewItems+' item(s) need an intentional decision.');
-    }
-    await state.recordSent(quoteId);
-    state = useQuoteStore.getState();
-    quote = state.quotes.find((candidate) => candidate.id === quoteId);
-    if (!quote || quote.status === 'Draft' || quote.status === 'Ready') {
-      throw new Error('The document could not be prepared for sharing.');
-    }
-  }
+  const blocker=customerShareCreationBlocker(quote);
+  if(blocker)throw new Error(blocker);
+  const expectedRevision=quote.revision;
 
   // Sharing is an explicit write intent. Refresh the local edit timestamp before
   // the durability sync so a previously interrupted number-assignment/send flow
@@ -93,6 +87,7 @@ async function prepareCurrentRevision(quoteId: string) {
   state = useQuoteStore.getState();
   quote = state.quotes.find((candidate) => candidate.id === quoteId);
   if (!quote) throw new Error('Commercial document not found.');
+  assertCurrentQuoteRevision(quoteId,expectedRevision);
 
   // Do not rely on the normal cloud debounce here. A customer link must never
   // be issued before the exact revision AND its CRM identity are durable.
@@ -106,6 +101,7 @@ async function prepareCurrentRevision(quoteId: string) {
     projects: hydratedCrm.projects,
     activities: hydratedCrm.activities,
   });
+  assertCurrentQuoteRevision(quoteId,expectedRevision);
   await syncNormalizedQuotes(organizationId, {
     schemaVersion: 2,
     quotes: state.quotes,
@@ -121,9 +117,9 @@ async function prepareCurrentRevision(quoteId: string) {
     .maybeSingle();
   if (freezeError) throw freezeError;
   if (!frozenRevision) {
-    throw new Error('SalesShop could not freeze this quote revision for sharing. Please try again after cloud sync finishes.');
+    throw new Error('The issued quote revision is not frozen in the cloud. Reopen Review and try again after sync completes.');
   }
-
+  quote=assertCurrentQuoteRevision(quoteId,expectedRevision);
   return { quote, organizationId };
 }
 
@@ -148,6 +144,9 @@ export async function createQuoteShare(quoteId: string, regenerate = false) {
     revision: quote.revision,
   });
   if (!response.share) throw new Error('SalesShop did not return a customer link.');
+  if(response.share.quoteId!==quote.id||response.share.revision!==quote.revision)
+    throw new Error('The cloud returned a customer link for a different quote revision. Reopen Review.');
+  assertCurrentQuoteRevision(quoteId,quote.revision);
   return response.share;
 }
 

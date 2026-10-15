@@ -939,7 +939,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
 
   const send = async () => {
     setSending(true); setSendError('');
-    try { await recordSent(quote.id); } catch (reason) { setSendError(reason instanceof Error ? reason.message : 'The document could not be sent.'); } finally { setSending(false); }
+    try { await recordSent(quote.id); } catch (reason) { setSendError(reason instanceof Error ? reason.message : 'The document could not be issued.'); } finally { setSending(false); }
   };
 
   const canRevise = !quote.archivedAt && quoteCanCreateRevision(quote);
@@ -1030,7 +1030,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
           <div className="quote-mobile-menu-section">
             <span className="quote-mobile-menu-heading">Document actions</span>
             <div className="quote-mobile-document-actions">
-              {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="is-send" disabled={sending || !canIssueQuote} title={!canIssueQuote ? 'Only authorized Salesperson, General Member, Admin or Owner accounts may issue customer quotes.' : undefined} onClick={() => void send()}>{sending ? 'Sending…' : `Send ${documentLabel}`}</button>}
+              {(quote.status === 'Draft' || quote.status === 'Ready') && <button type="button" className="is-send" disabled={sending || !canIssueQuote} title={!canIssueQuote ? 'Only authorized Salesperson, General Member, Admin or Owner accounts may issue customer quotes.' : 'Freezes the current customer revision. No message or link is sent.'} onClick={() => void send()}>{sending ? 'Issuing…' : `Issue ${documentLabel}`}</button>}
               <QuoteShareControl />
               {canSign && <button type="button" className="is-sign" onClick={() => { setSignatureOpen(true); setMobileMenu(null); }}>Sign now</button>}
               {quote.status === 'Signed' && <button type="button" onClick={() => { setSignatureOpen(true); setMobileMenu(null); }}>View signature</button>}
@@ -1068,9 +1068,9 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
           </div>
           <div className="quote-document-actions">
             {(quote.status === 'Draft' || quote.status === 'Ready') && (
-              <button type="button" className="quote-send-button quote-action-button" disabled={sending || !canIssueQuote} title={!canIssueQuote ? 'You can prepare this estimate, but your department cannot issue customer quotes.' : undefined} onClick={() => void send()}>
+              <button type="button" className="quote-send-button quote-action-button" disabled={sending || !canIssueQuote} title={!canIssueQuote ? 'You can prepare this estimate, but your department cannot issue customer quotes.' : 'Freezes the current customer revision. No message or link is sent.'} onClick={() => void send()}>
                 <span className="quote-action-icon" aria-hidden="true">↑</span>
-                <span className="quote-action-label">{sending ? 'Sending…' : `Send ${documentLabel}`}</span>
+                <span className="quote-action-label">{sending ? 'Issuing…' : `Issue ${documentLabel}`}</span>
               </button>
             )}
             <QuoteShareControl />

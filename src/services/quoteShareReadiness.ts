@@ -1,9 +1,17 @@
 import type {Quote} from '../types/quote';
-import {auditQuoteDraft} from './quoteDraftAudit';
 
-/** Direct link creation cannot bypass the intentional decision at formal issue.
- * Optional fields do not block a link, and issued revisions are immutable. */
-export function reviewItemsBlockingDirectShare(quote:Quote):number {
-  if(quote.documentType==='pricing-schedule'||(quote.status!=='Draft'&&quote.status!=='Ready'))return 0;
-  return auditQuoteDraft(quote).review.length;
+/** A customer bearer link may only be created for a separately issued,
+ * frozen revision. No UI, Classic editor, or direct client call may silently
+ * turn a draft into an issued customer document. Server edge function checks
+ * the same status using authoritative DB records. */
+export function customerShareCreationBlocker(
+  quote:Pick<Quote,'status'|'archivedAt'>,
+):string|null {
+  if(quote.archivedAt)return 'Restore this archived document before creating a customer link.';
+  if(quote.status==='Draft'||quote.status==='Ready')
+    return 'Preview and explicitly issue this customer revision before creating a link. Creating a link never issues a draft.';
+  if(quote.status==='Declined'||quote.status==='Expired')
+    return 'Create a new revision before sharing this declined or expired document.';
+  if(quote.status==='Sent'||quote.status==='Viewed'||quote.status==='Signed')return null;
+  return 'This document is not ready for customer sharing.';
 }

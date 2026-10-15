@@ -9,7 +9,7 @@ import {
   type QuoteShare,
 } from '../services/quoteShareService';
 import { displayQuoteNumber } from '../types/quote';
-import { reviewItemsBlockingDirectShare } from '../services/quoteShareReadiness';
+import { customerShareCreationBlocker } from '../services/quoteShareReadiness';
 import {shareMatchesQuoteRevision} from '../services/quoteDeliveryApproval';
 import {useCrmStore} from '../store/crmStore';
 import {confirmedQuoteDeliveries} from '../services/quoteDeliveryLifecycle';
@@ -55,9 +55,12 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
       ['Sent','Viewed','Signed'].includes(quote.status)));
     setShare(null);
     setError('');
+    setCopied(false);
   }, [activeQuoteId,inline,autoOpenOnIssue]);
 
   useEffect(() => {
+    // Never show a link fetched for the old revision while checking the new one.
+    setShare(null);
     if (!open || !quote || mode !== 'cloud' || !organizationId) return;
     let cancelled = false;
     setLoading(true);
@@ -134,14 +137,15 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
   };
 
   const cloudReady = mode === 'cloud' && Boolean(organizationId);
-  const url = share ? quoteShareUrl(share) : '';
-  const correctRevision=Boolean(share&&share.quoteId===quote.id&&shareMatchesQuoteRevision(quote,share));
+  const currentShare=share&&share.quoteId===quote.id&&shareMatchesQuoteRevision(quote,share)
+    ?share:null;
+  const url = currentShare ? quoteShareUrl(currentShare) : '';
   const deliveries=confirmedQuoteDeliveries(quote,activities);
-  const handoff=quoteHandoffStatus(quote,share,deliveries.length>0);
-  // Expired and mismatched-revision links must never appear copyable/shareable.
+  const handoff=quoteHandoffStatus(quote,currentShare,deliveries.length>0);
+  // A link for a different customer or revision is never displayed or shareable.
   const active=handoff.linkUsable;
-  const reviewedItemsNeedingIssue=reviewItemsBlockingDirectShare(quote);
-  const creationReady=allowCreation&&reviewedItemsNeedingIssue===0;
+  const creationBlocker=customerShareCreationBlocker(quote);
+  const creationReady=allowCreation&&!creationBlocker;
 
   return (
     <div className={'quote-share-control'+(inline?' is-inline':'')}>
@@ -188,38 +192,31 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
             <p className="quote-share-message">Checking this quote…</p>
           ) : (
             <>
-              {!share && (
+              {!currentShare && (
                 <div className="quote-share-empty">
                   <strong>No customer link yet</strong>
-                  <p>{quote.status === 'Draft' || quote.status === 'Ready'
-                    ? !allowCreation
-                      ? 'Approve and issue the customer revision from Review before creating a link.'
-                      : reviewedItemsNeedingIssue>0
-                      ? 'Issue the draft from Review to freeze this exact revision before sharing it.'
-                      : 'Creating the link will issue and freeze this exact revision before it becomes customer-accessible.'
-                    : 'Create a secure link to this frozen quote revision.'}</p>
-                  {reviewedItemsNeedingIssue>0
-                    ?<p className="quote-share-review-needed">This quote has {reviewedItemsNeedingIssue} review {reviewedItemsNeedingIssue===1?'item':'items'} to acknowledge. Issue it from Review first; then create the customer link here.</p>
-                    :!allowCreation&&<p className="quote-share-review-needed">Recheck and complete Review before creating a new customer link.</p>}
-                  <button type="button" onClick={() => void makeLink(false)} disabled={working || !creationReady || quote.status === 'Declined' || quote.status === 'Expired'}>
+                  <p>{!allowCreation
+                    ? 'Complete the customer document approval and issue flow in Review before creating a link.'
+                    : creationBlocker??'Create a secure link to this issued, frozen customer revision.'}</p>
+                  {!allowCreation&&<p className="quote-share-review-needed">
+                    No customer document will be issued or sent by opening this panel.
+                  </p>}
+                  <button type="button" onClick={() => void makeLink(false)} disabled={working || !creationReady}>
                     {working ? 'Creating…' : 'Create secure customer link'}
                   </button>
                 </div>
               )}
 
-              {share && (
+              {currentShare && (
                 <div className="quote-share-active">
                   <div className="quote-share-revision" aria-label="Customer link revision">
-                    <strong>{correctRevision?'Link for current revision':'Link for a different revision'}</strong>
-                    <span>Revision {share.revision} · {share.status==='revoked'?'Revoked':handoff.linkExpired?'Expired · generate a replacement link':'Customer-visible content is frozen at issue'}</span>
+                    <strong>Link for current revision</strong>
+                    <span>Revision {currentShare.revision} · {currentShare.status==='revoked'?'Revoked':handoff.linkExpired?'Expired · generate a replacement link':'Customer-visible content is frozen at issue'}</span>
                   </div>
-                  {!correctRevision&&<p className="quote-share-review-needed" role="status">
-                    This link is for a different quote or revision ({share.revision} rather than the selected revision {quote.revision}). It cannot be shared as the current quote. Create a link for this quote instead.
-                  </p>}
                   <div className="quote-share-status-row">
-                    <span className={`quote-share-status status-${handoff.linkExpired?'expired':share.status}`}>{share.status === 'signed' ? 'Signed' : share.status === 'revoked' ? 'Revoked' : handoff.linkExpired ? 'Expired' : share.viewCount > 0 ? 'Viewed' : 'Ready'}</span>
-                    {share.viewCount > 0 && <span>{share.viewCount} view{share.viewCount === 1 ? '' : 's'}</span>}
-                    {share.expiresAt && share.status === 'active' && <span>{handoff.linkExpired?'Expired':'Expires'} {dateLabel(share.expiresAt)}</span>}
+                    <span className={`quote-share-status status-${handoff.linkExpired?'expired':currentShare.status}`}>{currentShare.status === 'signed' ? 'Signed' : currentShare.status === 'revoked' ? 'Revoked' : handoff.linkExpired ? 'Expired' : currentShare.viewCount > 0 ? 'Viewed' : 'Ready'}</span>
+                    {currentShare.viewCount > 0 && <span>{currentShare.viewCount} view{currentShare.viewCount === 1 ? '' : 's'}</span>}
+                    {currentShare.expiresAt && currentShare.status === 'active' && <span>{handoff.linkExpired?'Expired':'Expires'} {dateLabel(currentShare.expiresAt)}</span>}
                   </div>
 
                   {active && (
@@ -239,15 +236,15 @@ export function QuoteShareControl({inline=false,allowCreation=true,autoOpenOnIss
                   {handoff.linkExpired&&<p className="quote-share-review-needed" role="alert">This URL is no longer customer-accessible. Create a new link before sharing; previously confirmed delivery remains in the CRM history.</p>}
                   <small>{deliveries.length
                     ? 'Delivery confirmed by salesperson · '+new Date(deliveries[0].occurredAt).toLocaleString()
-                    :share.firstViewedAt?'Customer opened this link. Delivery was not manually confirmed.'
+                    :currentShare.firstViewedAt?'Customer opened this link. Delivery was not manually confirmed.'
                     :'Link created. No customer delivery has been confirmed.'}</small>
-                  {share.firstViewedAt && <small>First opened {new Date(share.firstViewedAt).toLocaleString()}</small>}
-                  {share.signedAt && <small>Accepted {new Date(share.signedAt).toLocaleString()}</small>}
+                  {currentShare.firstViewedAt && <small>First opened {new Date(currentShare.firstViewedAt).toLocaleString()}</small>}
+                  {currentShare.signedAt && <small>Accepted {new Date(currentShare.signedAt).toLocaleString()}</small>}
 
                   <div className="quote-share-secondary-actions">
-                    {share.status !== 'revoked' && <button type="button" onClick={() => void revoke()} disabled={working}>Revoke</button>}
-                    <button type="button" onClick={() => void makeLink(true)} disabled={working || !creationReady || quote.status === 'Declined' || quote.status === 'Expired'}>
-                      {working ? 'Working…' : share.status === 'revoked'||handoff.linkExpired ? 'Create new link' : 'Regenerate link'}
+                    {currentShare.status !== 'revoked' && <button type="button" onClick={() => void revoke()} disabled={working}>Revoke</button>}
+                    <button type="button" onClick={() => void makeLink(true)} disabled={working || !creationReady}>
+                      {working ? 'Working…' : currentShare.status === 'revoked'||handoff.linkExpired ? 'Create new link' : 'Regenerate link'}
                     </button>
                   </div>
                 </div>
