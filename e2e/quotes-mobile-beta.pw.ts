@@ -439,7 +439,7 @@ test('mobile quote Review highlights blockers, deep-links to fixes and never blo
   await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeDisabled();
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
   await expect(beta.locator('.customer-quote-paper')).toBeVisible();
-  await beta.getByRole('button',{name:'Back to Review'}).click();
+  await beta.getByRole('button',{name:'Back to Review',exact:true}).click();
   await expect(review.getByRole('checkbox',{name:/I reviewed the remaining items/})).toBeChecked();
   await expect(review.getByRole('checkbox',{name:'Approve customer document for issuing'})).toBeEnabled();
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
@@ -506,14 +506,18 @@ test('Previewed customer revision approval expires after a change before issue',
   const options=beta.locator('.qmb-preview-customer-options');
   await options.locator('summary').click();
   await options.getByRole('checkbox',{name:'Line amounts'}).uncheck();
-  await beta.getByRole('button',{name:'Back to Review'}).click();
+  // A customer-visibility edit during Preview still invalidates that review
+  // even if the user returns via the convenient footer button.
+  await beta.locator('.qmb-quote-footer').getByRole('button',{
+    name:'Done previewing · Back to Review ›',
+  }).click();
   await expect(review.getByRole('button',{name:'Open customer preview ›'})).toBeVisible();
   await expect(approval).toBeDisabled();
   await expect(acknowledgement).not.toBeChecked();
   await acknowledgement.check();
   await expect(approval).toBeDisabled();
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
-  await beta.getByRole('button',{name:'Back to Review'}).click();
+  await beta.getByRole('button',{name:'Back to Review',exact:true}).click();
   await expect(acknowledgement).toBeChecked();
   await approval.check();
   await expect(review.getByRole('button',{name:'Issue quote · no message sent'})).toBeEnabled();
@@ -552,7 +556,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   const paper=beta.locator('.customer-quote-paper');
   await expect(paper).toContainText('Kitchen');
   await expect(paper.locator('.customer-quote-total')).toContainText('$400.00');
-  await beta.getByRole('button',{name:'Back to Review'}).click();
+  await beta.getByRole('button',{name:'Back to Review',exact:true}).click();
   await review.getByRole('checkbox',{name:/I reviewed the remaining items/}).check();
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
   await review.getByRole('button',{name:'Issue quote · no message sent'}).click();
@@ -650,13 +654,27 @@ test('Review preview returns directly to the same quote delivery checklist',asyn
   await review.getByRole('button',{name:'Open customer preview ›'}).click();
   await expect(review).toHaveCount(0);
   await expect(beta.locator('.customer-quote-paper')).toBeVisible();
-  await beta.getByRole('button',{name:'Back to Review'}).click();
+  const previewReturn=beta.locator('.qmb-quote-footer').getByRole('button',{
+    name:'Done previewing · Back to Review ›',
+  });
+  await expect(previewReturn).toBeVisible();
+  await previewReturn.click();
   await expect(review).toBeVisible();
   await expect(review.locator('[data-review-delivery]')).toBeVisible();
+  // Returning from Preview never auto-approves or issues the quote.
+  await expect(review.getByRole('checkbox',{
+    name:'Approve customer document for issuing',
+  })).not.toBeChecked();
   await review.getByRole('button',{name:'Close Review and Issue'}).click();
   await beta.getByRole('button',{name:'Build',exact:true}).click();
   await beta.getByRole('button',{name:'Preview',exact:true}).click();
-  await expect(beta.getByRole('button',{name:'Back to Review'})).toHaveCount(0);
+  await expect(beta.getByRole('button',{name:'Back to Review',exact:true})).toHaveCount(0);
+  await expect(previewReturn).toHaveCount(0);
+  const normalFooter=beta.locator('.qmb-quote-footer .qmb-primary');
+  await expect(normalFooter).toBeVisible();
+  await expect(normalFooter).not.toContainText('Done previewing');
+  // This empty test draft correctly resumes its pricing-issue footer, not
+  // an issue-ready label; only the special review-preview action goes away.
 });
 
 test('Review resolves customer name and sink price inline without leaving Review',async ({page},testInfo)=>{
