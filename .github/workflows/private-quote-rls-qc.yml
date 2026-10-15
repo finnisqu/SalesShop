@@ -1,0 +1,46 @@
+name: Private Quote RLS SQL QC
+
+on:
+  pull_request:
+    branches:
+      - architecture/react-foundation
+    paths:
+      - 'supabase/migrations/20261015151800_private_quote_ownership_gate.sql'
+      - 'tests/security/private_quote_rls_*.sql'
+      - '.github/workflows/private-quote-rls-qc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable_test_only
+          POSTGRES_DB: sales_shop_rls_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sales_shop_rls_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout proposed migration
+        uses: actions/checkout@v4
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Compile proposed migration and test JWT-scoped quote permissions
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: disposable_test_only
+          PGDATABASE: sales_shop_rls_test
+        run: psql -v ON_ERROR_STOP=1 -f tests/security/private_quote_rls_bootstrap.sql
