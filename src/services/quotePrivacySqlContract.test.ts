@@ -26,6 +26,14 @@ describe('Batch 14B staged quote privacy RLS contract (not live-deployed)',()=>{
     expect(edit).not.toContain('quote_access_grants');
     expect(edit).not.toContain('sales_team_members');
   });
+  it('closes the privileged quote-numbering helper bypass',()=>{
+    const numbering=section('CREATE OR REPLACE FUNCTION private.assign_commercial_document_number',
+      '-- Existing child SELECT/UPDATE policies already refer to these two functions.');
+    expect(numbering).toContain('security definer');
+    expect(numbering).toContain('private.can_issue_org_quotes(p_organization_id)');
+    expect(numbering).toContain('if not private.can_edit_quote(p_organization_id,p_quote_id) then');
+    expect(numbering).toContain("using errcode='42501'");
+  });
   it('keeps quote inserts personal and quote grants explicit',()=>{
     expect(sql).toContain("owner_user_id=(select auth.uid())");
     expect(sql).toContain('alter policy quotes_insert_editor');
