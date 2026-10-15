@@ -10,6 +10,8 @@ const team=read('src/components/TeamQuotesWorkspace.tsx');
 describe('Batch 14D private quote sync and ownership contract',()=>{
   it('refuses to upload teammate quotes even for owner/admin and checks org session',()=>{
     expect(sync).toContain('auth.organizationId === organizationId');
+    expect(sync).toContain('auth.organizationId === null && bootstrapUserId === auth.user?.id');
+    expect(sync).toContain('(activeWorkspace || verifiedBootstrap)');
     expect(sync).toContain('quote.ownerUserId === actorId');
     expect(sync).not.toContain('(isAdmin ||');
     expect(sync).toContain('atLeastAsNew(quote.updatedAt');
@@ -18,6 +20,8 @@ describe('Batch 14D private quote sync and ownership contract',()=>{
     expect(cloud).toContain('const canSeedOrgFromLocal = options.allowCompanySeed === true && !previousScope;');
     expect(cloud).toContain('localQuotes.quotes.every(quote=>quote.ownerUserId===userId)');
     expect(cloud).toContain('starterQuoteDocument(userId)');
+    expect(cloud).toContain('syncNormalizedQuotes(orgId, starter, userId)');
+    expect(cloud).toContain('syncNormalizedQuotes(orgId, localQuotes, userId)');
     expect(cloud).toContain('ownerUserId: userId');
     expect(cloud).not.toContain('starterQuoteDocument()');
   });
