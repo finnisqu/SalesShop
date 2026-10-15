@@ -201,3 +201,11 @@
   }
   .sales-app .qmb .qmb-document-new-shortcut{padding:5px 8px;min-height:30px;font-size:10px}
 }
+
+/* Undo, Redo and compact document options must occupy one row. */
+.sales-app .qmb .qmb-desktop-history{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;min-width:0}
+.sales-app .qmb .qmb-desktop-history>.sales-document-rail-actions{grid-column:auto;min-width:0;width:100%;align-self:stretch}
+.sales-app .qmb .qmb-desktop-history>.sales-document-rail-actions>summary{min-width:0;width:100%;box-sizing:border-box}
+.sales-app .qmb .qmb-history{flex-wrap:nowrap;align-items:center}
+.sales-app .qmb .qmb-history>.sales-document-rail-actions{flex:0 0 42px}
+.sales-app .qmb .qmb-history>.sales-document-rail-actions>summary{width:42px}

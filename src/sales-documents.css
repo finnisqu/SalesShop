@@ -98,3 +98,7 @@
 @media(max-width:620px){
   .qmb .qmb-library-filter-row .qmb-library-followups-tab{margin-inline-start:0}
 }
+
+/* Native palette for the document tab selector, including dark mode. */
+.sales-app .qmb .qmb-library-filter-row button{background:var(--qmb-card);color:var(--qmb-ink);border-color:var(--qmb-border)}
+.sales-app .qmb .qmb-library-filter-row button.active{background:var(--qmb-tint);color:var(--qmb-accent);border-color:var(--qmb-accent)}
