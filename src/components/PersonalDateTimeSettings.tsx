@@ -64,6 +64,6 @@ export function PersonalDateTimeSettings({ userId }: { userId: string | null }) 
       <button type="button" onClick={()=>set(DEFAULT_DATE_TIME_PREFERENCES)}>Restore date &amp; time defaults</button>
       <span className="settings-muted">Saved on this device · display preview only</span>
     </div>
-    <p className="settings-help">These preferences currently control this preview. Calendar and date displays elsewhere will adopt them as those workspaces are upgraded; document dates and signed timestamps are not rewritten.</p>
+    <p className="settings-help">Date order and time zone also apply to the Sales Documents list's edited dates. Other calendars and timestamps will adopt these preferences as those workspaces are upgraded; saved document dates and signed records never change.</p>
   </article>;
 }
