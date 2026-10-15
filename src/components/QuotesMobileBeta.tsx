@@ -432,6 +432,8 @@ export function QuotesMobileBeta() {
   const libraryMode=useQuoteLibraryStore(s=>s.mode);
   const setLibraryMode=useQuoteLibraryStore(s=>s.setMode);
   const setView=useNavigationStore(s=>s.setView);
+  const routeQuoteId=useNavigationStore(s=>s.focusedQuoteId);
+  const consumedRoute=useRef<string|null>(null);
   const restoredLocation=useRef(useQuotesMobileBetaStore.getState().location);
   const setLocation=useQuotesMobileBetaStore(s=>s.setLocation);
   const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
@@ -501,6 +503,17 @@ export function QuotesMobileBeta() {
   const mobileGeneralRef=useQuoteBetaCardReflow<HTMLDivElement>(
     (generalManager.editing?generalManager.lines:(quote?.lines??[]).filter(l=>
       !l.sectionId||!quote?.sections.some(s=>s.id===l.sectionId))).map(l=>l.id));
+  // A Home/Board/deep-link opening must reach the Beta editor instead of
+  // remaining on a previously restored document-library tab. Consume once;
+  // later quote edits must not bounce the user out of the library.
+  useEffect(()=>{
+    if(!hydrated||!routeQuoteId||consumedRoute.current===routeQuoteId)return;
+    if(!quotes.some(q=>q.id===routeQuoteId))return;
+    consumedRoute.current=routeQuoteId;
+    if(activeQuoteId!==routeQuoteId)select(routeQuoteId);
+    setPage('quote');setQuoteTab('build');setAreaId(null);
+  },[hydrated,routeQuoteId,quotes,activeQuoteId,select]);
+
   // One-time upgrade when opening old Beta takeoffs: historical specifications
   // should not silently remain unpriced. Normal Catalog/manually priced rows are
   // preserved; only missing takeoff-managed sink charges are created.
