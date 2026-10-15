@@ -28,6 +28,8 @@ describe('staged Shop Outcomes screen does not expose quote-library data',()=>{
     expect(screen).not.toContain('quote.lines');
     expect(screen).toContain('setOutcomes([])');
     expect(screen).toContain('let cancelled=false');
+    expect(screen).toContain('loadedScope===currentScope');
+    expect(screen).toContain("role==='owner'||role==='admin'");
     expect(service).toContain('sanitizeSignedShopOutcomes(data?.outcomes)');
   });
   it('does not offer a signed-only view to a logged-out user or non-manager',()=>{
