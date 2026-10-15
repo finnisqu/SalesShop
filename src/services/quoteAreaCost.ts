@@ -14,7 +14,12 @@ export interface AreaCostProjection {
   materialCost?:number;costSource:'slab'|'derived-sf'|'manual'|'unknown';
   sinkCost?:number;missingSinkCosts:number;otherCost:number;
   totalKnownCost:number;priceTotal:number;grossSpread:number;
-  marginPercent?:number;complete:boolean;explanation:string;
+  /** Only defined once material, sink, shop, install and other cost are entered. */
+  marginPercent?:number;complete:boolean;
+  /** Provisional spread on entered costs, not a full margin. */
+  knownCostSpreadPercent?:number;
+  costCoverage:{material:boolean;sinks:boolean;shop:boolean;install:boolean;other:boolean};
+  missingCostItems:string[];explanation:string;
 }
 
 /** Slab consumption and production buying cost are independent of the
@@ -54,7 +59,9 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const manualOverride=nonnegative(primary?.internalCost);
   const materialCost=manualOverride??fromSlab??fromSf;
   let sinkCost=0,missingSinkCosts=0;
-  for(const sink of scope?.takeoffSinks??[]){
+  // Specifications-only sinks never create a charge or require a buying cost.
+  const pricedSinks=(scope?.takeoffSinks??[]).filter(s=>s.includeInPricing&&s.count>0);
+  for(const sink of pricedSinks){
     const cost=nonnegative(sink.internalCostOverride)??nonnegative(sink.sinkReference?.snapshot?.internalCost);
     if(cost===undefined){missingSinkCosts++;continue;}
     sinkCost+=cost*sink.count;
@@ -65,18 +72,33 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const priceTotal=roundCurrency(lines.reduce((total,l)=>total+quoteLineTotal(l),0));
   const known=roundCurrency((materialCost??0)+sinkCost+otherSummary.knownInternalCost+
     (shopCost??0)+(installCost??0));
-  const complete=materialCost!==undefined&&missingSinkCosts===0
-    &&otherSummary.costedLineCount===otherSummary.costRequiredLineCount;
+  const costCoverage={
+    material:materialCost!==undefined,
+    sinks:missingSinkCosts===0,
+    shop:shopCost!==undefined,
+    install:installCost!==undefined,
+    other:otherSummary.costedLineCount===otherSummary.costRequiredLineCount,
+  };
+  const missingCostItems=([
+    ['material','Material buying cost'],['sinks','Sink buying costs'],
+    ['shop','Fabrication / shop cost'],['install','Installation cost'],
+    ['other','Other priced work costs'],
+  ] as const).filter(([key])=>!costCoverage[key]).map(([,label])=>label);
+  const complete=missingCostItems.length===0;
   const spread=roundCurrency(priceTotal-known);
-  const margin=complete&&priceTotal>0?Math.round(spread/priceTotal*1000)/10:undefined;
+  const coreCovered=costCoverage.material&&costCoverage.sinks&&costCoverage.other;
+  const knownCostSpreadPercent=coreCovered&&priceTotal>0
+    ?Math.round(spread/priceTotal*1000)/10:undefined;
+  const margin=complete?knownCostSpreadPercent:undefined;
   return {
     measuredSf,slabAreaSf:area,yield:yieldFraction,usableSfPerSlab:usablePerSlab,
     suggestedSlabs,slabCount:count,purchaseSlabs,slabCost,shopCost,installCost,materialCost,
     costSource:manualOverride!==undefined?'manual':fromSlab!==undefined?'slab':
       fromSf!==undefined?'derived-sf':'unknown',
-    sinkCost:missingSinkCosts===(scope?.takeoffSinks?.length??0)&&missingSinkCosts>0?undefined:sinkCost,
+    sinkCost:missingSinkCosts===pricedSinks.length&&missingSinkCosts>0?undefined:sinkCost,
     missingSinkCosts,otherCost:otherSummary.knownInternalCost,
-    totalKnownCost:known,priceTotal,grossSpread:spread,marginPercent:margin,complete,
+    totalKnownCost:known,priceTotal,grossSpread:spread,
+    knownCostSpreadPercent,marginPercent:margin,complete,costCoverage,missingCostItems,
     explanation:usablePerSlab===undefined?'Select a slab with recorded dimensions to suggest a slab count.':
       measuredSf.toFixed(2)+' SF ÷ ('+area!.toFixed(2)+' SF/slab × '+
       Math.round(yieldFraction*100)+'% yield) = '+(suggestedSlabs??'—')+' suggested slabs',
