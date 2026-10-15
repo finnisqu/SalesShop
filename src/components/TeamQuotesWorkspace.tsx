@@ -70,7 +70,8 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
   // Grant rows are owner/admin-only. A specific quote grant permits Viewers to
   // read just that quote without exposing the rest of the organization.
   useEffect(()=>{
-    if(!supabase || !organizationId || !selectedId || !['owner','admin'].includes(currentRole??'')){
+    if(!supabase || !organizationId || !selectedId || !['owner','admin'].includes(currentRole??'') ||
+      quotes.find(q=>q.id===selectedId)?.ownerUserId!==currentUserId){
       setGrants([]);return;
     }
     let cancelled=false;
@@ -82,7 +83,7 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
         else setGrants((data??[]) as Array<{user_id:string}>);
       });
     return ()=>{cancelled=true};
-  },[organizationId,selectedId,currentRole]);
+  },[organizationId,selectedId,currentRole,currentUserId,quotes]);
 
   const filtered=useMemo(()=>filterTeamQuotes(quotes,filters),[quotes,filters]);
   const metrics=useMemo(()=>summarizeTeamQuotes(filtered,activities),[filtered,activities]);
@@ -99,15 +100,43 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
   };
 
   const saveAssignment=async()=>{
-    if(!selected || !organizationId || !supabase || (currentRole!=='owner'&&currentRole!=='admin')) return;
+    if(!selected || !organizationId || !supabase || !currentUserId ||
+      (currentRole!=='owner'&&currentRole!=='admin')) return;
     const owner=assignment.owner||null,division=assignment.division||null,team=assignment.team||null;
     if(!validQuoteTeamAssignment(owner,division,team,members,divisions,teams)){
       setError('Choose a valid member and team within the selected division.');return;
     }
+    if(selected.ownerUserId && selected.ownerUserId!==currentUserId){
+      setError('This quote belongs to another salesperson. Request a deliberate handoff from its owner.');return;
+    }
+    if(selected.ownerUserId && owner!==selected.ownerUserId){
+      setError('An assigned quote cannot be transferred or unassigned from Team Quotes. Use an approved handoff.');return;
+    }
+    if(!selected.ownerUserId && !owner){
+      setError('Choose an eligible salesperson for this legacy unassigned quote.');return;
+    }
     setSaving(true);setError('');setNotice('');
+    if(!selected.ownerUserId){
+      // This RPC only exists after the staged Batch 14B migration is deployed.
+      // Never fall back to a direct owner_user_id write if it is unavailable.
+      const {data,error:writeError}=await supabase.rpc('assign_unowned_quote',{
+        target_organization:organizationId,target_quote_id:selected.id,target_user_id:owner,
+      });
+      setSaving(false);
+      if(writeError||data!==true){
+        setError(writeError?.message||'Legacy quote recovery is not available yet.');return;
+      }
+      setQuoteAssignmentFromCloud(selected.id,{
+        ownerUserId:owner??undefined,divisionId:selected.divisionId,teamId:selected.teamId,
+      });
+      setNotice('Unassigned legacy quote assigned and recorded in the recovery audit.');
+      return;
+    }
+    // Current owner may edit reporting labels, but never ownership.
     const {data,error:writeError}=await supabase.from('quotes')
-      .update({owner_user_id:owner,division_id:division,team_id:team})
+      .update({division_id:division,team_id:team})
       .eq('organization_id',organizationId).eq('id',selected.id)
+      .eq('owner_user_id',currentUserId)
       .select('id,owner_user_id,division_id,team_id').single();
     setSaving(false);
     if(writeError || !data){setError(writeError?.message||'Could not save assignment.');return;}
@@ -116,12 +145,13 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
       divisionId:data.division_id??undefined,
       teamId:data.team_id??undefined,
     });
-    setNotice('Quote responsibility updated.');
+    setNotice('Reporting labels updated for your quote.');
   };
 
   const saveGrant=async(userId:string, remove=false)=>{
     if(!supabase || !organizationId || !selectedId || !currentUserId ||
-      !['owner','admin'].includes(currentRole??'') || !userId)return;
+      !['owner','admin'].includes(currentRole??'') || !userId ||
+      selected?.ownerUserId!==currentUserId)return;
     setSaving(true);setError('');setNotice('');
     const request=remove
       ? supabase.from('quote_access_grants').delete().eq('organization_id',organizationId)
@@ -193,7 +223,7 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
             <span>{line.description}</span><strong>{money.format(quoteLineTotal(line))}</strong>
           </div>)}
           {!quote.lines.length && <p>No line items yet.</p>}
-          {selected && (currentRole==='owner'||currentRole==='admin') && <section className="team-quote-assignment">
+          {selected && (currentRole==='owner'||currentRole==='admin') && (!selected.ownerUserId||selected.ownerUserId===currentUserId) && <section className="team-quote-assignment">
             <h3>Responsibility & reporting</h3>
             <div>
               <label><span>Salesperson</span><select aria-label="Assign quote salesperson" value={assignment.owner} onChange={e=>setAssignment(a=>({...a,owner:e.target.value}))}>
@@ -210,9 +240,9 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
             </div>
             <button type="button" disabled={saving||loading} onClick={()=>void saveAssignment()}>{saving?'Saving…':'Save assignment'}</button>
           </section>}
-          {selected && (currentRole==='owner'||currentRole==='admin') && <section className="team-quote-assignment" aria-label="Explicit quote access">
+          {selected && (currentRole==='owner'||currentRole==='admin') && selected.ownerUserId===currentUserId && <section className="team-quote-assignment" aria-label="Explicit quote access">
             <h3>Additional read-only access</h3>
-            <p>Grant an individual access to this quote only. Team members can also see quotes assigned to their team; viewers require an explicit grant.</p>
+            <p>Grant individual read-only access. Team membership alone does not share a private quote.</p>
             {grants.map(g=><div className="team-quote-grant-row" key={g.user_id}>
               <span>{ownerName(g.user_id)}</span>
               <button type="button" disabled={saving} onClick={()=>void saveGrant(g.user_id,true)}>Revoke</button>
