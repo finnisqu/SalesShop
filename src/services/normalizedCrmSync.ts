@@ -167,13 +167,18 @@ async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards>
   return guards;
 }
 
-export async function syncNormalizedCrm(organizationId: string, document: CrmDocument) {
+export async function syncNormalizedCrm(organizationId: string, document: CrmDocument, bootstrapUserId?: string) {
   if (!supabase) return;
   if (document.schemaVersion !== 3) throw new Error('Unsupported CRM document schema.');
 
   const guards = await serverCrmGuards(organizationId);
   const auth = useAuthStore.getState();
-  const actorId=auth.mode==='cloud' && auth.organizationId===organizationId ? auth.user?.id : undefined;
+  // New workspace hydration happens before auth.organizationId is saved.
+  // Only an explicitly authenticated, matching bootstrap user may sync then.
+  const activeWorkspace=auth.organizationId===organizationId;
+  const verifiedBootstrap=auth.organizationId===null && bootstrapUserId===auth.user?.id;
+  const actorId=auth.mode==='cloud' && (activeWorkspace||verifiedBootstrap)
+    ? auth.user?.id : undefined;
   // Once CRM RLS is deployed, do not upload other salespeople's records or
   // legacy unattributed records from the shared historical browser cache.
   const maySync=(record:{ownerUserId?:string})=>
