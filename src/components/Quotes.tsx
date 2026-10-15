@@ -1151,7 +1151,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
               </div>}
 
               {metaPanel === 'project' && <div id="quote-setup-project" className="quote-config-popover is-project">
-                <div className="quote-config-popover-heading"><strong>Project details</strong><small>CRM links and deal context stay tucked away after selection.</small></div>
+                <div className="quote-config-popover-heading"><strong>Deal details</strong><small>CRM links and deal context stay tucked away after selection.</small></div>
                 <div className="quote-project-details-grid">
                   <QuoteCrmFields quote={quote} />
                   <QuoteRevisionLabelField value={quote.revisionLabel ?? ''}

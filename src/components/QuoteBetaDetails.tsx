@@ -7,7 +7,7 @@ import type { Quote } from '../types/quote';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import {QUOTE_STANDARD_TERMS,freeCustomerNotes,termsEnabled,withCustomerTerms} from '../services/quoteCustomerTerms';
 
-/** Mobile-first Details: customer -> project -> notes.
+/** Mobile-first Details: customer -> deal -> notes.
  * Never navigates away to Board from a CRM link or selection. */
 export function QuoteBetaDetails({quote}:{quote:Quote}) {
   const update=useQuoteStore(state=>state.updateQuote);

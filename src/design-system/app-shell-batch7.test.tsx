@@ -28,7 +28,7 @@ describe('UI Foundation Batch 7 — Board / Quotes / Notebook',()=>{
     expect(field).toContain('for="new-project-name"');
     expect(field).toContain('id="new-project-name"');
     expect(board).toContain('<PageHeader className="board-header-panel board-foundation-header"');
-    expect(board).toContain('<Field id="new-project-name" label="Quick project"');
+    expect(board).toContain('<Field id="new-project-name" label="Quick deal"');
     expect(board).toContain('<Button type="submit" variant="secondary" disabled={!newName.trim()}>Add</Button>');
     expect(board).toContain('onSubmit={quickAdd}');
     expect(boardCss).toContain('.board-quick-add > .board-foundation-quick-field');

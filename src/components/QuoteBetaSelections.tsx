@@ -81,7 +81,7 @@ export function QuoteBetaSelections({quote,onClose}:{
           </label>
           <button type="button" className="qmb-outline qmb-block" disabled={!editable||!material.trim()}
             onClick={()=>{if(material.trim()){pinMaterial(quote.id,material,materialRef);
-              setMessage('Material added to Project Materials.');}}}>+ Pin for this quote</button>
+              setMessage('Material added to Deal Materials.');}}}>+ Pin for this quote</button>
         </div>
         <div className="qmb-selections-card">
           <strong>Fabrication defaults</strong>

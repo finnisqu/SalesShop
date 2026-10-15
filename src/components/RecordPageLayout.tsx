@@ -29,7 +29,7 @@ export function RecordPageLayout({
   center: ReactNode;
   right: ReactNode;
 }) {
-  return <section className="connections-record-page" data-record-type={entityType} aria-label={entityType + ' record'}>
+  return <section className="connections-record-page" data-record-type={entityType} aria-label={(recordTypeLabel ?? (entityType === 'project' ? 'Deal' : entityType)) + ' record'}>
     <nav className="connections-record-breadcrumb" aria-label="Breadcrumb">
       <button type="button" onClick={onBack}>← Connections</button>
       <span aria-hidden="true">/</span>

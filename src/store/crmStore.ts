@@ -87,8 +87,8 @@ function ensureCompany(companies: Company[], companyName: string | undefined, ti
 
 function stageSummary(from: ProjectStage, to: ProjectStage, context?: StageChangeContext) {
   return context?.quoteNumber
-    ? `${context.quoteNumber} moved project from ${from} to ${to}`
-    : `Project moved from ${from} to ${to}`;
+    ? `${context.quoteNumber} moved deal from ${from} to ${to}`
+    : `Deal moved from ${from} to ${to}`;
 }
 
 export const useCrmStore = create<CrmState>((set, get) => ({
@@ -281,7 +281,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const activity: Activity = {
       id: id('activity'),
       type: 'project-created',
-      summary: details.quoteNumber ? `Project created from ${details.quoteNumber} in ${stage}` : `Project created in ${stage}`,
+      summary: details.quoteNumber ? `Deal created from ${details.quoteNumber} in ${stage}` : `Deal created in ${stage}`,
       projectId: project.id,
       companyId: project.companyId,
       quoteId: details.quoteId,
