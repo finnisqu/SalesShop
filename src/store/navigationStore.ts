@@ -23,6 +23,7 @@ interface NavigationState {
   ratesFocus?: 'material';
   focusedProjectId: string | null;
   focusedCompanyId: string | null;
+  focusedQuoteId: string | null;
   history: NavigationLocation[];
   goBack: () => void;
   syncFromBrowser: () => void;
