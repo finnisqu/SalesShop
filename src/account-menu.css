@@ -1,0 +1,8 @@
+.app-profile-menu{position:relative;flex:0 0 auto;z-index:85}
+.app-profile-trigger{display:grid;place-items:center;width:36px;height:36px;padding:0;border-radius:50%;border:1px solid var(--ss-theme-border,#b8b7ae);background:var(--ss-theme-card,#edf0eb);color:var(--ss-theme-ink,#303e35);font-size:14px;font-weight:850;cursor:pointer}
+.app-profile-trigger:focus-visible,.app-profile-panel button:focus-visible{outline:2px solid var(--ss-theme-accent,#527663);outline-offset:2px}
+.app-profile-panel{position:absolute;right:0;top:calc(100% + 8px);min-width:218px;max-width:min(310px,90vw);padding:12px;display:grid;gap:9px;background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#29352f);border:1px solid var(--ss-theme-border,#c2c7bd);border-radius:12px;box-shadow:0 16px 32px #0002}
+.app-profile-panel strong{font-size:13px}.app-profile-panel small{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ss-theme-muted,#647168)}
+.app-profile-panel>button{text-align:left;min-height:39px;padding:8px 10px;border:0;border-radius:7px;background:var(--ss-theme-tint,#eef1eb);color:inherit;cursor:pointer;font-weight:700}
+.app-profile-session{padding-top:8px;border-top:1px solid var(--ss-theme-border,#ddd)}
+.app-profile-session .backend-account{display:flex;align-items:center;justify-content:space-between;gap:8px}

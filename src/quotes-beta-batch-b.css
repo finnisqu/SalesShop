@@ -751,3 +751,13 @@
 .qmb .qmb-preview-line-group :is(button,input):focus-visible{
   outline:2px solid var(--qmb-accent);outline-offset:2px;
 }
+
+/* Align lifecycle controls across old and new document cards. */
+.qmb .qmb-library-card-actions{box-sizing:border-box;min-height:46px;align-items:center;flex-wrap:wrap}
+.qmb .qmb-library-card-actions button{box-sizing:border-box;min-height:32px;line-height:1.2;padding:6px 10px}
+.qmb .qmb-job-sink-list{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:7px}
+.qmb .qmb-job-sink-list li{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-bg);padding:8px;color:var(--qmb-ink);font-size:11px}
+.qmb .qmb-job-sink-list li>span:first-child{display:grid;gap:4px;min-width:0}
+.qmb .qmb-job-sink-list small{color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-general-empty{margin:8px 0 12px}

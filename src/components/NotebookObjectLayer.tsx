@@ -265,19 +265,20 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
               <button className="object-handle object-resize-handle" type="button" aria-label="Resize object" title="Resize" onPointerDown={beginResize} {...interactionHandlers} />
             </>
           )}
-          <div className={`object-context-bar ${object.locked ? 'is-locked' : ''}`} onPointerDown={(event) => event.stopPropagation()}>
-            <button type="button" onClick={() => duplicateObject(entryId, object.id)} title="Duplicate object">Duplicate</button>
-            <button type="button" className={object.locked ? 'active' : ''} onClick={() => toggleObjectLocked(entryId, object.id)} title={object.locked ? 'Unlock object' : 'Lock object'}>
-              {object.locked ? 'Unlock' : 'Lock'}
-            </button>
-            {!object.locked && (
-              <>
-                <button type="button" onClick={() => moveObjectLayer(entryId, object.id, 'backward')} title="Send one layer backward">Back</button>
-                <button type="button" onClick={() => moveObjectLayer(entryId, object.id, 'forward')} title="Bring one layer forward">Forward</button>
-                <button type="button" className="danger" onClick={() => deleteObject(entryId, object.id)} title="Delete object">Delete</button>
-              </>
-            )}
-          </div>
+          <details className="notebook-object-actions" onPointerDown={event=>event.stopPropagation()}>
+            <summary aria-label="Object actions" title="Object actions">⋯</summary>
+            <div className="notebook-object-actions-menu">
+              <button type="button" onClick={() => duplicateObject(entryId, object.id)}>Duplicate</button>
+              <button type="button" onClick={() => toggleObjectLocked(entryId, object.id)}>
+                {object.locked ? 'Unlock object' : 'Lock object'}
+              </button>
+              {!object.locked && <>
+                <button type="button" onClick={() => moveObjectLayer(entryId, object.id, 'backward')}>Send backward</button>
+                <button type="button" onClick={() => moveObjectLayer(entryId, object.id, 'forward')}>Bring forward</button>
+                <button type="button" className="danger" onClick={() => deleteObject(entryId, object.id)}>Delete object</button>
+              </>}
+            </div>
+          </details>
           {object.locked && <span className="object-locked-badge" aria-label="Object locked" title="Object locked">Locked</span>}
         </>
       )}

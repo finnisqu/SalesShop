@@ -14,12 +14,11 @@ import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
-  { view: 'notebook', label: 'Notebook', short: 'Notebook' },
-  { view: 'board', label: 'Board', short: 'Board' },
   { view: 'quotes', label: 'Quotes', short: 'Quotes' },
-  { view: 'catalog', label: 'Catalog', short: 'Catalog' },
+  { view: 'board', label: 'Board', short: 'Board' },
   { view: 'dashboard', label: 'Connections', short: 'Connections' },
-  { view: 'settings', label: 'Settings', short: 'Settings' },
+  { view: 'notebook', label: 'Notebook', short: 'Notebook' },
+  { view: 'catalog', label: 'Catalog', short: 'Catalog' },
 ];
 
 const CATALOG_SECTIONS: Array<{ id: CatalogSection; label: string }> = [
@@ -197,7 +196,10 @@ export function MobileAppChrome() {
             </div>
           </section>}
 
-          <footer><AuthStatus /></footer>
+          <footer className="mobile-app-account-footer">
+            <button type="button" className="mobile-app-settings-link" onClick={() => {setOpen(false);setView('settings');}}>⚙ Settings &amp; Profile</button>
+            <AuthStatus />
+          </footer>
         </aside>
       </div>}
     </>

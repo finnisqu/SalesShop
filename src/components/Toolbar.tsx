@@ -61,6 +61,7 @@ export function Toolbar({ entry, editor }: ToolbarProps) {
   const toggleOpenAtStart = useNotebookStore((state) => state.toggleOpenAtStart);
   const toggleHidden = useNotebookStore((state) => state.toggleHidden);
   const toggleDeletionLocked = useNotebookStore((state) => state.toggleDeletionLocked);
+  const deleteEntry = useNotebookStore((state) => state.deleteEntry);
   const undo = useNotebookStore((state) => state.undo);
   const redo = useNotebookStore((state) => state.redo);
   const canUndo = useNotebookStore((state) => state.canUndo);
@@ -74,7 +75,7 @@ export function Toolbar({ entry, editor }: ToolbarProps) {
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   const tools: ReadonlyArray<[ActiveNotebookTool, string]> = [
-    ['select', 'Select + text'], ['pen', 'Pen'], ['marker', 'Marker'],
+    ['pen', 'Pen'], ['marker', 'Marker'],
     ['highlighter', 'Highlighter'], ['eraser', 'Eraser'], ['lasso', 'Lasso'],
   ];
   const activeToolLabel = tools.find(([tool]) => tool === activeTool)?.[1] ?? 'Drawing tools';
@@ -126,11 +127,16 @@ export function Toolbar({ entry, editor }: ToolbarProps) {
         <button type="button" className="notebook-toolbar-icon" onClick={undo} disabled={!canUndo} title="Undo · Ctrl/Cmd+Z" aria-label="Undo"><ToolbarIcon name="undo" /></button>
         <button type="button" className="notebook-toolbar-icon" onClick={redo} disabled={!canRedo} title="Redo · Ctrl/Cmd+Y" aria-label="Redo"><ToolbarIcon name="redo" /></button>
       </div>
+      <button type="button" className={`notebook-toolbar-icon ${activeTool==='select'?'active':''}`}
+        aria-label="Select and edit objects" title="Select and edit objects"
+        aria-pressed={activeTool==='select'} onClick={()=>{setActiveTool('select');setOpenMenu(null);}}>
+        <ToolbarIcon name="select" />
+      </button>
       <div className="notebook-toolbar-menu">
         <button type="button" className={`notebook-toolbar-icon ${openMenu === 'drawing' ? 'active' : ''}`}
           onClick={() => setOpenMenu((current) => current === 'drawing' ? null : 'drawing')}
           aria-label={`Drawing tools. Current tool: ${activeToolLabel}`} aria-expanded={openMenu === 'drawing'} title={`Drawing tools · ${activeToolLabel}`}>
-          <ToolbarIcon name={activeTool} />
+          <ToolbarIcon name={activeTool==='select'?'pen':activeTool} />
         </button>
         {openMenu === 'drawing' && (
           <div className="notebook-toolbar-popover drawing-tools-popover" role="dialog" aria-label="Drawing tools">
@@ -233,12 +239,22 @@ export function Toolbar({ entry, editor }: ToolbarProps) {
                 {entry.hidden ? 'Show in binder' : 'Hide private sheet'}
               </button>
               <button type="button" className={`notebook-page-action ${entry.deletionLocked ? 'active' : ''}`}
-                onClick={() => toggleDeletionLocked(entry.id)} aria-pressed={entry.deletionLocked}>
+                onClick={() => {
+                  if(entry.deletionLocked && !window.confirm('Unlock this page? It will become eligible for deletion.'))return;
+                  toggleDeletionLocked(entry.id);
+                }} aria-pressed={entry.deletionLocked}>
                 {entry.deletionLocked ? '🔒 Deletion locked' : '🔓 Deletion unlocked'}
               </button>
               <button type="button" className="notebook-page-action" onClick={() => { duplicateEntry(entry.id); setOpenMenu(null); }}>
                 <ToolbarIcon name="duplicate" />Duplicate
               </button>
+              <button type="button" className="notebook-page-action danger" disabled={entry.deletionLocked}
+                title={entry.deletionLocked?'Unlock this page before deleting':'Recoverable for seven days'}
+                onClick={()=>{
+                  if(window.confirm(`Move “${entry.title||'Untitled page'}” to Recently Deleted? You can recover it for seven days.`)){
+                    deleteEntry(entry.id);setOpenMenu(null);
+                  }
+                }}>Move to Recently Deleted</button>
               <button type="button" className="notebook-page-action danger" onClick={() => {
                 if (!entry.strokes.length || window.confirm('Clear all handwriting from this page?')) clearInk(entry.id);
               }}>

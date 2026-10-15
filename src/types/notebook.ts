@@ -43,4 +43,8 @@ export interface NotebookEntry {
   updatedAt: string;
 }
 
-export interface NotebookDocument { schemaVersion: 3; entries: NotebookEntry[]; activeEntryId: string | null; }
+export interface TrashedNotebookEntry { entry: NotebookEntry; deletedAt: string; }
+export interface NotebookDocument {
+  schemaVersion: 3; entries: NotebookEntry[]; activeEntryId: string | null;
+  trashedEntries?: TrashedNotebookEntry[];
+}

@@ -26,6 +26,12 @@ export function QuoteBetaSelections({quote,onClose}:{
   const [materialRef,setMaterialRef]=useState<QuoteLineMaterialReference|undefined>();
   const [applyMaterial,setApplyMaterial]=useState(false);
   const [message,setMessage]=useState('');
+  // Derived from Area takeoffs. Sink selections are not duplicated or silently shared.
+  const selectedSinks=quote.sections.flatMap(area=>(area.scope?.takeoffSinks??[])
+    .filter(sink=>sink.name.trim())
+    .map(sink=>({id:area.id+':'+sink.id,name:sink.name,qty:sink.count,area:area.title})));
+  const manualSinks=quote.lines.filter(line=>line.kind==='sink'&&!line.takeoffSinkId&&line.description.trim())
+    .map(line=>({id:line.id,name:line.description,qty:line.quantity??1,area:quote.sections.find(area=>area.id===line.sectionId)?.title??'General'}));
   useEffect(()=>{setEdge(first?.scope?.takeoffDefaultEdgeProfile??DEFAULT_EDGE_PROFILE);
     setHeight(String(first?.scope?.takeoffDefaultSplashHeightIn??DEFAULT_SPLASH_HEIGHT_IN));
   },[quote.id,first?.scope?.takeoffDefaultEdgeProfile,first?.scope?.takeoffDefaultSplashHeightIn]);
@@ -52,6 +58,16 @@ export function QuoteBetaSelections({quote,onClose}:{
       </header>
       <div className="qmb-selections-body">
         <QuoteProjectMaterials quote={quote}/>
+        <div className="qmb-selections-card" aria-label="Job sink selections">
+          <strong>Job sinks · {selectedSinks.length+manualSinks.length}</strong>
+          {selectedSinks.length+manualSinks.length===0
+            ?<p className="qmb-help">No sinks selected yet. Choose one in any Area and it will appear here automatically.</p>
+            :<ul className="qmb-job-sink-list">
+              {[...selectedSinks,...manualSinks].map(sink=>
+                <li key={sink.id}><span><strong>{sink.name}</strong><small>{sink.area}</small></span>
+                  <span>{sink.qty} each</span></li>)}
+            </ul>}
+        </div>
         <div className="qmb-selections-card">
           <strong>Find a job material</strong>
           <TakeoffMaterialCatalog disabled={!editable} value={material} selected={materialRef}
