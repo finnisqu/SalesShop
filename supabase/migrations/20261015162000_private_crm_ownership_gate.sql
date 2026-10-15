@@ -148,6 +148,17 @@ alter policy activities_update_editor on public.activities
 alter policy activities_delete_editor on public.activities
   using (private.can_edit_crm_entity(organization_id,'activities',id));
 
+-- Check recipient membership with RLS-safe privileged lookup rather than
+-- relying on SELECT rights for employee directory rows.
+create or replace function private.is_crm_grantee_member(p_org uuid,p_user uuid)
+returns boolean language sql stable security definer set search_path=''
+as $crm$
+ select exists(select 1 from public.organization_members m
+   where m.organization_id=p_org and m.user_id=p_user);
+$crm$;
+revoke all on function private.is_crm_grantee_member(uuid,uuid) from public,anon;
+grant execute on function private.is_crm_grantee_member(uuid,uuid) to authenticated;
+
 -- A member cannot grant access to records they don't own or manage.
 create policy crm_grants_read on public.crm_access_grants for select to authenticated
  using (
@@ -158,9 +169,7 @@ create policy crm_grants_insert on public.crm_access_grants for insert to authen
  with check (
    granted_by=(select auth.uid())
    and private.can_edit_crm_entity(organization_id,entity_type,entity_id)
-   and exists(select 1 from public.organization_members m where
-     m.organization_id=crm_access_grants.organization_id
-     and m.user_id=crm_access_grants.user_id)
+   and private.is_crm_grantee_member(organization_id,user_id)
  );
 create policy crm_grants_delete on public.crm_access_grants for delete to authenticated
  using (private.can_edit_crm_entity(organization_id,entity_type,entity_id));
