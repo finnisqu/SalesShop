@@ -193,7 +193,8 @@ test('phone Ready status and customer action fit a compact Beta header',async({p
   await expect(header.locator('.qmb-editor-status')).toHaveAttribute('title',/Ready for review/);
   const geometry=await header.evaluate(node=>({scroll:node.scrollWidth,client:node.clientWidth}));
   expect(geometry.scroll).toBeLessThanOrEqual(geometry.client+1);
-  await expect(beta.locator('.qmb-quote-footer .qmb-primary')).toHaveText('Review & issue ›');
+  // A Ready quote with incomplete pricing must route to resolution, not promise it can issue.
+  await expect(beta.locator('.qmb-quote-footer .qmb-primary')).toHaveText('Resolve 1 pricing issue ›');
 });
 
 test('Area takeoff grid keeps tabs visible and splash popover updates billable SF',async ({page},testInfo)=>{
