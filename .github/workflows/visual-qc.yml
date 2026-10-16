@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - architecture/react-foundation
+      - main
     paths:
       - 'src/**'
       - 'e2e/**'
@@ -13,6 +14,7 @@ on:
   pull_request:
     branches:
       - architecture/react-foundation
+      - main
     paths:
       - 'e2e/**'
       - 'src/**'
