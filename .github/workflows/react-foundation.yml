@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - architecture/react-foundation
+      - main
   pull_request:
     branches:
       - architecture/react-foundation
-  # Development branch pushes build/test only; publish requires manual dispatch.
+      - main
+  # Branch pushes and PRs build/test; only a push to main (or manual main dispatch) publishes.
   workflow_dispatch:
 
 permissions:
@@ -32,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Configure GitHub Pages
-        if: github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         id: pages
         uses: actions/configure-pages@v5
       - name: Supplier importer regression tests
@@ -51,18 +53,19 @@ jobs:
             exit 1
           fi
       - name: Add GitHub Pages SPA fallback
-        if: github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           cp dist/index.html dist/404.html
           touch dist/.nojekyll
+          printf 'app.salesshop.work\n' > dist/CNAME
       - name: Upload GitHub Pages artifact
-        if: github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   deploy:
-    if: github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     environment:
@@ -72,3 +75,13 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Smoke-test production HTML and asset delivery
+        run: |
+          set -euo pipefail
+          url="https://app.salesshop.work/"
+          curl --fail --silent --show-error --location --retry 8 --retry-delay 8 --retry-all-errors "$url" -o /tmp/salesshop-index.html
+          grep -Eq 'src="/assets/' /tmp/salesshop-index.html
+          asset="$(grep -oE 'src="/assets/[^"]+' /tmp/salesshop-index.html | head -n 1 | cut -d '"' -f 2)"
+          test -n "$asset"
+          curl --fail --silent --show-error --location --retry 8 --retry-delay 8 --retry-all-errors "https://app.salesshop.work$asset" -o /dev/null
+          echo "SalesShop HTML and hashed application asset are reachable."
