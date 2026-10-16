@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - architecture/react-foundation
+      - main
     paths:
       - 'src/components/HomeWorkspace.tsx'
       - 'src/components/QuotesMobileBeta.tsx'
