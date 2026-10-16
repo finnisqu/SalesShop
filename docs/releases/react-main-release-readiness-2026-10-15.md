@@ -17,13 +17,13 @@ Prepared October 15, 2026. This checklist is a **preparatory record, not cutover
 - Preserve Classic Quotes; Beta is not certified for Classic retirement.
 - Inspect and resolve all new critical errors before proposing promotion into `main`.
 
-## Deployment control: HOLD until externally verified
+## Deployment control: GitHub Pages identified; automatic release approved in principle
 
-- GitHub Pages production steps are manual-dispatch only in `.github/workflows/react-foundation.yml`. A GitHub Pages guard **does not** control Cloudflare Pages or Netlify webhooks.
-- Identify the actual production deployment provider for `salesshop.work`, production branch, build settings, custom domain, environment variables, preview handling and any auto-deploy-on-`main` hook **in the provider dashboard**.
-- Confirm the `main` merge will **not** unintentionally publish. Temporarily disable live auto-deploy or otherwise guarantee a separately authorized release. Record deploy ID, live commit, DNS/domain and tested rollback procedure.
-- Run public unauthenticated page/asset/deep-link smoke. Authenticated and customer-data checks must use approved secure test accounts.
-- No GitHub branch merge automatically authorizes a website deployment.
+- On October 15, owner supplied GitHub Pages settings screenshot: Source **GitHub Actions**, last deployment via **SalesShop Pages**, custom domain **`app.salesshop.work`**, DNS check successful. Cloudflare account currently viewed shows no Workers & Pages project; **do not create one**. `app.salesshop.work` is the confirmed GitHub Pages custom domain; don't confuse it with the apex.
+- Current `.github/workflows/react-foundation.yml` is **not an automatic production deploy on `main`**. It runs build/QC on `architecture/react-foundation`, while deployment uses explicit `workflow_dispatch`. Simply merging React to `main` would not automatically publish via this workflow.
+- The owner confirmed automatic deployment is acceptable when the new `main` release is approved. Before cutover, deliberately configure the Pages workflow to deploy on `main` pushes (never on development/PR pushes), with the correct root asset path, custom-domain CNAME and `github-pages` environment. Verify with an isolated workflow check.
+- Automatic deploy consent **waives only the manual-deployment gate**, not data backup, Auth/privacy testing or explicit authorization for the React-to-`main` merge. No workflow/deploy changes to production during preparation.
+- Record pre-release production deployment/commit and its redeploy or rollback procedure; review any residual external hooks to avoid double deploys. Run public unauthenticated page/asset/deep-link smoke; authenticated checks use approved test accounts.
 
 ## Data and authorization: HOLD until separately verified
 
