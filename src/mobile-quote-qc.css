@@ -1,0 +1,273 @@
+/* Mobile document QC follow-up.
+   Keeps quote cards readable, fixes iOS form containment, and gives Quotes + Pricing Schedules
+   one shared command-bar language on phones. */
+
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root {
+    --document-command-height: 42px;
+    --document-command-radius: 7px;
+    --document-command-border: rgba(91, 83, 68, .18);
+    --document-command-bg: rgba(255, 252, 244, .78);
+    --document-command-active: #fff8e5;
+  }
+
+  /* Give the horizontal quote cards enough room for eyebrow, title, metadata, and value. */
+  .quotes-sidebar {
+    max-height: 132px;
+    flex-basis: 132px;
+  }
+
+  .quote-list {
+    padding-top: 6px;
+    padding-bottom: 8px;
+  }
+
+  .quote-list-item {
+    min-width: 176px;
+    min-height: 78px;
+    padding: 8px 10px 25px;
+  }
+
+  .quote-list-item > span {
+    font-size: 8px;
+    line-height: 1.2;
+  }
+
+  .quote-list-item > strong {
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.22;
+  }
+
+  .quote-list-item > small {
+    margin-top: 5px;
+    font-size: 8.5px;
+    line-height: 1.2;
+  }
+
+  .quote-list-item > b {
+    left: 10px;
+    bottom: 7px;
+    font-size: 9.5px;
+    line-height: 1.1;
+  }
+
+  /* Quote form containment. The previous width:100% rules still used content-box sizing,
+     which lets Safari add padding/borders outside the grid cell. Border-box fixes the root cause. */
+  .quote-details-grid,
+  .quote-details-grid > label,
+  .quote-details-grid .quote-crm-field,
+  .quote-details-grid .quote-crm-field > label {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .quote-details-grid > label {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Keep the core document/customer flow together, then treat Revision / Option as
+     the optional qualifier at the end of the mobile details list. */
+  .quote-details-grid > label:nth-child(4) {
+    order: 20;
+  }
+
+  .quote-details-grid input,
+  .quote-details-grid select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    inline-size: 100%;
+    max-inline-size: 100%;
+  }
+
+  /* iOS Safari applies its own centered, partially-native paint to date fields even after
+     width constraints. Keep the native date picker behavior but fully own the visible field. */
+  .quote-details-grid input[type="date"] {
+    display: block;
+    min-inline-size: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    border: 1px solid #c9c1b2;
+    border-radius: 2px;
+    background: rgba(255, 252, 244, .9);
+    color: #3e3a33;
+    padding: 0 14px;
+    line-height: 42px;
+    text-align: left;
+  }
+
+  .quote-details-grid input[type="date"]::-webkit-date-and-time-value {
+    min-width: 0;
+    max-width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    line-height: normal;
+    text-align: left;
+  }
+
+  .quote-details-grid input[type="date"]::-webkit-datetime-edit {
+    min-width: 0;
+    max-width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    line-height: normal;
+    text-align: left;
+  }
+
+  .quote-details-grid input[type="date"]::-webkit-calendar-picker-indicator {
+    align-self: center;
+    margin-left: auto;
+    opacity: .62;
+  }
+
+  /* Search and quick-create should read as a matched pair in the app header. */
+  .global-search-launcher,
+  .quick-create-launcher {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    flex: 0 0 38px;
+  }
+
+  /* ------------------------------
+     Shared mobile document command bar
+     Quotes + Pricing Schedules
+  ------------------------------ */
+  .quote-header-actions,
+  .pricing-schedule-workbook-actions {
+    align-items: center;
+    gap: 6px;
+  }
+
+  .quote-view-switch {
+    height: var(--document-command-height);
+    min-height: var(--document-command-height);
+    box-sizing: border-box;
+    padding: 2px;
+    border: 1px solid var(--document-command-border);
+    border-radius: var(--document-command-radius);
+    background: rgba(226, 222, 211, .9);
+  }
+
+  .quote-view-switch button {
+    height: 36px;
+    min-height: 36px;
+    border-radius: 5px;
+    padding-inline: 12px;
+    font-size: 11px;
+  }
+
+  .quote-view-switch button.active {
+    background: var(--document-command-active);
+    box-shadow: 0 1px 2px rgba(57, 49, 36, .09);
+  }
+
+  .quote-send-button,
+  .quote-revision-button,
+  .quote-sign-button,
+  .quote-signature-receipt-button,
+  .pricing-schedule-workbook-actions button {
+    height: var(--document-command-height);
+    min-height: var(--document-command-height);
+    box-sizing: border-box;
+    border-radius: var(--document-command-radius);
+    padding-inline: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  /* Pricing workflow selector becomes the same compact segmented-control pattern as Quote views. */
+  .pricing-schedule-route-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px;
+    min-height: var(--document-command-height);
+    padding: 2px;
+    border: 1px solid var(--document-command-border);
+    border-radius: var(--document-command-radius);
+    background: rgba(226, 222, 211, .9);
+    overflow: hidden;
+  }
+
+  .pricing-schedule-route-card {
+    min-width: 0;
+    min-height: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    text-align: center;
+    box-shadow: none;
+  }
+
+  .pricing-schedule-route-card strong {
+    overflow: hidden;
+    font-size: 10.5px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pricing-schedule-route-card span,
+  .pricing-schedule-route-card small {
+    display: none;
+  }
+
+  .pricing-schedule-route-card.active {
+    border: 0;
+    background: var(--document-command-active);
+    color: #3d392f;
+    box-shadow: 0 1px 2px rgba(57, 49, 36, .09), inset 0 -2px #c4a640;
+  }
+
+  .pricing-schedule-spreadsheet-toolbar {
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid rgba(91, 83, 68, .13);
+    border-radius: 9px;
+    background: rgba(244, 241, 232, .75);
+  }
+
+  .pricing-schedule-workbook-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pricing-schedule-workbook-actions button {
+    flex: 0 0 auto;
+    border: 1px solid var(--document-command-border);
+    background: var(--document-command-bg);
+    color: #5d574d;
+  }
+
+  .pricing-schedule-published-pill {
+    min-height: var(--document-command-height);
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: var(--document-command-radius);
+    background: rgba(222, 235, 218, .75);
+    color: #48604a;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+}

@@ -1,0 +1,68 @@
+/*
+ * SalesShop UI Foundation v1 — semantic values only.
+ * Batch 2 intentionally leaves the existing --chrome, --paper, --ink, etc.
+ * untouched. Nothing uses these tokens until it opts into .ss-* components.
+ */
+:root {
+  --ss-app-bg: #dedbd2;
+  --ss-shell-bg: #f4f3ef;
+  --ss-surface: #f6f3e9;
+  --ss-surface-raised: #fffaf0;
+  --ss-paper: #fff9df;
+  --ss-text: #272821;
+  --ss-text-muted: #626157;
+  --ss-border: #cbc8be;
+  --ss-accent: #c4a640;
+  --ss-accent-ink: #433b1e;
+  --ss-positive: #375943;
+  --ss-danger: #923d31;
+  --ss-focus: #516e96;
+
+  --ss-font-body: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ss-font-editorial: Georgia, "Times New Roman", serif;
+  --ss-text-xs: 11px;
+  --ss-text-sm: 12px;
+  --ss-text-body: 14px;
+  --ss-text-section: 18px;
+  --ss-text-page: 26px;
+  --ss-space-1: 4px;
+  --ss-space-2: 8px;
+  --ss-space-3: 12px;
+  --ss-space-4: 16px;
+  --ss-space-5: 20px;
+  --ss-space-6: 24px;
+  --ss-space-8: 32px;
+  --ss-radius-xs: 4px;
+  --ss-radius-sm: 6px;
+  --ss-radius-md: 8px;
+  --ss-radius-lg: 12px;
+  --ss-radius-pill: 999px;
+  --ss-shadow-raised: 0 3px 10px rgb(34 33 27 / 8%);
+  --ss-shadow-overlay: 0 12px 32px rgb(34 33 27 / 20%);
+
+  --ss-control-height: 40px;
+  --ss-page-inset: 24px;
+  --ss-panel-inset: 16px;
+  --ss-nav-height: 50px;
+  --ss-layer-sticky: 10;
+  --ss-layer-chrome: 20;
+  --ss-layer-popover: 100;
+  --ss-layer-role-banner: 200;
+  --ss-layer-modal-backdrop: 1000;
+  --ss-layer-modal: 1010;
+  --ss-layer-toast: 1100;
+}
+/* Only new .ss-* controls consume these values. Existing UI stays untouched. */
+:root[data-sales-contrast="high"] {
+  --ss-text-muted: #414238;
+  --ss-border: #77786d;
+  --ss-focus: #1f4b82;
+}
+@media (max-width: 700px) {
+  :root {
+    --ss-text-page: 22px;
+    --ss-page-inset: 12px;
+    --ss-panel-inset: 12px;
+    --ss-control-height: 44px;
+  }
+}

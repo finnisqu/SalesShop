@@ -1,0 +1,179 @@
+/* Quotes Beta structural management. Dialog is a portal so the narrow desktop rail
+   cannot clip it and touch users get a scrollable, reachable surface. */
+.qmb .qmb-area-menu-trigger{border:1px solid var(--qmb-border);border-radius:10px;min-width:38px;
+  min-height:36px;background:var(--qmb-card);color:var(--qmb-accent);font-size:21px;line-height:1;}
+.qmb .qmb-area-menu-trigger:disabled{opacity:.35}
+.qmb.qmb-area-manager-backdrop{position:fixed;inset:0;z-index:10050;
+  display:flex;align-items:center;justify-content:center;padding:14px;
+  background:rgba(8,19,14,.52);overflow:auto}
+.qmb .qmb-area-manager{width:min(475px,100%);max-height:min(86dvh,760px);display:flex;
+  flex-direction:column;overflow:hidden;border-radius:17px;
+  background:var(--qmb-card);color:var(--qmb-ink);
+  border:1px solid var(--qmb-border);box-shadow:0 18px 60px rgba(0,0,0,.22)}
+.qmb .qmb-area-manager-head{padding:17px 18px;display:flex;justify-content:space-between;
+  align-items:start;gap:12px;border-bottom:1px solid var(--qmb-border)}
+.qmb .qmb-area-manager-head div{display:grid;gap:5px}
+.qmb .qmb-area-manager-head strong{font-size:17px}
+.qmb .qmb-area-manager-head small{font-size:12px;line-height:1.5;color:var(--qmb-muted)}
+.qmb .qmb-area-manager-head button{border:0;background:transparent;color:var(--qmb-ink);font-size:23px;min-width:35px}
+.qmb .qmb-area-manager-menu,.qmb .qmb-area-manager-delete,.qmb .qmb-area-manager-list{
+  min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:9px;padding:16px}
+.qmb .qmb-area-manager-menu button,.qmb .qmb-area-deletion-choice{
+  border:1px solid var(--qmb-border);border-radius:12px;text-align:left;
+  padding:14px;background:var(--qmb-card);color:var(--qmb-ink);display:grid;gap:5px}
+.qmb .qmb-area-manager-menu button:hover,.qmb .qmb-area-deletion-choice:hover{background:var(--qmb-tint)}
+.qmb .qmb-area-manager-menu strong,.qmb .qmb-area-deletion-choice strong{font-size:14px}
+.qmb .qmb-area-manager-menu small,.qmb .qmb-area-deletion-choice small{
+  font-size:12px;line-height:1.5;color:var(--qmb-muted)}
+.qmb .qmb-area-deletion-choice.is-destructive{border-color:var(--ss-danger,#af5045)}
+.qmb .qmb-area-deletion-choice.is-destructive strong{color:var(--ss-danger,#af5045)}
+.qmb .qmb-area-reorder-row{display:flex;align-items:center;gap:8px;
+  padding:10px;border:1px solid var(--qmb-border);border-radius:11px;background:var(--qmb-card)}
+.qmb .qmb-area-reorder-handle{font-size:23px;cursor:grab;color:var(--qmb-accent);user-select:none;touch-action:none;padding:4px}
+.qmb .qmb-area-reorder-label{flex:1;min-width:0;display:grid;gap:3px;font-size:13px}
+.qmb .qmb-area-reorder-label strong{overflow-wrap:anywhere}
+.qmb .qmb-area-reorder-label small{color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-area-reorder-row button{border:1px solid var(--qmb-border);border-radius:8px;
+  min-height:36px;min-width:36px;background:var(--qmb-card);color:var(--qmb-accent)}
+.qmb .qmb-area-reorder-row button:disabled{opacity:.35}
+.qmb .qmb-area-manager-impact{display:grid;gap:5px;padding:12px;border-radius:11px;
+  background:var(--qmb-bg);border:1px solid var(--qmb-border)}
+.qmb .qmb-area-manager-impact span{font-weight:750;font-size:13px}
+.qmb .qmb-area-manager-impact small{font-size:12px;color:var(--qmb-muted);line-height:1.5}
+.qmb .qmb-area-manager-foot{display:flex;justify-content:flex-end;gap:10px;padding:13px 16px;
+  border-top:1px solid var(--qmb-border)}
+.qmb .qmb-area-manager-foot button{border:1px solid var(--qmb-border);border-radius:10px;
+  min-height:40px;min-width:88px;padding:8px 13px;background:var(--qmb-card);color:var(--qmb-ink)}
+.qmb .qmb-area-manager-foot .qmb-primary{background:var(--qmb-accent);color:var(--qmb-on-accent)}
+
+/* One quiet Area management entry point; no permanent shuffle arrows. */
+.qmb .qmb-areas-actions{display:flex;align-items:center;gap:9px}
+.qmb .qmb-desktop-areas-head .qmb-area-menu-trigger{min-height:30px;min-width:32px;font-size:19px;padding:0}
+.qmb .qmb-desktop-areas-head>strong{flex:1}
+.qmb .qmb-selections-tab{white-space:nowrap}
+.qmb .qmb-desktop-worktools{display:none}
+@media (min-width:1000px) and (min-height:550px){
+  .qmb .qmb-desktop-worktools{display:flex;flex:0 0 auto;align-items:center;flex-wrap:wrap;gap:6px;
+    padding:9px 21px;background:var(--qmb-card);border-bottom:1px solid var(--qmb-border)}
+  .qmb .qmb-desktop-worktools button{min-height:35px;padding:6px 10px;border:1px solid var(--qmb-border);
+    border-radius:8px;background:var(--qmb-card);color:var(--qmb-ink);font-size:12px;font-weight:750}
+  .qmb .qmb-desktop-worktools button:hover{background:var(--qmb-tint);color:var(--qmb-accent)}
+  .qmb .qmb-desktop-worktools button:disabled{opacity:.35}
+  .qmb .qmb-worktools-divider{height:22px;border-left:1px solid var(--qmb-border);margin:0 4px}
+  .qmb .qmb-desktop-selections-step{font-weight:850!important;color:var(--qmb-ink)!important}
+  .qmb .qmb-desktop-selections-step small{margin-left:auto;font-size:10px}
+  /* Central workspace owns the toolbar while rails continue to scroll independently. */
+  .qmb .qmb-desktop-main{position:relative}
+}
+@media (max-width:700px){
+  .qmb .qmb-quote-sticky .qmb-tabs button{min-width:0;font-size:11px}
+  .qmb .qmb-quote-sticky .qmb-selections-tab{font-size:11px;padding-inline:4px}
+}
+
+
+/* Inline Area reordering (desktop rail + phone Build cards). These controls
+   appear only when Reorder / Delete mode is active, never as persistent arrows. */
+.qmb .qmb-area-mode-button {
+ border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card);
+ min-height:32px;padding:5px 9px;font-size:11px;font-weight:800;color:var(--qmb-accent);
+ white-space:nowrap;cursor:pointer;
+}
+.qmb .qmb-area-mode-button.is-active{background:var(--qmb-tint);border-color:var(--qmb-accent)}
+.qmb .qmb-area-mode-button:disabled{opacity:.4;cursor:not-allowed}
+.qmb .qmb-inline-area-list{display:grid;gap:8px}
+.qmb .qmb-inline-area-row{display:flex;align-items:stretch;gap:6px;min-width:0;position:relative}
+.qmb .qmb-inline-area-row>.qmb-area-card{flex:1 1 0;min-width:0;margin:0}
+.qmb .qmb-inline-area-row>.qmb-area-card[aria-disabled=true],
+.qmb .qmb-desktop-area-card[aria-disabled=true]{cursor:default}
+.qmb .qmb-area-grip,.qmb .qmb-area-remove-x {
+ flex:0 0 33px;width:33px;min-width:33px;min-height:41px;
+ padding:0;border:1px solid var(--qmb-border);border-radius:9px;
+ background:var(--qmb-card);color:var(--qmb-accent);display:grid;
+ place-items:center;font-size:23px;font-weight:700;line-height:1;cursor:grab;
+ touch-action:none;user-select:none;-webkit-user-select:none;
+}
+.qmb .qmb-area-grip:active,.qmb .qmb-area-grip.is-dragging{
+ cursor:grabbing;background:var(--qmb-tint);border-color:var(--qmb-accent)}
+.qmb .qmb-area-remove-x{font-size:21px;cursor:pointer;color:var(--ss-danger,#b25145)}
+.qmb .qmb-area-remove-x:hover{border-color:var(--ss-danger,#b25145);background:var(--qmb-tint)}
+.qmb .qmb-inline-area-hint{margin:7px 0;color:var(--qmb-muted);font-size:11px;line-height:1.5}
+.qmb .qmb-desktop-area-list .qmb-inline-area-row{gap:4px}
+.qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-desktop-area-card{
+ display:flex;flex:1 1 0;width:auto;min-width:0;min-height:52px;align-items:flex-start;gap:7px;
+ padding:9px 6px;color:var(--qmb-ink);border:1px solid transparent;
+ background:transparent;border-radius:9px;text-align:left;
+}
+.qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-desktop-area-card:hover,
+.qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-desktop-area-card.is-active{
+ background:var(--qmb-tint);border-color:var(--qmb-border)}
+.qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-grip,
+.qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-remove-x{
+ display:grid;flex:0 0 25px;width:25px;min-width:25px;min-height:52px;
+ padding:0;margin:0;border:1px solid var(--qmb-border);border-radius:7px;
+ color:var(--qmb-accent);background:var(--qmb-card);align-items:center;justify-items:center;
+ font-size:20px}
+.qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-remove-x{
+ color:var(--ss-danger,#b25145)}
+.qmb .qmb-desktop-areas-head .qmb-area-mode-button{
+ font-size:10px;font-weight:800;min-height:30px;padding:5px 6px;
+ border:1px solid var(--qmb-border);border-radius:7px;
+ background:var(--qmb-card);color:var(--qmb-accent)}
+.qmb .qmb-desktop-areas-head>strong{margin-right:auto}
+.qmb .qmb-desktop-area-list.is-managing-areas{gap:7px}
+.qmb .qmb-inline-delete-dialog{max-width:460px}
+.qmb .qmb-inline-area-row:has(.qmb-area-grip.is-dragging){z-index:1;outline:2px solid var(--qmb-accent);outline-offset:2px;border-radius:9px}
+@media(max-width:680px){
+ .qmb .qmb-area-mode-button{font-size:11px;padding:7px 9px}
+ .qmb .qmb-inline-area-row>.qmb-area-card{padding-left:6px;padding-right:6px}
+ .qmb .qmb-inline-area-row>.qmb-area-grip,.qmb .qmb-inline-area-row>.qmb-area-remove-x{flex-basis:31px;width:31px;min-width:31px}
+}
+
+
+/* Raised *whole-card* drag, with neighboring rows animated using FLIP. */
+.qmb [data-qmb-sort-row] {will-change:transform;transform-origin:center center;}
+.qmb [data-qmb-sort-row].is-dragging {
+  position:relative;z-index:8;pointer-events:none;
+  transform:translate3d(0,var(--qmb-sort-delta,0px),0) scale(1.018);
+  filter:drop-shadow(0 9px 12px rgba(0,0,0,.19));
+}
+.qmb [data-qmb-sort-row].is-dragging .qmb-area-grip{background:var(--qmb-tint);border-color:var(--qmb-accent)}
+.qmb [data-qmb-sort-row] .qmb-area-grip{touch-action:none;cursor:grab}
+.qmb [data-qmb-sort-row].is-dragging .qmb-area-grip{cursor:grabbing}
+.qmb .qmb-inline-general-list{display:grid;gap:8px;min-width:0}
+.qmb .qmb-inline-general-row{display:flex;align-items:stretch;gap:7px;min-width:0}
+.qmb .qmb-general-inline-item{flex:1 1 0;min-width:0}
+.qmb .qmb-general-inline-item>.qmb-line{margin:0;height:100%}
+.qmb .qmb-inline-general-list.is-managing-general .qmb-line-fields{display:none!important}
+.qmb .qmb-inline-general-list.is-managing-general .qmb-line{pointer-events:none}
+.qmb .qmb-inline-general-row>.qmb-area-grip,.qmb .qmb-inline-general-row>.qmb-area-remove-x{
+  flex:0 0 34px;min-width:34px;width:34px}
+.qmb .qmb-inline-delete-explanation{font-size:12px;line-height:1.5;color:var(--qmb-muted);margin:0}
+@media(prefers-reduced-motion:reduce){
+ .qmb [data-qmb-sort-row].is-dragging{transition:none;filter:none}
+}
+
+
+/* Drag ghost lives in document.body, independent from list reflow and pointer
+ * capture. The original row is a stable placeholder until release. */
+.qmb [data-qmb-sort-row].is-drag-source {
+  opacity:.35;filter:none;transform:none!important;outline:1px dashed var(--qmb-accent);
+  outline-offset:2px;
+}
+.qmb.qmb-drag-ghost {
+  position:fixed!important;display:block!important;z-index:14000!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  background:transparent!important;padding:0!important;margin:0!important;
+  pointer-events:none!important;user-select:none;
+  transform:translate3d(0,0,0) scale(1.025);
+  transform-origin:center;
+  filter:drop-shadow(0 13px 16px rgba(0,0,0,.26));
+  overflow:visible!important;will-change:transform;
+}
+.qmb.qmb-drag-ghost [data-area-sort-id],.qmb.qmb-drag-ghost>.qmb-inline-general-row {
+  width:100%;opacity:1!important;pointer-events:none;
+  background:var(--qmb-card);border-radius:12px;
+}
+.qmb.qmb-drag-ghost .qmb-area-grip{cursor:grabbing;background:var(--qmb-tint)}
+@media(prefers-reduced-motion:reduce){
+ .qmb.qmb-drag-ghost{transition:none;filter:none}
+}

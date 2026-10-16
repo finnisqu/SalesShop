@@ -1,0 +1,74 @@
+.quote-integrity-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(143, 121, 58, .22);
+  background: rgba(248, 241, 207, .72);
+  color: #62583d;
+}
+
+.quote-integrity-banner > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-integrity-banner strong {
+  font-size: 9px;
+  letter-spacing: .025em;
+}
+
+.quote-integrity-banner span {
+  color: #7f755e;
+  font-size: 8px;
+}
+
+.quote-integrity-banner.is-archived {
+  border-bottom-color: rgba(103, 98, 88, .2);
+  background: rgba(234, 232, 224, .86);
+  color: #625f57;
+}
+
+.quote-integrity-banner button,
+.quote-archive-filter button {
+  min-height: 27px;
+  padding: 0 9px;
+  border: 1px solid #c3bdad;
+  border-radius: 3px;
+  background: #f8f5eb;
+  color: #5e5a51;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.quote-archive-filter {
+  padding: 6px 8px 0;
+}
+
+.quote-archive-filter button {
+  width: 100%;
+  background: transparent;
+  color: #898378;
+}
+
+.quote-archive-filter button.active {
+  border-color: #b8ad80;
+  background: #f2edd8;
+  color: #5c5546;
+}
+
+.quote-list-item.is-archived {
+  opacity: .58;
+}
+
+.quote-list-item.is-archived strong {
+  text-decoration: line-through;
+  text-decoration-thickness: .5px;
+}
+
+.quote-workbench .quote-title-input[readonly] {
+  color: #5d594f;
+  cursor: default;
+}

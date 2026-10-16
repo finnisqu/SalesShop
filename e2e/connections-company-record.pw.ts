@@ -1,0 +1,53 @@
+import { test, expect, type Page } from '@playwright/test';
+
+const supported = (project: string) => ['phone-390', 'desktop-1280'].includes(project);
+
+async function createAccount(page: Page, name: string) {
+  await page.goto('/connections');
+  await page.getByRole('button', { name: '+ Company' }).click();
+  const form = page.locator('.connections-add-form');
+  await form.getByRole('textbox', { name: 'Company name' }).fill(name);
+  await form.getByRole('button', { name: 'Save & open' }).click();
+}
+
+test('Company record supports edit, relationships, refresh and Back on mobile and desktop', async ({ page }, info) => {
+  test.skip(!supported(info.project.name), 'Dedicated Connections record QC');
+  const name = 'Record QC Company ' + Date.now();
+  await createAccount(page, name);
+  await expect(page).toHaveURL(/\/connections\/companies\/company_/);
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'About this company' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Activity history/ })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Deals' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Quotes' })).toBeVisible();
+  if (info.project.name === 'phone-390') {
+    const jump = page.getByRole('navigation', { name: 'Jump to record section' });
+    await expect(jump.getByRole('button', { name: 'Details' })).toBeVisible();
+    await expect(jump.getByRole('button', { name: 'Records' })).toBeVisible();
+    await jump.getByRole('button', { name: 'Related' }).click();
+    await expect(page.getByRole('heading', { name: 'People' })).toBeInViewport();
+  }
+
+  await page.getByRole('button', { name: 'Edit company' }).click();
+  await page.getByRole('spinbutton', { name: 'Annual units' }).fill('80');
+  await page.getByRole('spinbutton', { name: 'Average revenue / unit' }).fill('3500');
+  await page.getByRole('spinbutton', { name: 'Expected share (%)' }).fill('50');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('$140,000', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: '+ Add person' }).click();
+  const contactForm = page.locator('.connections-record-related form.connections-record-edit-form');
+  await contactForm.getByRole('textbox', { name: 'Name' }).fill('Record QC Estimator');
+  await contactForm.getByRole('textbox', { name: 'Email' }).fill('records@example.com');
+  await contactForm.getByRole('button', { name: 'Save person' }).click();
+  await expect(page.getByText('Record QC Estimator', { exact: true }).first()).toBeVisible();
+
+  await page.reload();
+  await expect(page).toHaveURL(/\/connections\/companies\/company_/);
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await expect(page.getByText('Record QC Estimator', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: /Connections/ }).filter({ hasText: '← Connections' }).click();
+  await expect(page).toHaveURL(/\/connections$/);
+  await expect(page.getByRole('button', { name: name, exact: false })).toBeVisible();
+});

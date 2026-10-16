@@ -1,0 +1,216 @@
+/* Customer paper typography and alignment normalization.
+ * Applies to preview AND public customer quote; presentation only. */
+.customer-quote-paper .customer-quote-row {
+  font-size:10px;
+  line-height:1.5;
+  padding:9px 9px;
+  gap:9px;
+  align-items:start;
+}
+.customer-quote-paper .customer-quote-row .customer-line-description{
+  min-width:0;overflow-wrap:anywhere;line-height:1.5;
+}
+.customer-quote-paper .customer-quote-table-head{
+  min-height:32px;
+  background:#dfe3de;
+  color:#3d483e;
+  font-size:8px;
+  line-height:1.35;
+  font-weight:850;
+  letter-spacing:.07em;
+  align-items:center;
+}
+.customer-quote-paper .customer-quote-table-head>div:last-child{text-align:right}
+.customer-quote-paper .customer-quote-section h3{
+  margin:0;
+  padding:10px 9px 8px;
+  border-top:1px solid #c8cac5;
+  color:#252825;
+  background:#e7e8e2;
+  font:700 11px/1.4 Georgia,serif;
+  letter-spacing:.025em;
+  text-transform:uppercase;
+}
+.customer-quote-paper .customer-quote-section.is-summary{
+  border-top:1px solid #c8cac5;
+}
+.customer-quote-paper .customer-area-summary-row{
+  background:#e7e8e2;
+  min-height:42px;
+  padding:10px 9px;
+  align-items:start;
+  grid-template-columns:minmax(0,1fr) auto!important;
+}
+.customer-quote-paper .customer-area-summary-row .customer-line-description{
+  min-width:0;
+  font:700 11px/1.4 Georgia,serif;
+  letter-spacing:.025em;
+}
+.customer-quote-paper .customer-area-summary-row .customer-line-amount{
+  font:700 11px/1.4 Georgia,serif;
+  text-align:right;white-space:nowrap;
+}
+.customer-quote-paper .customer-quote-section:not(.is-summary)>.customer-quote-row{
+  margin:0;
+  padding-inline:9px;
+}
+.customer-quote-paper .customer-quote-section:not(.is-summary) .customer-line-description{
+  padding:0;
+  margin:0;
+}
+.customer-quote-paper .customer-area-spec{
+  font-size:9px;
+  line-height:1.45;
+  letter-spacing:0;
+}
+@media(max-width:500px){
+  .customer-quote-paper .customer-quote-section h3,
+  .customer-quote-paper .customer-area-summary-row .customer-line-description,
+  .customer-quote-paper .customer-area-summary-row .customer-line-amount{font-size:11px}
+  .customer-quote-paper .customer-quote-row{font-size:10px}
+}
+@container quote-phone-preview (max-width:410px){
+  .customer-quote-paper .customer-quote-section h3,
+  .customer-quote-paper .customer-area-summary-row .customer-line-description{
+    font-size:11px;line-height:1.4}
+  .customer-quote-paper .customer-area-summary-row .customer-line-amount{font-size:11px}
+  .customer-quote-paper .customer-quote-row{font-size:10px}
+}
+@media print {
+  .customer-quote-paper .customer-quote-table-head,
+  .customer-quote-paper .customer-area-summary-row,
+  .customer-quote-paper .customer-quote-section h3{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+}
+
+/* Lump-sum prices obey the same Line amounts column toggle as detail rows;
+   keep the Area name on one full-width grid track when its amount is hidden. */
+.customer-quote-paper .customer-area-summary-row.is-no-amount{
+  grid-template-columns:minmax(0,1fr)!important;
+}
+@media (max-width:500px){
+  .customer-quote-paper .columns-q1-r1-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 30px 60px 72px;gap:5px;
+  }
+  .customer-quote-paper .columns-q1-r0-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 30px 72px;gap:5px;
+  }
+  .customer-quote-paper .columns-q0-r1-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 60px 72px;gap:5px;
+  }
+  .customer-quote-paper .customer-quote-row>div{min-width:0;overflow-wrap:anywhere}
+}
+@container quote-phone-preview (max-width:410px){
+  .customer-quote-paper .columns-q1-r1-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 30px 60px 72px;gap:5px;
+  }
+  .customer-quote-paper .columns-q1-r0-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 30px 72px;gap:5px;
+  }
+  .customer-quote-paper .columns-q0-r1-a1 .customer-quote-row:not(.customer-area-summary-row){
+    grid-template-columns:minmax(0,1fr) 60px 72px;gap:5px;
+  }
+  .customer-quote-paper .customer-quote-row>div{min-width:0;overflow-wrap:anywhere}
+}
+
+/* Shared hierarchy for live preview, public customer links and print output. */
+.customer-quote-paper{
+  box-sizing:border-box;min-width:0;overflow-wrap:anywhere;
+}
+.customer-quote-paper .customer-quote-scope-heading{
+  margin:6px 0 9px;padding:0 0 8px;border-bottom:1px solid #bfc4bd;
+  font:700 12px/1.3 Georgia,serif;letter-spacing:.035em;
+  text-transform:uppercase;color:#2c332e;
+}
+.customer-quote-paper .customer-area-intro{
+  background:#f6f7f4;
+  border-top:1px solid #c8cac5;
+}
+.customer-quote-paper .customer-area-intro h3{
+  border-top:0;
+}
+.customer-quote-paper .customer-area-details{
+  display:grid;gap:4px;margin:4px 9px 9px;
+  font:400 9px/1.45 system-ui,-apple-system,sans-serif;
+  color:#514f4a;text-transform:none;letter-spacing:normal;
+}
+.customer-quote-paper .customer-area-detail{
+  display:grid;grid-template-columns:53px minmax(0,1fr);
+  gap:8px;align-items:start;min-width:0;
+}
+.customer-quote-paper .customer-area-detail-label{
+  font-size:8px;font-weight:750;text-transform:uppercase;
+  letter-spacing:.045em;color:#606a62;
+}
+.customer-quote-paper .customer-area-detail-value{
+  min-width:0;overflow-wrap:anywhere;font-weight:500;
+}
+.customer-quote-paper .customer-area-summary-row .customer-area-details{
+  margin:6px 0 0;font-weight:400;letter-spacing:normal;
+}
+.customer-quote-paper .customer-quote-recipient>div,
+.customer-quote-paper .customer-quote-letterhead>div{
+  min-width:0;overflow-wrap:anywhere;
+}
+@media(max-width:500px){
+  .customer-quote-paper .customer-area-detail{grid-template-columns:45px minmax(0,1fr);gap:6px}
+}
+@container quote-phone-preview (max-width:410px){
+  .customer-quote-paper .customer-area-detail{grid-template-columns:45px minmax(0,1fr);gap:6px}
+}
+@media print {
+  /* Seller-only preview controls must never appear on a customer's printout. */
+  .qmb:has(.qmb-preview .customer-quote-paper) .qmb-preview-customer-options,
+  .qmb:has(.qmb-preview .customer-quote-paper) .qmb-preview-seller-toolbar{
+    display:none!important;
+  }
+  /* The phone preview frame must not constrain the printed paper even when
+     the browser prints from a wide desktop viewport. */
+  .qmb .qmb-preview.is-phone-view{
+    box-sizing:border-box;width:100%!important;max-width:none!important;
+    border:0!important;border-radius:0!important;box-shadow:none!important;
+    container-type:normal!important;
+  }
+  .qmb .qmb-preview.is-phone-view>.customer-quote-paper{
+    width:100%!important;max-width:none!important;padding:0!important;
+  }
+  /* Print on paper instead of an inset mock page; let itemized Areas span
+     pages naturally, but never orphan a heading/spec from its next line. */
+  .customer-quote-paper{
+    width:100%!important;max-width:none!important;min-height:0!important;
+    margin:0!important;padding:0!important;box-shadow:none!important;
+    border:0!important;overflow:visible!important;
+    background:#fff!important;color:#292929!important;
+  }
+  .customer-quote-paper .customer-quote-letterhead,
+  .customer-quote-paper .customer-quote-recipient,
+  .customer-quote-paper .customer-quote-total,
+  .customer-quote-paper .customer-quote-section.is-summary,
+  .customer-quote-paper .customer-area-summary-row,
+  .customer-quote-paper .customer-quote-row,
+  .customer-quote-paper .customer-quote-notes {
+    break-inside:avoid-page;page-break-inside:avoid;
+  }
+  .customer-quote-paper .customer-quote-scope-heading,
+  .customer-quote-paper .customer-quote-table-head,
+  .customer-quote-paper .customer-area-intro {
+    break-inside:avoid-page;page-break-inside:avoid;
+    break-after:avoid-page;page-break-after:avoid;
+  }
+  .customer-quote-paper .customer-quote-section{
+    break-inside:auto;page-break-inside:auto;
+  }
+  .customer-quote-paper .customer-quote-total{
+    border-top:2px solid #3e483e;margin-top:5px;padding-top:12px;
+  }
+  .customer-quote-paper .customer-quote-terms>p{
+    break-inside:avoid-page;page-break-inside:avoid;
+  }
+  .customer-quote-paper footer{margin-top:19px}
+  .customer-quote-paper .customer-quote-scope-heading,
+  .customer-quote-paper .customer-area-intro,
+  .customer-quote-paper .customer-area-details{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+}

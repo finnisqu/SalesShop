@@ -1,0 +1,33 @@
+.quote-crm-combobox { position: relative; }
+.quote-crm-input-wrap { position: relative; }
+.quote-crm-input-wrap > input { width: 100%; }
+.quote-crm-suggestions {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: calc(100% + 3px);
+  display: grid;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid rgba(58,51,43,.2);
+  border-radius: 5px;
+  background: #fffdf8;
+  box-shadow: 0 10px 24px rgba(45,40,34,.16);
+}
+.quote-crm-suggestions button {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+  border: 0;
+  border-radius: 3px;
+  padding: 7px 8px;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.quote-crm-suggestions button:hover,
+.quote-crm-suggestions button.active { background: rgba(76,69,60,.08); }
+.quote-crm-suggestions strong { font-size: 12px; }
+.quote-crm-suggestions small { color: var(--ink-muted, #746e64); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

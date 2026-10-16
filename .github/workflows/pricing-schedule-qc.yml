@@ -1,0 +1,132 @@
+name: Pricing Schedule Workbook QC
+
+on:
+  push:
+    branches:
+      - architecture/react-foundation
+      - main
+    paths:
+      - 'src/services/pricingSchedule*'
+      - 'src/components/PricingSchedule*'
+      - 'src/components/PricingDocumentEditor.tsx'
+      - 'src/components/NewSalesDocumentPicker.tsx'
+      - 'src/components/SalesDocumentToolbar.tsx'
+      - 'src/components/QuotesMobileBeta.tsx'
+      - 'src/components/QuoteBetaHistory.tsx'
+      - 'src/components/QuoteSignatureDialog.tsx'
+      - 'src/components/QuoteBetaReview.tsx'
+      - 'src/services/quoteRevisionView*'
+      - 'src/services/quoteSignatureLifecycle.test.ts'
+      - 'src/services/quoteRevisionArchive.test.ts'
+      - 'src/services/signatureService.ts'
+      - 'e2e/quotes-beta-historical-revision.pw.ts'
+      - 'src/components/QuoteBetaDesktopRails.tsx'
+      - 'src/services/quoteBetaLifecycleLanguage*'
+      - 'src/components/QuoteBetaCustomerOptions.tsx'
+      - 'src/components/QuoteBetaEditablePreview.tsx'
+      - 'src/store/quoteStore.ts'
+      - 'src/services/quoteIntegrity.ts'
+      - 'src/services/quoteDocumentCopy*'
+      - 'src/sales-document-workspace.css'
+      - 'src/services/salesDocumentTemplates*'
+      - 'src/services/salesDocumentLibrary*'
+      - 'src/services/stockBuilderRateTemplate*'
+      - 'src/sales-documents.css'
+      - 'src/components/QuoteBetaDesktopPricing.tsx'
+      - 'src/services/quotePricingParityMatrix.test.ts'
+      - 'src/services/quotePriceInput*'
+      - 'e2e/quotes-beta-pricing-clear.pw.ts'
+      - 'src/components/QuoteShareControl.tsx'
+      - 'src/components/Quotes.tsx'
+      - 'src/services/quoteShareReadiness*'
+      - 'src/services/quoteCustomerShareRelease.test.ts'
+      - 'src/services/quoteDeliveryApproval*'
+      - 'src/services/quoteShareService.ts'
+      - 'supabase/functions/quote-share-admin/index.ts'
+      - 'src/components/QuoteAuditInlineEditor*'
+      - 'src/services/quoteDraftAudit*'
+      - 'e2e/quotes-mobile-beta.pw.ts'
+      - 'src/components/PricingManual*'
+      - 'src/components/PricingContract*'
+      - 'src/services/pricingScheduleContract*'
+      - 'src/services/pricingScheduleCombinations*'
+      - 'src/pricing-schedule.css'
+      - 'src/pricing-schedule-manual.css'
+      - 'e2e/pricing-schedule-workbook.pw.ts'
+      - 'e2e/pricing-schedule-contract.pw.ts'
+      - 'e2e/pricing-schedule-manual.pw.ts'
+      - 'e2e/pricing-schedule-calculated.pw.ts'
+      - 'e2e/sales-document-templates.pw.ts'
+      - 'e2e/sales-document-workspace.pw.ts'
+      - 'e2e/sales-document-library.pw.ts'
+      - '.github/workflows/pricing-schedule-qc.yml'
+  pull_request:
+    branches:
+      - architecture/react-foundation
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workbook-qc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workbook-qc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: ''
+      VITE_SUPABASE_ANON_KEY: ''
+      VITE_BASE_PATH: '/'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Workbook unit tests
+        run: npx vitest run src/services/pricingSchedule.test.ts src/services/pricingScheduleContract.test.ts src/services/pricingScheduleManual.test.ts src/services/pricingScheduleBuilderVariants.test.ts src/services/salesDocumentTemplates.test.ts src/services/stockBuilderRateTemplate.test.ts src/services/quoteDocumentCopy.test.ts src/services/salesDocumentLibrary.test.ts
+      - name: Quote review unit regressions
+        run: npx vitest run src/services/quotePricingParityMatrix.test.ts src/services/quotePriceInput.test.ts src/services/quoteDraftAudit.test.ts src/components/QuoteAuditInlineEditor.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteCustomerPresentation.test.ts src/services/quoteTakeoffsLite.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteDeliveryLifecycle.test.ts src/services/quoteIssueGuard.test.ts src/services/quoteFollowUps.test.ts
+      - name: Customer document, frozen revision and sharing boundary
+        run: npx vitest run src/services/quoteCustomerShareRelease.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteIssueGuard.test.ts src/services/quoteHandoffStatus.test.ts
+      - name: Beta document lifecycle vocabulary unit regressions
+        run: npx vitest run src/services/quoteBetaLifecycleLanguage.test.ts
+      - name: Frozen historical revisions and in-person signing tests
+        run: npx vitest run src/services/quoteRevisionView.test.ts src/services/quoteRevisionArchive.test.ts src/services/quoteSignatureLifecycle.test.ts src/services/quoteIntegrity.test.ts
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Focused workbook browser tests
+        run: npx playwright test e2e/pricing-schedule-workbook.pw.ts e2e/pricing-schedule-contract.pw.ts e2e/pricing-schedule-manual.pw.ts e2e/pricing-schedule-calculated.pw.ts e2e/sales-document-templates.pw.ts e2e/sales-document-workspace.pw.ts e2e/sales-document-library.pw.ts --project=desktop-1280 --project=phone-390
+      - name: Quick Quote inline review browser regression
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Review fixes zero-priced flat charges|Review resolves customer name and sink price inline without leaving Review|Review missing material rate|Review preview returns directly|phone library defaults to documents with follow-ups in a secondary tab'
+      - name: Classic and Beta quote editor round-trip regressions
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 --project=desktop-1280 -g 'Classic desktop offers|Classic phone View menu opens'
+      - name: Quick Quote Area price-fastpath browser regressions
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 --project=desktop-1280 -g 'phone Quotes Beta uses the same quote records|desktop Quotes Beta is fully opted in'
+      - name: Desktop Beta cleared selling-rate must block issue
+        run: npx playwright test e2e/quotes-beta-pricing-clear.pw.ts --project=desktop-1280
+      - name: Customer quote document visibility browser regression
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Customer presentation keeps hidden line amounts private'
+      - name: Customer document scope and print browser regression
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 -g 'Customer paper keeps structured specifications'
+      - name: Customer Preview Approve Share browser regressions
+        run: npx playwright test e2e/quotes-mobile-beta.pw.ts --project=phone-390 --project=desktop-1440 -g 'Previewed customer revision approval expires after a change before issue|desktop Quote Review issues only a previewed and approved revision|mobile quote Review highlights blockers'
+      - name: Issued historical document survives an editable revision
+        run: npx playwright test e2e/quotes-beta-historical-revision.pw.ts --project=desktop-1440
+      - name: Upload workbook failure traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pricing-schedule-browser-qc
+          path: |
+            artifacts/playwright-results/
+            artifacts/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 10

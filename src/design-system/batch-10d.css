@@ -1,0 +1,48 @@
+/* Batch 10D: Quotes gets the same global search / quick-create hierarchy as
+ * the other five workspace toolbars. The contextual view/tools remain present. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  :root[data-sales-theme] .sales-app.view-quotes .quote-mobile-commandbar {
+    grid-template-columns:40px minmax(0,1fr) 36px 36px minmax(52px,auto) 36px;
+    gap:3px;
+    padding-inline:5px;
+  }
+  .sales-app.view-quotes .quote-mobile-current-document {min-width:0;padding-inline:2px}
+  .sales-app.view-quotes .quote-mobile-current-document :is(span,strong) {
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .quote-mobile-commandbar :is(
+    .global-search-launcher,.quick-create-launcher,.quote-mobile-view-button,.quote-mobile-more-button
+  ) {
+    width:100%;
+    min-width:0;
+    height:40px;
+    min-height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    border:1px solid var(--ss-quote-field-border);
+    border-radius:var(--ss-radius-sm);
+    background:var(--ss-quote-field-card);
+    color:var(--ss-quote-field-ink);
+    margin:0;
+    padding:0 3px;
+    box-shadow:none;
+  }
+  .sales-app.view-quotes .quote-mobile-commandbar .global-search-launcher svg {width:18px;height:18px}
+  .sales-app.view-quotes .quote-mobile-commandbar .quick-create-launcher {font-size:23px}
+  .sales-app.view-quotes .quote-mobile-commandbar .quote-mobile-view-button {
+    font-size:10px;
+    font-weight:750;
+    text-transform:uppercase;
+  }
+  .sales-app.view-quotes .quote-mobile-commandbar .quote-mobile-view-button span {font-size:9px}
+  :root[data-sales-theme] .sales-app.view-quotes .quote-mobile-commandbar :is(
+    .quote-mobile-more-button.active,.quote-mobile-view-button.active
+  ) {background:var(--ss-quote-field-tint);border-color:var(--ss-quote-field-accent)}
+  :root[data-sales-theme] .sales-app.view-quotes .quote-mobile-commandbar :is(
+    .global-search-launcher,.quick-create-launcher,.quote-mobile-view-button,.quote-mobile-more-button
+  ):focus-visible {outline:3px solid var(--ss-focus);outline-offset:1px}
+}

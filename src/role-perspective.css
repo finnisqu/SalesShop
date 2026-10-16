@@ -1,0 +1,58 @@
+/* Owner's non-impersonating, non-editing role perspective preview. */
+.role-perspective-content { display: contents; }
+.role-perspective-banner {
+  flex: 0 0 auto; position: relative; z-index: 45;
+  display: flex; align-items: center; gap: 12px;
+  padding: 7px 14px; min-height: 48px;
+  border-bottom: 1px solid #56664c;
+  background: #263b32; color: #f7f4e7;
+  box-shadow: 0 2px 7px #121a1329;
+}
+.role-perspective-symbol { font-size: 15px; color: #d5bd77; flex: 0 0 auto; }
+.role-perspective-banner-copy { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: baseline; gap: 5px 10px; min-width: 0; }
+.role-perspective-banner-copy strong { font-size: 12px; white-space: nowrap; }
+.role-perspective-banner-copy span { font-size: 11px; color: #d3dccc; line-height: 1.35; }
+.role-perspective-picker { display: flex; gap: 6px; align-items: center; white-space: nowrap; border: 1px solid #b9b9a9; background: #efefe6; color: #495046; border-radius: 6px; font-size: 10px; font-weight: 750; padding: 4px 7px; }
+.role-perspective-picker select { min-width: 110px; max-width: 150px; color: #344135; background: transparent; border: none; font-weight: 650; outline-offset: 2px; font-size: 11px; }
+.role-perspective-banner-switch { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; font-size: 10px; font-weight: 700; color: #e4eadb; }
+.role-perspective-banner-switch select { max-width: 172px; min-height: 30px; background: #fffef9; color: #2c3c32; border: 1px solid #acbca8; border-radius: 5px; padding: 5px 7px; font-size: 11px; }
+.role-perspective-escape { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; min-height: 32px; padding: 5px 12px; background: #e3eacd; color: #263b32; border: 1px solid #b9c49b; border-radius: 6px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.role-perspective-escape:hover { background: #f0f4dd; }
+.role-perspective-escape:focus-visible, .role-perspective-picker:focus-within, .role-perspective-banner-switch:focus-within { outline: 3px solid #f2cd72; outline-offset: 2px; }
+.owner-perspective-active .app-header { z-index: 19; }
+/* Editable role views are displayed for visual comparison but kept inert. */
+.role-perspective-content[inert] { user-select: none; }
+.role-perspective-content[inert] button, .role-perspective-content[inert] input, .role-perspective-content[inert] select { cursor: default; }
+
+.role-perspective-settings {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  background: #f0eee6; padding: clamp(17px,3vw,38px);
+}
+.role-perspective-settings-card { max-width: 950px; background: #fffdf6; border: 1px solid #d7d1c2; border-radius: 10px; padding: clamp(18px,3vw,32px); box-shadow: 0 4px 16px #31352e10; }
+.role-perspective-settings h1 { font-size: clamp(22px,2.8vw,34px); margin: 8px 0; }
+.role-perspective-settings p { color: #67675d; line-height: 1.55; font-size: 13px; }
+.role-perspective-capability-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(155px,1fr)); gap: 12px; margin: 20px 0; }
+.role-perspective-capability { border: 1px solid #dfded2; padding: 14px; border-radius: 7px; background: #f6f6ee; display: grid; gap: 8px; }
+.role-perspective-capability strong { font-size: 12px; }
+.role-perspective-capability span { font-size: 11px; color: #5f705e; line-height: 1.35; }
+.role-perspective-settings-note { border-top: 1px solid #dedacb; padding-top: 14px; }
+
+@media (max-width: 780px) {
+  .app-header .role-perspective-picker { display: none; }
+  .role-perspective-banner { padding: 7px 10px; gap: 8px; flex-wrap: wrap; }
+  .role-perspective-banner-copy { flex: 1 1 calc(100% - 40px); }
+  .role-perspective-banner-copy span { font-size: 10px; }
+  .role-perspective-banner-switch { margin-left: 0; }
+  .role-perspective-banner-switch select { max-width: 156px; }
+  .role-perspective-escape { margin-left: auto; min-height: 34px; }
+  .role-perspective-picker.is-compact { padding: 3px 5px; }
+  .role-perspective-picker.is-compact select { min-width: 74px; max-width: 112px; }
+}
+@media (max-width: 400px) {
+  .role-perspective-banner-copy span { display: none; }
+  .role-perspective-banner-copy strong { font-size: 11px; }
+  .role-perspective-banner-switch > span { display: none; }
+  .role-perspective-banner-switch select { max-width: 150px; }
+  .role-perspective-escape { padding: 5px 9px; font-size: 10px; }
+  .role-perspective-picker.is-compact .role-perspective-picker-label { display: none; }
+}

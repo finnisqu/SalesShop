@@ -1,0 +1,52 @@
+/* P2 — explicit ownership transfer, inside existing Settings Team pane. */
+.sales-app.view-settings .ownership-transfer-panel{
+  display:grid;gap:12px;min-width:0;
+  border-color:var(--ss-theme-border);color:var(--ss-theme-ink);
+}
+.sales-app.view-settings .ownership-transfer-help,.sales-app.view-settings .ownership-transfer-actions>p,
+.sales-app.view-settings .ownership-transfer-pending>p{
+  margin:0;font:450 12px/1.55 system-ui,sans-serif;
+  color:var(--ss-theme-muted);
+}
+.sales-app.view-settings .ownership-transfer-actions,.sales-app.view-settings .ownership-transfer-pending{
+  padding:13px;display:grid;gap:12px;min-width:0;
+  border:1px solid var(--ss-theme-border);border-radius:9px;
+  background:var(--ss-theme-base);
+}
+.sales-app.view-settings .ownership-transfer-actions label{
+  display:grid;gap:5px;min-width:0;
+}
+.sales-app.view-settings .ownership-transfer-actions label>span{
+  color:var(--ss-theme-muted);font:700 11px/1.4 system-ui,sans-serif;
+}
+.sales-app.view-settings .ownership-transfer-actions :is(select,input){
+  width:100%;min-width:0;min-height:44px;
+  padding:9px;border:1px solid var(--ss-theme-border);border-radius:7px;
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  font:450 16px/1.3 system-ui,sans-serif;
+}
+.sales-app.view-settings .ownership-transfer-panel button{
+  min-height:42px;padding:9px 13px;justify-self:start;
+  border-radius:7px;border:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  font:700 12px/1.4 system-ui,sans-serif;cursor:pointer;
+}
+.sales-app.view-settings .ownership-transfer-panel .settings-primary-button{
+  background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
+}
+.sales-app.view-settings .ownership-transfer-panel button:disabled {opacity:.5;cursor:not-allowed}
+.sales-app.view-settings .ownership-transfer-panel :is(button,input,select):focus-visible{
+  outline:3px solid var(--ss-focus);outline-offset:2px;
+}
+.sales-app.view-settings .ownership-transfer-status{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  color:var(--ss-theme-ink);font-size:12px;
+}
+.sales-app.view-settings .ownership-transfer-status>span{color:var(--ss-theme-muted)}
+.sales-app.view-settings .ownership-transfer-pending strong{color:var(--ss-theme-ink)}
+.sales-app.view-settings .ownership-transfer-error,.sales-app.view-settings .ownership-transfer-success{
+  margin:0;padding:10px;border:1px solid var(--ss-theme-border);
+  border-radius:7px;background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);font:600 12px/1.5 system-ui,sans-serif;
+}
+.sales-app.view-settings .ownership-transfer-error{border-color:#bf6961}

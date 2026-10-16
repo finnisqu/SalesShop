@@ -1,0 +1,117 @@
+.customer-document-brand {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.customer-document-brand-heading {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+}
+
+.customer-document-brand-heading img {
+  width: auto;
+  max-width: 76px;
+  max-height: 34px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.customer-document-brand-heading strong {
+  min-width: 0;
+  color: #2f302d;
+  font-size: 13px;
+  line-height: 1.08;
+  letter-spacing: .02em;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.customer-document-brand-details {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  margin: 1px 0 0;
+  padding-left: 0;
+  font-style: normal;
+}
+
+.customer-document-brand .brand-detail,
+.customer-document-brand span,
+.customer-document-brand small,
+.customer-document-brand a {
+  min-width: 0;
+  color: #756f65;
+  font-size: 8px;
+  line-height: 1.28;
+  text-decoration: none;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.customer-document-brand .brand-address,
+.customer-document-brand .brand-email,
+.customer-document-brand .brand-website {
+  overflow-wrap: anywhere;
+}
+
+.customer-document-brand-contact {
+  display: block;
+  margin-top: 1px;
+}
+
+.view-split .customer-quote-letterhead {
+  display: grid;
+  grid-template-columns: minmax(155px, 1fr) minmax(92px, 112px);
+  gap: 12px;
+  align-items: start;
+}
+
+.view-split .customer-quote-letterhead > div {
+  min-width: 0;
+}
+
+.view-split .customer-quote-letterhead dl {
+  min-width: 0;
+  width: 100%;
+}
+
+.view-split .customer-quote-letterhead dl > div {
+  gap: 6px;
+}
+
+.view-split .customer-document-brand-heading {
+  grid-template-columns: auto minmax(70px, 1fr);
+  gap: 6px;
+}
+
+.view-split .customer-document-brand-heading img {
+  max-width: 52px;
+  max-height: 28px;
+}
+
+.view-split .customer-document-brand-heading strong {
+  font-size: 10.5px;
+}
+
+.view-split .customer-document-brand .brand-detail,
+.view-split .customer-document-brand span,
+.view-split .customer-document-brand small,
+.view-split .customer-document-brand a {
+  font-size: 6.8px;
+  line-height: 1.22;
+}
+
+@media (max-width: 650px) {
+  .customer-document-brand-heading img {
+    max-width: 52px;
+    max-height: 28px;
+  }
+
+  .customer-document-brand-heading strong {
+    font-size: 11px;
+  }
+}

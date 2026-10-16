@@ -1,0 +1,118 @@
+.project-context-control {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.project-context-control > span {
+  color: #8a857a;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.project-context-select {
+  max-width: 190px;
+}
+.paper-project-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  padding: 1px 4px;
+  background: transparent;
+  color: #6f735f;
+  font: 700 9px/1.2 Georgia, serif;
+  cursor: pointer;
+}
+.paper-project-context:hover {
+  color: #4f5543;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.paper-project-context::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #939c78;
+  box-shadow: 0 0 0 2px rgba(147,156,120,.13);
+}
+.project-card-notes {
+  margin-top: 5px;
+  color: #888477;
+  font-size: 8px;
+}
+.project-notebook-links {
+  margin: 6px 0 18px;
+  padding: 11px 0 4px;
+  border-top: 1px solid rgba(115,96,57,.17);
+  border-bottom: 1px solid rgba(115,96,57,.13);
+}
+.project-notebook-links > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.project-notebook-links-title {
+  color: #7d7568;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.project-notebook-new {
+  border: 1px solid #c8bfad;
+  border-radius: 2px;
+  padding: 4px 7px;
+  background: #f8f1df;
+  color: #625c50;
+  font-size: 8px;
+  font-weight: 800;
+}
+.project-notebook-new:hover { background: #f1e6cc; }
+.project-notebook-page {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 5px;
+  border: 1px solid rgba(133,117,80,.17);
+  border-radius: 1px;
+  padding: 8px 9px;
+  background: rgba(255,252,240,.58);
+  color: #49443a;
+  text-align: left;
+}
+.project-notebook-page:hover { background: rgba(255,252,240,.9); }
+.project-notebook-page strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 11px/1.2 Georgia, serif;
+}
+.project-notebook-page span {
+  flex: 0 0 auto;
+  color: #9b9384;
+  font-size: 8px;
+}
+.project-notebook-empty {
+  padding: 5px 1px 10px;
+  color: #9c9589;
+  font: italic 10px/1.35 Georgia, serif;
+}
+
+@media (max-width: 900px) {
+  .project-context-control > span,
+  .pencil-mode-hint { display: none; }
+  .project-context-select { max-width: 150px; }
+}
+
+@media (max-width: 650px) {
+  .project-context-control { display: none; }
+  .paper-project-context { max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

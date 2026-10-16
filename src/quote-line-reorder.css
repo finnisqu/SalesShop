@@ -1,0 +1,68 @@
+.quote-line-editor {
+  grid-template-columns: 26px 24px minmax(240px, 1fr) minmax(220px, 300px) 26px;
+  transition: background 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
+}
+
+.quote-line-editor.kind-scope,
+.quote-line-editor.kind-warranty,
+.quote-line-editor.kind-note {
+  grid-template-columns: 26px 24px minmax(240px, 1fr) 26px;
+}
+
+.quote-line-editor.is-dragging {
+  opacity: .58;
+  background: #f4ecd1;
+  box-shadow: inset 3px 0 #b69b42;
+}
+
+.quote-line-drag-handle {
+  width: 24px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #aaa294;
+  padding: 0;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.quote-line-drag-handle:hover,
+.quote-line-drag-handle:focus-visible {
+  outline: 0;
+  background: rgba(213, 201, 165, .34);
+  color: #776a48;
+}
+
+.quote-line-drag-handle:active { cursor: grabbing; }
+.quote-line-drag-handle span {
+  display: block;
+  transform: rotate(90deg);
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: -4px;
+}
+
+@media (max-width: 700px) {
+  .quote-line-editor,
+  .quote-line-editor.kind-scope,
+  .quote-line-editor.kind-warranty,
+  .quote-line-editor.kind-note {
+    grid-template-columns: 28px 32px minmax(0, 1fr) 36px;
+    gap: 5px;
+  }
+
+  .quote-line-drag-handle {
+    width: 28px;
+    height: 38px;
+    align-self: start;
+  }
+
+  .quote-line-pricing {
+    grid-column: 3;
+  }
+}

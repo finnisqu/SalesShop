@@ -1,0 +1,121 @@
+/* SalesShop UI Foundation Batch 10C: Board mobile alignment, stage palette,
+ * compact cards and dark internal quote labels. Never style customer paper. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  /* The same segmented control occupies the same location for both lenses.
+     Accounts' extra CRM action wraps below, never pushes the toggle sideways. */
+  :root[data-sales-theme] .sales-app.view-board .board-header-panel.board-foundation-header {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:0;
+    padding:6px var(--ss-page-inset);
+  }
+  .sales-app.view-board .board-foundation-header .ss-page-header__intro { display:none; }
+  .sales-app.view-board .board-foundation-header .ss-page-header__actions {
+    flex:0 0 auto;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    width:100%;
+    gap:4px;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-foundation-header .board-view-toggle {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    width:min(100%,260px);
+    min-width:0;
+    margin-inline:auto;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-foundation-header .board-view-toggle > .ss-button {
+    width:100%;
+    min-width:0;
+    min-height:38px;
+    justify-content:center;
+    text-align:center;
+    padding-inline:8px;
+    font-size:var(--ss-text-sm);
+  }
+  .sales-app.view-board .accounts-header-actions {
+    flex:0 0 100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+  }
+  .sales-app.view-board .accounts-header-actions .accounts-cleanup-button.ss-button {
+    min-height:30px;
+    padding:3px 10px;
+  }
+  /* The stage dropdown is Board chrome, not a permanently ivory ribbon. */
+  :root[data-sales-theme] .sales-app.view-board .mobile-board-stage-picker {
+    background:var(--ss-board-base);
+    color:var(--ss-board-ink);
+    border-color:var(--ss-board-border);
+  }
+  :root[data-sales-theme] .sales-app.view-board .mobile-board-stage-picker label,
+  :root[data-sales-theme] .sales-app.view-board .mobile-board-stage-picker label > span,
+  :root[data-sales-theme] .sales-app.view-board .mobile-board-stage-position,
+  :root[data-sales-theme] .sales-app.view-board .mobile-board-stage-hint {
+    color:var(--ss-board-muted);
+  }
+  :root[data-sales-theme] .sales-app.view-board .mobile-board-stage-picker select {
+    background:var(--ss-board-card);
+    color:var(--ss-board-ink);
+    border:1px solid var(--ss-board-border);
+    border-radius:var(--ss-radius-sm);
+    color-scheme:normal;
+    font-size:16px;
+  }
+  /* Cards in horizontally paged columns keep intrinsic height and scroll only
+     inside that column, regardless of the number of cards. */
+  .sales-app.view-board .board-card-stack :is(.project-card,.account-card) {
+    min-height:0;
+    height:auto;
+    flex:0 0 auto;
+    padding:12px 13px 14px;
+  }
+}
+/* Dark quote labels should not inherit brown/cream ink from legacy row CSS.
+   Scope overrides to internal authoring fields and leave the paper alone. */
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-editor-pane
+:is(.quote-line-editor,.quote-line-main,.quote-area-card,.quote-lines-editor) {
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-editor-pane
+:is(.quote-line-topline,.quote-line-kind,.quote-line-resting-total,
+.quote-material-selection-main>strong,.quote-sink-selection-main>strong,
+.quote-rate-selection-main>strong,.quote-product-name-row>strong,
+.quote-line-editor .quote-control-heading,.quote-line-editor .quote-line-title,
+.quote-material-selection-main,.quote-sink-selection-main,.quote-rate-selection-main) {
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-editor-pane
+:is(.quote-material-selection-main>small,.quote-sink-selection-main>small,
+.quote-rate-selection-main>small,.quote-product-description,
+.quote-line-editor .quote-line-reminders,.quote-line-editor .quote-line-subtitle) {
+  color:var(--ss-quote-field-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-editor-pane
+:is(.quote-pricing-passive,.quote-material-cost-reference,
+.quote-sink-price-reference,.quote-rate-reference) {
+  background:var(--ss-quote-field-tint);
+  border-color:var(--ss-quote-field-border);
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-editor-pane
+:is(.quote-pricing-passive,.quote-material-cost-reference,
+.quote-sink-price-reference,.quote-rate-reference) :is(span,strong,small,button) {
+  color:var(--ss-quote-field-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-editor-pane
+:is(input:not([type="checkbox"]),select,textarea) {
+  color:var(--ss-quote-field-ink);
+  background:var(--ss-quote-field-card);
+  border-color:var(--ss-quote-field-border);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes .quote-editor-pane
+:is(input,textarea)::placeholder {
+  color:var(--ss-quote-field-muted);
+  opacity:1;
+}

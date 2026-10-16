@@ -1,0 +1,341 @@
+/*
+ * UI Foundation v1 — Batch 8: Viewer and Owner role-preview parity.
+ * Only internal read-only UI and controls; no CRM, quotes, notebook-paper or
+ * pricing mutations. The Owner escape banner stays outside the viewport.
+ */
+:root[data-sales-theme] .sales-app .viewer-workspace,
+:root[data-sales-theme] .sales-app .role-perspective-settings {
+  --ss-restricted-canvas:var(--ss-theme-canvas,var(--ss-app-bg));
+  --ss-restricted-base:var(--ss-theme-base,var(--ss-shell-bg));
+  --ss-restricted-card:var(--ss-theme-card,var(--ss-surface-raised));
+  --ss-restricted-tint:var(--ss-theme-tint,var(--ss-surface));
+  --ss-restricted-ink:var(--ss-theme-ink,var(--ss-text));
+  --ss-restricted-muted:var(--ss-theme-muted,var(--ss-text-muted));
+  --ss-restricted-border:var(--ss-theme-border,var(--ss-border));
+  --ss-restricted-accent:var(--ss-theme-accent,var(--ss-accent));
+  min-width:0;
+  min-height:0;
+  flex:1 1 auto;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  background:var(--ss-restricted-canvas);
+  color:var(--ss-restricted-ink);
+}
+:root[data-sales-theme] .sales-app .viewer-workspace {
+  padding:var(--ss-space-4) var(--ss-page-inset);
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-header {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:var(--ss-space-3);
+  max-width:1260px;
+  margin:0 0 var(--ss-space-4);
+  padding:var(--ss-space-3) var(--ss-space-4);
+  background:var(--ss-restricted-base);
+  color:var(--ss-restricted-ink);
+  border:1px solid var(--ss-restricted-border);
+  border-radius:var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-header .ss-page-header__intro {
+  display:grid;
+  flex:1 1 280px;
+  min-width:0;
+  gap:var(--ss-space-1);
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-header .ss-page-header__eyebrow {
+  color:var(--ss-restricted-muted);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+  letter-spacing:.07em;
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-header .ss-page-header__title {
+  margin:0;
+  color:var(--ss-restricted-ink);
+  font:700 var(--ss-text-page)/1.15 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-header .ss-page-header__description {
+  margin:0;
+  color:var(--ss-restricted-muted);
+  font:400 var(--ss-text-sm)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-header .ss-page-header__actions {
+  flex:0 0 auto;
+  min-width:0;
+}
+:root[data-sales-theme] .sales-app .viewer-role-pill {
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:var(--ss-space-1) var(--ss-space-3);
+  border:1px solid var(--ss-restricted-border);
+  border-radius:var(--ss-radius-pill);
+  background:var(--ss-restricted-tint);
+  color:var(--ss-restricted-ink);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app .viewer-search.viewer-foundation-search {
+  display:grid;
+  gap:var(--ss-space-1);
+  max-width:min(500px,100%);
+  min-width:0;
+  margin-bottom:var(--ss-space-4);
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-search>.ss-field__label {
+  color:var(--ss-restricted-muted);
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+  letter-spacing:normal;
+  text-transform:none;
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-search>input[type="search"] {
+  width:100%;
+  min-width:0;
+  height:var(--ss-control-height);
+  min-height:40px;
+  padding:var(--ss-space-2) var(--ss-space-3);
+  border:1px solid var(--ss-restricted-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-restricted-card);
+  color:var(--ss-restricted-ink);
+  font:400 var(--ss-text-body)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app .viewer-foundation-search>input::placeholder {
+  color:var(--ss-restricted-muted);
+  opacity:1;
+}
+:root[data-sales-theme] .sales-app .viewer-record-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));
+  gap:var(--ss-space-3);
+  max-width:1260px;
+  min-width:0;
+}
+:root[data-sales-theme] .sales-app .viewer-record {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:var(--ss-space-2);
+  min-width:0;
+  padding:var(--ss-space-4);
+  border:1px solid var(--ss-restricted-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-restricted-card);
+  color:var(--ss-restricted-ink);
+  box-shadow:var(--ss-shadow-raised);
+}
+:root[data-sales-theme] .sales-app .viewer-record h2 {
+  margin:0;
+  color:var(--ss-restricted-ink);
+  font:700 var(--ss-text-section)/1.3 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app .viewer-record :is(p,small) {
+  color:var(--ss-restricted-muted);
+  font:400 var(--ss-text-sm)/1.45 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app .viewer-record>small {
+  font-weight:750;
+}
+:root[data-sales-theme] .sales-app .viewer-facts {
+  color:var(--ss-restricted-ink);
+  font:550 var(--ss-text-sm)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app .viewer-facts strong {
+  color:var(--ss-restricted-ink);
+}
+:root[data-sales-theme] .sales-app .viewer-record .ss-button,
+:root[data-sales-theme] .sales-app .viewer-purchasing-jump .ss-button {
+  min-height:40px;
+  border:1px solid var(--ss-restricted-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-restricted-base);
+  color:var(--ss-restricted-ink);
+  font:700 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app .viewer-record .ss-button[aria-expanded="true"] {
+  background:var(--ss-restricted-tint);
+  border-color:var(--ss-restricted-accent);
+}
+:root[data-sales-theme] .sales-app .viewer-details {
+  border-color:var(--ss-restricted-border);
+  color:var(--ss-restricted-ink);
+  width:100%;
+}
+:root[data-sales-theme] .sales-app .viewer-details :is(p,strong,span) {
+  color:var(--ss-restricted-ink);
+}
+:root[data-sales-theme] .sales-app .viewer-line {
+  border-color:var(--ss-restricted-border);
+  color:var(--ss-restricted-ink);
+}
+:root[data-sales-theme] .sales-app .viewer-empty,
+:root[data-sales-theme] .sales-app .viewer-helper,
+:root[data-sales-theme] .sales-app .viewer-purchasing-jump {
+  color:var(--ss-restricted-muted);
+  font:400 var(--ss-text-sm)/1.5 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app .viewer-metrics>div {
+  background:var(--ss-restricted-card);
+  border:1px solid var(--ss-restricted-border);
+  border-radius:var(--ss-radius-md);
+  color:var(--ss-restricted-ink);
+}
+:root[data-sales-theme] .sales-app .viewer-metrics strong {
+  color:var(--ss-restricted-ink);
+}
+:root[data-sales-theme] .sales-app .viewer-metrics span {
+  color:var(--ss-restricted-muted);
+}
+/* Owner Settings simulation follows the same cards as Viewer without
+ * changing which capabilities can be modified in a real account. */
+:root[data-sales-theme] .sales-app .role-perspective-settings-card {
+  max-width:950px;
+  padding:var(--ss-space-5);
+  background:var(--ss-restricted-card);
+  border:1px solid var(--ss-restricted-border);
+  border-radius:var(--ss-radius-md);
+  color:var(--ss-restricted-ink);
+  box-shadow:var(--ss-shadow-raised);
+}
+:root[data-sales-theme] .sales-app .role-perspective-settings :is(h1,.role-perspective-capability strong) {
+  color:var(--ss-restricted-ink);
+}
+:root[data-sales-theme] .sales-app .role-perspective-settings :is(
+  p,.role-perspective-capability span,.board-eyebrow
+) {
+  color:var(--ss-restricted-muted);
+}
+:root[data-sales-theme] .sales-app .role-perspective-capability {
+  background:var(--ss-restricted-base);
+  border:1px solid var(--ss-restricted-border);
+  border-radius:var(--ss-radius-md);
+  color:var(--ss-restricted-ink);
+}
+:root[data-sales-theme] .sales-app .role-perspective-settings-note {
+  border-color:var(--ss-restricted-border);
+}
+:root[data-sales-theme] .sales-app .role-perspective-picker {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app .role-perspective-picker select {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app :is(
+  .viewer-foundation-search input,.viewer-record .ss-button,
+  .viewer-purchasing-jump .ss-button,.role-perspective-picker select
+):focus-visible {
+  outline:3px solid var(--ss-focus);
+  outline-offset:2px;
+}
+/* Banner deliberately remains high-contrast green to indicate simulation,
+ * not another branded card. Keep the Exit Preview button visibly accessible. */
+:root[data-sales-theme] .sales-app .role-perspective-banner-switch select {
+  min-height:36px;
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app .role-perspective-escape {
+  min-height:40px;
+  border-radius:var(--ss-radius-sm);
+}
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root[data-sales-theme] .sales-app .viewer-workspace {
+    padding:var(--ss-space-2);
+    min-height:0;
+  }
+  :root[data-sales-theme] .sales-app .viewer-foundation-header {
+    display:flex;
+    flex-wrap:nowrap;
+    min-width:0;
+    align-items:center;
+    padding:var(--ss-space-2) var(--ss-space-3);
+    margin:0 0 var(--ss-space-2);
+    gap:var(--ss-space-2);
+  }
+  :root[data-sales-theme] .sales-app .viewer-foundation-header .ss-page-header__intro {
+    min-width:0;
+    flex:1 1 auto;
+  }
+  :root[data-sales-theme] .sales-app .viewer-foundation-header .ss-page-header__title {
+    font-size:var(--ss-text-section);
+  }
+  :root[data-sales-theme] .sales-app .viewer-foundation-header .ss-page-header__description {
+    display:none;
+  }
+  :root[data-sales-theme] .sales-app .viewer-foundation-search input[type="search"] {
+    min-height:44px;
+    height:44px;
+    font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app .viewer-record-grid {
+    grid-template-columns:minmax(0,1fr);
+    gap:var(--ss-space-2);
+  }
+  :root[data-sales-theme] .sales-app .viewer-record {
+    padding:var(--ss-space-3);
+  }
+  :root[data-sales-theme] .sales-app .viewer-record .ss-button,
+  :root[data-sales-theme] .sales-app .viewer-purchasing-jump .ss-button {
+    min-height:44px;
+  }
+  :root[data-sales-theme] .sales-app .role-perspective-settings-card {
+    padding:var(--ss-space-3);
+  }
+  :root[data-sales-theme] .sales-app .role-perspective-capability-grid {
+    grid-template-columns:minmax(0,1fr);
+    gap:var(--ss-space-2);
+  }
+  /* A rotated phone loses most of its height to the multi-line preview
+   * banner. In landscape only, keep a single-line banner and always show
+   * the Exit control. This is outside the editor/scroll viewport. */
+  @media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+    :root[data-sales-theme] .sales-app .role-perspective-banner {
+      display:flex;
+      flex-wrap:nowrap;
+      min-height:48px;
+      padding:var(--ss-space-1) var(--ss-space-2);
+      gap:var(--ss-space-2);
+    }
+    :root[data-sales-theme] .sales-app .role-perspective-banner-copy {
+      min-width:0;
+      flex:1 1 auto;
+      display:block;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    :root[data-sales-theme] .sales-app .role-perspective-banner-copy strong {
+      display:block;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      font-size:var(--ss-text-sm);
+    }
+    :root[data-sales-theme] .sales-app .role-perspective-banner-copy>span,
+    :root[data-sales-theme] .sales-app .role-perspective-symbol,
+    :root[data-sales-theme] .sales-app .role-perspective-banner-switch>span {
+      display:none;
+    }
+    :root[data-sales-theme] .sales-app .role-perspective-banner-switch {
+      flex:0 1 120px;
+      min-width:0;
+      margin:0;
+    }
+    :root[data-sales-theme] .sales-app .role-perspective-banner-switch select {
+      max-width:100%;
+      width:100%;
+      font-size:12px;
+      min-height:40px;
+    }
+    :root[data-sales-theme] .sales-app .role-perspective-escape {
+      margin:0;
+      min-height:40px;
+      flex:0 0 auto;
+      padding:var(--ss-space-1) var(--ss-space-2);
+      font-size:12px;
+    }
+  }
+}

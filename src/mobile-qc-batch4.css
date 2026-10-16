@@ -1,0 +1,105 @@
+/* Batch 4: mobile overlay, scrolling, and touch QA.
+   Kept separate from the existing desktop notebook and pricing layouts. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  /* The Catalog host is the ONLY vertical scrolling surface.
+     Prior QC accidentally hid overflow here while forcing the embedded
+     Materials and Rates workspaces to overflow:visible !important. */
+  .sales-app.view-catalog .catalog-section-host{
+    flex:1 1 auto;
+    height:auto;
+    min-height:0;
+    min-width:0;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sales-app.view-catalog .catalog-section-host > :is(
+    .rates-workspace.is-catalog-embedded,
+    .sinks-workspace.is-catalog-embedded
+  ){
+    height:auto!important;
+    min-height:0;
+    overflow:visible!important;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  .sales-app.view-catalog .catalog-section-host:is(
+    .catalog-section-suppliers,.catalog-section-other
+  ){
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sales-app.view-catalog .catalog-section-host.catalog-section-suppliers .supplier-workbench{
+    overflow:visible;
+    height:auto;
+    min-height:100%;
+  }
+  /* Touches on a dialog never scroll the background beneath it. */
+  .sales-app :is(
+    .mobile-app-drawer,
+    .mobile-catalog-tools-sheet,
+    .project-editor,
+    .quote-mobile-navigator,
+    .quote-mobile-menu
+  ){
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sales-app .project-editor-backdrop{
+    touch-action:pan-y;
+  }
+  .sales-app .project-editor{
+    min-width:0;
+    max-width:100vw;
+    padding-bottom:calc(28px + env(safe-area-inset-bottom));
+  }
+  .sales-app .project-editor > header > .editor-close{
+    flex:0 0 42px;
+    width:42px;
+    height:42px;
+    min-height:42px;
+  }
+  .sales-app .project-editor :is(
+    input:not([type=checkbox]), select, textarea
+  ){
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+    font-size:16px;
+  }
+  .sales-app :is(.mobile-app-drawer,.quote-mobile-navigator) > header button{
+    min-width:42px;
+    min-height:42px;
+  }
+  .sales-app :is(
+    .mobile-app-drawer,
+    .project-editor,
+    .quote-mobile-navigator,
+    .quote-mobile-menu,
+    .mobile-catalog-tools-sheet
+  ) :is(button, input, select, textarea):focus-visible{
+    outline:2px solid #ad9257;
+    outline-offset:2px;
+  }
+  /* Board still pages sideways while each card stack scrolls on its own. */
+  .sales-app.view-board .board-card-stack{
+    min-height:0;
+    overscroll-behavior-y:contain;
+    /* Preserve horizontal stage swipes even when the gesture begins on a card. */
+    touch-action:auto;
+  }
+  .sales-app.view-board .mobile-board-stage-picker select{
+    touch-action:manipulation;
+  }
+  /* Keep document actions accessible above the iOS home indicator. */
+  .sales-app.view-quotes .quote-mobile-menu{
+    overscroll-behavior-y:contain;
+  }
+  .sales-app.view-quotes .quote-mobile-menu :is(
+    button,select,input:not([type=checkbox])
+  ){
+    touch-action:manipulation;
+  }
+}

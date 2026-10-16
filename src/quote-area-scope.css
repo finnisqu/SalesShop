@@ -1,0 +1,277 @@
+/* Quote Area Scope v1: private takeoff-lite quantities and explicit line links. */
+
+.quote-area-title {
+  align-content: center;
+}
+
+.quote-area-scope-toggle {
+  width: max-content;
+  max-width: 100%;
+  margin-top: 2px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #8b7d65;
+  font-size: 6.8px;
+  font-weight: 750;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(139,125,101,.28);
+  text-underline-offset: 2px;
+}
+
+.quote-area-scope-toggle:hover,
+.quote-area-scope-toggle.active {
+  color: #67593f;
+  text-decoration-color: rgba(103,89,63,.55);
+}
+
+.quote-area-scope-panel {
+  display: grid;
+  gap: 8px;
+  padding: 9px 10px 10px 40px;
+  border-bottom: 1px solid rgba(91,78,58,.1);
+  background:
+    linear-gradient(90deg, rgba(222,216,200,.32), transparent 28%),
+    rgba(246,242,232,.76);
+}
+
+.quote-area-scope-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quote-area-scope-heading > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-area-scope-heading strong {
+  color: #5c5346;
+  font: 700 9px Georgia, serif;
+}
+
+.quote-area-scope-heading small {
+  color: #918777;
+  font-size: 6.7px;
+}
+
+.quote-area-scope-heading > span {
+  flex: 0 0 auto;
+  color: #75674f;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.quote-area-scope-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(90px, 1fr));
+  gap: 6px;
+}
+
+.quote-area-scope-grid label {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.quote-area-scope-grid label > span {
+  overflow: hidden;
+  color: #8a806f;
+  font-size: 6.3px;
+  font-weight: 850;
+  letter-spacing: .035em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.quote-area-scope-grid label > div {
+  height: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #c9c0af;
+  border-radius: 2px;
+  background: #fffaf0;
+}
+
+.quote-area-scope-grid input {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  border: 0;
+  outline: 0;
+  padding: 0 6px;
+  background: transparent;
+  color: #514a40;
+  font-size: 8px;
+}
+
+.quote-area-scope-grid b {
+  padding: 0 6px 0 3px;
+  color: #9a8d79;
+  font-size: 6.5px;
+}
+
+.quote-qty-rate-stack {
+  display: grid;
+  gap: 4px;
+}
+
+.quote-area-quantity-link {
+  min-width: 180px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 5px;
+  align-items: end;
+  padding: 4px 5px;
+  border: 1px solid rgba(105,90,65,.13);
+  border-radius: 3px;
+  background: rgba(244,239,229,.8);
+}
+
+.quote-area-quantity-link label {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.quote-area-quantity-link label > span {
+  color: #8a806e;
+  font-size: 5.9px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.quote-area-quantity-link select {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  border: 1px solid #cbc2b2;
+  border-radius: 2px;
+  background: #fffaf0;
+  padding: 0 4px;
+  color: #5d5549;
+  font-size: 7px;
+}
+
+.quote-area-quantity-link > small {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: #948a7b;
+  font-size: 6.2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-area-quantity-link > button {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 24px;
+  border: 1px solid rgba(166,126,42,.25);
+  border-radius: 2px;
+  background: #fff0bd;
+  padding: 0 6px;
+  color: #765d24;
+  font-size: 6.5px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.quote-area-quantity-link.is-changed {
+  border-color: rgba(175,135,43,.26);
+  background: #fff7db;
+}
+
+.quote-area-quantity-warning {
+  grid-column: 1 / -1;
+  color: #9a5c4c;
+  font-size: 6.4px;
+  font-weight: 800;
+}
+
+@media (max-width: 1180px) {
+  .quote-area-scope-grid {
+    grid-template-columns: repeat(3, minmax(110px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .quote-area-scope-panel {
+    padding-left: 39px;
+  }
+
+  .quote-area-quantity-link {
+    min-width: 155px;
+  }
+}
+
+@media (max-width: 650px) {
+  .quote-area-scope-toggle {
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    font-size: 7.3px;
+  }
+
+  .quote-area-scope-panel {
+    padding: 10px 8px;
+  }
+
+  .quote-area-scope-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .quote-area-scope-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quote-area-scope-grid label > div {
+    height: 40px;
+  }
+
+  .quote-area-scope-grid input {
+    height: 38px;
+    font-size: 16px;
+  }
+
+  .quote-area-scope-grid b {
+    font-size: 7px;
+  }
+
+  .quote-qty-rate-stack {
+    width: 100%;
+  }
+
+  .quote-area-quantity-link {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .quote-area-quantity-link select {
+    min-height: 38px;
+    font-size: 14px;
+  }
+
+  .quote-area-quantity-link > button {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 390px) {
+  .quote-area-scope-grid {
+    grid-template-columns: 1fr;
+  }
+}

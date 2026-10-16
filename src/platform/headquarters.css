@@ -1,0 +1,129 @@
+/* Private SalesShop Headquarters surfaces, never applied to tenant workspace. */
+.developer-console .hq-sync-status{display:inline-flex;align-items:center;border:1px solid #cbd8d0;
+  background:#eef4ee;color:#36594c;font-size:11px;font-weight:750;padding:8px 12px;border-radius:30px;
+  margin-bottom:16px;}
+.developer-console .hq-primary{background:#2c4b46!important;color:white!important;border:1px solid #46685e!important;
+  border-radius:8px;padding:10px 13px;min-height:39px;font-weight:750;cursor:pointer;}
+.developer-console .hq-danger-link{background:transparent!important;border:1px solid #cfc7c1!important;
+  color:#995b53!important;border-radius:6px;padding:7px 10px;font-size:12px;}
+.developer-console .hq-count{display:inline-flex;border:1px solid #d5dcd7;border-radius:24px;
+  background:#f7f9f7;color:#547067;padding:9px 13px;font-size:12px;font-weight:700;}
+.developer-console .hq-kicker{font-size:10px;font-weight:800;letter-spacing:.14em;color:#61766f;}
+.developer-console .hq-panel-heading{display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px;margin-bottom:14px}
+.developer-console .hq-panel-heading h2{font:700 clamp(21px,3vw,27px) Georgia,serif;margin:4px 0;}
+.developer-console .hq-panel-heading p{margin:5px 0;color:#60716b;font-size:12px;line-height:1.5}
+.developer-console .hq-empty{padding:20px;color:#61716e;font-size:13px;line-height:1.6}
+.developer-console .hq-notebook{display:grid;grid-template-columns:minmax(190px,265px) minmax(0,1fr);
+ gap:14px;align-items:start;min-width:0;}
+.developer-console .hq-notebook-sidebar,.developer-console .hq-crm-list{display:grid;gap:11px;
+ background:#fffcf6;border:1px solid #d8dad6;border-radius:12px;padding:15px;min-width:0}
+.developer-console .hq-notebook-sidebar>input,.developer-console .hq-crm-list>input,
+.developer-console .hq-fields input,.developer-console .hq-fields select,.developer-console .hq-fields textarea,
+.developer-console .hq-contact-add input,.developer-console .hq-touchpoint-add input,
+.developer-console .hq-new-lead input{width:100%;min-width:0;border:1px solid #c8d0cb;border-radius:7px;
+  background:white;color:#2a3938;padding:10px 11px;font-size:14px;outline-offset:2px;}
+.developer-console .hq-notebook-pages{display:grid;gap:7px;max-height:min(62vh,600px);overflow-y:auto;}
+.developer-console .hq-notebook-page{display:grid;gap:5px;border:1px solid transparent!important;
+ padding:12px!important;text-align:left;border-radius:9px!important;background:#f4f2eb!important;
+ color:#2e3b39!important;width:100%;min-width:0}
+.developer-console .hq-notebook-page.active,.developer-console .hq-lead-card.active{
+ border-color:#a5b9ab!important;background:#ebf2eb!important;box-shadow:inset 3px 0 #547e6d;}
+.developer-console .hq-notebook-page span{font:700 14px/1.3 Georgia,serif;overflow-wrap:anywhere}
+.developer-console .hq-notebook-page small{font-size:10px;color:#77817e}
+.developer-console .hq-notebook-body{min-width:0}
+.developer-console .hq-notebook-sheet{padding:clamp(16px,3vw,35px);min-height:540px;
+ background:#fffdf2;border:1px solid #d2c8af;border-radius:12px;box-shadow:0 5px 20px #35433610;}
+.developer-console .hq-notebook-actions{display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:8px;}
+.developer-console .hq-notebook-actions>div{display:flex;gap:5px;}
+.developer-console .hq-notebook-actions button{padding:7px 9px;border:1px solid #dedbd0;border-radius:7px;
+ background:transparent;font-size:11px;color:#465c58;}
+.developer-console .hq-notebook-title{width:100%;min-height:54px;background:transparent;border:0;
+ border-bottom:1px solid #d6cdb9;border-radius:0;outline-offset:3px;
+ font:700 clamp(25px,4vw,38px)/1.2 Georgia,serif;color:#34392f;margin-top:18px;padding:0 0 8px;}
+.developer-console .hq-notebook-meta{color:#82847b;font-size:11px;margin:10px 0 15px;}
+.developer-console .hq-rich-editor-toolbar{display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid #ded8c8;
+ padding:9px 0;margin-bottom:12px;}
+.developer-console .hq-rich-editor-toolbar button{border:1px solid #cbd3cb;background:#fffdfa;
+ color:#334b44;border-radius:6px;padding:6px 10px;min-width:33px;min-height:34px;font-size:12px;}
+.developer-console .hq-rich-editor-toolbar button[aria-pressed=true]{background:#345c51;color:white}
+.developer-console .hq-rich-editor-body{min-height:300px;outline:none;color:#34392f;
+ font:15px/1.8 system-ui,-apple-system,sans-serif;overflow-wrap:anywhere;}
+.developer-console .hq-rich-editor-body p{margin:0 0 12px}
+.developer-console .hq-rich-editor-body h2{font:700 24px Georgia,serif;margin:16px 0 8px}
+.developer-console .hq-rich-editor-body ul,.developer-console .hq-rich-editor-body ol{padding-left:24px}
+.developer-console .hq-rich-editor-body blockquote{border-left:3px solid #c5b47e;margin:12px 0;padding:4px 14px;}
+.developer-console .hq-notebook-welcome,.developer-console .hq-detail-placeholder{
+ padding:clamp(22px,4vw,42px);border:1px dashed #c3ccc5;border-radius:12px;background:#fffcf6;
+ color:#4b635d;line-height:1.7;}
+.developer-console .hq-notebook-welcome h2,.developer-console .hq-detail-placeholder h2{
+ font:700 26px Georgia,serif;color:#283c34;margin:0;}
+.developer-console .hq-overview-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.developer-console .hq-overview-actions>button,.developer-console .hq-overview-actions>div{
+ display:grid;align-content:center;gap:9px;border:1px solid #d6ddd7;border-radius:10px;
+ background:#fffcf6;color:#2a3c37;text-align:left;padding:17px;min-width:0;}
+.developer-console .hq-overview-actions strong{font:700 18px Georgia,serif}
+.developer-console .hq-overview-actions span{font:500 12px/1.5 system-ui;color:#677671}
+.developer-console .hq-crm{display:grid;gap:14px;min-width:0}
+.developer-console .hq-stage-strip{display:flex;gap:7px;overflow-x:auto;min-width:0;padding-bottom:9px;
+ -webkit-overflow-scrolling:touch;}
+.developer-console .hq-stage-strip button{white-space:nowrap;border:1px solid #ced8d1;border-radius:25px;
+ background:#fffcf6;color:#435b50;padding:9px 12px;font-weight:750;font-size:12px;min-height:39px;}
+.developer-console .hq-stage-strip button.active{background:#34584e;color:white;border-color:#34584e}
+.developer-console .hq-stage-strip button span{font-size:10px;opacity:.7;margin-left:5px}
+.developer-console .hq-crm-layout{display:grid;grid-template-columns:minmax(210px,290px) minmax(0,1fr);
+ gap:13px;min-width:0;align-items:start}
+.developer-console .hq-new-lead{display:grid;gap:9px;}
+.developer-console .hq-new-lead label{display:grid;gap:6px;font-size:12px;font-weight:750;color:#556a5e}
+.developer-console .hq-crm-cards{display:grid;gap:7px;max-height:620px;overflow-y:auto;}
+.developer-console .hq-lead-card{display:grid;gap:5px;border:1px solid #e1e3d9;border-radius:9px;
+ text-align:left;padding:12px;background:#f7f6ef;color:#2f3a35;min-width:0}
+.developer-console .hq-lead-card strong{font:700 14px Georgia,serif;overflow-wrap:anywhere}
+.developer-console .hq-lead-card small{font-size:11px;color:#627268;overflow-wrap:anywhere}
+.developer-console .hq-lead-stage{justify-self:start;border-radius:12px;background:#e0e9df;
+ padding:3px 7px;font-size:10px;font-weight:750;}
+.developer-console .hq-crm-detail{min-width:0}
+.developer-console .hq-account-detail{padding:clamp(16px,2.5vw,24px);border:1px solid #d9ded8;
+ border-radius:12px;background:#fffcf6;display:grid;gap:18px;min-width:0;}
+.developer-console .hq-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;}
+.developer-console .hq-fields label{display:grid;gap:6px;font-size:11px;font-weight:750;color:#586d64;min-width:0;}
+.developer-console .hq-fields label.hq-wide{grid-column:1/-1}
+.developer-console .hq-fields label small{font-weight:500;font-size:11px;line-height:1.4}
+.developer-console .hq-crm-subsection{border-top:1px solid #e0e4de;padding-top:14px;display:grid;gap:9px;}
+.developer-console .hq-crm-subsection h3{font:700 19px Georgia,serif;color:#34433a;margin:0 0 4px;}
+.developer-console .hq-contact-row,.developer-console .hq-touchpoint{display:flex;justify-content:space-between;
+ align-items:center;gap:10px;border-radius:8px;background:#f4f6f2;padding:10px 12px;min-width:0;}
+.developer-console .hq-contact-row>div{display:grid;gap:4px;min-width:0;}
+.developer-console .hq-contact-row strong{font-size:13px;overflow-wrap:anywhere}
+.developer-console .hq-contact-row small,.developer-console .hq-touchpoint small{font-size:11px;color:#758278}
+.developer-console .hq-contact-row button{background:none;border:0;font-size:20px;color:#945749}
+.developer-console .hq-contact-add,.developer-console .hq-touchpoint-add{display:flex;flex-wrap:wrap;gap:7px}
+.developer-console .hq-contact-add input{flex:1 1 125px;width:0}
+.developer-console .hq-touchpoint-add input{flex:1 1 220px;width:0}
+.developer-console .hq-contact-add button,.developer-console .hq-touchpoint-add button{
+ background:#375b50;color:#fff;border:1px solid #375b50;border-radius:7px;min-height:41px;padding:8px 12px;
+ font-size:12px;font-weight:750;}
+.developer-console .hq-touchpoint{display:grid;gap:4px;align-items:initial;overflow-wrap:anywhere;}
+@media(max-width:1000px){
+ .developer-console .hq-overview-actions{grid-template-columns:1fr 1fr}
+ .developer-console .hq-overview-actions>div{grid-column:1/-1}
+}
+@media(max-width:750px){
+ .developer-console .hq-notebook,.developer-console .hq-crm-layout{grid-template-columns:1fr}
+ .developer-console .hq-notebook-sidebar{padding:12px}
+ .developer-console .hq-notebook-pages{display:flex;overflow-x:auto;overflow-y:hidden;max-height:none;padding-bottom:3px}
+ .developer-console .hq-notebook-page{min-width:140px;max-width:230px}
+ .developer-console .hq-notebook-sheet{min-height:480px}
+ .developer-console .hq-overview-actions{grid-template-columns:1fr}
+ .developer-console .hq-overview-actions>div{grid-column:auto}
+ .developer-console .hq-crm-cards{display:flex;overflow-x:auto;overflow-y:hidden;max-height:none;padding-bottom:4px}
+ .developer-console .hq-lead-card{min-width:min(240px,75vw);max-width:min(240px,75vw)}
+ .developer-console .hq-fields{grid-template-columns:1fr}
+ .developer-console .hq-contact-add input{flex-basis:45%}
+}
+@media(max-width:450px){
+ .developer-console .hq-notebook-actions .hq-kicker{font-size:8px}
+ .developer-console .hq-contact-add input{flex-basis:100%}
+ .developer-console .hq-panel-heading h2{font-size:22px}
+}

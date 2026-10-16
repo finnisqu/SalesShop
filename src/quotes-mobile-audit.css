@@ -1,0 +1,276 @@
+/* Mobile-only quote audit. Drafts remain free-form, but formal issue is reviewed. */
+/* Contextual Area pricing cue: no new workflow modal and no change to the issue gate. */
+.qmb .qmb-area-pricing-alert {
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  border:1px solid var(--qmb-border);background:var(--qmb-tint);
+  color:var(--qmb-ink);border-radius:10px;padding:9px 11px;
+  cursor:pointer;min-width:0;
+}
+.qmb .qmb-area-pricing-alert > span:nth-child(2) {flex:1;min-width:0;display:grid;gap:2px;}
+.qmb .qmb-area-pricing-alert strong {font-size:12px;font-weight:800;}
+.qmb .qmb-area-pricing-alert small {
+  font-size:11px;color:var(--qmb-muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+.qmb .qmb-area-pricing-alert-icon {
+  display:grid;place-items:center;flex:0 0 23px;width:23px;height:23px;
+  background:var(--qmb-card);color:var(--qmb-ink);border:1px solid var(--qmb-border);
+  border-radius:50%;font-weight:850;
+}
+.qmb .qmb-area-pricing-alert:focus-visible {
+  outline:2px solid var(--qmb-accent);outline-offset:2px;
+}
+
+.qmb .qmb-review-editor .qmb-pagecontent {
+  min-height:0;overflow-y:auto;padding-top:12px;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+}
+.qmb .qmb-audit-overview {
+  background:var(--qmb-card);border:1px solid var(--qmb-border);
+  border-radius:14px;padding:12px 13px;margin-bottom:12px;
+}
+.qmb .qmb-audit-total {display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.qmb .qmb-audit-total span {font-size:12px;font-weight:750;color:var(--qmb-muted);}
+.qmb .qmb-audit-total strong {font-size:21px;font-weight:900;
+  color:var(--qmb-ink);font-variant-numeric:tabular-nums;}
+.qmb .qmb-audit-counts {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;border-top:1px solid var(--qmb-border);padding-top:9px;margin-top:10px;}
+.qmb .qmb-audit-counts span {
+  display:flex;justify-content:center;align-items:center;gap:5px;
+  min-width:0;border-radius:7px;background:var(--qmb-tint);
+  color:var(--qmb-muted);padding:7px 2px;font-size:10px;font-weight:700;
+}
+.qmb .qmb-audit-counts b {font-size:14px;color:var(--qmb-ink);}
+.qmb .qmb-audit-counts .is-blocked {color:var(--ss-danger,#a6473e);}
+.qmb .qmb-audit-counts .is-blocked b {color:var(--ss-danger,#a6473e);}
+.qmb .qmb-audit-group {margin:12px 0 15px;display:grid;gap:7px;}
+.qmb .qmb-audit-group-heading {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;font-size:15px;color:var(--qmb-ink);
+}
+.qmb .qmb-audit-group-heading span {border-radius:99px;
+  padding:3px 9px;background:var(--qmb-tint);font-size:12px;}
+.qmb .qmb-audit-help {font-size:11px;color:var(--qmb-muted);line-height:1.5;}
+.qmb .qmb-audit-finding {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  min-width:0;padding:10px 11px;border-radius:11px;background:var(--qmb-card);
+  border:1px solid var(--qmb-border);
+}
+.qmb .qmb-audit-finding.is-blocker {border-left:3px solid var(--ss-danger,#a6473e);}
+.qmb .qmb-audit-finding.is-review {border-left:3px solid var(--qmb-accent);}
+.qmb .qmb-audit-finding-copy {min-width:0;flex:1;display:grid;gap:3px;}
+.qmb .qmb-audit-finding strong {font-size:12px;line-height:1.35;
+  font-weight:850;overflow-wrap:anywhere;color:var(--qmb-ink);}
+.qmb .qmb-audit-finding p {margin:0;line-height:1.4;font-size:11px;color:var(--qmb-muted);}
+.qmb .qmb-audit-finding button {flex:0 0 auto;min-height:36px;min-width:51px;
+  border-radius:8px;border:1px solid var(--qmb-border);color:var(--qmb-accent);
+  background:var(--qmb-tint);font-weight:850;font-size:12px;}
+.qmb .qmb-audit-ack {display:flex;align-items:flex-start;gap:10px;padding:11px 12px;
+  margin:12px 0;background:var(--qmb-tint);border:1px solid var(--qmb-border);
+  border-radius:12px;line-height:1.45;color:var(--qmb-ink);font-size:12px;}
+.qmb .qmb-audit-ack input {width:20px;height:20px;flex:0 0 20px;
+  accent-color:var(--qmb-accent);}
+.qmb .qmb-audit-clean {border-radius:12px;border:1px solid var(--qmb-border);
+  background:var(--qmb-card);padding:14px;margin-bottom:13px;}
+.qmb .qmb-audit-clean strong {font-size:15px;}
+.qmb .qmb-audit-clean p {margin:7px 0 0;font-size:12px;color:var(--qmb-muted);}
+.qmb .qmb-audit-delivery {display:grid;gap:8px;margin-top:16px;}
+.qmb .qmb-audit-delivery>strong {font-size:15px;}
+.qmb .qmb-audit-delivery>.qmb-help {margin:0 0 2px;}
+.qmb .qmb-audit-delivery>.qmb-block {min-height:42px;}
+.qmb .qmb-audit-delivery>.qmb-block:disabled {opacity:.57;}
+@media(max-width:350px){
+  .qmb .qmb-audit-counts span {font-size:9px;gap:3px;}
+  .qmb .qmb-audit-total strong {font-size:18px;}
+}
+
+/* Inline Review quick fixes stay within the normal scrolling workspace,
+   unlike a floating dialog which can be obscured by the mobile keyboard. */
+.qmb .qmb-audit-finding {
+  display:block;min-width:0;padding:0;overflow:visible;
+}
+.qmb .qmb-audit-finding-summary {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:10px 11px;min-width:0;
+}
+.qmb .qmb-audit-finding-summary .qmb-audit-finding-copy {flex:1 1 0;}
+.qmb .qmb-audit-finding-summary button.qmb-audit-resolve {
+  min-height:36px;flex:0 0 auto;padding:6px 10px;
+  border:1px solid var(--qmb-border);background:var(--qmb-tint);
+  color:var(--qmb-accent);border-radius:8px;
+  font-weight:850;font-size:12px;
+}
+.qmb .qmb-audit-finding.is-expanded .qmb-audit-resolve {
+  background:var(--qmb-accent);color:var(--qmb-card);
+}
+.qmb .qmb-audit-inline {
+  border-top:1px solid var(--qmb-border);padding:11px 12px 13px;
+  display:grid;gap:10px;background:var(--qmb-card);
+  border-radius:0 0 10px 10px;min-width:0;
+}
+.qmb .qmb-audit-inline form {display:grid;gap:10px;min-width:0;}
+.qmb .qmb-audit-inline label {display:grid;gap:5px;font-size:12px;
+  font-weight:750;color:var(--qmb-ink);min-width:0;}
+.qmb .qmb-audit-inline label>small {font-weight:450;color:var(--qmb-muted);}
+.qmb .qmb-audit-inline input {
+  display:block;min-height:42px;width:100%;min-width:0;
+  border:1px solid var(--qmb-border);border-radius:9px;
+  background:var(--qmb-card);color:var(--qmb-ink);
+  padding:8px 10px;font-size:16px;font-weight:550;
+}
+.qmb .qmb-audit-inline-pair {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.qmb .qmb-audit-inline p {font-size:12px;color:var(--qmb-muted);line-height:1.45;margin:0;}
+.qmb .qmb-audit-inline-actions {display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:2px;}
+.qmb .qmb-audit-inline-actions button {
+  min-height:40px;flex:1 0 auto;padding:6px 11px;font-size:12px;
+}
+.qmb .qmb-audit-input-error {font-size:11px;color:var(--ss-danger,#a6473e);}
+.qmb .qmb-audit-input-label {font-size:12px;font-weight:850;}
+.qmb .qmb-audit-inline .qtl-combobox {min-width:0;width:100%;}
+.qmb .qmb-audit-inline .qtl-combobox>input {width:100%;font-size:16px;}
+.qmb .qmb-audit-inline .qtl-combobox-menu {
+  position:relative;max-height:min(240px,37dvh);
+  overflow-y:auto;width:100%;z-index:2;
+}
+.qmb .qmb-audit-inline .qtl-combobox-results button {min-height:40px;}
+@media(max-width:350px){
+  .qmb .qmb-audit-inline-actions button {padding-inline:7px;font-size:11px;}
+  .qmb .qmb-audit-finding-summary {gap:6px;padding:9px;}
+}
+
+/* Existing CRM customers are selectable without leaving Review. */
+.qmb .qmb-audit-crm-suggestions {
+  display:grid;gap:3px;border:1px solid var(--qmb-border);
+  background:var(--qmb-tint);border-radius:9px;padding:6px;
+  max-height:205px;overflow-y:auto;
+}
+.qmb .qmb-audit-crm-suggestions>small {
+  font-size:10px;color:var(--qmb-muted);font-weight:850;
+  padding:2px 5px 4px;
+}
+.qmb .qmb-audit-crm-suggestions button {
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;min-height:39px;gap:10px;border:0;border-radius:7px;
+  background:var(--qmb-card);color:var(--qmb-ink);
+  padding:7px 9px;text-align:left;font-size:12px;font-weight:800;
+}
+.qmb .qmb-audit-crm-suggestions button small {color:var(--qmb-accent);font-size:10px;flex:0 0 auto;}
+
+/* Customer-approved Selections appendix shared by preview and public links. */
+.customer-quote-paper .quote-customer-selections {
+  margin-top:22px;padding-top:15px;border-top:1px solid #c9c2b3;
+  break-inside:avoid;page-break-inside:avoid;color:#37342f;
+}
+.customer-quote-paper .quote-customer-selections h3 {
+  font-family:inherit;font-size:17px;line-height:1.3;margin:0 0 3px;
+  color:#2e2c29;letter-spacing:.01em;
+}
+.customer-quote-paper .quote-customer-selections>p {
+  margin:0 0 11px;color:#69665f;font-size:11px;line-height:1.4;
+}
+.customer-quote-paper .quote-customer-selection-area {
+  border-bottom:1px solid #e8e3d9;padding:8px 0 11px;
+  display:grid;gap:5px;min-width:0;
+}
+.customer-quote-paper .quote-customer-selection-area>strong {
+  font-size:12px;font-weight:850;color:#3e3a30;
+}
+.customer-quote-paper .quote-customer-selection-area>div {
+  display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;
+  align-items:start;font-size:11px;line-height:1.35;
+}
+.customer-quote-paper .quote-customer-selection-area span {color:#7a756c;}
+.customer-quote-paper .quote-customer-selection-area b {
+  overflow-wrap:anywhere;font-weight:650;color:#403d37;
+}
+@media print {
+  .customer-quote-paper .quote-customer-selections {break-before:auto;}
+  .customer-quote-paper .quote-customer-selection-area {break-inside:avoid;}
+}
+
+/* Version-aware customer delivery flow (seller interface only). */
+.qmb .qmb-delivery-version{
+  display:grid;gap:4px;padding:12px;border-radius:10px;
+  background:var(--qmb-tint);border:1px solid var(--qmb-border);
+  color:var(--qmb-ink);min-width:0;
+}
+.qmb .qmb-delivery-version>span{font-size:10px;font-weight:800;color:var(--qmb-accent);text-transform:uppercase;letter-spacing:.045em}
+.qmb .qmb-delivery-version>strong{font-size:15px;overflow-wrap:anywhere}
+.qmb .qmb-delivery-version>small{font-size:11px;line-height:1.45;color:var(--qmb-muted);overflow-wrap:anywhere}
+.qmb .qmb-delivery-steps{display:grid;gap:9px;min-width:0}
+.qmb .qmb-delivery-step{display:grid;gap:8px;min-width:0;padding:12px;
+  background:var(--qmb-card);border:1px solid var(--qmb-border);border-radius:10px}
+.qmb .qmb-delivery-step-title{display:flex;align-items:center;gap:8px;min-width:0}
+.qmb .qmb-delivery-step-title>span{width:23px;height:23px;flex:0 0 23px;
+  display:grid;place-items:center;border-radius:50%;background:var(--qmb-tint);
+  color:var(--qmb-accent);font-size:11px;font-weight:850}
+.qmb .qmb-delivery-step-title>strong{flex:1;min-width:0;font-size:12px}
+.qmb .qmb-delivery-step-title>small{font-size:10px;font-weight:750;color:var(--qmb-accent);text-align:right}
+.qmb .qmb-delivery-step p,.qmb .qmb-delivery-step>small{margin:0;color:var(--qmb-muted);font-size:11px;line-height:1.5}
+.qmb .qmb-delivery-approval{display:flex;align-items:flex-start;gap:10px;
+  padding:10px;border:1px solid var(--qmb-border);border-radius:9px;
+  background:var(--qmb-bg);color:var(--qmb-ink);font-size:12px;line-height:1.5}
+.qmb .qmb-delivery-approval input{flex:0 0 19px;width:19px;height:19px;accent-color:var(--qmb-accent)}
+.qmb .qmb-delivery-approval:has(input:disabled){opacity:.66}
+.qmb .qmb-delivery-steps button{min-height:41px}
+.qmb .qmb-delivery-steps :is(button,input):focus-visible{outline:2px solid var(--qmb-accent);outline-offset:2px}
+.quote-share-control.is-inline .quote-share-revision{display:grid;gap:4px;
+  margin-bottom:11px;border:1px solid var(--qmb-border);border-radius:8px;
+  background:var(--qmb-tint);padding:10px;color:var(--qmb-ink)}
+.quote-share-control.is-inline .quote-share-revision strong{font-size:12px}
+.quote-share-control.is-inline .quote-share-revision span{font-size:11px;color:var(--qmb-muted);line-height:1.45}
+@media(max-width:420px){
+  .qmb .qmb-delivery-step-title{gap:5px}
+  .qmb .qmb-delivery-step-title>small{font-size:9px}
+}
+
+/* Post-issue handoff keeps five distinct facts rather than conflating the
+   existence of a link, a seller's delivery confirmation and customer activity. */
+.qmb .qmb-audit-delivery[data-review-delivery]{scroll-margin-top:15px}
+.qmb .qmb-issued-next{
+ display:grid;gap:5px;padding:13px;border:1px solid var(--qmb-accent);
+ border-radius:11px;background:var(--qmb-tint);color:var(--qmb-ink)
+}
+.qmb .qmb-issued-next strong{font-size:14px}
+.qmb .qmb-issued-next p{margin:0;font-size:11px;line-height:1.55;color:var(--qmb-muted)}
+.qmb .quote-share-control.is-inline .quote-handoff-status{
+ margin:12px 12px 0;padding:12px;border:1px solid var(--qmb-border);
+ border-radius:9px;background:var(--qmb-tint);color:var(--qmb-ink);
+ display:grid;gap:7px
+}
+.qmb .quote-handoff-status>strong{font-size:13px}
+.qmb .quote-handoff-status>p{font-size:11px;line-height:1.55;color:var(--qmb-muted);margin:0}
+.qmb .quote-handoff-milestones{
+ display:flex;gap:6px;align-items:center;flex-wrap:wrap
+}
+.qmb .quote-handoff-milestones>span{
+ display:inline-flex;gap:5px;align-items:center;padding:5px 7px;
+ border-radius:7px;border:1px solid var(--qmb-border);
+ font-size:10px;font-weight:750;line-height:1.35;
+ background:var(--qmb-card);color:var(--qmb-muted)
+}
+.qmb .quote-handoff-milestones>span.is-complete{
+ border-color:var(--qmb-accent);color:var(--qmb-accent)
+}
+.qmb .quote-share-control.is-inline .quote-share-empty>button{
+ width:100%;min-height:44px;border-radius:10px;
+ background:var(--qmb-accent);color:var(--qmb-on-accent);
+ border-color:var(--qmb-accent);font-weight:850
+}
+.qmb .quote-share-control.is-inline .quote-share-primary-actions{display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.qmb .quote-share-control.is-inline .quote-share-primary-actions button{
+ min-width:0;min-height:44px;border-radius:9px;font-weight:800
+}
+.qmb .quote-share-control.is-inline .quote-share-primary-actions .primary{
+ background:var(--qmb-accent);border-color:var(--qmb-accent);
+ color:var(--qmb-on-accent)
+}
+.qmb .quote-share-control.is-inline .quote-share-primary-actions button:not(.primary){
+ background:var(--qmb-card);border-color:var(--qmb-border);
+ color:var(--qmb-accent)
+}
+@media(max-width:350px){
+ .qmb .quote-share-control.is-inline .quote-share-primary-actions{
+  grid-template-columns:minmax(0,1fr)
+ }
+}

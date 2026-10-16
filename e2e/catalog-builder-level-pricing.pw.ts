@@ -1,0 +1,25 @@
+import {test,expect} from '@playwright/test';
+
+test('Catalog Materials shortcut opens the editable historical Stock Builder Level reference',async ({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Representative mobile Catalog regression');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','catalog');
+    localStorage.setItem('salesshop-catalog-section-v1','materials');
+  });
+  await page.reload();
+  const catalog=page.locator('.catalog-workspace');
+  await expect(catalog).toBeVisible();
+  await catalog.getByRole('button',{name:'Open material catalog tools'}).click();
+  await catalog.getByRole('button',{name:/Stock \/ Builder Levels/}).click();
+  await expect(catalog.locator('.rates-workspace')).toBeVisible();
+  const pricing=catalog.locator('.rates-reference-tabs').getByRole('button',{name:'Material Pricing',exact:true});
+  await expect(pricing).toHaveAttribute('aria-pressed','true');
+  const table=catalog.locator('.rates-material-pricing-table');
+  await expect(table).toContainText('Level 0');
+  await expect(table).toContainText('Granite only');
+  await expect(table).toContainText('First quartz level');
+  await catalog.getByRole('button',{name:'Edit pricing'}).click();
+  await expect(catalog.locator('.material-level-sheet')).toBeVisible();
+  await expect(catalog.locator('.material-level-sheet tbody tr')).toHaveCount(9);
+});

@@ -1,0 +1,623 @@
+/* Structured material reference: color -> physical variant -> supplier price program */
+
+.material-reference-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr)) auto;
+  gap: 7px;
+  align-items: end;
+  padding: 9px 11px;
+  border-bottom: 1px solid rgba(63, 56, 46, .1);
+  background: rgba(251, 248, 239, .84);
+}
+
+.material-reference-filters label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.material-reference-filters label > span,
+.material-variant-fields label > span,
+.material-price-program label > span,
+.material-reference-meta label > span,
+.material-derived-cost > span {
+  color: #777064;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.material-reference-filters select,
+.material-reference-filters button {
+  min-width: 0;
+  height: 35px;
+  box-sizing: border-box;
+  border: 1px solid rgba(68, 60, 49, .15);
+  border-radius: 3px;
+  background: #fffdf6;
+  color: #514b42;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.material-reference-filters button {
+  padding-inline: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.material-reference-sheet {
+  min-width: 1590px;
+}
+
+.material-reference-sheet th:nth-child(1) { width: 44px; }
+.material-reference-sheet th:nth-child(2) { width: 105px; }
+.material-reference-sheet th:nth-child(3) { width: 126px; }
+.material-reference-sheet th:nth-child(4) { width: 130px; }
+.material-reference-sheet th:nth-child(5) { width: 130px; }
+.material-reference-sheet th:nth-child(6) { width: 190px; }
+.material-reference-sheet th:nth-child(7) { width: 90px; }
+.material-reference-sheet th:nth-child(8) { width: 280px; }
+.material-reference-sheet th:nth-child(9) { width: 150px; }
+.material-reference-sheet th:nth-child(10) { width: 220px; }
+.material-reference-sheet th:nth-child(11) { width: 78px; }
+
+.material-reference-sheet tr.is-expanded > td {
+  background: #fffaf0;
+  border-bottom-color: rgba(159, 132, 47, .24);
+}
+
+.material-default-spec {
+  padding: 5px 8px !important;
+}
+
+.material-default-spec strong,
+.material-default-spec small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-default-spec strong {
+  color: #474138;
+  font-size: 10px;
+}
+
+.material-default-spec small {
+  margin-top: 2px;
+  color: #81796d;
+  font-size: 8px;
+}
+
+.material-reference-details button {
+  width: 100%;
+  height: 38px;
+  border: 0;
+  background: transparent;
+  color: #665f54;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.material-reference-expanded-row > td {
+  height: auto !important;
+  padding: 0 !important;
+  border-right: 0 !important;
+  background: #f1ece0 !important;
+  opacity: 1 !important;
+}
+
+.material-reference-detail-panel {
+  display: grid;
+  gap: 11px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(245, 240, 228, .96), rgba(248, 244, 235, .96));
+}
+
+.material-reference-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.material-reference-meta label,
+.material-variant-fields label,
+.material-price-program label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.material-reference-meta label.wide,
+.material-variant-fields label.wide {
+  grid-column: 1 / -1;
+}
+
+.material-reference-meta input,
+.material-variant-fields input,
+.material-variant-fields select,
+.material-price-program input,
+.material-price-program select {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  box-sizing: border-box;
+  border: 1px solid rgba(68, 60, 49, .14);
+  border-radius: 3px;
+  background: rgba(255, 254, 249, .9);
+  color: #423d35;
+  padding: 0 8px;
+  outline: 0;
+}
+
+.material-reference-meta input:focus,
+.material-variant-fields input:focus,
+.material-variant-fields select:focus,
+.material-price-program input:focus,
+.material-price-program select:focus {
+  border-color: #b89c38;
+  box-shadow: 0 0 0 1px rgba(184, 156, 56, .18);
+}
+
+.material-reference-variants-header,
+.material-price-programs > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.material-reference-variants-header > div,
+.material-price-programs > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.material-reference-variants-header strong,
+.material-price-programs > header strong {
+  color: #464038;
+  font-size: 11px;
+}
+
+.material-reference-variants-header small,
+.material-price-programs > header small {
+  color: #7b7468;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.material-reference-variants-header button,
+.material-price-programs > header button,
+.material-variant-empty button {
+  min-height: 33px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(65, 58, 48, .15);
+  border-radius: 3px;
+  background: #fffaf0;
+  color: #575047;
+  padding: 0 9px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.material-variant-list {
+  display: grid;
+  gap: 9px;
+}
+
+.material-variant-card {
+  min-width: 0;
+  border: 1px solid rgba(69, 61, 49, .16);
+  background: #fffdf7;
+  box-shadow: 0 2px 7px rgba(48, 41, 32, .035);
+}
+
+.material-variant-card.is-inactive {
+  opacity: .62;
+}
+
+.material-variant-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 39px;
+  padding: 7px 9px;
+  border-bottom: 1px solid rgba(68, 60, 49, .1);
+  background: rgba(236, 231, 219, .68);
+}
+
+.material-variant-header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.material-variant-header label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #6d665c;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.material-variant-header strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #443e36;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-variant-delete,
+.material-price-delete {
+  border: 0;
+  background: transparent;
+  color: #936c65;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.material-variant-fields {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 7px;
+  padding: 9px;
+}
+
+.material-price-programs {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border-top: 1px dashed rgba(68, 60, 49, .13);
+  background: rgba(249, 246, 237, .72);
+}
+
+.material-price-program-list {
+  display: grid;
+  gap: 5px;
+}
+
+.material-price-program {
+  display: grid;
+  grid-template-columns: 44px 58px minmax(120px, 1.15fr) 72px 108px 92px 96px minmax(132px, .95fr) minmax(150px, 1.2fr) 28px;
+  gap: 5px;
+  align-items: end;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid rgba(69, 61, 49, .11);
+  background: rgba(255, 254, 250, .94);
+}
+
+.material-price-program.is-inactive {
+  opacity: .58;
+}
+
+.material-price-check {
+  min-height: 34px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 4px !important;
+  color: #6e675c;
+  font-size: 8px;
+}
+
+.material-price-check input {
+  width: 14px;
+  height: 14px;
+}
+
+.material-derived-cost {
+  min-width: 0;
+  min-height: 34px;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: 0 7px;
+  border-left: 2px solid rgba(92, 116, 80, .22);
+}
+
+.material-derived-cost strong {
+  color: #40553b;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.material-derived-cost small {
+  overflow: hidden;
+  color: #7b766b;
+  font-size: 7.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-price-delete {
+  min-height: 34px;
+  font-size: 16px;
+}
+
+.material-variant-empty {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 9px;
+  border: 1px dashed rgba(72, 64, 52, .18);
+  background: rgba(255, 253, 247, .6);
+  color: #736c61;
+  font-size: 9px;
+}
+
+.material-variant-empty strong {
+  color: #504a41;
+}
+
+.material-variant-empty span {
+  flex: 1;
+}
+
+.material-reference-admin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 3px;
+  color: #746d62;
+  font-size: 8.5px;
+}
+
+.material-reference-admin button.danger {
+  flex: 0 0 auto;
+  min-height: 31px;
+  border: 1px solid rgba(137, 84, 77, .2);
+  background: rgba(255, 247, 244, .82);
+  color: #8d5f58;
+  padding: 0 9px;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+/* Quick Quote now has optional spec + supplier-price selectors. */
+.quick-material-fields {
+  grid-template-columns: minmax(220px, 1.5fr) minmax(150px, .85fr) minmax(130px, .7fr) 100px minmax(170px, .85fr) auto;
+}
+
+.quick-material-quote > footer {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.quick-material-quote > footer > span:not(:last-child)::after {
+  content: ' ·';
+}
+
+@media (max-width: 1180px) {
+  .material-variant-fields {
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+  }
+
+  .material-price-program {
+    grid-template-columns: 44px 58px minmax(130px, 1.2fr) 72px 110px 95px 100px minmax(140px, 1fr);
+  }
+
+  .material-price-note {
+    grid-column: 3 / -2;
+  }
+
+  .material-price-delete {
+    grid-column: -2 / -1;
+  }
+
+  .quick-material-fields {
+    grid-template-columns: minmax(220px, 1.3fr) minmax(155px, .9fr) minmax(140px, .75fr) 105px;
+  }
+
+  .quick-material-rate {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 800px) {
+  .material-reference-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .material-reference-filters > button {
+    grid-column: 1 / -1;
+  }
+
+  .material-reference-detail-panel {
+    position: sticky;
+    left: 0;
+    width: calc(100vw - 44px);
+    max-width: calc(100vw - 44px);
+    box-sizing: border-box;
+  }
+
+  .material-reference-meta,
+  .material-variant-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .material-variant-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .material-variant-header > div {
+    grid-column: 1 / -1;
+  }
+
+  .material-price-program {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    padding: 9px;
+  }
+
+  .material-price-check {
+    justify-content: flex-start;
+  }
+
+  .material-derived-cost,
+  .material-price-note {
+    grid-column: 1 / -1;
+  }
+
+  .material-price-delete {
+    grid-column: 2;
+    justify-self: end;
+    width: 36px;
+  }
+
+  .quick-material-fields {
+    grid-template-columns: 1fr 110px;
+  }
+
+  .quick-material-select,
+  .quick-material-variant,
+  .quick-material-program,
+  .quick-material-rate {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .material-reference-detail-panel {
+    width: calc(100vw - 28px);
+    max-width: calc(100vw - 28px);
+    padding: 9px;
+  }
+
+  .material-reference-meta,
+  .material-variant-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .material-reference-meta label.wide,
+  .material-variant-fields label.wide {
+    grid-column: auto;
+  }
+
+  .material-reference-variants-header,
+  .material-price-programs > header,
+  .material-reference-admin {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .material-reference-variants-header button,
+  .material-price-programs > header button {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .material-variant-header {
+    grid-template-columns: 1fr;
+  }
+
+  .material-variant-header > div,
+  .material-variant-header strong,
+  .material-variant-delete {
+    grid-column: 1;
+  }
+
+  .material-variant-header > div {
+    flex-wrap: wrap;
+  }
+
+  .material-price-program {
+    grid-template-columns: 1fr;
+  }
+
+  .material-price-check,
+  .material-derived-cost,
+  .material-price-note,
+  .material-price-delete {
+    grid-column: 1;
+  }
+
+  .material-price-delete {
+    justify-self: end;
+  }
+}
+
+
+/* Compact Materials edit index: keep the scan/edit row laptop-sized and move admin detail into Details. */
+.material-reference-sheet.material-reference-sheet-compact {
+  width: 100%;
+  min-width: 930px;
+  table-layout: fixed;
+}
+
+.material-reference-sheet-compact th:nth-child(1) { width: 42px; }
+.material-reference-sheet-compact th:nth-child(2) { width: 92px; }
+.material-reference-sheet-compact th:nth-child(3) { width: 112px; }
+.material-reference-sheet-compact th:nth-child(4) { width: 145px; }
+.material-reference-sheet-compact th:nth-child(5) { width: 170px; }
+.material-reference-sheet-compact th:nth-child(6) { width: 105px; }
+.material-reference-sheet-compact th:nth-child(7) { width: 210px; }
+.material-reference-sheet-compact th:nth-child(8) { width: 64px; }
+
+.material-reference-sheet-compact td {
+  min-width: 0;
+}
+
+.material-reference-sheet-compact td input,
+.material-reference-sheet-compact td select {
+  min-width: 0;
+  width: 100%;
+}
+
+.material-reference-sheet-compact .material-color-cell input {
+  font-weight: 750;
+}
+
+.material-reference-sheet-compact .material-reference-details button {
+  padding: 0 4px;
+}
+
+.material-reference-meta select,
+.material-detail-readout {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  box-sizing: border-box;
+  border: 1px solid rgba(68, 60, 49, .14);
+  border-radius: 3px;
+  background: rgba(255, 254, 249, .9);
+  color: #423d35;
+  padding: 0 8px;
+  outline: 0;
+  font-size: 10px;
+}
+
+.material-reference-meta select:focus {
+  border-color: #b89c38;
+  box-shadow: 0 0 0 1px rgba(184, 156, 56, .18);
+}
+
+.material-detail-readout {
+  display: flex;
+  align-items: center;
+  color: #70685c;
+}
+
+.material-detail-readout.is-slab-review {
+  background: rgba(246, 233, 198, .72);
+  color: #785b24;
+}
+
+@media (max-width: 1100px) {
+  .material-reference-sheet.material-reference-sheet-compact {
+    min-width: 860px;
+  }
+
+  .material-reference-sheet-compact th:nth-child(4) { width: 125px; }
+  .material-reference-sheet-compact th:nth-child(5) { width: 150px; }
+  .material-reference-sheet-compact th:nth-child(7) { width: 185px; }
+}

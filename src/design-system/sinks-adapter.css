@@ -1,0 +1,438 @@
+/*
+ * UI Foundation v1 — Batch 5C: Sinks.
+ * Scoped to Catalog → Sinks only. All sink model/variant pricing, persistence,
+ * Add to Quote and tool-sheet state continue to use existing handlers.
+ */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace {
+  --ss-sinks-canvas:var(--ss-theme-canvas,var(--ss-app-bg));
+  --ss-sinks-base:var(--ss-theme-base,var(--ss-shell-bg));
+  --ss-sinks-card:var(--ss-theme-card,var(--ss-surface-raised));
+  --ss-sinks-tint:var(--ss-theme-tint,var(--ss-surface));
+  --ss-sinks-ink:var(--ss-theme-ink,var(--ss-text));
+  --ss-sinks-muted:var(--ss-theme-muted,var(--ss-text-muted));
+  --ss-sinks-border:var(--ss-theme-border,var(--ss-border));
+  --ss-sinks-accent:var(--ss-theme-accent,var(--ss-accent));
+  background:var(--ss-sinks-canvas);
+  color:var(--ss-sinks-ink);
+}
+/* A shared PageHeader, without a second mobile toolbar. */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-workspace-header.sinks-foundation-header {
+  align-items:center;
+  padding:var(--ss-space-3) var(--ss-space-4);
+  background:var(--ss-sinks-base);
+  border:1px solid var(--ss-sinks-border);
+  border-radius:var(--ss-radius-md);
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-foundation-header .ss-page-header__intro {
+  min-width:0;
+  flex:1 1 300px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-foundation-header .ss-page-header__eyebrow {
+  color:var(--ss-sinks-muted);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-foundation-header .ss-page-header__title {
+  margin:0;
+  color:var(--ss-sinks-ink);
+  font:700 var(--ss-text-section)/1.2 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-foundation-header .ss-page-header__description {
+  color:var(--ss-sinks-muted);
+  font:400 var(--ss-text-sm)/1.45 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-save-status {
+  color:var(--ss-sinks-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-header-actions .ss-button {
+  min-height:var(--ss-control-height);
+  border-radius:var(--ss-radius-sm);
+  border:1px solid var(--ss-sinks-border);
+  background:var(--ss-sinks-card);
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-header-actions .ss-button[data-ss-variant="primary"] {
+  background:var(--ss-sinks-ink);
+  color:var(--ss-sinks-card);
+  border-color:var(--ss-sinks-ink);
+}
+/* Override fixed legacy !important colors for Done, but only on opted-in button. */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-header-actions .ss-button.sinks-done-button {
+  border-color:var(--ss-sinks-ink) !important;
+  background:var(--ss-sinks-ink) !important;
+  color:var(--ss-sinks-card) !important;
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-stats>div,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-shared-controls {
+  background:var(--ss-sinks-card);
+  color:var(--ss-sinks-ink);
+  border:1px solid var(--ss-sinks-border);
+  border-radius:var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-stats :is(span,small) {
+  color:var(--ss-sinks-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-stats strong {
+  color:var(--ss-sinks-ink);
+}
+/* Category selectors are filters (pressed buttons), not navigation tabs. */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-category-tabs .ss-button {
+  min-height:38px;
+  flex:0 0 auto;
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-sinks-ink);
+  font:700 var(--ss-text-sm)/1.25 var(--ss-font-body);
+  padding:var(--ss-space-2);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-category-tabs .ss-button[aria-pressed="true"] {
+  background:var(--ss-sinks-tint);
+  color:var(--ss-sinks-ink);
+  border-color:var(--ss-sinks-border);
+  box-shadow:inset 0 -3px var(--ss-sinks-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-category-tabs .ss-button:hover {
+  background:var(--ss-sinks-tint);
+}
+/* Shared Field search: hidden accessible label, unchanged search-first layout. */
+.sales-app.view-catalog .sinks-workspace .sinks-foundation-search {
+  flex:1 1 230px;
+  display:block;
+  min-width:0;
+  width:min(360px,100%);
+}
+.sales-app.view-catalog .sinks-workspace .sinks-foundation-search>.ss-field__label {
+  position:absolute;
+  width:1px;height:1px;margin:-1px;padding:0;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-foundation-search input[type="search"] {
+  display:block;
+  width:100%;
+  min-width:0;
+  height:var(--ss-control-height);
+  min-height:40px;
+  padding:var(--ss-space-2) var(--ss-space-3);
+  border:1px solid var(--ss-sinks-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-sinks-card);
+  color:var(--ss-sinks-ink);
+  font:400 var(--ss-text-body)/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-foundation-search input::placeholder {
+  color:var(--ss-sinks-muted);
+  opacity:1;
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-archived-toggle {
+  color:var(--ss-sinks-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(.sinks-catalog-shell,.sinks-navigator,.sinks-detail) {
+  border-color:var(--ss-sinks-border);
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-catalog-shell {
+  background:var(--ss-sinks-card);
+  border:1px solid var(--ss-sinks-border);
+  border-radius:var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-navigator {
+  background:var(--ss-sinks-base);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-navigator>header,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-header {
+  border-color:var(--ss-sinks-border);
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-navigator>header span,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-list :is(small,.sinks-model-list-meta b),
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-header :is(span,p) {
+  color:var(--ss-sinks-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-list>button {
+  background:var(--ss-sinks-card);
+  border:1px solid var(--ss-sinks-border);
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-list>button.active {
+  background:var(--ss-sinks-tint);
+  border-color:var(--ss-sinks-accent);
+  box-shadow:inset 3px 0 var(--ss-sinks-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-list-main strong,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-detail,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-header h2 {
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-detail {
+  background:var(--ss-sinks-card);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-reference>div {
+  background:var(--ss-sinks-base);
+  border:1px solid var(--ss-sinks-border);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-reference strong,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variants-section>header strong {
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .sinks-model-reference span,.sinks-variant-reference span,
+  .sinks-variants-section>header small,.sinks-model-fields label>span,
+  .sinks-variant-editor label>span:first-child,.sinks-variant-flags label
+) {
+  color:var(--ss-sinks-muted);
+}
+/* Expanded sink variants: match the material cards rather than retaining
+ * older ivory tiles with brown text inside a dark workspace. */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-card {
+  overflow:hidden;
+  background:var(--ss-sinks-card);
+  color:var(--ss-sinks-ink);
+  border:1px solid var(--ss-sinks-border);
+  border-left:3px solid var(--ss-sinks-accent);
+  border-radius:var(--ss-radius-md);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-card.is-default {
+  border-left-color:var(--ss-sinks-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-card.is-inactive {
+  border-left-color:var(--ss-sinks-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-card>header {
+  background:var(--ss-sinks-base);
+  border-color:var(--ss-sinks-border);
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-card>header strong,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-reference strong,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-mobile-variant-price {
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .sinks-variant-card>header small,.sinks-mobile-variant-price small
+) {
+  color:var(--ss-sinks-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-badges span {
+  background:var(--ss-sinks-tint);
+  border:1px solid var(--ss-sinks-border);
+  color:var(--ss-sinks-ink);
+  border-radius:var(--ss-radius-pill);
+}
+/* Keep cost, margin, effective dates and SKU values unchanged. */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-reference {
+  background:var(--ss-sinks-border);
+  border-color:var(--ss-sinks-border);
+  border-radius:0 0 var(--ss-radius-sm) var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-reference>div {
+  background:var(--ss-sinks-card);
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-reference strong.is-unpriced {
+  color:var(--ss-danger);
+}
+/* Edit fields use actual theme surfaces, 16px on iOS and visible focus. */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .sinks-model-fields input,.sinks-model-fields select,
+  .sinks-variant-editor input,.sinks-variant-editor select,
+  .sinks-variant-notes,.sinks-money-input
+) {
+  background:var(--ss-sinks-card);
+  color:var(--ss-sinks-ink);
+  border:1px solid var(--ss-sinks-border);
+  border-radius:var(--ss-radius-sm);
+  caret-color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .sinks-model-fields input,.sinks-model-fields select,
+  .sinks-variant-editor input,.sinks-variant-editor select,
+  .sinks-variant-notes
+)::placeholder {
+  color:var(--ss-sinks-muted);opacity:1;
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-money-input b {
+  color:var(--ss-sinks-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .sinks-model-fields input,.sinks-model-fields select,
+  .sinks-variant-editor input,.sinks-variant-editor select,
+  .sinks-variant-notes,.sinks-category-tabs button,.sinks-mobile-tools-trigger
+):focus-visible {
+  outline:3px solid var(--ss-focus);
+  outline-offset:2px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-flags button,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variants-section>header button {
+  background:var(--ss-sinks-base);
+  color:var(--ss-sinks-ink);
+  border:1px solid var(--ss-sinks-border);
+  border-radius:var(--ss-radius-sm);
+}
+/* The existing shared mobile Catalog reference card is never globally themed.
+ * This scope lets expanded Sinks details match both the card and its header. */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .mobile-catalog-reference-card,.mobile-catalog-reference-trigger,
+  .mobile-catalog-reference-details
+) {
+  background:var(--ss-sinks-card);
+  color:var(--ss-sinks-ink);
+  border-color:var(--ss-sinks-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-card.is-expanded {
+  border-color:var(--ss-sinks-accent);
+  background:var(--ss-sinks-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-card.is-expanded>.mobile-catalog-reference-trigger {
+  background:var(--ss-sinks-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-card.is-expanded>.mobile-catalog-reference-details {
+  background:var(--ss-sinks-base);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-name strong,
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-price>strong {
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .mobile-catalog-reference-name small,.mobile-catalog-reference-price-meta,
+  .mobile-catalog-reference-chevron
+) {
+  color:var(--ss-sinks-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-navigator .sinks-empty-navigator {
+  background:var(--ss-sinks-base);
+  color:var(--ss-sinks-muted);
+  border-color:var(--ss-sinks-border);
+  border-radius:var(--ss-radius-md);
+}
+/* Existing mobile tools sheet keeps one independently scrollable content area
+ * and its own non-scrolling footer. No add/edit action is moved into the header. */
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .mobile-catalog-tools-sheet,.mobile-catalog-tools-header,
+  .mobile-catalog-tools-content,.mobile-catalog-tools-footer
+) {
+  background:var(--ss-sinks-base);
+  color:var(--ss-sinks-ink);
+  border-color:var(--ss-sinks-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-tools-header :is(strong,button),
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-mobile-tools-label {
+  color:var(--ss-sinks-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .mobile-catalog-tools-header span,.mobile-catalog-tools-header small,
+  .mobile-catalog-tools-content>section>small,.sinks-mobile-mode-row button small
+) {
+  color:var(--ss-sinks-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+  .sinks-mobile-mode-row button,.sinks-mobile-add-model,.mobile-catalog-tools-header button
+) {
+  background:var(--ss-sinks-card);
+  border:1px solid var(--ss-sinks-border);
+  color:var(--ss-sinks-ink);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-mobile-mode-row button.active {
+  background:var(--ss-sinks-tint);
+  border-color:var(--ss-sinks-accent);
+  box-shadow:inset 3px 0 var(--ss-sinks-accent);
+}
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace.is-catalog-embedded {
+    background:var(--ss-sinks-canvas);
+    min-width:0;
+  }
+  .sales-app.view-catalog .sinks-workspace .sinks-foundation-search {
+    flex:1 1 auto;
+    width:100%;
+    min-width:0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-foundation-search input[type="search"] {
+    min-height:44px;
+    height:44px;
+    font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-mobile-tools-trigger.ss-button {
+    min-height:44px;
+    height:44px;
+    min-width:68px;
+    flex:0 0 68px;
+    background:var(--ss-sinks-card);
+    border:1px solid var(--ss-sinks-border);
+    border-radius:var(--ss-radius-sm);
+    color:var(--ss-sinks-ink);
+    font:750 var(--ss-text-sm)/1.25 var(--ss-font-body);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-category-tabs .ss-button {
+    min-height:36px;
+    height:36px;
+    font-size:var(--ss-text-sm);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-shared-controls {
+    padding:var(--ss-space-2);
+    border-radius:var(--ss-radius-md);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-catalog-shell {
+    background:transparent;
+    border:0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-navigator {
+    background:var(--ss-sinks-base);
+    border-radius:var(--ss-radius-md);
+    overflow:visible;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-navigator>header {
+    min-height:38px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-list {
+    gap:var(--ss-space-2);
+    padding:var(--ss-space-2);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-model-list>.mobile-catalog-reference-card {
+    border-radius:var(--ss-radius-md);
+    overflow:hidden;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-reference-details .sinks-detail {
+    background:var(--ss-sinks-base);
+    color:var(--ss-sinks-ink);
+    padding:var(--ss-space-3);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace :is(
+    .sinks-model-fields input,.sinks-model-fields select,
+    .sinks-variant-editor input,.sinks-variant-editor select,
+    .sinks-variant-notes
+  ) {
+    min-height:44px;
+    font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-money-input {
+    min-height:44px;
+    height:44px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-money-input input {
+    min-height:40px;
+    height:40px !important;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-mobile-variant-price {
+    color:var(--ss-sinks-ink);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-card {
+    border-radius:var(--ss-radius-md);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .sinks-variant-reference>div {
+    background:var(--ss-sinks-card);
+    color:var(--ss-sinks-ink);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-tools-content {
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .sinks-workspace .mobile-catalog-tools-footer {
+    position:relative;
+    flex:0 0 auto;
+  }
+}

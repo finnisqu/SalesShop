@@ -1,0 +1,72 @@
+/* Team Access: light, compact controls matching Settings' paper language. */
+.sales-app.view-settings .team-settings-layout{align-items:start}
+.sales-app.view-settings .team-settings-side{display:grid;align-content:start;gap:12px;min-width:0}
+.sales-app.view-settings .team-settings-side>.company-settings-card{width:auto;min-width:0}
+.sales-app.view-settings .team-member-row{flex-wrap:wrap}
+.sales-app.view-settings .team-member-actions{display:flex;align-items:center;gap:6px;flex:0 1 auto}
+.sales-app.view-settings .team-member-actions :is(select,button),
+.sales-app.view-settings .team-invite-form :is(input,select,button),
+.sales-app.view-settings .team-new-invite :is(input,button),
+.sales-app.view-settings .team-invite-row button{
+  min-height:40px;box-sizing:border-box;border:1px solid #cbb89b;border-radius:6px;
+  background:#fffaf0;color:#584b37;padding:7px 9px;font-family:inherit;
+  font-size:12px;cursor:pointer;
+}
+.sales-app.view-settings .team-member-actions button,
+.sales-app.view-settings .team-invite-row button{color:#864d42;background:#fff4ec}
+.sales-app.view-settings .team-member-actions :is(button,select):disabled,
+.sales-app.view-settings .team-invite-row button:disabled{opacity:.55;cursor:not-allowed}
+.sales-app.view-settings .team-invite-form{display:grid;gap:10px}
+.sales-app.view-settings .team-invite-form label{display:grid;gap:5px;min-width:0}
+.sales-app.view-settings .team-invite-form label>span{font-size:10px;text-transform:uppercase;font-weight:850;color:#857454}
+.sales-app.view-settings .team-invite-form label :is(input,select){width:100%;min-width:0}
+.sales-app.view-settings .team-invite-form>.settings-primary-button{
+  background:#e6d4a7;border-color:#b89a62;font-weight:800;min-height:43px;
+}
+.sales-app.view-settings .team-new-invite{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding:12px;border:1px solid #bfa56e;border-radius:8px;background:#fff6e2}
+.sales-app.view-settings .team-new-invite>strong{width:100%;font:700 15px Georgia,'Times New Roman',serif}
+.sales-app.view-settings .team-new-invite p{margin:0;font-size:11px;line-height:1.45;color:#746451}
+.sales-app.view-settings .team-new-invite input{width:100%;min-width:0;cursor:text}
+.sales-app.view-settings .team-pending-invites{display:grid;gap:7px;margin-top:16px}
+.sales-app.view-settings .team-pending-invites>strong{font-size:12px;color:#5c513f}
+.sales-app.view-settings .team-invite-row{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:10px 0;border-top:1px solid #e2d7c6;
+}
+.sales-app.view-settings .team-invite-row>div{display:grid;gap:5px;min-width:0}
+.sales-app.view-settings .team-invite-row strong{font-size:11px;overflow-wrap:anywhere}
+.sales-app.view-settings .team-invite-row small{font-size:10px;color:#827665}
+.sales-app.view-settings .team-screenreader{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap}
+@media(max-width:700px){
+  .sales-app.view-settings .team-settings-layout{grid-template-columns:minmax(0,1fr)}
+  .sales-app.view-settings .team-member-row{gap:9px}
+  .sales-app.view-settings .team-member-row>div:nth-child(2){flex:1 1 55%}
+  .sales-app.view-settings .team-member-actions{flex:1 1 100%;justify-content:flex-end}
+  .sales-app.view-settings .team-settings-side{gap:7px}
+  .sales-app.view-settings .team-invite-form :is(input,select){font-size:16px}
+}
+
+.sales-app.view-settings .team-company-fieldset{
+  min-width:0;width:100%;margin:0;padding:0;border:0;
+}
+.sales-app.view-settings .team-company-fieldset:disabled,
+.sales-app.view-settings .team-company-fieldset:disabled :is(input,textarea){cursor:not-allowed}
+.sales-app.view-settings .team-company-fieldset :is(input,textarea):disabled{opacity:.7;background:#f1ebdf}
+.sales-app.view-settings .settings-company-role-note{
+  grid-column:1/-1;margin:0;padding:11px;border:1px solid #d6c7aa;
+  border-radius:7px;background:#fff6e5;color:#716147;font-size:11px;line-height:1.5;
+}
+
+.sales-app.view-settings .settings-workspace-selector{display:grid;gap:8px;min-width:0;padding-top:8px}
+.sales-app.view-settings .settings-workspace-selector>strong{font:700 14px Georgia,'Times New Roman',serif;color:#554837}
+.sales-app.view-settings .settings-workspace-selector>label,
+.sales-app.view-settings .settings-workspace-selector>small,
+.sales-app.view-settings .settings-workspace-selector>span{font-size:11px;line-height:1.5;color:#837664}
+.sales-app.view-settings .settings-workspace-selector>select{
+  width:100%;min-width:0;min-height:43px;padding:8px 10px;
+  border:1px solid #bfa77a;border-radius:7px;
+  background:#fffaf1;color:#514536;font:inherit;font-size:13px;
+}
+@media(max-width:700px){
+  .sales-app.view-settings .settings-workspace-selector>select{font-size:16px}
+}

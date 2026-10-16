@@ -1,0 +1,58 @@
+/* Global personal capture. Content is a private Notebook object, never an org document. */
+.global-postit-launcher{display:grid;place-items:center;flex:0 0 auto;width:36px;height:36px;min-height:34px;
+  border:1px solid var(--ss-theme-border,#c8c3b4);border-radius:9px;
+  background:var(--ss-theme-card,#f8f5df);color:var(--ss-theme-ink,#414435);
+  font-size:22px;cursor:pointer}
+.global-postit-launcher:hover{background:var(--ss-theme-tint,#e8f0df)}
+.global-postit-panel{position:fixed;z-index:6005;width:min(340px,calc(100vw - 20px));max-height:min(670px,calc(100dvh - 90px));
+  display:flex;flex-direction:column;overflow:hidden;background:var(--ss-theme-card,#f8f7f1);
+  color:var(--ss-theme-ink,#263d31);border:1px solid var(--ss-theme-border,#b6b6a8);
+  border-radius:13px;box-shadow:0 20px 45px #0004}
+.global-postit-panel.is-docked{left:0!important;top:58px!important;bottom:0;max-height:none;width:min(340px,95vw);border-radius:0 12px 0 0}
+.global-postit-heading{display:flex;justify-content:space-between;align-items:center;gap:9px;
+  min-height:54px;flex:0 0 auto;padding:8px 11px;background:var(--ss-theme-tint,#f1efda);
+  touch-action:none;cursor:grab;user-select:none}
+.global-postit-heading>div:first-child{display:grid;gap:3px;min-width:0}
+.global-postit-heading strong{font-size:13px}
+.global-postit-heading small{font-size:10px;color:var(--ss-theme-muted,#687069)}
+.global-postit-heading-actions{display:flex;align-items:center;gap:5px}
+.global-postit-heading-actions button{width:29px;height:29px;border:1px solid var(--ss-theme-border,#b6b6a8);
+  border-radius:7px;background:var(--ss-theme-card,#fff);color:inherit;font-size:19px;cursor:pointer}
+.global-postit-list{display:flex;gap:5px;padding:8px;overflow-x:auto;min-height:43px;
+  border-bottom:1px solid var(--ss-theme-border,#d6d3bd)}
+.global-postit-item{display:flex;align-items:center;gap:6px;max-width:170px;min-width:62px;padding:6px 9px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--ss-theme-tint,#f0eedc);
+  color:inherit;border:1px solid transparent;border-radius:7px;cursor:pointer;font-size:11px}
+.global-postit-item.is-selected{border-color:var(--ss-theme-accent,#748b6c)}
+.global-postit-item span:last-child{overflow:hidden;text-overflow:ellipsis}
+.global-postit-dot{flex:0 0 10px;width:10px;height:10px;border-radius:3px}
+.global-postit-paper{flex:1;min-height:230px;display:flex;flex-direction:column;padding:10px;gap:10px;color:#2c342c}
+.global-postit-paper textarea{min-height:200px;flex:1;resize:vertical;width:100%;box-sizing:border-box;
+  border:0;outline:0;background:transparent;color:inherit;font:14px/1.55 system-ui,sans-serif}
+.global-postit-colors{display:flex;gap:8px}
+.global-postit-tone{width:22px;height:22px;border:1px solid #7778;border-radius:6px;cursor:pointer}
+.global-postit-tone[aria-pressed=true]{outline:2px solid #53654d;outline-offset:2px}
+.global-postit-dot.tone-yellow,.global-postit-tone.tone-yellow,.global-postit-paper.tone-yellow{background:#ffefa2}
+.global-postit-dot.tone-pink,.global-postit-tone.tone-pink,.global-postit-paper.tone-pink{background:#f6d5df}
+.global-postit-dot.tone-blue,.global-postit-tone.tone-blue,.global-postit-paper.tone-blue{background:#d2e8f8}
+.global-postit-dot.tone-green,.global-postit-tone.tone-green,.global-postit-paper.tone-green{background:#d9ebc4}
+.global-postit-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px;
+  border-top:1px solid var(--ss-theme-border,#d4d4c5)}
+.global-postit-foot button,.global-postit-empty button{border:0;background:transparent;color:var(--ss-theme-accent,#3c6350);
+  cursor:pointer;font-size:11px;font-weight:750}
+.global-postit-foot button.is-danger{color:#b14444}
+.global-postit-empty{padding:25px 16px;font-size:12px}
+.global-postit-mobile-backdrop{display:none}
+@media(max-width:700px),(orientation:landscape) and (max-height:520px) and (pointer:coarse){
+  .global-postit-panel,.global-postit-panel.is-docked{left:0!important;top:auto!important;bottom:0!important;width:100%;max-height:84dvh;
+    border-radius:16px 16px 0 0;box-sizing:border-box;box-shadow:0 -12px 42px #0004}
+  .global-postit-mobile-backdrop{display:block;position:fixed;inset:0;z-index:6004;background:#0006}
+  .global-postit-heading{touch-action:auto;cursor:default}
+  .global-postit-paper{min-height:190px}
+  .global-postit-paper textarea{min-height:155px}
+}
+
+/* Compact capture controls inside the Quote Beta toolbar. */
+.qmb .qmb-appnav-actions{display:flex;align-items:center;gap:5px}
+.qmb .qmb-appnav-actions .global-postit-launcher,
+.qmb .qmb-area-header-actions .global-postit-launcher{width:32px;height:32px;min-height:32px;font-size:18px}

@@ -1,0 +1,104 @@
+.sales-document-modal-backdrop{position:fixed;inset:0;z-index:9990;display:grid;
+  place-items:center;padding:15px;background:rgba(14,21,19,.48)}
+.sales-document-picker{width:min(870px,100%);max-height:min(90dvh,920px);min-height:0;
+  display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border,#c3c3c3);
+  border-radius:15px;background:var(--surface,#fff);color:var(--ink,#242525);
+  box-shadow:0 24px 70px rgba(0,0,0,.27)}
+.sales-document-picker-header{display:flex;gap:14px;align-items:start;justify-content:space-between;
+  padding:18px 20px;border-bottom:1px solid rgba(80,78,72,.15)}
+.sales-document-picker-header>div{display:grid;gap:4px}
+.sales-document-picker-header strong{font-size:18px}
+.sales-document-picker-header small,.sales-document-template-copy>small,
+.sales-document-template-copy>span:last-child,.sales-document-source-picker small,
+.sales-document-starter-note,.sales-document-picker-footer>span{
+  font-size:12px;line-height:1.45;color:var(--ink-muted,#706b63)}
+.sales-document-picker-header>button{font:inherit;font-size:22px;border:0;background:transparent;
+  color:inherit;cursor:pointer;min-width:33px;min-height:33px}
+.sales-document-template-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;padding:18px 20px;overflow:auto;min-height:0}
+.sales-document-template-card{display:flex;align-items:flex-start;gap:12px;text-align:left;position:relative;
+  padding:14px;border:1px solid rgba(78,74,64,.18);border-radius:10px;
+  background:color-mix(in srgb,var(--surface,#fff) 96%,var(--accent,#748d7e));
+  color:inherit;cursor:pointer;font:inherit}
+.sales-document-template-card:hover,.sales-document-template-card:focus-visible{
+  border-color:var(--accent,#607e6e);outline-offset:1px}
+.sales-document-template-card.is-placeholder{grid-column:1/-1;border-style:dashed}
+.sales-document-template-symbol{width:36px;height:36px;border-radius:8px;flex:0 0 36px;
+  display:grid;place-items:center;background:rgba(78,111,91,.11);font-size:22px}
+.sales-document-template-copy{display:grid;gap:3px;min-width:0;padding-right:10px}
+.sales-document-template-copy>strong{font-size:14px}
+.sales-document-coming-soon{font-size:11px;font-weight:700;white-space:nowrap;
+  color:var(--ink-muted,#706b63);margin-left:auto}
+.sales-document-start{padding:16px 20px;display:grid;gap:12px;overflow:auto;min-height:0}
+.sales-document-picker-back{justify-self:start;background:transparent;border:0;padding:5px 0;
+  color:inherit;cursor:pointer;font:inherit;text-decoration:underline;text-underline-offset:3px}
+.sales-document-template-description{margin:0;font-size:13px}
+.sales-document-starter-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px}
+.sales-document-starter-options>button{display:grid;gap:5px;align-content:start;text-align:left;
+  background:var(--surface,#fff);border:1px solid rgba(80,78,72,.2);border-radius:8px;
+  padding:13px;color:inherit;cursor:pointer;font:inherit}
+.sales-document-starter-options>button.active{border-color:var(--accent,#607e6e);
+  box-shadow:inset 0 0 0 1px var(--accent,#607e6e)}
+.sales-document-starter-options>button:disabled{opacity:.52;cursor:not-allowed}
+.sales-document-starter-options small{color:var(--ink-muted,#706b63);font-size:11px}
+.sales-document-source-picker{display:grid;gap:6px;font-size:12px}
+.sales-document-source-picker select{width:100%;background:var(--surface,#fff);color:inherit;
+  font:inherit;padding:10px;border:1px solid rgba(80,78,72,.24);border-radius:6px}
+.sales-document-starter-note{border-left:3px solid rgba(70,108,84,.35);
+  background:rgba(71,107,82,.07);padding:10px;margin:0}
+.sales-document-placeholder{padding:18px;background:rgba(70,99,82,.06);border-radius:9px}
+.sales-document-placeholder p{line-height:1.5}
+.sales-document-picker-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:13px 20px;border-top:1px solid rgba(80,78,72,.15)}
+.sales-document-picker-footer button{font:inherit;border:1px solid rgba(80,78,72,.2);border-radius:7px;
+  padding:10px 13px;background:var(--surface,#fff);color:inherit;cursor:pointer}
+.sales-document-picker-footer .sales-document-picker-create{
+  color:white;background:var(--accent,#4e705c);border-color:var(--accent,#4e705c);font-weight:700}
+.qmb-library-doc-type{display:inline-flex;align-items:center;font-weight:650}
+.qmb-library-filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.qmb-library-filter-row button{color:inherit;border:1px solid rgba(83,79,70,.17);
+  background:var(--surface,#fff);border-radius:6px;padding:6px 9px;font:inherit;cursor:pointer}
+.qmb-library-filter-row button.active{border-color:var(--accent,#6b8b75);
+  box-shadow:inset 0 0 0 1px var(--accent,#6b8b75)}
+@media(max-width:620px){
+  .sales-document-template-grid{grid-template-columns:1fr;padding:12px}
+  .sales-document-template-card.is-placeholder{grid-column:auto}
+  .sales-document-picker-header,.sales-document-start,.sales-document-picker-footer{padding:13px}
+  .sales-document-picker-footer{align-items:stretch;flex-direction:column}
+  .sales-document-picker-footer button{width:100%}
+}
+
+.sales-document-name-field{
+  display:grid;gap:7px;margin:2px 0;padding:12px 14px;
+  border-radius:8px;border:1px solid var(--ss-theme-border,#c5cec8);
+  background:var(--ss-theme-tint,#eff4ef)
+}
+.sales-document-name-field>span{font-size:12px;font-weight:800;color:var(--ss-theme-ink,#26372e)}
+.sales-document-name-field>span strong{color:var(--ss-theme-accent,#466c58)}
+.sales-document-name-field input{
+  width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--ss-theme-border,#b6c7b8);
+  border-radius:7px;padding:11px 12px;min-height:44px;font:inherit;
+  background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#26372e)
+}
+.sales-document-name-field small{color:var(--ss-theme-muted,#617369);font-size:11px}
+.sales-document-name-field input::placeholder{color:var(--ss-theme-muted,#617369);opacity:.9}
+
+/* Follow-up management is intentionally secondary during the new-quotes beta. */
+.qmb .qmb-library-filter-row .qmb-library-followups-tab{
+  margin-inline-start:auto;
+  font-size:.9em;
+  opacity:.78;
+  border-style:dashed;
+}
+.qmb .qmb-library-filter-row .qmb-library-followups-tab:hover,
+.qmb .qmb-library-filter-row .qmb-library-followups-tab:focus-visible,
+.qmb .qmb-library-filter-row .qmb-library-followups-tab.active{
+  opacity:1;
+}
+@media(max-width:620px){
+  .qmb .qmb-library-filter-row .qmb-library-followups-tab{margin-inline-start:0}
+}
+
+/* Native palette for the document tab selector, including dark mode. */
+.sales-app .qmb .qmb-library-filter-row button{background:var(--qmb-card);color:var(--qmb-ink);border-color:var(--qmb-border)}
+.sales-app .qmb .qmb-library-filter-row button.active{background:var(--qmb-tint);color:var(--qmb-accent);border-color:var(--qmb-accent)}

@@ -1,0 +1,763 @@
+/* Batch B — desktop Area buying/selling laboratory; intentionally opt-in to
+   wide desktop layouts. Phone keeps its existing stepped flow. */
+.qmb .qmb-area-desktop-pricing,.qmb .qmb-area-pricing-route,
+.qmb .qmb-area-desktop-pricing-material{display:none}
+.qmb .qmb-mobile-pricing-legacy{display:block}
+.qmb .qmb-area-commerce-columns{min-width:0}
+.qmb .qmb-general-heading{align-items:start;flex-wrap:wrap}
+.qmb .qmb-general-quick-add{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:wrap}
+.qmb .qmb-general-quick-add>button:not(.qmb-area-mode-button){
+  border:1px solid var(--qmb-border);background:var(--qmb-card);
+  color:var(--qmb-accent);border-radius:9px;font-size:11px;font-weight:760;
+  min-height:32px;padding:6px 9px}
+.qmb .qmb-area-visibility-toggle{
+  border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card);
+  color:var(--qmb-accent);font-size:10px;font-weight:780;min-width:48px;
+  min-height:38px;white-space:nowrap;padding:5px}
+.qmb .qmb-area-visibility-toggle[aria-pressed=false]{
+  color:var(--ss-danger,#b25145);border-color:currentColor;background:var(--qmb-tint)}
+.qmb .qmb-inline-area-row>.qmb-area-visibility-toggle{flex:0 0 auto;align-self:stretch}
+.qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-visibility-toggle{
+ min-width:38px;padding:3px 1px;font-size:9px;line-height:1.2}
+.qmb .qmb-area-extra-buttons{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.qmb .qmb-area-extra-buttons button{
+ border:1px solid var(--qmb-border);background:var(--qmb-card);
+ border-radius:8px;padding:6px 9px;color:var(--qmb-accent);font-size:11px;min-height:34px}
+.qmb .qmb-material-cost-caption{display:flex;flex-wrap:wrap;align-items:center;gap:4px 9px;
+ margin-top:9px;color:var(--qmb-muted);font-size:10px;line-height:1.4}
+.qmb .qmb-material-cost-caption strong{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-material-cost-caption span{white-space:nowrap}
+.qmb .qmb-material-cost-caption span+span:before{content:"· ";color:var(--qmb-muted)}
+.qmb .qmb-material-cost-caption span:last-child{color:var(--qmb-accent);font-weight:770}
+.qmb .qmb-sink-type-field{min-width:0;display:grid;gap:4px}
+.qmb .qmb-sink-type-field small,.qmb .qmb-sink-catalog>small{
+ font-size:10px;line-height:1.3;color:var(--qmb-muted);font-weight:750}
+.qmb .qmb-sink-type-field select{
+ min-width:0;width:100%;height:40px;min-height:40px;border:1px solid var(--qmb-border);
+ border-radius:7px;background:var(--qmb-card);color:var(--qmb-ink);font-size:12px;padding:5px 4px}
+.qmb .qmb-sink-catalog{display:grid;gap:4px;align-content:start}
+.qmb .qmb-sink-primary{align-items:end}
+.qmb .qmb-sink-secondary{align-items:end}
+.qmb .qmb-sink-private-cost{
+ display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:5px 8px;
+ color:var(--qmb-muted);font-size:10px;line-height:1.45;padding:0 1px 3px}
+.qmb .qmb-sink-private-cost>span{font-weight:760}
+.qmb .qmb-sink-private-cost>label{display:flex;gap:5px;align-items:center}
+.qmb .qmb-sink-private-cost input{
+ min-height:27px;width:76px;background:var(--qmb-card);color:var(--qmb-ink);
+ border:1px solid var(--qmb-border);border-radius:7px;padding:5px;font-size:11px}
+.qmb .qmb-sink-private-cost>strong{font-size:11px;color:var(--qmb-accent)}
+/* Suggestions *overlay* other sink rows; they never push the field/container
+   downward. Root z-index lifts above neighboring cards without a portal. */
+.qmb .qmb-materials-sheet .qtl-combobox{position:relative;min-width:0}
+.qmb .qmb-materials-sheet .qtl-combobox:has(.qtl-combobox-menu){
+ z-index:200;isolation:isolate}
+.qmb .qmb-materials-sheet .qtl-combobox-menu,
+.qmb .qmb-sink-catalog .qtl-combobox-menu{
+ position:absolute!important;top:calc(100% + 5px)!important;left:0!important;right:auto!important;
+ display:block;width:max(100%,min(330px,80vw));max-width:min(430px,85vw);
+ z-index:2000;margin:0;border:1px solid var(--qmb-border);
+ box-shadow:0 13px 35px rgba(0,0,0,.2);border-radius:10px;
+ background:var(--qmb-card);overflow:auto;max-height:min(390px,55vh)}
+.qmb .qmb-materials-sheet .qtl-combobox-results{max-height:min(375px,53vh);overflow:auto}
+.qmb .qmb-sink-line:has(.qtl-combobox-menu){position:relative;z-index:400}
+.qmb .qmb-material-picker:has(.qtl-combobox-menu){position:relative;z-index:400}
+.qmb .qmb-sinks-sheet:has(.qtl-combobox-menu){isolation:isolate}
+@media(min-width:1000px) and (min-height:550px){
+ /* The third tab is Calculator on desktop. Never hide it. */
+ .qmb .qmb-area-commerce-columns{
+   display:grid;grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);
+   gap:15px;align-items:start;min-width:0}
+ .qmb .qmb-area-commerce-columns>.qmb-materials-sheet,
+ .qmb .qmb-area-desktop-pricing-material{min-width:0}
+ .qmb .qmb-area-desktop-pricing,.qmb .qmb-area-desktop-pricing-material{display:block;min-width:0}
+ .qmb .qmb-area-commerce-columns.qmb-area-pricing-route{display:grid}
+ .qmb .qmb-mobile-pricing-legacy{display:none}
+ .qmb .qmb-area-editor .qmb-pagecontent{padding-block:17px 24px}
+ .qmb .qmb-sinks-sheet{container-type:inline-size}
+ /* In roomier workspaces use a single compact sink input rail. */
+ @container(min-width:465px){
+   .qmb .qmb-sink-line{display:grid;
+     grid-template-columns:minmax(78px,.72fr) minmax(120px,1.35fr)
+       49px 67px minmax(90px,.7fr) 23px;
+     column-gap:5px;row-gap:5px;align-items:end}
+   .qmb .qmb-sink-primary,.qmb .qmb-sink-secondary{display:contents}
+   .qmb .qmb-sink-type-field{grid-column:1;grid-row:1}
+   .qmb .qmb-sink-catalog{grid-column:2;grid-row:1}
+   .qmb .qmb-sink-primary>.qmb-sink-remove{grid-column:6;grid-row:1;align-self:end}
+   .qmb .qmb-sink-qty{grid-column:3;grid-row:1}
+   .qmb .qmb-sink-price{grid-column:4;grid-row:1}
+   .qmb .qmb-sink-secondary>*:last-child{grid-column:5;grid-row:1}
+   .qmb .qmb-sink-secondary label{display:grid;gap:4px;font-size:10px}
+   .qmb .qmb-sink-private-cost{grid-column:1/-1;grid-row:2}
+ }
+}
+.qmb .qmb-desktop-pricing-lab{display:grid;gap:13px;min-width:0}
+.qmb .qmb-pricing-lab-heading{display:flex;justify-content:space-between;gap:10px;align-items:start}
+.qmb .qmb-pricing-lab-heading h3{margin:0;font-size:16px}
+.qmb .qmb-pricing-lab-heading small{font-size:11px;color:var(--qmb-muted)}
+.qmb .qmb-pricing-lab-heading strong{font-size:17px;white-space:nowrap}
+.qmb .qmb-pricing-modes{display:flex;gap:5px;min-width:0}
+.qmb .qmb-pricing-modes>button{flex:1;min-width:0;min-height:36px;
+ padding:6px 3px;font-size:11px;font-weight:750;color:var(--qmb-muted);
+ border:1px solid var(--qmb-border);border-radius:9px;background:var(--qmb-card)}
+.qmb .qmb-pricing-modes>button[aria-pressed=true]{
+ color:var(--qmb-accent);background:var(--qmb-tint);border-color:var(--qmb-accent)}
+.qmb .qmb-pricing-hint,.qmb .qmb-math-ledger,.qmb .qmb-cost-warning{
+ font-size:11px;line-height:1.55;color:var(--qmb-muted);margin:4px 0}
+.qmb .qmb-cost-warning{color:var(--ss-danger,#b85145)}
+.qmb .qmb-pricing-formula{display:grid;gap:8px;min-width:0;
+ border:1px solid var(--qmb-border);border-radius:11px;
+ background:var(--qmb-card);padding:12px}
+.qmb .qmb-pricing-formula>label,.qmb .qmb-pricing-double>label{
+ display:grid;gap:5px;min-width:0;color:var(--qmb-muted);font-size:10px;font-weight:750}
+.qmb .qmb-pricing-formula input,.qmb .qmb-pricing-double input{
+ width:100%;min-width:0;min-height:36px;padding:6px 8px;
+ background:var(--qmb-card);border:1px solid var(--qmb-border);
+ color:var(--qmb-ink);border-radius:8px;font-size:14px;font-variant-numeric:tabular-nums}
+.qmb .qmb-pricing-double{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.qmb .qmb-pricing-formula .qmb-math-ledger{font-family:ui-monospace,monospace;
+ letter-spacing:-.03em;font-size:11px;overflow-wrap:anywhere;
+ padding:9px;border-radius:8px;background:var(--qmb-bg);color:var(--qmb-ink)}
+.qmb .qmb-pricing-rate-toggle{border:1px solid var(--qmb-border);border-radius:8px;
+ background:var(--qmb-tint);color:var(--qmb-accent);padding:8px;font-size:11px;font-weight:770}
+.qmb .qmb-pricing-rate-popup{max-height:290px;overflow-y:auto;
+ padding:6px;border:1px solid var(--qmb-border);border-radius:9px}
+.qmb .qmb-private-cost{display:grid;gap:11px;padding:13px;
+ background:color-mix(in srgb,var(--qmb-card) 90%,var(--qmb-tint));
+ border:1px solid var(--qmb-border);border-radius:12px}
+.qmb .qmb-private-cost>header{display:flex;justify-content:space-between;flex-wrap:wrap;
+ gap:5px;align-items:center}
+.qmb .qmb-private-cost>header strong{font-size:13px}
+.qmb .qmb-private-cost>header span{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-private-calc-result{min-width:0;display:grid;align-content:center;gap:5px;
+ color:var(--qmb-ink);font-size:11px}
+.qmb .qmb-private-calc-result strong{font-size:13px;overflow-wrap:anywhere}
+.qmb .qmb-private-calc-result small{color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-private-cost-lines{display:grid;gap:6px;border-top:1px solid var(--qmb-border);padding-top:9px}
+.qmb .qmb-private-cost-lines>span{display:flex;justify-content:space-between;gap:7px;
+ color:var(--qmb-muted);font-size:11px;line-height:1.45}
+.qmb .qmb-private-cost-lines>span b{color:var(--qmb-ink);white-space:nowrap}
+.qmb .qmb-private-cost-lines>span.qmb-private-margin{
+ font-weight:800;color:var(--qmb-ink);font-size:12px;border-top:1px solid var(--qmb-border);padding-top:8px}
+.qmb .qmb-desktop-lab-customer,.qmb .qmb-desktop-lab-extras{
+ display:grid;gap:9px;padding:12px;border:1px solid var(--qmb-border);
+ border-radius:12px;background:var(--qmb-card)}
+.qmb .qmb-desktop-lab-customer>strong,.qmb .qmb-desktop-lab-extras>header strong{font-size:12px}
+.qmb .qmb-desktop-lab-extras>header{display:flex;align-items:center;justify-content:space-between}
+.qmb .qmb-desktop-lab-extras>header button{border:1px solid var(--qmb-border);
+ background:var(--qmb-tint);color:var(--qmb-accent);border-radius:8px;
+ padding:6px 11px;font-size:11px;font-weight:750}
+.qmb .qmb-desktop-extra-row{display:flex;justify-content:space-between;gap:8px;
+ border-top:1px solid var(--qmb-border);padding-top:9px;min-width:0;font-size:11px}
+.qmb .qmb-desktop-extra-row>span{min-width:0;overflow-wrap:anywhere}
+.qmb .qmb-desktop-extra-row>strong{white-space:nowrap}
+.qmb .qmb-desktop-lab-extras>small{color:var(--qmb-muted);font-size:10px;line-height:1.5}
+@media(max-width:700px){
+ .qmb .qmb-general-quick-add{justify-content:flex-start}
+ .qmb .qmb-general-quick-add>button:not(.qmb-area-mode-button){font-size:10px;padding:6px}
+ .qmb .qmb-area-visibility-toggle{min-width:40px;font-size:9px}
+}
+
+@media(min-width:1000px) and (min-height:550px){
+ .qmb .qmb-sink-line{padding-inline:7px}
+ .qmb .qmb-sink-type-field select{font-size:11px;padding-inline:2px}
+ .qmb .qmb-sink-catalog .qtl-combobox>input{font-size:12px;padding-inline:5px}
+ .qmb .qmb-sink-secondary .qmb-sink-qty input{width:45px}
+ .qmb .qmb-sink-secondary .qmb-sink-price input{width:63px}
+ .qmb .qmb-sink-secondary>.qmb-row-menu-trigger{
+   min-width:0;width:100%;padding:5px 2px;font-size:10px;min-height:40px}
+}
+/* Compact invoice-style extra line editor, fully private costs included. */
+.qmb .qmb-desktop-extra-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:end;gap:7px 9px;padding:10px 0}
+.qmb .qmb-desktop-extra-row>input[type="text"]{grid-column:1/-1;min-height:35px}
+.qmb .qmb-desktop-extra-row input:not([type="checkbox"]){
+  min-width:0;width:100%;color:var(--qmb-ink);background:var(--qmb-card);
+  border:1px solid var(--qmb-border);border-radius:8px;padding:7px;font-size:12px}
+.qmb .qmb-desktop-extra-row>label,
+.qmb .qmb-desktop-extra-row .qmb-extra-qty-rate label{
+  display:grid;gap:4px;font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-extra-qty-rate{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.qmb .qmb-extra-line-actions{grid-column:1/-1;display:flex;align-items:center;
+  justify-content:space-between;gap:7px;flex-wrap:wrap}
+.qmb .qmb-extra-line-actions>strong{font-size:12px}
+.qmb .qmb-extra-line-actions label.qmb-check{display:flex;gap:5px;align-items:center;
+  margin:0;font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-extra-line-actions .qmb-extra-delete{font-size:10px;min-height:28px;
+  padding:4px 7px;border:1px solid var(--qmb-border);border-radius:7px;
+  background:var(--qmb-card);color:var(--ss-danger,#b25145)}
+.qmb .qmb-general-takeoff-ref{display:flex;justify-content:space-between;gap:10px;
+  width:100%;min-height:46px;padding:10px;margin-bottom:9px;
+  border:1px solid var(--qmb-border);border-radius:9px;
+  background:var(--qmb-tint);color:var(--qmb-ink);text-align:left;
+  align-items:center;flex-wrap:wrap}
+.qmb .qmb-general-takeoff-ref strong{font-size:12px}
+.qmb .qmb-general-takeoff-ref span{font-size:11px;color:var(--qmb-muted)}
+
+/* Compact private whole-quote rollup in the permanent right inspector. */
+.qmb .qmb-desktop-private-profit{border:1px solid var(--qmb-border);border-radius:11px;
+ padding:8px 10px;color:var(--qmb-ink);background:var(--qmb-card)}
+.qmb .qmb-desktop-private-profit summary{font-size:11px;font-weight:850;cursor:pointer;
+ display:flex;justify-content:space-between;gap:6px;align-items:center}
+.qmb .qmb-desktop-private-profit summary span{font-size:10px;color:var(--qmb-muted);
+ font-weight:700;text-align:right}
+.qmb .qmb-desktop-private-profit[open]{display:grid;gap:7px}
+.qmb .qmb-desktop-private-profit>div{display:flex;justify-content:space-between;
+ gap:6px;color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-desktop-private-profit>div strong{color:var(--qmb-ink);font-size:11px}
+.qmb .qmb-desktop-private-profit>small{color:var(--qmb-muted);
+ font-size:10px;line-height:1.4}
+
+
+
+/* Batch B.1 — Material and its price are one visual unit, same for sinks. */
+.qmb .qmb-commerce-stack{display:grid;gap:16px;min-width:0}
+.qmb .qmb-commerce-segment{display:grid;gap:10px;min-width:0;
+ border:1px solid var(--qmb-border);background:var(--qmb-card);
+ border-radius:13px;padding:14px}
+.qmb .qmb-commerce-heading{display:flex;align-items:start;justify-content:space-between;gap:10px}
+.qmb .qmb-commerce-heading h3{margin:0;font-size:16px;color:var(--qmb-ink)}
+.qmb .qmb-commerce-heading small{display:block;margin-top:4px;
+ font-size:11px;color:var(--qmb-muted);line-height:1.4}
+.qmb .qmb-commerce-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+ gap:13px;min-width:0;align-items:start}
+.qmb .qmb-commerce-pair>.qmb-materials-sheet,
+.qmb .qmb-commerce-pair>.qmb-desktop-pricing-lab,
+.qmb .qmb-commerce-pair>.qmb-sink-selling-sheet{min-width:0}
+.qmb .qmb-commerce-pair .qmb-materials-sheet .qmb-grid-toolbar:first-child{margin-top:0}
+.qmb .qmb-commerce-segment .qmb-desktop-pricing-lab{gap:8px}
+.qmb .qmb-commerce-segment .qmb-pricing-lab-heading h3{font-size:13px}
+.qmb .qmb-commerce-segment .qmb-pricing-lab-heading strong{font-size:14px}
+.qmb .qmb-commerce-segment .qmb-pricing-lab-heading small{font-size:10px}
+.qmb .qmb-commerce-segment .qmb-pricing-formula{padding:9px}
+.qmb .qmb-commerce-segment .qmb-pricing-modes button{min-height:32px;font-size:10px}
+.qmb .qmb-commerce-segment .qmb-material-cost-caption{display:flex;font-size:10px}
+.qmb .qmb-sink-selling-sheet{display:grid;gap:9px}
+.qmb .qmb-sink-selling-rows{display:grid;gap:0;min-width:0;
+ border:1px solid var(--qmb-border);border-radius:12px;overflow:hidden;
+ background:var(--qmb-card)}
+.qmb .qmb-sink-selling-row{min-height:125px;padding:10px 9px 8px;
+ border-bottom:1px solid var(--qmb-border);display:grid;align-content:start;gap:8px}
+.qmb .qmb-sink-selling-row:last-child{border-bottom:0}
+.qmb .qmb-sink-selling-row:nth-child(even){background:var(--qmb-tint)}
+.qmb .qmb-sink-sell-main{display:grid;grid-template-columns:62px minmax(0,1fr);
+ gap:7px;min-width:0}
+.qmb .qmb-sink-selling-row label{display:grid;align-content:start;gap:5px;
+ font-size:10px;font-weight:750;color:var(--qmb-muted);min-width:0}
+.qmb .qmb-sink-selling-row input{min-width:0;width:100%;height:38px;
+ border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card);
+ color:var(--qmb-ink);font-size:13px;padding:5px 6px}
+.qmb .qmb-sink-selling-total{margin:0;font-size:11px;
+ color:var(--qmb-ink);font-weight:760;line-height:1.4}
+.qmb .qmb-sink-selling-cost{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-sink-cost-editor{display:flex;align-items:end;justify-content:space-between;
+ gap:7px;flex-wrap:wrap}
+.qmb .qmb-sink-cost-editor label{flex:1;min-width:100px}
+.qmb .qmb-sink-cost-editor strong{font-size:12px;color:var(--qmb-ink)}
+.qmb .qmb-sink-selling-sheet .qmb-grid-toolbar{margin:2px 0 6px}
+.qmb .qmb-sink-selling-separated .qmb-sink-qty,
+.qmb .qmb-sink-selling-separated .qmb-sink-price,
+.qmb .qmb-sink-selling-separated .qmb-sink-private-cost{display:none!important}
+.qmb .qmb-sink-selling-separated .qmb-sink-secondary{display:flex;align-items:center}
+.qmb .qmb-sink-selling-separated .qmb-sink-line{min-height:125px;align-content:start}
+.qmb .qmb-sink-selling-separated .qmb-sink-secondary>.qmb-row-menu-trigger{
+  min-height:34px;flex:0 0 100%;width:100%}
+.qmb .qmb-currency-field{position:relative;display:flex;align-items:center;min-width:0}
+.qmb .qmb-currency-field>span{position:absolute;left:10px;pointer-events:none;
+ color:var(--qmb-muted);font-size:12px;font-weight:800;z-index:1}
+.qmb .qmb-currency-field>input{padding-left:23px!important;min-width:0}
+.qmb .qmb-optional-labor{display:grid;gap:10px;padding-top:10px;
+ border-top:1px solid var(--qmb-border)}
+.qmb .qmb-optional-labor>strong{font-size:12px}
+.qmb .qmb-optional-labor>strong small{display:block;margin-top:3px;font-size:10px;
+ color:var(--qmb-muted);font-weight:500}
+.qmb .qmb-calculator-workspace{gap:13px}
+.qmb .qmb-calculator-main>.qmb-desktop-pricing-lab{gap:9px}
+.qmb .qmb-calculator-source-editor{border:1px solid var(--qmb-border);border-radius:12px;
+ background:var(--qmb-card);padding:12px}
+.qmb .qmb-calculator-source-editor>summary{font-size:12px;font-weight:800;
+ color:var(--qmb-accent);cursor:pointer;padding-bottom:5px}
+.qmb .qmb-calculator-source-editor[open]{display:grid;gap:14px}
+.qmb .qmb-calculator-source-editor .qmb-commerce-pair{padding-top:4px;
+ border-top:1px solid var(--qmb-border)}
+.qmb .qmb-desktop-lab-customer summary{font-size:11px;font-weight:800;
+ cursor:pointer;color:var(--qmb-accent)}
+.qmb .qmb-desktop-lab-customer summary small{font-size:10px;color:var(--qmb-muted);font-weight:500}
+.qmb .qmb-desktop-lab-customer[open]{display:grid;gap:10px}
+@media(min-width:1000px) and (min-height:550px){
+ .qmb .qmb-commerce-stack .qmb-sink-line{display:grid;grid-template-columns:minmax(0,1fr)}
+ .qmb .qmb-commerce-stack .qmb-sink-primary{display:grid;
+   grid-template-columns:minmax(75px,.65fr) minmax(0,1.35fr) 22px;gap:5px}
+ .qmb .qmb-commerce-stack .qmb-sink-secondary{display:flex}
+ .qmb .qmb-commerce-stack .qmb-sinks-sheet{container-type:normal}
+ .qmb .qmb-area-editor .qmb-pagecontent{padding-block:16px 28px}
+ /* Fixed, responsive edit-mode grid: grab / card / remove. Show status is
+    an overlay in the card's free lower right, never an extra width column. */
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row:has(.qmb-area-grip){
+   display:grid!important;grid-template-columns:23px minmax(0,1fr) 25px;
+   gap:4px;width:100%;min-width:0;align-items:stretch}
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-grip{
+   grid-column:1;grid-row:1;width:23px;min-width:23px;min-height:59px}
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-desktop-area-card{
+   grid-column:2;grid-row:1;width:100%;min-width:0;min-height:59px;
+   padding:8px 35px 8px 4px;gap:3px;overflow:hidden}
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-remove-x{
+   grid-column:3;grid-row:1;min-width:25px;width:25px;min-height:59px}
+ .qmb .qmb-desktop-area-list .qmb-inline-area-row>.qmb-area-visibility-toggle{
+   position:absolute;right:30px;bottom:4px;z-index:3;
+   width:39px;min-width:39px;max-height:26px;min-height:25px;
+   padding:2px;font-size:8px;line-height:1}
+ .qmb .qmb-desktop-area-list.is-managing-areas .qmb-desktop-area-dot,
+ .qmb .qmb-desktop-area-list.is-managing-areas .qmb-desktop-area-value{display:none}
+ .qmb .qmb-desktop-area-list.is-managing-areas .qmb-desktop-area-title strong{
+   display:block;overflow-wrap:anywhere;font-size:10px;line-height:1.25}
+ .qmb .qmb-desktop-area-list.is-managing-areas .qmb-desktop-area-title small{
+   font-size:9px}
+ .qmb .qmb-desktop-area-list{overflow-x:hidden}
+ .qmb .qmb-desktop-navigation{overflow-x:hidden}
+}
+/* The two paired columns stack gracefully on moderate desktop widths. */
+@media(min-width:1000px) and (max-width:1200px){
+ .qmb .qmb-commerce-pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px}
+ .qmb .qmb-commerce-segment{padding:10px}
+ .qmb .qmb-sink-primary{gap:3px}
+}
+
+/* Coherent sequential scope / selling / cost workspace. The center pane
+ * always owns Calculator; right inspector is navigation/summary only. */
+.qmb .qmb-area-editor .qmb-pagecontent:has([data-center-calculator]){width:100%;min-width:0}
+.qmb .qmb-calculator-workspace,.qmb .qmb-calculator-main{
+ width:100%;display:grid!important;min-width:0;max-width:none;visibility:visible}
+.qmb .qmb-calculator-workspace .qmb-private-cost{width:100%;min-width:0}
+.qmb .qmb-workspace-intro{padding:4px 2px 8px}
+.qmb .qmb-workspace-intro h2{margin:3px 0 5px;font-size:21px;line-height:1.2;color:var(--qmb-ink)}
+.qmb .qmb-workspace-intro p{max-width:680px;margin:0;font-size:12px;line-height:1.55;color:var(--qmb-muted)}
+.qmb .qmb-commerce-stack,.qmb .qmb-measure-rework{display:grid;gap:14px;min-width:0}
+.qmb .qmb-commerce-segment{display:grid;gap:0;padding:0;overflow:visible;min-width:0}
+.qmb .qmb-commerce-segment>.qmb-commerce-heading{display:flex;align-items:center;justify-content:space-between;
+ padding:13px 16px;border-bottom:1px solid var(--qmb-border);background:var(--qmb-tint);
+ border-radius:12px 12px 0 0}
+.qmb .qmb-commerce-heading h3{font-size:15px;line-height:1.25;margin:0}
+.qmb .qmb-commerce-heading>span{font-size:10px;font-weight:850;color:var(--qmb-muted)}
+.qmb .qmb-commerce-stage{display:grid;gap:9px;padding:13px 16px;min-width:0}
+.qmb .qmb-commerce-stage.is-pricing{border-top:1px solid var(--qmb-border);
+ background:color-mix(in srgb,var(--qmb-card) 92%,var(--qmb-tint))}
+.qmb .qmb-stage-heading{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.qmb .qmb-stage-heading b{font-size:11px;text-transform:uppercase;letter-spacing:.055em;color:var(--qmb-accent)}
+.qmb .qmb-stage-heading small{font-size:10px;color:var(--qmb-muted);text-align:right}
+.qmb .qmb-commerce-stage .qmb-desktop-pricing-lab{gap:9px}
+.qmb .qmb-commerce-stage .qmb-pricing-lab-heading h3{display:none}
+.qmb .qmb-commerce-stage .qmb-pricing-lab-heading{justify-content:flex-end}
+.qmb .qmb-commerce-stage .qmb-pricing-lab-heading small{display:none}
+.qmb .qmb-commerce-stage .qmb-pricing-formula{max-width:none}
+.qmb .qmb-commerce-segment>.qmb-materials-sheet{padding:13px 16px;min-width:0}
+.qmb .qmb-commerce-segment>.qmb-desktop-pricing-lab{padding:13px 16px}
+.qmb .qmb-commerce-segment .qmb-desktop-lab-extras{border:0;padding:0;background:transparent}
+.qmb .qmb-commerce-segment .qmb-desktop-lab-extras>header>strong{display:none}
+.qmb .qmb-commerce-segment .qmb-desktop-lab-extras>header{justify-content:flex-end}
+.qmb .qmb-sink-select-heading,.qmb .qmb-sink-pricing-heading{
+ font-weight:820;color:var(--qmb-accent);letter-spacing:.04em;
+ text-transform:uppercase;font-size:10px}
+.qmb .qmb-sink-select-heading{display:flex;justify-content:space-between;
+ padding:0 0 5px;grid-column:1/-1}
+.qmb .qmb-sink-select-heading>span{font-weight:500;color:var(--qmb-muted)}
+.qmb .qmb-sink-pricing-heading{width:100%;flex:0 0 100%}
+.qmb .qmb-sink-line{border:1px solid var(--qmb-border);border-radius:10px;padding:12px;margin-bottom:8px;
+ background:var(--qmb-card)}
+.qmb .qmb-sink-primary{width:100%}
+.qmb .qmb-sink-secondary{display:flex;gap:9px;flex-wrap:wrap;align-items:end;
+ padding-top:10px;margin-top:10px;border-top:1px solid var(--qmb-border)}
+.qmb .qmb-sink-qty input{min-width:55px}
+.qmb .qmb-sink-price input{min-width:96px}
+.qmb .qmb-sink-scope-only .qmb-sink-secondary{padding-top:8px;margin-top:8px}
+.qmb .qmb-sink-scope-only .qmb-sink-price{display:none}
+.qmb .qmb-sink-private-cost{justify-content:flex-start}
+.qmb .qmb-material-cost-caption strong{font-weight:750}
+.qmb .qmb-commerce-segment .qmb-material-picker{border:1px solid var(--qmb-border);border-radius:10px;
+ padding:10px;background:var(--qmb-card)}
+.qmb .qmb-calculator-source-stack{display:grid;gap:13px;padding-top:10px;min-width:0}
+.qmb .qmb-calculator-source-stack>section{padding:12px;border:1px solid var(--qmb-border);border-radius:10px}
+.qmb .qmb-calculator-source-stack h3{margin:0 0 10px;font-size:13px}
+.qmb .qmb-scope-pieces-container .qmb-grid-toolbar{padding:12px 13px 5px}
+.qmb .qmb-scope-pieces-container .qmb-measure-sheet{margin:9px 12px 13px}
+.qmb .qmb-scope-description{font-size:11px;margin:10px 14px 0;color:var(--qmb-muted)}
+.qmb .qmb-measure-rework .qmb-commerce-segment>.qmb-materials-sheet{padding:12px}
+.qmb .qmb-scope-extras{padding:12px;display:grid;gap:9px}
+.qmb .qmb-scope-add-controls{display:flex;justify-content:space-between;gap:9px;align-items:end;flex-wrap:wrap}
+.qmb .qmb-scope-add-controls label{display:grid;gap:4px;font-size:10px;flex:1;min-width:130px;color:var(--qmb-muted)}
+.qmb .qmb-scope-add-controls select,.qmb .qmb-scope-extra-row input{
+ height:35px;border:1px solid var(--qmb-border);background:var(--qmb-card);color:var(--qmb-ink);
+ border-radius:8px;padding:6px;min-width:0;width:100%;font-size:12px}
+.qmb .qmb-scope-add-controls>button{height:35px;padding:6px 14px;border:1px solid var(--qmb-border);
+ border-radius:8px;background:var(--qmb-tint);color:var(--qmb-accent);font-size:11px;font-weight:750}
+.qmb .qmb-scope-extra-row{display:grid;grid-template-columns:minmax(0,1fr) 66px 30px;
+ gap:9px;align-items:end;padding:8px;border:1px solid var(--qmb-border);border-radius:10px}
+.qmb .qmb-scope-extra-row label{display:grid;gap:5px;font-size:10px;color:var(--qmb-muted);min-width:0}
+.qmb .qmb-scope-extra-row button{height:35px;border:1px solid var(--qmb-border);border-radius:8px;
+ background:var(--qmb-card);color:var(--ss-danger,#ae5545)}
+.qmb .qmb-inspector-open-calculator{min-height:34px;border:1px solid var(--qmb-border);
+ color:var(--qmb-accent);background:var(--qmb-tint);border-radius:9px;display:flex;
+ justify-content:space-between;align-items:center;font-size:11px;font-weight:750;padding:8px 10px}
+@media(min-width:1000px) and (min-height:550px){
+ .qmb .qmb-commerce-stack .qmb-sink-primary{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.5fr) 25px}
+ .qmb .qmb-commerce-stack .qmb-sink-secondary{display:flex}
+ .qmb .qmb-commerce-stack .qmb-sink-line{display:block}
+ .qmb .qmb-commerce-stack .qmb-sink-primary>.qmb-sink-type-field{min-width:0}
+ .qmb .qmb-commerce-stack .qmb-sink-catalog{min-width:0}
+ .qmb .qmb-commerce-stack .qmb-sink-qty input{width:75px}
+ .qmb .qmb-commerce-stack .qmb-sink-price input{width:130px}
+ .qmb .qmb-commerce-stack .qmb-sinks-sheet{container-type:normal}
+ .qmb .qmb-calculator-main>.qmb-desktop-pricing-lab{max-width:none}
+ .qmb .qmb-calculator-main .qmb-pricing-double{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){.qmb .qmb-workspace-intro h2{font-size:18px}}
+
+
+/* Batch B.3 – one spreadsheet-density language for Pieces, Sinks and Add-ons.
+   Table sheets fit INSIDE their rounded container rather than extending
+   beyond the card by their own 100%-width plus outside margins. */
+@media (min-width:1000px) and (min-height:550px) {
+ .qmb .qmb-scope-pieces-container .qmb-measure-sheet {
+   box-sizing:border-box;width:calc(100% - 24px);max-width:calc(100% - 24px);
+   margin:7px 12px 5px;min-width:0;overflow:visible;
+ }
+ .qmb .qmb-scope-pieces-container .qmb-measure-columns,
+ .qmb .qmb-scope-pieces-container .qmb-measure-row{
+   box-sizing:border-box;width:100%;min-width:0;max-width:100%;
+   grid-template-columns:minmax(0,2.3fr) minmax(0,.95fr) minmax(0,.95fr)
+     minmax(0,.58fr) minmax(0,.9fr) 26px;
+   gap:5px;padding-inline:9px;
+ }
+ .qmb .qmb-scope-pieces-container .qmb-measure-row{min-height:55px;padding-block:5px}
+ .qmb .qmb-scope-pieces-container .qmb-measure-columns{padding-block:7px}
+ .qmb .qmb-scope-pieces-container .qmb-row-piece{grid-template-rows:33px 12px;gap:1px}
+ .qmb .qmb-scope-pieces-container .qmb-row-piece small{line-height:12px;font-size:9px}
+ .qmb .qmb-scope-pieces-container .qmb-measure-row .qmb-grid-input,
+ .qmb .qmb-scope-pieces-container .qmb-measure-row .qmb-row-menu-trigger{
+   min-width:0;min-height:34px;height:34px;font-size:12px
+ }
+ .qmb .qmb-scope-pieces-container .qmb-measure-row .qmb-grid-number{font-size:13px}
+ .qmb .qmb-scope-pieces-container .qmb-grid-add{min-height:36px;padding:8px 12px}
+ .qmb .qmb-scope-pieces-container .qmb-grid-summary{margin-inline:12px;padding-block:6px}
+ .qmb .qmb-scope-pieces-container .qmb-grid-lower{margin:0 12px 10px}
+}
+.qmb .qmb-compact-table,.qmb .qmb-compact-addon-table{
+ width:100%;min-width:0;box-sizing:border-box;
+ border:1px solid var(--qmb-border);border-radius:10px;
+ background:var(--qmb-card);overflow:visible;
+}
+.qmb .qmb-compact-table .qmb-grid-add{min-height:36px;padding:7px 11px}
+.qmb .qmb-compact-sink-columns,.qmb .qmb-compact-sink-row{
+ display:grid;align-items:center;gap:6px;
+ padding-inline:9px;min-width:0;box-sizing:border-box;
+ grid-template-columns:minmax(0,1fr) minmax(0,2.4fr) 60px 88px 28px;
+}
+.qmb .qmb-compact-table.is-materials .qmb-compact-sink-columns,
+.qmb .qmb-compact-table.is-materials .qmb-compact-sink-row{
+ grid-template-columns:minmax(0,1fr) minmax(0,2.1fr) 56px 100px 86px 28px;
+}
+.qmb .qmb-compact-sink-columns,.qmb .qmb-compact-addon-columns{
+ background:var(--qmb-tint);border-bottom:1px solid var(--qmb-border);
+ padding-block:8px;border-radius:10px 10px 0 0;font-size:10px;
+ line-height:1.2;font-weight:800;color:var(--qmb-muted);
+}
+.qmb .qmb-compact-sink-row{
+ min-height:52px;padding-block:7px;border-bottom:1px solid var(--qmb-border);
+ position:relative;
+}
+.qmb .qmb-compact-sink-row:has(.qtl-combobox-menu){z-index:101}
+.qmb .qmb-compact-sink-row select,
+.qmb .qmb-compact-sink-row input,
+.qmb .qmb-compact-addon-row select,
+.qmb .qmb-compact-addon-row input{
+ min-height:35px;height:35px;max-width:100%;width:100%;min-width:0;
+ box-sizing:border-box;border:1px solid var(--qmb-border);border-radius:7px;
+ background:var(--qmb-card);color:var(--qmb-ink);font-size:12px;
+ padding:5px 7px;font-variant-numeric:tabular-nums;
+}
+.qmb .qmb-compact-sink-row .qtl-combobox{
+ min-width:0;width:100%;position:relative}
+.qmb .qmb-compact-sink-row .qtl-combobox>input{width:100%}
+.qmb .qmb-compact-sink-row .qtl-combobox-menu{
+ position:absolute;top:calc(100% + 5px);left:0;max-height:min(330px,55vh);
+ width:max(100%,min(390px,72vw));z-index:1200;
+ background:var(--qmb-card);box-shadow:0 12px 32px rgba(0,0,0,.2);
+ border:1px solid var(--qmb-border);border-radius:9px}
+.qmb .qmb-compact-sink-model{min-width:0}
+.qmb .qmb-compact-sink-sell{display:grid;gap:1px}
+.qmb .qmb-compact-sink-sell input{height:30px;min-height:30px}
+.qmb .qmb-compact-sink-sell small{font-size:9px;line-height:11px;
+ text-align:right;color:var(--qmb-muted)}
+.qmb .qmb-compact-sink-row .qmb-row-menu-trigger{
+ height:34px;min-height:34px;padding-inline:3px;
+ border-radius:7px;font-size:10px}
+.qmb .qmb-compact-remove{
+ min-width:0!important;width:27px!important;min-height:34px;height:34px;
+ border:0;background:transparent;color:var(--ss-danger,#a64d44);
+ font-size:18px;cursor:pointer;border-radius:7px}
+.qmb .qmb-compact-remove:hover{background:var(--qmb-tint)}
+.qmb .qmb-compact-addon-columns,.qmb .qmb-compact-addon-row{
+ display:grid;align-items:center;gap:7px;padding-inline:9px;min-width:0;
+ grid-template-columns:minmax(0,1fr) 70px 57px 28px;
+}
+.qmb .qmb-compact-addon-row{
+ min-height:49px;padding-block:6px;border-bottom:1px solid var(--qmb-border)}
+.qmb .qmb-compact-addon-row:last-child,.qmb .qmb-compact-sink-row:last-child{border-bottom:0}
+.qmb .qmb-compact-addon-description{
+ display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);
+ gap:6px;min-width:0;align-items:center}
+.qmb .qmb-compact-addon-row>small{
+ font-size:10px;white-space:nowrap;color:var(--qmb-muted)}
+.qmb .qmb-compact-addon-row .qmb-addon-nonpriced{text-align:center}
+.qmb .qmb-scope-extras{gap:8px;padding:9px 12px 12px}
+.qmb .qmb-addon-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.qmb .qmb-addon-toolbar .qmb-rate-catalog-select{
+ flex:1 1 210px;width:auto;max-width:100%;min-width:0}
+.qmb .qmb-addon-toolbar button{
+ min-height:34px;border:1px solid var(--qmb-border);border-radius:8px;
+ color:var(--qmb-accent);background:var(--qmb-card);
+ padding:6px 10px;font-size:11px;font-weight:750}
+.qmb .qmb-addon-other{display:flex;gap:8px;align-items:center}
+.qmb .qmb-addon-other select{max-width:190px}
+.qmb .qmb-addon-other>button{min-height:34px;padding:5px 12px;
+ border:1px solid var(--qmb-border);background:var(--qmb-tint);
+ color:var(--qmb-accent);border-radius:8px}
+.qmb .qmb-compact-addon-row .qmb-rate-catalog-select{font-size:11px}
+.qmb .qmb-addon-price-toolbar{flex:1;justify-content:flex-end}
+.qmb .qmb-desktop-lab-extras>header{gap:8px;flex-wrap:wrap}
+.qmb .qmb-desktop-extra-row .qmb-extra-description{
+ grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.6fr)
+ minmax(0,1fr);gap:7px;min-width:0}
+.qmb .qmb-desktop-extra-row .qmb-extra-description input,
+.qmb .qmb-desktop-extra-row .qmb-extra-description select{min-width:0;width:100%;min-height:35px}
+@media(min-width:1000px) and (max-width:1210px){
+ .qmb .qmb-compact-sink-columns,.qmb .qmb-compact-sink-row{
+   grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) 48px 68px 25px;gap:4px}
+ .qmb .qmb-compact-table.is-materials .qmb-compact-sink-columns,
+ .qmb .qmb-compact-table.is-materials .qmb-compact-sink-row{
+   grid-template-columns:minmax(0,.85fr) minmax(0,1.6fr) 45px 82px 65px 24px;gap:4px}
+ .qmb .qmb-compact-addon-description{
+   grid-template-columns:minmax(0,1fr) minmax(0,.8fr)}
+}
+@media(max-width:999px){
+ .qmb .qmb-compact-sink-columns,.qmb .qmb-compact-sink-row{
+   grid-template-columns:minmax(0,.85fr) minmax(0,1.5fr) 47px 61px 23px;gap:4px}
+ .qmb .qmb-compact-table.is-materials .qmb-compact-sink-columns,
+ .qmb .qmb-compact-table.is-materials .qmb-compact-sink-row{
+   grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 45px 65px 58px 22px;gap:3px}
+ .qmb .qmb-compact-addon-description{grid-template-columns:minmax(0,1fr)}
+}
+
+/* The saved catalog price is visible immediately in Measure, without
+ * placing a second editable price input into this scope-oriented table. */
+.qmb .qmb-compact-addon-columns,.qmb .qmb-compact-addon-row{
+  grid-template-columns:minmax(0,1fr) 63px 52px 91px 26px;
+}
+.qmb .qmb-compact-addon-amount{font-size:11px;font-weight:800;
+  text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(min-width:1000px) and (max-width:1210px){
+ .qmb .qmb-compact-addon-columns,.qmb .qmb-compact-addon-row{
+   grid-template-columns:minmax(0,1fr) 50px 43px 72px 24px;gap:4px}
+}
+
+
+/* Measure: Pieces, Sinks and Add-ons share a single visual system. */
+.qmb .qmb-measure-rework .qmb-commerce-segment{
+  background:var(--qmb-card);border:1px solid var(--qmb-border);
+  border-radius:13px;padding:0;overflow:visible;min-width:0}
+.qmb .qmb-measure-rework .qmb-commerce-segment>.qmb-commerce-heading{
+  background:transparent!important;border:0!important;
+  padding:14px 13px 6px!important;min-height:0}
+.qmb .qmb-measure-rework .qmb-commerce-segment>.qmb-commerce-heading h3{
+  font-size:16px;font-weight:800;line-height:1.25}
+.qmb .qmb-measure-rework .qmb-scope-pieces-container .qmb-grid-toolbar{
+  padding:13px 13px 5px;margin:0}
+.qmb .qmb-measure-rework .qmb-commerce-segment>.qmb-scope-description{
+  margin:0 13px 8px}
+.qmb .qmb-measure-rework .qmb-commerce-segment>.qmb-compact-table{
+  box-sizing:border-box;width:calc(100% - 24px);max-width:calc(100% - 24px);
+  margin:7px 12px 12px}
+.qmb .qmb-measure-rework .qmb-commerce-segment>.qmb-scope-extras{
+  padding:6px 12px 12px}
+.qmb .qmb-measure-rework .qmb-commerce-segment .qmb-compact-addon-table{
+  box-sizing:border-box;width:100%;max-width:100%}
+.qmb .qmb-general-takeoff-actions{display:flex;gap:6px;align-items:stretch}
+.qmb .qmb-general-takeoff-actions>.qmb-general-takeoff-ref{
+  flex:1;min-width:0;margin-bottom:9px}
+.qmb .qmb-general-takeoff-remove{
+  width:37px;min-width:37px;margin-bottom:9px;border:1px solid var(--qmb-border);
+  border-radius:9px;background:var(--qmb-card);color:var(--ss-danger,#a64d44);
+  font-size:19px;font-weight:800}
+
+
+/* Customer viewing options live with the actual paper. */
+.qmb .qmb-preview-customer-options{margin-bottom:12px;border:1px solid var(--qmb-border);border-radius:12px;background:var(--qmb-card);overflow:hidden}
+.qmb .qmb-preview-customer-options>summary{display:flex;align-items:center;gap:7px 12px;flex-wrap:wrap;cursor:pointer;padding:12px 14px;list-style:none}
+.qmb .qmb-preview-customer-options>summary:before{content:"▸";color:var(--qmb-accent)}
+.qmb .qmb-preview-customer-options[open]>summary:before{content:"▾"}
+.qmb .qmb-preview-customer-options>summary strong{font-size:13px}
+.qmb .qmb-preview-customer-options>summary span{margin-left:auto;font-size:10px;color:var(--qmb-accent)}
+.qmb .qmb-preview-customer-options>summary small{width:100%;font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-preview-options-body{display:grid;border-top:1px solid var(--qmb-border)}
+.qmb .qmb-preview-options-body>section{padding:13px 15px;display:grid;gap:10px;border-bottom:1px solid var(--qmb-border)}
+.qmb .qmb-preview-options-body h3{font-size:12px;margin:0}
+.qmb .qmb-preview-option-checks{display:flex;gap:12px;flex-wrap:wrap}
+.qmb .qmb-preview-option-checks>label,.qmb .qmb-preview-appendix{display:flex;align-items:center;gap:8px;font-size:11px}
+.qmb .qmb-preview-option-checks input,.qmb .qmb-preview-area-option input,.qmb .qmb-preview-line-options input,.qmb .qmb-preview-appendix input{width:16px;height:16px;accent-color:var(--qmb-accent)}
+.qmb .qmb-preview-areas-options,.qmb .qmb-preview-line-options{display:grid;gap:6px}
+.qmb .qmb-preview-area-option{border:1px solid var(--qmb-border);border-radius:8px;padding:8px;display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}
+.qmb .qmb-preview-area-option>label,.qmb .qmb-preview-line-options>label{display:flex;align-items:center;gap:8px;font-size:11px}
+.qmb .qmb-preview-display-buttons{display:flex;gap:4px}
+.qmb .qmb-preview-display-buttons>button{padding:7px;border-radius:7px;border:1px solid var(--qmb-border);background:var(--qmb-card);font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-preview-display-buttons>button[aria-pressed=true]{background:var(--qmb-tint);border-color:var(--qmb-accent);color:var(--qmb-accent);font-weight:800}
+.qmb .qmb-preview-options-expand,.qmb .qmb-preview-term-actions button{padding:8px;border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card);color:var(--qmb-accent);font-size:11px}
+.qmb .qmb-preview-line-options{max-height:200px;overflow:auto}
+.qmb .qmb-preview-line-options>label{padding:7px;border-bottom:1px solid var(--qmb-border)}
+.qmb .qmb-preview-option-checks.is-terms{display:grid;gap:7px}
+.qmb .qmb-preview-option-checks.is-terms>label{border:1px solid var(--qmb-border);border-radius:8px;padding:8px;align-items:start}
+.qmb .qmb-preview-option-checks.is-terms>label>span{display:grid;gap:4px}
+.qmb .qmb-preview-option-checks.is-terms small,.qmb .qmb-preview-terms-caption{font-size:10px;color:var(--qmb-muted);line-height:1.5}
+.qmb .qmb-preview-term-actions{display:flex;gap:8px;flex-wrap:wrap}
+.qmb .qmb-preview-other-notes{display:grid;gap:5px;font-size:11px}
+.qmb .qmb-preview-other-notes textarea{min-height:70px;padding:8px;background:var(--qmb-card);border:1px solid var(--qmb-border);border-radius:8px;color:var(--qmb-ink)}
+.customer-quote-terms{margin-top:18px;border-top:1px solid #ccc;padding-top:12px;display:grid;gap:8px;break-inside:avoid}
+.customer-quote-terms>strong{font-size:12px}
+.customer-quote-terms>p{margin:0;font-size:10px;line-height:1.45;white-space:pre-line}
+.customer-quote-notes>p{white-space:pre-line}
+.qmb .qmb-pricing-comparison{display:grid;gap:11px;border:1px solid var(--qmb-border);border-radius:12px;padding:13px;background:var(--qmb-card)}
+.qmb .qmb-pricing-comparison>header{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.qmb .qmb-pricing-comparison>header strong{font-size:13px}
+.qmb .qmb-pricing-comparison>header small,.qmb .qmb-pricing-comparison>small{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-pricing-comparison>label{display:grid;gap:5px;font-size:11px;max-width:200px}
+.qmb .qmb-pricing-comparison input{min-height:35px;background:var(--qmb-card);color:var(--qmb-ink);border:1px solid var(--qmb-border);border-radius:8px;padding:7px}
+.qmb .qmb-pricing-comparison-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.qmb .qmb-pricing-comparison-grid>div{display:grid;gap:7px;background:var(--qmb-tint);padding:10px;border-radius:9px;min-width:0}
+.qmb .qmb-pricing-comparison-grid>div strong{font-size:14px;overflow-wrap:anywhere}
+.qmb .qmb-pricing-comparison-grid>div small{font-size:10px;font-weight:800}
+.qmb .qmb-pricing-comparison-grid>div span{font-size:10px;color:var(--qmb-muted);line-height:1.4}
+.qmb .qmb-apply-margin,.qmb .qmb-demo-preset{padding:9px;border-radius:8px;border:1px solid var(--qmb-border);background:var(--qmb-tint);color:var(--qmb-accent);font-size:11px;font-weight:780}
+@media(max-width:650px){.qmb .qmb-pricing-comparison-grid{grid-template-columns:1fr}}
+
+
+/* Batch C — quote library lifecycle controls and frozen revision viewer. */
+.qmb .qmb-library-entry{display:grid;gap:0;min-width:0;position:relative;
+  border-radius:12px;border:1px solid var(--qmb-border);background:var(--qmb-card);overflow:hidden}
+.qmb .qmb-library-entry>.qmb-listcard{border:0!important;border-radius:0!important;
+  width:100%;min-width:0;margin:0;text-align:left}
+.qmb .qmb-library-card-actions{display:flex;justify-content:flex-end;gap:6px;padding:7px 10px;
+  border-top:1px solid var(--qmb-border);background:var(--qmb-card)}
+.qmb .qmb-library-card-actions button{background:transparent;border:1px solid var(--qmb-border);
+  border-radius:7px;min-height:30px;padding:5px 10px;font-size:11px;font-weight:750;
+  color:var(--qmb-accent)}
+.qmb .qmb-library-card-actions button.is-danger{color:#a94a40}
+.qmb .qmb-lifecycle-card{display:grid;gap:12px}
+.qmb .qmb-lifecycle-revisions{border:1px solid var(--qmb-border);border-radius:10px;
+  background:var(--qmb-card);overflow:hidden}
+.qmb .qmb-lifecycle-revisions>summary{padding:12px;cursor:pointer;display:flex;
+  justify-content:space-between;font-size:12px;font-weight:800;gap:10px}
+.qmb .qmb-lifecycle-revisions>summary span{color:var(--qmb-muted)}
+.qmb .qmb-lifecycle-revision{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 12px;border-top:1px solid var(--qmb-border)}
+.qmb .qmb-lifecycle-revision>div{display:grid;gap:4px;min-width:0}
+.qmb .qmb-lifecycle-revision strong{font-size:12px}
+.qmb .qmb-lifecycle-revision small{font-size:10px;color:var(--qmb-muted)}
+.qmb .qmb-lifecycle-revision button,.qmb .qmb-lifecycle-change-order{
+  padding:8px 10px;min-height:34px;border:1px solid var(--qmb-border);border-radius:8px;
+  background:var(--qmb-card);color:var(--qmb-accent);font-size:11px;font-weight:800}
+.qmb-history-modal-backdrop{position:fixed;inset:0;z-index:3050;background:rgba(0,0,0,.6);
+  display:grid;place-items:center;padding:16px}
+.qmb .qmb-history-modal{width:min(960px,100%);height:min(90vh,850px);min-width:0;
+  overflow:hidden;border-radius:14px;background:var(--qmb-card);color:var(--qmb-ink);
+  border:1px solid var(--qmb-border);display:flex;flex-direction:column;box-shadow:0 16px 50px rgba(0,0,0,.2)}
+.qmb .qmb-history-modal-heading{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;border-bottom:1px solid var(--qmb-border);padding:14px}
+.qmb .qmb-history-modal-heading>div{display:grid;gap:5px}
+.qmb .qmb-history-modal-heading strong{font-size:13px}
+.qmb .qmb-history-modal-heading small{font-size:11px;color:var(--qmb-muted)}
+.qmb .qmb-history-modal-heading button{border:1px solid var(--qmb-border);
+  border-radius:8px;background:var(--qmb-card);padding:7px;color:var(--qmb-ink)}
+.qmb .qmb-history-document{overflow-y:auto;background:#eee;padding:24px;flex:1;
+  display:grid;align-content:start;justify-items:center}
+.qmb .qmb-history-document .customer-quote-paper{width:min(100%,770px);max-width:100%}
+@media(max-width:999px){
+ /* Two short editing rows + one compact buying-cost row, not a tall stacked card. */
+ .qmb .qmb-sink-line{padding:7px!important;margin-bottom:7px!important;
+   display:grid;gap:4px!important;min-height:0}
+ .qmb .qmb-sink-line .qmb-sink-select-heading,
+ .qmb .qmb-sink-line .qmb-sink-pricing-heading{display:none!important}
+ .qmb .qmb-sink-line .qmb-sink-primary{display:grid!important;
+   grid-template-columns:minmax(0,.8fr) minmax(0,1.55fr) 22px;
+   align-items:end;gap:5px;min-width:0}
+ .qmb .qmb-sink-line .qmb-sink-primary .qmb-sink-catalog{min-width:0}
+ .qmb .qmb-sink-line .qmb-sink-primary small{font-size:9px}
+ .qmb .qmb-sink-line .qmb-sink-secondary{display:flex!important;
+   flex-wrap:nowrap;gap:8px;align-items:end;padding-top:2px!important;margin-top:0!important}
+ .qmb .qmb-sink-line .qmb-sink-secondary label{display:grid;gap:2px;font-size:9px;min-width:0}
+ .qmb .qmb-sink-line .qmb-sink-secondary .qmb-sink-qty{flex:0 0 55px}
+ .qmb .qmb-sink-line .qmb-sink-secondary .qmb-sink-price{flex:0 0 79px}
+ .qmb .qmb-sink-line .qmb-sink-secondary input{width:100%!important;
+   min-width:0!important;height:32px;min-height:32px}
+ .qmb .qmb-sink-line .qmb-sink-secondary .qmb-row-menu-trigger{
+   margin-left:auto;min-height:32px;height:32px;min-width:0;flex:1}
+ .qmb .qmb-sink-line .qmb-sink-private-cost{display:flex;align-items:center;
+   gap:5px;min-height:0;margin-top:0;padding:4px 2px!important;
+   border-top:1px solid var(--qmb-border)}
+ .qmb .qmb-sink-line .qmb-sink-private-cost>span{font-size:9px}
+ .qmb .qmb-sink-line .qmb-sink-private-cost>label{margin-left:auto;font-size:9px;
+   display:flex;align-items:center;gap:4px}
+ .qmb .qmb-sink-line .qmb-sink-private-cost input{width:65px;height:29px;min-height:29px}
+ .qmb .qmb-sink-line .qmb-sink-private-cost strong{font-size:10px}
+ .qmb .qmb-sink-line .qmb-sink-private-cost small{font-size:9px}
+ .qmb .qmb-history-document{padding:8px}
+}
+
+/* Customer Preview options: sell-price presentation and charge visibility
+   are intentionally separate; controls remain readable in every theme. */
+.qmb .qmb-preview-options-hint{
+  display:block;color:var(--qmb-muted);font-size:11px;line-height:1.55;
+}
+.qmb .qmb-preview-presentation-all{
+  display:flex;gap:6px;flex-wrap:wrap;
+}
+.qmb .qmb-preview-presentation-all button{
+  border:1px solid var(--qmb-border);background:var(--qmb-card);
+  color:var(--qmb-accent);border-radius:8px;min-height:35px;
+  padding:7px 12px;font-size:11px;font-weight:800;
+}
+.qmb .qmb-preview-presentation-all button[aria-pressed=true]{
+  background:var(--qmb-tint);border-color:var(--qmb-accent);
+}
+.qmb .qmb-preview-presentation-all button:disabled{opacity:.52;cursor:default}
+.qmb .qmb-preview-line-group{
+  border:1px solid var(--qmb-border);border-radius:9px;overflow:hidden;
+  background:var(--qmb-card);min-width:0;
+}
+.qmb .qmb-preview-line-group>header{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--qmb-tint);padding:9px 11px;color:var(--qmb-ink);font-size:11px;
+}
+.qmb .qmb-preview-line-group>header span{color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-preview-line-group>small{
+  display:block;padding:7px 11px;color:var(--qmb-muted);font-size:10px;line-height:1.45;
+}
+.qmb .qmb-preview-line-group>label{
+  display:flex;gap:9px;align-items:center;min-height:35px;
+  padding:8px 11px;border-top:1px solid var(--qmb-border);
+  font-size:11px;color:var(--qmb-ink);overflow-wrap:anywhere;
+}
+.qmb .qmb-preview-line-group>label span{min-width:0;flex:1}
+.qmb .qmb-preview-line-group input{flex:0 0 auto}
+.qmb .qmb-preview-line-group :is(button,input):focus-visible{
+  outline:2px solid var(--qmb-accent);outline-offset:2px;
+}
+
+/* Align lifecycle controls across old and new document cards. */
+.qmb .qmb-library-card-actions{box-sizing:border-box;min-height:46px;align-items:center;flex-wrap:wrap}
+.qmb .qmb-library-card-actions button{box-sizing:border-box;min-height:32px;line-height:1.2;padding:6px 10px}
+.qmb .qmb-job-sink-list{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:7px}
+.qmb .qmb-job-sink-list li{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-bg);padding:8px;color:var(--qmb-ink);font-size:11px}
+.qmb .qmb-job-sink-list li>span:first-child{display:grid;gap:4px;min-width:0}
+.qmb .qmb-job-sink-list small{color:var(--qmb-muted);font-size:10px}
+.qmb .qmb-general-empty{margin:8px 0 12px}

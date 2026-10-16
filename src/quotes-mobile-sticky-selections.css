@@ -1,0 +1,117 @@
+/* Quotes Beta and Board phone chrome polish, Oct 12.
+   Only mobile opt-in quote/editor and mobile Board layout are affected. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  /* The back/status/action bar scrolls out with the quote body.
+     The slim title/total and tabs form one sticky unit. */
+  .qmb .qmb-quote-editor {position:relative;min-height:0;}
+  .qmb .qmb-quote-scroll {
+    flex:1 1 0;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;
+    position:relative;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  }
+  .qmb .qmb-quote-sticky {
+    position:sticky;top:0;z-index:12;
+    background:var(--qmb-card);
+    box-shadow:0 3px 8px rgba(0,0,0,.055);
+  }
+  .qmb .qmb-quote-identity {
+    display:flex;align-items:center;gap:9px;min-height:47px;
+    border-bottom:1px solid var(--qmb-border);padding:6px 13px;
+  }
+  .qmb .qmb-quote-name {
+    display:block;flex:1 1 0;min-width:0;width:100%;height:33px;min-height:33px;
+    border:0!important;background:transparent!important;color:var(--qmb-ink);
+    padding:0 2px!important;outline-offset:0;font-size:15px;font-weight:850;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .qmb .qmb-quote-name::placeholder {color:var(--qmb-muted);}
+  .qmb .qmb-quote-total {
+    flex:0 0 auto;max-width:42%;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;
+    color:var(--qmb-ink);font-size:16px;font-weight:850;
+    font-variant-numeric:tabular-nums;
+  }
+  .qmb .qmb-quote-sticky .qmb-tabs {min-height:44px;box-shadow:none;}
+  .qmb .qmb-quote-sticky .qmb-tabs button {padding:9px 3px;min-height:44px;}
+  .qmb .qmb-quote-scroll>.qmb-pagecontent {
+    display:block;overflow:visible;min-height:0;flex:0 0 auto;
+    padding-top:10px;padding-bottom:22px;
+  }
+  .qmb .qmb-quote-footer {justify-content:flex-end;min-height:53px;
+    padding-top:7px;padding-bottom:calc(7px + env(safe-area-inset-bottom));}
+  .qmb .qmb-quote-footer .qmb-primary {min-height:40px;}
+  .qmb .qmb-selections-launch {
+    width:100%;min-height:51px;display:flex;justify-content:space-between;
+    align-items:center;text-align:left;gap:12px;border:1px solid var(--qmb-border);
+    border-radius:12px;background:var(--qmb-card);color:var(--qmb-ink);
+    margin:0 0 9px;padding:8px 13px;
+  }
+  .qmb .qmb-selections-launch>span:first-child {display:grid;gap:2px;min-width:0;}
+  .qmb .qmb-selections-launch strong {font-size:14px;font-weight:850;}
+  .qmb .qmb-selections-launch small {color:var(--qmb-muted);font-size:10px;}
+  .qmb .qmb-selections-launch>span:last-child {font-size:23px;color:var(--qmb-accent);}
+  .qmb .qmb-selections-backdrop {
+    position:absolute;inset:0;z-index:60;
+    background:rgba(20,26,22,.42);display:flex;align-items:flex-end;
+  }
+  .qmb .qmb-selections-drawer {
+    display:flex;flex-direction:column;min-height:0;
+    width:100%;height:min(88%,740px);overflow:hidden;
+    border-radius:20px 20px 0 0;background:var(--qmb-bg);color:var(--qmb-ink);
+    box-shadow:0 -9px 35px rgba(0,0,0,.15);
+  }
+  .qmb .qmb-selections-head,.qmb .qmb-selections-foot {
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--qmb-border);padding:11px 15px;background:var(--qmb-card);
+  }
+  .qmb .qmb-selections-head>div {display:grid;gap:2px;}
+  .qmb .qmb-selections-head strong {font-size:17px;}
+  .qmb .qmb-selections-head small {color:var(--qmb-muted);font-size:11px;}
+  .qmb .qmb-selections-head button {min-width:35px;min-height:35px;background:transparent;
+    border:0;color:var(--qmb-ink);font-size:25px;}
+  .qmb .qmb-selections-body {flex:1 1 0;min-height:0;overflow-y:auto;
+    overscroll-behavior:contain;padding:13px 14px 20px;-webkit-overflow-scrolling:touch;}
+  .qmb .qmb-selections-card {
+    padding:14px;margin:0 0 11px;border:1px solid var(--qmb-border);
+    border-radius:13px;background:var(--qmb-card);display:grid;gap:10px;min-width:0;
+  }
+  .qmb .qmb-selections-card > strong {font-size:14px;}
+  .qmb .qmb-selections-card .qtl-combobox {min-width:0;}
+  .qmb .qmb-selections-card .qtl-combobox>input {width:100%;min-height:42px;min-width:0;
+    background:var(--qmb-card);border:1px solid var(--qmb-border);
+    border-radius:8px;padding:8px 10px;color:var(--qmb-ink);font-size:16px;}
+  .qmb .qmb-selections-card .qtl-combobox-menu {position:relative;max-width:100%;
+    z-index:4;overflow-y:auto;max-height:240px;}
+  .qmb .qmb-selections-card .qmb-field {margin:0;}
+  .qmb .qmb-selections-card .qmb-two button {font-size:12px;padding:7px 4px;}
+  .qmb .qmb-selections-feedback {font-size:12px;color:var(--qmb-accent);
+    padding:9px 11px;margin:0;border:1px solid var(--qmb-border);border-radius:9px;}
+  .qmb .qmb-selections-foot {border-top:1px solid var(--qmb-border);
+    border-bottom:0;padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+  .qmb .qmb-selections-foot button {width:100%;}
+
+  /* Projects and Accounts now have the same single top navigation bar and
+     stage row: remove the Accounts-only secondary page header. */
+  .sales-app.view-board .accounts-view > .accounts-header-panel {display:none!important;}
+  .sales-app.view-board .accounts-view,
+  .sales-app.view-board .board-view {height:0;min-height:0;flex:1 1 0;
+    display:flex;flex-direction:column;overflow:hidden;}
+  .sales-app.view-board .mobile-board-stage-picker {
+    flex:0 0 auto;position:relative;z-index:2;
+    min-height:46px;margin:0;
+  }
+  .sales-app.view-board .accounts-view .mobile-board-stage-picker > label {
+    flex:1 1 0;min-width:0;
+  }
+  .sales-app.view-board .mobile-board-stage-actions {flex:0 0 auto;display:flex;}
+  .sales-app.view-board .accounts-mobile-tools {
+    width:34px;height:36px;min-width:34px;border:1px solid rgba(91,78,58,.17);
+    border-radius:7px;background:#fffaf0;color:#504739;font-size:20px;font-weight:800;
+  }
+  .sales-app.view-board .accounts-view > .account-board {
+    flex:1 1 0;min-height:0;padding-top:6px;overflow-x:auto;overflow-y:hidden;
+  }
+}
+@media (max-width:350px) {
+  .qmb .qmb-quote-name {font-size:13px;}
+  .qmb .qmb-quote-total {font-size:14px;}
+}

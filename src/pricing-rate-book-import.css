@@ -1,0 +1,241 @@
+.pricing-rate-master-import {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(58, 51, 43, .14);
+  background: rgba(244, 241, 232, .62);
+}
+
+.pricing-rate-master-import > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.pricing-rate-master-import > header > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pricing-rate-master-import > header small,
+.pricing-rate-import-row span,
+.pricing-rate-import-row small,
+.pricing-rate-import-browser > footer span {
+  color: var(--ink-muted, #746e64);
+}
+
+.pricing-rate-master-import > header > button,
+.pricing-rate-import-browser > footer button {
+  min-height: 38px;
+  border: 1px solid rgba(58, 51, 43, .2);
+  border-radius: 5px;
+  background: rgba(255, 252, 244, .92);
+  padding: 8px 12px;
+  color: inherit;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pricing-rate-import-message {
+  padding: 8px 10px;
+  border-left: 3px solid rgba(74, 115, 73, .5);
+  background: rgba(198, 222, 196, .2);
+  font-size: 11px;
+}
+
+.pricing-rate-import-browser {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(58, 51, 43, .1);
+  min-width: 0;
+}
+
+.pricing-rate-import-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 280px);
+  gap: 8px;
+  align-items: center;
+}
+
+.pricing-rate-import-categories {
+  display: flex;
+  gap: 3px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pricing-rate-import-categories::-webkit-scrollbar { display: none; }
+
+.pricing-rate-import-categories button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  border: 1px solid rgba(58, 51, 43, .14);
+  background: rgba(255,255,255,.48);
+  padding: 6px 9px;
+  border-radius: 4px;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.pricing-rate-import-categories button.active {
+  background: #fff8e5;
+  border-color: rgba(145, 119, 39, .35);
+  box-shadow: inset 0 -2px rgba(177, 145, 48, .45);
+  font-weight: 800;
+}
+
+.pricing-rate-import-controls > input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 38px;
+  border: 1px solid rgba(58, 51, 43, .18);
+  border-radius: 4px;
+  background: rgba(255,255,255,.86);
+  padding: 7px 9px;
+  font: inherit;
+}
+
+.pricing-rate-import-list {
+  display: grid;
+  gap: 5px;
+  max-height: 330px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pricing-rate-import-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 100px 118px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(58, 51, 43, .1);
+  background: rgba(255,255,255,.5);
+  cursor: pointer;
+}
+
+.pricing-rate-import-row > input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+}
+
+.pricing-rate-import-row > div:not(.pricing-rate-import-price) {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pricing-rate-import-row strong,
+.pricing-rate-import-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pricing-rate-import-row span,
+.pricing-rate-import-row small {
+  font-size: 10px;
+}
+
+.pricing-rate-import-price {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pricing-rate-import-row > small {
+  text-align: right;
+}
+
+.pricing-rate-import-row.is-disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.pricing-rate-import-browser > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.pricing-rate-import-browser > footer span {
+  font-size: 10px;
+}
+
+.pricing-rate-import-browser > footer button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+@media (max-width: 700px) {
+  .pricing-rate-master-import {
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .pricing-rate-master-import > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pricing-rate-master-import > header > button {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .pricing-rate-import-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-rate-import-categories {
+    width: 100%;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pricing-rate-import-controls > input {
+    min-height: 44px;
+  }
+
+  .pricing-rate-import-list {
+    max-height: 46dvh;
+  }
+
+  .pricing-rate-import-row {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    min-height: 54px;
+    padding: 8px;
+  }
+
+  .pricing-rate-import-price {
+    min-width: 72px;
+  }
+
+  .pricing-rate-import-row > small {
+    grid-column: 2 / -1;
+    text-align: left;
+  }
+
+  .pricing-rate-import-browser > footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pricing-rate-import-browser > footer button {
+    width: 100%;
+    min-height: 44px;
+  }
+}

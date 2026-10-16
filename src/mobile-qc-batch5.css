@@ -1,0 +1,117 @@
+/* Batch 5 — one calm loading treatment and consistent recovery from empty searches. */
+.workspace-loading-state{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  flex:1 1 auto;
+  min-height:200px;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  padding:28px 20px;
+  background:transparent;
+  color:#51483d;
+}
+.workspace-loading-state>div{
+  display:grid;
+  gap:5px;
+  min-width:0;
+}
+.workspace-loading-state strong{
+  font:700 16px/1.3 Georgia,'Times New Roman',serif;
+}
+.workspace-loading-state small{
+  color:#84796a;
+  font-size:11px;
+  line-height:1.4;
+}
+.workspace-loading-marker{
+  display:grid;
+  place-items:center;
+  flex:0 0 37px;
+  width:37px;
+  height:37px;
+  border:1px solid #d2c3a7;
+  border-radius:11px;
+  background:#fff8e9;
+  color:#ab925f;
+  font-size:27px;
+  line-height:1;
+  animation:workspace-loading-breathe 1.8s ease-in-out infinite;
+}
+@keyframes workspace-loading-breathe{
+  50%{opacity:.48;transform:scale(.94)}
+}
+:root[data-sales-motion='reduced'] .workspace-loading-marker{
+  animation:none;
+}
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .sales-app .workspace-loading-state{
+    min-height:170px;
+    align-self:stretch;
+    padding:26px 15px;
+    justify-content:flex-start;
+  }
+  .sales-app.view-catalog .workspace-loading-state{
+    margin:auto 0;
+  }
+  .sales-app.view-catalog .mobile-catalog-reference-empty{
+    display:grid;
+    justify-items:center;
+    gap:12px;
+    padding:22px 12px;
+    line-height:1.5;
+  }
+  .sales-app.view-catalog .mobile-catalog-reference-empty>span{
+    display:block;
+    max-width:280px;
+    color:#7d7365;
+  }
+  .sales-app.view-catalog .mobile-catalog-reference-empty>button,
+  .sales-app.view-catalog .sinks-empty-navigator>button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:42px;
+    min-width:150px;
+    max-width:100%;
+    box-sizing:border-box;
+    padding:8px 13px;
+    border:1px solid #c6ae75;
+    border-radius:6px;
+    background:#fff4d9;
+    color:#5a4b2d;
+    font-size:11px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .sales-app.view-catalog .sinks-empty-navigator{
+    display:grid;
+    gap:8px;
+    justify-items:center;
+    margin:4px;
+    padding:20px 10px;
+    border:1px dashed #c8bba7;
+    border-radius:6px;
+    background:#fffaf0;
+    text-align:center;
+  }
+  .sales-app.view-catalog .sinks-empty-navigator>button{
+    margin-top:3px;
+  }
+  .sales-app.view-catalog :is(
+    .mobile-catalog-reference-empty>button,
+    .sinks-empty-navigator>button
+  ):focus-visible{
+    outline:2px solid #ad9257;
+    outline-offset:2px;
+  }
+  /* Protect narrow displays while keeping Catalog's parent as the only y-scroller. */
+  .sales-app.view-catalog :is(
+    .materials-workspace,.rates-workspace,.sinks-workspace
+  ){
+    min-width:0;
+    max-width:100%;
+  }
+}

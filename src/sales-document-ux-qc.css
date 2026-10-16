@@ -1,0 +1,96 @@
+/* Template workspace QC: theme-safe authoring panels, no customer PDF changes. */
+.sales-app .qmb .pricing-builder {
+  --surface:var(--qmb-card);
+  --ink-muted:var(--qmb-muted);
+  --accent:var(--qmb-accent);
+  --ink:var(--qmb-ink);
+  color:var(--qmb-ink);
+}
+.sales-app .qmb .pricing-builder :is(
+  .pricing-builder-workflow,.pricing-builder-panel,.pricing-builder-plan-editor,
+  .pricing-builder-matrix-main,.pricing-builder-audit,.pricing-builder-plan-list,
+  .pricing-builder-option-card,.pricing-builder-rate-section,.pricing-builder-legacy-rules,
+  .pricing-builder-option-extras,.pricing-builder-material-rate,.pricing-builder-variant-choices
+){
+  background:var(--qmb-card);color:var(--qmb-ink);border-color:var(--qmb-border);
+}
+.sales-app .qmb .pricing-builder :is(
+  .pricing-builder-step-tabs button,.pricing-builder-tabs,
+  .pricing-builder-tabs button.active,.pricing-builder-header-meta span,
+  .pricing-builder-header-meta strong,.pricing-builder-quick-actions button,
+  .pricing-builder-inline-add,.pricing-builder-step-footer button,
+  .pricing-builder-plan-list>button.active,.pricing-builder-name-field,
+  .pricing-builder-option-card header input,.pricing-builder-matrix-cell
+){color:var(--qmb-ink);border-color:var(--qmb-border);}
+.sales-app .qmb .pricing-builder :is(
+  .pricing-builder-step-tabs button,.pricing-builder-tabs,
+  .pricing-builder-header-meta span,.pricing-builder-header-meta strong,
+  .pricing-builder-quick-actions button,.pricing-builder-inline-add,
+  .pricing-builder-step-footer button
+){background:var(--qmb-bg);}
+.sales-app .qmb .pricing-builder :is(
+  .pricing-builder-step-tabs button.active,.pricing-builder-tabs button.active,
+  .pricing-builder-plan-list>button.active
+){background:var(--qmb-tint);color:var(--qmb-ink);border-color:var(--qmb-accent);}
+.sales-app .qmb .pricing-builder :is(input,select,textarea){
+  background:var(--qmb-bg);color:var(--qmb-ink);border-color:var(--qmb-border);
+}
+.sales-app .qmb .pricing-builder :is(input,textarea)::placeholder{
+  color:var(--qmb-muted);opacity:.9;
+}
+.sales-app .qmb .pricing-builder :is(button,summary,label,small,p,span,strong,h2,h3){
+  color:inherit;
+}
+.sales-app .qmb .pricing-builder :is(
+  .pricing-builder-workflow>header small,.pricing-builder-alternatives p,
+  .pricing-builder-alternatives>header small,.pricing-builder-step-tabs small,
+  .pricing-builder-rate-section>header small,.pricing-builder-panel-heading small,
+  .pricing-builder-takeoff-hint,.pricing-builder-header small,.pricing-builder-name-field span,
+  .pricing-builder-option-config label>span,.pricing-builder-variant-choices label>span,
+  .pricing-builder-material-rate label span
+){color:var(--qmb-muted);}
+.sales-app .qmb .pricing-builder .pricing-builder-workflow{
+  background:var(--qmb-card);
+}
+.sales-app .qmb .pricing-builder .pricing-builder-mode-indicator,
+.sales-app .qmb .pricing-builder .pricing-builder-alternatives{
+  background:var(--qmb-bg);border-color:var(--qmb-border);border-radius:6px;padding:10px;
+}
+.sales-app .qmb .pricing-builder .pricing-builder-alternatives .pricing-builder-tabs{
+  display:flex;flex-wrap:wrap;gap:4px;max-width:100%;
+}
+.sales-app .qmb .pricing-builder .pricing-builder-quick-actions button:disabled{
+  color:var(--qmb-muted);
+}
+.sales-app .qmb .pricing-builder .pricing-builder-takeoff-hint{background:var(--qmb-tint);}
+.sales-app .qmb .pricing-builder .pricing-builder-published-preview{
+  color:var(--qmb-ink);
+}
+/* The same theme bridge applies to rate cards and manual contract editors. */
+.sales-app .qmb :is(.pricing-manual,.pricing-contract,.pricing-rate-sheet){
+  --surface:var(--qmb-card);--ink-muted:var(--qmb-muted);--accent:var(--qmb-accent);
+  color:var(--qmb-ink);
+}
+.sales-app .qmb :is(.pricing-manual,.pricing-contract,.pricing-rate-sheet) :is(input,select,textarea){
+  color:var(--qmb-ink);background:var(--qmb-bg);border-color:var(--qmb-border);
+}
+/* Pricing inspector is 244px wide. Never allow two status cards to overlap. */
+.sales-app .qmb .qmb-desktop-inspector.is-pricing .qmb-desktop-stat-grid{
+  grid-template-columns:minmax(0,1fr);width:100%;gap:7px;
+}
+.sales-app .qmb .qmb-desktop-inspector.is-pricing .qmb-desktop-stat-grid>div{
+  min-width:0;width:100%;padding:10px 12px;text-align:left;overflow-wrap:anywhere;
+  display:grid;gap:3px;
+}
+.sales-app .qmb .qmb-desktop-inspector.is-pricing .qmb-desktop-stat-grid strong{
+  display:block;min-width:0;font-size:13px;line-height:1.32;
+  white-space:normal;overflow-wrap:anywhere;
+}
+.sales-app .qmb .qmb-desktop-inspector.is-pricing .qmb-desktop-stat-grid small{
+  font-size:10px;line-height:1.25;
+}
+.sales-app .qmb .qmb-desktop-inspector.is-pricing .qmb-desktop-grand-total,
+.sales-app .qmb .qmb-desktop-inspector.is-pricing .qmb-desktop-readiness,
+.sales-app .qmb .qmb-desktop-inspector.is-pricing .qmb-desktop-stat-grid{
+  min-width:0;max-width:100%;
+}

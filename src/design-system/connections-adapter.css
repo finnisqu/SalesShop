@@ -1,0 +1,446 @@
+/*
+ * SalesShop UI Foundation v1 — Batch 4 Connections adapter.
+ * Scoped entirely to the existing Connections route; no data/CRM changes.
+ * CSS palette values are always paired with their foreground to avoid
+ * high-contrast and Dark-mode regressions.
+ */
+:root[data-sales-theme] .sales-app.view-dashboard {
+  --ss-connections-bg:var(--ss-theme-canvas,var(--ss-app-bg));
+  --ss-connections-rail:var(--ss-theme-base,var(--ss-shell-bg));
+  --ss-connections-card:var(--ss-theme-card,var(--ss-surface-raised));
+  --ss-connections-tint:var(--ss-theme-tint,var(--ss-surface));
+  --ss-connections-ink:var(--ss-theme-ink,var(--ss-text));
+  --ss-connections-muted:var(--ss-theme-muted,var(--ss-text-muted));
+  --ss-connections-border:var(--ss-theme-border,var(--ss-border));
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-workspace {
+  flex:1 1 auto;
+  height:auto;
+  min-height:0;
+  min-width:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  background:var(--ss-connections-bg);
+  color:var(--ss-connections-ink);
+  gap:var(--ss-space-3);
+  padding:var(--ss-space-5) var(--ss-page-inset) calc(var(--ss-space-6) + env(safe-area-inset-bottom));
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+}
+/* Shared PageHeader — align with Settings, but keep workspace statistics. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-heading.connections-foundation-heading {
+  align-items:center;
+  gap:var(--ss-space-4);
+  border-bottom:1px solid var(--ss-connections-border);
+  padding:0 0 var(--ss-space-4);
+  color:var(--ss-connections-ink);
+  margin:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-heading .ss-page-header__title {
+  margin:0;
+  color:var(--ss-connections-ink);
+  font:700 var(--ss-text-page)/1.16 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-heading .ss-page-header__eyebrow {
+  color:var(--ss-connections-muted);
+  font:750 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-heading .ss-page-header__description {
+  margin:0;
+  color:var(--ss-connections-muted);
+  font:400 var(--ss-text-body)/1.5 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-workspace-summary strong {
+  color:var(--ss-connections-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-workspace-summary span {
+  color:var(--ss-connections-muted);
+}
+/* Shared SectionTabs: selected card and its typography always agree. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs {
+  flex:0 0 auto;
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  gap:var(--ss-space-1);
+  padding:var(--ss-space-1);
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-connections-rail);
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+}
+.sales-app.view-dashboard .connections-tabs.ss-section-tabs::-webkit-scrollbar {display:none}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab {
+  flex:1 0 auto;
+  min-width:100px;
+  min-height:50px;
+  padding:var(--ss-space-2) var(--ss-space-3);
+  border-radius:var(--ss-radius-sm);
+  background:transparent;
+  border:1px solid transparent;
+  color:var(--ss-connections-ink);
+  text-align:left;
+  scroll-snap-align:start;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab strong {
+  color:inherit;
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab small {
+  color:var(--ss-connections-muted);
+  font:400 var(--ss-text-xs)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab:is(:hover,:focus-visible) {
+  background:var(--ss-connections-tint);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab.active {
+  background:var(--ss-connections-tint);
+  border-color:var(--ss-connections-border);
+  box-shadow:inset 0 -3px var(--ss-accent);
+  color:var(--ss-connections-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard :is(.connections-tabs button,.connections-directory button,.connections-directory-toolbar button):focus-visible {
+  outline:3px solid var(--ss-focus);
+  outline-offset:2px;
+}
+/* Panel owns the reporting summary header and scope controls together.
+ * It is not a second scrolling surface; the outer Connections route scrolls. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-scope-strip.connections-foundation-scope.ss-panel {
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:var(--ss-space-3);
+  padding:var(--ss-space-3);
+  height:auto;
+  min-height:0;
+  overflow:visible;
+  flex:0 0 auto;
+  background:var(--ss-connections-card);
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-md);
+  color:var(--ss-connections-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope > .ss-panel__header {
+  display:grid;
+  padding:0;
+  margin:0;
+  border:0;
+  min-width:0;
+  font:inherit;
+}
+.sales-app.view-dashboard .connections-foundation-scope .ss-panel__header > div {
+  display:grid;
+  gap:var(--ss-space-1);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope .ss-panel__header strong {
+  font:700 16px/1.3 var(--ss-font-editorial);
+  color:var(--ss-connections-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope .ss-panel__header small {
+  font:400 var(--ss-text-xs)/1.35 var(--ss-font-body);
+  color:var(--ss-connections-muted);
+}
+.sales-app.view-dashboard .connections-foundation-scope > .ss-panel__body {
+  padding:0;
+  min-width:0;
+  flex:0 1 auto;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope .connections-scope-buttons {
+  background:var(--ss-connections-rail);
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope .connections-scope-buttons .ss-button {
+  min-height:40px;
+  border-color:transparent;
+  background:transparent;
+  color:var(--ss-connections-muted);
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope .connections-scope-buttons .ss-button.active {
+  color:var(--ss-connections-ink);
+  background:var(--ss-connections-tint);
+  border-color:var(--ss-connections-border);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-scope-note {
+  font:400 var(--ss-text-sm)/1.5 var(--ss-font-body);
+  color:var(--ss-connections-muted);
+}
+/* Directory search/filter fields: labels, text and backgrounds use one scale. */
+.sales-app.view-dashboard .connections-directory-toolbar {
+  align-items:end;
+  gap:var(--ss-space-2);
+}
+.sales-app.view-dashboard .connections-directory-toolbar .ss-field {
+  min-width:0;
+  gap:var(--ss-space-1);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory-toolbar .ss-field__label {
+  color:var(--ss-connections-muted);
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory-toolbar .ss-field :is(input,select) {
+  min-height:var(--ss-control-height);
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-connections-card);
+  color:var(--ss-connections-ink);
+  font:400 var(--ss-text-body)/1.4 var(--ss-font-body);
+  box-sizing:border-box;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory-toolbar .ss-field input::placeholder {
+  color:var(--ss-connections-muted);
+  opacity:1;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory-toolbar .connections-add.ss-button {
+  min-height:var(--ss-control-height);
+  background:var(--ss-connections-ink);
+  color:var(--ss-connections-card);
+  border-color:var(--ss-connections-ink);
+  border-radius:var(--ss-radius-sm);
+  font:750 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+/* Reusable card contract across directory and Dashboard. No nested buttons
+ * are introduced; each CRM directory record keeps its existing click target. */
+:root[data-sales-theme] .sales-app.view-dashboard :is(
+  .connections-record, .dashboard-kpi, .dashboard-panel,
+  .connections-add-form, .connections-person-editor
+) {
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-connections-card);
+  color:var(--ss-connections-ink);
+  box-shadow:var(--ss-shadow-raised);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record:hover {
+  background:var(--ss-connections-tint);
+  border-color:var(--ss-accent);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record > strong,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-person-record > div > strong,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record > b {
+  color:var(--ss-connections-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record :is(small,.connections-record-eyebrow) {
+  color:var(--ss-connections-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-arrow {
+  color:var(--ss-accent);
+}
+:root[data-sales-theme] .sales-app.view-dashboard :is(
+  .connections-count,.connections-empty,.connections-activity-list small,
+  .connections-activity-list time,.connections-scope-note
+) {
+  color:var(--ss-connections-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-empty.ss-status {
+  margin:0;
+  padding:var(--ss-space-5) var(--ss-space-3);
+  background:var(--ss-connections-rail);
+  border:1px dashed var(--ss-connections-border);
+  border-radius:var(--ss-radius-md);
+  color:var(--ss-connections-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard :is(
+  .connections-activity-list>button,.connections-notice
+) {
+  background:var(--ss-connections-card);
+  color:var(--ss-connections-ink);
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-add-form :is(input,select),
+:root[data-sales-theme] .sales-app.view-dashboard .connections-person-editor :is(input,select) {
+  background:var(--ss-connections-card);
+  color:var(--ss-connections-ink);
+  border:1px solid var(--ss-connections-border);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-add-form label>span,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-person-editor label>span {
+  color:var(--ss-connections-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-add-form button,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-person-editor button {
+  background:var(--ss-connections-rail);
+  color:var(--ss-connections-ink);
+  border:1px solid var(--ss-connections-border);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-add-form button.primary,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-person-editor button.primary {
+  background:var(--ss-connections-ink);
+  color:var(--ss-connections-card);
+  border-color:var(--ss-connections-ink);
+}
+/* KPI/report panels get the same palette, radii, headings and card gutters as
+ * Settings' shared panels. Dashboard data and its nested behavior stay intact. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-kpi,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-panel {
+  min-width:0;
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-md);
+  background:var(--ss-connections-card);
+  color:var(--ss-connections-ink);
+  box-shadow:var(--ss-shadow-raised);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-kpi>span,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-panel h2,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-kpi>strong {
+  color:var(--ss-connections-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-kpi small,.dashboard-eyebrow,
+  .dashboard-panel>header>span,.dashboard-panel>header>strong,
+  .dashboard-attention-copy small,.dashboard-attention-copy span,
+  .dashboard-attention-side small,.dashboard-list-main>span,
+  .dashboard-list-main small,.dashboard-list-side small,
+  .dashboard-record-note,.dashboard-stage-copy span,.dashboard-stage-copy small,
+  .dashboard-funnel-flow span,.dashboard-funnel-stats span,
+  .dashboard-activity-row small
+) {
+  color:var(--ss-connections-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-copy strong,.dashboard-attention-side strong,
+  .dashboard-stage-copy strong,.dashboard-stage-copy b,
+  .dashboard-funnel-flow strong,.dashboard-funnel-stats strong,
+  .dashboard-list-main strong,.dashboard-list-side strong,
+  .dashboard-activity-row strong
+) {
+  color:var(--ss-connections-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-row,.dashboard-list-row,.dashboard-funnel-stats>div
+) {
+  background:var(--ss-connections-rail);
+  border-color:var(--ss-connections-border);
+  color:var(--ss-connections-ink);
+  border-radius:var(--ss-radius-sm);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-row:hover,.dashboard-list-row:hover
+) {
+  background:var(--ss-connections-tint);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-panel {
+  padding:var(--ss-space-4);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-panel > header {
+  border-bottom-color:var(--ss-connections-border);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-panel h2 {
+  font:600 20px/1.25 var(--ss-font-editorial);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-link-button {
+  min-height:40px;
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-sm);
+  background:var(--ss-connections-rail);
+  color:var(--ss-connections-ink);
+  font:700 var(--ss-text-sm)/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-empty {
+  border-color:var(--ss-connections-border);
+  border-radius:var(--ss-radius-sm);
+  color:var(--ss-connections-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-footer {
+  border-color:var(--ss-connections-border);
+  color:var(--ss-connections-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-footer button {
+  background:var(--ss-connections-rail);
+  color:var(--ss-connections-ink);
+  border:1px solid var(--ss-connections-border);
+  border-radius:var(--ss-radius-sm);
+}
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-workspace {
+    flex:1 1 auto;
+    height:auto;
+    min-height:0;
+    gap:var(--ss-space-2);
+    padding:var(--ss-space-2) var(--ss-space-2) calc(var(--ss-space-6) + env(safe-area-inset-bottom));
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-heading.connections-foundation-heading {
+    padding:var(--ss-space-1) var(--ss-space-1) var(--ss-space-3);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-heading .ss-page-header__title {
+    font-size:var(--ss-text-page);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-heading .ss-page-header__eyebrow {
+    font-size:var(--ss-text-xs);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-heading .ss-page-header__description {
+    font-size:var(--ss-text-sm);
+    line-height:1.4;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs {
+    gap:var(--ss-space-1);
+    padding:var(--ss-space-1);
+    scroll-snap-type:x proximity;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab {
+    flex:0 0 auto;
+    min-width:94px;
+    min-height:48px;
+    padding:var(--ss-space-2);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab strong {
+    font-size:var(--ss-text-sm);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab small {
+    font-size:var(--ss-text-xs);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-scope-strip.connections-foundation-scope.ss-panel {
+    gap:var(--ss-space-3);
+    padding:var(--ss-space-3);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope .connections-scope-buttons .ss-button {
+    min-height:44px;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-toolbar .ss-field :is(input,select) {
+    min-height:44px;
+    font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-toolbar .connections-add.ss-button {
+    min-height:44px;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-kpi {
+    min-height:115px;
+    padding:var(--ss-space-3);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-kpi>strong {
+    font-size:clamp(21px,6.5vw,32px);
+    overflow-wrap:anywhere;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-kpi small {
+    font-size:var(--ss-text-xs);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-overview .dashboard-panel {
+    padding:var(--ss-space-3);
+  }
+  /* Keep one scroll owner: viewport -> Connections; Dashboard expands in-flow.
+     The old redundant Connections footer stays hidden on phones. */
+  .sales-app.view-dashboard .connections-footer {
+    display:none;
+  }
+}
+@media(max-width:380px) {
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-scope-strip.connections-foundation-scope.ss-panel {
+    align-items:stretch;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope > .ss-panel__body {
+    flex:1 1 100%;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope .connections-scope-buttons {
+    width:100%;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-foundation-scope .connections-scope-buttons .ss-button {
+    flex:1 1 0;
+  }
+}

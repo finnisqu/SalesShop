@@ -1,0 +1,155 @@
+/* Live editing on the Beta-only customer preview. Classic, shared public
+   quote and printable paper remain presentation-only. */
+.qmb .qmb-preview-seller-toolbar{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;margin:8px 0 12px;padding:12px 14px;border:1px solid var(--qmb-border);
+  border-radius:12px;background:var(--qmb-card)}
+.qmb .qmb-preview-seller-toolbar>div{display:grid;gap:3px}
+.qmb .qmb-preview-seller-toolbar strong{font-size:13px}
+.qmb .qmb-preview-seller-toolbar small{font-size:11px;color:var(--qmb-muted);line-height:1.4}
+.qmb .qmb-preview-seller-toolbar button{padding:8px 11px;min-height:36px;
+  border-radius:9px;border:1px solid var(--qmb-border);background:var(--qmb-card);
+  color:var(--qmb-accent);font-weight:750;font-size:12px}
+.qmb .qmb-preview-seller-toolbar button[aria-pressed=true]{background:var(--qmb-tint)}
+.qmb .qmb-preview-seller-toolbar .qmb-preview-back-review{
+  background:var(--qmb-tint);border-color:var(--qmb-border);color:var(--qmb-ink);
+}
+.qmb .qmb-preview-seller-toolbar .qmb-preview-back-review:focus-visible{
+  outline:2px solid var(--qmb-accent);outline-offset:2px;
+}
+.qmb .qmb-preview.is-live-editing .customer-quote-row{position:relative}
+.qmb .qmb-preview-title-edit{padding:1px 3px;border:1px solid transparent;background:transparent;
+  color:inherit;cursor:pointer;text-align:left;font:inherit;font-weight:inherit}
+.qmb .qmb-preview-title-edit:hover,.qmb .qmb-preview-title-edit:focus-visible{
+  border-color:var(--qmb-accent);border-radius:5px}
+.qmb .qmb-preview-title-edit span{opacity:.35;color:var(--qmb-accent);margin-left:5px}
+.qmb .qmb-preview-title-edit:hover span,.qmb .qmb-preview-title-edit:focus-visible span{opacity:1}
+.qmb .qmb-preview-name-edit{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%}
+.qmb .qmb-preview-name-edit input{width:min(220px,55vw);max-width:100%;
+  border:1px solid var(--qmb-accent);border-radius:7px;padding:5px;
+  font:inherit;color:var(--qmb-ink);background:#fff}
+.qmb .qmb-preview-name-edit button{border:1px solid var(--qmb-border);border-radius:6px;
+  color:var(--qmb-accent);background:var(--qmb-card);min-width:29px;min-height:29px}
+.qmb .qmb-preview-edit-trigger{margin-left:5px;padding:1px 5px;min-width:23px;min-height:23px;
+  font-size:13px;border:1px solid var(--qmb-border);border-radius:6px;background:#fff;
+  color:var(--qmb-accent);opacity:.15;cursor:pointer}
+.qmb .qmb-preview.is-live-editing .customer-quote-row:hover .qmb-preview-edit-trigger,
+.qmb .qmb-preview-edit-trigger:focus-visible{opacity:1}
+.qmb .qmb-preview-edit-backdrop{position:fixed;inset:0;z-index:95;background:rgba(7,16,10,.24);
+  display:flex;align-items:center;justify-content:flex-end;padding:16px}
+.qmb .qmb-preview-edit-dialog{display:flex;flex-direction:column;
+  width:min(390px,100%);max-height:min(86dvh,820px);min-height:0;overflow:hidden;
+  background:var(--qmb-card);border:1px solid var(--qmb-border);border-radius:16px;
+  color:var(--qmb-ink);box-shadow:0 13px 46px rgba(0,0,0,.26)}
+.qmb .qmb-preview-edit-head,.qmb .qmb-preview-edit-foot{display:flex;align-items:start;
+  justify-content:space-between;gap:9px;padding:13px 15px;border-bottom:1px solid var(--qmb-border)}
+.qmb .qmb-preview-edit-head>div{display:grid;gap:4px}
+.qmb .qmb-preview-edit-head strong{font-size:15px}
+.qmb .qmb-preview-edit-head small{color:var(--qmb-muted);font-size:11px;line-height:1.4}
+.qmb .qmb-preview-edit-head button{border:0;background:transparent;
+  font-size:22px;color:var(--qmb-ink);min-width:33px}
+.qmb .qmb-preview-edit-body{padding:15px;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:grid;gap:13px;align-content:start}
+.qmb .qmb-preview-edit-foot{justify-content:flex-end;border:0;border-top:1px solid var(--qmb-border)}
+.qmb .qmb-preview-edit-foot button{min-width:100px}
+.qmb .qmb-preview-price-form{display:grid;gap:11px;min-width:0}
+.qmb .qmb-preview-edit-total,.qmb .qmb-preview-context-total,.qmb .qmb-preview-quote-total{
+  display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px}
+.qmb .qmb-preview-edit-total{padding:10px;border-radius:9px;background:var(--qmb-tint)}
+.qmb .qmb-preview-edit-total strong,.qmb .qmb-preview-context-total strong{font-size:15px}
+.qmb .qmb-preview-context-total{padding:5px 0}
+.qmb .qmb-preview-context-total small{color:var(--qmb-muted)}
+.qmb .qmb-preview-quote-total{padding:10px 0;border-top:1px solid var(--qmb-border);font-weight:750}
+.qmb .qmb-preview-mode-picker{display:flex;flex-wrap:wrap;gap:4px}
+.qmb .qmb-preview-mode-picker button{flex:1;min-width:65px;border:1px solid var(--qmb-border);
+  border-radius:8px;padding:8px 5px;background:var(--qmb-card);color:var(--qmb-muted);font-size:12px}
+.qmb .qmb-preview-mode-picker button[aria-pressed=true]{background:var(--qmb-tint);
+  border-color:var(--qmb-accent);color:var(--qmb-accent);font-weight:800}
+.qmb .qmb-preview-price-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.qmb .qmb-preview-slab-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.qmb .qmb-preview-price-fields label,.qmb .qmb-preview-slab-fields label,.qmb .qmb-preview-money-field{
+  display:grid;gap:5px;font-size:11px;font-weight:750;color:var(--qmb-muted)}
+.qmb .qmb-preview-price-fields input,.qmb .qmb-preview-slab-fields input,
+.qmb .qmb-preview-money-field :is(input,select){
+  box-sizing:border-box;width:100%;min-width:0;min-height:41px;padding:8px 9px;
+  background:var(--qmb-card);color:var(--qmb-ink);border:1px solid var(--qmb-border);
+  border-radius:9px;font-size:15px}
+.qmb .qmb-preview-pricing-info{font-size:11px;line-height:1.5;color:var(--qmb-muted)}
+.qmb .qmb-preview-levels-toggle{min-height:35px;border:1px solid var(--qmb-border);
+  border-radius:9px;background:var(--qmb-card);color:var(--qmb-accent);font-weight:700}
+.qmb .qmb-preview-rate-choices{max-height:330px;overflow-y:auto}
+.qmb .qmb-preview-line-tools{display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+  border-top:1px solid var(--qmb-border);padding-top:10px}
+.qmb .qmb-preview-line-tools strong{flex:1;min-width:100px;font-size:11px}
+.qmb .qmb-preview-line-tools button{min-height:34px;min-width:58px;border:1px solid var(--qmb-border);
+  border-radius:8px;background:var(--qmb-card);color:var(--qmb-accent)}
+.qmb .qmb-preview-line-tools button:disabled{opacity:.35}
+@media (hover:none),(max-width:700px){
+  .qmb .qmb-preview-edit-trigger{opacity:1}
+  .qmb .qmb-preview-edit-backdrop{padding:0;align-items:flex-end}
+  .qmb .qmb-preview-edit-dialog{width:100%;max-height:85dvh;border-radius:17px 17px 0 0}
+}
+@media print{
+  .qmb .qmb-preview-seller-toolbar,.qmb .qmb-preview-edit-trigger,
+  .qmb .qmb-preview-edit-backdrop,.qmb .qmb-preview-name-edit button{display:none!important}
+}
+
+
+/* Compact Preview tools: just one title, device-size toggle and edit action. */
+.qmb .qmb-preview-action-group{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qmb .qmb-preview-view-label{display:grid;gap:3px}
+.qmb .qmb-preview-device-toggle{display:flex;gap:3px;padding:3px;border:1px solid var(--qmb-border);
+  border-radius:10px;background:var(--qmb-bg)}
+.qmb .qmb-preview-device-toggle button{border:0;border-radius:7px;
+  padding:7px 9px;min-height:30px;white-space:nowrap;font-size:11px;color:var(--qmb-muted);
+  background:transparent}
+.qmb .qmb-preview-device-toggle button[aria-pressed=true]{
+  background:var(--qmb-card);color:var(--qmb-accent);font-weight:800;
+  box-shadow:0 1px 4px rgba(0,0,0,.08)}
+@media(max-width:999px), (max-height:549px){
+  .qmb .qmb-preview-device-toggle{display:none}
+}
+/* A narrow document view inside the same desktop viewport. Use container
+   queries so phone document layout responds to the DOCUMENT width rather than
+   relying on a physically narrow browser window. */
+@media(min-width:1000px) and (min-height:550px){
+  .qmb .qmb-preview.is-phone-view{box-sizing:border-box;width:min(390px,100%)!important;
+    margin-inline:auto;max-width:390px!important;min-width:0;
+    padding:0!important;border:1px solid var(--qmb-border);border-radius:15px;
+    box-shadow:0 8px 30px rgba(0,0,0,.1);overflow:hidden;
+    container-type:inline-size;container-name:quote-phone-preview}
+  .qmb .qmb-preview.is-phone-view>.customer-quote-paper{width:100%!important;min-width:0;
+    box-sizing:border-box;margin:0;box-shadow:none;padding:19px 13px 23px}
+}
+@container quote-phone-preview (max-width:410px){
+  .customer-quote-paper{max-width:100%;padding:18px 12px}
+  .customer-quote-letterhead{display:grid;grid-template-columns:1fr;gap:12px;padding-bottom:15px}
+  .customer-quote-letterhead>div>strong{font-size:22px}
+  .customer-quote-letterhead dl{min-width:0}
+  .customer-quote-recipient{display:grid;grid-template-columns:1fr;gap:11px;padding:14px 0}
+  .customer-quote-row,
+  .columns-q1-r0-a1 .customer-quote-row,
+  .columns-q0-r1-a1 .customer-quote-row,
+  .columns-q1-r1-a1 .customer-quote-row{font-size:10px;gap:6px}
+  .customer-quote-table-head{font-size:9px}
+  .customer-quote-total{display:flex;justify-content:space-between;gap:10px}
+  .customer-quote-total strong{min-width:0}
+  .customer-quote-row>div:first-child{min-width:0;overflow-wrap:anywhere}
+}
+@media print{
+  .qmb .qmb-preview-device-toggle{display:none!important}
+}
+
+
+/* On desktop the viewport switch and Make Edits belong to one action row.
+   The generic toolbar child display:grid must not override this flex layout. */
+.qmb .qmb-preview-seller-toolbar>.qmb-preview-action-group {
+  display:flex;flex-direction:row;justify-content:flex-end;
+  align-items:center;gap:8px;flex-wrap:wrap;min-width:0;
+}
+.qmb .qmb-preview-action-group>.qmb-preview-device-toggle{flex:0 0 auto}
+.qmb .qmb-preview-action-group>button{flex:0 0 auto}
+@media(max-width:560px){
+ .qmb .qmb-preview-seller-toolbar{gap:8px}
+ .qmb .qmb-preview-seller-toolbar>.qmb-preview-action-group{
+   justify-content:flex-start;width:100%;flex-wrap:wrap}
+}

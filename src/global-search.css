@@ -1,0 +1,225 @@
+.global-search-launcher {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(80,74,64,.14);
+  border-radius: 999px;
+  background: rgba(255,255,255,.52);
+  color: #4c4942;
+  cursor: pointer;
+}
+
+.global-search-launcher svg,
+.global-search-input-wrap svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.global-search-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: max(80px, 10vh) 16px 20px;
+  background: rgba(37,34,29,.28);
+  backdrop-filter: blur(4px);
+}
+
+.global-search-sheet {
+  width: min(680px, 100%);
+  max-height: min(72vh, 680px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(89,78,58,.16);
+  border-radius: 12px;
+  background: #f7f4e9;
+  box-shadow: 0 22px 60px rgba(44,38,28,.24);
+}
+
+.global-search-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid rgba(97,86,66,.12);
+}
+
+.global-search-input-wrap {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 46px;
+  padding: 0 13px;
+  border: 1px solid rgba(85,75,58,.15);
+  border-radius: 8px;
+  background: rgba(255,255,255,.72);
+  color: #777168;
+}
+
+.global-search-input-wrap input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #2e2c28;
+  font: inherit;
+  font-size: 16px;
+}
+
+.global-search-input-wrap input::-webkit-search-cancel-button { opacity: .55; }
+
+.global-search-close {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #68635b;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.global-search-results {
+  min-height: 180px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.global-search-result {
+  width: 100%;
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(91,80,60,.08);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.global-search-result:hover,
+.global-search-result:focus-visible {
+  background: rgba(255,255,255,.68);
+  outline: none;
+}
+
+.global-search-kind {
+  min-width: 64px;
+  display: inline-flex;
+  justify-content: center;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: rgba(74,68,59,.08);
+  color: #706a60;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.global-search-result-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.global-search-result-copy strong,
+.global-search-result-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-result-copy strong { font-size: 13px; }
+.global-search-result-copy small { color: #827b70; font-size: 10px; }
+.global-search-arrow { color: #9d968b; font-size: 22px; }
+
+.global-search-empty {
+  min-height: 190px;
+  display: grid;
+  place-content: center;
+  gap: 5px;
+  padding: 24px;
+  color: #817a70;
+  text-align: center;
+}
+
+.global-search-empty strong { color: #47433c; font-size: 15px; }
+.global-search-empty span { font-size: 11px; }
+
+@media (max-width: 700px) {
+  .global-search-launcher {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    margin-left: auto;
+    background: rgba(255,255,255,.62);
+  }
+
+  .app-account-zone {
+    margin-left: 0 !important;
+  }
+
+  .global-search-backdrop {
+    align-items: flex-end;
+    padding: 0;
+    background: rgba(34,31,26,.25);
+  }
+
+  .global-search-sheet {
+    width: 100%;
+    max-height: min(78dvh, 720px);
+    border-inline: 0;
+    border-bottom: 0;
+    border-radius: 15px 15px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .global-search-header {
+    padding: 10px 10px 8px;
+  }
+
+  .global-search-input-wrap {
+    height: 48px;
+  }
+
+  .global-search-results {
+    min-height: 220px;
+  }
+
+  .global-search-result {
+    min-height: 64px;
+    padding: 10px 9px;
+  }
+
+  .global-search-kind {
+    min-width: 58px;
+  }
+
+  .global-search-result-copy strong { font-size: 14px; }
+  .global-search-result-copy small { font-size: 11px; }
+}

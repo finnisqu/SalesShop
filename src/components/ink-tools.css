@@ -1,0 +1,126 @@
+.ink-layer.is-active {
+  touch-action: pan-x pan-y !important;
+}
+
+.ink-layer.is-active.touch-ink-enabled {
+  touch-action: none !important;
+}
+
+.ink-layer.tool-pen,
+.ink-layer.tool-marker,
+.ink-layer.tool-highlighter,
+.ink-layer.tool-lasso {
+  cursor: crosshair;
+}
+
+.ink-layer.tool-eraser {
+  cursor: cell;
+}
+
+.ink-selected-stroke {
+  stroke: rgba(70, 104, 142, .42);
+  stroke-width: 3;
+  paint-order: stroke fill;
+}
+
+.ink-lasso-path {
+  fill: rgba(76, 113, 154, .055);
+  stroke: rgba(63, 95, 131, .72);
+  stroke-width: 2;
+  stroke-dasharray: 9 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.ink-selection-ui {
+  pointer-events: none;
+}
+
+.ink-selection-box {
+  fill: rgba(78, 111, 149, .035);
+  stroke: rgba(69, 101, 137, .68);
+  stroke-width: 2;
+  stroke-dasharray: 8 7;
+}
+
+.ink-selection-label {
+  fill: rgba(64, 83, 103, .78);
+  font: 700 15px/1 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: .02em;
+}
+
+.ink-input-toggle {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  padding: 3px;
+  border: 1px solid rgba(77, 70, 59, .16);
+  border-radius: 6px;
+  background: rgba(255,255,255,.45);
+}
+
+.ink-input-toggle > span {
+  padding: 0 5px 0 3px;
+  color: #8b867d;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.ink-input-toggle button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 4px;
+  padding: 0 9px;
+  background: transparent;
+  color: #6e695f;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ink-input-toggle button.active {
+  background: #fffdf6;
+  color: #34312b;
+  box-shadow: 0 1px 4px rgba(50,43,34,.12);
+}
+
+.rough-shape-artwork {
+  pointer-events: none;
+}
+
+@media (pointer: coarse) {
+  .ink-input-toggle {
+    display: inline-flex;
+  }
+}
+
+@media (pointer: fine) {
+  .ink-input-toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .paper-toolbar .tool-group {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .paper-toolbar .tool-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ink-input-toggle {
+    min-height: 38px;
+  }
+
+  .ink-input-toggle button {
+    min-height: 32px;
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+}

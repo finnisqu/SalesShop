@@ -1,0 +1,581 @@
+/*
+ * SalesShop legacy-UI contrast bridge.
+ *
+ * The UI Foundation tokens already offer per-theme ink and muted ink, but
+ * several older workspaces hard-code brown/grey foregrounds. On a dark theme
+ * those declarations beat inherited color. This layer gives all legacy
+ * surfaces predictable foregrounds until their migration.
+ *
+ * Scope strictly to .sales-app: never theme public quote pages. Preserve
+ * deliberately light surfaces (notebook sheets, quote documents, branding
+ * previews) and intentional status/semantic color chips.
+ */
+
+/* Themed surfaces inherit the same accessible foreground vocabulary. */
+:root[data-sales-theme] .sales-app {
+  --ss-on-canvas: var(--ss-theme-ink);
+  --ss-on-surface: var(--ss-theme-ink);
+  --ss-on-muted: var(--ss-theme-muted);
+  --ss-on-accent: var(--ss-theme-contrast);
+  --ink-muted: var(--ss-on-muted);
+  --paper-ink: #353025; /* physical notebook paper always stays light */
+}
+:root[data-sales-theme] .sales-app :is(
+  .board-view, .accounts-view, .catalog-workspace, .materials-workspace,
+  .sinks-workspace, .rates-workspace, .connections-workspace,
+  .leadership-dashboard, .company-settings-view, .quotes-view,
+  .quotes-workbench, .viewer-workspace, .role-perspective-settings
+) {
+  --ink-muted: var(--ss-on-muted);
+  color: var(--ss-on-canvas);
+}
+
+/* Tabs, menus, popovers and support dialogs have their own legacy colors. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-commandbar, .mobile-app-drawer, .mobile-app-drawer-nav,
+  .mobile-app-context-section, .mobile-catalog-destinations,
+  .mobile-catalog-tools-sheet, .materials-mobile-tools-sheet,
+  .rates-mobile-tools-sheet, .sinks-mobile-tools-sheet,
+  .quote-mobile-commandbar, .quote-mobile-document-switcher,
+  .quotes-sidebar, .quote-list, .quote-workbench-header,
+  .catalog-header, .catalog-section-nav, .materials-subtabs,
+  .supplier-navigator, .supplier-detail, .supplier-detail-panel,
+  .settings-tabs, .settings-panel-grid, .company-settings-card,
+  .connections-tabs, .connections-directory,
+  .global-search-sheet, .global-search-dialog, .quick-create-sheet,
+  .project-editor, .account-editor, .quote-rate-picker,
+  .quote-material-picker, .rate-book-workspace,
+  .team-new-invite, .team-invite-form
+) {
+  --ink: var(--ss-on-surface);
+  --muted: var(--ss-on-muted);
+  --ink-muted: var(--ss-on-muted);
+  color: var(--ss-on-surface);
+}
+
+/*
+ * Refresh surface colors together with text. Applying white text to an
+ * unmodified ivory card is a contrast failure too. This surface list covers
+ * the new UI and the older nested/mobile cards left out of the first pass.
+ */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer, .mobile-app-context-section,
+  .mobile-app-drawer-nav button, .mobile-app-catalog-section-list button,
+  .mobile-catalog-reference-card, .mobile-catalog-reference-trigger,
+  .mobile-catalog-reference-detail, .mobile-catalog-reference-row,
+  .mobile-catalog-filter-trigger, .mobile-catalog-tools-sheet,
+  .materials-mobile-tools-sheet, .rates-mobile-tools-sheet,
+  .sinks-mobile-tools-sheet, .rates-mobile-tools-trigger,
+  .materials-mobile-tools-trigger, .sinks-mobile-tools-trigger,
+  .quote-mobile-commandbar, .quote-mobile-document-switcher,
+  .quote-list-item, .quote-view-switch, .quote-section-editor,
+  .quote-details-grid, .quote-customer-controls, .quote-lines-editor,
+  .quote-add-row, .quote-rate-picker, .quote-rate-results,
+  .quote-material-picker, .quote-material-results,
+  .board-header-panel, .board-column-header, .board-quick-add,
+  .project-card, .account-card, .accounts-inference-note,
+  .account-health-callout, .dashboard-kpi, .dashboard-card,
+  .dashboard-panel, .connections-directory-toolbar, .connections-record,
+  .connections-add-form, .connections-person-editor,
+  .supplier-navigator, .supplier-nav-item, .supplier-detail,
+  .supplier-filter-chips button, .supplier-detail-panel,
+  .materials-toolbar, .materials-show-card, .materials-reference-row,
+  .rates-reference-card, .rates-reference-row,
+  .sinks-reference-card, .sinks-list-card,
+  .company-settings-card, .settings-tabs, .leadership-dashboard,
+  .settings-preference-row select, .team-invite-form,
+  .viewer-record, .viewer-metrics>div,
+  .role-perspective-settings-card, .role-perspective-capability,
+  .global-search-sheet, .global-search-result,
+  .quick-create-sheet, .quick-create-option,
+  .project-editor, .account-editor
+) {
+  background-color: var(--ss-theme-card);
+  border-color: var(--ss-theme-border);
+  color: var(--ss-on-surface);
+}
+/*
+ * Paper-textured legacy backgrounds sometimes use opaque cream gradients,
+ * not just background-color. Reset only the *workspace* textures in Dark.
+ * Notebook paper and the customer quote document keep their own styling.
+ */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .board-column, .quotes-sidebar, .quote-editor-pane,
+  .quote-preview-pane, .sinks-workspace, .materials-workspace,
+  .rates-workspace, .supplier-navigator, .leadership-dashboard,
+  .quote-workbench-body, .catalog-section-host
+) {
+  background: var(--ss-theme-base);
+  color: var(--ss-on-surface);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .project-card, .account-card, .board-column,
+  .quote-line-editor, .quote-section-editor,
+  .mobile-catalog-reference-card, .supplier-nav-item,
+  .dashboard-panel, .dashboard-kpi
+) {
+  background-image: none;
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .board-column, .dashboard-panel, .dashboard-kpi,
+  .quote-list-item, .quote-lines-editor, .quote-rate-results,
+  .supplier-nav-item, .mobile-catalog-reference-card
+) {
+  color:var(--ss-on-surface);
+  border-color:var(--ss-theme-border);
+}
+
+/* Indicate selection with a dark-surface tint instead of old cream. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer-nav button.active,
+  .mobile-catalog-reference-card.is-selected,
+  .quote-list-item.active, .quote-view-switch button.active,
+  .supplier-nav-item.active, .supplier-filter-chips button.active,
+  .materials-subtabs button.active, .settings-tabs button.active,
+  .project-card.is-selected, .account-card.is-selected
+) {
+  background-color: var(--ss-theme-tint);
+  border-color: var(--ss-theme-accent);
+  color: var(--ss-on-surface);
+}
+
+/*
+ * Surface-aware dark mode: pair EACH light foreground with a known dark
+ * background. Never repaint arbitrary descendants by tag name. The former
+ * selector applied light color to every span/div/button, including nested
+ * ivory paper and pastel controls (white on cream on iPhone).
+ */
+
+/* App chrome + BOTH mobile navigators. Quotes uses its own drawer. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer, .quote-mobile-navigator,
+  .mobile-app-commandbar, .quote-mobile-commandbar,
+  .quote-mobile-menu, .quote-mobile-tools-menu, .quote-mobile-view-menu,
+  .mobile-app-context-section, .mobile-catalog-destinations,
+  .mobile-app-drawer-owner-tools
+) {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer>header, .quote-mobile-navigator>header,
+  .quote-mobile-document-heading, .mobile-app-context-section>header
+) :is(strong,span,small) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer-nav button, .quote-mobile-app-nav button,
+  .mobile-catalog-section-list button,
+  .quote-mobile-document-list>button,
+  .quote-mobile-archive-toggle, .quote-mobile-document-heading>button,
+  .quote-mobile-view-menu>button, .quote-mobile-tool-grid button,
+  .quote-mobile-setup-grid button, .quote-mobile-zoom-row button,
+  .quote-mobile-document-actions>button,
+  .quote-mobile-view-button, .quote-mobile-more-button,
+  .quote-mobile-nav-button, .mobile-app-menu-button
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer-nav button.active,.quote-mobile-app-nav button.active,
+  .quote-mobile-view-menu>button.active,.quote-mobile-view-button.active,
+  .quote-mobile-more-button.active,.mobile-catalog-section-list button.active,
+  .quote-mobile-document-list>button.active,
+  .mobile-app-drawer-nav button.is-expanded
+) {
+  background:var(--ss-theme-tint);
+  border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .mobile-app-drawer-nav button, .quote-mobile-app-nav button,
+  .quote-mobile-document-list>button, .mobile-catalog-section-list button
+) :is(span,strong,small,b) {
+  color:inherit;
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .quote-mobile-document-heading small,.quote-mobile-document-list small,
+  .quote-mobile-view-menu small,.quote-mobile-menu-heading,
+  .mobile-app-drawer>header span,.quote-mobile-navigator>header span,
+  .mobile-app-catalog-chevron,.quote-mobile-current-document span
+) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app .quote-mobile-current-document strong {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .quote-mobile-document-actions>button.is-send,
+  .quote-mobile-document-actions>button.is-sign
+) {
+  background:var(--ss-theme-accent);
+  border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-contrast);
+}
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer-owner-tools .role-perspective-picker {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer-owner-tools .role-perspective-picker :is(span,select) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer-owner-tools .role-perspective-picker select {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color-scheme:dark;
+}
+/* The Cloud/role badge remains deliberately light. Its label needs dark ink. */
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer>footer .backend-status.cloud {
+  color:#27382f;
+}
+:root[data-sales-theme="dark"] .sales-app .mobile-app-drawer>header>button,
+:root[data-sales-theme="dark"] .sales-app .quote-mobile-navigator>header>button {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+}
+
+/* Quotes estimate editor: dark surfaces + light text in the SAME component. */
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-card,.quote-area-header,.quote-general-header,
+  .quote-section-editor,.quote-lines-editor,.quote-details-grid,
+  .quote-customer-controls,.quote-add-row,.quote-history,
+  .quote-notes-grid label,.quote-notes-grid label.internal-notes,
+  .quote-configuration-strip,.quote-list-item
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-header,.quote-general-header,.quote-section-editor,
+  .quote-add-row,.quote-customer-controls
+) {
+  background:var(--ss-theme-base);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-title>span,.quote-area-summary>span,
+  .quote-number,.quote-line-kind,.quote-control-heading,
+  .quote-lines-editor header small,.quote-notes-grid label>span,
+  .quote-general-title>small,.quote-list-item>small,
+  .quote-list-item>span
+) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-title input,.quote-area-summary strong,
+  .quote-general-title>strong,.quote-section-editor input,
+  .quote-list-item>strong,.quote-list-item>b,
+  .quote-lines-editor>header>strong,.quote-line-editor .quote-line-main,
+  .quote-notes-grid label>span
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-details-grid :is(input,select),
+  .quote-notes-grid textarea,.quote-title-input,
+  .quote-section-editor input,.quote-area-title input
+) {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+  caret-color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-notes-grid textarea,.quote-details-grid input
+)::placeholder {
+  color:var(--ss-theme-muted);
+  opacity:1;
+}
+/* Pastel action buttons deliberately retain their light surfaces. */
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-actions button,.quote-add-row button
+) {
+  color:#2b352e;
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-area-actions button:hover,.quote-add-row button:hover
+) {
+  color:#2b352e;
+}
+/* Notes are not customer paper; their dark-mode form fields use dark colors. */
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-line-editor,.quote-section-editor,.quote-history
+) {
+  background-color:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-quotes :is(
+  .quote-line-kind,.quote-history>div,.quote-customer-controls label
+) { color:var(--ss-theme-muted); }
+
+/* Common other dark workspace components, scoped instead of all descendants. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .board-column-header h2,.board-column-header strong,.project-card-facts strong,
+  .account-editor-section>header strong,.dashboard-heading h1,
+  .dashboard-kpi>strong,.connections-heading h1,
+  .company-settings-header h1,.viewer-workspace-header h1,
+  .supplier-navigator>header strong,.sinks-workspace-header h1
+) {color:var(--ss-theme-ink);}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .board-column-header span,.project-last-touch,.account-activity-row small,
+  .dashboard-kpi>span,.dashboard-subtitle,
+  .connections-heading p,.company-settings-header p,
+  .viewer-workspace-header p,.supplier-nav-item small
+) {color:var(--ss-theme-muted);}
+/* These existing controls live directly on themed dark surfaces. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .quotes-sidebar>header button,.quote-mobile-archive-toggle,
+  .global-search-launcher,.global-search-sheet input,
+  .quick-create-sheet input,.mobile-app-drawer-nav button
+) {
+  color:var(--ss-theme-ink);
+}
+/* Search, textareas and selectors should not show dark text on dark input. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .global-search-sheet input,.quick-create-sheet input,
+  .connections-workspace :is(input,select,textarea),
+  .catalog-workspace :is(input,select,textarea),
+  .company-settings-view :is(input,select,textarea)
+) {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .global-search-sheet input,.quick-create-sheet input,
+  .connections-workspace input,.catalog-workspace input,
+  .company-settings-view input
+)::placeholder {color:var(--ss-theme-muted);opacity:1;}
+
+/* Preserve light islands and their dark text, including live quote previews.
+ * Colorful semantic notices are not turned into white-on-pastel accidents. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .paper-sheet, .customer-quote-paper,
+  .company-branding-preview, .settings-appearance-preview
+) {
+  --ss-on-surface:#353025;
+  --ss-on-muted:#706759;
+  --ink:#353025;
+  --muted:#706759;
+  --ink-muted:#706759;
+  color:#353025;
+  color-scheme:light;
+}
+/* Existing pipeline/status pills deliberately have a light semantic fill. */
+:root[data-sales-theme="dark"] .sales-app :is(
+  .account-stage-won, .account-stage-quoted,
+  .account-stage-lost, .account-stage-non-customer,
+  .quote-send-button, .quote-revision-button,
+  .settings-primary-button, .quick-create-primary
+) {
+  color:#2e322b;
+  color-scheme:light;
+}
+:root[data-sales-theme="dark"] .sales-app :is(
+  .viewer-role-pill, .team-role-matrix-header
+) {
+  background:var(--ss-theme-tint);
+  color:var(--ss-on-surface);
+  border-color:var(--ss-theme-border);
+}
+
+/* Strengthen High Contrast with real semantic foregrounds, not old greys. */
+:root[data-sales-theme="contrast"] .sales-app {
+  --ss-on-surface:#111b1b;
+  --ss-on-muted:#293c41;
+}
+:root[data-sales-theme="contrast"] .sales-app :is(
+  .board-view,.quotes-view,.catalog-workspace,
+  .connections-workspace,.company-settings-view,.viewer-workspace
+) :is(h1,h2,h3,h4,h5,h6,p,strong,label,small) {
+  color:var(--ss-on-surface);
+}
+:root[data-sales-contrast="high"] .sales-app {
+  --ss-on-muted:var(--ss-theme-ink);
+}
+
+
+/*
+ * Dark mode detail pass — Connections reporting and Catalog Materials.
+ * Fix foreground/background together. Restrict to the two relevant views:
+ * older tab/metric/card rules still ship their own brown #hex text colors.
+ * Neither quote documents nor notebook paper are touched here.
+ */
+
+/* Connections header + tabs. Keep the light selected-tab treatment paired
+ * with dark ink; the other tabs need light ink on the dark tab bar. */
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-heading>div:first-child>span {
+  color:var(--ss-theme-accent);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs>button {
+  background:transparent;
+  border-color:transparent;
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs>button small {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs>button.active {
+  background:var(--ss-theme-tint);
+  border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-tabs>button.active small {
+  color:var(--ss-theme-muted);
+}
+/* The pale reporting strip was inheriting white text. Make it an actual
+ * dark surface, including both segments of the scope switch. */
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-strip {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-strip strong {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-strip small,
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-note {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-buttons {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-buttons button {
+  background:transparent;
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-scope-buttons button.active {
+  background:var(--ss-theme-tint);
+  border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-ink);
+}
+/* KPI values were already bright, while their descriptions and queue labels
+ * kept old mid-brown colors that disappear on slate. */
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-kpi,.dashboard-panel
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-kpi>span,.dashboard-kpi>strong,
+  .dashboard-panel h2,.dashboard-panel>header>strong
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-kpi small,.dashboard-panel>header>span,
+  .dashboard-eyebrow,.dashboard-attention-copy small,
+  .dashboard-attention-copy span,.dashboard-attention-side small,
+  .dashboard-list-main>span,.dashboard-record-note,
+  .dashboard-stage-copy span,.dashboard-stage-copy small,
+  .dashboard-funnel-flow span,.dashboard-funnel-stats span,
+  .dashboard-activity-row small
+) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-row,.dashboard-list-row,.dashboard-funnel-stats>div
+) {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-row:hover,.dashboard-list-row:hover
+) {
+  background:var(--ss-theme-tint);
+}
+:root[data-sales-theme="dark"] .sales-app.view-dashboard .connections-overview :is(
+  .dashboard-attention-copy strong,.dashboard-attention-side strong,
+  .dashboard-list-main strong,.dashboard-list-side strong,
+  .dashboard-funnel-flow strong,.dashboard-funnel-stats strong,
+  .dashboard-activity-row strong
+) {
+  color:var(--ss-theme-ink);
+}
+
+/* Catalog — make Materials list labels agree with the already-dark cards.
+ * These are shared mobile reference-card classes used by Sinks/Rates too. */
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .mobile-catalog-reference-card,.mobile-catalog-reference-trigger,
+  .mobile-catalog-reference-details,.mobile-catalog-reference-empty
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .mobile-catalog-reference-card.is-expanded,.mobile-catalog-reference-card.is-highlighted
+) {
+  background:var(--ss-theme-tint);
+  border-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .mobile-catalog-reference-name>strong,
+  .mobile-catalog-reference-price,
+  .mobile-catalog-reference-price>strong
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .mobile-catalog-reference-name>small,
+  .mobile-catalog-reference-price-meta,
+  .mobile-catalog-reference-chevron
+) {
+  color:var(--ss-theme-muted);
+}
+/* A light reference table heading was next to dark list cards. */
+:root[data-sales-theme="dark"] .sales-app.view-catalog .materials-workspace :is(
+  .materials-reference-card,.materials-reference-card>header,
+  .materials-comparison-board,.materials-comparison-board>header
+) {
+  background:var(--ss-theme-base);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .materials-workspace :is(
+  .materials-reference-card>header strong,
+  .materials-comparison-board>header strong
+) {
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .materials-workspace :is(
+  .materials-reference-card>header small,
+  .materials-reference-card>header>span,
+  .materials-comparison-board>header small,
+  .materials-comparison-empty
+) {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .materials-workspace .materials-comparison-empty {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+}
+/* The select was rendered as ivory with white letters on iOS. Give the
+ * select AND its options an explicit same-surface ink pairing. */
+:root[data-sales-theme="dark"] .sales-app.view-catalog :is(
+  .rates-sort-control select,.rates-filter-menu>summary
+) {
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+  color-scheme:dark;
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .rates-sort-control>span {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme="dark"] .sales-app.view-catalog .rates-sort-control select option {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+}

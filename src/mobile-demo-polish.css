@@ -1,0 +1,240 @@
+/* Final iPhone demo polish. Imported after mobile.css. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  * { -webkit-tap-highlight-color: transparent; }
+
+  /* Make the chrome feel like a deliberate mobile app, not a compressed desktop header. */
+  .app-header {
+    min-height: calc(82px + env(safe-area-inset-top));
+    background: rgba(244, 243, 239, .985);
+    box-shadow: 0 1px 8px rgba(52, 47, 39, .06);
+  }
+
+  .brand-lockup { gap: 7px; }
+  .brand-lockup strong {
+    display: block !important;
+    font-size: 13px;
+    letter-spacing: -.01em;
+  }
+
+  .brand-mark {
+    border-radius: 7px;
+    box-shadow: 0 1px 2px rgba(36, 34, 29, .15);
+  }
+
+  .app-account-zone { height: 38px; }
+  .backend-status {
+    border-radius: 999px;
+    padding: 5px 8px;
+    letter-spacing: .03em;
+    background: rgba(232, 238, 227, .8);
+  }
+
+  .app-tabs {
+    height: 42px;
+    padding-inline: 6px;
+    scroll-snap-type: x proximity;
+  }
+
+  .app-tab {
+    height: 42px;
+    min-width: 68px;
+    padding-inline: 10px;
+    scroll-snap-align: center;
+  }
+
+  .app-tab.active {
+    box-shadow: inset 0 2px 0 var(--notebook), 0 -1px rgba(255,255,255,.5);
+  }
+
+  /* Notebook: slightly calmer and more edge-to-edge on a phone. */
+  .notebook-sidebar { flex-basis: 58px; }
+  .sidebar-heading { min-height: 58px; width: 48px; flex-basis: 48px; }
+  .page-list { padding-block: 6px; }
+  .page-tab { min-height: 44px; min-width: 124px; }
+  .paper-toolbar { height: 44px; flex-basis: 44px; }
+  .desk-surface { padding-inline: 4px; }
+  .paper-sheet { box-shadow: 0 4px 16px rgba(52,43,27,.10); }
+  .paper-heading { padding-inline: 14px; }
+  .paper-writing-surface { padding-inline: 14px; }
+
+  /* Board: keep the next column peeking in so horizontal navigation is obvious. */
+  .project-board,
+  .account-board {
+    scroll-padding-inline: 10px;
+  }
+
+  .board-column,
+  .account-column {
+    width: min(84vw, 322px);
+    min-width: min(84vw, 322px);
+  }
+
+  .project-card,
+  .account-card {
+    box-shadow: 0 2px 4px rgba(53,44,29,.08), 0 7px 15px rgba(53,44,29,.06);
+  }
+
+  /* Quotes: reclaim vertical space and make horizontal controls feel intentional. */
+  .quotes-sidebar {
+    max-height: 116px;
+    flex-basis: 116px;
+  }
+
+  .quotes-sidebar > header {
+    min-height: 40px;
+    padding: 4px 8px;
+  }
+
+  .quotes-sidebar > header strong { font-size: 14px; }
+  .quotes-sidebar > header button { height: 34px; }
+
+  .quote-list {
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+
+  .quote-list::-webkit-scrollbar,
+  .quote-header-actions::-webkit-scrollbar,
+  .pricing-builder-tabs::-webkit-scrollbar,
+  .pricing-schedule-mode-switch::-webkit-scrollbar { display: none; }
+
+  .quote-list-item {
+    min-width: 164px;
+    min-height: 64px;
+    scroll-snap-align: start;
+    padding-top: 7px;
+  }
+
+  .quote-workbench-header {
+    padding-top: 7px;
+    box-shadow: 0 2px 8px rgba(56, 50, 42, .045);
+  }
+
+  .quote-title-input { line-height: 1.15; }
+
+  .quote-header-actions {
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .quote-header-actions > * { scroll-snap-align: start; }
+
+  .quote-editor-pane,
+  .quote-preview-pane,
+  .view-split .quote-editor-pane,
+  .view-split .quote-preview-pane {
+    padding-inline: 7px;
+  }
+
+  .quote-details-grid,
+  .quote-lines-editor,
+  .quote-notes-grid,
+  .quote-history,
+  .pricing-schedule-summary-card {
+    border-radius: 5px;
+  }
+
+  .quote-details-grid { padding: 9px; }
+
+  .quote-lines-editor > header {
+    min-height: 46px;
+    padding: 8px 9px;
+  }
+
+  .quote-share-launcher {
+    min-height: 44px;
+    border-radius: 999px;
+    padding-inline: 16px;
+  }
+
+  /* Customer documents should read like a native mobile document, not a mini sheet of paper. */
+  .customer-quote-paper,
+  .public-customer-paper {
+    min-height: 0 !important;
+    padding: 18px 14px 24px !important;
+    border-radius: 5px;
+    box-shadow: 0 5px 18px rgba(42,37,29,.11) !important;
+  }
+
+  .customer-quote-letterhead {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  .customer-quote-letterhead > div > strong { font-size: 24px; }
+  .customer-quote-letterhead dl { min-width: 0; width: 100%; }
+  .customer-quote-letterhead dl > div { font-size: 11px; padding-block: 4px; }
+  .customer-quote-recipient { padding: 16px 0; }
+  .customer-quote-recipient strong { font-size: 15px; }
+  .customer-quote-recipient p { font-size: 11px; }
+  .customer-quote-paper footer { margin-top: 34px; }
+
+  /* Pricing schedule controls: compact but still finger-friendly. */
+  .pricing-schedule-mode-switch,
+  .pricing-builder-tabs {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    white-space: nowrap;
+  }
+
+  .pricing-schedule-mode-switch button,
+  .pricing-builder-tabs button {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding-inline: 12px;
+  }
+
+  .pricing-builder-panel,
+  .pricing-builder-plan-editor,
+  .pricing-builder-matrix-main,
+  .pricing-builder-audit,
+  .pricing-rate-level-card,
+  .company-settings-card {
+    padding: 11px;
+  }
+
+  .pricing-schedule-route-card {
+    padding: 11px 12px;
+    gap: 3px;
+  }
+
+  /* Dashboard / settings: remove desktop breathing room that wastes phone height. */
+  .leadership-dashboard,
+  .company-settings-view { padding-inline: 10px; }
+
+  .dashboard-heading { margin-bottom: 14px; }
+  .dashboard-heading h1 { font-size: 30px; }
+  .dashboard-kpi { min-height: 112px; padding: 14px; }
+  .dashboard-kpi > strong { margin-top: 8px; }
+  .dashboard-panel { padding: 13px; }
+
+  .company-settings-header { margin-bottom: 12px; }
+  .company-settings-grid { gap: 10px; }
+
+  /* Public signing experience. */
+  .public-quote-header {
+    min-height: 56px;
+    box-shadow: 0 2px 10px rgba(52, 47, 39, .05);
+  }
+
+  .public-brand strong { font-size: 13px; }
+  .public-share-state { font-size: 9px; }
+  .public-quote-content { margin-top: 8px; }
+  .public-sign-card,
+  .public-acceptance-card { border-radius: 5px; }
+  .public-accept-button { min-height: 48px; font-size: 15px; }
+}
+
+@media (max-width: 390px) {
+  .brand-lockup strong { font-size: 12px; }
+  .backend-status { font-size: 8px; padding-inline: 6px; }
+  .app-tab { min-width: 64px; padding-inline: 9px; }
+  .dashboard-kpis { grid-template-columns: 1fr; }
+  .quote-line-pricing { grid-template-columns: 1fr; }
+}

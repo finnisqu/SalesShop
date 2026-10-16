@@ -1,0 +1,445 @@
+/* Connections record pages — reuse palette variables from the existing Connections adapter. */
+.sales-app.view-dashboard .connections-record-page{
+  display:grid;align-content:start;gap:16px;min-width:0;
+  color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-record-breadcrumb{
+  display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;
+  font-size:12px;color:var(--ss-connections-muted,var(--ss-text-muted));
+}
+.sales-app.view-dashboard .connections-record-breadcrumb button{
+  appearance:none;background:none;border:0;padding:6px 2px;cursor:pointer;
+  font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;
+}
+.sales-app.view-dashboard .connections-record-breadcrumb [aria-current="page"]{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:250px;
+}
+.sales-app.view-dashboard .connections-record-header{
+  display:flex;gap:16px;align-items:center;justify-content:space-between;
+  padding:0 0 16px;border-bottom:1px solid var(--ss-connections-border,var(--ss-border));
+}
+.sales-app.view-dashboard .connections-record-heading{display:grid;gap:7px;min-width:0}
+.sales-app.view-dashboard .connections-record-type{
+  text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:800;
+  color:var(--ss-connections-muted,var(--ss-text-muted));
+}
+.sales-app.view-dashboard .connections-record-heading h1{
+  margin:0;font:700 clamp(22px,2.6vw,32px)/1.16 var(--ss-font-editorial,Georgia,serif);
+  overflow-wrap:anywhere;color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-record-heading p{margin:0;font-size:12px;color:var(--ss-connections-muted,var(--ss-text-muted))}
+.sales-app.view-dashboard .connections-record-badges,.sales-app.view-dashboard .connections-record-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.sales-app.view-dashboard .connections-record-badges>span{
+  display:inline-flex;align-items:center;padding:5px 9px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:99px;background:var(--ss-connections-tint,var(--ss-surface));font-size:11px;
+}
+.sales-app.view-dashboard .connections-record-stage{font-weight:850}
+.sales-app.view-dashboard .connections-record-actions button,
+.sales-app.view-dashboard .connections-record-add,
+.sales-app.view-dashboard .connections-record-edit-form button,
+.sales-app.view-dashboard .connections-record-alias-form button,
+.sales-app.view-dashboard .connections-record-missing button{
+  min-height:37px;min-width:40px;padding:8px 12px;border-radius:7px;
+  border:1px solid var(--ss-connections-border,var(--ss-border));
+  background:var(--ss-connections-tint,var(--ss-surface));color:var(--ss-connections-ink,var(--ss-text));
+  cursor:pointer;font-size:12px;font-weight:750;
+}
+.sales-app.view-dashboard .connections-record-actions .connections-record-primary,
+.sales-app.view-dashboard .connections-record-edit-form .connections-record-primary{
+  color:var(--ss-theme-ink,var(--ss-text));
+  background:var(--ss-accent-soft,var(--ss-connections-tint,var(--ss-surface)));
+  border-color:var(--ss-accent,var(--ss-connections-border,var(--ss-border)));
+}
+.sales-app.view-dashboard .connections-record-columns{
+  display:grid;grid-template-columns:minmax(210px, .9fr) minmax(300px, 1.7fr) minmax(230px, 1fr);
+  align-items:start;gap:12px;min-width:0;
+}
+.sales-app.view-dashboard .connections-record-columns>aside,.sales-app.view-dashboard .connections-record-columns>div{min-width:0;display:grid;gap:12px}
+.sales-app.view-dashboard .connections-record-panel{
+  min-width:0;overflow:hidden;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:var(--ss-radius-md,10px);background:var(--ss-connections-card,var(--ss-surface-raised));
+  color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-record-panel>header{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 14px;
+  border-bottom:1px solid var(--ss-connections-border,var(--ss-border));
+}
+.sales-app.view-dashboard .connections-record-panel>header h2{margin:0;font-size:13px;font-weight:800;color:inherit}
+.sales-app.view-dashboard .connections-record-panel>header span{font-size:11px;color:var(--ss-connections-muted,var(--ss-text-muted))}
+.sales-app.view-dashboard .connections-record-panel-body{display:grid;gap:11px;padding:14px;min-width:0}
+.sales-app.view-dashboard .connections-record-properties-list{display:grid;gap:12px}
+.sales-app.view-dashboard .connections-record-property{display:grid;gap:3px;min-width:0}
+.sales-app.view-dashboard .connections-record-property>span{
+  font-size:10px;color:var(--ss-connections-muted,var(--ss-text-muted));font-weight:750;
+}
+.sales-app.view-dashboard .connections-record-property>strong{font-size:12px;font-weight:600;overflow-wrap:anywhere}
+.sales-app.view-dashboard .connections-record-helper,.sales-app.view-dashboard .connections-record-empty{
+  margin:0;font-size:12px;line-height:1.5;color:var(--ss-connections-muted,var(--ss-text-muted));
+}
+.sales-app.view-dashboard .connections-record-entity-list{display:grid;gap:8px}
+.sales-app.view-dashboard .connections-record-entity-list :is(article,button){
+  display:grid;gap:5px;min-width:0;width:100%;text-align:left;
+  border:1px solid var(--ss-connections-border,var(--ss-border));border-radius:8px;
+  padding:10px;background:var(--ss-connections-tint,var(--ss-surface));
+  color:var(--ss-connections-ink,var(--ss-text));font:inherit;
+}
+.sales-app.view-dashboard .connections-record-entity-list button{cursor:pointer}
+.sales-app.view-dashboard .connections-record-entity-list strong{font-size:12px;overflow-wrap:anywhere}
+.sales-app.view-dashboard .connections-record-entity-list small,
+.sales-app.view-dashboard .connections-record-entity-list a{
+  font-size:11px;color:var(--ss-connections-muted,var(--ss-text-muted));overflow-wrap:anywhere;
+}
+.sales-app.view-dashboard .connections-record-entity-list a{text-decoration:underline;text-underline-offset:2px}
+.sales-app.view-dashboard .connections-record-edit-form{display:grid;gap:10px;min-width:0}
+.sales-app.view-dashboard .connections-record-edit-form label{display:grid;gap:4px;font-size:11px;font-weight:750}
+.sales-app.view-dashboard .connections-record-edit-form :is(input,select),
+.sales-app.view-dashboard .connections-record-alias-form input{
+  min-height:40px;min-width:0;width:100%;box-sizing:border-box;padding:8px;border-radius:7px;
+  border:1px solid var(--ss-connections-border,var(--ss-border));background:var(--ss-connections-tint,var(--ss-surface));
+  color:var(--ss-connections-ink,var(--ss-text));font-size:14px;
+}
+.sales-app.view-dashboard .connections-record-edit-form button{justify-self:start}
+.sales-app.view-dashboard .connections-record-aliases{display:flex;flex-wrap:wrap;gap:6px}
+.sales-app.view-dashboard .connections-record-aliases>span{display:flex;align-items:center;gap:4px;font-size:11px;border-radius:7px;background:var(--ss-connections-tint,var(--ss-surface));padding:4px 6px}
+.sales-app.view-dashboard .connections-record-aliases button{border:0;background:none;color:inherit;cursor:pointer;font-size:16px}
+.sales-app.view-dashboard .connections-record-alias-form{display:flex;gap:6px;align-items:center}
+.sales-app.view-dashboard .connections-record-alias-form input{flex:1}
+.sales-app.view-dashboard .connections-record-filter{display:flex;gap:6px;flex-wrap:wrap}
+.sales-app.view-dashboard .connections-record-filter button{
+  border:1px solid var(--ss-connections-border,var(--ss-border));border-radius:99px;
+  background:transparent;color:var(--ss-connections-ink,var(--ss-text));
+  padding:7px 11px;cursor:pointer;font-size:11px;min-height:33px;
+}
+.sales-app.view-dashboard .connections-record-filter button[aria-pressed="true"]{
+  background:var(--ss-connections-tint,var(--ss-surface));box-shadow:inset 0 -2px var(--ss-accent);
+  font-weight:800;
+}
+.sales-app.view-dashboard .connections-record-timeline{margin:0;padding:0 0 0 13px;list-style:none;display:grid;gap:0}
+.sales-app.view-dashboard .connections-record-timeline li{
+  display:grid;gap:6px;position:relative;padding:0 0 17px 17px;border-left:1px solid var(--ss-connections-border,var(--ss-border));
+}
+.sales-app.view-dashboard .connections-record-timeline li::before{
+  content:'';position:absolute;left:-5px;top:3px;width:8px;height:8px;border-radius:50%;
+  background:var(--ss-accent,var(--ss-connections-ink,var(--ss-text)));
+}
+.sales-app.view-dashboard .connections-record-timeline li>div{display:flex;justify-content:space-between;gap:7px;flex-wrap:wrap}
+.sales-app.view-dashboard .connections-record-timeline strong{font-size:12px;overflow-wrap:anywhere}
+.sales-app.view-dashboard .connections-record-timeline time,
+.sales-app.view-dashboard .connections-record-timeline small{font-size:10px;color:var(--ss-connections-muted,var(--ss-text-muted))}
+.sales-app.view-dashboard .connections-record-timeline li>button{
+  justify-self:start;border:0;background:none;padding:3px 0;color:var(--ss-connections-ink,var(--ss-text));
+  text-decoration:underline;cursor:pointer;font-size:11px;
+}
+.sales-app.view-dashboard .connections-record-missing{display:grid;gap:10px;align-content:start}
+.sales-app.view-dashboard .connections-record-missing h1{font-size:22px;margin:0}
+.sales-app.view-dashboard .connections-record-missing p{font-size:13px;color:var(--ss-connections-muted,var(--ss-text-muted));margin:0}
+.sales-app.view-dashboard .connections-record-missing button{justify-self:start}
+.sales-app.view-dashboard .connections-record-page :is(button,input,select,a):focus-visible{
+  outline:3px solid var(--ss-focus,var(--ss-accent));outline-offset:3px;
+}
+@media(max-width:1080px){
+  .sales-app.view-dashboard .connections-record-columns{grid-template-columns:minmax(195px,1fr) minmax(270px,1.6fr)}
+  .sales-app.view-dashboard .connections-record-related{grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+}
+@media(max-width:700px){
+  .sales-app.view-dashboard .connections-record-page{gap:10px}
+  .sales-app.view-dashboard .connections-record-header{align-items:stretch;flex-direction:column;gap:10px;padding-bottom:12px}
+  .sales-app.view-dashboard .connections-record-heading h1{font-size:23px}
+  .sales-app.view-dashboard .connections-record-actions button{flex:1}
+  .sales-app.view-dashboard .connections-record-columns{grid-template-columns:minmax(0,1fr);gap:9px}
+  .sales-app.view-dashboard .connections-record-columns>aside,.sales-app.view-dashboard .connections-record-columns>div{grid-column:1;grid-template-columns:minmax(0,1fr)}
+  .sales-app.view-dashboard .connections-record-properties{order:1}
+  .sales-app.view-dashboard .connections-record-center{order:2}
+  .sales-app.view-dashboard .connections-record-related{order:3}
+  .sales-app.view-dashboard .connections-record-panel>header{padding:11px 12px}
+  .sales-app.view-dashboard .connections-record-panel-body{padding:12px}
+  .sales-app.view-dashboard .connections-record-edit-form :is(input,select){font-size:16px}
+}
+
+/* Batch 17B: relationship directories are primary; history is an optional utility. */
+.sales-app.view-dashboard .connections-section-row{
+  display:flex;align-items:stretch;gap:8px;min-width:0;position:relative;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-section-row>.connections-tabs.ss-section-tabs{
+  flex:1 1 auto;min-width:0;width:auto;max-width:100%;
+}
+.sales-app.view-dashboard .connections-section-more{
+  display:flex;align-items:stretch;flex:0 0 auto;position:relative;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-section-more>button{
+  display:flex;align-items:center;gap:8px;justify-content:center;
+  min-width:76px;min-height:48px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  padding:8px 12px;border-radius:var(--ss-radius-md,8px);
+  background:var(--ss-connections-card,var(--ss-surface-raised));
+  color:var(--ss-connections-muted,var(--ss-text-muted));
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+.sales-app.view-dashboard .connections-section-more>button[aria-expanded="true"]{
+  color:var(--ss-connections-ink,var(--ss-text));
+  border-color:var(--ss-focus,var(--ss-border));
+}
+.sales-app.view-dashboard .connections-more-menu{
+  position:absolute;z-index:15;top:calc(100% + 5px);right:0;
+  width:max-content;min-width:168px;max-width:min(260px,calc(100vw - 24px));
+  border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:var(--ss-radius-md,8px);
+  background:var(--ss-connections-card,var(--ss-surface-raised));
+  box-shadow:0 10px 25px #0002;padding:5px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-more-menu>button{
+  display:block;width:100%;border:0;background:transparent;text-align:left;
+  border-radius:6px;min-height:42px;padding:10px;color:var(--ss-connections-ink,var(--ss-text));
+  font-size:12px;cursor:pointer;
+}
+.sales-app.view-dashboard .connections-more-menu>button:hover{
+  background:var(--ss-connections-tint,var(--ss-surface));
+}
+.sales-app.view-dashboard .connections-history-heading{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  border-bottom:1px solid var(--ss-connections-border,var(--ss-border));padding-bottom:10px;
+}
+.sales-app.view-dashboard .connections-history-heading strong{
+  font-size:15px;color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-history-heading p{
+  margin:4px 0 0;font-size:12px;color:var(--ss-connections-muted,var(--ss-text-muted));
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-history-heading>button{
+  min-height:38px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:7px;background:var(--ss-connections-card,var(--ss-surface-raised));
+  padding:8px 12px;color:var(--ss-connections-ink,var(--ss-text));cursor:pointer;
+}
+.sales-app.view-dashboard .connections-record-history{
+  box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-history>.connections-history-toggle{
+  display:flex;width:100%;min-height:48px;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;border:0;background:transparent;cursor:pointer;text-align:left;
+  color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-history-toggle>span{font-size:12px;font-weight:750}
+.sales-app.view-dashboard .connections-history-toggle>small{
+  font-size:11px;color:var(--ss-connections-muted,var(--ss-text-muted));white-space:nowrap;
+}
+.sales-app.view-dashboard .connections-history-toggle[aria-expanded="true"]{
+  border-bottom:1px solid var(--ss-connections-border,var(--ss-border));
+}
+@media(max-width:700px){
+  .sales-app.view-dashboard .connections-section-row{gap:5px}
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-section-more>button{min-width:63px;padding:7px 8px;min-height:49px}
+  .sales-app.view-dashboard .connections-record-history>.connections-history-toggle{min-height:47px}
+}
+
+/* Batch 17C: Person pages inherit Company record surfaces, with opt-in contact history. */
+.sales-app.view-dashboard .connections-person-contact-actions{display:grid;gap:8px}
+.sales-app.view-dashboard .connections-person-contact-actions :is(a,span){
+  display:block;padding:10px 12px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:8px;background:var(--ss-connections-tint,var(--ss-surface));
+  color:var(--ss-connections-ink,var(--ss-text));font-size:12px;text-decoration:none;
+}
+.sales-app.view-dashboard .connections-person-contact-actions a{cursor:pointer;font-weight:750}
+.sales-app.view-dashboard .connections-person-contact-actions span{color:var(--ss-connections-muted,var(--ss-text-muted))}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-entity-list article .connections-person-entity-open{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  border:0;padding:0;background:transparent;min-height:30px;
+  font:inherit;cursor:pointer;color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-person-entity-open strong{flex:1;text-align:left}
+.sales-app.view-dashboard .connections-record-entity-list article .connections-person-entity-open small{flex:0 0 auto;font-size:10px}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-person-record.connections-record{
+  display:grid;align-content:start;justify-content:stretch;padding:14px 35px 13px 14px;gap:6px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-person-record.connections-record>strong{
+  font:700 16px/1.3 var(--ss-font-editorial,Georgia,serif);
+  color:var(--ss-connections-ink,var(--ss-text));overflow-wrap:anywhere;
+}
+
+/* Deal record editing and optional Board history disclosure. */
+.sales-app.view-dashboard .connections-record-edit-form textarea{
+  min-height:88px;min-width:0;width:100%;box-sizing:border-box;resize:vertical;
+  border:1px solid var(--ss-connections-border,var(--ss-border));border-radius:7px;
+  padding:9px;background:var(--ss-connections-tint,var(--ss-surface));
+  color:var(--ss-connections-ink,var(--ss-text));font:inherit;font-size:14px;
+}
+.sales-app.view-dashboard .connections-record-edit-form :is(input,select,textarea):focus-visible{
+  outline:3px solid var(--ss-focus,var(--ss-accent));outline-offset:2px;
+}
+.sales-app.view-board .project-activity-panel > summary{
+  cursor:pointer;min-height:44px;display:flex;align-items:center;
+  font-weight:750;font-size:12px;padding:10px 12px;
+}
+.sales-app.view-board .project-activity-panel:not([open]) > :not(summary){display:none}
+@media(max-width:700px){
+  .sales-app.view-dashboard .connections-record-edit-form textarea{font-size:16px}
+}
+/* Batch 17E — one visual and navigation language for Companies, People and Deals. */
+.sales-app.view-dashboard .connections-record-page{
+  gap:14px;max-width:100%;isolation:isolate;
+}
+.sales-app.view-dashboard .connections-record-breadcrumb{
+  min-height:32px;column-gap:7px;row-gap:3px;
+}
+.sales-app.view-dashboard .connections-record-breadcrumb button{
+  min-height:34px;min-width:44px;text-decoration:none;font-weight:750;
+  border-radius:6px;padding:6px 8px;margin-left:-8px;
+}
+.sales-app.view-dashboard .connections-record-breadcrumb button:hover{
+  background:var(--ss-connections-tint,var(--ss-surface));
+}
+.sales-app.view-dashboard .connections-record-breadcrumb [aria-current="page"]{
+  max-width:min(52vw,400px);font-weight:750;color:var(--ss-connections-ink,var(--ss-text));
+}
+.sales-app.view-dashboard .connections-record-header{
+  gap:12px;align-items:flex-end;
+}
+.sales-app.view-dashboard .connections-record-heading h1{
+  letter-spacing:-.015em;line-height:1.18;
+}
+.sales-app.view-dashboard .connections-record-badges{
+  row-gap:5px;
+}
+.sales-app.view-dashboard .connections-record-badges>span{
+  line-height:1.2;max-width:100%;
+}
+.sales-app.view-dashboard .connections-record-actions{
+  justify-content:flex-end;flex:0 0 auto;
+}
+.sales-app.view-dashboard .connections-record-actions button{
+  min-height:42px;
+}
+.sales-app.view-dashboard .connections-record-columns > :is(aside,div){
+  scroll-margin-top:12px;
+}
+.sales-app.view-dashboard .connections-record-panel{
+  border-radius:var(--ss-radius-md,10px);
+  box-shadow:0 1px 3px rgb(0 0 0 / .025);
+}
+.sales-app.view-dashboard .connections-record-panel>header h2{
+  line-height:1.3;
+}
+.sales-app.view-dashboard .connections-record-entity-list button:not(:disabled):hover,
+.sales-app.view-dashboard .connections-person-contact-actions a:hover{
+  border-color:var(--ss-focus,var(--ss-accent));
+  background:var(--ss-connections-card,var(--ss-surface-raised));
+}
+.sales-app.view-dashboard .connections-record-entity-list button:not(:disabled):active{
+  transform:translateY(1px);
+}
+.sales-app.view-dashboard .connections-record-edit-form label{
+  line-height:1.4;gap:5px;
+}
+.sales-app.view-dashboard .connections-record-edit-form :is(input,select,textarea){
+  min-height:44px;
+}
+.sales-app.view-dashboard .connections-record-form-actions{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  justify-content:flex-start;padding-top:4px;
+}
+.sales-app.view-dashboard .connections-record-form-actions button{
+  min-height:42px;
+}
+.sales-app.view-dashboard .connections-record-page button:disabled{
+  cursor:not-allowed;opacity:.56;
+}
+.sales-app.view-dashboard .connections-record-jump-nav{
+  display:none;
+}
+.sales-app.view-dashboard .connections-record-page :is(button,a,input,select,textarea):focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-accent));outline-offset:2px;
+}
+/* Tablet: prevent the third region from squeezing form controls. */
+@media(min-width:701px) and (max-width:1080px){
+  .sales-app.view-dashboard .connections-record-columns{
+    grid-template-columns:minmax(195px,.95fr) minmax(270px,1.5fr);
+  }
+  .sales-app.view-dashboard .connections-record-related{
+    grid-template-columns:repeat(2,minmax(0,1fr));grid-column:1/-1;
+  }
+}
+@media(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+  .sales-app.view-dashboard .connections-record-page{gap:9px}
+  .sales-app.view-dashboard .connections-record-header{
+    flex-direction:column;align-items:stretch;gap:11px;padding-bottom:12px;
+  }
+  .sales-app.view-dashboard .connections-record-actions{
+    justify-content:stretch;display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
+  }
+  .sales-app.view-dashboard .connections-record-actions button{width:100%;min-height:44px}
+  .sales-app.view-dashboard .connections-record-jump-nav{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;
+    padding:4px;border:1px solid var(--ss-connections-border,var(--ss-border));
+    border-radius:9px;background:var(--ss-connections-tint,var(--ss-surface));
+  }
+  .sales-app.view-dashboard .connections-record-jump-nav button{
+    color:var(--ss-connections-ink,var(--ss-text));background:var(--ss-connections-card,var(--ss-surface-raised));
+    border:1px solid var(--ss-connections-border,var(--ss-border));
+    border-radius:6px;min-height:42px;font-size:12px;font-weight:750;font-family:inherit;line-height:1.3;cursor:pointer;
+  }
+  .sales-app.view-dashboard .connections-record-jump-nav button:active{
+    background:var(--ss-connections-tint,var(--ss-surface));
+  }
+  .sales-app.view-dashboard .connections-record-columns{grid-template-columns:minmax(0,1fr);gap:10px}
+  .sales-app.view-dashboard .connections-record-columns>aside,
+  .sales-app.view-dashboard .connections-record-columns>div{
+    grid-column:1;grid-template-columns:minmax(0,1fr);
+  }
+  .sales-app.view-dashboard .connections-record-properties{order:1}
+  .sales-app.view-dashboard .connections-record-center{order:2}
+  .sales-app.view-dashboard .connections-record-related{order:3}
+  .sales-app.view-dashboard .connections-record-breadcrumb [aria-current="page"]{
+    max-width:40vw;
+  }
+  .sales-app.view-dashboard .connections-record-form-actions button{
+    flex:1 1 112px;min-height:44px;
+  }
+  .sales-app.view-dashboard .connections-record-edit-form :is(input,select,textarea){
+    font-size:16px;
+  }
+  .sales-app.view-dashboard .connections-directory-toolbar .connections-add{
+    min-height:44px;
+  }
+  .sales-app.view-dashboard .connections-record-panel>header{padding:12px}
+  .sales-app.view-dashboard .connections-record-panel-body{padding:12px}
+}
+/* Directory and record identity should feel like one workspace. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory .connections-record{
+  min-height:110px;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory .connections-record:hover{
+  box-shadow:0 3px 10px rgb(0 0 0 / .05);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-section-more>button:focus-visible,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-more-menu>button:focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-accent));outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce){
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory .connections-record{transition:none}
+  .sales-app.view-dashboard .connections-record-entity-list button:active{transform:none}
+}
+
+/* Batch 17G — private Deal role editor, secondary to quote contacts. */
+.sales-app.view-dashboard .connections-private-role-list{
+  display:grid;gap:10px;
+}
+.sales-app.view-dashboard .connections-private-role-row{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:7px;
+  padding:10px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:8px;background:var(--ss-connections-tint,var(--ss-surface));
+}
+.sales-app.view-dashboard .connections-private-role-row>span{
+  display:flex;flex-direction:column;gap:4px;min-width:0;
+}
+.sales-app.view-dashboard .connections-private-role-row strong{
+  font-size:13px;color:var(--ss-connections-ink,var(--ss-text));overflow-wrap:anywhere;
+}
+.sales-app.view-dashboard .connections-private-role-row small{
+  font-size:11px;color:var(--ss-connections-muted,var(--ss-text-muted));
+}
+.sales-app.view-dashboard .connections-private-role-row select{
+  display:block;width:100%;min-height:44px;border:1px solid var(--ss-connections-border,var(--ss-border));
+  border-radius:7px;padding:8px 9px;background:var(--ss-connections-card,var(--ss-surface-raised));
+  color:var(--ss-connections-ink,var(--ss-text));font:inherit;font-size:13px;
+}
+.sales-app.view-dashboard .connections-record-error{
+  color:var(--ss-danger,#ad4242);font-size:12px;
+}
