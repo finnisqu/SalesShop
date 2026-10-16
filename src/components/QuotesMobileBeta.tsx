@@ -851,7 +851,7 @@ export function QuotesMobileBeta() {
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
           <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
-          <span className="qmb-chip">{salesTemplateLabel(salesDocumentTemplate(quote))} · {quoteBetaStatusLabel(quote)}</span>
+          <span className="qmb-chip qmb-editor-status" title={salesTemplateLabel(salesDocumentTemplate(quote))+' · '+quoteBetaStatusLabel(quote)}>{quoteBetaStatusLabel(quote)}</span>
           <div className="qmb-headeractions">
             <button type="button" className="qmb-document-new-shortcut" onClick={()=>setShowNewDocument(true)}>+ New document</button>
             <AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button>

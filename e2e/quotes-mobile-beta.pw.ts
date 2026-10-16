@@ -176,6 +176,26 @@ test('Classic Quotes stays available on desktop when Beta is disabled',async ({p
 });
 
 
+test('phone Ready status and customer action fit a compact Beta header',async({page},info)=>{
+  test.skip(info.project.name!=='phone-390','Phone status and responsive header');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await createQuickQuote(page);
+  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Details'}).click();
+  await beta.getByRole('combobox',{name:'Draft status'}).selectOption('Ready');
+  const header=beta.locator('.qmb-quote-editor>.qmb-quote-scroll>.qmb-pagehead');
+  await expect(header.locator('.qmb-editor-status')).toHaveText('Ready for review');
+  await expect(header.locator('.qmb-editor-status')).toHaveAttribute('title',/Ready for review/);
+  const geometry=await header.evaluate(node=>({scroll:node.scrollWidth,client:node.clientWidth}));
+  expect(geometry.scroll).toBeLessThanOrEqual(geometry.client+1);
+  await expect(beta.locator('.qmb-quote-footer .qmb-primary')).toHaveText('Review & issue ›');
+});
+
 test('Area takeoff grid keeps tabs visible and splash popover updates billable SF',async ({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','Targeted interactive mobile spreadsheet test');
   const pageErrors:string[]=[];

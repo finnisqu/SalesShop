@@ -172,3 +172,8 @@
 .qmb .qmb-appnav nav button {min-height:43px;border:0;text-align:left;background:transparent;
   color:var(--qmb-ink);border-radius:8px;padding:9px 12px;font-weight:700;}
 .qmb .qmb-appnav nav button:focus-visible, .qmb .qmb-appnav nav button:hover {background:var(--qmb-tint);}
+
+/* 18G: keep longer customer-facing lifecycle states readable in the dense phone header.
+   Document type remains available in the title tooltip, library and desktop rail. */
+.qmb .qmb-pagehead>.qmb-editor-status {min-width:0;max-width:38%;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media(max-width:700px){.qmb .qmb-quote-editor>.qmb-quote-scroll>.qmb-pagehead {gap:5px;padding-inline:10px}.qmb .qmb-quote-editor>.qmb-quote-scroll>.qmb-pagehead>.qmb-editor-status {max-width:34%}}
