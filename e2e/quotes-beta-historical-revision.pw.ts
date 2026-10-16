@@ -37,7 +37,11 @@ test('issued customer revision remains frozen through revision and newer draft e
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
   await review.getByRole('button',{name:'Issue quote · no message sent'}).click();
   await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
+  await expect(review.getByLabel('Step 4 share and confirm customer delivery')).toBeVisible();
+  await expect(review.getByLabel('Step 4 share and confirm customer delivery'))
+    .toContainText('Sharing the link is not proof of delivery');
   await review.getByRole('button',{name:'Create editable revision ›'}).click();
+  await expect(beta.locator('.qmb-quote-footer .qmb-primary')).toHaveText('Review & issue ›');
   await beta.getByRole('textbox',{name:'Quote title'}).fill('New Island Draft');
   await rail.getByRole('button',{name:'Customer & deal'}).click();
   const timeline=beta.getByRole('region',{name:'Quote document and history'});

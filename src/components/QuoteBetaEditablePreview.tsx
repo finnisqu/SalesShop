@@ -173,7 +173,7 @@ export function QuoteBetaEditablePreview({quote,onReturnToReview}:{quote:Quote;o
   return <div className="qmb-editable-preview">
     <div className="qmb-preview-seller-toolbar">
       <div className="qmb-preview-view-label"><strong>Customer document</strong>
-        {onReturnToReview?<small>Step 1 of 3 · Check this customer copy, then return to Review to approve it.</small>:
+        {onReturnToReview?<small>Step 1 of 4 · Check this customer copy, then return to Review to approve it.</small>:
           editing&&<small>Live quote editing</small>}</div>
       <div className="qmb-preview-action-group">
         {onReturnToReview&&<button type="button" className="qmb-preview-back-review"

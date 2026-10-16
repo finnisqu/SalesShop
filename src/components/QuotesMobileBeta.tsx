@@ -19,6 +19,7 @@ import {
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
 } from '../types/quote';
 import { QuoteBetaDetails } from './QuoteBetaDetails';
+import {quoteBetaPrimaryAction,quoteBetaStatusLabel} from '../services/quoteBetaLifecycleLanguage';
 import { QuoteCustomerQuickEdit } from './QuoteCustomerQuickEdit';
 import {SalesDocumentSaveStatus} from './SalesDocumentToolbar';
 import {SalesDocumentActionsMenu} from './SalesDocumentActionsMenu';
@@ -672,6 +673,7 @@ export function QuotesMobileBeta() {
   },[hydrated,page,area,quote]);
   const audit=quote&&quote.documentType!=='pricing-schedule'?auditQuoteDraft(quote):null;
   const detailsNextArea=quote?nextQuoteAreaShortcut(quote):null;
+  const primaryAction=quote?quoteBetaPrimaryAction(quote,audit?.blockers.length??0):null;
   const continueFromDetails=()=>{
     if(!detailsNextArea)return;
     if(detailsNextArea.kind==='open')openArea(detailsNextArea.areaId);
@@ -815,7 +817,7 @@ export function QuotesMobileBeta() {
             title={q.archivedAt?'Restore from Archived to reopen':'Open '+(q.title||'document')}
             onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
             <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
-              <span className="qmb-chip">{q.archivedAt?'Archived':q.status==='Sent'?'Issued':q.status}</span></div>
+              <span className="qmb-chip">{quoteBetaStatusLabel(q)}</span></div>
             <strong>{q.title||'Untitled document'}</strong>
             <div className="qmb-library-updated">Edited {formatPersonalDate(new Date(q.updatedAt),readPersonalDateTimePreferences(useAuthStore.getState().user?.id??null))}</div>
             <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}{q.documentType==='quote'?' · '+q.sections.length+' Areas':''}</small>
@@ -849,7 +851,7 @@ export function QuotesMobileBeta() {
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
           <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
-          <span className="qmb-chip">{salesTemplateLabel(salesDocumentTemplate(quote))} · {quote.status==='Sent'?'Issued':quote.status}</span>
+          <span className="qmb-chip">{salesTemplateLabel(salesDocumentTemplate(quote))} · {quoteBetaStatusLabel(quote)}</span>
           <div className="qmb-headeractions">
             <button type="button" className="qmb-document-new-shortcut" onClick={()=>setShowNewDocument(true)}>+ New document</button>
             <AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button>
@@ -870,7 +872,7 @@ export function QuotesMobileBeta() {
               {quote.companyName||quote.contactName||'Assign a customer'}{quote.companyName&&quote.contactName?' · '+quote.contactName:''}
               <span aria-hidden="true"> ›</span>
             </button>
-            <span>{quote.status==='Sent'?'Issued':quote.status} · Revision {quote.revision}</span>
+            <span>{quoteBetaStatusLabel(quote)} · Revision {quote.revision}</span>
             <SalesDocumentSaveStatus quote={quote} cloudMode={authMode==='cloud'}/>
           </div>
           {quote.templateOrigin&&<div className="qmb-pad qmb-document-origin">
@@ -970,7 +972,7 @@ export function QuotesMobileBeta() {
           ?<button type="button" className="qmb-primary"
             onClick={returnFromReviewPreview}>Done previewing · Back to Review ›</button>
           :<button type="button" className="qmb-primary" onClick={openSend}>
-            {quote.documentType==='pricing-schedule'?'Review Pricing Schedule ›':audit?.blockers.length?'Resolve '+audit.blockers.length+' pricing issue'+(audit.blockers.length===1?'':'s')+' ›':'Review & issue ›'}</button>}
+            {primaryAction?.mobile??'Review document ›'}</button>}
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onReview={openSend} onDuplicate={duplicateCurrentArea}

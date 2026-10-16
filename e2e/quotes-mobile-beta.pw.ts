@@ -523,6 +523,7 @@ test('Previewed customer revision approval expires after a change before issue',
   await expect(review.getByRole('button',{name:'Issue quote · no message sent'})).toBeEnabled();
   await review.getByRole('button',{name:'Issue quote · no message sent'}).click();
   await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
+  await expect(review.getByLabel('Step 4 share and confirm customer delivery')).toBeVisible();
   await expect(review.locator('.qmb-issued-next')).toContainText('Quote issued successfully');
   await expect(review.locator('.qmb-issued-next')).toContainText('No email or customer link was sent');
   await expect(review.locator('.quote-share-control.is-inline')
@@ -572,6 +573,7 @@ test('desktop Quote Review issues only a previewed and approved revision',async 
   await review.getByRole('checkbox',{name:'Approve customer document for issuing'}).check();
   await review.getByRole('button',{name:'Issue quote · no message sent'}).click();
   await expect(review.getByText('Issued customer revision',{exact:true})).toBeVisible();
+  await expect(review.getByLabel('Step 4 share and confirm customer delivery')).toBeVisible();
   await expect(review.locator('.qmb-issued-next')).toContainText('Quote issued successfully');
   await expect(review.getByRole('status',{name:'Quote delivery progress'}))
     .toContainText('Issued · not yet delivered');
