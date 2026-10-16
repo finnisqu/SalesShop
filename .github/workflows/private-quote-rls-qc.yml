@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - architecture/react-foundation
+      - main
     paths:
       - 'supabase/migrations/20261015151800_private_quote_ownership_gate.sql'
       - 'tests/security/private_quote_rls_*.sql'
