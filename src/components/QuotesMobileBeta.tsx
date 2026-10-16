@@ -853,7 +853,7 @@ export function QuotesMobileBeta() {
           <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
           <span className="qmb-chip qmb-editor-status" title={salesTemplateLabel(salesDocumentTemplate(quote))+' · '+quoteBetaStatusLabel(quote)}>{quoteBetaStatusLabel(quote)}</span>
           <div className="qmb-headeractions">
-            <button type="button" className="qmb-document-new-shortcut" onClick={()=>setShowNewDocument(true)}>+ New document</button>
+            <button type="button" className="qmb-document-new-shortcut" aria-label="+ New document" onClick={()=>setShowNewDocument(true)}><span className="qmb-document-new-full">+ New document</span><span className="qmb-document-new-compact" aria-hidden="true">+ New</span></button>
             <AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button>
           </div>
         </header>
