@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - architecture/react-foundation
+      - main
     paths:
       - 'src/services/pricingSchedule*'
       - 'src/components/PricingSchedule*'
@@ -62,6 +63,7 @@ on:
   pull_request:
     branches:
       - architecture/react-foundation
+      - main
   workflow_dispatch:
 
 permissions:
