@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - architecture/react-foundation
+      - main
     paths:
       - 'supabase/migrations/20261015173000_private_deal_contact_roles.sql'
       - 'tests/security/private_deal_roles_*.sql'
