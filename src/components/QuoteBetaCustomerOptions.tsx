@@ -96,7 +96,7 @@ export function QuoteBetaCustomerOptions({quote}:{quote:Quote}){
       </section>
       <section><h3>Scope, payment and policies</h3>
         <small className="qmb-preview-terms-caption">
-          Optional World Stone wording from the supplied quote template. Review before sending.
+          Optional World Stone wording from the supplied quote template. Review before issuing or sharing.
         </small>
         <div className="qmb-preview-option-checks is-terms">
           {QUOTE_STANDARD_TERMS.map(term=><label key={term.id} title={term.text}>

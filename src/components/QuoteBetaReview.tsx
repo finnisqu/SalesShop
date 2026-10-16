@@ -7,7 +7,8 @@ import {QuoteShareControl} from './QuoteShareControl';
 import {QuoteDeliveryConfirmation} from './QuoteDeliveryConfirmation';
 import {QuoteSignatureDialog} from './QuoteSignatureDialog';
 import {auditQuoteDraft,type QuoteAuditDestination,type QuoteAuditFinding} from '../services/quoteDraftAudit';
-import {quoteCanCreateRevision} from '../services/quoteIntegrity';
+import {quoteCanCreateRevision,quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {quoteBetaStatusLabel} from '../services/quoteBetaLifecycleLanguage';
 import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {useQuoteStore} from '../store/quoteStore';
 import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEditor';
@@ -48,7 +49,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
   useEffect(()=>{
     if(expandedId&&!report.findings.some(f=>f.id===expandedId))setExpandedId(null);
   },[expandedId,issueSet,report.findings]);
-  const editable=quote.status==='Draft'||quote.status==='Ready';
+  const editable=quoteIsCommerciallyEditable(quote);
   const scheduleError=quote.documentType==='pricing-schedule'
     ?pricingScheduleValidationError(quote.pricingSchedule):null;
   const ready=!needsRecheck&&report.blockers.length===0&&(!report.review.length||acknowledged);
@@ -99,7 +100,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-audit-overview"><div className="qmb-audit-total">
           <span>Published customer price rows</span><strong>{published}</strong></div>
-          <div className="qmb-audit-counts"><span>{sourceLabel}</span><span>{quote.status}</span></div>
+          <div className="qmb-audit-counts"><span>{sourceLabel}</span><span>{quoteBetaStatusLabel(quote)}</span></div>
         </div>
         {needsRecheck&&<section className="qmb-review-recheck" role="status">
           <div><strong>Schedule changed since this review</strong><small>Check the latest published prices before issuing.</small></div>
@@ -154,8 +155,8 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         <button type="button" onClick={()=>{setLastCheckedAt(quote.updatedAt);onReview(null);}}>Recheck now</button>
       </section>}
       {!report.findings.length&&<section className="qmb-audit-clean">
-        <strong>✓ Ready to issue</strong>
-        <p>No missing pricing or unfinished details detected. Check the customer preview before sending.</p>
+        <strong>{editable?'✓ Ready for customer review':'✓ No outstanding quote findings'}</strong>
+        <p>{editable?'No missing pricing or unfinished details detected. Check the customer preview before issuing.':'Review the frozen customer document and its delivery or revision options below.'}</p>
       </section>}
       {!!report.blockers.length&&renderFindings(report.blockers,'Resolve before issuing',
         'These affect the price or completeness of billable work. Draft editing stays unrestricted.',
@@ -172,7 +173,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
       </label>}
       {error&&<p role="alert" className="qmb-error">{error}</p>}
       <section ref={deliverySectionRef} className="qmb-card qmb-audit-delivery" data-review-delivery>
-        <strong>Customer delivery · Preview → Approve → Share</strong>
+        <strong>Customer delivery · Preview → Approve → Issue → Share</strong>
         {!editable&&quote.status==='Sent'&&<div className="qmb-issued-next" role="status">
           <strong>✓ Quote issued successfully</strong>
           <p>The approved revision is frozen. No email or customer link was sent or
@@ -180,14 +181,14 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
             your preferred method.</p>
         </div>}
         <div className="qmb-delivery-version" aria-label="Customer document revision">
-          <span>{editable?'Draft awaiting approval':'Issued customer revision'}</span>
+          <span>{editable?'Draft awaiting approval':quoteBetaStatusLabel(quote)+' customer revision'}</span>
           <strong>{displayQuoteNumber(quote)}</strong>
           <small>{quote.title}{quote.revisionLabel?' · '+quote.revisionLabel:''} · Revision {quote.revision} · {money.format(quoteTotal(quote))}</small>
         </div>
         {!editable&&<p className="qmb-audit-help">
           This customer-facing revision is frozen. The link below is created for the issued revision shown above.
         </p>}
-        {!editable&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
+        {!editable&&!quote.archivedAt&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
           onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
         {editable?<div className="qmb-delivery-steps" aria-label="Customer delivery steps">
           <div className="qmb-delivery-step">
@@ -211,7 +212,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
             <small>Any new edit invalidates this approval until you preview the updated version again.</small>
           </div>
           <div className="qmb-delivery-step">
-            <div className="qmb-delivery-step-title"><span>3</span><strong>Issue and share</strong><small>After approval</small></div>
+            <div className="qmb-delivery-step-title"><span>3</span><strong>Issue approved revision</strong><small>After approval</small></div>
             <p>Issuing freezes the approved revision. It does not send an email or automatically create a link.</p>
             <button type="button" className="qmb-primary qmb-block"
               disabled={sending||!canIssue||!ready||!approved} onClick={onIssue}>
@@ -222,7 +223,11 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
             </button>
           </div>
         </div>:<button type="button" className="qmb-outline qmb-block" onClick={onPreview}>View issued customer revision ›</button>}
-        {!editable&&<p className="qmb-audit-help">Share only this issued revision. Creating a link does not change the accepted price or contents.</p>}
+        {!editable&&['Sent','Viewed','Signed'].includes(quote.status)&&<div className="qmb-delivery-step" aria-label="Step 4 share and confirm customer delivery">
+          <div className="qmb-delivery-step-title"><span>4</span><strong>Share and confirm delivery</strong><small>After issuing</small></div>
+          <p>Create or reuse the secure link for this exact revision. Sharing the link is not proof of delivery; confirm receipt separately.</p>
+        </div>}
+        {!editable&&<p className="qmb-audit-help">A customer link never changes this frozen revision or sends a message automatically.</p>}
         <QuoteShareControl inline allowCreation={canIssue&&!editable} autoOpenOnIssue/>
         {!editable&&<QuoteDeliveryConfirmation quote={quote} canRecord={canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&!quote.archivedAt}/>} 
         {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&

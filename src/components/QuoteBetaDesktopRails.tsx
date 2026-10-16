@@ -4,6 +4,7 @@ import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {quoteBetaPrimaryAction,quoteBetaStatusLabel} from '../services/quoteBetaLifecycleLanguage';
 import {salesDocumentTemplate,salesTemplateLabel} from '../services/salesDocumentTemplates';
 import {SalesDocumentActionsMenu} from './SalesDocumentActionsMenu';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
@@ -43,7 +44,7 @@ export function QuoteBetaDesktopRails({
       <div className="qmb-desktop-rail-head">
         <button type="button" className="qmb-desktop-library-link" onClick={onLibrary}>‹ All documents</button>
         <strong>{salesTemplateLabel(salesDocumentTemplate(quote))} <span>Beta</span></strong>
-        <small>{displayQuoteNumber(quote)} · {quote.status}</small>
+        <small>{displayQuoteNumber(quote)} · {quoteBetaStatusLabel(quote)}</small>
         <div className="qmb-desktop-history" role="toolbar" aria-label="Quote history controls">
           <button type="button" onClick={onUndo} disabled={!editable||!undoDepth}
             aria-label="Undo quote change">↶ Undo</button>
@@ -114,6 +115,7 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
   onReviewIssue:(id:string)=>void;onSend:()=>void;canIssue:boolean;
 }){
   const audit=auditQuoteDraft(quote);
+  const primaryAction=quoteBetaPrimaryAction(quote,audit.blockers.length);
   const area=quote.sections.find(s=>s.id===areaId);
   const editable=quoteIsCommerciallyEditable(quote);
   const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
@@ -126,7 +128,7 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
     const sourceLabel=source==='workbook'?'Custom Spreadsheet':source==='builder'?'Community Plan Pricing':'Builder Rate Schedule';
     const issue=pricingScheduleValidationError(quote.pricingSchedule);
     return <aside className="qmb-desktop-inspector is-pricing" aria-label="Live quote summary">
-      <div className="qmb-desktop-inspector-heading"><span>PRICING SCHEDULE</span><span className="qmb-chip">{quote.status}</span></div>
+      <div className="qmb-desktop-inspector-heading"><span>PRICING SCHEDULE</span><span className="qmb-chip">{quoteBetaStatusLabel(quote)}</span></div>
       <div className="qmb-desktop-grand-total"><small>Published price rows</small>
         <strong>{published}</strong><span>{quote.companyName||'Customer not selected'}</span></div>
       <div className="qmb-desktop-stat-grid"><div><strong>{sourceLabel}</strong><small>Price source</small></div>
@@ -139,15 +141,15 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
       </section>
       <div className="qmb-inspector-send-block">
         <button type="button" className="qmb-inspector-send" onClick={onSend}
-          aria-label="Review Pricing Schedule delivery">{editable?'Review schedule':'Share issued schedule'} <span aria-hidden="true">›</span></button>
-        <small>{!canIssue?'Your team role cannot issue documents.':issue?'Complete the published pricing before issue':'Opens review, preview and customer sharing'}</small>
+          aria-label={primaryAction.ariaLabel}>{primaryAction.desktop} <span aria-hidden="true">›</span></button>
+        <small>{!canIssue&&editable?'Your team role cannot issue documents.':issue&&editable?'Complete the published pricing before issue':primaryAction.help}</small>
       </div>
     </aside>;
   }
   return (
     <aside className="qmb-desktop-inspector" aria-label="Live quote summary">
       <div className="qmb-desktop-inspector-heading">
-        <span>LIVE ESTIMATE</span><span className="qmb-chip">{quote.status}</span>
+        <span>{editable?'LIVE ESTIMATE':'CUSTOMER DOCUMENT'}</span><span className="qmb-chip">{quoteBetaStatusLabel(quote)}</span>
       </div>
       <div className="qmb-desktop-grand-total">
         <small>Quote total</small><strong>{money.format(quoteTotal(quote))}</strong>
@@ -193,11 +195,10 @@ export function QuoteBetaInspector({quote,page,areaTab,areaId,onAreaTab,onReview
       </section>
       <div className="qmb-inspector-send-block">
         <button type="button" className="qmb-inspector-send" onClick={onSend}
-          aria-label={editable?'Review and issue quote':'Review customer sharing'}>{editable?'Review & issue':'Share issued quote'} <span aria-hidden="true">›</span></button>
-        <small>{!canIssue?'Your team role cannot issue quotes.':audit.blockers.length
-          ?audit.blockers.length+' pricing blocker'+(audit.blockers.length===1?'':'s')+' must be resolved'
-          :audit.review.length?'Review items before sending'
-          :'Opens delivery options and customer sharing'}</small>
+          aria-label={primaryAction.ariaLabel}>{primaryAction.desktop} <span aria-hidden="true">›</span></button>
+        <small>{!canIssue&&editable?'Your team role cannot issue quotes.':editable&&audit.review.length&&!audit.blockers.length
+          ?'Review or acknowledge the remaining items before issuing.'
+          :primaryAction.help}</small>
       </div>
     </aside>
   );

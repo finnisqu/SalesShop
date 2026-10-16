@@ -20,6 +20,9 @@ on:
       - 'src/services/signatureService.ts'
       - 'e2e/quotes-beta-historical-revision.pw.ts'
       - 'src/components/QuoteBetaDesktopRails.tsx'
+      - 'src/services/quoteBetaLifecycleLanguage*'
+      - 'src/components/QuoteBetaCustomerOptions.tsx'
+      - 'src/components/QuoteBetaEditablePreview.tsx'
       - 'src/store/quoteStore.ts'
       - 'src/services/quoteIntegrity.ts'
       - 'src/services/quoteDocumentCopy*'
@@ -91,6 +94,8 @@ jobs:
         run: npx vitest run src/services/quotePricingParityMatrix.test.ts src/services/quotePriceInput.test.ts src/services/quoteDraftAudit.test.ts src/components/QuoteAuditInlineEditor.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteCustomerPresentation.test.ts src/services/quoteTakeoffsLite.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteDeliveryLifecycle.test.ts src/services/quoteIssueGuard.test.ts src/services/quoteFollowUps.test.ts
       - name: Customer document, frozen revision and sharing boundary
         run: npx vitest run src/services/quoteCustomerShareRelease.test.ts src/services/quoteShareReadiness.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteIssueGuard.test.ts src/services/quoteHandoffStatus.test.ts
+      - name: Beta document lifecycle vocabulary unit regressions
+        run: npx vitest run src/services/quoteBetaLifecycleLanguage.test.ts
       - name: Frozen historical revisions and in-person signing tests
         run: npx vitest run src/services/quoteRevisionView.test.ts src/services/quoteRevisionArchive.test.ts src/services/quoteSignatureLifecycle.test.ts src/services/quoteIntegrity.test.ts
       - name: Install Chromium
