@@ -14,12 +14,16 @@ function git(...args: string[]): string {
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, '.', 'VITE_');
+  // Cloudflare Workers Builds (unlike Pages) supplies WORKERS_CI_* values.
+  const workersBranch = process.env.WORKERS_CI_BRANCH?.trim() || '';
   const branch =
+    workersBranch ||
     process.env.CF_PAGES_BRANCH?.trim() ||
     process.env.GITHUB_HEAD_REF?.trim() ||
     process.env.GITHUB_REF_NAME?.trim() ||
     git('branch', '--show-current');
   const candidateSha =
+    process.env.WORKERS_CI_COMMIT_SHA?.trim() ||
     process.env.CF_PAGES_COMMIT_SHA?.trim() ||
     process.env.GITHUB_SHA?.trim() ||
     git('rev-parse', 'HEAD');
@@ -30,12 +34,16 @@ export default defineConfig(({ command, mode }) => {
     : branch === 'main'
       ? 'MAIN'
       : 'BUILD';
+  // Public, non-main Worker previews must not touch the live Supabase project.
+  // Local Vite dev sessions are unchanged. Backend staging remains deferred.
+  const previewSandbox = process.env.WORKERS_CI === '1' && Boolean(workersBranch) && workersBranch !== 'main';
 
   return {
     base: env.VITE_BASE_PATH?.trim() || '/',
     plugins: [react()],
     define: {
       __SALESSHOP_BUILD__: JSON.stringify({ channel, branch, commit }),
+      __SALESSHOP_PREVIEW_SANDBOX__: JSON.stringify(previewSandbox),
     },
     server: {
       port: 5173,
