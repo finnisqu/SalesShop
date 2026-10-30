@@ -1,6 +1,10 @@
-# SalesShop Prototype
+# SalesShop
 
-## Current React app and deferred Supabase staging
+## React app, development workflow and deferred Supabase staging
+
+**As of October 30, 2026:** The React application was promoted to `main` on October 16, 2026. GitHub Pages is configured to publish from `main` only; the working development branch remains `architecture/react-foundation`. Classic Quotes remains available while Beta awaits user acceptance and real authenticated privacy checks. This statement describes repository configuration, not a live deployment/browser verification.
+
+**Development without CI/browser dependency:** [Source-reviewed development loop](docs/engineering/19-source-reviewed-development-loop.md). We can make and inspect focused GitHub batches without claiming unexecuted build, unit, browser or security checks have passed. Production release and security gates remain separate.
 
 > **Decision (October 15, 2026): HOLD.** Do **not** create a billable Supabase development branch or apply the staged privacy migrations to the live SalesShop database yet. The older browser-only prototype described below is historical; active React development is on `architecture/react-foundation` (`src/`).
 
