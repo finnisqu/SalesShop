@@ -24,3 +24,25 @@
 .app-account-zone { margin-left:auto;display:flex;align-items:center;gap:8px; }
 .mobile-app-current .sales-build-badge { max-width:100%; }
 .qmb .sales-build-badge { color:var(--qmb-ink);background:var(--qmb-tint);border-color:var(--qmb-border); }
+
+/* Quotes Beta replaces the shared header on phones. Keep its build label in
+   a slim first line rather than squeezing the existing quote actions. */
+.qmb .qmb-top > .sales-build-badge,
+.qmb .qmb-pagehead > .sales-build-badge { display:none; }
+
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .qmb .qmb-top:has(> .sales-build-badge),
+  .qmb .qmb-pagehead:has(> .sales-build-badge) {
+    position:relative;
+    padding-top:24px;
+  }
+  .qmb .qmb-top > .sales-build-badge,
+  .qmb .qmb-pagehead > .sales-build-badge {
+    display:inline-flex;
+    position:absolute;
+    top:4px;
+    left:12px;
+    padding:2px 5px;
+    font-size:9px;
+  }
+}
