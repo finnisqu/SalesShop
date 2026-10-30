@@ -1,26 +1,8 @@
 name: SalesShop Navigation Smoke
 
+# Source-reviewed DEV batches do not run GitHub-hosted CI while Actions minutes are exhausted.
+# Keep manual release/security QC available; do not treat it as passed unless run.
 on:
-  pull_request:
-    branches:
-      - architecture/react-foundation
-      - main
-    paths:
-      - 'src/components/HomeWorkspace.tsx'
-      - 'src/components/QuotesMobileBeta.tsx'
-      - 'src/components/QuickCreate.tsx'
-      - 'src/components/DealRecordPage.tsx'
-      - 'src/components/PrivateDealContactRoles.tsx'
-      - 'src/home-workspace.css'
-      - 'src/quick-create.css'
-      - 'e2e/home-journey.pw.ts'
-      - 'e2e/connections-deal-record.pw.ts'
-      - 'e2e/quotes-beta-fast-path.pw.ts'
-      - 'src/services/quoteWorkflowShortcut.ts'
-      - 'src/components/QuoteBetaDetails.tsx'
-      - 'src/quotes-mobile-details.css'
-      - 'src/quotes-mobile-speed.css'
-      - '.github/workflows/navigation-smoke.yml'
   workflow_dispatch:
 
 permissions:
