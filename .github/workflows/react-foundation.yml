@@ -1,15 +1,8 @@
 name: SalesShop Pages
 
+# Source-reviewed DEV batches do not run GitHub-hosted CI while Actions minutes are exhausted.
+# Keep manual release/security QC available; do not treat it as passed unless run.
 on:
-  push:
-    branches:
-      - architecture/react-foundation
-      - main
-  pull_request:
-    branches:
-      - architecture/react-foundation
-      - main
-  # Branch pushes and PRs build/test; only a push to main (or manual main dispatch) publishes.
   workflow_dispatch:
 
 permissions:
