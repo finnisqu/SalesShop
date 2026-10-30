@@ -1,4 +1,19 @@
-.sales-home{width:min(1180px,100%);margin:0 auto;padding:clamp(16px,3vw,32px);color:var(--ss-theme-ink,#28342e);display:grid;gap:20px}
+/* HOME scrolls within the app shell, which intentionally locks document scrolling. */
+.sales-home{
+  flex:1 1 0%;
+  min-height:0;
+  width:min(1180px,100%);
+  margin:0 auto;
+  padding:clamp(16px,3vw,32px);
+  color:var(--ss-theme-ink,#28342e);
+  display:grid;
+  align-content:start;
+  gap:20px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+}
 .sales-home h1,.sales-home h2,.sales-home p{margin:0}
 .sales-home-heading h1{font-size:clamp(28px,3.2vw,42px);line-height:1.1;margin:7px 0}
 .sales-home-heading p,.sales-home-section-head p{color:var(--ss-theme-muted,#66716b);font-size:13px}
