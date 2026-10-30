@@ -66,6 +66,7 @@ import type {SalesDocumentTemplate,SalesDocumentTemplateChoice} from '../types/q
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
 import { nextQuoteAreaShortcut } from '../services/quoteWorkflowShortcut';
 import { GlobalPostItLauncher } from './GlobalPostIt';
+import { BuildBadge } from './BuildBadge';
 import {formatPersonalDate,readPersonalDateTimePreferences} from '../services/personalDateTimePreferences';
 
 // Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
@@ -274,6 +275,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,o
   return <div className="qmb-editor qmb-area-editor">
     <div ref={areaScrollRef} className="qmb-area-scroll">
     <header className="qmb-pagehead">
+      <BuildBadge compact />
       <button type="button" className="qmb-back" onClick={goBack}>‹ Quote</button>
       <div className="qmb-area-header-actions">
         <GlobalPostItLauncher />
@@ -765,7 +767,7 @@ export function QuotesMobileBeta() {
         />}
       <div className="qmb-desktop-main">
     {page==='library'?<>
-      <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div>
+      <header className="qmb-top"><BuildBadge compact /><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
@@ -850,6 +852,7 @@ export function QuotesMobileBeta() {
     </>:page==='quote'&&quote?<div className="qmb-editor qmb-quote-editor">
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
+          <BuildBadge compact />
           <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
           <span className="qmb-chip qmb-editor-status" title={salesTemplateLabel(salesDocumentTemplate(quote))+' · '+quoteBetaStatusLabel(quote)}>{quoteBetaStatusLabel(quote)}</span>
           <div className="qmb-headeractions">
