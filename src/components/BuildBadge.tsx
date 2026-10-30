@@ -12,9 +12,11 @@ export function BuildBadge({ compact = false }: BuildBadgeProps) {
   const { channel, branch, commit } = __SALESSHOP_BUILD__;
   const validCommit = /^[0-9a-f]{40,64}$/i.test(commit) ? commit : '';
   const shortCommit = validCommit ? validCommit.slice(0, 7) : 'unknown';
-  const description = `${channel} build · branch ${branch || 'unknown'} · commit ${validCommit || 'unavailable'}`;
+  const sandbox = __SALESSHOP_PREVIEW_SANDBOX__;
+  const description = `${channel} build · branch ${branch || 'unknown'} · commit ${validCommit || 'unavailable'}${sandbox ? ' · LOCAL SANDBOX: live Supabase disabled; test data stays in this browser' : ''}`;
   const contents = <>
     <strong>{channel}</strong>
+    {sandbox && <span className="sales-build-badge-sandbox">LOCAL</span>}
     <code>{shortCommit}</code>
   </>;
   const className = `sales-build-badge${compact ? ' is-compact' : ''}`;
