@@ -6,3 +6,6 @@ declare const __SALESSHOP_BUILD__: Readonly<{
   branch: string;
   commit: string;
 }>;
+
+/** True only in public Cloudflare Workers non-main preview builds. */
+declare const __SALESSHOP_PREVIEW_SANDBOX__: boolean;
