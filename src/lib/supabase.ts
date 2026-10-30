@@ -5,9 +5,13 @@ import { isDeveloperPlaygroundRoute } from './developerPlayground';
 // The defaults below point this SalesShop prototype at its dedicated Supabase
 // project. Supabase publishable keys are designed to be used in browser clients;
 // authorization is enforced by Postgres RLS, never by keeping this key secret.
-// Browser-only visual QC may use a local-only workspace without contacting
-// the live Supabase project. Never permit this override in a production build.
+// Browser-only visual QC and public Worker preview builds use a local-only
+// workspace without contacting the live Supabase project. Production keeps
+// its current backend; no privacy migration or backend staging is implied.
 const localVisualQc = import.meta.env.DEV && import.meta.env.VITE_SALES_SHOP_LOCAL_QC === '1';
+// Cloudflare Workers' non-main preview flag is embedded by Vite at build time.
+// Public previews are NOT an authorization boundary for real customer data.
+export const publicDevSandbox = __SALESSHOP_PREVIEW_SANDBOX__;
 
 const DEFAULT_SUPABASE_URL = 'https://pvchgibllozuwickhfqz.supabase.co';
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_lq79tQrf8RDCkGVv0powYQ_y9sfzRy7';
@@ -20,8 +24,8 @@ const productionKey = (
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
   ?? import.meta.env.VITE_SUPABASE_ANON_KEY
 )?.trim() || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
-export const supabaseUrl = localVisualQc || developerPlaygroundActive ? '' : productionUrl;
-export const supabaseKey = localVisualQc || developerPlaygroundActive ? '' : productionKey;
+export const supabaseUrl = localVisualQc || publicDevSandbox || developerPlaygroundActive ? '' : productionUrl;
+export const supabaseKey = localVisualQc || publicDevSandbox || developerPlaygroundActive ? '' : productionKey;
 
 export const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 
@@ -37,7 +41,7 @@ export const supabase: SupabaseClient | null = supabaseConfigured
 
 /** Only for verified Developer Playground entry. Never export this client to
  * tenant stores or UI; those use `supabase`, which is null in this route. */
-export const playgroundIdentityClient: SupabaseClient | null = developerPlaygroundActive && !localVisualQc
+export const playgroundIdentityClient: SupabaseClient | null = developerPlaygroundActive && !localVisualQc && !publicDevSandbox
   ? createClient(productionUrl, productionKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
     })
