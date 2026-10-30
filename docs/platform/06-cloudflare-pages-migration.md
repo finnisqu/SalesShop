@@ -1,4 +1,11 @@
-# SalesShop: move frontend hosting from GitHub Pages to Cloudflare Pages
+# SalesShop: migrate frontend hosting from GitHub Pages to Cloudflare
+
+> **Update — October 30, 2026: Cloudflare Workers (static assets), not Cloudflare Pages.** The user's Cloudflare build log shows `npx wrangler deploy`, worker name `salesshop`, and auto-generated `assets.not_found_handling: "single-page-application"`. The Vite build succeeded, but Worker deployment failed with error 100324 because `public/_redirects` contained `/* /index.html 200`. This file was deleted from both `main` (commit `ccd550b`) and DEV (commit `b0e8c38`). Workers serves SPA fallback natively and rejects the looping redirect. These new commits are source fixes; Cloudflare deployment success still needs verifying.
+>
+> **For the existing Workers project**, use Workers & Pages → **salesshop** → **Deployments** → **View build history** to check the new main build and active deployment. Check **Settings → Build → Branch control**: production branch `main`, **Enable Preview Builds** for DEV. On current Workers Builds, the preview command is `npx wrangler preview`; preview URLs appear under the Worker's **Previews** section. Use **Access → Protect this Worker behind Access → Previews only** to protect the dev deployment before testing with any accounts; the dev frontend still uses the live Supabase backend unless separately isolated. Check the actual assigned preview URL rather than assuming `pages.dev`. Reference: https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/ and https://developers.cloudflare.com/workers/configuration/cloudflare-access/.
+>
+> **The setup guide below documents the Pages alternative and should not be followed for the already-created Worker.** Do not create a second Pages project just to remedy this error. Keep the current GitHub Pages host live until Workers production is verified, then coordinate `app.salesshop.work` cutover.
+
 
 **Prepared:** October 30, 2026  
 **Status:** Setup instructions only. **Cloudflare project, preview URL, DNS cutover, and production switch are NOT yet confirmed.**
