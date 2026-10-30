@@ -34,11 +34,12 @@ async function login(environment, supplied = PASSWORD, next = '/', requestHeader
 function cookie(response) { return response.headers.get('Set-Cookie')?.split(';')[0] || ''; }
 
 test('Wrangler guarantees authentication before every asset', () => {
-  const conf = JSON.parse(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
-  assert.equal(conf.main, './worker/auth-gateway.mjs');
+  const conf = JSON.parse(readFileSync(new URL('../wrangler.dev.jsonc', import.meta.url), 'utf8'));
+  assert.equal(conf.name, 'salesshop-dev');
+  assert.equal(conf.main, './worker/dev-auth-gateway.mjs');
   assert.equal(conf.assets.run_worker_first, true);
   assert.equal(conf.assets.binding, 'ASSETS');
-  assert.equal(conf.assets.directory, './apps/web/dist');
+  assert.equal(conf.assets.directory, './dist');
 });
 test('missing or weak secret fails closed for HTML and asset paths', async () => {
   for (const secret of [undefined, 'short']) {
