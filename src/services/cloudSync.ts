@@ -12,6 +12,7 @@ import type { QuoteDocument } from '../types/quote';
 import type { SignatureDocument } from '../types/signature';
 import { loadNormalizedCrm, syncNormalizedCrm } from './normalizedCrmSync';
 import { loadNormalizedQuotes, syncNormalizedQuotes } from './normalizedQuoteSync';
+import {markPendingQuoteSync,clearPendingQuoteSync,readPendingQuoteSync,mergePendingQuoteDrafts} from './quoteCloudRecovery';
 import { loadNormalizedSignatures, syncNormalizedSignatures } from './normalizedSignatureSync';
 
 const CRM_DOCUMENT_KEY: CloudDocumentKey = 'crm';
@@ -144,8 +145,13 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   const localQuotes = readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument | null;
   const preferredActiveQuoteId = localQuotes?.schemaVersion === 2 ? localQuotes.activeQuoteId : null;
   const normalizedQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
-  if (normalizedQuotes) {
-    writeLocalDocument(QUOTES_DOCUMENT_KEY, normalizedQuotes, false);
+  const pendingQuoteSync=readPendingQuoteSync({organizationId:orgId,userId});
+  // Keep only explicitly pending drafts owned by this user. A stale local
+  // cache cannot overwrite issued revisions, archived rows or anyone else's
+  // quotes, even if the server has newer versions.
+  const recoveredQuotes=mergePendingQuoteDrafts(normalizedQuotes,localQuotes,pendingQuoteSync);
+  if (recoveredQuotes) {
+    writeLocalDocument(QUOTES_DOCUMENT_KEY,recoveredQuotes,false);
   } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2 &&
     localQuotes.quotes.length > 0 && localQuotes.quotes.every(quote=>quote.ownerUserId===userId)) {
     await syncNormalizedQuotes(orgId, localQuotes);
@@ -206,34 +212,48 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   stopCloudSync();
   if (!supabase || typeof window === 'undefined') return;
 
-  const handler = (event: Event) => {
-    const detail = (event as CustomEvent<CloudDocumentSavedDetail>).detail;
-    if (!detail?.key) return;
-    // Viewers may sync their personal notebook, never shared company documents.
-    if (options.readOnlyShared && detail.key !== PRIVATE_DOCUMENT_KEY) return;
-    const previous = pending.get(detail.key);
-    if (previous) window.clearTimeout(previous);
-
-    const delay = detail.key === 'notebook' ? 1200 : 500;
-    const timer = window.setTimeout(() => {
-      pending.delete(detail.key);
-      const operation = detail.key === PRIVATE_DOCUMENT_KEY
-        ? upsertPrivateDocument(userId, detail.document)
-        : detail.key === CRM_DOCUMENT_KEY
-          ? syncNormalizedCrm(orgId, detail.document as CrmDocument)
-          : detail.key === QUOTES_DOCUMENT_KEY
-            ? syncNormalizedQuotes(orgId, detail.document as QuoteDocument)
-            : syncNormalizedSignatures(orgId, detail.document as SignatureDocument);
-      void operation.catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Cloud sync failed.';
+  const scope={organizationId:orgId,userId};
+  const schedule=(key:CloudDocumentKey,document:unknown)=>{
+    const previous=pending.get(key);
+    if(previous)window.clearTimeout(previous);
+    // Local quote data already exists; persist an identity-scoped marker
+    // BEFORE the debounce, so a refresh cannot silently erase a draft.
+    const token=key===QUOTES_DOCUMENT_KEY?markPendingQuoteSync(scope,document):null;
+    const delay=key==='notebook'?1200:500;
+    const timer=window.setTimeout(()=>{
+      pending.delete(key);
+      const operation=key===PRIVATE_DOCUMENT_KEY
+        ?upsertPrivateDocument(userId,document)
+        :key===CRM_DOCUMENT_KEY
+          ?syncNormalizedCrm(orgId,document as CrmDocument)
+          :key===QUOTES_DOCUMENT_KEY
+            ?syncNormalizedQuotes(orgId,document as QuoteDocument)
+            :syncNormalizedSignatures(orgId,document as SignatureDocument);
+      void operation.then(()=>{
+        if(token)clearPendingQuoteSync(scope,token);
+      }).catch((error:unknown)=>{
+        const message=error instanceof Error?error.message:'Cloud sync failed.';
         onError?.(message);
       });
-    }, delay);
-    pending.set(detail.key, timer);
+    },delay);
+    pending.set(key,timer);
   };
+  const handler=(event:Event)=>{
+    const detail=(event as CustomEvent<CloudDocumentSavedDetail>).detail;
+    if(!detail?.key)return;
+    // Viewers may sync only their own notebook, never shared company quotes.
+    if(options.readOnlyShared&&detail.key!==PRIVATE_DOCUMENT_KEY)return;
+    schedule(detail.key,detail.document);
+  };
+  window.addEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
+  activeCleanup=()=>window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
 
-  window.addEventListener(CLOUD_DOCUMENT_SAVED_EVENT, handler);
-  activeCleanup = () => window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT, handler);
+  // A previously interrupted debounced save survives a browser reload.
+  // Re-attempt after the auth store finishes assigning this organization.
+  if(!options.readOnlyShared&&readPendingQuoteSync(scope)){
+    const restored=readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument|null;
+    if(restored?.schemaVersion===2)schedule(QUOTES_DOCUMENT_KEY,restored);
+  }
 }
 
 /**

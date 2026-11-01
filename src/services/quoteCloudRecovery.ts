@@ -1,7 +1,8 @@
 import type {Quote,QuoteDocument} from '../types/quote';
 import {chooseActiveQuoteId} from './quoteActiveSelection';
+import {scopedStorageKey} from '../lib/developerPlayground';
 
-const KEY='salesshop-cloud-quote-pending-v1';
+const KEY=scopedStorageKey('salesshop-cloud-quote-pending-v1');
 export interface QuoteSyncScope {userId:string;organizationId:string;}
 export interface PendingQuoteSync {
   userId:string;organizationId:string;token:string;quoteIds:string[];

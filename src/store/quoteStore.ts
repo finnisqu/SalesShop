@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { localQuoteRepository } from '../data/quoteRepository';
+import {chooseActiveQuoteId} from '../services/quoteActiveSelection';
 import { supabase } from '../lib/supabase';
 import {
   applyQuoteSent,
@@ -291,16 +292,16 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
 
   hydrate: () => {
     if (get().hydrated) return;
-    const stored = localQuoteRepository.load() ?? seedDocument();
-    if (!stored.quotes.length) {
+    const stored = localQuoteRepository.load();
+    if (!stored) {
       const seeded = seedDocument();
       persist(seeded.quotes, seeded.activeQuoteId);
       set({ quotes: seeded.quotes, activeQuoteId: seeded.activeQuoteId, hydrated: true });
       return;
     }
-    const activeQuoteId = stored.activeQuoteId && stored.quotes.some((quote) => quote.id === stored.activeQuoteId)
-      ? stored.activeQuoteId
-      : stored.quotes[0].id;
+    // A valid empty cloud workspace must stay empty: never generate a local
+    // placeholder that could later upload as an unintended customer quote.
+    const activeQuoteId=chooseActiveQuoteId(stored.quotes,stored.activeQuoteId);
     persist(stored.quotes, activeQuoteId);
     set({ quotes: stored.quotes, activeQuoteId, hydrated: true });
   },

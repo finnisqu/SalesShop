@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import {chooseActiveQuoteId} from './quoteActiveSelection';
 import { useAuthStore } from '../store/authStore';
 import {
   isDraftQuoteNumber,
@@ -189,9 +190,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     updatedAt: String(row.updated_at),
   }));
 
-  const activeQuoteId = preferredActiveQuoteId && quotes.some((quote) => quote.id === preferredActiveQuoteId)
-    ? preferredActiveQuoteId
-    : quotes[0]?.id ?? null;
+  const activeQuoteId=chooseActiveQuoteId(quotes,preferredActiveQuoteId);
   return { schemaVersion: 2, quotes, activeQuoteId };
 }
 
