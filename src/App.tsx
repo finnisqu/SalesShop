@@ -129,9 +129,14 @@ function App() {
     const store=useQuoteStore.getState();
     if(!store.hydrated)store.hydrate();
     const current=useQuoteStore.getState();
-    if(current.quotes.some(q=>q.id===routeQuoteId)&&current.activeQuoteId!==routeQuoteId){
-      current.selectQuote(routeQuoteId);
+    const linked=current.quotes.find(q=>q.id===routeQuoteId);
+    if(linked?.archivedAt){
+      // A stale URL must not silently reopen an archived document on reload.
+      // Archived records remain accessible through the appropriate history UI.
+      useNavigationStore.getState().setView('quotes');
+      return;
     }
+    if(linked&&current.activeQuoteId!==routeQuoteId)current.selectQuote(routeQuoteId);
   },[view,routeQuoteId,quotesHydrated]);
 
   // Appearance is per device, but the default palette follows the active company.

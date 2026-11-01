@@ -13,6 +13,7 @@ import type { SignatureDocument } from '../types/signature';
 import { loadNormalizedCrm, syncNormalizedCrm } from './normalizedCrmSync';
 import { loadNormalizedQuotes, syncNormalizedQuotes } from './normalizedQuoteSync';
 import {markPendingQuoteSync,clearPendingQuoteSync,readPendingQuoteSync,mergePendingQuoteDrafts} from './quoteCloudRecovery';
+import {useQuoteCloudStatusStore} from '../store/quoteCloudStatusStore';
 import { loadNormalizedSignatures, syncNormalizedSignatures } from './normalizedSignatureSync';
 
 const CRM_DOCUMENT_KEY: CloudDocumentKey = 'crm';
@@ -213,15 +214,19 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   if (!supabase || typeof window === 'undefined') return;
 
   const scope={organizationId:orgId,userId};
+  const setQuoteSaveStatus=useQuoteCloudStatusStore.getState().setStatus;
+  setQuoteSaveStatus(readPendingQuoteSync(scope)?'pending':'saved');
   const schedule=(key:CloudDocumentKey,document:unknown)=>{
     const previous=pending.get(key);
     if(previous)window.clearTimeout(previous);
     // Local quote data already exists; persist an identity-scoped marker
     // BEFORE the debounce, so a refresh cannot silently erase a draft.
     const token=key===QUOTES_DOCUMENT_KEY?markPendingQuoteSync(scope,document):null;
+    if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('pending');
     const delay=key==='notebook'?1200:500;
     const timer=window.setTimeout(()=>{
       pending.delete(key);
+      if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('syncing');
       const operation=key===PRIVATE_DOCUMENT_KEY
         ?upsertPrivateDocument(userId,document)
         :key===CRM_DOCUMENT_KEY
@@ -230,9 +235,15 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
             ?syncNormalizedQuotes(orgId,document as QuoteDocument)
             :syncNormalizedSignatures(orgId,document as SignatureDocument);
       void operation.then(()=>{
-        if(token)clearPendingQuoteSync(scope,token);
+        if(token){
+          clearPendingQuoteSync(scope,token);
+          // Do not mark an earlier save as current when a newer local edit
+          // is still pending in the same browser.
+          if(!readPendingQuoteSync(scope))setQuoteSaveStatus('saved');
+        }
       }).catch((error:unknown)=>{
         const message=error instanceof Error?error.message:'Cloud sync failed.';
+        if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('error',message);
         onError?.(message);
       });
     },delay);

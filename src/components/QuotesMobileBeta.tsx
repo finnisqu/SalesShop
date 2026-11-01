@@ -579,7 +579,7 @@ export function QuotesMobileBeta() {
   },[routeQuoteId]);
   useEffect(()=>{
     if(!hydrated||!routeQuoteId||consumedRoute.current===routeQuoteId)return;
-    if(!quotes.some(q=>q.id===routeQuoteId))return;
+    if(!quotes.some(q=>q.id===routeQuoteId&&!q.archivedAt))return;
     consumedRoute.current=routeQuoteId;
     if(activeQuoteId!==routeQuoteId)select(routeQuoteId);
     // Browser Back to the *same* quote should restore its last editor section.
