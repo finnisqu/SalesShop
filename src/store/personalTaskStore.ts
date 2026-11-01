@@ -66,7 +66,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
   load:scope=>{
     if(!scope){set({scope:null,tasks:[],promotion:null});return;}
     if(get().scope===scope)return;
-    set({scope,tasks:read(scope),promotion:null});
+    set({scope,tasks:read(scope)});
   },
   createTask:(title,changes={})=>{
     const scope=get().scope;
