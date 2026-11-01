@@ -11,7 +11,7 @@ import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { canIssueTeamQuote } from '../services/teamDepartments';
 import {quoteIsCommerciallyEditable,canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
 import {
-  parseInches, takeoffCustomerSpecs,
+  parseInches, newTakeoffPiece, takeoffCustomerSpecs,
   totalBillableTakeoffSf, totalSplashSf, totalTakeoffSf,
 } from '../services/quoteTakeoffsLite';
 import {
@@ -49,6 +49,7 @@ import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
 import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRails';
 import { QuoteBetaProgress } from './QuoteBetaProgress';
 import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
+import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
   QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
 import {useQuoteBetaGeneralManager,QuoteBetaGeneralModeButton,QuoteBetaGeneralGrip,
@@ -213,9 +214,10 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   </article>;
 }
 
-function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,onReview,onClassic}:{
+function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNextArea,onDuplicate,onReview,onClassic,returnLabel}:{
   quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;
-  goBack:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onReview:()=>void;onClassic:()=>void;
+  goBack:()=>void;onPricingOverview:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onReview:()=>void;onClassic:()=>void;
+  returnLabel:string;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
   const general=isGeneralTakeoffSection(section);
@@ -275,6 +277,19 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,o
     if(scroll&&tabs)scroll.scrollTo({top:tabs.offsetTop,behavior:'auto'});
   };
   const patchPiece=(id:string,patch:Partial<QuoteTakeoffPiece>)=>savePieces(pieces.map(p=>p.id===id?{...p,...patch}:p));
+  const chooseTab=(target:AreaTab)=>{
+    setTab(target);
+    const scroll=areaScrollRef.current;
+    const tabs=scroll?.querySelector<HTMLElement>('.qmb-tabs');
+    if(scroll&&tabs)scroll.scrollTo({top:tabs.offsetTop,behavior:'auto'});
+  };
+  const addFirstPiece=()=>{
+    if(!editable||pieces.length>=500)return;
+    savePieces([...pieces,{...newTakeoffPiece(pieces.length+1),
+      splashHeightIn:section.scope?.takeoffDefaultSplashHeightIn??4,
+      edgeProfile:section.scope?.takeoffDefaultEdgeProfile??'Flat'}]);
+    chooseTab('measure');
+  };
   return <div className="qmb-editor qmb-area-editor">
     <div ref={areaScrollRef} className="qmb-area-scroll">
     <header className="qmb-pagehead">
@@ -306,6 +321,11 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,o
         <span aria-hidden="true">›</span>
       </button>}
     </div>
+    {!general&&<QuoteBetaAreaGuide quote={quote} section={section} editable={editable}
+      onAddPiece={addFirstPiece} onMeasure={()=>chooseTab('measure')}
+      onMaterial={()=>chooseTab('materials')}
+      onPricing={()=>chooseTab(desktopLab?'materials':'pricing')}
+      onOverview={onPricingOverview}/>}
     <nav className="qmb-tabs" aria-label="Area sections">
       {(desktopLab?([['measure','Measure'],['materials','Materials'],['calculator','Calculator']] as const)
         :([['measure','Measure'],['materials','Materials'],['pricing','Pricing']] as const)).map(([id,label])=>
@@ -406,7 +426,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,o
         </button>}
         <button type="button" className="qmb-outline qmb-area-review"
           aria-label="Review quote from Area" onClick={onReview}>Review ›</button>
-        <button type="button" className="qmb-primary" onClick={goBack}>Done · Quote ›</button>
+        <button type="button" className="qmb-primary" onClick={goBack}>{returnLabel} ›</button>
       </div>
     </footer>
     {advanced&&<QuoteTakeoffsLite quote={quote} section={section} onClose={()=>setAdvanced(false)}/>}
@@ -664,7 +684,7 @@ export function QuotesMobileBeta() {
     openQuote(id,template==='quick-quote'?'details':'build');
   };
   const openArea=(id:string)=>{setCustomerQuickOpen(false);setAreaId(id);setAreaTab('measure');setPage('area');};
-  const goBack=()=>{navigateDocument('build');};
+  const goBack=()=>{navigateDocument(quoteTab==='pricing'?'pricing':'build');};
   const newArea=()=>{
     if(!quote||!editable)return;
     const id=addSection(quote.id);
@@ -1029,7 +1049,9 @@ export function QuotesMobileBeta() {
             {primaryAction?.mobile??'Review document ›'}</button>}
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
-      setTab={setAreaTab} goBack={goBack} onNextArea={advanceToNextArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
+      setTab={setAreaTab} goBack={goBack} onPricingOverview={openPricingStage}
+      returnLabel={quoteTab==='pricing'?'Done · Pricing':'Done · Areas'}
+      onNextArea={advanceToNextArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
       onClassic={()=>exitBeta(false)}/>:null}
       </div>
     </div>

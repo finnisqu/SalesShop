@@ -1,0 +1,15 @@
+.qmb .qmb-area-guide {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:9px 16px;background:var(--qmb-card);border-bottom:1px solid var(--qmb-border);min-width:0;}
+.qmb .qmb-area-guide.is-fresh {background:var(--qmb-tint);}
+.qmb .qmb-area-guide-copy {display:grid;gap:2px;min-width:150px;flex:1 1 190px;}
+.qmb .qmb-area-guide-copy strong {font-size:12px;font-weight:850;color:var(--qmb-ink);}
+.qmb .qmb-area-guide-copy small {font-size:10px;line-height:1.45;color:var(--qmb-muted);}
+.qmb .qmb-area-guide-actions {display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.qmb .qmb-area-guide-actions button {border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card);color:var(--qmb-accent);padding:6px 9px;min-height:34px;font-size:11px;font-weight:800;}
+.qmb .qmb-area-guide-actions button.is-primary {background:var(--qmb-accent);color:var(--qmb-on-accent);border-color:var(--qmb-accent);}
+.qmb .qmb-area-guide-actions button.is-overview {border-style:dashed;}
+@media(max-width:700px){
+ .qmb .qmb-area-guide {padding:8px 11px;gap:6px;}
+ .qmb .qmb-area-guide-copy {flex:1 1 100%;}
+ .qmb .qmb-area-guide-actions {width:100%;display:flex;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;overscroll-behavior-x:contain;}
+ .qmb .qmb-area-guide-actions button {flex:0 0 auto;min-height:39px;white-space:nowrap;}
+}
