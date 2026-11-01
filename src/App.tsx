@@ -51,6 +51,8 @@ import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
 import { Connections } from './components/Connections';
 import {HomeWorkspace} from './components/HomeWorkspace';
+import {taskScope,usePersonalTaskStore} from './store/personalTaskStore';
+import {startPersonalTaskCloudSync} from './services/personalTaskCloudSync';
 import {TasksWorkspace} from './components/TasksWorkspace';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
@@ -110,6 +112,13 @@ function App() {
   const renameEntry = useNotebookStore((state) => state.renameEntry);
   const projects = useCrmStore((state) => state.projects);
   const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
+  const taskUserId=useAuthStore(s=>s.user?.id);
+  const tasksScope=taskScope(mode,organizationId,taskUserId);
+  useEffect(()=>{
+    usePersonalTaskStore.getState().load(tasksScope);
+    if(mode!=='cloud'||!taskUserId||!tasksScope)return;
+    return startPersonalTaskCloudSync(tasksScope,taskUserId);
+  },[mode,organizationId,taskUserId,tasksScope]);
 
   useEffect(() => {
     hydrate();

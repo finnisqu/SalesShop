@@ -6,7 +6,7 @@ export type TaskType='todo'|'call'|'email'|'meeting'|'follow-up';
 export type TaskPriority='low'|'normal'|'high'|'urgent';
 export type TaskStatus='open'|'in-progress'|'waiting'|'completed'|'canceled';
 export interface PersonalTask {
-  id:string;title:string;dueDate?:string;dueTime?:string;sourceObjectId?:string;
+  id:string;title:string;dueDate?:string;dueTime?:string;sourceObjectId?:string;deletedAt?:string;
   linked?:TaskLink;sourceLabel?:string;sourceText?:string;
   notes?:string;type?:TaskType;priority?:TaskPriority;status?:TaskStatus;
   queue?:string;reminderAt?:string;
@@ -16,6 +16,9 @@ export type TaskChanges=Partial<Omit<PersonalTask,'id'|'createdAt'|'updatedAt'>>
 export interface TaskPromotion {title:string;linked?:TaskLink;sourceLabel?:string;sourceText?:string;sourceObjectId?:string;}
 interface TaskState {
   scope:string|null;tasks:PersonalTask[];promotion:TaskPromotion|null;
+  syncStatus:'local'|'loading'|'pending'|'saved'|'error';syncError:string|null;
+  setSyncStatus:(status:TaskState['syncStatus'],error?:string|null)=>void;
+  receiveCloud:(scope:string,tasks:PersonalTask[])=>void;
   load:(scope:string|null)=>void;
   add:(title:string,dueDate?:string,linked?:TaskLink)=>string|null;
   createTask:(title:string,changes?:TaskChanges)=>string|null;
@@ -62,11 +65,16 @@ function sanitize(change:TaskChanges):TaskChanges {
   return next;
 }
 export const usePersonalTaskStore=create<TaskState>((set,get)=>({
-  scope:null,tasks:[],promotion:null,
+  scope:null,tasks:[],promotion:null,syncStatus:'local',syncError:null,
+  setSyncStatus:(syncStatus,syncError=null)=>set({syncStatus,syncError}),
+  receiveCloud:(scope,tasks)=>{
+    if(scope!==get().scope)return;
+    set({tasks});persist(scope,tasks);
+  },
   load:scope=>{
-    if(!scope){set({scope:null,tasks:[],promotion:null});return;}
+    if(!scope){set({scope:null,tasks:[],syncStatus:'local',syncError:null});return;}
     if(get().scope===scope)return;
-    set({scope,tasks:read(scope)});
+    set({scope,tasks:read(scope),syncStatus:'local',syncError:null});
   },
   createTask:(title,changes={})=>{
     const scope=get().scope;
@@ -98,7 +106,9 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
   snooze:(id,until)=>{if(validDate(until))get().updateTask(id,{dueDate:until,status:'open'});},
   remove:id=>{
     const {scope,tasks}=get();if(!scope)return;
-    const next=tasks.filter(task=>task.id!==id);
+    const now=new Date().toISOString();
+    // Tombstones prevent another signed-in device from resurrecting deleted tasks.
+    const next=tasks.map(task=>task.id===id?{...task,deletedAt:now,updatedAt:now}:task);
     set({tasks:next});persist(scope,next);
   },
   beginPromotion:promotion=>set({promotion}),

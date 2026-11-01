@@ -44,10 +44,11 @@ function Editor({initial,onCancel,onSave}:{
   const [linked]=useState(initial.linked);
   const [sourceLabel]=useState(initial.sourceLabel);
   const [sourceText]=useState(initial.sourceText);
+  const [sourceObjectId]=useState(initial.sourceObjectId);
   const submit=(event:FormEvent)=>{event.preventDefault();if(!title.trim())return;
     onSave({title:title.trim(),type,priority,status,dueDate:dueDate||undefined,
       dueTime:dueDate?dueTime||undefined:undefined,reminderAt:normalizeLocalReminder(reminderAt),
-      notes,queue,linked,sourceLabel,sourceText});
+      notes,queue,linked,sourceLabel,sourceText,sourceObjectId});
   };
   return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)onCancel();}}>
     <form className="tasks-editor" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
@@ -81,6 +82,8 @@ export function TasksWorkspace(){
   const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
   const scope=taskScope(mode,orgId,userId);
   const tasks=usePersonalTaskStore(s=>s.tasks),storedScope=usePersonalTaskStore(s=>s.scope);
+  const syncStatus=usePersonalTaskStore(s=>s.syncStatus);
+  const syncError=usePersonalTaskStore(s=>s.syncError);
   const load=usePersonalTaskStore(s=>s.load),create=usePersonalTaskStore(s=>s.createTask);
   const update=usePersonalTaskStore(s=>s.updateTask),complete=usePersonalTaskStore(s=>s.complete);
   const reopen=usePersonalTaskStore(s=>s.reopen),remove=usePersonalTaskStore(s=>s.remove);
@@ -92,7 +95,7 @@ export function TasksWorkspace(){
   const today=localDay();
   useEffect(()=>load(scope),[scope,load]);
   useEffect(()=>{if(promotion&&scope){setEditing(promotion);beginPromotion(null);}},[promotion,beginPromotion,scope]);
-  const own=(!rolePreview&&scope&&storedScope===scope)?tasks:[];
+  const own=(!rolePreview&&scope&&storedScope===scope)?tasks.filter(t=>!t.deletedAt):[];
   const counts=useMemo(()=>({
     active:own.filter(t=>condition(t,today)==='active').length,
     overdue:own.filter(t=>condition(t,today)==='overdue').length,
@@ -181,7 +184,16 @@ export function TasksWorkspace(){
         </article>;
       })}
     </section>}
-    <footer className="tasks-footer">Private personal tasks are currently saved on this device. Reminder timestamps appear in SalesShop; background emails and push alerts are not enabled.</footer>
+    <footer className="tasks-footer">
+      {mode==='cloud'
+        ?syncStatus==='saved'?'✓ Tasks saved privately to cloud'
+          :syncStatus==='pending'?'Cloud save pending · also saved on this device'
+          :syncStatus==='loading'?'Loading your private cloud task history…'
+          :syncStatus==='error'?'Cloud task sync failed · local records preserved: '+(syncError??'Retry by reopening Tasks')
+          :'Personal tasks saved on this device'
+        :'Personal tasks saved on this device'}
+      {' · '}Reminder dates are tracked in SalesShop. Background emails and push alerts are not enabled.
+    </footer>
     {editing&&<Editor key={'id'in editing?editing.id:editing.title+'new'} initial={editing} onCancel={()=>setEditing(null)} onSave={save}/>}
   </main>;
 }

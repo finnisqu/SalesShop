@@ -13,7 +13,7 @@ export function buildHomeAgenda(
  limit=9,
 ):HomeAgendaItem[]{
  const manual:HomeAgendaItem[]=tasks
-   .filter(t=>!t.completedAt&&(!t.dueDate||t.dueDate<=today))
+   .filter(t=>!t.deletedAt&&!t.completedAt&&t.status!=='completed'&&t.status!=='canceled'&&(!t.dueDate||t.dueDate<=today))
    .map(task=>({kind:'task',id:'task:'+task.id,task,dueDate:task.dueDate,
      priority:task.dueDate&&task.dueDate<today?0:task.dueDate===today?1:2}));
  const quote:HomeAgendaItem[]=followUps.map(followUp=>({

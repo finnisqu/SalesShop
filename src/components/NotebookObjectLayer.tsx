@@ -332,6 +332,7 @@ export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
               [{label:'Promote object to Task…',onSelect:()=>promote(item)}]);
           }}/>
       ))}
+      {context.menu}
     </div>
   );
 }
