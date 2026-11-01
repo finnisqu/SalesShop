@@ -43,10 +43,13 @@ export function startPersonalTaskCloudSync(scope:string,userId:string):()=>void{
         const remote=await fetchRemote();
         if(cancelled)return;
         const latest=store.getState().tasks;
-        const merged=mergePrivateTasks(latest,remote);
+        const merged=mergePrivateTasks(latest,remote.filter(task=>task.workspaceScope===scope));
         // Never replace current local work with an outdated cloud response.
         suppress=true;store.getState().receiveCloud(scope,merged);suppress=false;
-        const document:TaskDocument={schemaVersion:1,tasks:merged};
+        // Preserve other company scopes owned by this user in the same private
+        // document. Tasks remain invisible to other users through RLS.
+        const document:TaskDocument={schemaVersion:1,
+          tasks:[...remote.filter(task=>task.workspaceScope!==scope),...merged]};
         const {error}=await client.from('private_documents').upsert({
           owner_id:userId,document_key:DOCUMENT_KEY,document,
         },{onConflict:'owner_id,document_key'});
@@ -77,11 +80,12 @@ export function startPersonalTaskCloudSync(scope:string,userId:string):()=>void{
       const remote=await fetchRemote();
       if(cancelled||store.getState().scope!==scope)return;
       const local=store.getState().tasks;
-      const merged=mergePrivateTasks(local,remote);
+      const remoteInScope=remote.filter(task=>task.workspaceScope===scope);
+      const merged=mergePrivateTasks(local,remoteInScope);
       suppress=true;store.getState().receiveCloud(scope,merged);suppress=false;
       initializing=false;
       // Ensure old device-only Home tasks are uploaded on first connection.
-      if(JSON.stringify(merged)!==JSON.stringify(remote))queue();
+      if(JSON.stringify(merged)!==JSON.stringify(remoteInScope))queue();
       else status('saved');
     }catch(error){
       suppress=false;initializing=false;

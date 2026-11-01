@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest';
 import type {PersonalTask} from '../store/personalTaskStore';
 import {mergePrivateTasks} from './personalTaskCloudSync';
 const t=(id:string,updatedAt:string,patch:Partial<PersonalTask>={}):PersonalTask=>({
-  id,title:id,createdAt:updatedAt,updatedAt,...patch
+  id,title:id,workspaceScope:'org:shop:user:owner',createdAt:updatedAt,updatedAt,...patch
 });
 describe('private task history merge',()=>{
  it('keeps a draft created on this device without overwriting cloud history',()=>{

@@ -6,7 +6,7 @@ export type TaskType='todo'|'call'|'email'|'meeting'|'follow-up';
 export type TaskPriority='low'|'normal'|'high'|'urgent';
 export type TaskStatus='open'|'in-progress'|'waiting'|'completed'|'canceled';
 export interface PersonalTask {
-  id:string;title:string;dueDate?:string;dueTime?:string;sourceObjectId?:string;deletedAt?:string;
+  id:string;title:string;dueDate?:string;dueTime?:string;sourceObjectId?:string;deletedAt?:string;workspaceScope?:string;
   linked?:TaskLink;sourceLabel?:string;sourceText?:string;
   notes?:string;type?:TaskType;priority?:TaskPriority;status?:TaskStatus;
   queue?:string;reminderAt?:string;
@@ -45,7 +45,7 @@ function read(scope:string):PersonalTask[]{
       item!==null&&typeof item==='object'&&
       typeof item.id==='string'&&typeof item.title==='string'&&
       typeof item.createdAt==='string'&&typeof item.updatedAt==='string')
-      .map(item=>({...item,title:item.title.slice(0,240),
+      .map(item=>({...item,workspaceScope:item.workspaceScope??scope,title:item.title.slice(0,240),
         status:item.status??(item.completedAt?'completed':'open'),
         type:item.type??'todo',priority:item.priority??'normal'}));
   }catch{return[];}
@@ -82,7 +82,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     if(!scope||!clean)return null;
     const now=new Date().toISOString();
     const fields=sanitize(changes);
-    const task:PersonalTask={...fields,id:'task_'+crypto.randomUUID(),title:clean,
+    const task:PersonalTask={...fields,id:'task_'+crypto.randomUUID(),title:clean,workspaceScope:scope,
       type:fields.type??'todo',priority:fields.priority??'normal',
       status:'open',completedAt:undefined,createdAt:now,updatedAt:now};
     const tasks=[task,...get().tasks];
