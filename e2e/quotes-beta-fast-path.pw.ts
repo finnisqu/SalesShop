@@ -14,7 +14,7 @@ test('Beta customer and Deal details advance directly to an Area and its Review,
   await picker.getByRole('button',{name:/^Quick Quote/}).click();
   await picker.getByRole('textbox',{name:'Quote name'}).fill('Fast path test');
   await picker.getByRole('button',{name:/Create document/}).click();
-  await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
+  // A newly named Quick Quote begins at Details: no extra Build → Details tap.
   await expect(beta.getByRole('region',{name:'Quote customer and deal details'})).toBeVisible();
 
   // Explicit action creates exactly one Area; merely opening Details never does.
@@ -34,4 +34,18 @@ test('Beta customer and Deal details advance directly to an Area and its Review,
   await beta.getByRole('button',{name:'Continue to Kitchen ›'}).click();
   await expect(beta.getByRole('textbox',{name:'Area name'})).toHaveValue('Kitchen');
   await expect(beta.locator('.qmb-desktop-frame.is-library')).toHaveCount(0);
+
+  // Leaving the last Area can explicitly create another, but returning to the
+  // first Area must reopen the existing next Area instead of duplicating it.
+  await beta.getByRole('button',{name:'Pricing',exact:true}).click();
+  await beta.getByRole('button',{name:'Add another Area'}).click();
+  await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:/Kitchen/}).first().click();
+  await beta.getByRole('button',{name:'Pricing',exact:true}).click();
+  await expect(beta.getByRole('button',{name:'Go to next Area: Bath'})).toBeVisible();
+  await beta.getByRole('button',{name:'Go to next Area: Bath'}).click();
+  await expect(beta.getByRole('textbox',{name:'Area name'})).toHaveValue('Bath');
+  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await expect(beta.locator('[data-area-sort-id]')).toHaveCount(2);
 });

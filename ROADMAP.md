@@ -1,3 +1,7 @@
+> **Current main-first priority (November 2026):** Cloudflare Worker `salesshop` serves `app.salesshop.work` from `main`; routine GitHub Actions are manual-only. The rest of this file is a long-term product vision and includes historical prototype-stage estimates, not current deployment instructions.
+>
+> **Next execution queue:** (1) Quotes Beta speed/Area navigation/customer details and responsive polish; (2) Connections record usefulness and low-friction Deal associations; (3) Catalog/Rate Book/Project Materials accuracy and customer-facing pricing consistency; (4) real-device and authenticated quote/privacy/revision acceptance before any security-sensitive release. Keep Classic Quotes available. Never silently deploy staged Supabase RLS or Edge changes. See `AGENTS.md` for the active workflow.
+
 # SalesShop Roadmap
 
 > Living product and architecture roadmap for SalesShop.

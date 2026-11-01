@@ -46,6 +46,10 @@ export function QuoteBetaDetails({quote,onContinueToArea,nextAreaLabel}:{quote:Q
         <QuoteCrmFields quote={quote} compactSection="project" editable={editable}/>
       </details>
     </section>
+    {onContinueToArea&&nextAreaLabel&&<div className="qmb-details-next" aria-label="Next quote step">
+      <div><strong>Continue to takeoffs</strong><small>Customer and Deal details are optional and save automatically. Continue now; add notes whenever you need.</small></div>
+      <button type="button" className="qmb-primary" onClick={onContinueToArea}>{nextAreaLabel}</button>
+    </div>}
     <section className="qmb-details-section qmb-card" aria-labelledby="qmb-details-notes">
       <header className="qmb-details-heading">
         <span className="qmb-details-step">3</span>
@@ -63,10 +67,6 @@ export function QuoteBetaDetails({quote,onContinueToArea,nextAreaLabel}:{quote:Q
           onInternalChange={value=>update(quote.id,{internalNotes:value})}/>
       </fieldset>
     </section>
-    {onContinueToArea&&nextAreaLabel&&<div className="qmb-details-next" aria-label="Next quote step">
-      <div><strong>Ready for takeoffs?</strong><small>Customer and Deal details save automatically. Continue measuring and pricing without returning to Build.</small></div>
-      <button type="button" className="qmb-primary" onClick={onContinueToArea}>{nextAreaLabel}</button>
-    </div>}
     <QuoteBetaHistory quote={quote}/>
   </div>;
 }

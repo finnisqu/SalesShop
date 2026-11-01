@@ -64,7 +64,7 @@ import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
 import {snapshotStockBuilderLevels} from '../services/stockBuilderRateTemplate';
 import type {SalesDocumentTemplate,SalesDocumentTemplateChoice} from '../types/quote';
 import { isGeneralTakeoffSection } from '../services/quoteCustomerPresentation';
-import { nextQuoteAreaShortcut } from '../services/quoteWorkflowShortcut';
+import { nextQuoteAreaShortcut, nextQuoteAreaAfter } from '../services/quoteWorkflowShortcut';
 import { GlobalPostItLauncher } from './GlobalPostIt';
 import { BuildBadge } from './BuildBadge';
 import {formatPersonalDate,readPersonalDateTimePreferences} from '../services/personalDateTimePreferences';
@@ -246,6 +246,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,o
   const pieces=section.scope?.takeoffPieces??[];
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
   const linked=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf');
+  const nextArea=nextQuoteAreaAfter(quote,section.id);
   const amount=quoteLinesTotal(lines);
   const measured=totalBillableTakeoffSf(pieces);
   // Keep unresolved priced work visible *inside* the Area, not only at the
@@ -392,11 +393,14 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onNextArea,onDuplicate,o
     <footer className="qmb-footer qmb-area-footer">
       <div className="qmb-footer-area-total"><small>Area total</small><strong>{money.format(amount)}</strong></div>
       <div className="qmb-area-footer-actions">
-        {editable&&<button type="button" className="qmb-outline qmb-area-next"
-          aria-label={tab==='pricing'||tab==='calculator'?'Create next Area':'Continue to next Area step'}
+        {editable&&nextArea&&<button type="button" className="qmb-outline qmb-area-next"
+          aria-label={tab==='pricing'||tab==='calculator'
+            ?nextArea.kind==='open'?'Go to next Area: '+quote.sections.find(s=>s.id===nextArea.areaId)?.title:'Add another Area'
+            :'Continue to next Area step'}
+          title={tab==='pricing'||tab==='calculator'?nextArea.label:undefined}
           onClick={advanceArea}>
           {tab==='measure'?'Materials ›':tab==='materials'&&!desktopLab?'Pricing ›':
-            tab==='materials'&&desktopLab?'Calculator ›':'+ Next Area ›'}
+            tab==='materials'&&desktopLab?'Calculator ›':nextArea.label}
         </button>}
         <button type="button" className="qmb-outline qmb-area-review"
           aria-label="Review quote from Area" onClick={onReview}>Review ›</button>
@@ -442,6 +446,9 @@ export function QuotesMobileBeta() {
   const routeQuoteId=useNavigationStore(s=>s.focusedQuoteId);
   const consumedRoute=useRef<string|null>(null);
   const restoredLocation=useRef(useQuotesMobileBetaStore.getState().location);
+  // Preserve a deliberately chosen first screen for a newly named Quick Quote.
+  // Deep links and ordinary document opens continue to use the saved Build path.
+  const newQuoteDetailsRef=useRef<string|null>(null);
   const setLocation=useQuotesMobileBetaStore(s=>s.setLocation);
   const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
   const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
@@ -491,7 +498,9 @@ export function QuotesMobileBeta() {
     if(!hydrated)return;
     const previous=restoredLocation.current.quoteId;
     if(previous&&previous!==activeQuoteId&&page!=='library'){
-      setPage('quote');setQuoteTab('build');setAreaId(null);
+      setPage('quote');
+      if(newQuoteDetailsRef.current!==activeQuoteId)setQuoteTab('build');
+      setAreaId(null);
       restoredLocation.current={...restoredLocation.current,quoteId:activeQuoteId??undefined};
       return;
     }
@@ -524,7 +533,9 @@ export function QuotesMobileBeta() {
     // Browser Back to the *same* quote should restore its last editor section.
     // Opening a different document should still begin at Build.
     const saved=useQuotesMobileBetaStore.getState().location;
-    if(saved.quoteId!==routeQuoteId||saved.page!=='quote')setQuoteTab('build');
+    const newQuoteInDetails=newQuoteDetailsRef.current===routeQuoteId;
+    if((saved.quoteId!==routeQuoteId||saved.page!=='quote')&&!newQuoteInDetails)setQuoteTab('build');
+    if(newQuoteInDetails)newQuoteDetailsRef.current=null;
     setPage('quote');setAreaId(null);
   },[hydrated,routeQuoteId,quotes,activeQuoteId,select]);
 
@@ -571,8 +582,9 @@ export function QuotesMobileBeta() {
   const resetLibraryFilters=()=>{
     setSearch('');setDocumentFilter('all');setStatusFilter('active');setDocumentSort('recent');
   };
-  const openQuote=(id:string)=>{
-    openRoutedQuote(id);setQuoteTab('build');setPage('quote');setAreaId(null);
+  const openQuote=(id:string,initialTab:QuoteTab='build')=>{
+    if(initialTab==='details')newQuoteDetailsRef.current=id;
+    openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
     setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
@@ -644,7 +656,10 @@ export function QuotesMobileBeta() {
           template==='builder-rates'?levelGuide:undefined),
       }:{}),
     });
-    setShowNewDocument(false);openQuote(id);
+    setShowNewDocument(false);
+    // After naming a new Quick Quote, begin with customer/job details.
+    // Customer/Deal is optional; the explicit next action goes straight to Area.
+    openQuote(id,template==='quick-quote'?'details':'build');
   };
   const openArea=(id:string)=>{setCustomerQuickOpen(false);setAreaId(id);setAreaTab('measure');setPage('area');};
   const goBack=()=>{navigateDocument('build');};
@@ -660,6 +675,12 @@ export function QuotesMobileBeta() {
       });
       openArea(id);
     }
+  };
+  const advanceToNextArea=()=>{
+    if(!quote||!area)return;
+    const next=nextQuoteAreaAfter(quote,area.id);
+    if(next?.kind==='open')openArea(next.areaId);
+    else if(next?.kind==='create')newArea();
   };
   const duplicateCurrentArea=()=>{
     if(!quote||!area||!editable)return;
@@ -978,7 +999,7 @@ export function QuotesMobileBeta() {
             {primaryAction?.mobile??'Review document ›'}</button>}
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
-      setTab={setAreaTab} goBack={goBack} onNextArea={newArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
+      setTab={setAreaTab} goBack={goBack} onNextArea={advanceToNextArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
       onClassic={()=>exitBeta(false)}/>:null}
       </div>
     </div>
