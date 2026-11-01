@@ -12,6 +12,7 @@ export function parseSalesShopRoute(pathname:string):Partial<NavigationLocation>
   if(path==='/')return null;
   if(path==='/home')return{view:'home'};
   if(path==='/quotes')return{view:'quotes',focusedQuoteId:null};
+  if(path==='/tasks')return{view:'tasks'};
   if(path.startsWith('/quotes/')){
     const id=path.slice('/quotes/'.length);
     return id&&!id.includes('/')?{view:'quotes',focusedQuoteId:clean(id)}:null;
@@ -52,6 +53,7 @@ export function salesShopRoutePath(location:Pick<NavigationLocation,'view'|'cata
   const view:AppView=location.view;
   switch(view){
     case 'home':return '/home';
+    case 'tasks':return '/tasks';
     case 'quotes':return location.focusedQuoteId?'/quotes/'+segment(location.focusedQuoteId):'/quotes';
     case 'board':return location.focusedProjectId?'/board/projects/'+segment(location.focusedProjectId):
       location.focusedCompanyId?'/board/accounts/'+segment(location.focusedCompanyId):'/board';

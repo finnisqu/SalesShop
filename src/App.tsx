@@ -51,6 +51,7 @@ import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
 import { Connections } from './components/Connections';
 import {HomeWorkspace} from './components/HomeWorkspace';
+import {TasksWorkspace} from './components/TasksWorkspace';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
 import { MobileAppChrome } from './components/MobileAppChrome';
@@ -159,6 +160,7 @@ function App() {
         <nav className="app-tabs" aria-label="SalesShop sections">
           <button className={`app-tab ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>Home</button>
           <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
+          <button className={`app-tab ${view === 'tasks' ? 'active' : ''}`} onClick={() => setView('tasks')}>Tasks</button>
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Connections</button>
           <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
@@ -178,10 +180,12 @@ function App() {
       <WorkspaceViewport mode="legacy" className="role-perspective-content" inert={inRolePreview && !readOnlyArea && view !== 'settings'}>
       {inRolePreview && view === 'settings' ? (
         <RolePerspectiveSettings />
-      ) : readOnlyArea && view !== 'notebook' && view !== 'settings' ? (
+      ) : readOnlyArea && view !== 'notebook' && view !== 'settings' && view !== 'tasks' ? (
         <ViewerWorkspace section={view} previewRole={effectiveRole} previewDepartment={effectiveDepartment} />
       ) : view === 'home' ? (
         <HomeWorkspace />
+      ) : view === 'tasks' ? (
+        <TasksWorkspace />
       ) : view === 'board' ? (
         <Board />
       ) : view === 'quotes' ? (

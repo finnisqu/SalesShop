@@ -19,6 +19,7 @@ import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'home', label: 'Home', short: 'Home' },
   { view: 'quotes', label: 'Quotes', short: 'Quotes' },
+  { view: 'tasks', label: 'Tasks', short: 'Tasks' },
   { view: 'board', label: 'Board', short: 'Board' },
   { view: 'dashboard', label: 'Connections', short: 'Connections' },
   { view: 'notebook', label: 'Notebook', short: 'Notebook' },
