@@ -52,6 +52,7 @@ import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
 import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
 import './quotes-beta-control-polish.css';
 import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
+import {InitialOpenDetails} from './InitialOpenDetails';
 import './quote-beta-progressive.css';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
   QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
@@ -358,8 +359,8 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
         }}/>
         </section>
         {desktopLab&&<>
-          <details className="qmb-optional-commerce" aria-label="Scope sinks"
-            defaultOpen={optionalSections.sinksOpen}>
+          <InitialOpenDetails key={section.id+'-scope-sinks'} className="qmb-optional-commerce" aria-label="Scope sinks"
+            initialOpen={optionalSections.sinksOpen}>
             <summary><strong>Sinks</strong>
               <small>{optionalSections.sinks ? optionalSections.sinks+' selected' : 'Optional · Select models and quantities'}</small>
               <span aria-hidden="true">⌄</span>
@@ -367,9 +368,9 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
             <div className="qmb-optional-commerce-body">
               <QuoteBetaCompactSinks quote={quote} section={section} editable={editable} stage="measure"/>
             </div>
-          </details>
-          <details className="qmb-optional-commerce" aria-label="Scope add-ons"
-            defaultOpen={optionalSections.extrasOpen}>
+          </InitialOpenDetails>
+          <InitialOpenDetails key={section.id+'-scope-addons'} className="qmb-optional-commerce" aria-label="Scope add-ons"
+            initialOpen={optionalSections.extrasOpen}>
             <summary><strong>Add-ons</strong>
               <small>{optionalSections.extras ? optionalSections.extras+' items' : 'Optional · Add rates or custom work'}</small>
               <span aria-hidden="true">⌄</span>
@@ -377,7 +378,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
             <div className="qmb-optional-commerce-body">
               <QuoteBetaAdditionalScope quote={quote} section={section} editable={editable}/>
             </div>
-          </details>
+          </InitialOpenDetails>
         </>}
       </div>}
       {tab==='materials'&&(desktopLab

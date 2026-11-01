@@ -3,6 +3,7 @@ import {QuoteBetaMaterials} from './QuoteBetaMaterials';
 import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
 import {QuoteBetaCompactSinks} from './QuoteBetaCompactSinks';
 import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
+import {InitialOpenDetails} from './InitialOpenDetails';
 import './quote-beta-progressive.css';
 
 /** One scrollable center workspace, one column. Selection precedes price inside
@@ -49,8 +50,8 @@ export function QuoteBetaDesktopCommerce({quote,section,editable,tab}:{
         <QuoteBetaDesktopPricing quote={quote} section={section} editable={editable} view="selling"/>
       </div>
     </section>
-    <details className="qmb-optional-commerce" aria-label="Sink selection and pricing"
-      defaultOpen={disclosure.sinksOpen}>
+    <InitialOpenDetails key={section.id+'-sinks'} className="qmb-optional-commerce" aria-label="Sink selection and pricing"
+      initialOpen={disclosure.sinksOpen}>
       <summary><strong>Sinks</strong>
         <small>{disclosure.sinks ? disclosure.sinks+' selected' : 'Optional · Add only when needed'}</small>
         <span aria-hidden="true">⌄</span>
@@ -58,9 +59,9 @@ export function QuoteBetaDesktopCommerce({quote,section,editable,tab}:{
       <div className="qmb-optional-commerce-body qmb-compact-sink-stage">
         <QuoteBetaCompactSinks quote={quote} section={section} editable={editable} stage="materials"/>
       </div>
-    </details>
-    <details className="qmb-optional-commerce" aria-label="Additional work and pricing"
-      defaultOpen={disclosure.extrasOpen}>
+    </InitialOpenDetails>
+    <InitialOpenDetails key={section.id+'-addons'} className="qmb-optional-commerce" aria-label="Additional work and pricing"
+      initialOpen={disclosure.extrasOpen}>
       <summary><strong>Add-ons</strong>
         <small>{disclosure.extras ? disclosure.extras+' items' : 'Optional · Rates, fees and custom work'}</small>
         <span aria-hidden="true">⌄</span>
@@ -68,6 +69,6 @@ export function QuoteBetaDesktopCommerce({quote,section,editable,tab}:{
       <div className="qmb-optional-commerce-body">
         <QuoteBetaDesktopPricing quote={quote} section={section} editable={editable} view="extras"/>
       </div>
-    </details>
+    </InitialOpenDetails>
   </div>;
 }

@@ -13,6 +13,7 @@ import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {useQuoteStore} from '../store/quoteStore';
 import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEditor';
 import { QuoteBetaReviewGuide } from './QuoteBetaReviewGuide';
+import {InitialOpenDetails} from './InitialOpenDetails';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
@@ -175,13 +176,14 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
       {!!report.review.length&&renderFindings(report.review,'Review or intentionally leave blank',
         'These are not mandatory during drafting. You can fix them or explicitly acknowledge them.',
         'is-review')}
-      {!!report.optional.length&&<details className="qmb-review-optional"
-        defaultOpen={Boolean(initialFindingId&&report.optional.some(f=>f.id===initialFindingId))}>
+      {!!report.optional.length&&<InitialOpenDetails key={quote.id+':'+(initialFindingId??'optional')}
+        className="qmb-review-optional"
+        initialOpen={Boolean(initialFindingId&&report.optional.some(f=>f.id===initialFindingId))}>
         <summary>Optional details <span>{report.optional.length}</span>
           <small>Can be left blank</small><span aria-hidden="true">⌄</span></summary>
         {renderFindings(report.optional,'Optional information',
           'Helpful for the customer, but not required for issuing.','is-optional')}
-      </details>}
+      </InitialOpenDetails>}
       {!!report.review.length&&<label className="qmb-audit-ack">
         <input type="checkbox" checked={acknowledged} onChange={event=>onReview(event.target.checked?reviewKey:null)}/>
         <span>I reviewed the remaining items and intend to leave them as shown.</span>
