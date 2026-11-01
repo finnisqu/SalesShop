@@ -55,6 +55,7 @@ import { MobileAppChrome } from './components/MobileAppChrome';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
 import { AccountMenu } from './components/AccountMenu';
+import { BuildBadge } from './components/BuildBadge';
 import { GlobalPostItLauncher, GlobalPostItLayer } from './components/GlobalPostIt';
 import { Quotes } from './components/Quotes';
 import { QuotesMobileBeta } from './components/QuotesMobileBeta';
@@ -160,7 +161,7 @@ function App() {
         {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
         {!inRolePreview && <GlobalPostItLauncher />}
         <div className="app-account-zone">
-          <div className="migration-chip">React foundation</div>
+          <BuildBadge />
           <AccountMenu />
         </div>
       </header>

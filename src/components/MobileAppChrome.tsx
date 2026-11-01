@@ -8,6 +8,7 @@ import { AuthStatus } from './AuthGate';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
 import { GlobalPostItLauncher } from './GlobalPostIt';
+import { BuildBadge } from './BuildBadge';
 import { useAuthStore } from '../store/authStore';
 import { useAppearanceStore } from '../store/appearanceStore';
 import { canEditTeamArea } from '../services/teamDepartments';
@@ -125,7 +126,7 @@ export function MobileAppChrome() {
           onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
         <button type="button" className="mobile-app-menu-button" onClick={openNavigation} aria-label="Open SalesShop navigation">☰</button>
         <div className="mobile-app-current">
-          <span>SalesShop</span>
+          <span><BuildBadge compact /></span>
           <strong>{contextTitle}</strong>
         </div>
         {!viewer && !preview && <GlobalSearch />}

@@ -1,69 +1,8 @@
 name: Pricing Schedule Workbook QC
 
+# Cloudflare Workers Builds publishes SalesShop from GitHub main. GitHub-hosted
+# checks are opt-in while Actions minutes are exhausted; run them for releases.
 on:
-  push:
-    branches:
-      - architecture/react-foundation
-      - main
-    paths:
-      - 'src/services/pricingSchedule*'
-      - 'src/components/PricingSchedule*'
-      - 'src/components/PricingDocumentEditor.tsx'
-      - 'src/components/NewSalesDocumentPicker.tsx'
-      - 'src/components/SalesDocumentToolbar.tsx'
-      - 'src/components/QuotesMobileBeta.tsx'
-      - 'src/components/QuoteBetaHistory.tsx'
-      - 'src/components/QuoteSignatureDialog.tsx'
-      - 'src/components/QuoteBetaReview.tsx'
-      - 'src/services/quoteRevisionView*'
-      - 'src/services/quoteSignatureLifecycle.test.ts'
-      - 'src/services/quoteRevisionArchive.test.ts'
-      - 'src/services/signatureService.ts'
-      - 'e2e/quotes-beta-historical-revision.pw.ts'
-      - 'src/components/QuoteBetaDesktopRails.tsx'
-      - 'src/services/quoteBetaLifecycleLanguage*'
-      - 'src/components/QuoteBetaCustomerOptions.tsx'
-      - 'src/components/QuoteBetaEditablePreview.tsx'
-      - 'src/store/quoteStore.ts'
-      - 'src/services/quoteIntegrity.ts'
-      - 'src/services/quoteDocumentCopy*'
-      - 'src/sales-document-workspace.css'
-      - 'src/services/salesDocumentTemplates*'
-      - 'src/services/salesDocumentLibrary*'
-      - 'src/services/stockBuilderRateTemplate*'
-      - 'src/sales-documents.css'
-      - 'src/components/QuoteBetaDesktopPricing.tsx'
-      - 'src/services/quotePricingParityMatrix.test.ts'
-      - 'src/services/quotePriceInput*'
-      - 'e2e/quotes-beta-pricing-clear.pw.ts'
-      - 'src/components/QuoteShareControl.tsx'
-      - 'src/components/Quotes.tsx'
-      - 'src/services/quoteShareReadiness*'
-      - 'src/services/quoteCustomerShareRelease.test.ts'
-      - 'src/services/quoteDeliveryApproval*'
-      - 'src/services/quoteShareService.ts'
-      - 'supabase/functions/quote-share-admin/index.ts'
-      - 'src/components/QuoteAuditInlineEditor*'
-      - 'src/services/quoteDraftAudit*'
-      - 'e2e/quotes-mobile-beta.pw.ts'
-      - 'src/components/PricingManual*'
-      - 'src/components/PricingContract*'
-      - 'src/services/pricingScheduleContract*'
-      - 'src/services/pricingScheduleCombinations*'
-      - 'src/pricing-schedule.css'
-      - 'src/pricing-schedule-manual.css'
-      - 'e2e/pricing-schedule-workbook.pw.ts'
-      - 'e2e/pricing-schedule-contract.pw.ts'
-      - 'e2e/pricing-schedule-manual.pw.ts'
-      - 'e2e/pricing-schedule-calculated.pw.ts'
-      - 'e2e/sales-document-templates.pw.ts'
-      - 'e2e/sales-document-workspace.pw.ts'
-      - 'e2e/sales-document-library.pw.ts'
-      - '.github/workflows/pricing-schedule-qc.yml'
-  pull_request:
-    branches:
-      - architecture/react-foundation
-      - main
   workflow_dispatch:
 
 permissions:

@@ -1,15 +1,8 @@
 name: SalesShop Pages
 
+# Cloudflare Workers Builds publishes SalesShop from GitHub main. GitHub-hosted
+# checks are opt-in while Actions minutes are exhausted; run them for releases.
 on:
-  push:
-    branches:
-      - architecture/react-foundation
-      - main
-  pull_request:
-    branches:
-      - architecture/react-foundation
-      - main
-  # Branch pushes and PRs build/test; only a push to main (or manual main dispatch) publishes.
   workflow_dispatch:
 
 permissions:

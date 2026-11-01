@@ -1,26 +1,8 @@
 name: SalesShop Navigation Smoke
 
+# Cloudflare Workers Builds publishes SalesShop from GitHub main. GitHub-hosted
+# checks are opt-in while Actions minutes are exhausted; run them for releases.
 on:
-  pull_request:
-    branches:
-      - architecture/react-foundation
-      - main
-    paths:
-      - 'src/components/HomeWorkspace.tsx'
-      - 'src/components/QuotesMobileBeta.tsx'
-      - 'src/components/QuickCreate.tsx'
-      - 'src/components/DealRecordPage.tsx'
-      - 'src/components/PrivateDealContactRoles.tsx'
-      - 'src/home-workspace.css'
-      - 'src/quick-create.css'
-      - 'e2e/home-journey.pw.ts'
-      - 'e2e/connections-deal-record.pw.ts'
-      - 'e2e/quotes-beta-fast-path.pw.ts'
-      - 'src/services/quoteWorkflowShortcut.ts'
-      - 'src/components/QuoteBetaDetails.tsx'
-      - 'src/quotes-mobile-details.css'
-      - 'src/quotes-mobile-speed.css'
-      - '.github/workflows/navigation-smoke.yml'
   workflow_dispatch:
 
 permissions:
