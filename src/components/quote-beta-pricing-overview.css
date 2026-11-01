@@ -51,3 +51,16 @@
  .qmb .qmb-build-next {align-items:stretch;}
  .qmb .qmb-build-next .qmb-primary {width:100%;}
 }
+
+/* Each audit blocker remains separately actionable; no hidden issue count. */
+.qmb .qmb-pricing-overview-issue-list {display:grid;gap:4px;margin-top:8px;}
+.qmb .qmb-pricing-overview-issue-list button {
+ display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;
+ border:1px solid var(--qmb-border);border-radius:8px;
+ padding:8px 10px;min-height:39px;background:var(--qmb-card);color:var(--qmb-ink);
+}
+.qmb .qmb-pricing-overview-issue-list button span {font-size:11px;line-height:1.4;min-width:0;}
+.qmb .qmb-pricing-overview-issue-list button strong {
+ flex:0 0 auto;font-size:10px;color:var(--qmb-accent);
+}
+@media(max-width:700px){.qmb .qmb-pricing-overview-issue-list button strong{font-size:9px;}}

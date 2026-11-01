@@ -34,9 +34,15 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
     {overview.blockers.length?<section className="qmb-pricing-overview-alert" aria-label="Pricing issues">
       <strong>{overview.blockers.length} pricing {overview.blockers.length===1?'issue':'issues'} to resolve</strong>
       <p>These are the same issues that appear at Review. Draft editing remains unrestricted.</p>
-      <button type="button" onClick={()=>onResolve(overview.blockers[0].destination)}>
-        Fix first issue: {overview.blockers[0].title} ›
-      </button>
+      <div className="qmb-pricing-overview-issue-list" aria-label="Resolve pricing items">
+        {overview.blockers.slice(0,6).map(f=><button type="button" key={f.id}
+          onClick={()=>f.id==='quote:work'?onGeneral():onResolve(f.destination)}>
+          <span>{f.title}</span><strong>Resolve ›</strong>
+        </button>)}
+        {overview.blockers.length>6&&<button type="button" onClick={onReview}>
+          <span>{overview.blockers.length-6} more pricing issues</span><strong>View in Review ›</strong>
+        </button>}
+      </div>
     </section>:<p className="qmb-pricing-overview-ok">{report.pricedLineCount
       ?'✓ No blocking pricing findings. Review the customer-facing details when ready.'
       :'No priced work yet. Add a General charge or an Area.'}</p>}
@@ -53,6 +59,7 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
             <strong>{currency.format(row.amount)}</strong>
           </div>
           <div className="qmb-pricing-overview-row-actions">
+            <button type="button" onClick={()=>onArea(row.section.id,'measure')}>Measurements ›</button>
             <button type="button" onClick={()=>onArea(row.section.id,'materials')}>Material &amp; sinks ›</button>
             <button type="button" onClick={()=>onArea(row.section.id,'pricing')}>Selling price ›</button>
             {issue&&<button type="button" className={row.blockers?'is-attention':''}
