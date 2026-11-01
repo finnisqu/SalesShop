@@ -12,6 +12,7 @@ import {quoteBetaStatusLabel} from '../services/quoteBetaLifecycleLanguage';
 import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {useQuoteStore} from '../store/quoteStore';
 import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEditor';
+import { QuoteBetaReviewGuide } from './QuoteBetaReviewGuide';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
@@ -29,6 +30,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [signatureOpen,setSignatureOpen]=useState(false);
   const deliverySectionRef=useRef<HTMLElement>(null);
+  const checklistSectionRef=useRef<HTMLElement>(null);
   const previousStatusRef=useRef(quote.status);
   useEffect(()=>{
     const earlier=previousStatusRef.current;
@@ -50,6 +52,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
     if(expandedId&&!report.findings.some(f=>f.id===expandedId))setExpandedId(null);
   },[expandedId,issueSet,report.findings]);
   const editable=quoteIsCommerciallyEditable(quote);
+  const issued=['Sent','Viewed','Signed','Declined','Expired'].includes(quote.status);
   const scheduleError=quote.documentType==='pricing-schedule'
     ?pricingScheduleValidationError(quote.pricingSchedule):null;
   const ready=!needsRecheck&&report.blockers.length===0&&(!report.review.length||acknowledged);
@@ -149,6 +152,14 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
           <span><b>{report.optional.length}</b> Optional</span>
         </div>
       </div>
+      <QuoteBetaReviewGuide editable={editable} issued={issued} canIssue={canIssue}
+        needsRecheck={needsRecheck} blockers={report.blockers.length}
+        decisions={report.review.length} acknowledged={acknowledged}
+        optional={report.optional.length} previewed={previewed} approved={approved}
+        onCheck={()=>checklistSectionRef.current?.scrollIntoView({block:'start',behavior:'auto'})}
+        onPreview={onPreview}
+        onDelivery={()=>deliverySectionRef.current?.scrollIntoView({block:'start',behavior:'auto'})}/>
+      <section ref={checklistSectionRef} className="qmb-review-checklist" aria-label="Review quote findings">
       {needsRecheck&&<section className="qmb-review-recheck" role="status">
         <div><strong>Quote changed since this review</strong>
           <small>Recheck the latest amounts and findings before issuing or creating a new customer link.</small></div>
@@ -164,16 +175,24 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
       {!!report.review.length&&renderFindings(report.review,'Review or intentionally leave blank',
         'These are not mandatory during drafting. You can fix them or explicitly acknowledge them.',
         'is-review')}
-      {!!report.optional.length&&renderFindings(report.optional,'Optional details',
-        'Helpful for the customer, but not required for issuing.',
-        'is-optional')}
+      {!!report.optional.length&&<details className="qmb-review-optional"
+        defaultOpen={Boolean(initialFindingId&&report.optional.some(f=>f.id===initialFindingId))}>
+        <summary>Optional details <span>{report.optional.length}</span>
+          <small>Can be left blank</small><span aria-hidden="true">⌄</span></summary>
+        {renderFindings(report.optional,'Optional information',
+          'Helpful for the customer, but not required for issuing.','is-optional')}
+      </details>}
       {!!report.review.length&&<label className="qmb-audit-ack">
         <input type="checkbox" checked={acknowledged} onChange={event=>onReview(event.target.checked?reviewKey:null)}/>
         <span>I reviewed the remaining items and intend to leave them as shown.</span>
       </label>}
+      </section>
       {error&&<p role="alert" className="qmb-error">{error}</p>}
       <section ref={deliverySectionRef} className="qmb-card qmb-audit-delivery" data-review-delivery>
-        <strong>Customer delivery · Preview → Approve → Issue → Share</strong>
+        <div className="qmb-review-delivery-heading">
+          <strong>{editable?'Prepare customer delivery':issued?'Issued revision & delivery':'Read-only document'}</strong>
+          <small>{editable?'Preview and approve this exact version before issuing. Sharing is separate.':issued?'This revision is frozen. Creating a link never sends a message.':'This document cannot be edited here. It has not been issued.'}</small>
+        </div>
         {!editable&&quote.status==='Sent'&&<div className="qmb-issued-next" role="status">
           <strong>✓ Quote issued successfully</strong>
           <p>The approved revision is frozen. No email or customer link was sent or
