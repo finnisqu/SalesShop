@@ -26,6 +26,9 @@ export function useAppContextMenu(){
       title,actions,
     });
   };
+  const openDirect=(x:number,y:number,title:string,actions:AppContextAction[],element:HTMLElement)=>{
+    if(actions.length)open(x,y,title,actions,element);
+  };
   const openPointer=(event:ReactMouseEvent<HTMLElement>,title:string,actions:AppContextAction[])=>{
     if(!actions.length)return;
     const target=event.target;
@@ -82,5 +85,5 @@ export function useAppContextMenu(){
         {action.label}
       </button>)}
     </div>,document.body):null;
-  return {openPointer,openKeyboard,close:()=>setState(null),menu};
+  return {openPointer,openDirect,openKeyboard,close:()=>setState(null),menu};
 }

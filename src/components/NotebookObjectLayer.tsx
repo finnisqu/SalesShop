@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
+import {usePersonalTaskStore} from '../store/personalTaskStore';
+import {useNavigationStore} from '../store/navigationStore';
+import {useAppContextMenu} from './AppContextMenu';
+import {notebookObjectTaskText} from '../services/notebookTaskPromotion';
 import type {
   BusinessCardField,
   NotebookEntry,
@@ -150,7 +154,10 @@ function ObjectContent({ entryId, object, selected }: { entryId: string; object:
   return <div className="future-object-placeholder">Notebook object</div>;
 }
 
-function ObjectFrame({ entryId, object, selected }: { entryId: string; object: NotebookObject; selected: boolean }) {
+function ObjectFrame({ entryId, object, selected, onPromote }: {
+  entryId: string; object: NotebookObject; selected: boolean;
+  onPromote:(event:import('react').MouseEvent<HTMLDivElement>,object:NotebookObject)=>void;
+}) {
   const selectObject = useNotebookStore((state) => state.selectObject);
   const updateObjectFrame = useNotebookStore((state) => state.updateObjectFrame);
   const duplicateObject = useNotebookStore((state) => state.duplicateObject);
@@ -254,6 +261,7 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
       style={{ left: `${draftFrame.x}%`, top: `${draftFrame.y}%`, width: `${draftFrame.width}%`, height: `${draftFrame.height}%`, transform: `rotate(${draftFrame.rotation}deg)`, zIndex: selected ? 1000 : draftFrame.zIndex }}
       onPointerDown={(event) => { event.stopPropagation(); selectObject(object.id); }}
       data-object-type={object.type}
+      onContextMenu={event=>onPromote(event,object)}
     >
       <ObjectContent entryId={entryId} object={object} selected={selected} />
       {selected && (
@@ -287,6 +295,15 @@ function ObjectFrame({ entryId, object, selected }: { entryId: string; object: N
 }
 
 export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
+  const context=useAppContextMenu();
+  const beginPromotion=usePersonalTaskStore(s=>s.beginPromotion);
+  const setView=useNavigationStore(s=>s.setView);
+  const promote=(object:NotebookObject)=>{
+    const text=notebookObjectTaskText(object);
+    beginPromotion({title:text.slice(0,240),sourceText:text.slice(0,2000),
+      linked:{type:'notebook',id:entry.id},sourceLabel:entry.title||'Notebook page',sourceObjectId:object.id});
+    setView('tasks');
+  };
   const activeTool = useNotebookStore((state) => state.activeTool);
   const selectedObjectId = useNotebookStore((state) => state.selectedObjectId);
   const selectObject = useNotebookStore((state) => state.selectObject);
@@ -308,7 +325,12 @@ export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
   return (
     <div className={`notebook-object-layer ${selectionEnabled ? 'is-selecting' : ''}`} onPointerDown={(event) => { if (selectionEnabled && event.target === event.currentTarget) selectObject(null); }} aria-label="Notebook objects">
       {entry.objects.map((object) => (
-        <ObjectFrame key={object.id} entryId={entry.id} object={object} selected={selectionEnabled && selectedObjectId === object.id} />
+        <ObjectFrame key={object.id} entryId={entry.id} object={object}
+          selected={selectionEnabled && selectedObjectId === object.id}
+          onPromote={(event,item)=>{
+            context.openPointer(event,'Notebook '+item.type,
+              [{label:'Promote object to Task…',onSelect:()=>promote(item)}]);
+          }}/>
       ))}
     </div>
   );

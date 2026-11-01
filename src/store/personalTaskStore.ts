@@ -6,14 +6,14 @@ export type TaskType='todo'|'call'|'email'|'meeting'|'follow-up';
 export type TaskPriority='low'|'normal'|'high'|'urgent';
 export type TaskStatus='open'|'in-progress'|'waiting'|'completed'|'canceled';
 export interface PersonalTask {
-  id:string;title:string;dueDate?:string;dueTime?:string;
+  id:string;title:string;dueDate?:string;dueTime?:string;sourceObjectId?:string;
   linked?:TaskLink;sourceLabel?:string;sourceText?:string;
   notes?:string;type?:TaskType;priority?:TaskPriority;status?:TaskStatus;
   queue?:string;reminderAt?:string;
   createdAt:string;updatedAt:string;completedAt?:string;
 }
 export type TaskChanges=Partial<Omit<PersonalTask,'id'|'createdAt'|'updatedAt'>>;
-export interface TaskPromotion {title:string;linked?:TaskLink;sourceLabel?:string;sourceText?:string;}
+export interface TaskPromotion {title:string;linked?:TaskLink;sourceLabel?:string;sourceText?:string;sourceObjectId?:string;}
 interface TaskState {
   scope:string|null;tasks:PersonalTask[];promotion:TaskPromotion|null;
   load:(scope:string|null)=>void;
