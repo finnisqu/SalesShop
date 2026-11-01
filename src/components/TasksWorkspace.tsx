@@ -6,7 +6,7 @@ import {useNotebookStore} from '../store/notebookStore';
 import {useAuthStore} from '../store/authStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
-import './tasks-workspace.css';
+import '../tasks-workspace.css';
 
 type Filter='active'|'overdue'|'scheduled'|'completed'|'all';
 const priorities:TaskPriority[]=['low','normal','high','urgent'];
