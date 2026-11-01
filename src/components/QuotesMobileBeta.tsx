@@ -53,6 +53,7 @@ import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
 import './quotes-beta-control-polish.css';
 import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
 import {InitialOpenDetails} from './InitialOpenDetails';
+import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import './quote-beta-progressive.css';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
   QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
@@ -494,6 +495,7 @@ export function QuotesMobileBeta() {
   // Deep links and ordinary document opens continue to use the saved Build path.
   const newQuoteDetailsRef=useRef<string|null>(null);
   const setLocation=useQuotesMobileBetaStore(s=>s.setLocation);
+  const contextActions=useAppContextMenu();
   const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
   const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
@@ -654,12 +656,49 @@ export function QuotesMobileBeta() {
     setPage('quote');setQuoteTab(tab);setAreaId(null);
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
+  const requestCopy=(target:Quote)=>{
+    if(!canManageLibrary||target.archivedAt)return;
+    setCopyRequest({id:target.id,title:target.title});
+    const name=(target.title||'Untitled').replace(/(?:\s*· Copy)+$/i,'').trim();
+    setCopyName(name+' · Copy');
+  };
+  const quoteMenuActions=(target:Quote):AppContextAction[]=>{
+    const actions:AppContextAction[]=[];
+    if(!target.archivedAt)actions.push({label:'Open document',onSelect:()=>openQuote(target.id)});
+    if(canManageLibrary){
+      if(target.archivedAt)actions.push({label:'Restore to active',onSelect:()=>restoreQuote(target.id)});
+      else{
+        actions.push({label:'Make independent copy…',onSelect:()=>requestCopy(target)});
+        actions.push({label:'Archive…',dividerBefore:true,
+          onSelect:()=>setLibraryAction({id:target.id,kind:'archive'})});
+        if(canPermanentlyDeleteQuote(target,quotes))actions.push({
+          label:'Delete unsent draft…',destructive:true,
+          onSelect:()=>setLibraryAction({id:target.id,kind:'delete'})});
+      }
+    }
+    return actions;
+  };
+  const areaMenuActions=(target:QuoteSection):AppContextAction[]=>{
+    const actions:AppContextAction[]=[
+      {label:'Open Area',onSelect:()=>openArea(target.id)},
+      {label:'Edit measurements',onSelect:()=>openArea(target.id)},
+      {label:'Materials & selling prices',onSelect:()=>{openArea(target.id);setAreaTab('materials');}},
+    ];
+    if(quote&&editable&&!areaManager.editing){
+      actions.push({label:'Duplicate Area',dividerBefore:true,onSelect:()=>{
+        const id=duplicateArea(quote.id,target.id);if(id)openArea(id);
+      }});
+      actions.push({label:target.customerVisible?'Hide from customer':'Show to customer',onSelect:()=>{
+        useQuoteStore.getState().updateSection(quote.id,target.id,{customerVisible:!target.customerVisible});
+      }});
+      actions.push({label:'Reorder or delete Areas…',onSelect:()=>areaManager.start()});
+    }
+    return actions;
+  };
   const copyCurrentDocument=()=>{
     if(!quote||!canManageLibrary)return;
     // Copy is never executed from a menu click. Explicit confirmation required.
-    setCopyRequest({id:quote.id,title:quote.title});
-    const base=(quote.title||'Untitled').replace(/(?:\s*· Copy)+$/i,'').trim();
-    setCopyName(base+' · Copy');
+    requestCopy(quote);
   };
   const confirmDocumentCopy=()=>{
     if(!copyRequest||!canManageLibrary||!copyName.trim())return;
@@ -907,6 +946,8 @@ export function QuotesMobileBeta() {
          <div className="qmb-library-grid">
         {list.map(q=><div className="qmb-library-entry" key={q.id}>
           <button type="button" className="qmb-card qmb-listcard"
+            onContextMenu={event=>contextActions.openPointer(event,q.title||'Quote',quoteMenuActions(q))}
+            onKeyDown={event=>contextActions.openKeyboard(event,q.title||'Quote',quoteMenuActions(q))}
             aria-disabled={!!q.archivedAt}
             title={q.archivedAt?'Restore from Archived to reopen':'Open '+(q.title||'document')}
             onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
@@ -1010,6 +1051,8 @@ export function QuotesMobileBeta() {
             return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}>
               {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
               <button type="button" className="qmb-card qmb-area-card"
+                onContextMenu={event=>contextActions.openPointer(event,s.title||'Area',areaMenuActions(s))}
+                onKeyDown={event=>contextActions.openKeyboard(event,s.title||'Area',areaMenuActions(s))}
                 aria-disabled={areaManager.editing}
                 onClick={()=>{if(!areaManager.editing)openArea(s.id);}}>
                 <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
@@ -1195,6 +1238,7 @@ export function QuotesMobileBeta() {
         </section>
       </div>,document.body);
     })()}
+    {contextActions.menu}
     <QuoteBetaAreaDeleteDialog manager={areaManager} quote={quote}/>
     <QuoteBetaGeneralDeleteDialog manager={generalManager} quote={quote}/>
     {quote&&page!=='library'&&reviewOpen&&<QuoteBetaReviewOverlay quote={quote} focusId={reviewFocus}
