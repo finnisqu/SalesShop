@@ -1,0 +1,41 @@
+/* Progressive disclosure in Quotes Beta; scope and prices remain in their existing editors. */
+.qmb .qmb-optional-commerce {
+  display:block;min-width:0;
+  border:1px solid var(--qmb-border);border-radius:13px;
+  background:var(--qmb-card);overflow:visible;
+}
+.qmb .qmb-optional-commerce>summary {
+  display:flex;align-items:center;gap:10px;min-height:49px;
+  padding:10px 13px;cursor:pointer;list-style:none;
+  color:var(--qmb-ink);
+}
+.qmb .qmb-optional-commerce>summary::-webkit-details-marker,
+.qmb .qmb-buying-details>summary::-webkit-details-marker {display:none;}
+.qmb .qmb-optional-commerce>summary strong {font-size:14px;font-weight:820;}
+.qmb .qmb-optional-commerce>summary small {font-size:11px;color:var(--qmb-muted);flex:1;min-width:0;overflow-wrap:anywhere;}
+.qmb .qmb-optional-commerce>summary span {font-size:15px;color:var(--qmb-accent);transition:transform .15s ease;}
+.qmb .qmb-optional-commerce[open]>summary span {transform:rotate(180deg);}
+.qmb .qmb-optional-commerce[open]>summary {border-bottom:1px solid var(--qmb-border);}
+.qmb .qmb-optional-commerce-body {padding:10px 12px 14px;min-width:0;}
+.qmb .qmb-optional-commerce-body .qmb-compact-table {margin-top:0;}
+.qmb .qmb-buying-details {margin-top:8px;min-width:0;border:1px dashed var(--qmb-border);border-radius:8px;background:var(--qmb-card);}
+.qmb .qmb-buying-details>summary {
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:7px 10px;cursor:pointer;list-style:none;
+  color:var(--qmb-muted);font-size:11px;font-weight:700;min-height:33px;
+}
+.qmb .qmb-buying-details>summary span {color:var(--qmb-accent);}
+.qmb .qmb-buying-details[open]>summary {border-bottom:1px solid var(--qmb-border);}
+.qmb .qmb-buying-details .qmb-material-cost-caption,
+.qmb .qmb-buying-details .qmb-sink-private-cost {margin:0;border:0;border-radius:0;box-shadow:none;}
+.qmb .qmb-buying-details .qmb-material-cost-caption {padding:9px;}
+.qmb .qmb-buying-details .qmb-sink-private-cost {padding:9px;}
+.qmb .qmb-mobile-buying {margin:5px 0 14px;}
+.qmb .qmb-mobile-buying .qmb-area-material-cost {padding:10px;margin:0;}
+.qmb .qmb-materials-sheet .qmb-buying-details {margin-bottom:7px;}
+@media(max-width:700px) {
+  .qmb .qmb-optional-commerce>summary {min-height:46px;padding:9px 11px;gap:7px;}
+  .qmb .qmb-optional-commerce>summary strong {font-size:13px;}
+  .qmb .qmb-optional-commerce>summary small {font-size:10px;}
+  .qmb .qmb-optional-commerce-body {padding:9px;}
+}

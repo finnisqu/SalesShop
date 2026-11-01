@@ -50,6 +50,8 @@ import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRai
 import { QuoteBetaProgress } from './QuoteBetaProgress';
 import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
 import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
+import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
+import './quote-beta-progressive.css';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
   QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
 import {useQuoteBetaGeneralManager,QuoteBetaGeneralModeButton,QuoteBetaGeneralGrip,
@@ -251,6 +253,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
   const lines=quote.lines.filter(l=>l.sectionId===section.id);
   const linked=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf');
   const nextArea=nextQuoteAreaAfter(quote,section.id);
+  const optionalSections=quoteAreaDisclosure(quote,section);
   const amount=quoteLinesTotal(lines);
   const measured=totalBillableTakeoffSf(pieces);
   // Keep unresolved priced work visible *inside* the Area, not only at the
@@ -353,15 +356,28 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
             edgeProfile:next.edgeProfile})));
         }}/>
         </section>
-        {desktopLab&&<><section className="qmb-commerce-segment">
-          <header className="qmb-commerce-heading"><h3>Sinks</h3><span>02</span></header>
-          <p className="qmb-scope-description">Select models and quantities. Selling prices are set on the Materials step.</p>
-          <QuoteBetaCompactSinks quote={quote} section={section} editable={editable} stage="measure"/>
-        </section>
-        <section className="qmb-commerce-segment">
-          <header className="qmb-commerce-heading"><h3>Add-ons</h3><span>03</span></header>
-          <QuoteBetaAdditionalScope quote={quote} section={section} editable={editable}/>
-        </section></>}
+        {desktopLab&&<>
+          <details className="qmb-optional-commerce" aria-label="Scope sinks"
+            defaultOpen={optionalSections.sinksOpen}>
+            <summary><strong>Sinks</strong>
+              <small>{optionalSections.sinks ? optionalSections.sinks+' selected' : 'Optional · Select models and quantities'}</small>
+              <span aria-hidden="true">⌄</span>
+            </summary>
+            <div className="qmb-optional-commerce-body">
+              <QuoteBetaCompactSinks quote={quote} section={section} editable={editable} stage="measure"/>
+            </div>
+          </details>
+          <details className="qmb-optional-commerce" aria-label="Scope add-ons"
+            defaultOpen={optionalSections.extrasOpen}>
+            <summary><strong>Add-ons</strong>
+              <small>{optionalSections.extras ? optionalSections.extras+' items' : 'Optional · Add rates or custom work'}</small>
+              <span aria-hidden="true">⌄</span>
+            </summary>
+            <div className="qmb-optional-commerce-body">
+              <QuoteBetaAdditionalScope quote={quote} section={section} editable={editable}/>
+            </div>
+          </details>
+        </>}
       </div>}
       {tab==='materials'&&(desktopLab
         ?<QuoteBetaDesktopCommerce quote={quote} section={section} editable={editable} tab="materials"/>
@@ -372,7 +388,10 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
         <div className="qmb-section-head"><div><h3>Pricing & presentation</h3><p>Finish pricing here—or leave it undecided.</p></div></div>
         <section className="qmb-card">
           <div className="qmb-split"><span>Linked area SF</span><strong>{sf.format(measured)} SF</strong></div>
-          <div className="qmb-area-material-cost" aria-label="Selected material cost reference">
+          <details className="qmb-buying-details qmb-mobile-buying" aria-label="Selected material cost reference">
+            <summary>{selectedCost.catalogCostChanged?'Buying reference updated · internal':'Buying reference · internal'}
+              <span aria-hidden="true">⌄</span></summary>
+          <div className="qmb-area-material-cost">
             <div className="qmb-area-cost-top">
               <span>Selected material cost <small>· internal</small></span>
               <strong>{costPerSf!==undefined
@@ -390,7 +409,8 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
               <button type="button" onClick={()=>setTab('materials')}>Materials ›</button>
             </div>}
           </div>
-          {linked?<TakeoffRatePicker quote={quote} rate={linked.rate} disabled={!editable}
+          </details>
+          {linked?<TakeoffRatePicker quote={quote} rate={linked.rate} disabled={!editable
             selectedRateId={linked.rateReference?.rateBookItemId}
             materialType={selectedCost.materialType}
             materialCostPerSf={costPerSf}

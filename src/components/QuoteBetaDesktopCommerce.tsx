@@ -2,12 +2,15 @@ import type {Quote,QuoteSection} from '../types/quote';
 import {QuoteBetaMaterials} from './QuoteBetaMaterials';
 import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
 import {QuoteBetaCompactSinks} from './QuoteBetaCompactSinks';
+import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
+import './quote-beta-progressive.css';
 
 /** One scrollable center workspace, one column. Selection precedes price inside
  * each category; Calculator is optional detailed costing, not a right-rail panel. */
 export function QuoteBetaDesktopCommerce({quote,section,editable,tab}:{
   quote:Quote;section:QuoteSection;editable:boolean;tab:'materials'|'calculator';
 }){
+  const disclosure=quoteAreaDisclosure(quote,section);
   if(tab==='calculator')return <div className="qmb-commerce-stack qmb-calculator-workspace" data-center-calculator="true">
     <header className="qmb-workspace-intro">
       <div className="qmb-kicker">ADVANCED ESTIMATING</div>
@@ -46,18 +49,25 @@ export function QuoteBetaDesktopCommerce({quote,section,editable,tab}:{
         <QuoteBetaDesktopPricing quote={quote} section={section} editable={editable} view="selling"/>
       </div>
     </section>
-    <section className="qmb-commerce-segment" aria-label="Sink selection and pricing">
-      <header className="qmb-commerce-heading"><h3>Sinks</h3><span>02</span></header>
-      <div className="qmb-commerce-stage qmb-compact-sink-stage">
+    <details className="qmb-optional-commerce" aria-label="Sink selection and pricing"
+      defaultOpen={disclosure.sinksOpen}>
+      <summary><strong>Sinks</strong>
+        <small>{disclosure.sinks ? disclosure.sinks+' selected' : 'Optional · Add only when needed'}</small>
+        <span aria-hidden="true">⌄</span>
+      </summary>
+      <div className="qmb-optional-commerce-body qmb-compact-sink-stage">
         <QuoteBetaCompactSinks quote={quote} section={section} editable={editable} stage="materials"/>
       </div>
-    </section>
-    <section className="qmb-commerce-segment" aria-label="Additional work and pricing">
-      <header className="qmb-commerce-heading"><h3>Add-ons</h3><span>03</span></header>
-      <div className="qmb-commerce-stage">
-        <div className="qmb-stage-heading"><b>Pricing</b><small>Scope and quantities are editable here, too</small></div>
+    </details>
+    <details className="qmb-optional-commerce" aria-label="Additional work and pricing"
+      defaultOpen={disclosure.extrasOpen}>
+      <summary><strong>Add-ons</strong>
+        <small>{disclosure.extras ? disclosure.extras+' items' : 'Optional · Rates, fees and custom work'}</small>
+        <span aria-hidden="true">⌄</span>
+      </summary>
+      <div className="qmb-optional-commerce-body">
         <QuoteBetaDesktopPricing quote={quote} section={section} editable={editable} view="extras"/>
       </div>
-    </section>
+    </details>
   </div>;
 }

@@ -36,12 +36,15 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
         selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
         onTextChange={name=>selectMaterial(quote.id,section.id,name)}
         onSelect={(reference,label)=>selectMaterial(quote.id,section.id,label,reference)}/>
-      <div className="qmb-material-cost-caption" aria-label="Private material buying cost">
+      <details className="qmb-buying-details" aria-label="Private material buying cost">
+        <summary>Buying reference · internal <span aria-hidden="true">⌄</span></summary>
+        <div className="qmb-material-cost-caption">
         <strong>Buying cost</strong>
         <span>{materialSfCost===undefined?'$ / SF unknown':'$'+materialSfCost.toFixed(2)+'/SF'}</span>
         <span>{projected.slabCost===undefined?'Slab cost unknown':'$'+projected.slabCost.toFixed(2)+'/slab'}</span>
         <span>{projected.purchaseSlabs??'—'} buying slab(s) · {projected.materialCost===undefined?'Cost incomplete':'$'+projected.materialCost.toFixed(2)+' projected purchase cost'}</span>
-      </div>
+        </div>
+      </details>
     </div>
     </>}
     {part!=='material'&&<>
@@ -102,7 +105,10 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
             </div>}
           </FloatingRowMenu>
         </div>
-        {!scopeOnly&&<div className="qmb-sink-private-cost" aria-label={'Sink '+(index+1)+' private buying cost'}>
+        {!scopeOnly&&<details className="qmb-buying-details qmb-sink-buying-details"
+          aria-label={'Sink '+(index+1)+' private buying cost'}>
+          <summary>Sink buying cost · internal <span aria-hidden="true">⌄</span></summary>
+          <div className="qmb-sink-private-cost">
           <span>Buying cost</span>
           <label>$/each <input type="number" min="0" step=".01"
             aria-label={'Sink '+(index+1)+' buying cost'} disabled={!editable}
@@ -114,7 +120,8 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
             ?'$'+((sink.internalCostOverride??sink.sinkReference!.snapshot!.internalCost!)*sink.count).toFixed(2)
             :'Unknown'}</strong>
           <small>× {sink.count}</small>
-        </div>}
+          </div>
+        </details>}
       </div>)}
       {!sinks.length&&<div className="qmb-grid-empty">No sinks yet. You can leave this empty.</div>}
       <button type="button" className="qmb-grid-add" disabled={!editable||sinks.length>=100}
