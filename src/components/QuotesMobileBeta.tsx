@@ -48,6 +48,7 @@ import { QuoteBetaReview } from './QuoteBetaReview';
 import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
 import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRails';
 import { QuoteBetaProgress } from './QuoteBetaProgress';
+import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
   QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
 import {useQuoteBetaGeneralManager,QuoteBetaGeneralModeButton,QuoteBetaGeneralGrip,
@@ -76,7 +77,7 @@ const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(m
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
 type Page = 'library' | 'quote' | 'area' | 'review';
-type QuoteTab = 'build' | 'details' | 'preview';
+type QuoteTab = 'build' | 'details' | 'pricing' | 'preview';
 type AreaTab = 'measure' | 'materials' | 'pricing' | 'calculator';
 
 function AppMenu() {
@@ -706,13 +707,8 @@ export function QuotesMobileBeta() {
   const openReview=(focusId:string|null=null)=>{setError('');setSelectionsOpen(false);setReviewFocus(focusId);setReviewOpen(true);};
   // Stage shortcuts never mutate pricing or automatically issue a document.
   const openPricingStage=()=>{
-    if(!quote)return;
-    const target=audit?.blockers.find(f=>f.destination.view==='area')
-      ??audit?.review.find(f=>f.destination.view==='area'&&f.destination.tab==='materials');
-    if(target){fixAudit(target.destination);return;}
-    const targetArea=area??quote.sections.find(s=>!isGeneralTakeoffSection(s))??generalTakeoff;
-    if(targetArea){openArea(targetArea.id);setAreaTab('materials');}
-    else navigateDocument('build');
+    if(!quote||quote.documentType==='pricing-schedule')return;
+    navigateDocument('pricing');
   };
   const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
     const item=audit?.[kind][0];openReview(item?.id??null);
@@ -802,7 +798,7 @@ export function QuotesMobileBeta() {
         key={quote.id} quote={quote} editable={editable}
         current={reviewOpen||page==='quote'&&quoteTab==='preview'?'review':
           page==='area'?(areaTab==='measure'?'areas':'pricing'):
-          quoteTab==='details'?'details':'areas'}
+          quoteTab==='details'?'details':quoteTab==='pricing'?'pricing':'areas'}
         onDetails={()=>navigateDocument('details')}
         onAreas={()=>navigateDocument('build')}
         onOpenArea={openArea} onAddArea={newArea} onPricing={openPricingStage}
@@ -924,7 +920,10 @@ export function QuotesMobileBeta() {
             <span>· Independent working copy</span>
           </div>}
           <nav className="qmb-tabs" aria-label="Quote views">
-            {([['build','Build'],['details','Details'],['preview','Preview']] as const).map(([id,label])=>
+            {(quote.documentType==='pricing-schedule'
+              ?([['build','Editor'],['details','Details'],['preview','Preview']] as const)
+              :([['details','Details'],['build','Areas'],['pricing','Pricing'],['preview','Preview']] as const)
+            ).map(([id,label])=>
               <button key={id} type="button" className={quoteTab===id?'active':''}
                 aria-current={quoteTab===id?'page':undefined}
                 onClick={()=>navigateDocument(id)}>{id==='build'&&quote.documentType==='pricing-schedule'?'Editor':label}</button>)}
@@ -940,6 +939,41 @@ export function QuotesMobileBeta() {
             </Suspense>
           </section>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
+          <div className="qmb-build-intro"><div className="qmb-kicker">STEP 2 · DEFINE THE WORK</div>
+            <h2>Areas &amp; scope</h2><p>Add Kitchen, Bath or Island Areas, or use General for flat fees and other work. Nothing here is required until you decide to issue.</p>
+          </div>
+          <div className="qmb-section-head" data-area-edit-workspace><h3>Areas</h3>
+            <div className="qmb-areas-actions">
+              <QuoteBetaAreaModeButton manager={areaManager}/>
+              {!areaManager.editing&&<button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>}
+            </div>
+          </div>
+          <div ref={mobileAreaRef} className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
+            data-area-edit-workspace aria-label="Quote Area cards">
+          {(areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s))).map(s=>{
+            const lines=quote.lines.filter(l=>l.sectionId===s.id);
+            return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}>
+              {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
+              <button type="button" className="qmb-card qmb-area-card"
+                aria-disabled={areaManager.editing}
+                onClick={()=>{if(!areaManager.editing)openArea(s.id);}}>
+                <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
+                  <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
+                  <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small>
+                  {!s.customerVisible&&<small className="qmb-area-hidden-label">Hidden from customer</small>}</span>
+                <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b>{!areaManager.editing&&<span>›</span>}</span>
+              </button>
+              {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={s}/>} 
+            </div>;
+          })}
+          {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
+          </div>
+          {!quote.sections.some(s=>!isGeneralTakeoffSection(s))&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
+          <div className="qmb-build-next">
+            <span>Return to Areas or General any time; nothing is locked.</span>
+            <button type="button" className="qmb-primary" onClick={openPricingStage}>Continue to Materials &amp; Pricing ›</button>
+          </div>
+          <div className="qmb-build-general-heading"><strong>Optional · General charges</strong><span>Flat fees, add-ons, discounts and notes</span></div>
           <div className="qmb-section-head qmb-general-heading" data-general-edit-workspace><h3>General</h3>
             <div className="qmb-general-quick-add" aria-label="Add General line">
               {editable&&!generalManager.editing&&<button type="button"
@@ -975,34 +1009,10 @@ export function QuotesMobileBeta() {
           </div>
 
 
-          <div className="qmb-section-head" data-area-edit-workspace><h3>Areas</h3>
-            <div className="qmb-areas-actions">
-              <QuoteBetaAreaModeButton manager={areaManager}/>
-              {!areaManager.editing&&<button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>}
-            </div>
-          </div>
-          <div ref={mobileAreaRef} className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
-            data-area-edit-workspace aria-label="Quote Area cards">
-          {(areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s))).map(s=>{
-            const lines=quote.lines.filter(l=>l.sectionId===s.id);
-            return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}>
-              {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
-              <button type="button" className="qmb-card qmb-area-card"
-                aria-disabled={areaManager.editing}
-                onClick={()=>{if(!areaManager.editing)openArea(s.id);}}>
-                <span className="qmb-area-icon">▤</span><span className="qmb-area-text"><strong>{s.title.trim().toLowerCase()==='general takeoffs'?'General':s.title||'Untitled Area'}</strong>
-                  <small>{sf.format(s.scope?.countertopSf??0)} SF · {s.scope?.takeoffMaterial||'Material not selected'}</small>
-                  <small>{s.customerDisplayMode==='summary'?'One lump sum':'Itemized'}</small>
-                  {!s.customerVisible&&<small className="qmb-area-hidden-label">Hidden from customer</small>}</span>
-                <span className="qmb-area-price"><b>{money.format(quoteLinesTotal(lines))}</b>{!areaManager.editing&&<span>›</span>}</span>
-              </button>
-              {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={s}/>} 
-            </div>;
-          })}
-          {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
-          </div>
-          {!quote.sections.some(s=>!isGeneralTakeoffSection(s))&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
         </>}
+        {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaPricingOverview
+          quote={quote} onArea={(id,tab)=>{openArea(id);setAreaTab(tab);}}
+          onGeneral={()=>navigateDocument('build')} onResolve={fixAudit} onReview={openSend}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}
           nextAreaLabel={detailsNextArea?.label} onContinueToArea={detailsNextArea?continueFromDetails:undefined}/>} 
         {quoteTab==='preview'&&<>

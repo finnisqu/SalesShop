@@ -1,0 +1,53 @@
+/* Scope-first Quote Beta guided builder. All colors follow the active theme. */
+.qmb .qmb-pricing-overview {display:grid;gap:14px;max-width:980px;margin:0 auto;padding-bottom:28px;min-width:0;}
+.qmb .qmb-pricing-overview-intro h2 {margin:0 0 5px;font-size:22px;line-height:1.2;color:var(--qmb-ink);}
+.qmb .qmb-pricing-overview-intro p {margin:0;max-width:650px;font-size:12px;line-height:1.5;color:var(--qmb-muted);}
+.qmb .qmb-pricing-overview-summary {display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;padding:12px;border:1px solid var(--qmb-border);border-radius:12px;background:var(--qmb-card);}
+.qmb .qmb-pricing-overview-summary>div {display:grid;gap:3px;min-width:0;}
+.qmb .qmb-pricing-overview-summary small {font-size:10px;color:var(--qmb-muted);}
+.qmb .qmb-pricing-overview-summary strong {font-size:15px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.qmb .qmb-pricing-overview-alert {padding:11px 13px;border:1px solid var(--qmb-border);border-left:4px solid var(--ss-theme-warning,#9e680e);border-radius:11px;background:var(--qmb-card);}
+.qmb .qmb-pricing-overview-alert strong {font-size:13px;}
+.qmb .qmb-pricing-overview-alert p {margin:4px 0;font-size:11px;color:var(--qmb-muted);}
+.qmb .qmb-pricing-overview-alert button,.qmb .qmb-pricing-overview-empty button {display:block;min-height:38px;text-align:left;border:0;padding:8px 0;color:var(--qmb-accent);background:transparent;font-weight:750;font-size:12px;}
+.qmb .qmb-pricing-overview-ok,.qmb .qmb-pricing-overview-note {padding:10px 12px;margin:0;border-radius:10px;background:var(--qmb-tint);color:var(--qmb-ink);font-size:12px;}
+.qmb .qmb-pricing-overview-title {display:flex;justify-content:space-between;align-items:end;gap:8px;}
+.qmb .qmb-pricing-overview-title h3,.qmb .qmb-pricing-overview-general h3 {font-size:15px;margin:0;}
+.qmb .qmb-pricing-overview-title small {font-size:10px;color:var(--qmb-muted);}
+.qmb .qmb-pricing-overview-areas {display:grid;gap:9px;}
+.qmb .qmb-pricing-overview-row {border:1px solid var(--qmb-border);border-radius:12px;padding:12px;background:var(--qmb-card);min-width:0;}
+.qmb .qmb-pricing-overview-row-top {display:flex;justify-content:space-between;align-items:start;gap:10px;}
+.qmb .qmb-pricing-overview-row-top>div {display:grid;gap:3px;min-width:0;}
+.qmb .qmb-pricing-overview-row h4 {font-size:14px;margin:0;overflow-wrap:anywhere;}
+.qmb .qmb-pricing-overview-row-top span {font-size:11px;color:var(--qmb-muted);line-height:1.4;overflow-wrap:anywhere;}
+.qmb .qmb-pricing-overview-row-top>strong {font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.qmb .qmb-pricing-overview-row-actions {display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.qmb .qmb-pricing-overview-row-actions button {background:var(--qmb-tint);color:var(--qmb-accent);border:1px solid var(--qmb-border);border-radius:8px;padding:7px 10px;min-height:36px;font-size:11px;font-weight:780;}
+.qmb .qmb-pricing-overview-row-actions button.is-attention {color:var(--ss-theme-warning,#9e680e);background:var(--qmb-card);}
+.qmb .qmb-pricing-overview-empty {border:1px dashed var(--qmb-border);border-radius:12px;padding:14px;background:var(--qmb-card);}
+.qmb .qmb-pricing-overview-empty p {font-size:12px;color:var(--qmb-muted);margin:4px 0;}
+.qmb .qmb-pricing-overview-general {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;border:1px solid var(--qmb-border);border-radius:12px;padding:12px;background:var(--qmb-card);}
+.qmb .qmb-pricing-overview-general>div {grid-row:span 2;}
+.qmb .qmb-pricing-overview-general p {font-size:11px;color:var(--qmb-muted);margin:4px 0;line-height:1.5;}
+.qmb .qmb-pricing-overview-general>strong {text-align:right;font-size:15px;}
+.qmb .qmb-pricing-overview-general>span {font-size:10px;text-align:right;color:var(--qmb-muted);}
+.qmb .qmb-pricing-overview-general>button {grid-column:1/-1;text-align:left;min-height:34px;border:0;padding:8px 0 0;background:transparent;color:var(--qmb-accent);font-size:12px;font-weight:780;}
+.qmb .qmb-pricing-overview-review {width:100%;min-height:44px;}
+.qmb .qmb-build-intro {margin-bottom:13px;}
+.qmb .qmb-build-intro h2 {margin:0 0 4px;font-size:22px;letter-spacing:-.4px;}
+.qmb .qmb-build-intro p {margin:0;font-size:12px;line-height:1.5;color:var(--qmb-muted);max-width:650px;}
+.qmb .qmb-build-next {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;margin:10px 0 18px;border:1px solid var(--qmb-border);border-radius:12px;background:var(--qmb-card);}
+.qmb .qmb-build-next span {font-size:11px;color:var(--qmb-muted);max-width:290px;line-height:1.4;}
+.qmb .qmb-build-next .qmb-primary {font-size:12px;min-height:40px;}
+.qmb .qmb-build-general-heading {display:grid;gap:3px;margin:16px 0 4px;padding-top:12px;border-top:1px solid var(--qmb-border);}
+.qmb .qmb-build-general-heading strong {font-size:13px;color:var(--qmb-ink);}
+.qmb .qmb-build-general-heading span {font-size:11px;color:var(--qmb-muted);}
+@media(max-width:700px){
+ .qmb .qmb-pricing-overview-intro h2 {font-size:20px;}
+ .qmb .qmb-pricing-overview-summary {padding:10px;}
+ .qmb .qmb-pricing-overview-summary strong {font-size:13px;}
+ .qmb .qmb-pricing-overview-title {align-items:start;flex-direction:column;gap:2px;}
+ .qmb .qmb-pricing-overview-row-top>strong {font-size:13px;}
+ .qmb .qmb-build-next {align-items:stretch;}
+ .qmb .qmb-build-next .qmb-primary {width:100%;}
+}

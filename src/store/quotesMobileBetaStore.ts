@@ -16,7 +16,7 @@ function readOptIn(): boolean {
 export interface QuotesBetaLocation {
   quoteId?:string;
   page:'library'|'quote'|'area'|'review';
-  quoteTab:'build'|'details'|'preview';
+  quoteTab:'build'|'details'|'pricing'|'preview';
   areaTab:'measure'|'materials'|'pricing'|'calculator';
   areaId:string|null;
 }
@@ -34,7 +34,7 @@ function readLocation():QuotesBetaLocation{
       quoteId:typeof value.quoteId==='string'?value.quoteId:undefined,
       // Runtime validator above guarantees this is a supported page.
       page:value.page as QuotesBetaLocation['page'],
-      quoteTab:['build','details','preview'].includes(String(value.quoteTab))
+      quoteTab:['build','details','pricing','preview'].includes(String(value.quoteTab))
         ?value.quoteTab as QuotesBetaLocation['quoteTab']:'build',
       areaTab:['measure','materials','pricing','calculator'].includes(String(value.areaTab))
         ?value.areaTab as QuotesBetaLocation['areaTab']:'measure',

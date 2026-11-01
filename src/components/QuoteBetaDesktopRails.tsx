@@ -12,7 +12,7 @@ import {useQuoteBetaCardReflow} from './quoteBetaCardMotion';
 import {QuoteBetaAreaModeButton,QuoteBetaAreaGrip,QuoteBetaAreaDeleteButton,
   type QuoteBetaAreaManager} from './QuoteBetaAreasMenu';
 
-type QuoteTab='build'|'details'|'preview';
+type QuoteTab='build'|'details'|'pricing'|'preview';
 type AreaTab='measure'|'materials'|'pricing'|'calculator';
 type Page='library'|'quote'|'area'|'review';
 
@@ -36,7 +36,9 @@ export function QuoteBetaDesktopRails({
   areaManager:QuoteBetaAreaManager;
 }){
   const editable=quoteIsCommerciallyEditable(quote);
-  const steps=[['build',quote.documentType==='pricing-schedule'?'Editor':'Quote editor'],['details','Customer & deal'],['preview','Customer preview']] as const;
+  const steps:ReadonlyArray<readonly [QuoteTab,string]>=quote.documentType==='pricing-schedule'
+    ?[['build','Editor'],['details','Customer & deal'],['preview','Customer preview']]
+    :[['details','Project details'],['build','Areas & scope'],['pricing','Materials & pricing'],['preview','Customer preview']];
   const areas=areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s));
   const desktopAreaRef=useQuoteBetaCardReflow<HTMLElement>(areas.map(s=>s.id));
   return <>
@@ -62,7 +64,7 @@ export function QuoteBetaDesktopRails({
           aria-label={id==='build'?quote.documentType==='pricing-schedule'
             ?'Edit '+salesTemplateLabel(salesDocumentTemplate(quote)):'Build quote':undefined}
           onClick={()=>onQuoteTab(id)}>
-          <span className="qmb-desktop-step-icon">{id==='build'?'▤':id==='details'?'♙':'▧'}</span>
+          <span className="qmb-desktop-step-icon">{id==='build'?'▤':id==='details'?'♙':id==='pricing'?'◈':'▧'}</span>
           {label}
         </button>)}
         {quote.documentType!=='pricing-schedule'&&<button type="button" className="qmb-desktop-selections-step" onClick={onSelections}>
