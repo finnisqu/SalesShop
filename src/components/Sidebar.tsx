@@ -3,6 +3,19 @@ import { useNotebookStore } from '../store/notebookStore';
 import type { NotebookEntry, NotebookFolder, NotebookObject } from '../types/notebook';
 
 type PageFilter = 'all' | 'favorites' | 'project' | 'postits';
+type NotebookIconName='search'|'all'|'favorites'|'project'|'postits'|'trash';
+function NotebookIcon({name}:{name:NotebookIconName}){
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true" focusable="false">
+    {name==='search'&&<><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></>}
+    {name==='all'&&<><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></>}
+    {name==='favorites'&&<path d="m12 3 2.8 6 6.6.9-4.8 4.6 1.2 6.5L12 18l-5.8 3 1.2-6.5-4.8-4.6 6.6-.9z"/>}
+    {name==='project'&&<><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></>}
+    {name==='postits'&&<><path d="M5 3h14a2 2 0 0 1 2 2v10l-6 6H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 21v-6h6M7 8h9M7 12h5"/></>}
+    {name==='trash'&&<><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></>}
+  </svg>;
+}
 
 function plainHtml(value: string) {
   return value.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -134,22 +147,37 @@ export function Sidebar() {
       </div>
 
       <div className="notebook-page-search">
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search notebook…"
-          aria-label="Search notebook pages"
-        />
-        <div className="notebook-page-filters" aria-label="Notebook page filters">
-          <button type="button" className={filter === 'all'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setActiveFolderId(null);setFilter('all');}}>All</button>
-          <button type="button" className={filter === 'favorites'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setActiveFolderId(null);setFilter('favorites');}}>★</button>
-          <button type="button" className={filter === 'project'&&!showTrash ? 'active' : ''} onClick={() => {setShowTrash(false);setActiveFolderId(null);setFilter('project');}}>Project</button>
-          <button type="button" className={filter === 'postits'&&!showTrash ? 'active' : ''}
-            onClick={() => {setShowTrash(false);setActiveFolderId(null);setFilter('postits');}}>Post-its</button>
-          <button type="button" className={showTrash ? 'active' : ''} onClick={() => setShowTrash(value=>!value)}>Recently Deleted ({trashedEntries.length})</button>
+        <div className="notebook-search-field">
+          <NotebookIcon name="search"/>
+          <input type="search" value={query} onChange={event=>setQuery(event.target.value)}
+            placeholder="Find pages…" aria-label="Search notebook pages"/>
+          {query&&<button type="button" className="notebook-search-clear"
+            aria-label="Clear notebook search" title="Clear search" onClick={()=>setQuery('')}>×</button>}
         </div>
-        {!reorderEnabled && !showTrash && <small>Clear search/filter to reorder pages.</small>}
+        <div className="notebook-page-filters" role="group" aria-label="Filter Notebook pages">
+          <button type="button" className={filter==='all'&&!showTrash&&!activeFolderId?'active':''}
+            title="All pages" aria-label="All pages" aria-pressed={filter==='all'&&!showTrash&&!activeFolderId}
+            onClick={()=>{setShowTrash(false);setActiveFolderId(null);setFilter('all');}}>
+            <NotebookIcon name="all"/><span>All</span></button>
+          <button type="button" className={filter==='favorites'&&!showTrash?'active':''}
+            title="Favorite pages" aria-label="Favorite pages" aria-pressed={filter==='favorites'&&!showTrash}
+            onClick={()=>{setShowTrash(false);setActiveFolderId(null);setFilter('favorites');}}>
+            <NotebookIcon name="favorites"/></button>
+          <button type="button" className={filter==='project'&&!showTrash?'active':''}
+            title="Pages linked to projects" aria-label="Project pages" aria-pressed={filter==='project'&&!showTrash}
+            onClick={()=>{setShowTrash(false);setActiveFolderId(null);setFilter('project');}}>
+            <NotebookIcon name="project"/></button>
+          <button type="button" className={filter==='postits'&&!showTrash?'active':''}
+            title="Pages containing Post-its" aria-label="Pages with Post-its" aria-pressed={filter==='postits'&&!showTrash}
+            onClick={()=>{setShowTrash(false);setActiveFolderId(null);setFilter('postits');}}>
+            <NotebookIcon name="postits"/></button>
+          <button type="button" className={showTrash?'active':''}
+            title={'Recently deleted · '+trashedEntries.length}
+            aria-label={'Recently deleted pages ('+trashedEntries.length+')'} aria-pressed={showTrash}
+            onClick={()=>setShowTrash(value=>!value)}>
+            <NotebookIcon name="trash"/>{trashedEntries.length>0&&<span className="notebook-filter-count">{trashedEntries.length}</span>}</button>
+        </div>
+        {!reorderEnabled&&!showTrash&&<small className="notebook-filter-help">Clear search or filter to reorder pages.</small>}
       </div>
 
       {!showTrash&&<section className="notebook-folder-panel" aria-label="Notebook folders">

@@ -1,0 +1,42 @@
+/* Targeted Light-theme bridge for the embedded Materials reference list.
+   Legacy supplier tables were still painting beige after the header moved to
+   theme tokens. Other Catalog sections and Warm/Dark are deliberately untouched. */
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials{
+  background:var(--ss-theme-canvas);
+}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials .materials-workspace.is-catalog-embedded{
+  background:var(--ss-theme-canvas);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials :is(
+  .rates-workspace-header,.materials-reference-host,.materials-editor-host
+){background:transparent;color:var(--ss-theme-ink);}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials :is(
+  .materials-reference-card,.materials-reference-card>header,
+  .materials-comparison-board,.materials-comparison-board>header,
+  .rates-reference-table-wrap,.materials-comparison-empty
+){
+  background:var(--ss-theme-card);border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials .materials-reference-table{
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials .materials-reference-table thead th{
+  background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials .materials-reference-table tbody td{
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials .materials-reference-table tbody tr:nth-child(even) td{
+  background:var(--ss-theme-base);
+}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials :is(
+  .materials-reference-card>header small,.materials-reference-card>header>span,
+  .materials-comparison-board small,.materials-comparison-empty
+){color:var(--ss-theme-muted);}
+:root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials .materials-variant-expanded-row>td{
+  background:var(--ss-theme-base)!important;
+}

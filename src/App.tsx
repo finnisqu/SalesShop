@@ -28,6 +28,8 @@ import './quote-select-leave.css';
 import './quote-popover-polish.css';
 import './quote-mobile-pass.css';
 import './catalog-workspace.css';
+import './catalog-light-materials.css';
+import './notebook-sidebar-compact.css';
 import './viewer-workspace.css';
 import './role-perspective.css';
 import './appearance-themes.css';
