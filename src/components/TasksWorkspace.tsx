@@ -35,15 +35,18 @@ function reminderValue(value?:string){
 function Editor({initial,onCancel,onSave}:{
   initial:Partial<PersonalTask>|TaskPromotion;onCancel:()=>void;onSave:(changes:TaskChanges&{title:string})=>void;
 }){
-  const [title,setTitle]=useState(initial.title??'');
-  const [type,setType]=useState<TaskType>(('type'in initial&&initial.type)||'todo');
-  const [priority,setPriority]=useState<TaskPriority>(('priority'in initial&&initial.priority)||'normal');
-  const [status,setStatus]=useState<TaskStatus>(('status'in initial&&initial.status)||'open');
-  const [dueDate,setDueDate]=useState(('dueDate'in initial&&initial.dueDate)||'');
-  const [dueTime,setDueTime]=useState(('dueTime'in initial&&initial.dueTime)||'');
-  const [reminderAt,setReminderAt]=useState(reminderValue('reminderAt'in initial?initial.reminderAt:undefined));
-  const [queue,setQueue]=useState(('queue'in initial&&initial.queue)||'');
-  const [notes,setNotes]=useState(('notes'in initial&&initial.notes)||'');
+  // A promotion draft is a subset of the ordinary task editor fields.
+  // Use one typed draft shape so optional properties remain correctly typed.
+  const draft:Partial<PersonalTask>=initial;
+  const [title,setTitle]=useState(draft.title??'');
+  const [type,setType]=useState<TaskType>(draft.type??'todo');
+  const [priority,setPriority]=useState<TaskPriority>(draft.priority??'normal');
+  const [status,setStatus]=useState<TaskStatus>(draft.status??'open');
+  const [dueDate,setDueDate]=useState(draft.dueDate??'');
+  const [dueTime,setDueTime]=useState(draft.dueTime??'');
+  const [reminderAt,setReminderAt]=useState(reminderValue(draft.reminderAt));
+  const [queue,setQueue]=useState(draft.queue??'');
+  const [notes,setNotes]=useState(draft.notes??'');
   const [linked,setLinked]=useState<TaskLink|undefined>(initial.linked);
   const [sourceLabel,setSourceLabel]=useState(initial.sourceLabel);
   const quotes=useQuoteStore(s=>s.quotes);
