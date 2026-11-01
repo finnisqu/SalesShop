@@ -1,5 +1,8 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
-import {usePersonalTaskStore,taskScope,type PersonalTask,type TaskChanges,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
+import {useQuoteStore} from '../store/quoteStore';
+import {useCrmStore} from '../store/crmStore';
+import {useNotebookStore} from '../store/notebookStore';
 import {useAuthStore} from '../store/authStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -41,8 +44,18 @@ function Editor({initial,onCancel,onSave}:{
   const [reminderAt,setReminderAt]=useState(reminderValue('reminderAt'in initial?initial.reminderAt:undefined));
   const [queue,setQueue]=useState(('queue'in initial&&initial.queue)||'');
   const [notes,setNotes]=useState(('notes'in initial&&initial.notes)||'');
-  const [linked]=useState(initial.linked);
-  const [sourceLabel]=useState(initial.sourceLabel);
+  const [linked,setLinked]=useState<TaskLink|undefined>(initial.linked);
+  const [sourceLabel,setSourceLabel]=useState(initial.sourceLabel);
+  const quotes=useQuoteStore(s=>s.quotes);
+  const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
+  const deals=useCrmStore(s=>s.projects),pages=useNotebookStore(s=>s.entries);
+  const associations=[
+    ...quotes.filter(q=>!q.archivedAt).map(q=>({key:'quote:'+q.id,linked:{type:'quote',id:q.id} as TaskLink,label:'Quote · '+q.title})),
+    ...deals.map(d=>({key:'project:'+d.id,linked:{type:'project',id:d.id} as TaskLink,label:'Deal · '+d.name})),
+    ...companies.map(c=>({key:'company:'+c.id,linked:{type:'company',id:c.id} as TaskLink,label:'Company · '+c.name})),
+    ...contacts.map(c=>({key:'contact:'+c.id,linked:{type:'contact',id:c.id} as TaskLink,label:'Person · '+c.name})),
+    ...pages.map(p=>({key:'notebook:'+p.id,linked:{type:'notebook',id:p.id} as TaskLink,label:'Notebook · '+p.title})),
+  ];
   const [sourceText]=useState(initial.sourceText);
   const [sourceObjectId]=useState(initial.sourceObjectId);
   const submit=(event:FormEvent)=>{event.preventDefault();if(!title.trim())return;
@@ -56,7 +69,19 @@ function Editor({initial,onCancel,onSave}:{
       <header><strong>{'id'in initial?'Edit task':'New task'}</strong>
         <button type="button" aria-label="Close task editor" onClick={onCancel}>×</button></header>
       <label>Task title<input autoFocus required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/></label>
-      {sourceLabel&&<p className="tasks-editor-source">Linked to {sourceLabel}{sourceText?' · Original excerpt preserved':''}</p>}
+      {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
+      <label>Related record
+        <select value={linked?linked.type+':'+linked.id:''} onChange={event=>{
+          const selected=associations.find(a=>a.key===event.target.value);
+          setLinked(selected?.linked);
+          setSourceLabel(selected?.label);
+        }}>
+          <option value="">Unassociated task</option>
+          {linked&&!associations.some(a=>a.key===linked.type+':'+linked.id)&&
+            <option value={linked.type+':'+linked.id}>{sourceLabel??linked.type+' · Linked record'}</option>}
+          {associations.map(a=><option key={a.key} value={a.key}>{a.label}</option>)}
+        </select>
+      </label>
       <div className="tasks-editor-grid">
         <label>Type<select value={type} onChange={e=>setType(e.target.value as TaskType)}>
           {types.map(t=><option key={t} value={t}>{t==='todo'?'To-do':t==='follow-up'?'Follow-up':t[0].toUpperCase()+t.slice(1)}</option>)}</select></label>
@@ -168,7 +193,7 @@ export function TasksWorkspace(){
               <span className={'tasks-priority is-'+(task.priority??'normal')}>{task.priority??'normal'}</span></div>
             <div className="tasks-row-meta"><span>{task.type==='todo'||!task.type?'To-do':task.type}</span>
               <span className={state==='overdue'?'is-overdue':''}>{task.dueDate?'Due '+formatDate(task.dueDate)+(task.dueTime?' · '+task.dueTime:''):'No due date'}</span>
-              <span>{isDone?'Completed':task.status==='in-progress'?'In progress':task.status==='waiting'?'Waiting':state==='scheduled'?'Scheduled':'Open'}</span>
+              <span>{isDone?'Completed':task.status==='canceled'?'Canceled':task.status==='in-progress'?'In progress':task.status==='waiting'?'Waiting':state==='scheduled'?'Scheduled':'Open'}</span>
               {task.queue&&<span>{task.queue}</span>}
               {reminderDue&&<span className="is-overdue">Reminder due</span>}
             </div>

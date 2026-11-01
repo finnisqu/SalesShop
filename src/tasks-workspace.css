@@ -49,3 +49,5 @@
 .tasks-editor footer button:not(.tasks-primary){padding:9px 13px;border:1px solid var(--ss-theme-border);border-radius:8px;background:transparent;color:inherit;}
 .tasks-editor-source{margin:0;background:var(--ss-theme-tint);padding:9px;border-radius:8px;font-size:11px;}
 @media(max-width:680px){.tasks-workspace{padding:12px 10px 32px}.tasks-header{align-items:flex-start}.tasks-header h1{font-size:23px}.tasks-summary{gap:5px}.tasks-summary button{padding:9px;min-height:65px}.tasks-summary strong{font-size:20px}.tasks-tools input{width:100%}.tasks-row{flex-wrap:wrap;padding:10px}.tasks-row-actions{width:100%;justify-content:flex-end}.tasks-editor{padding:14px}.tasks-editor-grid{grid-template-columns:1fr 1fr}}
+
+.tasks-editor>label select{width:100%;}
