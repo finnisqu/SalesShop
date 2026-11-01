@@ -82,9 +82,11 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     if(!scope||!clean)return null;
     const now=new Date().toISOString();
     const fields=sanitize(changes);
+    const nextStatus=fields.status??'open';
     const task:PersonalTask={...fields,id:'task_'+crypto.randomUUID(),title:clean,workspaceScope:scope,
       type:fields.type??'todo',priority:fields.priority??'normal',
-      status:'open',completedAt:undefined,createdAt:now,updatedAt:now};
+      status:nextStatus,completedAt:nextStatus==='completed'?now:undefined,
+      createdAt:now,updatedAt:now};
     const tasks=[task,...get().tasks];
     set({tasks});persist(scope,tasks);return task.id;
   },
