@@ -510,6 +510,15 @@ export function QuotesMobileBeta() {
   const [approvedDeliveryKey,setApprovedDeliveryKey]=useState<string|null>(null);
   const [reviewedDeliveryKey,setReviewedDeliveryKey]=useState<string|null>(null);
   const quoteScrollRef=useRef<HTMLDivElement>(null);
+  const [focusGeneralFromPricing,setFocusGeneralFromPricing]=useState(false);
+  useEffect(()=>{
+    if(!focusGeneralFromPricing||page!=='quote'||quoteTab!=='build')return;
+    const general=quoteScrollRef.current?.querySelector<HTMLElement>('[data-general-edit-workspace]');
+    if(general){
+      general.scrollIntoView({block:'start',behavior:'auto'});
+      setFocusGeneralFromPricing(false);
+    }
+  },[focusGeneralFromPricing,page,quoteTab]);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
   useEffect(()=>{
@@ -729,6 +738,10 @@ export function QuotesMobileBeta() {
   const openPricingStage=()=>{
     if(!quote||quote.documentType==='pricing-schedule')return;
     navigateDocument('pricing');
+  };
+  const openGeneralFromPricing=()=>{
+    setFocusGeneralFromPricing(true);
+    navigateDocument('build');
   };
   const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
     const item=audit?.[kind][0];openReview(item?.id??null);
@@ -989,12 +1002,8 @@ export function QuotesMobileBeta() {
           {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
           </div>
           {!quote.sections.some(s=>!isGeneralTakeoffSection(s))&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
-          <div className="qmb-build-next">
-            <span>Return to Areas or General any time; nothing is locked.</span>
-            <button type="button" className="qmb-primary" onClick={openPricingStage}>Continue to Materials &amp; Pricing ›</button>
-          </div>
-          <div className="qmb-build-general-heading"><strong>Optional · General charges</strong><span>Flat fees, add-ons, discounts and notes</span></div>
-          <div className="qmb-section-head qmb-general-heading" data-general-edit-workspace><h3>General</h3>
+          <div className="qmb-section-head qmb-general-heading" data-general-edit-workspace>
+            <div><h3>General</h3><small>Optional · Flat fees, add-ons, discounts and notes</small></div>
             <div className="qmb-general-quick-add" aria-label="Add General line">
               {editable&&!generalManager.editing&&<button type="button"
                 aria-label="General takeoffs" onClick={()=>{
@@ -1032,7 +1041,7 @@ export function QuotesMobileBeta() {
         </>}
         {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaPricingOverview
           quote={quote} onArea={(id,tab)=>{openArea(id);setAreaTab(tab);}}
-          onGeneral={()=>navigateDocument('build')} onResolve={fixAudit} onReview={openSend}/>}
+          onGeneral={openGeneralFromPricing} onResolve={fixAudit} onReview={openSend}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}
           nextAreaLabel={detailsNextArea?.label} onContinueToArea={detailsNextArea?continueFromDetails:undefined}/>} 
         {quoteTab==='preview'&&<>
@@ -1045,6 +1054,12 @@ export function QuotesMobileBeta() {
         {quoteTab==='preview'&&previewReturnQuoteId===quote.id
           ?<button type="button" className="qmb-primary"
             onClick={returnFromReviewPreview}>Done previewing · Back to Review ›</button>
+          :quote.documentType!=='pricing-schedule'&&quoteTab==='details'
+            ?<button type="button" className="qmb-primary"
+              onClick={()=>navigateDocument('build')}>Continue to Areas ›</button>
+          :quote.documentType!=='pricing-schedule'&&quoteTab==='build'
+            ?<button type="button" className="qmb-primary"
+              onClick={openPricingStage}>Continue to Materials &amp; Pricing ›</button>
           :<button type="button" className="qmb-primary" onClick={openSend}>
             {primaryAction?.mobile??'Review document ›'}</button>}
       </footer>
