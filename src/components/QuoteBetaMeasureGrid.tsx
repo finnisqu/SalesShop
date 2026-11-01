@@ -167,7 +167,7 @@ export function QuoteBetaMeasureGrid({pieces,editable,onSave,onAdvanced,defaults
   };
   return <>
     <div className="qmb-grid-toolbar">
-      <div><strong>Pieces</strong><small>{pieces.length} total · edit any cell</small></div>
+      <div><strong>Pieces</strong><small>{pieces.length} {pieces.length===1?'piece':'pieces'} · dimensions in inches</small></div>
       <div className="qmb-grid-toolbar-actions">
         <FloatingRowMenu label="Area fabrication defaults" caption="Defaults" width={298}>
           {close=><div className="qmb-fabrication-options">
@@ -189,7 +189,7 @@ export function QuoteBetaMeasureGrid({pieces,editable,onSave,onAdvanced,defaults
     </div>
     <div className="qmb-measure-sheet" ref={grid} onKeyDown={advance}>
       <div className="qmb-measure-columns" aria-hidden="true">
-        <span>Piece</span><span>L (in)</span><span>W (in)</span><span>Qty</span><span>Splash</span><span></span>
+        <span>Piece</span><span>Length</span><span>Width</span><span>Qty</span><span>Splash</span><span></span>
       </div>
       {pieces.map((piece,index)=><div className="qmb-measure-row" key={piece.id}>
         <div className="qmb-row-piece">

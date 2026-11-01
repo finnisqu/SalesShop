@@ -1,0 +1,64 @@
+/* Consistent, compact quoting controls. No price or persisted data logic here.
+ * On phones keep 16px input text to avoid iOS auto-zoom and minimum 40px targets. */
+.qmb .qmb-area-editor :is(.qmb-measure-row,.qmb-compact-sink-row,.qmb-compact-addon-row) {
+  font-variant-numeric:tabular-nums;
+}
+.qmb .qmb-measure-sheet,.qmb .qmb-compact-table,.qmb .qmb-compact-addon-table {
+  box-shadow:none;border-radius:10px;
+}
+.qmb .qmb-measure-columns,.qmb .qmb-compact-sink-columns,.qmb .qmb-compact-addon-columns {
+  border-radius:9px 9px 0 0;
+  padding-block:7px;letter-spacing:.015em;
+}
+.qmb .qmb-measure-row {padding-block:5px;min-height:63px;}
+.qmb .qmb-row-piece {grid-template-rows:35px 14px;}
+.qmb .qmb-measure-row .qmb-grid-input {height:35px;min-height:35px;}
+.qmb .qmb-compact-sink-row,.qmb .qmb-compact-addon-row {padding-block:5px;min-height:47px;}
+.qmb .qmb-compact-sink-row :is(input,select),
+.qmb .qmb-compact-addon-row :is(input,select) {min-height:34px;height:34px;padding:5px 6px;}
+.qmb .qmb-compact-sink-sell {gap:3px;}
+.qmb .qmb-compact-sink-sell input {min-height:34px;height:34px;}
+.qmb .qmb-compact-sink-sell small {white-space:normal;line-height:1.2;text-align:right;}
+.qmb .qmb-compact-addon-amount {overflow-wrap:anywhere;white-space:normal;line-height:1.2;}
+.qmb .qmb-compact-remove {min-height:36px;height:36px;}
+/* Rate Book selection is a discrete action, not a second editable pricing formula. */
+.qmb .qmb-rate-entry {min-width:0;}
+.qmb .qmb-rate-entry-heading {
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding-bottom:5px;color:var(--qmb-ink);
+}
+.qmb .qmb-rate-entry-heading strong {font-size:12px;font-weight:800;}
+.qmb .qmb-rate-entry-heading small,
+.qmb .qmb-pricing-rate-source {font-size:10px;color:var(--qmb-muted);}
+.qmb .qtl-rate-suggestions>button,
+.qmb .qmb-pricing-rate-chooser .qmb-pricing-rate-toggle {
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  min-height:38px;border:1px solid var(--qmb-border);border-radius:8px;
+  background:var(--qmb-tint);color:var(--qmb-accent);font-size:12px;font-weight:780;
+  padding:8px 10px;
+}
+.qmb .qmb-pricing-rate-chooser {
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:8px;
+}
+.qmb .qmb-pricing-rate-chooser .qmb-pricing-rate-toggle {flex:0 1 auto;}
+.qmb .qmb-pricing-rate-popup,.qmb .qtl-rate-options {
+  overscroll-behavior:contain;
+}
+.qmb .qmb-area-editor :is(input,button,select):focus-visible {
+  outline:2px solid var(--qmb-accent);outline-offset:2px;
+}
+@media(max-width:700px) {
+  .qmb .qmb-measure-row {min-height:67px;}
+  .qmb .qmb-row-piece {grid-template-rows:38px 14px;}
+  .qmb .qmb-measure-row .qmb-grid-input {height:38px;min-height:38px;font-size:16px;}
+  .qmb .qmb-compact-sink-row :is(input,select),
+  .qmb .qmb-compact-addon-row :is(input,select) {min-height:40px;height:40px;font-size:16px;}
+  .qmb .qmb-compact-sink-sell input {min-height:40px;height:40px;}
+  .qmb .qmb-compact-remove {min-height:40px;height:40px;}
+  .qmb .qmb-pricing-rate-chooser .qmb-pricing-rate-toggle {width:100%;}
+  .qmb .qmb-rate-entry-heading {align-items:start;flex-wrap:wrap;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .qmb .qmb-area-editor :is(input,button,select) {scroll-behavior:auto;}
+}

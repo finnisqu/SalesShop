@@ -8,8 +8,10 @@ export function TakeoffRatePicker({quote,rate,disabled,onSelect,selectedRateId,m
   selectedRateId?:string;materialType?:string;materialCostPerSf?:number;
 }){
   const [open,setOpen]=useState(false);
-  return <div className="qtl-rate-box">
-    <label className="qtl-rate-input"><span>Selling price per SF</span>
+  return <div className="qtl-rate-box qmb-rate-entry">
+    <div className="qmb-rate-entry-heading"><strong>Customer selling rate</strong>
+      <small>{rate===undefined?'Not priced yet':selectedRateId?'Rate Book selection':'Custom rate'}</small></div>
+    <label className="qtl-rate-input"><span>Price / SF</span>
       <div><strong>$</strong><input aria-label="Takeoff selling rate per square foot"
         type="number" inputMode="decimal" min="0" step=".01" disabled={disabled}
         value={rate??''} placeholder="Enter price / SF"
@@ -20,7 +22,8 @@ export function TakeoffRatePicker({quote,rate,disabled,onSelect,selectedRateId,m
         }}/></div></label>
     <div className="qtl-rate-suggestions">
       <button type="button" disabled={disabled} aria-expanded={open}
-        onClick={()=>setOpen(v=>!v)}>Choose from Rates ▾</button>
+        aria-label="Choose a selling rate from Rate Book"
+        onClick={()=>setOpen(v=>!v)}>{open?'Close Rate Book':'Choose from Rate Book'} <span aria-hidden="true">{open?'⌃':'⌄'}</span></button>
       {open&&<div className="qtl-rate-options">
         <QuoteSfRateChoices division={quote.pricingDivision}
           selectedRateId={selectedRateId} materialType={materialType}

@@ -50,6 +50,7 @@ import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRai
 import { QuoteBetaProgress } from './QuoteBetaProgress';
 import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
 import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
+import './quotes-beta-control-polish.css';
 import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
 import './quote-beta-progressive.css';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,

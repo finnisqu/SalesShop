@@ -47,7 +47,7 @@ export function QuoteBetaAdditionalScope({quote,section,editable}:{quote:Quote;s
     </div>}
     <div className="qmb-compact-addon-table" aria-label="Add-on line table">
       <div className="qmb-compact-addon-columns" aria-hidden="true">
-        <span>Add-on / Rate</span><span>Qty</span><span>Unit</span><span>Amount</span><span></span>
+        <span>Add-on / Rate</span><span>Qty</span><span>Unit</span><span>Sell total</span><span></span>
       </div>
       {rows.map((line,index)=><div className="qmb-compact-addon-row" key={line.id}>
         <div className="qmb-compact-addon-description">
@@ -70,7 +70,7 @@ export function QuoteBetaAdditionalScope({quote,section,editable}:{quote:Quote;s
               }else update(quote.id,line.id,{quantity:amount});
             }}/>}
         <small>{line.rateReference?.snapshot?.unit??(line.kind==='note'?'—':'each')}</small>
-        <strong className="qmb-compact-addon-amount" title="Selling amount; edit in Materials">
+        <strong className="qmb-compact-addon-amount" title="Customer selling total; edit under Materials & Pricing">
           {line.includeInTotal?money.format(quoteLineAmount(line)):'—'}
         </strong>
         <button type="button" className="qmb-compact-remove" disabled={!editable}
@@ -79,7 +79,7 @@ export function QuoteBetaAdditionalScope({quote,section,editable}:{quote:Quote;s
             remove(quote.id,line.id);}}>×</button>
       </div>)}
       {!rows.length&&<p className="qmb-grid-empty">
-        No Add-ons yet. Choose a catalog Rate to insert its saved price, or add a custom item.
+        No Add-ons yet. Choose a Rate Book item or add a custom charge.
       </p>}
     </div>
   </div>;

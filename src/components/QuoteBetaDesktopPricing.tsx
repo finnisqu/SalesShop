@@ -186,7 +186,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     </header>}
     {(view==='all'||view==='selling')&&<>
     <header className="qmb-pricing-lab-heading">
-      <div><h3>Pricing</h3><small>Customer price and private production cost</small></div>
+      <div><h3>Customer selling price</h3><small>Private buying costs and margin are in Calculator</small></div>
       <strong>{money.format(areaTotal)}</strong>
     </header>
     <div className="qmb-pricing-modes" aria-label="Area selling method">
@@ -209,8 +209,17 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
           disabled={!editable||!primary} value={decimal(primary?.rate)}
           onChange={e=>setPrice('sf',{rate:numeric(e.target.value)})}/>
       </label>
-      <button type="button" className="qmb-pricing-rate-toggle" disabled={!editable}
-        aria-expanded={ratesOpen} onClick={()=>setRatesOpen(!ratesOpen)}>Choose builder rate</button>
+      <div className="qmb-pricing-rate-chooser">
+        <span className="qmb-pricing-rate-source" aria-live="polite">
+          {primary?.rate===undefined?'No rate selected':primary.rateReference?.rateBookItemId
+            ?'Rate Book selection':'Custom selling rate'}
+        </span>
+        <button type="button" className="qmb-pricing-rate-toggle" disabled={!editable}
+          aria-label="Choose a selling rate from Rate Book"
+          aria-expanded={ratesOpen} onClick={()=>setRatesOpen(v=>!v)}>
+          {ratesOpen?'Close Rate Book':'Choose from Rate Book'} <span aria-hidden="true">{ratesOpen?'⌃':'⌄'}</span>
+        </button>
+      </div>
       {ratesOpen&&<div className="qmb-pricing-rate-popup">
         <QuoteSfRateChoices division={quote.pricingDivision}
           selectedRateId={primary?.rateReference?.rateBookItemId}

@@ -20,7 +20,7 @@ export function QuoteBetaCompactSinks({quote,section,editable,stage}:{
     aria-label="Area sink table">
     <div className="qmb-compact-sink-columns" aria-hidden="true">
       <span>Type</span><span>Model</span><span>Qty</span>
-      {stage==='materials'&&<span>Sell / each</span>}
+      {stage==='materials'&&<span>Sell / each ($)</span>}
       <span>Holes</span><span></span>
     </div>
     {sinks.map((sink,index)=><div className="qmb-compact-sink-row" key={sink.id}>
@@ -45,7 +45,9 @@ export function QuoteBetaCompactSinks({quote,section,editable,stage}:{
           placeholder="Set price" value={sink.unitPrice??''}
           onChange={e=>{const n=e.target.value===''?undefined:Number(e.target.value);
             if(n===undefined||(Number.isFinite(n)&&n>=0))patch(sink.id,{unitPrice:n});}}/>
-        <small>{sink.unitPrice!==undefined?money.format(sink.count*sink.unitPrice):'Unpriced'}</small>
+        <small aria-label={'Sink '+(index+1)+' selling total'}>
+          {sink.unitPrice!==undefined?'Total '+money.format(sink.count*sink.unitPrice):'Rate missing'}
+        </small>
       </div>}
       <FloatingRowMenu width={290} label={'Faucet holes for Sink '+(index+1)}
         caption={String((sink.faucetHoleOffsetsIn??[0]).length)+' holes'}>
