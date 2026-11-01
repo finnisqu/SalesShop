@@ -680,8 +680,7 @@ export function QuotesMobileBeta() {
   };
   const areaMenuActions=(target:QuoteSection):AppContextAction[]=>{
     const actions:AppContextAction[]=[
-      {label:'Open Area',onSelect:()=>openArea(target.id)},
-      {label:'Edit measurements',onSelect:()=>openArea(target.id)},
+      {label:'Open Area / measurements',onSelect:()=>openArea(target.id)},
       {label:'Materials & selling prices',onSelect:()=>{openArea(target.id);setAreaTab('materials');}},
     ];
     if(quote&&editable&&!areaManager.editing){
@@ -870,6 +869,8 @@ export function QuotesMobileBeta() {
       {quote&&page!=='library'&&<QuoteBetaDesktopRails
         quote={quote} page={page} quoteTab={quoteTab} areaTab={areaTab} areaId={areaId}
         areaManager={areaManager}
+        onAreaContextMenu={(event,s)=>contextActions.openPointer(event,s.title||'Area',areaMenuActions(s))}
+        onAreaContextKey={(event,s)=>contextActions.openKeyboard(event,s.title||'Area',areaMenuActions(s))}
         onLibrary={showLibrary}
         onQuoteTab={navigateDocument}
         onArea={id=>{if(page==='area'&&id===areaId)return;openArea(id);}}

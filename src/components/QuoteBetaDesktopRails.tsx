@@ -1,4 +1,5 @@
-import type {Quote} from '../types/quote';
+import type {Quote,QuoteSection} from '../types/quote';
+import type {MouseEvent as ReactMouseEvent,KeyboardEvent as ReactKeyboardEvent} from 'react';
 import {quoteLinesTotal,quoteTotal,displayQuoteNumber} from '../types/quote';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {pricingScheduleValidationError} from '../services/pricingSchedule';
@@ -23,7 +24,7 @@ export function QuoteBetaDesktopRails({
   quote,page,quoteTab,areaTab,areaId,
   onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onReviewFinding,onReviewIssue,
   onUndo,onRedo,undoDepth,redoDepth,onSend,canIssue,canManage,canDelete,
-  onCopy,onDelete,onArchive,onRevise,areaManager,
+  onCopy,onDelete,onArchive,onRevise,areaManager,onAreaContextMenu,onAreaContextKey,
 }:{
   quote:Quote;page:Page;quoteTab:QuoteTab;areaTab:AreaTab;areaId:string|null;
   onLibrary:()=>void;onQuoteTab:(tab:QuoteTab)=>void;onArea:(id:string)=>void;
@@ -34,6 +35,8 @@ export function QuoteBetaDesktopRails({
   onSend:()=>void;canIssue:boolean;canManage:boolean;canDelete:boolean;
   onCopy:()=>void;onDelete:()=>void;onArchive:()=>void;onRevise:()=>void;
   areaManager:QuoteBetaAreaManager;
+  onAreaContextMenu:(event:ReactMouseEvent<HTMLButtonElement>,area:QuoteSection)=>void;
+  onAreaContextKey:(event:ReactKeyboardEvent<HTMLButtonElement>,area:QuoteSection)=>void;
 }){
   const editable=quoteIsCommerciallyEditable(quote);
   const steps:ReadonlyArray<readonly [QuoteTab,string]>=quote.documentType==='pricing-schedule'
@@ -85,6 +88,8 @@ export function QuoteBetaDesktopRails({
           return <div key={section.id} className="qmb-inline-area-row" data-qmb-sort-row={section.id} data-area-sort-id={section.id}>
             {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={section}/>}
             <button type="button" className={'qmb-desktop-area-card'+(active?' is-active':'')}
+              onContextMenu={event=>onAreaContextMenu(event,section)}
+              onKeyDown={event=>onAreaContextKey(event,section)}
               aria-disabled={areaManager.editing}
               aria-current={active?'page':undefined} onClick={()=>{if(!areaManager.editing)onArea(section.id);}}>
               <span className="qmb-desktop-area-dot">▤</span>
