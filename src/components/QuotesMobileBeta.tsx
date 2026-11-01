@@ -411,7 +411,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
             </div>}
           </div>
           </details>
-          {linked?<TakeoffRatePicker quote={quote} rate={linked.rate} disabled={!editable
+          {linked?<TakeoffRatePicker quote={quote} rate={linked.rate} disabled={!editable}
             selectedRateId={linked.rateReference?.rateBookItemId}
             materialType={selectedCost.materialType}
             materialCostPerSf={costPerSf}
