@@ -47,6 +47,7 @@ import { QuoteBetaSelections } from './QuoteBetaSelections';
 import { QuoteBetaReview } from './QuoteBetaReview';
 import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
 import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRails';
+import { QuoteBetaProgress } from './QuoteBetaProgress';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
   QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
 import {useQuoteBetaGeneralManager,QuoteBetaGeneralModeButton,QuoteBetaGeneralGrip,
@@ -703,6 +704,16 @@ export function QuotesMobileBeta() {
     else newArea();
   };
   const openReview=(focusId:string|null=null)=>{setError('');setSelectionsOpen(false);setReviewFocus(focusId);setReviewOpen(true);};
+  // Stage shortcuts never mutate pricing or automatically issue a document.
+  const openPricingStage=()=>{
+    if(!quote)return;
+    const target=audit?.blockers.find(f=>f.destination.view==='area')
+      ??audit?.review.find(f=>f.destination.view==='area'&&f.destination.tab==='materials');
+    if(target){fixAudit(target.destination);return;}
+    const targetArea=area??quote.sections.find(s=>!isGeneralTakeoffSection(s))??generalTakeoff;
+    if(targetArea){openArea(targetArea.id);setAreaTab('materials');}
+    else navigateDocument('build');
+  };
   const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
     const item=audit?.[kind][0];openReview(item?.id??null);
   };
@@ -787,6 +798,15 @@ export function QuotesMobileBeta() {
         onSelections={()=>setSelectionsOpen(true)}
         />}
       <div className="qmb-desktop-main">
+      {quote&&page!=='library'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaProgress
+        key={quote.id} quote={quote} editable={editable}
+        current={reviewOpen||page==='quote'&&quoteTab==='preview'?'review':
+          page==='area'?(areaTab==='measure'?'areas':'pricing'):
+          quoteTab==='details'?'details':'areas'}
+        onDetails={()=>navigateDocument('details')}
+        onAreas={()=>navigateDocument('build')}
+        onOpenArea={openArea} onAddArea={newArea} onPricing={openPricingStage}
+        onReview={openSend}/>} 
     {page==='library'?<>
       <header className="qmb-top"><BuildBadge compact /><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
