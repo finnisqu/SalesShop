@@ -1,5 +1,6 @@
 import { useMemo, useState, type DragEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
+import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import type { NotebookEntry, NotebookFolder, NotebookObject } from '../types/notebook';
 
 type PageFilter = 'all' | 'favorites' | 'project' | 'postits';
@@ -67,6 +68,11 @@ export function Sidebar() {
   const trashedEntries = useNotebookStore((state) => state.trashedEntries);
   const restoreEntry = useNotebookStore((state) => state.restoreEntry);
   const reorderEntry = useNotebookStore((state) => state.reorderEntry);
+  const duplicateEntry=useNotebookStore(state=>state.duplicateEntry);
+  const renameEntry=useNotebookStore(state=>state.renameEntry);
+  const deleteEntry=useNotebookStore(state=>state.deleteEntry);
+  const toggleFavorite=useNotebookStore(state=>state.toggleFavorite);
+  const contextActions=useAppContextMenu();
   const [showHidden, setShowHidden] = useState(false);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [showTrash, setShowTrash] = useState(false);
@@ -85,6 +91,34 @@ export function Sidebar() {
     }
     return ids;
   },[activeFolderId,folders]);
+  const pageMenuActions=(entry:NotebookEntry):AppContextAction[]=>{
+    const actions:AppContextAction[]=[
+      {label:'Open page',onSelect:()=>selectEntry(entry.id)},
+      {label:entry.favorite?'Remove favorite':'Add to favorites',onSelect:()=>toggleFavorite(entry.id)},
+      {label:'Rename…',onSelect:()=>{
+        const title=window.prompt('Rename notebook page',entry.title);
+        if(title?.trim())renameEntry(entry.id,title.trim());
+      }},
+      {label:'Duplicate page',onSelect:()=>duplicateEntry(entry.id)},
+    ];
+    if(!entry.deletionLocked)actions.push({
+      label:'Move to Recently Deleted…',destructive:true,dividerBefore:true,
+      onSelect:()=>{if(window.confirm('Move “'+(entry.title||'Untitled page')+'” to Recently Deleted?'))deleteEntry(entry.id);}
+    });
+    return actions;
+  };
+  const folderMenuActions=(folder:NotebookFolder):AppContextAction[]=>[
+    {label:'Open folder',onSelect:()=>{setActiveFolderId(folder.id);setFilter('all');setShowTrash(false);}},
+    {label:'New subfolder…',onSelect:()=>askFolder(folder.id)},
+    {label:'Rename folder…',onSelect:()=>{
+      const name=window.prompt('Rename folder',folder.name);
+      if(name?.trim())renameFolder(folder.id,name.trim());
+    }},
+    {label:'Remove folder…',destructive:true,dividerBefore:true,onSelect:()=>{
+      if(!window.confirm('Remove “'+folder.name+'”? Its pages and subfolders will be moved up, not deleted.'))return;
+      removeFolder(folder.id);if(activeFolderId===folder.id)setActiveFolderId(folder.parentId??null);
+    }},
+  ];
   const askFolder=(parentId?:string)=>{
     const name=window.prompt(parentId?'New subfolder name':'New folder name');
     if(!name?.trim())return;
@@ -185,6 +219,8 @@ export function Sidebar() {
         {folderRows.map(({folder,depth})=><div className={'notebook-folder-row'+(activeFolderId===folder.id&&filter==='all'?' is-active':'')}
           key={folder.id} style={{paddingLeft: Math.min(depth,6)*12+5}}>
           <button className="notebook-folder-open" type="button"
+            onContextMenu={event=>contextActions.openPointer(event,folder.name,folderMenuActions(folder))}
+            onKeyDown={event=>contextActions.openKeyboard(event,folder.name,folderMenuActions(folder))}
             aria-pressed={activeFolderId===folder.id&&filter==='all'}
             onClick={()=>{setActiveFolderId(folder.id);setFilter('all');setShowTrash(false);}}>
             <span aria-hidden="true">▸</span><span>{folder.name}</span><small>{entries.filter(entry=>entry.folderId===folder.id).length}</small>
@@ -223,6 +259,8 @@ export function Sidebar() {
               key={entry.id}
               className={`page-tab tone-${entry.tone} ${active ? 'active' : ''} ${entry.favorite ? 'is-favorite' : ''} ${entry.hidden ? 'is-hidden-page' : ''} ${draggingId === entry.id ? 'is-dragging' : ''} ${before ? 'drop-before' : ''} ${after ? 'drop-after' : ''}`}
               onClick={() => selectEntry(entry.id)}
+              onContextMenu={event=>contextActions.openPointer(event,entry.title||'Notebook page',pageMenuActions(entry))}
+              onKeyDown={event=>contextActions.openKeyboard(event,entry.title||'Notebook page',pageMenuActions(entry))}
               draggable={reorderEnabled}
               onDragStart={(event) => {
                 if (!reorderEnabled) return;
@@ -266,6 +304,7 @@ export function Sidebar() {
           </div>
         )}
       </div>
+      {contextActions.menu}
     </aside>
   );
 }
