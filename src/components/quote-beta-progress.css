@@ -70,3 +70,30 @@
 /* Four equal milestones: no duplicate Selections/Pricing page. */
 .qmb .qmb-guide-four .qmb-guide-steps,
 .qmb .qmb-guide-four .qmb-guide-progress{grid-template-columns:repeat(4,minmax(0,1fr));}
+
+
+/* Quick Quote progress: one compact line, no redundant caption or sub-progress bar. */
+.sales-app .qmb .qmb-guide-four{padding:8px 14px;background:var(--qmb-card);gap:0;}
+.sales-app .qmb .qmb-guide-four .qmb-guide-heading,
+.sales-app .qmb .qmb-guide-four .qmb-guide-caption,
+.sales-app .qmb .qmb-guide-four .qmb-guide-progress{display:none;}
+.sales-app .qmb .qmb-guide-four .qmb-guide-steps{display:grid;
+ grid-template-columns:repeat(4,minmax(0,1fr));gap:0;}
+.sales-app .qmb .qmb-guide-four .qmb-guide-step{min-height:37px;padding:6px 8px;
+ display:flex;flex-direction:row;gap:8px;border:0;border-bottom:3px solid var(--qmb-border);
+ border-radius:0;background:transparent;box-shadow:none;}
+.sales-app .qmb .qmb-guide-four .qmb-guide-step.is-current{
+ color:var(--qmb-accent);border-bottom-color:var(--qmb-accent);background:var(--qmb-tint);}
+.sales-app .qmb .qmb-guide-four .qmb-guide-step.is-done{border-bottom-color:var(--qmb-accent);}
+.sales-app .qmb .qmb-guide-four .qmb-guide-step-number{
+ width:20px;height:20px;flex:0 0 20px;font-size:10px;}
+.sales-app .qmb .qmb-guide-four .qmb-guide-step-text strong{font-size:11px;
+ font-weight:800;white-space:nowrap;}
+.sales-app .qmb .qmb-guide-four .qmb-guide-step-text small{display:none;}
+@media(max-width:700px){
+ .sales-app .qmb .qmb-guide-four{padding:5px;}
+ .sales-app .qmb .qmb-guide-four .qmb-guide-step{gap:3px;flex-direction:column;
+  min-height:48px;justify-content:center;padding:4px 2px;}
+ .sales-app .qmb .qmb-guide-four .qmb-guide-step-text strong{
+  font-size:9px;white-space:normal;text-align:center;}
+}
