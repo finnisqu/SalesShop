@@ -75,5 +75,5 @@ export function QuoteReuseAreaDialog({quote,sources,onClose}:{
     <button type="button" className="qra-primary" onClick={copy}
      disabled={!currentArea||!quoteIsCommerciallyEditable(quote)}>Copy Area</button></footer>
   </section>
- </div>,document.body);
+ </div>,document.querySelector('.sales-app')??document.body);
 }
