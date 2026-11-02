@@ -12,6 +12,8 @@ import {SINK_CATEGORIES,SINK_CATEGORY_LABELS} from '../types/sink';
 import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
 import {CalculatorDrawer} from './QuoteWorkTables';
 import type {QuoteScopeRowRef,QuoteScopeBulkOperation} from '../services/quoteScopeRowBatch';
+import {QuoteQuickAreaSummary} from './QuoteQuickAreaSummary';
+import {QuoteCompactTakeoffs} from './QuoteCompactTakeoffs';
 import './quote-matrix-builder.css';
 
 const cash=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -222,6 +224,8 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
  quote:Quote;onAddArea:()=>void;onLayouts:()=>void;onAdvanced:(id:string)=>void;onGeneralTakeoff:()=>void;
 }){
  const store=useQuoteStore.getState(),editable=quoteIsCommerciallyEditable(quote);
+ const [subtab,setSubtab]=useState<'areas'|'takeoffs'>('areas');
+ const [advanced,setAdvanced]=useState(false);
  const [calculator,setCalculator]=useState<string|null|'general'>(null);
  const [selected,setSelected]=useState<QuoteScopeRowRef[]>([]);
  const [operation,setOperation]=useState<QuoteScopeBulkOperation>('exclude');
@@ -229,7 +233,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
  const [destination,setDestination]=useState('');
  const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
  const general=quote.sections.find(isGeneralTakeoffSection)??null;
- useEffect(()=>setSelected([]),[quote.id]);
+ useEffect(()=>{setSelected([]);setSubtab('areas');setAdvanced(false);},[quote.id]);
  const selectedKeys=new Set(selected.map(keyOf));
  const choose=(ref:QuoteScopeRowRef,checked:boolean)=>setSelected(old=>checked?
   [...old.filter(x=>keyOf(x)!==keyOf(ref)),ref]:old.filter(x=>keyOf(x)!==keyOf(ref)));
@@ -286,34 +290,27 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
    ?.nextElementSibling?.querySelector<HTMLInputElement>('input.qmx-edit')?.focus();
  };
  return <div className="qmx-workspace">
-  <header className="qmx-intro"><div><div className="qmb-kicker">QUICK QUOTE · SPREADSHEET WORKSPACE</div>
-   <h2>Quote Builder</h2><p>Area decisions flow into every takeoff row. Edit the cells; no separate measurement or material screen required.</p>
+  <header className="qmx-intro"><div><div className="qmb-kicker">QUICK QUOTE</div>
+   <h2>Build Quote</h2><p>Choose Areas for fast pricing or Takeoffs for measured detail. Both stay in sync.</p>
    </div><button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button></header>
-  <section className="qmx-panel" aria-label="Areas and General summary">
-   <header className="qmx-panel-head"><div><h3>1 · Areas &amp; General</h3>
-    <p>One row per Area · material, billable SF, fixture pricing and customer total</p></div>
-    <button type="button" disabled={!editable} onClick={onAddArea}>+ Area</button></header>
-   <div className="qmx-hscroll" role="region" aria-label="Scroll Area summary columns horizontally" tabIndex={0}>
-    <div className="qmx-area-grid">
-     <div className="qmx-grid qmx-area-groups" aria-hidden="true">
-      <span className="qmx-sticky-area">Area / Room</span><span className="qmx-sticky-material">Stone selection</span>
-      <span className="qmx-span-4">Stone / Square Feet</span>
-      <span className="qmx-span-4">Kitchen sink</span><span className="qmx-span-4">Vanity sink</span>
-      <span>Specialty</span><span>Calculator</span><span>Total</span></div>
-     <div className="qmx-grid qmx-area-columns" role="row">
-      {['Area / contract','Material','Measured SF','Billable SF','Sell / SF','Stone price',
-       'Model #','Qty','Unit price','Sink total',
-       'Model #','Qty','Unit price','Sink total','Other charges','Private estimator','Customer total']
-       .map((label,i)=><span key={i} className={i===0?'qmx-sticky-area':i===1?'qmx-sticky-material':''}>{label}</span>)}
-     </div>
-     {areas.map(section=><AreaRow key={section.id} quote={quote} section={section}
-      editable={editable} onCalculator={id=>setCalculator(id)}/>)}
-     <GeneralRow quote={quote} onCalculator={()=>setCalculator('general')}/>
-    </div>
+  <nav className="qmx-subtabs" aria-label="Build Quote views">
+   <div role="group" aria-label="Quote worksheets">
+    <button type="button" className={subtab==='areas'?'is-active':''}
+     aria-current={subtab==='areas'?'page':undefined} onClick={()=>setSubtab('areas')}>
+      Areas <small>{areas.length}</small></button>
+    <button type="button" className={subtab==='takeoffs'?'is-active':''}
+     aria-current={subtab==='takeoffs'?'page':undefined} onClick={()=>setSubtab('takeoffs')}>
+      Takeoffs <small>{areas.reduce((n,a)=>n+(a.scope?.takeoffPieces?.length??0),0)}</small></button>
    </div>
-   <footer className="qmx-table-foot"><span>Scroll horizontally for sink and specialty columns. The Area and Material columns stay visible.</span>
-    <strong>Quote total {cash.format(quoteTotal(quote))}</strong></footer>
-  </section>
+   {subtab==='takeoffs'&&<button type="button" className="qmx-advanced-switch"
+    onClick={()=>setAdvanced(v=>!v)} aria-pressed={advanced}>
+    {advanced?'✓ Technical columns':'Technical columns ›'}</button>}
+   <strong>Quote {cash.format(quoteTotal(quote))}</strong>
+  </nav>
+  {subtab==='areas'&&<QuoteQuickAreaSummary quote={quote} onAddArea={onAddArea}
+    onLayouts={onLayouts} onAdvanced={onAdvanced} onTakeoffs={()=>setSubtab('takeoffs')}/>}
+  {subtab==='takeoffs'&&!advanced&&<QuoteCompactTakeoffs quote={quote} onAdvanced={onAdvanced}/>}
+  {subtab==='takeoffs'&&advanced&&
   <section className="qmx-panel" aria-label="Takeoffs selections and pricing spreadsheet">
    <header className="qmx-panel-head"><div><h3>2 · Takeoffs, Selections &amp; Pricing</h3>
     <p>One measured piece, sink or charge per editable row. Exclusions preserve every measurement.</p></div>
@@ -497,7 +494,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
    {editable&&!general&&<button type="button" className="qmx-general-start" onClick={onGeneralTakeoff}>+ General measured takeoff</button>}
    <footer className="qmx-table-foot"><span>All geometry is kept when you strike out a row. Customer totals exclude struck-out lines.</span>
      <strong>Quote total {cash.format(quoteTotal(quote))}</strong></footer>
-  </section>
+  </section>}
   {calculator!==null&&<CalculatorDrawer quote={quote}
    section={calculator==='general'?null:quote.sections.find(s=>s.id===calculator)??null}
    onClose={()=>setCalculator(null)} onAdvanced={onAdvanced}/>}
