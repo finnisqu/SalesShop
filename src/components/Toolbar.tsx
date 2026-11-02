@@ -7,7 +7,8 @@ import { useNotebookStore } from '../store/notebookStore';
 import type { ActiveNotebookTool, NotebookEntry, PageTone, PaperStyle, PaperTexture } from '../types/notebook';
 import { StationeryInsertMenu } from './StationeryInsertMenu';
 
-interface ToolbarProps { entry: NotebookEntry; editor?: Editor | null; enableShortcuts?: boolean; }
+interface ToolbarProps { entry: NotebookEntry; editor?: Editor | null; enableShortcuts?: boolean;
+ splitMode?:boolean; activePane?:boolean; }
 type ToolbarMenu = 'drawing' | 'page' | null;
 
 type IconName = ActiveNotebookTool | 'tools' | 'settings' | 'pencil-input' | 'finger-input' | 'favorite' | 'duplicate' | 'clear' | 'undo' | 'redo';
@@ -49,7 +50,7 @@ function ToolbarIcon({ name }: { name: IconName }) {
   }
 }
 
-export function Toolbar({ entry, editor, enableShortcuts = true }: ToolbarProps) {
+export function Toolbar({ entry, editor, enableShortcuts = true,splitMode=false,activePane=true }: ToolbarProps) {
   const activeTool = useNotebookStore((state) => state.activeTool);
   const setActiveTool = useNotebookStore((state) => state.setActiveTool);
   const clearInk = useNotebookStore((state) => state.clearInk);
@@ -68,6 +69,12 @@ export function Toolbar({ entry, editor, enableShortcuts = true }: ToolbarProps)
   const redo = useNotebookStore((state) => state.redo);
   const canUndo = useNotebookStore((state) => state.canUndo);
   const canRedo = useNotebookStore((state) => state.canRedo);
+  const undoEntry=useNotebookStore(s=>s.undoEntry),redoEntry=useNotebookStore(s=>s.redoEntry);
+  const canUndoEntry=useNotebookStore(s=>s.canUndoEntry),canRedoEntry=useNotebookStore(s=>s.canRedoEntry);
+  const hasUndo=splitMode?canUndoEntry(entry.id):canUndo;
+  const hasRedo=splitMode?canRedoEntry(entry.id):canRedo;
+  const doUndo=()=>splitMode?undoEntry(entry.id):undo();
+  const doRedo=()=>splitMode?redoEntry(entry.id):redo();
   const inputMode = useNotebookInputStore((state) => state.inputMode);
   const setInputMode = useNotebookInputStore((state) => state.setInputMode);
   const projects = useCrmStore((state) => state.projects);
@@ -109,7 +116,7 @@ export function Toolbar({ entry, editor, enableShortcuts = true }: ToolbarProps)
   useEffect(() => {
     if (!enableShortcuts) return;
     const onShortcut = (event: KeyboardEvent) => {
-      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || !activePane) return;
       const target=event.target as HTMLElement|null;
       if(target?.closest('.spreadsheet-object-editor'))return;
       // Each split-pane rich-text editor owns its own text undo/redo history.
@@ -121,18 +128,18 @@ export function Toolbar({ entry, editor, enableShortcuts = true }: ToolbarProps)
       if (!wantsUndo && !wantsRedo) return;
       event.preventDefault();
       event.stopPropagation();
-      if (wantsUndo) undo();
-      else redo();
+      if (wantsUndo) doUndo();
+      else doRedo();
     };
     document.addEventListener('keydown', onShortcut, true);
     return () => document.removeEventListener('keydown', onShortcut, true);
-  }, [redo, undo, enableShortcuts]);
+  }, [redo, undo, undoEntry,redoEntry,entry.id,splitMode,activePane,enableShortcuts]);
 
   return (
     <div className="paper-toolbar" aria-label="Notebook tools" ref={toolbarRef}>
       <div className="notebook-history-tools" aria-label="Undo and redo">
-        <button type="button" className="notebook-toolbar-icon" onClick={undo} disabled={!canUndo} title="Undo · Ctrl/Cmd+Z" aria-label="Undo"><ToolbarIcon name="undo" /></button>
-        <button type="button" className="notebook-toolbar-icon" onClick={redo} disabled={!canRedo} title="Redo · Ctrl/Cmd+Y" aria-label="Redo"><ToolbarIcon name="redo" /></button>
+        <button type="button" className="notebook-toolbar-icon" onClick={doUndo} disabled={!hasUndo} title={splitMode?'Undo drawing/object on this page · Ctrl/Cmd+Z':'Undo · Ctrl/Cmd+Z'} aria-label="Undo"><ToolbarIcon name="undo" /></button>
+        <button type="button" className="notebook-toolbar-icon" onClick={doRedo} disabled={!hasRedo} title={splitMode?'Redo drawing/object on this page · Ctrl/Cmd+Y':'Redo · Ctrl/Cmd+Y'} aria-label="Redo"><ToolbarIcon name="redo" /></button>
       </div>
       <button type="button" className={`notebook-toolbar-icon ${activeTool==='select'?'active':''}`}
         aria-label="Select and edit objects" title="Select and edit objects"

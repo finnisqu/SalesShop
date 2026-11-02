@@ -56,6 +56,7 @@ import {startPersonalTaskCloudSync} from './services/personalTaskCloudSync';
 import {TasksWorkspace} from './components/TasksWorkspace';
 import {NotebookPromotionDialog} from './components/NotebookPromotionDialog';
 import {NotebookCompanionPage} from './components/NotebookCompanionPage';
+import {readNotebookSplitPreference,writeNotebookSplitPreference} from './services/notebookSplitPreference';
 import './notebook-split-folders.css';
 import './catalog-collections.css';
 import { DrawingCanvas } from './components/DrawingCanvas';
@@ -115,11 +116,14 @@ function App() {
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
   const renameEntry = useNotebookStore((state) => state.renameEntry);
   const projects = useCrmStore((state) => state.projects);
+  const taskUserId=useAuthStore(s=>s.user?.id);
   const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
   const [companionId,setCompanionId]=useState<string|null>(null);
   const [focusedPane,setFocusedPane]=useState<'left'|'right'>('left');
   const [splitStacked,setSplitStacked]=useState(false);
-  const taskUserId=useAuthStore(s=>s.user?.id);
+  const splitScope=mode==='cloud'
+    ?(organizationId&&taskUserId?'org:'+organizationId+':user:'+taskUserId:null):'local';
+  const [restoredSplitScope,setRestoredSplitScope]=useState<string|null>(null);
   const tasksScope=taskScope(mode,organizationId,taskUserId);
   useEffect(()=>{
     usePersonalTaskStore.getState().load(tasksScope);
@@ -160,6 +164,19 @@ function App() {
   // The membership RLS lets all teammates read the default; only admins update it.
   useEffect(() => { void loadCompanyPalette(mode === 'cloud' ? organizationId : null); }, [mode, organizationId, loadCompanyPalette]);
 
+  // Split arrangement is device-local, scoped by signed-in account. Neither pane's content is duplicated.
+  useEffect(()=>{
+    if(!hydrated||!activeEntryId||!splitScope)return;
+    const saved=readNotebookSplitPreference(splitScope,activeEntryId,entries.map(e=>e.id));
+    setCompanionId(saved.rightId);setSplitStacked(saved.stacked);
+    setFocusedPane('left');setRestoredSplitScope(splitScope);
+  // Restore only at hydration/account boundaries; selecting another page must not reset the group.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[hydrated,splitScope]);
+  useEffect(()=>{
+    if(!hydrated||!splitScope||restoredSplitScope!==splitScope)return;
+    writeNotebookSplitPreference(splitScope,{rightId:companionId,stacked:splitStacked});
+  },[hydrated,splitScope,restoredSplitScope,companionId,splitStacked]);
   const entry = entries.find((candidate) => candidate.id === activeEntryId) ?? null;
   const companion = entries.find(candidate=>candidate.id===companionId&&candidate.id!==activeEntryId)??null;
   const companionOptions=entries.filter(candidate=>candidate.id!==activeEntryId&&(!candidate.hidden||candidate.id===companionId));
@@ -252,6 +269,8 @@ function App() {
                 onChange={event=>openCompanion(event.target.value)}>
                 {companionOptions.map(page=><option key={page.id} value={page.id}>{page.title||'Untitled page'}</option>)}
               </select>}
+              {companion&&<button type="button" onClick={()=>setSplitStacked(s=>!s)}
+                aria-pressed={splitStacked}>{splitStacked?'◫ Side by side':'▤ Stack'}</button>}
               <button type="button" disabled={!companion&&companionOptions.length===0}
                 aria-pressed={!!companion} onClick={()=>{
                   if(companion)closeRightPane();
@@ -263,7 +282,8 @@ function App() {
               className={`notebook-primary-pane ${focusedPane==='left'||!companion?'is-focused-pane':''}`}
               onPointerDownCapture={()=>setFocusedPane('left')}
               onFocusCapture={()=>setFocusedPane('left')}>
-              <Toolbar entry={entry} editor={notebookEditor} enableShortcuts/>
+              <Toolbar entry={entry} editor={notebookEditor} enableShortcuts splitMode={!!companion}
+                activePane={focusedPane==='left'||!companion}/>
               <div className="desk-surface">
               <article className={`paper-sheet paper-${entry.paperStyle} tone-${entry.tone} texture-${entry.texture}`}>
                 <div className="paper-edge" aria-hidden="true" />

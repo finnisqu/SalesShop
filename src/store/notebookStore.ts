@@ -83,6 +83,11 @@ interface NotebookState {
   deleteObject: (entryId: string, objectId: string) => void;
   undo: () => void;
   redo: () => void;
+  /** Independently undo drawing/object edits in one split-pane page. */
+  undoEntry: (entryId: string) => void;
+  redoEntry: (entryId: string) => void;
+  canUndoEntry: (entryId: string) => boolean;
+  canRedoEntry: (entryId: string) => boolean;
 }
 
 interface HistorySnapshot {
@@ -97,6 +102,28 @@ let past: HistorySnapshot[] = [];
 let future: HistorySnapshot[] = [];
 let lastCheckpointKey = '';
 let lastCheckpointAt = 0;
+// Only non-text changes are tracked here. Rich text keeps TipTap's own editor history.
+const pagePast = new Map<string,NotebookEntry[]>();
+const pageFuture = new Map<string,NotebookEntry[]>();
+const pageLast = new Map<string,{key:string;at:number}>();
+const pageEditKey = /^(?:ink:(?:add|delete|move|clear)|object:(?:create|frame|text|tone|business|caption|sheet|duplicate|lock|layer|delete)):(\w+)(?::|$)/;
+function savePageCheckpoint(state:NotebookState,key:string,coalesceMs:number,timestamp:number){
+  const pageId=key.match(pageEditKey)?.[1];
+  if(!pageId)return;
+  const entry=state.entries.find(e=>e.id===pageId);
+  if(!entry)return;
+  const last=pageLast.get(pageId);
+  const coalescing=coalesceMs>0&&last?.key===key&&timestamp-last.at<=coalesceMs;
+  if(!coalescing){
+    const history=pagePast.get(pageId)??[];
+    history.push(structuredClone(entry));
+    if(history.length>HISTORY_LIMIT)history.shift();
+    pagePast.set(pageId,history);
+    pageFuture.delete(pageId);
+  }
+  pageLast.set(pageId,{key,at:timestamp});
+}
+
 
 const now = () => new Date().toISOString();
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
@@ -115,10 +142,12 @@ function resetHistory() {
   future = [];
   lastCheckpointKey = '';
   lastCheckpointAt = 0;
+  pagePast.clear();pageFuture.clear();pageLast.clear();
 }
 
 function checkpoint(state: NotebookState, key: string, coalesceMs = 0) {
   const timestamp = Date.now();
+  savePageCheckpoint(state,key,coalesceMs,timestamp);
   const coalescing = coalesceMs > 0 && lastCheckpointKey === key && timestamp - lastCheckpointAt <= coalesceMs;
   if (!coalescing) {
     past.push(snapshot(state));
@@ -808,6 +837,33 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     set({ entries, selectedObjectId: get().selectedObjectId === objectId ? null : get().selectedObjectId, ...historyFlags() });
   },
 
+  canUndoEntry: entryId => (pagePast.get(entryId)?.length??0)>0,
+  canRedoEntry: entryId => (pageFuture.get(entryId)?.length??0)>0,
+  undoEntry: entryId => {
+    const current=get().entries.find(e=>e.id===entryId);
+    const history=pagePast.get(entryId),previous=history?.pop();
+    if(!current||!previous)return;
+    const redo=pageFuture.get(entryId)??[];
+    redo.push(structuredClone(current));if(redo.length>HISTORY_LIMIT)redo.shift();
+    pageFuture.set(entryId,redo);pageLast.delete(entryId);
+    const entries=mapEntry(get().entries,entryId,()=>structuredClone(previous));
+    persist(entries,get().activeEntryId);
+    // Global snapshots could otherwise restore older versions of unrelated pages.
+    past=[];future=[];lastCheckpointKey='';
+    set({entries,selectedObjectId:null,...historyFlags()});
+  },
+  redoEntry: entryId => {
+    const current=get().entries.find(e=>e.id===entryId);
+    const history=pageFuture.get(entryId),next=history?.pop();
+    if(!current||!next)return;
+    const undo=pagePast.get(entryId)??[];
+    undo.push(structuredClone(current));if(undo.length>HISTORY_LIMIT)undo.shift();
+    pagePast.set(entryId,undo);pageLast.delete(entryId);
+    const entries=mapEntry(get().entries,entryId,()=>structuredClone(next));
+    persist(entries,get().activeEntryId);
+    past=[];future=[];lastCheckpointKey='';
+    set({entries,selectedObjectId:null,...historyFlags()});
+  },
   undo: () => {
     const previous = past.pop();
     if (!previous) return;

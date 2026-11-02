@@ -22,7 +22,7 @@ export function NotebookCompanionPage({entry,onMakePrimary,onClose,onFocus,activ
        <button type="button" onClick={onClose} aria-label="Close right page" title="Close right page">×</button>
      </div>
    </div>
-   <Toolbar key={'right-toolbar-'+entry.id} entry={entry} editor={editor} enableShortcuts={false}/>
+   <Toolbar key={'right-toolbar-'+entry.id} entry={entry} editor={editor} enableShortcuts splitMode activePane={active}/>
    <div className="notebook-companion-scroll">
      <article className={`paper-sheet paper-${entry.paperStyle} tone-${entry.tone} texture-${entry.texture}`}>
        <div className="paper-edge" aria-hidden="true"/>
