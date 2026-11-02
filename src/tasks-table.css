@@ -1,0 +1,7 @@
+/* Tasks share the dense SalesShop table on wide screens, retaining existing
+   touch-friendly cards, completion controls and source links on phones. */
+.tasks-table-container{max-width:1280px;margin:0 auto 13px;min-width:0;}
+.tasks-table-container .connections-table-scroll{max-height:610px;}
+.tasks-table-container .connections-table-open:hover{text-decoration:underline;}
+@media(min-width:821px){.tasks-workspace .tasks-list{display:none;}}
+@media(max-width:820px){.tasks-table-container{display:none;}}

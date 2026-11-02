@@ -1,6 +1,8 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
+import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
+import '../tasks-table.css';
 import {useQuoteStore} from '../store/quoteStore';
 import {useCrmStore} from '../store/crmStore';
 import {useNotebookStore} from '../store/notebookStore';
@@ -12,6 +14,11 @@ import '../task-workflow-v2.css';
 
 type Filter='active'|'today'|'upcoming'|'overdue'|'scheduled'|'completed'|'all';
 const defaultQueues=['Prospecting','Quotes','Deliveries','Meetings','Follow-ups','Internal'];
+const taskColumns:ConnectionColumn[]=[
+ {key:'name',label:'Task'},{key:'type',label:'Type'},{key:'priority',label:'Priority'},
+ {key:'status',label:'Status'},{key:'queue',label:'Queue'},
+ {key:'start',label:'Start on'},{key:'due',label:'Due'},
+ {key:'related',label:'Related records'},{key:'updated',label:'Updated'}];
 const priorities:TaskPriority[]=['low','normal','high','urgent'];
 const types:TaskType[]=['todo','call','email','meeting','follow-up'];
 const statusOptions:TaskStatus[]=['open','in-progress','waiting','completed','canceled'];
@@ -157,6 +164,14 @@ export function TasksWorkspace(){
     return (a.dueDate??'9999').localeCompare(b.dueDate??'9999')||
       weight(a.priority)-weight(b.priority)||b.updatedAt.localeCompare(a.updatedAt);
   }),[own,filter,search,queueFilter,today]);
+  const taskTableRows:ConnectionTableRow[]=visible.map(task=>({
+    id:task.id,name:task.title,
+    values:{name:task.title,type:task.type||'todo',priority:task.priority||'normal',
+      status:task.status||'open',queue:task.queue||'',start:task.startDate?formatDate(task.startDate):'',
+      due:task.dueDate?formatDate(task.dueDate):'',
+      related:normalizedTaskAssociations(task).map(link=>link.label||link.type).join(' · '),
+      updated:new Date(task.updatedAt).toLocaleDateString()},
+  }));
   const openSource=(link:TaskLink)=>{
     const {id,type}=link;
     if(type==='notebook')nav.openNotebookPage(id);
@@ -202,6 +217,13 @@ export function TasksWorkspace(){
     </div>
     <p className="tasks-view-description">A due date never hides a task from All open. “Start later” is for tasks you don't plan to work on yet.</p>
     {!scope&&<p className="tasks-state">Your personal Tasks workspace will load after you sign in to a company.</p>}
+    {scope&&<div className="tasks-table-container">
+      <ConnectionsTable tableKey="tasks" columns={taskColumns} rows={taskTableRows}
+        onOpen={id=>{const selected=visible.find(task=>task.id===id);if(selected)setEditing(selected);}}
+        onBulkComplete={items=>items.forEach(item=>{
+          if(own.some(task=>task.id===item.id&&!taskComplete(task)))complete(item.id);
+        })}/>
+    </div>}
     {scope&&<section className="tasks-list" aria-label="Task records">
       {!visible.length&&<div className="tasks-empty"><strong>No matching tasks</strong>
         <p>Create a task here, or right-click Notebook text or an object and promote it to a task.</p></div>}
