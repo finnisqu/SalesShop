@@ -95,9 +95,9 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
     ?Math.round(spread/priceTotal*1000)/10:undefined;
   const margin=complete?knownCostSpreadPercent:undefined;
   return {
-    measuredSf,slabAreaSf:area,yield:yieldFraction,usableSfPerSlab:usablePerSlab,
+    measuredSf,slabAreaSf:poolAllocation?.slabAreaSf??area,yield:yieldFraction,usableSfPerSlab:usablePerSlab,
     suggestedSlabs,slabCount:count,purchaseSlabs:poolAllocation?.purchaseSlabs??purchaseSlabs,
-    slabCost,shopCost,installCost,materialCost,
+    slabCost:poolAllocation?.unitSlabCost??slabCost,shopCost,installCost,materialCost,
     costSource:manualOverride!==undefined?'manual':poolAllocation!==null?'slab':fromSlab!==undefined?'slab':
       fromSf!==undefined?'derived-sf':'unknown',
     sinkCost:missingSinkCosts===pricedSinks.length&&missingSinkCosts>0?undefined:sinkCost,
