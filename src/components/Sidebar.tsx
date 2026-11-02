@@ -58,10 +58,20 @@ function folderTree(folders:NotebookFolder[]): Array<{folder:NotebookFolder;dept
   return rows;
 }
 
-interface NotebookSidebarProps {onOpenBeside?:(pageId:string)=>void;companionId?:string|null;}
+interface NotebookSidebarProps {
+  onOpenBeside?:(pageId:string)=>void;
+  onOpenLeft?:(pageId:string)=>void;
+  companionId?:string|null;
+  activePane?:'left'|'right';stacked?:boolean;
+  onSwap?:()=>void;onCloseLeft?:()=>void;onCloseRight?:()=>void;
+  onToggleStack?:()=>void;onFocusPane?:(pane:'left'|'right')=>void;
+}
 const COLLAPSED_KEY='salesshop-notebook-folders-collapsed-v1';
 const UNFILED='__unfiled__';
-export function Sidebar({onOpenBeside,companionId}:NotebookSidebarProps) {
+export function Sidebar({
+  onOpenBeside,onOpenLeft,companionId,activePane='left',stacked=false,
+  onSwap,onCloseLeft,onCloseRight,onToggleStack,onFocusPane,
+}:NotebookSidebarProps) {
   const entries = useNotebookStore((state) => state.entries);
   const folders = useNotebookStore((state) => state.folders);
   const createFolder = useNotebookStore((state) => state.createFolder);
@@ -135,9 +145,9 @@ export function Sidebar({onOpenBeside,companionId}:NotebookSidebarProps) {
   },[activeFolderId,folders]);
   const pageMenuActions=(entry:NotebookEntry):AppContextAction[]=>{
     const actions:AppContextAction[]=[
-      {label:'Open page',onSelect:()=>selectEntry(entry.id)},
+      {label:'Open page on left',onSelect:()=>onOpenLeft?onOpenLeft(entry.id):selectEntry(entry.id)},
       ...(onOpenBeside&&activeEntryId!==entry.id?
-        [{label:'Open side by side',onSelect:()=>onOpenBeside(entry.id)}]:[]),
+        [{label:'Open page on right',onSelect:()=>onOpenBeside(entry.id)}]:[]),
       {label:entry.favorite?'Remove favorite':'Add to favorites',onSelect:()=>toggleFavorite(entry.id)},
       {label:'Rename…',onSelect:()=>{
         const title=window.prompt('Rename notebook page',entry.title);
@@ -230,6 +240,51 @@ export function Sidebar({onOpenBeside,companionId}:NotebookSidebarProps) {
         </div>
       </div>
 
+      {onOpenBeside&&<section className="notebook-split-rail" aria-label="Notebook split view">
+        <div className="notebook-split-rail-header">
+          <span aria-hidden="true">▣</span>
+          <strong>{companionId?'Split group':'Page layout'}</strong>
+          <details className="notebook-split-rail-more">
+            <summary aria-label="Split view options" title="Split view options">⋯</summary>
+            <div className="notebook-split-rail-menu">
+              {companionId?<>
+                <button type="button" onClick={onSwap}>⇄ Reverse views</button>
+                <button type="button" onClick={onToggleStack}>{stacked?'◫ Show side by side':'▤ Show stacked'}</button>
+                <button type="button" onClick={onCloseLeft}>Close left view</button>
+                <button type="button" onClick={onCloseRight}>Close right view</button>
+              </>:<span>Open a second page to start a split.</span>}
+            </div>
+          </details>
+        </div>
+        <div className="notebook-split-rail-tabs">
+          <button type="button" aria-pressed={activePane==='left'}
+            onClick={()=>onFocusPane?.('left')} title="Focus the left page">
+            <span aria-hidden="true">◧</span>
+            <span className="notebook-split-rail-page">{entries.find(e=>e.id===activeEntryId)?.title||'Untitled page'}</span>
+            <small>Left</small>
+          </button>
+          {companionId&&<button type="button" aria-pressed={activePane==='right'}
+            onClick={()=>onFocusPane?.('right')} title="Focus the right page">
+            <span aria-hidden="true">◨</span>
+            <span className="notebook-split-rail-page">{entries.find(e=>e.id===companionId)?.title||'Untitled page'}</span>
+            <small>Right</small>
+          </button>}
+          {!companionId&&<label className="notebook-split-rail-add">
+            <span aria-hidden="true">＋</span>
+            <select aria-label="Open a second Notebook page" value=""
+              onChange={event=>{if(event.target.value)onOpenBeside(event.target.value);}}>
+              <option value="">Open page beside…</option>
+              {entries.filter(e=>e.id!==activeEntryId&&!e.hidden)
+                .map(e=><option key={e.id} value={e.id}>{e.title||'Untitled page'}</option>)}
+            </select>
+          </label>}
+        </div>
+        {companionId&&<div className="notebook-split-rail-bottom">
+          <button type="button" onClick={onSwap} title="Swap left and right">⇄ Swap</button>
+          <button type="button" onClick={onToggleStack} title="Change split orientation">{stacked?'◫ Beside':'▤ Stack'}</button>
+          <button type="button" onClick={onCloseRight} title="Close right view">× Close</button>
+        </div>}
+      </section>}
       <div className="notebook-page-search">
         <div className="notebook-search-field">
           <NotebookIcon name="search"/>
@@ -341,7 +396,7 @@ export function Sidebar({onOpenBeside,companionId}:NotebookSidebarProps) {
             <button
               key={entry.id}
               className={`page-tab tone-${entry.tone} ${active ? 'active' : ''} ${entry.id===companionId?'is-companion':''} ${entry.favorite ? 'is-favorite' : ''} ${entry.hidden ? 'is-hidden-page' : ''} ${draggingId === entry.id ? 'is-dragging' : ''} ${before ? 'drop-before' : ''} ${after ? 'drop-after' : ''}`}
-              onClick={() => selectEntry(entry.id)}
+              onClick={() => onOpenLeft?onOpenLeft(entry.id):selectEntry(entry.id)}
               onContextMenu={event=>contextActions.openPointer(event,entry.title||'Notebook page',pageMenuActions(entry))}
               onKeyDown={event=>contextActions.openKeyboard(event,entry.title||'Notebook page',pageMenuActions(entry))}
               draggable={reorderEnabled}
