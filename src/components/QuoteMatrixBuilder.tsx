@@ -151,7 +151,7 @@ function SinkSummary({quote,section,kind,editable}:{quote:Quote;section:QuoteSec
    {sinks.length>1&&<small>+{sinks.length-1} more in worksheet</small>}</div>
   <div className="qmx-cell">{first?<CellNumber label={section.title+' '+kind+' sink qty'}
    value={first.count} integer disabled={!editable} onChange={v=>{if(v!==undefined&&v>0)patch({count:v});}}/>:'—'}</div>
-  <div className="qmx-cell">{first?<CellNumber label={section.title+' '+kind+' sink unit price'}
+  <div className={'qmx-cell'+(first&&first.unitPrice===undefined?' qmx-needs-review':'')}>{first?<CellNumber label={section.title+' '+kind+' sink unit price'}
    value={first.unitPrice} disabled={!editable} onChange={v=>patch({unitPrice:v})}/>:'—'}</div>
   <div className="qmx-cell qmx-money">{first?cash.format(sinks.reduce((n,s)=>n+sinkSell(quote,id,s),0)):'—'}</div>
  </>;
@@ -175,7 +175,8 @@ function AreaRow({quote,section,editable,onCalculator}:{quote:Quote;section:Quot
      ...(e.target.value!=='hidden'?{customerDisplayMode:e.target.value==='summary'?'summary':'detail'}:{})})}>
     <option value="detail">Itemized</option><option value="summary">Lump sum</option>
     <option value="hidden">Hide from contract</option></select></div>
-  <div className="qmx-cell qmx-sticky-material"><MaterialCell quote={quote} section={section} editable={editable}/></div>
+  <div className={'qmx-cell qmx-sticky-material'+(!section.scope?.takeoffMaterial?.trim()?' qmx-needs-review':'')}>
+   <MaterialCell quote={quote} section={section} editable={editable}/></div>
   <div className="qmx-cell qmx-num">{decimal.format(measured)}</div>
   <div className="qmx-cell"><strong>{decimal.format(billed)}</strong>
    <select disabled={!editable} value={billMode} aria-label={'Billable SF rounding for '+section.title}
@@ -187,7 +188,7 @@ function AreaRow({quote,section,editable,onCalculator}:{quote:Quote;section:Quot
     <option value="exact">Exact</option><option value="quarter-up">¼ up</option>
     <option value="half-up">½ up</option><option value="whole-up">Whole up</option>
    </select></div>
-  <div className="qmx-cell">{primary?.pricingMode==='quantity-rate'
+  <div className={'qmx-cell'+(!primary||primary.pricingMode==='quantity-rate'&&primary.rate===undefined?' qmx-needs-review':'')}>{primary?.pricingMode==='quantity-rate'
    ?<QuoteInlineAreaRate quote={quote} section={section} onOpen={()=>onCalculator(id)}/>
    :<button type="button" className="qmx-add-small" onClick={()=>onCalculator(id)}>
      {manual&&billed>0?cash.format(stone/billed):'Set price'}</button>}
@@ -370,6 +371,11 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
        <div className="qmx-sheet-group"><strong>{section.title}</strong>
         <span>{section.scope?.takeoffMaterial||'Material not selected'} · {decimal.format(areaMeasured(section))} measured SF ·
         {decimal.format(areaBilled(section))} billed SF</span>
+        <div className="qmx-group-actions">
+         <button type="button" disabled={!editable} onClick={()=>addPiece(id)}>+ Piece</button>
+         <button type="button" disabled={!editable} onClick={()=>addSink(id)}>+ Sink</button>
+         <button type="button" disabled={!editable} onClick={()=>addCharge(id)}>+ Charge</button>
+        </div>
         <strong>{cash.format(quoteLinesTotal(areaLines(quote,id)))}</strong></div>
        {pieces.map((piece,index)=>{
         const ref:QuoteScopeRowRef={kind:'piece',id:piece.id,sectionId:id};
