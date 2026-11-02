@@ -146,7 +146,7 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
     }
     for(const [i,sink] of sinks.entries()){
       // Older, specification-only sink selections do not create a billable line.
-      if(!sink.includeInPricing)continue;
+      if(!takeoffSinkIncludedInQuote(quote,section.id,sink.id))continue;
       const name=sink.name.trim()||'Sink '+(i+1);
       // A blank price on a selected sink must never be mistaken for a free sink.
       if(!isValidPrice(sink.unitPrice)){
