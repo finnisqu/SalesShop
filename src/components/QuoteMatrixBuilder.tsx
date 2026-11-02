@@ -168,6 +168,7 @@ function AreaRow({quote,section,editable,onCalculator}:{quote:Quote;section:Quot
  const billMode=section.scope?.billableSfRounding??'exact';
  return <div className="qmx-grid qmx-area-row" role="row">
   <div className="qmx-cell qmx-sticky-area"><QuoteInlineAreaName quote={quote} section={section}/>
+   <small>Area ×1</small>
    <select disabled={!editable} aria-label={'Customer presentation '+section.title}
     value={!section.customerVisible?'hidden':section.customerDisplayMode==='summary'?'summary':'detail'}
     onChange={e=>store.updateSection(quote.id,id,{customerVisible:e.target.value!=='hidden',
@@ -373,6 +374,11 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
        {pieces.map((piece,index)=>{
         const ref:QuoteScopeRowRef={kind:'piece',id:piece.id,sectionId:id};
         const sf=takeoffPieceSf(piece),valid=!!piece.lengthIn&&!!piece.widthIn&&piece.count>0;
+        const measured=areaMeasured(section);
+        const stonePrice=primary?.includeInTotal?quoteLineAmount(primary):0;
+        const allocatedTop=!piece.excludedFromQuote&&measured>0?round(stonePrice*sf/measured):0;
+        const allocatedSplash=!piece.excludedFromQuote&&!piece.excludeSplashFromQuote&&measured>0
+         ?round(stonePrice*takeoffPieceSplashSf(piece)/measured):0;
         return <div key={piece.id}>
          <DetailRow excluded={!!piece.excludedFromQuote} issue={!valid}>
           <ReadCell className="qmx-sticky-area qmx-area-name">{tick(ref)}{section.title}</ReadCell>
@@ -393,7 +399,10 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
           <ReadCell>{piece.edgeProfile??'Flat'}</ReadCell>
           <ReadCell>Area cost</ReadCell>
           <ReadCell>{strike(ref,!!piece.excludedFromQuote)}</ReadCell>
-          <ReadCell className="qmx-money">{piece.excludedFromQuote?'Excluded':'In Area total'}</ReadCell>
+          <ReadCell className="qmx-money">
+            <span title="Allocated share of Area material selling price; not a separate quote charge">
+             {piece.excludedFromQuote?'—':cash.format(allocatedTop)}</span>
+            <small>Allocated</small></ReadCell>
          </DetailRow>
          {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&<DetailRow
           excluded={!!piece.excludedFromQuote||!!piece.excludeSplashFromQuote}>
@@ -411,7 +420,10 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
           {Array.from({length:8},(_,i)=><ReadCell key={i}/>)}
           <ReadCell>—</ReadCell><ReadCell>4&quot; splash</ReadCell><ReadCell>Area cost</ReadCell>
           <ReadCell>{strike({kind:'splash',id:piece.id,sectionId:id},!!piece.excludeSplashFromQuote)}</ReadCell>
-          <ReadCell>In Area total</ReadCell>
+          <ReadCell className="qmx-money">
+           <span title="Allocated share of Area material selling price; not a separate quote charge">
+            {piece.excludedFromQuote||piece.excludeSplashFromQuote?'—':cash.format(allocatedSplash)}</span>
+           <small>Allocated</small></ReadCell>
          </DetailRow>}
         </div>;
        })}
