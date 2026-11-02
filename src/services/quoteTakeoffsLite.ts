@@ -83,6 +83,13 @@ export function totalBillableTakeoffSf(pieces:QuoteTakeoffPiece[]):number {
   return roundSf(pieces.reduce((acc,piece)=>acc+(piece.excludedFromQuote?0:
     takeoffPieceSf(piece)+(piece.excludeSplashFromQuote?0:takeoffPieceSplashSf(piece))),0));
 }
+/** Selling quantity only; internal shop and slab costs continue using precise SF. */
+export function roundedBillableTakeoffSf(pieces:QuoteTakeoffPiece[],
+ mode:QuoteAreaScope['billableSfRounding']='exact'):number {
+ const raw=totalBillableTakeoffSf(pieces);
+ const step=mode==='quarter-up'?.25:mode==='half-up'?.5:mode==='whole-up'?1:0;
+ return step?Math.round((Math.ceil((raw-1e-8)/step)*step+Number.EPSILON)*100)/100:raw;
+}
 /** Quoted splash linear feet: retained but struck-through splashes stay out of the active price. */
 export function totalBillableSplashLf(pieces:QuoteTakeoffPiece[]):number {
   return roundSf(pieces.reduce((acc,piece)=>acc+(piece.excludedFromQuote||piece.excludeSplashFromQuote
@@ -267,7 +274,7 @@ export function patchQuoteTakeoff(
   if(!section)return quote;
   const topSf=totalTakeoffSf(pieces);
   const splashSf=totalSplashSf(pieces);
-  const total=totalBillableTakeoffSf(pieces);
+  const total=roundedBillableTakeoffSf(pieces,section.scope?.billableSfRounding);
   const splash=totalBillableSplashLf(pieces);
   const miter=totalBillableMiterInches(pieces);
   return {
