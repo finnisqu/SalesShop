@@ -348,7 +348,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
      const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:line.sectionId};
      const excluded=!line.includeInTotal;
      const changes=(patch:Partial<QuoteLine>)=>store.updateLine(quote.id,line.id,patch);
-     const incomplete=!excluded&&(line.internalOnlyCost&&line.internalCost===undefined||
+     const incomplete=!excluded&&(line.internalOnlyCost&&line.internalCost===undefined&&line.unitCost===undefined||
       line.pricingMode!=='none'&&(line.pricingMode==='quantity-rate'
        ?line.rate===undefined||line.quantity===undefined:line.amount===undefined));
     return <div className={'qwt-line'+(excluded?' is-excluded':'')+(incomplete?' has-issue':'')} key={line.id}>
@@ -385,9 +385,16 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
            placeholder="SKU" value={line.productCode??''} disabled={!editable}
            onChange={e=>changes({productCode:e.target.value})}/>
         :<span className="qwt-muted-cell">—</span>}
-       {line.pricingMode==='quantity-rate'?<NumberCell label={'Charge '+line.id+' quantity'}
+       {line.pricingMode==='quantity-rate'?<div className="qwt-quantity-cell">
+         <NumberCell label={'Charge '+line.id+' quantity'}
           value={line.quantity} min={0} disabled={!editable||line.quantitySource?.syncMode==='live'}
-          onCommit={v=>changes({quantity:v})}/>:<span>—</span>}
+          onCommit={v=>changes({quantity:v})}/>
+         {line.costCategory==='product'&&<input className="qwt-input qwt-unit-label"
+           aria-label={'Purchase unit for '+line.description} placeholder="EA"
+           value={line.unitLabel??''} maxLength={12} disabled={!editable}
+           onChange={e=>changes({unitLabel:e.target.value})}/>}
+         {line.quantitySource?.field==='miterInches'&&<small>Linked IN</small>}
+        </div>:<span>—</span>}
        <div className="qwt-detail">{line.pricingMode==='none'?<span>—</span>:
         line.pricingMode==='quantity-rate'
          ?<NumberCell label={'Charge '+line.id+' rate'} value={line.rate} disabled={!editable}
@@ -395,8 +402,14 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
          :<NumberCell label={'Charge '+line.id+' amount'} value={line.amount} disabled={!editable}
            onCommit={v=>changes({amount:v})}/>}</div>
        <strong className="qwt-amount">{line.internalOnlyCost?'Private cost':money.format(excluded?0:quoteLineAmount(line))}</strong>
-       <NumberCell label={'Private total cost for '+line.description} value={line.internalCost}
-          disabled={!editable} onCommit={value=>changes({internalCost:value})}/>
+       <div className="qwt-private-cost-cell">
+        <NumberCell label={(line.costCategory==='product'?'Private unit':'Private total')+' cost for '+line.description}
+          value={line.costCategory==='product'?line.unitCost:line.internalCost}
+          disabled={!editable} onCommit={value=>changes(line.costCategory==='product'
+            ?{unitCost:value,internalCost:undefined}:{internalCost:value})}/>
+        {line.costCategory==='product'&&line.unitCost!==undefined&&
+         <small>Σ {money.format(line.unitCost*(line.quantity??0))}</small>}
+        </div>
        {include(ref,excluded)}
      </div>;
    })}
