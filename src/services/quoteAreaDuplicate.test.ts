@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import type {Quote} from '../types/quote';
-import {duplicateQuoteArea,copyQuoteAreaFromSource} from './quoteAreaDuplicate';
+import {duplicateQuoteArea,copyQuoteAreaFromSource,copyQuoteAreasFromSource} from './quoteAreaDuplicate';
 import {quoteTotal} from '../types/quote';
 
 function sample():Quote {
@@ -81,6 +81,27 @@ describe('Duplicate Area for mobile quote speed',()=>{
     expect(created.quote.lines[0].quantitySource?.sectionId).toBe('section-copy-1');
     expect(created.quote.sections[0].scope?.takeoffSinks?.[0].id).toBe('sinktakeoff-copy-1');
     expect(source.lines[0].id).toBe('line-a');
+  });
+  it('copies an entire collection in one transformation without reusing child IDs',()=>{
+    const source=sample();
+    const first=source.sections[0];
+    source.sections.push({...first,id:'area-b',title:'Unit B Bathroom',scope:{
+      ...first.scope,takeoffPieces:[{...first.scope!.takeoffPieces![0],id:'piece-b'}],
+      takeoffSinks:[],
+    }});
+    const target={...sample(),id:'quote-b',sections:[],lines:[]};
+    const next=new Map<string,number>();
+    const ids=(kind:string)=>{const n=(next.get(kind)??0)+1;next.set(kind,n);return kind+'-'+n;};
+    const copied=copyQuoteAreasFromSource(target,source,['area-a','area-b'],false,ids)!;
+    expect(copied.newAreaIds).toEqual(['section-1','section-2']);
+    expect(copied.quote.sections.map(a=>a.title)).toEqual(['Unit A Kitchen','Unit B Bathroom']);
+    expect(copied.quote.sections[0].scope?.takeoffPieces?.[0].id)
+      .not.toBe(copied.quote.sections[1].scope?.takeoffPieces?.[0].id);
+    expect(quoteTotal(copied.quote)).toBe(0);
+    expect(source.sections).toHaveLength(2);
+    expect(target.sections).toHaveLength(0);
+    expect(copyQuoteAreasFromSource(target,source,['area-a','missing'])).toBeUndefined();
+    expect(copyQuoteAreasFromSource(target,source,['area-a','area-a'])).toBeUndefined();
   });
   it('refuses self-copy and missing Areas without changing the destination',()=>{
     const source=sample(),target={...sample(),id:'quote-b',sections:[],lines:[]};
