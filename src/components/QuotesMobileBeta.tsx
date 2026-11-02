@@ -54,6 +54,9 @@ import './quotes-beta-control-polish.css';
 import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
 import {InitialOpenDetails} from './InitialOpenDetails';
 import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
+import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
+import {usePersonalTaskStore} from '../store/personalTaskStore';
+import '../sales-documents-table.css';
 import './quote-beta-progressive.css';
 import {useQuoteBetaAreaManager,QuoteBetaAreaModeButton,QuoteBetaAreaGrip,
   QuoteBetaAreaDeleteButton,QuoteBetaAreaDeleteDialog} from './QuoteBetaAreasMenu';
@@ -82,6 +85,10 @@ const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(m
 
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
+const documentColumns:ConnectionColumn[]=[
+ {key:'name',label:'Document'},{key:'number',label:'Number'},{key:'company',label:'Customer'},
+ {key:'type',label:'Template'},{key:'status',label:'Status'},
+ {key:'amount',label:'Amount'},{key:'updated',label:'Last edited'}];
 type Page = 'library' | 'quote' | 'area' | 'review';
 type QuoteTab = 'build' | 'details' | 'pricing' | 'preview';
 type AreaTab = 'measure' | 'materials' | 'pricing' | 'calculator';
@@ -496,6 +503,7 @@ export function QuotesMobileBeta() {
   const newQuoteDetailsRef=useRef<string|null>(null);
   const setLocation=useQuotesMobileBetaStore(s=>s.setLocation);
   const contextActions=useAppContextMenu();
+  const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
   const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
   const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
@@ -633,6 +641,20 @@ export function QuotesMobileBeta() {
   const list=filterSalesDocuments(myQuotes,{
     query:search,template:documentFilter,status:statusFilter,sort:documentSort,
   });
+  const documentTableRows:ConnectionTableRow[]=list.map(q=>({
+    id:q.id,name:q.title||'Untitled document',
+    association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
+    values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
+      company:q.companyName||q.contactName||'',
+      type:salesTemplateLabel(salesDocumentTemplate(q)),
+      status:quoteBetaStatusLabel(q)+(q.archivedAt?' · Archived':''),
+      amount:q.documentType==='pricing-schedule'
+        ?String(q.pricingSchedule?.customerItems.length??0)+' price rows'
+        :money.format(quoteTotal(q)),
+      updated:formatPersonalDate(new Date(q.updatedAt),
+        readPersonalDateTimePreferences(userId??null)),
+    },
+  }));
   const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active';
   const resetLibraryFilters=()=>{
     setSearch('');setDocumentFilter('all');setStatusFilter('active');setDocumentSort('recent');
@@ -943,6 +965,15 @@ export function QuotesMobileBeta() {
            <div><h3>{statusFilter==='archived'?'Archived documents':'My documents'}</h3>
              <small>{list.length} {list.length===1?'document':'documents'} shown</small></div>
            <button type="button" className="qmb-library-new-inline" onClick={()=>setShowNewDocument(true)}>+ New</button>
+         </div>
+         <div className="qmb-documents-table">
+           <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
+             onOpen={id=>{if(!list.find(q=>q.id===id)?.archivedAt)openQuote(id);}}
+             onBulkTask={items=>beginTaskPromotion({
+               target:'task',title:'Follow up on '+items.length+' sales documents',
+               sourceLabel:'Sales Documents selection',
+               associations:items.flatMap(x=>x.association?[x.association]:[]),
+             })}/>
          </div>
          <div className="qmb-library-grid">
         {list.map(q=><div className="qmb-library-entry" key={q.id}>
