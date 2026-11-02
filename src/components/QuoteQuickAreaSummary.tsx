@@ -109,6 +109,8 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
   <button type="button" className="qqs-value" title={typeof value==='string'?value:label}
    onClick={()=>{onFocus();if(inline&&!inline.disabled)setEditing(true);}}>
    <span>{value}</span></button>}
+  {warn&&<span className="qqs-cell-attention" role="img"
+    aria-label={'Check missing information: '+label} title={'Needs attention: '+label}>!</span>}
   <button type="button" className="qqs-pencil" aria-label={'More settings: '+label}
    title={'More settings: '+label} onClick={()=>{setEditing(false);onEdit();}}>✎</button>
  </div>;
@@ -189,6 +191,19 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
       </label>
       <button type="button" className="qqs-secondary" onClick={()=>{onAdvanced(section.id);onClose();}}>
        Advanced Area settings ↗</button>
+      {editable&&<div className="qqs-danger-actions">
+       <strong>Remove Area</strong>
+       <button type="button" onClick={()=>{
+        if(window.confirm('Remove this Area? Existing charges will be moved to General. Measurements in this Area will be removed. You can Undo.')){
+         store.deleteSection(quote.id,section.id,'transfer');onClose();
+        }
+       }}>Remove Area · keep charges in General</button>
+       <button type="button" onClick={()=>{
+        if(window.confirm('Delete this Area AND all its takeoffs and charges? This can be undone.')){
+         store.deleteSection(quote.id,section.id,'delete');onClose();
+        }
+       }}>Delete Area and its work</button>
+      </div>}
      </>}
      {section&&detail.kind==='material'&&<>
        <p>Choose a Catalog variant or enter a custom stone name. The choice flows through both worksheets.</p>
@@ -243,6 +258,12 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
      {section&&detail.kind==='price'&&<>
        <p>Customer selling method and private cost estimates are separate. Nothing is repriced without an explicit edit.</p>
        <QuoteBetaDesktopPricing quote={quote} section={section} editable={editable} view="selling"/>
+       {editable&&data?.primary&&<button type="button" className="qqs-remove-action"
+        onClick={()=>{
+         if(window.confirm('Remove this Area material selling line? Measurements and material selection remain; you can Undo.')){
+          store.deleteLine(quote.id,data.primary!.id);onClose();
+         }
+        }}>Remove material selling line</button>}
        <button type="button" className="qqs-secondary" onClick={()=>{onCalculator(section.id);onClose();}}>
         View private Calculator ↗</button>
      </>}
@@ -283,6 +304,13 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
         <strong>{amount(quote.lines.filter(l=>l.sectionId===section.id&&l.takeoffSinkId===sink.id&&l.includeInTotal)
          .reduce((sum,line)=>sum+quoteLineAmount(line),0))}</strong>
        </div>
+       {editable&&<button type="button" className="qqs-remove-action"
+        onClick={()=>{
+         if(window.confirm('Delete sink '+(sink.name||'item')+' from this Area? You can Undo.')){
+          store.updateTakeoffSinks(quote.id,section.id,
+           (section.scope?.takeoffSinks??[]).filter(item=>item.id!==sink.id));
+         }
+        }}>Delete sink</button>}
       </section>)}
       <button className="qqs-secondary" disabled={!editable} type="button" onClick={addSink}>+ Add sink</button>
      </>}
@@ -320,6 +348,11 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
          onChange={e=>changeLine(line,{includeInTotal:e.target.checked})}/> Include in price</label>
         <strong>{amount(line.includeInTotal?quoteLineAmount(line):0)}</strong>
        </div>
+       {editable&&!line.quantitySource?.syncMode&&<button type="button" className="qqs-remove-action"
+        onClick={()=>{
+         if(window.confirm('Delete charge '+(line.description||'item')+'? You can Undo.'))
+          store.deleteLine(quote.id,line.id);
+        }}>Delete line</button>}
       </section>)}
       <div className="qqs-inline-actions">
        <button disabled={!editable} type="button" onClick={()=>addCharge()}>+ Charge</button>
@@ -423,7 +456,8 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
       <AreaTitleCell quote={quote} area={area} onSelect={()=>setFocus('Area '+area.id)}
        onEdit={()=>open(area.id,'area')}/>
       {cell(area.id,'material','Stone selection for '+area.title,
-        area.scope?.takeoffMaterial||'Choose stone',!area.scope?.takeoffMaterial,!area.scope?.takeoffMaterial)}
+        area.scope?.takeoffMaterial||'Choose stone',!area.scope?.takeoffMaterial,
+        !area.scope?.takeoffMaterial&&data.billedSf>0)}
       {cell(area.id,'sf','Square feet for '+area.title,
         sf.format(data.billedSf)+(data.measuredSf!==data.billedSf?' / '+sf.format(data.measuredSf):'')+' SF',
         false,false,!data.hasMeasuredPieces?{
@@ -431,7 +465,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
          disabled:!editable,onCommit:v=>writeManualSf(quote,area,v),
         }:undefined)}
       {cell(area.id,'price','Material price for '+area.title,amount(data.materialPrice),
-       !data.primary,data.hasUnpricedMaterial,data.primary?.includeInTotal?{
+       !data.primary,data.hasUnpricedMaterial&&data.billedSf>0,data.primary?.includeInTotal?{
         value:data.materialPrice,disabled:!editable,onCommit:v=>writeStoneTotal(quote,area,v),
        }:undefined)}
       {cell(area.id,'sinks','Sink price for '+area.title,amount(data.sinkPrice),!data.sinkQuantity,
