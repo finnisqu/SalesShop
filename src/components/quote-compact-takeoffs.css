@@ -106,3 +106,47 @@
 .sales-app .qmb .qqt-actions button:disabled{opacity:.25;cursor:default;}
 .sales-app .qmb .qqt-number .qqt-input{text-align:right;}
 .sales-app .qmb .qqt-row:not(.is-excluded):hover .qqt-edit-button{opacity:1;}
+
+/* Spreadsheet presentation: static values, editor only while a cell is active. */
+.sales-app .qmb .qqt-cell:has(.qqt-readonly),.sales-app .qmb .qqt-cell:has(.qqt-cell-value:not(.is-editable)){
+ background:var(--qmb-tint)!important;color:var(--qmb-muted);
+}
+.sales-app .qmb .qqt-cell-value,.sales-app .qmb .qqt-readonly{
+ display:block;width:100%;min-width:0;padding:0;
+ border:0!important;border-radius:0;background:transparent!important;
+ color:inherit;font-size:11px;line-height:36px;min-height:36px;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ font-variant-numeric:tabular-nums;text-align:right;
+}
+.sales-app .qmb .qqt-cell-text{text-align:left;}
+.sales-app .qmb .qqt-cell-value.is-editable{cursor:text;}
+.sales-app .qmb .qqt-cell-value.is-editable:hover,
+.sales-app .qmb .qqt-cell-value.is-editable:focus-visible{
+ outline:1px solid var(--qmb-accent);outline-offset:-2px;background:var(--qmb-tint)!important;
+}
+.sales-app .qmb .qqt-cell:has(.qqt-input.is-editing),
+.sales-app .qmb .qqt-cell:has(.qqt-text.is-editing){outline:2px solid var(--qmb-accent);outline-offset:-2px;
+ background:var(--qmb-card);}
+.sales-app .qmb .qqt-cell .qqt-input.is-editing,.sales-app .qmb .qqt-cell .qqt-text.is-editing{
+ height:34px;min-height:34px;border:0!important;border-radius:0!important;
+ background:transparent!important;outline:0!important;box-shadow:none!important;
+}
+.sales-app .qmb .qqt-heading.is-selecting{min-height:54px;align-items:center;}
+.sales-app .qmb .qqt-heading .qqt-bulk{flex:1;min-width:0;padding:0;
+ background:transparent;border:0;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.sales-app .qmb .qqt-heading .qqt-bulk>strong{padding-right:7px;font-size:11px;white-space:nowrap;}
+.sales-app .qmb .qqt-heading .qqt-bulk button,.sales-app .qmb .qqt-heading .qqt-bulk select{
+ min-height:29px;padding:4px 8px;border:1px solid var(--qmb-border);
+ border-radius:5px;background:var(--qmb-card);color:var(--qmb-ink);font-size:11px;cursor:pointer;
+}
+.sales-app .qmb .qqt-heading .qqt-bulk .qqt-delete-selected{
+ color:var(--ss-danger,#af5148);border-color:var(--ss-danger,#af5148);
+}
+.sales-app .qmb .qqt-heading .qqt-bulk button:disabled{opacity:.4;cursor:default;}
+/* Independent drawer sits at viewport top, not at the page's scroll position. */
+.sales-app .qmb.qqt-overlay>.qqt-panel{
+ position:fixed!important;inset:0 0 0 auto!important;
+ top:0!important;bottom:0!important;left:auto!important;right:0!important;
+ height:100dvh!important;max-height:100dvh!important;min-height:0!important;
+ margin:0!important;transform:none!important;border-radius:0!important;
+}
