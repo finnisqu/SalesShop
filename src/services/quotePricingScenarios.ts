@@ -1,7 +1,7 @@
 import {quoteLineTotal,quoteTotal,roundCurrency,type Quote} from '../types/quote';
 import {isGeneralTakeoffSection} from './quoteCustomerPresentation';
 import {projectAreaCost} from './quoteAreaCost';
-import {totalBillableTakeoffSf} from './quoteTakeoffsLite';
+import {totalBillableTakeoffSf,roundedBillableTakeoffSf} from './quoteTakeoffsLite';
 import {summarizeQuoteInternalPricing} from './quoteInternalPricing';
 
 type Scenario={label:string;price?:number;profit?:number;margin?:number;perSf?:number;perUnit?:number;reason?:string};
@@ -9,9 +9,10 @@ export function quotePricingScenarios(quote:Quote,margin=.30,multiplier=2.2,sfRa
  const areas=quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
   const lines=quote.lines.filter(line=>line.sectionId===section.id&&line.includeInTotal);
   const sf=totalBillableTakeoffSf(section.scope?.takeoffPieces??[]);
+  const sellSf=roundedBillableTakeoffSf(section.scope?.takeoffPieces??[],section.scope?.billableSfRounding);
   const primary=lines.find(line=>line.quantitySource?.syncMode==='live'&&line.quantitySource.field==='countertopSf')
    ??lines.find(line=>line.kind==='material'&&!line.takeoffSinkId);
-  return {section,lines,sf,primary,cost:projectAreaCost(quote,section)};
+  return {section,lines,sf,sellSf,primary,cost:projectAreaCost(quote,section)};
  }).filter(row=>row.lines.length||row.sf);
  const ids=new Set(areas.map(a=>a.section.id));
  const general=summarizeQuoteInternalPricing(quote.lines.filter(line=>!line.sectionId||
