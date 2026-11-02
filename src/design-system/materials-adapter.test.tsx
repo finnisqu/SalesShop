@@ -13,10 +13,14 @@ const inputs = {
   materialFamilyFilter: 'all' as const,
   materialTypeFilter: 'Quartz',
   brandFilter: 'Vicostone',
+  collectionFilter: 'World Stone WARM',
+  tagFilter: 'Designer Favorite',
   finishFilter: 'Honed',
   thicknessFilter: '3cm',
   materialTypes: ['Quartz', 'Granite'],
   brands: ['Vicostone', 'Caesarstone'],
+  collections: ['World Stone WARM'],
+  tags: ['Designer Favorite'],
   finishes: ['Honed', 'Polished'],
   thicknesses: ['2cm', '3cm'],
   activeFilterCount: 5,
@@ -24,6 +28,8 @@ const inputs = {
   onFamilyChange: () => {},
   onTypeChange: () => {},
   onBrandChange: () => {},
+  onCollectionChange: () => {},
+  onTagChange: () => {},
   onFinishChange: () => {},
   onThicknessChange: () => {},
   onClear: () => {},
@@ -34,13 +40,14 @@ describe('UI Foundation Batch 5B — Materials', () => {
     const html = renderToStaticMarkup(<MaterialsFilterFields idPrefix="material-test" {...inputs} />);
     for (const [name, id] of [
       ['Program', 'program'], ['Material family', 'family'], ['Material type', 'type'],
-      ['Brand', 'brand'], ['Finish', 'finish'], ['Thickness', 'thickness'],
+      ['Brand', 'brand'], ['Collection / series', 'collection'],
+      ['Specialty / tag', 'tag'], ['Finish', 'finish'], ['Thickness', 'thickness'],
     ]) {
       expect(html).toContain(`for="material-test-${id}"`);
       expect(html).toContain(`id="material-test-${id}"`);
       expect(html).toContain(`>${name}</label>`);
     }
-    expect((html.match(/<select/g) || [])).toHaveLength(6);
+    expect((html.match(/<select/g) || [])).toHaveLength(8);
     expect(html).toContain('value="stock" selected=""');
     expect(html).toContain('value="Vicostone" selected=""');
     expect(html).toContain('Clear filters');
