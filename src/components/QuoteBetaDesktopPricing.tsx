@@ -9,6 +9,7 @@ import {QuoteBetaRateCatalog,rateItemToQuotePatch} from './QuoteBetaRateCatalog'
 import {useCompanySettingsStore} from '../store/companySettingsStore';
 import {selectedMaterialCost} from '../services/selectedMaterialCost';
 import {isDeveloperPlaygroundRoute} from '../lib/developerPlayground';
+import './quote-beta-cost-coverage.css';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const decimal=(n:number|undefined)=>n===undefined?'':String(n);
@@ -55,6 +56,15 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const primary=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf')
     ??lines.find(l=>l.kind==='material'&&!l.takeoffSinkId);
   const projection=projectAreaCost(quote,section);
+  const costPanelRef=useRef<HTMLDivElement>(null);
+  const confirmedCostCount=Object.values(projection.costCoverage).filter(Boolean).length;
+  const focusCost=(label:string)=>{
+    const input=Array.from(costPanelRef.current?.querySelectorAll<HTMLInputElement>('input[aria-label]')??[])
+      .find(element=>element.getAttribute('aria-label')===label&&!element.disabled);
+    if(!input)return;
+    input.scrollIntoView({block:'center',behavior:'smooth'});
+    input.focus({preventScroll:true});
+  };
   const catalogMaterials=useCompanySettingsStore(s=>s.settings.stockMaterials);
   const selectedCost=selectedMaterialCost(
     section.scope?.takeoffMaterial??'',section.scope?.takeoffMaterialReference,catalogMaterials);
@@ -181,8 +191,8 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   };
   return <section className={'qmb-desktop-pricing-lab qmb-lab-'+view} aria-label="Area pricing and internal costs">
     {view==='calculator'&&<header className="qmb-pricing-lab-heading">
-      <div><h3>Buying costs &amp; margin</h3><small>Internal estimate · costs must be entered for a complete margin</small></div>
-      <strong>{perc!==undefined?perc.toFixed(1)+'%':'Costs incomplete'}</strong>
+      <div><h3>Buying costs &amp; margin</h3><small>{confirmedCostCount}/5 cost categories confirmed · private estimate</small></div>
+      <strong>{perc!==undefined?'Estimated margin '+perc.toFixed(1)+'%':'Partial cost estimate'}</strong>
     </header>}
     {(view==='all'||view==='selling')&&<>
     <header className="qmb-pricing-lab-heading">
@@ -254,7 +264,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     </div>}
     </>}
     {(view==='all'||view==='calculator')&&<>
-    <div className="qmb-private-cost" aria-label="Private Area cost and margin">
+    <div className="qmb-private-cost" ref={costPanelRef} aria-label="Private Area cost and margin">
       {isDeveloperPlaygroundRoute()&&<button className="qmb-demo-preset" type="button" disabled={!editable}
         onClick={()=>updateScope({slabYield:.65,targetMargin:.25,
           shopCostRateSf:14,installCostRateSf:5.5,
@@ -346,21 +356,31 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
         </div>
       </div>
       <div className="qmb-private-cost-lines">
-        <span>Shop / fabrication cost <b>{money.format(projection.shopCost??0)}</b></span>
-        <span>Installation cost <b>{money.format(projection.installCost??0)}</b></span>
+        <span>Shop / fabrication cost <b>{projection.shopCost===undefined?'Not entered':money.format(projection.shopCost)}</b></span>
+        <span>Installation cost <b>{projection.installCost===undefined?'Not entered':money.format(projection.installCost)}</b></span>
         <span>Known sink buying cost <b>{projection.sinkCost!==undefined?money.format(projection.sinkCost):'Missing'}</b></span>
         <span>Other known costs <b>{money.format(projection.otherCost)}</b></span>
         <span>Known total cost <b>{money.format(projection.totalKnownCost)}</b></span>
         <span>Spread on entered costs <b>{money.format(priceDiff)}</b></span>
         {provisional!==undefined&&!projection.complete&&<span>
           Known-cost spread · not a full margin <b>{provisional.toFixed(1)}%</b></span>}
-        <span className="qmb-private-margin">Estimated margin · all cost categories
+        <span className="qmb-private-margin">Estimated fully-loaded margin · all cost categories
           <b>{perc!==undefined?perc.toFixed(1)+'%':'Costs incomplete'}</b></span>
       </div>
       {!projection.complete&&<div className="qmb-cost-warning" role="status">
         <strong>Complete these cost categories to calculate margin:</strong>
-        <ul>{projection.missingCostItems.map(label=><li key={label}>{label}</li>)}</ul>
-        <small>Blank costs are unknown, not zero. Enter $0 when a category truly has no cost.</small>
+        <ul>
+          {!projection.costCoverage.material&&<li><button type="button" disabled={!editable}
+            onClick={()=>focusCost(primary?'Area total material cost override':'Area buying cost per slab')}>
+            Enter material buying cost ↗</button></li>}
+          {!projection.costCoverage.sinks&&<li>Sink buying costs — open Area sink selections and enter buying costs for charged sinks.</li>}
+          {!projection.costCoverage.shop&&<li><button type="button" disabled={!editable}
+            onClick={()=>focusCost('Area shop cost per SF')}>Enter fabrication / shop cost ↗</button></li>}
+          {!projection.costCoverage.install&&<li><button type="button" disabled={!editable}
+            onClick={()=>focusCost('Area install cost per SF')}>Enter installation cost ↗</button></li>}
+          {!projection.costCoverage.other&&<li>Other priced work costs — enter internal costs on the Area's additional lines.</li>}
+        </ul>
+        <small>Blank costs are unknown, not zero. Enter $0 only when a category truly has no cost. Missing costs never change selling prices.</small>
       </div>}
     </div>
     <div className="qmb-pricing-comparison" aria-label="Compare project selling methods">
