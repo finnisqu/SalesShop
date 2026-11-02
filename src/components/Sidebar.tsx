@@ -1,4 +1,4 @@
-import { useMemo, useState, type DragEvent } from 'react';
+import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
 import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
@@ -58,7 +58,10 @@ function folderTree(folders:NotebookFolder[]): Array<{folder:NotebookFolder;dept
   return rows;
 }
 
-export function Sidebar() {
+interface NotebookSidebarProps {onOpenBeside?:(pageId:string)=>void;companionId?:string|null;}
+const COLLAPSED_KEY='salesshop-notebook-folders-collapsed-v1';
+const UNFILED='__unfiled__';
+export function Sidebar({onOpenBeside,companionId}:NotebookSidebarProps) {
   const entries = useNotebookStore((state) => state.entries);
   const folders = useNotebookStore((state) => state.folders);
   const createFolder = useNotebookStore((state) => state.createFolder);
@@ -70,6 +73,7 @@ export function Sidebar() {
   const trashedEntries = useNotebookStore((state) => state.trashedEntries);
   const restoreEntry = useNotebookStore((state) => state.restoreEntry);
   const reorderEntry = useNotebookStore((state) => state.reorderEntry);
+  const moveEntryToFolder=useNotebookStore(state=>state.moveEntryToFolder);
   const duplicateEntry=useNotebookStore(state=>state.duplicateEntry);
   const renameEntry=useNotebookStore(state=>state.renameEntry);
   const deleteEntry=useNotebookStore(state=>state.deleteEntry);
@@ -78,6 +82,14 @@ export function Sidebar() {
   const beginPromotion=usePersonalTaskStore(s=>s.beginPromotion);
   const [showHidden, setShowHidden] = useState(false);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [collapsedFolders,setCollapsedFolders]=useState<string[]>(()=>{
+    try{const v=JSON.parse(localStorage.getItem(COLLAPSED_KEY)||'[]') as unknown;
+      return Array.isArray(v)?v.filter((x):x is string=>typeof x==='string'):[];
+    }catch{return[];}
+  });
+  useEffect(()=>{try{localStorage.setItem(COLLAPSED_KEY,JSON.stringify(collapsedFolders));}catch{/* optional */}},[collapsedFolders]);
+  const toggleFolder=(id:string)=>setCollapsedFolders(current=>current.includes(id)?
+    current.filter(x=>x!==id):[...current,id]);
   const [showTrash, setShowTrash] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<PageFilter>('all');
@@ -86,8 +98,35 @@ export function Sidebar() {
 
   const hiddenCount = entries.filter((entry) => entry.hidden).length;
   const folderRows=useMemo(()=>folderTree(folders),[folders]);
+  const childrenMap=useMemo(()=>{
+    const children=new Map<string,string[]>();
+    for(const folder of folders)if(folder.parentId){
+      children.set(folder.parentId,[...(children.get(folder.parentId)??[]),folder.id]);
+    }
+    return children;
+  },[folders]);
+  const descendants=(id:string)=>{
+    const ids=new Set<string>([id]),pending=[id];
+    while(pending.length){const current=pending.pop()!;
+      for(const child of childrenMap.get(current)??[])if(!ids.has(child)){ids.add(child);pending.push(child);}
+    }
+    return ids;
+  };
+  const folderCount=(id:string)=>{
+    const ids=descendants(id);
+    return entries.filter(entry=>!!entry.folderId&&ids.has(entry.folderId)).length;
+  };
+  const visibleFolderRows=folderRows.filter(({folder})=>{
+    const seen=new Set<string>();let parent=folder.parentId;
+    while(parent&&!seen.has(parent)){
+      if(collapsedFolders.includes(parent))return false;
+      seen.add(parent);parent=folders.find(f=>f.id===parent)?.parentId;
+    }
+    return true;
+  });
   const visibleFolderIds=useMemo(()=>{
     if(!activeFolderId)return null;
+    if(activeFolderId===UNFILED)return new Set([UNFILED]);
     const ids=new Set<string>([activeFolderId]);
     for(let i=0;i<folders.length;i++){
       for(const folder of folders)if(folder.parentId&&ids.has(folder.parentId))ids.add(folder.id);
@@ -97,6 +136,8 @@ export function Sidebar() {
   const pageMenuActions=(entry:NotebookEntry):AppContextAction[]=>{
     const actions:AppContextAction[]=[
       {label:'Open page',onSelect:()=>selectEntry(entry.id)},
+      ...(onOpenBeside&&activeEntryId!==entry.id?
+        [{label:'Open side by side',onSelect:()=>onOpenBeside(entry.id)}]:[]),
       {label:entry.favorite?'Remove favorite':'Add to favorites',onSelect:()=>toggleFavorite(entry.id)},
       {label:'Rename…',onSelect:()=>{
         const title=window.prompt('Rename notebook page',entry.title);
@@ -129,7 +170,8 @@ export function Sidebar() {
     const name=window.prompt(parentId?'New subfolder name':'New folder name');
     if(!name?.trim())return;
     const id=createFolder(name,parentId);
-    if(id){setActiveFolderId(id);setFilter('all');setShowTrash(false);}
+    if(id){setActiveFolderId(id);setFilter('all');setShowTrash(false);
+      if(parentId)setCollapsedFolders(current=>current.filter(x=>x!==parentId));}
   };
   const reorderEnabled = !showTrash && !query.trim() && filter === 'all';
 
@@ -137,7 +179,9 @@ export function Sidebar() {
     const needle = query.trim().toLowerCase();
     return entries.filter((entry) => {
       if (entry.hidden && !showHidden && entry.id !== activeEntryId) return false;
-      if (filter==='all' && visibleFolderIds && (!entry.folderId || !visibleFolderIds.has(entry.folderId))) return false;
+      if(filter==='all'&&activeFolderId===UNFILED&&entry.folderId)return false;
+      if (filter==='all' && visibleFolderIds && activeFolderId!==UNFILED &&
+        (!entry.folderId || !visibleFolderIds.has(entry.folderId))) return false;
       if (filter === 'favorites' && !entry.favorite) return false;
       if (filter === 'project' && !entry.context?.projectId) return false;
       if (filter === 'postits' && !entry.objects.some(object=>object.type==='post-it')) return false;
@@ -220,29 +264,56 @@ export function Sidebar() {
         {!reorderEnabled&&!showTrash&&<small className="notebook-filter-help">Clear search or filter to reorder pages.</small>}
       </div>
 
-      {!showTrash&&<section className="notebook-folder-panel" aria-label="Notebook folders">
-        <header><strong>Folders</strong><button type="button" title="New folder" onClick={()=>askFolder()}>+ Folder</button></header>
-        {folderRows.map(({folder,depth})=><div className={'notebook-folder-row'+(activeFolderId===folder.id&&filter==='all'?' is-active':'')}
-          key={folder.id} style={{paddingLeft: Math.min(depth,6)*12+5}}>
-          <button className="notebook-folder-open" type="button"
-            onContextMenu={event=>contextActions.openPointer(event,folder.name,folderMenuActions(folder))}
-            onKeyDown={event=>contextActions.openKeyboard(event,folder.name,folderMenuActions(folder))}
-            aria-pressed={activeFolderId===folder.id&&filter==='all'}
-            onClick={()=>{setActiveFolderId(folder.id);setFilter('all');setShowTrash(false);}}>
-            <span aria-hidden="true">▸</span><span>{folder.name}</span><small>{entries.filter(entry=>entry.folderId===folder.id).length}</small>
+      {!showTrash&&<section className="notebook-folder-panel notebook-folder-panel-v2" aria-label="Notebook folders">
+        <header><span><strong>Folders</strong><small>{folders.length} folders · Organize your pages</small></span>
+          <button type="button" title="New folder" onClick={()=>askFolder()}>+ Folder</button></header>
+        {activeFolderId&&<div className="notebook-folder-current">
+          <span>Showing {activeFolderId===UNFILED?'Unfiled pages':
+            folders.find(f=>f.id===activeFolderId)?.name??'pages'}</span>
+          <button type="button" onClick={()=>setActiveFolderId(null)}>All pages ×</button>
+        </div>}
+        <div className="notebook-folder-tree">
+          <button type="button" className={'notebook-unfiled-row'+(activeFolderId===UNFILED?' is-active':'')}
+            onClick={()=>{setActiveFolderId(UNFILED);setFilter('all');setShowTrash(false);}}>
+            <span aria-hidden="true">▤</span><strong>Unfiled</strong>
+            <small>{entries.filter(entry=>!entry.folderId).length}</small>
           </button>
-          <button type="button" title={'New subfolder in '+folder.name} aria-label={'New subfolder in '+folder.name}
-            onClick={()=>askFolder(folder.id)}>+</button>
-          <button type="button" title={'Rename '+folder.name} aria-label={'Rename '+folder.name} onClick={()=>{
-            const name=window.prompt('Rename folder',folder.name);
-            if(name?.trim())renameFolder(folder.id,name);
-          }}>✎</button>
-          <button type="button" title={'Remove '+folder.name} aria-label={'Remove '+folder.name} onClick={()=>{
-            if(!window.confirm('Remove “'+folder.name+'”? Its pages and subfolders will be moved up, not deleted.'))return;
-            removeFolder(folder.id);
-            if(activeFolderId===folder.id)setActiveFolderId(folder.parentId??null);
-          }}>×</button>
-        </div>)}
+          {visibleFolderRows.map(({folder,depth})=>{
+            const isCollapsed=collapsedFolders.includes(folder.id);
+            const hasChildren=childrenMap.has(folder.id);
+            return <div key={folder.id}
+              className={'notebook-folder-row'+(activeFolderId===folder.id&&filter==='all'?' is-active':'')+
+                (draggingId?' accepts-page-drop':'')}
+              style={{paddingLeft:Math.min(depth,6)*12+5}}
+              onDragOver={event=>{if(!draggingId)return;event.preventDefault();event.dataTransfer.dropEffect='move';}}
+              onDrop={event=>{
+                if(!draggingId)return;event.preventDefault();event.stopPropagation();
+                moveEntryToFolder(draggingId,folder.id);
+                setActiveFolderId(folder.id);setFilter('all');setDraggingId(null);setDropTarget(null);
+              }}>
+              <button type="button" className="notebook-folder-toggle"
+                aria-label={(isCollapsed?'Expand ':'Collapse ')+folder.name} aria-expanded={!isCollapsed}
+                disabled={!hasChildren} onClick={()=>toggleFolder(folder.id)}>
+                {hasChildren?(isCollapsed?'▸':'▾'):'·'}
+              </button>
+              <button type="button" className="notebook-folder-open"
+                onContextMenu={event=>contextActions.openPointer(event,folder.name,folderMenuActions(folder))}
+                onKeyDown={event=>contextActions.openKeyboard(event,folder.name,folderMenuActions(folder))}
+                aria-pressed={activeFolderId===folder.id&&filter==='all'}
+                onClick={()=>{setActiveFolderId(folder.id);setFilter('all');setShowTrash(false);}}>
+                <span aria-hidden="true">▣</span><span>{folder.name}</span><small>{folderCount(folder.id)}</small>
+              </button>
+              <button type="button" className="notebook-folder-extra" title={'New subfolder in '+folder.name}
+                aria-label={'New subfolder in '+folder.name} onClick={()=>askFolder(folder.id)}>+</button>
+              <button type="button" className="notebook-folder-extra" title={'Rename '+folder.name}
+                aria-label={'Rename '+folder.name} onClick={()=>{
+                  const name=window.prompt('Rename folder',folder.name);
+                  if(name?.trim())renameFolder(folder.id,name);
+                }}>✎</button>
+            </div>;
+          })}
+        </div>
+        {draggingId&&<p className="notebook-folder-drop-help">Drop the page onto a folder to file it.</p>}
       </section>}
       <div className="page-list">
         {showTrash ? (
@@ -263,7 +334,7 @@ export function Sidebar() {
           return (
             <button
               key={entry.id}
-              className={`page-tab tone-${entry.tone} ${active ? 'active' : ''} ${entry.favorite ? 'is-favorite' : ''} ${entry.hidden ? 'is-hidden-page' : ''} ${draggingId === entry.id ? 'is-dragging' : ''} ${before ? 'drop-before' : ''} ${after ? 'drop-after' : ''}`}
+              className={`page-tab tone-${entry.tone} ${active ? 'active' : ''} ${entry.id===companionId?'is-companion':''} ${entry.favorite ? 'is-favorite' : ''} ${entry.hidden ? 'is-hidden-page' : ''} ${draggingId === entry.id ? 'is-dragging' : ''} ${before ? 'drop-before' : ''} ${after ? 'drop-after' : ''}`}
               onClick={() => selectEntry(entry.id)}
               onContextMenu={event=>contextActions.openPointer(event,entry.title||'Notebook page',pageMenuActions(entry))}
               onKeyDown={event=>contextActions.openKeyboard(event,entry.title||'Notebook page',pageMenuActions(entry))}
