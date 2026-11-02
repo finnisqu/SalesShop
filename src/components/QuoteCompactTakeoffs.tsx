@@ -265,7 +265,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
     <button type="button" onClick={()=>setSelected([])}>Clear</button></div>}
   <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}>
    <div className="qqt-header qqt-grid">
-    {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling ]
+    {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling price','Contract','Actions']
      .map((h,i)=><div key={i} className="qqt-cell">{h}</div>)}
    </div>
    {areas.map(section=>{
