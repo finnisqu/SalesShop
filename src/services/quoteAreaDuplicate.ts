@@ -85,3 +85,23 @@ export function copyQuoteAreaFromSource(
   quote:{...target,sections:[...target.sections,section],lines:[...target.lines,...lines]},
  };
 }
+
+/** Copy several Areas as one independent, undoable change; if any source Area
+ * is invalid, leave the destination unchanged rather than partially copying. */
+export function copyQuoteAreasFromSource(
+ target:Quote,source:Quote,areaIds:readonly string[],includeSellingPrices=false,
+ newId:(kind:string)=>string=(kind)=>kind+'_'+crypto.randomUUID(),
+):{quote:Quote;newAreaIds:string[]}|undefined {
+ if(!areaIds.length||new Set(areaIds).size!==areaIds.length)return undefined;
+ if(areaIds.some(id=>!source.sections.some(section=>section.id===id
+  &&!isGeneralTakeoffSection(section))))return undefined;
+ let current=target;
+ const newAreaIds:string[]=[];
+ for(const id of areaIds){
+  const result=copyQuoteAreaFromSource(current,source,id,includeSellingPrices,newId);
+  if(!result)return undefined;
+  current=result.quote;
+  newAreaIds.push(result.newAreaId);
+ }
+ return {quote:current,newAreaIds};
+}
