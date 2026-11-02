@@ -8,6 +8,9 @@ const areaCss=source('src/components/quote-quick-areas.css');
 const takeoffs=source('src/components/QuoteCompactTakeoffs.tsx');
 const quoteUi=source('src/components/QuotesMobileBeta.tsx');
 const progress=source('src/services/quoteBuilderProgress.ts');
+const gridKeyboard=source('src/services/quoteGridNavigation.ts');
+const gridValue=source('src/services/quoteGridValue.ts');
+const quickPricingParity=source('src/services/quoteQuickPricingParity.test.ts');
 const contract=source('src/components/QuoteContractApproval.tsx');
 const scopeBatch=source('src/services/quoteScopeRowBatch.ts');
 const review=source('src/components/QuoteBetaReview.tsx');
@@ -101,6 +104,19 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(printPreview).toContain("document.body.classList.add('sales-quote-print-active')");
   expect(printCss).toContain('.qpp-toolbar{display:none!important;}');
   expect(printCss).toContain('@page{size:letter;');
+ });
+ it('keeps keyboard shortcuts focused on editable cells without modifying pricing logic',()=>{
+  expect(gridKeyboard).toContain('nextQuickGridCell');
+  expect(gridKeyboard).toContain("if(editing)target.blur()");
+  expect(gridKeyboard).toContain("requestAnimationFrame");
+  expect(areas).toContain('onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}');
+  expect(takeoffs).toContain('onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}');
+  expect(areas).toContain('data-quick-grid-editable');
+  expect(takeoffs).toContain('data-quick-grid-editable');
+  expect(areas).toContain('parseQuickGridNumber');
+  expect(takeoffs).toContain('parseQuickGridNumber');
+  expect(gridValue).toContain('Number.isFinite(parsed)');
+  expect(quickPricingParity).toContain('assertParity');
  });
  it('uses the same guided four stages and never requires opening an old Area page',()=>{
   expect(progress).toContain("label:'Deal Details'");
