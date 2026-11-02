@@ -23,7 +23,7 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
     if(row.kind==='line'){
       const line=next.lines.find(item=>item.id===row.id);
       if(operation==='delete'){
-        if(line&&!line.takeoffSinkId&&!line.quantitySource?.syncMode)
+        if(line&&!line.takeoffSinkId&&line.quantitySource?.syncMode!=='live')
           next={...next,lines:next.lines.filter(item=>item.id!==row.id)};
         continue;
       }
