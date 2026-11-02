@@ -220,8 +220,8 @@ function DetailRow({children,excluded=false,issue=false}:{children:ReactNode;exc
 function ReadCell({children,className=''}:{children?:ReactNode;className?:string}){
  return <div className={'qmx-cell '+className}>{children??'—'}</div>;
 }
-export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGeneralTakeoff}:{
- quote:Quote;onAddArea:()=>void;onLayouts:()=>void;onAdvanced:(id:string)=>void;onGeneralTakeoff:()=>void;
+export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvanced,onGeneralTakeoff}:{
+ quote:Quote;onAddArea:()=>void;onLayouts:()=>void;onCopyArea:()=>void;onAdvanced:(id:string)=>void;onGeneralTakeoff:()=>void;
 }){
  const store=useQuoteStore.getState(),editable=quoteIsCommerciallyEditable(quote);
  const [subtab,setSubtab]=useState<'areas'|'takeoffs'>('areas');
@@ -306,7 +306,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
    <strong>Quote {cash.format(quoteTotal(quote))}</strong>
   </nav>
   {subtab==='areas'&&<QuoteQuickAreaSummary quote={quote} onAddArea={onAddArea}
-    onLayouts={onLayouts} onAdvanced={onAdvanced} onTakeoffs={id=>{
+    onLayouts={onLayouts} onCopyArea={onCopyArea} onAdvanced={onAdvanced} onTakeoffs={id=>{
      setFocusArea(id);setSubtab('takeoffs');
     }}/>}
   {subtab==='takeoffs'&&!advanced&&<QuoteCompactTakeoffs quote={quote} focusArea={focusArea} onAdvanced={onAdvanced}/>}
