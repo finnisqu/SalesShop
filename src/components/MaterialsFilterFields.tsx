@@ -9,10 +9,14 @@ export interface MaterialsFilterFieldsProps {
   materialFamilyFilter: 'all' | MaterialFamily;
   materialTypeFilter: string;
   brandFilter: string;
+  collectionFilter:string;
+  tagFilter:string;
   finishFilter: string;
   thicknessFilter: string;
   materialTypes: string[];
   brands: string[];
+  collections:string[];
+  tags:string[];
   finishes: string[];
   thicknesses: string[];
   activeFilterCount: number;
@@ -20,6 +24,8 @@ export interface MaterialsFilterFieldsProps {
   onFamilyChange: (next: 'all' | MaterialFamily) => void;
   onTypeChange: (next: string) => void;
   onBrandChange: (next: string) => void;
+  onCollectionChange:(next:string)=>void;
+  onTagChange:(next:string)=>void;
   onFinishChange: (next: string) => void;
   onThicknessChange: (next: string) => void;
   onClear: () => void;
@@ -27,10 +33,10 @@ export interface MaterialsFilterFieldsProps {
 
 export function MaterialsFilterFields({
   idPrefix, programFilter, materialFamilyFilter, materialTypeFilter,
-  brandFilter, finishFilter, thicknessFilter, materialTypes,
-  brands, finishes, thicknesses, activeFilterCount,
+  brandFilter, collectionFilter, tagFilter, finishFilter, thicknessFilter, materialTypes,
+  brands, collections, tags, finishes, thicknesses, activeFilterCount,
   onProgramChange, onFamilyChange, onTypeChange, onBrandChange,
-  onFinishChange, onThicknessChange, onClear,
+  onCollectionChange, onTagChange, onFinishChange, onThicknessChange, onClear,
 }: MaterialsFilterFieldsProps) {
   return <div className="materials-foundation-filter-fields">
     <Field id={`${idPrefix}-program`} label="Program">
@@ -51,6 +57,18 @@ export function MaterialsFilterFields({
     <Field id={`${idPrefix}-brand`} label="Brand">
       {(control) => <select {...control} value={brandFilter} onChange={(event) => onBrandChange(event.target.value)}>
         <option value="all">All brands</option>{brands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+      </select>}
+    </Field>
+    <Field id={`${idPrefix}-collection`} label="Collection / series">
+      {(control)=><select {...control} value={collectionFilter} onChange={e=>onCollectionChange(e.target.value)}>
+        <option value="all">All collections</option>
+        {collections.map(name=><option key={name} value={name}>{name}</option>)}
+      </select>}
+    </Field>
+    <Field id={`${idPrefix}-tag`} label="Specialty / tag">
+      {(control)=><select {...control} value={tagFilter} onChange={e=>onTagChange(e.target.value)}>
+        <option value="all">All tags</option>
+        {tags.map(name=><option key={name} value={name}>{name}</option>)}
       </select>}
     </Field>
     <Field id={`${idPrefix}-finish`} label="Finish">

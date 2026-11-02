@@ -1,0 +1,4 @@
+# Catalog collections and tags
+The Materials catalog already stores `collection` on each StockMaterial and `features` on both colors and slab variants. Use Collection / Series for grouped launches such as "World Stone WARM". Use tags such as "Designer Favorite", "Frequently Specified", or "Specialty" across collections.
+This batch adds collection and tag filters to the shared desktop/mobile filter sheet and clickable collection/tag chips to desktop material names. Catalog edit mode retains the existing Collection / Series and Color-level special features fields; no material pricing or schema migration.
+A richer collection management view with images, descriptions, campaign dates, supplier ownership and saved filtered views remains a future feature; this is not yet a separately stored Collection entity.

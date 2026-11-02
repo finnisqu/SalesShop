@@ -111,6 +111,8 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   const [materialFamilyFilter, setMaterialFamilyFilter] = useState<'all' | MaterialFamily>('all');
   const [materialTypeFilter, setMaterialTypeFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
+  const [collectionFilter,setCollectionFilter]=useState('all');
+  const [tagFilter,setTagFilter]=useState('all');
   const [finishFilter, setFinishFilter] = useState('all');
   const [thicknessFilter, setThicknessFilter] = useState('all');
   const [sort, setSort] = useState<MaterialSort>('stock-brand');
@@ -151,6 +153,11 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
 
   const materialTypes = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.materialType))].sort(), [settings.stockMaterials]);
   const brands = useMemo(() => [...new Set(settings.stockMaterials.map((material) => material.brand?.trim()).filter((value): value is string => Boolean(value)))].sort(), [settings.stockMaterials]);
+  const collections=useMemo(()=>[...new Set(settings.stockMaterials.map(m=>m.collection?.trim())
+    .filter((v):v is string=>!!v))].sort(),[settings.stockMaterials]);
+  const tags=useMemo(()=>[...new Set(settings.stockMaterials.flatMap(m=>
+    [...(m.features??[]),...(m.variants??[]).flatMap(v=>v.features??[])]
+  ).map(v=>v.trim()).filter(Boolean))].sort(),[settings.stockMaterials]);
   const finishes = useMemo(() => [...new Set(settings.stockMaterials.flatMap((material) => (material.variants ?? []).map((variant) => variant.finish?.trim()).filter((value): value is string => Boolean(value))))].sort(), [settings.stockMaterials]);
   const thicknesses = useMemo(() => [...new Set(settings.stockMaterials.flatMap((material) => (material.variants ?? []).map((variant) => variant.thickness?.trim()).filter((value): value is string => Boolean(value))))].sort(), [settings.stockMaterials]);
 
@@ -162,6 +169,9 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
       .filter((material) => materialFamilyFilter === 'all' || resolvedMaterialFamily(material) === materialFamilyFilter)
       .filter((material) => materialTypeFilter === 'all' || material.materialType === materialTypeFilter)
       .filter((material) => brandFilter === 'all' || material.brand === brandFilter)
+      .filter((material) => collectionFilter === 'all' || material.collection === collectionFilter)
+      .filter((material) => tagFilter === 'all' || (material.features??[]).includes(tagFilter)
+        || (material.variants??[]).some(v=>(v.features??[]).includes(tagFilter)))
       .filter((material) => finishFilter === 'all' || (material.variants ?? []).some((variant) => variant.finish === finishFilter))
       .filter((material) => thicknessFilter === 'all' || (material.variants ?? []).some((variant) => variant.thickness === thicknessFilter))
       .filter((material) => !needle || `${material.name} ${material.supplier ?? ''} ${material.brand ?? ''} ${material.collection ?? ''} ${material.sku ?? ''} ${resolvedMaterialFamily(material)} ${material.materialType} ${(material.features ?? []).join(' ')} ${(material.variants ?? []).flatMap((variant) => [variant.sku, variant.thickness, variant.finish, variant.formatName, variant.availabilityNote, ...(variant.features ?? [])]).join(' ')}`.toLowerCase().includes(needle));
@@ -174,7 +184,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
       if (sort === 'cost-desc') return compareOptionalNumbers(resolveStockMaterialCostReference(b).costPerSf, resolveStockMaterialCostReference(a).costPerSf) || a.name.localeCompare(b.name);
       return Number(b.stockProgram) - Number(a.stockProgram) || (a.brand ?? a.supplier ?? '').localeCompare(b.brand ?? b.supplier ?? '') || a.name.localeCompare(b.name);
     });
-  }, [settings.stockMaterials, query, programFilter, materialFamilyFilter, materialTypeFilter, brandFilter, finishFilter, thicknessFilter, sort]);
+  }, [settings.stockMaterials, query, programFilter, materialFamilyFilter, materialTypeFilter, brandFilter,collectionFilter,tagFilter, finishFilter, thicknessFilter, sort]);
 
   const pinnedKeySet = useMemo(() => new Set(pinnedKeys), [pinnedKeys]);
 
@@ -194,6 +204,8 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
     + Number(materialFamilyFilter !== 'all')
     + Number(materialTypeFilter !== 'all')
     + Number(brandFilter !== 'all')
+    + Number(collectionFilter !== 'all')
+    + Number(tagFilter !== 'all')
     + Number(finishFilter !== 'all')
     + Number(thicknessFilter !== 'all');
 
@@ -202,18 +214,22 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
     setMaterialFamilyFilter('all');
     setMaterialTypeFilter('all');
     setBrandFilter('all');
+    setCollectionFilter('all');
+    setTagFilter('all');
     setFinishFilter('all');
     setThicknessFilter('all');
   };
   // Both desktop and mobile filter sheets receive exactly the same state.
   const filterFields: Omit<MaterialsFilterFieldsProps, 'idPrefix'> = {
     programFilter, materialFamilyFilter, materialTypeFilter, brandFilter,
-    finishFilter, thicknessFilter, materialTypes, brands, finishes,
-    thicknesses, activeFilterCount,
+    collectionFilter,tagFilter,finishFilter, thicknessFilter, materialTypes, brands,
+    collections,tags,finishes,thicknesses, activeFilterCount,
     onProgramChange: setProgramFilter,
     onFamilyChange: setMaterialFamilyFilter,
     onTypeChange: setMaterialTypeFilter,
     onBrandChange: setBrandFilter,
+    onCollectionChange:setCollectionFilter,
+    onTagChange:setTagFilter,
     onFinishChange: setFinishFilter,
     onThicknessChange: setThicknessFilter,
     onClear: clearFilters,
@@ -225,6 +241,8 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
     ...(materialFamilyFilter !== 'all' ? [{ key: 'family', label: materialFamilyFilter, onRemove: () => setMaterialFamilyFilter('all') }] : []),
     ...(materialTypeFilter !== 'all' ? [{ key: 'type', label: materialTypeFilter, onRemove: () => setMaterialTypeFilter('all') }] : []),
     ...(brandFilter !== 'all' ? [{ key: 'brand', label: brandFilter, onRemove: () => setBrandFilter('all') }] : []),
+    ...(collectionFilter !== 'all' ? [{key:'collection',label:'Collection: '+collectionFilter,onRemove:()=>setCollectionFilter('all')}] : []),
+    ...(tagFilter !== 'all' ? [{key:'tag',label:'Tag: '+tagFilter,onRemove:()=>setTagFilter('all')}] : []),
     ...(finishFilter !== 'all' ? [{ key: 'finish', label: finishFilter, onRemove: () => setFinishFilter('all') }] : []),
     ...(thicknessFilter !== 'all' ? [{ key: 'thickness', label: thicknessFilter, onRemove: () => setThicknessFilter('all') }] : []),
   ];
@@ -620,7 +638,14 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
                       <Fragment key={material.id}>
                         <tr className={`${expanded ? 'is-expanded' : ''} ${hasPinnedVariant ? 'has-pinned-variant' : ''}`}>
                           <td><strong>{material.brand || material.supplier || '—'}</strong></td>
-                          <td className="rates-reference-item"><button type="button" className="materials-name-toggle" aria-expanded={expanded} aria-label={`${expanded ? 'Hide' : 'Show'} variants for ${material.name}`} onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}><strong>{material.name}</strong><span className="materials-mobile-chevron" aria-hidden="true">{expanded ? '⌃' : '⌄'}</span></button><small className="materials-mobile-brand">{material.brand || material.supplier || 'Unbranded'}{material.materialType ? ` · ${material.materialType}` : ''}</small><small className="materials-desktop-subtitle">{material.collection || material.sku || '—'}</small></td>
+                          <td className="rates-reference-item"><button type="button" className="materials-name-toggle" aria-expanded={expanded} aria-label={`${expanded ? 'Hide' : 'Show'} variants for ${material.name}`} onClick={() => setExpandedMaterialId((current) => current === material.id ? null : material.id)}><strong>{material.name}</strong><span className="materials-mobile-chevron" aria-hidden="true">{expanded ? '⌃' : '⌄'}</span></button><small className="materials-mobile-brand">{material.brand || material.supplier || 'Unbranded'}{material.materialType ? ` · ${material.materialType}` : ''}</small><small className="materials-desktop-subtitle">
+   {material.collection&&<button type="button" className="materials-collection-chip"
+     title={'Filter collection '+material.collection} onClick={()=>setCollectionFilter(material.collection||'all')}>
+     {material.collection}</button>}
+   {(material.features??[]).slice(0,2).map(tag=><button type="button" key={tag}
+     className="materials-tag-chip" title={'Filter tag '+tag} onClick={()=>setTagFilter(tag)}>{tag}</button>)}
+   {!material.collection&&!(material.features??[]).length&&(material.sku||'—')}
+ </small></td>
                           <td><strong>{material.materialType || resolvedMaterialFamily(material)}</strong></td>
                           <td><span className={`rates-program-pill ${material.stockProgram ? 'is-stock' : ''}`}>{material.stockProgram ? 'STOCK' : 'Non-stock'}</span></td>
                           <td className="number"><strong>{moneyPerSf(reference.costPerSf)}</strong><small className="materials-cell-note">{reference.purchaseOption?.label || (reference.basis === 'legacy' ? 'Legacy cost' : 'No default price')}</small></td>
