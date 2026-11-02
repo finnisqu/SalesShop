@@ -5,7 +5,7 @@ import {isGeneralTakeoffSection} from './quoteCustomerPresentation';
 export type QuoteBuilderStageId='details'|'areas'|'review'|'contract';
 export type QuoteBuilderStageState='done'|'attention'|'pending';
 export interface QuoteBuilderStage{id:QuoteBuilderStageId;label:string;status:string;state:QuoteBuilderStageState;}
-/** Five milestones are navigation guidance only. Contract issuing still uses
+/** Four milestones are navigation guidance only. Contract issuing still uses
  * the canonical audit and approval gate; a green milestone does not issue. */
 export function quoteBuilderProgress(quote:Quote,report:QuoteAuditReport=auditQuoteDraft(quote)):{
  stages:QuoteBuilderStage[];readyCount:number;areas:Quote['sections'];
@@ -20,15 +20,15 @@ export function quoteBuilderProgress(quote:Quote,report:QuoteAuditReport=auditQu
  const blockers=report.blockers.length;
  const issued=['Sent','Viewed','Signed','Declined','Expired'].includes(quote.status);
  const stages:QuoteBuilderStage[]=[
-  {id:'details',label:'Project details',status:hasCustomer?'Customer added':hasJobContext?'Job details added':'Optional',
+  {id:'details',label:'Deal Details',status:hasCustomer?'Customer added':hasJobContext?'Job details added':'Optional',
     state:hasCustomer||hasJobContext?'done':'pending'},
-  {id:'areas',label:'Takeoffs & selections',status:pieces?pieces+(pieces===1?' piece':' pieces'):
+  {id:'areas',label:'Build Quote',status:pieces?pieces+(pieces===1?' piece':' pieces'):
     areas.length?areas.length+(areas.length===1?' Area':' Areas'):hasGeneral?'General scope':'Optional',
     state:hasTakeoffs||areas.length>0?'done':'pending'},
-  {id:'review',label:'Pricing review',status:!hasPrices?'Awaiting prices':
+  {id:'review',label:'Pricing Review',status:!hasPrices?'Awaiting prices':
     blockers?blockers+(blockers===1?' issue':' issues'):'Ready for review',
     state:hasPrices?(blockers?'attention':'done'):'pending'},
-  {id:'contract',label:'Contract review',status:quote.status==='Signed'?'Signed':
+  {id:'contract',label:'Contract Review',status:quote.status==='Signed'?'Signed':
     issued?'Issued':'Not issued',state:issued?'done':'pending'},
  ];
  return {stages,readyCount:stages.filter(s=>s.state==='done').length,areas};
