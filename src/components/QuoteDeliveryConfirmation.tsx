@@ -44,28 +44,32 @@ export function QuoteDeliveryConfirmation({quote,canRecord}:{quote:Quote;canReco
       setError(reason instanceof Error?reason.message:'Could not record customer delivery.');
     }finally{setConfirming(false);}
   };
-  return <section className="qmb-delivery-confirmation" aria-label="Customer delivery confirmation">
-    <strong>Actual customer delivery</strong>
-    <p>Issued does not mean sent. Creating or copying a link never confirms delivery.</p>
+  return <section className={'qmb-delivery-confirmation'+(deliveries.length?' is-delivered':'')}
+    aria-label="Customer delivery confirmation">
     <div className="qmb-delivery-confirmation-state" role="status">
-      {quoteDeliveryLabel(quote,deliveries)}
+      <span className="qmb-delivery-state-indicator" aria-hidden="true">{deliveries.length?'✓':'○'}</span>
+      <strong>{quoteDeliveryLabel(quote,deliveries)}</strong>
     </div>
-    {deliveries.length>0?<small>
+    {deliveries.length>0?<small className="qmb-delivery-confirmation-meta">
       Confirmed {new Date(deliveries[0].occurredAt).toLocaleString()} · {
       QUOTE_DELIVERY_METHOD_LABELS[deliveries[0].metadata?.deliveryMethod??'other']}
-    </small>:<div className="qmb-delivery-confirmation-actions">
-      <label>How did you deliver it?
-        <select aria-label="Customer delivery method" value={method}
-          disabled={!canRecord||confirming} onChange={e=>setMethod(e.target.value as QuoteDeliveryMethod)}>
-          {Object.entries(QUOTE_DELIVERY_METHOD_LABELS).map(([value,label])=>
-            <option value={value} key={value}>{label}</option>)}
-        </select>
-      </label>
-      <button type="button" className="qmb-outline" onClick={record} disabled={!canRecord||confirming}>
-        Confirm customer delivery
-      </button>
-      <small>{mode==='cloud'?'Recorded in the workspace CRM activity history.':'Recorded in local CRM history.'} No message is sent by SalesShop.</small>
-    </div>}
+    </small>:<>
+      <div className="qmb-delivery-confirmation-actions">
+        <label>Delivery method
+          <select aria-label="Customer delivery method" value={method}
+            disabled={!canRecord||confirming} onChange={e=>setMethod(e.target.value as QuoteDeliveryMethod)}>
+            {Object.entries(QUOTE_DELIVERY_METHOD_LABELS).map(([value,label])=>
+              <option value={value} key={value}>{label}</option>)}
+          </select>
+        </label>
+        <button type="button" className="qmb-outline" onClick={record} disabled={!canRecord||confirming}>
+          {confirming?'Recording…':'Confirm customer delivery'}
+        </button>
+      </div>
+      <small className="qmb-delivery-confirmation-meta">
+        Confirm only after actual delivery. {mode==='cloud'?'Recorded in the workspace CRM.':'Recorded in local CRM history.'} No message is sent.
+      </small>
+    </>}
     {error&&<p role="alert" className="qmb-error">{error}</p>}
   </section>;
 }
