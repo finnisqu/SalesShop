@@ -38,6 +38,11 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [signatureOpen,setSignatureOpen]=useState(false);
+  const reviewNavRef=useRef<HTMLElement>(null);
+  useEffect(()=>{
+   if(quote.documentType!=='pricing-schedule')
+    reviewNavRef.current?.scrollIntoView({block:'nearest',behavior:'instant'});
+  },[reviewStep,quote.documentType]);
   const deliverySectionRef=useRef<HTMLElement>(null);
   const checklistSectionRef=useRef<HTMLElement>(null);
   const previousStatusRef=useRef(quote.status);
@@ -152,7 +157,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
        <p>Confirm totals, costs, open questions and the exact customer contract.</p></div>
       <button type="button" className="qmb-back" onClick={onBack}>‹ Back to Build Quote</button>
     </header>
-    <nav className="qqr-steps" aria-label="Pricing Review steps">
+    <nav className="qqr-steps" aria-label="Pricing Review steps" ref={reviewNavRef}>
      {reviewSteps.map((label,index)=><button key={label} type="button"
        className={index===reviewStep?'is-active':''}
        aria-current={index===reviewStep?'step':undefined} onClick={()=>setReviewStep(index)}>
@@ -232,6 +237,11 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
         <input type="checkbox" checked={acknowledged} onChange={event=>onReview(event.target.checked?reviewKey:null)}/>
         <span>I reviewed the remaining items and intend to leave them as shown.</span>
       </label>}
+      </section>}
+      {reviewStep===3&&needsRecheck&&<section className="qmb-review-recheck" role="status">
+       <div><strong>Prices or selections changed during review</strong>
+        <small>Recheck the current quote before approving this customer copy.</small></div>
+       <button type="button" onClick={()=>{setLastCheckedAt(quote.updatedAt);onReview(null);}}>Recheck now</button>
       </section>}
       {error&&<p role="alert" className="qmb-error">{error}</p>}
       {reviewStep===3&&<section ref={deliverySectionRef} className="qmb-card qmb-audit-delivery" data-review-delivery>
