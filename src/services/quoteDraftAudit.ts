@@ -1,6 +1,6 @@
 import type {Quote,QuoteSection} from '../types/quote';
 import {quoteLinesTotal,quoteTotal} from '../types/quote';
-import {totalBillableTakeoffSf} from './quoteTakeoffsLite';
+import {totalBillableTakeoffSf,takeoffSinkIncludedInQuote} from './quoteTakeoffsLite';
 
 /** Drafting is always free-form. These findings are evaluated only at Review/Issue. */
 export type QuoteAuditSeverity='blocker'|'review'|'optional';
