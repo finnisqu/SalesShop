@@ -25,6 +25,9 @@ test('an Area layout can be saved and reused without carrying over pricing',asyn
  await save.getByRole('button',{name:'Save layout'}).click();
  await expect(save).toHaveCount(0);
  await page.reload();
+ // The editor restores the saved Area first; return to its quote for the gallery.
+ if(await beta.getByRole('button',{name:'‹ Quote'}).count())
+   await beta.getByRole('button',{name:'‹ Quote'}).click();
  await beta.getByRole('button',{name:'Area layouts'}).click();
  const picker=page.getByRole('dialog',{name:'Choose Area starting layout'});
  await expect(picker).toContainText('Standard 96 inch kitchen');
