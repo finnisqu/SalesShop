@@ -16,9 +16,11 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(builder).toContain("subtab==='takeoffs'&&!advanced&&<QuoteCompactTakeoffs");
   expect(builder).toContain("subtab==='takeoffs'&&advanced&&");
  });
- it('keeps the ten requested summary columns with only checkbox and Area frozen',()=>{
-  expect(areas).toContain("'Stone selection','Square feet','Material price','Sinks qty','Sinks price'");
-  expect(areas).toContain("'Specialty qty','Specialty price','Total price'");
+ it('keeps the compact seven-value-column summary with only checkbox and Area frozen',()=>{
+  expect(areas).toContain("'Stone selection','Square feet','Material price'");
+  expect(areas).toContain("'Sinks price','Specialty price','Total price'");
+  expect(areas).not.toContain("'Sinks qty','Sinks price'");
+  expect(areas).not.toContain("'Specialty qty','Specialty price'");
   expect(areaCss).toContain('.qqs-pin-check{position:sticky;left:0;');
   expect(areaCss).toContain('.qqs-pin-area{position:sticky;left:34px;');
   expect(areaCss).not.toContain('.qqs-sticky-material');
@@ -34,6 +36,14 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(takeoffs).toContain('takeoffPieceSplashSf');
   expect(takeoffs).toContain("kind:'splash'");
   expect(takeoffs).toContain("store.bulkScopeRows");
+ });
+ it('edits basic amounts inline and advances from material choice to selling price',()=>{
+  expect(areas).toContain('function writeManualSf');
+  expect(areas).toContain('function writeStoneTotal');
+  expect(areas).toContain("onNext('price')");
+  expect(areas).toContain('onPointerDown');
+  expect(areas).toContain("onCommit:v=>writeStoneTotal");
+  expect(quoteUi).toContain('qmb-quick-history');
  });
  it('uses the same guided four stages and never requires opening an old Area page',()=>{
   expect(progress).toContain("label:'Deal Details'");
