@@ -4,6 +4,7 @@ import type {Quote,QuoteLine,QuoteSection,QuoteTakeoffSink} from '../types/quote
 import {quoteLineAmount,quoteTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from '../services/quoteQuickAreaSummary';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {newTakeoffSink} from '../services/quoteTakeoffsLite';
@@ -87,7 +88,7 @@ function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFoc
    if(parsed!==value)onCommit(parsed);
   }else setDraft(value===undefined?'':String(value));
  };
- return <input className="qqs-edit" type="text" inputMode="decimal" aria-label={label}
+ return <input className="qqs-edit" data-quick-grid-editable="true" type="text" inputMode="decimal" aria-label={label}
   value={draft} disabled={disabled} placeholder="—" autoFocus={autoFocus}
   onChange={event=>setDraft(event.target.value)} onBlur={()=>{commit();onDone?.();}}
   onKeyDown={event=>{
@@ -107,7 +108,8 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
   {editing&&inline?<CommitNumber label={label} value={inline.value} disabled={inline.disabled}
     autoFocus onCommit={inline.onCommit} onDone={()=>setEditing(false)}/>:
   <button type="button" className="qqs-value" title={typeof value==='string'?value:label}
-   onClick={()=>{onFocus();if(inline&&!inline.disabled)setEditing(true);}}>
+   data-quick-grid-editable={inline&&!inline.disabled?'true':undefined}
+   onFocus={onFocus} onClick={()=>{onFocus();if(inline&&!inline.disabled)setEditing(true);}}>
    <span>{value}</span></button>}
   {warn&&<span className="qqs-cell-attention" role="img"
     aria-label={'Check missing information: '+label} title={'Needs attention: '+label}>!</span>}
@@ -120,10 +122,11 @@ function AreaTitleCell({quote,area,onSelect,onEdit}:{
 }){
  const [editing,setEditing]=useState(false);
  return <div className="qqs-cell qqs-pin-area qqs-area-name">
-  {editing?<span className="qqs-inline-title" onBlur={event=>{
+  {editing?<span className="qqs-inline-title" data-quick-grid-editable="true" onBlur={event=>{
    if(!event.currentTarget.contains(event.relatedTarget as Node))setEditing(false);
   }}><QuoteInlineAreaName quote={quote} section={area} autoFocus/></span>:
-   <button type="button" title={area.title} onClick={()=>{onSelect();setEditing(true);}}>
+   <button type="button" title={area.title} data-quick-grid-editable="true"
+    onFocus={onSelect} onClick={()=>{onSelect();setEditing(true);}}>
     {area.title||'New Area'}</button>}
   <button type="button" className="qqs-pencil" aria-label={'Area settings for '+area.title}
    onClick={()=>{setEditing(false);onEdit();}}>✎</button>
@@ -444,7 +447,8 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
      <button type="button" className="qqs-accent" disabled={!editable} onClick={onAddArea}>+ Area</button>
     </div>
    </header>
-   <div className="qqs-scroll" role="region" aria-label="Area summary spreadsheet" tabIndex={0} ref={table}>
+   <div className="qqs-scroll" role="region" aria-label="Area summary spreadsheet" tabIndex={0} ref={table}
+    onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}>
     <div className="qqs-grid qqs-header" role="row">
       <div className="qqs-cell qqs-pin-check"><input type="checkbox" aria-label="Select all Areas"
        checked={areas.length>0&&areas.every(area=>selected.includes(area.id))}
@@ -455,7 +459,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
     </div>
     {areas.map(area=>{
      const data=quickAreaSummary(quote,area);
-     return <div className="qqs-grid qqs-row" key={area.id} role="row">
+     return <div className="qqs-grid qqs-row" key={area.id} data-quick-grid-row={area.id} role="row">
       <div className="qqs-cell qqs-pin-check"><input type="checkbox" aria-label={'Select '+area.title}
        checked={selected.includes(area.id)} onChange={event=>choose(area.id,event.target.checked)}/></div>
       <AreaTitleCell quote={quote} area={area} onSelect={()=>setFocus('Area '+area.id)}
@@ -496,7 +500,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
       {cell(area.id,'total','Total price for '+area.title,amount(data.total))}
      </div>;
     })}
-    <div className="qqs-grid qqs-row qqs-general" role="row">
+    <div className="qqs-grid qqs-row qqs-general" data-quick-grid-row="general" role="row">
      <div className="qqs-cell qqs-pin-check"></div>
      <div className="qqs-cell qqs-pin-area"><button type="button" onClick={()=>open(null,'specialty')}>General</button></div>
      <div className="qqs-cell qqs-general-note">Unassigned charges, freight, discounts and fees</div>
