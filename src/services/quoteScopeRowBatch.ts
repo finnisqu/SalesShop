@@ -39,17 +39,31 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
       const sink=source.scope?.takeoffSinks?.find(item=>item.id===row.id);
       if(!sink)continue;
       if(operation!=='move'){
-        next=setQuoteTakeoffSinkCharge(next,sectionId,row.id,operation==='restore');
-        const changed=next.sections.find(item=>item.id===sectionId);
-        next=patchQuoteTakeoffSinks(next,sectionId,(changed?.scope?.takeoffSinks??[]).map(item=>
-          item.id===row.id?{...item,excludedFromContract:operation==='exclude'}:item));
+        if(operation==='exclude'){
+          next=patchQuoteTakeoffSinks(next,sectionId,
+            (source.scope?.takeoffSinks??[]).map(item=>item.id===row.id?
+              {...item,includeInPricing:false,excludedFromContract:true}:item));
+        }else{
+          next=setQuoteTakeoffSinkCharge(next,sectionId,row.id,true);
+          const changed=next.sections.find(item=>item.id===sectionId);
+          next=patchQuoteTakeoffSinks(next,sectionId,(changed?.scope?.takeoffSinks??[]).map(item=>
+            item.id===row.id?{...item,excludedFromContract:false}:item));
+        }
       }else if(targetSectionId&&targetSectionId!==sectionId){
+        if(next.sections.some(item=>item.id===targetSectionId&&
+          item.scope?.takeoffSinks?.some(existing=>existing.id===sink.id)))continue;
+        const originalLine=next.lines.find(item=>item.sectionId===sectionId&&item.takeoffSinkId===sink.id);
         next=patchQuoteTakeoffSinks(next,sectionId,
           (source.scope?.takeoffSinks??[]).filter(item=>item.id!==row.id));
         const dest=next.sections.find(item=>item.id===targetSectionId);
         next=patchQuoteTakeoffSinks(next,targetSectionId,
           [...(dest?.scope?.takeoffSinks??[]),sink],
           sink.includeInPricing?new Set([sink.id]):undefined);
+        const replacement=next.lines.find(item=>item.sectionId===targetSectionId&&item.takeoffSinkId===sink.id);
+        if(originalLine&&replacement)next={...next,lines:next.lines.map(item=>
+          item.id===replacement.id?{...item,id:originalLine.id}:item)};
+        else if(originalLine&&!replacement)next={...next,lines:[...next.lines,
+          {...originalLine,sectionId:targetSectionId,includeInTotal:false,customerVisible:false}]};
       }
       continue;
     }

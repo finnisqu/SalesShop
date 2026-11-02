@@ -47,10 +47,17 @@ describe('single-table scoped quote rows',()=>{
   expect(excluded.sections[0].scope?.takeoffSinks?.[0]).toMatchObject({
     name:'Vanity sink',excludedFromContract:true,includeInPricing:false});
   expect(quoteLinesTotal(excluded.lines)).toBe(0);
+  expect(excluded.lines).toHaveLength(1);
+  expect(excluded.lines[0].includeInTotal).toBe(false);
+  expect(excluded.lines[0].id).toBe(q.lines[0].id);
   expect(takeoffCustomerDetails(excluded.sections[0]).sinks).toEqual([]);
   const restored=applyQuoteScopeRowBatch(excluded,[row('sink','s','k')],'restore');
   expect(quoteLinesTotal(restored.lines)).toBe(250);
   expect(takeoffCustomerDetails(restored.sections[0]).sinks).toEqual(['2 × Vanity sink']);
+  const moved=applyQuoteScopeRowBatch(restored,[row('sink','s','k')],'move','b');
+  expect(moved.sections[1].scope?.takeoffSinks?.[0].id).toBe('s');
+  expect(moved.lines).toHaveLength(1);
+  expect(moved.lines[0]).toMatchObject({id:q.lines[0].id,sectionId:'b'});
  });
  it('excludes/restores a custom charge and allows moving multiple lines in one pure change',()=>{
   const charge=(id:string):QuoteLine=>({id,kind:'item',description:'Install',pricingMode:'direct',

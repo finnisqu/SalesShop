@@ -128,12 +128,22 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
   if(!section)return quote;
   const timestamp=new Date().toISOString();
   const managedExisting=quote.lines.filter(line=>line.sectionId===sectionId&&line.takeoffSinkId);
-  const keepIds=new Set(sinks.filter(s=>s.includeInPricing).map(s=>s.id));
+  // A deliberately struck-through sink keeps its existing, inactive line
+  // ID so normalized cloud sync cannot resurrect a stale charge on reload.
+  // Legacy specifications-only sinks still never create billable lines.
+  const keepIds=new Set(sinks.filter(s=>s.includeInPricing||s.excludedFromContract).map(s=>s.id));
   const lines=quote.lines.filter(line=>!line.takeoffSinkId
     || line.sectionId!==sectionId || keepIds.has(line.takeoffSinkId));
   for(const sink of sinks){
-    if(!sink.includeInPricing)continue;
     const existing=managedExisting.find(line=>line.takeoffSinkId===sink.id);
+    if(!sink.includeInPricing){
+      if(sink.excludedFromContract&&existing){
+        const index=lines.findIndex(item=>item.id===existing.id);
+        if(index>=0)lines[index]={...existing,quantity:sink.count,rate:sink.unitPrice,
+          includeInTotal:false,customerVisible:false};
+      }
+      continue;
+    }
     // Editing a saved legacy sink without a managed line cannot create a bill.
     const previous=section.scope?.takeoffSinks?.find(old=>old.id===sink.id);
     if(!existing&&previous?.includeInPricing&&!explicitIncludedIds?.has(sink.id))continue;
