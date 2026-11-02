@@ -26,6 +26,7 @@ import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import {assertMatchingApprovedDraft} from '../services/quoteIssueGuard';
 import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
+import {sectionFromQuoteAreaPreset,type QuoteAreaPresetId} from '../services/quoteAreaPresets';
 import {copySalesDocument} from '../services/quoteDocumentCopy';
 import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder } from '../services/quoteStructure';
 import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
@@ -77,6 +78,7 @@ interface QuoteState {
   setGeneralLineOrder: (quoteId: string, lineIds: string[]) => void;
   moveLine: (quoteId: string, lineId: string, sectionId?: string) => void;
   addSection: (quoteId: string) => string;
+  addAreaFromPreset: (quoteId:string,presetId:QuoteAreaPresetId)=>string;
   duplicateArea: (quoteId: string, sourceAreaId: string) => string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   setAllCustomerDisplayModes: (quoteId: string, mode: 'detail' | 'summary') => void;
@@ -634,6 +636,19 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     return section.id;
   },
 
+  addAreaFromPreset: (quoteId,presetId)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return '';
+    const section=sectionFromQuoteAreaPreset(presetId,uid('section'),()=>uid('takeoff'));
+    if(!section)return '';
+    // One undo step; no default sell lines, sink charges or made-up SF.
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId
+      ?{...q,sections:[...q.sections,section],updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
+    return section.id;
+  },
   updateSection: (quoteId, sectionId, patch) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;

@@ -50,6 +50,8 @@ import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRai
 import { QuoteBetaProgress } from './QuoteBetaProgress';
 import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
 import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
+import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
+import type {QuoteAreaPresetId} from '../services/quoteAreaPresets';
 import './quotes-beta-control-polish.css';
 import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
 import {InitialOpenDetails} from './InitialOpenDetails';
@@ -476,6 +478,7 @@ export function QuotesMobileBeta() {
   const select=useQuoteStore(s=>s.selectQuote);
   const update=useQuoteStore(s=>s.updateQuote);
   const addSection=useQuoteStore(s=>s.addSection);
+  const addAreaFromPreset=useQuoteStore(s=>s.addAreaFromPreset);
   const duplicateArea=useQuoteStore(s=>s.duplicateArea);
   const ensureGeneralTakeoff=useQuoteStore(s=>s.ensureGeneralTakeoff);
   const addLine=useQuoteStore(s=>s.addLine);
@@ -512,6 +515,7 @@ export function QuotesMobileBeta() {
   const [statusFilter,setStatusFilter]=useState<SalesDocumentStatusFilter>('active');
   const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
+  const [areaPresetsOpen,setAreaPresetsOpen]=useState(false);
   const [documentPreviewId,setDocumentPreviewId]=useState<string|null>(null);
   const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
@@ -636,13 +640,13 @@ export function QuotesMobileBeta() {
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
-    setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
+    setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const showLibrary=()=>{
-    setSelectionsOpen(false);setPage('library');setAreaId(null);
+    setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
     // Clearing the route ID makes Back reopen the selected editor, rather than
     // leaving a stale /quotes/:id URL on the document library.
     setView('quotes');
@@ -773,6 +777,11 @@ export function QuotesMobileBeta() {
       openArea(id);
     }
   };
+  const newAreaPreset=(presetId:QuoteAreaPresetId)=>{
+    if(!quote||!editable)return;
+    const id=addAreaFromPreset(quote.id,presetId);
+    if(id){setAreaPresetsOpen(false);openArea(id);}
+  };
   const advanceToNextArea=()=>{
     if(!quote||!area)return;
     const next=nextQuoteAreaAfter(quote,area.id);
@@ -891,7 +900,7 @@ export function QuotesMobileBeta() {
         onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}
         canManage={canManageLibrary}
         canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
-        onAddArea={newArea}
+        onAddArea={newArea} onAreaPresets={()=>setAreaPresetsOpen(true)}
         onSelections={()=>setSelectionsOpen(true)}
         />}
       <div className="qmb-desktop-main">
@@ -1057,7 +1066,11 @@ export function QuotesMobileBeta() {
           <div className="qmb-section-head" data-area-edit-workspace><h3>Areas</h3>
             <div className="qmb-areas-actions">
               <QuoteBetaAreaModeButton manager={areaManager}/>
-              {!areaManager.editing&&<button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>}
+              {!areaManager.editing&&<>
+                <button className="qmb-quiet" type="button" disabled={!editable}
+                  onClick={()=>setAreaPresetsOpen(true)}>Area layouts</button>
+                <button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>
+              </>}
             </div>
           </div>
           <div ref={mobileAreaRef} className={'qmb-inline-area-list'+(areaManager.editing?' is-managing-areas':'')}
@@ -1126,7 +1139,8 @@ export function QuotesMobileBeta() {
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}
           nextAreaLabel={detailsNextArea?.label}
           onContinueToArea={detailsNextArea?continueFromDetails:undefined}
-          onStartGeneral={detailsNextArea?openGeneralFromPricing:undefined}/>} 
+          onStartGeneral={detailsNextArea?openGeneralFromPricing:undefined}
+           onStartPreset={editable?()=>setAreaPresetsOpen(true):undefined}/>} 
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
             onReturnToReview={previewReturnQuoteId===quote.id?returnFromReviewPreview:undefined}/>
@@ -1194,6 +1208,10 @@ export function QuotesMobileBeta() {
         setDocumentPreviewId(null);
         requestQuoteMetadataPage(id,()=>setView('dashboard'));
       }}/>}
+    {quote&&page!=='library'&&editable&&areaPresetsOpen&&<QuoteAreaPresetPicker
+      onSelect={newAreaPreset}
+      onBlank={()=>{setAreaPresetsOpen(false);newArea();}}
+      onClose={()=>setAreaPresetsOpen(false)}/>}
     {showNewDocument&&<NewSalesDocumentPicker quotes={myQuotes}
       stockRateCount={stockRates.filter(item=>item.active).length}
       stockLevelReady={companyReady&&levelGuideReady}

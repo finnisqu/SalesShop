@@ -22,13 +22,14 @@ const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 
 export function QuoteBetaDesktopRails({
   quote,page,quoteTab,areaTab,areaId,
-  onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onSelections,onReviewFinding,onReviewIssue,
+  onLibrary,onQuoteTab,onArea,onAreaTab,onReview,onAddArea,onAreaPresets,onSelections,onReviewFinding,onReviewIssue,
   onUndo,onRedo,undoDepth,redoDepth,onSend,canIssue,canManage,canDelete,
   onCopy,onDelete,onArchive,onRevise,areaManager,onAreaContextMenu,onAreaContextKey,
 }:{
   quote:Quote;page:Page;quoteTab:QuoteTab;areaTab:AreaTab;areaId:string|null;
   onLibrary:()=>void;onQuoteTab:(tab:QuoteTab)=>void;onArea:(id:string)=>void;
   onAreaTab:(tab:AreaTab)=>void;onReview:()=>void;onAddArea:()=>void;
+  onAreaPresets:()=>void;
   onSelections:()=>void;onReviewFinding:(kind:'blockers'|'review'|'optional')=>void;
   onReviewIssue:(id:string)=>void;
   onUndo:()=>void;onRedo:()=>void;undoDepth:number;redoDepth:number;
@@ -77,8 +78,12 @@ export function QuoteBetaDesktopRails({
       </nav>
       {quote.documentType!=='pricing-schedule'&&<><div className="qmb-desktop-areas-head" data-area-edit-workspace><strong>Areas</strong>
         <QuoteBetaAreaModeButton manager={areaManager}/>
-        {!areaManager.editing&&<button type="button" disabled={!editable}
-          onClick={onAddArea} aria-label="Add Area from navigator">+ Add</button>}
+        {!areaManager.editing&&<>
+          <button type="button" disabled={!editable} onClick={onAreaPresets}
+            aria-label="Choose Area layout">Layouts</button>
+          <button type="button" disabled={!editable}
+            onClick={onAddArea} aria-label="Add Area from navigator">+ Add</button>
+        </>}
       </div>
       <nav ref={desktopAreaRef} className={'qmb-desktop-area-list'+(areaManager.editing?' is-managing-areas':'')}
         aria-label="Quote Areas" data-area-edit-workspace>
