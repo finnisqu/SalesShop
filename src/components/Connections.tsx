@@ -6,6 +6,8 @@ import { Button, Field, PageHeader, SectionTabs, StatusText } from '../design-sy
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
+import {usePersonalTaskStore} from '../store/personalTaskStore';
+import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
 import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
 import type { CompanyKind } from '../types/crm';
 
@@ -19,6 +21,17 @@ export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; descri
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
+const companyColumns:ConnectionColumn[]=[
+ {key:'name',label:'Company name'},{key:'type',label:'Relationship'},
+ {key:'people',label:'People'},{key:'deals',label:'Deals'},{key:'quotes',label:'Quotes'},
+ {key:'created',label:'Created'},{key:'updated',label:'Updated'}];
+const peopleColumns:ConnectionColumn[]=[
+ {key:'name',label:'Name'},{key:'company',label:'Company'},{key:'title',label:'Job title'},
+ {key:'email',label:'Email'},{key:'phone',label:'Phone'},{key:'updated',label:'Updated'}];
+const dealColumns:ConnectionColumn[]=[
+ {key:'name',label:'Deal name'},{key:'company',label:'Company'},{key:'stage',label:'Stage'},
+ {key:'due',label:'Due'},{key:'amount',label:'Value'},{key:'next',label:'Next action'},
+ {key:'updated',label:'Updated'}];
 
 /** Historical Overview/Activity selections must not revive hidden dashboard/log tabs. */
 export function resolveConnectionsLandingTab(stored: string | null): ConnectionsTab {
@@ -95,6 +108,7 @@ export function Connections() {
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const setView = useNavigationStore((state) => state.setView);
+  const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
@@ -126,6 +140,28 @@ export function Connections() {
       projectsById.get(activity.projectId ?? '')?.name).includes(needle))
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
     .slice(0, 150), [activities, companiesById, projectsById, needle]);
+
+  const companyTableRows:ConnectionTableRow[]=companyRows.map(c=>({
+    id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
+    values:{name:c.name,type:c.kind==='customer'?'Customer / prospect':'Partner / other',
+      people:String(contacts.filter(p=>p.companyId===c.id).length),
+      deals:String(projects.filter(p=>p.companyId===c.id).length),
+      quotes:String(quotesForCompany(c,projects,quotes).filter(q=>!q.archivedAt).length),
+      created:timeLabel(c.createdAt),updated:timeLabel(c.updatedAt)}}));
+  const peopleTableRows:ConnectionTableRow[]=peopleRows.map(c=>({
+    id:c.id,name:c.name||c.email||'Unnamed person',
+    association:{type:'contact',id:c.id,label:'Person · '+(c.name||c.email||'Unnamed')},
+    values:{name:c.name||c.email||'Unnamed person',company:companiesById.get(c.companyId??'')?.name??'',
+      title:c.title??'',email:c.email??'',phone:c.phone??'',updated:timeLabel(c.updatedAt)}}));
+  const dealTableRows:ConnectionTableRow[]=projectRows.map(d=>({
+    id:d.id,name:d.name,association:{type:'project',id:d.id,label:'Deal · '+d.name},
+    values:{name:d.name,company:d.companyName??companiesById.get(d.companyId??'')?.name??'',
+      stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
+      next:d.nextAction??'',updated:timeLabel(d.updatedAt)}}));
+  const bulkTask=(items:ConnectionTableRow[])=>{
+    beginTaskPromotion({target:'task',title:'Follow up: '+items.length+' '+tab,
+      sourceLabel:'Connections selection',associations:items.map(x=>x.association)});
+  };
 
   const addCompany = (event: FormEvent) => {
     event.preventDefault();
@@ -238,7 +274,9 @@ export function Connections() {
                 <div><button type="button" onClick={() => setCompanyCreating(false)}>Cancel</button><button type="submit" className="primary">Save & open</button></div>
               </form>}
               <p className="connections-count">{companyRows.length} companies · select to open the full account record</p>
-              <div className="connections-card-grid">
+              <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
+                rows={companyTableRows} onOpen={openCompany} onBulkTask={bulkTask}/>
+              <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
                   const peopleCount = contacts.filter((person) => person.companyId === company.id).length;
                   const projectCount = projects.filter((project) => project.companyId === company.id).length;
@@ -266,7 +304,9 @@ export function Connections() {
                 <div><button type="button" onClick={() => setPersonCreating(false)}>Cancel</button><button className="primary" type="submit" disabled={!newPerson.trim() && !newPersonEmail.trim()}>Add person</button></div>
               </form>}
               <p className="connections-count">{peopleRows.length} people · select a person to open their full record</p>
-              <div className="connections-card-grid">
+              <ConnectionsTable key="people" tableKey="people" columns={peopleColumns}
+                rows={peopleTableRows} onOpen={openPerson} onBulkTask={bulkTask}/>
+              <div className="connections-card-grid connections-legacy-cards">
                 {peopleRows.map((person) => <button type="button" className="connections-record connections-person-record" key={person.id} onClick={() => openPerson(person.id)}>
                   <span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
                   <strong>{person.name || person.email || 'Unnamed contact'}</strong>
@@ -291,7 +331,9 @@ export function Connections() {
                 <button type="submit" className="primary" disabled={!newDeal.trim()}>Create & open</button></div>
             </form>}
             <p className="connections-count">{projectRows.length} deals · stage, bid dates and quotes on each deal record</p>
-            <div className="connections-card-grid">
+            <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
+              rows={dealTableRows} onOpen={openProject} onBulkTask={bulkTask}/>
+            <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
                 const linked = quotesForProject(project, quotes).filter((q) => !q.archivedAt);
                 return <button type="button" key={project.id} className="connections-record" onClick={() => openProject(project.id)}>
