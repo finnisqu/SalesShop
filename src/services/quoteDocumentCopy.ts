@@ -1,4 +1,4 @@
-import type {Quote} from '../types/quote';
+import type {Quote,QuoteSlabPool} from '../types/quote';
 
 /**
  * Duplicate a document's work into a fresh draft and remap every quote-owned
@@ -9,7 +9,7 @@ import type {Quote} from '../types/quote';
 export function copySalesDocument(source:Quote,shell:Quote):Quote{
   const sections=structuredClone(source.sections);
   const lines=structuredClone(source.lines);
-  const sectionIds=new Map(sections.map(s=>[s.id,crypto.randomUUID()]));
+  const sectionIds=new Map<string,string>(sections.map(s=>[s.id,crypto.randomUUID()]));
   const sinkIds=new Map<string,string>();
   for(const section of sections){
     const oldId=section.id;
@@ -33,7 +33,7 @@ export function copySalesDocument(source:Quote,shell:Quote):Quote{
     }:undefined,
     takeoffSinkId:line.takeoffSinkId?(sinkIds.get(line.takeoffSinkId)??line.takeoffSinkId):undefined,
   }));
-  const remappedPools=source.slabPools?.map(pool=>({
+  const remappedPools:QuoteSlabPool[]|undefined=source.slabPools?.map(pool=>({
     ...structuredClone(pool),id:crypto.randomUUID(),
     sectionIds:pool.sectionIds.map(id=>sectionIds.get(id)).filter((id):id is string=>!!id),
   })).filter(pool=>pool.sectionIds.length>=2);

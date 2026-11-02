@@ -2,7 +2,7 @@ import {describe,expect,it} from 'vitest';
 import type {Quote} from '../types/quote';
 import {nextReviewFocus} from './quoteReviewReturn';
 const base=():Quote=>({id:'q',title:'Demo',status:'Draft',documentType:'quote',
- sections:[],lines:[],companyName:'Acme'} as Quote);
+ sections:[],lines:[],companyName:'Acme'} as unknown as Quote);
 describe('return from quote Review issue repair',()=>{
  it('keeps focus on a finding that still needs work',()=>{
   const quote=base();

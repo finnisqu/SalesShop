@@ -8,7 +8,7 @@ const area=(measured:boolean):Quote=>({
   sections:[{id:'kitchen',title:'Kitchen',
     scope:{takeoffPieces:measured?[{id:'top',name:'Top',count:1,lengthIn:72,widthIn:24}]:[]}}],
   lines:[],
-} as Quote);
+} as unknown as Quote);
 const noop=()=>{};
 const markup=(quote:Quote)=>renderToStaticMarkup(<QuoteBetaPricingOverview quote={quote}
   onArea={noop} onGeneral={noop} onResolve={noop} onReview={noop}/>);

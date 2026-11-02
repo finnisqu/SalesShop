@@ -44,7 +44,7 @@ describe('Connections foundation — privacy-first navigation', () => {
     for (const code of [
       "'companies'", "'people'", "'deals'", '<SectionTabs', '<PageHeader', '<Field', '<StatusText',
       'resolveCompany(name, newCompanyKind)', 'createContact({', 'previewRecord(\'person\'', 'openPerson(id)',
-      'openCompany(company.id)', 'openProject(project.id)',
+      'previewRecord(\'company\'', 'previewRecord(\'deal\'',
       'quotesForCompany(company, projects, quotes)', 'quotesForProject(project, quotes)',
       'setCompanyFilter', 'setQuery', 'connections-section-more', "chooseTab('activity')",
     ]) expect(page, `Missing Connections capability: ${code}`).toContain(code);

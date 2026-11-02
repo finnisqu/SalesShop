@@ -6,7 +6,7 @@ const doc=(id:string,documentType:'quote'|'pricing-schedule'|'change-order',arch
  ...(archived?{archivedAt:'2026-11-01T12:00:00Z'}:{}),
  sections:[],lines:[],pricingSchedule:documentType==='pricing-schedule'
   ?{route:'rate-sheet',publishSource:'rate-sheet',customerItems:[]}:undefined,
-} as Quote);
+} as unknown as Quote);
 describe('previous-document starter choices',()=>{
  const quotes=[doc('quick','quote'),doc('archived','quote',true),
   doc('schedule','pricing-schedule'),doc('change-order','change-order')];
