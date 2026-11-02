@@ -269,3 +269,11 @@
  .sales-app .qmb .qmb-desktop-frame.is-quick-quote-frame>.qmb-desktop-inspector{
   display:none;}
 }
+
+/* Pricing Review is a genuine full-width stage, not a narrow drawer inside Build Quote. */
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-scroll>.qmb-pagecontent:has(.qqr-workspace){
+ width:100%;max-width:none;padding:0;display:block;min-width:0;}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qqr-workspace .qqr-body{
+ width:100%;max-width:1300px;padding:18px clamp(12px,2.5vw,32px) 28px;}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qqr-workspace>.qqr-footer{
+ position:sticky;bottom:0;z-index:7;background:var(--qmb-card);}
