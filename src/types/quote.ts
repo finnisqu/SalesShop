@@ -324,6 +324,8 @@ export interface QuoteLine {
   internalCost?: number;
   /** Private source classification for itemized specialty costs; never changes selling math. */
   costCategory?: QuoteChargeCategory;
+  /** Absorbed production cost with no customer charge; requires an entered internalCost. */
+  internalOnlyCost?: boolean;
   productCode?: string;
   supplierName?: string;
   unitLabel?: string;
