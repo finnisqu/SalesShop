@@ -33,9 +33,6 @@ function EntityField({ label, value, suggestions, onChange, disabled=false }: {
         <input
           disabled={disabled}
           value={value}
-          role="combobox"
-          aria-autocomplete="list"
-          aria-expanded={visible.length>0}
           autoComplete="off"
           onFocus={() => setOpen(true)}
           onBlur={() => window.setTimeout(() => setOpen(false), 120)}

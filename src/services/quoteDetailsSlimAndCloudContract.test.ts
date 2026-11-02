@@ -28,10 +28,10 @@ describe('Quick Quote Details single-column and secure cloud-save contract',()=>
     expect(details).toContain("onKeyDownCapture={e=>onEnter('customer',e)}");
     expect(details).toContain("onKeyDownCapture={e=>onEnter('deal',e)}");
     expect(details).toContain("event.nativeEvent.isComposing");
-    expect(details).toContain("aria-expanded");
+    expect(details).toContain('.quote-crm-suggestions');
     expect(details).toContain('scrollIntoView');
     const crm=source('src/components/QuoteCrmFields.tsx');
-    expect(crm).toContain('aria-expanded={visible.length>0}');
+    expect(crm).toContain('visible[focused]?.onChoose()');
     expect(details).not.toContain("instanceof HTMLTextAreaElement");
   });
   it('removes Beta Classic shortcuts while preserving the Settings feature switch',()=>{

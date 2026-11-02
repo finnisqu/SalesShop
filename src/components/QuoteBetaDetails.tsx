@@ -29,7 +29,7 @@ export function QuoteBetaDetails({quote}:{quote:Quote}){
     const target=event.target;
     if(!(target instanceof HTMLInputElement)||!['text','email','search','url','tel'].includes(target.type))return;
     // Autocomplete selects its own suggestions with Enter.
-    if(target.getAttribute('aria-expanded')==='true'||target.closest('[role="combobox"]')?.getAttribute('aria-expanded')==='true')return;
+    if(target.closest('.quote-crm-input-wrap')?.querySelector('.quote-crm-suggestions'))return;
     const inputs=focusables(section),index=inputs.indexOf(target);
     if(index<0)return;
     const next=inputs.slice(index+1).find(el=>el.tagName!=='SUMMARY');
