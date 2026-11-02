@@ -37,9 +37,9 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
         go:onReview};
   return <div className="qmb-pricing-overview" aria-label="Quote-wide materials and pricing">
     <header className="qmb-pricing-overview-intro">
-      <div className="qmb-kicker">STEP 3 · MATERIALS &amp; PRICING</div>
-      <h2>Price the whole quote</h2>
-      <p>See selections and selling prices for every Area. Open one to change material, sinks, add-ons or rates. You can work in any order.</p>
+      <div className="qmb-kicker">STEP 4 · PRICING REVIEW</div>
+      <h2>Review quote pricing</h2>
+      <p>Review buying-cost coverage, selling prices and pricing findings across all Areas. Edit everyday line items in Takeoffs, or open Calculator for advanced pricing.</p>
     </header>
     <div className="qmb-pricing-overview-summary">
       <div><small>Quote total</small><strong>{currency.format(quoteTotal(quote))}</strong></div>

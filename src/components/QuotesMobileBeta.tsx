@@ -1157,7 +1157,7 @@ export function QuotesMobileBeta() {
           <nav className="qmb-tabs" aria-label="Quote views">
             {(quote.documentType==='pricing-schedule'
               ?([['build','Editor'],['details','Details'],['preview','Preview']] as const)
-              :([['details','Details'],['build','Areas'],['pricing','Pricing'],['preview','Preview']] as const)
+              :([['details','Details'],['build','Takeoffs'],['pricing','Price review'],['preview','Preview']] as const)
             ).map(([id,label])=>
               <button key={id} type="button" className={quoteTab===id?'active':''}
                 aria-current={quoteTab===id?'page':undefined}
