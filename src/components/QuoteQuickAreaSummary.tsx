@@ -348,7 +348,7 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
          onChange={e=>changeLine(line,{includeInTotal:e.target.checked})}/> Include in price</label>
         <strong>{amount(line.includeInTotal?quoteLineAmount(line):0)}</strong>
        </div>
-       {editable&&!line.quantitySource?.syncMode&&<button type="button" className="qqs-remove-action"
+       {editable&&line.quantitySource?.syncMode!=='live'&&!line.takeoffSinkId&&<button type="button" className="qqs-remove-action"
         onClick={()=>{
          if(window.confirm('Delete charge '+(line.description||'item')+'? You can Undo.'))
           store.deleteLine(quote.id,line.id);
