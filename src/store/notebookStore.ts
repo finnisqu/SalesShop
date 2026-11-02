@@ -106,7 +106,7 @@ let lastCheckpointAt = 0;
 const pagePast = new Map<string,NotebookEntry[]>();
 const pageFuture = new Map<string,NotebookEntry[]>();
 const pageLast = new Map<string,{key:string;at:number}>();
-const pageEditKey = /^(?:ink:(?:add|delete|move|clear)|object:(?:create|frame|text|tone|business|caption|sheet|duplicate|lock|layer|delete)):(\w+)(?::|$)/;
+const pageEditKey = /^(?:ink:(?:add|delete|move|clear)|object:(?:create|frame|text|tone|business|caption|sheet|duplicate|lock|layer|delete)):([^:]+)(?::|$)/;
 function savePageCheckpoint(state:NotebookState,key:string,coalesceMs:number,timestamp:number){
   const pageId=key.match(pageEditKey)?.[1];
   if(!pageId)return;
