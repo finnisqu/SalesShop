@@ -146,6 +146,8 @@ export interface QuoteAreaScope {
   /** Default for newly added pieces; individually overridden pieces keep their own choices. */
   takeoffDefaultSplashHeightIn?: number;
   takeoffDefaultEdgeProfile?: string;
+  /** Customer SF billing adjustment; physical slab calculations always use precise geometry. */
+  billableSfRounding?: 'exact'|'quarter-up'|'half-up'|'whole-up';
   /** Fraction of slab surface expected to be usable; 0.65 by default. */
   slabYield?: number;
   /** Optional manually adjusted whole-slab purchase count. */
