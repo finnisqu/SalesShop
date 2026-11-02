@@ -23,12 +23,15 @@ const detailName:Record<DetailKind,string>={
  price:'Material pricing',sinks:'Sinks',specialty:'Specialty charges',total:'Price breakdown',
 };
 /** Never bind a continually changing currency string to the numeric input. */
-function CommitNumber({value,onCommit,label,disabled=false,integer=false}:{
+function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFocus=false,onDone}:{
  value?:number;onCommit:(v:number|undefined)=>void;label:string;disabled?:boolean;integer?:boolean;
+ autoFocus?:boolean;onDone?:()=>void;
 }){
  const [draft,setDraft]=useState(value===undefined?'':String(value));
+ const cancelled=useRef(false);
  useEffect(()=>setDraft(value===undefined?'':String(value)),[value]);
  const commit=()=>{
+  if(cancelled.current){cancelled.current=false;return;}
   const raw=draft.trim();
   if(!raw){if(value!==undefined)onCommit(undefined);return;}
   const parsed=Number(raw);
@@ -37,23 +40,29 @@ function CommitNumber({value,onCommit,label,disabled=false,integer=false}:{
   }else setDraft(value===undefined?'':String(value));
  };
  return <input className="qqs-edit" type="text" inputMode="decimal" aria-label={label}
-  value={draft} disabled={disabled} placeholder="—"
-  onChange={event=>setDraft(event.target.value)} onBlur={commit}
+  value={draft} disabled={disabled} placeholder="—" autoFocus={autoFocus}
+  onChange={event=>setDraft(event.target.value)} onBlur={()=>{commit();onDone?.();}}
   onKeyDown={event=>{
    if(event.key==='Enter')event.currentTarget.blur();
-   if(event.key==='Escape'){setDraft(value===undefined?'':String(value));event.currentTarget.blur();}
+   if(event.key==='Escape'){cancelled.current=true;setDraft(value===undefined?'':String(value));event.currentTarget.blur();}
   }}/>;
 }
-function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,numeric=false}:{
+function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,numeric=false,inline}:{
  value:ReactNode;label:string;focused:boolean;onFocus:()=>void;onEdit:()=>void;
  muted?:boolean;warn?:boolean;numeric?:boolean;
+ inline?:{value:number|undefined;onCommit:(value:number|undefined)=>void;disabled:boolean};
 }){
+ const [editing,setEditing]=useState(false);
+ useEffect(()=>{if(!focused)setEditing(false);},[focused]);
  return <div className={'qqs-cell qqs-focusable'+(focused?' is-focused':'')+
   (muted?' is-muted':'')+(warn?' is-warning':'')+(numeric?' is-numeric':'')} role="group" aria-label={label}>
+  {editing&&inline?<CommitNumber label={label} value={inline.value} disabled={inline.disabled}
+    autoFocus onCommit={inline.onCommit} onDone={()=>setEditing(false)}/>:
   <button type="button" className="qqs-value" title={typeof value==='string'?value:label}
-   onClick={onFocus}><span>{value}</span></button>
-  <button type="button" className="qqs-pencil" aria-label={'Edit '+label}
-   title={'Edit '+label} onClick={onEdit}>✎</button>
+   onClick={()=>{onFocus();if(inline&&!inline.disabled)setEditing(true);else onEdit();}}>
+   <span>{value}</span></button>}
+  <button type="button" className="qqs-pencil" aria-label={'More settings: '+label}
+   title={'More settings: '+label} onClick={()=>{setEditing(false);onEdit();}}>✎</button>
  </div>;
 }
 function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced}:{
