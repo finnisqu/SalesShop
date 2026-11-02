@@ -15,6 +15,10 @@ export function QuotePrintPreview({quote,onClose,autoPrint=false}:{
  const [printing,setPrinting]=useState(false);
  const printStarted=useRef(false);
  useEffect(()=>{
+  document.body.classList.add('sales-quote-print-active');
+  return ()=>document.body.classList.remove('sales-quote-print-active');
+ },[]);
+ useEffect(()=>{
   const onKeyDown=(event:KeyboardEvent)=>{if(event.key==='Escape')onClose();};
   document.addEventListener('keydown',onKeyDown);
   return ()=>document.removeEventListener('keydown',onKeyDown);
