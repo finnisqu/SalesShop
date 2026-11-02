@@ -7,12 +7,12 @@ Scope: Quick Quote only (not Builder Rate Schedules or Plan Pricing). The guided
 From the repository root:
 
 ```sh
-npm ci
+bun install
 npm run build
 npm run test
 ```
 
-The `build` script runs TypeScript checking before Vite, so TypeScript failures invalidate the deployment. New targeted tests:
+The `build` script runs TypeScript checking before Vite, so TypeScript failures invalidate the deployment. **Dependency reproducibility is not yet established:** as of November 2, 2026, this repository has no committed `bun.lock` or `package-lock.json`. Generate `bun.lock` with a real `bun install`, commit it, and then configure deployments to use `bun install --frozen-lockfile`. Until then, Cloudflare resolves dependency versions on every build. New targeted tests:
 
 ```sh
 npx vitest run src/services/quoteGridNavigation.test.ts src/services/quoteQuickPricingParity.test.ts src/services/quoteQuickAreaSummary.test.ts src/services/quoteScopeRowBatch.test.ts src/services/quoteDeliveryApproval.test.ts
