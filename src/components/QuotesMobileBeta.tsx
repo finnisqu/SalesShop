@@ -919,7 +919,7 @@ export function QuotesMobileBeta() {
   // Stage shortcuts never mutate pricing or automatically issue a document.
   const openPricingStage=()=>{
     if(!quote||quote.documentType==='pricing-schedule')return;
-    navigateDocument('pricing');
+    openReview();
   };
   const openGeneralFromPricing=()=>{
     setFocusGeneralFromPricing(true);
@@ -1030,7 +1030,7 @@ export function QuotesMobileBeta() {
         onDetails={()=>navigateDocument('details')}
         onAreas={()=>navigateDocument('build')}
         onOpenArea={openArea} onAddArea={newArea} onPricing={openPricingStage}
-        onReview={openSend}/>} 
+        onReview={()=>navigateDocument('preview')}/>} 
     {page==='library'?<>
       <header className="qmb-top"><BuildBadge compact /><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/></div></header>
@@ -1157,7 +1157,7 @@ export function QuotesMobileBeta() {
           <nav className="qmb-tabs" aria-label="Quote views">
             {(quote.documentType==='pricing-schedule'
               ?([['build','Editor'],['details','Details'],['preview','Preview']] as const)
-              :([['details','Details'],['build','Takeoffs'],['pricing','Price review'],['preview','Preview']] as const)
+              :([['details','Details'],['build','Takeoffs & selections'],['preview','Contract review']] as const)
             ).map(([id,label])=>
               <button key={id} type="button" className={quoteTab===id?'active':''}
                 aria-current={quoteTab===id?'page':undefined}
