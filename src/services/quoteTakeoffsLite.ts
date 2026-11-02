@@ -64,6 +64,17 @@ export function totalTakeoffSf(pieces:QuoteTakeoffPiece[]):number {
 export function totalSplashLf(pieces:QuoteTakeoffPiece[]):number {
   return roundSf(pieces.reduce((acc,piece)=>acc+splashEdgeInches(piece),0)/12);
 }
+/** Explicit fabrication edges only. Edges on excluded pieces do not bill; their
+ * measured geometry remains stored for later revisions. */
+export function takeoffPieceMiterInches(piece:QuoteTakeoffPiece):number {
+ if(!isValidTakeoffPiece(piece))return 0;
+ return ((piece.miterFront?piece.lengthIn!:0)+
+   (piece.miterLeft?piece.widthIn!:0)+(piece.miterRight?piece.widthIn!:0))*piece.count;
+}
+export function totalBillableMiterInches(pieces:QuoteTakeoffPiece[]):number {
+ return Math.round(pieces.reduce((sum,piece)=>sum+
+   (piece.excludedFromQuote?0:takeoffPieceMiterInches(piece)),0)*100)/100;
+}
 export function totalSplashSf(pieces:QuoteTakeoffPiece[]):number {
   return roundSf(pieces.reduce((acc,piece)=>acc+takeoffPieceSplashSf(piece),0));
 }
@@ -258,18 +269,19 @@ export function patchQuoteTakeoff(
   const splashSf=totalSplashSf(pieces);
   const total=totalBillableTakeoffSf(pieces);
   const splash=totalBillableSplashLf(pieces);
+  const miter=totalBillableMiterInches(pieces);
   return {
     ...quote,
     sections:quote.sections.map(s=>s.id===sectionId
       ? {...s,scope:{...(s.scope??{}),takeoffPieces:pieces,
-        countertopSf:total,takeoffTopSf:topSf,takeoffSplashSf:splashSf,splashLf:splash}}
+        countertopSf:total,takeoffTopSf:topSf,takeoffSplashSf:splashSf,splashLf:splash,miterInches:miter}}
       : s),
     lines:quote.lines.map(line=>{
       const source=line.quantitySource;
       if(line.sectionId!==sectionId||line.pricingMode!=='quantity-rate'
         ||source?.kind!=='area-scope'||source.sectionId!==sectionId
-        ||(source.field!=='countertopSf'&&source.field!=='splashLf')||source.syncMode!=='live')return line;
-      const quantity=source.field==='splashLf'?splash:total;
+        ||(source.field!=='countertopSf'&&source.field!=='splashLf'&&source.field!=='miterInches')||source.syncMode!=='live')return line;
+      const quantity=source.field==='splashLf'?splash:source.field==='miterInches'?miter:total;
       return {...line,quantity,quantitySource:{...source,capturedValue:quantity,appliedAt}};
     }),
   };
@@ -292,7 +304,7 @@ export function detachQuoteTakeoff(quote:Quote, sectionId:string):Quote {
     lines:quote.lines.map(line=>{
       const source=line.quantitySource;
       if(line.sectionId!==sectionId || source?.kind!=='area-scope'
-        ||(source.field!=='countertopSf'&&source.field!=='splashLf')||source.sectionId!==sectionId||source.syncMode!=='live')return line;
+        ||(source.field!=='countertopSf'&&source.field!=='splashLf'&&source.field!=='miterInches')||source.sectionId!==sectionId||source.syncMode!=='live')return line;
       const {syncMode: _live, ...snapshot}=source;
       void _live;
       return {...line,quantitySource:snapshot};
