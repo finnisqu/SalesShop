@@ -1,0 +1,138 @@
+/* Quick Quote: dense one-line rollups, no form controls in the row. */
+.sales-app .qmb .qqs-summary{display:flex;flex-direction:column;min-width:0;
+ border:1px solid var(--qmb-border);border-radius:9px;
+ background:var(--qmb-card);color:var(--qmb-ink);overflow:hidden;}
+.sales-app .qmb .qqs-summary-head{display:flex;align-items:center;justify-content:space-between;
+ padding:10px 12px;gap:10px;min-height:48px;}
+.sales-app .qmb .qqs-summary-head>div:first-child{display:flex;align-items:baseline;gap:10px;min-width:0;}
+.sales-app .qmb .qqs-summary-head h3{font-size:14px;margin:0;white-space:nowrap;font-weight:850;}
+.sales-app .qmb .qqs-summary-head span{font-size:10px;color:var(--qmb-muted);}
+.sales-app .qmb .qqs-inline-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.sales-app .qmb .qqs-inline-actions>button,.sales-app .qmb .qqs-bulk button{
+ min-height:29px;white-space:nowrap;padding:5px 9px;border:1px solid var(--qmb-border);
+ background:var(--qmb-card);border-radius:6px;font-size:11px;font-weight:760;
+ color:var(--qmb-accent);}
+.sales-app .qmb .qqs-inline-actions .qqs-accent{background:var(--qmb-tint);}
+.sales-app .qmb .qqs-scroll{overflow:auto;scrollbar-width:thin;
+ min-width:0;max-width:100%;width:100%;max-height:min(64vh,720px);
+ overscroll-behavior:contain;}
+.sales-app .qmb .qqs-grid{
+ display:grid;grid-template-columns:34px 154px 240px 103px 114px 86px 112px 96px 119px 120px;
+ width:max-content;min-width:100%;align-items:stretch;}
+.sales-app .qmb .qqs-cell{position:relative;display:flex;align-items:center;
+ min-width:0;min-height:38px;max-height:38px;padding:0 9px;gap:4px;
+ border-right:1px solid var(--qmb-border);border-bottom:1px solid var(--qmb-border);
+ font-size:11px;line-height:1.2;font-variant-numeric:tabular-nums;
+ background:var(--qmb-card);overflow:hidden;}
+.sales-app .qmb .qqs-cell:last-child{border-right:0;}
+.sales-app .qmb .qqs-header .qqs-cell{min-height:36px;max-height:36px;
+ background:var(--qmb-tint);font-weight:810;color:var(--qmb-muted);
+ font-size:10px;white-space:nowrap;}
+.sales-app .qmb .qqs-row:hover>.qqs-cell{background:var(--qmb-bg);}
+.sales-app .qmb .qqs-pin-check{position:sticky;left:0;z-index:5;justify-content:center;
+ padding:0;background:var(--qmb-card)!important;}
+.sales-app .qmb .qqs-pin-area{position:sticky;left:34px;z-index:4;
+ border-right:2px solid var(--qmb-border);background:var(--qmb-card)!important;}
+.sales-app .qmb .qqs-header .qqs-pin-check,
+.sales-app .qmb .qqs-header .qqs-pin-area{background:var(--qmb-tint)!important;z-index:7;}
+.sales-app .qmb .qqs-cell input[type="checkbox"]{width:14px;height:14px;margin:0;
+ accent-color:var(--qmb-accent);}
+.sales-app .qmb .qqs-area-name>button:first-child{border:0;background:none;
+ color:var(--qmb-ink);font-size:11px;font-weight:800;flex:1;min-width:0;
+ white-space:nowrap;text-align:left;overflow:hidden;text-overflow:ellipsis;padding:0;}
+.sales-app .qmb .qqs-focusable{padding-right:4px;}
+.sales-app .qmb .qqs-value{border:0;background:transparent;color:var(--qmb-ink);
+ display:block;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ flex:1;min-width:0;font-size:11px;line-height:38px;height:38px;padding:0;}
+.sales-app .qmb .qqs-value>span{display:block;white-space:nowrap;
+ overflow:hidden;text-overflow:ellipsis;}
+.sales-app .qmb .qqs-cell.is-muted .qqs-value{color:var(--qmb-muted);}
+.sales-app .qmb .qqs-pencil{opacity:0;pointer-events:none;flex:0 0 22px;
+ width:22px;height:23px;display:grid;place-items:center;
+ border:1px solid var(--qmb-border);border-radius:5px;
+ background:var(--qmb-card);color:var(--qmb-accent);font-size:14px;padding:0;
+ transition:opacity .12s ease;}
+.sales-app .qmb .qqs-cell:hover .qqs-pencil,
+.sales-app .qmb .qqs-cell:focus-within .qqs-pencil,
+.sales-app .qmb .qqs-cell.is-focused .qqs-pencil{opacity:1;pointer-events:auto;}
+.sales-app .qmb .qqs-cell.is-focused{background:var(--qmb-tint);outline:-1px solid var(--qmb-accent);}
+.sales-app .qmb .qqs-cell.is-warning{box-shadow:inset 0 -2px 0 var(--ss-warning,#c89240);}
+.sales-app .qmb .qqs-general .qqs-cell{background:var(--qmb-bg);}
+.sales-app .qmb .qqs-general .qqs-pin-area,.sales-app .qmb .qqs-general .qqs-pin-check{
+ background:var(--qmb-bg)!important;}
+.sales-app .qmb .qqs-general-note{color:var(--qmb-muted);font-size:10px;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sales-app .qmb .qqs-summary-total{display:flex;align-items:center;justify-content:flex-end;
+ gap:14px;padding:10px 14px;background:var(--qmb-card);}
+.sales-app .qmb .qqs-summary-total span{color:var(--qmb-muted);font-size:11px;}
+.sales-app .qmb .qqs-summary-total strong{font-size:16px;}
+.sales-app .qmb .qqs-bulk{display:flex;align-items:center;gap:8px;
+ padding:7px 10px;background:var(--qmb-tint);font-size:11px;flex-wrap:wrap;}
+.sales-app .qmb .qqs-bulk select{border:1px solid var(--qmb-border);
+ border-radius:5px;background:var(--qmb-card);color:var(--qmb-ink);min-height:29px;}
+/* Portal uses .sales-app so this drawer inherits the active company theme. */
+.sales-app .qmb.qqs-overlay{position:fixed;inset:0;z-index:10020;
+ width:100vw;height:100dvh;min-width:0;min-height:0;display:flex;justify-content:flex-end;
+ background:rgba(12,23,28,.48);overflow:visible;isolation:isolate;}
+.sales-app .qmb.qqs-overlay .qqs-panel{display:flex;flex-direction:column;
+ height:100dvh;width:min(450px,100vw);min-width:0;min-height:0;
+ background:var(--qmb-card);color:var(--qmb-ink);
+ box-shadow:-12px 0 38px rgba(0,0,0,.23);border-left:1px solid var(--qmb-border);
+ opacity:1;isolation:isolate;}
+.sales-app .qmb .qqs-panel>header{display:flex;align-items:center;justify-content:space-between;
+ padding:14px 16px;min-height:67px;gap:8px;border-bottom:1px solid var(--qmb-border);}
+.sales-app .qmb .qqs-panel>header small{font-size:10px;color:var(--qmb-muted);font-weight:760;}
+.sales-app .qmb .qqs-panel>header h2{font-size:17px;margin:3px 0 0;}
+.sales-app .qmb .qqs-panel-close{border:0;background:none;font-size:23px;
+ color:var(--qmb-ink);width:32px;height:32px;}
+.sales-app .qmb .qqs-panel-body{flex:1;min-height:0;overflow-y:auto;
+ padding:14px 16px 22px;display:flex;flex-direction:column;align-items:stretch;gap:14px;}
+.sales-app .qmb .qqs-panel-body>p{font-size:12px;line-height:1.5;color:var(--qmb-muted);margin:0;}
+.sales-app .qmb .qqs-panel-body>small{font-size:10px;color:var(--qmb-muted);}
+.sales-app .qmb .qqs-panel-body label{display:grid;gap:5px;font-weight:760;
+ font-size:11px;color:var(--qmb-ink);}
+.sales-app .qmb .qqs-panel-body :is(input[type="text"],select){
+ min-height:35px;max-width:100%;width:100%;background:var(--qmb-card);
+ border:1px solid var(--qmb-border);border-radius:7px;
+ padding:6px 8px;color:var(--qmb-ink);font-size:12px;font-weight:500;}
+.sales-app .qmb .qqs-panel-body input[type="checkbox"]{width:15px;height:15px;accent-color:var(--qmb-accent);}
+.sales-app .qmb .qqs-panel-body .qqs-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sales-app .qmb .qqs-metrics>div{background:var(--qmb-bg);padding:11px;
+ border:1px solid var(--qmb-border);display:grid;gap:4px;border-radius:8px;}
+.sales-app .qmb .qqs-metrics span,.sales-app .qmb .qqs-metric span{
+ font-size:10px;color:var(--qmb-muted);}
+.sales-app .qmb .qqs-metrics strong{font-size:18px;}
+.sales-app .qmb .qqs-metric{padding:10px;background:var(--qmb-bg);border-radius:8px;
+ display:grid;gap:3px;overflow-wrap:anywhere;}
+.sales-app .qmb .qqs-item-card{border:1px solid var(--qmb-border);border-radius:9px;
+ background:var(--qmb-bg);display:grid;gap:11px;padding:11px;}
+.sales-app .qmb .qqs-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sales-app .qmb .qqs-item-total{display:flex;align-items:center;justify-content:space-between;
+ gap:10px;border-top:1px solid var(--qmb-border);padding-top:8px;}
+.sales-app .qmb .qqs-item-total label{display:flex;flex-direction:row;
+ align-items:center;gap:7px;font-size:11px;}
+.sales-app .qmb .qqs-secondary{min-height:36px;width:100%;border:1px solid var(--qmb-border);
+ border-radius:7px;background:var(--qmb-tint);color:var(--qmb-accent);font-weight:800;
+ padding:7px 10px;font-size:12px;}
+.sales-app .qmb .qqs-panel-body .qtl-combobox{position:relative;}
+.sales-app .qmb .qqs-panel-body .qtl-combobox>input{width:100%;}
+.sales-app .qmb .qqs-panel-body .qtl-combobox-menu{max-height:360px;overflow:auto;z-index:40;}
+.sales-app .qmb .qqs-breakdown{display:grid;grid-template-columns:1fr auto;gap:9px;
+ border:1px solid var(--qmb-border);border-radius:9px;padding:14px;}
+.sales-app .qmb .qqs-breakdown strong{text-align:right;}
+.sales-app .qmb .qqs-breakdown span:nth-last-child(2),
+.sales-app .qmb .qqs-breakdown strong:last-child{font-weight:850;
+ border-top:1px solid var(--qmb-border);padding-top:10px;}
+.sales-app .qmb .qqs-panel>footer{display:flex;justify-content:flex-end;padding:10px 16px;
+ border-top:1px solid var(--qmb-border);}
+.sales-app .qmb .qqs-panel>footer button{border:1px solid var(--qmb-border);
+ color:var(--qmb-accent);background:var(--qmb-tint);border-radius:7px;
+ font-size:12px;font-weight:800;padding:8px 18px;}
+@media(max-width:650px){
+ .sales-app .qmb .qqs-summary-head>div:first-child{display:grid;gap:2px;}
+ .sales-app .qmb .qqs-summary-head span{font-size:9px;}
+ .sales-app .qmb .qqs-summary-head{padding:8px;}
+ .sales-app .qmb .qqs-grid{grid-template-columns:34px 125px 195px 100px 110px 75px 100px 80px 105px 110px;}
+ .sales-app .qmb .qqs-pin-area{left:34px;}
+ .sales-app .qmb .qqs-panel-body{padding:12px;}
+}
