@@ -98,6 +98,20 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
    title={'More settings: '+label} onClick={()=>{setEditing(false);onEdit();}}>✎</button>
  </div>;
 }
+function AreaTitleCell({quote,area,onSelect,onEdit}:{
+ quote:Quote;area:QuoteSection;onSelect:()=>void;onEdit:()=>void;
+}){
+ const [editing,setEditing]=useState(false);
+ return <div className="qqs-cell qqs-pin-area qqs-area-name">
+  {editing?<span className="qqs-inline-title" onBlur={event=>{
+   if(!event.currentTarget.contains(event.relatedTarget as Node))setEditing(false);
+  }}><QuoteInlineAreaName quote={quote} section={area} autoFocus/></span>:
+   <button type="button" title={area.title} onClick={()=>{onSelect();setEditing(true);}}>
+    {area.title||'New Area'}</button>}
+  <button type="button" className="qqs-pencil" aria-label={'Area settings for '+area.title}
+   onClick={()=>{setEditing(false);onEdit();}}>✎</button>
+ </div>;
+}
 function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,onNext}:{
  quote:Quote;detail:Detail;onClose:()=>void;onCalculator:(id:string|null)=>void;
  onNext:(kind:DetailKind)=>void;
@@ -386,11 +400,8 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
      return <div className="qqs-grid qqs-row" key={area.id} role="row">
       <div className="qqs-cell qqs-pin-check"><input type="checkbox" aria-label={'Select '+area.title}
        checked={selected.includes(area.id)} onChange={event=>choose(area.id,event.target.checked)}/></div>
-      <div className="qqs-cell qqs-pin-area qqs-area-name">
-       <button type="button" title={area.title}
-        onClick={()=>open(area.id,'area')}>{area.title||'New Area'}</button>
-       <button type="button" className="qqs-pencil" aria-label={'Edit Area '+area.title}
-        onClick={()=>open(area.id,'area')}>✎</button></div>
+      <AreaTitleCell quote={quote} area={area} onSelect={()=>setFocus('Area '+area.id)}
+       onEdit={()=>open(area.id,'area')}/>
       {cell(area.id,'material','Stone selection for '+area.title,
         area.scope?.takeoffMaterial||'Choose stone',!area.scope?.takeoffMaterial,!area.scope?.takeoffMaterial)}
       {cell(area.id,'sf','Square feet for '+area.title,
