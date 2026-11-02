@@ -5,6 +5,7 @@ import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
+import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {newTakeoffPiece,newTakeoffSink,takeoffPieceSf,takeoffPieceSplashSf,
  parseInches,takeoffPieceMiterInches} from '../services/quoteTakeoffsLite';
@@ -29,7 +30,7 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
   if(cancelled.current){cancelled.current=false;setEditing(false);return;}
   const raw=draft.trim();
   if(!raw){if(value!==undefined)commit(undefined);setEditing(false);return;}
-  const n=inches?parseInches(raw):Number(raw);
+  const n=inches?parseInches(raw):parseQuickGridNumber(raw);
   if(n!==undefined&&Number.isFinite(n)&&(n>=0||allowNegative)&&(!integer||Number.isInteger(n))){
    if(n!==value)commit(n);
   }else setDraft(value===undefined?'':String(value));
