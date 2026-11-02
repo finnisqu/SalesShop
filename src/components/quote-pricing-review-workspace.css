@@ -1,0 +1,35 @@
+/* Full-width, guided pricing review — not a flyout or an inspector. */
+.sales-app .qmb .qqr-workspace{display:flex;flex-direction:column;min-width:0;min-height:0;max-width:100%;width:100%;background:var(--qmb-bg);}
+.sales-app .qmb .qqr-pagehead{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 16px;border-bottom:1px solid var(--qmb-border);}
+.sales-app .qmb .qqr-pagehead>div{display:grid;gap:3px;}
+.sales-app .qmb .qqr-pagehead small{font-size:10px;font-weight:800;letter-spacing:.09em;color:var(--qmb-muted);}
+.sales-app .qmb .qqr-pagehead strong{font-size:19px;color:var(--qmb-ink);}
+.sales-app .qmb .qqr-pagehead p{margin:0;font-size:11px;color:var(--qmb-muted);}
+.sales-app .qmb .qqr-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--qmb-card);padding:8px 14px;gap:6px;border-bottom:1px solid var(--qmb-border);}
+.sales-app .qmb .qqr-steps button{display:flex;align-items:center;gap:9px;border:1px solid var(--qmb-border);border-radius:7px;min-height:40px;padding:6px 10px;background:var(--qmb-card);color:var(--qmb-ink);text-align:left;}
+.sales-app .qmb .qqr-steps button>span{display:grid;place-items:center;width:23px;height:23px;flex:0 0 23px;border:1px solid var(--qmb-border);border-radius:50%;font-weight:800;font-size:11px;}
+.sales-app .qmb .qqr-steps button strong{font-size:11px;line-height:1.25;}
+.sales-app .qmb .qqr-steps button small{margin-left:auto;font-size:10px;color:var(--qmb-muted);}
+.sales-app .qmb .qqr-steps button.is-active{background:var(--qmb-tint);border-color:var(--qmb-accent);color:var(--qmb-accent);}
+.sales-app .qmb .qqr-body{width:100%;max-width:1280px;margin-inline:auto;padding:20px clamp(12px,2.5vw,30px);display:grid;gap:16px;min-height:0;}
+.sales-app .qmb .qqr-stage{display:grid;gap:13px;align-content:start;min-width:0;}
+.sales-app .qmb .qqr-stage h3{font-size:18px;margin:0;}
+.sales-app .qmb .qqr-stage>p{margin:0;color:var(--qmb-muted);font-size:12px;line-height:1.5;}
+.sales-app .qmb .qqr-table-scroll{max-width:100%;overflow:auto;border:1px solid var(--qmb-border);border-radius:9px;background:var(--qmb-card);}
+.sales-app .qmb .qqr-table-scroll table{border-collapse:collapse;width:100%;min-width:810px;font-size:12px;}
+.sales-app .qmb .qqr-table-scroll th,.sales-app .qmb .qqr-table-scroll td{padding:10px 13px;border-bottom:1px solid var(--qmb-border);text-align:right;white-space:nowrap;}
+.sales-app .qmb .qqr-table-scroll th:first-child,.sales-app .qmb .qqr-table-scroll td:nth-child(2){text-align:left;max-width:240px;text-overflow:ellipsis;overflow:hidden;}
+.sales-app .qmb .qqr-table-scroll thead th{background:var(--qmb-tint);font-size:11px;color:var(--qmb-muted);}
+.sales-app .qmb .qqr-grand-total{display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:14px;border-top:1px solid var(--qmb-border);}
+.sales-app .qmb .qqr-grand-total strong{font-size:21px;}
+.sales-app .qmb .qqr-cost-rows{display:grid;gap:6px;}
+.sales-app .qmb .qqr-cost-row{display:grid;grid-template-columns:minmax(150px,2fr) minmax(150px,1fr) minmax(95px,.5fr);gap:10px;padding:11px 14px;border:1px solid var(--qmb-border);border-radius:7px;background:var(--qmb-card);font-size:12px;}
+.sales-app .qmb .qqr-cost-row span:last-child{text-align:right;font-variant-numeric:tabular-nums;}
+.sales-app .qmb .qqr-body>.qsr-panel{margin:0;}
+.sales-app .qmb .qqr-body>.qmb-review-checklist{max-width:100%;width:100%;}
+.sales-app .qmb .qqr-body>.qmb-audit-delivery{max-width:100%;width:100%;}
+.sales-app .qmb .qqr-footer{display:flex;justify-content:space-between;gap:12px;padding:10px 18px;}
+.sales-app .qmb .qqr-footer>div{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;}
+.sales-app .qmb .qqr-footer small{color:var(--qmb-muted);font-size:11px;}
+.sales-app .qmb .qqr-footer button{min-height:37px;padding:8px 15px;border-radius:7px;font-weight:750;}
+@media(max-width:720px){.sales-app .qmb .qqr-steps{gap:3px;padding:5px;}.sales-app .qmb .qqr-steps button{padding:5px 3px;flex-direction:column;justify-content:center;min-height:59px;gap:3px;}.sales-app .qmb .qqr-steps button strong{font-size:9px;text-align:center;}.sales-app .qmb .qqr-steps button small{display:none;}.sales-app .qmb .qqr-cost-row{grid-template-columns:1fr 1fr;}.sales-app .qmb .qqr-cost-row span:last-child{grid-column:1 / -1;text-align:left;}.sales-app .qmb .qqr-footer small{display:none;}}
