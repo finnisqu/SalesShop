@@ -97,7 +97,8 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(printPreview).toContain('<CustomerPreview quote={quote}/>');
   expect(printPreview).not.toContain('editing={');
   expect(printPreview).toContain('window.print()');
-  expect(printCss).toContain('body>*:not(#sales-quote-print-root){display:none!important;}');
+  expect(printCss).toContain('body.sales-quote-print-active>*:not(#sales-quote-print-root){display:none!important;}');
+  expect(printPreview).toContain("document.body.classList.add('sales-quote-print-active')");
   expect(printCss).toContain('.qpp-toolbar{display:none!important;}');
   expect(printCss).toContain('@page{size:letter;');
  });
