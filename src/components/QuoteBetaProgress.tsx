@@ -6,7 +6,7 @@ import './quote-beta-progress.css';
 type Props={
  quote:Quote;current:QuoteBuilderStageId;editable:boolean;onDetails:()=>void;
  onAreas:()=>void;onOpenArea:(id:string)=>void;onAddArea:()=>void;
- /** Open the actual Review drawer; no separate Materials & Pricing step. */
+ /** Open the dedicated Pricing Review stage; no separate Materials & Pricing step. */
  onPricing:()=>void;
  /** Open the customer preview with its presentation choices. */
  onReview:()=>void;
@@ -40,7 +40,7 @@ export function QuoteBetaProgress({quote,current,onDetails,onAreas,onPricing,onR
    {progress.stages.map(stage=><span key={stage.id} className={'qmb-guide-progress-piece is-'+stage.state}/>)}
   </div>
   <div className="qmb-guide-caption">
-   <small>Edit Takeoffs, selections and selling prices together. Review opens a drawer; Contract review opens the customer preview.</small>
+   <small>Edit Takeoffs, selections and selling prices together. Pricing Review opens a dedicated page; Contract Review opens the customer preview.</small>
    {nextStage&&<button type="button" className="qmb-guide-next" onClick={()=>visit(nextStage.id)}>
     Continue: {nextStage.label} <span aria-hidden="true">›</span></button>}
   </div>
