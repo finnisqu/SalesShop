@@ -51,6 +51,16 @@ function NumberCell({value,label,disabled,min=0,max=10000,integer=false,inches=f
 }
 function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectMany,onCalc,onAdvanced}:ScopeTableProps){
  const editable=quoteIsCommerciallyEditable(quote);
+ const [materialOpen,setMaterialOpen]=useState(false);
+ const materialAnchor=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+  if(!materialOpen)return;
+  const dismiss=(event:PointerEvent)=>{
+   if(!materialAnchor.current?.contains(event.target as Node))setMaterialOpen(false);
+  };
+  document.addEventListener('pointerdown',dismiss);
+  return()=>document.removeEventListener('pointerdown',dismiss);
+ },[materialOpen]);
  const store=useQuoteStore.getState();
  const id=section?.id;
  const pieces=section?.scope?.takeoffPieces??[];
@@ -172,11 +182,30 @@ function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectM
     </select>}
    </div>
    {section&&!general?<div className="qwt-summary-grid">
-     <label className={'qwt-summary-material'+(pieces.length>0&&!section.scope?.takeoffMaterial?.trim()?' qwt-needs-review':'')} title={pieces.length&&!section.scope?.takeoffMaterial?'Choose a material for these pieces':undefined}><span>Material</span>
-       <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
-        selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
-        onTextChange={name=>store.selectTakeoffMaterial(quote.id,id!,name)}
-        onSelect={(reference,label)=>store.selectTakeoffMaterial(quote.id,id!,label,reference)}/></label>
+     <div ref={materialAnchor} className={'qwt-summary-material qwt-material-anchor'+
+       (pieces.length>0&&!section.scope?.takeoffMaterial?.trim()?' qwt-needs-review':'')}>
+       <span>Material</span>
+       <button type="button" className="qwt-material-trigger" disabled={!editable}
+        aria-expanded={materialOpen} aria-haspopup="dialog"
+        aria-label={'Select material for '+section.title}
+        onClick={()=>setMaterialOpen(v=>!v)}>
+        <strong>{section.scope?.takeoffMaterial||'Choose material'}</strong><span aria-hidden="true">▾</span>
+       </button>
+       {section.scope?.takeoffMaterialReference?.materialId&&
+         <small>✓ Catalog selection</small>}
+       {materialOpen&&<div className="qwt-material-popover" role="dialog"
+         aria-label={'Material catalog for '+section.title}>
+         <div className="qwt-material-popover-head"><strong>Choose a material</strong>
+          <button type="button" onClick={()=>setMaterialOpen(false)} aria-label="Close material picker">×</button></div>
+         <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
+           selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
+           onTextChange={name=>store.selectTakeoffMaterial(quote.id,id!,name)}
+           onSelect={(reference,label)=>{
+             store.selectTakeoffMaterial(quote.id,id!,label,reference);
+             setMaterialOpen(false);
+           }}/>
+       </div>}
+     </div>
      <div className="qwt-sf-cell"><span>Measured SF</span>
        <strong>{sf.format(totalBillableTakeoffSf(pieces))}</strong>
        <select aria-label={'SF billing rounding for '+section.title}
