@@ -28,3 +28,104 @@
  background:var(--qmb-card);color:var(--qmb-accent);}
 @media(max-width:600px){.sales-app .qmb .qca-workspace>header{flex-wrap:wrap;}
  .sales-app .qmb .qca-actions button{width:100%;}}
+
+/* Issued state: a compact, readable handoff instead of an approval heading
+ * followed by unrelated full-width buttons. All UI chrome follows the theme. */
+.sales-app .qmb .qca-workspace.is-issued{gap:10px;max-width:1180px;margin-top:14px;}
+.sales-app .qmb .qca-workspace.is-issued>header{background:var(--qmb-card);padding:12px 15px;}
+.sales-app .qmb .qca-issued-flow{display:grid;gap:12px;min-width:0;}
+.sales-app .qmb .qca-issued-summary{display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:14px;padding:15px 17px;background:var(--qmb-card);
+ border:1px solid var(--qmb-border);border-radius:10px;}
+.sales-app .qmb .qca-issued-summary-main{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 280px;}
+.sales-app .qmb .qca-issued-check{display:grid;place-items:center;width:35px;height:35px;
+ flex:0 0 35px;border-radius:50%;background:var(--qmb-tint);
+ border:1px solid var(--qmb-border);color:var(--qmb-accent);font-size:18px;font-weight:900;}
+.sales-app .qmb .qca-issued-summary-main>div{display:grid;gap:3px;min-width:0;}
+.sales-app .qmb .qca-issued-summary-main strong{font-size:14px;}
+.sales-app .qmb .qca-issued-summary-main p{margin:0;font-size:11px;line-height:1.45;color:var(--qmb-muted);}
+.sales-app .qmb .qca-issued-summary-actions{display:flex;align-items:center;justify-content:flex-end;
+ flex-wrap:wrap;gap:9px;min-width:0;}
+.sales-app .qmb .qca-issued-pill{display:inline-flex;align-items:center;min-height:27px;
+ border:1px solid var(--qmb-border);background:var(--qmb-tint);color:var(--qmb-accent);
+ border-radius:100px;padding:3px 10px;font-size:11px;font-weight:800;}
+.sales-app .qmb .qca-issued-summary-actions button{min-height:34px;padding:7px 11px;
+ border-radius:7px;font-size:11px;font-weight:800;}
+.sales-app .qmb .qca-issued-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;}
+.sales-app .qmb .qca-issued-section{display:grid;align-content:start;gap:12px;min-width:0;
+ padding:16px;background:var(--qmb-card);border:1px solid var(--qmb-border);border-radius:10px;}
+.sales-app .qmb .qca-issued-section-head{display:flex;align-items:start;gap:10px;}
+.sales-app .qmb .qca-issued-step{display:grid;place-items:center;flex:0 0 24px;
+ width:24px;height:24px;border:1px solid var(--qmb-border);border-radius:50%;
+ background:var(--qmb-tint);color:var(--qmb-accent);font-size:11px;font-weight:850;}
+.sales-app .qmb .qca-issued-section-head>div{display:grid;gap:3px;min-width:0;}
+.sales-app .qmb .qca-issued-section-head h4{font-size:13px;margin:1px 0 0;font-weight:850;}
+.sales-app .qmb .qca-issued-section-head p{font-size:11px;line-height:1.45;margin:0;color:var(--qmb-muted);}
+.sales-app .qmb .qca-issued-signing{display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:12px;padding:13px 16px;border-radius:10px;
+ background:var(--qmb-bg);border:1px solid var(--qmb-border);}
+.sales-app .qmb .qca-issued-signing>div{display:grid;gap:3px;}
+.sales-app .qmb .qca-issued-signing strong{font-size:12px;}
+.sales-app .qmb .qca-issued-signing span{font-size:11px;color:var(--qmb-muted);}
+.sales-app .qmb .qca-issued-signing button{min-height:35px;padding:8px 12px;
+ border-radius:7px;font-size:11px;font-weight:750;}
+
+/* Keep the secure-link editor INSIDE the sharing section instead of a
+ * disconnected upward-floating popover. Overrides desktop panel positioning. */
+.sales-app .qmb .qca-issued-sharing .quote-share-control.is-inline{
+ position:relative!important;inset:auto!important;z-index:auto!important;
+ display:block!important;min-width:0;width:100%;margin:0!important;}
+.sales-app .qmb .qca-issued-sharing .quote-share-launcher{
+ width:100%;justify-content:center;min-height:39px;box-shadow:none;
+ background:var(--qmb-tint);color:var(--qmb-accent);border:1px solid var(--qmb-border);
+ border-radius:8px;font-size:12px;font-weight:800;}
+.sales-app .qmb .qca-issued-sharing .quote-share-panel{
+ position:static!important;inset:auto!important;display:block;width:100%;
+ min-width:0;max-width:100%;max-height:none;overflow:visible;margin:10px 0 0;
+ background:var(--qmb-card);color:var(--qmb-ink);
+ border:1px solid var(--qmb-border);border-radius:9px;box-shadow:none;}
+.sales-app .qmb .qca-issued-sharing .quote-share-panel>header{
+ background:var(--qmb-bg);border-bottom:1px solid var(--qmb-border);}
+.sales-app .qmb .qca-issued-sharing .quote-share-empty,
+.sales-app .qmb .qca-issued-sharing .quote-share-active{padding:13px;}
+.sales-app .qmb .qca-issued-sharing .quote-handoff-status{margin:10px 10px 0;}
+.sales-app .qmb .qca-issued-sharing .quote-share-message{font-size:12px;color:var(--qmb-muted);}
+.sales-app .qmb .qca-issued-sharing .quote-share-primary-actions{flex-wrap:wrap;}
+.sales-app .qmb .qca-issued-sharing .quote-share-primary-actions button{flex:1 1 115px;min-width:0;}
+
+/* Tight delivery controls, clearly separate from the act of creating a link. */
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation{
+ display:grid;gap:11px;min-width:0;align-content:start;}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation-state{
+ display:flex;align-items:center;gap:8px;min-height:38px;
+ padding:8px 10px;border:1px solid var(--qmb-border);
+ border-radius:8px;background:var(--qmb-bg);color:var(--qmb-ink);font-size:11px;}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation-state>strong{font-size:11px;font-weight:800;}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-state-indicator{
+ display:grid;place-items:center;flex:0 0 21px;width:21px;height:21px;
+ border-radius:50%;background:var(--qmb-tint);color:var(--qmb-accent);font-size:12px;font-weight:800;}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation-actions{
+ display:flex;flex-wrap:wrap;gap:9px;align-items:end;}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation-actions label{
+ display:grid;gap:5px;min-width:145px;flex:1 1 140px;font-size:11px;font-weight:760;}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation-actions select{
+ width:100%;min-height:36px;border-radius:7px;
+ border:1px solid var(--qmb-border);background:var(--qmb-card);
+ color:var(--qmb-ink);padding:7px 9px;font-size:12px;}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation-actions button{
+ min-height:36px;flex:1 1 170px;padding:8px 11px;border:1px solid var(--qmb-border);
+ border-radius:7px;background:var(--qmb-tint);color:var(--qmb-accent);
+ font-size:11px;font-weight:800;white-space:normal;}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation-meta{
+ font-size:10px;line-height:1.5;color:var(--qmb-muted);}
+.sales-app .qmb .qca-issued-delivery .qmb-delivery-confirmation.is-delivered
+ .qmb-delivery-confirmation-state{background:var(--qmb-tint);}
+@media(max-width:850px){
+ .sales-app .qmb .qca-issued-grid{grid-template-columns:minmax(0,1fr);}
+}
+@media(max-width:600px){
+ .sales-app .qmb .qca-issued-summary,.sales-app .qmb .qca-issued-signing{padding:12px;}
+ .sales-app .qmb .qca-issued-section{padding:12px;}
+ .sales-app .qmb .qca-issued-summary-actions{justify-content:flex-start;}
+ .sales-app .qmb .qca-issued-summary-actions button{flex:1 1 auto;}
+}
