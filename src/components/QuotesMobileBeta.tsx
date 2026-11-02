@@ -1012,9 +1012,8 @@ export function QuotesMobileBeta() {
         </div>}
       {quote&&page!=='library'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaProgress
         key={quote.id} quote={quote} editable={editable}
-        current={page==='quote'&&quoteTab==='preview'?'contract':reviewOpen?'review':
-          page==='area'?(areaTab==='measure'?'areas':'pricing'):
-          quoteTab==='details'?'details':quoteTab==='pricing'?'review':'areas'}
+        current={reviewOpen?'review':page==='quote'&&quoteTab==='preview'?'contract':
+          page==='quote'&&quoteTab==='details'?'details':'areas'}
         onDetails={()=>navigateDocument('details')}
         onAreas={()=>navigateDocument('build')}
         onOpenArea={openArea} onAddArea={newArea} onPricing={openPricingStage}
