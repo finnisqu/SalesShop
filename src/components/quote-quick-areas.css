@@ -192,3 +192,16 @@
  width:min(450px,100vw);transform:none!important;
  border-radius:0!important;
 }
+
+/* Selection tools occupy existing Areas header; no extra table row. */
+.sales-app .qmb .qqs-summary-head.is-selecting{min-height:52px;align-items:center;}
+.sales-app .qmb .qqs-summary-head .qqs-bulk{flex:1;display:flex;min-width:0;
+ align-items:center;gap:5px;flex-wrap:wrap;background:transparent;padding:0;}
+.sales-app .qmb .qqs-summary-head .qqs-bulk>strong{font-size:11px;padding-right:7px;white-space:nowrap;}
+.sales-app .qmb .qqs-summary-head .qqs-bulk button{
+ border:1px solid var(--qmb-border);border-radius:5px;
+ background:var(--qmb-card);color:var(--qmb-ink);min-height:29px;
+ padding:4px 8px;font-size:11px;cursor:pointer;}
+.sales-app .qmb .qqs-summary-head .qqs-bulk button.qqs-bulk-delete{
+ color:var(--ss-danger,#ad4d43);border-color:var(--ss-danger,#ad4d43);}
+.sales-app .qmb .qqs-summary-head .qqs-bulk button:disabled{opacity:.4;cursor:default;}
