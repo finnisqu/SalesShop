@@ -974,7 +974,8 @@ export function QuotesMobileBeta() {
       : <TeamQuotesWorkspace quotes={quotes} onShowMine={()=>setLibraryMode('mine')}/>}
   </main>;
   return <main className={"quotes-view qmb"+(reviewOpen?" is-review-expanded":"")} aria-label="Quotes mobile beta">
-    <div className={'qmb-desktop-frame'+(page==='library'?' is-library':'')}>
+    <div className={'qmb-desktop-frame'+(page==='library'?' is-library':'')+
+      (page!=='library'&&quote?.documentType==='quote'?' is-quick-quote-frame':'')}>
       {quote&&page!=='library'&&<QuoteBetaDesktopRails
         quote={quote} page={page} quoteTab={quoteTab} areaTab={areaTab} areaId={areaId}
         areaManager={areaManager}
