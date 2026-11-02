@@ -19,20 +19,18 @@ function PricingMetrics({ lines, compact = false }: { lines: QuoteLine[]; compac
         <strong>{money.format(summary.knownInternalCost)}</strong>
       </div>
       <div>
-        <span>{summary.complete ? 'Gross profit' : 'Known spread'}</span>
+        <span>Line-item spread</span>
         <strong>{money.format(summary.grossSpread)}</strong>
       </div>
       <div>
-        <span>{summary.complete && summary.marginPercent !== undefined ? 'Gross margin' : 'Cost coverage'}</span>
-        <strong>{summary.complete && summary.marginPercent !== undefined
-          ? `${summary.marginPercent}%`
-          : summary.costRequiredLineCount
-            ? `${summary.costedLineCount}/${summary.costRequiredLineCount}`
-            : '—'}</strong>
+        <span>Line cost coverage</span>
+        <strong>{summary.costRequiredLineCount
+          ? `${summary.costedLineCount}/${summary.costRequiredLineCount}`
+          : '—'}</strong>
       </div>
       {!compact && missing > 0 && (
         <small className="quote-internal-pricing-warning">
-          {missing} priced scope line{missing === 1 ? '' : 's'} still {missing === 1 ? 'needs' : 'need'} an internal cost before SalesShop shows a gross-margin percentage.
+          {missing} priced scope line{missing === 1 ? '' : 's'} still {missing === 1 ? 'needs' : 'need'} an internal cost before the line-cost estimate is complete.
         </small>
       )}
     </div>
@@ -64,9 +62,8 @@ export function QuoteInternalPricingSummary({ quote }: { quote: Quote }) {
 
   if (!trackedCosts) return null;
 
-  const summaryLabel = overall.complete && overall.marginPercent !== undefined
-    ? `${money.format(overall.knownInternalCost)} cost · ${overall.marginPercent}% margin`
-    : `${money.format(overall.knownInternalCost)} known cost · ${overall.costedLineCount}/${overall.costRequiredLineCount} covered`;
+  // Complete line-item snapshots do not include Area fabrication and installation.
+  const summaryLabel = `${money.format(overall.knownInternalCost)} known line cost · ${overall.costedLineCount}/${overall.costRequiredLineCount} covered`;
 
   return (
     <details className="quote-internal-pricing" open={open} onToggle={(event) => setOpen(event.currentTarget.open)} aria-label="Internal pricing summary">
@@ -80,7 +77,7 @@ export function QuoteInternalPricingSummary({ quote }: { quote: Quote }) {
       </summary>
       <div className="quote-internal-pricing-body">
         <header>
-          <small>Uses private manual costs plus frozen Material, Sink Catalog, and Rate Book cost snapshots on this quote. Customer pricing is unchanged.</small>
+          <small>Line-item costs only, from private overrides and saved Material, Sink and Rate Book snapshots. This spread is not a fully-loaded margin: Area fabrication and installation costs are calculated separately in Quotes Beta Calculator. Customer pricing is unchanged.</small>
         </header>
         <PricingMetrics lines={quote.lines} />
         {groups.length > 1 && (
