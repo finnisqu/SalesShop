@@ -7,21 +7,20 @@ const draft=(patch:Partial<Quote>={})=>({id:'sample',title:'Test quote',document
 const charge=()=>({id:'c',kind:'item',includeInTotal:true,customerVisible:true,
  pricingMode:'direct',amount:250,description:'Trip charge'} as Quote['lines'][number]);
 const stage=(q:Quote,id:string)=>quoteBuilderProgress(q).stages.find(s=>s.id===id)!;
-describe('single-workspace five-stage quote progress',()=>{
+describe('single-workspace four-stage quote progress',()=>{
  it('starts with optional details and optional Areas',()=>{
   const q=draft();
   expect(stage(q,'details')).toMatchObject({status:'Optional',state:'pending'});
   expect(stage(q,'areas')).toMatchObject({status:'Optional',state:'pending'});
-  expect(stage(q,'pricing').status).toBe('Add priced work');
   expect(stage(q,'review').status).toBe('Awaiting prices');
   expect(stage(q,'contract').status).toBe('Not issued');
   expect(quoteBuilderProgress(q).stages.map(x=>x.label)).toEqual([
-   'Project details','Takeoffs','Selections & pricing','Pricing review','Contract review']);
+   'Project details','Takeoffs & selections','Pricing review','Contract review']);
  });
  it('allows a priced General-only quick quote',()=>{
   const q=draft({lines:[charge()]});
   expect(stage(q,'areas')).toMatchObject({status:'General scope',state:'done'});
-  expect(stage(q,'pricing')).toMatchObject({status:'Prices entered',state:'done'});
+  expect(stage(q,'review')).toMatchObject({status:'Ready for review',state:'done'});
   expect(stage(q,'details').state).toBe('pending');
   expect(stage(q,'contract').state).toBe('pending');
  });
@@ -31,8 +30,7 @@ describe('single-workspace five-stage quote progress',()=>{
   const before=JSON.stringify(q);
   expect(stage(q,'areas').status).toBe('1 Area');
   expect(stage(q,'details').state).toBe('done');
-  expect(stage(q,'pricing')).toMatchObject({state:'attention',status:'1 issue'});
-  expect(stage(q,'review').state).toBe('attention');
+  expect(stage(q,'review')).toMatchObject({state:'attention',status:'1 issue'});
   expect(JSON.stringify(q)).toBe(before);
  });
  it('contract review is complete only for an actually issued document',()=>{
