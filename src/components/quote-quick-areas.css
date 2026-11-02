@@ -17,7 +17,7 @@
  min-width:0;max-width:100%;width:100%;max-height:min(64vh,720px);
  overscroll-behavior:contain;}
 .sales-app .qmb .qqs-grid{
- display:grid;grid-template-columns:34px 154px 240px 103px 114px 86px 112px 96px 119px 120px;
+ display:grid;grid-template-columns:34px 154px 250px 120px 134px 134px 135px 142px;
  width:max-content;min-width:100%;align-items:stretch;}
 .sales-app .qmb .qqs-cell{position:relative;display:flex;align-items:center;
  min-width:0;min-height:38px;max-height:38px;padding:0 9px;gap:4px;
@@ -132,7 +132,7 @@
  .sales-app .qmb .qqs-summary-head>div:first-child{display:grid;gap:2px;}
  .sales-app .qmb .qqs-summary-head span{font-size:9px;}
  .sales-app .qmb .qqs-summary-head{padding:8px;}
- .sales-app .qmb .qqs-grid{grid-template-columns:34px 125px 195px 100px 110px 75px 100px 80px 105px 110px;}
+ .sales-app .qmb .qqs-grid{grid-template-columns:34px 125px 200px 108px 122px 125px 129px 132px;}
  .sales-app .qmb .qqs-pin-area{left:34px;}
  .sales-app .qmb .qqs-panel-body{padding:12px;}
 }
@@ -143,3 +143,13 @@
  .sales-app .qmb .qqs-focusable .qqs-pencil,
  .sales-app .qmb .qqs-area-name .qqs-pencil{opacity:.8;pointer-events:auto;}
 }
+
+/* Compact seven-value-column Area summary; editors remain outside row layout. */
+.sales-app .qmb .qqs-cell .qqs-edit{height:29px;min-height:29px;max-height:29px;
+ flex:1;min-width:0;padding:3px 5px;border:1px solid var(--qmb-accent);
+ border-radius:4px;background:var(--qmb-card);color:var(--qmb-ink);
+ font-variant-numeric:tabular-nums;text-align:right;font-size:12px;}
+.sales-app .qmb.qqs-overlay{justify-content:flex-end!important;align-items:stretch;}
+.sales-app .qmb.qqs-overlay>.qqs-panel{margin-left:auto;margin-right:0;
+ flex:0 0 min(450px,100vw);transform:none;left:auto;right:0;}
+.sales-app .qmb .qqs-panel-body .qmb-pricing-lab-heading{padding:4px 0;}
