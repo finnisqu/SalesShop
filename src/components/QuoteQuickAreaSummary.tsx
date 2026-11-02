@@ -44,12 +44,12 @@ function CommitNumber({value,onCommit,label,disabled=false,integer=false}:{
    if(event.key==='Escape'){setDraft(value===undefined?'':String(value));event.currentTarget.blur();}
   }}/>;
 }
-function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false}:{
+function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,numeric=false}:{
  value:ReactNode;label:string;focused:boolean;onFocus:()=>void;onEdit:()=>void;
- muted?:boolean;warn?:boolean;
+ muted?:boolean;warn?:boolean;numeric?:boolean;
 }){
  return <div className={'qqs-cell qqs-focusable'+(focused?' is-focused':'')+
-  (muted?' is-muted':'')+(warn?' is-warning':'')} role="group" aria-label={label}>
+  (muted?' is-muted':'')+(warn?' is-warning':'')+(numeric?' is-numeric':'')} role="group" aria-label={label}>
   <button type="button" className="qqs-value" title={typeof value==='string'?value:label}
    onClick={onFocus}><span>{value}</span></button>
   <button type="button" className="qqs-pencil" aria-label={'Edit '+label}
@@ -293,7 +293,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
  const cell=(areaId:string,kind:DetailKind,label:string,value:ReactNode,muted=false,warn=false)=>
   <SummaryCell key={kind} value={value} label={label}
    focused={focus===label} onFocus={()=>setFocus(label)}
-   onEdit={()=>open(areaId,kind)} muted={muted} warn={warn}/>;
+   onEdit={()=>open(areaId,kind)} muted={muted} warn={warn} numeric={kind!=='material'&&kind!=='area'}/>;
  const bulkApply=()=>{
   if(!editable||!selected.length)return;
   const count=store.bulkEditAreas(quote.id,selected,
