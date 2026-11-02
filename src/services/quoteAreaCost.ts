@@ -27,7 +27,12 @@ export interface AreaCostProjection {
  * customer-facing pricing mode (manual, SF or multiplier). No invented slab size. */
 export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjection{
   const scope=section.scope;
-  const measuredSf=totalBillableTakeoffSf(scope?.takeoffPieces??[]);
+  // Quick Quote can begin with a manually entered SF total; measured pieces
+  // take precedence whenever they exist (including deliberate exclusions).
+  const measuredSf=scope?.takeoffPieces?.length
+    ?totalBillableTakeoffSf(scope.takeoffPieces)
+    :Number.isFinite(scope?.countertopSf)&&((scope?.countertopSf??-1)>=0)
+      ?scope!.countertopSf!:0;
   const ref=scope?.takeoffMaterialReference;
   const setting=scope?.slabYield;
   const yieldFraction=setting!==undefined&&Number.isFinite(setting)&&setting>0&&setting<=1
