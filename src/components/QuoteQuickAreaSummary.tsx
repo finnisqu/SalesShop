@@ -4,7 +4,7 @@ import type {Quote,QuoteLine,QuoteSection,QuoteTakeoffSink} from '../types/quote
 import {quoteLineAmount,quoteTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
-import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary} from '../services/quoteQuickAreaSummary';
+import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from '../services/quoteQuickAreaSummary';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {newTakeoffSink} from '../services/quoteTakeoffsLite';
 import {QuoteInlineAreaName} from './QuoteInlineAreaEditing';
@@ -92,12 +92,13 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced}:{
   // Manual SF is owned by the Area until actual takeoff pieces are entered.
   store.updateSection(quote.id,section.id,{scope:{...section.scope,countertopSf:v}});
   const current=quickAreaPrimary(quote,section.id);
+  const billed=v===undefined?undefined:quickRoundedSf(v,section.scope?.billableSfRounding);
   if(current?.pricingMode==='quantity-rate'&&current.quantitySource?.syncMode!=='live')
-   store.updateLine(quote.id,current.id,{quantity:v});
+   store.updateLine(quote.id,current.id,{quantity:billed});
   else if(!current&&v!==undefined)
    store.addCatalogLine(quote.id,'material',{
     sectionId:section.id,description:section.scope?.takeoffMaterial||'Countertop material',
-    pricingMode:'quantity-rate',quantity:v,rate:undefined,
+    pricingMode:'quantity-rate',quantity:billed,rate:undefined,
     customerVisible:true,includeInTotal:true,materialReference:section.scope?.takeoffMaterialReference,
    });
  };
@@ -159,6 +160,12 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced}:{
           store.updateSection(quote.id,section.id,{scope:{...section.scope,billableSfRounding:mode}});
           if(data?.hasMeasuredPieces)
            store.updateTakeoffPieces(quote.id,section.id,section.scope?.takeoffPieces??[]);
+          else{
+           const primary=quickAreaPrimary(quote,section.id);
+           if(primary?.pricingMode==='quantity-rate'&&primary.quantitySource?.syncMode!=='live')
+            store.updateLine(quote.id,primary.id,{quantity:quickRoundedSf(
+             section.scope?.countertopSf??data?.measuredSf??0,mode)});
+          }
          }}>
          <option value="exact">Exact measured SF</option><option value="quarter-up">Round up to ¼ SF</option>
          <option value="half-up">Round up to ½ SF</option><option value="whole-up">Round up to whole SF</option>
