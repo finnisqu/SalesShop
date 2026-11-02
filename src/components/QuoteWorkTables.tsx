@@ -22,7 +22,7 @@ const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 const rowKey=(row:QuoteScopeRowRef)=>[row.kind,row.sectionId??'general',row.id].join(':');
 type ScopeTableProps={
- quote:Quote;section:QuoteSection|null;general?:boolean;selected:Set<string>;
+ quote:Quote;section:QuoteSection|null;general?:boolean;view:'summary'|'lines';selected:Set<string>;
  onSelect:(row:QuoteScopeRowRef,checked:boolean)=>void;onSelectMany:(rows:QuoteScopeRowRef[],checked:boolean)=>void;
  onCalc:(id:string|null)=>void;onAdvanced:(id:string)=>void;
 };
@@ -49,7 +49,7 @@ function NumberCell({value,label,disabled,min=0,max=10000,integer=false,inches=f
    if(e.key==='Escape'){e.preventDefault();setDraft(value===undefined?'':String(value));e.currentTarget.blur();}
   }}/>;
 }
-function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,onCalc,onAdvanced}:ScopeTableProps){
+function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectMany,onCalc,onAdvanced}:ScopeTableProps){
  const editable=quoteIsCommerciallyEditable(quote);
  const store=useQuoteStore.getState();
  const id=section?.id;
@@ -158,8 +158,8 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
       pricingSource:'slab-multiplier' as const,slabMultiplier:value,
       slabCount:cost?.slabCount,sourceSlabCost:cost?.slabCost}});
  };
- return <section className="qwt-area" aria-label={general?'General work table':'Area work table '+section?.title}>
-  <div className="qwt-area-top">
+ return <section className={'qwt-area qwt-scope-'+view} aria-label={(general?'General':section?.title??'Area')+(view==='summary'?' setup row':' takeoff lines')}>
+  {view==='summary'&&<div className="qwt-area-top">
    <div className="qwt-area-label">{section&&!general?<QuoteInlineAreaName quote={quote} section={section}/>:
     <strong>General</strong>}
     <small>{general?'Fees, allowances, discounts and unassigned work':'Measured takeoffs · selling · costs'}</small>
@@ -229,6 +229,15 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
    </div>:<div className="qwt-general-total"><span>General charges</span>
     <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
    <button type="button" className="qwt-calculator" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
+  </div>
+  {view==='lines'&&<>
+  <div className="qwt-sheet-context"><strong>{general?'General charges':section?.title??'Area'}</strong>
+   {!general&&<><span>{section?.scope?.takeoffMaterial||'Choose a material in Areas & General'}</span>
+    <span>{sf.format(totalBillableTakeoffSf(pieces))} measured SF</span>
+    <span>Sell / SF: {primary&&totalBillableTakeoffSf(pieces)>0
+      ?money.format(quoteLineAmount(primary)/roundedBillableTakeoffSf(pieces,section?.scope?.billableSfRounding)):'—'}</span>
+    <span>{primary?.pricingMode==='direct'?'Manual total':primary?.pricingMode==='slab-multiplier'?'Slab multiplier':'SF rate'}</span></>}
+   <button type="button" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
   </div>
   {manualExclusionReview&&<div className="qwt-exclusion-warning" role="status">
     <span>Excluded takeoffs are preserved. The selling price may still include excluded work.
@@ -434,6 +443,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
       <button type="button" onClick={()=>addCharge('sink')}>+ Sink charge</button></>}
     {id&&<button type="button" className="qwt-advanced-link" onClick={()=>onAdvanced(id)}>Detailed fabrication / catalog ↗</button>}
   </div>}
+  </>}
  </section>;
 }
 /** Private calculator is a dismissible focus panel, not another quote workflow page. */
@@ -571,15 +581,32 @@ export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralT
     p.kind==='piece'&&p.id===r.id&&p.sectionId===r.sectionId))&&
     <small role="alert">Splash subrows stay attached to their Piece. Select the Piece too to move it.</small>}
   </div>}
-  {areas.map(section=><ScopeRows key={section.id} quote={quote} section={section}
-   selected={ids} onSelect={onSelect} onSelectMany={onSelectMany}
-   onCalc={id=>setCalculator(id??'general')} onAdvanced={onAdvanced}/>)}
-  {!areas.length&&<p className="qwt-no-areas">No Areas yet. Add Kitchen, Vanity or another scope, or start with General charges.</p>}
-  <ScopeRows quote={quote} section={general} general selected={ids}
-   onSelect={onSelect} onSelectMany={onSelectMany}
-   onCalc={()=>setCalculator('general')} onAdvanced={onAdvanced}/>
-  {editable&&!general&&<button type="button" className="qwt-general-start" onClick={onGeneralTakeoff}>
-   + General measured takeoff</button>}
+  <section className="qwt-grid-panel qwt-areas-panel" aria-label="Areas and General setup table">
+   <div className="qwt-panel-heading"><div><h3>1 · Areas &amp; General</h3>
+    <p>Define each Area, select its material, review totals and open its calculator.</p></div>
+    <button type="button" disabled={!editable} onClick={onAddArea}>+ Area</button></div>
+   <div className="qwt-overview-labels" aria-hidden="true"><span>Area / contract</span>
+    <span>Material &amp; setup</span><span>Measured / buying / selling</span>
+    <span>Estimate &amp; calculator</span></div>
+   {areas.map(section=><ScopeRows key={section.id} view="summary" quote={quote} section={section}
+     selected={ids} onSelect={onSelect} onSelectMany={onSelectMany}
+     onCalc={id=>setCalculator(id??'general')} onAdvanced={onAdvanced}/>)}
+   {!areas.length&&<p className="qwt-no-areas">No Areas yet. Add one to start measuring and pricing.</p>}
+   <ScopeRows quote={quote} section={general} view="summary" general selected={ids}
+     onSelect={onSelect} onSelectMany={onSelectMany} onCalc={()=>setCalculator('general')} onAdvanced={onAdvanced}/>
+  </section>
+  <section className="qwt-grid-panel qwt-lines-panel" aria-label="Takeoffs selections and pricing worksheet">
+   <div className="qwt-panel-heading"><div><h3>2 · Takeoffs, Selections &amp; Pricing</h3>
+    <p>Edit measurements and prices directly. Material and effective $/SF follow Area settings.</p></div>
+    <strong className="qwt-project-total">Quote {money.format(quoteTotal(quote))}</strong></div>
+   {areas.map(section=><ScopeRows key={section.id} view="lines" quote={quote} section={section}
+     selected={ids} onSelect={onSelect} onSelectMany={onSelectMany}
+     onCalc={id=>setCalculator(id??'general')} onAdvanced={onAdvanced}/>)}
+   <ScopeRows quote={quote} section={general} view="lines" general selected={ids}
+     onSelect={onSelect} onSelectMany={onSelectMany} onCalc={()=>setCalculator('general')} onAdvanced={onAdvanced}/>
+   {editable&&!general&&<button type="button" className="qwt-general-start" onClick={onGeneralTakeoff}>
+    + General measured takeoff</button>}
+  </section>
   {calculator!==null&&<CalculatorDrawer quote={quote}
    section={calculator==='general'?null:quote.sections.find(s=>s.id===calculator)??null}
    onAdvanced={onAdvanced} onClose={()=>setCalculator(null)}/>}
