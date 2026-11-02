@@ -714,7 +714,9 @@ export function QuotesMobileBeta() {
   const navigateDocument=(tab:QuoteTab)=>{
     setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     // Older stored routes used a full Materials & Pricing page. Send them to Review.
-    if(tab==='pricing'){setQuoteTab('build');setReviewFocus(null);setReviewOpen(true);setPage('quote');return;}
+    if(tab==='pricing'&&quote?.documentType!=='pricing-schedule'){
+      setQuoteTab('pricing');setReviewFocus(null);setReviewOpen(false);setPage('quote');return;
+    }
     setPage('quote');setQuoteTab(tab);setAreaId(null);
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
@@ -901,7 +903,11 @@ export function QuotesMobileBeta() {
   };
   const openReview=(focusId:string|null=null)=>{
     setReviewReturn(null);setError('');setSelectionsOpen(false);
-    setReviewFocus(focusId);setReviewOpen(true);
+    setReviewFocus(focusId);
+    if(quote?.documentType==='quote'){
+      setReviewOpen(false);setQuoteTab('pricing');setPage('quote');setAreaId(null);
+      if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
+    }else setReviewOpen(true);
   };
   const returnToReview=()=>{
     if(!quote||reviewReturn?.quoteId!==quote.id)return;
@@ -935,7 +941,7 @@ export function QuotesMobileBeta() {
     openReview('__delivery__');
   };
   const fixAudit=(destination:QuoteAuditDestination)=>{
-    if(reviewOpen&&quote)setReviewReturn({quoteId:quote.id,findingId:reviewFocus});
+    if((reviewOpen||quoteTab==='pricing')&&quote)setReviewReturn({quoteId:quote.id,findingId:reviewFocus});
     setReviewOpen(false);
     if(destination.view==='area'){
       setAreaId(destination.areaId);setAreaTab(destination.tab);setPage('area');
@@ -1175,6 +1181,18 @@ export function QuotesMobileBeta() {
 
 
         </>}
+        {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&
+          <QuoteBetaReview quote={quote} initialFindingId={reviewFocus}
+            onBack={()=>navigateDocument('build')} onFix={fixAudit}
+            onPreview={()=>{
+              setPreviewReturnQuoteId(quote.id);
+              setPreviewStartedKey(quoteDeliveryApprovalKey(quote));
+              setQuoteTab('preview');setPage('quote');setAreaId(null);
+            }}
+            canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
+            previewedKey={previewedDeliveryKey} approvedKey={approvedDeliveryKey}
+            onApprove={approved=>setApprovedDeliveryKey(approved?quoteDeliveryApprovalKey(quote):null)}
+            reviewedKey={reviewedDeliveryKey} onReview={setReviewedDeliveryKey}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
@@ -1182,7 +1200,7 @@ export function QuotesMobileBeta() {
         </>}
         </div>
       </div>
-      <footer className="qmb-footer qmb-quote-footer">
+      {quoteTab!=='pricing'&&<footer className="qmb-footer qmb-quote-footer">
         <div className="qmb-guided-footer-left">
           <button type="button" className="qmb-guided-back" onClick={()=>
            quoteTab==='details'?showLibrary():navigateDocument(quoteTab==='preview'?'build':'details')}>
@@ -1204,7 +1222,7 @@ export function QuotesMobileBeta() {
               onClick={openPricingStage}>Continue to Pricing Review ›</button>
           :<button type="button" className="qmb-primary" onClick={openSend}>
             {primaryAction?.mobile??'Review document ›'}</button>}
-      </footer>
+      </footer>}
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onPricingOverview={openPricingStage}
       returnLabel="Done · Takeoffs"
