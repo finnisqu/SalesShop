@@ -29,3 +29,11 @@ Date: 2026-11-02
 - Summary, Measure, Materials/Sinks, Selling and private Calculator tabs reuse existing store-bound editors; full Area workspace remains available through **Open full Area**.
 - Previous/Next switches between Areas without closing the panel. The background dims, Escape and clicking the backdrop close, and keyboard focus is contained/restored through the shared dismissible-layer helper.
 - Review on phone/tablet/desktop is still required: drawer width, scrolling, long names, Material Catalog popovers and nested dialogs.
+
+## Nonvisual hardening follow-up (2026-11-02)
+- Reviewed the source paths for quote-wide slab allocation, cloud quote-section sync, independent copy ID remapping, three-method pricing, and the public quote-sharing Edge Function.
+- Pooled material compatibility now requires a stable Catalog material ID; a generic free-text material name is not enough to establish that different purchases are interchangeable. Identity also considers the supplier, variant, thickness, finish, purchase option and recorded slab format.
+- A manual combined slab count below the SF/yield minimum is rejected. Higher manual counts remain permitted for realistic cut-loss assumptions.
+- Added regression cases for ambiguous material names, supplier/slab-format mismatch and manually understated slab counts. Added static release-contract tests checking the quote share allowlist, scope-backed cloud round trip, independent quote copies, 30% comparison default and guarded bulk SF rates.
+- Source review of `supabase/functions/quote-share-public/index.ts` shows public sections are constructed via `safePublicSection`, with `safeSectionSpecs` and an allowlisted selections helper rather than raw Area scopes. This is source evidence, **not** a completed authenticated leak test.
+- **Execution boundary:** This environment could read/write the connected GitHub repository but could not reach the GitHub host from a shell or access `https://app.salesshop.work` through its public-page inspector. The new tests have not been executed; TypeScript/Vite/Playwright, deployment status, real-auth privacy and customer revision smoke checks are still pending. Keep Classic available. Do not declare production acceptance.
