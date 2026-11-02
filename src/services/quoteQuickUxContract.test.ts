@@ -8,6 +8,8 @@ const areaCss=source('src/components/quote-quick-areas.css');
 const takeoffs=source('src/components/QuoteCompactTakeoffs.tsx');
 const quoteUi=source('src/components/QuotesMobileBeta.tsx');
 const progress=source('src/services/quoteBuilderProgress.ts');
+const contract=source('src/components/QuoteContractApproval.tsx');
+const scopeBatch=source('src/services/quoteScopeRowBatch.ts');
 const review=source('src/components/QuoteBetaReview.tsx');
 const reviewCss=source('src/components/quote-pricing-review-workspace.css');
 
@@ -56,12 +58,15 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areaCss).toContain('.qqs-cell.is-warning{box-shadow:none;');
   expect(areas).toContain('qqs-cell-attention');
  });
- it('renders Pricing Review as a dedicated four-question workspace',()=>{
-  expect(review).toContain("['Area totals','Costs & margin','Pricing questions','Approve & deliver']");
+ it('renders a three-question Pricing Review with approval in Contract Review',()=>{
+  expect(review).toContain("['Area totals','Costs & margin','Pricing questions']");
   expect(review).toContain("reviewStep===0");
   expect(review).toContain("reviewStep===1");
   expect(review).toContain("reviewStep===2");
-  expect(review).toContain("reviewStep===3");
+  expect(review).not.toContain("reviewStep===3");
+  expect(contract).toContain('I approve this quote');
+  expect(contract).toContain('approvedCustomerDraft');
+  expect(quoteUi).toContain('<QuoteContractApproval');
   expect(reviewCss).toContain('.qqr-steps');
   expect(quoteUi).toContain("quoteTab==='pricing'");
   expect(quoteUi).toContain('<QuoteBetaReview quote={quote}');
@@ -69,6 +74,9 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
  });
  it('exposes distinct Delete and Strike-out behaviors without losing inline takeoff editing',()=>{
   expect(takeoffs).toContain('qqt-delete-button');
+  expect(scopeBatch).toContain("'delete'");
+  expect(takeoffs).toContain("onClick={()=>apply('delete')}");
+  expect(takeoffs).toContain("className=\"qqt-cell-value is-editable\"");
   expect(takeoffs).toContain("ref.kind==='splash'");
   expect(takeoffs).toContain("store.deleteLine(quote.id,line.id)");
   expect(takeoffs).toContain("Sink selling total");
@@ -76,6 +84,7 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain("Remove Area · keep charges in General");
   expect(areas).toContain('Delete sink');
   expect(areas).toContain('Delete line');
+  expect(areas).toContain("onClick={()=>bulkApply('delete')}");
  });
  it('uses the same guided four stages and never requires opening an old Area page',()=>{
   expect(progress).toContain("label:'Deal Details'");
