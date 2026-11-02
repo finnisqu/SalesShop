@@ -53,7 +53,7 @@ import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
 import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
 import {QuoteSaveAreaLayoutDialog} from './QuoteSaveAreaLayoutDialog';
 import {QuoteInlineAreaName,QuoteInlineAreaRate,QuoteBulkAreaDialog} from './QuoteInlineAreaEditing';
-import {QuoteWorkTables} from './QuoteWorkTables';
+import {QuoteMatrixBuilder} from './QuoteMatrixBuilder';
 import {QuoteAreaQuickPanel,type QuickAreaTab} from './QuoteAreaQuickPanel';
 import {captureSavedAreaLayout,readSavedAreaLayouts,writeSavedAreaLayouts,
   savedAreaLayoutScope,upsertSavedAreaLayout,SAVED_AREA_LAYOUT_LIMIT,
@@ -1160,7 +1160,7 @@ export function QuotesMobileBeta() {
             </Suspense>
           </section>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
-          <QuoteWorkTables quote={quote} onAddArea={()=>{addSection(quote.id);}}
+          <QuoteMatrixBuilder quote={quote} onAddArea={()=>{addSection(quote.id);}}
             onLayouts={()=>setAreaPresetsOpen(true)}
             onAdvanced={id=>openArea(id)}
             onGeneralTakeoff={()=>{ensureGeneralTakeoff(quote.id);}}/>
