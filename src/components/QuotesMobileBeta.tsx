@@ -49,7 +49,6 @@ import { QuoteBetaReview } from './QuoteBetaReview';
 import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
 import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRails';
 import { QuoteBetaProgress } from './QuoteBetaProgress';
-import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
 import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
 import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
 import {QuoteSaveAreaLayoutDialog} from './QuoteSaveAreaLayoutDialog';
@@ -564,7 +563,7 @@ export function QuotesMobileBeta() {
   const contextActions=useAppContextMenu();
   const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
   const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
-  const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
+  const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab==='pricing'?'build':restoredLocation.current.quoteTab);
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
   const [search,setSearch]=useState('');
@@ -618,15 +617,6 @@ export function QuotesMobileBeta() {
   const [approvedDeliveryKey,setApprovedDeliveryKey]=useState<string|null>(null);
   const [reviewedDeliveryKey,setReviewedDeliveryKey]=useState<string|null>(null);
   const quoteScrollRef=useRef<HTMLDivElement>(null);
-  const [focusGeneralFromPricing,setFocusGeneralFromPricing]=useState(false);
-  useEffect(()=>{
-    if(!focusGeneralFromPricing||page!=='quote'||quoteTab!=='build')return;
-    const general=quoteScrollRef.current?.querySelector<HTMLElement>('[data-general-edit-workspace]');
-    if(general){
-      general.scrollIntoView({block:'start',behavior:'auto'});
-      setFocusGeneralFromPricing(false);
-    }
-  },[focusGeneralFromPricing,page,quoteTab]);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
   useEffect(()=>{
@@ -724,6 +714,8 @@ export function QuotesMobileBeta() {
   };
   const navigateDocument=(tab:QuoteTab)=>{
     setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
+    // Older stored routes used a full Materials & Pricing page. Send them to Review.
+    if(tab==='pricing'){setQuoteTab('build');setReviewFocus(null);setReviewOpen(true);setPage('quote');return;}
     setPage('quote');setQuoteTab(tab);setAreaId(null);
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
@@ -836,7 +828,7 @@ export function QuotesMobileBeta() {
   const openArea=(id:string)=>{setCustomerQuickOpen(false);setAreaId(id);setAreaTab('measure');setPage('area');};
   const openAreaAt=(id:string,tab:AreaTab)=>{setQuickArea(null);openArea(id);setAreaTab(tab);};
   const openQuickArea=(id:string,tab:QuickAreaTab='overview')=>setQuickArea({id,tab});
-  const goBack=()=>{navigateDocument(quoteTab==='pricing'?'pricing':'build');};
+  const goBack=()=>{navigateDocument('build');};
   const newArea=()=>{
     if(!quote||!editable)return;
     const id=addSection(quote.id);
@@ -920,10 +912,6 @@ export function QuotesMobileBeta() {
   const openPricingStage=()=>{
     if(!quote||quote.documentType==='pricing-schedule')return;
     openReview();
-  };
-  const openGeneralFromPricing=()=>{
-    setFocusGeneralFromPricing(true);
-    navigateDocument('build');
   };
   const openReviewCategory=(kind:'blockers'|'review'|'optional')=>{
     const item=audit?.[kind][0];openReview(item?.id??null);
@@ -1206,7 +1194,7 @@ export function QuotesMobileBeta() {
       </footer>
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onPricingOverview={openPricingStage}
-      returnLabel={quoteTab==='pricing'?'Done · Pricing':'Done · Areas'}
+      returnLabel="Done · Takeoffs"
       onNextArea={advanceToNextArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
        onSaveLayout={()=>{if(area)setSavingLayoutAreaId(area.id);}}
       />:null}
