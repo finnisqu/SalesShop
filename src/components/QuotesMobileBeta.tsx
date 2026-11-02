@@ -1124,7 +1124,9 @@ export function QuotesMobileBeta() {
           quote={quote} onArea={(id,tab)=>{openArea(id);setAreaTab(tab);}}
           onGeneral={openGeneralFromPricing} onResolve={fixAudit} onReview={openSend}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}
-          nextAreaLabel={detailsNextArea?.label} onContinueToArea={detailsNextArea?continueFromDetails:undefined}/>} 
+          nextAreaLabel={detailsNextArea?.label}
+          onContinueToArea={detailsNextArea?continueFromDetails:undefined}
+          onStartGeneral={detailsNextArea?openGeneralFromPricing:undefined}/>} 
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
             onReturnToReview={previewReturnQuoteId===quote.id?returnFromReviewPreview:undefined}/>
