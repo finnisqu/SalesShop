@@ -2,8 +2,9 @@
 export function taskAssociationPopoverPlacement(
  anchor:Pick<DOMRect,'left'|'top'|'bottom'|'width'>,
  viewport:{width:number;height:number},
+ measuredHeight?:number,
 ){
- const margin=8,gap=6,desiredHeight=264;
+ const margin=8,gap=6,desiredHeight=Math.min(264,Math.max(64,measuredHeight??264));
  const below=Math.max(0,viewport.height-anchor.bottom-gap-margin);
  const above=Math.max(0,anchor.top-gap-margin);
  const showAbove=below<175&&above>below;

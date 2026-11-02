@@ -15,3 +15,9 @@ describe('Task related-record search popover',()=>{
    expect(result.left).toBeGreaterThanOrEqual(8);expect(result.top).toBeGreaterThanOrEqual(8);
  });
 });
+
+it('places short popup immediately above its anchor rather than far away',()=>{
+ const result=taskAssociationPopoverPlacement({left:80,top:640,bottom:680,width:420},{width:1000,height:750},95);
+ expect(result.top).toBe(539);
+ expect(result.maxHeight).toBe(95);
+});
