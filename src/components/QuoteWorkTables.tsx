@@ -7,7 +7,7 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,takeoffPieceSplashSf,
- totalBillableTakeoffSf,totalBillableMiterInches,roundedBillableTakeoffSf} from '../services/quoteTakeoffsLite';
+ totalBillableTakeoffSf,totalBillableMiterInches,roundedBillableTakeoffSf,takeoffPieceMiterInches} from '../services/quoteTakeoffsLite';
 import {calculateAreaCustomerPrice,projectAreaCost} from '../services/quoteAreaCost';
 import {savedAreaMultiplier} from '../services/quotePriceInput';
 import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
@@ -290,9 +290,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
               <input type="checkbox" disabled={!editable} checked={!!piece[flag]}
                onChange={e=>patchPiece(piece,{[flag]:e.target.checked})}/>{label}</label>)}
            {(piece.miterFront||piece.miterLeft||piece.miterRight)&&
-             <small>{((piece.miterFront?(piece.lengthIn??0):0)
-             +(piece.miterLeft?(piece.widthIn??0):0)
-             +(piece.miterRight?(piece.widthIn??0):0))*piece.count).toFixed(1)} IN</small>}
+             <small>{takeoffPieceMiterInches(piece).toFixed(1)} IN</small>}
          </div>
          <button type="button" onClick={()=>onAdvanced(id!)}>Edge: {piece.edgeProfile??'Flat'} ↗</button>
        </div>
