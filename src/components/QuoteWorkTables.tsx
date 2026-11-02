@@ -214,7 +214,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
            min={0.01} max={100} disabled={!editable} onCommit={setMultiplier}/>
         :<button type="button" onClick={()=>onCalc(id!)}>Set a price</button>}
      </label>
-     <div className={cost?.marginPercent===undefined?'qwt-needs-cost':cost.marginPercent<30?'qwt-needs-review':'qwt-ok'}>
+     <div className={cost?.marginPercent===undefined?'qwt-needs-cost':cost.marginPercent<(section?.scope?.targetMargin??.30)*100?'qwt-needs-review':'qwt-ok'}>
        <span>Margin</span><strong>{cost?.marginPercent===undefined?'—':cost.marginPercent.toFixed(1)+'%'}</strong></div>
      <div className={issue||manualExclusionReview?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
        {issue&&<small title={issue.title}>! Check price</small>}
@@ -236,7 +236,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
     <label><input type="checkbox" checked={refs.every(row=>selected.has(rowKey(row)))}
      onChange={e=>onSelectMany(refs,e.target.checked)}/> Select all lines</label>
     <small>{refs.filter(row=>selected.has(rowKey(row))).length} selected here</small></div>}
-  <div className="qwt-table" role="grid" aria-label={(section?.title||'General')+' editable worksheet'}
+  <div className="qwt-table" role="region" aria-label={(section?.title||'General')+' editable worksheet'}
    onKeyDown={(event:KeyboardEvent<HTMLDivElement>)=>{
    if(!['Enter','ArrowDown','ArrowUp'].includes(event.key)||event.nativeEvent.isComposing
       ||!(event.target instanceof HTMLInputElement)||event.target.type==='checkbox'||event.defaultPrevented)return;
