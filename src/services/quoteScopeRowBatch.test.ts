@@ -16,6 +16,25 @@ const quote=():Quote=>({
 } as unknown as Quote);
 const row=(kind:'piece'|'splash'|'sink'|'line',id:string,sectionId?:string)=>({kind,id,sectionId});
 describe('single-table scoped quote rows',()=>{
+ it('deletes a selected mix of piece, splash, sink and manual charge in one immutable quote update',()=>{
+  const original=quote();
+  let q=patchQuoteTakeoff(original,'k',[piece('p'),piece('keep')]);
+  q=patchQuoteTakeoffSinks(q,'k',[{id:'s',name:'1813',category:'vanity',
+   count:1,includeInPricing:true,unitPrice:75}]);
+  q={...q,lines:[...q.lines,{id:'fee',kind:'item',description:'Fee',pricingMode:'direct',
+   amount:30,includeInTotal:true,customerVisible:true,sectionId:'k'}]};
+  const deleted=applyQuoteScopeRowBatch(q,[
+   row('piece','p','k'),row('sink','s','k'),row('line','fee','k'),
+   row('splash','keep','k'),
+  ],'delete');
+  expect(q.sections[0].scope?.takeoffPieces?.map(p=>p.id)).toEqual(['p','keep']);
+  expect(deleted.sections[0].scope?.takeoffPieces?.map(p=>p.id)).toEqual(['keep']);
+  expect(deleted.sections[0].scope?.takeoffPieces?.[0].backsplash).toBe(false);
+  expect(deleted.sections[0].scope?.takeoffSinks).toEqual([]);
+  expect(deleted.lines.find(l=>l.id==='fee')).toBeUndefined();
+  expect(deleted.lines.some(l=>l.takeoffSinkId==='s')).toBe(false);
+ });
+
  it('retains measured top geometry but excludes it from the live priced SF; Undo source stays immutable',()=>{
   let q=patchQuoteTakeoff(quote(),'k',[piece('p')]);
   q=ensureSmartTakeoffLine(q,'k');
