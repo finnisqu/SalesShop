@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {CustomerPreview} from './Quotes';
@@ -13,6 +13,7 @@ export function QuotePrintPreview({quote,onClose,autoPrint=false}:{
  quote:Quote;onClose:()=>void;autoPrint?:boolean;
 }){
  const [printing,setPrinting]=useState(false);
+ const printStarted=useRef(false);
  useEffect(()=>{
   const onKeyDown=(event:KeyboardEvent)=>{if(event.key==='Escape')onClose();};
   document.addEventListener('keydown',onKeyDown);
@@ -20,10 +21,19 @@ export function QuotePrintPreview({quote,onClose,autoPrint=false}:{
  },[onClose]);
  useEffect(()=>{
   if(!autoPrint)return;
-  // Wait for the portal to be painted before opening the browser's print dialog.
-  const frame=requestAnimationFrame(()=>{window.print();});
+  // Paint the print-only portal before opening the browser's native print preview.
+  const frame=requestAnimationFrame(()=>{
+   if(printStarted.current)return;
+   printStarted.current=true;
+   window.print();
+  });
   return ()=>cancelAnimationFrame(frame);
  },[autoPrint]);
+ useEffect(()=>{
+  const oldTitle=document.title;
+  document.title=[quote.title,'SalesShop Quote'].filter(Boolean).join(' - ');
+  return ()=>{document.title=oldTitle;};
+ },[quote.title]);
  useEffect(()=>{
   const before=()=>setPrinting(true);
   const after=()=>setPrinting(false);
