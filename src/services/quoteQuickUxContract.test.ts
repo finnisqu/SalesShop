@@ -41,9 +41,12 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain('function writeManualSf');
   expect(areas).toContain('function writeStoneTotal');
   expect(areas).toContain("onNext('price')");
+  expect(areas).toContain("onCustomCommit={()=>onNext('price')}");
+  expect(areas).toContain("writeSingleChargeTotal");
   expect(areas).toContain('onPointerDown');
   expect(areas).toContain("onCommit:v=>writeStoneTotal");
   expect(quoteUi).toContain('qmb-quick-history');
+  expect(areas).toContain("table.current.querySelector<HTMLInputElement>('input.qqs-edit:focus')?.blur()");
  });
  it('uses the same guided four stages and never requires opening an old Area page',()=>{
   expect(progress).toContain("label:'Deal Details'");
