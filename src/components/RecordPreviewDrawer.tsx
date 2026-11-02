@@ -1,0 +1,132 @@
+import {useEffect} from 'react';
+import {useCrmStore} from '../store/crmStore';
+import {useQuoteStore} from '../store/quoteStore';
+import {useNavigationStore} from '../store/navigationStore';
+import {quotesForProject,quotesForCompany} from '../services/quoteCrmLinks';
+import {displayQuoteNumber,quoteTotal} from '../types/quote';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import '../record-preview.css';
+
+export type PreviewRecord = {kind:'company'|'person'|'deal'|'quote';id:string};
+type Props={record:PreviewRecord;onClose:()=>void;onSelect?:(record:PreviewRecord)=>void;
+  onGoToQuotePage?:(id:string)=>void;onEditBoard?:(record:PreviewRecord)=>void};
+const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const shortDate=(date?:string)=>date?new Date(date).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
+
+/** A consistent, nondestructive focus preview across Board and Connections.
+ * Full record pages and document editors stay separate from preview clicks. */
+export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard}:Props){
+ const ref=useDismissibleLayer<HTMLElement>(true,onClose);
+ const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
+ const deals=useCrmStore(s=>s.projects),quotes=useQuoteStore(s=>s.quotes);
+ const navigate=useNavigationStore();
+ const company=record.kind==='company'?companies.find(x=>x.id===record.id):undefined;
+ const person=record.kind==='person'?people.find(x=>x.id===record.id):undefined;
+ const deal=record.kind==='deal'?deals.find(x=>x.id===record.id):undefined;
+ const quote=record.kind==='quote'?quotes.find(x=>x.id===record.id):undefined;
+ const linkedCompany=person?companies.find(x=>x.id===person.companyId)
+    :deal?companies.find(x=>x.id===deal.companyId):quote?companies.find(x=>x.id===quote.companyId):undefined;
+ const relatedPeople=company?people.filter(p=>p.companyId===company.id):[];
+ const relatedDeals=company?deals.filter(d=>d.companyId===company.id):[];
+ const relatedQuotes=deal?quotesForProject(deal,quotes)
+   :company?quotesForCompany(company,deals,quotes)
+   :quote?.projectId?quotes.filter(q=>q.projectId===quote.projectId&&q.id!==quote.id):[];
+ const heading=company?.name||person?.name||deal?.name||quote?.title||'Record unavailable';
+ const label=record.kind==='person'?'Person':record.kind==='deal'?'Deal':
+   record.kind==='quote'?'Quote metadata':'Company';
+ const open=(kind:PreviewRecord['kind'],id:string)=>{
+   if(onSelect)onSelect({kind,id});
+   else {
+     onClose();
+     if(kind==='company')navigate.openCompany(id);
+     if(kind==='person')navigate.openPerson(id);
+     if(kind==='deal')navigate.openProject(id);
+     if(kind==='quote')navigate.openQuote(id);
+   }
+ };
+ const goToPage=()=>{
+   onClose();
+   if(record.kind==='company')navigate.openCompany(record.id);
+   if(record.kind==='person')navigate.openPerson(record.id);
+   if(record.kind==='deal')navigate.openProject(record.id);
+   if(record.kind==='quote')onGoToQuotePage?.(record.id);
+ };
+ const related=(kind:PreviewRecord['kind'],id:string,title:string,description?:string)=>
+   <button type="button" className="record-preview-related" key={kind+id}
+     onClick={()=>open(kind,id)}><span><strong>{title}</strong>{description&&<small>{description}</small>}</span><span aria-hidden="true">›</span></button>;
+ useEffect(()=>{if(!company&&!person&&!deal&&!quote)onClose();},[company,person,deal,quote,onClose]);
+ if(!company&&!person&&!deal&&!quote)return null;
+ return <div className="project-editor-backdrop record-preview-backdrop"
+   onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
+   <aside ref={ref} role="dialog" aria-modal="true" aria-label={label+' preview'}
+     className="project-editor record-preview-panel">
+     <header><div><span className="board-eyebrow">{label} · Quick preview</span><h2>{heading}</h2></div>
+       <button type="button" data-dialog-initial-focus className="editor-close"
+         aria-label="Close preview" onClick={onClose}>×</button>
+     </header>
+     <div className="record-preview-body">
+       {company&&<>
+         <section><h3>About this company</h3>
+           <dl><dt>Relationship</dt><dd>{company.kind==='customer'?'Customer / prospect':'Partner / supplier'}</dd>
+             <dt>Aliases</dt><dd>{company.aliases?.join(', ')||'—'}</dd>
+             <dt>Last updated</dt><dd>{shortDate(company.updatedAt)}</dd></dl>
+         </section>
+         <section><h3>People <span>{relatedPeople.length}</span></h3>
+           {relatedPeople.slice(0,12).map(p=>related('person',p.id,p.name,p.title||p.email))}
+           {!relatedPeople.length&&<p className="record-preview-empty">No people linked.</p>}
+         </section>
+         <section><h3>Deals <span>{relatedDeals.length}</span></h3>
+           {relatedDeals.slice(0,12).map(d=>related('deal',d.id,d.name,d.stage))}
+           {!relatedDeals.length&&<p className="record-preview-empty">No deals linked.</p>}
+         </section>
+       </>}
+       {person&&<>
+         <section><h3>About this person</h3><dl>
+           <dt>Job title</dt><dd>{person.title||'—'}</dd>
+           <dt>Email</dt><dd>{person.email||'—'}</dd>
+           <dt>Phone</dt><dd>{person.phone||'—'}</dd></dl></section>
+         <section><h3>Company</h3>
+           {linkedCompany?related('company',linkedCompany.id,linkedCompany.name):<p className="record-preview-empty">No company linked.</p>}
+         </section>
+       </>}
+       {deal&&<>
+         <section><h3>Company</h3>
+           {linkedCompany?related('company',linkedCompany.id,linkedCompany.name):
+             <p className="record-preview-empty">{deal.companyName||'No company linked.'}</p>}
+         </section>
+         <section><h3>About this deal</h3><dl>
+           <dt>Stage</dt><dd>{deal.stage}</dd><dt>Value</dt><dd>{deal.amount===undefined?'—':money.format(deal.amount)}</dd>
+           <dt>Due date</dt><dd>{shortDate(deal.dueDate)}</dd><dt>Next action</dt><dd>{deal.nextAction||'—'}</dd></dl></section>
+         <section><h3>Quotes <span>{relatedQuotes.length}</span></h3>
+           {relatedQuotes.slice(0,12).map(q=>related('quote',q.id,q.title||displayQuoteNumber(q),q.status))}
+           {!relatedQuotes.length&&<p className="record-preview-empty">No linked quotes.</p>}
+         </section>
+       </>}
+       {quote&&<>
+         <section><h3>About this document</h3><dl>
+           <dt>Number</dt><dd>{displayQuoteNumber(quote)}</dd>
+           <dt>Type</dt><dd>{quote.documentType==='pricing-schedule'?'Pricing schedule':quote.documentType==='change-order'?'Change order':'Quote'}</dd>
+           <dt>Status</dt><dd>{quote.status}{quote.archivedAt?' · Archived':''}</dd>
+           <dt>Revision</dt><dd>{quote.revision}</dd>
+           <dt>Value</dt><dd>{money.format(quoteTotal(quote))}</dd>
+           <dt>Updated</dt><dd>{shortDate(quote.updatedAt)}</dd></dl></section>
+         <section><h3>Company</h3>
+           {linkedCompany?related('company',linkedCompany.id,linkedCompany.name)
+             :<p className="record-preview-empty">{quote.companyName||'No company linked.'}</p>}
+         </section>
+         <section><h3>Deal</h3>
+           {quote.projectId&&deals.find(x=>x.id===quote.projectId)
+             ?related('deal',quote.projectId,deals.find(x=>x.id===quote.projectId)!.name)
+             :<p className="record-preview-empty">{quote.projectName||'No deal linked.'}</p>}
+         </section>
+       </>}
+     </div>
+     <footer className="record-preview-actions">
+       {onEditBoard&&record.kind!=='quote'&&<button type="button" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
+       <button type="button" className="record-preview-full" onClick={goToPage}
+         disabled={record.kind==='quote'&&!onGoToQuotePage}>Go to page</button>
+       {quote&&<button type="button" className="record-preview-open-quote" onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
+     </footer>
+   </aside>
+ </div>;
+}
