@@ -7,8 +7,8 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,takeoffPieceSplashSf,
- totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
-import {projectAreaCost} from '../services/quoteAreaCost';
+ totalBillableTakeoffSf,totalBillableMiterInches} from '../services/quoteTakeoffsLite';
+import {calculateAreaCustomerPrice,projectAreaCost} from '../services/quoteAreaCost';
 import {savedAreaMultiplier} from '../services/quotePriceInput';
 import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
 import {SINK_CATEGORIES,SINK_CATEGORY_LABELS} from '../types/sink';
@@ -64,6 +64,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
  const extras=lines.filter(line=>line!==primary&&!line.takeoffSinkId);
  const cost=section&&!general?projectAreaCost(quote,section):null;
  const amount=quoteLinesTotal(lines);
+ const miterInches=totalBillableMiterInches(pieces);
  const issue=section&&!general?auditQuoteDraft(quote).blockers.find(item=>
   item.destination.view==='area'&&item.destination.areaId===id):undefined;
  const excludedMeasuredWork=pieces.some(p=>p.excludedFromQuote||p.excludeSplashFromQuote);
@@ -101,6 +102,36 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
   [...pieces,newTakeoffPiece(pieces.length+1)]);};
  const addSink=()=>{if(id&&sinks.length<100)store.updateTakeoffSinks(quote.id,id,[...sinks,newTakeoffSink()]);};
  const addCharge=(kind:'item'|'discount'|'material'|'sink'='item')=>store.addLine(quote.id,kind,id);
+ const chooseMethod=(mode:QuoteLine['pricingMode'])=>{
+  if(!id||!primary||mode===primary.pricingMode)return;
+  const multiplier=savedAreaMultiplier(primary.materialReference,2.2);
+  const calculated=mode==='slab-multiplier'?calculateAreaCustomerPrice('multiplier',{
+   sf:totalBillableTakeoffSf(pieces),slabs:cost?.slabCount,
+   costPerSlab:cost?.slabCost,multiplier}):undefined;
+  store.updateLine(quote.id,primary.id,{
+   pricingMode:mode,rate:mode==='quantity-rate'?primary.rate:undefined,
+   amount:mode==='direct'?quoteLineAmount(primary):mode==='slab-multiplier'?calculated:undefined,
+   ...(mode==='quantity-rate'&&pieces.length?{
+     quantity:totalBillableTakeoffSf(pieces),
+     quantitySource:{kind:'area-scope',sectionId:id,field:'countertopSf',syncMode:'live',
+       capturedValue:totalBillableTakeoffSf(pieces),appliedAt:new Date().toISOString()},
+   }:{}),
+   materialReference:mode==='slab-multiplier'?{
+    ...(primary.materialReference??{stockProgram:false,pricingSource:'slab-multiplier'}),
+    pricingSource:'slab-multiplier',slabMultiplier:multiplier,
+    slabCount:cost?.slabCount,sourceSlabCost:cost?.slabCost}:primary.materialReference,
+  });
+ };
+ const setMultiplier=(value:number|undefined)=>{
+  if(!primary)return;
+  const calculated=calculateAreaCustomerPrice('multiplier',{
+   sf:totalBillableTakeoffSf(pieces),slabs:cost?.slabCount,
+   costPerSlab:cost?.slabCost,multiplier:value});
+  store.updateLine(quote.id,primary.id,{amount:calculated,
+    materialReference:{...(primary.materialReference??{stockProgram:false,pricingSource:'slab-multiplier'}),
+      pricingSource:'slab-multiplier',slabMultiplier:value,
+      slabCount:cost?.slabCount,sourceSlabCost:cost?.slabCost}});
+ };
  return <section className="qwt-area" aria-label={general?'General work table':'Area work table '+section?.title}>
   <div className="qwt-area-top">
    <div className="qwt-area-label">{section&&!general?<QuoteInlineAreaName quote={quote} section={section}/>:
@@ -124,14 +155,28 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
      <div className={!cost?.complete?'qwt-needs-cost':''} title={!cost?.complete?'Partial estimate · '+cost?.missingCostItems.join(', '):'Full private cost'}>
        <span>Cost</span><strong>{cost?.totalKnownCost?money.format(cost.totalKnownCost):'—'}</strong>
        {!cost?.complete&&<small>Partial</small>}</div>
-     <div><span>Method</span><button type="button" onClick={()=>onCalc(id!)}>
-       {!primary?'Choose method':primary.pricingMode==='direct'?'Manual':primary.pricingMode==='slab-multiplier'?'Multiplier':'SF rate'} ▾</button></div>
-     <div><span>Rate / multiplier</span>
-       {primary?.pricingMode==='quantity-rate'?<QuoteInlineAreaRate quote={quote} section={section} onOpen={()=>onCalc(id!)}/>:
-        <button type="button" onClick={()=>onCalc(id!)}>{primary?.pricingMode==='slab-multiplier'
-         ?savedAreaMultiplier(primary.materialReference,2)+'×'
-         :primary?.pricingMode==='direct'?money.format(primary.amount??0):'Choose…'} ▾</button>}
-     </div>
+     <label className="qwt-editable-cell"><span>Pricing method</span>
+       <select aria-label={'Pricing method for '+section.title} disabled={!editable||!primary}
+        value={primary?.pricingMode??'quantity-rate'}
+        onChange={e=>chooseMethod(e.target.value as QuoteLine['pricingMode'])}>
+        <option value="quantity-rate">SF rate</option>
+        <option value="direct">Manual</option>
+        <option value="slab-multiplier">Slab multiplier</option>
+       </select></label>
+     <label className="qwt-editable-cell"><span>{primary?.pricingMode==='direct'?'Selling amount':
+       primary?.pricingMode==='slab-multiplier'?'Multiplier':'Sell / SF'}</span>
+       {primary?.pricingMode==='quantity-rate'
+        ?<QuoteInlineAreaRate quote={quote} section={section} onOpen={()=>onCalc(id!)}/>
+        :primary?.pricingMode==='direct'
+        ?<NumberCell label={'Manual selling amount for '+section.title}
+           value={primary.amount} disabled={!editable}
+           onCommit={value=>store.updateLine(quote.id,primary.id,{amount:value})}/>
+        :primary?.pricingMode==='slab-multiplier'
+        ?<NumberCell label={'Selling multiplier for '+section.title}
+           value={savedAreaMultiplier(primary.materialReference,2.2)}
+           min={0.01} max={100} disabled={!editable} onCommit={setMultiplier}/>
+        :<button type="button" onClick={()=>onCalc(id!)}>Set a price</button>}
+     </label>
      <div className={cost?.marginPercent===undefined?'qwt-needs-cost':cost.marginPercent<30?'qwt-needs-review':'qwt-ok'}>
        <span>Margin</span><strong>{cost?.marginPercent===undefined?'—':cost.marginPercent.toFixed(1)+'%'}</strong></div>
      <div className={issue||manualExclusionReview?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
