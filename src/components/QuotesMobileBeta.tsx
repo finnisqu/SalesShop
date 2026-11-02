@@ -809,11 +809,12 @@ export function QuotesMobileBeta() {
     const nextId=addAreaFromSavedLayout(quote.id,saved);
     if(nextId){setAreaPresetsOpen(false);openArea(nextId);}
   };
-  const deletePersonalAreaLayout=(id:string)=>{
-    if(!layoutScope)return;
+  const deletePersonalAreaLayout=(id:string):boolean=>{
+    if(!layoutScope)return false;
     const next=readSavedAreaLayouts(layoutScope).filter(item=>item.id!==id);
-    if(writeSavedAreaLayouts(layoutScope,next))
-      setLayoutState({scope:layoutScope,items:next});
+    if(!writeSavedAreaLayouts(layoutScope,next))return false;
+    setLayoutState({scope:layoutScope,items:next});
+    return true;
   };
   const savePersonalAreaLayout=(name:string):boolean=>{
     if(!quote||!editable||!layoutScope||!savingLayoutAreaId)return false;

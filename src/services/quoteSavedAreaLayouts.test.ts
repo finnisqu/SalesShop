@@ -65,6 +65,9 @@ describe('personal saved Area layout data boundary',()=>{
   const preset=captureSavedAreaLayout(original(),'Shared computer only','id','now')!;
   expect(writeSavedAreaLayouts(a,[preset])).toBe(true);
   expect(readSavedAreaLayouts(a)).toHaveLength(1);
+  const unsafe={...preset,contactEmail:'should-not-persist@example.com'};
+  expect(writeSavedAreaLayouts(a,[unsafe])).toBe(true);
+  expect(entries.get('salesshop-quote-area-layouts-v1:'+a)).not.toContain('should-not-persist');
   expect(readSavedAreaLayouts(b)).toEqual([]);
   expect(readSavedAreaLayouts(c)).toEqual([]);
   expect(writeSavedAreaLayouts(null,[preset])).toBe(false);
@@ -78,5 +81,8 @@ describe('personal saved Area layout data boundary',()=>{
   const repeated=Array.from({length:SAVED_AREA_LAYOUT_LIMIT+1},(_,i)=>({...layout,id:String(i)}));
   expect(writeSavedAreaLayouts('local-device',repeated)).toBe(false);
   expect(upsertSavedAreaLayout([layout],{...layout,id:'two'})).toHaveLength(2);
+  const zeroCount=original();
+  zeroCount.scope!.takeoffPieces![0].count=0;
+  expect(captureSavedAreaLayout(zeroCount,'Unfinished work','zero','now')?.pieces[0].count).toBe(0);
  });
 });

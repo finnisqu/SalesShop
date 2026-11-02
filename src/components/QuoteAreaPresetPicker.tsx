@@ -6,9 +6,10 @@ import './quote-area-preset-picker.css';
 
 export function QuoteAreaPresetPicker({onSelect,onBlank,onClose,savedLayouts,onSelectSaved,onDeleteSaved}:{
  onSelect:(id:QuoteAreaPresetId)=>void;onBlank:()=>void;onClose:()=>void;
- savedLayouts:readonly SavedAreaLayout[];onSelectSaved:(id:string)=>void;onDeleteSaved:(id:string)=>void;
+ savedLayouts:readonly SavedAreaLayout[];onSelectSaved:(id:string)=>void;onDeleteSaved:(id:string)=>boolean;
 }){
  const [confirmDelete,setConfirmDelete]=useState<string|null>(null);
+ const [deleteError,setDeleteError]=useState('');
  const dialogRef=useRef<HTMLElement>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
@@ -48,7 +49,10 @@ export function QuoteAreaPresetPicker({onSelect,onBlank,onClose,savedLayouts,onS
            </button>
            {confirmDelete===layout.id?
              <div className="qmb-saved-area-delete-confirm">
-               <button type="button" onClick={()=>{onDeleteSaved(layout.id);setConfirmDelete(null);}}>
+               <button type="button" onClick={()=>{
+                 if(onDeleteSaved(layout.id)){setConfirmDelete(null);setDeleteError('');}
+                 else setDeleteError('The saved layout could not be removed from browser storage.');
+               }}>
                  Remove layout
                </button>
                <button type="button" onClick={()=>setConfirmDelete(null)}>Cancel</button>
@@ -57,6 +61,7 @@ export function QuoteAreaPresetPicker({onSelect,onBlank,onClose,savedLayouts,onS
               onClick={()=>setConfirmDelete(layout.id)}>×</button>}
          </div>)}
        </div>
+       {deleteError&&<p role="alert" className="qmb-save-area-error">{deleteError}</p>}
      </section>}
      <div className="qmb-saved-area-heading"><strong>Built-in layouts</strong>
        <small>Unmeasured starting points</small></div>

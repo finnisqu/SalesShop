@@ -5,10 +5,11 @@ The user requested reusable Area templates as the next Quotes workflow improveme
 
 ### Behavior
 - In an editable non-General Area, **Save layout** opens a confirmation dialog with an editable name and a clear explanation of what will and will not be copied.
-- It preserves the Area's named pieces, explicitly entered lengths/widths/counts, splash flags/height, edge profiles, and default edge/splash settings.
+- It preserves the Area's named pieces, explicitly entered lengths/widths/counts (including zero-count unfinished pieces), splash flags/height, edge profiles, and default edge/splash settings.
+- Layout names and piece names **are stored**. Use generic labels rather than customer-identifying text.
 - It **does not copy** customer, Deal, CRM, material selection, supplier buying cost, sink models/charges, selling price, tax, add-ons, issued evidence, approval, revision history, or rate/cost snapshots. Applying a saved layout creates one new Area with new IDs and no billable lines. No price is inferred.
 - **My saved layouts** appears above the built-in Gallery. Each saved layout is deliberately marked **stored in this browser, not synced or shared**. There is explicit remove confirmation.
-- Storage uses a strict allowlisted, versioned payload, count/size validation, and a key scoped to cloud organization ID **and user ID**. Missing cloud scope returns no personal layouts. On workspace/account switch the previous list is hidden synchronously, then the new list is loaded. Local mode is device-local.
+- Storage uses a strict allowlisted, versioned payload (sanitized again on write), count/size validation, and a key scoped to cloud organization ID **and user ID**. Missing cloud scope returns no personal layouts. On workspace/account switch the previous list is hidden synchronously, then the new list is loaded. Local mode is device-local.
 - Maximum 30 layouts and 60 pieces per layout. Browser-storage failure does not create a false successful save.
 - For full priced exact replicas, use **Duplicate Area** or **Start from previous quote** instead of this deliberately unpriced layout feature.
 
