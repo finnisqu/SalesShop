@@ -291,9 +291,6 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
    ?.nextElementSibling?.querySelector<HTMLInputElement>('input.qmx-edit')?.focus();
  };
  return <div className="qmx-workspace">
-  <header className="qmx-intro"><div><div className="qmb-kicker">QUICK QUOTE</div>
-   <h2>Build Quote</h2><p>Choose Areas for fast pricing or Takeoffs for measured detail. Both stay in sync.</p>
-   </div></header>
   <nav className="qmx-subtabs" aria-label="Build Quote views">
    <div role="group" aria-label="Quote worksheets">
     <button type="button" className={subtab==='areas'?'is-active':''}
