@@ -92,7 +92,7 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
   {editing&&inline?<CommitNumber label={label} value={inline.value} disabled={inline.disabled}
     autoFocus onCommit={inline.onCommit} onDone={()=>setEditing(false)}/>:
   <button type="button" className="qqs-value" title={typeof value==='string'?value:label}
-   onClick={()=>{onFocus();if(inline&&!inline.disabled)setEditing(true);else onEdit();}}>
+   onClick={()=>{onFocus();if(inline&&!inline.disabled)setEditing(true);}}>
    <span>{value}</span></button>}
   <button type="button" className="qqs-pencil" aria-label={'More settings: '+label}
    title={'More settings: '+label} onClick={()=>{setEditing(false);onEdit();}}>✎</button>
@@ -319,17 +319,32 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
  const [detail,setDetail]=useState<Detail|null>(null);
  const [calculator,setCalculator]=useState<string|null>(null);
  const [focus,setFocus]=useState('');
+ const table=useRef<HTMLDivElement>(null);
  const [selected,setSelected]=useState<string[]>([]);
  const [bulkMode,setBulkMode]=useState<'detail'|'summary'|'hidden'|'visible'>('summary');
  useEffect(()=>{setSelected([]);setDetail(null);setFocus('');},[quote.id]);
+ useEffect(()=>{
+  const outside=(event:PointerEvent)=>{
+   if(table.current&&!table.current.contains(event.target as Node))setFocus('');
+  };
+  const esc=(event:globalThis.KeyboardEvent)=>{
+   if(event.key==='Escape'&&!(event.target instanceof HTMLInputElement))setFocus('');
+  };
+  document.addEventListener('pointerdown',outside);
+  document.addEventListener('keydown',esc);
+  return()=>{document.removeEventListener('pointerdown',outside);
+   document.removeEventListener('keydown',esc);};
+ },[]);
  const areas=quote.sections.filter(section=>!isGeneralTakeoffSection(section));
  const general=quickGeneralSummary(quote);
  const choose=(id:string,on:boolean)=>setSelected(old=>on?[...old.filter(x=>x!==id),id]:old.filter(x=>x!==id));
  const open=(areaId:string|null,kind:DetailKind)=>setDetail({areaId,kind});
- const cell=(areaId:string,kind:DetailKind,label:string,value:ReactNode,muted=false,warn=false)=>
-  <SummaryCell key={kind} value={value} label={label}
+ const cell=(areaId:string,kind:DetailKind,label:string,value:ReactNode,muted=false,warn=false,
+  inline?:{value:number|undefined;onCommit:(value:number|undefined)=>void;disabled:boolean})=>
+  <SummaryCell key={label} value={value} label={label}
    focused={focus===label} onFocus={()=>setFocus(label)}
-   onEdit={()=>open(areaId,kind)} muted={muted} warn={warn} numeric={kind!=='material'&&kind!=='area'}/>;
+   onEdit={()=>open(areaId,kind)} muted={muted} warn={warn}
+   inline={inline} numeric={kind!=='material'&&kind!=='area'}/>;
  const bulkApply=()=>{
   if(!editable||!selected.length)return;
   const count=store.bulkEditAreas(quote.id,selected,
@@ -357,13 +372,13 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
     <button type="button" onClick={bulkApply} disabled={!editable}>Apply</button>
     <button type="button" onClick={()=>setSelected([])}>Clear</button>
    </div>}
-   <div className="qqs-scroll" role="region" aria-label="Area summary spreadsheet" tabIndex={0}>
+   <div className="qqs-scroll" role="region" aria-label="Area summary spreadsheet" tabIndex={0} ref={table}>
     <div className="qqs-grid qqs-header" role="row">
       <div className="qqs-cell qqs-pin-check"><input type="checkbox" aria-label="Select all Areas"
        checked={areas.length>0&&areas.every(area=>selected.includes(area.id))}
        onChange={event=>setSelected(event.target.checked?areas.map(area=>area.id):[])}/></div>
-      {['Area','Stone selection','Square feet','Material price','Sinks qty','Sinks price',
-       'Specialty qty','Specialty price','Total price'].map((name,index)=>
+      {['Area','Stone selection','Square feet','Material price',
+       'Sinks price','Specialty price','Total price'].map((name,index)=>
        <div className={'qqs-cell'+(index===0?' qqs-pin-area':'')} key={name}>{name}</div>)}
     </div>
     {areas.map(area=>{
@@ -379,16 +394,38 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
       {cell(area.id,'material','Stone selection for '+area.title,
         area.scope?.takeoffMaterial||'Choose stone',!area.scope?.takeoffMaterial,!area.scope?.takeoffMaterial)}
       {cell(area.id,'sf','Square feet for '+area.title,
-        sf.format(data.billedSf)+(data.measuredSf!==data.billedSf?' / '+sf.format(data.measuredSf):'')+' SF')}
+        sf.format(data.billedSf)+(data.measuredSf!==data.billedSf?' / '+sf.format(data.measuredSf):'')+' SF',
+        false,false,!data.hasMeasuredPieces?{
+         value:area.scope?.countertopSf??data.measuredSf,
+         disabled:!editable,onCommit:v=>writeManualSf(quote,area,v),
+        }:undefined)}
       {cell(area.id,'price','Material price for '+area.title,amount(data.materialPrice),
-       !data.primary,data.hasUnpricedMaterial)}
-      {cell(area.id,'sinks','Sink quantity for '+area.title,String(data.sinkQuantity),
-       !data.sinkQuantity)}
-      {cell(area.id,'sinks','Sink price for '+area.title,amount(data.sinkPrice),!data.sinkQuantity)}
-      {cell(area.id,'specialty','Specialty quantity for '+area.title,String(data.specialtyQuantity),
-       !data.specialtyQuantity)}
+       !data.primary,data.hasUnpricedMaterial,data.primary?{
+        value:data.materialPrice,disabled:!editable,onCommit:v=>writeStoneTotal(quote,area,v),
+       }:undefined)}
+      {cell(area.id,'sinks','Sink price for '+area.title,amount(data.sinkPrice),!data.sinkQuantity,
+       false,(()=>{
+        const sinks=(area.scope?.takeoffSinks??[]).filter(s=>!s.excludedFromContract&&s.includeInPricing);
+        const one=sinks.length===1?sinks[0]:undefined;
+        if(!one)return undefined;
+        return {value:data.sinkPrice,disabled:!editable,
+         onCommit:(v:number|undefined)=>{
+          if(v===undefined)return;
+          store.updateTakeoffSinks(quote.id,area.id,
+           (area.scope?.takeoffSinks??[]).map(s=>s.id===one.id
+            ?{...s,unitPrice:Math.round(v/Math.max(1,s.count)*100)/100}:s));
+         }};
+       })())}
       {cell(area.id,'specialty','Specialty price for '+area.title,amount(data.specialtyPrice),
-       !data.specialtyQuantity)}
+       !data.specialtyQuantity,false,(()=>{
+        const line=data.specialty.length===1?data.specialty[0]:undefined;
+        if(!line||line.quantitySource?.syncMode==='live')return undefined;
+        return {value:data.specialtyPrice,disabled:!editable,
+         onCommit:(v:number|undefined)=>store.updateLine(quote.id,line.id,
+          line.pricingMode==='quantity-rate'&&!!line.quantity?
+           {rate:v===undefined?undefined:Math.round(v/line.quantity*10000)/10000,rateReference:undefined}:
+           {pricingMode:'direct',amount:v,rate:undefined})};
+       })())}
       {cell(area.id,'total','Total price for '+area.title,amount(data.total))}
      </div>;
     })}
@@ -396,8 +433,6 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
      <div className="qqs-cell qqs-pin-check"></div>
      <div className="qqs-cell qqs-pin-area"><button type="button" onClick={()=>open(null,'specialty')}>General</button></div>
      <div className="qqs-cell qqs-general-note">Unassigned charges, freight, discounts and fees</div>
-     <div className="qqs-cell qqs-general-spacer"></div>
-     <div className="qqs-cell qqs-general-spacer"></div>
      <div className="qqs-cell qqs-general-spacer"></div>
      <div className="qqs-cell qqs-general-spacer"></div>
      <div className="qqs-cell qqs-general-spacer"></div>
