@@ -87,7 +87,7 @@ export function totalBillableTakeoffSf(pieces:QuoteTakeoffPiece[]):number {
 export function roundedBillableTakeoffSf(pieces:QuoteTakeoffPiece[],
  mode:QuoteAreaScope['billableSfRounding']='exact'):number {
  const raw=totalBillableTakeoffSf(pieces);
- const step=mode==='quarter-up'?.25:mode==='half-up'?.5:mode==='whole-up'?1:0;
+ const step=mode==='quarter-up'?0.25:mode==='half-up'?0.5:mode==='whole-up'?1:0;
  return step?Math.round((Math.ceil((raw-1e-8)/step)*step+Number.EPSILON)*100)/100:raw;
 }
 /** Quoted splash linear feet: retained but struck-through splashes stay out of the active price. */
