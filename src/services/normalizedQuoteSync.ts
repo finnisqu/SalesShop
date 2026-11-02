@@ -125,6 +125,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     productCode:rateReferenceOrUndefined(row.rate_reference)?.estimate?.productCode,
     supplierName:rateReferenceOrUndefined(row.rate_reference)?.estimate?.supplierName,
     unitLabel:rateReferenceOrUndefined(row.rate_reference)?.estimate?.unitLabel,
+    unitCost:rateReferenceOrUndefined(row.rate_reference)?.estimate?.unitCost,
     internalOnlyCost:rateReferenceOrUndefined(row.rate_reference)?.estimate?.internalOnlyCost,
   }));
   const revisionsByQuote = groupByQuote<QuoteRevisionSnapshot>(revisionRows, (row) => {
@@ -360,9 +361,10 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     material_reference: line.materialReference ?? null,
     sink_reference: line.sinkReference ?? null,
     takeoff_sink_id: line.takeoffSinkId ?? null,
-    rate_reference:line.costCategory||line.productCode||line.supplierName||line.unitLabel||line.internalOnlyCost
+    rate_reference:line.costCategory||line.productCode||line.supplierName||line.unitLabel||line.unitCost!==undefined||line.internalOnlyCost
       ?{...(line.rateReference??{}),estimate:{costCategory:line.costCategory,
        productCode:line.productCode,supplierName:line.supplierName,unitLabel:line.unitLabel,
+       unitCost:line.unitCost,
        internalOnlyCost:line.internalOnlyCost}}:line.rateReference??null,
     sort_order: sortOrder,
   })));
