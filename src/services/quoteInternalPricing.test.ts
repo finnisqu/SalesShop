@@ -16,6 +16,17 @@ function line(overrides: Partial<QuoteLine>): QuoteLine {
 }
 
 describe('quote internal pricing summary', () => {
+  it('extends purchased-product unit costs without changing sales rates',()=>{
+    const summary=summarizeQuoteInternalPricing([line({
+      id:'product',description:'Brackets',costCategory:'product',
+      pricingMode:'quantity-rate',quantity:3,rate:100,amount:undefined,
+      unitCost:40,
+    })]);
+    expect(summary.customerTotal).toBe(300);
+    expect(summary.knownInternalCost).toBe(120);
+    expect(summary.marginPercent).toBe(60);
+    expect(summary.lines[0].costSource).toBe('product-unit');
+  });
   it('counts private absorbed freight but omits struck-through sales charges',()=>{
     const report=summarizeQuoteInternalPricing([
       line({id:'freight',description:'Freight',pricingMode:'none',amount:undefined,
