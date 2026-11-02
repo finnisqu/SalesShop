@@ -1,0 +1,12 @@
+/* BetaLine is shared with other editors. Its supplementary grid cells belong
+ * only in the General table; never crowd inline Area editors. */
+.qmb .qmb-builder-general-type,
+.qmb .qmb-builder-general-method,
+.qmb .qmb-builder-general-amount{display:none;}
+.qmb .qmb-builder-general-table .qmb-builder-general-type,
+.qmb .qmb-builder-general-table .qmb-builder-general-method,
+.qmb .qmb-builder-general-table .qmb-builder-general-amount{display:block;}
+@media(max-width:660px){
+ .qmb .qmb-builder-general-table .qmb-builder-general-type,
+ .qmb .qmb-builder-general-table .qmb-builder-general-method{display:none;}
+}

@@ -1,0 +1,98 @@
+/* Quote Builder table language: shared tint/borders, aligned cells and selectable names.
+ * Existing Area / General editing, drag handles, prices and guards are unchanged. */
+.qmb .qmb-builder-intro-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
+.qmb .qmb-builder-view-setting{display:grid;gap:4px;color:var(--qmb-muted);font-size:10px;font-weight:750;}
+.qmb .qmb-builder-view-setting select{min-width:156px;min-height:34px;border:1px solid var(--qmb-border);border-radius:8px;
+ background:var(--qmb-card);color:var(--qmb-ink);padding:5px 8px;font-size:11px;}
+.qmb .qmb-builder-table{display:grid;gap:0;min-width:0;border:1px solid var(--qmb-border);
+ border-radius:10px;background:var(--qmb-card);overflow:visible;}
+.qmb .qmb-builder-table-head{display:grid;align-items:center;gap:8px;min-height:34px;padding:0 12px;
+ background:var(--qmb-tint);color:var(--qmb-muted);border-radius:9px 9px 0 0;
+ border-bottom:1px solid var(--qmb-border);font-size:10px;text-transform:uppercase;
+ letter-spacing:.035em;font-weight:850;}
+.qmb .qmb-builder-area-head,
+.qmb .qmb-builder-area-entry{grid-template-columns:minmax(115px,1.65fr) minmax(90px,1.35fr) 73px 74px minmax(87px,.9fr);}
+.qmb .qmb-builder-area-table .qmb-inline-area-row{display:flex;align-items:stretch;gap:5px;min-width:0;
+ padding:0 8px;border-bottom:1px solid var(--qmb-border);}
+.qmb .qmb-builder-area-table .qmb-inline-area-row:last-of-type{border-bottom:0;}
+.qmb .qmb-builder-area-table .qmb-inline-area-row:nth-of-type(odd){background:var(--qmb-bg);}
+.qmb .qmb-builder-area-table .qmb-inline-area-row:hover{background:var(--qmb-tint);}
+.qmb .qmb-builder-area-table .qmb-inline-area-row>.qmb-builder-area-entry{
+ display:grid!important;width:100%;min-width:0;min-height:49px;gap:8px;align-items:center;
+ text-align:left;margin:0;padding:6px 4px;border:0;border-radius:0;background:transparent;
+ color:var(--qmb-ink);box-shadow:none;}
+.qmb .qmb-builder-area-entry>span{min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:11px;white-space:nowrap;}
+.qmb .qmb-builder-area-entry .qmb-builder-area-name{display:grid;gap:2px;}
+.qmb .qmb-builder-area-name strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--qmb-accent);font-size:12px;}
+.qmb .qmb-builder-area-name small,.qmb .qmb-builder-area-measured small{color:var(--qmb-muted);font-size:10px;}
+.qmb .qmb-builder-area-material{color:var(--qmb-muted);}
+.qmb .qmb-builder-area-display{color:var(--qmb-muted);}
+.qmb .qmb-builder-area-value{display:flex;align-items:center;justify-content:flex-end;gap:7px;
+ font-variant-numeric:tabular-nums;text-align:right;}
+.qmb .qmb-builder-area-value b{font-size:12px;color:var(--qmb-ink);}
+.qmb .qmb-builder-area-value span{font-size:18px;color:var(--qmb-accent);}
+.qmb .qmb-builder-table .qmb-inline-area-hint{padding:8px 12px;}
+.qmb .qmb-builder-area-table .qmb-inline-area-row>.qmb-area-grip,
+.qmb .qmb-builder-area-table .qmb-inline-area-row>.qmb-area-remove-x{align-self:center;min-height:34px;
+ min-width:29px;flex-basis:29px;width:29px;border-radius:6px;}
+.qmb .qmb-builder-table.is-comfortable .qmb-builder-area-entry{min-height:73px!important;padding-block:12px!important;}
+.qmb .qmb-builder-table.is-comfortable .qmb-inline-general-row .qmb-line-top{min-height:74px;}
+.qmb .qmb-builder-general-head,
+.qmb .qmb-builder-general-table .qmb-line-top{grid-template-columns:minmax(115px,2fr) 66px 87px 100px 34px;}
+.qmb .qmb-builder-general-table .qmb-inline-general-row{display:flex;gap:5px;align-items:stretch;
+ min-width:0;padding:0 8px;border-bottom:1px solid var(--qmb-border);}
+.qmb .qmb-builder-general-table .qmb-inline-general-row:last-of-type{border-bottom:0;}
+.qmb .qmb-builder-general-table .qmb-inline-general-row:nth-of-type(odd){background:var(--qmb-bg);}
+.qmb .qmb-builder-general-table .qmb-inline-general-row:hover{background:var(--qmb-tint);}
+.qmb .qmb-builder-general-table .qmb-general-inline-item>.qmb-line{border:0;margin:0;height:auto;
+ border-radius:0;background:transparent;overflow:visible;}
+.qmb .qmb-builder-general-table .qmb-line-top{display:grid;gap:8px;min-height:49px;align-items:center;padding:4px;}
+.qmb .qmb-builder-general-table .qmb-line-name{padding:5px 0;}
+.qmb .qmb-builder-general-table .qmb-line-name strong{font-size:12px;color:var(--qmb-accent);
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qmb .qmb-builder-general-table .qmb-line-name small{font-size:10px;}
+.qmb .qmb-builder-general-type,.qmb .qmb-builder-general-method{font-size:11px;color:var(--qmb-muted);
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:capitalize;}
+.qmb .qmb-builder-general-amount{text-align:right;white-space:nowrap;font-size:12px;font-weight:800;
+ font-variant-numeric:tabular-nums;color:var(--qmb-ink);}
+.qmb .qmb-builder-general-table .qmb-line-top>.qmb-icon{width:32px;height:34px;font-size:20px;justify-self:end;}
+.qmb .qmb-builder-general-table .qmb-line-fields{border-top:1px solid var(--qmb-border);
+ background:var(--qmb-card);padding:12px;border-radius:0 0 8px 8px;}
+.qmb .qmb-builder-general-table .qmb-inline-general-row>.qmb-area-grip,
+.qmb .qmb-builder-general-table .qmb-inline-general-row>.qmb-area-remove-x{align-self:center;
+ flex-basis:29px;min-width:29px;width:29px;min-height:36px;border-radius:6px;}
+.qmb .qmb-builder-general-head{padding-inline:12px;}
+.qmb .qmb-builder-quickadd-menu{position:relative;z-index:3;}
+.qmb .qmb-builder-quickadd-menu>summary{display:grid;place-items:center;list-style:none;min-height:32px;
+ padding:6px 10px;border:1px solid var(--qmb-border);border-radius:8px;
+ color:var(--qmb-accent);background:var(--qmb-card);font-size:11px;font-weight:780;cursor:pointer;}
+.qmb .qmb-builder-quickadd-menu>summary::-webkit-details-marker{display:none;}
+.qmb .qmb-builder-quickadd-popover{position:absolute;right:0;top:calc(100% + 5px);z-index:10;
+ width:min(275px,calc(100vw - 32px));max-height:350px;overflow:auto;
+ display:grid;gap:7px;padding:12px;border:1px solid var(--qmb-border);border-radius:10px;
+ background:var(--qmb-card);color:var(--qmb-ink);box-shadow:0 9px 28px #0003;}
+.qmb .qmb-builder-quickadd-popover>strong{font-size:12px;}
+.qmb .qmb-builder-quickadd-popover>small{color:var(--qmb-muted);font-size:10px;line-height:1.35;}
+.qmb .qmb-builder-quickadd-row{display:flex;gap:8px;align-items:center;}
+.qmb .qmb-builder-quickadd-row label{display:flex;gap:4px;align-items:center;min-width:44px;color:var(--qmb-accent);}
+.qmb .qmb-builder-quickadd-row input{accent-color:var(--qmb-accent);}
+.qmb .qmb-builder-quickadd-row button{flex:1;text-align:left;padding:7px 9px;min-height:32px;
+ border:1px solid var(--qmb-border);background:var(--qmb-tint);border-radius:7px;color:var(--qmb-ink);font-size:11px;}
+.qmb .qmb-builder-area-entry:focus-visible,.qmb .qmb-builder-table button:focus-visible,
+.qmb .qmb-builder-view-setting select:focus-visible{outline:2px solid var(--qmb-accent);outline-offset:-2px;}
+@media(max-width:660px){
+ .qmb .qmb-builder-area-head,.qmb .qmb-builder-area-entry{grid-template-columns:minmax(0,1fr) 67px 99px;}
+ .qmb .qmb-builder-area-head span:nth-child(2),.qmb .qmb-builder-area-head span:nth-child(4),
+ .qmb .qmb-builder-area-entry>.qmb-builder-area-material,.qmb .qmb-builder-area-entry>.qmb-builder-area-display{display:none;}
+ .qmb .qmb-builder-area-table .qmb-inline-area-row{padding-inline:5px;}
+ .qmb .qmb-builder-area-entry .qmb-builder-area-name small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+ .qmb .qmb-builder-general-head,.qmb .qmb-builder-general-table .qmb-line-top{
+  grid-template-columns:minmax(0,1fr) 100px 28px;}
+ .qmb .qmb-builder-general-head span:nth-child(2),.qmb .qmb-builder-general-head span:nth-child(3),
+ .qmb .qmb-builder-general-type,.qmb .qmb-builder-general-method{display:none;}
+ .qmb .qmb-builder-table-head{padding-inline:8px;gap:5px;}
+ .qmb .qmb-builder-general-table .qmb-line-top{gap:5px;}
+ .qmb .qmb-builder-general-table .qmb-line-name{min-width:0;}
+ .qmb .qmb-builder-area-value b,.qmb .qmb-builder-general-amount{font-size:11px;}
+ .qmb .qmb-builder-general-table .qmb-inline-general-row{padding-inline:5px;}
+}

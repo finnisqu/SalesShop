@@ -4,6 +4,7 @@ import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDr
 import { quotePricingOverview } from '../services/quotePricingOverview';
 import {projectAreaCost} from '../services/quoteAreaCost';
 import './quote-beta-pricing-overview.css';
+import './quote-pricing-table-polish.css';
 
 const currency=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
@@ -66,7 +67,10 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
       :'No priced work yet. Add a General charge or an Area.'}</p>}
     <div className="qmb-pricing-overview-title"><h3>Area selections &amp; selling prices</h3>
       <small>{overview.rows.length?'Open any Area to edit':'Areas are optional for simple quotes'}</small></div>
-    <div className="qmb-pricing-overview-areas">
+    <div className="qmb-pricing-overview-areas qmb-pricing-table">
+      <div className="qmb-pricing-table-head" aria-hidden="true">
+        <span>Area</span><span>Material / scope</span><span>Sell total</span>
+      </div>
       {overview.rows.map(row=>{
         const issue=issueFor(row.section.id);
         // This is private estimating guidance, NOT a quote issuing requirement.
@@ -75,9 +79,8 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
         const covered=cost?Object.values(cost.costCoverage).filter(Boolean).length:0;
         return <section className="qmb-pricing-overview-row" key={row.section.id} aria-label={row.section.title||'Untitled Area'}>
           <div className="qmb-pricing-overview-row-top">
-            <div><h4>{row.section.title||'Untitled Area'}</h4>
-              <span>{row.material} · {sf.format(row.measuredSf)} SF · {row.sinkCount} {row.sinkCount===1?'sink':'sinks'}</span>
-            </div>
+            <h4>{row.section.title||'Untitled Area'}</h4>
+            <span>{row.material} · {sf.format(row.measuredSf)} SF · {row.sinkCount} {row.sinkCount===1?'sink':'sinks'}</span>
             <strong>{currency.format(row.amount)}</strong>
           </div>
           {cost&&<div className="qmb-pricing-overview-cost" aria-label="Private Area cost coverage">
