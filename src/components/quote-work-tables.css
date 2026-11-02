@@ -61,7 +61,7 @@
 .sales-app .qmb .qwt-columns,.sales-app .qmb .qwt-line{display:grid;
  grid-template-columns:30px minmax(160px,1.8fr) minmax(56px,.75fr)
  minmax(56px,.75fr) minmax(46px,.6fr) minmax(112px,1.1fr)
- minmax(77px,.85fr) minmax(86px,1fr);
+ minmax(77px,.85fr) minmax(85px,.9fr) minmax(86px,1fr);
  align-items:center;gap:4px;min-width:920px;padding:3px 7px;}
 .sales-app .qmb .qwt-columns{background:var(--qmb-tint);font-size:10px;
  font-weight:790;color:var(--qmb-muted);padding-block:8px;}
