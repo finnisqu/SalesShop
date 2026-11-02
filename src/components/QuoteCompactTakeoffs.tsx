@@ -20,8 +20,10 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
  inches?:boolean;integer?:boolean;disabled?:boolean;
 }){
  const [draft,setDraft]=useState(value===undefined?'':String(value));
+ const cancelled=useRef(false);
  useEffect(()=>setDraft(value===undefined?'':String(value)),[value]);
  const save=()=>{
+  if(cancelled.current){cancelled.current=false;return;}
   if(!draft.trim()){if(value!==undefined)commit(undefined);return;}
   const n=inches?parseInches(draft):Number(draft);
   if(n!==undefined&&Number.isFinite(n)&&n>=0&&(!integer||Number.isInteger(n))){
@@ -32,7 +34,7 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
   inputMode="decimal" value={draft} onChange={e=>setDraft(e.target.value)}
   onBlur={save} onKeyDown={e=>{
    if(e.key==='Enter')e.currentTarget.blur();
-   if(e.key==='Escape'){setDraft(value===undefined?'':String(value));e.currentTarget.blur();}
+   if(e.key==='Escape'){cancelled.current=true;setDraft(value===undefined?'':String(value));e.currentTarget.blur();}
   }}/>;
 }
 function DetailPopup({quote,section,piece,sink,line,onClose}:{
@@ -183,6 +185,38 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
  const setPiece=(section:QuoteSection,piece:QuoteTakeoffPiece,changes:Partial<QuoteTakeoffPiece>)=>
   store.updateTakeoffPieces(quote.id,section.id,(section.scope?.takeoffPieces??[])
    .map(p=>p.id===piece.id?{...p,...changes}:p));
+ const setSink=(section:QuoteSection,sink:QuoteTakeoffSink,patch:Partial<QuoteTakeoffSink>)=>
+  store.updateTakeoffSinks(quote.id,section.id,(section.scope?.takeoffSinks??[])
+   .map(item=>item.id===sink.id?{...item,...patch}:item));
+ const deleteRow=(ref:QuoteScopeRowRef)=>{
+  if(!editable)return;
+  const section=quote.sections.find(s=>s.id===ref.sectionId);
+  if(ref.kind==='line'){
+   const line=quote.lines.find(l=>l.id===ref.id);
+   if(!line||line.quantitySource?.syncMode==='live'||line.takeoffSinkId)return;
+   if(window.confirm('Delete this charge? You can Undo.'))store.deleteLine(quote.id,line.id);
+   return;
+  }
+  if(!section)return;
+  if(ref.kind==='sink'){
+   if(window.confirm('Delete this sink? You can Undo.'))
+    store.updateTakeoffSinks(quote.id,section.id,(section.scope?.takeoffSinks??[]).filter(s=>s.id!==ref.id));
+  }else if(ref.kind==='piece'){
+   if(window.confirm('Delete this measured piece and its attached splash? You can Undo.'))
+    store.updateTakeoffPieces(quote.id,section.id,(section.scope?.takeoffPieces??[]).filter(p=>p.id!==ref.id));
+  }else if(ref.kind==='splash'){
+   if(window.confirm('Remove splash edges from this piece? The top measurements stay. You can Undo.'))
+    store.updateTakeoffPieces(quote.id,section.id,(section.scope?.takeoffPieces??[]).map(p=>p.id===ref.id
+     ?{...p,backsplash:false,leftSplash:false,rightSplash:false,excludeSplashFromQuote:false}:p));
+  }
+ };
+ const setChargeTotal=(line:QuoteLine,total:number|undefined)=>{
+  if(line.quantitySource?.syncMode==='live')return;
+  if(line.pricingMode==='quantity-rate'&&(line.quantity??0)>0)
+   store.updateLine(quote.id,line.id,{rate:total===undefined?undefined:
+    Math.round(total/(line.quantity??1)*10000)/10000,rateReference:undefined});
+  else store.updateLine(quote.id,line.id,{pricingMode:'direct',amount:total,rate:undefined});
+ };
  const apply=()=>{
   if(!selected.length||!editable||(bulk==='move'&&!target))return;
   if(bulk==='move'&&selected.some(r=>r.kind==='splash'&&!selected.some(p=>
@@ -196,7 +230,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
   setSelected([]);
  };
  const row=(ref:QuoteScopeRowRef,area:string,description:ReactNode,qty:ReactNode,length:ReactNode,
-  width:ReactNode,sfValue:ReactNode,price:ReactNode,excluded:boolean,edit:()=>void,issue=false)=>
+  width:ReactNode,sfValue:ReactNode,price:ReactNode,excluded:boolean,edit:()=>void,issue=false,remove?:()=>void)=>
   <div className={'qqt-row qqt-grid'+(excluded?' is-excluded':'')+(issue?' has-issue':'')} key={key(ref)}>
    <div className="qqt-cell qqt-check">{select(ref)}</div>
    <div className="qqt-cell qqt-area" title={area}>{area}</div>
@@ -207,8 +241,13 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    <div className="qqt-cell qqt-number">{sfValue}</div>
    <div className="qqt-cell qqt-number">{price}</div>
    <div className="qqt-cell">{contract(ref,excluded)}</div>
-   <div className="qqt-cell"><button type="button" className="qqt-edit-button"
-    aria-label={'Edit '+area+' '+ref.kind} onClick={edit}>✎</button></div>
+   <div className="qqt-cell qqt-actions">
+    <button type="button" className="qqt-edit-button"
+     aria-label={'More settings for '+area+' '+ref.kind} onClick={edit} title="Detailed settings">✎</button>
+    <button type="button" className="qqt-delete-button" disabled={!editable||!remove}
+     aria-label={'Delete '+area+' '+ref.kind} title="Delete row (Undo available)"
+     onClick={remove}>×</button>
+   </div>
   </div>;
  return <section className="qqt-workspace" aria-label="Takeoffs spreadsheet">
   <header className="qqt-heading"><div><h3>Takeoffs</h3>
@@ -226,7 +265,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
     <button type="button" onClick={()=>setSelected([])}>Clear</button></div>}
   <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}>
    <div className="qqt-header qqt-grid">
-    {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling $','Contract','Edit']
+    {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling ]
      .map((h,i)=><div key={i} className="qqt-cell">{h}</div>)}
    </div>
    {areas.map(section=>{
@@ -259,26 +298,54 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
         <SmallInput label={'Width '+piece.name} inches disabled={!editable} value={piece.widthIn}
          commit={v=>setPiece(section,piece,{widthIn:v})}/>,
         sf.format(topSf),<span title="Allocated Area price; not a second billable line">
-         {money.format(allocated)}</span>,!!piece.excludedFromQuote,edit,!piece.lengthIn||!piece.widthIn)}
+         {money.format(allocated)}</span>,!!piece.excludedFromQuote,edit,!piece.lengthIn||!piece.widthIn,
+         ()=>deleteRow(ref))}
        {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&
         row({kind:'splash',id:piece.id,sectionId:section.id},section.title,'↳ Splash · '+piece.name,
-         piece.count,'—',sf.format(piece.splashHeightIn??4),sf.format(takeoffPieceSplashSf(piece)),
-         <span title="Splash included in the Area stone selling price">Included in stone</span>,
-         !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,edit)}
+         piece.count,'—',<SmallInput label={'Splash height '+piece.name} value={piece.splashHeightIn??4}
+          disabled={!editable} commit={v=>setPiece(section,piece,{splashHeightIn:v??4})}/>,
+         sf.format(takeoffPieceSplashSf(piece)),
+         <span title="This selling price is included in Area stone pricing">Included in stone</span>,
+         !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,edit,false,
+         ()=>deleteRow({kind:'splash',id:piece.id,sectionId:section.id}))}
       </div>;
      })}
      {sinks.map(sink=>{
       const ref:QuoteScopeRowRef={kind:'sink',id:sink.id,sectionId:section.id};
       const sinkAmount=quote.lines.filter(l=>l.sectionId===section.id&&l.takeoffSinkId===sink.id&&l.includeInTotal)
        .reduce((sum,line)=>sum+quoteLineAmount(line),0);
-      return row(ref,section.title,'Sink · '+(sink.name||'Choose model'),sink.count,'—','—','—',
-       money.format(sinkAmount),!!sink.excludedFromContract,
-       ()=>setDetail({areaId:section.id,id:sink.id,kind:'sink'}),!sink.name.trim());
+      return row(ref,section.title,
+       <input type="text" className="qqt-text" aria-label={'Sink model '+sink.id}
+        value={sink.name} disabled={!editable} placeholder="Choose sink"
+        onChange={e=>setSink(section,sink,{name:e.target.value,sinkReference:undefined})}/>,
+       <SmallInput label={'Sink quantity '+sink.name} value={sink.count} integer disabled={!editable}
+        commit={v=>{if(v!==undefined&&v>=1)setSink(section,sink,{count:v});}}/>,
+       '—','—','—',
+       <SmallInput label={'Sink selling total '+sink.name} value={sinkAmount} disabled={!editable}
+        commit={v=>{if(v!==undefined&&sink.count>0)
+         setSink(section,sink,{unitPrice:Math.round(v/sink.count*100)/100});}}/>,
+       !!sink.excludedFromContract,
+       ()=>setDetail({areaId:section.id,id:sink.id,kind:'sink'}),!sink.name.trim(),
+       ()=>deleteRow(ref));
      })}
-     {otherLines.map(line=>row({kind:'line',id:line.id,sectionId:section.id},
-      section.title,line.description,line.quantity??1,'—','—','—',
-      money.format(line.includeInTotal?quoteLineAmount(line):0),!line.includeInTotal,
-      ()=>setDetail({areaId:section.id,id:line.id,kind:'line'})))}
+     {otherLines.map(line=>{
+       const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:section.id};
+       return row(ref,section.title,
+        <input type="text" className="qqt-text" aria-label={'Charge description '+line.id}
+         value={line.description} disabled={!editable}
+         onChange={e=>store.updateLine(quote.id,line.id,{description:e.target.value})}/>,
+        line.pricingMode==='quantity-rate'
+         ?<SmallInput label={'Charge quantity '+line.id} value={line.quantity} disabled={!editable||line.quantitySource?.syncMode==='live'}
+           commit={v=>store.updateLine(quote.id,line.id,{quantity:v})}/>
+         :line.quantity??1,
+        '—','—','—',
+        <SmallInput label={'Charge selling total '+line.id} value={line.includeInTotal?quoteLineAmount(line):0}
+         disabled={!editable||line.quantitySource?.syncMode==='live'||!line.includeInTotal}
+         commit={v=>setChargeTotal(line,v)}/>,
+        !line.includeInTotal,
+        ()=>setDetail({areaId:section.id,id:line.id,kind:'line'}),false,
+        ()=>deleteRow(ref));
+      })}
      {!pieces.length&&!sinks.length&&!otherLines.length&&
       <div className="qqt-empty">No takeoffs yet. Add a piece, sink or charge.</div>}
     </div>;
@@ -288,9 +355,142 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
     <div><button type="button" disabled={!editable} onClick={()=>addLine(null)}>+ Charge</button></div></div>
     {quote.lines.filter(line=>!line.sectionId||
      !quote.sections.some(s=>s.id===line.sectionId)||quote.sections.some(s=>s.id===line.sectionId&&isGeneralTakeoffSection(s)))
-     .map(line=>row({kind:'line',id:line.id,sectionId:line.sectionId},'General',line.description,
-      line.quantity??1,'—','—','—',money.format(line.includeInTotal?quoteLineAmount(line):0),
-      !line.includeInTotal,()=>setDetail({areaId:null,id:line.id,kind:'line'})))}
+     .map(line=>{
+      const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:line.sectionId};
+      return row(ref,'General',
+       <input type="text" className="qqt-text" aria-label={'General charge description '+line.id}
+        value={line.description} disabled={!editable}
+        onChange={e=>store.updateLine(quote.id,line.id,{description:e.target.value})}/>,
+       line.pricingMode==='quantity-rate'
+        ?<SmallInput label={'General charge quantity '+line.id} value={line.quantity}
+          disabled={!editable||line.quantitySource?.syncMode==='live'}
+          commit={v=>store.updateLine(quote.id,line.id,{quantity:v})}/>
+        :line.quantity??1,
+       '—','—','—',
+       <SmallInput label={'General charge selling total '+line.id} value={line.includeInTotal?quoteLineAmount(line):0}
+        disabled={!editable||line.quantitySource?.syncMode==='live'||!line.includeInTotal}
+        commit={v=>setChargeTotal(line,v)}/>,
+       !line.includeInTotal,()=>setDetail({areaId:null,id:line.id,kind:'line'}),false,
+       ()=>deleteRow(ref));
+     })}
+   </div>
+  </div>
+  <footer className="qqt-total">Striking out a row preserves the measurements and excludes it from current pricing.</footer>
+  {detail&&<DetailPopup quote={quote} section={quote.sections.find(s=>s.id===detail.areaId)??null}
+   piece={detail.kind==='piece'?quote.sections.find(s=>s.id===detail.areaId)?.scope?.takeoffPieces?.find(p=>p.id===detail.id):undefined}
+   sink={detail.kind==='sink'?quote.sections.find(s=>s.id===detail.areaId)?.scope?.takeoffSinks?.find(p=>p.id===detail.id):undefined}
+   line={detail.kind==='line'?quote.lines.find(l=>l.id===detail.id):undefined}
+   onClose={()=>setDetail(null)}/>}
+ </section>;
+}
+,'Contract','Actions']
+     .map((h,i)=><div key={i} className="qqt-cell">{h}</div>)}
+   </div>
+   {areas.map(section=>{
+    const pieces=section.scope?.takeoffPieces??[],sinks=section.scope?.takeoffSinks??[];
+    const summary=quickAreaSummary(quote,section);
+    const primary=summary.primary;
+    const otherLines=summary.specialty;
+    const pieceTotal=summary.measuredSf;
+    return <div className="qqt-area-block" key={section.id} data-area-id={section.id}>
+     <div className="qqt-group"><strong>{section.title}</strong>
+      <span>{sf.format(summary.measuredSf)} measured SF · {sf.format(summary.billedSf)} billed</span>
+      <div>
+       <button disabled={!editable} type="button" onClick={()=>addPiece(section)}>+ Piece</button>
+       <button disabled={!editable} type="button" onClick={()=>addSink(section)}>+ Sink</button>
+       <button disabled={!editable} type="button" onClick={()=>addLine(section)}>+ Charge</button>
+      </div><strong>{money.format(summary.total)}</strong></div>
+     {pieces.map(piece=>{
+      const topSf=takeoffPieceSf(piece);
+      const allocated=pieceTotal>0&&!piece.excludedFromQuote&&primary?.includeInTotal
+       ?quoteLineAmount(primary)*topSf/pieceTotal:0;
+      const ref:QuoteScopeRowRef={kind:'piece',id:piece.id,sectionId:section.id};
+      const edit=()=>setDetail({areaId:section.id,id:piece.id,kind:'piece'});
+      return <div key={piece.id}>
+       {row(ref,section.title,<input type="text" className="qqt-text" aria-label={'Piece name '+piece.id}
+        value={piece.name} disabled={!editable} onChange={e=>setPiece(section,piece,{name:e.target.value})}/>,
+        <SmallInput label={'Quantity '+piece.name} integer disabled={!editable} value={piece.count}
+         commit={v=>{if(v!==undefined&&v>0)setPiece(section,piece,{count:v});}}/>,
+        <SmallInput label={'Length '+piece.name} inches disabled={!editable} value={piece.lengthIn}
+         commit={v=>setPiece(section,piece,{lengthIn:v})}/>,
+        <SmallInput label={'Width '+piece.name} inches disabled={!editable} value={piece.widthIn}
+         commit={v=>setPiece(section,piece,{widthIn:v})}/>,
+        sf.format(topSf),<span title="Allocated Area price; not a second billable line">
+         {money.format(allocated)}</span>,!!piece.excludedFromQuote,edit,!piece.lengthIn||!piece.widthIn,
+         ()=>deleteRow(ref))}
+       {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&
+        row({kind:'splash',id:piece.id,sectionId:section.id},section.title,'↳ Splash · '+piece.name,
+         piece.count,'—',<SmallInput label={'Splash height '+piece.name} value={piece.splashHeightIn??4}
+          disabled={!editable} commit={v=>setPiece(section,piece,{splashHeightIn:v??4})}/>,
+         sf.format(takeoffPieceSplashSf(piece)),
+         <span title="This selling price is included in Area stone pricing">Included in stone</span>,
+         !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,edit,false,
+         ()=>deleteRow({kind:'splash',id:piece.id,sectionId:section.id}))}
+      </div>;
+     })}
+     {sinks.map(sink=>{
+      const ref:QuoteScopeRowRef={kind:'sink',id:sink.id,sectionId:section.id};
+      const sinkAmount=quote.lines.filter(l=>l.sectionId===section.id&&l.takeoffSinkId===sink.id&&l.includeInTotal)
+       .reduce((sum,line)=>sum+quoteLineAmount(line),0);
+      return row(ref,section.title,
+       <input type="text" className="qqt-text" aria-label={'Sink model '+sink.id}
+        value={sink.name} disabled={!editable} placeholder="Choose sink"
+        onChange={e=>setSink(section,sink,{name:e.target.value,sinkReference:undefined})}/>,
+       <SmallInput label={'Sink quantity '+sink.name} value={sink.count} integer disabled={!editable}
+        commit={v=>{if(v!==undefined&&v>=1)setSink(section,sink,{count:v});}}/>,
+       '—','—','—',
+       <SmallInput label={'Sink selling total '+sink.name} value={sinkAmount} disabled={!editable}
+        commit={v=>{if(v!==undefined&&sink.count>0)
+         setSink(section,sink,{unitPrice:Math.round(v/sink.count*100)/100});}}/>,
+       !!sink.excludedFromContract,
+       ()=>setDetail({areaId:section.id,id:sink.id,kind:'sink'}),!sink.name.trim(),
+       ()=>deleteRow(ref));
+     })}
+     {otherLines.map(line=>{
+       const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:section.id};
+       return row(ref,section.title,
+        <input type="text" className="qqt-text" aria-label={'Charge description '+line.id}
+         value={line.description} disabled={!editable}
+         onChange={e=>store.updateLine(quote.id,line.id,{description:e.target.value})}/>,
+        line.pricingMode==='quantity-rate'
+         ?<SmallInput label={'Charge quantity '+line.id} value={line.quantity} disabled={!editable||line.quantitySource?.syncMode==='live'}
+           commit={v=>store.updateLine(quote.id,line.id,{quantity:v})}/>
+         :line.quantity??1,
+        '—','—','—',
+        <SmallInput label={'Charge selling total '+line.id} value={line.includeInTotal?quoteLineAmount(line):0}
+         disabled={!editable||line.quantitySource?.syncMode==='live'||!line.includeInTotal}
+         commit={v=>setChargeTotal(line,v)}/>,
+        !line.includeInTotal,
+        ()=>setDetail({areaId:section.id,id:line.id,kind:'line'}),false,
+        ()=>deleteRow(ref));
+      })}
+     {!pieces.length&&!sinks.length&&!otherLines.length&&
+      <div className="qqt-empty">No takeoffs yet. Add a piece, sink or charge.</div>}
+    </div>;
+   })}
+   <div className="qqt-area-block"><div className="qqt-group">
+    <strong>General</strong><span>Project-wide charges and adjustments</span>
+    <div><button type="button" disabled={!editable} onClick={()=>addLine(null)}>+ Charge</button></div></div>
+    {quote.lines.filter(line=>!line.sectionId||
+     !quote.sections.some(s=>s.id===line.sectionId)||quote.sections.some(s=>s.id===line.sectionId&&isGeneralTakeoffSection(s)))
+     .map(line=>{
+      const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:line.sectionId};
+      return row(ref,'General',
+       <input type="text" className="qqt-text" aria-label={'General charge description '+line.id}
+        value={line.description} disabled={!editable}
+        onChange={e=>store.updateLine(quote.id,line.id,{description:e.target.value})}/>,
+       line.pricingMode==='quantity-rate'
+        ?<SmallInput label={'General charge quantity '+line.id} value={line.quantity}
+          disabled={!editable||line.quantitySource?.syncMode==='live'}
+          commit={v=>store.updateLine(quote.id,line.id,{quantity:v})}/>
+        :line.quantity??1,
+       '—','—','—',
+       <SmallInput label={'General charge selling total '+line.id} value={line.includeInTotal?quoteLineAmount(line):0}
+        disabled={!editable||line.quantitySource?.syncMode==='live'||!line.includeInTotal}
+        commit={v=>setChargeTotal(line,v)}/>,
+       !line.includeInTotal,()=>setDetail({areaId:null,id:line.id,kind:'line'}),false,
+       ()=>deleteRow(ref));
+     })}
    </div>
   </div>
   <footer className="qqt-total">Striking out a row preserves the measurements and excludes it from current pricing.</footer>
