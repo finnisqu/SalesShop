@@ -43,7 +43,7 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
-import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces, syncManagedSinkLineEdit, unpriceDeletedTakeoffSink } from '../services/quoteTakeoffsLite';
+import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces, syncManagedSinkLineEdit, unpriceDeletedTakeoffSink, setQuoteTakeoffSinkCharge } from '../services/quoteTakeoffsLite';
 import type { QuoteTakeoffPiece, QuoteTakeoffSink, QuoteLineMaterialReference, QuoteLineRateReference } from '../types/quote';
 
 interface QuoteState {
@@ -82,6 +82,7 @@ interface QuoteState {
   setAllCustomerDisplayModes: (quoteId: string, mode: 'detail' | 'summary') => void;
   updateTakeoffPieces: (quoteId: string, sectionId: string, pieces: QuoteTakeoffPiece[]) => void;
   updateTakeoffSinks: (quoteId: string, sectionId: string, sinks: QuoteTakeoffSink[]) => void;
+  setTakeoffSinkCharge: (quoteId:string,sectionId:string,sinkId:string,include:boolean)=>void;
   selectTakeoffMaterial: (quoteId: string, sectionId: string, label: string, reference?: QuoteLineMaterialReference) => void;
   addTakeoffLine: (quoteId: string, sectionId: string) => string;
   setTakeoffRate: (quoteId: string, sectionId: string, value: number | undefined, reference?: QuoteLineRateReference) => void;
@@ -761,6 +762,15 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quotes=get().quotes.map(quote=>quote.id===quoteId?updated:quote);
     persist(quotes,get().activeQuoteId);
     set({quotes,...history});
+  },
+  setTakeoffSinkCharge: (quoteId,sectionId,sinkId,include)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return;
+    const next=setQuoteTakeoffSinkCharge(current,sectionId,sinkId,include);
+    if(next===current)return;
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId?next:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
   },
   updateTakeoffPieces: (quoteId, sectionId, pieces) => {
     const current = get().quotes.find(quote => quote.id === quoteId);
