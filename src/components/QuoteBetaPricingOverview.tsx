@@ -21,6 +21,18 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
   const overview=quotePricingOverview(quote,report);
   const issueFor=(id:string)=>report.blockers.find(f=>f.destination.view==='area'&&f.destination.areaId===id)
     ??report.review.find(f=>f.destination.view==='area'&&f.destination.areaId===id);
+  const incompleteCosts=overview.rows.filter(row=>row.measuredSf>0
+    &&!projectAreaCost(quote,row.section).complete);
+  const nextBlocker=overview.blockers[0];
+  const nextAction=nextBlocker
+    ?{label:'Resolve next pricing issue',detail:nextBlocker.title,
+      go:()=>nextBlocker.id==='quote:work'?onGeneral():onResolve(nextBlocker.destination)}
+    :incompleteCosts.length
+      ?{label:'Check next internal estimate',
+        detail:(incompleteCosts[0].section.title||'Untitled Area')+' · private costs are incomplete',
+        go:()=>onArea(incompleteCosts[0].section.id,'calculator')}
+      :{label:'Continue to Review',detail:'No blocking selling-price findings or missing measured Area costs.',
+        go:onReview};
   return <div className="qmb-pricing-overview" aria-label="Quote-wide materials and pricing">
     <header className="qmb-pricing-overview-intro">
       <div className="qmb-kicker">STEP 3 · MATERIALS &amp; PRICING</div>
@@ -31,6 +43,11 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
       <div><small>Quote total</small><strong>{currency.format(quoteTotal(quote))}</strong></div>
       <div><small>Areas</small><strong>{overview.rows.length}</strong></div>
       <div><small>Pricing issues</small><strong>{overview.blockers.length}</strong></div>
+      <div><small>Internal estimates</small><strong>{overview.rows.filter(row=>row.measuredSf>0).length-incompleteCosts.length}/{overview.rows.filter(row=>row.measuredSf>0).length}</strong></div>
+    </div>
+    <div className="qmb-pricing-overview-next" aria-label="Next quote pricing action">
+      <div><strong>{nextAction.label}</strong><small>{nextAction.detail}</small></div>
+      <button type="button" onClick={nextAction.go}>Continue ›</button>
     </div>
     {overview.blockers.length?<section className="qmb-pricing-overview-alert" aria-label="Pricing issues">
       <strong>{overview.blockers.length} pricing {overview.blockers.length===1?'issue':'issues'} to resolve</strong>
@@ -66,6 +83,7 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
           {cost&&<div className="qmb-pricing-overview-cost" aria-label="Private Area cost coverage">
             <span>Private cost estimate · {covered}/5 categories entered
               {cost.marginPercent!==undefined?' · Estimated margin '+cost.marginPercent.toFixed(1)+'%':' · Margin incomplete'}
+              {!cost.complete?' · Missing: '+cost.missingCostItems.join(', '):''}
             </span>
             <button type="button" onClick={()=>onArea(row.section.id,'calculator')}>
               Open Calculator ›
