@@ -273,7 +273,7 @@ export function Sidebar({
           {!companionId&&<label className="notebook-split-rail-add">
             <span aria-hidden="true">＋</span>
             <select aria-label="Open a second Notebook page" value=""
-              onChange={event=>{if(event.target.value)onOpenBeside(event.target.value);}}>
+              onChange={event=>{if(event.target.value)onOpenBeside?.(event.target.value);}}>
               <option value="">Open page beside…</option>
               {entries.filter(e=>e.id!==activeEntryId&&!e.hidden)
                 .map(e=><option key={e.id} value={e.id}>{e.title||'Untitled page'}</option>)}
