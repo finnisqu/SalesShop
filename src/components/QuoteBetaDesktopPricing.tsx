@@ -75,7 +75,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const [moreLines,setMoreLines]=useState(false);
   const mode:AreaPricingChoice=primary?.pricingMode==='direct'?'manual':
     primary?.pricingMode==='slab-multiplier'?'multiplier':'sf';
-  const defaultMultiplier=isDeveloperPlaygroundRoute()?2.2:2;
+  const defaultMultiplier=2.2;
   const multiplier=savedAreaMultiplier(primary?.materialReference,defaultMultiplier);
   const slabPrice=section.scope?.slabCostOverride??projection.slabCost;
   const slabCount=projection.slabCount;
