@@ -281,8 +281,9 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
  };
  const onSheetKey=(e:KeyboardEvent<HTMLDivElement>)=>{
   if(e.key!=='Enter'||!(e.target instanceof HTMLInputElement)||e.target.type==='checkbox')return;
-  e.preventDefault();e.currentTarget.querySelectorAll<HTMLInputElement>('input.qmx-edit:not(:disabled)');
-  e.currentTarget.querySelector<HTMLElement>('.qmx-detail-row:focus-within')?.nextElementSibling?.querySelector<HTMLInputElement>('input.qmx-edit')?.focus();
+  e.preventDefault();
+  e.currentTarget.querySelector<HTMLElement>('.qmx-detail-row:focus-within')
+   ?.nextElementSibling?.querySelector<HTMLInputElement>('input.qmx-edit')?.focus();
  };
  return <div className="qmx-workspace">
   <header className="qmx-intro"><div><div className="qmb-kicker">QUICK QUOTE · SPREADSHEET WORKSPACE</div>
@@ -363,6 +364,17 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
      {areas.map(section=>{
       const id=section.id,pieces=section.scope?.takeoffPieces??[],sinks=section.scope?.takeoffSinks??[];
       const primary=areaPrimary(quote,id), extras=areaLines(quote,id).filter(l=>l!==primary&&!l.takeoffSinkId);
+      const rowRefs:QuoteScopeRowRef[]=[
+       ...pieces.flatMap(piece=>([{kind:'piece' as const,id:piece.id,sectionId:id},
+        ...((piece.backsplash||piece.leftSplash||piece.rightSplash)
+         ?[{kind:'splash' as const,id:piece.id,sectionId:id}]:[])])),
+       ...sinks.map(sink=>({kind:'sink' as const,id:sink.id,sectionId:id})),
+       ...extras.map(line=>({kind:'line' as const,id:line.id,sectionId:id})),
+      ];
+      const allSelected=rowRefs.length>0&&rowRefs.every(ref=>selectedKeys.has(keyOf(ref)));
+      const selectArea=()=>setSelected(old=>allSelected?old.filter(ref=>
+       !rowRefs.some(row=>keyOf(row)===keyOf(ref))):
+       [...old.filter(ref=>!rowRefs.some(row=>keyOf(row)===keyOf(ref))),...rowRefs]);
       const patchPiece=(piece:QuoteTakeoffPiece,patch:Partial<QuoteTakeoffPiece>)=>
        store.updateTakeoffPieces(quote.id,id,pieces.map(p=>p.id===piece.id?{...p,...patch}:p));
       const patchSink=(sink:QuoteTakeoffSink,patch:Partial<QuoteTakeoffSink>)=>
@@ -372,6 +384,8 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
         <span>{section.scope?.takeoffMaterial||'Material not selected'} · {decimal.format(areaMeasured(section))} measured SF ·
         {decimal.format(areaBilled(section))} billed SF</span>
         <div className="qmx-group-actions">
+         <button type="button" disabled={!rowRefs.length} onClick={selectArea}>
+          {allSelected?'Deselect all':'Select all'}</button>
          <button type="button" disabled={!editable} onClick={()=>addPiece(id)}>+ Piece</button>
          <button type="button" disabled={!editable} onClick={()=>addSink(id)}>+ Sink</button>
          <button type="button" disabled={!editable} onClick={()=>addCharge(id)}>+ Charge</button>
