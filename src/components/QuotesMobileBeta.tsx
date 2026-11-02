@@ -657,6 +657,7 @@ export function QuotesMobileBeta() {
       updated:formatPersonalDate(new Date(q.updatedAt),
         readPersonalDateTimePreferences(userId??null)),
     },
+    sortValues:{amount:quoteTotal(q),updated:q.updatedAt},
   }));
   const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active';
   const resetLibraryFilters=()=>{

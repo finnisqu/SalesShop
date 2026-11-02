@@ -65,10 +65,11 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const commonQueues=Array.from(new Set([...defaultQueues,
     ...usePersonalTaskStore.getState().tasks.map(task=>task.queue).filter((q):q is string=>!!q)])).sort();
   const quotes=useQuoteStore(s=>s.quotes);
+  const authMode=useAuthStore(s=>s.mode),authUserId=useAuthStore(s=>s.user?.id);
   const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
   const deals=useCrmStore(s=>s.projects),pages=useNotebookStore(s=>s.entries);
   const associations=[
-    ...quotes.filter(q=>!q.archivedAt).map(q=>({key:'quote:'+q.id,linked:{type:'quote',id:q.id} as TaskLink,label:'Quote · '+q.title})),
+    ...quotes.filter(q=>!q.archivedAt&&(authMode!=='cloud'||q.ownerUserId===authUserId)).map(q=>({key:'quote:'+q.id,linked:{type:'quote',id:q.id} as TaskLink,label:'Quote · '+q.title})),
     ...deals.map(d=>({key:'project:'+d.id,linked:{type:'project',id:d.id} as TaskLink,label:'Deal · '+d.name})),
     ...companies.map(c=>({key:'company:'+c.id,linked:{type:'company',id:c.id} as TaskLink,label:'Company · '+c.name})),
     ...contacts.map(c=>({key:'contact:'+c.id,linked:{type:'contact',id:c.id} as TaskLink,label:'Person · '+c.name})),
@@ -171,6 +172,8 @@ export function TasksWorkspace(){
       due:task.dueDate?formatDate(task.dueDate):'',
       related:normalizedTaskAssociations(task).map(link=>link.label||link.type).join(' · '),
       updated:new Date(task.updatedAt).toLocaleDateString()},
+    sortValues:{due:task.dueDate??'9999-12-31',start:task.startDate??'',
+      updated:task.updatedAt,priority:({urgent:0,high:1,normal:2,low:3})[task.priority??'normal']},
   }));
   const openSource=(link:TaskLink)=>{
     const {id,type}=link;

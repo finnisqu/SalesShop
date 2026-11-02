@@ -1,13 +1,13 @@
 import {useEffect,useMemo,useState} from 'react';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import '../connections-table.css';
+import {visibleConnectionColumns,compareConnectionSortValues} from '../services/connectionsTablePreferences';
 export interface ConnectionColumn {key:string;label:string;}
-export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;}
+export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
  onBulkComplete?:(records:ConnectionTableRow[])=>void;}
 const PAGE_SIZE=25;
-const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
  try{const data=JSON.parse(localStorage.getItem(key)??'[]') as unknown;
@@ -18,16 +18,22 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
- const [sort,setSort]=useState({key:'name',reverse:false});
+ const [sort,setSort]=useState({
+   key:tableKey==='documents'?'updated':tableKey==='tasks'?'due':'name',
+   reverse:tableKey==='documents',
+ });
  const [page,setPage]=useState(1);
- useEffect(()=>{localStorage.setItem(storage(tableKey,'cols'),JSON.stringify(keys));},[tableKey,keys]);
- useEffect(()=>{localStorage.setItem(storage(tableKey,'pins'),JSON.stringify(pinned));},[tableKey,pinned]);
- const valid=new Set(columns.map(c=>c.key));
- const active=(keys.length?keys:columns.map(c=>c.key)).filter(k=>valid.has(k));
+ useEffect(()=>{try{localStorage.setItem(storage(tableKey,'cols'),JSON.stringify(keys));}catch{/* preference storage is optional */}},[tableKey,keys]);
+ useEffect(()=>{try{localStorage.setItem(storage(tableKey,'pins'),JSON.stringify(pinned));}catch{/* preference storage is optional */}},[tableKey,pinned]);
+ const active=visibleConnectionColumns(keys,columns.map(c=>c.key));
  const visible=active.map(k=>columns.find(c=>c.key===k)).filter((c):c is ConnectionColumn=>!!c);
  const sorted=useMemo(()=>[...rows].sort((a,b)=>{
-   const diff=collator.compare(a.values[sort.key]??'',b.values[sort.key]??'');
-   return (sort.reverse?-diff:diff)||collator.compare(a.name,b.name);
+   const diff=compareConnectionSortValues(
+     a.sortValues?.[sort.key]??a.values[sort.key],
+     b.sortValues?.[sort.key]??b.values[sort.key]);
+   const priority=tableKey==='tasks'?
+     compareConnectionSortValues(a.sortValues?.priority,b.sortValues?.priority):0;
+   return (sort.reverse?-diff:diff)||priority||compareConnectionSortValues(a.name,b.name);
  }),[rows,sort]);
  const pages=Math.max(1,Math.ceil(sorted.length/PAGE_SIZE));
  const currentPage=Math.min(page,pages);
@@ -44,6 +50,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
  };
  const toggleColumn=(key:string)=>setKeys(old=>{
    const next=old.length?old:columns.map(c=>c.key);
+   if(key==='name')return next; // Every row needs a visible way to open the record.
    return next.includes(key)?(next.length>1?next.filter(x=>x!==key):next):[...next,key];
  });
  return <section className="connections-grid-shell" aria-label={tableKey+' table'}>
@@ -63,7 +70,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
          <small>Choose and reorder. Saved on this device.</small>
          {columns.map(col=><div key={col.key} className="connections-column-choice">
            <label><input type="checkbox" checked={active.includes(col.key)}
-             disabled={active.length===1&&active.includes(col.key)}
+             disabled={col.key==='name'||(active.length===1&&active.includes(col.key))}
              onChange={()=>toggleColumn(col.key)}/>{col.label}</label>
            <button type="button" disabled={!active.includes(col.key)||active.indexOf(col.key)===0}
              onClick={()=>move(col.key,-1)} aria-label={'Move '+col.label+' left'}>←</button>
@@ -107,6 +114,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
            onClick={()=>togglePin(row.id)}>{pinned.includes(row.id)?'★':'☆'}</button></td>
          {visible.map(col=><td key={col.key}>
            {col.key==='name'?<button type="button" className="connections-table-open" onClick={()=>onOpen(row.id)}>{row.name}</button>
+             :tableKey==='tasks'&&col.key==='priority'?<span className={'tasks-priority is-'+(row.values.priority||'normal')}>
+               {row.values.priority||'Normal'}</span>
              :(row.values[col.key]||'—')}
          </td>)}
        </tr>)}

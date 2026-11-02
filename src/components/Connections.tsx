@@ -173,17 +173,20 @@ export function Connections() {
       people:String(contacts.filter(p=>p.companyId===c.id).length),
       deals:String(projects.filter(p=>p.companyId===c.id).length),
       quotes:String(quotesForCompany(c,projects,quotes).filter(q=>!q.archivedAt).length),
-      created:timeLabel(c.createdAt),updated:timeLabel(c.updatedAt)}}));
+      created:timeLabel(c.createdAt),updated:timeLabel(c.updatedAt)},
+    sortValues:{created:c.createdAt,updated:c.updatedAt}}));
   const peopleTableRows:ConnectionTableRow[]=peopleRows.map(c=>({
     id:c.id,name:c.name||c.email||'Unnamed person',
     association:{type:'contact',id:c.id,label:'Person · '+(c.name||c.email||'Unnamed')},
     values:{name:c.name||c.email||'Unnamed person',company:companiesById.get(c.companyId??'')?.name??'',
-      title:c.title??'',email:c.email??'',phone:c.phone??'',updated:timeLabel(c.updatedAt)}}));
+      title:c.title??'',email:c.email??'',phone:c.phone??'',updated:timeLabel(c.updatedAt)},
+    sortValues:{updated:c.updatedAt}}));
   const dealTableRows:ConnectionTableRow[]=projectRows.map(d=>({
     id:d.id,name:d.name,association:{type:'project',id:d.id,label:'Deal · '+d.name},
     values:{name:d.name,company:d.companyName??companiesById.get(d.companyId??'')?.name??'',
       stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
-      next:d.nextAction??'',updated:timeLabel(d.updatedAt)}}));
+      next:d.nextAction??'',updated:timeLabel(d.updatedAt)},
+    sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}}));
   const quoteTableRows:ConnectionTableRow[]=quoteRows.map(q=>({
     id:q.id,name:q.title||'Untitled document',
     association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
@@ -191,7 +194,8 @@ export function Connections() {
       type:q.documentType==='pricing-schedule'?'Pricing schedule':q.documentType==='change-order'?'Change order':'Quote',
       company:q.companyName??'',deal:projectsById.get(q.projectId??'')?.name??'',
       status:q.status+(q.archivedAt?' · Archived':''),
-      value:money.format(quoteTotal(q)),updated:timeLabel(q.updatedAt)}}));
+      value:money.format(quoteTotal(q)),updated:timeLabel(q.updatedAt)},
+    sortValues:{value:quoteTotal(q),updated:q.updatedAt}}));
   const bulkTask=(items:ConnectionTableRow[])=>{
     beginTaskPromotion({target:'task',title:'Follow up: '+items.length+' '+tab,
       sourceLabel:'Connections selection',associations:items.flatMap(x=>x.association?[x.association]:[])});
