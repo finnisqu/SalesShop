@@ -15,9 +15,9 @@ import './quote-compact-takeoffs.css';
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 const key=(r:QuoteScopeRowRef)=>[r.kind,r.sectionId??'',r.id].join(':');
-function SmallInput({value,label,commit,inches=false,integer=false,disabled=false,allowNegative=false}:{
+function SmallInput({value,label,commit,inches=false,integer=false,disabled=false,allowNegative=false,alwaysInput=false}:{
  value?:number;label:string;commit:(n:number|undefined)=>void;
- inches?:boolean;integer?:boolean;disabled?:boolean;allowNegative?:boolean;
+ inches?:boolean;integer?:boolean;disabled?:boolean;allowNegative?:boolean;alwaysInput?:boolean;
 }){
  const [editing,setEditing]=useState(false);
  const [draft,setDraft]=useState(value===undefined?'':String(value));
@@ -33,11 +33,11 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
   }else setDraft(value===undefined?'':String(value));
   setEditing(false);
  };
- if(disabled)return <span className="qqt-readonly" title={label}>{value===undefined?'—':String(value)}</span>;
- if(!editing)return <button type="button" className="qqt-cell-value is-editable"
+ if(disabled&&!alwaysInput)return <span className="qqt-readonly" title={label}>{value===undefined?'—':String(value)}</span>;
+ if(!editing&&!alwaysInput)return <button type="button" className="qqt-cell-value is-editable"
   aria-label={'Edit '+label} title={'Click to edit '+label}
   onClick={()=>setEditing(true)}>{value===undefined?'—':String(value)}</button>;
- return <input className="qqt-input is-editing" autoFocus type="text" aria-label={label}
+ return <input className="qqt-input is-editing" autoFocus={editing} disabled={disabled} type="text" aria-label={label}
   inputMode="decimal" value={draft} onChange={e=>setDraft(e.target.value)}
   onFocus={e=>e.currentTarget.select()}
   onBlur={save} onKeyDown={e=>{
@@ -106,9 +106,9 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
        <label>Edge profile<input type="text" disabled={!editable} value={piece.edgeProfile??'Flat'}
         onChange={e=>patchPiece({edgeProfile:e.target.value})}/></label>
        <div className="qqt-two">
-        <label>Quantity<SmallInput label="Piece quantity" integer disabled={!editable}
+        <label>Quantity<SmallInput alwaysInput label="Piece quantity" integer disabled={!editable}
          value={piece.count} commit={v=>{if(v!==undefined&&v>=1)patchPiece({count:v});}}/></label>
-        <label>Splash height (in)<SmallInput label="Splash height" disabled={!editable}
+        <label>Splash height (in)<SmallInput alwaysInput label="Splash height" disabled={!editable}
          value={piece.splashHeightIn??4} commit={v=>patchPiece({splashHeightIn:v??4})}/></label>
        </div>
        <strong>Splash edges</strong>
@@ -135,11 +135,11 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
           <option value="bar-prep">Bar / Prep</option><option value="laundry">Laundry</option>
           <option value="other">Other</option>
         </select></label>
-        <label>Quantity<SmallInput label="Sink quantity" value={sink.count} integer disabled={!editable}
+        <label>Quantity<SmallInput alwaysInput label="Sink quantity" value={sink.count} integer disabled={!editable}
           commit={v=>{if(v!==undefined&&v>=1)patchSink({count:v});}}/></label>
-        <label>Unit selling price<SmallInput label="Sink unit selling price" value={sink.unitPrice}
+        <label>Unit selling price<SmallInput alwaysInput label="Sink unit selling price" value={sink.unitPrice}
           disabled={!editable} commit={v=>patchSink({unitPrice:v})}/></label>
-        <label>Private unit cost<SmallInput label="Sink private unit cost" value={sink.internalCostOverride}
+        <label>Private unit cost<SmallInput alwaysInput label="Sink private unit cost" value={sink.internalCostOverride}
           disabled={!editable} commit={v=>patchSink({internalCostOverride:v})}/></label>
        </div>
        <label className="qqt-check-label"><input type="checkbox" disabled={!editable}
@@ -158,13 +158,13 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
        </select></label>
        <div className="qqt-two">
         {line.pricingMode==='quantity-rate'&&<label>Quantity
-         <SmallInput label="Charge quantity" disabled={!editable||line.quantitySource?.syncMode==='live'}
+         <SmallInput alwaysInput label="Charge quantity" disabled={!editable||line.quantitySource?.syncMode==='live'}
           value={line.quantity} commit={v=>patchLine({quantity:v})}/></label>}
         <label>{line.pricingMode==='quantity-rate'?'Unit rate':'Customer price'}
-         <SmallInput label="Customer charge price" disabled={!editable}
+         <SmallInput alwaysInput label="Customer charge price" disabled={!editable}
           value={line.pricingMode==='quantity-rate'?line.rate:line.amount}
           commit={v=>patchLine(line.pricingMode==='quantity-rate'?{rate:v}:{amount:v})}/></label>
-        <label>Private cost<SmallInput label="Private charge cost" disabled={!editable}
+        <label>Private cost<SmallInput alwaysInput label="Private charge cost" disabled={!editable}
          value={line.internalCost} commit={v=>patchLine({internalCost:v})}/></label>
        </div>
        {line.costCategory==='product'&&<div className="qqt-two">
