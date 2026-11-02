@@ -42,7 +42,7 @@ export function QuoteBetaDesktopRails({
   const editable=quoteIsCommerciallyEditable(quote);
   const steps:ReadonlyArray<readonly [QuoteTab,string]>=quote.documentType==='pricing-schedule'
     ?[['build','Editor'],['details','Customer & deal'],['preview','Customer preview']]
-    :[['details','Project details'],['build','Takeoffs & selections'],['preview','Contract review']];
+    :[['details','Project details'],['build','Takeoffs & selections'],['pricing','Pricing review'],['preview','Contract review']];
   const areas=areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s));
   const desktopAreaRef=useQuoteBetaCardReflow<HTMLElement>(areas.map(s=>s.id));
   return <>
@@ -65,9 +65,9 @@ export function QuoteBetaDesktopRails({
         {steps.map(([id,label])=><button type="button" key={id}
           className={(page==='quote'&&quoteTab===id)||(page==='area'&&id==='build')?'is-active':''}
           aria-current={(page==='quote'&&quoteTab===id)||(page==='area'&&id==='build')?'page':undefined}
-          aria-label={id==='build'?quote.documentType==='pricing-schedule'
+          aria-label={id==='pricing'?'Open pricing review panel':id==='build'?quote.documentType==='pricing-schedule'
             ?'Edit '+salesTemplateLabel(salesDocumentTemplate(quote)):'Build quote':undefined}
-          onClick={()=>onQuoteTab(id)}>
+          onClick={()=>id==='pricing'?onReview():onQuoteTab(id)}>
           <span className="qmb-desktop-step-icon">{id==='build'?'▤':id==='details'?'♙':id==='pricing'?'◈':'▧'}</span>
           {label}
         </button>)}
