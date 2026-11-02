@@ -7,7 +7,7 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {auditQuoteDraft} from '../services/quoteDraftAudit';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,takeoffPieceSplashSf,
- totalBillableTakeoffSf,totalBillableMiterInches} from '../services/quoteTakeoffsLite';
+ totalBillableTakeoffSf,totalBillableMiterInches,roundedBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {calculateAreaCustomerPrice,projectAreaCost} from '../services/quoteAreaCost';
 import {savedAreaMultiplier} from '../services/quotePriceInput';
 import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
@@ -133,9 +133,9 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
    pricingMode:mode,rate:mode==='quantity-rate'?primary.rate:undefined,
    amount:mode==='direct'?quoteLineAmount(primary):mode==='slab-multiplier'?calculated:undefined,
    ...(mode==='quantity-rate'&&pieces.length?{
-     quantity:totalBillableTakeoffSf(pieces),
+     quantity:roundedBillableTakeoffSf(pieces,section?.scope?.billableSfRounding),
      quantitySource:{kind:'area-scope',sectionId:id,field:'countertopSf',syncMode:'live',
-       capturedValue:totalBillableTakeoffSf(pieces),appliedAt:new Date().toISOString()},
+       capturedValue:roundedBillableTakeoffSf(pieces,section?.scope?.billableSfRounding),appliedAt:new Date().toISOString()},
    }:{}),
    materialReference:mode==='slab-multiplier'?{
     ...(primary.materialReference??{stockProgram:false,pricingSource:'slab-multiplier'}),
@@ -172,7 +172,23 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
         selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
         onTextChange={name=>store.selectTakeoffMaterial(quote.id,id!,name)}
         onSelect={(reference,label)=>store.selectTakeoffMaterial(quote.id,id!,label,reference)}/></label>
-     <div><span>SF</span><strong>{sf.format(totalBillableTakeoffSf(pieces))}</strong></div>
+     <div className="qwt-sf-cell"><span>Measured SF</span>
+       <strong>{sf.format(totalBillableTakeoffSf(pieces))}</strong>
+       <select aria-label={'SF billing rounding for '+section.title}
+        disabled={!editable} value={section.scope?.billableSfRounding??'exact'}
+        onChange={e=>{
+         store.updateSection(quote.id,id!,{scope:{...section.scope,
+          billableSfRounding:e.target.value as NonNullable<typeof section.scope>['billableSfRounding']}});
+         store.updateTakeoffPieces(quote.id,id!,pieces);
+        }}>
+         <option value="exact">Exact SF</option>
+         <option value="quarter-up">Up to ¼ SF</option>
+         <option value="half-up">Up to ½ SF</option>
+         <option value="whole-up">Up to whole SF</option>
+       </select>
+       {section.scope?.billableSfRounding&&section.scope.billableSfRounding!=='exact'&&
+        <small>Billed: {sf.format(roundedBillableTakeoffSf(pieces,section.scope.billableSfRounding))} SF</small>}
+      </div>
      <div className={!cost?.complete?'qwt-needs-cost':''} title={!cost?.complete?'Partial estimate · '+cost?.missingCostItems.join(', '):'Full private cost'}>
        <span>Cost</span><strong>{cost?.totalKnownCost?money.format(cost.totalKnownCost):'—'}</strong>
        {!cost?.complete&&<small>Partial</small>}</div>
