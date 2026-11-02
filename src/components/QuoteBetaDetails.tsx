@@ -9,7 +9,7 @@ import {QUOTE_STANDARD_TERMS,freeCustomerNotes,termsEnabled,withCustomerTerms} f
 
 /** Mobile-first Details: customer -> deal -> notes.
  * Never navigates away to Board from a CRM link or selection. */
-export function QuoteBetaDetails({quote,onContinueToArea,nextAreaLabel}:{quote:Quote;onContinueToArea?:()=>void;nextAreaLabel?:string}) {
+export function QuoteBetaDetails({quote,onContinueToArea,nextAreaLabel,onStartGeneral}:{quote:Quote;onContinueToArea?:()=>void;nextAreaLabel?:string;onStartGeneral?:()=>void}) {
   const update=useQuoteStore(state=>state.updateQuote);
   const editable=quoteIsCommerciallyEditable(quote);
   return <div className="qmb-details-page" role="region" aria-label="Quote customer and deal details">
@@ -48,7 +48,12 @@ export function QuoteBetaDetails({quote,onContinueToArea,nextAreaLabel}:{quote:Q
     </section>
     {onContinueToArea&&nextAreaLabel&&<div className="qmb-details-next" aria-label="Next quote step">
       <div><strong>Continue to takeoffs</strong><small>Customer and Deal details are optional and save automatically. Continue now; add notes whenever you need.</small></div>
-      <button type="button" className="qmb-primary" onClick={onContinueToArea}>{nextAreaLabel}</button>
+      <div className="qmb-details-next-actions">
+        <button type="button" className="qmb-primary" onClick={onContinueToArea}>{nextAreaLabel}</button>
+        {onStartGeneral&&<button type="button" className="qmb-outline" onClick={onStartGeneral}>
+          Start with General charges ›
+        </button>}
+      </div>
     </div>}
     <section className="qmb-details-section qmb-card" aria-labelledby="qmb-details-notes">
       <header className="qmb-details-heading">
