@@ -1,0 +1,4 @@
+.qmb .qmb-sink-inclusion{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;line-height:1.35;color:var(--qmb-muted);cursor:pointer;}
+.qmb .qmb-sink-inclusion input{width:14px;height:14px;flex:none;accent-color:var(--qmb-accent);}
+.qmb .qmb-sink-spec-only{display:block;color:var(--qmb-muted);font-size:10px;line-height:1.35;}
+.qmb .qmb-compact-sink-model{min-width:0;}
