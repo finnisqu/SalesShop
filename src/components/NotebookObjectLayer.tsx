@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
-import {useNavigationStore} from '../store/navigationStore';
+import {notebookPromotionActions} from '../services/notebookPromotionActions';
 import {useAppContextMenu} from './AppContextMenu';
 import {notebookObjectTaskText} from '../services/notebookTaskPromotion';
 import type {
@@ -297,13 +297,6 @@ function ObjectFrame({ entryId, object, selected, onPromote }: {
 export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
   const context=useAppContextMenu();
   const beginPromotion=usePersonalTaskStore(s=>s.beginPromotion);
-  const setView=useNavigationStore(s=>s.setView);
-  const promote=(object:NotebookObject)=>{
-    const text=notebookObjectTaskText(object);
-    beginPromotion({title:text.slice(0,240),sourceText:text.slice(0,2000),
-      linked:{type:'notebook',id:entry.id},sourceLabel:entry.title||'Notebook page',sourceObjectId:object.id});
-    setView('tasks');
-  };
   const activeTool = useNotebookStore((state) => state.activeTool);
   const selectedObjectId = useNotebookStore((state) => state.selectedObjectId);
   const selectObject = useNotebookStore((state) => state.selectObject);
@@ -329,7 +322,9 @@ export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
           selected={selectionEnabled && selectedObjectId === object.id}
           onPromote={(event,item)=>{
             context.openPointer(event,'Notebook '+item.type,
-              [{label:'Promote object to Task…',onSelect:()=>promote(item)}]);
+              notebookPromotionActions({title:notebookObjectTaskText(item),
+                linked:{type:'notebook',id:entry.id},sourceLabel:entry.title||'Notebook page',
+                sourceText:notebookObjectTaskText(item),sourceObjectId:item.id},beginPromotion));
           }}/>
       ))}
       {context.menu}

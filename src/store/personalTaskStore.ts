@@ -25,7 +25,11 @@ export interface PersonalTask {
   createdAt:string;updatedAt:string;completedAt?:string;
 }
 export type TaskChanges=Partial<Omit<PersonalTask,'id'|'createdAt'|'updatedAt'>>;
-export interface TaskPromotion {title:string;linked?:TaskLink;associations?:TaskAssociation[];sourceLabel?:string;sourceText?:string;sourceObjectId?:string;}
+export type NotebookPromotionKind='task'|'touchpoint'|'deal'|'contact'|'company';
+export interface TaskPromotion {
+  title:string;target?:NotebookPromotionKind;linked?:TaskLink;associations?:TaskAssociation[];
+  sourceLabel?:string;sourceText?:string;sourceObjectId?:string;
+}
 interface TaskState {
   scope:string|null;tasks:PersonalTask[];promotion:TaskPromotion|null;
   syncStatus:'local'|'loading'|'pending'|'saved'|'error';syncError:string|null;

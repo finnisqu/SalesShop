@@ -2,7 +2,7 @@ import { useMemo, useState, type DragEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
 import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
-import {useNavigationStore} from '../store/navigationStore';
+import {notebookPromotionActions} from '../services/notebookPromotionActions';
 import type { NotebookEntry, NotebookFolder, NotebookObject } from '../types/notebook';
 
 type PageFilter = 'all' | 'favorites' | 'project' | 'postits';
@@ -76,7 +76,6 @@ export function Sidebar() {
   const toggleFavorite=useNotebookStore(state=>state.toggleFavorite);
   const contextActions=useAppContextMenu();
   const beginPromotion=usePersonalTaskStore(s=>s.beginPromotion);
-  const setView=useNavigationStore(s=>s.setView);
   const [showHidden, setShowHidden] = useState(false);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [showTrash, setShowTrash] = useState(false);
@@ -104,12 +103,9 @@ export function Sidebar() {
         if(title?.trim())renameEntry(entry.id,title.trim());
       }},
       {label:'Duplicate page',onSelect:()=>duplicateEntry(entry.id)},
-      {label:'Promote page to Task…',dividerBefore:true,onSelect:()=>{
-        beginPromotion({title:entry.title||'Review Notebook page',
-          linked:{type:'notebook',id:entry.id},sourceLabel:entry.title||'Notebook page',
-          sourceText:entry.title||undefined});
-        setView('tasks');
-      }},
+      ...notebookPromotionActions({title:entry.title||'Review Notebook page',
+        linked:{type:'notebook',id:entry.id},sourceLabel:entry.title||'Notebook page',
+        sourceText:entry.title||undefined},beginPromotion),
     ];
     if(!entry.deletionLocked)actions.push({
       label:'Move to Recently Deleted…',destructive:true,dividerBefore:true,
