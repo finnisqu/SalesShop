@@ -10,3 +10,21 @@
  .qmb .qmb-builder-general-table .qmb-builder-general-type,
  .qmb .qmb-builder-general-table .qmb-builder-general-method{display:none;}
 }
+
+/* The desktop quote navigator/inspector can squeeze the editor even when the
+ * viewport is wide. Respond to the actual table width, not only window width. */
+.qmb .qmb-builder-table{container-type:inline-size;}
+@container (max-width:670px){
+ .qmb .qmb-builder-area-head,.qmb .qmb-builder-area-entry{
+   grid-template-columns:minmax(0,1fr) 67px 99px;}
+ .qmb .qmb-builder-area-head span:nth-child(2),
+ .qmb .qmb-builder-area-head span:nth-child(4),
+ .qmb .qmb-builder-area-entry>.qmb-builder-area-material,
+ .qmb .qmb-builder-area-entry>.qmb-builder-area-display{display:none;}
+ .qmb .qmb-builder-general-head,.qmb .qmb-builder-general-table .qmb-line-top{
+   grid-template-columns:minmax(0,1fr) 100px 28px;}
+ .qmb .qmb-builder-general-head span:nth-child(2),
+ .qmb .qmb-builder-general-head span:nth-child(3),
+ .qmb .qmb-builder-general-table .qmb-builder-general-type,
+ .qmb .qmb-builder-general-table .qmb-builder-general-method{display:none;}
+}
