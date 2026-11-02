@@ -60,7 +60,7 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const materialCost=manualOverride??fromSlab??fromSf;
   let sinkCost=0,missingSinkCosts=0;
   // Specifications-only sinks never create a charge or require a buying cost.
-  const pricedSinks=(scope?.takeoffSinks??[]).filter(s=>s.includeInPricing&&s.count>0);
+  const pricedSinks=(scope?.takeoffSinks??[]).filter(s=>s.count>0&&takeoffSinkIncludedInQuote(quote,section.id,s.id));
   for(const sink of pricedSinks){
     const cost=nonnegative(sink.internalCostOverride)??nonnegative(sink.sinkReference?.snapshot?.internalCost);
     if(cost===undefined){missingSinkCosts++;continue;}
