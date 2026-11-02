@@ -3,6 +3,7 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {slabReferencePatch} from './QuoteMaterialLineFields';
 import {QuoteSfRateChoices} from './QuoteSfRateChoices';
 import {CustomerPreview,type CustomerPreviewEditing} from './Quotes';
+import {QuotePrintPreview} from './QuotePrintPreview';
 import {QuoteBetaCustomerOptions} from './QuoteBetaCustomerOptions';
 import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
 import {useQuoteStore} from '../store/quoteStore';
@@ -122,10 +123,11 @@ export function QuoteBetaEditablePreview({quote,onReturnToReview}:{quote:Quote;o
   const updateSection=useQuoteStore(s=>s.updateSection);
   const [editing,setEditing]=useState(false);
   const [device,setDevice]=useState<'desktop'|'phone'>('desktop');
+  const [printMode,setPrintMode]=useState<'preview'|'print'|null>(null);
   const [nameId,setNameId]=useState<string|null>(null);
   const [target,setTarget]=useState<PriceTarget|null>(null);
   const [selectedLineId,setSelectedLineId]=useState('');
-  useEffect(()=>{setEditing(false);setNameId(null);setTarget(null);},[quote.id]);
+  useEffect(()=>{setEditing(false);setNameId(null);setTarget(null);setPrintMode(null);},[quote.id]);
   useEffect(()=>{
     if(!target)return;
     const key=(event:KeyboardEvent)=>{if(event.key==='Escape'){setTarget(null);setNameId(null);}};
@@ -184,6 +186,10 @@ export function QuoteBetaEditablePreview({quote,onReturnToReview}:{quote:Quote;o
           <button type="button" aria-label="Phone quote preview" aria-pressed={device==='phone'}
             onClick={()=>setDevice('phone')}>▯ Phone</button>
         </div>
+        <button type="button" className="qmb-preview-print-preview" aria-label="Print preview"
+          onClick={()=>setPrintMode('preview')}>Print preview</button>
+        <button type="button" className="qmb-preview-print" aria-label="Print customer quote"
+          onClick={()=>setPrintMode('print')}>Print</button>
         {editable&&<button type="button" aria-pressed={editing} onClick={()=>{
           setEditing(current=>!current);setTarget(null);setNameId(null);
         }}>{editing?'✓ Done editing':'✎ Make edits'}</button>}
@@ -193,6 +199,8 @@ export function QuoteBetaEditablePreview({quote,onReturnToReview}:{quote:Quote;o
     <div className={'qmb-preview'+(editing?' is-live-editing':'')+(device==='phone'?' is-phone-view':'')}>
       <CustomerPreview quote={quote} editing={paperEditing}/>
     </div>
+    {printMode&&<QuotePrintPreview quote={quote} autoPrint={printMode==='print'}
+      onClose={()=>setPrintMode(null)}/>}
     {target&&editing&&<div className="qmb-preview-edit-backdrop"
       onPointerDown={e=>{if(e.target===e.currentTarget)setTarget(null);}}>
       <section role="dialog" aria-modal="true" aria-label="Edit quote price from preview" className="qmb-preview-edit-dialog">
