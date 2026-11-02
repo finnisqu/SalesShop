@@ -133,6 +133,16 @@ describe('explicit shared physical slab buying',()=>{
   expect(effectiveQuoteSlabEstimates(quote)).toHaveLength(0);
   expect(allocatedSharedSlabCost(quote,'kitchen')).toBeNull();
  });
+ it('does not override deliberate per-Area slab purchase counts with inferred pooling',()=>{
+  const quote=base();
+  quote.sections.forEach(area=>{
+   area.scope!.slabAreaOverrideSf=80;
+   area.scope!.slabCostOverride=600;
+  });
+  quote.sections[1].scope!.slabCountOverride=2;
+  expect(effectiveQuoteSlabEstimates(quote)).toHaveLength(0);
+  expect(allocatedSharedSlabCost(quote,'kitchen')).toBeNull();
+ });
  it('keeps explicitly configured pools authoritative over automatic pooling',()=>{
   const quote=base();
   quote.sections.forEach(area=>{
