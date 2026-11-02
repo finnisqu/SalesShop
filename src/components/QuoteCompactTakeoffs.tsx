@@ -192,7 +192,6 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
   target?.scrollIntoView({block:'nearest',behavior:'smooth'});
  },[focusArea]);
  const [selected,setSelected]=useState<QuoteScopeRowRef[]>([]);
- const [bulk,setBulk]=useState<QuoteScopeBulkOperation>('exclude');
  const [target,setTarget]=useState('');
  const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
  useEffect(()=>{setSelected([]);setDetail(null);},[quote.id]);
@@ -245,16 +244,17 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
     Math.round(total/(line.quantity??1)*10000)/10000,rateReference:undefined});
   else store.updateLine(quote.id,line.id,{pricingMode:'direct',amount:total,rate:undefined});
  };
- const apply=()=>{
-  if(!selected.length||!editable||(bulk==='move'&&!target))return;
-  if(bulk==='move'&&selected.some(r=>r.kind==='splash'&&!selected.some(p=>
+ const apply=(operation:QuoteScopeBulkOperation)=>{
+  if(!selected.length||!editable||(operation==='move'&&!target))return;
+  if(operation==='delete'&&!window.confirm('Delete '+selected.length+' selected takeoff row(s)? Measurements and charges are removed; Undo is available.'))return;
+  if(operation==='move'&&selected.some(r=>r.kind==='splash'&&!selected.some(p=>
    p.kind==='piece'&&p.id===r.id&&p.sectionId===r.sectionId)))return;
   const targetId=target==='general'?undefined:target;
-  const valid=bulk!=='move'||target==='general'
-   ?bulk!=='move'||selected.every(r=>r.kind==='line')
+  const valid=operation!=='move'||target==='general'
+   ?operation!=='move'||selected.every(r=>r.kind==='line')
    :areas.some(s=>s.id===target);
   if(!valid)return;
-  store.bulkScopeRows(quote.id,selected,bulk,targetId);
+  store.bulkScopeRows(quote.id,selected,operation,targetId);
   setSelected([]);
  };
  const row=(ref:QuoteScopeRowRef,area:string,description:ReactNode,qty:ReactNode,length:ReactNode,
@@ -278,19 +278,23 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    </div>
   </div>;
  return <section className="qqt-workspace" aria-label="Takeoffs spreadsheet">
-  <header className="qqt-heading"><div><h3>Takeoffs</h3>
-   <span>One row per piece, splash, sink or charge · detailed settings on ✎</span></div>
-   <button type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button></header>
-  {!!selected.length&&<div className="qqt-bulk" role="toolbar" aria-label="Bulk edit takeoff lines">
-    <strong>{selected.length} selected</strong>
-    <select value={bulk} aria-label="Bulk operation" onChange={e=>setBulk(e.target.value as QuoteScopeBulkOperation)}>
-     <option value="exclude">Strike out</option><option value="restore">Restore</option>
-     <option value="move">Move to another Area</option></select>
-    {bulk==='move'&&<select aria-label="Move to Area" value={target} onChange={e=>setTarget(e.target.value)}>
-     <option value="">Choose Area</option>{areas.map(a=><option key={a.id} value={a.id}>{a.title}</option>)}
-     <option value="general">General (charges only)</option></select>}
-    <button type="button" disabled={!editable||bulk==='move'&&!target} onClick={apply}>Apply</button>
-    <button type="button" onClick={()=>setSelected([])}>Clear</button></div>}
+  <header className={'qqt-heading'+(selected.length?' is-selecting':'')}>
+    {selected.length?<div className="qqt-bulk" role="toolbar" aria-label="Bulk edit takeoff lines">
+     <strong>{selected.length} selected</strong>
+     <button type="button" disabled={!editable} onClick={()=>apply('exclude')}>Strike out</button>
+     <button type="button" disabled={!editable} onClick={()=>apply('restore')}>Restore</button>
+     <select aria-label="Move selected rows to Area" value={target} onChange={e=>setTarget(e.target.value)}>
+      <option value="">Move to…</option>{areas.map(a=><option key={a.id} value={a.id}>{a.title}</option>)}
+      <option value="general">General (charges only)</option>
+     </select>
+     <button type="button" disabled={!editable||!target} onClick={()=>apply('move')}>Move</button>
+     <button type="button" className="qqt-delete-selected" disabled={!editable}
+      onClick={()=>apply('delete')}>Delete</button>
+     <button type="button" onClick={()=>{setSelected([]);setTarget('');}}>Clear ×</button>
+    </div>:<div><h3>Takeoffs</h3>
+     <span>Click a cell to edit · pencil for advanced settings</span></div>}
+    <button type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
+   </header>
   <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}>
    <div className="qqt-header qqt-grid">
     {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling price','Contract','Actions']
