@@ -132,7 +132,9 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&
          <button type="button" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
        <button type="button" className="record-preview-full" onClick={goToPage}>Go to page</button>
-       {quote&&<button type="button" className="record-preview-open-quote" onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
+       {quote&&<button type="button" className="record-preview-open-quote"
+         disabled={Boolean(quote.archivedAt)} title={quote.archivedAt?'Restore this document before opening it':undefined}
+         onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
      </footer>
    </aside>
  </div>;

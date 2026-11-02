@@ -327,9 +327,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
       </section>
 
       {preview&&<RecordPreviewDrawer record={preview} onClose={()=>setPreview(null)}
-        onSelect={setPreview} onEditBoard={record=>{
-          if(record.kind==='company')setEditingId(record.id);
-        }}/>}
+        onSelect={setPreview} onEditBoard={preview.kind==='company'?record=>setEditingId(record.id):undefined}/>}
       {editingCompany && <AccountEditor company={editingCompany} onClose={() => {
         setEditingId(null);
         if(focusedCompanyId===editingCompany.id)clearFocusedCompany();

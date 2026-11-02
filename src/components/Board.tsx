@@ -392,9 +392,7 @@ export function Board() {
       </section>
 
       {preview&&<RecordPreviewDrawer record={preview} onClose={()=>setPreview(null)}
-        onSelect={setPreview} onEditBoard={record=>{
-          if(record.kind==='deal')setEditingId(record.id);
-        }}/>}
+        onSelect={setPreview} onEditBoard={preview.kind==='deal'?record=>setEditingId(record.id):undefined}/>}
       {editingProject && <ProjectEditor project={editingProject} onClose={() => {
         setEditingId(null);
         if(focusedProjectId===editingProject.id)clearFocusedProject();
