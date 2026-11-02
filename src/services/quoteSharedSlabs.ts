@@ -70,9 +70,47 @@ export function estimateQuoteSlabPool(quote:Quote,pool:QuoteSlabPool):SlabPoolEs
 export function quoteSharedSlabEstimates(quote:Quote):SlabPoolEstimate[]{
  return (quote.slabPools??[]).map(pool=>estimateQuoteSlabPool(quote,pool));
 }
+/** Automatically share whole-slab buying for measured Areas with the same exact Catalog
+ * material/variant and identical purchasing inputs. This is a derived estimate:
+ * no quote mutation, no cloud migration and no change to customer selling prices.
+ * Areas lacking safe Catalog identity, dimensions or buying cost remain independent. */
+export function effectiveQuoteSlabEstimates(quote:Quote):SlabPoolEstimate[]{
+ const explicit=quoteSharedSlabEstimates(quote);
+ const occupied=new Set((quote.slabPools??[]).flatMap(pool=>pool.sectionIds));
+ const compatible=new Map<string,{areas:QuoteSection[];size:number;cost:number;yield:number;key:string}>();
+ for(const area of quote.sections){
+  if(occupied.has(area.id)||!finitePositive(areaOf(area)))continue;
+  const key=slabPoolMaterialKey(area);
+  if(!key)continue;
+  const scope=area.scope,ref=scope?.takeoffMaterialReference,snap=ref?.snapshot;
+  const size=scope?.slabAreaOverrideSf??snap?.areaSf??
+   (snap?.lengthIn&&snap?.widthIn?snap.lengthIn*snap.widthIn/144:undefined);
+  const cost=scope?.slabCostOverride??ref?.sourceSlabCost??snap?.slabCost??ref?.catalogSlabCost;
+  const yieldFraction=scope?.slabYield??.65;
+  if(size===undefined||!finitePositive(size)||cost===undefined||
+   !Number.isFinite(cost)||cost<0||!finitePositive(yieldFraction)||yieldFraction>1)continue;
+  const groupKey=JSON.stringify([key,size,cost,yieldFraction]);
+  const group=compatible.get(groupKey);
+  if(group)group.areas.push(area);
+  else compatible.set(groupKey,{key,size,cost,yield:yieldFraction,areas:[area]});
+ }
+ const automatic:SlabPoolEstimate[]=[];
+ for(const group of compatible.values()){
+  if(group.areas.length<2)continue;
+  // The estimator rejects overlapping explicit pools and allocates cents
+  // deterministically across the measured Areas.
+  const pool:QuoteSlabPool={id:'auto:'+group.areas.map(a=>a.id).sort().join(':'),
+   label:'Auto-shared slabs',sectionIds:group.areas.map(a=>a.id),
+   materialKey:group.key,slabAreaSf:group.size,slabCost:group.cost,yield:group.yield};
+  const estimate=estimateQuoteSlabPool(quote,pool);
+  if(estimate.valid)automatic.push(estimate);
+ }
+ return [...explicit,...automatic];
+}
+
 export function allocatedSharedSlabCost(quote:Quote,areaId:string):
  {cost:number;purchaseSlabs:number;physicalSlabs:number;poolLabel:string;unitSlabCost:number;slabAreaSf:number}|null{
- const match=quoteSharedSlabEstimates(quote)
+ const match=effectiveQuoteSlabEstimates(quote)
    .find(group=>group.valid&&Object.prototype.hasOwnProperty.call(group.allocation,areaId));
  if(!match)return null;
  return {cost:match.allocation[areaId],purchaseSlabs:match.fractionalSlabs[areaId],
