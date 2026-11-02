@@ -12,6 +12,9 @@ const contract=source('src/components/QuoteContractApproval.tsx');
 const scopeBatch=source('src/services/quoteScopeRowBatch.ts');
 const review=source('src/components/QuoteBetaReview.tsx');
 const reviewCss=source('src/components/quote-pricing-review-workspace.css');
+const editablePreview=source('src/components/QuoteBetaEditablePreview.tsx');
+const printPreview=source('src/components/QuotePrintPreview.tsx');
+const printCss=source('src/components/quote-print-preview.css');
 
 describe('Quick Quote guided workflow and compact table contract',()=>{
  it('uses Areas by default and does not stack the detailed table underneath',()=>{
@@ -85,6 +88,18 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain('Delete sink');
   expect(areas).toContain('Delete line');
   expect(areas).toContain("onClick={()=>bulkApply('delete')}");
+ });
+ it('prints only the customer document with preview and direct Print actions',()=>{
+  expect(editablePreview).toContain('Print preview</button>');
+  expect(editablePreview).toContain('>Print</button>');
+  expect(editablePreview).toContain('<QuotePrintPreview quote={quote}');
+  expect(editablePreview).toContain("autoPrint={printMode==='print'}");
+  expect(printPreview).toContain('<CustomerPreview quote={quote}/>');
+  expect(printPreview).not.toContain('editing={');
+  expect(printPreview).toContain('window.print()');
+  expect(printCss).toContain('body>*:not(#sales-quote-print-root){display:none!important;}');
+  expect(printCss).toContain('.qpp-toolbar{display:none!important;}');
+  expect(printCss).toContain('@page{size:letter;');
  });
  it('uses the same guided four stages and never requires opening an old Area page',()=>{
   expect(progress).toContain("label:'Deal Details'");
