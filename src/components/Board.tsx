@@ -6,6 +6,7 @@ import { quotesForProject } from '../services/quoteCrmLinks';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useQuoteStore } from '../store/quoteStore';
 import { AccountsBoard } from './AccountsBoard';
+import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import { Button, Field, PageHeader } from '../design-system/components';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
@@ -57,15 +58,16 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
       draggable={!mobileInteraction}
       onDragStart={mobileInteraction ? undefined : onDragStart}
       onClick={mobileInteraction ? onOpen : undefined}
-      onDoubleClick={mobileInteraction ? undefined : onOpen}
       tabIndex={0}
       onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(); } }}
-      title={mobileInteraction ? 'Tap to edit' : 'Double-click to edit'}
+      title={mobileInteraction ? 'Tap name to preview' : 'Drag card to move · click name to preview'}
     >
       <div className="project-card-pin" aria-hidden="true" />
       <div className="project-card-company">{project.companyName || 'Unassigned company'}</div>
       <div className="project-card-title-row">
-        <h3>{project.name}</h3>
+        <h3><button type="button" className="board-entity-name"
+          aria-label={'Preview deal '+project.name}
+          onClick={event=>{event.stopPropagation();onOpen();}}>{project.name}</button></h3>
         {Boolean(project.amount) && <strong className="project-card-title-value">{money.format(project.amount ?? 0)}</strong>}
       </div>
       {(project.amount || project.dueDate) && (
@@ -241,6 +243,7 @@ export function Board() {
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragStage, setDragStage] = useState<ProjectStage | null>(null);
   const boardRef = useRef<HTMLElement | null>(null);
@@ -377,7 +380,7 @@ export function Board() {
                     key={project.id}
                     project={project}
                     mobileInteraction={mobileInteraction}
-                    onOpen={() => setEditingId(project.id)}
+                    onOpen={() => setPreview({kind:'deal',id:project.id})}
                     onDragStart={(event) => { setDraggedId(project.id); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', project.id); }}
                   />
                 ))}
@@ -388,6 +391,8 @@ export function Board() {
         })}
       </section>
 
+      {preview&&<RecordPreviewDrawer record={preview} onClose={()=>setPreview(null)}
+        onSelect={setPreview} onEditBoard={record=>setEditingId(record.id)}/>}
       {editingProject && <ProjectEditor project={editingProject} onClose={() => {
         setEditingId(null);
         if(focusedProjectId===editingProject.id)clearFocusedProject();

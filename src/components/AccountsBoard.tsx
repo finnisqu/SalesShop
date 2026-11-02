@@ -23,6 +23,7 @@ import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { Button, PageHeader } from '../design-system/components';
 import { CrmCleanupPanel } from './CrmCleanupPanel';
+import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
 
@@ -198,6 +199,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const clearFocusedCompany = useNavigationStore((state) => state.clearFocusedCompany);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [cleanupOpen, setCleanupOpen] = useState(false);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
@@ -293,15 +295,16 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                     <article
                       className="project-card account-card"
                       key={company.id}
-                      onClick={mobileInteraction ? () => setEditingId(company.id) : undefined}
-                      onDoubleClick={mobileInteraction ? undefined : () => setEditingId(company.id)}
+                      onClick={mobileInteraction ? () => setPreview({kind:'company',id:company.id}) : undefined}
                       tabIndex={0}
                       onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setEditingId(company.id); } }}
-                      title={mobileInteraction ? 'Tap to open' : 'Double-click to open'}
+                      title={mobileInteraction ? 'Tap name to preview' : 'Click name to preview'}
                     >
                       <div className="project-card-company">{health.stage}</div>
                       <div className="account-card-title-row">
-                        <h3>{company.name}</h3>
+                        <h3><button type="button" className="board-entity-name"
+                          aria-label={'Preview account '+company.name}
+                          onClick={event=>{event.stopPropagation();setPreview({kind:'company',id:company.id});}}>{company.name}</button></h3>
                         {expectedAnnualWork !== undefined && <strong className="account-card-title-value">{money.format(expectedAnnualWork)}</strong>}
                       </div>
                       <div className="account-card-stats">
@@ -323,6 +326,8 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
         })}
       </section>
 
+      {preview&&<RecordPreviewDrawer record={preview} onClose={()=>setPreview(null)}
+        onSelect={setPreview} onEditBoard={record=>setEditingId(record.id)}/>}
       {editingCompany && <AccountEditor company={editingCompany} onClose={() => {
         setEditingId(null);
         if(focusedCompanyId===editingCompany.id)clearFocusedCompany();

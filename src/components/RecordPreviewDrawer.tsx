@@ -117,7 +117,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          <section><h3>Deal</h3>
            {quote.projectId&&deals.find(x=>x.id===quote.projectId)
              ?related('deal',quote.projectId,deals.find(x=>x.id===quote.projectId)!.name)
-             :<p className="record-preview-empty">{quote.projectName||'No deal linked.'}</p>}
+             :<p className="record-preview-empty">{'No deal linked.'}</p>}
          </section>
        </>}
      </div>
