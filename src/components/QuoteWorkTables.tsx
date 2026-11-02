@@ -481,7 +481,7 @@ function ScopeRows({quote,section,general=false,view,showColumns=false,selected,
  </section>;
 }
 /** Private calculator is a dismissible focus panel, not another quote workflow page. */
-function CalculatorDrawer({quote,section,onClose,onAdvanced}:{
+export function CalculatorDrawer({quote,section,onClose,onAdvanced}:{
  quote:Quote;section:QuoteSection|null;onClose:()=>void;onAdvanced:(id:string)=>void;
 }){
  const ref=useRef<HTMLElement>(null);
