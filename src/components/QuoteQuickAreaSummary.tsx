@@ -68,12 +68,14 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced}:{
  const extras=section?data?.specialty??[]:general.lines;
  const title=section?.title??'General';
  const input=useRef<HTMLDivElement>(null);
+ const closeRef=useRef(onClose);
+ closeRef.current=onClose;
  useEffect(()=>{
-  const escape=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')onClose();};
+  const escape=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')closeRef.current();};
   document.addEventListener('keydown',escape);
   input.current?.querySelector<HTMLButtonElement>('.qqs-panel-close')?.focus();
   return()=>document.removeEventListener('keydown',escape);
- },[onClose,detail.kind,detail.areaId]);
+ },[detail.kind,detail.areaId]);
  const addSink=()=>{
   if(!section)return;
   store.updateTakeoffSinks(quote.id,section.id,
