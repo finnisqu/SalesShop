@@ -80,6 +80,7 @@ export const QUOTE_AREA_SCOPE_FIELDS = [
   'kitchenSinkCount',
   'vanitySinkCount',
   'cutoutCount',
+  'miterInches',
 ] as const;
 export type QuoteAreaScopeField = (typeof QUOTE_AREA_SCOPE_FIELDS)[number];
 
@@ -97,6 +98,10 @@ export interface QuoteTakeoffPiece {
   splashHeightIn?: number;
   /** Optional fabrication edge selection; defaults to Flat. */
   edgeProfile?: string;
+  /** Checked fabrication edges measured for linked miter work (inches). */
+  miterFront?: boolean;
+  miterLeft?: boolean;
+  miterRight?: boolean;
   /** Retain measured geometry, but exclude this top and its splashes from the current quote. */
   excludedFromQuote?: boolean;
   /** Keep measured splash edges for later, without billing their material. */
@@ -172,6 +177,8 @@ export interface QuoteAreaScope {
   kitchenSinkCount?: number;
   vanitySinkCount?: number;
   cutoutCount?: number;
+  /** Sum of opted-in miter edges, following source-piece geometry. */
+  miterInches?: number;
 }
 
 /** Explicit quote-wide internal slab buying group; never automatically changes customer prices. */
@@ -303,6 +310,7 @@ export interface QuoteLineQuantitySource {
   syncMode?: 'live';
 }
 
+export type QuoteChargeCategory = 'product'|'miter'|'specialty'|'freight'|'tax'|'tariff'|'breakage';
 export interface QuoteLine {
   id: string;
   sectionId?: string;
@@ -314,6 +322,11 @@ export interface QuoteLine {
   rate?: number;
   amount?: number;
   internalCost?: number;
+  /** Private source classification for itemized specialty costs; never changes selling math. */
+  costCategory?: QuoteChargeCategory;
+  productCode?: string;
+  supplierName?: string;
+  unitLabel?: string;
   customerVisible: boolean;
   includeInTotal: boolean;
   materialReference?: QuoteLineMaterialReference;
