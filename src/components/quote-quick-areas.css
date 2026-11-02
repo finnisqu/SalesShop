@@ -181,3 +181,14 @@
  font-size:11px;font-weight:750;text-align:left;min-height:32px;}
 .sales-app .qmb .qqs-danger-actions button:hover,.sales-app .qmb .qqs-remove-action:hover{
  border-color:var(--ss-danger,#ad4d43);background:var(--qmb-bg);}
+
+/* A focused editor always starts at the top-right of the viewport, even when
+ * the page's own flex/grid styles and scroll position change. */
+.sales-app .qmb.qqs-overlay>.qqs-panel{
+ position:fixed!important;inset:0 0 0 auto!important;
+ top:0!important;right:0!important;bottom:0!important;left:auto!important;
+ height:100dvh!important;max-height:100dvh!important;
+ margin:0!important;align-self:stretch!important;
+ width:min(450px,100vw);transform:none!important;
+ border-radius:0!important;
+}
