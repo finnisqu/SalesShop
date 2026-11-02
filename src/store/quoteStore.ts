@@ -25,7 +25,7 @@ import {
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import {assertMatchingApprovedDraft} from '../services/quoteIssueGuard';
-import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
+import {duplicateQuoteArea,copyQuoteAreaFromSource} from '../services/quoteAreaDuplicate';
 import {sectionFromQuoteAreaPreset,type QuoteAreaPresetId} from '../services/quoteAreaPresets';
 import {instantiateSavedAreaLayout,type SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
 import {createQuoteSlabPool} from '../services/quoteSharedSlabs';
@@ -87,6 +87,7 @@ interface QuoteState {
   addAreaFromPreset: (quoteId:string,presetId:QuoteAreaPresetId)=>string;
   addAreaFromSavedLayout: (quoteId:string,layout:SavedAreaLayout)=>string;
   duplicateArea: (quoteId: string, sourceAreaId: string) => string;
+  copyAreaFromQuote:(targetQuoteId:string,sourceQuoteId:string,sourceAreaId:string,includeSellingPrices?:boolean)=>string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   /** Atomic, undoable update to Area display or pre-existing live-SF selling rates. */
   bulkEditAreas:(quoteId:string,sectionIds:string[],patch:{
@@ -916,6 +917,20 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     persist(quotes,get().activeQuoteId);
     set({quotes,...history});
     return duplicate.newAreaId;
+  },
+  copyAreaFromQuote:(targetQuoteId,sourceQuoteId,sourceAreaId,includeSellingPrices=false)=>{
+    const target=get().quotes.find(q=>q.id===targetQuoteId);
+    const source=get().quotes.find(q=>q.id===sourceQuoteId);
+    if(!target||!source||!quoteIsCommerciallyEditable(target)||
+       target.documentType==='pricing-schedule'||target.id===source.id)return '';
+    const copy=copyQuoteAreaFromSource(target,source,sourceAreaId,includeSellingPrices);
+    if(!copy)return '';
+    const history=historyPatch(get(),targetQuoteId,target);
+    const quotes=get().quotes.map(q=>q.id===targetQuoteId
+      ?{...copy.quote,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
+    return copy.newAreaId;
   },
   reorderSection: (quoteId, sectionId, targetSectionId) => {
     const current = get().quotes.find((quote) => quote.id === quoteId);
