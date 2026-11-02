@@ -132,3 +132,10 @@
  .sales-app .qmb .qwt-summary-grid>.qwt-summary-material{flex-basis:180px;}
  .sales-app .qmb .qwt-calculator{justify-self:start;}
 }
+
+.sales-app .qmb .qwt-area-label select{max-width:170px;min-height:30px;font-size:10px;
+ color:var(--qmb-muted);background:var(--qmb-card);border:1px solid var(--qmb-border);
+ border-radius:6px;padding:4px 5px;}
+.sales-app .qmb .qwt-exclusion-warning{margin:0;padding:9px 12px;font-size:11px;
+ color:var(--qmb-ink);line-height:1.45;background:rgba(182,119,44,.10);
+ border-top:1px solid rgba(182,119,44,.3);}

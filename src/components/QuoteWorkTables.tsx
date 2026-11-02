@@ -63,6 +63,8 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
  const amount=quoteLinesTotal(lines);
  const issue=section&&!general?auditQuoteDraft(quote).blockers.find(item=>
   item.destination.view==='area'&&item.destination.areaId===id):undefined;
+ const excludedMeasuredWork=pieces.some(p=>p.excludedFromQuote||p.excludeSplashFromQuote);
+ const manualExclusionReview=excludedMeasuredWork&&primary&&primary.pricingMode!=='quantity-rate';
  const refs:QuoteScopeRowRef[]=[
   ...pieces.flatMap(piece=>([
    {kind:'piece' as const,id:piece.id,sectionId:id},
@@ -99,9 +101,16 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
    <div className="qwt-area-label">{section&&!general?<QuoteInlineAreaName quote={quote} section={section}/>:
     <strong>General</strong>}
     <small>{general?'Fees, allowances, discounts and unassigned work':'Measured takeoffs · selling · costs'}</small>
+    {section&&!general&&<select aria-label={'Customer display for '+section.title}
+      disabled={!editable} value={!section.customerVisible?'hidden':section.customerDisplayMode==='summary'?'summary':'detail'}
+      onChange={e=>store.updateSection(quote.id,section.id,{customerVisible:e.target.value!=='hidden',
+       ...(e.target.value!=='hidden'?{customerDisplayMode:e.target.value==='summary'?'summary':'detail'}:{})})}>
+      <option value="detail">Contract: itemized</option><option value="summary">Contract: lump sum</option>
+      <option value="hidden">Hidden from customer</option>
+    </select>}
    </div>
    {section&&!general?<div className="qwt-summary-grid">
-     <label className="qwt-summary-material"><span>Material</span>
+     <label className={'qwt-summary-material'+(pieces.length>0&&!section.scope?.takeoffMaterial?.trim()?' qwt-needs-review':'')} title={pieces.length&&!section.scope?.takeoffMaterial?'Choose a material for these pieces':undefined}><span>Material</span>
        <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
         selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
         onTextChange={name=>store.selectTakeoffMaterial(quote.id,id!,name)}
@@ -120,13 +129,18 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
      </div>
      <div className={cost?.marginPercent===undefined?'qwt-needs-cost':cost.marginPercent<30?'qwt-needs-review':'qwt-ok'}>
        <span>Margin</span><strong>{cost?.marginPercent===undefined?'—':cost.marginPercent.toFixed(1)+'%'}</strong></div>
-     <div className={issue?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
-       {issue&&<small title={issue.title}>! Check price</small>}</div>
+     <div className={issue||manualExclusionReview?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
+       {issue&&<small title={issue.title}>! Check price</small>}
+       {manualExclusionReview&&<small>! Recheck manual price</small>}</div>
      <div><span>Sinks</span><strong>{sinks.reduce((n,s)=>n+s.count,0)}</strong></div>
    </div>:<div className="qwt-general-total"><span>General charges</span>
     <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
    <button type="button" className="qwt-calculator" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
   </div>
+  {manualExclusionReview&&<p className="qwt-exclusion-warning" role="status">
+    Excluded measurements are preserved, but this Area uses a manual or multiplier selling price.
+    That price has not changed. Review and explicitly adjust it in Calculator before issuing the contract.
+   </p>}
   {refs.length>0&&<div className="qwt-table-selection">
     <label><input type="checkbox" checked={refs.every(row=>selected.has(rowKey(row)))}
      onChange={e=>onSelectMany(refs,e.target.checked)}/> Select all lines</label>
@@ -306,7 +320,7 @@ export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralT
   store.bulkScopeRows(quote.id,selectedValid,operation,operation==='move'?target:undefined);
   setSelected([]);
  };
- return <div className="qwt-workspace" aria-label="Takeoffs selections and pricing tables">
+ return <div className="qwt-workspace" role="region" aria-label="Takeoffs selections and pricing tables">
   <header className="qwt-intro"><div><div className="qmb-kicker">QUICK QUOTE · SINGLE WORKSPACE</div>
     <h2>Takeoffs, selections &amp; pricing</h2>
     <p>Each Area has its own editable table. Pieces come first, then sinks and charges.
