@@ -63,12 +63,13 @@ export function quoteSharedSlabEstimates(quote:Quote):SlabPoolEstimate[]{
  return (quote.slabPools??[]).map(pool=>estimateQuoteSlabPool(quote,pool));
 }
 export function allocatedSharedSlabCost(quote:Quote,areaId:string):
- {cost:number;purchaseSlabs:number;physicalSlabs:number;poolLabel:string}|null{
+ {cost:number;purchaseSlabs:number;physicalSlabs:number;poolLabel:string;unitSlabCost:number;slabAreaSf:number}|null{
  const match=quoteSharedSlabEstimates(quote)
    .find(group=>group.valid&&Object.prototype.hasOwnProperty.call(group.allocation,areaId));
  if(!match)return null;
  return {cost:match.allocation[areaId],purchaseSlabs:match.fractionalSlabs[areaId],
-   physicalSlabs:match.slabCount!,poolLabel:match.pool.label};
+   physicalSlabs:match.slabCount!,poolLabel:match.pool.label,
+   unitSlabCost:match.pool.slabCost,slabAreaSf:match.pool.slabAreaSf};
 }
 export function createQuoteSlabPool(quote:Quote,selectedIds:readonly string[],spec:{
  id:string;label:string;slabAreaSf:number;slabCost:number;yield:number;slabCountOverride?:number;
