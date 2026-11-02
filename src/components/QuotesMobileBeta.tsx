@@ -83,6 +83,8 @@ import { nextQuoteAreaShortcut, nextQuoteAreaAfter } from '../services/quoteWork
 import { GlobalPostItLauncher } from './GlobalPostIt';
 import { BuildBadge } from './BuildBadge';
 import {formatPersonalDate,readPersonalDateTimePreferences} from '../services/personalDateTimePreferences';
+import {nextReviewFocus} from '../services/quoteReviewReturn';
+import './quote-beta-review-return.css';
 
 // Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
 const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(module=>({default:module.PricingDocumentEditor})));
@@ -541,6 +543,7 @@ export function QuotesMobileBeta() {
   const [selectionsOpen,setSelectionsOpen]=useState(false);
   const [reviewOpen,setReviewOpen]=useState(false);
   const [reviewFocus,setReviewFocus]=useState<string|null>(null);
+  const [reviewReturn,setReviewReturn]=useState<{quoteId:string;findingId:string|null}|null>(null);
   const [previewReturnQuoteId,setPreviewReturnQuoteId]=useState<string|null>(null);
   const [previewStartedKey,setPreviewStartedKey]=useState<string|null>(null);
   const [previewedDeliveryKey,setPreviewedDeliveryKey]=useState<string|null>(null);
@@ -640,13 +643,13 @@ export function QuotesMobileBeta() {
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
-    setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
+    setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const showLibrary=()=>{
-    setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
+    setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
     // Clearing the route ID makes Back reopen the selected editor, rather than
     // leaving a stale /quotes/:id URL on the document library.
     setView('quotes');
@@ -808,7 +811,14 @@ export function QuotesMobileBeta() {
     if(detailsNextArea.kind==='open')openArea(detailsNextArea.areaId);
     else newArea();
   };
-  const openReview=(focusId:string|null=null)=>{setError('');setSelectionsOpen(false);setReviewFocus(focusId);setReviewOpen(true);};
+  const openReview=(focusId:string|null=null)=>{
+    setReviewReturn(null);setError('');setSelectionsOpen(false);
+    setReviewFocus(focusId);setReviewOpen(true);
+  };
+  const returnToReview=()=>{
+    if(!quote||reviewReturn?.quoteId!==quote.id)return;
+    openReview(nextReviewFocus(quote,reviewReturn.findingId));
+  };
   // Stage shortcuts never mutate pricing or automatically issue a document.
   const openPricingStage=()=>{
     if(!quote||quote.documentType==='pricing-schedule')return;
@@ -841,6 +851,7 @@ export function QuotesMobileBeta() {
     openReview('__delivery__');
   };
   const fixAudit=(destination:QuoteAuditDestination)=>{
+    if(reviewOpen&&quote)setReviewReturn({quoteId:quote.id,findingId:reviewFocus});
     setReviewOpen(false);
     if(destination.view==='area'){
       setAreaId(destination.areaId);setAreaTab(destination.tab);setPage('area');
@@ -904,6 +915,17 @@ export function QuotesMobileBeta() {
         onSelections={()=>setSelectionsOpen(true)}
         />}
       <div className="qmb-desktop-main">
+      {quote&&page!=='library'&&!reviewOpen&&reviewReturn?.quoteId===quote.id
+        &&!(page==='quote'&&quoteTab==='preview')&&
+        <div className="qmb-review-return" role="status" aria-label="Return to quote Review">
+          <div><strong>Editing a Review finding</strong>
+            <small>Changes save as you work. Return to Review to check the updated quote.</small></div>
+          <div className="qmb-review-return-actions">
+            <button type="button" onClick={returnToReview}>Return to Review ›</button>
+            <button type="button" className="is-dismiss"
+              aria-label="Dismiss return to Review" onClick={()=>setReviewReturn(null)}>×</button>
+          </div>
+        </div>}
       {quote&&page!=='library'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaProgress
         key={quote.id} quote={quote} editable={editable}
         current={reviewOpen||page==='quote'&&quoteTab==='preview'?'review':

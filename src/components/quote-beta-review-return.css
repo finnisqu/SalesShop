@@ -1,0 +1,13 @@
+.qmb .qmb-review-return{display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:9px 14px;background:var(--qmb-card);color:var(--qmb-ink);
+ border-bottom:1px solid var(--qmb-border);flex:none;min-width:0;}
+.qmb .qmb-review-return>div{display:grid;gap:3px;min-width:0;}
+.qmb .qmb-review-return strong{font-size:12px;line-height:1.2;}
+.qmb .qmb-review-return small{font-size:10px;color:var(--qmb-muted);line-height:1.35;}
+.qmb .qmb-review-return-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+.qmb .qmb-review-return-actions button{border:1px solid var(--qmb-border);
+ border-radius:8px;background:var(--qmb-tint);color:var(--qmb-accent);font-size:11px;font-weight:780;
+ min-height:37px;padding:6px 9px;}
+.qmb .qmb-review-return-actions button.is-dismiss{background:transparent;color:var(--qmb-muted);min-width:32px;}
+@media(max-width:580px){.qmb .qmb-review-return{flex-wrap:wrap;gap:7px;}
+ .qmb .qmb-review-return-actions{width:100%;justify-content:flex-end;}}
