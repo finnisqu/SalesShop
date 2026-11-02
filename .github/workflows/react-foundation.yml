@@ -1,22 +1,32 @@
-name: SalesShop Pages
+name: SalesShop CI
 
-# Cloudflare Workers Builds publishes SalesShop from GitHub main. GitHub-hosted
-# checks are opt-in while Actions minutes are exhausted; run them for releases.
+# Cloudflare Workers Git integration owns production deployment.
+# Never deploy to GitHub Pages or configure its custom domain from Actions.
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages-${{ github.ref }}
+  group: salesshop-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  checks:
+    name: TypeScript, unit tests, production build
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # Use local-test defaults. Never inject a real customer Supabase session.
+      VITE_SALES_SHOP_LOCAL_QC: '1'
+      VITE_SUPABASE_URL: ''
+      VITE_SUPABASE_ANON_KEY: ''
+      VITE_BASE_PATH: '/'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,57 +34,29 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      # This repository currently has no npm lockfile; npm ci would fail.
       - name: Install dependencies
-        run: npm install
-      - name: Configure GitHub Pages
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-        id: pages
-        uses: actions/configure-pages@v5
-      - name: Supplier importer regression tests
+        run: npm install --no-audit --no-fund
+      - name: Unit and regression tests
         run: npm test
       - name: Typecheck and build
         run: npm run build
-        env:
-          # Custom-domain deployment is at the origin root, not /SalesShop/.
-          VITE_BASE_PATH: '/'
-      - name: Verify custom-domain asset paths
+      - name: Verify root-hosted asset paths
         run: |
+          set -euo pipefail
           grep -Eq 'src="/assets/' dist/index.html
           grep -Eq 'href="/assets/' dist/index.html
           if grep -Eq '(src|href)="/SalesShop/' dist/index.html; then
-            echo "Built HTML still uses the old /SalesShop/ base path" >&2
+            echo "Unexpected legacy /SalesShop/ asset path" >&2
             exit 1
           fi
-      - name: Add GitHub Pages SPA fallback
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-        run: |
-          cp dist/index.html dist/404.html
-          touch dist/.nojekyll
-          printf 'app.salesshop.work\n' > dist/CNAME
-      - name: Upload GitHub Pages artifact
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v4
+      - name: Upload build diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          path: dist
-
-  deploy:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: sales-shop-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-      - name: Smoke-test production HTML and asset delivery
-        run: |
-          set -euo pipefail
-          url="https://app.salesshop.work/"
-          curl --fail --silent --show-error --location --retry 8 --retry-delay 8 --retry-all-errors "$url" -o /tmp/salesshop-index.html
-          grep -Eq 'src="/assets/' /tmp/salesshop-index.html
-          asset="$(grep -oE 'src="/assets/[^"]+' /tmp/salesshop-index.html | head -n 1 | cut -d '"' -f 2)"
-          test -n "$asset"
-          curl --fail --silent --show-error --location --retry 8 --retry-delay 8 --retry-all-errors "https://app.salesshop.work$asset" -o /dev/null
-          echo "SalesShop HTML and hashed application asset are reachable."
+          name: salesshop-ci-diagnostics
+          path: |
+            artifacts/
+            dist/
+          retention-days: 7
+          if-no-files-found: ignore

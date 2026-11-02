@@ -1,8 +1,29 @@
 name: SalesShop Visual QC (Batch 10B)
 
-# Cloudflare Workers Builds publishes SalesShop from GitHub main. GitHub-hosted
-# checks are opt-in while Actions minutes are exhausted; run them for releases.
+# Cloudflare Workers deploys production separately; this is automated validation only.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'e2e/**'
+      - 'public/**'
+      - 'package.json'
+      - 'vite.config.*'
+      - 'playwright.config.*'
+      - 'tsconfig.json'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'e2e/**'
+      - 'public/**'
+      - 'package.json'
+      - 'vite.config.*'
+      - 'playwright.config.*'
+      - 'tsconfig.json'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:

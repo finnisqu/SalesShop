@@ -1,8 +1,21 @@
 name: Private Quote RLS SQL QC
 
-# Cloudflare Workers Builds publishes SalesShop from GitHub main. GitHub-hosted
-# checks are opt-in while Actions minutes are exhausted; run them for releases.
+# Cloudflare Workers deploys production separately; this is automated validation only.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'tests/security/**'
+      - '.github/workflows/private-quote-rls-qc.yml'
+      - '.github/workflows/private-deal-roles-qc.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'tests/security/**'
+      - '.github/workflows/private-quote-rls-qc.yml'
+      - '.github/workflows/private-deal-roles-qc.yml'
   workflow_dispatch:
 
 permissions:
