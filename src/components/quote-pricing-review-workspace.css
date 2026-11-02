@@ -5,7 +5,7 @@
 .sales-app .qmb .qqr-pagehead small{font-size:10px;font-weight:800;letter-spacing:.09em;color:var(--qmb-muted);}
 .sales-app .qmb .qqr-pagehead strong{font-size:19px;color:var(--qmb-ink);}
 .sales-app .qmb .qqr-pagehead p{margin:0;font-size:11px;color:var(--qmb-muted);}
-.sales-app .qmb .qqr-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--qmb-card);padding:8px 14px;gap:6px;border-bottom:1px solid var(--qmb-border);}
+.sales-app .qmb .qqr-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--qmb-card);padding:8px 14px;gap:6px;border-bottom:1px solid var(--qmb-border);}
 .sales-app .qmb .qqr-steps button{display:flex;align-items:center;gap:9px;border:1px solid var(--qmb-border);border-radius:7px;min-height:40px;padding:6px 10px;background:var(--qmb-card);color:var(--qmb-ink);text-align:left;}
 .sales-app .qmb .qqr-steps button>span{display:grid;place-items:center;width:23px;height:23px;flex:0 0 23px;border:1px solid var(--qmb-border);border-radius:50%;font-weight:800;font-size:11px;}
 .sales-app .qmb .qqr-steps button strong{font-size:11px;line-height:1.25;}
