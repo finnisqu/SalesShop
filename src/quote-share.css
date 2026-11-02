@@ -88,3 +88,61 @@
   .quote-share-control { right: 14px; bottom: 14px; }
   .quote-share-panel { bottom: 46px; }
 }
+
+/* Theme bridge for SalesShop quote sharing. The original fixed warm colors are
+ * kept only as standalone Classic fallbacks; inside the workspace every
+ * elevation, border, input, and status now follows the active palette. */
+.sales-app .qmb .quote-share-control{color:var(--qmb-ink);}
+.sales-app .qmb .quote-share-launcher{
+ background:var(--qmb-card);color:var(--qmb-accent);
+ border:1px solid var(--qmb-border);border-radius:8px;
+ box-shadow:0 3px 12px rgba(0,0,0,.09);}
+.sales-app .qmb .quote-share-panel{
+ background:var(--qmb-card);color:var(--qmb-ink);
+ border:1px solid var(--qmb-border);border-radius:10px;
+ box-shadow:0 14px 35px rgba(0,0,0,.17);}
+.sales-app .qmb .quote-share-panel>header{
+ background:var(--qmb-bg);border-bottom:1px solid var(--qmb-border);
+ color:var(--qmb-ink);}
+.sales-app .qmb .quote-share-panel>header span{color:var(--qmb-muted);opacity:1;}
+.sales-app .qmb .quote-share-panel>header button{color:var(--qmb-muted);}
+.sales-app .qmb .quote-share-panel :is(.quote-share-empty,.quote-share-active,.quote-share-message){
+ color:var(--qmb-ink);}
+.sales-app .qmb .quote-share-panel .quote-share-empty p,
+.sales-app .qmb .quote-share-panel .quote-share-active small,
+.sales-app .qmb .quote-share-panel .quote-share-revision>span,
+.sales-app .qmb .quote-share-panel .quote-share-status-row,
+.sales-app .qmb .quote-share-panel .quote-share-url>span{
+ color:var(--qmb-muted);}
+.sales-app .qmb .quote-share-panel :is(.quote-share-empty>button,
+ .quote-share-primary-actions button,.quote-share-secondary-actions button){
+ border:1px solid var(--qmb-border);border-radius:7px;
+ background:var(--qmb-card);color:var(--qmb-ink);}
+.sales-app .qmb .quote-share-panel :is(.quote-share-empty>button,
+ .quote-share-primary-actions button.primary){
+ background:var(--qmb-accent);border-color:var(--qmb-accent);
+ color:var(--qmb-on-accent);}
+.sales-app .qmb .quote-share-panel .quote-share-secondary-actions{
+ border-top:1px solid var(--qmb-border);}
+.sales-app .qmb .quote-share-panel .quote-share-secondary-actions button{background:transparent;}
+.sales-app .qmb .quote-share-panel .quote-share-status{
+ border:1px solid var(--qmb-border);background:var(--qmb-tint);
+ color:var(--qmb-accent);}
+.sales-app .qmb .quote-share-panel .quote-share-status.status-revoked,
+.sales-app .qmb .quote-share-panel .quote-share-status.status-expired{
+ background:var(--qmb-bg);color:var(--ss-danger,#b75750);}
+.sales-app .qmb .quote-share-panel .quote-share-url input{
+ border:1px solid var(--qmb-border);background:var(--qmb-bg);
+ color:var(--qmb-ink);border-radius:7px;}
+.sales-app .qmb .quote-share-panel .quote-share-error{
+ border-left:3px solid var(--ss-danger,#b75750);
+ background:var(--qmb-tint);color:var(--qmb-ink);}
+.sales-app .qmb .quote-share-panel .quote-share-review-needed{
+ font-size:11px;line-height:1.45;color:var(--ss-danger,#b75750);}
+.sales-app .qmb .quote-share-panel .quote-handoff-status{
+ background:var(--qmb-tint);color:var(--qmb-ink);
+ border:1px solid var(--qmb-border);}
+.sales-app .qmb .quote-share-panel .quote-handoff-milestones>span{
+ background:var(--qmb-card);border:1px solid var(--qmb-border);color:var(--qmb-muted);}
+.sales-app .qmb .quote-share-panel .quote-handoff-milestones>span.is-complete{
+ background:var(--qmb-tint);color:var(--qmb-accent);border-color:var(--qmb-accent);}
