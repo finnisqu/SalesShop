@@ -1,6 +1,6 @@
 import {useMemo,useState} from 'react';
 import {createPortal} from 'react-dom';
-import {SALES_DOCUMENT_TEMPLATES,salesDocumentTemplate,salesTemplateLabel,
+import {SALES_DOCUMENT_TEMPLATES,salesTemplateLabel,previousSalesDocuments,
   type SalesTemplateStart} from '../services/salesDocumentTemplates';
 import type {Quote,SalesDocumentTemplateChoice} from '../types/quote';
 import '../sales-documents.css';
@@ -24,12 +24,7 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
   const [sourceId,setSourceId]=useState('');
   const [documentName,setDocumentName]=useState('');
   const template=SALES_DOCUMENT_TEMPLATES.find(t=>t.id===selected);
-  const previous=useMemo(()=>quotes.filter(q=>{
-    if(q.archivedAt||!q.pricingSchedule)return false;
-    const type=salesDocumentTemplate(q);
-    if(selected==='community-pricing')return type==='community-pricing'||type==='builder-rates';
-    return type===selected;
-  }).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[selected,quotes]);
+  const previous=useMemo(()=>previousSalesDocuments(quotes,selected),[selected,quotes]);
   const choose=(id:SalesDocumentTemplateChoice)=>{
     setSelected(id);setStart('blank');setSourceId('');setDocumentName('');
   };
@@ -66,11 +61,11 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
           <p>This document type is reserved for supplier quotes, cut-to-size material pricing, wholesale purchasing and project cost modeling. It cannot create a draft or publish prices until its calculator and contract rules are ready.</p>
         </div>:<>
           <p className="sales-document-template-description">{template?.description}</p>
-          {selected!=='quick-quote'&&<div className="sales-document-starter-options" role="group" aria-label="Starting point">
+          <div className="sales-document-starter-options" role="group" aria-label="Starting point">
             <button type="button" className={start==='blank'?'active':''} onClick={()=>{setStart('blank');setSourceId('');}}>
               <strong>Blank</strong><small>Start with an empty editable document.</small>
             </button>
-            {selected!=='spreadsheet'&&<button type="button"
+            {selected!=='quick-quote'&&selected!=='spreadsheet'&&<button type="button"
               className={start==='company-rates'?'active':''} disabled={!stockStarterReady}
               onClick={()=>{setStart('company-rates');setSourceId('');}}>
               <strong>{stockStarterSelected?'Company stock levels':'Company stock rates'}</strong>
@@ -83,10 +78,12 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
             </button>}
             <button type="button" className={start==='previous'?'active':''}
               disabled={!previous.length} onClick={()=>{setStart('previous');setDocumentName('');}}>
-              <strong>Copy previous agreement</strong><small>{previous.length?previous.length+' compatible documents':'No matching documents yet'}</small>
+              <strong>{selected==='quick-quote'?'Start from previous quote':'Copy previous agreement'}</strong>
+              <small>{previous.length?previous.length+' compatible documents':'No matching documents yet'}</small>
             </button>
-          </div>}
-          {start==='previous'&&<label className="sales-document-source-picker"><span>Choose the agreement to copy</span>
+          </div>
+          {start==='previous'&&<label className="sales-document-source-picker">
+            <span>{selected==='quick-quote'?'Choose the quote to reuse':'Choose the agreement to copy'}</span>
             <select aria-label="Previous agreement" value={sourceId} onChange={e=>{
               setSourceId(e.target.value);
               const chosen=quotes.find(q=>q.id===e.target.value);
@@ -97,7 +94,9 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
                 {q.companyName?q.companyName+' · ':''}{q.title} · Rev {q.revision} · {salesTemplateLabel(salesDocumentTemplate(q))}
               </option>)}
             </select>
-            <small>Copies its current pricing as an independent draft. Later changes to the original will not change this document.</small>
+            <small>{selected==='quick-quote'
+              ?'Copies Areas, measurements, prices and selections into a new independent draft. Issued revisions, signatures, and delivery history are not copied.'
+              :'Copies its current pricing as an independent draft. Later changes to the original will not change this document.'}</small>
           </label>}
           <label className="sales-document-name-field">
             <span>{selected==='quick-quote'?'Quote name':'Document name'} <strong aria-hidden="true">*</strong></span>
