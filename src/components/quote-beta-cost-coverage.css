@@ -2,3 +2,20 @@
 .qmb-cost-warning li button:disabled{opacity:.5;cursor:default;}
 .qmb-cost-warning li button:focus-visible{outline:2px solid var(--ss-theme-accent);outline-offset:3px;}
 .qmb-cost-warning li{margin:4px 0;line-height:1.45;}
+
+/* Optional guidance is visually quiet; it never changes selling without a click. */
+.sales-app .qmb .qmb-suggested-rate{border:1px solid var(--qmb-border);
+ border-radius:8px;padding:10px 12px;background:var(--qmb-bg);display:grid;gap:8px;}
+.sales-app .qmb .qmb-suggested-rate-intro,.sales-app .qmb .qmb-suggested-rate-row{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.sales-app .qmb .qmb-suggested-rate-intro>strong{font-size:12px;}
+.sales-app .qmb .qmb-suggested-rate-intro small,.sales-app .qmb .qmb-suggested-rate-row small{
+ color:var(--qmb-muted);font-size:10px;line-height:1.4;}
+.sales-app .qmb .qmb-suggested-rate-row>div{display:grid;gap:4px;min-width:0;}
+.sales-app .qmb .qmb-suggested-rate-row strong{font-size:12px;}
+.sales-app .qmb .qmb-suggested-rate-row button{border:1px solid var(--qmb-accent);
+ background:var(--qmb-card);color:var(--qmb-accent);font-size:11px;font-weight:800;
+ border-radius:6px;padding:7px 10px;white-space:nowrap;}
+.sales-app .qmb .qmb-suggested-rate-note,.sales-app .qmb .qmb-suggested-cost-changed{
+ font-size:11px;color:var(--qmb-muted);line-height:1.45;margin:0;}
+.sales-app .qmb .qmb-suggested-cost-changed{color:var(--ss-warning,#a87420);}
