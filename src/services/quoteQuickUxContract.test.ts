@@ -8,6 +8,8 @@ const areaCss=source('src/components/quote-quick-areas.css');
 const takeoffs=source('src/components/QuoteCompactTakeoffs.tsx');
 const quoteUi=source('src/components/QuotesMobileBeta.tsx');
 const progress=source('src/services/quoteBuilderProgress.ts');
+const review=source('src/components/QuoteBetaReview.tsx');
+const reviewCss=source('src/components/quote-pricing-review-workspace.css');
 
 describe('Quick Quote guided workflow and compact table contract',()=>{
  it('uses Areas by default and does not stack the detailed table underneath',()=>{
@@ -48,6 +50,32 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(quoteUi).toContain('qmb-quick-history');
   expect(quoteUi).toContain('is-quick-quote-frame');
   expect(areas).toContain("table.current.querySelector<HTMLInputElement>('input.qqs-edit:focus')?.blur()");
+ });
+ it('fills the available desktop width and explains missing information without gold underlines',()=>{
+  expect(areaCss).toContain('width:100%;min-width:960px');
+  expect(areaCss).toContain('.qqs-cell.is-warning{box-shadow:none;');
+  expect(areas).toContain('qqs-cell-attention');
+ });
+ it('renders Pricing Review as a dedicated four-question workspace',()=>{
+  expect(review).toContain("['Area totals','Costs & margin','Pricing questions','Approve & deliver']");
+  expect(review).toContain("reviewStep===0");
+  expect(review).toContain("reviewStep===1");
+  expect(review).toContain("reviewStep===2");
+  expect(review).toContain("reviewStep===3");
+  expect(reviewCss).toContain('.qqr-steps');
+  expect(quoteUi).toContain("quoteTab==='pricing'");
+  expect(quoteUi).toContain('<QuoteBetaReview quote={quote}');
+  expect(quoteUi).toContain("reviewOpen||page==='quote'&&quoteTab==='pricing'");
+ });
+ it('exposes distinct Delete and Strike-out behaviors without losing inline takeoff editing',()=>{
+  expect(takeoffs).toContain('qqt-delete-button');
+  expect(takeoffs).toContain("ref.kind==='splash'");
+  expect(takeoffs).toContain("store.deleteLine(quote.id,line.id)");
+  expect(takeoffs).toContain("Sink selling total");
+  expect(takeoffs).toContain("Charge selling total");
+  expect(areas).toContain("Remove Area · keep charges in General");
+  expect(areas).toContain('Delete sink');
+  expect(areas).toContain('Delete line');
  });
  it('uses the same guided four stages and never requires opening an old Area page',()=>{
   expect(progress).toContain("label:'Deal Details'");
