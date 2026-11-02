@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
-import {usePersonalTaskStore,taskScope,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
+import {TaskAssociationsField} from './TaskAssociationsField';
 import {useQuoteStore} from '../store/quoteStore';
 import {useCrmStore} from '../store/crmStore';
 import {useNotebookStore} from '../store/notebookStore';
@@ -7,18 +8,22 @@ import {useAuthStore} from '../store/authStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../tasks-workspace.css';
+import '../task-workflow-v2.css';
 
-type Filter='active'|'overdue'|'scheduled'|'completed'|'all';
+type Filter='active'|'today'|'upcoming'|'overdue'|'scheduled'|'completed'|'all';
+const defaultQueues=['Prospecting','Quotes','Deliveries','Meetings','Follow-ups','Internal'];
 const priorities:TaskPriority[]=['low','normal','high','urgent'];
 const types:TaskType[]=['todo','call','email','meeting','follow-up'];
 const statusOptions:TaskStatus[]=['open','in-progress','waiting','completed','canceled'];
 const localDay=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
 const formatDate=(date?:string)=>date?new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'Anytime';
 const taskComplete=(task:PersonalTask)=>task.status==='completed'||!!task.completedAt;
+const ownQueueNames=(tasks:PersonalTask[])=>tasks.filter(t=>!t.deletedAt)
+  .map(t=>t.queue).filter((q):q is string=>!!q);
 function condition(task:PersonalTask,today:string):'complete'|'overdue'|'scheduled'|'active'{
   if(taskComplete(task)||task.status==='canceled')return 'complete';
   if(task.dueDate&&task.dueDate<today)return 'overdue';
-  if(task.dueDate&&task.dueDate>today)return 'scheduled';
+  if(task.startDate&&task.startDate>today)return 'scheduled';
   return 'active';
 }
 function normalizeLocalReminder(value:string){
@@ -32,7 +37,7 @@ function reminderValue(value?:string){
   const p=(n:number)=>String(n).padStart(2,'0');
   return Number.isNaN(d.getTime())?'':[d.getFullYear(),p(d.getMonth()+1),p(d.getDate())].join('-')+'T'+p(d.getHours())+':'+p(d.getMinutes());
 }
-function Editor({initial,onCancel,onSave}:{
+export function TaskEditor({initial,onCancel,onSave}:{
   initial:Partial<PersonalTask>|TaskPromotion;onCancel:()=>void;onSave:(changes:TaskChanges&{title:string})=>void;
 }){
   // A promotion draft is a subset of the ordinary task editor fields.
@@ -43,12 +48,15 @@ function Editor({initial,onCancel,onSave}:{
   const [priority,setPriority]=useState<TaskPriority>(draft.priority??'normal');
   const [status,setStatus]=useState<TaskStatus>(draft.status??'open');
   const [dueDate,setDueDate]=useState(draft.dueDate??'');
+  const [startDate,setStartDate]=useState(draft.startDate??'');
   const [dueTime,setDueTime]=useState(draft.dueTime??'');
   const [reminderAt,setReminderAt]=useState(reminderValue(draft.reminderAt));
   const [queue,setQueue]=useState(draft.queue??'');
   const [notes,setNotes]=useState(draft.notes??'');
-  const [linked,setLinked]=useState<TaskLink|undefined>(initial.linked);
-  const [sourceLabel,setSourceLabel]=useState(initial.sourceLabel);
+  const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>normalizedTaskAssociations(initial));
+  const sourceLabel=initial.sourceLabel;
+  const commonQueues=Array.from(new Set([...defaultQueues,
+    ...usePersonalTaskStore.getState().tasks.map(task=>task.queue).filter((q):q is string=>!!q)])).sort();
   const quotes=useQuoteStore(s=>s.quotes);
   const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
   const deals=useCrmStore(s=>s.projects),pages=useNotebookStore(s=>s.entries);
@@ -62,9 +70,11 @@ function Editor({initial,onCancel,onSave}:{
   const [sourceText]=useState(initial.sourceText);
   const [sourceObjectId]=useState(initial.sourceObjectId);
   const submit=(event:FormEvent)=>{event.preventDefault();if(!title.trim())return;
-    onSave({title:title.trim(),type,priority,status,dueDate:dueDate||undefined,
+    onSave({title:title.trim(),type,priority,status,startDate:startDate||undefined,dueDate:dueDate||undefined,
       dueTime:dueDate?dueTime||undefined:undefined,reminderAt:normalizeLocalReminder(reminderAt),
-      notes,queue,linked,sourceLabel,sourceText,sourceObjectId});
+      notes,queue,associations:selectedLinks,
+      linked:selectedLinks[0]?{type:selectedLinks[0].type,id:selectedLinks[0].id}:undefined,
+      sourceLabel:selectedLinks[0]?.label??sourceLabel,sourceText,sourceObjectId});
   };
   return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)onCancel();}}>
     <form className="tasks-editor" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
@@ -73,18 +83,8 @@ function Editor({initial,onCancel,onSave}:{
         <button type="button" aria-label="Close task editor" onClick={onCancel}>×</button></header>
       <label>Task title<input autoFocus required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/></label>
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
-      <label>Related record
-        <select value={linked?linked.type+':'+linked.id:''} onChange={event=>{
-          const selected=associations.find(a=>a.key===event.target.value);
-          setLinked(selected?.linked);
-          setSourceLabel(selected?.label);
-        }}>
-          <option value="">Unassociated task</option>
-          {linked&&!associations.some(a=>a.key===linked.type+':'+linked.id)&&
-            <option value={linked.type+':'+linked.id}>{sourceLabel??linked.type+' · Linked record'}</option>}
-          {associations.map(a=><option key={a.key} value={a.key}>{a.label}</option>)}
-        </select>
-      </label>
+      <TaskAssociationsField options={associations.map(item=>({...item,
+        linked:{...item.linked,label:item.label}}))} value={selectedLinks} onChange={setSelectedLinks}/>
       <div className="tasks-editor-grid">
         <label>Type<select value={type} onChange={e=>setType(e.target.value as TaskType)}>
           {types.map(t=><option key={t} value={t}>{t==='todo'?'To-do':t==='follow-up'?'Follow-up':t[0].toUpperCase()+t.slice(1)}</option>)}</select></label>
@@ -92,8 +92,15 @@ function Editor({initial,onCancel,onSave}:{
           {priorities.map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
         <label>Status<select value={status} onChange={e=>setStatus(e.target.value as TaskStatus)}>
           {statusOptions.map(x=><option value={x} key={x}>{x==='in-progress'?'In progress':x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
-        <label>Queue / category<input value={queue} maxLength={80} placeholder="e.g. Follow-ups" onChange={e=>setQueue(e.target.value)}/></label>
-        <label>Due date<input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label>
+        <label>Queue / category<input list="tasks-queue-choices" value={queue} maxLength={80}
+          placeholder="e.g. Quotes" onChange={e=>setQueue(e.target.value)}/>
+          <datalist id="tasks-queue-choices">{commonQueues.map(q=><option key={q} value={q}/>)}</datalist>
+          <small className="tasks-editor-due-hint">Choose an existing queue or type a new name.</small>
+        </label>
+        <label>Start on<input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}/>
+          <small className="tasks-editor-due-hint">When you plan to begin; blank means available now.</small></label>
+        <label>Due date<input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}/>
+          <small className="tasks-editor-due-hint">Deadline, not the date the task becomes visible.</small></label>
         <label>Due time<input type="time" disabled={!dueDate} value={dueTime} onChange={e=>setDueTime(e.target.value)}/></label>
         <label className="tasks-editor-full">Reminder (in-app only)<input type="datetime-local" value={reminderAt}
           onChange={e=>setReminderAt(e.target.value)}/></label>
@@ -115,38 +122,43 @@ export function TasksWorkspace(){
   const load=usePersonalTaskStore(s=>s.load),create=usePersonalTaskStore(s=>s.createTask);
   const update=usePersonalTaskStore(s=>s.updateTask),complete=usePersonalTaskStore(s=>s.complete);
   const reopen=usePersonalTaskStore(s=>s.reopen),remove=usePersonalTaskStore(s=>s.remove);
-  const promotion=usePersonalTaskStore(s=>s.promotion),beginPromotion=usePersonalTaskStore(s=>s.beginPromotion);
+  const [queueFilter,setQueueFilter]=useState('all');
   const nav=useNavigationStore();
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
   const today=localDay();
   useEffect(()=>load(scope),[scope,load]);
-  useEffect(()=>{if(promotion&&scope){setEditing(promotion);beginPromotion(null);}},[promotion,beginPromotion,scope]);
+  const queues=useMemo(()=>Array.from(new Set(ownQueueNames(tasks))).sort(),[tasks]);
   const own=(!rolePreview&&scope&&storedScope===scope)?tasks.filter(t=>!t.deletedAt):[];
   const counts=useMemo(()=>({
-    active:own.filter(t=>condition(t,today)==='active').length,
+    active:own.filter(t=>condition(t,today)!=='complete').length,
     overdue:own.filter(t=>condition(t,today)==='overdue').length,
     scheduled:own.filter(t=>condition(t,today)==='scheduled').length,
     completed:own.filter(t=>condition(t,today)==='complete').length,
     all:own.length,
   }),[own,today]);
   const visible=useMemo(()=>own.filter(t=>{
-    if(filter==='active'&&!['active','overdue'].includes(condition(t,today)))return false;
-    if(filter==='overdue'&&condition(t,today)!=='overdue')return false;
-    if(filter==='scheduled'&&condition(t,today)!=='scheduled')return false;
-    if(filter==='completed'&&condition(t,today)!=='complete')return false;
-    return (t.title+' '+(t.notes??'')+' '+(t.sourceLabel??'')+' '+(t.queue??'')).toLowerCase().includes(search.trim().toLowerCase());
+    const state=condition(t,today),finished=state==='complete';
+    if(filter==='active'&&finished)return false;
+    if(filter==='today'&&(finished||(t.startDate&&t.startDate>today)||
+      (t.dueDate&&t.dueDate>today)))return false;
+    if(filter==='upcoming'&&(finished||!t.dueDate||t.dueDate<=today))return false;
+    if(filter==='overdue'&&state!=='overdue')return false;
+    if(filter==='scheduled'&&state!=='scheduled')return false;
+    if(filter==='completed'&&!finished)return false;
+    if(queueFilter!=='all'&&(t.queue??'')!==queueFilter)return false;
+    return (t.title+' '+(t.notes??'')+' '+(t.sourceLabel??'')+' '+
+      (t.associations??[]).map(x=>x.label??'').join(' ')+' '+(t.queue??'')).toLowerCase().includes(search.trim().toLowerCase());
   }).sort((a,b)=>{
     const aDone=taskComplete(a),bDone=taskComplete(b);
     if(aDone!==bDone)return aDone?1:-1;
     const weight=(p?:TaskPriority)=>({urgent:0,high:1,normal:2,low:3})[p??'normal'];
     return (a.dueDate??'9999').localeCompare(b.dueDate??'9999')||
       weight(a.priority)-weight(b.priority)||b.updatedAt.localeCompare(a.updatedAt);
-  }),[own,filter,search,today]);
-  const openSource=(t:PersonalTask)=>{
-    if(!t.linked)return;
-    const {id,type}=t.linked;
+  }),[own,filter,search,queueFilter,today]);
+  const openSource=(link:TaskLink)=>{
+    const {id,type}=link;
     if(type==='notebook')nav.openNotebookPage(id);
     if(type==='quote')nav.openQuote(id);
     if(type==='project')nav.openProject(id);
@@ -167,7 +179,7 @@ export function TasksWorkspace(){
       <button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})} disabled={!scope}>+ New task</button>
     </header>
     <div className="tasks-summary" aria-label="Task counts">
-      {([['active','To do'],['overdue','Overdue'],['scheduled','Scheduled'],['completed','Completed']] as const).map(([key,label])=>
+      {([['active','All open'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
         <button key={key} type="button" onClick={()=>setFilter(key)} className={filter===key?'is-selected':''}>
           <strong>{counts[key]}</strong><span>{label}</span>
         </button>)}
@@ -175,11 +187,20 @@ export function TasksWorkspace(){
     <div className="tasks-tools">
       <input type="search" aria-label="Search tasks" placeholder="Search tasks, notes, queues…" value={search} onChange={e=>setSearch(e.target.value)}/>
       <div className="tasks-filter-row" role="group" aria-label="Task status filter">
-        {(['active','overdue','scheduled','completed','all'] as const).map(key=>
+        {(['active','today','upcoming','overdue','scheduled','completed','all'] as const).map(key=>
           <button key={key} type="button" aria-pressed={filter===key}
-            className={filter===key?'is-selected':''} onClick={()=>setFilter(key)}>{key==='active'?'Open':key==='all'?'All history':key[0].toUpperCase()+key.slice(1)}</button>)}
+            className={filter===key?'is-selected':''} onClick={()=>setFilter(key)}>{
+              key==='active'?'All open':key==='all'?'All history':key==='scheduled'?'Start later':
+              key[0].toUpperCase()+key.slice(1)}</button>)}
       </div>
+      <label className="tasks-queue-filter">Queue
+        <select aria-label="Filter task queue" value={queueFilter} onChange={e=>setQueueFilter(e.target.value)}>
+          <option value="all">All queues</option>
+          {queues.map(q=><option key={q} value={q}>{q}</option>)}
+        </select>
+      </label>
     </div>
+    <p className="tasks-view-description">A due date never hides a task from All open. “Start later” is for tasks you don't plan to work on yet.</p>
     {!scope&&<p className="tasks-state">Your personal Tasks workspace will load after you sign in to a company.</p>}
     {scope&&<section className="tasks-list" aria-label="Task records">
       {!visible.length&&<div className="tasks-empty"><strong>No matching tasks</strong>
@@ -197,12 +218,15 @@ export function TasksWorkspace(){
             <div className="tasks-row-meta"><span>{task.type==='todo'||!task.type?'To-do':task.type}</span>
               <span className={state==='overdue'?'is-overdue':''}>{task.dueDate?'Due '+formatDate(task.dueDate)+(task.dueTime?' · '+task.dueTime:''):'No due date'}</span>
               <span>{isDone?'Completed':task.status==='canceled'?'Canceled':task.status==='in-progress'?'In progress':task.status==='waiting'?'Waiting':state==='scheduled'?'Scheduled':'Open'}</span>
-              {task.queue&&<span>{task.queue}</span>}
+              {task.queue&&<span>Queue: {task.queue}</span>}
+              {task.startDate&&<span>Start {formatDate(task.startDate)}</span>}
               {reminderDue&&<span className="is-overdue">Reminder due</span>}
             </div>
             {task.notes&&<p>{task.notes}</p>}
             {task.sourceText&&<blockquote>{task.sourceText.slice(0,260)}</blockquote>}
-            {task.linked&&<button type="button" className="tasks-source" onClick={()=>openSource(task)}>Open {task.sourceLabel??task.linked.type} ↗</button>}
+            {normalizedTaskAssociations(task).map(link=>
+              <button key={link.type+':'+link.id} type="button" className="tasks-source"
+                onClick={()=>openSource(link)}>Open {link.label??link.type} ↗</button>)}
             {isDone&&task.completedAt&&<small>Completed {new Date(task.completedAt).toLocaleString()}</small>}
           </div>
           <div className="tasks-row-actions">
@@ -222,6 +246,6 @@ export function TasksWorkspace(){
         :'Personal tasks saved on this device'}
       {' · '}Reminder dates are tracked in SalesShop. Background emails and push alerts are not enabled.
     </footer>
-    {editing&&<Editor key={'id'in editing?editing.id:editing.title+'new'} initial={editing} onCancel={()=>setEditing(null)} onSave={save}/>}
+    {editing&&<TaskEditor key={'id'in editing?editing.id:editing.title+'new'} initial={editing} onCancel={()=>setEditing(null)} onSave={save}/>}
   </main>;
 }
