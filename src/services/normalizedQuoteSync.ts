@@ -121,6 +121,11 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     sinkReference: sinkReferenceOrUndefined(row.sink_reference),
     takeoffSinkId: valueOrUndefined(row.takeoff_sink_id),
     rateReference: rateReferenceOrUndefined(row.rate_reference),
+    costCategory:rateReferenceOrUndefined(row.rate_reference)?.estimate?.costCategory,
+    productCode:rateReferenceOrUndefined(row.rate_reference)?.estimate?.productCode,
+    supplierName:rateReferenceOrUndefined(row.rate_reference)?.estimate?.supplierName,
+    unitLabel:rateReferenceOrUndefined(row.rate_reference)?.estimate?.unitLabel,
+    internalOnlyCost:rateReferenceOrUndefined(row.rate_reference)?.estimate?.internalOnlyCost,
   }));
   const revisionsByQuote = groupByQuote<QuoteRevisionSnapshot>(revisionRows, (row) => {
     const snapshot = row.snapshot;
@@ -355,7 +360,10 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     material_reference: line.materialReference ?? null,
     sink_reference: line.sinkReference ?? null,
     takeoff_sink_id: line.takeoffSinkId ?? null,
-    rate_reference: line.rateReference ?? null,
+    rate_reference:line.costCategory||line.productCode||line.supplierName||line.unitLabel||line.internalOnlyCost
+      ?{...(line.rateReference??{}),estimate:{costCategory:line.costCategory,
+       productCode:line.productCode,supplierName:line.supplierName,unitLabel:line.unitLabel,
+       internalOnlyCost:line.internalOnlyCost}}:line.rateReference??null,
     sort_order: sortOrder,
   })));
 
