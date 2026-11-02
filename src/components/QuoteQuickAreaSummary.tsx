@@ -180,6 +180,7 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
        <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
         pinned={quote.projectMaterials??[]} selected={section.scope?.takeoffMaterialReference}
         onTextChange={name=>store.selectTakeoffMaterial(quote.id,section.id,name)}
+        onCustomCommit={()=>onNext('price')}
         onSelect={(ref,label)=>{
          store.selectTakeoffMaterial(quote.id,section.id,label,ref);
          onNext('price');
@@ -438,7 +439,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
         return {value:data.specialtyPrice,disabled:!editable,
          onCommit:(v:number|undefined)=>store.updateLine(quote.id,line.id,
           line.pricingMode==='quantity-rate'&&!!line.quantity?
-           {rate:v===undefined?undefined:Math.round(v/line.quantity*10000)/10000,rateReference:undefined}:
+           {rate:v===undefined?undefined:Math.round(v/Math.max(1,line.quantity??1)*10000)/10000,rateReference:undefined}:
            {pricingMode:'direct',amount:v,rate:undefined})};
        })())}
       {cell(area.id,'total','Total price for '+area.title,amount(data.total))}
