@@ -26,7 +26,7 @@ Do not claim a release is verified until the current commit passes. Source inspe
 - Focus a supported cell and press **Enter** to edit. Inside the editor **Enter** commits and advances down (when a lower editable cell exists).
 - **Tab** / **Shift+Tab** move to the next / prior editable cell. **Arrow keys** move through display cells and skip read-only calculated cells.
 - Once editing, arrow keys move the text cursor; they must not change cells or page tabs.
-- Focus a display cell and type digits: the existing value is replaced. Paste a **single value** with Ctrl+V; invalid numbers must not be committed. Names permit pasted text.
+- Focus a display cell and press Ctrl+C (or Cmd+C) to copy its visible value; text inputs keep native copy behavior. Type digits to replace a focused numeric cell, or paste a **single value** with Ctrl+V; invalid numbers must not be committed. Names permit pasted text.
 - **Escape** restores the original value instead of saving a partial edit.
 - The keyboard must never trigger Delete, Strike out, or an approval action just by traversing cells.
 - Repeat on Takeoffs: piece name, length/width/quantity; sink name/quantity/price; extra charge/price; splash height.
