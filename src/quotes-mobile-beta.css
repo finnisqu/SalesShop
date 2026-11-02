@@ -223,3 +223,16 @@
 @media(max-width:410px){
  .sales-app .qmb .qmb-guided-footer-meta strong{display:none;}
 }
+
+
+/* Keep Quick Quote's progress bar as the only stage navigator. The separate
+ * Pricing Review contains the audit; no duplicate always-open inspector. */
+@media(min-width:1000px) and (min-height:550px){
+ .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote){
+  grid-template-columns:158px minmax(0,1fr);
+  grid-template-areas:"navigation workspace";}
+ .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote)
+  .qmb-desktop-inspector,
+ .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote)
+  .qmb-desktop-mainsteps{display:none;}
+}
