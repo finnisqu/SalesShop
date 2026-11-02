@@ -1,6 +1,6 @@
 import {useMemo,useState} from 'react';
 import {createPortal} from 'react-dom';
-import {SALES_DOCUMENT_TEMPLATES,salesTemplateLabel,previousSalesDocuments,
+import {SALES_DOCUMENT_TEMPLATES,salesDocumentTemplate,salesTemplateLabel,previousSalesDocuments,
   type SalesTemplateStart} from '../services/salesDocumentTemplates';
 import type {Quote,SalesDocumentTemplateChoice} from '../types/quote';
 import '../sales-documents.css';
