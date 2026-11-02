@@ -339,7 +339,11 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
  useEffect(()=>{setSelected([]);setDetail(null);setFocus('');},[quote.id]);
  useEffect(()=>{
   const outside=(event:PointerEvent)=>{
-   if(table.current&&!table.current.contains(event.target as Node))setFocus('');
+   if(table.current&&!table.current.contains(event.target as Node)){
+    // Commit a focused inline edit before deselecting its cell.
+    table.current.querySelector<HTMLInputElement>('input.qqs-edit:focus')?.blur();
+    setFocus('');
+   }
   };
   const esc=(event:globalThis.KeyboardEvent)=>{
    if(event.key==='Escape'&&!(event.target instanceof HTMLInputElement))setFocus('');
@@ -418,7 +422,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
        false,(()=>{
         const sinks=(area.scope?.takeoffSinks??[]).filter(s=>!s.excludedFromContract&&s.includeInPricing);
         const one=sinks.length===1?sinks[0]:undefined;
-        if(!one)return undefined;
+        if(!one||!quote.lines.some(line=>line.sectionId===area.id&&line.takeoffSinkId===one.id&&line.includeInTotal))return undefined;
         return {value:data.sinkPrice,disabled:!editable,
          onCommit:(v:number|undefined)=>{
           if(v===undefined)return;
@@ -430,7 +434,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
       {cell(area.id,'specialty','Specialty price for '+area.title,amount(data.specialtyPrice),
        !data.specialtyQuantity,false,(()=>{
         const line=data.specialty.length===1?data.specialty[0]:undefined;
-        if(!line||line.quantitySource?.syncMode==='live')return undefined;
+        if(!line||!line.includeInTotal||line.quantitySource?.syncMode==='live')return undefined;
         return {value:data.specialtyPrice,disabled:!editable,
          onCommit:(v:number|undefined)=>store.updateLine(quote.id,line.id,
           line.pricingMode==='quantity-rate'&&!!line.quantity?
