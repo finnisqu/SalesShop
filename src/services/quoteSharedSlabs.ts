@@ -83,6 +83,10 @@ export function effectiveQuoteSlabEstimates(quote:Quote):SlabPoolEstimate[]{
   const key=slabPoolMaterialKey(area);
   if(!key)continue;
   const scope=area.scope,ref=scope?.takeoffMaterialReference,snap=ref?.snapshot;
+  // A manual Area purchasing-count override signals a deliberate exception.
+  // Leave it independent unless the seller explicitly creates a pool.
+  if(scope?.slabCountOverride!==undefined||
+     scope?.slabPurchaseQuantityOverride!==undefined)continue;
   const size=scope?.slabAreaOverrideSf??snap?.areaSf??
    (snap?.lengthIn&&snap?.widthIn?snap.lengthIn*snap.widthIn/144:undefined);
   const cost=scope?.slabCostOverride??ref?.sourceSlabCost??snap?.slabCost??ref?.catalogSlabCost;
