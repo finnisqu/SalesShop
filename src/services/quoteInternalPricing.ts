@@ -106,8 +106,8 @@ function lineRequiresCost(line: QuoteLine, customerAmount: number) {
 }
 
 export function summarizeQuoteInternalPricing(lines: QuoteLine[]): QuoteInternalPricingSummary {
-  // A struck-through line is entirely excluded from this contract's cost AND sell.
-  // Absorbed expenses remain included, with a zero customer amount.
+  // A struck-through line is excluded from this contract's cost and sell.
+  // Absorbed expenses and explicit rate-book cost-reference lines retain costs.
   const lineSummaries = lines.filter(line => line.includeInTotal ||
     line.rateReference?.snapshot?.pricingBehavior === 'cost-reference').map((line) => {
     const customerAmount = quoteLineTotal(line);
