@@ -7,7 +7,7 @@ import { useNotebookStore } from '../store/notebookStore';
 import type { ActiveNotebookTool, NotebookEntry, PageTone, PaperStyle, PaperTexture } from '../types/notebook';
 import { StationeryInsertMenu } from './StationeryInsertMenu';
 
-interface ToolbarProps { entry: NotebookEntry; editor?: Editor | null; }
+interface ToolbarProps { entry: NotebookEntry; editor?: Editor | null; enableShortcuts?: boolean; }
 type ToolbarMenu = 'drawing' | 'page' | null;
 
 type IconName = ActiveNotebookTool | 'tools' | 'settings' | 'pencil-input' | 'finger-input' | 'favorite' | 'duplicate' | 'clear' | 'undo' | 'redo';
@@ -49,7 +49,7 @@ function ToolbarIcon({ name }: { name: IconName }) {
   }
 }
 
-export function Toolbar({ entry, editor }: ToolbarProps) {
+export function Toolbar({ entry, editor, enableShortcuts = true }: ToolbarProps) {
   const activeTool = useNotebookStore((state) => state.activeTool);
   const setActiveTool = useNotebookStore((state) => state.setActiveTool);
   const clearInk = useNotebookStore((state) => state.clearInk);
@@ -107,6 +107,7 @@ export function Toolbar({ entry, editor }: ToolbarProps) {
   }, [editor]);
 
   useEffect(() => {
+    if (!enableShortcuts) return;
     const onShortcut = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
       if ((event.target as HTMLElement | null)?.closest('.spreadsheet-object-editor')) return;
@@ -121,7 +122,7 @@ export function Toolbar({ entry, editor }: ToolbarProps) {
     };
     document.addEventListener('keydown', onShortcut, true);
     return () => document.removeEventListener('keydown', onShortcut, true);
-  }, [redo, undo]);
+  }, [redo, undo, enableShortcuts]);
 
   return (
     <div className="paper-toolbar" aria-label="Notebook tools" ref={toolbarRef}>

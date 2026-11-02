@@ -11,6 +11,7 @@ const ERASER_RADIUS = 24;
 
 interface DrawingCanvasProps {
   entry: NotebookEntry;
+  activePane?: boolean;
 }
 
 interface Bounds {
@@ -129,7 +130,7 @@ function selectedByLasso(stroke: InkStroke, polygon: InkPoint[]) {
   return pointInPolygon(center, polygon);
 }
 
-export function DrawingCanvas({ entry }: DrawingCanvasProps) {
+export function DrawingCanvas({ entry, activePane = true }: DrawingCanvasProps) {
   const activeTool = useNotebookStore((state) => state.activeTool);
   const addStroke = useNotebookStore((state) => state.addStroke);
   const deleteStrokes = useNotebookStore((state) => state.deleteStrokes);
@@ -174,7 +175,7 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (activeTool !== 'lasso' || !selectedStrokeIds.length) return;
+      if (!activePane || activeTool !== 'lasso' || !selectedStrokeIds.length) return;
       const target = event.target as HTMLElement | null;
       if (target?.matches('input, textarea, [contenteditable="true"]') || target?.closest('.spreadsheet-object-editor')) return;
       if (event.key === 'Escape') {
@@ -188,7 +189,7 @@ export function DrawingCanvas({ entry }: DrawingCanvasProps) {
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [activeTool, deleteStrokes, entry.id, selectedStrokeIds]);
+  }, [activeTool, deleteStrokes, entry.id, selectedStrokeIds, activePane]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

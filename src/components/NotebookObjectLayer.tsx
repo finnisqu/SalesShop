@@ -20,6 +20,7 @@ const POST_IT_TONES: PostItTone[] = ['yellow', 'pink', 'blue', 'green'];
 interface NotebookObjectLayerProps {
   entry: NotebookEntry;
   readOnly?: boolean;
+  activePane?: boolean;
 }
 
 interface InteractionState {
@@ -295,7 +296,7 @@ function ObjectFrame({ entryId, object, selected, onPromote }: {
   );
 }
 
-export function NotebookObjectLayer({ entry, readOnly = false }: NotebookObjectLayerProps) {
+export function NotebookObjectLayer({ entry, readOnly = false, activePane = true }: NotebookObjectLayerProps) {
   const context=useAppContextMenu();
   const beginPromotion=usePersonalTaskStore(s=>s.beginPromotion);
   const activeTool = useNotebookStore((state) => state.activeTool);
@@ -306,7 +307,7 @@ export function NotebookObjectLayer({ entry, readOnly = false }: NotebookObjectL
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (readOnly || !selectionEnabled || !selectedObjectId || (event.key !== 'Delete' && event.key !== 'Backspace')) return;
+      if (readOnly || !activePane || !selectionEnabled || !selectedObjectId || (event.key !== 'Delete' && event.key !== 'Backspace')) return;
       const target = event.target as HTMLElement | null;
       if (target?.matches('input, textarea, [contenteditable="true"]') || target?.closest('.spreadsheet-object-editor')) return;
       event.preventDefault();
@@ -314,7 +315,7 @@ export function NotebookObjectLayer({ entry, readOnly = false }: NotebookObjectL
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [deleteObject, entry.id, selectedObjectId, selectionEnabled, readOnly]);
+  }, [deleteObject, entry.id, selectedObjectId, selectionEnabled, readOnly, activePane]);
 
   return (
     <div className={`notebook-object-layer ${selectionEnabled && !readOnly ? 'is-selecting' : ''}`} onPointerDown={(event) => { if (selectionEnabled && event.target === event.currentTarget) selectObject(null); }} aria-label="Notebook objects">
