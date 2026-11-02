@@ -63,7 +63,7 @@ export function QuoteSharedSlabPools({quote}:{quote:Quote}){
    </div>)}
    {editable&&<div className="qmb-slab-pool-builder">
      <strong>Combine Areas into a new slab pool</strong>
-     <small>Only Areas using the same material, variant, thickness, finish and purchase option can share a pool. Slab nesting and cut feasibility still need shop verification.</small>
+     <small>Select a specific Catalog material in each Area first. Free-text names are not enough to establish compatibility. Pools require the same material ID, supplier, variant, thickness, finish, purchase option and slab format. Slab nesting and cut feasibility still need shop verification.</small>
      <div className="qmb-slab-area-choices">
        {areas.map(area=>{
          const sf=totalBillableTakeoffSf(area.scope?.takeoffPieces??[]);
