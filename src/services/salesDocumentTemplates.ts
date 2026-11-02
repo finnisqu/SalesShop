@@ -37,6 +37,23 @@ export const SALES_DOCUMENT_TEMPLATES:SalesTemplateDefinition[]=[
 
 export type SalesTemplateStart='blank'|'company-rates'|'previous';
 
+/** Reuse only an accessible active document of the matching type.
+ * This lists candidate sources; copying is always explicit and independent. */
+export function previousSalesDocuments(
+ quotes:readonly Quote[],selected:SalesDocumentTemplateChoice|null,
+):Quote[]{
+ if(!selected||selected==='multifamily')return [];
+ return quotes.filter(q=>{
+   if(q.archivedAt)return false;
+   if(selected==='quick-quote')return q.documentType==='quote';
+   if(!q.pricingSchedule)return false;
+   const type=salesDocumentTemplate(q);
+   return selected==='community-pricing'
+     ?type==='community-pricing'||type==='builder-rates'
+     :type===selected;
+ }).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
+}
+
 /** Historical schedules choose a single editor based on the original published source. */
 export function salesDocumentTemplate(quote:Pick<Quote,'documentType'|'templateId'|'pricingSchedule'>):SalesDocumentTemplate{
   if(quote.documentType!=='pricing-schedule')return 'quick-quote';
