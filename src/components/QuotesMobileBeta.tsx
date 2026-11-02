@@ -53,7 +53,6 @@ import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
 import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
 import {QuoteSaveAreaLayoutDialog} from './QuoteSaveAreaLayoutDialog';
 import {QuoteInlineAreaName,QuoteInlineAreaRate,QuoteBulkAreaDialog} from './QuoteInlineAreaEditing';
-import {QuoteSharedSlabPools} from './QuoteSharedSlabPools';
 import {QuoteWorkTables} from './QuoteWorkTables';
 import {QuoteAreaQuickPanel,type QuickAreaTab} from './QuoteAreaQuickPanel';
 import {captureSavedAreaLayout,readSavedAreaLayouts,writeSavedAreaLayouts,
