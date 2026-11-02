@@ -15,9 +15,9 @@ import './quote-compact-takeoffs.css';
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 const key=(r:QuoteScopeRowRef)=>[r.kind,r.sectionId??'',r.id].join(':');
-function SmallInput({value,label,commit,inches=false,integer=false,disabled=false}:{
+function SmallInput({value,label,commit,inches=false,integer=false,disabled=false,allowNegative=false}:{
  value?:number;label:string;commit:(n:number|undefined)=>void;
- inches?:boolean;integer?:boolean;disabled?:boolean;
+ inches?:boolean;integer?:boolean;disabled?:boolean;allowNegative?:boolean;
 }){
  const [draft,setDraft]=useState(value===undefined?'':String(value));
  const cancelled=useRef(false);
@@ -26,7 +26,7 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
   if(cancelled.current){cancelled.current=false;return;}
   if(!draft.trim()){if(value!==undefined)commit(undefined);return;}
   const n=inches?parseInches(draft):Number(draft);
-  if(n!==undefined&&Number.isFinite(n)&&n>=0&&(!integer||Number.isInteger(n))){
+  if(n!==undefined&&Number.isFinite(n)&&(n>=0||allowNegative)&&(!integer||Number.isInteger(n))){
    if(n!==value)commit(n);
   }else setDraft(value===undefined?'':String(value));
  };
@@ -341,7 +341,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
         '—','—','—',
         <SmallInput label={'Charge selling total '+line.id} value={line.includeInTotal?quoteLineAmount(line):0}
          disabled={!editable||line.quantitySource?.syncMode==='live'||!line.includeInTotal}
-         commit={v=>setChargeTotal(line,v)}/>,
+         allowNegative={line.kind==='discount'} commit={v=>setChargeTotal(line,v)}/>,
         !line.includeInTotal,
         ()=>setDetail({areaId:section.id,id:line.id,kind:'line'}),false,
         ()=>deleteRow(ref));
@@ -369,7 +369,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
        '—','—','—',
        <SmallInput label={'General charge selling total '+line.id} value={line.includeInTotal?quoteLineAmount(line):0}
         disabled={!editable||line.quantitySource?.syncMode==='live'||!line.includeInTotal}
-        commit={v=>setChargeTotal(line,v)}/>,
+        allowNegative={line.kind==='discount'} commit={v=>setChargeTotal(line,v)}/>,
        !line.includeInTotal,()=>setDetail({areaId:null,id:line.id,kind:'line'}),false,
        ()=>deleteRow(ref));
      })}
