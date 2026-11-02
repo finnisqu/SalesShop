@@ -49,3 +49,39 @@ export function duplicateQuoteArea(quote:Quote,sourceAreaId:string,
     },
   };
 }
+
+/** Copy reusable takeoffs from another quote without mixing customer identities,
+ * revision history, pooled slabs or source line/child IDs.
+ * Selling prices are opt-in, because a prior customer's price is not a
+ * safe default for the new job. */
+export function copyQuoteAreaFromSource(
+ target:Quote,source:Quote,areaId:string,includeSellingPrices=false,
+ newId:(kind:string)=>string=(kind)=>kind+'_'+crypto.randomUUID(),
+):AreaDuplicateResult|undefined {
+ if(target.id===source.id||target.documentType==='pricing-schedule')return undefined;
+ const duplicate=duplicateQuoteArea(source,areaId,newId);
+ if(!duplicate)return undefined;
+ const newAreaId=duplicate.newAreaId;
+ const created=duplicate.quote.sections.find(section=>section.id===newAreaId);
+ if(!created)return undefined;
+ const section=structuredClone(created) as QuoteSection;
+ section.title=source.sections.find(area=>area.id===areaId)?.title??section.title;
+ if(section.scope?.sharedSlabPool)section.scope.sharedSlabPool=undefined;
+ if(!includeSellingPrices&&section.scope?.takeoffSinks){
+  section.scope.takeoffSinks=section.scope.takeoffSinks.map(sink=>({
+   ...sink,unitPrice:undefined,includeInPricing:false,internalCostOverride:undefined,
+  }));
+ }
+ const lines=duplicate.quote.lines.filter(line=>line.sectionId===newAreaId)
+  .map(line=>{
+   if(includeSellingPrices)return line;
+   return {
+    ...line,rate:undefined,amount:undefined,internalCost:undefined,rateReference:undefined,
+    ...(line.takeoffSinkId?{includeInTotal:false}:{}),
+   };
+  });
+ return {
+  newAreaId,
+  quote:{...target,sections:[...target.sections,section],lines:[...target.lines,...lines]},
+ };
+}
