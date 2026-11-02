@@ -147,11 +147,18 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
    </div>
   </div>,document.querySelector('.sales-app')??document.body);
 }
-export function QuoteCompactTakeoffs({quote,onAdvanced}:{
- quote:Quote;onAdvanced:(areaId:string)=>void;
+export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
+ quote:Quote;onAdvanced:(areaId:string)=>void;focusArea?:string|null;
 }){
  const store=useQuoteStore.getState(),editable=quoteIsCommerciallyEditable(quote);
+ const list=useRef<HTMLDivElement>(null);
  const [detail,setDetail]=useState<{areaId:string|null;id:string;kind:'piece'|'sink'|'line'}|null>(null);
+ useEffect(()=>{
+  if(!focusArea)return;
+  const target=Array.from(list.current?.querySelectorAll<HTMLElement>('[data-area-id]')??[])
+   .find(el=>el.dataset.areaId===focusArea);
+  target?.scrollIntoView({block:'nearest',behavior:'smooth'});
+ },[focusArea]);
  const [selected,setSelected]=useState<QuoteScopeRowRef[]>([]);
  const [bulk,setBulk]=useState<QuoteScopeBulkOperation>('exclude');
  const [target,setTarget]=useState('');
@@ -215,7 +222,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced}:{
      <option value="general">General (charges only)</option></select>}
     <button type="button" disabled={!editable||bulk==='move'&&!target} onClick={apply}>Apply</button>
     <button type="button" onClick={()=>setSelected([])}>Clear</button></div>}
-  <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0}>
+  <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}>
    <div className="qqt-header qqt-grid">
     {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling $','Contract','Edit']
      .map((h,i)=><div key={i} className="qqt-cell">{h}</div>)}
@@ -226,7 +233,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced}:{
     const primary=summary.primary;
     const otherLines=summary.specialty;
     const pieceTotal=summary.measuredSf;
-    return <div className="qqt-area-block" key={section.id}>
+    return <div className="qqt-area-block" key={section.id} data-area-id={section.id}>
      <div className="qqt-group"><strong>{section.title}</strong>
       <span>{sf.format(summary.measuredSf)} measured SF · {sf.format(summary.billedSf)} billed</span>
       <div>
