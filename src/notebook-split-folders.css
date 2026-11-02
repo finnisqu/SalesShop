@@ -64,3 +64,22 @@
 
 .notebook-unfiled-row.accepts-page-drop:hover{outline:2px dashed var(--ss-theme-accent,#9e7c3d);}
 .notebook-companion-scroll .paper-writing-surface{user-select:text;}
+
+/* Chrome-style split: each pane owns a full editor and an independent toolbar. */
+.notebook-panes>.notebook-primary-pane{min-width:0;min-height:0;flex:1;display:flex;flex-direction:column;}
+.notebook-panes>.notebook-primary-pane>.desk-surface{min-width:0;min-height:0;flex:1;}
+.notebook-panes.is-split>.notebook-primary-pane{flex:1 1 50%;width:50%;}
+.notebook-panes.is-split>.notebook-primary-pane>.desk-surface{padding:14px 12px 55px;}
+.notebook-panes.is-split .paper-toolbar{min-width:0;overflow-x:auto;overflow-y:visible;scrollbar-width:thin;gap:4px;}
+.notebook-panes .is-focused-pane>.paper-toolbar{box-shadow:inset 0 -2px var(--ss-theme-accent,#aa8b48);}
+.notebook-companion .paper-writing-surface,.notebook-companion .text-editor-layer,
+.notebook-companion .ink-layer,.notebook-companion .notebook-object-layer{pointer-events:auto!important;}
+.notebook-companion .text-editor-layer:not(.is-active){pointer-events:none!important;}
+.notebook-companion .ProseMirror[contenteditable=true]{cursor:text;}
+.notebook-panes.is-stacked{flex-direction:column;}
+.notebook-panes.is-stacked>.notebook-primary-pane,
+.notebook-panes.is-stacked>.notebook-companion{width:100%;height:50%;flex:1 1 50%;}
+.notebook-panes.is-stacked>.notebook-companion{border-left:0;border-top:2px solid var(--ss-theme-border,#aaa);}
+@media(max-width:960px){
+ .notebook-panes.is-split>.notebook-primary-pane{width:100%;height:50%;flex:1 1 50%;}
+}

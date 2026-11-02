@@ -117,6 +117,8 @@ function App() {
   const projects = useCrmStore((state) => state.projects);
   const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
   const [companionId,setCompanionId]=useState<string|null>(null);
+  const [focusedPane,setFocusedPane]=useState<'left'|'right'>('left');
+  const [splitStacked,setSplitStacked]=useState(false);
   const taskUserId=useAuthStore(s=>s.user?.id);
   const tasksScope=taskScope(mode,organizationId,taskUserId);
   useEffect(()=>{
@@ -162,13 +164,29 @@ function App() {
   const companion = entries.find(candidate=>candidate.id===companionId&&candidate.id!==activeEntryId)??null;
   const companionOptions=entries.filter(candidate=>candidate.id!==activeEntryId&&(!candidate.hidden||candidate.id===companionId));
   const openCompanion=(id:string)=>{
-    if(id!==activeEntryId&&entries.some(candidate=>candidate.id===id))setCompanionId(id);
+    if(id!==activeEntryId&&entries.some(candidate=>candidate.id===id)){
+      setCompanionId(id);setFocusedPane('right');
+    }
   };
-  const makeCompanionPrimary=()=>{
+  const openPrimary=(id:string)=>{
+    if(id===activeEntryId){setFocusedPane('left');return;}
+    if(!entries.some(candidate=>candidate.id===id))return;
+    if(id===companionId)setCompanionId(activeEntryId);
+    useNotebookStore.getState().selectEntry(id);
+    setFocusedPane('left');
+  };
+  const swapPanes=()=>{
     if(!companion)return;
     useNotebookStore.getState().selectEntry(companion.id);
     setCompanionId(entry?.id??null);
+    setFocusedPane('left');
   };
+  const closeLeftPane=()=>{
+    if(!companion)return;
+    useNotebookStore.getState().selectEntry(companion.id);
+    setCompanionId(null);setFocusedPane('left');
+  };
+  const closeRightPane=()=>{setCompanionId(null);setFocusedPane('left');};
   const linkedProject = entry?.context?.projectId
     ? projects.find((project) => project.id === entry.context?.projectId) ?? null
     : null;
@@ -222,23 +240,31 @@ function App() {
         <CompanySettings />
       ) : (
         <main className={`notebook-workspace ${companion?'is-side-by-side':''}`}>
-          <Sidebar onOpenBeside={openCompanion} companionId={companion?.id??null}/>
+          <Sidebar onOpenBeside={openCompanion} onOpenLeft={openPrimary}
+            companionId={companion?.id??null} activePane={companion?focusedPane:'left'}
+            stacked={splitStacked} onToggleStack={()=>setSplitStacked(s=>!s)}
+            onSwap={swapPanes} onCloseLeft={closeLeftPane} onCloseRight={closeRightPane}
+            onFocusPane={setFocusedPane}/>
           <section className="binder-stage">
-            <Toolbar entry={entry} editor={notebookEditor} />
             <div className="notebook-split-controls">
-              <strong>{companion?'Side-by-side':'Single page'}</strong>
+              <strong>{companion?(splitStacked?'Stacked pages':'Split pages'):'Single page'}</strong>
               {companion&&<select aria-label="Choose second Notebook page" value={companion.id}
                 onChange={event=>openCompanion(event.target.value)}>
                 {companionOptions.map(page=><option key={page.id} value={page.id}>{page.title||'Untitled page'}</option>)}
               </select>}
               <button type="button" disabled={!companion&&companionOptions.length===0}
                 aria-pressed={!!companion} onClick={()=>{
-                  if(companion)setCompanionId(null);
-                  else setCompanionId(companionOptions[0]?.id??null);
+                  if(companion)closeRightPane();
+                  else if(companionOptions[0])openCompanion(companionOptions[0].id);
                 }}>{companion?'Close split':'▥ Side by side'}</button>
             </div>
-            <div className={`notebook-panes ${companion?'is-split':''}`}>
-            <div className="desk-surface">
+            <div className={`notebook-panes ${companion?'is-split':''} ${splitStacked?'is-stacked':''}`}>
+            <div data-notebook-pane="left"
+              className={`notebook-primary-pane ${focusedPane==='left'||!companion?'is-focused-pane':''}`}
+              onPointerDownCapture={()=>setFocusedPane('left')}
+              onFocusCapture={()=>setFocusedPane('left')}>
+              <Toolbar entry={entry} editor={notebookEditor} enableShortcuts/>
+              <div className="desk-surface">
               <article className={`paper-sheet paper-${entry.paperStyle} tone-${entry.tone} texture-${entry.texture}`}>
                 <div className="paper-edge" aria-hidden="true" />
                 <header className="paper-heading">
@@ -267,13 +293,16 @@ function App() {
                 </header>
                 <div className="paper-writing-surface">
                   <TextEditor key={`text-${entry.id}`} entry={entry} onEditorReady={setNotebookEditor} />
-                  <DrawingCanvas key={`ink-${entry.id}`} entry={entry} />
-                  <NotebookObjectLayer key={`objects-${entry.id}`} entry={entry} />
+                  <DrawingCanvas key={`ink-${entry.id}`} entry={entry} activePane={focusedPane==='left'||!companion} />
+                  <NotebookObjectLayer key={`objects-${entry.id}`} entry={entry}
+                    activePane={focusedPane==='left'||!companion} />
                 </div>
               </article>
+              </div>
             </div>
-            {companion&&<NotebookCompanionPage entry={companion} onMakePrimary={makeCompanionPrimary}
-              onClose={()=>setCompanionId(null)}/>}
+            {companion&&<NotebookCompanionPage entry={companion} onMakePrimary={swapPanes}
+              onClose={closeRightPane} active={focusedPane==='right'}
+              onFocus={()=>setFocusedPane('right')}/>}
             </div>
           </section>
         </main>
