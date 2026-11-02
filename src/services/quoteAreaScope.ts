@@ -14,13 +14,14 @@ export const QUOTE_AREA_SCOPE_VISIBLE_FIELDS: QuoteAreaScopeField[] = [
   'vanitySinkCount',
 ];
 
-export const QUOTE_AREA_SCOPE_META: Record<QuoteAreaScopeField, { label: string; shortLabel: string; unit: 'SF' | 'LF' | 'Each' }> = {
+export const QUOTE_AREA_SCOPE_META: Record<QuoteAreaScopeField, { label: string; shortLabel: string; unit: 'SF' | 'LF' | 'IN' | 'Each' }> = {
   countertopSf: { label: 'Countertop SF', shortLabel: 'Countertop', unit: 'SF' },
   splashLf: { label: '4" splash LF', shortLabel: 'Splash', unit: 'LF' },
   fullHeightSplashSf: { label: 'Full-height splash SF', shortLabel: 'Full-height', unit: 'SF' },
   kitchenSinkCount: { label: 'Kitchen sinks', shortLabel: 'Kitchen sinks', unit: 'Each' },
   vanitySinkCount: { label: 'Vanity sinks', shortLabel: 'Vanity sinks', unit: 'Each' },
   cutoutCount: { label: 'Cutouts', shortLabel: 'Cutouts', unit: 'Each' },
+  miterInches: { label: 'Miter edge inches', shortLabel: 'Miter', unit: 'IN' },
 };
 
 export function scopeValue(scope: QuoteAreaScope | undefined, field: QuoteAreaScopeField) {
@@ -75,7 +76,7 @@ export function applyAreaScopeQuantity(
     field,
     capturedValue: value,
     appliedAt,
-    ...((field === 'countertopSf'||field === 'splashLf') && Array.isArray(section.scope?.takeoffPieces) ? { syncMode: 'live' as const } : {}),
+    ...((field === 'countertopSf'||field === 'splashLf'||field === 'miterInches') && Array.isArray(section.scope?.takeoffPieces) ? { syncMode: 'live' as const } : {}),
   };
   return { quantity: value, quantitySource };
 }
