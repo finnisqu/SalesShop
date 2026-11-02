@@ -158,6 +158,25 @@ describe('Notebook 2.0 private folder organization', () => {
     expect(useNotebookStore.getState().entries[0].id).not.toBe(original.id);
   });
 
+  it('undoes split-pane object edits on one page without rewinding another',()=>{
+    const first=useNotebookStore.getState().entries[0].id;
+    useNotebookStore.getState().createEntry();
+    const second=useNotebookStore.getState().activeEntryId!;
+    useNotebookStore.getState().createPostIt(first);
+    useNotebookStore.getState().createPostIt(second);
+    const both=useNotebookStore.getState();
+    expect(both.entries.find(e=>e.id===first)?.objects).toHaveLength(1);
+    expect(both.entries.find(e=>e.id===second)?.objects).toHaveLength(1);
+    expect(both.canUndoEntry(first)).toBe(true);
+    both.undoEntry(first);
+    const after=useNotebookStore.getState();
+    expect(after.entries.find(e=>e.id===first)?.objects).toHaveLength(0);
+    expect(after.entries.find(e=>e.id===second)?.objects).toHaveLength(1);
+    expect(after.canRedoEntry(first)).toBe(true);
+    after.redoEntry(first);
+    expect(useNotebookStore.getState().entries.find(e=>e.id===first)?.objects).toHaveLength(1);
+  });
+
   it('keeps one Post-it inbox even when that Notebook page is duplicated', () => {
     const originalId=useNotebookStore.getState().createGlobalPostIt();
     const inbox=useNotebookStore.getState().entries.find(entry=>entry.isPostItInbox)!;
