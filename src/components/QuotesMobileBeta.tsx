@@ -479,8 +479,6 @@ export function QuotesMobileBeta() {
   const duplicateArea=useQuoteStore(s=>s.duplicateArea);
   const ensureGeneralTakeoff=useQuoteStore(s=>s.ensureGeneralTakeoff);
   const addLine=useQuoteStore(s=>s.addLine);
-  const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
-  const updateManagedSinkLine=useQuoteStore(s=>s.updateLine);
   const undo=useQuoteStore(s=>s.undoQuote);
   const redo=useQuoteStore(s=>s.redoQuote);
   const recordSent=useQuoteStore(s=>s.recordSent);
@@ -605,36 +603,8 @@ export function QuotesMobileBeta() {
     setPage('quote');setAreaId(null);
   },[hydrated,routeQuoteId,quotes,activeQuoteId,select]);
 
-  // One-time upgrade when opening old Beta takeoffs: historical specifications
-  // should not silently remain unpriced. Normal Catalog/manually priced rows are
-  // preserved; only missing takeoff-managed sink charges are created.
-  useEffect(()=>{
-    if(!quote||!quoteIsCommerciallyEditable(quote))return;
-    // Beta always includes the managed sink sell charge in the quote amount.
-    // Classic retains its earlier manual Include behavior for compatibility.
-    for(const line of quote.lines){
-      if(line.takeoffSinkId&&!line.includeInTotal)
-        updateManagedSinkLine(quote.id,line.id,{includeInTotal:true});
-    }
-    for(const section of quote.sections){
-      const sinks=section.scope?.takeoffSinks;
-      if(!sinks?.length)continue;
-      const hasExcludedCharge=quote.lines.some(line=>line.sectionId===section.id
-        &&line.takeoffSinkId&&!line.includeInTotal);
-      if(!sinks.some(s=>!s.includeInPricing)&&!hasExcludedCharge)continue;
-      const updated=sinks.map(sink=>{
-        if(sink.includeInPricing)return sink;
-        const alreadyCharged=quote.lines.some(line=>line.sectionId===section.id
-          &&line.includeInTotal
-          &&(line.takeoffSinkId===sink.id
-            ||(line.kind==='sink' && !!sink.name.trim()
-              &&line.description.toLowerCase().includes(sink.name.trim().toLowerCase()))));
-        return alreadyCharged?sink:{...sink,includeInPricing:true};
-      });
-      if(updated.some((sink,i)=>sink!==sinks[i])||hasExcludedCharge)
-        updateSinks(quote.id,section.id,updated);
-    }
-  },[quote,updateSinks,updateManagedSinkLine]);
+  // Opening Beta must not silently change a Classic draft's sink billing.
+  // Each Area now offers an explicit priced-versus-specification choice.
   const area=quote?.sections.find(s=>s.id===areaId)??null;
   const editable=Boolean(quote&&quoteIsCommerciallyEditable(quote));
   const canBrowseTeam=authMode==='cloud'&&(teamRole==='owner'||teamRole==='admin')&&!previewRole;
