@@ -210,3 +210,22 @@
  border:1px solid var(--qmb-border);border-radius:7px;background:var(--qmb-card);}
 .sales-app .qmb .qwt-line.is-excluded input{opacity:.7;}
 .sales-app .qmb .qwt-table{scrollbar-width:thin;}
+
+/* Numeric purchase details stay in cells, even on narrow workspace widths. */
+.sales-app .qmb .qwt-quantity-cell,.sales-app .qmb .qwt-private-cost-cell{
+ min-width:0;display:grid;gap:2px;align-content:center;
+}
+.sales-app .qmb .qwt-quantity-cell small,.sales-app .qmb .qwt-private-cost-cell small{
+ font-size:9px;color:var(--qmb-muted);white-space:nowrap;
+}
+.sales-app .qmb .qwt-quantity-cell .qwt-unit-label{
+ min-height:20px;height:20px;border:0;border-bottom:1px dotted var(--qmb-border);
+ font-size:9px;color:var(--qmb-muted);padding:0 3px;
+}
+.sales-app .qmb .qwt-sf-cell select{
+ max-width:100%;border:1px solid transparent;color:var(--qmb-accent);
+ background:transparent;font-size:10px;min-height:22px;
+}
+.sales-app .qmb .qwt-sf-cell select:hover,.sales-app .qmb .qwt-sf-cell select:focus{
+ border-color:var(--qmb-accent);outline-offset:1px;
+}
