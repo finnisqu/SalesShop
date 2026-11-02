@@ -4,6 +4,7 @@ import { applyAreaScopeQuantity,resolveLineAreaScopeState } from './quoteAreaSco
 import {
   parseInches,isValidTakeoffPiece,takeoffPieceSf,totalTakeoffSf,
   patchQuoteTakeoff,detachQuoteTakeoff,sectionTakeoffSf,newTakeoffPiece,
+  takeoffPieceMiterInches,totalBillableMiterInches,
   takeoffCustomerDetails,takeoffCustomerSpecs,
 } from './quoteTakeoffsLite';
 
@@ -58,6 +59,26 @@ describe('Takeoffs Lite: precise fractional-inch piece measurements',()=>{
     expect(totalTakeoffSf(parts)).toBe(66.5);
     expect(totalTakeoffSf([piece('a',3,5),piece('b',3,5)])).toBe(0.21);
     expect(totalTakeoffSf([piece('unfinished'),piece('complete',48,24)])).toBe(8);
+  });
+  it('tracks explicit linked miter lengths as source geometry changes or is excluded',()=>{
+    const p={...piece('waterfall',96,36,2),miterFront:true,miterRight:true};
+    expect(takeoffPieceMiterInches(p)).toBe(264);
+    expect(totalBillableMiterInches([p])).toBe(264);
+    expect(totalBillableMiterInches([{...p,excludedFromQuote:true}])).toBe(0);
+    const start=quote();
+    start.lines.push({
+      id:'miters',sectionId:'kitchen',kind:'rate',description:'Mitered edge',
+      pricingMode:'quantity-rate',quantity:264,rate:50,
+      customerVisible:true,includeInTotal:true,
+      quantitySource:{kind:'area-scope',sectionId:'kitchen',
+        field:'miterInches',capturedValue:264,appliedAt:at,syncMode:'live'},
+    });
+    const updated=patchQuoteTakeoff(start,'kitchen',[{...p,lengthIn:100}],at);
+    expect(updated.sections[0].scope?.miterInches).toBe(272);
+    expect(updated.lines.find(line=>line.id==='miters')?.quantity).toBe(272);
+    const excluded=patchQuoteTakeoff(updated,'kitchen',[{...p,excludedFromQuote:true}],at);
+    expect(excluded.lines.find(line=>line.id==='miters')?.quantity).toBe(0);
+    expect(excluded.sections[0].scope?.takeoffPieces?.[0].miterFront).toBe(true);
   });
   it('patches area SF and only same-area LIVE-linked quantity; preserves all other pricing',()=>{
     const original=quote();
