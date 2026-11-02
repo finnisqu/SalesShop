@@ -485,12 +485,14 @@ export function CalculatorDrawer({quote,section,onClose,onAdvanced}:{
  quote:Quote;section:QuoteSection|null;onClose:()=>void;onAdvanced:(id:string)=>void;
 }){
  const ref=useRef<HTMLElement>(null);
+ const closeRef=useRef(onClose);
+ closeRef.current=onClose;
  useEffect(()=>{
-  const key=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')onClose();};
+  const key=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')closeRef.current();};
   document.addEventListener('keydown',key);
   ref.current?.querySelector<HTMLElement>('button')?.focus();
   return()=>document.removeEventListener('keydown',key);
- },[onClose]);
+ },[section?.id,quote.id]);
  const generalLines=quote.lines.filter(l=>!l.sectionId||!quote.sections.some(s=>s.id===l.sectionId)
   ||quote.sections.some(s=>s.id===l.sectionId&&isGeneralTakeoffSection(s)));
  const cost=generalLines.reduce((n,l)=>n+(l.includeInTotal?l.internalCost??0:0),0);
