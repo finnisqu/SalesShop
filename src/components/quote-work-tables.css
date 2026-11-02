@@ -139,3 +139,10 @@
 .sales-app .qmb .qwt-exclusion-warning{margin:0;padding:9px 12px;font-size:11px;
  color:var(--qmb-ink);line-height:1.45;background:rgba(182,119,44,.10);
  border-top:1px solid rgba(182,119,44,.3);}
+
+.sales-app .qmb .qwt-exclusion-warning{display:flex;align-items:center;
+ justify-content:space-between;flex-wrap:wrap;gap:9px;}
+.sales-app .qmb .qwt-exclusion-warning>span{flex:1 1 220px;}
+.sales-app .qmb .qwt-exclusion-warning>button{flex:0 0 auto;min-height:33px;
+ border:1px solid var(--qmb-accent);background:var(--qmb-card);
+ color:var(--qmb-accent);font-size:11px;font-weight:800;border-radius:8px;padding:6px 10px;}

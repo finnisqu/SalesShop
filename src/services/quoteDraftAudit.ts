@@ -111,6 +111,21 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
     const sinks=section.scope?.takeoffSinks??[];
     const lines=quote.lines.filter(line=>line.sectionId===section.id);
     const amount=quoteLinesTotal(lines);
+    const hasExcludedTopOrSplash=pieces.some(piece=>piece.excludedFromQuote||piece.excludeSplashFromQuote);
+    const hasExcludedSink=sinks.some(sink=>sink.excludedFromContract);
+    const primary=lines.find(line=>line.quantitySource?.field==='countertopSf'
+      &&line.quantitySource?.syncMode==='live')
+      ??lines.find(line=>line.kind==='material'&&!line.takeoffSinkId);
+    // The top/SF rate can be recalculated from measured billable SF. Manual
+    // and multiplier prices cannot be prorated safely, and sink inclusion
+    // can be implicit in the Area price. Require explicit review before issue.
+    if((hasExcludedTopOrSplash&&primary&&primary.pricingMode!=='quantity-rate'
+        ||hasExcludedSink&&primary)&&!section.scope?.exclusionPricingReviewed){
+      add('area:'+section.id+':excluded-pricing','blocker',
+        'Review price for excluded scope: '+label,
+        'Takeoff rows were struck through without deleting measurements. Check this Area\'s selling price in Calculator, then mark the exclusion pricing reviewed.',
+        {view:'build'});
+    }
     if(!section.customerVisible&&Math.abs(amount)>0.005){
       add('area:'+section.id+':visibility','review',label+' is hidden from the customer',
         'Its charges remain in the total. Confirm that hiding the entire Area is intentional.',

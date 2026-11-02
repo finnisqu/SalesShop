@@ -64,7 +64,9 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
  const issue=section&&!general?auditQuoteDraft(quote).blockers.find(item=>
   item.destination.view==='area'&&item.destination.areaId===id):undefined;
  const excludedMeasuredWork=pieces.some(p=>p.excludedFromQuote||p.excludeSplashFromQuote);
- const manualExclusionReview=excludedMeasuredWork&&primary&&primary.pricingMode!=='quantity-rate';
+ const excludedSinkWork=sinks.some(p=>p.excludedFromContract);
+ const manualExclusionReview=Boolean((excludedMeasuredWork&&primary&&primary.pricingMode!=='quantity-rate'
+   ||excludedSinkWork&&primary)&&!section?.scope?.exclusionPricingReviewed);
  const refs:QuoteScopeRowRef[]=[
   ...pieces.flatMap(piece=>([
    {kind:'piece' as const,id:piece.id,sectionId:id},
@@ -137,10 +139,13 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
     <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
    <button type="button" className="qwt-calculator" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
   </div>
-  {manualExclusionReview&&<p className="qwt-exclusion-warning" role="status">
-    Excluded measurements are preserved, but this Area uses a manual or multiplier selling price.
-    That price has not changed. Review and explicitly adjust it in Calculator before issuing the contract.
-   </p>}
+  {manualExclusionReview&&<div className="qwt-exclusion-warning" role="status">
+    <span>Excluded takeoffs are preserved. The selling price may still include excluded work.
+      Review it in Calculator; no automatic manual or multiplier repricing has occurred.</span>
+    <button type="button" disabled={!editable||!id} onClick={()=>store.updateSection(quote.id,id!,{
+      scope:{...section!.scope,exclusionPricingReviewed:true},
+    })}>I've reviewed this price</button>
+   </div>}
   {refs.length>0&&<div className="qwt-table-selection">
     <label><input type="checkbox" checked={refs.every(row=>selected.has(rowKey(row)))}
      onChange={e=>onSelectMany(refs,e.target.checked)}/> Select all lines</label>

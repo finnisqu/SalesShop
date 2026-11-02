@@ -49,6 +49,8 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
           next=patchQuoteTakeoffSinks(next,sectionId,(changed?.scope?.takeoffSinks??[]).map(item=>
             item.id===row.id?{...item,excludedFromContract:false}:item));
         }
+        next={...next,sections:next.sections.map(item=>item.id===sectionId?
+          {...item,scope:{...item.scope,exclusionPricingReviewed:false}}:item)};
       }else if(targetSectionId&&targetSectionId!==sectionId){
         if(next.sections.some(item=>item.id===targetSectionId&&
           item.scope?.takeoffSinks?.some(existing=>existing.id===sink.id)))continue;
@@ -81,6 +83,8 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
         {...piece,excludedFromQuote:operation==='exclude'};
       next=patchQuoteTakeoff(next,sectionId,
         (source.scope?.takeoffPieces??[]).map(item=>item.id===piece.id?changed:item));
+      next={...next,sections:next.sections.map(item=>item.id===sectionId?
+        {...item,scope:{...item.scope,exclusionPricingReviewed:false}}:item)};
     }
   }
   return next;

@@ -2,6 +2,7 @@ import {describe,it,expect} from 'vitest';
 import type {Quote,QuoteSection,QuoteTakeoffPiece,QuoteLine} from '../types/quote';
 import {quoteLinesTotal} from '../types/quote';
 import {applyQuoteScopeRowBatch} from './quoteScopeRowBatch';
+import {auditQuoteDraft} from './quoteDraftAudit';
 import {patchQuoteTakeoff,patchQuoteTakeoffSinks,ensureSmartTakeoffLine,
   totalBillableTakeoffSf,takeoffCustomerDetails} from './quoteTakeoffsLite';
 
@@ -72,6 +73,19 @@ describe('single-table scoped quote rows',()=>{
   const moved=applyQuoteScopeRowBatch(restored,refs,'move','b');
   expect(moved.lines.map(l=>l.sectionId)).toEqual(['b','b']);
   expect(q.lines.map(l=>l.sectionId)).toEqual(['k','k']);
+ });
+ it('blocks issuing a manual selling price until exclusions are explicitly reviewed',()=>{
+  let q=patchQuoteTakeoff(quote(),'k',[piece('p')]);
+  q=ensureSmartTakeoffLine(q,'k');
+  q={...q,lines:q.lines.map(line=>({...line,pricingMode:'direct' as const,amount:480}))};
+  const excluded=applyQuoteScopeRowBatch(q,[row('splash','p','k')],'exclude');
+  expect(quoteLinesTotal(excluded.lines)).toBe(480);
+  expect(auditQuoteDraft(excluded).blockers.some(f=>f.id==='area:k:excluded-pricing')).toBe(true);
+  const reviewed={...excluded,sections:excluded.sections.map(section=>section.id==='k'
+    ?{...section,scope:{...section.scope,exclusionPricingReviewed:true}}:section)};
+  expect(auditQuoteDraft(reviewed).blockers.some(f=>f.id==='area:k:excluded-pricing')).toBe(false);
+  const changedAgain=applyQuoteScopeRowBatch(reviewed,[row('piece','p','k')],'exclude');
+  expect(auditQuoteDraft(changedAgain).blockers.some(f=>f.id==='area:k:excluded-pricing')).toBe(true);
  });
  it('does not let an invalid destination or a managed source line corrupt the quote',()=>{
   const q=quote();

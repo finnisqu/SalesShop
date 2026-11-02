@@ -158,6 +158,9 @@ export interface QuoteAreaScope {
   sharedSlabPool?: QuoteSlabPool;
   /** Target gross margin, stored as a fraction (0.30 = 30%). */
   targetMargin?: number;
+  /** Explicit seller acknowledgment after pricing work excluded from the contract.
+   * Reset when takeoff inclusion changes; never implies repricing. */
+  exclusionPricingReviewed?: boolean;
   /** Explicit shop slab size and buying cost when the catalog lacks them. */
   slabAreaOverrideSf?: number;
   slabCostOverride?: number;
