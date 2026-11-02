@@ -97,6 +97,10 @@ export interface QuoteTakeoffPiece {
   splashHeightIn?: number;
   /** Optional fabrication edge selection; defaults to Flat. */
   edgeProfile?: string;
+  /** Retain measured geometry, but exclude this top and its splashes from the current quote. */
+  excludedFromQuote?: boolean;
+  /** Keep measured splash edges for later, without billing their material. */
+  excludeSplashFromQuote?: boolean;
 }
 
 export interface QuoteTakeoffSink {
@@ -110,6 +114,8 @@ export interface QuoteTakeoffSink {
   unitPrice?: number;
   /** Legacy catalog compatibility flag. New mobile Beta sinks always receive a priced quote line. */
   includeInPricing: boolean;
+  /** Explicit struck-through contract exclusion, independent of legacy specs-only billing. */
+  excludedFromContract?: boolean;
   /** Nine optional faucet drilling locations at 2-inch intervals relative to center, -8 through +8. */
   faucetHoleOffsetsIn?: number[];
   /** Snapshot of a Catalog sink model + variant at selection time. */

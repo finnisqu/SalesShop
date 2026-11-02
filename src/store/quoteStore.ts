@@ -47,6 +47,7 @@ import {
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
+import {applyQuoteScopeRowBatch,type QuoteScopeRowRef,type QuoteScopeBulkOperation} from '../services/quoteScopeRowBatch';
 import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces, syncManagedSinkLineEdit, unpriceDeletedTakeoffSink, setQuoteTakeoffSinkCharge } from '../services/quoteTakeoffsLite';
 import type { QuoteTakeoffPiece, QuoteTakeoffSink, QuoteLineMaterialReference, QuoteLineRateReference } from '../types/quote';
 
@@ -80,6 +81,8 @@ interface QuoteState {
   reorderLine: (quoteId: string, lineId: string, direction: -1 | 1) => void;
   setGeneralLineOrder: (quoteId: string, lineIds: string[]) => void;
   moveLine: (quoteId: string, lineId: string, sectionId?: string) => void;
+  /** One undo step for multi-row exclude, restore or move, across work tables. */
+  bulkScopeRows:(quoteId:string,rows:QuoteScopeRowRef[],operation:QuoteScopeBulkOperation,targetSectionId?:string)=>number;
   addSection: (quoteId: string) => string;
   addAreaFromPreset: (quoteId:string,presetId:QuoteAreaPresetId)=>string;
   addAreaFromSavedLayout: (quoteId:string,layout:SavedAreaLayout)=>string;
@@ -606,6 +609,17 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, ...history });
   },
 
+  bulkScopeRows:(quoteId,rows,operation,targetSectionId)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)||!rows.length)return 0;
+    const updated=applyQuoteScopeRowBatch(current,rows,operation,targetSectionId);
+    if(updated===current)return 0;
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
+    return rows.length;
+  },
   moveLine: (quoteId, lineId, sectionId) => {
     const current = get().quotes.find(quote => quote.id === quoteId);
     if (!current || !quoteIsCommerciallyEditable(current)) return;

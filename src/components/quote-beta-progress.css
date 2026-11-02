@@ -66,3 +66,12 @@
  .qmb .qmb-guide-step-text small {font-size:8px;}
  .qmb .qmb-guide-steps {gap:4px;}
 }
+
+/* Five concise, equal milestones for the new single-workspace quote path. */
+.qmb .qmb-guide-five .qmb-guide-steps{grid-template-columns:repeat(5,minmax(0,1fr));}
+.qmb .qmb-guide-five .qmb-guide-progress{grid-template-columns:repeat(5,minmax(0,1fr));}
+@media(max-width:700px){
+ .qmb .qmb-guide-five .qmb-guide-step{min-height:64px;padding:4px 2px;}
+ .qmb .qmb-guide-five .qmb-guide-step-text strong{font-size:9px;}
+ .qmb .qmb-guide-five .qmb-guide-step-text small{font-size:8px;}
+}

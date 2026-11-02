@@ -1,0 +1,358 @@
+import {useEffect,useRef,useState,type KeyboardEvent} from 'react';
+import {createPortal} from 'react-dom';
+import type {Quote,QuoteSection,QuoteTakeoffPiece,QuoteTakeoffSink,QuoteLine} from '../types/quote';
+import {quoteLineAmount,quoteLinesTotal,quoteTotal} from '../types/quote';
+import {useQuoteStore} from '../store/quoteStore';
+import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
+import {auditQuoteDraft} from '../services/quoteDraftAudit';
+import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
+import {newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,takeoffPieceSplashSf,
+ totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
+import {projectAreaCost} from '../services/quoteAreaCost';
+import {savedAreaMultiplier} from '../services/quotePriceInput';
+import {TakeoffMaterialCatalog} from './TakeoffCatalogPickers';
+import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
+import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
+import {QuoteBetaMaterials} from './QuoteBetaMaterials';
+import type {QuoteScopeRowRef,QuoteScopeBulkOperation} from '../services/quoteScopeRowBatch';
+import './quote-work-tables.css';
+
+const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
+const rowKey=(row:QuoteScopeRowRef)=>[row.kind,row.sectionId??'general',row.id].join(':');
+type ScopeTableProps={
+ quote:Quote;section:QuoteSection|null;general?:boolean;selected:Set<string>;
+ onSelect:(row:QuoteScopeRowRef,checked:boolean)=>void;onSelectMany:(rows:QuoteScopeRowRef[],checked:boolean)=>void;
+ onCalc:(id:string|null)=>void;onAdvanced:(id:string)=>void;
+};
+
+/** Blur commits once, including fractions for cut-piece dimensions. */
+function NumberCell({value,label,disabled,min=0,max=10000,integer=false,inches=false,onCommit}:{
+ value?:number;label:string;disabled:boolean;min?:number;max?:number;integer?:boolean;inches?:boolean;
+ onCommit:(value:number|undefined)=>void;
+}){
+ const [draft,setDraft]=useState(value===undefined?'':String(value));
+ useEffect(()=>setDraft(value===undefined?'':String(value)),[value]);
+ const commit=()=>{
+  const parsed=draft.trim()===''?undefined:inches?parseInches(draft):Number(draft);
+  if(parsed===undefined&&draft.trim()===''){if(value!==undefined)onCommit(undefined);return;}
+  if(parsed!==undefined&&Number.isFinite(parsed)&&parsed>=min&&parsed<=max&&(!integer||Number.isInteger(parsed))){
+    if(parsed!==value)onCommit(parsed);return;
+  }
+  setDraft(value===undefined?'':String(value));
+ };
+ return <input aria-label={label} className="qwt-input qwt-numeric" inputMode="decimal" type="text"
+  disabled={disabled} value={draft} placeholder="—" onChange={e=>setDraft(e.target.value)}
+  onBlur={commit} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();e.currentTarget.blur();}
+   if(e.key==='Escape'){setDraft(value===undefined?'':String(value));e.currentTarget.blur();}}}/>;
+}
+function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,onCalc,onAdvanced}:ScopeTableProps){
+ const editable=quoteIsCommerciallyEditable(quote);
+ const store=useQuoteStore.getState();
+ const id=section?.id;
+ const pieces=section?.scope?.takeoffPieces??[];
+ const sinks=section?.scope?.takeoffSinks??[];
+ const lines=quote.lines.filter(line=>general?
+  !line.sectionId||!quote.sections.some(s=>s.id===line.sectionId)||line.sectionId===id:
+  line.sectionId===id);
+ const primary=general?undefined:lines.find(line=>line.quantitySource?.syncMode==='live'
+   &&line.quantitySource.field==='countertopSf')
+  ??lines.find(line=>line.kind==='material'&&!line.takeoffSinkId);
+ const extras=lines.filter(line=>line!==primary&&!line.takeoffSinkId);
+ const cost=section&&!general?projectAreaCost(quote,section):null;
+ const amount=quoteLinesTotal(lines);
+ const issue=section&&!general?auditQuoteDraft(quote).blockers.find(item=>
+  item.destination.view==='area'&&item.destination.areaId===id):undefined;
+ const refs:QuoteScopeRowRef[]=[
+  ...pieces.flatMap(piece=>([
+   {kind:'piece' as const,id:piece.id,sectionId:id},
+   ...((piece.backsplash||piece.leftSplash||piece.rightSplash)?
+    [{kind:'splash' as const,id:piece.id,sectionId:id}]:[]),
+  ])),
+  ...sinks.map(sink=>({kind:'sink' as const,id:sink.id,sectionId:id})),
+  ...extras.map(line=>({kind:'line' as const,id:line.id,sectionId:line.sectionId})),
+ ];
+ const patchPiece=(piece:QuoteTakeoffPiece,patch:Partial<QuoteTakeoffPiece>)=>{
+  if(!id)return;store.updateTakeoffPieces(quote.id,id,pieces.map(p=>p.id===piece.id?{...p,...patch}:p));
+ };
+ const patchSink=(sink:QuoteTakeoffSink,patch:Partial<QuoteTakeoffSink>)=>{
+  if(!id)return;store.updateTakeoffSinks(quote.id,id,sinks.map(s=>s.id===sink.id?{...s,...patch}:s));
+ };
+ const toggle=(ref:QuoteScopeRowRef,excluded:boolean)=>
+  store.bulkScopeRows(quote.id,[ref],excluded?'restore':'exclude');
+ const box=(ref:QuoteScopeRowRef)=><input type="checkbox" className="qwt-check"
+  aria-label={'Select '+ref.kind+' '+ref.id} checked={selected.has(rowKey(ref))}
+  onChange={e=>onSelect(ref,e.target.checked)}/>;
+ const include=(ref:QuoteScopeRowRef,excluded:boolean)=><button type="button"
+  className={'qwt-include'+(excluded?' is-off':'')} disabled={!editable}
+  aria-label={(excluded?'Restore ':'Exclude ')+ref.kind+' '+ref.id}
+  onClick={()=>toggle(ref,excluded)} title={excluded?'Restore to customer quote':'Keep takeoff but omit from customer quote'}>
+  {excluded?'↶ Restore':'Strike out'}</button>;
+ const category=(label:string,count:number)=><div className="qwt-kind-head" role="row">
+   <strong>{label}</strong><span>{count} {count===1?'item':'items'}</span></div>;
+ const addPiece=()=>{if(id&&pieces.length<500)store.updateTakeoffPieces(quote.id,id,
+  [...pieces,newTakeoffPiece(pieces.length+1)]);};
+ const addSink=()=>{if(id&&sinks.length<100)store.updateTakeoffSinks(quote.id,id,[...sinks,newTakeoffSink()]);};
+ const addCharge=(kind:'item'|'discount'|'material'|'sink'='item')=>store.addLine(quote.id,kind,id);
+ return <section className="qwt-area" aria-label={general?'General work table':'Area work table '+section?.title}>
+  <div className="qwt-area-top">
+   <div className="qwt-area-label">{section&&!general?<QuoteInlineAreaName quote={quote} section={section}/>:
+    <strong>General</strong>}
+    <small>{general?'Fees, allowances, discounts and unassigned work':'Measured takeoffs · selling · costs'}</small>
+   </div>
+   {section&&!general?<div className="qwt-summary-grid">
+     <label className="qwt-summary-material"><span>Material</span>
+       <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
+        selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
+        onTextChange={name=>store.selectTakeoffMaterial(quote.id,id!,name)}
+        onSelect={(reference,label)=>store.selectTakeoffMaterial(quote.id,id!,label,reference)}/></label>
+     <div><span>SF</span><strong>{sf.format(totalBillableTakeoffSf(pieces))}</strong></div>
+     <div className={!cost?.complete?'qwt-needs-cost':''} title={!cost?.complete?'Partial estimate · '+cost?.missingCostItems.join(', '):'Full private cost'}>
+       <span>Cost</span><strong>{cost?.totalKnownCost?money.format(cost.totalKnownCost):'—'}</strong>
+       {!cost?.complete&&<small>Partial</small>}</div>
+     <div><span>Method</span><button type="button" onClick={()=>onCalc(id!)}>
+       {primary?.pricingMode==='direct'?'Manual':primary?.pricingMode==='slab-multiplier'?'Multiplier':'SF rate'} ▾</button></div>
+     <div><span>Rate / multiplier</span>
+       {primary?.pricingMode==='quantity-rate'?<QuoteInlineAreaRate quote={quote} section={section} onOpen={()=>onCalc(id!)}/>:
+        <button type="button" onClick={()=>onCalc(id!)}>{primary?.pricingMode==='slab-multiplier'
+         ?savedAreaMultiplier(primary.materialReference,2)+'×'
+         :primary?.pricingMode==='direct'?money.format(primary.amount??0):'Choose…'} ▾</button>}
+     </div>
+     <div className={cost?.marginPercent===undefined?'qwt-needs-cost':cost.marginPercent<30?'qwt-needs-review':'qwt-ok'}>
+       <span>Margin</span><strong>{cost?.marginPercent===undefined?'—':cost.marginPercent.toFixed(1)+'%'}</strong></div>
+     <div className={issue?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
+       {issue&&<small title={issue.title}>! Check price</small>}</div>
+     <div><span>Sinks</span><strong>{sinks.reduce((n,s)=>n+s.count,0)}</strong></div>
+   </div>:<div className="qwt-general-total"><span>General charges</span>
+    <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
+   <button type="button" className="qwt-calculator" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
+  </div>
+  {refs.length>0&&<div className="qwt-table-selection">
+    <label><input type="checkbox" checked={refs.every(row=>selected.has(rowKey(row)))}
+     onChange={e=>onSelectMany(refs,e.target.checked)}/> Select all lines</label>
+    <small>{refs.filter(row=>selected.has(rowKey(row))).length} selected here</small></div>}
+  <div className="qwt-table" onKeyDown={(event:KeyboardEvent<HTMLDivElement>)=>{
+   if(event.key!=='Enter'||event.nativeEvent.isComposing||!(event.target instanceof HTMLInputElement)
+      ||event.target.type==='checkbox'||event.defaultPrevented)return;
+   const cell=event.target;
+   const inputs=Array.from(event.currentTarget.querySelectorAll<HTMLInputElement>(
+     'input.qwt-input:not(:disabled), input.qwt-description:not(:disabled)'));
+   const index=inputs.indexOf(cell);
+   if(index<0)return;
+   event.preventDefault();cell.blur();
+   if(index+1<inputs.length)requestAnimationFrame(()=>inputs[index+1]?.focus());
+  }}>
+   <div className="qwt-columns" aria-hidden="true"><span></span><span>Type / description</span>
+    <span>Length</span><span>Width</span><span>Qty</span><span>Detail / rate</span>
+    <span>SF / amount</span><span>Contract</span></div>
+   {!!pieces.length&&category('Pieces',pieces.length)}
+   {pieces.map((piece,index)=>{
+     const ref:QuoteScopeRowRef={kind:'piece',id:piece.id,sectionId:id};
+     return <div key={piece.id} className="qwt-piece-block">
+      <div className={'qwt-line'+(piece.excludedFromQuote?' is-excluded':'')+
+       (!piece.excludedFromQuote&&(!piece.lengthIn||!piece.widthIn)?' has-issue':'')}>
+       {box(ref)}<label className="qwt-title-cell"><small>Piece {index+1}</small>
+         <input className="qwt-input qwt-description" aria-label={'Piece '+(index+1)+' name'}
+          disabled={!editable} placeholder={'Piece '+(index+1)} maxLength={140}
+          value={piece.name} onChange={e=>patchPiece(piece,{name:e.target.value})}/></label>
+       <NumberCell label={'Piece '+(index+1)+' length inches'} value={piece.lengthIn} inches min={0.01}
+          disabled={!editable} onCommit={v=>patchPiece(piece,{lengthIn:v})}/>
+       <NumberCell label={'Piece '+(index+1)+' width inches'} value={piece.widthIn} inches min={0.01}
+          disabled={!editable} onCommit={v=>patchPiece(piece,{widthIn:v})}/>
+       <NumberCell label={'Piece '+(index+1)+' quantity'} value={piece.count} integer min={1} max={1000}
+          disabled={!editable} onCommit={v=>{if(v!==undefined)patchPiece(piece,{count:v});}}/>
+       <div className="qwt-detail"><small>Top</small><button type="button" onClick={()=>onAdvanced(id!)}>Edges · {piece.edgeProfile??'Flat'} ↗</button></div>
+       <strong className="qwt-amount">{sf.format(piece.excludedFromQuote?0:takeoffPieceSf(piece))} SF</strong>
+       {include(ref,!!piece.excludedFromQuote)}
+      </div>
+      {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&<div className={'qwt-line qwt-splash-line'+
+        (piece.excludeSplashFromQuote||piece.excludedFromQuote?' is-excluded':'')}>
+       {box({kind:'splash',id:piece.id,sectionId:id})}
+       <span className="qwt-title-cell"><small>Splash for {piece.name||'Piece '+(index+1)}</small></span>
+       <span>—</span><span>—</span><span>{piece.count}×</span>
+       <div className="qwt-detail"><small>{piece.splashHeightIn??4}″ high</small>
+          <span>{[piece.backsplash?'Back':null,piece.leftSplash?'Left':null,piece.rightSplash?'Right':null].filter(Boolean).join(' / ')}</span></div>
+       <strong className="qwt-amount">{sf.format(piece.excludeSplashFromQuote||piece.excludedFromQuote?0:takeoffPieceSplashSf(piece))} SF</strong>
+       {include({kind:'splash',id:piece.id,sectionId:id},!!piece.excludeSplashFromQuote)}
+      </div>}
+     </div>;
+   })}
+   {!!sinks.length&&category('Sinks',sinks.length)}
+   {sinks.map((sink,index)=>{
+     const ref:QuoteScopeRowRef={kind:'sink',id:sink.id,sectionId:id};
+     const excluded=!!sink.excludedFromContract;
+     return <div key={sink.id} className={'qwt-line'+(excluded?' is-excluded':'')}>
+      {box(ref)}
+      <label className="qwt-title-cell"><small>Sink {index+1}</small>
+       <input className="qwt-input qwt-description" aria-label={'Sink '+(index+1)+' name'} disabled={!editable}
+        value={sink.name} placeholder="Sink model" onChange={e=>patchSink(sink,{name:e.target.value,sinkReference:undefined})}/></label>
+      <span>—</span><span>—</span>
+      <NumberCell label={'Sink '+(index+1)+' quantity'} value={sink.count} min={1} max={1000} integer disabled={!editable}
+       onCommit={v=>{if(v!==undefined)patchSink(sink,{count:v});}}/>
+      <div className="qwt-detail"><small>Sell / each</small>
+       <NumberCell label={'Sink '+(index+1)+' price'} value={sink.unitPrice} disabled={!editable}
+        onCommit={v=>patchSink(sink,{unitPrice:v})}/></div>
+      <strong className="qwt-amount">{excluded?'—':sink.includeInPricing?money.format(sink.count*(sink.unitPrice??0)):'Spec only'}</strong>
+      {include(ref,excluded)}
+     </div>;
+   })}
+   {!!extras.length&&category('Other charges',extras.length)}
+   {extras.map(line=>{
+     const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:line.sectionId};
+     const excluded=!line.includeInTotal;
+     const changes=(patch:Partial<QuoteLine>)=>store.updateLine(quote.id,line.id,patch);
+     return <div className={'qwt-line'+(excluded?' is-excluded':'')} key={line.id}>
+       {box(ref)}
+       <label className="qwt-title-cell"><small>{line.kind.replace('-',' ')}</small>
+        <input className="qwt-input qwt-description" aria-label={'Charge '+line.id+' description'}
+         value={line.description} disabled={!editable} onChange={e=>changes({description:e.target.value})}/></label>
+       <span>—</span><span>—</span>
+       {line.pricingMode==='quantity-rate'?<NumberCell label={'Charge '+line.id+' quantity'}
+          value={line.quantity} min={0} disabled={!editable} onCommit={v=>changes({quantity:v})}/>:<span>—</span>}
+       <div className="qwt-detail">{line.pricingMode==='quantity-rate'
+          ?<NumberCell label={'Charge '+line.id+' rate'} value={line.rate} disabled={!editable}
+             onCommit={v=>changes({rate:v})}/>
+          :<NumberCell label={'Charge '+line.id+' amount'} value={line.amount} disabled={!editable}
+             onCommit={v=>changes({amount:v})}/>}</div>
+       <strong className="qwt-amount">{money.format(excluded?0:quoteLineAmount(line))}</strong>
+       {include(ref,excluded)}
+     </div>;
+   })}
+   {!refs.length&&<p className="qwt-empty">No lines yet. Add a piece, sink or charge to begin.</p>}
+  </div>
+  {editable&&<div className="qwt-add-row">
+    {id&&<><button type="button" onClick={addPiece}>+ Piece</button><button type="button" onClick={addSink}>+ Sink</button></>}
+    <button type="button" onClick={()=>addCharge('item')}>+ Charge</button>
+    <button type="button" onClick={()=>addCharge('discount')}>+ Discount</button>
+    {general&&<><button type="button" onClick={()=>addCharge('material')}>+ Material</button>
+      <button type="button" onClick={()=>addCharge('sink')}>+ Sink charge</button></>}
+    {id&&<button type="button" className="qwt-advanced-link" onClick={()=>onAdvanced(id)}>Detailed fabrication / catalog ↗</button>}
+  </div>}
+ </section>;
+}
+/** Private calculator is a dismissible focus panel, not another quote workflow page. */
+function CalculatorDrawer({quote,section,onClose,onAdvanced}:{
+ quote:Quote;section:QuoteSection|null;onClose:()=>void;onAdvanced:(id:string)=>void;
+}){
+ const ref=useRef<HTMLElement>(null);
+ useEffect(()=>{
+  const key=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')onClose();};
+  document.addEventListener('keydown',key);
+  ref.current?.querySelector<HTMLElement>('button')?.focus();
+  return()=>document.removeEventListener('keydown',key);
+ },[onClose]);
+ const generalLines=quote.lines.filter(l=>!l.sectionId||!quote.sections.some(s=>s.id===l.sectionId)
+  ||quote.sections.some(s=>s.id===l.sectionId&&isGeneralTakeoffSection(s)));
+ const cost=generalLines.reduce((n,l)=>n+(l.includeInTotal?l.internalCost??0:0),0);
+ const price=quoteLinesTotal(generalLines);
+ return createPortal(<div className="qmb qwt-drawer-backdrop" onPointerDown={e=>{
+  if(e.target===e.currentTarget)onClose();}}>
+  <section ref={ref} role="dialog" aria-modal="true" aria-label={section?'Calculator for '+section.title:'General calculator'}
+   className="qwt-drawer">
+   <header><div><small>PRIVATE ESTIMATING</small><h2>{section?section.title+' · Calculator':'General · Calculator'}</h2>
+    </div><button type="button" aria-label="Close calculator" onClick={onClose}>×</button></header>
+   <div className="qwt-drawer-body">
+    {section?<><p className="qwt-drawer-note">Choose selling method, then edit the corresponding rate or total.
+       The cost estimate and 30% target margin stay private; they do not change customer prices until you apply them.</p>
+       <QuoteBetaDesktopPricing quote={quote} section={section}
+          editable={quoteIsCommerciallyEditable(quote)} view="selling"/>
+       <QuoteBetaDesktopPricing quote={quote} section={section}
+          editable={quoteIsCommerciallyEditable(quote)} view="calculator"/>
+       <details><summary>Catalog sinks and fabrication details</summary>
+        <QuoteBetaMaterials quote={quote} section={section}
+         editable={quoteIsCommerciallyEditable(quote)} part="sinks" showHeading={false}/></details>
+       <button type="button" className="qwt-advanced-link" onClick={()=>{onAdvanced(section.id);onClose();}}>
+        Full fabrication details ↗</button>
+      </>:<><p>General charges and known costs are listed below. Missing internal costs are not assumed to be zero for margin decisions.</p>
+       <div className="qwt-general-math"><span>General selling total</span><strong>{money.format(price)}</strong>
+        <span>Entered internal costs</span><strong>{money.format(cost)}</strong>
+        <small>Apply line amounts in the General table. No automatic repricing.</small></div></>}
+   </div>
+   <footer><button type="button" onClick={onClose}>Done</button></footer>
+  </section>
+ </div>,document.body);
+}
+export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralTakeoff}:{
+ quote:Quote;onAddArea:()=>void;onLayouts:()=>void;onAdvanced:(id:string)=>void;onGeneralTakeoff:()=>void;
+}){
+ const [selected,setSelected]=useState<QuoteScopeRowRef[]>([]);
+ const [operation,setOperation]=useState<QuoteScopeBulkOperation>('exclude');
+ const [target,setTarget]=useState('');
+ const [calculator,setCalculator]=useState<string|null|'general'>(null);
+ const store=useQuoteStore.getState();
+ const editable=quoteIsCommerciallyEditable(quote);
+ useEffect(()=>setSelected([]),[quote.id]);
+ const ids=new Set(selected.map(rowKey));
+ const onSelect=(ref:QuoteScopeRowRef,checked:boolean)=>
+  setSelected(old=>checked?[...old.filter(v=>rowKey(v)!==rowKey(ref)),ref]:
+   old.filter(v=>rowKey(v)!==rowKey(ref)));
+ const onSelectMany=(refs:QuoteScopeRowRef[],checked:boolean)=>{
+  const keys=new Set(refs.map(rowKey));
+  setSelected(old=>checked?[...old.filter(v=>!keys.has(rowKey(v))),...refs]:
+   old.filter(v=>!keys.has(rowKey(v))));
+ };
+ const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
+ const general=quote.sections.find(s=>isGeneralTakeoffSection(s))??null;
+ const selectedValid=selected.filter(row=>{
+   if(row.kind==='line')return quote.lines.some(l=>l.id===row.id);
+   const section=quote.sections.find(s=>s.id===row.sectionId);
+   return row.kind==='sink'?section?.scope?.takeoffSinks?.some(s=>s.id===row.id):
+    section?.scope?.takeoffPieces?.some(p=>p.id===row.id);
+ });
+ const commitBulk=()=>{
+  if(!editable||!selectedValid.length)return;
+  const validTarget=operation!=='move'||(target&&quote.sections.some(s=>s.id===target));
+  if(!validTarget)return;
+  store.bulkScopeRows(quote.id,selectedValid,operation,operation==='move'?target:undefined);
+  setSelected([]);
+ };
+ return <div className="qwt-workspace" aria-label="Takeoffs selections and pricing tables">
+  <header className="qwt-intro"><div><div className="qmb-kicker">QUICK QUOTE · SINGLE WORKSPACE</div>
+    <h2>Takeoffs, selections &amp; pricing</h2>
+    <p>Each Area has its own editable table. Pieces come first, then sinks and charges.
+     Strike out work without deleting its measurements; restore it later with one click.</p>
+   </div><div className="qwt-intro-actions">
+    <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
+    <button type="button" disabled={!editable} onClick={onAddArea}>+ Area</button>
+   </div></header>
+  {!!selectedValid.length&&<div className="qwt-bulk" role="toolbar" aria-label="Bulk edit selected quote lines">
+   <strong>{selectedValid.length} selected</strong>
+   <label>Change <select aria-label="Bulk action" value={operation}
+    onChange={e=>setOperation(e.target.value as QuoteScopeBulkOperation)}>
+    <option value="exclude">Strike out · exclude from contract</option>
+    <option value="restore">Restore to contract</option>
+    <option value="move">Move to another Area</option>
+   </select></label>
+   {operation==='move'&&<label>Destination <select aria-label="Destination Area" value={target}
+    onChange={e=>setTarget(e.target.value)}><option value="">Select Area</option>
+    {quote.sections.map(s=><option value={s.id} key={s.id}>{isGeneralTakeoffSection(s)?'General':s.title}</option>)}
+    <option value="__general">General charges</option>
+   </select></label>}
+   <button type="button" disabled={!editable||(operation==='move'&&!target)}
+    onClick={()=>{
+     if(operation==='move'&&target==='__general'){
+       const chargeRows=selectedValid.filter(r=>r.kind==='line');
+       if(chargeRows.length===selectedValid.length)
+        store.bulkScopeRows(quote.id,chargeRows,operation,undefined);
+       else return;
+       setSelected([]);
+     }else commitBulk();
+    }}>Apply to {selectedValid.length} lines</button>
+   <button type="button" onClick={()=>setSelected([])}>Clear</button>
+   {operation==='move'&&target==='__general'&&selectedValid.some(r=>r.kind!=='line')&&
+    <small role="alert">Pieces and sinks need a measured destination Area. Select an Area to move them.</small>}
+  </div>}
+  {areas.map(section=><ScopeRows key={section.id} quote={quote} section={section}
+   selected={ids} onSelect={onSelect} onSelectMany={onSelectMany}
+   onCalc={id=>setCalculator(id??'general')} onAdvanced={onAdvanced}/>)}
+  {!areas.length&&<p className="qwt-no-areas">No Areas yet. Add Kitchen, Vanity or another scope, or start with General charges.</p>}
+  <ScopeRows quote={quote} section={general} general selected={ids}
+   onSelect={onSelect} onSelectMany={onSelectMany}
+   onCalc={()=>setCalculator('general')} onAdvanced={onAdvanced}/>
+  {editable&&!general&&<button type="button" className="qwt-general-start" onClick={onGeneralTakeoff}>
+   + General measured takeoff</button>}
+  {calculator!==null&&<CalculatorDrawer quote={quote}
+   section={calculator==='general'?null:quote.sections.find(s=>s.id===calculator)??null}
+   onAdvanced={onAdvanced} onClose={()=>setCalculator(null)}/>}
+ </div>;
+}

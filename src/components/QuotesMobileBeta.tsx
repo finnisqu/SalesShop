@@ -55,6 +55,7 @@ import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
 import {QuoteSaveAreaLayoutDialog} from './QuoteSaveAreaLayoutDialog';
 import {QuoteInlineAreaName,QuoteInlineAreaRate,QuoteBulkAreaDialog} from './QuoteInlineAreaEditing';
 import {QuoteSharedSlabPools} from './QuoteSharedSlabPools';
+import {QuoteWorkTables} from './QuoteWorkTables';
 import {QuoteAreaQuickPanel,type QuickAreaTab} from './QuoteAreaQuickPanel';
 import {captureSavedAreaLayout,readSavedAreaLayouts,writeSavedAreaLayouts,
   savedAreaLayoutScope,upsertSavedAreaLayout,SAVED_AREA_LAYOUT_LIMIT,
@@ -1023,9 +1024,9 @@ export function QuotesMobileBeta() {
         </div>}
       {quote&&page!=='library'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaProgress
         key={quote.id} quote={quote} editable={editable}
-        current={reviewOpen||page==='quote'&&quoteTab==='preview'?'review':
+        current={page==='quote'&&quoteTab==='preview'?'contract':reviewOpen?'review':
           page==='area'?(areaTab==='measure'?'areas':'pricing'):
-          quoteTab==='details'?'details':quoteTab==='pricing'?'pricing':'areas'}
+          quoteTab==='details'?'details':quoteTab==='pricing'?'review':'areas'}
         onDetails={()=>navigateDocument('details')}
         onAreas={()=>navigateDocument('build')}
         onOpenArea={openArea} onAddArea={newArea} onPricing={openPricingStage}
@@ -1173,165 +1174,13 @@ export function QuotesMobileBeta() {
             </Suspense>
           </section>}
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
-          <div className="qmb-build-intro">
-            <div className="qmb-builder-intro-head"><div>
-              <div className="qmb-kicker">STEP 2 · DEFINE THE WORK</div>
-              <h2>Areas &amp; scope</h2>
-            </div><label className="qmb-builder-view-setting">My view
-              <select aria-label="Quote Builder row density" value={builderPrefs.density}
-                disabled={!builderScope}
-                onChange={event=>setBuilderPrefs({...builderPrefs,
-                  density:event.target.value as QuoteBuilderPreferences['density']})}>
-                <option value="compact">Compact table</option>
-                <option value="comfortable">Comfortable table</option>
-              </select>
-            </label></div>
-            <p>Areas, takeoffs, and General charges in one table-style workspace. Use the row names to open full editors. Your view preferences stay personal.</p>
-          </div>
-          <div className="qmb-section-head" data-area-edit-workspace><h3>Areas</h3>
-            <div className="qmb-areas-actions">
-              <QuoteBetaAreaModeButton manager={areaManager}/>
-              {!areaManager.editing&&<>
-                <button className="qmb-quiet" type="button" disabled={!editable}
-                  onClick={()=>setAreaPresetsOpen(true)}>Area layouts</button>
-                <button className="qmb-quiet" type="button" disabled={!editable} onClick={newArea}>+ Add Area</button>
-              </>}
-            </div>
-          </div>
-          <div className="qmb-builder-bulk-toolbar" data-area-edit-workspace>
-            <label><input type="checkbox" aria-label="Select all quote Areas"
-              checked={!!quote.sections.filter(s=>!isGeneralTakeoffSection(s)).length&&
-                quote.sections.filter(s=>!isGeneralTakeoffSection(s)).every(s=>selectedBulkAreaIds.includes(s.id))}
-              onChange={e=>setSelectedBulkAreaIds(e.target.checked
-                ?quote.sections.filter(s=>!isGeneralTakeoffSection(s)).map(s=>s.id):[])}/>
-              Select all Areas</label>
-            <span>{selectedBulkAreaIds.length} selected</span>
-            <button type="button" disabled={!editable||!selectedBulkAreaIds.length}
-              onClick={()=>setBulkAreaOpen(true)}>Bulk edit…</button>
-            {!!selectedBulkAreaIds.length&&<button type="button"
-              onClick={()=>setSelectedBulkAreaIds([])}>Clear</button>}
-          </div>
-          <div ref={mobileAreaRef} className={'qmb-inline-area-list qmb-builder-table qmb-builder-area-table is-'+builderPrefs.density+(areaManager.editing?' is-managing-areas':'')}
-            data-area-edit-workspace aria-label="Quote Areas table">
-            <div className="qmb-builder-table-head qmb-builder-area-head" aria-hidden="true">
-              <span>Area</span><span>Material</span><span>Measured</span>
-              <span>Sell / SF</span><span>Display</span><span>Amount</span>
-            </div>
-          {(areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s))).map(s=>{
-            const lines=quote.lines.filter(l=>l.sectionId===s.id);
-            return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}
-              onContextMenu={event=>contextActions.openPointer(event,s.title||'Area',areaMenuActions(s))}
-              onKeyDown={event=>contextActions.openKeyboard(event,s.title||'Area',areaMenuActions(s))}>
-              {!areaManager.editing&&<input type="checkbox" className="qmb-builder-select"
-                checked={selectedBulkAreaIds.includes(s.id)} aria-label={'Select Area '+s.title}
-                onChange={e=>setSelectedBulkAreaIds(ids=>e.target.checked?[...ids,s.id]:ids.filter(id=>id!==s.id))}/>}
-              {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
-              <div className="qmb-card qmb-area-card qmb-builder-area-entry">
-                <span className="qmb-builder-area-name">
-                  <QuoteInlineAreaName quote={quote} section={s}/>
-                  <button type="button" onClick={()=>openQuickArea(s.id)}
-                    aria-label={'Quick edit Area '+s.title}>Quick edit ↗</button>
-                  <small>{(s.scope?.takeoffPieces??[]).length} pieces · {(s.scope?.takeoffSinks??[]).length} sinks</small>
-                </span>
-                <span className="qmb-builder-area-material">
-                  <button type="button" onClick={()=>openQuickArea(s.id,'material')}
-                    aria-label={'Change material for '+s.title}>{s.scope?.takeoffMaterial||'Select material'} ↗</button>
-                </span>
-                <span className="qmb-builder-area-measured">
-                  <button type="button" onClick={()=>openQuickArea(s.id,'measure')}
-                    aria-label={'Edit measurements for '+s.title}>{sf.format(s.scope?.countertopSf??0)} SF</button>
-                </span>
-                <span className="qmb-builder-area-rate">
-                  <QuoteInlineAreaRate quote={quote} section={s}
-                    onOpen={()=>openQuickArea(s.id,'pricing')}/>
-                </span>
-                <span className="qmb-builder-area-display">
-                  <select aria-label={'Customer display for '+s.title}
-                    disabled={!editable||areaManager.editing}
-                    value={!s.customerVisible?'hidden':s.customerDisplayMode==='summary'?'summary':'detail'}
-                    onChange={event=>{
-                      const value=event.target.value;
-                      useQuoteStore.getState().updateSection(quote.id,s.id,{
-                        customerVisible:value!=='hidden',
-                        ...(value==='hidden'?{}:{customerDisplayMode:value==='summary'?'summary':'detail'}),
-                      });
-                    }}>
-                    <option value="detail">Itemized</option>
-                    <option value="summary">Lump sum</option>
-                    <option value="hidden">Hidden</option>
-                  </select>
-                </span>
-                <span className="qmb-builder-area-value"><button type="button"
-                  aria-label={'Edit selling price for '+s.title} onClick={()=>openQuickArea(s.id,'pricing')}>
-                  {money.format(quoteLinesTotal(lines))} ›</button></span>
-              </div>
-              {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={s}/>}
-            </div>;
-          })}
-          {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
-          </div>
-          {!quote.sections.some(s=>!isGeneralTakeoffSection(s))&&<div className="qmb-empty">No Areas yet. Add a Kitchen, Bathroom, Unit Type—or jump to Details first.</div>}
-          <div className="qmb-section-head qmb-general-heading" data-general-edit-workspace>
-            <div><h3>General</h3><small>Optional · Flat fees, add-ons, discounts and notes</small></div>
-            <div className="qmb-general-quick-add" aria-label="Add General line">
-              {editable&&!generalManager.editing&&<button type="button"
-                aria-label="General takeoffs" onClick={()=>{
-                  const id=ensureGeneralTakeoff(quote.id);
-                  if(id)openArea(id);
-                }}>{generalTakeoff?'Edit takeoff':'Takeoff'}</button>}
-              {editable&&!generalManager.editing&&QUOTE_GENERAL_QUICK_ADDS
-                .filter(kind=>builderPrefs.favoriteQuickAdds.includes(kind))
-                .map(kind=><button type="button" key={kind} onClick={()=>addLine(quote.id,kind)}>
-                  ★ {QUOTE_GENERAL_QUICK_ADD_LABELS[kind]}</button>)}
-              {editable&&!generalManager.editing&&<details className="qmb-builder-quickadd-menu" ref={quickAddMenuRef}>
-                <summary>More · My quick adds</summary>
-                <div className="qmb-builder-quickadd-popover">
-                  <strong>General line shortcuts</strong>
-                  <small>Star the types you use most. Personal to this browser.</small>
-                  {QUOTE_GENERAL_QUICK_ADDS.map(kind=><div key={kind} className="qmb-builder-quickadd-row">
-                    <label><input type="checkbox" aria-label={'Favorite '+QUOTE_GENERAL_QUICK_ADD_LABELS[kind]}
-                      checked={builderPrefs.favoriteQuickAdds.includes(kind)}
-                      disabled={!builderScope}
-                      onChange={()=>toggleGeneralQuickAdd(kind)}/>
-                      ★</label>
-                    <button type="button" onClick={event=>{
-                      addLine(quote.id,kind);
-                      event.currentTarget.closest('details')?.removeAttribute('open');
-                    }}>+ {QUOTE_GENERAL_QUICK_ADD_LABELS[kind]}</button>
-                  </div>)}
-                </div>
-              </details>}
-              <QuoteBetaGeneralModeButton manager={generalManager}/>
-            </div>
-          </div>
-          {generalTakeoff&&<div className="qmb-general-takeoff-actions">
-            <button type="button" className="qmb-general-takeoff-ref"
-              onClick={()=>openArea(generalTakeoff.id)}>
-              <strong>General takeoff · {sf.format(generalTakeoff.scope?.countertopSf??0)} SF</strong>
-              <span>{money.format(quoteLinesTotal(quote.lines.filter(l=>l.sectionId===generalTakeoff.id)))} · Edit measurements and pricing ›</span>
-            </button>
-            <button type="button" className="qmb-general-takeoff-remove" disabled={!editable}
-              aria-label="Delete General takeoff" onClick={()=>setShowDeleteGeneralTakeoff(true)}>×</button>
-          </div>}
-          <div ref={mobileGeneralRef} className={'qmb-inline-general-list qmb-builder-table qmb-builder-general-table is-'+builderPrefs.density+(generalManager.editing?' is-managing-general':'')}
-            data-general-edit-workspace aria-label="General line table">
-            <div className="qmb-builder-table-head qmb-builder-general-head" aria-hidden="true">
-              <span>Description</span><span>Type</span><span>Pricing</span><span>Amount</span><span>Open</span>
-            </div>
-            {!generalManager.lines.length&&!generalTakeoff&&<div className="qmb-empty qmb-general-empty">No General items yet. Add a charge, material, sink, rate, note, or General takeoff to get started.</div>}
-            {(generalManager.editing?generalManager.lines:
-              quote.lines.filter(l=>!l.sectionId||!quote.sections.some(s=>s.id===l.sectionId)))
-              .map(l=><div className="qmb-inline-general-row" data-qmb-sort-row={l.id} key={l.id}>
-                {generalManager.editing&&<QuoteBetaGeneralGrip manager={generalManager} line={l}/>}
-                <div className="qmb-general-inline-item"><BetaLine quote={quote} line={l} editable={editable&&!generalManager.editing}/></div>
-                {generalManager.editing&&<QuoteBetaGeneralDelete manager={generalManager} line={l}/>}
-              </div>)}
-            {generalManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
-          </div>
+          <QuoteWorkTables quote={quote} onAddArea={()=>{addSection(quote.id);}}
+            onLayouts={()=>setAreaPresetsOpen(true)}
+            onAdvanced={id=>openArea(id)}
+            onGeneralTakeoff={()=>{ensureGeneralTakeoff(quote.id);}}/>
           <QuoteSharedSlabPools quote={quote}/>
-
         </>}
-        {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaPricingOverview
+                {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaPricingOverview
           quote={quote} onArea={(id,tab)=>{openArea(id);setAreaTab(tab);}}
           onGeneral={openGeneralFromPricing} onResolve={fixAudit} onReview={openSend}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
@@ -1351,7 +1200,7 @@ export function QuotesMobileBeta() {
               {detailsNextArea?.label??'Continue to Areas ›'}</button>
           :quote.documentType!=='pricing-schedule'&&quoteTab==='build'
             ?<button type="button" className="qmb-primary"
-              onClick={openPricingStage}>Continue to Materials &amp; Pricing ›</button>
+              onClick={openPricingStage}>Continue to Pricing Review ›</button>
           :<button type="button" className="qmb-primary" onClick={openSend}>
             {primaryAction?.mobile??'Review document ›'}</button>}
       </footer>

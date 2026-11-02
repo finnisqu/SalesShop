@@ -69,7 +69,13 @@ export function totalSplashSf(pieces:QuoteTakeoffPiece[]):number {
 }
 /** Single billable SF quantity: tops + 4-inch splash material, rounded once. */
 export function totalBillableTakeoffSf(pieces:QuoteTakeoffPiece[]):number {
-  return roundSf(pieces.reduce((acc,piece)=>acc+takeoffPieceTotalSf(piece),0));
+  return roundSf(pieces.reduce((acc,piece)=>acc+(piece.excludedFromQuote?0:
+    takeoffPieceSf(piece)+(piece.excludeSplashFromQuote?0:takeoffPieceSplashSf(piece))),0));
+}
+/** Quoted splash linear feet: retained but struck-through splashes stay out of the active price. */
+export function totalBillableSplashLf(pieces:QuoteTakeoffPiece[]):number {
+  return roundSf(pieces.reduce((acc,piece)=>acc+(piece.excludedFromQuote||piece.excludeSplashFromQuote
+    ?0:splashEdgeInches(piece)),0)/12);
 }
 export function newTakeoffSink():QuoteTakeoffSink {
   return {id:`sinktakeoff_${crypto.randomUUID()}`,category:'kitchen',name:'',count:1,
@@ -84,7 +90,7 @@ export function takeoffCustomerDetails(section:QuoteSection):{
   return {
     material:section.scope?.takeoffMaterial?.trim()??'',
     sinks:(section.scope?.takeoffSinks??[])
-      .filter(sink=>Number.isFinite(sink.count)&&sink.count>0)
+      .filter(sink=>!sink.excludedFromContract&&Number.isFinite(sink.count)&&sink.count>0)
       .map(sink=>`${sink.count} × ${sink.name.trim()||
         (sink.category==='vanity'?'Vanity sink':'Kitchen sink')}`),
   };
@@ -241,7 +247,7 @@ export function patchQuoteTakeoff(
   const topSf=totalTakeoffSf(pieces);
   const splashSf=totalSplashSf(pieces);
   const total=totalBillableTakeoffSf(pieces);
-  const splash=totalSplashLf(pieces);
+  const splash=totalBillableSplashLf(pieces);
   return {
     ...quote,
     sections:quote.sections.map(s=>s.id===sectionId
