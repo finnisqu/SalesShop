@@ -160,3 +160,13 @@
  border:1px solid var(--qmb-border);border-radius:6px;background:var(--qmb-card);
  color:var(--qmb-muted);padding:3px 5px;}
 .sales-app .qmb .qwt-line:focus-within{background:var(--qmb-tint);}
+
+.qmb .qwt-general-cost-list{display:grid;gap:8px;background:var(--qmb-card);border:1px solid var(--qmb-border);
+ border-radius:9px;padding:12px;}
+.qmb .qwt-general-cost-list>strong{font-size:13px;}
+.qmb .qwt-general-cost-list>label{display:flex;justify-content:space-between;align-items:center;
+ flex-wrap:wrap;gap:8px;border-top:1px solid var(--qmb-border);padding-top:8px;font-size:12px;}
+.qmb .qwt-general-cost-list .qwt-general-cost-input{display:flex;align-items:center;gap:6px;}
+.qmb .qwt-general-cost-list input{max-width:110px;min-height:34px;border:1px solid var(--qmb-border);
+ background:var(--qmb-card);color:var(--qmb-ink);border-radius:7px;padding:5px;}
+.qmb .qwt-general-cost-list>small{font-size:11px;color:var(--qmb-muted);}

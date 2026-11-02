@@ -320,7 +320,24 @@ function CalculatorDrawer({quote,section,onClose,onAdvanced}:{
       </>:<><p>General charges and known costs are listed below. Missing internal costs are not assumed to be zero for margin decisions.</p>
        <div className="qwt-general-math"><span>General selling total</span><strong>{money.format(price)}</strong>
         <span>Entered internal costs</span><strong>{money.format(cost)}</strong>
-        <small>Apply line amounts in the General table. No automatic repricing.</small></div></>}
+        <small>Apply line amounts in the General table. No automatic repricing.</small></div>
+       <section className="qwt-general-cost-list" aria-label="General private line costs">
+        <strong>Private costs per General line</strong>
+        {generalLines.map(line=><label key={line.id}>
+          <span>{line.description||'Unnamed charge'}{!line.includeInTotal?' · excluded':''}</span>
+          <span className="qwt-general-cost-input">Cost $
+           <input type="number" min="0" step=".01" aria-label={'Internal cost for '+line.description}
+             disabled={!quoteIsCommerciallyEditable(quote)} value={line.internalCost??''}
+             placeholder="Unknown" onChange={e=>{
+              const raw=e.target.value;const value=raw===''?undefined:Number(raw);
+              if(value===undefined||Number.isFinite(value)&&value>=0)
+               useQuoteStore.getState().updateLine(quote.id,line.id,{internalCost:value});
+             }}/>
+          </span>
+        </label>)}
+        {!generalLines.length&&<small>No General charges to cost yet.</small>}
+        <small>Blank means unknown, not $0. Costs stay private and do not automatically change customer selling prices.</small>
+       </section></>}
    </div>
    <footer><button type="button" onClick={onClose}>Done</button></footer>
   </section>
