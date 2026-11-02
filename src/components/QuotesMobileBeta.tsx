@@ -1111,7 +1111,8 @@ export function QuotesMobileBeta() {
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary"
           onClick={()=>setShowNewDocument(true)}>+ New document</button></footer>
-    </>:page==='quote'&&quote?<div className="qmb-editor qmb-quote-editor">
+    </>:page==='quote'&&quote?<div className={'qmb-editor qmb-quote-editor'+
+  (quote.documentType!=='pricing-schedule'?' is-quick-quote':'')}>
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
           <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
@@ -1175,13 +1176,22 @@ export function QuotesMobileBeta() {
         </div>
       </div>
       <footer className="qmb-footer qmb-quote-footer">
+        <div className="qmb-guided-footer-left">
+          <button type="button" className="qmb-guided-back" onClick={()=>
+           quoteTab==='details'?showLibrary():navigateDocument(quoteTab==='preview'?'build':'details')}>
+           ‹ Back</button>
+          <span className="qmb-guided-footer-meta">
+           <SalesDocumentSaveStatus quote={quote} cloudMode={authMode==='cloud'}/>
+           <strong>{money.format(quoteTotal(quote))}</strong>
+          </span>
+        </div>
         {quoteTab==='preview'&&previewReturnQuoteId===quote.id
           ?<button type="button" className="qmb-primary"
             onClick={returnFromReviewPreview}>Done previewing · Back to Review ›</button>
           :quote.documentType!=='pricing-schedule'&&quoteTab==='details'
             ?<button type="button" className="qmb-primary"
-              onClick={()=>detailsNextArea?continueFromDetails():navigateDocument('build')}>
-              {detailsNextArea?.label??'Continue to Areas ›'}</button>
+              onClick={()=>navigateDocument('build')}>
+              Continue to Build Quote ›</button>
           :quote.documentType!=='pricing-schedule'&&quoteTab==='build'
             ?<button type="button" className="qmb-primary"
               onClick={openPricingStage}>Continue to Pricing Review ›</button>
