@@ -8,6 +8,7 @@ import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {newTakeoffPiece,newTakeoffSink,takeoffPieceSf,takeoffPieceSplashSf,
  takeoffPieceMiterInches,totalBillableTakeoffSf,roundedBillableTakeoffSf,parseInches} from '../services/quoteTakeoffsLite';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
+import {SINK_CATEGORIES,SINK_CATEGORY_LABELS} from '../types/sink';
 import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
 import {CalculatorDrawer} from './QuoteWorkTables';
 import type {QuoteScopeRowRef,QuoteScopeBulkOperation} from '../services/quoteScopeRowBatch';
@@ -66,11 +67,12 @@ function PopupCell({value,label,disabled=false,render}:{
  const dismiss=()=>setOpen(false);
  useEffect(()=>{
   if(!open)return;
+  panel.current?.querySelector<HTMLInputElement>('input[role="combobox"]')?.focus({preventScroll:true});
   const outside=(event:PointerEvent)=>{
    if(!panel.current?.contains(event.target as Node)&&!trigger.current?.contains(event.target as Node))setOpen(false);
   };
   const escape=(event:globalThis.KeyboardEvent)=>{if(event.key==='Escape')setOpen(false);};
-  const scroll=(event:Event)=>{if(event.target!==panel.current)setOpen(false);};
+  const scroll=(event:Event)=>{if(!(event.target instanceof Node)||!panel.current?.contains(event.target))setOpen(false);};
   document.addEventListener('pointerdown',outside);
   document.addEventListener('keydown',escape);
   window.addEventListener('resize',dismiss);
@@ -159,7 +161,9 @@ function AreaRow({quote,section,editable,onCalculator}:{quote:Quote;section:Quot
  const id=section.id,lines=areaLines(quote,id),primary=areaPrimary(quote,id);
  const measured=areaMeasured(section),billed=areaBilled(section);
  const stone=primary?.includeInTotal?quoteLineAmount(primary):0;
- const extra=lines.filter(l=>l!==primary&&!l.takeoffSinkId).reduce((v,l)=>v+(l.includeInTotal?quoteLineAmount(l):0),0);
+ const extra=lines.filter(l=>l!==primary&&!l.takeoffSinkId).reduce((v,l)=>v+(l.includeInTotal?quoteLineAmount(l):0),0)+
+  (section.scope?.takeoffSinks??[]).filter(s=>s.category!=='kitchen'&&s.category!=='vanity')
+   .reduce((sum,sink)=>sum+sinkSell(quote,id,sink),0);
  const manual=primary?.pricingMode!=='quantity-rate';
  const billMode=section.scope?.billableSfRounding??'exact';
  return <div className="qmx-grid qmx-area-row" role="row">
@@ -345,7 +349,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
     <div className="qmx-details-grid" onKeyDown={onSheetKey}>
      <div className="qmx-grid qmx-detail-groups" aria-hidden="true">
       <span className="qmx-sticky-area">Area / Room</span><span className="qmx-sticky-description">Item</span>
-      <span className="qmx-span-5">Takeoff / Material</span><span className="qmx-span-4">Kitchen sink</span>
+      <span className="qmx-span-5">Takeoff / Measurement</span><span>Material</span><span className="qmx-span-4">Kitchen sink</span>
       <span className="qmx-span-4">Vanity sink</span><span>Miter</span><span>Specialty</span><span>Cost</span><span>Contract</span><span>Price</span>
      </div>
      <div className="qmx-grid qmx-detail-columns" aria-hidden="true">
@@ -413,14 +417,15 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
        })}
        {sinks.map(sink=>{
         const ref:QuoteScopeRowRef={kind:'sink',id:sink.id,sectionId:id};
-        const kitchen=sink.category==='kitchen';
+        const kitchen=sink.category==='kitchen',vanity=sink.category==='vanity';
         return <DetailRow key={sink.id} excluded={!!sink.excludedFromContract}
          issue={sink.includeInPricing&&sink.unitPrice===undefined}>
           <ReadCell className="qmx-sticky-area qmx-area-name">{tick(ref)}{section.title}</ReadCell>
           <ReadCell className="qmx-sticky-description">
-           <select aria-label={'Sink category '+sink.name} disabled={!editable} value={kitchen?'kitchen':'vanity'}
+           <select aria-label={'Sink category '+sink.name} disabled={!editable} value={sink.category}
             onChange={e=>patchSink(sink,{category:e.target.value as QuoteTakeoffSink['category']})}>
-            <option value="kitchen">Kitchen sink</option><option value="vanity">Vanity sink</option></select></ReadCell>
+            {SINK_CATEGORIES.map(category=><option key={category} value={category}>
+             {SINK_CATEGORY_LABELS[category]} sink</option>)}</select></ReadCell>
           <ReadCell>{sink.count}</ReadCell>
           {Array.from({length:5},(_,i)=><ReadCell key={i}/>)}
           {kitchen?<><ReadCell><SinkModel quote={quote} section={section} sink={sink} editable={editable}/></ReadCell>
@@ -430,16 +435,17 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
              onChange={v=>patchSink(sink,{unitPrice:v})}/></ReadCell>
            <ReadCell className="qmx-money">{cash.format(sinkSell(quote,id,sink))}</ReadCell>
            {Array.from({length:4},(_,i)=><ReadCell key={i}/>)}</>:
-          <>{Array.from({length:4},(_,i)=><ReadCell key={i}/>)}
+          vanity?<>{Array.from({length:4},(_,i)=><ReadCell key={i}/>)}
            <ReadCell><SinkModel quote={quote} section={section} sink={sink} editable={editable}/></ReadCell>
            <ReadCell><CellNumber label={'Vanity quantity '+sink.name} integer value={sink.count} disabled={!editable}
              onChange={v=>{if(v!==undefined&&v>0)patchSink(sink,{count:v});}}/></ReadCell>
            <ReadCell><CellNumber label={'Vanity unit price '+sink.name} value={sink.unitPrice} disabled={!editable}
              onChange={v=>patchSink(sink,{unitPrice:v})}/></ReadCell>
-           <ReadCell className="qmx-money">{cash.format(sinkSell(quote,id,sink))}</ReadCell></>}
-          <ReadCell/><ReadCell/><ReadCell>
-           <CellNumber label={'Private sink cost '+sink.name} value={sink.internalCostOverride} disabled={!editable}
-            onChange={v=>patchSink(sink,{internalCostOverride:v})}/>
+           <ReadCell className="qmx-money">{cash.format(sinkSell(quote,id,sink))}</ReadCell></>:
+           <>{Array.from({length:8},(_,i)=><ReadCell key={i}/>)}</>}
+          <ReadCell/><ReadCell>{!kitchen&&!vanity?sink.name:null}</ReadCell>
+          <ReadCell><CellNumber label={'Private sink cost '+sink.name} value={sink.internalCostOverride} disabled={!editable}
+            onChange={v=>patchSink(sink,{internalCostOverride:v})}/></ReadCell>
           <ReadCell>{strike(ref,!!sink.excludedFromContract)}</ReadCell>
           <ReadCell className="qmx-money">{cash.format(sinkSell(quote,id,sink))}</ReadCell>
          </DetailRow>;
