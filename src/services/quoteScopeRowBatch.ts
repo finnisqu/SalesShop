@@ -71,6 +71,9 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
     }
     const piece=source.scope?.takeoffPieces?.find(item=>item.id===row.id);
     if(!piece)continue;
+    // A splash subrow is not independent geometry: it cannot be moved without
+    // its parent Piece. Moving the Piece keeps all splash flags intact.
+    if(operation==='move'&&row.kind==='splash')continue;
     if(operation==='move'){
       if(!targetSectionId||targetSectionId===sectionId)continue;
       next=patchQuoteTakeoff(next,sectionId,

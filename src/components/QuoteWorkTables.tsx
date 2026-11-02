@@ -11,6 +11,7 @@ import {newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,takeoffPieceSp
 import {projectAreaCost} from '../services/quoteAreaCost';
 import {savedAreaMultiplier} from '../services/quotePriceInput';
 import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
+import {SINK_CATEGORIES,SINK_CATEGORY_LABELS} from '../types/sink';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
 import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
 import {QuoteBetaMaterials} from './QuoteBetaMaterials';
@@ -124,7 +125,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
        <span>Cost</span><strong>{cost?.totalKnownCost?money.format(cost.totalKnownCost):'—'}</strong>
        {!cost?.complete&&<small>Partial</small>}</div>
      <div><span>Method</span><button type="button" onClick={()=>onCalc(id!)}>
-       {primary?.pricingMode==='direct'?'Manual':primary?.pricingMode==='slab-multiplier'?'Multiplier':'SF rate'} ▾</button></div>
+       {!primary?'Choose method':primary.pricingMode==='direct'?'Manual':primary.pricingMode==='slab-multiplier'?'Multiplier':'SF rate'} ▾</button></div>
      <div><span>Rate / multiplier</span>
        {primary?.pricingMode==='quantity-rate'?<QuoteInlineAreaRate quote={quote} section={section} onOpen={()=>onCalc(id!)}/>:
         <button type="button" onClick={()=>onCalc(id!)}>{primary?.pricingMode==='slab-multiplier'
@@ -136,7 +137,8 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
      <div className={issue||manualExclusionReview?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
        {issue&&<small title={issue.title}>! Check price</small>}
        {manualExclusionReview&&<small>! Recheck manual price</small>}</div>
-     <div><span>Sinks</span><strong>{sinks.reduce((n,s)=>n+s.count,0)}</strong></div>
+     <div><span>Sinks · active</span><strong>{sinks.reduce((n,s)=>n+(s.excludedFromContract?0:s.count),0)}</strong>
+       {sinks.some(s=>s.excludedFromContract)&&<small>{sinks.reduce((n,s)=>n+s.count,0)} retained</small>}</div>
    </div>:<div className="qwt-general-total"><span>General charges</span>
     <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
    <button type="button" className="qwt-calculator" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
@@ -221,6 +223,12 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
        (!excluded&&sink.includeInPricing&&sink.unitPrice===undefined?' has-issue':'')}>
       {box(ref)}
       <div className="qwt-title-cell qwt-sink-catalog"><small>Sink {index+1} · model</small>
+       <select aria-label={'Sink '+(index+1)+' type'} value={sink.category}
+        disabled={!editable} onChange={e=>patchSink(sink,{
+         category:e.target.value as QuoteTakeoffSink['category'],sinkReference:undefined,
+        })}>
+         {SINK_CATEGORIES.map(type=><option key={type} value={type}>{SINK_CATEGORY_LABELS[type]}</option>)}
+       </select>
        <TakeoffSinkCatalog disabled={!editable} value={sink.name}
         onTextChange={name=>patchSink(sink,{name,sinkReference:undefined})}
         onSelect={patch=>patchSink(sink,patch)}/>
@@ -375,7 +383,8 @@ export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralT
  const commitBulk=()=>{
   if(!editable||!selectedValid.length)return;
   const validTarget=operation!=='move'||(target&&quote.sections.some(s=>s.id===target));
-  if(!validTarget)return;
+  if(!validTarget||operation==='move'&&selectedValid.some(r=>r.kind==='splash'&&
+      !selectedValid.some(p=>p.kind==='piece'&&p.id===r.id&&p.sectionId===r.sectionId)))return;
   store.bulkScopeRows(quote.id,selectedValid,operation,operation==='move'?target:undefined);
   setSelected([]);
  };
@@ -401,7 +410,9 @@ export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralT
     {quote.sections.map(s=><option value={s.id} key={s.id}>{isGeneralTakeoffSection(s)?'General':s.title}</option>)}
     <option value="__general">General charges</option>
    </select></label>}
-   <button type="button" disabled={!editable||(operation==='move'&&!target)}
+   <button type="button" disabled={!editable||(operation==='move'&&(!target||
+      selectedValid.some(r=>r.kind==='splash'&&!selectedValid.some(p=>
+       p.kind==='piece'&&p.id===r.id&&p.sectionId===r.sectionId))))}
     onClick={()=>{
      if(operation==='move'&&target==='__general'){
        const chargeRows=selectedValid.filter(r=>r.kind==='line');
@@ -414,6 +425,9 @@ export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralT
    <button type="button" onClick={()=>setSelected([])}>Clear</button>
    {operation==='move'&&target==='__general'&&selectedValid.some(r=>r.kind!=='line')&&
     <small role="alert">Pieces and sinks need a measured destination Area. Select an Area to move them.</small>}
+   {operation==='move'&&selectedValid.some(r=>r.kind==='splash'&&!selectedValid.some(p=>
+    p.kind==='piece'&&p.id===r.id&&p.sectionId===r.sectionId))&&
+    <small role="alert">Splash subrows stay attached to their Piece. Select the Piece too to move it.</small>}
   </div>}
   {areas.map(section=><ScopeRows key={section.id} quote={quote} section={section}
    selected={ids} onSelect={onSelect} onSelectMany={onSelectMany}

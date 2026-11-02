@@ -87,6 +87,17 @@ describe('single-table scoped quote rows',()=>{
   const changedAgain=applyQuoteScopeRowBatch(reviewed,[row('piece','p','k')],'exclude');
   expect(auditQuoteDraft(changedAgain).blockers.some(f=>f.id==='area:k:excluded-pricing')).toBe(true);
  });
+ it('never moves a splash subrow independently of its parent Piece',()=>{
+  const q=patchQuoteTakeoff(quote(),'k',[piece('p')]);
+  const unchanged=applyQuoteScopeRowBatch(q,[row('splash','p','k')],'move','b');
+  expect(unchanged.sections[0].scope?.takeoffPieces?.[0].id).toBe('p');
+  expect(unchanged.sections[1].scope?.takeoffPieces??[]).toHaveLength(0);
+  const moved=applyQuoteScopeRowBatch(q,[row('piece','p','k')],'move','b');
+  expect(moved.sections[0].scope?.takeoffPieces??[]).toHaveLength(0);
+  expect(moved.sections[1].scope?.takeoffPieces?.[0]).toMatchObject({
+   id:'p',backsplash:true,
+  });
+ });
  it('does not let an invalid destination or a managed source line corrupt the quote',()=>{
   const q=quote();
   expect(applyQuoteScopeRowBatch(q,[row('line','not-found')],'move','not-an-area')).toBe(q);
