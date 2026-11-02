@@ -46,6 +46,17 @@ Use a fresh 2-Area Quick Quote:
 8. Confirm a manual selling price is not silently recalculated when geometry is excluded. Pricing Review should require the exclusion decision to be acknowledged.
 9. Undo, redo, bulk move, bulk delete, then undo. Check totals after every action.
 
+## Catalog-guided pricing and reusable Areas
+
+- Select a material with a captured supplier cost. Verify the company Level recommendation is visible inside the selling-price editor, including SF price and margin only when costs are complete.
+- Check a material whose current Catalog cost differs from the quote snapshot. Show the stale-cost warning and keep the existing customer price unchanged.
+- Select **Use suggested rate**. Confirm the saved SF rate and snapshot, then Undo; no suggestion is applied merely by opening or closing a panel.
+- Test a material without a known cost and an above-threshold slab-priced material. No invented Level rate should appear.
+- Click **Copy Area**, select a quote already visible to the salesperson, and copy one Area with selling prices unchecked. Geometry, material selections, sinks and charge descriptions should copy; customer charges must not be retained automatically.
+- Repeat with the explicit **Carry over previous selling prices** choice, then review rates and margin before issuing.
+- Copy **All Areas** in one operation, then Undo once. The original quote and all of its child IDs must remain untouched.
+- Verify a salesperson cannot browse another salesperson's hidden quotes through this picker.
+
 ## Persistence and delivery
 
 - Save in cloud. Reload same quote and compare names, measurements, linked rates, exclusions, material/SKU, sink prices and total.
