@@ -52,18 +52,19 @@ describe('Duplicate Area for mobile quote speed',()=>{
   });
   it('copies another quote\'s measurements and selections without automatically carrying selling prices',()=>{
     const source=sample(),target={...sample(),id:'quote-b',sections:[],lines:[]};
+    const ids=new Map<string,number>();
     const created=copyQuoteAreaFromSource(target,source,'area-a',false,
-      kind=>kind+'-new')!;
+      kind=>{const n=(ids.get(kind)??0)+1;ids.set(kind,n);return kind+'-new-'+n;})!;
     const section=created.quote.sections[0];
-    expect(created.newAreaId).toBe('section-new');
+    expect(created.newAreaId).toBe('section-new-1');
     expect(section.title).toBe('Unit A Kitchen');
-    expect(section.scope?.takeoffPieces?.[0].id).toBe('piece-new');
+    expect(section.scope?.takeoffPieces?.[0].id).toBe('piece-new-1');
     expect(section.scope?.takeoffSinks?.[0]).toMatchObject({
-      id:'sinktakeoff-new',includeInPricing:false,unitPrice:undefined,
+      id:'sinktakeoff-new-1',includeInPricing:false,unitPrice:undefined,
     });
-    expect(created.quote.lines[0]).toMatchObject({sectionId:'section-new',rate:undefined});
+    expect(created.quote.lines[0]).toMatchObject({sectionId:'section-new-1',rate:undefined});
     expect(created.quote.lines[1]).toMatchObject({
-      sectionId:'section-new',takeoffSinkId:'sinktakeoff-new',includeInTotal:false,rate:undefined,
+      sectionId:'section-new-1',takeoffSinkId:'sinktakeoff-new-1',includeInTotal:false,rate:undefined,
     });
     expect(quoteTotal(created.quote)).toBe(0);
     expect(quoteTotal(source)).toBeGreaterThan(0);
@@ -73,10 +74,12 @@ describe('Duplicate Area for mobile quote speed',()=>{
   });
   it('preserves selling prices only when explicitly requested by the salesperson',()=>{
     const source=sample(),target={...sample(),id:'quote-b',sections:[],lines:[]};
-    const created=copyQuoteAreaFromSource(target,source,'area-a',true,kind=>kind+'-copy')!;
+    const ids=new Map<string,number>();
+    const created=copyQuoteAreaFromSource(target,source,'area-a',true,
+      kind=>{const n=(ids.get(kind)??0)+1;ids.set(kind,n);return kind+'-copy-'+n;})!;
     expect(quoteTotal(created.quote)).toBeCloseTo(quoteTotal(source),2);
-    expect(created.quote.lines[0].quantitySource?.sectionId).toBe('section-copy');
-    expect(created.quote.sections[0].scope?.takeoffSinks?.[0].id).toBe('sinktakeoff-copy');
+    expect(created.quote.lines[0].quantitySource?.sectionId).toBe('section-copy-1');
+    expect(created.quote.sections[0].scope?.takeoffSinks?.[0].id).toBe('sinktakeoff-copy-1');
     expect(source.lines[0].id).toBe('line-a');
   });
   it('refuses self-copy and missing Areas without changing the destination',()=>{
