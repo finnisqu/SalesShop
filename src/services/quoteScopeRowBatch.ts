@@ -4,7 +4,7 @@ import {patchQuoteTakeoff,patchQuoteTakeoffSinks,ensureSmartTakeoffLine,
 
 export type QuoteScopeRowKind='piece'|'splash'|'sink'|'line';
 export interface QuoteScopeRowRef {kind:QuoteScopeRowKind;id:string;sectionId?:string;}
-export type QuoteScopeBulkOperation='exclude'|'restore'|'move';
+export type QuoteScopeBulkOperation='exclude'|'restore'|'move'|'delete';
 
 /** Apply one grouped change so Undo restores the complete prior quote.
  * Moving a sink or piece preserves the original takeoff rather than making
@@ -22,6 +22,11 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
     seen.add(key);
     if(row.kind==='line'){
       const line=next.lines.find(item=>item.id===row.id);
+      if(operation==='delete'){
+        if(line&&!line.takeoffSinkId&&!line.quantitySource?.syncMode)
+          next={...next,lines:next.lines.filter(item=>item.id!==row.id)};
+        continue;
+      }
       if(!line||line.quantitySource?.syncMode==='live'||line.takeoffSinkId)continue;
       const sectionId=operation==='move'?targetSectionId:line.sectionId;
       if(operation==='move'&&sectionId===line.sectionId)continue;
@@ -38,6 +43,11 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
     if(row.kind==='sink'){
       const sink=source.scope?.takeoffSinks?.find(item=>item.id===row.id);
       if(!sink)continue;
+      if(operation==='delete'){
+       next=patchQuoteTakeoffSinks(next,sectionId,
+         (source.scope?.takeoffSinks??[]).filter(item=>item.id!==row.id));
+       continue;
+      }
       if(operation!=='move'){
         if(operation==='exclude'){
           next=patchQuoteTakeoffSinks(next,sectionId,
@@ -71,6 +81,17 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
     }
     const piece=source.scope?.takeoffPieces?.find(item=>item.id===row.id);
     if(!piece)continue;
+    if(operation==='delete'){
+      if(row.kind==='splash'){
+        next=patchQuoteTakeoff(next,sectionId,
+         (source.scope?.takeoffPieces??[]).map(item=>item.id===row.id
+          ?{...item,backsplash:false,leftSplash:false,rightSplash:false,excludeSplashFromQuote:false}:item));
+      }else{
+        next=patchQuoteTakeoff(next,sectionId,
+         (source.scope?.takeoffPieces??[]).filter(item=>item.id!==row.id));
+      }
+      continue;
+    }
     // A splash subrow is not independent geometry: it cannot be moved without
     // its parent Piece. Moving the Piece keeps all splash flags intact.
     if(operation==='move'&&row.kind==='splash')continue;
