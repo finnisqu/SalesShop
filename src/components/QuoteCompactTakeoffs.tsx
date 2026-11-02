@@ -263,10 +263,10 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    <div className="qqt-cell qqt-check">{select(ref)}</div>
    <div className="qqt-cell qqt-area" title={area}>{area}</div>
    <div className="qqt-cell qqt-description">{description}</div>
-   <div className="qqt-cell">{qty}</div>
-   <div className="qqt-cell">{length}</div>
-   <div className="qqt-cell">{width}</div>
-   <div className="qqt-cell qqt-number">{sfValue}</div>
+   <div className={'qqt-cell'+(typeof qty==='number'||typeof qty==='string'?' qqt-derived-cell':'')}>{qty}</div>
+   <div className={'qqt-cell'+(typeof length==='string'?' qqt-derived-cell':'')}>{length}</div>
+   <div className={'qqt-cell'+(typeof width==='string'?' qqt-derived-cell':'')}>{width}</div>
+   <div className="qqt-cell qqt-number qqt-derived-cell">{sfValue}</div>
    <div className="qqt-cell qqt-number">{price}</div>
    <div className="qqt-cell">{contract(ref,excluded)}</div>
    <div className="qqt-cell qqt-actions">
@@ -329,7 +329,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
          commit={v=>setPiece(section,piece,{lengthIn:v})}/>,
         <SmallInput label={'Width '+piece.name} inches disabled={!editable} value={piece.widthIn}
          commit={v=>setPiece(section,piece,{widthIn:v})}/>,
-        sf.format(topSf),<span title="Allocated Area price; not a second billable line">
+        sf.format(topSf),<span className="qqt-readonly" title="Allocated Area price; not a second billable line">
          {money.format(allocated)}</span>,!!piece.excludedFromQuote,edit,!piece.lengthIn||!piece.widthIn,
          ()=>deleteRow(ref))}
        {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&
@@ -337,7 +337,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
          piece.count,'—',<SmallInput label={'Splash height '+piece.name} value={piece.splashHeightIn??4}
           disabled={!editable} commit={v=>setPiece(section,piece,{splashHeightIn:v??4})}/>,
          sf.format(takeoffPieceSplashSf(piece)),
-         <span title="This selling price is included in Area stone pricing">Included in stone</span>,
+         <span className="qqt-readonly" title="This selling price is included in Area stone pricing">Included in stone</span>,
          !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,edit,false,
          ()=>deleteRow({kind:'splash',id:piece.id,sectionId:section.id}))}
       </div>;
