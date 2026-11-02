@@ -153,3 +153,9 @@
 .sales-app .qmb.qqs-overlay>.qqs-panel{margin-left:auto;margin-right:0;
  flex:0 0 min(450px,100vw);transform:none;left:auto;right:0;}
 .sales-app .qmb .qqs-panel-body .qmb-pricing-lab-heading{padding:4px 0;}
+
+.sales-app .qmb .qqs-inline-title{display:flex;align-items:center;flex:1;min-width:0;overflow:hidden;}
+.sales-app .qmb .qqs-inline-title .qmb-inline-area-title{
+ width:100%;max-width:100%;min-width:0;min-height:29px;max-height:29px;
+ border:1px solid var(--qmb-accent);border-radius:4px;padding:3px 5px;
+ background:var(--qmb-card);color:var(--qmb-ink);font-size:11px;font-weight:760;}
