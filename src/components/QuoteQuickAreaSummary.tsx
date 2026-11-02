@@ -72,13 +72,13 @@ function writeSingleChargeTotal(quote:Quote,line:QuoteLine,total:number|undefine
  }
 }
 /** Never bind a continually changing currency string to the numeric input. */
-function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFocus=false,onDone}:{
+function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFocus=false,onDone,startWith}:{
  value?:number;onCommit:(v:number|undefined)=>void;label:string;disabled?:boolean;integer?:boolean;
- autoFocus?:boolean;onDone?:()=>void;
+ autoFocus?:boolean;onDone?:()=>void;startWith?:string;
 }){
- const [draft,setDraft]=useState(value===undefined?'':String(value));
+ const [draft,setDraft]=useState(startWith??(value===undefined?'':String(value)));
  const cancelled=useRef(false);
- useEffect(()=>setDraft(value===undefined?'':String(value)),[value]);
+ useEffect(()=>{if(startWith===undefined)setDraft(value===undefined?'':String(value));},[value,startWith]);
  const commit=()=>{
   if(cancelled.current){cancelled.current=false;return;}
   const raw=draft.trim();
@@ -90,7 +90,9 @@ function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFoc
  };
  return <input className="qqs-edit" data-quick-grid-editable="true" type="text" inputMode="decimal" aria-label={label}
   value={draft} disabled={disabled} placeholder="—" autoFocus={autoFocus}
-  onChange={event=>setDraft(event.target.value)} onBlur={()=>{commit();onDone?.();}}
+  onChange={event=>setDraft(event.target.value)}
+  onFocus={event=>{if(startWith===undefined)event.currentTarget.select();}}
+  onBlur={()=>{commit();onDone?.();}}
   onKeyDown={event=>{
    if(event.key==='Enter')event.currentTarget.blur();
    if(event.key==='Escape'){cancelled.current=true;setDraft(value===undefined?'':String(value));event.currentTarget.blur();}
@@ -102,14 +104,29 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
  inline?:{value:number|undefined;onCommit:(value:number|undefined)=>void;disabled:boolean};
 }){
  const [editing,setEditing]=useState(false);
- useEffect(()=>{if(!focused)setEditing(false);},[focused]);
+ const [startWith,setStartWith]=useState<string|undefined>();
+ useEffect(()=>{if(!focused){setEditing(false);setStartWith(undefined);}},[focused]);
  return <div className={'qqs-cell qqs-focusable'+(focused?' is-focused':'')+
   (muted?' is-muted':'')+(warn?' is-warning':'')+(numeric?' is-numeric':'')} role="group" aria-label={label}>
   {editing&&inline?<CommitNumber label={label} value={inline.value} disabled={inline.disabled}
-    autoFocus onCommit={inline.onCommit} onDone={()=>setEditing(false)}/>:
+    autoFocus startWith={startWith} onCommit={inline.onCommit}
+    onDone={()=>{setEditing(false);setStartWith(undefined);}}/>:
   <button type="button" className="qqs-value" title={typeof value==='string'?value:label}
    data-quick-grid-editable={inline&&!inline.disabled?'true':undefined}
-   onFocus={onFocus} onClick={()=>{onFocus();if(inline&&!inline.disabled)setEditing(true);}}>
+   onFocus={onFocus}
+   onClick={()=>{onFocus();setStartWith(undefined);if(inline&&!inline.disabled)setEditing(true);}}
+   onKeyDown={event=>{
+    if(!inline||inline.disabled||event.ctrlKey||event.metaKey||event.altKey)return;
+    if(/^[0-9.-]$/.test(event.key)){
+     event.preventDefault();setStartWith(event.key);setEditing(true);
+    }
+   }}
+   onPaste={event=>{
+    if(!inline||inline.disabled)return;
+    const text=event.clipboardData.getData('text/plain').trim();
+    if(!text)return;
+    event.preventDefault();setStartWith(text);setEditing(true);
+   }}>
    <span>{value}</span></button>}
   {warn&&<span className="qqs-cell-attention" role="img"
     aria-label={'Check missing information: '+label} title={'Needs attention: '+label}>!</span>}
@@ -441,7 +458,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
       onClick={()=>bulkApply('delete')}>Delete</button>
      <button type="button" onClick={()=>setSelected([])}>Clear ×</button>
     </div>:<div><h3>Areas</h3>
-     <span>{areas.length} {areas.length===1?'room':'rooms'} · click a cell to edit</span></div>}
+     <span>{areas.length} {areas.length===1?'room':'rooms'} · click or type to edit · Tab/Enter to move</span></div>}
     <div className="qqs-inline-actions">
      <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
      <button type="button" className="qqs-accent" disabled={!editable} onClick={onAddArea}>+ Area</button>
