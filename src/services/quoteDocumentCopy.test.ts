@@ -62,6 +62,26 @@ describe('independent SalesShop document copy',()=>{
     copy.sections[0].title='Changed only in duplicate';
     expect(src.sections[0].title).toBe('Master Bathroom');
   });
+  it('starts from a signed historical quote without retaining signing or delivery evidence',()=>{
+    const src=original();
+    src.status='Signed';
+    src.signedAt='2026-10-07';
+    src.viewedAt='2026-10-06';
+    src.sentAt='2026-10-05';
+    const copy=copySalesDocument(src,draftShell());
+    expect(copy.status).toBe('Draft');
+    expect(copy.signedAt).toBeUndefined();
+    expect(copy.sentAt).toBeUndefined();
+    expect(copy.viewedAt).toBeUndefined();
+    expect(copy.history).toEqual([]);
+    expect(copy.revision).toBe(0);
+    expect(copy.lines.length).toBe(src.lines.length);
+    expect(copy.sections.length).toBe(src.sections.length);
+    expect(copy.lines[1].id).not.toBe(src.lines[1].id);
+    expect(copy.sections[0].id).not.toBe(src.sections[0].id);
+    expect(src.status).toBe('Signed');
+    expect(src.signedAt).toBe('2026-10-07');
+  });
   it('copies schedule pricing as isolated working data while preserving source agreement',()=>{
     const src=original();
     src.documentType='pricing-schedule';src.templateId='builder-rates';
