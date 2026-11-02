@@ -29,6 +29,7 @@ import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
 import { QuoteBetaEditablePreview } from './QuoteBetaEditablePreview';
+import {QuoteContractApproval} from './QuoteContractApproval';
 import {approvedCustomerDraft,quoteDeliveryApprovalKey} from '../services/quoteDeliveryApproval';
 import { TeamQuotesWorkspace } from './TeamQuotesWorkspace';
 import { ShopOutcomesWorkspace } from './ShopOutcomesWorkspace';
@@ -929,7 +930,7 @@ export function QuotesMobileBeta() {
     }
     if(audit?.blockers.length){openReview(audit.blockers[0].id);return;}
     if(audit?.review.length){openReview(audit.review[0].id);return;}
-    openReview('__delivery__');
+    navigateDocument('preview');
   };
   // Review launched this exact Preview. Both the small top button and the
   // persistent phone footer use the SAME path, so neither can bypass the
@@ -956,7 +957,7 @@ export function QuotesMobileBeta() {
     if(!latest){setError('This document is no longer available.');return;}
     if(latest.documentType!=='pricing-schedule'&&
       !approvedCustomerDraft(latest,previewedDeliveryKey,approvedDeliveryKey)){
-      setError('Preview and approve this exact customer document in Review before issuing.');return;
+      setError('Open Contract Review and select “I approve this quote” before issuing.');return;
     }
     if(latest.documentType==='pricing-schedule'){
       const issue=pricingScheduleValidationError(latest.pricingSchedule);
@@ -1186,8 +1187,7 @@ export function QuotesMobileBeta() {
           <QuoteBetaReview quote={quote} initialFindingId={reviewFocus}
             onBack={()=>navigateDocument('build')} onFix={fixAudit}
             onPreview={()=>{
-              setPreviewReturnQuoteId(quote.id);
-              setPreviewStartedKey(quoteDeliveryApprovalKey(quote));
+              setPreviewReturnQuoteId(null);
               setQuoteTab('preview');setPage('quote');setAreaId(null);
             }}
             canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
@@ -1196,12 +1196,23 @@ export function QuotesMobileBeta() {
             reviewedKey={reviewedDeliveryKey} onReview={setReviewedDeliveryKey}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
-          <QuoteBetaEditablePreview quote={quote}
-            onReturnToReview={previewReturnQuoteId===quote.id?returnFromReviewPreview:undefined}/>
+          <QuoteBetaEditablePreview quote={quote}/>
+          {quote.documentType!=='pricing-schedule'&&<QuoteContractApproval
+            quote={quote} canIssue={canIssue} sending={sending} error={error}
+            previewedKey={previewedDeliveryKey} approvedKey={approvedDeliveryKey}
+            reviewedKey={reviewedDeliveryKey}
+            onApprove={next=>{
+              if(next){
+                const contentKey=quoteDeliveryApprovalKey(quote);
+                setPreviewedDeliveryKey(contentKey);
+                setApprovedDeliveryKey(contentKey);
+              }else setApprovedDeliveryKey(null);
+            }}
+            onIssue={issueQuote} onPricingReview={()=>navigateDocument('pricing')}/>} 
         </>}
         </div>
       </div>
-      {quoteTab!=='pricing'&&<footer className="qmb-footer qmb-quote-footer">
+      {quoteTab!=='pricing'&&quoteTab!=='preview'&&<footer className="qmb-footer qmb-quote-footer">
         <div className="qmb-guided-footer-left">
           <button type="button" className="qmb-guided-back" onClick={()=>
            quoteTab==='details'?showLibrary():navigateDocument(quoteTab==='preview'?'build':'details')}>
