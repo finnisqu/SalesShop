@@ -12,7 +12,7 @@ const section=(id:string,title:string):QuoteSection=>({id,title,customerVisible:
 const quote=():Quote=>({
  id:'q',title:'Bid',documentType:'quote',status:'Draft',sections:[section('k','Kitchen'),section('b','Bath')],
  lines:[],customerColumns:{quantity:false,rate:false,lineAmount:true}
-} as Quote);
+} as unknown as Quote);
 const row=(kind:'piece'|'splash'|'sink'|'line',id:string,sectionId?:string)=>({kind,id,sectionId});
 describe('single-table scoped quote rows',()=>{
  it('retains measured top geometry but excludes it from the live priced SF; Undo source stays immutable',()=>{
