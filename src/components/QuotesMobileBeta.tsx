@@ -55,6 +55,8 @@ import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
 import {InitialOpenDetails} from './InitialOpenDetails';
 import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
+import {RecordPreviewDrawer} from './RecordPreviewDrawer';
+import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import '../sales-documents-table.css';
 import './quote-beta-progressive.css';
@@ -512,6 +514,7 @@ export function QuotesMobileBeta() {
   const [statusFilter,setStatusFilter]=useState<SalesDocumentStatusFilter>('active');
   const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
+  const [documentPreviewId,setDocumentPreviewId]=useState<string|null>(null);
   const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
   // Keep the new-document library first; follow-ups are a secondary destination.
@@ -968,7 +971,7 @@ export function QuotesMobileBeta() {
          </div>
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
-             onOpen={id=>{if(!list.find(q=>q.id===id)?.archivedAt)openQuote(id);}}
+             onOpen={id=>setDocumentPreviewId(id)}
              onBulkTask={items=>beginTaskPromotion({
                target:'task',title:'Follow up on '+items.length+' sales documents',
                sourceLabel:'Sales Documents selection',
@@ -1201,6 +1204,13 @@ export function QuotesMobileBeta() {
             onClick={()=>setShowDeleteGeneralTakeoff(false)}>Cancel</button></footer>
         </section>
       </div>,document.body)}
+    {documentPreviewId&&<RecordPreviewDrawer
+      record={{kind:'quote',id:documentPreviewId}}
+      onClose={()=>setDocumentPreviewId(null)}
+      onGoToQuotePage={id=>{
+        setDocumentPreviewId(null);
+        requestQuoteMetadataPage(id,()=>setView('dashboard'));
+      }}/>}
     {showNewDocument&&<NewSalesDocumentPicker quotes={myQuotes}
       stockRateCount={stockRates.filter(item=>item.active).length}
       stockLevelReady={companyReady&&levelGuideReady}

@@ -297,7 +297,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                       key={company.id}
                       onClick={mobileInteraction ? () => setPreview({kind:'company',id:company.id}) : undefined}
                       tabIndex={0}
-                      onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setEditingId(company.id); } }}
+                      onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPreview({kind:'company',id:company.id}); } }}
                       title={mobileInteraction ? 'Tap name to preview' : 'Click name to preview'}
                     >
                       <div className="project-card-company">{health.stage}</div>
@@ -315,7 +315,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                       {expectedAnnualWork !== undefined && <div className="account-card-annual-value"><span>Expected annual work</span><strong>{money.format(expectedAnnualWork)}</strong></div>}
                       <p className="account-card-reason">{health.reason}</p>
                       <div className="project-last-touch">{formatDate(health.lastActivityAt)}</div>
-                      <button type="button" className="project-card-open" onClick={(event) => { event.stopPropagation(); setEditingId(company.id); }}>Open</button>
+                      <button type="button" className="project-card-open" onClick={(event) => { event.stopPropagation(); setEditingId(company.id); }}>Edit</button>
                     </article>
                   );
                 })}
@@ -327,7 +327,9 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
       </section>
 
       {preview&&<RecordPreviewDrawer record={preview} onClose={()=>setPreview(null)}
-        onSelect={setPreview} onEditBoard={record=>setEditingId(record.id)}/>}
+        onSelect={setPreview} onEditBoard={record=>{
+          if(record.kind==='company')setEditingId(record.id);
+        }}/>}
       {editingCompany && <AccountEditor company={editingCompany} onClose={() => {
         setEditingId(null);
         if(focusedCompanyId===editingCompany.id)clearFocusedCompany();

@@ -12,6 +12,7 @@ import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
+import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
 import type { CompanyKind } from '../types/crm';
 
@@ -70,6 +71,10 @@ export function Connections() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [quoteRecordId,setQuoteRecordId]=useState<string|null>(null);
+  useEffect(()=>{
+    const id=consumeQuoteMetadataRequest();
+    if(id){setQuoteRecordId(id);setTab('quotes');}
+  },[]);
   const moreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!moreOpen) return;

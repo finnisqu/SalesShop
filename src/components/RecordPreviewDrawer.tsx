@@ -5,6 +5,8 @@ import {useNavigationStore} from '../store/navigationStore';
 import {quotesForProject,quotesForCompany} from '../services/quoteCrmLinks';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {useAuthStore} from '../store/authStore';
+import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import '../record-preview.css';
 
 export type PreviewRecord = {kind:'company'|'person'|'deal'|'quote';id:string};
@@ -18,7 +20,9 @@ const shortDate=(date?:string)=>date?new Date(date).toLocaleDateString(undefined
 export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard}:Props){
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
- const deals=useCrmStore(s=>s.projects),quotes=useQuoteStore(s=>s.quotes);
+ const deals=useCrmStore(s=>s.projects),allQuotes=useQuoteStore(s=>s.quotes);
+ const authMode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id);
+ const quotes=authMode==='cloud'?allQuotes.filter(q=>q.ownerUserId===userId):allQuotes;
  const navigate=useNavigationStore();
  const company=record.kind==='company'?companies.find(x=>x.id===record.id):undefined;
  const person=record.kind==='person'?people.find(x=>x.id===record.id):undefined;
@@ -49,7 +53,10 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
    if(record.kind==='company')navigate.openCompany(record.id);
    if(record.kind==='person')navigate.openPerson(record.id);
    if(record.kind==='deal')navigate.openProject(record.id);
-   if(record.kind==='quote')onGoToQuotePage?.(record.id);
+   if(record.kind==='quote'){
+     if(onGoToQuotePage)onGoToQuotePage(record.id);
+     else requestQuoteMetadataPage(record.id,()=>navigate.setView('dashboard'));
+   }
  };
  const related=(kind:PreviewRecord['kind'],id:string,title:string,description?:string)=>
    <button type="button" className="record-preview-related" key={kind+id}
@@ -117,14 +124,14 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          <section><h3>Deal</h3>
            {quote.projectId&&deals.find(x=>x.id===quote.projectId)
              ?related('deal',quote.projectId,deals.find(x=>x.id===quote.projectId)!.name)
-             :<p className="record-preview-empty">{'No deal linked.'}</p>}
+             :<p className="record-preview-empty">No deal linked.</p>}
          </section>
        </>}
      </div>
      <footer className="record-preview-actions">
-       {onEditBoard&&record.kind!=='quote'&&<button type="button" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
-       <button type="button" className="record-preview-full" onClick={goToPage}
-         disabled={record.kind==='quote'&&!onGoToQuotePage}>Go to page</button>
+       {onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&
+         <button type="button" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
+       <button type="button" className="record-preview-full" onClick={goToPage}>Go to page</button>
        {quote&&<button type="button" className="record-preview-open-quote" onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
      </footer>
    </aside>

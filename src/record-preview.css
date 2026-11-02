@@ -29,3 +29,5 @@
  text-align:left;cursor:pointer;touch-action:manipulation;}
 .board-entity-name:hover,.board-entity-name:focus-visible{text-decoration:underline!important;
  text-decoration-thickness:2px!important;text-underline-offset:3px;outline-offset:3px;}
+
+.record-preview-backdrop{background:rgba(34,31,25,.32);backdrop-filter:blur(1.5px);}
