@@ -452,7 +452,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
         const line=data.specialty.length===1?data.specialty[0]:undefined;
         if(!line||!line.includeInTotal||line.quantitySource?.syncMode==='live')return undefined;
         return {value:data.specialtyPrice,disabled:!editable,
-         onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v);
+         onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v)};
        })())}
       {cell(area.id,'total','Total price for '+area.title,amount(data.total))}
      </div>;
