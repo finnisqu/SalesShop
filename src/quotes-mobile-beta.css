@@ -236,3 +236,25 @@
  .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote)
   .qmb-desktop-mainsteps{display:none;}
 }
+
+
+/* Quick Quote uses the full work area: no empty navigator/inspector panels. */
+@media(min-width:1000px) and (min-height:550px){
+ .sales-app .qmb .qmb-desktop-frame:not(.is-library):has(.qmb-quote-editor.is-quick-quote){
+  grid-template-columns:minmax(0,1fr);grid-template-areas:"workspace";}
+ .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote)>.qmb-desktop-navigation,
+ .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote)>.qmb-desktop-inspector{
+  display:none;}
+ .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-scroll>.qmb-pagecontent{
+  width:100%;max-width:none;padding-inline:clamp(12px,2vw,32px);}
+}
+.sales-app .qmb .qmb-quick-history{display:flex;align-items:center;gap:4px;margin-right:auto;}
+.sales-app .qmb .qmb-quick-history button{display:inline-flex;align-items:center;gap:5px;
+ border:1px solid var(--qmb-border);border-radius:6px;
+ padding:5px 9px;min-height:31px;background:var(--qmb-card);color:var(--qmb-ink);
+ font-size:12px;font-weight:750;white-space:nowrap;}
+.sales-app .qmb .qmb-quick-history button:disabled{opacity:.36;cursor:default;}
+@media(max-width:600px){
+ .sales-app .qmb .qmb-quick-history button span{display:none;}
+ .sales-app .qmb .qmb-quick-history button{min-width:32px;justify-content:center;padding:4px 6px;}
+}
