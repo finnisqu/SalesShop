@@ -2,18 +2,30 @@ import {create} from 'zustand';
 import {scopedStorageKey} from '../lib/developerPlayground';
 
 export type TaskLink={type:'quote'|'project'|'company'|'contact'|'notebook';id:string};
+export type TaskAssociation=TaskLink&{label?:string};
+export const taskAssociationKey=(link:TaskLink)=>link.type+':'+link.id;
+export function normalizedTaskAssociations(task:Pick<PersonalTask,'associations'|'linked'|'sourceLabel'>):TaskAssociation[]{
+ const records=task.associations?.length?task.associations:(task.linked?[{...task.linked,label:task.sourceLabel}]:[]);
+ const seen=new Set<string>();
+ return records.filter(link=>{
+   if(!link?.id||!link.type)return false;
+   const key=taskAssociationKey(link);
+   if(seen.has(key))return false;seen.add(key);return true;
+ }).slice(0,40);
+}
 export type TaskType='todo'|'call'|'email'|'meeting'|'follow-up';
 export type TaskPriority='low'|'normal'|'high'|'urgent';
 export type TaskStatus='open'|'in-progress'|'waiting'|'completed'|'canceled';
 export interface PersonalTask {
   id:string;title:string;dueDate?:string;dueTime?:string;sourceObjectId?:string;deletedAt?:string;workspaceScope?:string;
-  linked?:TaskLink;sourceLabel?:string;sourceText?:string;
+  linked?:TaskLink;associations?:TaskAssociation[];sourceLabel?:string;sourceText?:string;
+  startDate?:string;
   notes?:string;type?:TaskType;priority?:TaskPriority;status?:TaskStatus;
   queue?:string;reminderAt?:string;
   createdAt:string;updatedAt:string;completedAt?:string;
 }
 export type TaskChanges=Partial<Omit<PersonalTask,'id'|'createdAt'|'updatedAt'>>;
-export interface TaskPromotion {title:string;linked?:TaskLink;sourceLabel?:string;sourceText?:string;sourceObjectId?:string;}
+export interface TaskPromotion {title:string;linked?:TaskLink;associations?:TaskAssociation[];sourceLabel?:string;sourceText?:string;sourceObjectId?:string;}
 interface TaskState {
   scope:string|null;tasks:PersonalTask[];promotion:TaskPromotion|null;
   syncStatus:'local'|'loading'|'pending'|'saved'|'error';syncError:string|null;
@@ -60,6 +72,13 @@ function sanitize(change:TaskChanges):TaskChanges {
   if('notes'in next)next.notes=trim(next.notes,5000);
   if('queue'in next)next.queue=trim(next.queue,80);
   if('dueDate'in next&&!validDate(next.dueDate))next.dueDate=undefined;
+  if('startDate'in next&&!validDate(next.startDate))next.startDate=undefined;
+  if('associations'in next){
+    next.associations=normalizedTaskAssociations({associations:next.associations,linked:next.linked,sourceLabel:next.sourceLabel})
+      .map(link=>({...link,label:trim(link.label,120)}));
+    next.linked=next.associations[0]?{type:next.associations[0].type,id:next.associations[0].id}:undefined;
+    next.sourceLabel=next.associations[0]?.label;
+  }
   if('dueTime'in next&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(next.dueTime??''))next.dueTime=undefined;
   if('reminderAt'in next&&next.reminderAt&&!Number.isFinite(Date.parse(next.reminderAt)))next.reminderAt=undefined;
   return next;
