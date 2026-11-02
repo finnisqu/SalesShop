@@ -4,6 +4,7 @@ import type {Quote,QuoteSection,QuoteTakeoffPiece,QuoteTakeoffSink,QuoteLine} fr
 import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
+import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {newTakeoffPiece,newTakeoffSink,takeoffPieceSf,takeoffPieceSplashSf,
  parseInches,takeoffPieceMiterInches} from '../services/quoteTakeoffsLite';
@@ -34,10 +35,11 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
   setEditing(false);
  };
  if(disabled&&!alwaysInput)return <span className="qqt-readonly" title={label}>{value===undefined?'—':String(value)}</span>;
- if(!editing&&!alwaysInput)return <button type="button" className="qqt-cell-value is-editable"
+ if(!editing&&!alwaysInput)return <button type="button" data-quick-grid-editable="true" className="qqt-cell-value is-editable"
   aria-label={'Edit '+label} title={'Click to edit '+label}
   onClick={()=>setEditing(true)}>{value===undefined?'—':String(value)}</button>;
- return <input className="qqt-input is-editing" autoFocus={editing} disabled={disabled} type="text" aria-label={label}
+ return <input className="qqt-input is-editing" data-quick-grid-editable={alwaysInput?undefined:'true'}
+   autoFocus={editing} disabled={disabled} type="text" aria-label={label}
   inputMode="decimal" value={draft} onChange={e=>setDraft(e.target.value)}
   onFocus={e=>e.currentTarget.select()}
   onBlur={save} onKeyDown={e=>{
@@ -53,10 +55,10 @@ function SmallText({value,label,commit,disabled=false,placeholder='—'}:{
  const cancelled=useRef(false);
  useEffect(()=>{if(!editing)setDraft(value);},[value,editing]);
  if(disabled)return <span className="qqt-readonly" title={label}>{value||placeholder}</span>;
- if(!editing)return <button type="button" className="qqt-cell-value qqt-cell-text is-editable"
+ if(!editing)return <button type="button" data-quick-grid-editable="true" className="qqt-cell-value qqt-cell-text is-editable"
   title={value||'Click to enter '+label} aria-label={'Edit '+label}
   onClick={()=>setEditing(true)}>{value||placeholder}</button>;
- return <input type="text" className="qqt-text is-editing" autoFocus aria-label={label}
+ return <input type="text" data-quick-grid-editable="true" className="qqt-text is-editing" autoFocus aria-label={label}
   value={draft} onChange={e=>setDraft(e.target.value)}
   onFocus={e=>e.currentTarget.select()}
   onBlur={()=>{if(!cancelled.current&&draft!==value)commit(draft);cancelled.current=false;setEditing(false);}}
@@ -259,7 +261,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
  };
  const row=(ref:QuoteScopeRowRef,area:string,description:ReactNode,qty:ReactNode,length:ReactNode,
   width:ReactNode,sfValue:ReactNode,price:ReactNode,excluded:boolean,edit:()=>void,issue=false,remove?:()=>void)=>
-  <div className={'qqt-row qqt-grid'+(excluded?' is-excluded':'')+(issue?' has-issue':'')} key={key(ref)}>
+  <div className={'qqt-row qqt-grid'+(excluded?' is-excluded':'')+(issue?' has-issue':'')}
+   key={key(ref)} data-quick-grid-row={key(ref)}>
    <div className="qqt-cell qqt-check">{select(ref)}</div>
    <div className="qqt-cell qqt-area" title={area}>{area}</div>
    <div className="qqt-cell qqt-description">{description}</div>
@@ -295,7 +298,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
      <span>Click a cell to edit · pencil for advanced settings</span></div>}
     <button type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
    </header>
-  <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}>
+  <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}
+   onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}>
    <div className="qqt-header qqt-grid">
     {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling price','Contract','Actions']
      .map((h,i)=><div key={i} className="qqt-cell">{h}</div>)}
