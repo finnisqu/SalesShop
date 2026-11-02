@@ -20,7 +20,7 @@ function decodePiece(value:unknown):SavedAreaLayoutPiece|null{
  if(!value||typeof value!=='object')return null;
  const p=value as Record<string,unknown>;
  if(typeof p.name!=='string'||p.name.length>140||!optionalDimension(p.lengthIn)||!optionalDimension(p.widthIn)
-   ||!Number.isInteger(p.count)||!validNumber(p.count,1,1000)
+   ||!Number.isInteger(p.count)||!validNumber(p.count,0,1000)
    ||!validNumber(p.splashHeightIn,0,120)||typeof p.edgeProfile!=='string'||p.edgeProfile.length>80
    ||typeof p.backsplash!=='boolean'||typeof p.leftSplash!=='boolean'||typeof p.rightSplash!=='boolean')return null;
  return {name:p.name,count:p.count as number,lengthIn:p.lengthIn as number|undefined,
@@ -86,9 +86,10 @@ export function readSavedAreaLayouts(scope:string|null):SavedAreaLayout[]{
  catch{return [];}
 }
 export function writeSavedAreaLayouts(scope:string|null,items:SavedAreaLayout[]):boolean{
- if(!scope||items.length>SAVED_AREA_LAYOUT_LIMIT
-   ||decodeSavedAreaLayouts(items).length!==items.length)return false;
- try{localStorage.setItem(storageKey(scope),JSON.stringify(items));return true;}
+ if(!scope||items.length>SAVED_AREA_LAYOUT_LIMIT)return false;
+ const sanitized=decodeSavedAreaLayouts(items);
+ if(sanitized.length!==items.length)return false;
+ try{localStorage.setItem(storageKey(scope),JSON.stringify(sanitized));return true;}
  catch{return false;}
 }
 export function upsertSavedAreaLayout(items:readonly SavedAreaLayout[],item:SavedAreaLayout):SavedAreaLayout[]{
