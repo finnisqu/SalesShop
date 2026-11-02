@@ -228,9 +228,6 @@ function ScopeRows({quote,section,general=false,view,showColumns=false,selected,
        {section.scope?.billableSfRounding&&section.scope.billableSfRounding!=='exact'&&
         <small>Billed: {sf.format(roundedBillableTakeoffSf(pieces,section.scope.billableSfRounding))} SF</small>}
       </div>
-     <div className={!cost?.complete?'qwt-needs-cost':''} title={!cost?.complete?'Partial estimate · '+cost?.missingCostItems.join(', '):'Full private cost'}>
-       <span>Cost</span><strong>{cost?.totalKnownCost?money.format(cost.totalKnownCost):'—'}</strong>
-       {!cost?.complete&&<small>Partial</small>}</div>
      <label className="qwt-editable-cell"><span>Pricing method</span>
        <select aria-label={'Pricing method for '+section.title} disabled={!editable||!primary}
         value={primary?.pricingMode??'quantity-rate'}
@@ -252,14 +249,14 @@ function ScopeRows({quote,section,general=false,view,showColumns=false,selected,
            value={savedAreaMultiplier(primary.materialReference,2.2)}
            min={0.01} max={100} disabled={!editable} onCommit={setMultiplier}/>
         :<button type="button" onClick={()=>onCalc(id!)}>Set a price</button>}
+       <small>Effective: {effectiveSellSf!==undefined?money.format(effectiveSellSf)+'/SF':'—'}
+         {sinks.length?' · '+sinks.filter(s=>!s.excludedFromContract).length+' sink line(s)':''}</small>
      </label>
      <div className={cost?.marginPercent===undefined?'qwt-needs-cost':cost.marginPercent<(section?.scope?.targetMargin??.30)*100?'qwt-needs-review':'qwt-ok'}>
        <span>Margin</span><strong>{cost?.marginPercent===undefined?'—':cost.marginPercent.toFixed(1)+'%'}</strong></div>
      <div className={issue||manualExclusionReview?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
        {issue&&<small title={issue.title}>! Check price</small>}
        {manualExclusionReview&&<small>! Recheck manual price</small>}</div>
-     <div><span>Effective / SF</span><strong>{effectiveSellSf!==undefined?money.format(effectiveSellSf):'—'}</strong>
-       <small>{sinks.reduce((n,s)=>n+(s.excludedFromContract?0:s.count),0)} active sinks</small></div>
    </div>:<div className="qwt-general-total"><span>General charges</span>
     <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
    <button type="button" className="qwt-calculator" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
