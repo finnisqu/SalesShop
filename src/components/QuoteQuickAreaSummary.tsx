@@ -395,8 +395,8 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
    </div>
   </div>,document.querySelector('.sales-app')??document.body);
 }
-export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAdvanced}:{
- quote:Quote;onAddArea:()=>void;onLayouts:()=>void;
+export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTakeoffs,onAdvanced}:{
+ quote:Quote;onAddArea:()=>void;onLayouts:()=>void;onCopyArea:()=>void;
  onTakeoffs:(areaId:string)=>void;onAdvanced:(areaId:string)=>void;
 }){
  const store=useQuoteStore.getState(),editable=quoteIsCommerciallyEditable(quote);
@@ -461,6 +461,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
     </div>:<div><h3>Areas</h3>
      <span>{areas.length} {areas.length===1?'room':'rooms'} · click or type to edit · Tab/Enter to move</span></div>}
     <div className="qqs-inline-actions">
+     <button type="button" disabled={!editable} onClick={onCopyArea}>Copy Area</button>
      <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
      <button type="button" className="qqs-accent" disabled={!editable} onClick={onAddArea}>+ Area</button>
     </div>
