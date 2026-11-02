@@ -1167,9 +1167,6 @@ export function QuotesMobileBeta() {
             onGeneralTakeoff={()=>{ensureGeneralTakeoff(quote.id);}}/>
           <QuoteSharedSlabPools quote={quote}/>
         </>}
-                {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaPricingOverview
-          quote={quote} onArea={(id,tab)=>{openArea(id);setAreaTab(tab);}}
-          onGeneral={openGeneralFromPricing} onResolve={fixAudit} onReview={openSend}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
