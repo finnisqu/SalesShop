@@ -369,3 +369,16 @@
 .sales-app .qmb .qwt-lines-scroll .qwt-sheet-context{min-width:920px;}
 .sales-app .qmb .qwt-lines-scroll .qwt-columns{position:relative;top:auto;}
 .sales-app .qmb .qwt-lines-scroll .qwt-add-row{min-width:920px;}
+
+
+/* Six deliberate Area setup columns; detailed private buying costs live in Calculator. */
+@media(min-width:901px){
+ .sales-app .qmb .qwt-scope-summary .qwt-summary-grid{
+  grid-template-columns:minmax(120px,1.7fr) minmax(74px,.9fr)
+   minmax(100px,1.1fr) minmax(92px,1.1fr)
+   minmax(64px,.75fr) minmax(80px,.9fr);
+ }
+}
+.sales-app .qmb .qwt-scope-summary .qwt-editable-cell small{
+ font-size:9px;color:var(--qmb-muted);line-height:1.25;
+}
