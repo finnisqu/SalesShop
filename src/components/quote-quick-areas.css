@@ -171,3 +171,13 @@
  .sales-app .qmb .qqs-grid{width:100%;min-width:930px;
   grid-template-columns:34px 125px 200px 108px 122px 125px 129px 132px;}
 }
+
+.sales-app .qmb .qqs-danger-actions{display:grid;gap:8px;padding-top:12px;
+ border-top:1px solid var(--qmb-border);margin-top:8px;}
+.sales-app .qmb .qqs-danger-actions>strong{font-size:12px;}
+.sales-app .qmb .qqs-danger-actions button,.sales-app .qmb .qqs-remove-action{
+ border:1px solid var(--qmb-border);background:var(--qmb-card);
+ color:var(--ss-danger,#ad4d43);padding:8px 10px;border-radius:7px;
+ font-size:11px;font-weight:750;text-align:left;min-height:32px;}
+.sales-app .qmb .qqs-danger-actions button:hover,.sales-app .qmb .qqs-remove-action:hover{
+ border-color:var(--ss-danger,#ad4d43);background:var(--qmb-bg);}
