@@ -1,0 +1,30 @@
+.sales-app .qmb .qca-workspace{display:grid;gap:12px;max-width:1100px;
+ margin:18px auto 28px;padding:0 10px;color:var(--qmb-ink);}
+.sales-app .qmb .qca-workspace>header{display:flex;justify-content:space-between;align-items:center;
+ gap:12px;padding:12px 15px;background:var(--qmb-card);
+ border:1px solid var(--qmb-border);border-radius:9px;}
+.sales-app .qmb .qca-workspace>header>div{display:grid;gap:4px;}
+.sales-app .qmb .qca-workspace>header small{color:var(--qmb-muted);font-size:10px;font-weight:750;letter-spacing:.07em;}
+.sales-app .qmb .qca-workspace>header h3{margin:0;font-size:17px;}
+.sales-app .qmb .qca-workspace>header p{margin:0;font-size:11px;color:var(--qmb-muted);}
+.sales-app .qmb .qca-workspace>header>strong{font-size:20px;font-variant-numeric:tabular-nums;}
+.sales-app .qmb .qca-card{display:grid;gap:12px;padding:16px;
+ background:var(--qmb-card);border:1px solid var(--qmb-border);border-radius:9px;}
+.sales-app .qmb .qca-approval{display:flex;align-items:flex-start;gap:12px;cursor:pointer;
+ padding:12px;border:1px solid var(--qmb-border);border-radius:7px;}
+.sales-app .qmb .qca-approval input{margin:3px 0 0;width:18px;height:18px;
+ accent-color:var(--qmb-accent);flex:0 0 auto;}
+.sales-app .qmb .qca-approval>span{display:grid;gap:4px;}
+.sales-app .qmb .qca-approval strong{font-size:14px;}
+.sales-app .qmb .qca-approval small,.sales-app .qmb .qca-caption{
+ font-size:11px;line-height:1.5;color:var(--qmb-muted);}
+.sales-app .qmb .qca-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.sales-app .qmb .qca-actions button,.sales-app .qmb .qca-not-ready button{
+ padding:9px 13px;min-height:36px;border-radius:7px;font-size:12px;font-weight:750;}
+.sales-app .qmb .qca-not-ready{display:grid;gap:5px;padding:12px;
+ border-left:3px solid var(--ss-warning,#b58a3d);background:var(--qmb-tint);font-size:12px;}
+.sales-app .qmb .qca-not-ready span{color:var(--qmb-muted);}
+.sales-app .qmb .qca-not-ready button{justify-self:start;border:1px solid var(--qmb-border);
+ background:var(--qmb-card);color:var(--qmb-accent);}
+@media(max-width:600px){.sales-app .qmb .qca-workspace>header{flex-wrap:wrap;}
+ .sales-app .qmb .qca-actions button{width:100%;}}
