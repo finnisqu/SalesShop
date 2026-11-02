@@ -247,9 +247,18 @@ export interface QuoteRateSnapshot {
   sourceUpdatedAt?: string;
 }
 
+export interface QuoteEstimateLineMetadata {
+  costCategory?: QuoteChargeCategory;
+  productCode?: string;
+  supplierName?: string;
+  unitLabel?: string;
+  internalOnlyCost?: boolean;
+}
 export interface QuoteLineRateReference {
   rateBookItemId?: string;
   snapshot?: QuoteRateSnapshot;
+  /** JSON-backed custom estimate metadata; avoids a production schema migration. */
+  estimate?: QuoteEstimateLineMetadata;
 }
 
 export interface QuoteSinkSnapshot {
