@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import type {Quote,QuoteSection} from '../types/quote';
-import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary} from './quoteQuickAreaSummary';
+import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from './quoteQuickAreaSummary';
 import {quoteTotal} from '../types/quote';
 
 const area=(id:string,title:string):QuoteSection=>({
@@ -70,6 +70,17 @@ describe('Quick Quote compact Area price parity',()=>{
   expect(quickAreaSummary(q,q.sections[0]).total).toBe(1768);
   expect(quickGeneralSummary(q).total).toBe(75);
   expect(quoteTotal(q)).toBe(2461);
+ });
+ it('supports manual SF-only quoting with explicit customer billing rounding',()=>{
+  const q=quote();
+  q.sections[0].scope={...q.sections[0].scope,
+   takeoffPieces:[],countertopSf:42.83,billableSfRounding:'whole-up'};
+  const data=quickAreaSummary(q,q.sections[0]);
+  expect(data.measuredSf).toBe(42.83);
+  expect(data.billedSf).toBe(43);
+  expect(quickRoundedSf(12.51,'whole-up')).toBe(13);
+  expect(quickRoundedSf(12.51,'quarter-up')).toBe(12.75);
+  expect(quickRoundedSf(12.51,'exact')).toBe(12.51);
  });
  it('never changes the source quote when projecting summary values',()=>{
   const q=quote(),before=JSON.stringify(q);
