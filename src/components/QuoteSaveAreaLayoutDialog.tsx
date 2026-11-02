@@ -42,8 +42,9 @@ export function QuoteSaveAreaLayoutDialog({section,onSave,onClose}:{
      <header><strong>Save Area layout</strong>
        <button type="button" aria-label="Close save layout" onClick={onClose}>×</button></header>
      <p>Save this Area's piece names, measurements, splash selections and edge defaults for reuse.
-       <strong> Prices, material and sink choices, private costs and customer data are never saved.</strong></p>
-     <p>Personal to this account and this browser. Other devices and teammates will not see it.</p>
+       <strong> Prices, material and sink choices, private costs, and CRM customer/Deal fields are not saved.</strong></p>
+     <p>The layout name and piece names you enter are saved, so use generic names rather than customer details.
+       Personal to this account and browser; other devices and teammates will not see it.</p>
      <label>Layout name
        <input ref={inputRef} type="text" maxLength={100} value={name}
          onChange={e=>{setName(e.target.value);setError('');}}
