@@ -9,8 +9,11 @@ import {quoteDeliveryApprovalKey,approvedCustomerDraft} from './quoteDeliveryApp
 const piece:QuoteTakeoffPiece={id:'top',name:'Vanity top',lengthIn:60,widthIn:25.5,
  count:1,backsplash:true,splashHeightIn:4};
 const initial=():Quote=>({
- id:'q',title:'Builder estimate',status:'Draft',documentType:'quote',revision:0,
- updatedAt:'2026-11-02T20:00:00.000Z',
+ id:'q',quoteNumber:'DRAFT-PARITY',title:'Builder estimate',
+ status:'Draft',documentType:'quote',revision:0,
+ originalQuoteDate:'2026-11-02',quoteDate:'2026-11-02',
+ createdAt:'2026-11-02T20:00:00.000Z',updatedAt:'2026-11-02T20:00:00.000Z',
+ customerNotes:'',internalNotes:'',history:[],
  customerColumns:{quantity:true,rate:true,lineAmount:true},
  sections:[
   {id:'bath',title:'Bathroom',customerVisible:true,scope:{
@@ -23,7 +26,7 @@ const initial=():Quote=>({
    description:'Quartz',pricingMode:'quantity-rate',quantity:8,rate:54,
    includeInTotal:true,customerVisible:true},
  ],
-} as Quote);
+});
 const charge=(id:string,sectionId:string|undefined,amount:number):QuoteLine=>({
  id,sectionId,kind:'item',description:id,pricingMode:'direct',
  amount,includeInTotal:true,customerVisible:true,
