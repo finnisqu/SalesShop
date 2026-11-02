@@ -262,7 +262,7 @@ function ScopeRows({quote,section,general=false,view,showColumns=false,selected,
    </div>:<div className="qwt-general-total"><span>General charges</span>
     <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
    <button type="button" className="qwt-calculator" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
-  </div>
+  </div>}
   {view==='lines'&&<>
   <div className="qwt-sheet-context"><strong>{general?'General charges':section?.title??'Area'}</strong>
    {!general&&<><span>{section?.scope?.takeoffMaterial||'Choose a material in Areas & General'}</span>
