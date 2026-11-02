@@ -359,3 +359,13 @@
  margin-top:12px;padding-top:12px;}
 .sales-app .qmb .qwt-slab-manual>summary{cursor:pointer;font-weight:800;
  color:var(--qmb-accent);font-size:12px;padding:7px 0;}
+
+
+/* One shared scroll track and one set of spreadsheet column labels. */
+.sales-app .qmb .qwt-lines-scroll{width:100%;min-width:0;overflow-x:auto;scrollbar-width:thin;
+ overscroll-behavior-x:contain;}
+.sales-app .qmb .qwt-lines-scroll .qwt-scope-lines{min-width:920px;}
+.sales-app .qmb .qwt-lines-scroll .qwt-table{overflow:visible;border:0;}
+.sales-app .qmb .qwt-lines-scroll .qwt-sheet-context{min-width:920px;}
+.sales-app .qmb .qwt-lines-scroll .qwt-columns{position:relative;top:auto;}
+.sales-app .qmb .qwt-lines-scroll .qwt-add-row{min-width:920px;}
