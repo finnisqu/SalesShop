@@ -19,6 +19,17 @@ const fixture=():Quote=>({
   ],
 }) as Quote;
 describe('Area slab yield and internal margin',()=>{
+  it('accepts manual Quick Quote SF as physical estimate when no pieces exist',()=>{
+    const q=fixture();
+    q.sections[0].scope!.takeoffPieces=[];
+    q.sections[0].scope!.countertopSf=43;
+    const cost=projectAreaCost(q,q.sections[0]);
+    expect(cost.measuredSf).toBe(43);
+    expect(cost.suggestedSlabs).toBe(2);
+    // Changing the internal estimate never changes customer line amounts.
+    expect(cost.priceTotal).toBe(2530);
+  });
+
   it('defaults yield to 65% and uses purchased whole slabs not measured SF',()=>{
     const q=fixture();const cost=projectAreaCost(q,q.sections[0]);
     expect(DEFAULT_SLAB_YIELD).toBe(.65);
