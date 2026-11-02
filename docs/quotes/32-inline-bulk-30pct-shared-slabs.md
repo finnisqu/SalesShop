@@ -23,3 +23,9 @@ Date: 2026-11-02
 - Compare old vs new customer PDF/Preview and issued revision history across active/signed/archived quote, confirming no internal buying costs leak and price totals are stable.
 - Check bulk rate edits (including 0), missing rates, manual/multiplier mixtures, excluded lines, quick change of Areas, long text, high Area count, all themes, mobile 375px, tablet and desktop side rail.
 - Confirm loaded Cloudflare bundle SHA; no CI/browser result is implied by a Git commit.
+
+## Follow-up: Quick Area side panel
+- From the Quote Builder table, Area actions open a focused right-side quick editor instead of routing away from the table.
+- Summary, Measure, Materials/Sinks, Selling and private Calculator tabs reuse existing store-bound editors; full Area workspace remains available through **Open full Area**.
+- Previous/Next switches between Areas without closing the panel. The background dims, Escape and clicking the backdrop close, and keyboard focus is contained/restored through the shared dismissible-layer helper.
+- Review on phone/tablet/desktop is still required: drawer width, scrolling, long names, Material Catalog popovers and nested dialogs.

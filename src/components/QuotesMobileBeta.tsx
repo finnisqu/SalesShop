@@ -54,6 +54,7 @@ import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
 import {QuoteSaveAreaLayoutDialog} from './QuoteSaveAreaLayoutDialog';
 import {QuoteInlineAreaName,QuoteInlineAreaRate,QuoteBulkAreaDialog} from './QuoteInlineAreaEditing';
 import {QuoteSharedSlabPools} from './QuoteSharedSlabPools';
+import {QuoteAreaQuickPanel,type QuickAreaTab} from './QuoteAreaQuickPanel';
 import {captureSavedAreaLayout,readSavedAreaLayouts,writeSavedAreaLayouts,
   savedAreaLayoutScope,upsertSavedAreaLayout,SAVED_AREA_LAYOUT_LIMIT,
   type SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
@@ -573,6 +574,7 @@ export function QuotesMobileBeta() {
   const [areaPresetsOpen,setAreaPresetsOpen]=useState(false);
   const [selectedBulkAreaIds,setSelectedBulkAreaIds]=useState<string[]>([]);
   const [bulkAreaOpen,setBulkAreaOpen]=useState(false);
+  const [quickArea,setQuickArea]=useState<{id:string;tab:QuickAreaTab}|null>(null);
   const [savingLayoutAreaId,setSavingLayoutAreaId]=useState<string|null>(null);
   const layoutScope=savedAreaLayoutScope(authMode,organizationId,userId??null);
   const [layoutState,setLayoutState]=useState<{scope:string|null;items:SavedAreaLayout[]}>(()=>({
@@ -709,13 +711,13 @@ export function QuotesMobileBeta() {
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
-    setSelectedBulkAreaIds([]);setBulkAreaOpen(false);setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
+    setSelectedBulkAreaIds([]);setBulkAreaOpen(false);setQuickArea(null);setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const showLibrary=()=>{
-    setSelectedBulkAreaIds([]);setBulkAreaOpen(false);setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
+    setSelectedBulkAreaIds([]);setBulkAreaOpen(false);setQuickArea(null);setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
     // Clearing the route ID makes Back reopen the selected editor, rather than
     // leaving a stale /quotes/:id URL on the document library.
     setView('quotes');
@@ -832,7 +834,8 @@ export function QuotesMobileBeta() {
     openQuote(id,template==='quick-quote'?'details':'build');
   };
   const openArea=(id:string)=>{setCustomerQuickOpen(false);setAreaId(id);setAreaTab('measure');setPage('area');};
-  const openAreaAt=(id:string,tab:AreaTab)=>{openArea(id);setAreaTab(tab);};
+  const openAreaAt=(id:string,tab:AreaTab)=>{setQuickArea(null);openArea(id);setAreaTab(tab);};
+  const openQuickArea=(id:string,tab:QuickAreaTab='overview')=>setQuickArea({id,tab});
   const goBack=()=>{navigateDocument(quoteTab==='pricing'?'pricing':'build');};
   const newArea=()=>{
     if(!quote||!editable)return;
@@ -993,7 +996,7 @@ export function QuotesMobileBeta() {
         onAreaContextKey={(event,s)=>contextActions.openKeyboard(event,s.title||'Area',areaMenuActions(s))}
         onLibrary={showLibrary}
         onQuoteTab={navigateDocument}
-        onArea={id=>{if(page==='area'&&id===areaId)return;openArea(id);}}
+        onArea={id=>{if(page==='area'&&id===areaId)return;openQuickArea(id);}}
         onAreaTab={tab=>{setPage('area');setAreaTab(tab);}}
         onReview={()=>openReview()}
         onReviewFinding={openReviewCategory}
@@ -1232,21 +1235,21 @@ export function QuotesMobileBeta() {
               <div className="qmb-card qmb-area-card qmb-builder-area-entry">
                 <span className="qmb-builder-area-name">
                   <QuoteInlineAreaName quote={quote} section={s}/>
-                  <button type="button" onClick={()=>openArea(s.id)}
-                    aria-label={'Open full Area editor '+s.title}>Edit details ↗</button>
+                  <button type="button" onClick={()=>openQuickArea(s.id)}
+                    aria-label={'Quick edit Area '+s.title}>Quick edit ↗</button>
                   <small>{(s.scope?.takeoffPieces??[]).length} pieces · {(s.scope?.takeoffSinks??[]).length} sinks</small>
                 </span>
                 <span className="qmb-builder-area-material">
-                  <button type="button" onClick={()=>openAreaAt(s.id,'materials')}
+                  <button type="button" onClick={()=>openQuickArea(s.id,'material')}
                     aria-label={'Change material for '+s.title}>{s.scope?.takeoffMaterial||'Select material'} ↗</button>
                 </span>
                 <span className="qmb-builder-area-measured">
-                  <button type="button" onClick={()=>openAreaAt(s.id,'measure')}
+                  <button type="button" onClick={()=>openQuickArea(s.id,'measure')}
                     aria-label={'Edit measurements for '+s.title}>{sf.format(s.scope?.countertopSf??0)} SF</button>
                 </span>
                 <span className="qmb-builder-area-rate">
                   <QuoteInlineAreaRate quote={quote} section={s}
-                    onOpen={()=>openAreaAt(s.id,'pricing')}/>
+                    onOpen={()=>openQuickArea(s.id,'pricing')}/>
                 </span>
                 <span className="qmb-builder-area-display">
                   <select aria-label={'Customer display for '+s.title}
@@ -1265,7 +1268,7 @@ export function QuotesMobileBeta() {
                   </select>
                 </span>
                 <span className="qmb-builder-area-value"><button type="button"
-                  aria-label={'Edit selling price for '+s.title} onClick={()=>openAreaAt(s.id,'pricing')}>
+                  aria-label={'Edit selling price for '+s.title} onClick={()=>openQuickArea(s.id,'pricing')}>
                   {money.format(quoteLinesTotal(lines))} ›</button></span>
               </div>
               {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={s}/>}
@@ -1416,6 +1419,12 @@ export function QuotesMobileBeta() {
       onSelect={newAreaPreset}
       onBlank={()=>{setAreaPresetsOpen(false);newArea();}}
       onClose={()=>setAreaPresetsOpen(false)}/>}
+    {quote&&page==='quote'&&quickArea&&quote.sections.some(a=>a.id===quickArea.id)&&
+      <QuoteAreaQuickPanel quote={quote} areaId={quickArea.id} initialTab={quickArea.tab}
+        onTab={tab=>setQuickArea(value=>value?{...value,tab}:null)}
+        onSelect={id=>setQuickArea(value=>value?{...value,id}:null)}
+        onClose={()=>setQuickArea(null)}
+        onFull={tab=>openAreaAt(quickArea.id,tab)}/>}
     {quote&&page==='quote'&&bulkAreaOpen&&<QuoteBulkAreaDialog quote={quote}
       ids={selectedBulkAreaIds.filter(id=>quote.sections.some(s=>s.id===id))}
       onClose={()=>setBulkAreaOpen(false)}
