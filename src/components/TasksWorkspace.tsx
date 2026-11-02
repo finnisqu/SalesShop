@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
+import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
 import '../tasks-table.css';
 import {useQuoteStore} from '../store/quoteStore';
@@ -62,8 +63,11 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [notes,setNotes]=useState(draft.notes??'');
   const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>normalizedTaskAssociations(initial));
   const sourceLabel=initial.sourceLabel;
+  const suggestionScope=usePersonalTaskStore(s=>s.scope);
+  const suggestionTasks=usePersonalTaskStore(s=>s.tasks);
   const commonQueues=Array.from(new Set([...defaultQueues,
-    ...usePersonalTaskStore.getState().tasks.map(task=>task.queue).filter((q):q is string=>!!q)])).sort();
+    ...suggestionTasks.filter(task=>!!suggestionScope&&task.workspaceScope===suggestionScope&&!task.deletedAt)
+      .map(task=>task.queue).filter((q):q is string=>!!q)])).sort();
   const quotes=useQuoteStore(s=>s.quotes);
   const authMode=useAuthStore(s=>s.mode),authUserId=useAuthStore(s=>s.user?.id);
   const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
@@ -137,10 +141,13 @@ export function TasksWorkspace(){
   const [search,setSearch]=useState('');
   const today=localDay();
   useEffect(()=>load(scope),[scope,load]);
-  const queues=useMemo(()=>Array.from(new Set(ownQueueNames(tasks))).sort(),[tasks]);
   const own=(!rolePreview&&scope&&storedScope===scope)?tasks.filter(t=>!t.deletedAt):[];
+  const queues=Array.from(new Set(ownQueueNames(own))).sort();
   const counts=useMemo(()=>({
     active:own.filter(t=>condition(t,today)!=='complete').length,
+    today:own.filter(t=>condition(t,today)!=='complete'&&
+      (!t.startDate||t.startDate<=today)&&(!t.dueDate||t.dueDate<=today)).length,
+    upcoming:own.filter(t=>condition(t,today)!=='complete'&&!!t.dueDate&&t.dueDate>today).length,
     overdue:own.filter(t=>condition(t,today)==='overdue').length,
     scheduled:own.filter(t=>condition(t,today)==='scheduled').length,
     completed:own.filter(t=>condition(t,today)==='complete').length,
@@ -183,6 +190,13 @@ export function TasksWorkspace(){
     if(type==='company')nav.openCompany(id);
     if(type==='contact')nav.openPerson(id);
   };
+  const quickDue=(id:string,preset:TaskDuePreset)=>{
+    const task=own.find(item=>item.id===id);
+    if(!task||taskComplete(task)||task.status==='canceled')return;
+    const date=taskDuePresetDate(today,preset);
+    // Keep an existing due-time when moving a deadline; clearing the date also clears its time.
+    update(id,{dueDate:date,dueTime:date?task.dueTime:undefined});
+  };
   const save=(changes:TaskChanges&{title:string})=>{
     if(!scope)return;
     if(editing&&'id'in editing)update(editing.id,changes);
@@ -197,7 +211,7 @@ export function TasksWorkspace(){
       <button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})} disabled={!scope}>+ New task</button>
     </header>
     <div className="tasks-summary" aria-label="Task counts">
-      {([['active','All open'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
+      {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
         <button key={key} type="button" onClick={()=>setFilter(key)} className={filter===key?'is-selected':''}>
           <strong>{counts[key]}</strong><span>{label}</span>
         </button>)}
@@ -223,6 +237,8 @@ export function TasksWorkspace(){
     {scope&&<div className="tasks-table-container">
       <ConnectionsTable tableKey="tasks" columns={taskColumns} rows={taskTableRows}
         onOpen={id=>{const selected=visible.find(task=>task.id===id);if(selected)setEditing(selected);}}
+        onTaskDuePreset={quickDue}
+        onTaskToggleComplete={(id,finished)=>finished?reopen(id):complete(id)}
         onBulkComplete={items=>items.forEach(item=>{
           if(own.some(task=>task.id===item.id&&!taskComplete(task)))complete(item.id);
         })}/>
@@ -255,6 +271,17 @@ export function TasksWorkspace(){
             {isDone&&task.completedAt&&<small>Completed {new Date(task.completedAt).toLocaleString()}</small>}
           </div>
           <div className="tasks-row-actions">
+            <select className="tasks-quick-due" defaultValue="" aria-label={'Quick due date for '+task.title}
+              disabled={state==='complete'} onChange={event=>{
+                const preset=event.currentTarget.value as TaskDuePreset|'';
+                if(preset)quickDue(task.id,preset);
+                event.currentTarget.value='';
+              }}>
+              <option value="">Due date…</option><option value="today">Today</option>
+              <option value="tomorrow">Tomorrow</option><option value="next-week">In 7 days</option>
+              <option value="clear">Clear due date</option>
+            </select>
+            {state==='complete'&&<button type="button" onClick={()=>reopen(task.id)}>Reopen</button>}
             <button type="button" onClick={()=>setEditing(task)}>Edit</button>
             <button type="button" onClick={()=>{if(window.confirm('Permanently delete this task record?'))remove(task.id);}}>Delete</button>
           </div>

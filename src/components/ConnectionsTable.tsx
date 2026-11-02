@@ -1,4 +1,5 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
+import type {TaskDuePreset} from '../services/taskSchedule';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import '../connections-table.css';
 import {visibleConnectionColumns,compareConnectionSortValues} from '../services/connectionsTablePreferences';
@@ -6,7 +7,9 @@ export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
- onBulkComplete?:(records:ConnectionTableRow[])=>void;}
+ onBulkComplete?:(records:ConnectionTableRow[])=>void;
+ onTaskDuePreset?:(id:string,preset:TaskDuePreset)=>void;
+ onTaskToggleComplete?:(id:string,finished:boolean)=>void;}
 const PAGE_SIZE=25;
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
@@ -14,7 +17,7 @@ function read(key:string):string[]{
  return Array.isArray(data)?data.filter((x):x is string=>typeof x==='string'):[];}
  catch{return[];}
 }
-export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkComplete}:Props){
+export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkComplete,onTaskDuePreset,onTaskToggleComplete}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
@@ -23,6 +26,28 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
    reverse:tableKey==='documents',
  });
  const [page,setPage]=useState(1);
+ const columnsMenuRef=useRef<HTMLDetailsElement>(null);
+ // The native details element remains keyboard accessible; dismiss it like other popovers.
+ useEffect(()=>{
+   const outside=(event:PointerEvent)=>{
+     if(!columnsMenuRef.current?.contains(event.target as Node))columnsMenuRef.current?.removeAttribute('open');
+   };
+   const escape=(event:KeyboardEvent)=>{
+     if(event.key!=='Escape'||!columnsMenuRef.current?.open)return;
+     event.stopPropagation();
+     columnsMenuRef.current.open=false;
+     columnsMenuRef.current.querySelector('summary')?.focus();
+   };
+   document.addEventListener('pointerdown',outside);
+   document.addEventListener('keydown',escape);
+   return ()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape);};
+ },[]);
+ // Preserve selections across pages, but never act on records removed by a new filter.
+ useEffect(()=>{
+   const ids=new Set(rows.map(row=>row.id));
+   setSelected(old=>old.every(id=>ids.has(id))?old:old.filter(id=>ids.has(id)));
+ },[rows]);
+ const hasTaskActions=tableKey==='tasks'&&Boolean(onTaskDuePreset||onTaskToggleComplete);
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'cols'),JSON.stringify(keys));}catch{/* preference storage is optional */}},[tableKey,keys]);
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'pins'),JSON.stringify(pinned));}catch{/* preference storage is optional */}},[tableKey,pinned]);
  const active=visibleConnectionColumns(keys,columns.map(c=>c.key));
@@ -65,7 +90,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
        }}>Complete selected ({chosen.length})</button>}
        <button type="button" onClick={()=>setSelected([])}>Clear</button>
      </>}
-     <details className="connections-columns-menu"><summary>⚙ Columns</summary>
+     <details className="connections-columns-menu" ref={columnsMenuRef}><summary>⚙ Columns</summary>
        <div className="connections-columns-popover"><strong>Columns</strong>
          <small>Choose and reorder. Saved on this device.</small>
          {columns.map(col=><div key={col.key} className="connections-column-choice">
@@ -104,6 +129,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
              onClick={()=>{setSort(s=>({key:col.key,reverse:s.key===col.key?!s.reverse:false}));setPage(1);}}>
              {col.label}{sort.key===col.key?(sort.reverse?' ↓':' ↑'):' ↕'}
            </button></th>)}
+         {hasTaskActions&&<th className="connections-row-actions-heading">Quick actions</th>}
        </tr></thead>
        <tbody>{display.map(row=><tr key={row.id} className={selection.has(row.id)?'is-selected':''}>
          <td className="connections-check-cell"><input type="checkbox" checked={selection.has(row.id)}
@@ -118,8 +144,25 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
                {row.values.priority||'Normal'}</span>
              :(row.values[col.key]||'—')}
          </td>)}
+         {hasTaskActions&&<td className="connections-row-actions">
+           {onTaskToggleComplete&&<button type="button"
+             onClick={()=>onTaskToggleComplete(row.id,row.values.status==='completed'||row.values.status==='canceled')}>
+             {row.values.status==='completed'||row.values.status==='canceled'?'Reopen':'Complete'}
+           </button>}
+           {onTaskDuePreset&&<select defaultValue="" aria-label={'Quick due date for '+row.name}
+             disabled={row.values.status==='completed'||row.values.status==='canceled'}
+             onChange={event=>{
+               const preset=event.currentTarget.value as TaskDuePreset|'';
+               if(preset)onTaskDuePreset(row.id,preset);
+               event.currentTarget.value='';
+             }}>
+             <option value="">Due date…</option>
+             <option value="today">Today</option><option value="tomorrow">Tomorrow</option>
+             <option value="next-week">In 7 days</option><option value="clear">Clear due date</option>
+           </select>}
+         </td>}
        </tr>)}
-       {!display.length&&<tr><td colSpan={visible.length+2}>No matching records.</td></tr>}
+       {!display.length&&<tr><td colSpan={visible.length+2+(hasTaskActions?1:0)}>No matching records.</td></tr>}
        </tbody>
      </table>
    </div>

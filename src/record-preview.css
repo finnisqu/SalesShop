@@ -31,3 +31,14 @@
  text-decoration-thickness:2px!important;text-underline-offset:3px;outline-offset:3px;}
 
 .record-preview-backdrop{background:rgba(34,31,25,.32);backdrop-filter:blur(1.5px);}
+
+/* Keep the preview focused and scroll its contents, not the whole document. */
+.record-preview-panel{max-height:100dvh;overflow:hidden;}
+.record-preview-body{min-height:0;overscroll-behavior:contain;}
+.record-preview-actions{flex:0 0 auto;}
+.record-preview-related:focus-visible,.record-preview-actions button:focus-visible{outline:2px solid var(--ss-theme-accent);outline-offset:-2px;}
+@media(max-width:560px){
+ .record-preview-panel{max-width:100vw;width:min(450px,100vw);}
+ .record-preview-body section dl{grid-template-columns:minmax(80px,100px) minmax(0,1fr);}
+ .record-preview-actions{padding-bottom:max(14px,env(safe-area-inset-bottom));}
+}

@@ -51,3 +51,10 @@
 @media(max-width:680px){.tasks-workspace{padding:12px 10px 32px}.tasks-header{align-items:flex-start}.tasks-header h1{font-size:23px}.tasks-summary{gap:5px}.tasks-summary button{padding:9px;min-height:65px}.tasks-summary strong{font-size:20px}.tasks-tools input{width:100%}.tasks-row{flex-wrap:wrap;padding:10px}.tasks-row-actions{width:100%;justify-content:flex-end}.tasks-editor{padding:14px}.tasks-editor-grid{grid-template-columns:1fr 1fr}}
 
 .tasks-editor>label select{width:100%;}
+
+/* Six personal queue summaries; compact enough for tablets and small phones. */
+.tasks-summary{grid-template-columns:repeat(6,minmax(0,1fr));}
+@media(max-width:1000px){.tasks-summary{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:680px){.tasks-summary button{min-height:62px;padding:9px;}}
+.tasks-quick-due{max-width:145px;min-height:32px;padding:5px 7px;border:1px solid var(--ss-theme-border);border-radius:7px;background:var(--ss-theme-card);color:var(--ss-theme-ink);font-size:11px;}
+.tasks-quick-due:disabled{opacity:.55;}
