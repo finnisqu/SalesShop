@@ -20,7 +20,8 @@ export function QuoteReuseAreaDialog({quote,sources,onClose}:{
  const [error,setError]=useState('');
  const source=eligible.find(candidate=>candidate.id===sourceId);
  const areas=source?.sections.filter(area=>!isGeneralTakeoffSection(area))??[];
- const currentArea=areas.some(area=>area.id===areaId)?areaId:'';
+ const currentArea=areaId==='__all__'&&areas.length?'__all__':
+  areas.some(area=>area.id===areaId)?areaId:'';
  useEffect(()=>{
   const escape=(event:KeyboardEvent)=>{if(event.key==='Escape')onClose();};
   document.addEventListener('keydown',escape);
@@ -28,8 +29,11 @@ export function QuoteReuseAreaDialog({quote,sources,onClose}:{
  },[onClose]);
  const copy=()=>{
   if(!source||!currentArea||!quoteIsCommerciallyEditable(quote))return;
-  const newArea=useQuoteStore.getState().copyAreaFromQuote(quote.id,source.id,currentArea,includePricing);
-  if(newArea)onClose();
+  const store=useQuoteStore.getState();
+  const copied=currentArea==='__all__'
+   ?store.copyAreasFromQuote(quote.id,source.id,areas.map(area=>area.id),includePricing)>0
+   :!!store.copyAreaFromQuote(quote.id,source.id,currentArea,includePricing);
+  if(copied)onClose();
   else setError('This Area could not be copied. Confirm the destination is an editable quote.');
  };
  return createPortal(<div className="qra-backdrop" onPointerDown={event=>{
@@ -55,6 +59,7 @@ export function QuoteReuseAreaDialog({quote,sources,onClose}:{
        setAreaId(event.target.value);setError('');
       }}>
        <option value="">Choose an Area…</option>
+       {areas.length>1&&<option value="__all__">All {areas.length} Areas</option>}
        {areas.map(area=><option key={area.id} value={area.id}>{area.title}</option>)}
       </select>
      </label>
@@ -73,7 +78,8 @@ export function QuoteReuseAreaDialog({quote,sources,onClose}:{
    </div>
    <footer><button type="button" onClick={onClose}>Cancel</button>
     <button type="button" className="qra-primary" onClick={copy}
-     disabled={!currentArea||!quoteIsCommerciallyEditable(quote)}>Copy Area</button></footer>
+     disabled={!currentArea||!quoteIsCommerciallyEditable(quote)}>
+     {currentArea==='__all__'?'Copy all Areas':'Copy Area'}</button></footer>
   </section>
  </div>,document.querySelector('.sales-app')??document.body);
 }
