@@ -69,10 +69,13 @@ export function Toolbar({ entry, editor, enableShortcuts = true,splitMode=false,
   const redo = useNotebookStore((state) => state.redo);
   const canUndo = useNotebookStore((state) => state.canUndo);
   const canRedo = useNotebookStore((state) => state.canRedo);
+  // History stacks are module-scoped; subscribe to this page's changes so
+  // split-pane Undo and Redo enable/disable as drawings and objects change.
+  const currentPage=useNotebookStore(state=>state.entries.find(page=>page.id===entry.id));
   const undoEntry=useNotebookStore(s=>s.undoEntry),redoEntry=useNotebookStore(s=>s.redoEntry);
   const canUndoEntry=useNotebookStore(s=>s.canUndoEntry),canRedoEntry=useNotebookStore(s=>s.canRedoEntry);
-  const hasUndo=splitMode?canUndoEntry(entry.id):canUndo;
-  const hasRedo=splitMode?canRedoEntry(entry.id):canRedo;
+  const hasUndo=splitMode?(Boolean(currentPage)&&canUndoEntry(entry.id)):canUndo;
+  const hasRedo=splitMode?(Boolean(currentPage)&&canRedoEntry(entry.id)):canRedo;
   const doUndo=()=>splitMode?undoEntry(entry.id):undo();
   const doRedo=()=>splitMode?redoEntry(entry.id):redo();
   const inputMode = useNotebookInputStore((state) => state.inputMode);

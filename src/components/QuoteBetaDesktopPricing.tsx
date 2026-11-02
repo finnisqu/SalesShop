@@ -9,6 +9,7 @@ import {QuoteBetaRateCatalog,rateItemToQuotePatch} from './QuoteBetaRateCatalog'
 import {useCompanySettingsStore} from '../store/companySettingsStore';
 import {selectedMaterialCost} from '../services/selectedMaterialCost';
 import {isDeveloperPlaygroundRoute} from '../lib/developerPlayground';
+import {changesMultiplierSellBasis} from '../services/quoteMultiplierSellBasis';
 import './quote-beta-cost-coverage.css';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -81,9 +82,9 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     const nextSection={...section,scope:{...section.scope,...patch}};
     const nextCost=projectAreaCost(quote,nextSection);
     updateSection(quote.id,section.id,{scope:nextSection.scope});
-    // In multiplier mode, yield / cost / purchased slab-count edits affect
-    // the actual customer price. Other pricing modes stay untouched.
-    if(mode==='multiplier'&&primary){
+    // Only slab selling-basis edits may update customer multiplier prices.
+    // Private production estimates and fractional buying quantity never do.
+    if(mode==='multiplier'&&primary&&changesMultiplierSellBasis(patch)){
       const updatedPrice=calculateAreaCustomerPrice('multiplier',{
         sf:nextCost.measuredSf,slabs:nextCost.slabCount,
         costPerSlab:nextCost.slabCost,multiplier,
@@ -318,6 +319,10 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
           <strong>{projection.materialCost!==undefined?money.format(projection.materialCost):'Needs slab cost & size'}</strong>
           <small>{projection.purchaseSlabs??'—'} slab(s) · buying basis</small></div>
       </div>
+      {mode==='multiplier'&&<p className="qmb-math-ledger">
+        Multiplier pricing uses slab yield, size, whole-slab count and slab cost as its selling basis.
+        Shop, installation and fractional purchasing costs do not change that selling price.
+      </p>}
       <div className="qmb-optional-labor">
         <strong>Fabrication &amp; installation <small>Per-SF assumptions or optional total overrides</small></strong>
         <div className="qmb-pricing-double">

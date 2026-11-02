@@ -102,10 +102,15 @@ let past: HistorySnapshot[] = [];
 let future: HistorySnapshot[] = [];
 let lastCheckpointKey = '';
 let lastCheckpointAt = 0;
-// Only non-text changes are tracked here. Rich text keeps TipTap's own editor history.
-const pagePast = new Map<string,NotebookEntry[]>();
-const pageFuture = new Map<string,NotebookEntry[]>();
+// Split page undo must never restore stale text, titles or page metadata.
+type PageEditSnapshot=Pick<NotebookEntry,'strokes'|'objects'>;
+const snapshotPageEdit=(entry:NotebookEntry):PageEditSnapshot=>({
+  strokes:structuredClone(entry.strokes),objects:structuredClone(entry.objects),
+});
+const pagePast = new Map<string,PageEditSnapshot[]>();
+const pageFuture = new Map<string,PageEditSnapshot[]>();
 const pageLast = new Map<string,{key:string;at:number}>();
+function clearPageEditHistory(){pagePast.clear();pageFuture.clear();pageLast.clear();}
 const pageEditKey = /^(?:ink:(?:add|delete|move|clear)|object:(?:create|frame|text|tone|business|caption|sheet|duplicate|lock|layer|delete)):([^:]+)(?::|$)/;
 function savePageCheckpoint(state:NotebookState,key:string,coalesceMs:number,timestamp:number){
   const pageId=key.match(pageEditKey)?.[1];
@@ -116,7 +121,7 @@ function savePageCheckpoint(state:NotebookState,key:string,coalesceMs:number,tim
   const coalescing=coalesceMs>0&&last?.key===key&&timestamp-last.at<=coalesceMs;
   if(!coalescing){
     const history=pagePast.get(pageId)??[];
-    history.push(structuredClone(entry));
+    history.push(snapshotPageEdit(entry));
     if(history.length>HISTORY_LIMIT)history.shift();
     pagePast.set(pageId,history);
     pageFuture.delete(pageId);
@@ -142,12 +147,15 @@ function resetHistory() {
   future = [];
   lastCheckpointKey = '';
   lastCheckpointAt = 0;
-  pagePast.clear();pageFuture.clear();pageLast.clear();
+  clearPageEditHistory();
 }
 
 function checkpoint(state: NotebookState, key: string, coalesceMs = 0) {
   const timestamp = Date.now();
-  savePageCheckpoint(state,key,coalesceMs,timestamp);
+  // Structural changes invalidate page-scoped ink/object snapshots.
+  if(key.startsWith('page:')||key.startsWith('folder:')||key.startsWith('global-postit:'))
+    clearPageEditHistory();
+  else savePageCheckpoint(state,key,coalesceMs,timestamp);
   const coalescing = coalesceMs > 0 && lastCheckpointKey === key && timestamp - lastCheckpointAt <= coalesceMs;
   if (!coalescing) {
     past.push(snapshot(state));
@@ -844,9 +852,12 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const history=pagePast.get(entryId),previous=history?.pop();
     if(!current||!previous)return;
     const redo=pageFuture.get(entryId)??[];
-    redo.push(structuredClone(current));if(redo.length>HISTORY_LIMIT)redo.shift();
+    redo.push(snapshotPageEdit(current));if(redo.length>HISTORY_LIMIT)redo.shift();
     pageFuture.set(entryId,redo);pageLast.delete(entryId);
-    const entries=mapEntry(get().entries,entryId,()=>structuredClone(previous));
+    const entries=mapEntry(get().entries,entryId,entry=>({
+      ...entry,strokes:structuredClone(previous.strokes),objects:structuredClone(previous.objects),
+      updatedAt:now(),
+    }));
     persist(entries,get().activeEntryId);
     // Global snapshots could otherwise restore older versions of unrelated pages.
     past=[];future=[];lastCheckpointKey='';
@@ -857,9 +868,12 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const history=pageFuture.get(entryId),next=history?.pop();
     if(!current||!next)return;
     const undo=pagePast.get(entryId)??[];
-    undo.push(structuredClone(current));if(undo.length>HISTORY_LIMIT)undo.shift();
+    undo.push(snapshotPageEdit(current));if(undo.length>HISTORY_LIMIT)undo.shift();
     pagePast.set(entryId,undo);pageLast.delete(entryId);
-    const entries=mapEntry(get().entries,entryId,()=>structuredClone(next));
+    const entries=mapEntry(get().entries,entryId,entry=>({
+      ...entry,strokes:structuredClone(next.strokes),objects:structuredClone(next.objects),
+      updatedAt:now(),
+    }));
     persist(entries,get().activeEntryId);
     past=[];future=[];lastCheckpointKey='';
     set({entries,selectedObjectId:null,...historyFlags()});
@@ -867,6 +881,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   undo: () => {
     const previous = past.pop();
     if (!previous) return;
+    clearPageEditHistory();
     future.push(snapshot(get()));
     if (future.length > HISTORY_LIMIT) future.shift();
     persist(previous.entries, previous.activeEntryId, previous.trashedEntries, previous.folders);
@@ -885,6 +900,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   redo: () => {
     const next = future.pop();
     if (!next) return;
+    clearPageEditHistory();
     past.push(snapshot(get()));
     if (past.length > HISTORY_LIMIT) past.shift();
     persist(next.entries, next.activeEntryId, next.trashedEntries, next.folders);

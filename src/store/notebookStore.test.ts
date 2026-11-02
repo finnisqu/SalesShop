@@ -177,6 +177,34 @@ describe('Notebook 2.0 private folder organization', () => {
     expect(useNotebookStore.getState().entries.find(e=>e.id===first)?.objects).toHaveLength(1);
   });
 
+  it('keeps later text and metadata when undoing split-pane objects',()=>{
+    const id=useNotebookStore.getState().entries[0].id;
+    useNotebookStore.getState().createPostIt(id);
+    useNotebookStore.getState().renameEntry(id,'Revised page');
+    // A page-level structural/metadata change invalidates older object snapshots.
+    expect(useNotebookStore.getState().canUndoEntry(id)).toBe(false);
+    useNotebookStore.getState().createPostIt(id);
+    useNotebookStore.getState().updateContent(id,'<p>Newest text must survive object undo</p>');
+    useNotebookStore.getState().undoEntry(id);
+    const after=useNotebookStore.getState().entries.find(entry=>entry.id===id)!;
+    expect(after.title).toBe('Revised page');
+    expect(after.contentHtml).toBe('<p>Newest text must survive object undo</p>');
+    expect(after.objects).toHaveLength(1);
+    useNotebookStore.getState().redoEntry(id);
+    const restored=useNotebookStore.getState().entries.find(entry=>entry.id===id)!;
+    expect(restored.objects).toHaveLength(2);
+    expect(restored.contentHtml).toBe('<p>Newest text must survive object undo</p>');
+  });
+
+  it('invalidates stale page history after a full-document undo',()=>{
+    const id=useNotebookStore.getState().entries[0].id;
+    useNotebookStore.getState().createPostIt(id);
+    expect(useNotebookStore.getState().canUndoEntry(id)).toBe(true);
+    useNotebookStore.getState().undo();
+    expect(useNotebookStore.getState().canUndoEntry(id)).toBe(false);
+    expect(useNotebookStore.getState().entries.find(entry=>entry.id===id)?.objects).toHaveLength(0);
+  });
+
   it('keeps one Post-it inbox even when that Notebook page is duplicated', () => {
     const originalId=useNotebookStore.getState().createGlobalPostIt();
     const inbox=useNotebookStore.getState().entries.find(entry=>entry.isPostItInbox)!;
