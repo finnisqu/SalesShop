@@ -73,9 +73,9 @@ function writeSingleChargeTotal(quote:Quote,line:QuoteLine,total:number|undefine
  }
 }
 /** Never bind a continually changing currency string to the numeric input. */
-function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFocus=false,onDone,startWith}:{
+function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFocus=false,onDone,startWith,allowNegative=false}:{
  value?:number;onCommit:(v:number|undefined)=>void;label:string;disabled?:boolean;integer?:boolean;
- autoFocus?:boolean;onDone?:()=>void;startWith?:string;
+ autoFocus?:boolean;onDone?:()=>void;startWith?:string;allowNegative?:boolean;
 }){
  const [draft,setDraft]=useState(startWith??(value===undefined?'':String(value)));
  const cancelled=useRef(false);
@@ -85,7 +85,7 @@ function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFoc
   const raw=draft.trim();
   if(!raw){if(value!==undefined)onCommit(undefined);return;}
   const parsed=parseQuickGridNumber(raw);
-  if(parsed!==undefined&&parsed>=0&&(!integer||Number.isInteger(parsed))){
+  if(parsed!==undefined&&(parsed>=0||allowNegative)&&(!integer||Number.isInteger(parsed))){
    if(parsed!==value)onCommit(parsed);
   }else setDraft(value===undefined?'':String(value));
  };
@@ -102,7 +102,7 @@ function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFoc
 function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,numeric=false,inline}:{
  value:ReactNode;label:string;focused:boolean;onFocus:()=>void;onEdit:()=>void;
  muted?:boolean;warn?:boolean;numeric?:boolean;
- inline?:{value:number|undefined;onCommit:(value:number|undefined)=>void;disabled:boolean};
+ inline?:{value:number|undefined;onCommit:(value:number|undefined)=>void;disabled:boolean;allowNegative?:boolean};
 }){
  const [editing,setEditing]=useState(false);
  const [startWith,setStartWith]=useState<string|undefined>();
@@ -110,7 +110,7 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
  return <div className={'qqs-cell qqs-focusable'+(focused?' is-focused':'')+
   (muted?' is-muted':'')+(warn?' is-warning':'')+(numeric?' is-numeric':'')} role="group" aria-label={label}>
   {editing&&inline?<CommitNumber label={label} value={inline.value} disabled={inline.disabled}
-    autoFocus startWith={startWith} onCommit={inline.onCommit}
+    autoFocus startWith={startWith} allowNegative={inline.allowNegative} onCommit={inline.onCommit}
     onDone={()=>{setEditing(false);setStartWith(undefined);}}/>:
   <button type="button" className="qqs-value" title={typeof value==='string'?value:label}
    data-quick-grid-editable={inline&&!inline.disabled?'true':undefined}
@@ -428,7 +428,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
  const choose=(id:string,on:boolean)=>setSelected(old=>on?[...old.filter(x=>x!==id),id]:old.filter(x=>x!==id));
  const open=(areaId:string|null,kind:DetailKind)=>setDetail({areaId,kind});
  const cell=(areaId:string,kind:DetailKind,label:string,value:ReactNode,muted=false,warn=false,
-  inline?:{value:number|undefined;onCommit:(value:number|undefined)=>void;disabled:boolean})=>
+  inline?:{value:number|undefined;onCommit:(value:number|undefined)=>void;disabled:boolean;allowNegative?:boolean})=>
   <SummaryCell key={label} value={value} label={label}
    focused={focus===label} onFocus={()=>setFocus(label)}
    onEdit={()=>open(areaId,kind)} muted={muted} warn={warn}
@@ -512,7 +512,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
        !data.specialtyQuantity,false,(()=>{
         const line=data.specialty.length===1?data.specialty[0]:undefined;
         if(!line||!line.includeInTotal||line.quantitySource?.syncMode==='live')return undefined;
-        return {value:data.specialtyPrice,disabled:!editable,
+        return {value:data.specialtyPrice,disabled:!editable,allowNegative:line.kind==='discount',
          onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v)};
        })())}
       {cell(area.id,'total','Total price for '+area.title,amount(data.total))}
@@ -529,7 +529,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
        false,(()=>{
         const line=general.lines.length===1?general.lines[0]:undefined;
         if(!line||!line.includeInTotal||line.quantitySource?.syncMode==='live')return undefined;
-        return {value:general.total,disabled:!editable,
+        return {value:general.total,disabled:!editable,allowNegative:line.kind==='discount',
          onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v)};
        })())}
      {cell('general','total','General total',amount(general.total))}
