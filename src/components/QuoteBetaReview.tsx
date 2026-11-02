@@ -31,10 +31,9 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   previewedKey:string|null;approvedKey:string|null;onApprove:(approved:boolean)=>void;
   reviewedKey:string|null;onReview:(key:string|null)=>void;
 }){
-  const [reviewStep,setReviewStep]=useState<number>(()=>initialFindingId==='__delivery__'?3:initialFindingId?2:0);
-  useEffect(()=>{if(initialFindingId==='__delivery__')setReviewStep(3);
-   else if(initialFindingId)setReviewStep(2);},[initialFindingId]);
-  const reviewSteps=['Area totals','Costs & margin','Pricing questions','Approve & deliver'] as const;
+  const [reviewStep,setReviewStep]=useState<number>(()=>initialFindingId?2:0);
+  useEffect(()=>{if(initialFindingId)setReviewStep(2);},[initialFindingId]);
+  const reviewSteps=['Area totals','Costs & margin','Pricing questions'] as const;
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [signatureOpen,setSignatureOpen]=useState(false);
@@ -197,18 +196,8 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
      })}</div>
      <QuotePricingScenarioReview quote={quote}/>
     </section>}
-      {reviewStep===3&&<div className="qmb-audit-overview">
-        <div className="qmb-audit-total"><span>Quote total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
-        <div className="qmb-audit-counts">
-          <span className={report.blockers.length?'is-blocked':''}><b>{report.blockers.length}</b> To resolve</span>
-          <span><b>{report.review.length}</b> Review</span>
-          <span><b>{report.optional.length}</b> Optional</span>
-        </div>
-      </div>}
       {reviewStep===2&&<div className="qqr-stage"><h3>Resolve or acknowledge questions</h3>
        <p>Blocking items must be fixed. Other decisions can be deliberately acknowledged.</p></div>}
-      {reviewStep===3&&<div className="qqr-stage"><h3>Approve and prepare delivery</h3>
-       <p>Preview the exact customer document. Issuing will not send an email.</p></div>}
       {reviewStep===2&&<section ref={checklistSectionRef} className="qmb-review-checklist" aria-label="Review quote findings">
       {needsRecheck&&<section className="qmb-review-recheck" role="status">
         <div><strong>Quote changed since this review</strong>
@@ -238,91 +227,17 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
         <span>I reviewed the remaining items and intend to leave them as shown.</span>
       </label>}
       </section>}
-      {reviewStep===3&&needsRecheck&&<section className="qmb-review-recheck" role="status">
-       <div><strong>Prices or selections changed during review</strong>
-        <small>Recheck the current quote before approving this customer copy.</small></div>
-       <button type="button" onClick={()=>{setLastCheckedAt(quote.updatedAt);onReview(null);}}>Recheck now</button>
-      </section>}
       {error&&<p role="alert" className="qmb-error">{error}</p>}
-      {reviewStep===3&&<section ref={deliverySectionRef} className="qmb-card qmb-audit-delivery" data-review-delivery>
-        <div className="qmb-review-delivery-heading">
-          <strong>{editable?'Prepare customer delivery':issued?'Issued revision & delivery':'Read-only document'}</strong>
-          <small>{editable?'Preview and approve this exact version before issuing. Sharing is separate.':issued?'This revision is frozen. Creating a link never sends a message.':'This document cannot be edited here. It has not been issued.'}</small>
-        </div>
-        {!editable&&quote.status==='Sent'&&<div className="qmb-issued-next" role="status">
-          <strong>✓ Quote issued successfully</strong>
-          <p>The approved revision is frozen. No email or customer link was sent or
-            created automatically. Create a secure link below, then share it using
-            your preferred method.</p>
-        </div>}
-        <div className="qmb-delivery-version" aria-label="Customer document revision">
-          <span>{editable?'Draft awaiting approval':quoteBetaStatusLabel(quote)+' customer revision'}</span>
-          <strong>{displayQuoteNumber(quote)}</strong>
-          <small>{quote.title}{quote.revisionLabel?' · '+quote.revisionLabel:''} · Revision {quote.revision} · {money.format(quoteTotal(quote))}</small>
-        </div>
-        {!editable&&<p className="qmb-audit-help">
-          This customer-facing revision is frozen. The link below is created for the issued revision shown above.
-        </p>}
-        {!editable&&!quote.archivedAt&&quoteCanCreateRevision(quote)&&<button type="button" className="qmb-outline qmb-block"
-          onClick={()=>{createRevision(quote.id);onBack();}}>Create editable revision ›</button>}
-        {editable?<div className="qmb-delivery-steps" aria-label="Customer delivery steps">
-          <div className="qmb-delivery-step">
-            <div className="qmb-delivery-step-title"><span>1</span><strong>Preview customer copy</strong>
-              <small>{previewed?'✓ Reviewed':'Required'}</small></div>
-            <p>Check the customer name, visible scope, pricing, total and policies as the customer will see them.</p>
-            <button type="button" className="qmb-outline qmb-block" onClick={onPreview}>
-              {previewed?'Preview again ›':'Open customer preview ›'}</button>
-          </div>
-          <div className="qmb-delivery-step">
-            <div className="qmb-delivery-step-title"><span>2</span><strong>Approve this draft</strong>
-              <small>{approved?'✓ Approved':previewed?'Confirm':'Preview first'}</small></div>
-            <label className="qmb-delivery-approval"><input type="checkbox"
-              aria-label="Approve customer document for issuing"
-              checked={approved} disabled={!canApprove}
-              onChange={e=>onApprove(e.target.checked)}/>
-              <span>I approve the customer document shown in Preview, including this revision's price and scope.</span>
-            </label>
-            {!previewed&&<small>Open Preview, then return to Review to confirm this exact draft.</small>}
-            {previewed&&!ready&&<small>Resolve or acknowledge outstanding findings and recheck changes before approving.</small>}
-            <small>Any new edit invalidates this approval until you preview the updated version again.</small>
-          </div>
-          <div className="qmb-delivery-step">
-            <div className="qmb-delivery-step-title"><span>3</span><strong>Issue approved revision</strong><small>After approval</small></div>
-            <p>Issuing freezes the approved revision. It does not send an email or automatically create a link.</p>
-            <button type="button" className="qmb-primary qmb-block"
-              disabled={sending||!canIssue||!ready||!approved} onClick={onIssue}>
-              {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':report.blockers.length?'Resolve pricing issues to issue':
-                report.review.length&&!acknowledged?'Review remaining items to issue':
-                !previewed?'Preview customer document to issue':!approved?'Approve customer document to issue':
-                  'Issue quote · no message sent'}
-            </button>
-          </div>
-        </div>:<button type="button" className="qmb-outline qmb-block" onClick={onPreview}>View issued customer revision ›</button>}
-        {!editable&&['Sent','Viewed','Signed'].includes(quote.status)&&<div className="qmb-delivery-step" aria-label="Step 4 share and confirm customer delivery">
-          <div className="qmb-delivery-step-title"><span>4</span><strong>Share and confirm delivery</strong><small>After issuing</small></div>
-          <p>Create or reuse the secure link for this exact revision. Sharing the link is not proof of delivery; confirm receipt separately.</p>
-        </div>}
-        {!editable&&<p className="qmb-audit-help">A customer link never changes this frozen revision or sends a message automatically.</p>}
-        <QuoteShareControl inline allowCreation={canIssue&&!editable} autoOpenOnIssue/>
-        {!editable&&<QuoteDeliveryConfirmation quote={quote} canRecord={canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&!quote.archivedAt}/>} 
-        {canIssue&&['Sent','Viewed','Signed'].includes(quote.status)&&
-          <button type="button" className="qmb-outline qmb-block" onClick={()=>setSignatureOpen(true)}>
-            {quote.status==='Signed'?'View signed receipt':'Sign in person'}
-          </button>}
-        {!canIssue&&editable&&<small className="qmb-audit-help">Your current team role cannot issue quotes.</small>}
-        {report.blockers.length>0&&editable&&
-          <small className="qmb-audit-help">Resolve {report.blockers.length} pricing issue{report.blockers.length===1?'':'s'} before issuing. Your draft is still saved.</small>}
-      </section>}
       {signatureOpen&&createPortal(<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>,document.body)}
 
     </div>
     <footer className="qmb-footer qqr-footer">
       <button type="button" className="qmb-outline" onClick={()=>reviewStep===0?onBack():setReviewStep(reviewStep-1)}>
        {reviewStep===0?'‹ Back to Build Quote':'‹ Previous'}</button>
-      <div><small>Step {reviewStep+1} of 4 · {money.format(quoteTotal(quote))}</small>
-       {reviewStep<3?<button type="button" className="qmb-primary" onClick={()=>setReviewStep(reviewStep+1)}>
+      <div><small>Step {reviewStep+1} of 3 · {money.format(quoteTotal(quote))}</small>
+       {reviewStep<2?<button type="button" className="qmb-primary" onClick={()=>setReviewStep(reviewStep+1)}>
         Next: {reviewSteps[reviewStep+1]} ›</button>
-       :<button type="button" className="qmb-outline" onClick={onPreview}>Open Contract Review ›</button>}</div>
+       :<button type="button" className="qmb-primary" onClick={onPreview}>Continue to Contract Review ›</button>}</div>
     </footer>
   </div>;
 }
