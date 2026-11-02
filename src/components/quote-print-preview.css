@@ -33,9 +33,10 @@
 }
 @page{size:letter;margin:.55in;}
 @media print{
- html,body{height:auto!important;min-height:0!important;overflow:visible!important;
+ html:has(body.sales-quote-print-active),body.sales-quote-print-active{
+  height:auto!important;min-height:0!important;overflow:visible!important;
   background:white!important;margin:0!important;padding:0!important;}
- body>*:not(#sales-quote-print-root){display:none!important;}
+ body.sales-quote-print-active>*:not(#sales-quote-print-root){display:none!important;}
  #sales-quote-print-root.qpp-overlay{position:static!important;display:block!important;
   inset:auto!important;width:auto!important;height:auto!important;min-height:0!important;
   background:white!important;margin:0!important;padding:0!important;overflow:visible!important;}
