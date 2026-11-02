@@ -56,3 +56,24 @@
   .customer-quote-terms,.customer-quote-total){break-inside:avoid;page-break-inside:avoid;}
  #sales-quote-print-root *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
+
+/* Seller toolbar: compact print actions alongside device and edit controls. */
+.sales-app .qmb .qmb-preview-action-group .qmb-preview-print-preview,
+.sales-app .qmb .qmb-preview-action-group .qmb-preview-print{
+ min-height:31px;padding:6px 11px;border:1px solid var(--qmb-border);
+ border-radius:7px;background:var(--qmb-card);color:var(--qmb-accent);
+ font-size:11px;font-weight:780;cursor:pointer;white-space:nowrap;
+}
+.sales-app .qmb .qmb-preview-action-group .qmb-preview-print{
+ background:var(--qmb-tint);font-weight:850;
+}
+.sales-app .qmb .qmb-preview-action-group .qmb-preview-print-preview:hover,
+.sales-app .qmb .qmb-preview-action-group .qmb-preview-print:hover{
+ border-color:var(--qmb-accent);
+}
+@media(max-width:650px){
+ .sales-app .qmb .qmb-preview-action-group .qmb-preview-print-preview,
+ .sales-app .qmb .qmb-preview-action-group .qmb-preview-print{
+  padding:6px 8px;font-size:10px;
+ }
+}
