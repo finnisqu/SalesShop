@@ -2,7 +2,7 @@ import type {Quote} from '../types/quote';
 import {auditQuoteDraft,type QuoteAuditReport} from './quoteDraftAudit';
 import {isGeneralTakeoffSection} from './quoteCustomerPresentation';
 
-export type QuoteBuilderStageId='details'|'areas'|'pricing'|'review'|'contract';
+export type QuoteBuilderStageId='details'|'areas'|'review'|'contract';
 export type QuoteBuilderStageState='done'|'attention'|'pending';
 export interface QuoteBuilderStage{id:QuoteBuilderStageId;label:string;status:string;state:QuoteBuilderStageState;}
 /** Five milestones are navigation guidance only. Contract issuing still uses
@@ -22,12 +22,9 @@ export function quoteBuilderProgress(quote:Quote,report:QuoteAuditReport=auditQu
  const stages:QuoteBuilderStage[]=[
   {id:'details',label:'Project details',status:hasCustomer?'Customer added':hasJobContext?'Job details added':'Optional',
     state:hasCustomer||hasJobContext?'done':'pending'},
-  {id:'areas',label:'Takeoffs',status:pieces?pieces+(pieces===1?' piece':' pieces'):
+  {id:'areas',label:'Takeoffs & selections',status:pieces?pieces+(pieces===1?' piece':' pieces'):
     areas.length?areas.length+(areas.length===1?' Area':' Areas'):hasGeneral?'General scope':'Optional',
     state:hasTakeoffs||areas.length>0?'done':'pending'},
-  {id:'pricing',label:'Selections & pricing',status:!hasPrices?'Add priced work':
-    blockers?blockers+(blockers===1?' issue':' issues'):'Prices entered',
-    state:hasPrices?(blockers?'attention':'done'):'pending'},
   {id:'review',label:'Pricing review',status:!hasPrices?'Awaiting prices':
     blockers?blockers+(blockers===1?' issue':' issues'):'Ready for review',
     state:hasPrices?(blockers?'attention':'done'):'pending'},
