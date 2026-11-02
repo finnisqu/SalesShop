@@ -42,7 +42,7 @@ export function QuoteBetaDesktopRails({
   const editable=quoteIsCommerciallyEditable(quote);
   const steps:ReadonlyArray<readonly [QuoteTab,string]>=quote.documentType==='pricing-schedule'
     ?[['build','Editor'],['details','Customer & deal'],['preview','Customer preview']]
-    :[['details','Project details'],['build','Takeoffs & selections'],['pricing','Pricing review'],['preview','Customer preview']];
+    :[['details','Project details'],['build','Takeoffs & selections'],['preview','Contract review']];
   const areas=areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s));
   const desktopAreaRef=useQuoteBetaCardReflow<HTMLElement>(areas.map(s=>s.id));
   return <>
