@@ -1018,7 +1018,8 @@ export function QuotesMobileBeta() {
         </div>}
       {quote&&page!=='library'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaProgress
         key={quote.id} quote={quote} editable={editable}
-        current={reviewOpen?'review':page==='quote'&&quoteTab==='preview'?'contract':
+        current={reviewOpen||page==='quote'&&quoteTab==='pricing'?'review':
+          page==='quote'&&quoteTab==='preview'?'contract':
           page==='quote'&&quoteTab==='details'?'details':'areas'}
         onDetails={()=>navigateDocument('details')}
         onAreas={()=>navigateDocument('build')}
