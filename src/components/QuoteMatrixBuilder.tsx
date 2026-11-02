@@ -225,6 +225,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
 }){
  const store=useQuoteStore.getState(),editable=quoteIsCommerciallyEditable(quote);
  const [subtab,setSubtab]=useState<'areas'|'takeoffs'>('areas');
+ const [focusArea,setFocusArea]=useState<string|null>(null);
  const [advanced,setAdvanced]=useState(false);
  const [calculator,setCalculator]=useState<string|null|'general'>(null);
  const [selected,setSelected]=useState<QuoteScopeRowRef[]>([]);
@@ -233,7 +234,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
  const [destination,setDestination]=useState('');
  const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
  const general=quote.sections.find(isGeneralTakeoffSection)??null;
- useEffect(()=>{setSelected([]);setSubtab('areas');setAdvanced(false);},[quote.id]);
+ useEffect(()=>{setSelected([]);setSubtab('areas');setAdvanced(false);setFocusArea(null);},[quote.id]);
  const selectedKeys=new Set(selected.map(keyOf));
  const choose=(ref:QuoteScopeRowRef,checked:boolean)=>setSelected(old=>checked?
   [...old.filter(x=>keyOf(x)!==keyOf(ref)),ref]:old.filter(x=>keyOf(x)!==keyOf(ref)));
@@ -292,7 +293,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
  return <div className="qmx-workspace">
   <header className="qmx-intro"><div><div className="qmb-kicker">QUICK QUOTE</div>
    <h2>Build Quote</h2><p>Choose Areas for fast pricing or Takeoffs for measured detail. Both stay in sync.</p>
-   </div><button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button></header>
+   </div></header>
   <nav className="qmx-subtabs" aria-label="Build Quote views">
    <div role="group" aria-label="Quote worksheets">
     <button type="button" className={subtab==='areas'?'is-active':''}
@@ -308,8 +309,10 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onAdvanced,onGener
    <strong>Quote {cash.format(quoteTotal(quote))}</strong>
   </nav>
   {subtab==='areas'&&<QuoteQuickAreaSummary quote={quote} onAddArea={onAddArea}
-    onLayouts={onLayouts} onAdvanced={onAdvanced} onTakeoffs={()=>setSubtab('takeoffs')}/>}
-  {subtab==='takeoffs'&&!advanced&&<QuoteCompactTakeoffs quote={quote} onAdvanced={onAdvanced}/>}
+    onLayouts={onLayouts} onAdvanced={onAdvanced} onTakeoffs={id=>{
+     setFocusArea(id);setSubtab('takeoffs');
+    }}/>}
+  {subtab==='takeoffs'&&!advanced&&<QuoteCompactTakeoffs quote={quote} focusArea={focusArea} onAdvanced={onAdvanced}/>}
   {subtab==='takeoffs'&&advanced&&
   <section className="qmx-panel" aria-label="Takeoffs selections and pricing spreadsheet">
    <header className="qmx-panel-head"><div><h3>2 · Takeoffs, Selections &amp; Pricing</h3>
