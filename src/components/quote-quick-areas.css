@@ -136,3 +136,10 @@
  .sales-app .qmb .qqs-pin-area{left:34px;}
  .sales-app .qmb .qqs-panel-body{padding:12px;}
 }
+
+.sales-app .qmb .qqs-cell.is-numeric .qqs-value{text-align:right;}
+.sales-app .qmb .qqs-cell.is-numeric .qqs-value>span{font-variant-numeric:tabular-nums;}
+@media(hover:none){
+ .sales-app .qmb .qqs-focusable .qqs-pencil,
+ .sales-app .qmb .qqs-area-name .qqs-pencil{opacity:.8;pointer-events:auto;}
+}
