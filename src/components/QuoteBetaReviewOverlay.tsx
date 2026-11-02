@@ -7,10 +7,10 @@ import {QuoteBetaReview} from './QuoteBetaReview';
 /** Seller-only review sheet. Keeps Build or Preview mounted beneath a dimmed
  * backdrop so inline quick fixes can work without losing quote context. */
 export function QuoteBetaReviewOverlay({quote,focusId,inspector,canIssue,sending,error,onIssue,
-  onClose,onFix,onPreview,onClassic,previewedKey,approvedKey,onApprove,reviewedKey,onReview}:{
+  onClose,onFix,onPreview,previewedKey,approvedKey,onApprove,reviewedKey,onReview}:{
   quote:Quote;focusId:string|null;inspector:ReactNode;canIssue:boolean;sending:boolean;error:string;
   onIssue:()=>void;onClose:()=>void;onFix:(destination:QuoteAuditDestination)=>void;
-  onPreview:()=>void;onClassic:()=>void;
+  onPreview:()=>void;
   previewedKey:string|null;approvedKey:string|null;onApprove:(approved:boolean)=>void;
   reviewedKey:string|null;onReview:(key:string|null)=>void;
 }){
@@ -35,7 +35,7 @@ export function QuoteBetaReviewOverlay({quote,focusId,inspector,canIssue,sending
       <div className="qmb-review-pulled-inspector">{inspector}</div>
       <div ref={drawerRef} className="qmb-review-sheet" role="dialog" aria-modal="true" aria-label="Review and issue quote">
       <QuoteBetaReview quote={quote} initialFindingId={focusId}
-        onBack={onClose} onFix={onFix} onPreview={onPreview} onClassic={onClassic}
+        onBack={onClose} onFix={onFix} onPreview={onPreview}
         canIssue={canIssue} sending={sending} error={error} onIssue={onIssue}
         previewedKey={previewedKey} approvedKey={approvedKey} onApprove={onApprove}
         reviewedKey={reviewedKey} onReview={onReview}/>

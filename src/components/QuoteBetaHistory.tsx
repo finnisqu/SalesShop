@@ -15,7 +15,7 @@ import {createPricingScheduleData} from '../services/pricingSchedule';
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 /** Historical snapshots are frozen: viewing a prior customer document must
  * never substitute it into the active quote or mutate its latest revision. */
-export function QuoteBetaHistory({quote}:{quote:Quote}){
+export function QuoteBetaHistory({quote,embedded=false}:{quote:Quote;embedded?:boolean}){
   const update=useQuoteStore(s=>s.updateQuote);
   const activities=useCrmStore(s=>s.activities);
   const createChangeOrder=useQuoteStore(s=>s.createChangeOrder);
@@ -33,11 +33,11 @@ export function QuoteBetaHistory({quote}:{quote:Quote}){
   const canChangeType=editable&&!quote.templateId&&!history.length&&quote.documentType!=='change-order';
   const snapshot=selected===null?undefined:history.find(item=>item.revision===selected);
   const frozen=snapshot?historicalCustomerQuote(quote,snapshot):undefined;
-  return <section className="qmb-details-section qmb-card qmb-lifecycle-card" aria-label="Quote document and history">
-    <header className="qmb-details-heading">
+  return <section className={embedded?'qmb-lifecycle-card is-embedded':'qmb-details-section qmb-card qmb-lifecycle-card'} aria-label="Quote document and history">
+    {embedded?<h4>Document &amp; revisions</h4>:<header className="qmb-details-heading">
       <span className="qmb-details-step">4</span><div><h3>Document &amp; revisions</h3>
         <small>Current revision, issued snapshots and confirmed customer deliveries</small></div>
-    </header>
+    </header>}
     <div className="qmb-details-fields">
       <label><span>Document type</span>
         <select aria-label="Document type" disabled={!canChangeType} value={quote.documentType}

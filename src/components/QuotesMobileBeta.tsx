@@ -19,6 +19,7 @@ import {
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
 } from '../types/quote';
 import { QuoteBetaDetails } from './QuoteBetaDetails';
+import '../quote-details-single-column.css';
 import {quoteBetaPrimaryAction,quoteBetaStatusLabel} from '../services/quoteBetaLifecycleLanguage';
 import { QuoteCustomerQuickEdit } from './QuoteCustomerQuickEdit';
 import {SalesDocumentSaveStatus} from './SalesDocumentToolbar';
@@ -248,9 +249,9 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   </article>;
 }
 
-function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNextArea,onDuplicate,onSaveLayout,onReview,onClassic,returnLabel}:{
+function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNextArea,onDuplicate,onSaveLayout,onReview,returnLabel}:{
   quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;
-  goBack:()=>void;onPricingOverview:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onSaveLayout:()=>void;onReview:()=>void;onClassic:()=>void;
+  goBack:()=>void;onPricingOverview:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onSaveLayout:()=>void;onReview:()=>void;
   returnLabel:string;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
@@ -335,7 +336,6 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
         {editable&&!general&&<button type="button" className="qmb-area-duplicate-action"
           aria-label="Duplicate this Area" onClick={onDuplicate}>⧉ Duplicate</button>}
         <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>
-        <button type="button" className="qmb-quiet" onClick={onClassic}>Classic</button>
       </div>
     </header>
     <div className="qmb-pad qmb-titlepad">
@@ -507,7 +507,6 @@ export function QuotesMobileBeta() {
   const undoDepth=useQuoteStore(s=>activeQuoteId?s.undoStacks[activeQuoteId]?.length??0:0);
   const redoDepth=useQuoteStore(s=>activeQuoteId?s.redoStacks[activeQuoteId]?.length??0:0);
   const hydrateCrm=useCrmStore(s=>s.hydrate);
-  const exitBeta=useQuotesMobileBetaStore(s=>s.setEnabled);
   const authMode=useAuthStore(s=>s.mode);
   const teamRole=useAuthStore(s=>s.teamRole);
   const department=useAuthStore(s=>s.teamDepartment);
@@ -981,8 +980,7 @@ export function QuotesMobileBeta() {
   };
   if(!hydrated)return <main className="qmb"><p className="qmb-loading">Opening Quotes Beta…</p></main>;
   if(canBrowseTeam&&libraryMode==='team')return <main className="quotes-view qmb-team">
-    <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes Beta</button>
-      <button type="button" onClick={()=>exitBeta(false)}>Classic</button></div>
+    <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes</button></div>
     {signedShopOutcomesEnabled
       ? <ShopOutcomesWorkspace onShowMine={()=>setLibraryMode('mine')}/>
       : <TeamQuotesWorkspace quotes={quotes} onShowMine={()=>setLibraryMode('mine')}/>}
@@ -1034,7 +1032,7 @@ export function QuotesMobileBeta() {
         onReview={openSend}/>} 
     {page==='library'?<>
       <header className="qmb-top"><BuildBadge compact /><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div>
-        <div className="qmb-headeractions"><AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic ↗</button></div></header>
+        <div className="qmb-headeractions"><AppMenu/></div></header>
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
         <p className="qmb-subtitle">Open an existing agreement, quote or workbook—or create a new document from a purpose-built template.</p>
@@ -1129,13 +1127,8 @@ export function QuotesMobileBeta() {
     </>:page==='quote'&&quote?<div className="qmb-editor qmb-quote-editor">
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
-          <BuildBadge compact />
           <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
-          <span className="qmb-chip qmb-editor-status" title={salesTemplateLabel(salesDocumentTemplate(quote))+' · '+quoteBetaStatusLabel(quote)}>{quoteBetaStatusLabel(quote)}</span>
-          <div className="qmb-headeractions">
-            <button type="button" className="qmb-document-new-shortcut" aria-label="+ New document" onClick={()=>setShowNewDocument(true)}><span className="qmb-document-new-full">+ New document</span><span className="qmb-document-new-compact" aria-hidden="true">+ New</span></button>
-            <AppMenu/><button type="button" className="qmb-quiet" onClick={()=>exitBeta(false)}>Classic</button>
-          </div>
+          <span className="qmb-chip qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
         </header>
         <div className="qmb-quote-sticky">
           <div className="qmb-quote-identity">
@@ -1340,11 +1333,7 @@ export function QuotesMobileBeta() {
         {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaPricingOverview
           quote={quote} onArea={(id,tab)=>{openArea(id);setAreaTab(tab);}}
           onGeneral={openGeneralFromPricing} onResolve={fixAudit} onReview={openSend}/>}
-        {quoteTab==='details'&&<QuoteBetaDetails quote={quote}
-          nextAreaLabel={detailsNextArea?.label}
-          onContinueToArea={detailsNextArea?continueFromDetails:undefined}
-          onStartGeneral={detailsNextArea?openGeneralFromPricing:undefined}
-           onStartPreset={editable?()=>setAreaPresetsOpen(true):undefined}/>} 
+        {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
             onReturnToReview={previewReturnQuoteId===quote.id?returnFromReviewPreview:undefined}/>
@@ -1357,7 +1346,8 @@ export function QuotesMobileBeta() {
             onClick={returnFromReviewPreview}>Done previewing · Back to Review ›</button>
           :quote.documentType!=='pricing-schedule'&&quoteTab==='details'
             ?<button type="button" className="qmb-primary"
-              onClick={()=>navigateDocument('build')}>Continue to Areas ›</button>
+              onClick={()=>detailsNextArea?continueFromDetails():navigateDocument('build')}>
+              {detailsNextArea?.label??'Continue to Areas ›'}</button>
           :quote.documentType!=='pricing-schedule'&&quoteTab==='build'
             ?<button type="button" className="qmb-primary"
               onClick={openPricingStage}>Continue to Materials &amp; Pricing ›</button>
@@ -1369,7 +1359,7 @@ export function QuotesMobileBeta() {
       returnLabel={quoteTab==='pricing'?'Done · Pricing':'Done · Areas'}
       onNextArea={advanceToNextArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
        onSaveLayout={()=>{if(area)setSavingLayoutAreaId(area.id);}}
-      onClassic={()=>exitBeta(false)}/>:null}
+      />:null}
       </div>
     </div>
     {quote&&page==='quote'&&customerQuickOpen&&<QuoteCustomerQuickEdit
@@ -1521,7 +1511,7 @@ export function QuotesMobileBeta() {
         setPreviewStartedKey(quoteDeliveryApprovalKey(quote));
         setQuoteTab('preview');setPage('quote');setAreaId(null);
       }}
-      onClassic={()=>{setReviewOpen(false);exitBeta(false);setView('quotes');}}/>}
+      />}
     {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
       <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>

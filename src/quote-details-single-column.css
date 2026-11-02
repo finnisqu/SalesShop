@@ -1,0 +1,34 @@
+/* One slim, responsive Quick Quote Details column. Keep its original card width. */
+.sales-app .qmb .qmb-pagecontent .qmb-details-page{display:flex;flex-direction:column;
+ width:100%;max-width:430px;margin:0 auto;padding:0 0 36px;gap:12px;align-items:stretch;
+ grid-template-columns:minmax(0,1fr);}
+.sales-app .qmb .qmb-details-page>.qmb-details-section{width:100%;min-width:0;
+ margin:0;scroll-margin-top:14px;}
+.sales-app .qmb .qmb-details-page :is(.qmb-details-fields,.qmb-details-notes-fields .quote-notes-grid){
+ display:grid;grid-template-columns:minmax(0,1fr);gap:11px;}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced{margin-top:15px;
+ border-top:1px solid var(--qmb-border);padding-top:9px;}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced>summary{cursor:pointer;
+ list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;
+ min-height:44px;padding:8px 0;font-size:12px;font-weight:800;color:var(--qmb-accent);}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced>summary::-webkit-details-marker{display:none;}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced>summary::before{content:'›';font-size:21px;line-height:1;}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced[open]>summary::before{content:'⌄';}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced>summary span{color:var(--qmb-muted);
+ font-size:10px;font-weight:500;line-height:1.35;}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced-body{display:grid;gap:16px;padding-top:12px;}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced-group{display:grid;gap:9px;}
+.sales-app .qmb .qmb-details-page .qmb-details-advanced :is(h4){font-size:12px;
+ margin:0;color:var(--qmb-ink);line-height:1.4;}
+.sales-app .qmb .qmb-details-page .qmb-lifecycle-card.is-embedded{margin:0;
+ padding:14px 0 0;border:0;border-top:1px solid var(--qmb-border);
+ box-shadow:none;border-radius:0;background:transparent;}
+.sales-app .qmb .qmb-details-page .qmb-lifecycle-card.is-embedded>.qmb-details-fields{margin-top:10px;}
+.sales-app .qmb .qmb-details-page .qmb-details-save-note{font-size:11px;
+ color:var(--qmb-muted);line-height:1.5;text-align:left;margin:2px;}
+/* The desktop navigation already provides Documents, Undo/Redo and actions. */
+@media(min-width:901px){.sales-app .qmb .qmb-quote-editor .qmb-pagehead{display:none;}}
+@media(max-width:900px){.sales-app .qmb .qmb-quote-editor .qmb-pagehead{
+ min-height:42px;padding:6px 12px;}}
+@media(max-width:500px){.sales-app .qmb .qmb-details-page{max-width:100%;}
+ .sales-app .qmb .qmb-details-section{padding:12px;}}

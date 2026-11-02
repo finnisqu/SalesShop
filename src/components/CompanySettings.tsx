@@ -251,7 +251,7 @@ export function CompanySettings() {
               <Button variant="primary" onClick={()=>{setQuotesBetaEnabled(true);setAppView('quotes');}}>Open Quotes Beta</Button>
               <Button variant="secondary" onClick={()=>{setQuotesBetaEnabled(false);setAppView('quotes');}}>Open classic Quotes</Button>
             </div>
-            <small className="settings-muted">Preference is saved on this device. Tap Classic in Beta to switch back on any screen size.</small>
+            <small className="settings-muted">Preference is saved on this device. Return to Settings → Beta Features to switch editors.</small>
           </article>
         </section>}
         {tab === 'advanced' && mode === 'cloud' && actualRole === 'owner' && (

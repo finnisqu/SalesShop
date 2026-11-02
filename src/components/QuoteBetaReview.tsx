@@ -17,12 +17,12 @@ import {InitialOpenDetails} from './InitialOpenDetails';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
-export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialFindingId,
+export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   canIssue,sending,error,onIssue,previewedKey,approvedKey,onApprove,reviewedKey,onReview}:{
   quote:Quote;
   onBack:()=>void;onFix:(destination:QuoteAuditDestination)=>void;
   initialFindingId?:string|null;
-  onPreview:()=>void;onClassic:()=>void;
+  onPreview:()=>void;
   canIssue:boolean;sending:boolean;error:string;onIssue:()=>void;
   previewedKey:string|null;approvedKey:string|null;onApprove:(approved:boolean)=>void;
   reviewedKey:string|null;onReview:(key:string|null)=>void;
@@ -133,7 +133,6 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
             {sending?'Issuing…':needsRecheck?'Recheck changes before issuing':scheduleError?'Complete the schedule to issue':'Issue Pricing Schedule · no message sent'}</button>}
           {!canIssue&&editable&&<small className="qmb-audit-help">Your current team role cannot issue schedules.</small>}
         </section>
-        <button type="button" className="qmb-quiet qmb-block" onClick={onClassic}>Continue in Classic Quotes</button>
         {signatureOpen&&createPortal(<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>,document.body)}
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={onBack}>Done reviewing</button></footer>
@@ -259,7 +258,6 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,onClassic,initialF
         {report.blockers.length>0&&editable&&
           <small className="qmb-audit-help">Resolve {report.blockers.length} pricing issue{report.blockers.length===1?'':'s'} before issuing. Your draft is still saved.</small>}
       </section>
-      <button type="button" className="qmb-quiet qmb-block" onClick={onClassic}>Continue in Classic Quotes</button>
       {signatureOpen&&createPortal(<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>,document.body)}
 
     </div>

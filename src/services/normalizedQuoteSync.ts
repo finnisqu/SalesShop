@@ -378,7 +378,18 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
       };
     }));
 
-  await upsertRows('quotes', quotes);
+  // Existing quotes can be safely merged by the authenticated owner.
+  // A brand-new quote must use INSERT, not POST upsert/ON CONFLICT DO UPDATE:
+  // the quote SELECT RLS helper looks up existing rows and cannot yet see a
+  // newly inserted ID while an upsert evaluates its UPDATE/SELECT path.
+  // This preserves the strict owner/org RLS rules instead of relaxing them.
+  const freshQuotes=quotes.filter(row=>!guards.has(String(row.id)));
+  const existingQuotes=quotes.filter(row=>guards.has(String(row.id)));
+  if(supabase&&freshQuotes.length){
+    const {error}=await supabase.from('quotes').insert(freshQuotes);
+    if(error)throw error;
+  }
+  await upsertRows('quotes', existingQuotes);
   await upsertRows('quote_sections', sections);
   await upsertRows('quote_lines', lines);
   await insertRevisionSnapshots(revisions);
