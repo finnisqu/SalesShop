@@ -55,6 +55,7 @@ import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
 import {QuoteSaveAreaLayoutDialog} from './QuoteSaveAreaLayoutDialog';
 import {QuoteInlineAreaName,QuoteInlineAreaRate,QuoteBulkAreaDialog} from './QuoteInlineAreaEditing';
 import {QuoteMatrixBuilder} from './QuoteMatrixBuilder';
+import {QuoteReuseAreaDialog} from './QuoteReuseAreaDialog';
 import {QuoteAreaQuickPanel,type QuickAreaTab} from './QuoteAreaQuickPanel';
 import {captureSavedAreaLayout,readSavedAreaLayouts,writeSavedAreaLayouts,
   savedAreaLayoutScope,upsertSavedAreaLayout,SAVED_AREA_LAYOUT_LIMIT,
@@ -571,6 +572,7 @@ export function QuotesMobileBeta() {
   const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
   const [areaPresetsOpen,setAreaPresetsOpen]=useState(false);
+  const [copyAreaOpen,setCopyAreaOpen]=useState(false);
   const [selectedBulkAreaIds,setSelectedBulkAreaIds]=useState<string[]>([]);
   const [bulkAreaOpen,setBulkAreaOpen]=useState(false);
   const [quickArea,setQuickArea]=useState<{id:string;tab:QuickAreaTab}|null>(null);
@@ -701,7 +703,7 @@ export function QuotesMobileBeta() {
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
-    setSelectedBulkAreaIds([]);setBulkAreaOpen(false);setQuickArea(null);setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
+    setSelectedBulkAreaIds([]);setBulkAreaOpen(false);setQuickArea(null);setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCopyAreaOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
@@ -1180,6 +1182,7 @@ export function QuotesMobileBeta() {
         {quoteTab==='build'&&quote.documentType!=='pricing-schedule'&&<>
           <QuoteMatrixBuilder quote={quote} onAddArea={()=>{addSection(quote.id);}}
             onLayouts={()=>setAreaPresetsOpen(true)}
+            onCopyArea={()=>setCopyAreaOpen(true)}
             onAdvanced={id=>openArea(id)}
             onGeneralTakeoff={()=>{ensureGeneralTakeoff(quote.id);}}/>
 
@@ -1379,6 +1382,8 @@ export function QuotesMobileBeta() {
         </section>
       </div>,document.body);
     })()}
+    {quote&&copyAreaOpen&&<QuoteReuseAreaDialog quote={quote} sources={myQuotes}
+      onClose={()=>setCopyAreaOpen(false)}/>}
     {contextActions.menu}
     <QuoteBetaAreaDeleteDialog manager={areaManager} quote={quote}/>
     <QuoteBetaGeneralDeleteDialog manager={generalManager} quote={quote}/>
