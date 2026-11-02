@@ -1129,6 +1129,7 @@ export function QuotesMobileBeta() {
         <header className="qmb-pagehead">
           <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
           <span className="qmb-chip qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
+          <AppMenu/>
         </header>
         <div className="qmb-quote-sticky">
           <div className="qmb-quote-identity">
