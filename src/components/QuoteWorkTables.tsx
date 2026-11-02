@@ -102,6 +102,27 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
   [...pieces,newTakeoffPiece(pieces.length+1)]);};
  const addSink=()=>{if(id&&sinks.length<100)store.updateTakeoffSinks(quote.id,id,[...sinks,newTakeoffSink()]);};
  const addCharge=(kind:'item'|'discount'|'material'|'sink'='item')=>store.addLine(quote.id,kind,id);
+ const addSpecial=(type:NonNullable<QuoteLine['costCategory']>)=>{
+  const lineId=store.addLine(quote.id,type==='tax'?'tax':type==='miter'?'rate':'item',id);
+  const titles:Record<NonNullable<QuoteLine['costCategory']>,string>={
+   product:'Other product',miter:'Mitered edge',specialty:'Special fabrication',
+   freight:'Freight / shipping',tax:'Tax',tariff:'Tariff',breakage:'Breakage allowance'};
+  const linked=type==='miter'&&!!id;
+  store.updateLine(quote.id,lineId,{
+   description:titles[type],costCategory:type,
+   productCode:type==='product'?'':undefined,supplierName:type==='product'?'':undefined,
+   unitLabel:type==='miter'?'IN':type==='product'?'EA':undefined,
+   pricingMode:linked||type==='product'?'quantity-rate':'direct',
+   quantity:linked?miterInches:type==='product'?1:undefined,
+   rate:undefined,amount:linked||type==='product'?undefined:0,
+   ...(linked?{quantitySource:{kind:'area-scope',sectionId:id!,field:'miterInches',
+      syncMode:'live',capturedValue:miterInches,appliedAt:new Date().toISOString()}}:{}),
+  });
+ };
+ const addLinkedMiter=()=>{
+  if(!id||lines.some(l=>l.costCategory==='miter'&&l.quantitySource?.syncMode==='live'))return;
+  addSpecial('miter');
+ };
  const chooseMethod=(mode:QuoteLine['pricingMode'])=>{
   if(!id||!primary||mode===primary.pricingMode)return;
   const multiplier=savedAreaMultiplier(primary.materialReference,2.2);
@@ -239,7 +260,17 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
            {label}
           </label>)}
         </div>
-        <button type="button" onClick={()=>onAdvanced(id!)}>Edge: {piece.edgeProfile??'Flat'} ↗</button>
+        <div className="qwt-miter-edges" role="group" aria-label={'Piece '+(index+1)+' miter edges'}>
+           {([['miterFront','Front'],['miterLeft','Left'],['miterRight','Right']] as const).map(([flag,label])=>
+             <label key={flag} title={'Miter '+label.toLowerCase()+' edge'}>
+              <input type="checkbox" disabled={!editable} checked={!!piece[flag]}
+               onChange={e=>patchPiece(piece,{[flag]:e.target.checked})}/>{label}</label>)}
+           {(piece.miterFront||piece.miterLeft||piece.miterRight)&&
+             <small>{((piece.miterFront?(piece.lengthIn??0):0)
+             +(piece.miterLeft?(piece.widthIn??0):0)
+             +(piece.miterRight?(piece.widthIn??0):0))*piece.count).toFixed(1)} IN</small>}
+         </div>
+         <button type="button" onClick={()=>onAdvanced(id!)}>Edge: {piece.edgeProfile??'Flat'} ↗</button>
        </div>
        <strong className="qwt-amount">{sf.format(piece.excludedFromQuote?0:takeoffPieceSf(piece))} SF</strong>
        {include(ref,!!piece.excludedFromQuote)}
@@ -333,6 +364,14 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
     {id&&<><button type="button" onClick={addPiece}>+ Piece</button><button type="button" onClick={addSink}>+ Sink</button></>}
     <button type="button" onClick={()=>addCharge('item')}>+ Charge</button>
     <button type="button" onClick={()=>addCharge('discount')}>+ Discount</button>
+    {id&&<button type="button" onClick={addLinkedMiter}
+       disabled={lines.some(l=>l.costCategory==='miter'&&l.quantitySource?.syncMode==='live')}>
+        + Linked miter</button>}
+    <details className="qwt-more-add"><summary>+ More ▾</summary><div>
+      {(['product','specialty','freight','tax','tariff','breakage'] as const).map(type=><button
+       key={type} type="button" onClick={()=>addSpecial(type)}>
+       + {type==='product'?'Other product':type==='freight'?'Shipping':type.charAt(0).toUpperCase()+type.slice(1)}</button>)}
+    </div></details>
     {general&&<><button type="button" onClick={()=>addCharge('material')}>+ Material</button>
       <button type="button" onClick={()=>addCharge('sink')}>+ Sink charge</button></>}
     {id&&<button type="button" className="qwt-advanced-link" onClick={()=>onAdvanced(id)}>Detailed fabrication / catalog ↗</button>}
