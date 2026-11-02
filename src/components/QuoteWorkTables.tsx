@@ -15,6 +15,7 @@ import {SINK_CATEGORIES,SINK_CATEGORY_LABELS} from '../types/sink';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
 import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
 import {QuoteBetaMaterials} from './QuoteBetaMaterials';
+import {QuoteSharedSlabPools} from './QuoteSharedSlabPools';
 import type {QuoteScopeRowRef,QuoteScopeBulkOperation} from '../services/quoteScopeRowBatch';
 import './quote-work-tables.css';
 
@@ -253,8 +254,9 @@ function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectM
      <div className={issue||manualExclusionReview?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
        {issue&&<small title={issue.title}>! Check price</small>}
        {manualExclusionReview&&<small>! Recheck manual price</small>}</div>
-     <div><span>Sinks · active</span><strong>{sinks.reduce((n,s)=>n+(s.excludedFromContract?0:s.count),0)}</strong>
-       {sinks.some(s=>s.excludedFromContract)&&<small>{sinks.reduce((n,s)=>n+s.count,0)} retained</small>}</div>
+     <div><span>Effective / SF</span><strong>{primary&&totalBillableTakeoffSf(pieces)>0
+       ?money.format(quoteLineAmount(primary)/roundedBillableTakeoffSf(pieces,section.scope?.billableSfRounding)):'—'}</strong>
+       <small>{sinks.reduce((n,s)=>n+(s.excludedFromContract?0:s.count),0)} active sinks</small></div>
    </div>:<div className="qwt-general-total"><span>General charges</span>
     <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
    <button type="button" className="qwt-calculator" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
@@ -529,10 +531,14 @@ function CalculatorDrawer({quote,section,onClose,onAdvanced}:{
         {!generalLines.length&&<small>No General charges to cost yet.</small>}
         <small>Blank means unknown, not $0. Costs stay private and do not automatically change customer selling prices.</small>
        </section></>}
+    <details className="qwt-shared-drawer">
+      <summary>Shared slab buying · automatic when compatible</summary>
+      <QuoteSharedSlabPools quote={quote}/>
+    </details>
    </div>
    <footer><button type="button" onClick={onClose}>Done</button></footer>
   </section>
- </div>,document.body);
+ </div>,document.querySelector('.sales-app')??document.body);
 }
 export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralTakeoff}:{
  quote:Quote;onAddArea:()=>void;onLayouts:()=>void;onAdvanced:(id:string)=>void;onGeneralTakeoff:()=>void;
