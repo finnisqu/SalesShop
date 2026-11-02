@@ -109,6 +109,7 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(gridKeyboard).toContain('nextQuickGridCell');
   expect(gridKeyboard).toContain("if(editing)target.blur()");
   expect(gridKeyboard).toContain("requestAnimationFrame");
+  expect(gridKeyboard).toContain("navigator.clipboard.writeText(text)");
   expect(areas).toContain('onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}');
   expect(takeoffs).toContain('onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}');
   expect(areas).toContain('data-quick-grid-editable');
