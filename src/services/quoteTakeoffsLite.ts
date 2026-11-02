@@ -262,7 +262,7 @@ export function takeoffOwnedScope(scope:QuoteAreaScope|undefined):boolean {
 }
 export function sectionTakeoffSf(section:QuoteSection):number|undefined {
   if(!takeoffOwnedScope(section.scope))return undefined;
-  return totalBillableTakeoffSf(section.scope!.takeoffPieces!);
+  return roundedBillableTakeoffSf(section.scope!.takeoffPieces!,section.scope?.billableSfRounding);
 }
 
 /** A single atomic edit updates tops + 4-inch splash SF and ONLY its live-linked
