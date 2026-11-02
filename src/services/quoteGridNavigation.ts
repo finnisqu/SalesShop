@@ -24,7 +24,7 @@ export function nextQuickGridCell(cells:readonly QuickGridCell[],
  return choices[0]?.index??null;
 }
 type GridKeyEvent={
- key:string;shiftKey:boolean;target:EventTarget|null;
+ key:string;shiftKey:boolean;ctrlKey:boolean;metaKey:boolean;target:EventTarget|null;
  preventDefault:()=>void;
 };
 /** Called on the worksheet root, on the capture phase.
@@ -34,6 +34,18 @@ export function handleQuickGridKey(event:GridKeyEvent,root:HTMLElement):void{
  const target=event.target;
  if(!(target instanceof HTMLElement))return;
  const editing=target.matches('input,textarea,[contenteditable="true"]');
+ // Copy the focused display value without needing to highlight the text.
+ // Native copy still applies inside text inputs and on browsers without Clipboard API.
+ if(!editing&&(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='c'
+   &&target.hasAttribute('data-quick-grid-editable')
+   &&typeof navigator!=='undefined'&&navigator.clipboard?.writeText){
+  const text=target.textContent?.trim();
+  if(text){
+   event.preventDefault();
+   void navigator.clipboard.writeText(text).catch(()=>{});
+  }
+  return;
+ }
  const direction:QuickGridDirection|undefined=
   event.key==='Tab'?(event.shiftKey?'previous':'next'):
   event.key==='Enter'&&editing?'down':
