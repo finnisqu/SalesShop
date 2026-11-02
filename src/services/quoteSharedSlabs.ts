@@ -10,10 +10,15 @@ export function slabPoolMaterialKey(section:QuoteSection):string|null{
  const scope=section.scope;
  const ref=scope?.takeoffMaterialReference;
  const snap=ref?.snapshot;
- const id=(snap?.materialId??ref?.materialId??scope?.takeoffMaterial??'').trim().toLowerCase();
+ // Free-text labels are not safe identities: two vendors may both sell a
+ // material called "White Quartz" with incompatible slabs and pricing.
+ const id=(snap?.materialId??ref?.materialId??'').trim().toLowerCase();
  if(!id)return null;
- return JSON.stringify([id,snap?.variantId??ref?.variantId??'',snap?.thickness??'',
-   snap?.finish??'',snap?.purchaseOptionId??ref?.purchaseOptionId??'']);
+ return JSON.stringify([
+   id,snap?.brand??'',snap?.supplier??'',snap?.variantId??ref?.variantId??'',
+   snap?.thickness??'',snap?.finish??'',snap?.purchaseOptionId??ref?.purchaseOptionId??'',
+   snap?.formatKind??'',snap?.formatName??'',snap?.lengthIn??null,snap?.widthIn??null,
+ ]);
 }
 export interface SlabPoolEstimate {
  pool:QuoteSlabPool;valid:boolean;reason?:string;materialKey:string;
@@ -29,7 +34,7 @@ export function estimateQuoteSlabPool(quote:Quote,pool:QuoteSlabPool):SlabPoolEs
    measuredSf:0,independentSlabCount:0,allocation,fractionalSlabs,
  });
  if(!Array.isArray(pool.sectionIds)||new Set(pool.sectionIds).size!==pool.sectionIds.length
-   ||pool.sectionIds.length<2)return invalid('Choose at least two different Areas.');
+   ||pool.sectionIds.length<2||pool.sectionIds.length>50)return invalid('Choose 2–50 different Areas.');
  if(!finitePositive(pool.slabAreaSf)||!Number.isFinite(pool.slabCost)||pool.slabCost<0
    ||!finitePositive(pool.yield)||pool.yield>1)return invalid('Enter slab size, buying cost and yield.');
  const areas=pool.sectionIds.map(id=>quote.sections.find(s=>s.id===id));
@@ -40,9 +45,12 @@ export function estimateQuoteSlabPool(quote:Quote,pool:QuoteSlabPool):SlabPoolEs
  const sf=sections.map(areaOf);
  if(sf.some(value=>!finitePositive(value)))return invalid('Measure all Areas before pooling slabs.');
  const total=sf.reduce((a,b)=>a+b,0);
- const count=pool.slabCountOverride??Math.ceil(total/(pool.slabAreaSf*pool.yield));
+ const minimumCount=Math.ceil(total/(pool.slabAreaSf*pool.yield));
+ const count=pool.slabCountOverride??minimumCount;
  if(!Number.isInteger(count)||count<1||count>100000)
    return invalid('Use a positive whole-slab count.');
+ if(count<minimumCount)
+   return invalid('Manual slab count is below the minimum implied by combined SF and usable yield. Adjust yield or purchase count.');
  const other=quote.slabPools??[];
  if(other.some(p=>p.id!==pool.id&&p.sectionIds.some(id=>pool.sectionIds.includes(id))))
    return invalid('An Area is already assigned to another slab pool.');
