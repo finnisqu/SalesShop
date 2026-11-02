@@ -1164,7 +1164,8 @@ export function QuotesMobileBeta() {
             onLayouts={()=>setAreaPresetsOpen(true)}
             onAdvanced={id=>openArea(id)}
             onGeneralTakeoff={()=>{ensureGeneralTakeoff(quote.id);}}/>
-          <QuoteSharedSlabPools quote={quote}/>
+
+
         </>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
