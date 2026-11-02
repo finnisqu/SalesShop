@@ -220,20 +220,23 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
     <label><input type="checkbox" checked={refs.every(row=>selected.has(rowKey(row)))}
      onChange={e=>onSelectMany(refs,e.target.checked)}/> Select all lines</label>
     <small>{refs.filter(row=>selected.has(rowKey(row))).length} selected here</small></div>}
-  <div className="qwt-table" onKeyDown={(event:KeyboardEvent<HTMLDivElement>)=>{
-   if(event.key!=='Enter'||event.nativeEvent.isComposing||!(event.target instanceof HTMLInputElement)
-      ||event.target.type==='checkbox'||event.defaultPrevented)return;
+  <div className="qwt-table" role="grid" aria-label={(section?.title||'General')+' editable worksheet'}
+   onKeyDown={(event:KeyboardEvent<HTMLDivElement>)=>{
+   if(!['Enter','ArrowDown','ArrowUp'].includes(event.key)||event.nativeEvent.isComposing
+      ||!(event.target instanceof HTMLInputElement)||event.target.type==='checkbox'||event.defaultPrevented)return;
    const cell=event.target;
    const inputs=Array.from(event.currentTarget.querySelectorAll<HTMLInputElement>(
      'input.qwt-input:not(:disabled), input.qwt-description:not(:disabled)'));
    const index=inputs.indexOf(cell);
    if(index<0)return;
+   const next=event.key==='ArrowUp'?index-1:index+1;
+   if(next<0||next>=inputs.length)return;
    event.preventDefault();cell.blur();
-   if(index+1<inputs.length)requestAnimationFrame(()=>inputs[index+1]?.focus());
+   requestAnimationFrame(()=>inputs[next]?.focus());
   }}>
    <div className="qwt-columns" aria-hidden="true"><span></span><span>Type / description</span>
     <span>Length</span><span>Width</span><span>Qty</span><span>Detail / rate</span>
-    <span>SF / amount</span><span>Contract</span></div>
+    <span>SF / amount</span><span>Private cost</span><span>Contract</span></div>
    {!!pieces.length&&category('Pieces',pieces.length)}
    {pieces.map((piece,index)=>{
      const ref:QuoteScopeRowRef={kind:'piece',id:piece.id,sectionId:id};
@@ -273,6 +276,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
          <button type="button" onClick={()=>onAdvanced(id!)}>Edge: {piece.edgeProfile??'Flat'} ↗</button>
        </div>
        <strong className="qwt-amount">{sf.format(piece.excludedFromQuote?0:takeoffPieceSf(piece))} SF</strong>
+       <span className="qwt-muted-cell" title="Part of the Area material cost">Area cost</span>
        {include(ref,!!piece.excludedFromQuote)}
       </div>
       {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&<div className={'qwt-line qwt-splash-line'+
@@ -287,6 +291,7 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
         <small>{[piece.backsplash?'Back':null,piece.leftSplash?'Left':null,piece.rightSplash?'Right':null].filter(Boolean).join(' / ')}</small>
        </div>
        <strong className="qwt-amount">{sf.format(piece.excludeSplashFromQuote||piece.excludedFromQuote?0:takeoffPieceSplashSf(piece))} SF</strong>
+       <span className="qwt-muted-cell">Area cost</span>
        {include({kind:'splash',id:piece.id,sectionId:id},!!piece.excludeSplashFromQuote)}
       </div>}
      </div>;
@@ -316,6 +321,9 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
        <NumberCell label={'Sink '+(index+1)+' price'} value={sink.unitPrice} disabled={!editable}
         onCommit={v=>patchSink(sink,{unitPrice:v})}/></div>
       <strong className="qwt-amount">{excluded?'—':sink.includeInPricing?money.format(sink.count*(sink.unitPrice??0)):'Spec only'}</strong>
+      <NumberCell label={'Private sink cost per unit for '+(sink.name||'sink')}
+        value={sink.internalCostOverride??sink.sinkReference?.snapshot?.internalCost}
+        disabled={!editable} onCommit={value=>patchSink(sink,{internalCostOverride:value})}/>
       {include(ref,excluded)}
      </div>;
    })}
@@ -324,37 +332,55 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
      const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:line.sectionId};
      const excluded=!line.includeInTotal;
      const changes=(patch:Partial<QuoteLine>)=>store.updateLine(quote.id,line.id,patch);
-     const incomplete=!excluded&&line.pricingMode!=='none'&&
-      (line.pricingMode==='quantity-rate'?line.rate===undefined||line.quantity===undefined:
-       line.amount===undefined);
+     const incomplete=!excluded&&(line.internalOnlyCost&&line.internalCost===undefined||
+      line.pricingMode!=='none'&&(line.pricingMode==='quantity-rate'
+       ?line.rate===undefined||line.quantity===undefined:line.amount===undefined));
     return <div className={'qwt-line'+(excluded?' is-excluded':'')+(incomplete?' has-issue':'')} key={line.id}>
        {box(ref)}
        <label className="qwt-title-cell"><small>{line.kind.replace('-',' ')}</small>
        <input className="qwt-input qwt-description" aria-label={'Charge '+line.id+' description'}
         value={line.description} disabled={!editable} onChange={e=>changes({description:e.target.value})}/>
-       <select aria-label={'Charge '+line.id+' pricing method'} value={line.pricingMode}
+       <select aria-label={'Charge '+line.id+' pricing method'}
+        value={line.internalOnlyCost?'internal-only':line.pricingMode}
         disabled={!editable} onChange={e=>{
-         const mode=e.target.value as QuoteLine['pricingMode'];
-         if(mode==='quantity-rate')changes({pricingMode:mode,quantity:line.quantity??1,rate:line.rate??undefined});
-         else if(mode==='direct')changes({pricingMode:mode,amount:line.amount??quoteLineAmount(line)});
-         else changes({pricingMode:mode});
+         const mode=e.target.value as QuoteLine['pricingMode']|'internal-only';
+         if(mode==='internal-only')changes({pricingMode:'none',internalOnlyCost:true,
+            includeInTotal:true,customerVisible:false,amount:undefined,rate:undefined});
+         else if(mode==='quantity-rate')changes({pricingMode:mode,internalOnlyCost:false,
+            customerVisible:true,quantity:line.quantity??1,rate:line.rate??undefined});
+         else if(mode==='direct')changes({pricingMode:mode,internalOnlyCost:false,
+            customerVisible:true,amount:line.amount??quoteLineAmount(line)});
+         else changes({pricingMode:mode,internalOnlyCost:false});
         }}>
         <option value="direct">Manual amount</option>
         <option value="quantity-rate">Quantity × rate</option>
         <option value="none">Notes only</option>
+        <option value="internal-only">Absorbed cost (private)</option>
         {line.pricingMode==='slab-multiplier'&&<option value="slab-multiplier">Slab multiplier</option>}
        </select>
       </label>
-       <span>—</span><span>—</span>
+       {line.costCategory==='product'
+        ?<input className="qwt-input" aria-label={'Supplier for '+line.description}
+           placeholder="Supplier" value={line.supplierName??''} disabled={!editable}
+           onChange={e=>changes({supplierName:e.target.value})}/>
+        :<span className="qwt-muted-cell">{line.costCategory||'—'}</span>}
+       {line.costCategory==='product'
+        ?<input className="qwt-input" aria-label={'SKU for '+line.description}
+           placeholder="SKU" value={line.productCode??''} disabled={!editable}
+           onChange={e=>changes({productCode:e.target.value})}/>
+        :<span className="qwt-muted-cell">—</span>}
        {line.pricingMode==='quantity-rate'?<NumberCell label={'Charge '+line.id+' quantity'}
-          value={line.quantity} min={0} disabled={!editable} onCommit={v=>changes({quantity:v})}/>:<span>—</span>}
+          value={line.quantity} min={0} disabled={!editable||line.quantitySource?.syncMode==='live'}
+          onCommit={v=>changes({quantity:v})}/>:<span>—</span>}
        <div className="qwt-detail">{line.pricingMode==='none'?<span>—</span>:
         line.pricingMode==='quantity-rate'
          ?<NumberCell label={'Charge '+line.id+' rate'} value={line.rate} disabled={!editable}
            onCommit={v=>changes({rate:v})}/>
          :<NumberCell label={'Charge '+line.id+' amount'} value={line.amount} disabled={!editable}
            onCommit={v=>changes({amount:v})}/>}</div>
-       <strong className="qwt-amount">{money.format(excluded?0:quoteLineAmount(line))}</strong>
+       <strong className="qwt-amount">{line.internalOnlyCost?'Private cost':money.format(excluded?0:quoteLineAmount(line))}</strong>
+       <NumberCell label={'Private total cost for '+line.description} value={line.internalCost}
+          disabled={!editable} onCommit={value=>changes({internalCost:value})}/>
        {include(ref,excluded)}
      </div>;
    })}
