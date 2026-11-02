@@ -8,10 +8,14 @@ import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
+import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
+import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
+import {useAuthStore} from '../store/authStore';
+import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
 import type { CompanyKind } from '../types/crm';
 
-type ConnectionsTab = 'companies' | 'people' | 'deals' | 'activity';
+type ConnectionsTab = 'companies' | 'people' | 'deals' | 'quotes' | 'activity';
 type CompanyFilter = 'all' | 'customer' | 'non-customer';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
@@ -32,6 +36,10 @@ const dealColumns:ConnectionColumn[]=[
  {key:'name',label:'Deal name'},{key:'company',label:'Company'},{key:'stage',label:'Stage'},
  {key:'due',label:'Due'},{key:'amount',label:'Value'},{key:'next',label:'Next action'},
  {key:'updated',label:'Updated'}];
+const quoteColumns:ConnectionColumn[]=[
+ {key:'name',label:'Document'},{key:'number',label:'Number'},{key:'type',label:'Type'},
+ {key:'company',label:'Company'},{key:'deal',label:'Deal'},{key:'status',label:'Status'},
+ {key:'value',label:'Value'},{key:'updated',label:'Updated'}];
 
 /** Historical Overview/Activity selections must not revive hidden dashboard/log tabs. */
 export function resolveConnectionsLandingTab(stored: string | null): ConnectionsTab {
@@ -60,6 +68,8 @@ export function Connections() {
   const [tab, setTab] = useState<ConnectionsTab>(initialTab);
   const [query, setQuery] = useState('');
   const [moreOpen, setMoreOpen] = useState(false);
+  const [preview,setPreview]=useState<PreviewRecord|null>(null);
+  const [quoteRecordId,setQuoteRecordId]=useState<string|null>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!moreOpen) return;
@@ -96,6 +106,8 @@ export function Connections() {
   const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
   const quotes = useQuoteStore((state) => state.quotes);
+  const authMode=useAuthStore(state=>state.mode);
+  const authUser=useAuthStore(state=>state.user?.id);
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createContact = useCrmStore((state) => state.createContact);
   const createDeal = useCrmStore((state) => state.createProject);
@@ -112,6 +124,7 @@ export function Connections() {
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
+    setPreview(null);setQuoteRecordId(null);
     setTab(next); setQuery(''); setNotice(''); setMoreOpen(false);
     setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
     // Activity history is an on-demand utility, never the default landing page.
@@ -123,6 +136,10 @@ export function Connections() {
   const companiesById = useMemo(() => new Map(companies.map((company) => [company.id, company])), [companies]);
   const projectsById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
   const needle = query.trim().toLowerCase();
+  // The Connections metadata directory mirrors My Documents ownership, not
+  // team-wide private quotes or the old global sales dashboard.
+  const visibleQuotes=useMemo(()=>authMode==='cloud'
+    ?quotes.filter(q=>q.ownerUserId===authUser):quotes,[quotes,authMode,authUser]);
   const companyRows = useMemo(() => companies
     .filter((company) => companyFilter === 'all' || company.kind === companyFilter)
     .filter((company) => findText(company.name, ...(company.aliases ?? [])).includes(needle))
@@ -134,6 +151,10 @@ export function Connections() {
   const projectRows = useMemo(() => projects
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction).includes(needle))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
+  const quoteRows=useMemo(()=>visibleQuotes.filter(q=>
+    findText(q.title,q.companyName,q.contactName,displayQuoteNumber(q),q.status,
+      projectsById.get(q.projectId??'')?.name).includes(needle))
+    .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[visibleQuotes,projectsById,needle]);
   const activityRows = useMemo(() => [...activities]
     .filter((activity) => findText(activity.summary, activity.type,
       companiesById.get(activity.companyId ?? '')?.name,
@@ -158,9 +179,17 @@ export function Connections() {
     values:{name:d.name,company:d.companyName??companiesById.get(d.companyId??'')?.name??'',
       stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
       next:d.nextAction??'',updated:timeLabel(d.updatedAt)}}));
+  const quoteTableRows:ConnectionTableRow[]=quoteRows.map(q=>({
+    id:q.id,name:q.title||'Untitled document',
+    association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
+    values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
+      type:q.documentType==='pricing-schedule'?'Pricing schedule':q.documentType==='change-order'?'Change order':'Quote',
+      company:q.companyName??'',deal:projectsById.get(q.projectId??'')?.name??'',
+      status:q.status+(q.archivedAt?' · Archived':''),
+      value:money.format(quoteTotal(q)),updated:timeLabel(q.updatedAt)}}));
   const bulkTask=(items:ConnectionTableRow[])=>{
     beginTaskPromotion({target:'task',title:'Follow up: '+items.length+' '+tab,
-      sourceLabel:'Connections selection',associations:items.map(x=>x.association)});
+      sourceLabel:'Connections selection',associations:items.flatMap(x=>x.association?[x.association]:[])});
   };
 
   const addCompany = (event: FormEvent) => {
@@ -222,6 +251,12 @@ export function Connections() {
     <CompanyRecordPage companyId={focusedCompanyId} onBack={backToCompanies} />
   </main>;
 
+  if(quoteRecordId)return <main className="connections-workspace">
+    <QuoteRecordMetadataPage quoteId={quoteRecordId} onBack={()=>{
+      setQuoteRecordId(null);chooseTab('quotes');
+    }} onPreview={()=>{setQuoteRecordId(null);setPreview({kind:'quote',id:quoteRecordId});}}/>
+  </main>;
+  const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
   return (
     <main className="connections-workspace">
       <PageHeader className="connections-heading connections-foundation-heading"
@@ -238,11 +273,13 @@ export function Connections() {
             onClick={() => setMoreOpen((value) => !value)}>More <span aria-hidden="true">⋯</span></button>
           {moreOpen && <div id="connections-more-menu" className="connections-more-menu">
             <button type="button" onClick={() => chooseTab('activity')}>Activity history</button>
+            <button type="button" onClick={() => chooseTab('quotes')}>Quotes · metadata</button>
           </div>}
         </div>
       </div>
-      {tab === 'activity' && <div className="connections-history-heading">
-        <div><strong>Activity history</strong><p>A reference log of existing record events.</p></div>
+      {(tab === 'activity'||tab==='quotes') && <div className="connections-history-heading">
+        <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
+          <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
         <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
       </div>}
 
@@ -275,13 +312,13 @@ export function Connections() {
               </form>}
               <p className="connections-count">{companyRows.length} companies · select to open the full account record</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
-                rows={companyTableRows} onOpen={openCompany} onBulkTask={bulkTask}/>
+                rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
                   const peopleCount = contacts.filter((person) => person.companyId === company.id).length;
                   const projectCount = projects.filter((project) => project.companyId === company.id).length;
                   const companyQuotes = quotesForCompany(company, projects, quotes).filter((q) => !q.archivedAt);
-                  return <button type="button" key={company.id} className="connections-record" onClick={() => openCompany(company.id)}>
+                  return <button type="button" key={company.id} className="connections-record" onClick={() => previewRecord('company',company.id)}>
                     <span className="connections-record-eyebrow">{company.kind === 'non-customer' ? 'Partner / other' : 'Customer / prospect'}</span>
                     <strong>{company.name}</strong>
                     <small>{peopleCount} people · {projectCount} deals · {companyQuotes.length} linked quotes</small>
@@ -305,9 +342,9 @@ export function Connections() {
               </form>}
               <p className="connections-count">{peopleRows.length} people · select a person to open their full record</p>
               <ConnectionsTable key="people" tableKey="people" columns={peopleColumns}
-                rows={peopleTableRows} onOpen={openPerson} onBulkTask={bulkTask}/>
+                rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}/>
               <div className="connections-card-grid connections-legacy-cards">
-                {peopleRows.map((person) => <button type="button" className="connections-record connections-person-record" key={person.id} onClick={() => openPerson(person.id)}>
+                {peopleRows.map((person) => <button type="button" className="connections-record connections-person-record" key={person.id} onClick={() => previewRecord('person',person.id)}>
                   <span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
                   <strong>{person.name || person.email || 'Unnamed contact'}</strong>
                   <small>{[person.title,person.email,person.phone].filter(Boolean).join(' · ') || 'No contact details'}</small>
@@ -332,11 +369,11 @@ export function Connections() {
             </form>}
             <p className="connections-count">{projectRows.length} deals · stage, bid dates and quotes on each deal record</p>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
-              rows={dealTableRows} onOpen={openProject} onBulkTask={bulkTask}/>
+              rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
                 const linked = quotesForProject(project, quotes).filter((q) => !q.archivedAt);
-                return <button type="button" key={project.id} className="connections-record" onClick={() => openProject(project.id)}>
+                return <button type="button" key={project.id} className="connections-record" onClick={() => previewRecord('deal',project.id)}>
                   <span className="connections-record-eyebrow">{project.stage}</span>
                   <strong>{project.name}</strong>
                   <small>{[project.companyName,project.dueDate ? `Due ${timeLabel(project.dueDate)}` : undefined,`${linked.length} linked quotes`].filter(Boolean).join(' · ')}</small>
@@ -346,6 +383,22 @@ export function Connections() {
               })}
             </div>
             {!projectRows.length && <StatusText state="empty" className="connections-empty">No deals match your search.</StatusText>}
+          </section>}
+          {tab === 'quotes' && <section className="connections-directory" aria-label="Quote metadata directory">
+            <p className="connections-count">{quoteRows.length} documents · click a name for its preview</p>
+            <ConnectionsTable key="quotes" tableKey="quotes" columns={quoteColumns}
+              rows={quoteTableRows} onOpen={id=>previewRecord('quote',id)} onBulkTask={bulkTask}/>
+            <div className="connections-mobile-quote-records">
+              {quoteRows.map(q=><button type="button" key={q.id} className="connections-record"
+                onClick={()=>previewRecord('quote',q.id)}>
+                <strong>{q.title||displayQuoteNumber(q)}</strong>
+                <small>{displayQuoteNumber(q)} · {q.companyName||'No company'} · {q.status}</small>
+                <span className="connections-record-arrow" aria-hidden="true">›</span>
+              </button>)}
+            </div>
+            {!quoteRows.length&&<StatusText state="empty" className="connections-empty">
+              No quote metadata matches. Check My Sales Documents or your search.
+            </StatusText>}
           </section>}
           {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
             <p className="connections-count">{activityRows.length} recorded events. This is reference history, not a follow-up checklist.</p>
@@ -360,6 +413,9 @@ export function Connections() {
               {!activityRows.length && <StatusText state="empty" className="connections-empty">No recorded history is available.</StatusText>}
             </div>
           </section>}
+      {preview&&<RecordPreviewDrawer record={preview}
+        onClose={()=>setPreview(null)} onSelect={setPreview}
+        onGoToQuotePage={id=>{setPreview(null);setQuoteRecordId(id);setTab('quotes');}}/>}
       <footer className="connections-footer">
         <span>People and sales records are managed here. Team accounts, permissions, and invitations belong in Settings.</span>
         <button type="button" onClick={() => setView('settings')}>Open team settings →</button>
