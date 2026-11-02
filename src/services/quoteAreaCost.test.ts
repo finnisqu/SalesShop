@@ -145,6 +145,28 @@ describe('Area slab yield and internal margin',()=>{
     expect(cost.marginPercent).toBeUndefined();
     expect(cost.knownCostSpreadPercent).toBeUndefined();
   });
+  it('keeps repeated-unit vanity prices unchanged while labor coverage is completed',()=>{
+    const q=fixture();
+    q.sections[0].title='Multi-family vanities';
+    q.sections[0].scope!.takeoffPieces=[
+      {id:'repeated',name:'72-inch vanity',count:20,lengthIn:72,widthIn:22},
+    ];
+    const originalSell=q.lines.map(line=>({...line}));
+    const partial=projectAreaCost(q,q.sections[0]);
+    expect(partial.measuredSf).toBe(220);
+    expect(partial.costCoverage.shop).toBe(false);
+    expect(partial.costCoverage.install).toBe(false);
+    expect(partial.marginPercent).toBeUndefined();
+    q.sections[0].scope!.shopCostRateSf=14.5;
+    q.sections[0].scope!.installCostRateSf=5;
+    const full=projectAreaCost(q,q.sections[0]);
+    expect(full.shopCost).toBe(3190);
+    expect(full.installCost).toBe(1100);
+    expect(full.complete).toBe(true);
+    expect(full.marginPercent).toBeDefined();
+    expect(q.lines).toEqual(originalSell);
+  });
+
   it('prices three calculator modes but rejects unfinished multiplier inputs',()=>{
     expect(calculateAreaCustomerPrice('manual',{sf:50,amount:2500})).toBe(2500);
     expect(calculateAreaCustomerPrice('sf',{sf:50,rate:49})).toBe(2450);
