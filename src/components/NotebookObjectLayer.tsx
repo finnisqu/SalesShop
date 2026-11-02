@@ -19,6 +19,7 @@ const POST_IT_TONES: PostItTone[] = ['yellow', 'pink', 'blue', 'green'];
 
 interface NotebookObjectLayerProps {
   entry: NotebookEntry;
+  readOnly?: boolean;
 }
 
 interface InteractionState {
@@ -294,7 +295,7 @@ function ObjectFrame({ entryId, object, selected, onPromote }: {
   );
 }
 
-export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
+export function NotebookObjectLayer({ entry, readOnly = false }: NotebookObjectLayerProps) {
   const context=useAppContextMenu();
   const beginPromotion=usePersonalTaskStore(s=>s.beginPromotion);
   const activeTool = useNotebookStore((state) => state.activeTool);
@@ -305,7 +306,7 @@ export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!selectionEnabled || !selectedObjectId || (event.key !== 'Delete' && event.key !== 'Backspace')) return;
+      if (readOnly || !selectionEnabled || !selectedObjectId || (event.key !== 'Delete' && event.key !== 'Backspace')) return;
       const target = event.target as HTMLElement | null;
       if (target?.matches('input, textarea, [contenteditable="true"]') || target?.closest('.spreadsheet-object-editor')) return;
       event.preventDefault();
@@ -313,14 +314,15 @@ export function NotebookObjectLayer({ entry }: NotebookObjectLayerProps) {
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [deleteObject, entry.id, selectedObjectId, selectionEnabled]);
+  }, [deleteObject, entry.id, selectedObjectId, selectionEnabled, readOnly]);
 
   return (
-    <div className={`notebook-object-layer ${selectionEnabled ? 'is-selecting' : ''}`} onPointerDown={(event) => { if (selectionEnabled && event.target === event.currentTarget) selectObject(null); }} aria-label="Notebook objects">
+    <div className={`notebook-object-layer ${selectionEnabled && !readOnly ? 'is-selecting' : ''}`} onPointerDown={(event) => { if (selectionEnabled && event.target === event.currentTarget) selectObject(null); }} aria-label="Notebook objects">
       {entry.objects.map((object) => (
         <ObjectFrame key={object.id} entryId={entry.id} object={object}
-          selected={selectionEnabled && selectedObjectId === object.id}
+          selected={!readOnly && selectionEnabled && selectedObjectId === object.id}
           onPromote={(event,item)=>{
+            if(readOnly)return;
             context.openPointer(event,'Notebook '+item.type,
               notebookPromotionActions({title:notebookObjectTaskText(item),
                 linked:{type:'notebook',id:entry.id},sourceLabel:entry.title||'Notebook page',

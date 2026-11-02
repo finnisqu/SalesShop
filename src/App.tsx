@@ -55,6 +55,8 @@ import {taskScope,usePersonalTaskStore} from './store/personalTaskStore';
 import {startPersonalTaskCloudSync} from './services/personalTaskCloudSync';
 import {TasksWorkspace} from './components/TasksWorkspace';
 import {NotebookPromotionDialog} from './components/NotebookPromotionDialog';
+import {NotebookCompanionPage} from './components/NotebookCompanionPage';
+import './notebook-split-folders.css';
 import './catalog-collections.css';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
@@ -114,6 +116,7 @@ function App() {
   const renameEntry = useNotebookStore((state) => state.renameEntry);
   const projects = useCrmStore((state) => state.projects);
   const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
+  const [companionId,setCompanionId]=useState<string|null>(null);
   const taskUserId=useAuthStore(s=>s.user?.id);
   const tasksScope=taskScope(mode,organizationId,taskUserId);
   useEffect(()=>{
@@ -156,6 +159,16 @@ function App() {
   useEffect(() => { void loadCompanyPalette(mode === 'cloud' ? organizationId : null); }, [mode, organizationId, loadCompanyPalette]);
 
   const entry = entries.find((candidate) => candidate.id === activeEntryId) ?? null;
+  const companion = entries.find(candidate=>candidate.id===companionId&&candidate.id!==activeEntryId)??null;
+  const companionOptions=entries.filter(candidate=>candidate.id!==activeEntryId&&!candidate.hidden);
+  const openCompanion=(id:string)=>{
+    if(id!==activeEntryId&&entries.some(candidate=>candidate.id===id))setCompanionId(id);
+  };
+  const makeCompanionPrimary=()=>{
+    if(!companion)return;
+    useNotebookStore.getState().selectEntry(companion.id);
+    setCompanionId(entry?.id??null);
+  };
   const linkedProject = entry?.context?.projectId
     ? projects.find((project) => project.id === entry.context?.projectId) ?? null
     : null;
@@ -208,10 +221,23 @@ function App() {
       ) : view === 'settings' ? (
         <CompanySettings />
       ) : (
-        <main className="notebook-workspace">
-          <Sidebar />
+        <main className={`notebook-workspace ${companion?'is-side-by-side':''}`}>
+          <Sidebar onOpenBeside={openCompanion} companionId={companion?.id??null}/>
           <section className="binder-stage">
             <Toolbar entry={entry} editor={notebookEditor} />
+            <div className="notebook-split-controls">
+              <strong>{companion?'Side-by-side':'Single page'}</strong>
+              {companion&&<select aria-label="Choose second Notebook page" value={companion.id}
+                onChange={event=>openCompanion(event.target.value)}>
+                {companionOptions.map(page=><option key={page.id} value={page.id}>{page.title||'Untitled page'}</option>)}
+              </select>}
+              <button type="button" disabled={!companion&&companionOptions.length===0}
+                aria-pressed={!!companion} onClick={()=>{
+                  if(companion)setCompanionId(null);
+                  else setCompanionId(companionOptions[0]?.id??null);
+                }}>{companion?'Close split':'▥ Side by side'}</button>
+            </div>
+            <div className={`notebook-panes ${companion?'is-split':''}`}>
             <div className="desk-surface">
               <article className={`paper-sheet paper-${entry.paperStyle} tone-${entry.tone} texture-${entry.texture}`}>
                 <div className="paper-edge" aria-hidden="true" />
@@ -245,6 +271,9 @@ function App() {
                   <NotebookObjectLayer key={`objects-${entry.id}`} entry={entry} />
                 </div>
               </article>
+            </div>
+            {companion&&<NotebookCompanionPage entry={companion} onMakePrimary={makeCompanionPrimary}
+              onClose={()=>setCompanionId(null)}/>}
             </div>
           </section>
         </main>

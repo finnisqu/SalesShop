@@ -1,0 +1,35 @@
+/* Two-pane notebook: companion content is fully visible, but only the primary owns editing tools. */
+.notebook-split-controls{display:flex;gap:8px;min-height:38px;flex:0 0 auto;align-items:center;justify-content:flex-end;
+ padding:5px 10px;border-bottom:1px solid var(--ss-theme-border,#cac6b9);
+ background:var(--ss-theme-card,#f4f2ec);color:var(--ss-theme-ink,#494639);}
+.notebook-split-controls strong{font-size:10px;margin-right:auto;font-weight:750}
+.notebook-split-controls button,.notebook-split-controls select,.notebook-companion-header button{
+ min-height:28px;border:1px solid var(--ss-theme-border,#c9c6bc);border-radius:6px;
+ background:var(--ss-theme-card,#f8f7f2);color:var(--ss-theme-ink,#363b3b);padding:4px 9px;font-size:11px;}
+.notebook-split-controls select{min-width:90px;max-width:260px;flex:0 1 220px;}
+.notebook-panes{display:flex;flex:1;min-height:0;min-width:0;}
+.notebook-panes>.desk-surface{flex:1;min-width:0;min-height:0;}
+.notebook-panes.is-split>.desk-surface{flex:1 1 50%;width:50%;padding:14px 12px 55px;}
+.notebook-companion{flex:1 1 50%;width:50%;min-width:0;min-height:0;display:flex;flex-direction:column;
+ border-left:1px solid var(--ss-theme-border,#bbb6a8);background:#d7d3c8;}
+.notebook-companion-header{min-height:45px;display:flex;align-items:center;gap:8px;justify-content:space-between;
+ padding:7px 10px;background:var(--ss-theme-card,#f4f2ec);color:var(--ss-theme-ink,#343839);}
+.notebook-companion-header>span{display:grid;min-width:0;gap:2px;}
+.notebook-companion-header small{font-size:8px;color:var(--ss-theme-muted,#6c7277);letter-spacing:.04em;}
+.notebook-companion-header strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.notebook-companion-header>div{display:flex;gap:4px;flex:none;}
+.notebook-companion-scroll{padding:14px 12px 45px;overflow:auto;flex:1;min-height:0;}
+.notebook-panes.is-split .paper-sheet{width:100%;min-height:900px;}
+.notebook-companion .paper-title,.notebook-companion-page-title{font:700 20px/1.2 Georgia,serif;color:var(--paper-ink);margin:0;}
+.notebook-companion .paper-heading{min-height:90px;}
+.notebook-companion .paper-writing-surface{pointer-events:none;}
+.notebook-companion .text-editor-layer{pointer-events:auto;}
+.notebook-companion .ink-layer,.notebook-companion .notebook-object-layer{pointer-events:none!important;}
+.notebook-companion .ProseMirror[contenteditable=false]{cursor:text;}
+.page-tab.is-companion{outline:2px solid var(--ss-theme-accent,#b09958);outline-offset:-3px;}
+@media(max-width:960px){
+ .notebook-panes.is-split{flex-direction:column;}
+ .notebook-panes.is-split>.desk-surface,.notebook-companion{flex:1 1 50%;height:50%;width:100%;}
+ .notebook-companion{border-left:0;border-top:2px solid var(--ss-theme-border,#aaa);}
+ .notebook-companion-scroll{padding:10px;}
+}

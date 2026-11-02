@@ -10,19 +10,21 @@ import type { NotebookEntry } from '../types/notebook';
 interface TextEditorProps {
   entry: NotebookEntry;
   onEditorReady?: (editor: Editor | null) => void;
+  readOnly?: boolean;
 }
 
-export function TextEditor({ entry, onEditorReady }: TextEditorProps) {
+export function TextEditor({ entry, onEditorReady, readOnly = false }: TextEditorProps) {
   const updateContent = useNotebookStore((state) => state.updateContent);
   const activeTool = useNotebookStore((state) => state.activeTool);
   const selectObject = useNotebookStore((state) => state.selectObject);
-  const textEnabled = activeTool === 'select' || activeTool === 'text';
+  const textEnabled = readOnly || activeTool === 'select' || activeTool === 'text';
   const beginPromotion=usePersonalTaskStore(s=>s.beginPromotion);
    const context=useAppContextMenu();
 
   const editor = useEditor({
     extensions: [StarterKit],
     content: entry.contentHtml,
+    editable: !readOnly,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -30,7 +32,7 @@ export function TextEditor({ entry, onEditorReady }: TextEditorProps) {
         spellcheck: 'true',
       },
     },
-    onUpdate: ({ editor }) => updateContent(entry.id, editor.getHTML()),
+    onUpdate: ({ editor }) => { if(!readOnly) updateContent(entry.id, editor.getHTML()); },
   });
 
   useEffect(() => {
@@ -49,9 +51,10 @@ export function TextEditor({ entry, onEditorReady }: TextEditorProps) {
     <div
       className={`text-editor-layer ${textEnabled ? 'is-active' : ''}`}
       onPointerDownCapture={() => {
-        if (textEnabled) selectObject(null);
+        if (textEnabled && !readOnly) selectObject(null);
       }}
       onContextMenu={event=>{
+        if(readOnly)return;
         // Preserve browser text tools unless a real editor selection is active.
         const selection=window.getSelection();
         const inside=selection?.anchorNode&&event.currentTarget.contains(selection.anchorNode);
