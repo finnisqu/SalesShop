@@ -384,7 +384,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
  const [focus,setFocus]=useState('');
  const table=useRef<HTMLDivElement>(null);
  const [selected,setSelected]=useState<string[]>([]);
- const [bulkMode,setBulkMode]=useState<'detail'|'summary'|'hidden'|'visible'>('summary');
+
  useEffect(()=>{setSelected([]);setDetail(null);setFocus('');},[quote.id]);
  useEffect(()=>{
   const outside=(event:PointerEvent)=>{
@@ -412,33 +412,38 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
    focused={focus===label} onFocus={()=>setFocus(label)}
    onEdit={()=>open(areaId,kind)} muted={muted} warn={warn}
    inline={inline} numeric={kind!=='material'&&kind!=='area'}/>;
- const bulkApply=()=>{
+ const bulkApply=(mode:'detail'|'summary'|'hidden'|'visible'|'delete')=>{
   if(!editable||!selected.length)return;
+  if(mode==='delete'){
+   if(!window.confirm('Delete '+selected.length+' selected Area(s) and their measured work? All associated charges are removed. You can Undo each deletion.'))return;
+   // Each Area uses the existing safe deletion path, including cloud cleanup.
+   for(const areaId of selected)store.deleteSection(quote.id,areaId,'delete');
+   setSelected([]);return;
+  }
   const count=store.bulkEditAreas(quote.id,selected,
-   bulkMode==='detail'?{customerDisplayMode:'detail'}:
-   bulkMode==='summary'?{customerDisplayMode:'summary'}:
-   bulkMode==='hidden'?{customerVisible:false}:{customerVisible:true});
+   mode==='detail'?{customerDisplayMode:'detail'}:
+   mode==='summary'?{customerDisplayMode:'summary'}:
+   mode==='hidden'?{customerVisible:false}:{customerVisible:true});
   if(count===selected.length)setSelected([]);
  };
  return <section className="qqs-summary" aria-label="Quick Quote compact Area summary">
-   <header className="qqs-summary-head">
-    <div><h3>Areas</h3><span>{areas.length} {areas.length===1?'room':'rooms'} · click a cell to reveal its editor</span></div>
+   <header className={'qqs-summary-head'+(selected.length?' is-selecting':'')}>
+    {selected.length?<div className="qqs-bulk" role="toolbar" aria-label="Bulk Area actions">
+     <strong>{selected.length} selected</strong>
+     <button type="button" disabled={!editable} onClick={()=>bulkApply('summary')}>Lump sum</button>
+     <button type="button" disabled={!editable} onClick={()=>bulkApply('detail')}>Itemize</button>
+     <button type="button" disabled={!editable} onClick={()=>bulkApply('hidden')}>Hide</button>
+     <button type="button" disabled={!editable} onClick={()=>bulkApply('visible')}>Show</button>
+     <button type="button" className="qqs-bulk-delete" disabled={!editable}
+      onClick={()=>bulkApply('delete')}>Delete</button>
+     <button type="button" onClick={()=>setSelected([])}>Clear ×</button>
+    </div>:<div><h3>Areas</h3>
+     <span>{areas.length} {areas.length===1?'room':'rooms'} · click a cell to edit</span></div>}
     <div className="qqs-inline-actions">
      <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
      <button type="button" className="qqs-accent" disabled={!editable} onClick={onAddArea}>+ Area</button>
     </div>
    </header>
-   {!!selected.length&&<div className="qqs-bulk" role="toolbar" aria-label="Bulk Area presentation">
-    <strong>{selected.length} selected</strong><select aria-label="Bulk Area action"
-     value={bulkMode} onChange={event=>setBulkMode(event.target.value as typeof bulkMode)}>
-     <option value="summary">Contract: lump sum</option>
-     <option value="detail">Contract: itemized</option>
-     <option value="hidden">Hide Areas from contract</option>
-     <option value="visible">Show Areas on contract</option>
-    </select>
-    <button type="button" onClick={bulkApply} disabled={!editable}>Apply</button>
-    <button type="button" onClick={()=>setSelected([])}>Clear</button>
-   </div>}
    <div className="qqs-scroll" role="region" aria-label="Area summary spreadsheet" tabIndex={0} ref={table}>
     <div className="qqs-grid qqs-header" role="row">
       <div className="qqs-cell qqs-pin-check"><input type="checkbox" aria-label="Select all Areas"
