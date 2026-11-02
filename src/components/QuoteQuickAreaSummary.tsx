@@ -52,6 +52,8 @@ function writeStoneTotal(quote:Quote,section:QuoteSection,total:number|undefined
   // The user explicitly replaced the selling total; make that a manual price.
   store.updateLine(quote.id,primary.id,{
    pricingMode:'direct',amount:total,rate:undefined,rateReference:undefined,
+   ...(primary.materialReference?{materialReference:{
+    ...primary.materialReference,pricingSource:'manual-line-rate' as const}}:{}),
   });
  }
 }
@@ -416,7 +418,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
          disabled:!editable,onCommit:v=>writeManualSf(quote,area,v),
         }:undefined)}
       {cell(area.id,'price','Material price for '+area.title,amount(data.materialPrice),
-       !data.primary,data.hasUnpricedMaterial,data.primary?{
+       !data.primary,data.hasUnpricedMaterial,data.primary?.includeInTotal?{
         value:data.materialPrice,disabled:!editable,onCommit:v=>writeStoneTotal(quote,area,v),
        }:undefined)}
       {cell(area.id,'sinks','Sink price for '+area.title,amount(data.sinkPrice),!data.sinkQuantity,
