@@ -183,3 +183,43 @@
    Document type remains available in the title tooltip, library and desktop rail. */
 .qmb .qmb-pagehead>.qmb-editor-status {min-width:0;max-width:38%;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 @media(max-width:700px){.qmb .qmb-quote-editor>.qmb-quote-scroll>.qmb-pagehead {gap:5px;padding-inline:10px}.qmb .qmb-quote-editor>.qmb-quote-scroll>.qmb-pagehead>.qmb-editor-status {max-width:34%}}
+
+
+/* Quick Quote shell: slim context, dedicated progress above, fixed guided footer below. */
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-tabs{display:none;}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-sticky{border-bottom:1px solid var(--qmb-border);}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-identity{padding-block:8px;}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-document-identity-note{padding-block:5px;}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-footer{display:flex;
+ align-items:center;justify-content:space-between;gap:12px;}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-guided-footer-left{
+ display:flex;flex-direction:row;align-items:center;gap:18px;min-width:0;}
+.sales-app .qmb .qmb-guided-back{border:1px solid var(--qmb-border);
+ background:var(--qmb-card);color:var(--qmb-ink);
+ font-size:12px;font-weight:750;padding:9px 14px;
+ min-height:36px;border-radius:8px;white-space:nowrap;}
+.sales-app .qmb .qmb-guided-footer-meta{display:flex;flex-direction:row;
+ align-items:center;gap:15px;min-width:0;color:var(--qmb-muted);font-size:10px;}
+.sales-app .qmb .qmb-guided-footer-meta strong{font-size:14px;color:var(--qmb-ink);
+ font-variant-numeric:tabular-nums;white-space:nowrap;}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-footer>.qmb-primary{
+ margin-left:auto;min-width:180px;white-space:nowrap;}
+@media(min-width:1000px) and (min-height:550px){
+ .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote){
+  grid-template-columns:170px minmax(0,1fr) 210px;}
+ .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote)
+  .qmb-desktop-areas-head,
+ .sales-app .qmb .qmb-desktop-frame:has(.qmb-quote-editor.is-quick-quote)
+  .qmb-desktop-area-list{display:none;}
+}
+@media(max-width:720px){
+ .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-guided-footer-left{gap:6px;}
+ .sales-app .qmb .qmb-guided-footer-meta{gap:5px;}
+ .sales-app .qmb .qmb-guided-footer-meta strong{font-size:11px;}
+ .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-footer>.qmb-primary{
+  flex:1;min-width:0;font-size:11px;}
+ .sales-app .qmb .qmb-guided-back{padding:8px;}
+}
+@media(max-width:410px){
+ .sales-app .qmb .qmb-guided-footer-meta strong{display:none;}
+}
