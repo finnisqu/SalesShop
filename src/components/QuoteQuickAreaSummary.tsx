@@ -57,6 +57,19 @@ function writeStoneTotal(quote:Quote,section:QuoteSection,total:number|undefined
   });
  }
 }
+/** A single editable fee stays one existing quote line, never a duplicate charge. */
+function writeSingleChargeTotal(quote:Quote,line:QuoteLine,total:number|undefined){
+ if(line.quantitySource?.syncMode==='live')return;
+ const store=useQuoteStore.getState();
+ if(line.pricingMode==='quantity-rate'&&(line.quantity??0)>0){
+  store.updateLine(quote.id,line.id,{
+   rate:total===undefined?undefined:Math.round(total/(line.quantity??1)*10000)/10000,
+   rateReference:undefined,
+  });
+ }else{
+  store.updateLine(quote.id,line.id,{pricingMode:'direct',amount:total,rate:undefined});
+ }
+}
 /** Never bind a continually changing currency string to the numeric input. */
 function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFocus=false,onDone}:{
  value?:number;onCommit:(v:number|undefined)=>void;label:string;disabled?:boolean;integer?:boolean;
@@ -439,10 +452,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
         const line=data.specialty.length===1?data.specialty[0]:undefined;
         if(!line||!line.includeInTotal||line.quantitySource?.syncMode==='live')return undefined;
         return {value:data.specialtyPrice,disabled:!editable,
-         onCommit:(v:number|undefined)=>store.updateLine(quote.id,line.id,
-          line.pricingMode==='quantity-rate'&&!!line.quantity?
-           {rate:v===undefined?undefined:Math.round(v/Math.max(1,line.quantity??1)*10000)/10000,rateReference:undefined}:
-           {pricingMode:'direct',amount:v,rate:undefined})};
+         onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v);
        })())}
       {cell(area.id,'total','Total price for '+area.title,amount(data.total))}
      </div>;
@@ -454,7 +464,13 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
      <div className="qqs-cell qqs-general-spacer"></div>
      <div className="qqs-cell qqs-general-spacer"></div>
      <div className="qqs-cell qqs-general-spacer"></div>
-     {cell('general','specialty','General charges',amount(general.total),!general.lines.length)}
+     {cell('general','specialty','General charges',amount(general.total),!general.lines.length,
+       false,(()=>{
+        const line=general.lines.length===1?general.lines[0]:undefined;
+        if(!line||!line.includeInTotal||line.quantitySource?.syncMode==='live')return undefined;
+        return {value:general.total,disabled:!editable,
+         onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v)};
+       })())}
      {cell('general','total','General total',amount(general.total))}
     </div>
    </div>
