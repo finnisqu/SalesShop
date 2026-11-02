@@ -1116,6 +1116,12 @@ export function QuotesMobileBeta() {
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <header className="qmb-pagehead">
           <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
+          {quote.documentType!=='pricing-schedule'&&<div className="qmb-quick-history" role="toolbar" aria-label="Quote undo and redo">
+           <button type="button" disabled={!editable||undoDepth===0} onClick={()=>undo(quote.id)}
+            title="Undo last quote edit" aria-label="Undo quote edit">↶ <span>Undo</span></button>
+           <button type="button" disabled={!editable||redoDepth===0} onClick={()=>redo(quote.id)}
+            title="Redo last quote edit" aria-label="Redo quote edit">↷ <span>Redo</span></button>
+          </div>}
           <span className="qmb-chip qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
           <AppMenu/>
         </header>
