@@ -36,8 +36,18 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
  };
  if(disabled&&!alwaysInput)return <span className="qqt-readonly" title={label}>{value===undefined?'—':String(value)}</span>;
  if(!editing&&!alwaysInput)return <button type="button" data-quick-grid-editable="true" className="qqt-cell-value is-editable"
-  aria-label={'Edit '+label} title={'Click to edit '+label}
-  onClick={()=>setEditing(true)}>{value===undefined?'—':String(value)}</button>;
+  aria-label={'Edit '+label} title={'Click or type to edit '+label}
+  onClick={()=>setEditing(true)}
+  onKeyDown={event=>{
+   if(!event.ctrlKey&&!event.metaKey&&!event.altKey&&/^[0-9.-]$/.test(event.key)){
+    event.preventDefault();setDraft(event.key);setEditing(true);
+   }
+  }}
+  onPaste={event=>{
+   const text=event.clipboardData.getData('text/plain').trim();
+   if(!text)return;
+   event.preventDefault();setDraft(text);setEditing(true);
+  }}>{value===undefined?'—':String(value)}</button>;
  return <input className="qqt-input is-editing" data-quick-grid-editable={alwaysInput?undefined:'true'}
    autoFocus={editing} disabled={disabled} type="text" aria-label={label}
   inputMode="decimal" value={draft} onChange={e=>setDraft(e.target.value)}
@@ -57,7 +67,17 @@ function SmallText({value,label,commit,disabled=false,placeholder='—'}:{
  if(disabled)return <span className="qqt-readonly" title={label}>{value||placeholder}</span>;
  if(!editing)return <button type="button" data-quick-grid-editable="true" className="qqt-cell-value qqt-cell-text is-editable"
   title={value||'Click to enter '+label} aria-label={'Edit '+label}
-  onClick={()=>setEditing(true)}>{value||placeholder}</button>;
+  onClick={()=>setEditing(true)}
+  onKeyDown={event=>{
+   if(!event.ctrlKey&&!event.metaKey&&!event.altKey&&event.key.length===1&&event.key!==' '){
+    event.preventDefault();setDraft(event.key);setEditing(true);
+   }
+  }}
+  onPaste={event=>{
+   const text=event.clipboardData.getData('text/plain');
+   if(!text)return;
+   event.preventDefault();setDraft(text);setEditing(true);
+  }}>{value||placeholder}</button>;
  return <input type="text" data-quick-grid-editable="true" className="qqt-text is-editing" autoFocus aria-label={label}
   value={draft} onChange={e=>setDraft(e.target.value)}
   onFocus={e=>e.currentTarget.select()}
@@ -295,7 +315,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
       onClick={()=>apply('delete')}>Delete</button>
      <button type="button" onClick={()=>{setSelected([]);setTarget('');}}>Clear ×</button>
     </div>:<div><h3>Takeoffs</h3>
-     <span>Click a cell to edit · pencil for advanced settings</span></div>}
+     <span>Click, type or paste to edit · Tab/Enter to move · pencil for more</span></div>}
     <button type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
    </header>
   <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}
