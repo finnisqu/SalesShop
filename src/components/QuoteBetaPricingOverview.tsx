@@ -2,6 +2,7 @@ import type { Quote } from '../types/quote';
 import { quoteTotal } from '../types/quote';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
 import { quotePricingOverview } from '../services/quotePricingOverview';
+import {projectAreaCost} from '../services/quoteAreaCost';
 import './quote-beta-pricing-overview.css';
 
 const currency=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -51,6 +52,10 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
     <div className="qmb-pricing-overview-areas">
       {overview.rows.map(row=>{
         const issue=issueFor(row.section.id);
+        // This is private estimating guidance, NOT a quote issuing requirement.
+        // No slab/production estimate is implied for an unmeasured flat-fee Area.
+        const cost=row.measuredSf>0?projectAreaCost(quote,row.section):null;
+        const covered=cost?Object.values(cost.costCoverage).filter(Boolean).length:0;
         return <section className="qmb-pricing-overview-row" key={row.section.id} aria-label={row.section.title||'Untitled Area'}>
           <div className="qmb-pricing-overview-row-top">
             <div><h4>{row.section.title||'Untitled Area'}</h4>
@@ -58,6 +63,14 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
             </div>
             <strong>{currency.format(row.amount)}</strong>
           </div>
+          {cost&&<div className="qmb-pricing-overview-cost" aria-label="Private Area cost coverage">
+            <span>Private cost estimate · {covered}/5 categories entered
+              {cost.marginPercent!==undefined?' · Estimated margin '+cost.marginPercent.toFixed(1)+'%':' · Margin incomplete'}
+            </span>
+            <button type="button" onClick={()=>onArea(row.section.id,'calculator')}>
+              Open Calculator ›
+            </button>
+          </div>}
           <div className="qmb-pricing-overview-row-actions">
             <button type="button" onClick={()=>onArea(row.section.id,'measure')}>Measurements ›</button>
             <button type="button" onClick={()=>onArea(row.section.id,'materials')}>Material &amp; sinks ›</button>
