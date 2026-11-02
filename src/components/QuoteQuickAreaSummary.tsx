@@ -283,7 +283,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
  const open=(areaId:string|null,kind:DetailKind)=>setDetail({areaId,kind});
  const cell=(areaId:string,kind:DetailKind,label:string,value:ReactNode,muted=false,warn=false)=>
   <SummaryCell key={kind} value={value} label={label}
-   focused={focus===areaId+':'+kind} onFocus={()=>setFocus(areaId+':'+kind)}
+   focused={focus===label} onFocus={()=>setFocus(label)}
    onEdit={()=>open(areaId,kind)} muted={muted} warn={warn}/>;
  const bulkApply=()=>{
   if(!editable||!selected.length)return;
@@ -332,7 +332,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
        <button type="button" className="qqs-pencil" aria-label={'Edit Area '+area.title}
         onClick={()=>open(area.id,'area')}>✎</button></div>
       {cell(area.id,'material','Stone selection for '+area.title,
-        area.scope?.takeoffMaterial||'Choose stone',!area.scope?.takeoffMaterial,true===(!area.scope?.takeoffMaterial))}
+        area.scope?.takeoffMaterial||'Choose stone',!area.scope?.takeoffMaterial,!area.scope?.takeoffMaterial)}
       {cell(area.id,'sf','Square feet for '+area.title,
         sf.format(data.billedSf)+(data.measuredSf!==data.billedSf?' / '+sf.format(data.measuredSf):'')+' SF')}
       {cell(area.id,'price','Material price for '+area.title,amount(data.materialPrice),
@@ -363,7 +363,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
    <footer className="qqs-summary-total"><span>Quote total</span><strong>{amount(quoteTotal(quote))}</strong></footer>
    {detail&&<DetailPanel quote={quote} detail={detail} onClose={()=>setDetail(null)}
     onTakeoffs={onTakeoffs} onAdvanced={onAdvanced}
-    onCalculator={id=>setCalculator(id??'general')}/>}
+    onCalculator={id=>{setDetail(null);setCalculator(id??'general');}}/>}
    {calculator!==null&&<CalculatorDrawer quote={quote}
     section={calculator==='general'?null:quote.sections.find(s=>s.id===calculator)??null}
     onClose={()=>setCalculator(null)} onAdvanced={onAdvanced}/>}
