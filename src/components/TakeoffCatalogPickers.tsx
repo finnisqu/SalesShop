@@ -12,10 +12,11 @@ import { SINK_CATEGORY_LABELS,type SinkModel,type SinkVariant } from '../types/s
 const materialLabel=(m:StockMaterial,v:MaterialVariant)=>
   [m.brand,m.name,v.thickness,v.finish].filter(Boolean).join(' · ');
 
-export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,onTextChange}:{
+export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,onTextChange,onCustomCommit}:{
   disabled:boolean;value:string;selected?:QuoteLineMaterialReference;pinned:QuoteProjectMaterial[];
   onSelect:(ref:QuoteLineMaterialReference,label:string)=>void;
   onTextChange:(text:string)=>void;
+  onCustomCommit?:()=>void;
 }){
   const materials=useCompanySettingsStore(s=>s.settings.stockMaterials);
   const hydrate=useCompanySettingsStore(s=>s.hydrate);
@@ -82,7 +83,7 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
         {!variants.length&&<p>No active variants available.</p>}
       </div>:<div className="qtl-combobox-results">
         {pinned.filter(p=>!p.reference?.materialId && (!query||p.label.toLowerCase().includes(query))).map(p=>
-          <button type="button" key={p.id} onClick={()=>{onTextChange(p.label);setOpen(false);}}>
+          <button type="button" key={p.id} onClick={()=>{onTextChange(p.label);setOpen(false);onCustomCommit?.();}}>
             <strong>★ {p.label}</strong><small>Project material · Custom</small>
           </button>)}
         {ordered.map(m=><button type="button" key={m.id} onClick={()=>{
@@ -90,7 +91,7 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
         }}><strong>{pinned.some(p=>p.reference?.materialId===m.id)?'★ ':''}{[m.brand,m.name].filter(Boolean).join(' ')}</strong>
           <small>{[m.materialType,m.supplier].filter(Boolean).join(' · ')}</small></button>)}
         {!ordered.length&&<p>No matching Catalog items. Custom names are allowed.</p>}
-        {value.trim()&&<button type="button" onClick={()=>setOpen(false)}>
+        {value.trim()&&<button type="button" onClick={()=>{setOpen(false);onCustomCommit?.();}}>
           Use custom material “{value.trim()}”</button>}
       </div>}
     </div>}
