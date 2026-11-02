@@ -27,6 +27,7 @@ import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import {assertMatchingApprovedDraft} from '../services/quoteIssueGuard';
 import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
 import {sectionFromQuoteAreaPreset,type QuoteAreaPresetId} from '../services/quoteAreaPresets';
+import {instantiateSavedAreaLayout,type SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
 import {copySalesDocument} from '../services/quoteDocumentCopy';
 import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder } from '../services/quoteStructure';
 import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
@@ -79,6 +80,7 @@ interface QuoteState {
   moveLine: (quoteId: string, lineId: string, sectionId?: string) => void;
   addSection: (quoteId: string) => string;
   addAreaFromPreset: (quoteId:string,presetId:QuoteAreaPresetId)=>string;
+  addAreaFromSavedLayout: (quoteId:string,layout:SavedAreaLayout)=>string;
   duplicateArea: (quoteId: string, sourceAreaId: string) => string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   setAllCustomerDisplayModes: (quoteId: string, mode: 'detail' | 'summary') => void;
@@ -647,6 +649,18 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       ?{...q,sections:[...q.sections,section],updatedAt:now()}:q);
     persist(quotes,get().activeQuoteId);
     set({quotes,...history});
+    return section.id;
+  },
+  addAreaFromSavedLayout: (quoteId,layout)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return '';
+    let section:QuoteSection;
+    try{section=instantiateSavedAreaLayout(layout,uid('section'),()=>uid('takeoff'));}
+    catch{return '';}
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId
+      ?{...q,sections:[...q.sections,section],updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
     return section.id;
   },
   updateSection: (quoteId, sectionId, patch) => {

@@ -51,6 +51,10 @@ import { QuoteBetaProgress } from './QuoteBetaProgress';
 import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
 import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
 import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
+import {QuoteSaveAreaLayoutDialog} from './QuoteSaveAreaLayoutDialog';
+import {captureSavedAreaLayout,readSavedAreaLayouts,writeSavedAreaLayouts,
+  savedAreaLayoutScope,upsertSavedAreaLayout,SAVED_AREA_LAYOUT_LIMIT,
+  type SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
 import type {QuoteAreaPresetId} from '../services/quoteAreaPresets';
 import './quotes-beta-control-polish.css';
 import {quoteAreaDisclosure} from '../services/quoteAreaDisclosure';
@@ -232,9 +236,9 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   </article>;
 }
 
-function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNextArea,onDuplicate,onReview,onClassic,returnLabel}:{
+function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNextArea,onDuplicate,onSaveLayout,onReview,onClassic,returnLabel}:{
   quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;
-  goBack:()=>void;onPricingOverview:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onReview:()=>void;onClassic:()=>void;
+  goBack:()=>void;onPricingOverview:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onSaveLayout:()=>void;onReview:()=>void;onClassic:()=>void;
   returnLabel:string;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
@@ -316,8 +320,12 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
       <button type="button" className="qmb-back" onClick={goBack}>‹ Quote</button>
       <div className="qmb-area-header-actions">
         <GlobalPostItLauncher />
-        {editable&&!general&&<button type="button" className="qmb-area-duplicate-action"
-          aria-label="Duplicate this Area" onClick={onDuplicate}>⧉ Duplicate</button>}
+        {editable&&!general&&<>
+          <button type="button" className="qmb-area-duplicate-action"
+            aria-label="Save this Area layout" onClick={onSaveLayout}>Save layout</button>
+          <button type="button" className="qmb-area-duplicate-action"
+            aria-label="Duplicate this Area" onClick={onDuplicate}>⧉ Duplicate</button>
+        </>}
         <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>
         <button type="button" className="qmb-quiet" onClick={onClassic}>Classic</button>
       </div>
@@ -481,6 +489,7 @@ export function QuotesMobileBeta() {
   const update=useQuoteStore(s=>s.updateQuote);
   const addSection=useQuoteStore(s=>s.addSection);
   const addAreaFromPreset=useQuoteStore(s=>s.addAreaFromPreset);
+  const addAreaFromSavedLayout=useQuoteStore(s=>s.addAreaFromSavedLayout);
   const duplicateArea=useQuoteStore(s=>s.duplicateArea);
   const ensureGeneralTakeoff=useQuoteStore(s=>s.ensureGeneralTakeoff);
   const addLine=useQuoteStore(s=>s.addLine);
@@ -495,6 +504,7 @@ export function QuotesMobileBeta() {
   const teamRole=useAuthStore(s=>s.teamRole);
   const department=useAuthStore(s=>s.teamDepartment);
   const userId=useAuthStore(s=>s.user?.id);
+  const organizationId=useAuthStore(s=>s.organizationId);
   const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
   const libraryMode=useQuoteLibraryStore(s=>s.mode);
   const setLibraryMode=useQuoteLibraryStore(s=>s.setMode);
@@ -518,6 +528,17 @@ export function QuotesMobileBeta() {
   const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
   const [areaPresetsOpen,setAreaPresetsOpen]=useState(false);
+  const [savingLayoutAreaId,setSavingLayoutAreaId]=useState<string|null>(null);
+  const layoutScope=savedAreaLayoutScope(authMode,organizationId,userId??null);
+  const [layoutState,setLayoutState]=useState<{scope:string|null;items:SavedAreaLayout[]}>(()=>({
+    scope:layoutScope,items:readSavedAreaLayouts(layoutScope),
+  }));
+  // On an account or organization switch, never render the previous user's list.
+  const savedLayouts=layoutState.scope===layoutScope?layoutState.items:[];
+  useEffect(()=>{
+    setLayoutState({scope:layoutScope,items:readSavedAreaLayouts(layoutScope)});
+    setSavingLayoutAreaId(null);setAreaPresetsOpen(false);
+  },[layoutScope]);
   const [documentPreviewId,setDocumentPreviewId]=useState<string|null>(null);
   const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
@@ -643,13 +664,13 @@ export function QuotesMobileBeta() {
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
-    setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
+    setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const showLibrary=()=>{
-    setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
+    setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
     // Clearing the route ID makes Back reopen the selected editor, rather than
     // leaving a stale /quotes/:id URL on the document library.
     setView('quotes');
@@ -784,6 +805,32 @@ export function QuotesMobileBeta() {
     if(!quote||!editable)return;
     const id=addAreaFromPreset(quote.id,presetId);
     if(id){setAreaPresetsOpen(false);openArea(id);}
+  };
+  const addPersonalAreaLayout=(id:string)=>{
+    if(!quote||!editable||!layoutScope)return;
+    const saved=readSavedAreaLayouts(layoutScope).find(item=>item.id===id);
+    if(!saved)return;
+    const nextId=addAreaFromSavedLayout(quote.id,saved);
+    if(nextId){setAreaPresetsOpen(false);openArea(nextId);}
+  };
+  const deletePersonalAreaLayout=(id:string)=>{
+    if(!layoutScope)return;
+    const next=readSavedAreaLayouts(layoutScope).filter(item=>item.id!==id);
+    if(writeSavedAreaLayouts(layoutScope,next))
+      setLayoutState({scope:layoutScope,items:next});
+  };
+  const savePersonalAreaLayout=(name:string):boolean=>{
+    if(!quote||!editable||!layoutScope||!savingLayoutAreaId)return false;
+    const target=quote.sections.find(section=>section.id===savingLayoutAreaId);
+    if(!target||isGeneralTakeoffSection(target))return false;
+    const existing=readSavedAreaLayouts(layoutScope);
+    if(existing.length>=SAVED_AREA_LAYOUT_LIMIT)return false;
+    const layout=captureSavedAreaLayout(target,name,crypto.randomUUID(),new Date().toISOString());
+    if(!layout)return false;
+    const next=upsertSavedAreaLayout(existing,layout);
+    if(!writeSavedAreaLayouts(layoutScope,next))return false;
+    setLayoutState({scope:layoutScope,items:next});
+    return true;
   };
   const advanceToNextArea=()=>{
     if(!quote||!area)return;
@@ -1186,6 +1233,7 @@ export function QuotesMobileBeta() {
       setTab={setAreaTab} goBack={goBack} onPricingOverview={openPricingStage}
       returnLabel={quoteTab==='pricing'?'Done · Pricing':'Done · Areas'}
       onNextArea={advanceToNextArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
+       onSaveLayout={()=>{if(area)setSavingLayoutAreaId(area.id);}}
       onClassic={()=>exitBeta(false)}/>:null}
       </div>
     </div>
@@ -1231,9 +1279,16 @@ export function QuotesMobileBeta() {
         requestQuoteMetadataPage(id,()=>setView('dashboard'));
       }}/>}
     {quote&&page!=='library'&&editable&&areaPresetsOpen&&<QuoteAreaPresetPicker
+      savedLayouts={savedLayouts} onSelectSaved={addPersonalAreaLayout}
+      onDeleteSaved={deletePersonalAreaLayout}
       onSelect={newAreaPreset}
       onBlank={()=>{setAreaPresetsOpen(false);newArea();}}
       onClose={()=>setAreaPresetsOpen(false)}/>}
+    {quote&&page==='area'&&editable&&savingLayoutAreaId
+      &&quote.sections.some(section=>section.id===savingLayoutAreaId)
+      &&<QuoteSaveAreaLayoutDialog
+        section={quote.sections.find(section=>section.id===savingLayoutAreaId)!}
+        onSave={savePersonalAreaLayout} onClose={()=>setSavingLayoutAreaId(null)}/>}
     {showNewDocument&&<NewSalesDocumentPicker quotes={myQuotes}
       stockRateCount={stockRates.filter(item=>item.active).length}
       stockLevelReady={companyReady&&levelGuideReady}

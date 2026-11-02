@@ -1,11 +1,14 @@
-import {useEffect,useRef} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {QUOTE_AREA_PRESETS,type QuoteAreaPresetId} from '../services/quoteAreaPresets';
+import type {SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
 import './quote-area-preset-picker.css';
 
-export function QuoteAreaPresetPicker({onSelect,onBlank,onClose}:{
+export function QuoteAreaPresetPicker({onSelect,onBlank,onClose,savedLayouts,onSelectSaved,onDeleteSaved}:{
  onSelect:(id:QuoteAreaPresetId)=>void;onBlank:()=>void;onClose:()=>void;
+ savedLayouts:readonly SavedAreaLayout[];onSelectSaved:(id:string)=>void;onDeleteSaved:(id:string)=>void;
 }){
+ const [confirmDelete,setConfirmDelete]=useState<string|null>(null);
  const dialogRef=useRef<HTMLElement>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
@@ -33,6 +36,30 @@ export function QuoteAreaPresetPicker({onSelect,onBlank,onClose}:{
        No measurements, material, sink charges or selling prices are guessed.</small></div>
        <button type="button" onClick={onClose} aria-label="Close Area layouts">×</button>
      </header>
+     {savedLayouts.length>0&&<section className="qmb-saved-area-layouts" aria-label="Your saved Area layouts">
+       <div className="qmb-saved-area-heading"><strong>My saved layouts</strong>
+         <small>Stored in this browser for your account · not shared or synced</small></div>
+       <div className="qmb-saved-area-list">
+         {savedLayouts.map(layout=><div className="qmb-saved-area-row" key={layout.id}>
+           <button type="button" className="qmb-saved-area-open"
+             onClick={()=>onSelectSaved(layout.id)}>
+             <strong>{layout.name}</strong>
+             <small>{layout.pieces.length} editable {layout.pieces.length===1?'piece':'pieces'} · measurements included, prices excluded</small>
+           </button>
+           {confirmDelete===layout.id?
+             <div className="qmb-saved-area-delete-confirm">
+               <button type="button" onClick={()=>{onDeleteSaved(layout.id);setConfirmDelete(null);}}>
+                 Remove layout
+               </button>
+               <button type="button" onClick={()=>setConfirmDelete(null)}>Cancel</button>
+             </div>
+           :<button type="button" aria-label={'Remove saved layout '+layout.name}
+              onClick={()=>setConfirmDelete(layout.id)}>×</button>}
+         </div>)}
+       </div>
+     </section>}
+     <div className="qmb-saved-area-heading"><strong>Built-in layouts</strong>
+       <small>Unmeasured starting points</small></div>
      <div className="qmb-area-preset-list">
        {QUOTE_AREA_PRESETS.map(preset=><button type="button" key={preset.id}
          onClick={()=>onSelect(preset.id)}>
