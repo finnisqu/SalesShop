@@ -1,7 +1,7 @@
 import {describe,expect,it} from 'vitest';
 import type {Quote,QuoteSection,QuoteSlabPool} from '../types/quote';
 import {quoteTotal} from '../types/quote';
-import {allocatedSharedSlabCost,createQuoteSlabPool,estimateQuoteSlabPool,
+import {allocatedSharedSlabCost,createQuoteSlabPool,estimateQuoteSlabPool,effectiveQuoteSlabEstimates,
  slabPoolMaterialKey,slabPoolsFromAreaScopes} from './quoteSharedSlabs';
 import {projectAreaCost} from './quoteAreaCost';
 const section=(id:string,sf:number,variant='white'):QuoteSection=>({
@@ -103,4 +103,46 @@ describe('explicit shared physical slab buying',()=>{
   quote.lines[0].internalCost=250;
   expect(projectAreaCost(quote,quote.sections[0]).materialCost).toBe(250);
  });
+ it('automatically shares buying for matching fully-costed Catalog variants without changing quotes',()=>{
+  const quote=base(),before=JSON.stringify(quote),selling=quoteTotal(quote);
+  for(const area of quote.sections){
+   area.scope!.slabAreaOverrideSf=80;
+   area.scope!.slabCostOverride=600;
+  }
+  const unchanged=JSON.stringify(quote);
+  const pooled=effectiveQuoteSlabEstimates(quote);
+  expect(pooled).toHaveLength(1);
+  expect(pooled[0].pool.id.startsWith('auto:')).toBe(true);
+  expect(pooled[0].slabCount).toBe(1);
+  expect(pooled[0].independentSlabCount).toBe(2);
+  const k=projectAreaCost(quote,quote.sections[0]);
+  const v=projectAreaCost(quote,quote.sections[1]);
+  expect(Number(((k.materialCost??0)+(v.materialCost??0)).toFixed(2))).toBe(600);
+  expect(quoteTotal(quote)).toBe(selling);
+  expect(JSON.stringify(quote)).toBe(unchanged);
+  expect(before).not.toBe(unchanged);
+ });
+ it('leaves unpriced and incompatible variants separate without silently inventing costs',()=>{
+  const quote=base();
+  expect(effectiveQuoteSlabEstimates(quote)).toHaveLength(0);
+  quote.sections.forEach(area=>{
+   area.scope!.slabAreaOverrideSf=80;
+   area.scope!.slabCostOverride=600;
+  });
+  quote.sections[1].scope!.takeoffMaterialReference!.variantId='different';
+  expect(effectiveQuoteSlabEstimates(quote)).toHaveLength(0);
+  expect(allocatedSharedSlabCost(quote,'kitchen')).toBeNull();
+ });
+ it('keeps explicitly configured pools authoritative over automatic pooling',()=>{
+  const quote=base();
+  quote.sections.forEach(area=>{
+   area.scope!.slabAreaOverrideSf=80;
+   area.scope!.slabCostOverride=600;
+  });
+  quote.slabPools=[createQuoteSlabPool(quote,['kitchen','vanity'],spec)!];
+  const pooled=effectiveQuoteSlabEstimates(quote);
+  expect(pooled).toHaveLength(1);
+  expect(pooled[0].pool.id).toBe('pool');
+ });
+
 });
