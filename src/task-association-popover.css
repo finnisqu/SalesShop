@@ -1,0 +1,22 @@
+/* Portaled dropdown: no flow displacement or clipping by .tasks-editor overflow. */
+.tasks-associations-popover{box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;
+ border:1px solid var(--ss-theme-border,#aaa);border-radius:10px;
+ background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#333);
+ box-shadow:0 13px 36px rgba(0,0,0,.25);padding:5px;}
+.tasks-associations-popover>button[role="option"]{display:grid;grid-template-columns:minmax(55px,70px) minmax(0,1fr) 14px;
+ gap:8px;align-items:center;text-align:left;width:100%;min-height:37px;padding:8px;
+ border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer;}
+.tasks-associations-popover>button[role="option"].is-active,
+.tasks-associations-popover>button[role="option"]:hover,
+.tasks-associations-popover>button[role="option"]:focus-visible{background:var(--ss-theme-tint,#eee);}
+.tasks-associations-popover>button[role="option"] span{font-size:10px;color:var(--ss-theme-muted,#777);}
+.tasks-associations-popover>button[role="option"] strong{font-size:12px;font-weight:750;white-space:normal;overflow-wrap:anywhere;}
+.tasks-associations-popover>button[role="option"] b{color:var(--ss-theme-accent,#9e7e33);}
+.tasks-associations-popover>p{margin:7px 8px;font-size:11px;color:var(--ss-theme-muted,#777);}
+.tasks-associations-popover-foot{position:sticky;bottom:-5px;display:flex;justify-content:space-between;
+ gap:10px;align-items:center;margin:5px -5px -5px;padding:5px 9px;
+ border-top:1px solid var(--ss-theme-border,#ddd);background:var(--ss-theme-card,#fff);}
+.tasks-associations-popover-foot small{font-size:10px;color:var(--ss-theme-muted,#777);}
+.tasks-associations-popover-foot>.tasks-associations-close{width:auto;margin:0;padding:5px 10px;
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:6px;color:var(--ss-theme-ink,#444);
+ background:var(--ss-theme-base,#fafafa);font-size:11px;white-space:nowrap;}
