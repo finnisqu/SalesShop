@@ -320,12 +320,8 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
       <button type="button" className="qmb-back" onClick={goBack}>‹ Quote</button>
       <div className="qmb-area-header-actions">
         <GlobalPostItLauncher />
-        {editable&&!general&&<>
-          <button type="button" className="qmb-area-duplicate-action"
-            aria-label="Save this Area layout" onClick={onSaveLayout}>Save layout</button>
-          <button type="button" className="qmb-area-duplicate-action"
-            aria-label="Duplicate this Area" onClick={onDuplicate}>⧉ Duplicate</button>
-        </>}
+        {editable&&!general&&<button type="button" className="qmb-area-duplicate-action"
+          aria-label="Duplicate this Area" onClick={onDuplicate}>⧉ Duplicate</button>}
         <span className="qmb-chip">{editable?'Auto-save':'Read only'}</span>
         <button type="button" className="qmb-quiet" onClick={onClassic}>Classic</button>
       </div>
@@ -352,7 +348,7 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
       onAddPiece={addFirstPiece} onMeasure={()=>chooseTab('measure')}
       onMaterial={()=>chooseTab('materials')}
       onPricing={()=>chooseTab(desktopLab?'materials':'pricing')}
-      onOverview={onPricingOverview}/>}
+      onOverview={onPricingOverview} onSaveLayout={onSaveLayout}/>}
     <nav className="qmb-tabs" aria-label="Area sections">
       {(desktopLab?([['measure','Measure'],['materials','Materials'],['calculator','Calculator']] as const)
         :([['measure','Measure'],['materials','Materials'],['pricing','Pricing']] as const)).map(([id,label])=>
