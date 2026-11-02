@@ -32,10 +32,7 @@ test('Beta customer and Deal details advance directly to an Area and its Review,
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
   await expect(beta.getByRole('button',{name:'Continue to Kitchen ›'})).toBeVisible();
   await beta.getByRole('button',{name:'Continue to Kitchen ›'}).click();
-  // The table keeps its context and now opens a focused side panel first.
-  const quickArea=page.getByRole('dialog',{name:'Quick edit Area Kitchen'});
-  await expect(quickArea).toBeVisible();
-  await quickArea.getByRole('button',{name:'Open full Area ↗'}).click();
+  // Continue from Details opens the existing Area's full editor directly.
   await expect(beta.getByRole('textbox',{name:'Area name'})).toHaveValue('Kitchen');
   await expect(beta.locator('.qmb-desktop-frame.is-library')).toHaveCount(0);
 
@@ -46,6 +43,8 @@ test('Beta customer and Deal details advance directly to an Area and its Review,
   await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
   await beta.getByRole('button',{name:/Done · (Areas|Pricing)/}).click();
   await beta.getByRole('button',{name:'Quick edit Area Kitchen'}).click();
+  // Returning from the Quote Builder table uses the new focused drawer.
+  const quickArea=page.getByRole('dialog',{name:'Quick edit Area Kitchen'});
   await expect(quickArea).toBeVisible();
   await quickArea.getByRole('button',{name:'Open full Area ↗'}).click();
   await beta.getByRole('button',{name:'Pricing',exact:true}).click();
