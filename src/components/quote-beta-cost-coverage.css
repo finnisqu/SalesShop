@@ -1,0 +1,4 @@
+.qmb-cost-warning li button{border:0;background:transparent;color:var(--ss-theme-accent);font:inherit;font-weight:750;padding:3px 0;text-decoration:underline;text-underline-offset:2px;cursor:pointer;}
+.qmb-cost-warning li button:disabled{opacity:.5;cursor:default;}
+.qmb-cost-warning li button:focus-visible{outline:2px solid var(--ss-theme-accent);outline-offset:3px;}
+.qmb-cost-warning li{margin:4px 0;line-height:1.45;}
