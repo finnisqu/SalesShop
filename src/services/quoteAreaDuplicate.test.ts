@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import type {Quote} from '../types/quote';
-import {duplicateQuoteArea} from './quoteAreaDuplicate';
+import {duplicateQuoteArea,copyQuoteAreaFromSource} from './quoteAreaDuplicate';
 import {quoteTotal} from '../types/quote';
 
 function sample():Quote {
@@ -49,6 +49,41 @@ describe('Duplicate Area for mobile quote speed',()=>{
     clonedPieces[0].lengthIn=100;
     expect(source.sections[0].scope?.takeoffPieces?.[0].lengthIn).toBe(48);
     expect(source.lines).toHaveLength(2);
+  });
+  it('copies another quote\'s measurements and selections without automatically carrying selling prices',()=>{
+    const source=sample(),target={...sample(),id:'quote-b',sections:[],lines:[]};
+    const created=copyQuoteAreaFromSource(target,source,'area-a',false,
+      kind=>kind+'-new')!;
+    const section=created.quote.sections[0];
+    expect(created.newAreaId).toBe('section-new');
+    expect(section.title).toBe('Unit A Kitchen');
+    expect(section.scope?.takeoffPieces?.[0].id).toBe('piece-new');
+    expect(section.scope?.takeoffSinks?.[0]).toMatchObject({
+      id:'sinktakeoff-new',includeInPricing:false,unitPrice:undefined,
+    });
+    expect(created.quote.lines[0]).toMatchObject({sectionId:'section-new',rate:undefined});
+    expect(created.quote.lines[1]).toMatchObject({
+      sectionId:'section-new',takeoffSinkId:'sinktakeoff-new',includeInTotal:false,rate:undefined,
+    });
+    expect(quoteTotal(created.quote)).toBe(0);
+    expect(quoteTotal(source)).toBeGreaterThan(0);
+    expect(target.sections).toHaveLength(0);
+    created.quote.sections[0].scope!.takeoffPieces![0].lengthIn=10;
+    expect(source.sections[0].scope?.takeoffPieces?.[0].lengthIn).toBe(48);
+  });
+  it('preserves selling prices only when explicitly requested by the salesperson',()=>{
+    const source=sample(),target={...sample(),id:'quote-b',sections:[],lines:[]};
+    const created=copyQuoteAreaFromSource(target,source,'area-a',true,kind=>kind+'-copy')!;
+    expect(quoteTotal(created.quote)).toBeCloseTo(quoteTotal(source),2);
+    expect(created.quote.lines[0].quantitySource?.sectionId).toBe('section-copy');
+    expect(created.quote.sections[0].scope?.takeoffSinks?.[0].id).toBe('sinktakeoff-copy');
+    expect(source.lines[0].id).toBe('line-a');
+  });
+  it('refuses self-copy and missing Areas without changing the destination',()=>{
+    const source=sample(),target={...sample(),id:'quote-b',sections:[],lines:[]};
+    expect(copyQuoteAreaFromSource(source,source,'area-a')).toBeUndefined();
+    expect(copyQuoteAreaFromSource(target,source,'unknown')).toBeUndefined();
+    expect(target.sections).toHaveLength(0);
   });
   it('does not clone the special General takeoffs section or missing Areas',()=>{
     const q=sample();
