@@ -2,7 +2,7 @@ import {useMemo,useState} from 'react';
 import type {Quote} from '../types/quote';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {projectAreaCost} from '../services/quoteAreaCost';
-import {createQuoteSlabPool,estimateQuoteSlabPool,quoteSharedSlabEstimates,
+import {createQuoteSlabPool,estimateQuoteSlabPool,effectiveQuoteSlabEstimates,
  slabPoolMaterialKey} from '../services/quoteSharedSlabs';
 import {totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
@@ -23,7 +23,8 @@ export function QuoteSharedSlabPools({quote}:{quote:Quote}){
  const [error,setError]=useState('');
  const active=new Set(selected);
  const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
- const existing=quoteSharedSlabEstimates(quote);
+ const existing=effectiveQuoteSlabEstimates(quote);
+ const automatic=existing.filter(group=>group.pool.id.startsWith('auto:')&&group.valid);
  const occupied=new Set((quote.slabPools??[]).flatMap(p=>p.sectionIds));
  const first=areas.find(s=>active.has(s.id));
  const firstCost=first?projectAreaCost(quote,first):null;
@@ -43,25 +44,29 @@ export function QuoteSharedSlabPools({quote}:{quote:Quote}){
  };
  return <section className="qmb-slab-pools" aria-label="Shared slab buying planner">
    <header><div><h3>Shared slab buying</h3>
-     <p>Count compatible Kitchen, Vanity and other Areas together. One physical slab can cover multiple Areas.
-       Private buying costs are divided by measured SF; customer selling prices do not change automatically.</p></div>
+     <p>Matching Catalog materials with the same slab format and buying assumptions are pooled automatically.
+       Buying costs are allocated by measured SF. Customer selling prices stay as quoted.</p></div>
      <span>Private estimate</span></header>
+   <p className="qwt-auto-pool-status">{automatic.length>0
+     ?automatic.length+' automatically shared slab group'+(automatic.length===1?'':'s')+' · no setup needed'
+     :'Automatic grouping becomes available when two or more Areas use the same Catalog variant with known slab dimensions and buying cost.'}</p>
    {existing.map(group=><div className="qmb-slab-pool-existing" key={group.pool.id}>
-     <div><strong>{group.pool.label}</strong>
+     <div><strong>{group.pool.id.startsWith('auto:')?'Auto-shared · '+group.pool.label:group.pool.label}</strong>
        <small>{group.pool.sectionIds.map(id=>quote.sections.find(s=>s.id===id)?.title??'Removed Area').join(' + ')}</small>
        {group.valid?<span>{number.format(group.measuredSf)} SF together ·
          <b> {group.slabCount} physical slabs</b> vs {group.independentSlabCount} separately ·
          <b> {money.format(group.totalBuyingCost??0)} total buying</b></span>
          :<span className="is-warning">Recheck pool: {group.reason}. Individual Area costing is used until repaired.</span>}
      </div>
-     {editable&&(confirmRemove===group.pool.id?
+     {editable&&!group.pool.id.startsWith('auto:')&&(confirmRemove===group.pool.id?
        <div className="qmb-pool-delete-actions">
          <button type="button" onClick={()=>{remove(quote.id,group.pool.id);setConfirmRemove(null);}}>Confirm ungroup</button>
          <button type="button" onClick={()=>setConfirmRemove(null)}>Cancel</button>
        </div>
        :<button type="button" onClick={()=>setConfirmRemove(group.pool.id)}>Ungroup</button>)}
    </div>)}
-   {editable&&<div className="qmb-slab-pool-builder">
+   {editable&&<details className="qwt-slab-manual"><summary>Advanced: manually override slab grouping</summary>
+    <div className="qmb-slab-pool-builder">
      <strong>Combine Areas into a new slab pool</strong>
      <small>Select a specific Catalog material in each Area first. Free-text names are not enough to establish compatibility. Pools require the same material ID, supplier, variant, thickness, finish, purchase option and slab format. Slab nesting and cut feasibility still need shop verification.</small>
      <div className="qmb-slab-area-choices">
@@ -102,6 +107,6 @@ export function QuoteSharedSlabPools({quote}:{quote:Quote}){
        onClick={apply}>Save shared slab pool</button>
      <small>Slabs are counted once for buying. Allocated buying costs can inform a 30% margin scenario.
        An Area's existing multiplier selling price stays as quoted until explicitly reviewed.</small>
-   </div>}
+   </div></details>}
  </section>;
 }
