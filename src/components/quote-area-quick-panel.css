@@ -1,4 +1,13 @@
-.qmb.qmb-quick-area-backdrop{position:fixed;inset:0;z-index:1140;background:rgba(11,18,29,.44);
+.qmb.qmb-quick-area-backdrop{
+ --qmb-bg:var(--ss-theme-base,#f5f7f3);
+ --qmb-card:var(--ss-theme-card,#fff);
+ --qmb-ink:var(--ss-theme-ink,#26392e);
+ --qmb-muted:var(--ss-theme-muted,#63796b);
+ --qmb-border:var(--ss-theme-border,#cddcd1);
+ --qmb-accent:var(--ss-theme-accent,#286f5d);
+ --qmb-tint:var(--ss-theme-tint,#e5f2e8);
+ --qmb-on-accent:var(--ss-theme-contrast,#fff);
+ position:fixed;inset:0;z-index:1140;background:rgba(11,18,29,.44);
  display:flex;justify-content:flex-end;color:var(--qmb-ink);}
 .qmb .qmb-quick-area-panel{width:min(570px,100%);height:100dvh;max-height:100dvh;
  border-left:1px solid var(--qmb-border);background:var(--qmb-bg);box-shadow:-12px 0 35px #0003;
