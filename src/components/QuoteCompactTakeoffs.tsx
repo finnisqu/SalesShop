@@ -19,22 +19,50 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
  value?:number;label:string;commit:(n:number|undefined)=>void;
  inches?:boolean;integer?:boolean;disabled?:boolean;allowNegative?:boolean;
 }){
+ const [editing,setEditing]=useState(false);
  const [draft,setDraft]=useState(value===undefined?'':String(value));
  const cancelled=useRef(false);
- useEffect(()=>setDraft(value===undefined?'':String(value)),[value]);
+ useEffect(()=>{if(!editing)setDraft(value===undefined?'':String(value));},[value,editing]);
  const save=()=>{
-  if(cancelled.current){cancelled.current=false;return;}
-  if(!draft.trim()){if(value!==undefined)commit(undefined);return;}
-  const n=inches?parseInches(draft):Number(draft);
+  if(cancelled.current){cancelled.current=false;setEditing(false);return;}
+  const raw=draft.trim();
+  if(!raw){if(value!==undefined)commit(undefined);setEditing(false);return;}
+  const n=inches?parseInches(raw):Number(raw);
   if(n!==undefined&&Number.isFinite(n)&&(n>=0||allowNegative)&&(!integer||Number.isInteger(n))){
    if(n!==value)commit(n);
   }else setDraft(value===undefined?'':String(value));
+  setEditing(false);
  };
- return <input className="qqt-input" type="text" aria-label={label} disabled={disabled}
+ if(disabled)return <span className="qqt-readonly" title={label}>{value===undefined?'—':String(value)}</span>;
+ if(!editing)return <button type="button" className="qqt-cell-value is-editable"
+  aria-label={'Edit '+label} title={'Click to edit '+label}
+  onClick={()=>setEditing(true)}>{value===undefined?'—':String(value)}</button>;
+ return <input className="qqt-input is-editing" autoFocus type="text" aria-label={label}
   inputMode="decimal" value={draft} onChange={e=>setDraft(e.target.value)}
+  onFocus={e=>e.currentTarget.select()}
   onBlur={save} onKeyDown={e=>{
-   if(e.key==='Enter')e.currentTarget.blur();
+   if(e.key==='Enter'||e.key==='Tab')e.currentTarget.blur();
    if(e.key==='Escape'){cancelled.current=true;setDraft(value===undefined?'':String(value));e.currentTarget.blur();}
+  }}/>;
+}
+function SmallText({value,label,commit,disabled=false,placeholder='—'}:{
+ value:string;label:string;commit:(value:string)=>void;disabled?:boolean;placeholder?:string;
+}){
+ const [editing,setEditing]=useState(false);
+ const [draft,setDraft]=useState(value);
+ const cancelled=useRef(false);
+ useEffect(()=>{if(!editing)setDraft(value);},[value,editing]);
+ if(disabled)return <span className="qqt-readonly" title={label}>{value||placeholder}</span>;
+ if(!editing)return <button type="button" className="qqt-cell-value qqt-cell-text is-editable"
+  title={value||'Click to enter '+label} aria-label={'Edit '+label}
+  onClick={()=>setEditing(true)}>{value||placeholder}</button>;
+ return <input type="text" className="qqt-text is-editing" autoFocus aria-label={label}
+  value={draft} onChange={e=>setDraft(e.target.value)}
+  onFocus={e=>e.currentTarget.select()}
+  onBlur={()=>{if(!cancelled.current&&draft!==value)commit(draft);cancelled.current=false;setEditing(false);}}
+  onKeyDown={e=>{
+   if(e.key==='Enter'||e.key==='Tab')e.currentTarget.blur();
+   if(e.key==='Escape'){cancelled.current=true;setDraft(value);e.currentTarget.blur();}
   }}/>;
 }
 function DetailPopup({quote,section,piece,sink,line,onClose}:{
@@ -289,8 +317,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
       const ref:QuoteScopeRowRef={kind:'piece',id:piece.id,sectionId:section.id};
       const edit=()=>setDetail({areaId:section.id,id:piece.id,kind:'piece'});
       return <div key={piece.id}>
-       {row(ref,section.title,<input type="text" className="qqt-text" aria-label={'Piece name '+piece.id}
-        value={piece.name} disabled={!editable} onChange={e=>setPiece(section,piece,{name:e.target.value})}/>,
+       {row(ref,section.title,<SmallText label={'Piece name '+piece.id} value={piece.name} disabled={!editable}
+         commit={name=>setPiece(section,piece,{name})}/>,
         <SmallInput label={'Quantity '+piece.name} integer disabled={!editable} value={piece.count}
          commit={v=>{if(v!==undefined&&v>0)setPiece(section,piece,{count:v});}}/>,
         <SmallInput label={'Length '+piece.name} inches disabled={!editable} value={piece.lengthIn}
@@ -315,9 +343,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
       const sinkAmount=quote.lines.filter(l=>l.sectionId===section.id&&l.takeoffSinkId===sink.id&&l.includeInTotal)
        .reduce((sum,line)=>sum+quoteLineAmount(line),0);
       return row(ref,section.title,
-       <input type="text" className="qqt-text" aria-label={'Sink model '+sink.id}
-        value={sink.name} disabled={!editable} placeholder="Choose sink"
-        onChange={e=>setSink(section,sink,{name:e.target.value,sinkReference:undefined})}/>,
+       <SmallText label={'Sink model '+sink.id} value={sink.name} disabled={!editable}
+         placeholder="Choose sink" commit={name=>setSink(section,sink,{name,sinkReference:undefined})}/>,
        <SmallInput label={'Sink quantity '+sink.name} value={sink.count} integer disabled={!editable}
         commit={v=>{if(v!==undefined&&v>=1)setSink(section,sink,{count:v});}}/>,
        '—','—','—',
@@ -331,9 +358,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
      {otherLines.map(line=>{
        const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:section.id};
        return row(ref,section.title,
-        <input type="text" className="qqt-text" aria-label={'Charge description '+line.id}
-         value={line.description} disabled={!editable}
-         onChange={e=>store.updateLine(quote.id,line.id,{description:e.target.value})}/>,
+        <SmallText label={'Charge description '+line.id} value={line.description} disabled={!editable}
+         commit={description=>store.updateLine(quote.id,line.id,{description})}/>,
         line.pricingMode==='quantity-rate'
          ?<SmallInput label={'Charge quantity '+line.id} value={line.quantity} disabled={!editable||line.quantitySource?.syncMode==='live'}
            commit={v=>store.updateLine(quote.id,line.id,{quantity:v})}/>
@@ -358,9 +384,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
      .map(line=>{
       const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:line.sectionId};
       return row(ref,'General',
-       <input type="text" className="qqt-text" aria-label={'General charge description '+line.id}
-        value={line.description} disabled={!editable}
-        onChange={e=>store.updateLine(quote.id,line.id,{description:e.target.value})}/>,
+       <SmallText label={'General charge description '+line.id} value={line.description} disabled={!editable}
+         commit={description=>store.updateLine(quote.id,line.id,{description})}/>,
        line.pricingMode==='quantity-rate'
         ?<SmallInput label={'General charge quantity '+line.id} value={line.quantity}
           disabled={!editable||line.quantitySource?.syncMode==='live'}
