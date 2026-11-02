@@ -3,6 +3,7 @@ import type {Quote,QuoteLine,QuoteLineKind,QuoteSection,QuotePricingMode,QuoteLi
 import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {calculateAreaCustomerPrice,projectAreaCost,type AreaPricingChoice} from '../services/quoteAreaCost';
+import {quickAreaSummary} from '../services/quoteQuickAreaSummary';
 import {editedQuotePriceValue,savedAreaMultiplier} from '../services/quotePriceInput';
 import {QuoteSfRateChoices} from './QuoteSfRateChoices';
 import {QuoteBetaRateCatalog,rateItemToQuotePatch} from './QuoteBetaRateCatalog';
@@ -57,6 +58,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const primary=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf')
     ??lines.find(l=>l.kind==='material'&&!l.takeoffSinkId);
   const projection=projectAreaCost(quote,section);
+  const sellingSf=quickAreaSummary(quote,section).billedSf;
   const costPanelRef=useRef<HTMLDivElement>(null);
   const confirmedCostCount=Object.values(projection.costCoverage).filter(Boolean).length;
   const focusCost=(label:string)=>{
@@ -109,10 +111,10 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       description:section.scope?.takeoffMaterial?.trim()||'Countertop material',
       materialReference:materialRef,
       pricingMode:choice==='sf'?'quantity-rate':choice==='multiplier'?'slab-multiplier':'direct',
-      quantity:projection.measuredSf,
+      quantity:sellingSf,
       quantitySource:section.scope?.takeoffPieces?.length?{
         kind:'area-scope',sectionId:section.id,field:'countertopSf',
-        syncMode:'live',capturedValue:projection.measuredSf,appliedAt:new Date().toISOString(),
+        syncMode:'live',capturedValue:sellingSf,appliedAt:new Date().toISOString(),
       }:undefined,
       amount:choice==='manual'?0:undefined,
       customerVisible:true,includeInTotal:true,
@@ -124,7 +126,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     const previous=primary??useQuoteStore.getState().quotes.find(q=>q.id===quote.id)?.lines.find(l=>l.id===id);
     const nextMode:QuotePricingMode=choice==='manual'?'direct':
       choice==='sf'?'quantity-rate':'slab-multiplier';
-    const effectiveSf=projection.measuredSf;
+    const effectiveSf=sellingSf;
     const effectiveRate=editedQuotePriceValue(edits,'rate',previous?.rate);
     const effectiveCount=projection.slabCount;
     const effectiveMultiplier=editedQuotePriceValue(edits,'multiplier',
@@ -149,7 +151,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       quantity:projection.measuredSf,
       quantitySource:{
         kind:'area-scope' as const,sectionId:section.id,field:'countertopSf' as const,
-        syncMode:'live' as const,capturedValue:projection.measuredSf,
+        syncMode:'live' as const,capturedValue:sellingSf,
         appliedAt:new Date().toISOString(),
       },
     }:{};
@@ -166,7 +168,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     // Re-entering SF mode after a manual or slab estimate must catch up with
     // any changed Takeoffs measurements, without detaching the live source.
     if(choice==='sf'&&wasLive&&section.scope?.takeoffPieces&&
-      (previous?.pricingMode!=='quantity-rate'||previous?.quantity!==projection.measuredSf))
+      (previous?.pricingMode!=='quantity-rate'||previous?.quantity!==sellingSf))
       updatePieces(quote.id,section.id,section.scope.takeoffPieces);
   };
   const areaTotal=quoteLinesTotal(lines);
@@ -180,7 +182,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const marginMaterialAmount=marginTotal===undefined?undefined:
     Math.max(0,Math.round((marginTotal-separateSell)*100)/100);
   const sfScenario=primary?.rate===undefined?undefined:
-    projection.measuredSf*primary.rate+separateSell;
+    sellingSf*primary.rate+separateSell;
   const multiplierScenario=projection.slabCount!==undefined&&projection.slabCost!==undefined&&multiplier!==undefined?
     projection.slabCount*projection.slabCost*multiplier+separateSell:undefined;
   const applyMargin=()=>{
@@ -253,8 +255,8 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
             setRatesOpen(false);
           }}/>
       </div>}
-      <p className="qmb-math-ledger">{projection.measuredSf.toFixed(2)} SF × {money.format(primary?.rate??0)}/SF = <strong>
-        {money.format(projection.measuredSf*(primary?.rate??0))}</strong></p>
+      <p className="qmb-math-ledger">{sellingSf.toFixed(2)} billed SF × {money.format(primary?.rate??0)}/SF = <strong>
+        {money.format(sellingSf*(primary?.rate??0))}</strong></p>
     </div>}
     {mode==='multiplier'&&<div className="qmb-pricing-formula">
       <div className="qmb-pricing-double">
