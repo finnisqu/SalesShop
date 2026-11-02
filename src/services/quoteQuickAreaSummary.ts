@@ -12,13 +12,20 @@ export function quickAreaPrimary(quote:Quote,areaId:string):QuoteLine|undefined{
   ??lines.find(line=>line.kind==='item'&&!line.takeoffSinkId
    &&line.quantitySource?.field==='countertopSf');
 }
+/** Apply customer-billing rounding to an SF-only Quick Quote without
+ * altering its source measurement or private purchase calculation. */
+export function quickRoundedSf(value:number,mode?:NonNullable<QuoteSection['scope']>['billableSfRounding']):number{
+ if(!Number.isFinite(value)||value<=0)return 0;
+ const step=mode==='quarter-up'?.25:mode==='half-up'?.5:mode==='whole-up'?1:0;
+ return step?Math.round((Math.ceil((value-1e-8)/step)*step+Number.EPSILON)*100)/100:value;
+}
 export function quickAreaSummary(quote:Quote,area:QuoteSection){
  const scope=area.scope,pieces=scope?.takeoffPieces??[];
  const primary=quickAreaPrimary(quote,area.id);
  const lines=quote.lines.filter(line=>line.sectionId===area.id);
  const measuredSf=pieces.length?totalBillableTakeoffSf(pieces):scope?.countertopSf??primary?.quantity??0;
  const billedSf=pieces.length?roundedBillableTakeoffSf(pieces,scope?.billableSfRounding):
-  scope?.countertopSf??primary?.quantity??0;
+  quickRoundedSf(scope?.countertopSf??primary?.quantity??0,scope?.billableSfRounding);
  const sinkLines=lines.filter(line=>line.takeoffSinkId||line.kind==='sink');
  const sinkQuantity=(scope?.takeoffSinks??[]).filter(sink=>!sink.excludedFromContract)
   .reduce((sum,sink)=>sum+sink.count,0)+
