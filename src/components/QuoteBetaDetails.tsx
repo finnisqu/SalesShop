@@ -65,6 +65,9 @@ export function QuoteBetaDetails({quote}:{quote:Quote}){
           <small>Job location and pricing context</small></div>
       </header>
       <div className="qmb-details-fields">
+        <label><span>Project Name</span><input type="text" value={quote.title}
+          disabled={!editable} maxLength={180} placeholder="Name this project"
+          aria-label="Project Name" onChange={e=>update(quote.id,{title:e.target.value})}/></label>
         <label><span>Quote date</span><input type="date" value={quote.quoteDate}
           disabled={!editable} onChange={e=>update(quote.id,{quoteDate:e.target.value})}/></label>
         <label><span>Job address</span><input type="text" value={quote.address??''} disabled={!editable}
