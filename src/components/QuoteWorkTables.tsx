@@ -75,6 +75,10 @@ function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectM
  const extras=lines.filter(line=>line!==primary&&!line.takeoffSinkId);
  const cost=section&&!general?projectAreaCost(quote,section):null;
  const amount=quoteLinesTotal(lines);
+ const billedSf=pieces.length?roundedBillableTakeoffSf(pieces,section?.scope?.billableSfRounding):
+   section?.scope?.countertopSf??0;
+ const effectiveSellSf=primary?.includeInTotal&&billedSf>0
+   ?quoteLineAmount(primary)/billedSf:undefined;
  const miterInches=totalBillableMiterInches(pieces);
  const issue=section&&!general?auditQuoteDraft(quote).blockers.find(item=>
   item.destination.view==='area'&&item.destination.areaId===id):undefined;
@@ -254,8 +258,7 @@ function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectM
      <div className={issue||manualExclusionReview?'qwt-needs-review':''}><span>Total</span><strong>{money.format(amount)}</strong>
        {issue&&<small title={issue.title}>! Check price</small>}
        {manualExclusionReview&&<small>! Recheck manual price</small>}</div>
-     <div><span>Effective / SF</span><strong>{primary&&totalBillableTakeoffSf(pieces)>0
-       ?money.format(quoteLineAmount(primary)/roundedBillableTakeoffSf(pieces,section.scope?.billableSfRounding)):'—'}</strong>
+     <div><span>Effective / SF</span><strong>{effectiveSellSf!==undefined?money.format(effectiveSellSf):'—'}</strong>
        <small>{sinks.reduce((n,s)=>n+(s.excludedFromContract?0:s.count),0)} active sinks</small></div>
    </div>:<div className="qwt-general-total"><span>General charges</span>
     <strong>{money.format(amount)}</strong><small>Quote total {money.format(quoteTotal(quote))}</small></div>}
@@ -265,8 +268,7 @@ function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectM
   <div className="qwt-sheet-context"><strong>{general?'General charges':section?.title??'Area'}</strong>
    {!general&&<><span>{section?.scope?.takeoffMaterial||'Choose a material in Areas & General'}</span>
     <span>{sf.format(totalBillableTakeoffSf(pieces))} measured SF</span>
-    <span>Sell / SF: {primary&&totalBillableTakeoffSf(pieces)>0
-      ?money.format(quoteLineAmount(primary)/roundedBillableTakeoffSf(pieces,section?.scope?.billableSfRounding)):'—'}</span>
+    <span>Effective sell / SF: {effectiveSellSf!==undefined?money.format(effectiveSellSf):'—'}</span>
     <span>{primary?.pricingMode==='direct'?'Manual total':primary?.pricingMode==='slab-multiplier'?'Slab multiplier':'SF rate'}</span></>}
    <button type="button" onClick={()=>onCalc(general?null:id!)}>Calculator ↗</button>
   </div>
@@ -332,7 +334,10 @@ function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectM
            {(piece.miterFront||piece.miterLeft||piece.miterRight)&&
              <small>{takeoffPieceMiterInches(piece).toFixed(1)} IN</small>}
          </div>
-         <button type="button" onClick={()=>onAdvanced(id!)}>Edge: {piece.edgeProfile??'Flat'} ↗</button>
+         <label className="qwt-edge-field"><small>Edge profile</small>
+          <input type="text" className="qwt-input" aria-label={'Edge profile for piece '+(index+1)}
+           maxLength={90} disabled={!editable} value={piece.edgeProfile??'Flat'}
+           onChange={e=>patchPiece(piece,{edgeProfile:e.target.value})}/></label>
        </div>
        <strong className="qwt-amount">{sf.format(piece.excludedFromQuote?0:takeoffPieceSf(piece))} SF</strong>
        <span className="qwt-muted-cell" title="Part of the Area material cost">Area cost</span>
@@ -472,7 +477,6 @@ function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectM
     </div></details>
     {general&&<><button type="button" onClick={()=>addCharge('material')}>+ Material</button>
       <button type="button" onClick={()=>addCharge('sink')}>+ Sink charge</button></>}
-    {id&&<button type="button" className="qwt-advanced-link" onClick={()=>onAdvanced(id)}>Detailed fabrication / catalog ↗</button>}
   </div>}
   </>}
  </section>;
@@ -577,12 +581,11 @@ export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralT
  };
  return <div className="qwt-workspace" role="region" aria-label="Takeoffs selections and pricing tables">
   <header className="qwt-intro"><div><div className="qmb-kicker">QUICK QUOTE · SINGLE WORKSPACE</div>
-    <h2>Takeoffs, selections &amp; pricing</h2>
-    <p>Each Area has its own editable table. Pieces come first, then sinks and charges.
-     Strike out work without deleting its measurements; restore it later with one click.</p>
+    <h2>Quote Builder</h2>
+    <p>Set up Areas once, then edit measurements, selections and prices in one worksheet.
+     Struck-out work keeps its measurements and can be restored at any time.</p>
    </div><div className="qwt-intro-actions">
     <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
-    <button type="button" disabled={!editable} onClick={onAddArea}>+ Area</button>
    </div></header>
   {!!selectedValid.length&&<div className="qwt-bulk" role="toolbar" aria-label="Bulk edit selected quote lines">
    <strong>{selectedValid.length} selected</strong>
