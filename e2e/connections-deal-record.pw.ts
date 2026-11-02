@@ -38,7 +38,11 @@ test('Deal page creates, edits, links quotes, returns to directory and reloads',
     await page.getByRole('button', { name: /Connections/ }).filter({ hasText: '← Connections' }).click();
     await expect(page).toHaveURL(/\/connections$/);
     await expect(tabs.getByRole('button', { name: /Deals/ })).toHaveAttribute('aria-current', 'page');
-    await expect(page.locator('.connections-directory').getByRole('button', { name: deal, exact: true })).toBeVisible();
+    // Phone uses richer record cards; desktop uses a dedicated name cell.
+    // Ignore the separate pin button, which has the same deal name.
+    await expect(page.locator('.connections-directory')
+      .locator('.connections-table-open:visible, .connections-record:visible')
+      .filter({ hasText: deal }).first()).toBeVisible();
   });
 
 test('Unknown Deal ID stays on a safe record fallback; legacy Board project URLs are recognized',
