@@ -132,16 +132,21 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
   store.updateLine(quote.id,primary.id,{
    pricingMode:mode,rate:mode==='quantity-rate'?primary.rate:undefined,
    amount:mode==='direct'?quoteLineAmount(primary):mode==='slab-multiplier'?calculated:undefined,
-   ...(mode==='quantity-rate'&&pieces.length?{
+   // Existing live links cannot be overwritten through the general line editor.
+   // Re-sync them through the takeoff owner after changing modes.
+   ...(mode==='quantity-rate'&&pieces.length&&primary.quantitySource?.syncMode!=='live'?{
      quantity:roundedBillableTakeoffSf(pieces,section?.scope?.billableSfRounding),
-     quantitySource:{kind:'area-scope',sectionId:id,field:'countertopSf',syncMode:'live',
-       capturedValue:roundedBillableTakeoffSf(pieces,section?.scope?.billableSfRounding),appliedAt:new Date().toISOString()},
+     quantitySource:{kind:'area-scope' as const,sectionId:id,field:'countertopSf' as const,
+       syncMode:'live' as const,capturedValue:roundedBillableTakeoffSf(pieces,section?.scope?.billableSfRounding),
+       appliedAt:new Date().toISOString()},
    }:{}),
    materialReference:mode==='slab-multiplier'?{
-    ...(primary.materialReference??{stockProgram:false,pricingSource:'slab-multiplier'}),
-    pricingSource:'slab-multiplier',slabMultiplier:multiplier,
+    ...(primary.materialReference??{stockProgram:false,pricingSource:'slab-multiplier' as const}),
+    pricingSource:'slab-multiplier' as const,slabMultiplier:multiplier,
     slabCount:cost?.slabCount,sourceSlabCost:cost?.slabCost}:primary.materialReference,
   });
+  if(mode==='quantity-rate'&&pieces.length&&primary.quantitySource?.syncMode==='live')
+   store.updateTakeoffPieces(quote.id,id,pieces);
  };
  const setMultiplier=(value:number|undefined)=>{
   if(!primary)return;
@@ -149,8 +154,8 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
    sf:totalBillableTakeoffSf(pieces),slabs:cost?.slabCount,
    costPerSlab:cost?.slabCost,multiplier:value});
   store.updateLine(quote.id,primary.id,{amount:calculated,
-    materialReference:{...(primary.materialReference??{stockProgram:false,pricingSource:'slab-multiplier'}),
-      pricingSource:'slab-multiplier',slabMultiplier:value,
+    materialReference:{...(primary.materialReference??{stockProgram:false,pricingSource:'slab-multiplier' as const}),
+      pricingSource:'slab-multiplier' as const,slabMultiplier:value,
       slabCount:cost?.slabCount,sourceSlabCost:cost?.slabCost}});
  };
  return <section className="qwt-area" aria-label={general?'General work table':'Area work table '+section?.title}>
