@@ -46,6 +46,7 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain('onPointerDown');
   expect(areas).toContain("onCommit:v=>writeStoneTotal");
   expect(quoteUi).toContain('qmb-quick-history');
+  expect(quoteUi).toContain('is-quick-quote-frame');
   expect(areas).toContain("table.current.querySelector<HTMLInputElement>('input.qqs-edit:focus')?.blur()");
  });
  it('uses the same guided four stages and never requires opening an old Area page',()=>{
