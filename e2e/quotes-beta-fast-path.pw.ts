@@ -27,7 +27,8 @@ test('Quick Quote Details flows into unified Area tables, strike-through and cal
   await kitchen.getByRole('button',{name:'+ Piece'}).click();
   await kitchen.getByRole('textbox',{name:'Piece 1 name'}).fill('Kitchen counter');
   await kitchen.getByRole('textbox',{name:'Piece 1 length inches'}).fill('48');
-  await kitchen.getByRole('textbox',{name:'Piece 1 length inches'}).blur();
+  await kitchen.getByRole('textbox',{name:'Piece 1 length inches'}).press('Enter');
+  await expect(kitchen.getByRole('textbox',{name:'Piece 1 width inches'})).toBeFocused();
   await kitchen.getByRole('textbox',{name:'Piece 1 width inches'}).fill('24');
   await kitchen.getByRole('textbox',{name:'Piece 1 width inches'}).blur();
   await expect(kitchen.getByText('8 SF')).toBeVisible();

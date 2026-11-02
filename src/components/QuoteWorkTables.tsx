@@ -43,8 +43,10 @@ function NumberCell({value,label,disabled,min=0,max=10000,integer=false,inches=f
  };
  return <input aria-label={label} className="qwt-input qwt-numeric" inputMode="decimal" type="text"
   disabled={disabled} value={draft} placeholder="—" onChange={e=>setDraft(e.target.value)}
-  onBlur={commit} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();e.currentTarget.blur();}
-   if(e.key==='Escape'){setDraft(value===undefined?'':String(value));e.currentTarget.blur();}}}/>;
+  onBlur={commit} onKeyDown={e=>{
+   // The parent worktable owns Enter→next-cell navigation; keep Escape local.
+   if(e.key==='Escape'){e.preventDefault();setDraft(value===undefined?'':String(value));e.currentTarget.blur();}
+  }}/>;
 }
 function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,onCalc,onAdvanced}:ScopeTableProps){
  const editable=quoteIsCommerciallyEditable(quote);
