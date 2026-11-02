@@ -13,6 +13,7 @@ import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {useQuoteStore} from '../store/quoteStore';
 import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEditor';
 import { QuoteBetaReviewGuide } from './QuoteBetaReviewGuide';
+import {QuotePricingScenarioReview} from './QuotePricingScenarioReview';
 import {InitialOpenDetails} from './InitialOpenDetails';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -152,6 +153,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
           <span><b>{report.optional.length}</b> Optional</span>
         </div>
       </div>
+      <QuotePricingScenarioReview quote={quote}/>
       <QuoteBetaReviewGuide editable={editable} issued={issued} canIssue={canIssue}
         needsRecheck={needsRecheck} blockers={report.blockers.length}
         decisions={report.review.length} acknowledged={acknowledged}
