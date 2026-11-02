@@ -4,7 +4,7 @@ import { applyAreaScopeQuantity,resolveLineAreaScopeState } from './quoteAreaSco
 import {
   parseInches,isValidTakeoffPiece,takeoffPieceSf,totalTakeoffSf,
   patchQuoteTakeoff,detachQuoteTakeoff,sectionTakeoffSf,newTakeoffPiece,
-  takeoffPieceMiterInches,totalBillableMiterInches,
+  takeoffPieceMiterInches,totalBillableMiterInches,roundedBillableTakeoffSf,
   takeoffCustomerDetails,takeoffCustomerSpecs,
 } from './quoteTakeoffsLite';
 
@@ -59,6 +59,20 @@ describe('Takeoffs Lite: precise fractional-inch piece measurements',()=>{
     expect(totalTakeoffSf(parts)).toBe(66.5);
     expect(totalTakeoffSf([piece('a',3,5),piece('b',3,5)])).toBe(0.21);
     expect(totalTakeoffSf([piece('unfinished'),piece('complete',48,24)])).toBe(8);
+  });
+  it('rounds only billable selling SF and preserves exact source geometry',()=>{
+    const p=piece('island',25,25); // 4.340277... SF
+    expect(totalTakeoffSf([p])).toBe(4.34);
+    expect(roundedBillableTakeoffSf([p],'exact')).toBe(4.34);
+    expect(roundedBillableTakeoffSf([p],'quarter-up')).toBe(4.5);
+    expect(roundedBillableTakeoffSf([p],'half-up')).toBe(4.5);
+    expect(roundedBillableTakeoffSf([p],'whole-up')).toBe(5);
+    const start=quote();
+    start.sections[0].scope={...start.sections[0].scope,billableSfRounding:'whole-up'};
+    const updated=patchQuoteTakeoff(start,'kitchen',[p],at);
+    expect(updated.sections[0].scope?.countertopSf).toBe(5);
+    expect(updated.sections[0].scope?.takeoffTopSf).toBe(4.34);
+    expect(updated.lines.find(l=>l.id==='live')?.quantity).toBe(5);
   });
   it('tracks explicit linked miter lengths as source geometry changes or is excluded',()=>{
     const p={...piece('waterfall',96,36,2),miterFront:true,miterRight:true};
