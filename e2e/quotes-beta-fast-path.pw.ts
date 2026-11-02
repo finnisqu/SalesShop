@@ -31,6 +31,12 @@ test('Quick Quote Details flows into unified Area tables, strike-through and cal
   await kitchen.getByRole('textbox',{name:'Piece 1 width inches'}).fill('24');
   await kitchen.getByRole('textbox',{name:'Piece 1 width inches'}).blur();
   await expect(kitchen.getByText('8 SF')).toBeVisible();
+  await kitchen.getByRole('checkbox',{name:'Piece 1 backsplash'}).check();
+  await expect(kitchen.getByText('9.33 SF').first()).toBeVisible();
+  await kitchen.getByRole('button',{name:/Exclude splash/}).click();
+  await expect(kitchen.locator('.qwt-splash-line.is-excluded')).toHaveCount(1);
+  await kitchen.getByRole('button',{name:/Restore splash/}).click();
+  await expect(kitchen.locator('.qwt-splash-line.is-excluded')).toHaveCount(0);
   await expect(kitchen.getByRole('button',{name:'Calculator ↗'})).toBeVisible();
   await kitchen.getByRole('button',{name:'Calculator ↗'}).click();
   const calc=page.getByRole('dialog',{name:'Calculator for Kitchen'});

@@ -146,3 +146,17 @@
 .sales-app .qmb .qwt-exclusion-warning>button{flex:0 0 auto;min-height:33px;
  border:1px solid var(--qmb-accent);background:var(--qmb-card);
  color:var(--qmb-accent);font-size:11px;font-weight:800;border-radius:8px;padding:6px 10px;}
+
+.sales-app .qmb .qwt-edge-choices>div[role="group"]{display:flex;gap:4px;flex-wrap:wrap;}
+.sales-app .qmb .qwt-edge-choices>div[role="group"] label{display:flex;align-items:center;justify-content:center;
+ gap:3px;min-width:28px;min-height:28px;padding:3px;border:1px solid var(--qmb-border);border-radius:6px;
+ background:var(--qmb-card);font-weight:800;color:var(--qmb-muted);cursor:pointer;}
+.sales-app .qmb .qwt-edge-choices>div[role="group"] label:has(input:checked){
+ background:var(--qmb-tint);color:var(--qmb-accent);border-color:var(--qmb-accent);}
+.sales-app .qmb .qwt-edge-choices input{width:12px;height:12px;accent-color:var(--qmb-accent);}
+.sales-app .qmb .qwt-sink-catalog{position:relative;}
+.sales-app .qmb .qwt-sink-catalog input{min-height:32px;font-size:12px;min-width:0;width:100%;}
+.sales-app .qmb .qwt-title-cell select{width:100%;max-width:100%;min-height:26px;font-size:10px;
+ border:1px solid var(--qmb-border);border-radius:6px;background:var(--qmb-card);
+ color:var(--qmb-muted);padding:3px 5px;}
+.sales-app .qmb .qwt-line:focus-within{background:var(--qmb-tint);}

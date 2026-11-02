@@ -10,7 +10,7 @@ import {newTakeoffPiece,newTakeoffSink,parseInches,takeoffPieceSf,takeoffPieceSp
  totalBillableTakeoffSf} from '../services/quoteTakeoffsLite';
 import {projectAreaCost} from '../services/quoteAreaCost';
 import {savedAreaMultiplier} from '../services/quotePriceInput';
-import {TakeoffMaterialCatalog} from './TakeoffCatalogPickers';
+import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
 import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
 import {QuoteBetaMaterials} from './QuoteBetaMaterials';
@@ -180,7 +180,18 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
           disabled={!editable} onCommit={v=>patchPiece(piece,{widthIn:v})}/>
        <NumberCell label={'Piece '+(index+1)+' quantity'} value={piece.count} integer min={1} max={1000}
           disabled={!editable} onCommit={v=>{if(v!==undefined)patchPiece(piece,{count:v});}}/>
-       <div className="qwt-detail"><small>Top</small><button type="button" onClick={()=>onAdvanced(id!)}>Edges · {piece.edgeProfile??'Flat'} ↗</button></div>
+       <div className="qwt-detail qwt-edge-choices"><small>Top · splash edges</small>
+        <div role="group" aria-label={'Piece '+(index+1)+' splash edges'}>
+         {([['backsplash','B'],['leftSplash','L'],['rightSplash','R']] as const).map(([flag,label])=>
+          <label key={flag} title={flag==='backsplash'?'Back splash':flag==='leftSplash'?'Left splash':'Right splash'}>
+           <input type="checkbox" disabled={!editable} checked={!!piece[flag]}
+            aria-label={'Piece '+(index+1)+' '+flag}
+            onChange={e=>patchPiece(piece,{[flag]:e.target.checked})}/>
+           {label}
+          </label>)}
+        </div>
+        <button type="button" onClick={()=>onAdvanced(id!)}>Edge: {piece.edgeProfile??'Flat'} ↗</button>
+       </div>
        <strong className="qwt-amount">{sf.format(piece.excludedFromQuote?0:takeoffPieceSf(piece))} SF</strong>
        {include(ref,!!piece.excludedFromQuote)}
       </div>
@@ -189,8 +200,12 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
        {box({kind:'splash',id:piece.id,sectionId:id})}
        <span className="qwt-title-cell"><small>Splash for {piece.name||'Piece '+(index+1)}</small></span>
        <span>—</span><span>—</span><span>{piece.count}×</span>
-       <div className="qwt-detail"><small>{piece.splashHeightIn??4}″ high</small>
-          <span>{[piece.backsplash?'Back':null,piece.leftSplash?'Left':null,piece.rightSplash?'Right':null].filter(Boolean).join(' / ')}</span></div>
+       <div className="qwt-detail"><small>Splash height (in)</small>
+        <NumberCell label={'Splash height for piece '+(index+1)} min={0} max={120}
+         value={piece.splashHeightIn??4} disabled={!editable}
+         onCommit={v=>patchPiece(piece,{splashHeightIn:v??4})}/>
+        <small>{[piece.backsplash?'Back':null,piece.leftSplash?'Left':null,piece.rightSplash?'Right':null].filter(Boolean).join(' / ')}</small>
+       </div>
        <strong className="qwt-amount">{sf.format(piece.excludeSplashFromQuote||piece.excludedFromQuote?0:takeoffPieceSplashSf(piece))} SF</strong>
        {include({kind:'splash',id:piece.id,sectionId:id},!!piece.excludeSplashFromQuote)}
       </div>}
@@ -200,11 +215,14 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
    {sinks.map((sink,index)=>{
      const ref:QuoteScopeRowRef={kind:'sink',id:sink.id,sectionId:id};
      const excluded=!!sink.excludedFromContract;
-     return <div key={sink.id} className={'qwt-line'+(excluded?' is-excluded':'')}>
+     return <div key={sink.id} className={'qwt-line'+(excluded?' is-excluded':'')+
+       (!excluded&&sink.includeInPricing&&sink.unitPrice===undefined?' has-issue':'')}>
       {box(ref)}
-      <label className="qwt-title-cell"><small>Sink {index+1}</small>
-       <input className="qwt-input qwt-description" aria-label={'Sink '+(index+1)+' name'} disabled={!editable}
-        value={sink.name} placeholder="Sink model" onChange={e=>patchSink(sink,{name:e.target.value,sinkReference:undefined})}/></label>
+      <div className="qwt-title-cell qwt-sink-catalog"><small>Sink {index+1} · model</small>
+       <TakeoffSinkCatalog disabled={!editable} value={sink.name}
+        onTextChange={name=>patchSink(sink,{name,sinkReference:undefined})}
+        onSelect={patch=>patchSink(sink,patch)}/>
+      </div>
       <span>—</span><span>—</span>
       <NumberCell label={'Sink '+(index+1)+' quantity'} value={sink.count} min={1} max={1000} integer disabled={!editable}
        onCommit={v=>{if(v!==undefined)patchSink(sink,{count:v});}}/>
@@ -220,19 +238,36 @@ function ScopeRows({quote,section,general=false,selected,onSelect,onSelectMany,o
      const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:line.sectionId};
      const excluded=!line.includeInTotal;
      const changes=(patch:Partial<QuoteLine>)=>store.updateLine(quote.id,line.id,patch);
-     return <div className={'qwt-line'+(excluded?' is-excluded':'')} key={line.id}>
+     const incomplete=!excluded&&line.pricingMode!=='none'&&
+      (line.pricingMode==='quantity-rate'?line.rate===undefined||line.quantity===undefined:
+       line.amount===undefined);
+    return <div className={'qwt-line'+(excluded?' is-excluded':'')+(incomplete?' has-issue':'')} key={line.id}>
        {box(ref)}
        <label className="qwt-title-cell"><small>{line.kind.replace('-',' ')}</small>
-        <input className="qwt-input qwt-description" aria-label={'Charge '+line.id+' description'}
-         value={line.description} disabled={!editable} onChange={e=>changes({description:e.target.value})}/></label>
+       <input className="qwt-input qwt-description" aria-label={'Charge '+line.id+' description'}
+        value={line.description} disabled={!editable} onChange={e=>changes({description:e.target.value})}/>
+       <select aria-label={'Charge '+line.id+' pricing method'} value={line.pricingMode}
+        disabled={!editable} onChange={e=>{
+         const mode=e.target.value as QuoteLine['pricingMode'];
+         if(mode==='quantity-rate')changes({pricingMode:mode,quantity:line.quantity??1,rate:line.rate??undefined});
+         else if(mode==='direct')changes({pricingMode:mode,amount:line.amount??quoteLineAmount(line)});
+         else changes({pricingMode:mode});
+        }}>
+        <option value="direct">Manual amount</option>
+        <option value="quantity-rate">Quantity × rate</option>
+        <option value="none">Notes only</option>
+        {line.pricingMode==='slab-multiplier'&&<option value="slab-multiplier">Slab multiplier</option>}
+       </select>
+      </label>
        <span>—</span><span>—</span>
        {line.pricingMode==='quantity-rate'?<NumberCell label={'Charge '+line.id+' quantity'}
           value={line.quantity} min={0} disabled={!editable} onCommit={v=>changes({quantity:v})}/>:<span>—</span>}
-       <div className="qwt-detail">{line.pricingMode==='quantity-rate'
-          ?<NumberCell label={'Charge '+line.id+' rate'} value={line.rate} disabled={!editable}
-             onCommit={v=>changes({rate:v})}/>
-          :<NumberCell label={'Charge '+line.id+' amount'} value={line.amount} disabled={!editable}
-             onCommit={v=>changes({amount:v})}/>}</div>
+       <div className="qwt-detail">{line.pricingMode==='none'?<span>—</span>:
+        line.pricingMode==='quantity-rate'
+         ?<NumberCell label={'Charge '+line.id+' rate'} value={line.rate} disabled={!editable}
+           onCommit={v=>changes({rate:v})}/>
+         :<NumberCell label={'Charge '+line.id+' amount'} value={line.amount} disabled={!editable}
+           onCommit={v=>changes({amount:v})}/>}</div>
        <strong className="qwt-amount">{money.format(excluded?0:quoteLineAmount(line))}</strong>
        {include(ref,excluded)}
      </div>;
