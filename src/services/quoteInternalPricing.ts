@@ -96,13 +96,16 @@ function internalCostForLine(line: QuoteLine) {
 }
 
 function lineRequiresCost(line: QuoteLine, customerAmount: number) {
+  if (line.internalOnlyCost) return true;
   if (line.kind === 'material' || line.kind === 'sink' || line.kind === 'rate') return true;
   if (customerAmount <= 0) return false;
   return !['tax', 'discount', 'allowance'].includes(line.kind);
 }
 
 export function summarizeQuoteInternalPricing(lines: QuoteLine[]): QuoteInternalPricingSummary {
-  const lineSummaries = lines.map((line) => {
+  // A struck-through line is entirely excluded from this contract's cost AND sell.
+  // Absorbed expenses remain included, with a zero customer amount.
+  const lineSummaries = lines.filter(line => line.includeInTotal).map((line) => {
     const customerAmount = quoteLineTotal(line);
     const internalCost = internalCostForLine(line);
     return {
