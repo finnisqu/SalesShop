@@ -93,3 +93,10 @@
 .qmb .qmb-details-next small{font-size:12px;line-height:1.45;color:var(--qmb-muted)}
 .qmb .qmb-details-next button{min-width:155px;white-space:normal}
 @media(max-width:650px){.qmb .qmb-details-next{grid-template-columns:minmax(0,1fr)}.qmb .qmb-details-next button{width:100%;min-height:44px}}
+
+/* Fast start: a normal measured Area or a General-only fixed-fee quote. */
+.qmb .qmb-details-next .qmb-details-next-actions{display:flex;align-items:center;justify-content:flex-end;
+ flex-wrap:wrap;gap:8px;min-width:0;}
+.qmb .qmb-details-next-actions button{flex:1 1 155px;max-width:240px;min-height:38px;}
+@media(max-width:650px){.qmb .qmb-details-next .qmb-details-next-actions{display:grid;grid-template-columns:1fr;}
+ .qmb .qmb-details-next-actions button{max-width:none;}}
