@@ -2,9 +2,10 @@ import {useEffect,useMemo,useState} from 'react';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import '../connections-table.css';
 export interface ConnectionColumn {key:string;label:string;}
-export interface ConnectionTableRow {id:string;name:string;association:TaskAssociation;values:Record<string,string>;}
-interface Props {tableKey:'companies'|'people'|'deals';columns:ConnectionColumn[];rows:ConnectionTableRow[];
- onOpen:(id:string)=>void;onBulkTask:(records:ConnectionTableRow[])=>void;}
+export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;}
+interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks';columns:ConnectionColumn[];rows:ConnectionTableRow[];
+ onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
+ onBulkComplete?:(records:ConnectionTableRow[])=>void;}
 const PAGE_SIZE=25;
 const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
@@ -13,7 +14,7 @@ function read(key:string):string[]{
  return Array.isArray(data)?data.filter((x):x is string=>typeof x==='string'):[];}
  catch{return[];}
 }
-export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask}:Props){
+export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkComplete}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
@@ -49,7 +50,12 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask}:Props
    <div className="connections-grid-toolbar">
      <span>{rows.length} records · {chosen.length} selected</span>
      {chosen.length>0&&<>
-       <button type="button" onClick={()=>onBulkTask(chosen)}>Create task with selected ({chosen.length})</button>
+       {onBulkTask&&<button type="button" onClick={()=>onBulkTask(chosen)}>Create task with selected ({chosen.length})</button>}
+       {onBulkComplete&&<button type="button" onClick={()=>{
+         if(window.confirm('Mark '+chosen.length+' selected tasks complete?')){
+           onBulkComplete(chosen);setSelected([]);
+         }
+       }}>Complete selected ({chosen.length})</button>}
        <button type="button" onClick={()=>setSelected([])}>Clear</button>
      </>}
      <details className="connections-columns-menu"><summary>⚙ Columns</summary>
