@@ -258,3 +258,14 @@
  .sales-app .qmb .qmb-quick-history button span{display:none;}
  .sales-app .qmb .qmb-quick-history button{min-width:32px;justify-content:center;padding:4px 6px;}
 }
+
+
+/* Hide the obsolete navigator and inspector across the complete Quick Quote
+ * flow, including optional advanced Area work; Pricing Schedules are untouched. */
+@media(min-width:1000px) and (min-height:550px){
+ .sales-app .qmb .qmb-desktop-frame.is-quick-quote-frame:not(.is-library){
+  grid-template-columns:minmax(0,1fr);grid-template-areas:"workspace";}
+ .sales-app .qmb .qmb-desktop-frame.is-quick-quote-frame>.qmb-desktop-navigation,
+ .sales-app .qmb .qmb-desktop-frame.is-quick-quote-frame>.qmb-desktop-inspector{
+  display:none;}
+}
