@@ -23,7 +23,7 @@ const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 const rowKey=(row:QuoteScopeRowRef)=>[row.kind,row.sectionId??'general',row.id].join(':');
 type ScopeTableProps={
- quote:Quote;section:QuoteSection|null;general?:boolean;view:'summary'|'lines';selected:Set<string>;
+ quote:Quote;section:QuoteSection|null;general?:boolean;view:'summary'|'lines';showColumns?:boolean;selected:Set<string>;
  onSelect:(row:QuoteScopeRowRef,checked:boolean)=>void;onSelectMany:(rows:QuoteScopeRowRef[],checked:boolean)=>void;
  onCalc:(id:string|null)=>void;onAdvanced:(id:string)=>void;
 };
@@ -50,7 +50,7 @@ function NumberCell({value,label,disabled,min=0,max=10000,integer=false,inches=f
    if(e.key==='Escape'){e.preventDefault();setDraft(value===undefined?'':String(value));e.currentTarget.blur();}
   }}/>;
 }
-function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectMany,onCalc,onAdvanced}:ScopeTableProps){
+function ScopeRows({quote,section,general=false,view,showColumns=false,selected,onSelect,onSelectMany,onCalc,onAdvanced}:ScopeTableProps){
  const editable=quoteIsCommerciallyEditable(quote);
  const [materialOpen,setMaterialOpen]=useState(false);
  const materialAnchor=useRef<HTMLDivElement>(null);
@@ -297,9 +297,9 @@ function ScopeRows({quote,section,general=false,view,selected,onSelect,onSelectM
    event.preventDefault();cell.blur();
    requestAnimationFrame(()=>inputs[next]?.focus());
   }}>
-   <div className="qwt-columns" aria-hidden="true"><span></span><span>Type / description</span>
+   {showColumns&&<div className="qwt-columns" aria-hidden="true"><span></span><span>Type / description</span>
     <span>Length</span><span>Width</span><span>Qty</span><span>Detail / rate</span>
-    <span>SF / amount</span><span>Private cost</span><span>Contract</span></div>
+    <span>SF / amount</span><span>Private cost</span><span>Contract</span></div>}
    {!!pieces.length&&category('Pieces',pieces.length)}
    {pieces.map((piece,index)=>{
      const ref:QuoteScopeRowRef={kind:'piece',id:piece.id,sectionId:id};
@@ -637,11 +637,13 @@ export function QuoteWorkTables({quote,onAddArea,onLayouts,onAdvanced,onGeneralT
    <div className="qwt-panel-heading"><div><h3>2 · Takeoffs, Selections &amp; Pricing</h3>
     <p>Edit measurements and prices directly. Material and effective $/SF follow Area settings.</p></div>
     <strong className="qwt-project-total">Quote {money.format(quoteTotal(quote))}</strong></div>
-   {areas.map(section=><ScopeRows key={section.id} view="lines" quote={quote} section={section}
-     selected={ids} onSelect={onSelect} onSelectMany={onSelectMany}
-     onCalc={id=>setCalculator(id??'general')} onAdvanced={onAdvanced}/>)}
-   <ScopeRows quote={quote} section={general} view="lines" general selected={ids}
-     onSelect={onSelect} onSelectMany={onSelectMany} onCalc={()=>setCalculator('general')} onAdvanced={onAdvanced}/>
+   <div className="qwt-lines-scroll">
+    {areas.map((section,index)=><ScopeRows key={section.id} view="lines" showColumns={index===0} quote={quote} section={section}
+      selected={ids} onSelect={onSelect} onSelectMany={onSelectMany}
+      onCalc={id=>setCalculator(id??'general')} onAdvanced={onAdvanced}/>)}
+    <ScopeRows quote={quote} section={general} view="lines" showColumns={!areas.length} general selected={ids}
+      onSelect={onSelect} onSelectMany={onSelectMany} onCalc={()=>setCalculator('general')} onAdvanced={onAdvanced}/>
+   </div>
    {editable&&!general&&<button type="button" className="qwt-general-start" onClick={onGeneralTakeoff}>
     + General measured takeoff</button>}
   </section>
