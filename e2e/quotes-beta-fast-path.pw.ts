@@ -45,7 +45,9 @@ test('Beta customer and Deal details advance directly to an Area and its Review,
   await beta.getByRole('button',{name:'Add another Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
   await beta.getByRole('button',{name:/Done · (Areas|Pricing)/}).click();
-  await beta.getByRole('button',{name:/Kitchen/}).first().click();
+  await beta.getByRole('button',{name:'Quick edit Area Kitchen'}).click();
+  await expect(quickArea).toBeVisible();
+  await quickArea.getByRole('button',{name:'Open full Area ↗'}).click();
   await beta.getByRole('button',{name:'Pricing',exact:true}).click();
   await expect(beta.getByRole('button',{name:'Go to next Area: Bath'})).toBeVisible();
   await beta.getByRole('button',{name:'Go to next Area: Bath'}).click();
