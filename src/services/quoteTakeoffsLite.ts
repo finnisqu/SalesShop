@@ -94,9 +94,30 @@ export function takeoffCustomerSpecs(section:QuoteSection):string {
   const {material,sinks}=takeoffCustomerDetails(section);
   return [material,...sinks].filter(Boolean).join(' · ');
 }
+/** Legacy sinks can have no managed charge or an excluded charge. */
+export function takeoffSinkIncludedInQuote(quote:Quote,sectionId:string,sinkId:string):boolean {
+  const sink=quote.sections.find(s=>s.id===sectionId)?.scope?.takeoffSinks?.find(s=>s.id===sinkId);
+  if(!sink?.includeInPricing)return false;
+  return quote.lines.some(line=>line.sectionId===sectionId&&line.takeoffSinkId===sinkId&&line.includeInTotal);
+}
+
+/** Explicit, one-operation seller opt-in/out of a sink charge. */
+export function setQuoteTakeoffSinkCharge(quote:Quote,sectionId:string,sinkId:string,include:boolean):Quote {
+  const section=quote.sections.find(s=>s.id===sectionId);
+  const sinks=section?.scope?.takeoffSinks;
+  if(!sinks?.some(s=>s.id===sinkId))return quote;
+  const next=patchQuoteTakeoffSinks(quote,sectionId,
+    sinks.map(s=>s.id===sinkId?{...s,includeInPricing:include}:s),
+    include?new Set([sinkId]):undefined);
+  if(!include)return next;
+  return {...next,lines:next.lines.map(line=>
+    line.sectionId===sectionId&&line.takeoffSinkId===sinkId
+      ?{...line,includeInTotal:true}:line)};
+}
+
 /** Sink rows are explicitly opted in to pricing. Existing manual sink rows
  * and catalog sink selections are NEVER modified or deleted. */
-export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteTakeoffSink[]):Quote {
+export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteTakeoffSink[],explicitIncludedIds?:ReadonlySet<string>):Quote {
   const section=quote.sections.find(s=>s.id===sectionId);
   if(!section)return quote;
   const timestamp=new Date().toISOString();
@@ -107,6 +128,9 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
   for(const sink of sinks){
     if(!sink.includeInPricing)continue;
     const existing=managedExisting.find(line=>line.takeoffSinkId===sink.id);
+    // Editing a saved legacy sink without a managed line cannot create a bill.
+    const previous=section.scope?.takeoffSinks?.find(old=>old.id===sink.id);
+    if(!existing&&previous?.includeInPricing&&!explicitIncludedIds?.has(sink.id))continue;
     const line:QuoteLine={
       id:existing?.id??`line_${crypto.randomUUID()}`,
       sectionId,kind:sink.sinkReference?.snapshot?'sink':'item',
