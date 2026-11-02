@@ -618,6 +618,14 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,updatedAt:now()}:q);
     persist(quotes,get().activeQuoteId);
     set({quotes,...history});
+    if(operation==='delete'){
+      const organizationId=cloudOrganizationId();
+      if(organizationId){
+        const deleted=current.lines.filter(line=>!updated.lines.some(next=>next.id===line.id));
+        void Promise.all(deleted.map(line=>deleteNormalizedQuoteLine(organizationId,line.id)))
+          .catch(reportCloudDeleteError);
+      }
+    }
     return rows.length;
   },
   moveLine: (quoteId, lineId, sectionId) => {
