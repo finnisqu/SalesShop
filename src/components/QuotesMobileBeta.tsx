@@ -1196,7 +1196,9 @@ export function QuotesMobileBeta() {
             reviewedKey={reviewedDeliveryKey} onReview={setReviewedDeliveryKey}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
-          <QuoteBetaEditablePreview quote={quote}/>
+          <QuoteBetaEditablePreview quote={quote}
+            onReturnToReview={quote.documentType==='pricing-schedule'&&previewReturnQuoteId===quote.id
+              ?returnFromReviewPreview:undefined}/>
           {quote.documentType!=='pricing-schedule'&&<QuoteContractApproval
             quote={quote} canIssue={canIssue} sending={sending} error={error}
             previewedKey={previewedDeliveryKey} approvedKey={approvedDeliveryKey}
@@ -1212,7 +1214,7 @@ export function QuotesMobileBeta() {
         </>}
         </div>
       </div>
-      {quoteTab!=='pricing'&&quoteTab!=='preview'&&<footer className="qmb-footer qmb-quote-footer">
+      {quoteTab!=='pricing'&&(quoteTab!=='preview'||quote.documentType==='pricing-schedule')&&<footer className="qmb-footer qmb-quote-footer">
         <div className="qmb-guided-footer-left">
           <button type="button" className="qmb-guided-back" onClick={()=>
            quoteTab==='details'?showLibrary():navigateDocument(quoteTab==='preview'?'build':'details')}>
