@@ -54,7 +54,8 @@ export function TaskAssociationsField({options,value,onChange}:{
    const onEscape=(event:globalThis.KeyboardEvent)=>{
      if(event.key==='Escape'&&open){
        event.stopPropagation();setOpen(false);
-       if(popoverRef.current?.contains(document.activeElement))inputRef.current?.focus();
+       if(popoverRef.current?.contains(document.activeElement))
+         searchRef.current?.querySelector('select')?.focus();
      }
    };
    document.addEventListener('pointerdown',outside);
@@ -133,7 +134,7 @@ export function TaskAssociationsField({options,value,onChange}:{
        <div className="tasks-associations-popover-foot">
          <small>{matches.length?String(matches.length)+' matches · ↑↓ to choose · Enter to link':'Try another name or record type'}</small>
          <button type="button" className="tasks-associations-close"
-           onClick={()=>{setOpen(false);inputRef.current?.focus();}}>Done</button>
+           onClick={()=>{setOpen(false);searchRef.current?.querySelector('select')?.focus();}}>Done</button>
        </div>
      </div>,document.body)}
  </div>;
