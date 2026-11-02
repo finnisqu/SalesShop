@@ -254,6 +254,7 @@ export interface QuoteEstimateLineMetadata {
   productCode?: string;
   supplierName?: string;
   unitLabel?: string;
+  unitCost?: number;
   internalOnlyCost?: boolean;
 }
 export interface QuoteLineRateReference {
@@ -340,6 +341,8 @@ export interface QuoteLine {
   productCode?: string;
   supplierName?: string;
   unitLabel?: string;
+  /** Cost per purchased unit, multiplied by quantity; private. */
+  unitCost?: number;
   customerVisible: boolean;
   includeInTotal: boolean;
   materialReference?: QuoteLineMaterialReference;
