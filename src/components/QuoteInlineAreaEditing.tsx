@@ -5,7 +5,7 @@ import {quoteLineAmount} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
-export function QuoteInlineAreaName({quote,section}:{quote:Quote;section:QuoteSection}){
+export function QuoteInlineAreaName({quote,section,autoFocus=false}:{quote:Quote;section:QuoteSection;autoFocus?:boolean}){
  const update=useQuoteStore(s=>s.updateSection);
  const [draft,setDraft]=useState(section.title);
  const old=useRef(section.title);
@@ -15,7 +15,7 @@ export function QuoteInlineAreaName({quote,section}:{quote:Quote;section:QuoteSe
    if(value&&value!==section.title)update(quote.id,section.id,{title:value});
    else setDraft(section.title);
  };
- return <input className="qmb-inline-area-title" aria-label={'Area name '+section.title}
+ return <input className="qmb-inline-area-title" autoFocus={autoFocus} aria-label={'Area name '+section.title}
    disabled={!quoteIsCommerciallyEditable(quote)} value={draft} maxLength={140}
    onChange={e=>setDraft(e.target.value)}
    onBlur={save} onKeyDown={e=>{
