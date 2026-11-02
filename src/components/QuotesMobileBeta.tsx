@@ -729,6 +729,16 @@ export function QuotesMobileBeta() {
     const documentType=template==='quick-quote'?'quote':'pricing-schedule';
     const title=requestedTitle.trim();
     if(!title){setError('Enter a document name before creating it.');return;}
+    if(template==='quick-quote'&&start==='previous'&&source){
+      // An independent draft keeps source measurements and selling snapshots,
+      // but never inherits its quote identity, issued history or delivery.
+      if(source.documentType!=='quote'||source.archivedAt)return;
+      const newId=duplicateDocument(source.id,title);
+      if(!newId){setError('Could not create a fresh quote from this document.');return;}
+      setShowNewDocument(false);
+      openQuote(newId,'details');
+      return;
+    }
     const id=create({documentType,title,
       ...(source?{companyId:source.companyId,companyName:source.companyName,
         contactId:source.contactId,contactName:source.contactName,
