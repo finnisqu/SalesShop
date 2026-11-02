@@ -147,14 +147,16 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     // The measured SF belongs to Takeoffs; the selling mode never removes
     // its source association or changes its measured quantity.
     const wasLive=previous?.quantitySource?.syncMode==='live';
-    const addLink=choice==='sf'&&!wasLive&&section.scope?.takeoffPieces?.length?{
-      quantity:projection.measuredSf,
-      quantitySource:{
-        kind:'area-scope' as const,sectionId:section.id,field:'countertopSf' as const,
-        syncMode:'live' as const,capturedValue:sellingSf,
-        appliedAt:new Date().toISOString(),
-      },
-    }:{};
+    const addLink=choice==='sf'&&!wasLive
+      ?(section.scope?.takeoffPieces?.length?{
+        quantity:sellingSf,
+        quantitySource:{
+          kind:'area-scope' as const,sectionId:section.id,field:'countertopSf' as const,
+          syncMode:'live' as const,capturedValue:sellingSf,
+          appliedAt:new Date().toISOString(),
+        },
+      }:{quantity:sellingSf})
+      :{};;
     const patch:Partial<Omit<QuoteLine,'id'>>={
       pricingMode:nextMode,materialReference:mat,
       ...addLink,
