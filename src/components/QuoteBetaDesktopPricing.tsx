@@ -70,6 +70,8 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const selectedCost=selectedMaterialCost(
     section.scope?.takeoffMaterial??'',section.scope?.takeoffMaterialReference,catalogMaterials);
   const [ratesOpen,setRatesOpen]=useState(false);
+  // A comparison selection previews only; it never reprices a customer document on selection.
+  const [comparisonChoice,setComparisonChoice]=useState<'margin'|'sf'|'multiplier'>('margin');
   const [moreLines,setMoreLines]=useState(false);
   const mode:AreaPricingChoice=primary?.pricingMode==='direct'?'manual':
     primary?.pricingMode==='slab-multiplier'?'multiplier':'sf';
@@ -171,7 +173,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const priceDiff=projection.grossSpread;
   const perc=projection.marginPercent;
   const provisional=projection.knownCostSpreadPercent;
-  const desiredMargin=section.scope?.targetMargin??.25;
+  const desiredMargin=section.scope?.targetMargin??.30;
   const separateSell=quoteLinesTotal(lines.filter(l=>l!==primary));
   const marginTotal=projection.complete&&desiredMargin<1?
     projection.totalKnownCost/(1-desiredMargin):undefined;
@@ -185,6 +187,16 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     if(marginMaterialAmount===undefined)return;
     setPrice('manual',{amount:marginMaterialAmount});
   };
+  const applyComparison=()=>{
+    if(comparisonChoice==='margin'){applyMargin();return;}
+    if(comparisonChoice==='sf'&&primary?.rate!==undefined){
+      setPrice('sf',{rate:primary.rate,rateReference:primary.rateReference});return;
+    }
+    if(comparisonChoice==='multiplier'&&multiplierScenario!==undefined)
+      setPrice('multiplier',{multiplier});
+  };
+  const comparisonReady=comparisonChoice==='margin'?marginMaterialAmount!==undefined:
+    comparisonChoice==='sf'?sfScenario!==undefined:multiplierScenario!==undefined;
 
   const addCharge=(kind:QuoteLineKind)=>{
     addLine(quote.id,kind,section.id);
@@ -267,7 +279,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
     {(view==='all'||view==='calculator')&&<>
     <div className="qmb-private-cost" ref={costPanelRef} aria-label="Private Area cost and margin">
       {isDeveloperPlaygroundRoute()&&<button className="qmb-demo-preset" type="button" disabled={!editable}
-        onClick={()=>updateScope({slabYield:.65,targetMargin:.25,
+        onClick={()=>updateScope({slabYield:.65,targetMargin:.30,
           shopCostRateSf:14,installCostRateSf:5.5,
           shopCostOverride:undefined,installCostOverride:undefined,
           ...(section.scope?.takeoffMaterialReference?{}:{
@@ -275,7 +287,7 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
             slabCostOverride:section.scope?.slabCostOverride??(39*130*65/144),
           }),
         })}>
-        Use spreadsheet example assumptions · 65% yield · 25% margin · $14 shop / $5.50 install per SF
+        Use spreadsheet example assumptions · 65% yield · 30% margin · $14 shop / $5.50 install per SF
       </button>}
       <header><strong>Buying cost & production</strong><span>Internal only · not on customer quote</span></header>
       <div className="qmb-pricing-double">
@@ -398,25 +410,31 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
           onChange={e=>{const v=numeric(e.target.value);
             if(v!==undefined&&v>=0&&v<=95)updateScope({targetMargin:v/100});}}/>
       </label>
-      <div className="qmb-pricing-comparison-grid">
-        <div><small>Margin</small>
+      <div className="qmb-pricing-comparison-grid" role="radiogroup" aria-label="Choose selling calculation">
+        <label><input type="radio" name={'sell-method-'+section.id} value="margin"
+          checked={comparisonChoice==='margin'} onChange={()=>setComparisonChoice('margin')}/>
+          <small>Margin · {Math.round(desiredMargin*100)}% target</small>
           <strong>{marginTotal===undefined?'Costs incomplete':money.format(marginTotal)}</strong>
-          <span>{Math.round(desiredMargin*100)}% of customer price retained as gross spread</span>
-        </div>
-        <div><small>Square feet</small>
+          <span>Complete buying costs ÷ (1 − margin)</span>
+        </label>
+        <label><input type="radio" name={'sell-method-'+section.id} value="sf"
+          checked={comparisonChoice==='sf'} onChange={()=>setComparisonChoice('sf')}/>
+          <small>Square feet</small>
           <strong>{sfScenario===undefined?'Set SF rate':money.format(sfScenario)}</strong>
           <span>{projection.measuredSf.toFixed(2)} SF × {money.format(primary?.rate??0)}/SF + other charges</span>
-        </div>
-        <div><small>Multiplier</small>
+        </label>
+        <label><input type="radio" name={'sell-method-'+section.id} value="multiplier"
+          checked={comparisonChoice==='multiplier'} onChange={()=>setComparisonChoice('multiplier')}/>
+          <small>Multiplier</small>
           <strong>{multiplierScenario===undefined?'Slab data missing':money.format(multiplierScenario)}</strong>
-          <span>{projection.slabCount??'—'} whole slabs × {money.format(projection.slabCost??0)} × {multiplier} + others</span>
-        </div>
+          <span>{projection.slabCount??'—'} independent Area slabs × {money.format(projection.slabCost??0)} × {multiplier}</span>
+        </label>
       </div>
-      <button type="button" className="qmb-apply-margin" disabled={!editable||marginMaterialAmount===undefined}
-        onClick={applyMargin}>Apply margin estimate to quote</button>
+      <button type="button" className="qmb-apply-margin" disabled={!editable||!comparisonReady}
+        onClick={applyComparison}>Apply selected {comparisonChoice==='margin'?'margin':comparisonChoice==='sf'?'SF':'multiplier'} price to quote</button>
       <small>Applying Margin requires material, sink, fabrication, installation and other priced-work costs.
         It sets the countertop selling price after separately charged sinks and add-ons.
-        Cost changes never silently reprice the customer quote.</small>
+        The selected scenario does not change the customer quote until Apply is clicked. Shared slab buying never silently revises an existing multiplier selling price.</small>
     </div>
 
     </>}

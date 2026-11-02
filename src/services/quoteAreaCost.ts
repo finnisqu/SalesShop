@@ -1,6 +1,7 @@
 import {quoteLineTotal,roundCurrency,type Quote,type QuoteSection} from '../types/quote';
 import {totalBillableTakeoffSf,takeoffSinkIncludedInQuote} from './quoteTakeoffsLite';
 import {summarizeQuoteInternalPricing} from './quoteInternalPricing';
+import {allocatedSharedSlabCost} from './quoteSharedSlabs';
 
 export const DEFAULT_SLAB_YIELD=.65;
 const positive=(v:number|undefined)=>typeof v==='number'&&Number.isFinite(v)&&v>0?v:undefined;
@@ -57,7 +58,10 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const primary=lines.find(l=>l.quantitySource?.syncMode==='live'&&l.quantitySource.field==='countertopSf')
     ??lines.find(l=>l.kind==='material'&&!l.takeoffSinkId);
   const manualOverride=nonnegative(primary?.internalCost);
-  const materialCost=manualOverride??fromSlab??fromSf;
+  // Explicit pool membership replaces per-Area physical slab buying to prevent
+  // purchasing the same physical slab twice. Manual total overrides still win.
+  const poolAllocation=allocatedSharedSlabCost(quote,section.id);
+  const materialCost=manualOverride??poolAllocation?.cost??fromSlab??fromSf;
   let sinkCost=0,missingSinkCosts=0;
   // Specifications-only sinks never create a charge or require a buying cost.
   const pricedSinks=(scope?.takeoffSinks??[]).filter(s=>s.count>0&&takeoffSinkIncludedInQuote(quote,section.id,s.id));
@@ -92,14 +96,19 @@ export function projectAreaCost(quote:Quote,section:QuoteSection):AreaCostProjec
   const margin=complete?knownCostSpreadPercent:undefined;
   return {
     measuredSf,slabAreaSf:area,yield:yieldFraction,usableSfPerSlab:usablePerSlab,
-    suggestedSlabs,slabCount:count,purchaseSlabs,slabCost,shopCost,installCost,materialCost,
-    costSource:manualOverride!==undefined?'manual':fromSlab!==undefined?'slab':
+    suggestedSlabs,slabCount:count,purchaseSlabs:poolAllocation?.purchaseSlabs??purchaseSlabs,
+    slabCost,shopCost,installCost,materialCost,
+    costSource:manualOverride!==undefined?'manual':poolAllocation!==null?'slab':fromSlab!==undefined?'slab':
       fromSf!==undefined?'derived-sf':'unknown',
     sinkCost:missingSinkCosts===pricedSinks.length&&missingSinkCosts>0?undefined:sinkCost,
     missingSinkCosts,otherCost:otherSummary.knownInternalCost,
     totalKnownCost:known,priceTotal,grossSpread:spread,
     knownCostSpreadPercent,marginPercent:margin,complete,costCoverage,missingCostItems,
-    explanation:usablePerSlab===undefined?'Select a slab with recorded dimensions to suggest a slab count.':
+    explanation:poolAllocation!==null
+      ?'Shared slab pool: '+poolAllocation.poolLabel+' · '+poolAllocation.physicalSlabs+
+       ' physical slab(s) counted once across matching Areas; buying cost allocated by measured SF. '
+       +'Existing Area multiplier selling prices are unchanged.'
+      :usablePerSlab===undefined?'Select a slab with recorded dimensions to suggest a slab count.':
       measuredSf.toFixed(2)+' SF ÷ ('+area!.toFixed(2)+' SF/slab × '+
       Math.round(yieldFraction*100)+'% yield) = '+(suggestedSlabs??'—')+' suggested slabs',
   };

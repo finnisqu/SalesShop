@@ -1,0 +1,68 @@
+/* Editable table cells remain compact, but controls retain explicit accessible names. */
+.qmb .qmb-builder-area-table .qmb-builder-area-entry{display:grid!important;
+ grid-template-columns:minmax(102px,1.4fr) minmax(86px,1.2fr) 65px 88px 89px minmax(87px,.8fr);
+ gap:7px;width:100%;min-height:52px;align-items:center;background:transparent;padding:5px 3px;}
+.qmb .qmb-builder-area-table .qmb-builder-area-entry>.qmb-builder-area-name{min-width:0;}
+.qmb .qmb-builder-area-table .qmb-builder-area-entry button{border:0;text-align:left;background:transparent;
+ color:var(--qmb-accent);font-size:11px;font-weight:800;min-width:0;overflow:hidden;
+ text-overflow:ellipsis;white-space:nowrap;padding:4px 0;cursor:pointer;}
+.qmb .qmb-builder-area-table .qmb-builder-area-entry .qmb-builder-area-value button{text-align:right;}
+.qmb .qmb-builder-area-table .qmb-builder-area-entry input,
+.qmb .qmb-builder-area-table .qmb-builder-area-entry select{width:100%;min-width:0;min-height:32px;
+ border:1px solid var(--qmb-border);border-radius:6px;background:var(--qmb-card);color:var(--qmb-ink);
+ padding:4px 6px;font-size:11px;}
+.qmb .qmb-builder-area-table .qmb-builder-area-entry input[type=number]{text-align:right;
+ font-variant-numeric:tabular-nums;}
+.qmb .qmb-builder-area-table .qmb-builder-area-entry input:disabled,
+.qmb .qmb-builder-area-table .qmb-builder-area-entry select:disabled{opacity:.65;}
+.qmb .qmb-builder-area-table .qmb-builder-area-entry .qmb-builder-area-name small{
+ display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ font-size:10px;color:var(--qmb-muted);}
+.qmb .qmb-builder-area-table .qmb-builder-area-entry .qmb-builder-area-value{
+ display:flex;align-items:center;justify-content:end;min-width:0;}
+.qmb .qmb-builder-area-table .qmb-inline-area-row>.qmb-builder-select{
+ flex:0 0 25px;align-self:center;width:16px;height:16px;min-width:16px;max-width:16px;
+ accent-color:var(--qmb-accent);}
+.qmb .qmb-builder-area-head{grid-template-columns:minmax(102px,1.4fr) minmax(86px,1.2fr) 65px 88px 89px minmax(87px,.8fr);}
+.qmb .qmb-builder-bulk-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;
+ padding:8px 10px;background:var(--qmb-tint);border:1px solid var(--qmb-border);
+ border-bottom:0;border-radius:10px 10px 0 0;font-size:11px;color:var(--qmb-muted);}
+.qmb .qmb-builder-bulk-toolbar>button{min-height:32px;padding:6px 10px;border:1px solid var(--qmb-border);
+ background:var(--qmb-card);color:var(--qmb-accent);border-radius:7px;font-size:11px;font-weight:800;}
+.qmb .qmb-bulk-area-dialog{display:grid;gap:12px;width:min(520px,calc(100vw - 24px));
+ max-height:calc(100dvh - 32px);overflow:auto;background:var(--qmb-card);color:var(--qmb-ink);
+ border:1px solid var(--qmb-border);border-radius:12px;padding:17px;box-shadow:0 12px 36px #0003;}
+.qmb .qmb-bulk-area-dialog header{display:flex;justify-content:space-between;align-items:center;}
+.qmb .qmb-bulk-area-dialog header>button{background:transparent;border:0;color:var(--qmb-ink);font-size:21px;}
+.qmb .qmb-bulk-area-dialog>small{font-size:11px;color:var(--qmb-muted);}
+.qmb .qmb-bulk-area-dialog label{display:grid;gap:5px;font-size:11px;font-weight:800;}
+.qmb .qmb-bulk-area-dialog select,.qmb .qmb-bulk-area-dialog input{width:100%;min-height:40px;
+ border:1px solid var(--qmb-border);background:var(--qmb-card);color:var(--qmb-ink);
+ border-radius:8px;padding:7px;}
+.qmb .qmb-bulk-area-dialog p{font-size:11px;color:var(--qmb-muted);line-height:1.4;}
+.qmb .qmb-bulk-area-dialog footer{display:flex;justify-content:flex-end;gap:8px;}
+.qmb .qmb-bulk-area-dialog footer button{padding:8px 12px;min-height:38px;
+ border:1px solid var(--qmb-border);background:var(--qmb-card);color:var(--qmb-ink);
+ border-radius:7px;font-size:11px;font-weight:800;}
+.qmb .qmb-bulk-area-dialog footer .is-primary{background:var(--qmb-accent);color:var(--qmb-on-accent);}
+@media(max-width:780px){
+ .qmb .qmb-builder-area-head,
+ .qmb .qmb-builder-area-table .qmb-builder-area-entry{
+  grid-template-columns:minmax(0,1fr) 78px 84px;}
+ .qmb .qmb-builder-area-head span:nth-child(2),
+ .qmb .qmb-builder-area-head span:nth-child(3),
+ .qmb .qmb-builder-area-head span:nth-child(5),
+ .qmb .qmb-builder-area-table .qmb-builder-area-entry>.qmb-builder-area-material,
+ .qmb .qmb-builder-area-table .qmb-builder-area-entry>.qmb-builder-area-measured,
+ .qmb .qmb-builder-area-table .qmb-builder-area-entry>.qmb-builder-area-display{display:none;}
+}
+@container (max-width:850px){
+ .qmb .qmb-builder-area-head,
+ .qmb .qmb-builder-area-table .qmb-builder-area-entry{grid-template-columns:minmax(0,1fr) 78px 88px;}
+ .qmb .qmb-builder-area-head span:nth-child(2),
+ .qmb .qmb-builder-area-head span:nth-child(3),
+ .qmb .qmb-builder-area-head span:nth-child(5),
+ .qmb .qmb-builder-area-table .qmb-builder-area-entry>.qmb-builder-area-material,
+ .qmb .qmb-builder-area-table .qmb-builder-area-entry>.qmb-builder-area-measured,
+ .qmb .qmb-builder-area-table .qmb-builder-area-entry>.qmb-builder-area-display{display:none;}
+}

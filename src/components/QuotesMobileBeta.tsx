@@ -52,6 +52,8 @@ import { QuoteBetaPricingOverview } from './QuoteBetaPricingOverview';
 import { QuoteBetaAreaGuide } from './QuoteBetaAreaGuide';
 import {QuoteAreaPresetPicker} from './QuoteAreaPresetPicker';
 import {QuoteSaveAreaLayoutDialog} from './QuoteSaveAreaLayoutDialog';
+import {QuoteInlineAreaName,QuoteInlineAreaRate,QuoteBulkAreaDialog} from './QuoteInlineAreaEditing';
+import {QuoteSharedSlabPools} from './QuoteSharedSlabPools';
 import {captureSavedAreaLayout,readSavedAreaLayouts,writeSavedAreaLayouts,
   savedAreaLayoutScope,upsertSavedAreaLayout,SAVED_AREA_LAYOUT_LIMIT,
   type SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
@@ -94,6 +96,7 @@ import {defaultQuoteBuilderPreferences,readQuoteBuilderPreferences,writeQuoteBui
   type QuoteBuilderPreferences,type QuoteGeneralQuickAdd} from '../services/quoteBuilderPreferences';
 import './quote-builder-tables.css';
 import './quote-builder-tables-scoped.css';
+import './quote-inline-bulk.css';
 
 // Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
 const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(module=>({default:module.PricingDocumentEditor})));
@@ -568,6 +571,8 @@ export function QuotesMobileBeta() {
   const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
   const [areaPresetsOpen,setAreaPresetsOpen]=useState(false);
+  const [selectedBulkAreaIds,setSelectedBulkAreaIds]=useState<string[]>([]);
+  const [bulkAreaOpen,setBulkAreaOpen]=useState(false);
   const [savingLayoutAreaId,setSavingLayoutAreaId]=useState<string|null>(null);
   const layoutScope=savedAreaLayoutScope(authMode,organizationId,userId??null);
   const [layoutState,setLayoutState]=useState<{scope:string|null;items:SavedAreaLayout[]}>(()=>({
@@ -704,13 +709,13 @@ export function QuotesMobileBeta() {
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
-    setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
+    setSelectedBulkAreaIds([]);setBulkAreaOpen(false);setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setReviewOpen(false);setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     setPreviewStartedKey(null);setPreviewedDeliveryKey(null);setApprovedDeliveryKey(null);
     setReviewedDeliveryKey(null);setError('');
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
   const showLibrary=()=>{
-    setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
+    setSelectedBulkAreaIds([]);setBulkAreaOpen(false);setSavingLayoutAreaId(null);setReviewReturn(null);setAreaPresetsOpen(false);setSelectionsOpen(false);setPage('library');setAreaId(null);
     // Clearing the route ID makes Back reopen the selected editor, rather than
     // leaving a stale /quotes/:id URL on the document library.
     setView('quotes');
@@ -827,6 +832,7 @@ export function QuotesMobileBeta() {
     openQuote(id,template==='quick-quote'?'details':'build');
   };
   const openArea=(id:string)=>{setCustomerQuickOpen(false);setAreaId(id);setAreaTab('measure');setPage('area');};
+  const openAreaAt=(id:string,tab:AreaTab)=>{openArea(id);setAreaTab(tab);};
   const goBack=()=>{navigateDocument(quoteTab==='pricing'?'pricing':'build');};
   const newArea=()=>{
     if(!quote||!editable)return;
@@ -1195,28 +1201,74 @@ export function QuotesMobileBeta() {
               </>}
             </div>
           </div>
+          <div className="qmb-builder-bulk-toolbar" data-area-edit-workspace>
+            <label><input type="checkbox" aria-label="Select all quote Areas"
+              checked={!!quote.sections.filter(s=>!isGeneralTakeoffSection(s)).length&&
+                quote.sections.filter(s=>!isGeneralTakeoffSection(s)).every(s=>selectedBulkAreaIds.includes(s.id))}
+              onChange={e=>setSelectedBulkAreaIds(e.target.checked
+                ?quote.sections.filter(s=>!isGeneralTakeoffSection(s)).map(s=>s.id):[])}/>
+              Select all Areas</label>
+            <span>{selectedBulkAreaIds.length} selected</span>
+            <button type="button" disabled={!editable||!selectedBulkAreaIds.length}
+              onClick={()=>setBulkAreaOpen(true)}>Bulk edit…</button>
+            {!!selectedBulkAreaIds.length&&<button type="button"
+              onClick={()=>setSelectedBulkAreaIds([])}>Clear</button>}
+          </div>
           <div ref={mobileAreaRef} className={'qmb-inline-area-list qmb-builder-table qmb-builder-area-table is-'+builderPrefs.density+(areaManager.editing?' is-managing-areas':'')}
             data-area-edit-workspace aria-label="Quote Areas table">
             <div className="qmb-builder-table-head qmb-builder-area-head" aria-hidden="true">
-              <span>Area</span><span>Material</span><span>Measured</span><span>Display</span><span>Amount</span>
+              <span>Area</span><span>Material</span><span>Measured</span>
+              <span>Sell / SF</span><span>Display</span><span>Amount</span>
             </div>
           {(areaManager.editing?areaManager.orderedSections:quote.sections.filter(s=>!isGeneralTakeoffSection(s))).map(s=>{
             const lines=quote.lines.filter(l=>l.sectionId===s.id);
-            return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}>
+            return <div className="qmb-inline-area-row" data-qmb-sort-row={s.id} data-area-sort-id={s.id} key={s.id}
+              onContextMenu={event=>contextActions.openPointer(event,s.title||'Area',areaMenuActions(s))}
+              onKeyDown={event=>contextActions.openKeyboard(event,s.title||'Area',areaMenuActions(s))}>
+              {!areaManager.editing&&<input type="checkbox" className="qmb-builder-select"
+                checked={selectedBulkAreaIds.includes(s.id)} aria-label={'Select Area '+s.title}
+                onChange={e=>setSelectedBulkAreaIds(ids=>e.target.checked?[...ids,s.id]:ids.filter(id=>id!==s.id))}/>}
               {areaManager.editing&&<QuoteBetaAreaGrip manager={areaManager} area={s}/>}
-              <button type="button" className="qmb-card qmb-area-card qmb-builder-area-entry"
-                onContextMenu={event=>contextActions.openPointer(event,s.title||'Area',areaMenuActions(s))}
-                onKeyDown={event=>contextActions.openKeyboard(event,s.title||'Area',areaMenuActions(s))}
-                aria-disabled={areaManager.editing} aria-label={'Open Area '+(s.title||'Untitled Area')}
-                onClick={()=>{if(!areaManager.editing)openArea(s.id);}}>
-                <span className="qmb-builder-area-name"><strong>{s.title||'Untitled Area'}</strong>
-                  <small>{(s.scope?.takeoffPieces??[]).length} pieces · {(s.scope?.takeoffSinks??[]).length} sinks</small></span>
-                <span className="qmb-builder-area-material">{s.scope?.takeoffMaterial||'Not selected'}</span>
-                <span className="qmb-builder-area-measured">{sf.format(s.scope?.countertopSf??0)} <small>SF</small></span>
-                <span className="qmb-builder-area-display">{!s.customerVisible?'Hidden':s.customerDisplayMode==='summary'?'Lump sum':'Itemized'}</span>
-                <span className="qmb-builder-area-value"><b>{money.format(quoteLinesTotal(lines))}</b><span aria-hidden="true">›</span></span>
-              </button>
-              {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={s}/>} 
+              <div className="qmb-card qmb-area-card qmb-builder-area-entry">
+                <span className="qmb-builder-area-name">
+                  <QuoteInlineAreaName quote={quote} section={s}/>
+                  <button type="button" onClick={()=>openArea(s.id)}
+                    aria-label={'Open full Area editor '+s.title}>Edit details ↗</button>
+                  <small>{(s.scope?.takeoffPieces??[]).length} pieces · {(s.scope?.takeoffSinks??[]).length} sinks</small>
+                </span>
+                <span className="qmb-builder-area-material">
+                  <button type="button" onClick={()=>openAreaAt(s.id,'materials')}
+                    aria-label={'Change material for '+s.title}>{s.scope?.takeoffMaterial||'Select material'} ↗</button>
+                </span>
+                <span className="qmb-builder-area-measured">
+                  <button type="button" onClick={()=>openAreaAt(s.id,'measure')}
+                    aria-label={'Edit measurements for '+s.title}>{sf.format(s.scope?.countertopSf??0)} SF</button>
+                </span>
+                <span className="qmb-builder-area-rate">
+                  <QuoteInlineAreaRate quote={quote} section={s}
+                    onOpen={()=>openAreaAt(s.id,'pricing')}/>
+                </span>
+                <span className="qmb-builder-area-display">
+                  <select aria-label={'Customer display for '+s.title}
+                    disabled={!editable||areaManager.editing}
+                    value={!s.customerVisible?'hidden':s.customerDisplayMode==='summary'?'summary':'detail'}
+                    onChange={event=>{
+                      const value=event.target.value;
+                      useQuoteStore.getState().updateSection(quote.id,s.id,{
+                        customerVisible:value!=='hidden',
+                        ...(value==='hidden'?{}:{customerDisplayMode:value==='summary'?'summary':'detail'}),
+                      });
+                    }}>
+                    <option value="detail">Itemized</option>
+                    <option value="summary">Lump sum</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
+                </span>
+                <span className="qmb-builder-area-value"><button type="button"
+                  aria-label={'Edit selling price for '+s.title} onClick={()=>openAreaAt(s.id,'pricing')}>
+                  {money.format(quoteLinesTotal(lines))} ›</button></span>
+              </div>
+              {areaManager.editing&&<QuoteBetaAreaDeleteButton manager={areaManager} area={s}/>}
             </div>;
           })}
           {areaManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
@@ -1279,7 +1331,7 @@ export function QuotesMobileBeta() {
               </div>)}
             {generalManager.editing&&<p className="qmb-inline-area-hint">Drag to reorder · Enter / Done saves · Esc cancels</p>}
           </div>
-
+          <QuoteSharedSlabPools quote={quote}/>
 
         </>}
         {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaPricingOverview
@@ -1364,6 +1416,10 @@ export function QuotesMobileBeta() {
       onSelect={newAreaPreset}
       onBlank={()=>{setAreaPresetsOpen(false);newArea();}}
       onClose={()=>setAreaPresetsOpen(false)}/>}
+    {quote&&page==='quote'&&bulkAreaOpen&&<QuoteBulkAreaDialog quote={quote}
+      ids={selectedBulkAreaIds.filter(id=>quote.sections.some(s=>s.id===id))}
+      onClose={()=>setBulkAreaOpen(false)}
+      onApplied={()=>{setBulkAreaOpen(false);setSelectedBulkAreaIds([]);}}/>}
     {quote&&page==='area'&&editable&&savingLayoutAreaId
       &&quote.sections.some(section=>section.id===savingLayoutAreaId)
       &&<QuoteSaveAreaLayoutDialog

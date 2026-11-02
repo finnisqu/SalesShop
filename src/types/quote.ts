@@ -147,7 +147,10 @@ export interface QuoteAreaScope {
   /** Optional per-measured-SF internal shop and installation assumptions. */
   shopCostRateSf?: number;
   installCostRateSf?: number;
-  /** Target project gross margin, stored as a fraction (0.25 = 25%). */
+  /** Explicit shared physical slab batch, copied into participating Area scopes for cloud sync.
+   * This metadata is internal only, not a customer quote line. */
+  sharedSlabPool?: QuoteSlabPool;
+  /** Target gross margin, stored as a fraction (0.30 = 30%). */
   targetMargin?: number;
   /** Explicit shop slab size and buying cost when the catalog lacks them. */
   slabAreaOverrideSf?: number;
@@ -162,6 +165,11 @@ export interface QuoteAreaScope {
   cutoutCount?: number;
 }
 
+/** Explicit quote-wide internal slab buying group; never automatically changes customer prices. */
+export interface QuoteSlabPool {
+  id:string;label:string;sectionIds:string[];materialKey:string;
+  slabAreaSf:number;slabCost:number;yield:number;slabCountOverride?:number;
+}
 export type QuoteSectionCustomerDisplay = 'detail' | 'summary';
 
 export interface QuoteSection {
@@ -551,6 +559,8 @@ export interface Quote {
   templateOrigin?: SalesDocumentOrigin;
   /** Quote-scoped pinned material picks; never company-global. */
   projectMaterials?: QuoteProjectMaterial[];
+  /** Private quote-wide combined physical slab buying groups, opt-in only. */
+  slabPools?: QuoteSlabPool[];
   /** Explicit opt-in to attach a sanitized customer-facing selections appendix. */
   attachSelectionsSheet?: boolean;
   id: string;

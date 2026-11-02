@@ -5,6 +5,7 @@ import { quotePricingOverview } from '../services/quotePricingOverview';
 import {projectAreaCost} from '../services/quoteAreaCost';
 import './quote-beta-pricing-overview.css';
 import './quote-pricing-table-polish.css';
+import {QuoteSharedSlabPools} from './QuoteSharedSlabPools';
 
 const currency=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
@@ -109,6 +110,7 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
         <button type="button" onClick={onGeneral}>Go to Areas &amp; General ›</button>
       </div>}
     </div>
+    <QuoteSharedSlabPools quote={quote}/>
     <section className="qmb-pricing-overview-general" aria-label="General quote charges">
       <div><h3>General charges</h3>
         <p>Trip charges, discounts, fees and work that doesn't belong to one Area.</p></div>

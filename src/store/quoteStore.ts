@@ -28,6 +28,7 @@ import {assertMatchingApprovedDraft} from '../services/quoteIssueGuard';
 import {duplicateQuoteArea} from '../services/quoteAreaDuplicate';
 import {sectionFromQuoteAreaPreset,type QuoteAreaPresetId} from '../services/quoteAreaPresets';
 import {instantiateSavedAreaLayout,type SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
+import {createQuoteSlabPool} from '../services/quoteSharedSlabs';
 import {copySalesDocument} from '../services/quoteDocumentCopy';
 import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder } from '../services/quoteStructure';
 import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
@@ -42,6 +43,7 @@ import {
   type QuotePatch,
   type QuoteSection,
   type QuoteStatus,
+  type QuoteSlabPool,
 } from '../types/quote';
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
@@ -83,6 +85,13 @@ interface QuoteState {
   addAreaFromSavedLayout: (quoteId:string,layout:SavedAreaLayout)=>string;
   duplicateArea: (quoteId: string, sourceAreaId: string) => string;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
+  /** Atomic, undoable update to Area display or pre-existing live-SF selling rates. */
+  bulkEditAreas:(quoteId:string,sectionIds:string[],patch:{
+    customerDisplayMode?:'detail'|'summary';customerVisible?:boolean;sfRate?:number;
+  })=>number;
+  /** Explicit quote-wide pooled physical slab buying. No customer price edits. */
+  addSlabPool:(quoteId:string,sectionIds:string[],spec:Omit<QuoteSlabPool,'sectionIds'|'materialKey'>)=>boolean;
+  removeSlabPool:(quoteId:string,poolId:string)=>void;
   setAllCustomerDisplayModes: (quoteId: string, mode: 'detail' | 'summary') => void;
   updateTakeoffPieces: (quoteId: string, sectionId: string, pieces: QuoteTakeoffPiece[]) => void;
   updateTakeoffSinks: (quoteId: string, sectionId: string, sinks: QuoteTakeoffSink[]) => void;
@@ -679,6 +688,54 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, ...history });
   },
 
+  bulkEditAreas:(quoteId,sectionIds,patch)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)||current.documentType==='pricing-schedule')return 0;
+    const ids=new Set(sectionIds);
+    const valid=current.sections.filter(section=>ids.has(section.id));
+    if(valid.length!==ids.size||!valid.length)return 0;
+    if(patch.sfRate!==undefined&&(!Number.isFinite(patch.sfRate)||patch.sfRate<0))return 0;
+    const areaLines=patch.sfRate===undefined?[]:current.lines.filter(line=>ids.has(line.sectionId??'')
+      &&line.pricingMode==='quantity-rate'&&line.quantitySource?.syncMode==='live'
+      &&line.quantitySource.field==='countertopSf');
+    // Never silently replace a manually entered or multiplier selling method.
+    if(patch.sfRate!==undefined&&areaLines.length!==ids.size)return 0;
+    if(patch.customerDisplayMode===undefined&&patch.customerVisible===undefined&&patch.sfRate===undefined)return 0;
+    const next={...current,updatedAt:now(),
+      sections:current.sections.map(section=>ids.has(section.id)?{...section,
+        ...(patch.customerDisplayMode!==undefined?{customerDisplayMode:patch.customerDisplayMode}:{}),
+        ...(patch.customerVisible!==undefined?{customerVisible:patch.customerVisible}:{})}:section),
+      lines:current.lines.map(line=>areaLines.some(a=>a.id===line.id)
+        ?{...line,rate:patch.sfRate,rateReference:undefined}:line)};
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId?next:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
+    return valid.length;
+  },
+  addSlabPool:(quoteId,sectionIds,spec)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)||current.documentType==='pricing-schedule')return false;
+    const pool=createQuoteSlabPool(current,sectionIds,spec);
+    if(!pool)return false;
+    const history=historyPatch(get(),quoteId,current);
+    const next={...current,slabPools:[...(current.slabPools??[]),pool],
+      sections:current.sections.map(section=>pool.sectionIds.includes(section.id)
+        ?{...section,scope:{...section.scope,sharedSlabPool:pool}}:section),
+      updatedAt:now()};
+    const quotes=get().quotes.map(q=>q.id===quoteId?next:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});return true;
+  },
+  removeSlabPool:(quoteId,poolId)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current)||!current.slabPools?.some(p=>p.id===poolId))return;
+    const history=historyPatch(get(),quoteId,current);
+    const next={...current,slabPools:current.slabPools.filter(p=>p.id!==poolId),
+      sections:current.sections.map(section=>section.scope?.sharedSlabPool?.id===poolId
+        ?{...section,scope:{...section.scope,sharedSlabPool:undefined}}:section),
+      updatedAt:now()};
+    const quotes=get().quotes.map(q=>q.id===quoteId?next:q);
+    persist(quotes,get().activeQuoteId);set({quotes,...history});
+  },
   setAllCustomerDisplayModes: (quoteId, mode) => {
     const current=get().quotes.find(quote=>quote.id===quoteId);
     if(!current||!quoteIsCommerciallyEditable(current)||!current.sections.length)return;

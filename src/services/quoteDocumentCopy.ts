@@ -33,6 +33,14 @@ export function copySalesDocument(source:Quote,shell:Quote):Quote{
     }:undefined,
     takeoffSinkId:line.takeoffSinkId?(sinkIds.get(line.takeoffSinkId)??line.takeoffSinkId):undefined,
   }));
+  const remappedPools=source.slabPools?.map(pool=>({
+    ...structuredClone(pool),id:crypto.randomUUID(),
+    sectionIds:pool.sectionIds.map(id=>sectionIds.get(id)).filter((id):id is string=>!!id),
+  })).filter(pool=>pool.sectionIds.length>=2);
+  for(const section of sections){
+    if(!section.scope)continue;
+    section.scope.sharedSlabPool=remappedPools?.find(pool=>pool.sectionIds.includes(section.id));
+  }
   const copy:Quote={
     ...structuredClone(source),
     ...shell,
@@ -44,6 +52,7 @@ export function copySalesDocument(source:Quote,shell:Quote):Quote{
     originalQuoteDate:shell.originalQuoteDate,quoteDate:shell.quoteDate,
     ownerUserId:shell.ownerUserId,
     sections,lines:updatedLines,
+    slabPools:remappedPools,
     projectMaterials:source.projectMaterials?.map(item=>({...structuredClone(item),id:crypto.randomUUID()})),
     customerColumns:{...source.customerColumns},
     pricingSchedule:source.pricingSchedule?structuredClone(source.pricingSchedule):undefined,

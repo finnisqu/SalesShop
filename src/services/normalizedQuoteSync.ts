@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import {chooseActiveQuoteId} from './quoteActiveSelection';
+import {slabPoolsFromAreaScopes} from './quoteSharedSlabs';
 import { useAuthStore } from '../store/authStore';
 import {
   isDraftQuoteNumber,
@@ -172,6 +173,7 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     address: valueOrUndefined(row.address),
     pricingDivision: valueOrUndefined(row.pricing_division) as Quote['pricingDivision'],
     sections: sectionsByQuote.get(String(row.id)) ?? [],
+    slabPools:slabPoolsFromAreaScopes(sectionsByQuote.get(String(row.id))??[]),
     projectMaterials: Array.isArray(row.project_materials) ? row.project_materials as QuoteProjectMaterial[] : [],
     attachSelectionsSheet: Boolean(row.attach_selections_sheet),
     lines: linesByQuote.get(String(row.id)) ?? [],

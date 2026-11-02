@@ -94,4 +94,20 @@ describe('independent SalesShop document copy',()=>{
     copy.pricingSchedule!.builder!.rateBookName='Copy price list';
     expect(src.pricingSchedule.builder!.rateBookName).toBe('Original');
   });
+  it('remaps both Area membership and pool IDs when copying a grouped quote',()=>{
+    const src=original();
+    const other=structuredClone(src.sections[0]);
+    other.id='area-2';other.title='Guest Vanity';
+    src.sections.push(other);
+    const pool={id:'group-original',label:'Together',materialKey:'key',
+      sectionIds:['area-1','area-2'],slabAreaSf:75,slabCost:500,yield:.65};
+    src.slabPools=[pool];
+    src.sections.forEach(area=>{area.scope!.sharedSlabPool=pool;});
+    const copy=copySalesDocument(src,draftShell());
+    expect(copy.slabPools).toHaveLength(1);
+    expect(copy.slabPools![0].id).not.toBe(pool.id);
+    expect(copy.slabPools![0].sectionIds).toEqual(copy.sections.map(area=>area.id));
+    expect(copy.sections.every(area=>area.scope?.sharedSlabPool?.id===copy.slabPools![0].id)).toBe(true);
+    expect(src.sections[0].scope?.sharedSlabPool?.id).toBe('group-original');
+  });
 });

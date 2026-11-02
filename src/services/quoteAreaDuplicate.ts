@@ -13,6 +13,8 @@ export function duplicateQuoteArea(quote:Quote,sourceAreaId:string,
   const newAreaId=newId('section');
   const area=structuredClone(source) as QuoteSection;
   area.id=newAreaId;
+  // A newly duplicated Area is not an additional physical slab purchase member.
+  if(area.scope?.sharedSlabPool)area.scope.sharedSlabPool=undefined;
   area.title=source.title.trim()?source.title.trim()+' copy':'Area copy';
   const sinkIdMap=new Map<string,string>();
   if(area.scope?.takeoffPieces){
