@@ -22,6 +22,39 @@ const detailName:Record<DetailKind,string>={
  area:'Area settings',material:'Stone selection',sf:'Square feet',
  price:'Material pricing',sinks:'Sinks',specialty:'Specialty charges',total:'Price breakdown',
 };
+/** Manual SF stays independent from measured pieces; customer quantity follows rounding. */
+function writeManualSf(quote:Quote,section:QuoteSection,value:number|undefined){
+ if((section.scope?.takeoffPieces?.length??0)>0)return;
+ const store=useQuoteStore.getState();
+ const billed=value===undefined?undefined:quickRoundedSf(value,section.scope?.billableSfRounding);
+ store.updateSection(quote.id,section.id,{scope:{...section.scope,countertopSf:value}});
+ const current=quickAreaPrimary(quote,section.id);
+ if(current?.pricingMode==='quantity-rate'&&current.quantitySource?.syncMode!=='live')
+  store.updateLine(quote.id,current.id,{quantity:billed});
+ else if(!current&&value!==undefined)
+  store.addCatalogLine(quote.id,'material',{
+   sectionId:section.id,description:section.scope?.takeoffMaterial||'Countertop material',
+   pricingMode:'quantity-rate',quantity:billed,rate:undefined,
+   customerVisible:true,includeInTotal:true,materialReference:section.scope?.takeoffMaterialReference,
+  });
+}
+/** Edit the *selling total* while respecting the existing SF rate when possible. */
+function writeStoneTotal(quote:Quote,section:QuoteSection,total:number|undefined){
+ const store=useQuoteStore.getState(),primary=quickAreaPrimary(quote,section.id);
+ if(!primary)return;
+ const billed=primary.quantity??quickAreaSummary(quote,section).billedSf;
+ if(primary.pricingMode==='quantity-rate'&&billed>0){
+  store.updateLine(quote.id,primary.id,{
+   rate:total===undefined?undefined:Math.round(total/billed*10000)/10000,
+   rateReference:undefined,
+  });
+ }else{
+  // The user explicitly replaced the selling total; make that a manual price.
+  store.updateLine(quote.id,primary.id,{
+   pricingMode:'direct',amount:total,rate:undefined,rateReference:undefined,
+  });
+ }
+}
 /** Never bind a continually changing currency string to the numeric input. */
 function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFocus=false,onDone}:{
  value?:number;onCommit:(v:number|undefined)=>void;label:string;disabled?:boolean;integer?:boolean;
@@ -65,8 +98,9 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
    title={'More settings: '+label} onClick={()=>{setEditing(false);onEdit();}}>✎</button>
  </div>;
 }
-function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced}:{
+function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,onNext}:{
  quote:Quote;detail:Detail;onClose:()=>void;onCalculator:(id:string|null)=>void;
+ onNext:(kind:DetailKind)=>void;
  onTakeoffs:(id:string)=>void;onAdvanced:(id:string)=>void;
 }){
  const store=useQuoteStore.getState(),editable=quoteIsCommerciallyEditable(quote);
@@ -99,19 +133,7 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced}:{
   store.addLine(quote.id,kind,section?.id);
  };
  const updateManualSf=(v:number|undefined)=>{
-  if(!section||data?.hasMeasuredPieces||!editable)return;
-  // Manual SF is owned by the Area until actual takeoff pieces are entered.
-  store.updateSection(quote.id,section.id,{scope:{...section.scope,countertopSf:v}});
-  const current=quickAreaPrimary(quote,section.id);
-  const billed=v===undefined?undefined:quickRoundedSf(v,section.scope?.billableSfRounding);
-  if(current?.pricingMode==='quantity-rate'&&current.quantitySource?.syncMode!=='live')
-   store.updateLine(quote.id,current.id,{quantity:billed});
-  else if(!current&&v!==undefined)
-   store.addCatalogLine(quote.id,'material',{
-    sectionId:section.id,description:section.scope?.takeoffMaterial||'Countertop material',
-    pricingMode:'quantity-rate',quantity:billed,rate:undefined,
-    customerVisible:true,includeInTotal:true,materialReference:section.scope?.takeoffMaterialReference,
-   });
+  if(section&&editable)writeManualSf(quote,section,v);
  };
  const changeLine=(line:QuoteLine,patch:Partial<QuoteLine>)=>
   store.updateLine(quote.id,line.id,patch);
@@ -144,10 +166,15 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced}:{
        <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
         pinned={quote.projectMaterials??[]} selected={section.scope?.takeoffMaterialReference}
         onTextChange={name=>store.selectTakeoffMaterial(quote.id,section.id,name)}
-        onSelect={(ref,label)=>store.selectTakeoffMaterial(quote.id,section.id,label,ref)}/>
+        onSelect={(ref,label)=>{
+         store.selectTakeoffMaterial(quote.id,section.id,label,ref);
+         onNext('price');
+        }}/>
        <div className="qqs-metric"><span>Current selection</span>
         <strong>{section.scope?.takeoffMaterial||'Not selected'}</strong></div>
        <small>Source buying costs remain private and are handled in Calculator.</small>
+       <button type="button" className="qqs-secondary" disabled={!editable||!section.scope?.takeoffMaterial?.trim()}
+        onClick={()=>onNext('price')}>Continue to selling price &amp; method ›</button>
      </>}
      {section&&detail.kind==='sf'&&<>
        <p>Billable square feet drives SF-rate selling. Enter known SF directly, or measure your pieces in Takeoffs.</p>
@@ -381,6 +408,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onTakeoffs,onAd
    <footer className="qqs-summary-total"><span>Quote total</span><strong>{amount(quoteTotal(quote))}</strong></footer>
    {detail&&<DetailPanel quote={quote} detail={detail} onClose={()=>setDetail(null)}
     onTakeoffs={onTakeoffs} onAdvanced={onAdvanced}
+    onNext={kind=>setDetail(current=>current?{...current,kind}:null)}
     onCalculator={id=>{setDetail(null);setCalculator(id??'general');}}/>}
    {calculator!==null&&<CalculatorDrawer quote={quote}
     section={calculator==='general'?null:quote.sections.find(s=>s.id===calculator)??null}
