@@ -562,7 +562,7 @@ export function QuotesMobileBeta() {
   const contextActions=useAppContextMenu();
   const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
   const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
-  const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab==='pricing'?'build':restoredLocation.current.quoteTab);
+  const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
   const [search,setSearch]=useState('');
