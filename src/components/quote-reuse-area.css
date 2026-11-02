@@ -1,0 +1,31 @@
+.qra-backdrop{position:fixed;inset:0;z-index:10050;background:rgba(8,20,31,.44);
+ display:flex;justify-content:flex-end;align-items:stretch;}
+.qra-panel{width:min(450px,100vw);height:100dvh;min-height:0;display:flex;flex-direction:column;
+ background:var(--qmb-card,#fff);color:var(--qmb-ink,#182832);
+ border-left:1px solid var(--qmb-border,#dbe1e5);box-shadow:-10px 0 35px rgba(0,0,0,.2);}
+.qra-panel>header{padding:15px 17px;display:flex;align-items:center;justify-content:space-between;
+ border-bottom:1px solid var(--qmb-border,#dbe1e5);gap:12px;}
+.qra-panel>header>div{display:grid;gap:3px;}
+.qra-panel>header small{color:var(--qmb-muted,#6b7b85);font-size:10px;}
+.qra-panel>header h2{font-size:17px;margin:0;}
+.qra-panel>header button{background:none;border:0;font-size:24px;color:inherit;}
+.qra-body{min-height:0;overflow:auto;padding:17px;display:grid;align-content:start;gap:17px;}
+.qra-body>p{font-size:12px;color:var(--qmb-muted,#6b7b85);line-height:1.5;margin:0;}
+.qra-body label{display:grid;gap:7px;font-size:12px;font-weight:760;}
+.qra-body select{min-height:38px;width:100%;background:var(--qmb-card,#fff);
+ color:inherit;border:1px solid var(--qmb-border,#dbe1e5);border-radius:7px;padding:7px 9px;}
+.qra-body .qra-checkbox{display:flex;align-items:flex-start;gap:10px;padding:12px;
+ border:1px solid var(--qmb-border,#dbe1e5);border-radius:8px;cursor:pointer;}
+.qra-checkbox input{margin-top:3px;width:16px;height:16px;accent-color:var(--qmb-accent,#21617b);}
+.qra-checkbox span{display:grid;gap:5px;}
+.qra-checkbox small{color:var(--qmb-muted,#6b7b85);font-size:11px;line-height:1.45;font-weight:400;}
+.qra-note{padding:11px;border-radius:7px;background:var(--qmb-tint,#edf4f6);
+ display:grid;gap:5px;font-size:11px;line-height:1.45;}
+.qra-note span{color:var(--qmb-muted,#6b7b85);}
+.qra-error{color:#ab3333!important;}
+.qra-panel footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;
+ border-top:1px solid var(--qmb-border,#dbe1e5);}
+.qra-panel footer button{padding:8px 14px;min-height:35px;border-radius:7px;font-weight:760;
+ border:1px solid var(--qmb-border,#dbe1e5);color:inherit;background:var(--qmb-card,#fff);}
+.qra-panel footer .qra-primary{background:var(--qmb-tint,#edf4f6);color:var(--qmb-accent,#21617b);}
+.qra-panel footer button:disabled{opacity:.45;}
