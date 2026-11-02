@@ -510,6 +510,7 @@ export function QuotesMobileBeta() {
   const userId=useAuthStore(s=>s.user?.id);
   const organizationId=useAuthStore(s=>s.organizationId);
   const builderScope=quoteBuilderPreferenceScope(authMode,organizationId,userId??null);
+  const quickAddMenuRef=useRef<HTMLDetailsElement>(null);
   const [builderPrefsState,setBuilderPrefsState]=useState<{scope:string|null;prefs:QuoteBuilderPreferences}>(
     ()=>({scope:builderScope,prefs:readQuoteBuilderPreferences(builderScope)}));
   const builderPrefs=builderPrefsState.scope===builderScope
@@ -522,6 +523,22 @@ export function QuotesMobileBeta() {
     if(writeQuoteBuilderPreferences(builderScope,next))
       setBuilderPrefsState({scope:builderScope,prefs:next});
   };
+  useEffect(()=>{
+    const close=(event:PointerEvent)=>{
+      const menu=quickAddMenuRef.current;
+      if(menu?.open&&!menu.contains(event.target as Node))menu.open=false;
+    };
+    const escape=(event:KeyboardEvent)=>{
+      const menu=quickAddMenuRef.current;
+      if(event.key==='Escape'&&menu?.open){
+        event.preventDefault();menu.open=false;menu.querySelector('summary')?.focus();
+      }
+    };
+    document.addEventListener('pointerdown',close);
+    document.addEventListener('keydown',escape);
+    return ()=>{document.removeEventListener('pointerdown',close);
+      document.removeEventListener('keydown',escape);};
+  },[]);
   const toggleGeneralQuickAdd=(kind:QuoteGeneralQuickAdd)=>{
     const favorites=builderPrefs.favoriteQuickAdds.includes(kind)
       ?builderPrefs.favoriteQuickAdds.filter(k=>k!==kind)
@@ -1217,7 +1234,7 @@ export function QuotesMobileBeta() {
                 .filter(kind=>builderPrefs.favoriteQuickAdds.includes(kind))
                 .map(kind=><button type="button" key={kind} onClick={()=>addLine(quote.id,kind)}>
                   ★ {QUOTE_GENERAL_QUICK_ADD_LABELS[kind]}</button>)}
-              {editable&&!generalManager.editing&&<details className="qmb-builder-quickadd-menu">
+              {editable&&!generalManager.editing&&<details className="qmb-builder-quickadd-menu" ref={quickAddMenuRef}>
                 <summary>More · My quick adds</summary>
                 <div className="qmb-builder-quickadd-popover">
                   <strong>General line shortcuts</strong>
