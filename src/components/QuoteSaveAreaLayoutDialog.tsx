@@ -9,13 +9,24 @@ export function QuoteSaveAreaLayoutDialog({section,onSave,onClose}:{
  const [name,setName]=useState((section.title||'Area layout').slice(0,100));
  const [error,setError]=useState('');
  const inputRef=useRef<HTMLInputElement>(null);
+ const closeRef=useRef(onClose);
+ closeRef.current=onClose;
  useEffect(()=>{
    const old=document.activeElement instanceof HTMLElement?document.activeElement:null;
    inputRef.current?.focus();
-   const handle=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();onClose();}};
+   const handle=(e:KeyboardEvent)=>{
+     if(e.key==='Escape'){e.preventDefault();closeRef.current();return;}
+     if(e.key!=='Tab')return;
+     const buttons=Array.from(inputRef.current?.closest<HTMLElement>('[role="dialog"]')
+       ?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled)')??[]);
+     if(!buttons.length)return;
+     const first=buttons[0],last=buttons[buttons.length-1];
+     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+   };
    document.addEventListener('keydown',handle);
    return ()=>{document.removeEventListener('keydown',handle);old?.focus();};
- },[onClose]);
+ },[]);
  const save=()=>{
    if(!name.trim()){setError('Name your reusable Area layout.');return;}
    if((section.scope?.takeoffPieces?.length??0)>SAVED_AREA_PIECE_LIMIT){
