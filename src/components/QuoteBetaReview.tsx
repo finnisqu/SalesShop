@@ -12,8 +12,11 @@ import {quoteBetaStatusLabel} from '../services/quoteBetaLifecycleLanguage';
 import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {useQuoteStore} from '../store/quoteStore';
 import { QuoteAuditInlineEditor, quickFixForFinding } from './QuoteAuditInlineEditor';
-import { QuoteBetaReviewGuide } from './QuoteBetaReviewGuide';
 import {QuotePricingScenarioReview} from './QuotePricingScenarioReview';
+import {quickAreaSummary,quickGeneralSummary} from '../services/quoteQuickAreaSummary';
+import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
+import {projectAreaCost} from '../services/quoteAreaCost';
+import './quote-pricing-review-workspace.css';
 import {InitialOpenDetails} from './InitialOpenDetails';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -28,6 +31,10 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   previewedKey:string|null;approvedKey:string|null;onApprove:(approved:boolean)=>void;
   reviewedKey:string|null;onReview:(key:string|null)=>void;
 }){
+  const [reviewStep,setReviewStep]=useState<number>(()=>initialFindingId==='__delivery__'?3:initialFindingId?2:0);
+  useEffect(()=>{if(initialFindingId==='__delivery__')setReviewStep(3);
+   else if(initialFindingId)setReviewStep(2);},[initialFindingId]);
+  const reviewSteps=['Area totals','Costs & margin','Pricing questions','Approve & deliver'] as const;
   const report=auditQuoteDraft(quote);
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [signatureOpen,setSignatureOpen]=useState(false);
@@ -139,29 +146,65 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary" onClick={onBack}>Done reviewing</button></footer>
     </div>;
   }
-  return <div className="qmb-editor qmb-review-editor">
-    <header className="qmb-pagehead">
-      <strong>Review details &amp; delivery</strong>
-      <button type="button" className="qmb-back" onClick={onBack} aria-label="Close Review and Issue">× Close</button>
+  return <div className="qmb-editor qmb-review-editor qqr-workspace">
+    <header className="qmb-pagehead qqr-pagehead">
+      <div><small>QUICK QUOTE</small><strong>Pricing Review</strong>
+       <p>Confirm totals, costs, open questions and the exact customer contract.</p></div>
+      <button type="button" className="qmb-back" onClick={onBack}>‹ Back to Build Quote</button>
     </header>
-    <div className="qmb-pad qmb-pagecontent">
-      <div className="qmb-audit-overview">
+    <nav className="qqr-steps" aria-label="Pricing Review steps">
+     {reviewSteps.map((label,index)=><button key={label} type="button"
+       className={index===reviewStep?'is-active':''}
+       aria-current={index===reviewStep?'step':undefined} onClick={()=>setReviewStep(index)}>
+       <span>{index<reviewStep?'✓':index+1}</span><strong>{label}</strong>
+       {index===2&&report.blockers.length>0&&<small>{report.blockers.length} issues</small>}
+     </button>)}
+    </nav>
+    <div className="qmb-pad qmb-pagecontent qqr-body">
+    {reviewStep===0&&<section className="qqr-stage">
+     <h3>Confirm Area totals</h3><p>These are your existing customer selling amounts, not new charges.</p>
+     <div className="qqr-table-scroll"><table><thead><tr>
+      <th>Area</th><th>Material</th><th>Billable SF</th><th>Stone</th>
+      <th>Sinks</th><th>Specialty</th><th>Total</th>
+     </tr></thead><tbody>
+      {quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
+       const data=quickAreaSummary(quote,section);
+       return <tr key={section.id}><th>{section.title}</th>
+        <td title={section.scope?.takeoffMaterial??''}>{section.scope?.takeoffMaterial||'Choose material'}</td>
+        <td>{data.billedSf.toFixed(2)}</td><td>{money.format(data.materialPrice)}</td>
+        <td>{money.format(data.sinkPrice)}</td><td>{money.format(data.specialtyPrice)}</td>
+        <td><strong>{money.format(data.total)}</strong></td></tr>;
+      })}
+      <tr><th>General</th><td colSpan={5}>Unassigned charges and discounts</td>
+       <td><strong>{money.format(quickGeneralSummary(quote).total)}</strong></td></tr>
+     </tbody></table></div>
+     <div className="qqr-grand-total"><span>Quote total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
+     <button type="button" className="qmb-outline" onClick={()=>onFix({view:'build'})}>Edit Areas in Build Quote ›</button>
+    </section>}
+    {reviewStep===1&&<section className="qqr-stage">
+     <h3>Check buying costs and margin</h3>
+     <p>Private estimates and alternative pricing scenarios. Changes are only applied when you explicitly choose them.</p>
+     <div className="qqr-cost-rows">{quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
+      const value=projectAreaCost(quote,section);
+      return <div className="qqr-cost-row" key={section.id}><strong>{section.title}</strong>
+       <span>{value.materialCost===undefined?'Material buying cost missing':money.format(value.materialCost)+' buying cost'}</span>
+       <span>{value.measuredSf.toFixed(2)} SF measured</span></div>;
+     })}</div>
+     <QuotePricingScenarioReview quote={quote}/>
+    </section>}
+      {reviewStep===3&&<div className="qmb-audit-overview">
         <div className="qmb-audit-total"><span>Quote total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
         <div className="qmb-audit-counts">
           <span className={report.blockers.length?'is-blocked':''}><b>{report.blockers.length}</b> To resolve</span>
           <span><b>{report.review.length}</b> Review</span>
           <span><b>{report.optional.length}</b> Optional</span>
         </div>
-      </div>
-      <QuotePricingScenarioReview quote={quote}/>
-      <QuoteBetaReviewGuide editable={editable} issued={issued} canIssue={canIssue}
-        needsRecheck={needsRecheck} blockers={report.blockers.length}
-        decisions={report.review.length} acknowledged={acknowledged}
-        optional={report.optional.length} previewed={previewed} approved={approved}
-        onCheck={()=>checklistSectionRef.current?.scrollIntoView({block:'start',behavior:'auto'})}
-        onPreview={onPreview}
-        onDelivery={()=>deliverySectionRef.current?.scrollIntoView({block:'start',behavior:'auto'})}/>
-      <section ref={checklistSectionRef} className="qmb-review-checklist" aria-label="Review quote findings">
+      </div>}
+      {reviewStep===2&&<div className="qqr-stage"><h3>Resolve or acknowledge questions</h3>
+       <p>Blocking items must be fixed. Other decisions can be deliberately acknowledged.</p></div>}
+      {reviewStep===3&&<div className="qqr-stage"><h3>Approve and prepare delivery</h3>
+       <p>Preview the exact customer document. Issuing will not send an email.</p></div>}
+      {reviewStep===2&&<section ref={checklistSectionRef} className="qmb-review-checklist" aria-label="Review quote findings">
       {needsRecheck&&<section className="qmb-review-recheck" role="status">
         <div><strong>Quote changed since this review</strong>
           <small>Recheck the latest amounts and findings before issuing or creating a new customer link.</small></div>
@@ -189,9 +232,9 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
         <input type="checkbox" checked={acknowledged} onChange={event=>onReview(event.target.checked?reviewKey:null)}/>
         <span>I reviewed the remaining items and intend to leave them as shown.</span>
       </label>}
-      </section>
+      </section>}
       {error&&<p role="alert" className="qmb-error">{error}</p>}
-      <section ref={deliverySectionRef} className="qmb-card qmb-audit-delivery" data-review-delivery>
+      {reviewStep===3&&<section ref={deliverySectionRef} className="qmb-card qmb-audit-delivery" data-review-delivery>
         <div className="qmb-review-delivery-heading">
           <strong>{editable?'Prepare customer delivery':issued?'Issued revision & delivery':'Read-only document'}</strong>
           <small>{editable?'Preview and approve this exact version before issuing. Sharing is separate.':issued?'This revision is frozen. Creating a link never sends a message.':'This document cannot be edited here. It has not been issued.'}</small>
@@ -259,12 +302,17 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
         {!canIssue&&editable&&<small className="qmb-audit-help">Your current team role cannot issue quotes.</small>}
         {report.blockers.length>0&&editable&&
           <small className="qmb-audit-help">Resolve {report.blockers.length} pricing issue{report.blockers.length===1?'':'s'} before issuing. Your draft is still saved.</small>}
-      </section>
+      </section>}
       {signatureOpen&&createPortal(<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>,document.body)}
 
     </div>
-    <footer className="qmb-footer qmb-footer-single">
-      <button type="button" className="qmb-primary" onClick={onBack}>Done reviewing</button>
+    <footer className="qmb-footer qqr-footer">
+      <button type="button" className="qmb-outline" onClick={()=>reviewStep===0?onBack():setReviewStep(reviewStep-1)}>
+       {reviewStep===0?'‹ Back to Build Quote':'‹ Previous'}</button>
+      <div><small>Step {reviewStep+1} of 4 · {money.format(quoteTotal(quote))}</small>
+       {reviewStep<3?<button type="button" className="qmb-primary" onClick={()=>setReviewStep(reviewStep+1)}>
+        Next: {reviewSteps[reviewStep+1]} ›</button>
+       :<button type="button" className="qmb-outline" onClick={onPreview}>Open Contract Review ›</button>}</div>
     </footer>
   </div>;
 }
