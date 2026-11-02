@@ -9,6 +9,9 @@ import {QuoteSfRateChoices} from './QuoteSfRateChoices';
 import {QuoteBetaRateCatalog,rateItemToQuotePatch} from './QuoteBetaRateCatalog';
 import {useCompanySettingsStore} from '../store/companySettingsStore';
 import {selectedMaterialCost} from '../services/selectedMaterialCost';
+import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
+import {resolveMaterialPricingRecommendation} from '../types/materialLevelGuide';
+import {builderLevelRateReference} from '../services/builderLevelRate';
 import {isDeveloperPlaygroundRoute} from '../lib/developerPlayground';
 import {changesMultiplierSellBasis} from '../services/quoteMultiplierSellBasis';
 import './quote-beta-cost-coverage.css';
@@ -71,6 +74,23 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
   const catalogMaterials=useCompanySettingsStore(s=>s.settings.stockMaterials);
   const selectedCost=selectedMaterialCost(
     section.scope?.takeoffMaterial??'',section.scope?.takeoffMaterialReference,catalogMaterials);
+  const guide=useMaterialLevelGuideStore(s=>s.guide);
+  const guideReady=useMaterialLevelGuideStore(s=>s.hydrated);
+  const hydrateGuide=useMaterialLevelGuideStore(s=>s.hydrate);
+  useEffect(()=>{if(!guideReady)void hydrateGuide();},[guideReady,hydrateGuide]);
+  // Use the saved supplier cost at selection time. A changed Catalog cost is
+  // only highlighted, never substituted into an existing quote without review.
+  const materialBuyingCost=selectedCost.quotedCostPerSf??selectedCost.currentCatalogCostPerSf;
+  const recommendation=guideReady&&section.scope?.takeoffMaterial?.trim()
+    ?resolveMaterialPricingRecommendation(guide,materialBuyingCost,undefined,selectedCost.materialType)
+    :undefined;
+  const suggestedRate=recommendation?.mode==='level'?recommendation.level.customerRate:undefined;
+  const suggestedMaterialTotal=suggestedRate===undefined?undefined:
+    Math.round(suggestedRate*sellingSf*100)/100;
+  const suggestedQuoteTotal=suggestedMaterialTotal===undefined?undefined:
+    Math.round((suggestedMaterialTotal+quoteLinesTotal(lines.filter(l=>l!==primary)))*100)/100;
+  const suggestedMargin=projection.complete&&suggestedQuoteTotal!==undefined&&suggestedQuoteTotal>0
+    ?(suggestedQuoteTotal-projection.totalKnownCost)/suggestedQuoteTotal*100:undefined;
   const [ratesOpen,setRatesOpen]=useState(false);
   // A comparison selection previews only; it never reprices a customer document on selection.
   const [comparisonChoice,setComparisonChoice]=useState<'margin'|'sf'|'multiplier'>('margin');
@@ -216,6 +236,29 @@ export function QuoteBetaDesktopPricing({quote,section,editable,view='all'}:{
       <div><h3>Customer selling price</h3><small>Private buying costs and margin are in Calculator</small></div>
       <strong>{money.format(areaTotal)}</strong>
     </header>
+    {section.scope?.takeoffMaterial?.trim()&&<div className="qmb-suggested-rate" aria-label="Company selling rate guidance">
+      <div className="qmb-suggested-rate-intro">
+       <strong>Company pricing guidance</strong>
+       <small>Suggestion only · no automatic price changes</small>
+      </div>
+      {recommendation?.mode==='level'&&suggestedRate!==undefined?<>
+       <div className="qmb-suggested-rate-row">
+        <div><strong>{recommendation.level.rule.label} · {money.format(suggestedRate)}/SF</strong>
+         <small>{sellingSf.toFixed(2)} billed SF → {money.format(suggestedMaterialTotal??0)} stone selling price
+          {suggestedMargin!==undefined?' · est. margin '+suggestedMargin.toFixed(1)+'%':''}</small></div>
+        <button type="button" disabled={!editable||sellingSf<=0}
+         onClick={()=>setPrice('sf',{rate:suggestedRate,
+          rateReference:builderLevelRateReference(guide,recommendation.level.rule,quote.pricingDivision)})}>
+         Use suggested rate</button>
+       </div>
+      </>:<p className="qmb-suggested-rate-note">
+       {recommendation?.basis??'Loading company pricing guidance…'}
+      </p>}
+      {selectedCost.catalogCostChanged&&<p className="qmb-suggested-cost-changed" role="status">
+       Supplier Catalog cost changed since this material was selected. The existing quote and recommendation use
+       the captured cost; review the new supplier price before accepting a selling rate.
+      </p>}
+    </div>}
     <div className="qmb-pricing-modes" aria-label="Area selling method">
       {([['manual','Manual'],['sf','Square feet'],['multiplier','Multiplier']] as const).map(([id,label])=>
         <button key={id} type="button" disabled={!editable} aria-pressed={mode===id}
