@@ -78,3 +78,24 @@
   padding:6px 8px;font-size:10px;
  }
 }
+
+/* The modal chrome follows the selected SalesShop theme, not the customer
+ * paper. The printable document always remains white. */
+@media screen{
+ #sales-quote-print-root .qpp-dialog{
+  background:var(--ss-theme-base,#eff1f2);color:var(--ss-theme-ink,#233a45);}
+ #sales-quote-print-root .qpp-toolbar{
+  background:var(--ss-theme-card,#fff);border-color:var(--ss-theme-border,#d2dce1);}
+ #sales-quote-print-root .qpp-toolbar small{color:var(--ss-theme-muted,#66767d);}
+ #sales-quote-print-root .qpp-scroll{background:var(--ss-theme-base,#eff1f2);}
+ #sales-quote-print-root .qpp-actions button{
+  border-color:var(--ss-theme-border,#aebec5);
+  background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#233a45);}
+ #sales-quote-print-root .qpp-actions button.qpp-print-action{
+  background:var(--ss-theme-accent,#26627b);
+  border-color:var(--ss-theme-accent,#26627b);
+  color:var(--ss-theme-contrast,#fff);}
+ #sales-quote-print-root .qpp-print-sheet,
+ #sales-quote-print-root .qpp-print-sheet .customer-quote-paper{
+  background:#fff;color:#292929;}
+}
