@@ -1,0 +1,58 @@
+/* Screen preview: a true paper view, not an editable quote workspace. */
+#sales-quote-print-root.qpp-overlay{position:fixed;inset:0;z-index:2147483000;
+ display:flex;justify-content:center;align-items:center;background:rgba(12,22,31,.64);
+ font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#202d32;}
+#sales-quote-print-root .qpp-dialog{width:min(1100px,96vw);height:min(96dvh,1100px);
+ display:flex;flex-direction:column;min-width:0;min-height:0;background:#eff1f2;
+ box-shadow:0 18px 65px rgba(0,0,0,.3);border-radius:12px;overflow:hidden;}
+#sales-quote-print-root .qpp-toolbar{background:white;display:flex;
+ justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+ padding:12px 18px;border-bottom:1px solid #d2dce1;flex:0 0 auto;}
+#sales-quote-print-root .qpp-toolbar>div:first-child{display:grid;gap:3px;}
+#sales-quote-print-root .qpp-toolbar strong{font-size:16px;font-weight:800;}
+#sales-quote-print-root .qpp-toolbar small{font-size:11px;color:#66767d;}
+#sales-quote-print-root .qpp-actions{display:flex;gap:8px;align-items:center;}
+#sales-quote-print-root .qpp-actions button{min-height:36px;padding:7px 14px;
+ border-radius:7px;border:1px solid #aebec5;background:white;color:#233a45;
+ font-size:12px;font-weight:750;cursor:pointer;}
+#sales-quote-print-root .qpp-actions button.qpp-print-action{background:#26627b;
+ color:white;border-color:#26627b;}
+#sales-quote-print-root .qpp-actions button:disabled{opacity:.5;cursor:default;}
+#sales-quote-print-root .qpp-scroll{overflow:auto;flex:1;min-height:0;
+ padding:28px clamp(12px,4vw,42px);overscroll-behavior:contain;}
+#sales-quote-print-root .qpp-print-sheet{width:min(816px,100%);margin:0 auto;
+ background:#fff;box-shadow:0 5px 25px rgba(0,0,0,.15);}
+#sales-quote-print-root .qpp-print-sheet .customer-quote-paper{width:100%;
+ min-height:1056px;margin:0;box-shadow:none;color:#292929;background:white;}
+@media(max-width:700px){
+ #sales-quote-print-root .qpp-dialog{width:100vw;height:100dvh;border-radius:0;}
+ #sales-quote-print-root .qpp-toolbar{gap:9px;padding:10px;}
+ #sales-quote-print-root .qpp-toolbar small{font-size:10px;}
+ #sales-quote-print-root .qpp-scroll{padding:8px;}
+ #sales-quote-print-root .qpp-print-sheet .customer-quote-paper{padding:25px 20px;min-height:780px;}
+}
+@page{size:letter;margin:.55in;}
+@media print{
+ html,body{height:auto!important;min-height:0!important;overflow:visible!important;
+  background:white!important;margin:0!important;padding:0!important;}
+ body>*:not(#sales-quote-print-root){display:none!important;}
+ #sales-quote-print-root.qpp-overlay{position:static!important;display:block!important;
+  inset:auto!important;width:auto!important;height:auto!important;min-height:0!important;
+  background:white!important;margin:0!important;padding:0!important;overflow:visible!important;}
+ #sales-quote-print-root .qpp-dialog{display:block!important;width:auto!important;
+  height:auto!important;min-height:0!important;overflow:visible!important;
+  box-shadow:none!important;border:0!important;border-radius:0!important;background:white!important;}
+ #sales-quote-print-root .qpp-toolbar{display:none!important;}
+ #sales-quote-print-root .qpp-scroll{display:block!important;overflow:visible!important;
+  width:auto!important;height:auto!important;padding:0!important;margin:0!important;}
+ #sales-quote-print-root .qpp-print-sheet{display:block!important;
+  width:auto!important;height:auto!important;margin:0!important;
+  background:white!important;box-shadow:none!important;}
+ #sales-quote-print-root .qpp-print-sheet .customer-quote-paper{width:100%!important;
+  max-width:none!important;min-height:0!important;padding:0!important;margin:0!important;
+  border:0!important;box-shadow:none!important;background:white!important;color:#292929!important;}
+ #sales-quote-print-root :is(.customer-quote-letterhead,.customer-quote-recipient,
+  .customer-quote-row,.customer-area-intro,.customer-quote-notes,
+  .customer-quote-terms,.customer-quote-total){break-inside:avoid;page-break-inside:avoid;}
+ #sales-quote-print-root *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
