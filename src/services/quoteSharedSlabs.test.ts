@@ -50,6 +50,33 @@ describe('explicit shared physical slab buying',()=>{
   quote.slabPools=[createQuoteSlabPool(quote,['kitchen','vanity'],spec)!];
   expect(createQuoteSlabPool(quote,['kitchen','vanity'],{...spec,id:'other'})).toBeNull();
  });
+ it('does not share slabs on an ambiguous free-text material label alone',()=>{
+  const quote=base();
+  for(const area of quote.sections)delete area.scope!.takeoffMaterialReference;
+  expect(quote.sections[0].scope?.takeoffMaterial).toBe('Quartz');
+  expect(slabPoolMaterialKey(quote.sections[0])).toBeNull();
+  expect(createQuoteSlabPool(quote,['kitchen','vanity'],spec)).toBeNull();
+ });
+ it('requires matching supplier and slab format, not merely a shared catalog material ID',()=>{
+  const quote=base();
+  const snapshot={
+    capturedAt:'2026-11-02',materialId:'mat-1',materialName:'Quartz',
+    materialType:'Quartz' as const,stockProgram:false,supplier:'Supplier A',
+    lengthIn:120,widthIn:64,
+  };
+  quote.sections[0].scope!.takeoffMaterialReference!.snapshot=snapshot;
+  quote.sections[1].scope!.takeoffMaterialReference!.snapshot={...snapshot,supplier:'Supplier B'};
+  expect(createQuoteSlabPool(quote,['kitchen','vanity'],spec)).toBeNull();
+  quote.sections[1].scope!.takeoffMaterialReference!.snapshot={...snapshot,widthIn:63};
+  expect(createQuoteSlabPool(quote,['kitchen','vanity'],spec)).toBeNull();
+ });
+ it('rejects a manual count below the combined SF/yield floor',()=>{
+  const quote=base(),tooSmall={...spec,slabAreaSf:65,slabCountOverride:1};
+  expect(createQuoteSlabPool(quote,['kitchen','vanity'],tooSmall)).toBeNull();
+  expect(createQuoteSlabPool(quote,['kitchen','vanity'],{
+    ...tooSmall,slabCountOverride:2,
+  })?.slabCountOverride).toBe(2);
+ });
  it('invalidates an old pool after a material change without changing sales totals',()=>{
   const quote=base();
   quote.slabPools=[createQuoteSlabPool(quote,['kitchen','vanity'],spec)!];
