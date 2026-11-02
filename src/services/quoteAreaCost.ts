@@ -1,5 +1,5 @@
 import {quoteLineTotal,roundCurrency,type Quote,type QuoteSection} from '../types/quote';
-import {totalBillableTakeoffSf} from './quoteTakeoffsLite';
+import {totalBillableTakeoffSf,takeoffSinkIncludedInQuote} from './quoteTakeoffsLite';
 import {summarizeQuoteInternalPricing} from './quoteInternalPricing';
 
 export const DEFAULT_SLAB_YIELD=.65;
