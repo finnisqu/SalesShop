@@ -160,7 +160,7 @@ function App() {
 
   const entry = entries.find((candidate) => candidate.id === activeEntryId) ?? null;
   const companion = entries.find(candidate=>candidate.id===companionId&&candidate.id!==activeEntryId)??null;
-  const companionOptions=entries.filter(candidate=>candidate.id!==activeEntryId&&!candidate.hidden);
+  const companionOptions=entries.filter(candidate=>candidate.id!==activeEntryId&&(!candidate.hidden||candidate.id===companionId));
   const openCompanion=(id:string)=>{
     if(id!==activeEntryId&&entries.some(candidate=>candidate.id===id))setCompanionId(id);
   };

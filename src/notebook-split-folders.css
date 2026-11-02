@@ -61,3 +61,6 @@
 .notebook-unfiled-row strong{font-size:11px;flex:1;}
 .notebook-folder-drop-help{font-size:9px;color:var(--ss-theme-muted,#6c6455);margin:3px 6px;}
 @media(max-width:820px){.notebook-folder-panel-v2{display:none;}}
+
+.notebook-unfiled-row.accepts-page-drop:hover{outline:2px dashed var(--ss-theme-accent,#9e7c3d);}
+.notebook-companion-scroll .paper-writing-surface{user-select:text;}

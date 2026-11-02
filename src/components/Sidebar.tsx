@@ -273,7 +273,13 @@ export function Sidebar({onOpenBeside,companionId}:NotebookSidebarProps) {
           <button type="button" onClick={()=>setActiveFolderId(null)}>All pages ×</button>
         </div>}
         <div className="notebook-folder-tree">
-          <button type="button" className={'notebook-unfiled-row'+(activeFolderId===UNFILED?' is-active':'')}
+          <button type="button" className={'notebook-unfiled-row'+(activeFolderId===UNFILED?' is-active':'')+(draggingId?' accepts-page-drop':'')}
+            onDragOver={event=>{if(draggingId){event.preventDefault();event.dataTransfer.dropEffect='move';}}}
+            onDrop={event=>{
+              if(!draggingId)return;event.preventDefault();event.stopPropagation();
+              moveEntryToFolder(draggingId,null);setActiveFolderId(UNFILED);
+              setDraggingId(null);setDropTarget(null);
+            }}
             onClick={()=>{setActiveFolderId(UNFILED);setFilter('all');setShowTrash(false);}}>
             <span aria-hidden="true">▤</span><strong>Unfiled</strong>
             <small>{entries.filter(entry=>!entry.folderId).length}</small>
