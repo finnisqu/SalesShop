@@ -15,7 +15,7 @@ describe('single-workspace four-stage quote progress',()=>{
   expect(stage(q,'review').status).toBe('Awaiting prices');
   expect(stage(q,'contract').status).toBe('Not issued');
   expect(quoteBuilderProgress(q).stages.map(x=>x.label)).toEqual([
-   'Project details','Takeoffs & selections','Pricing review','Contract review']);
+   'Deal Details','Build Quote','Pricing Review','Contract Review']);
  });
  it('allows a priced General-only quick quote',()=>{
   const q=draft({lines:[charge()]});
