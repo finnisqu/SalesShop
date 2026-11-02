@@ -55,6 +55,7 @@ import {taskScope,usePersonalTaskStore} from './store/personalTaskStore';
 import {startPersonalTaskCloudSync} from './services/personalTaskCloudSync';
 import {TasksWorkspace} from './components/TasksWorkspace';
 import {NotebookPromotionDialog} from './components/NotebookPromotionDialog';
+import './catalog-collections.css';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
 import { MobileAppChrome } from './components/MobileAppChrome';

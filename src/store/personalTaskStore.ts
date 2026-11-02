@@ -5,7 +5,7 @@ export type TaskLink={type:'quote'|'project'|'company'|'contact'|'notebook';id:s
 export type TaskAssociation=TaskLink&{label?:string};
 export const taskAssociationKey=(link:TaskLink)=>link.type+':'+link.id;
 export function normalizedTaskAssociations(task:Pick<PersonalTask,'associations'|'linked'|'sourceLabel'>):TaskAssociation[]{
- const records=task.associations?.length?task.associations:(task.linked?[{...task.linked,label:task.sourceLabel}]:[]);
+ const records=task.associations!==undefined?task.associations:(task.linked?[{...task.linked,label:task.sourceLabel}]:[]);
  const seen=new Set<string>();
  return records.filter(link=>{
    if(!link?.id||!link.type)return false;
