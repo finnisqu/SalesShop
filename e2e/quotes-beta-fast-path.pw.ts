@@ -52,5 +52,5 @@ test('Beta customer and Deal details advance directly to an Area and its Review,
   await beta.getByRole('button',{name:'Go to next Area: Bath'}).click();
   await expect(beta.getByRole('textbox',{name:'Area name'})).toHaveValue('Bath');
   await beta.getByRole('button',{name:/Done · (Areas|Pricing)/}).click();
-  await expect(beta.locator('[data-area-sort-id]')).toHaveCount(2);
+  await expect(beta.locator('.qmb-builder-area-table [data-area-sort-id]')).toHaveCount(2);
 });

@@ -38,7 +38,10 @@ test('HOME named quote opens Beta editor, supports mobile/desktop Back and resum
 
     // Library navigation must clear the quote URL, and browser Back should
     // restore the same document (not leave the library on a stale deep link).
-    await page.locator('.qmb-quote-editor .qmb-back').click();
+    if(info.project.name==='desktop-1280')
+      await page.getByRole('button',{name:/All documents/}).click();
+    else
+      await page.locator('.qmb-quote-editor .qmb-back').click();
     await expect(page).toHaveURL(/\/quotes$/);
     await expect(page.locator('.qmb-desktop-frame.is-library')).toBeVisible();
     await page.goBack();
