@@ -41,12 +41,14 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
 }){
  const editable=quoteIsCommerciallyEditable(quote),store=useQuoteStore.getState();
  const ref=useRef<HTMLDivElement>(null);
+ const closeRef=useRef(onClose);
+ closeRef.current=onClose;
  useEffect(()=>{
-  const fn=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')onClose();};
+  const fn=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')closeRef.current();};
   document.addEventListener('keydown',fn);
   ref.current?.querySelector<HTMLButtonElement>('.qqt-close')?.focus();
   return()=>document.removeEventListener('keydown',fn);
- },[onClose]);
+ },[piece?.id,sink?.id,line?.id]);
  const patchPiece=(patch:Partial<QuoteTakeoffPiece>)=>{
   if(!section||!piece)return;
   store.updateTakeoffPieces(quote.id,section.id,(section.scope?.takeoffPieces??[])
