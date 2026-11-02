@@ -56,6 +56,7 @@ function ScopeRows({quote,section,general=false,view,showColumns=false,selected,
  const materialAnchor=useRef<HTMLDivElement>(null);
  useEffect(()=>{
   if(!materialOpen)return;
+  materialAnchor.current?.querySelector<HTMLInputElement>('[role="combobox"]')?.focus();
   const dismiss=(event:PointerEvent)=>{
    if(!materialAnchor.current?.contains(event.target as Node))setMaterialOpen(false);
   };
@@ -199,7 +200,8 @@ function ScopeRows({quote,section,general=false,view,showColumns=false,selected,
        {section.scope?.takeoffMaterialReference?.materialId&&
          <small>✓ Catalog selection</small>}
        {materialOpen&&<div className="qwt-material-popover" role="dialog"
-         aria-label={'Material catalog for '+section.title}>
+         aria-label={'Material catalog for '+section.title}
+         onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();setMaterialOpen(false);}}}>
          <div className="qwt-material-popover-head"><strong>Choose a material</strong>
           <button type="button" onClick={()=>setMaterialOpen(false)} aria-label="Close material picker">×</button></div>
          <TakeoffMaterialCatalog disabled={!editable} value={section.scope?.takeoffMaterial??''}
