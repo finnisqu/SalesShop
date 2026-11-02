@@ -12,10 +12,10 @@ npm run build
 npm run test
 ```
 
-The `build` script runs TypeScript checking before Vite, so TypeScript failures invalidate the deployment. **Dependency reproducibility is not yet established:** as of November 2, 2026, this repository has no committed `bun.lock` or `package-lock.json`. Generate `bun.lock` with a real `bun install`, commit it, and then configure deployments to use `bun install --frozen-lockfile`. Until then, Cloudflare resolves dependency versions on every build. New targeted tests:
+The `build` script now runs TypeScript checking, `npm run test:quick-quote` (targeted Vitest regressions), and then Vite, in that order. Any failed stage stops deployment. This uses the existing Cloudflare Pages build, not a new GitHub CI workflow. **Dependency reproducibility is not yet established:** as of November 2, 2026, this repository has no committed `bun.lock` or `package-lock.json`. Generate `bun.lock` with a real `bun install`, commit it, and then configure deployments to use `bun install --frozen-lockfile`. Until then, Cloudflare resolves dependency versions on every build. New targeted tests:
 
 ```sh
-npx vitest run src/services/quoteGridNavigation.test.ts src/services/quoteQuickPricingParity.test.ts src/services/quoteQuickAreaSummary.test.ts src/services/quoteScopeRowBatch.test.ts src/services/quoteDeliveryApproval.test.ts
+npm run test:quick-quote
 ```
 
 Do not claim a release is verified until the current commit passes. Source inspection and successful dependency installation are **not** a substitute for passing build/tests.
@@ -58,5 +58,5 @@ Use a fresh 2-Area Quick Quote:
 
 ## Deployment gate
 
-- Record Git commit SHA, Cloudflare Pages build status and the `npm run build` output.
+- Record Git commit SHA, Cloudflare Pages build status, TypeScript outcome, targeted Vitest test counts, and Vite build output.
 - If any check cannot run (offline tooling, no browser or unavailable Cloudflare logs), record it as **not verified**, not as passed.
