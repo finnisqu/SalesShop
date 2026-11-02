@@ -19,7 +19,7 @@ test('an Area layout can be saved and reused without carrying over pricing',asyn
   .getByRole('button',{name:/^Kitchen/}).click();
  const length=beta.getByRole('textbox',{name:'Length (in)'}).first();
  await length.fill('96');await length.press('Tab');
- await beta.getByRole('button',{name:'Save this Area layout'}).click();
+ await beta.getByRole('button',{name:'Save layout',exact:true}).click();
  const save=page.getByRole('dialog',{name:'Save reusable Area layout'});
  await save.getByRole('textbox',{name:'Layout name'}).fill('Standard 96 inch kitchen');
  await save.getByRole('button',{name:'Save layout'}).click();
