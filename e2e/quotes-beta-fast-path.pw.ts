@@ -28,7 +28,7 @@ test('Beta customer and Deal details advance directly to an Area and its Review,
   await expect(page.getByRole('dialog',{name:'Review and issue quote'})).toContainText('No priced work yet');
   await page.getByRole('dialog',{name:'Review and issue quote'}).getByRole('button',{name:'Close Review and Issue'}).click();
 
-  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:/Done · (Areas|Pricing)/}).click();
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Details'}).click();
   await expect(beta.getByRole('button',{name:'Continue to Kitchen ›'})).toBeVisible();
   await beta.getByRole('button',{name:'Continue to Kitchen ›'}).click();
@@ -40,12 +40,12 @@ test('Beta customer and Deal details advance directly to an Area and its Review,
   await beta.getByRole('button',{name:'Pricing',exact:true}).click();
   await beta.getByRole('button',{name:'Add another Area'}).click();
   await beta.getByRole('textbox',{name:'Area name'}).fill('Bath');
-  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:/Done · (Areas|Pricing)/}).click();
   await beta.getByRole('button',{name:/Kitchen/}).first().click();
   await beta.getByRole('button',{name:'Pricing',exact:true}).click();
   await expect(beta.getByRole('button',{name:'Go to next Area: Bath'})).toBeVisible();
   await beta.getByRole('button',{name:'Go to next Area: Bath'}).click();
   await expect(beta.getByRole('textbox',{name:'Area name'})).toHaveValue('Bath');
-  await beta.getByRole('button',{name:/Done · Quote/}).click();
+  await beta.getByRole('button',{name:/Done · (Areas|Pricing)/}).click();
   await expect(beta.locator('[data-area-sort-id]')).toHaveCount(2);
 });

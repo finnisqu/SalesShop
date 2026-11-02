@@ -79,9 +79,9 @@ describe('UI Foundation Batch 7 — Board / Quotes / Notebook',()=>{
   });
 
   it('themes Notebook sidebar and toolbar but preserves physical paper and text/ink engines',()=>{
-    expect(notebook).toContain('className="notebook-workspace"');
-    expect(notebook).toContain('<Sidebar />');
-    expect(notebook).toContain('<Toolbar entry={entry} editor={notebookEditor} />');
+    expect(notebook).toContain('className={`notebook-workspace ');
+    expect(notebook).toContain('<Sidebar onOpenBeside={openCompanion}');
+    expect(notebook).toContain('<Toolbar entry={entry} editor={notebookEditor} enableShortcuts');
     expect(notebook).toContain('className={`paper-sheet paper-${entry.paperStyle}');
     expect(notebook).toContain('<TextEditor key={`text-${entry.id}`}');
     expect(notebook).toContain('<DrawingCanvas key={`ink-${entry.id}`}');

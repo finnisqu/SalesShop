@@ -43,7 +43,7 @@ describe('Connections foundation — privacy-first navigation', () => {
   it('keeps CRM creation, search, filters, quote links and an optional history utility', () => {
     for (const code of [
       "'companies'", "'people'", "'deals'", '<SectionTabs', '<PageHeader', '<Field', '<StatusText',
-      'resolveCompany(name, newCompanyKind)', 'createContact({', 'openPerson(person.id)', 'openPerson(id)',
+      'resolveCompany(name, newCompanyKind)', 'createContact({', 'previewRecord(\'person\'', 'openPerson(id)',
       'openCompany(company.id)', 'openProject(project.id)',
       'quotesForCompany(company, projects, quotes)', 'quotesForProject(project, quotes)',
       'setCompanyFilter', 'setQuery', 'connections-section-more', "chooseTab('activity')",

@@ -38,7 +38,7 @@ test('Deal page creates, edits, links quotes, returns to directory and reloads',
     await page.getByRole('button', { name: /Connections/ }).filter({ hasText: '← Connections' }).click();
     await expect(page).toHaveURL(/\/connections$/);
     await expect(tabs.getByRole('button', { name: /Deals/ })).toHaveAttribute('aria-current', 'page');
-    await expect(page.locator('.connections-directory').getByRole('button', { name: new RegExp(deal) })).toBeVisible();
+    await expect(page.locator('.connections-directory').getByRole('button', { name: deal, exact: true })).toBeVisible();
   });
 
 test('Unknown Deal ID stays on a safe record fallback; legacy Board project URLs are recognized',

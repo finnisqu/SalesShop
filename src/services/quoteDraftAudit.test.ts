@@ -34,7 +34,9 @@ describe('Quotes Beta Review audit',()=>{
   });
   it('blocks missing selling rates and selected sinks without prices, but not draft entry',()=>{
     const input=quote({
-      lines:[line('top',{sectionId:'kitchen',pricingMode:'quantity-rate',quantity:20,rate:undefined})],
+      lines:[line('top',{sectionId:'kitchen',pricingMode:'quantity-rate',quantity:20,rate:undefined}),
+        line('sink-linked',{sectionId:'kitchen',takeoffSinkId:'s1',kind:'sink',
+          pricingMode:'quantity-rate',quantity:1,rate:undefined})],
       sections:[{...quote().sections[0],scope:{takeoffSinks:[sink('s1',undefined)],takeoffPieces:[]}}],
     });
     const result=auditQuoteDraft(input);
@@ -48,7 +50,9 @@ describe('Quotes Beta Review audit',()=>{
   });
   it('allows explicitly free sinks and flags them for acknowledgment instead of blocking',()=>{
     const input=quote({sections:[{...quote().sections[0],
-      scope:{takeoffPieces:[],takeoffSinks:[sink('s1',0)]}}]});
+      scope:{takeoffPieces:[],takeoffSinks:[sink('s1',0)]}}],
+      lines:[...quote().lines,line('sink-linked',{sectionId:'kitchen',takeoffSinkId:'s1',
+        kind:'sink',pricingMode:'quantity-rate',quantity:1,rate:0})]});
     const result=auditQuoteDraft(input);
     expect(result.blockers).toHaveLength(0);
     expect(result.review.map(issue=>issue.id)).toContain('sink:s1:complimentary');

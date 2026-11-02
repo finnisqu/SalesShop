@@ -6,9 +6,11 @@ const connections=read('src/components/Connections.tsx');
 const account=read('src/components/AccountMenu.tsx');
 const mobile=read('src/components/MobileAppChrome.tsx');
 describe('Batch 16A profile and Connections cleanup',()=>{
- it('keeps linked quote counts but removes redundant Connections quote library',()=>{
+ it('places Quote metadata under More, not primary Connections tabs',()=>{
    expect(connections).not.toContain("{ id: 'quotes', label: 'Quotes'");
-   expect(connections).not.toContain("tab === 'quotes'");
+   expect(connections).toContain("chooseTab('quotes')");
+   expect(connections).toContain("tab === 'quotes'");
+   expect(connections).toContain('Quote metadata directory');
    expect(connections).toContain('quotesForCompany(company, projects, quotes)');
    expect(connections).toContain('quotesForProject(project, quotes)');
  });

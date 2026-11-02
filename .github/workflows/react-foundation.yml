@@ -40,6 +40,7 @@ jobs:
       - name: Unit and regression tests
         run: npm test
       - name: Typecheck and build
+        if: success() || failure()
         run: npm run build
       - name: Verify root-hosted asset paths
         run: |

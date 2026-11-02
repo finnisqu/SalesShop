@@ -153,7 +153,7 @@ function resetHistory() {
 function checkpoint(state: NotebookState, key: string, coalesceMs = 0) {
   const timestamp = Date.now();
   // Structural changes invalidate page-scoped ink/object snapshots.
-  if(key.startsWith('page:')||key.startsWith('folder:')||key.startsWith('global-postit:'))
+  if(key.startsWith('page:')||key.startsWith('folder:')||key.startsWith('global-postit:')||key.startsWith('title:'))
     clearPageEditHistory();
   else savePageCheckpoint(state,key,coalesceMs,timestamp);
   const coalescing = coalesceMs > 0 && lastCheckpointKey === key && timestamp - lastCheckpointAt <= coalesceMs;
