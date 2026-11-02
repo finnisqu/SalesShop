@@ -5,6 +5,7 @@ import {quoteLineAmount,quoteTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
+import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from '../services/quoteQuickAreaSummary';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {newTakeoffSink} from '../services/quoteTakeoffsLite';
@@ -83,8 +84,8 @@ function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFoc
   if(cancelled.current){cancelled.current=false;return;}
   const raw=draft.trim();
   if(!raw){if(value!==undefined)onCommit(undefined);return;}
-  const parsed=Number(raw);
-  if(Number.isFinite(parsed)&&parsed>=0&&(!integer||Number.isInteger(parsed))){
+  const parsed=parseQuickGridNumber(raw);
+  if(parsed!==undefined&&parsed>=0&&(!integer||Number.isInteger(parsed))){
    if(parsed!==value)onCommit(parsed);
   }else setDraft(value===undefined?'':String(value));
  };
