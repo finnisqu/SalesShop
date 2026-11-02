@@ -716,7 +716,9 @@ export function QuotesMobileBeta() {
     setCustomerQuickOpen(false);setPreviewReturnQuoteId(null);
     // Older stored routes used a full Materials & Pricing page. Send them to Review.
     if(tab==='pricing'&&quote?.documentType!=='pricing-schedule'){
-      setQuoteTab('pricing');setReviewFocus(null);setReviewOpen(false);setPage('quote');return;
+      setQuoteTab('pricing');setReviewFocus(null);setReviewOpen(false);setPage('quote');
+      if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
+      return;
     }
     setPage('quote');setQuoteTab(tab);setAreaId(null);
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
@@ -1189,6 +1191,7 @@ export function QuotesMobileBeta() {
             onPreview={()=>{
               setPreviewReturnQuoteId(null);
               setQuoteTab('preview');setPage('quote');setAreaId(null);
+              if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
             }}
             canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
             previewedKey={previewedDeliveryKey} approvedKey={approvedDeliveryKey}
