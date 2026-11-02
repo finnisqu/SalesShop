@@ -110,7 +110,11 @@ export function Toolbar({ entry, editor, enableShortcuts = true }: ToolbarProps)
     if (!enableShortcuts) return;
     const onShortcut = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
-      if ((event.target as HTMLElement | null)?.closest('.spreadsheet-object-editor')) return;
+      const target=event.target as HTMLElement|null;
+      if(target?.closest('.spreadsheet-object-editor'))return;
+      // Each split-pane rich-text editor owns its own text undo/redo history.
+      // Avoid intercepting ProseMirror keystrokes and undoing a different page.
+      if(target?.closest('.notebook-panes.is-split [contenteditable="true"]'))return;
       const key = event.key.toLowerCase();
       const wantsUndo = key === 'z' && !event.shiftKey;
       const wantsRedo = key === 'y' || (key === 'z' && event.shiftKey);

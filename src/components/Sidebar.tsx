@@ -252,6 +252,7 @@ export function Sidebar({
                 <button type="button" onClick={onToggleStack}>{stacked?'◫ Show side by side':'▤ Show stacked'}</button>
                 <button type="button" onClick={onCloseLeft}>Close left view</button>
                 <button type="button" onClick={onCloseRight}>Close right view</button>
+                <button type="button" onClick={onCloseRight}>Exit split · keep left</button>
               </>:<span>Open a second page to start a split.</span>}
             </div>
           </details>
