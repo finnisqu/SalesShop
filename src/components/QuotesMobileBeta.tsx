@@ -100,6 +100,7 @@ import {defaultQuoteBuilderPreferences,readQuoteBuilderPreferences,writeQuoteBui
 import './quote-builder-tables.css';
 import './quote-builder-tables-scoped.css';
 import './quote-inline-bulk.css';
+import '../quote-quick-mobile.css';
 
 // Keep the advanced spreadsheet bundle out of the everyday Quick Quote path.
 const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(module=>({default:module.PricingDocumentEditor})));
@@ -1134,6 +1135,10 @@ export function QuotesMobileBeta() {
             title="Undo last quote edit" aria-label="Undo quote edit">↶ <span>Undo</span></button>
            <button type="button" disabled={!editable||redoDepth===0} onClick={()=>redo(quote.id)}
             title="Redo last quote edit" aria-label="Redo quote edit">↷ <span>Redo</span></button>
+           <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
+            canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
+            onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
+            onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
           </div>}
           <span className="qmb-chip qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
           <AppMenu/>
@@ -1403,7 +1408,7 @@ export function QuotesMobileBeta() {
         setQuoteTab('preview');setPage('quote');setAreaId(null);
       }}
       />}
-    {quote&&page==='quote'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
+    {quote&&page==='quote'&&quote.documentType==='pricing-schedule'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
       <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
       <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>
       <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
