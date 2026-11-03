@@ -118,6 +118,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
     <div className="sales-calendar-grid">
      {days.map(key=>{
       const counts=calendarDayCounts(events,key),inMonth=key.slice(0,7)===localDateKey(month).slice(0,7);
+      const kindCounts:Record<SalesCalendarKind,number>={
+       task:counts.task,bid:counts.bid,activity:counts.activity,'follow-up':counts.followUp,
+      };
       return <button type="button" key={key}
         className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
          (key===today?' is-today':'')+(key===selected?' is-selected':'')}
@@ -131,9 +134,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
         }}}>
         <span>{Number(key.slice(-2))}</span>
         <span className="sales-calendar-dots" aria-hidden="true">
-         {(['task','bid','activity','follow-up'] as const).filter(kind=>counts[kind]>0)
-          .map(kind=><i key={kind} className={'is-'+kind} title={counts[kind]+' '+labels[kind]}>
-           {counts[kind]}</i>)}
+         {(['task','bid','activity','follow-up'] as const).filter(kind=>kindCounts[kind]>0)
+          .map(kind=><i key={kind} className={'is-'+kind} title={kindCounts[kind]+' '+labels[kind]}>
+           {kindCounts[kind]}</i>)}
         </span>
        </button>;
      })}
