@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {QuickActivityLauncher} from './QuickActivityLauncher';
 import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -71,9 +72,10 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   return <RecordPageLayout entityType="person" title={displayName} onBack={onBack}
     subtitle={[person.title, related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{related.company ? 'Associated company' : 'Unassigned'}</span>}
-    actions={<button type="button" onClick={() => setEditing((value) => !value)}>
+    actions={<><QuickActivityLauncher context={{type:'contact',id:person.id}} compact />
+    <button type="button" onClick={() => setEditing((value) => !value)}>
       {editing ? 'Cancel editing' : 'Edit person'}
-    </button>}
+    </button></>}
     left={<>
       <RecordCard title="About this person">
         {editing ? <form className="connections-record-edit-form" onSubmit={save}>

@@ -126,3 +126,17 @@
  font-weight:800;line-height:1;color:#fff;}
 .sales-calendar-dots i.is-task,.sales-calendar-dots i.is-bid,
 .sales-calendar-dots i.is-activity,.sales-calendar-dots i.is-follow-up{color:white;}
+
+.sales-activity-cloud-state{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ font-size:11px;color:var(--ss-theme-muted,#796d5b);padding:6px 10px;}
+.sales-activity-cloud-state.is-error{color:#ba5145;}
+.sales-activity-cloud-state button,.sales-activity-success button{min-height:32px;padding:5px 9px;
+ border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:7px;background:transparent;color:inherit;}
+.sales-activity-cloud-state small{overflow:hidden;max-width:250px;text-overflow:ellipsis;white-space:nowrap;}
+.sales-activity-exception{display:flex!important;flex-direction:row;align-items:start;gap:8px;font-size:11px;color:#b47a32;}
+.sales-activity-exception input{width:17px!important;min-width:17px;margin:0;}
+.sales-activity-success{position:fixed;z-index:9700;bottom:max(18px,env(safe-area-inset-bottom,0px));
+ right:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ max-width:min(400px,calc(100vw - 30px));padding:10px 12px;background:var(--ss-theme-card,#fff);
+ color:var(--ss-theme-ink,#333);border:1px solid var(--ss-theme-border,#ccc);
+ border-radius:11px;box-shadow:0 7px 24px rgba(0,0,0,.22);font-size:12px;}

@@ -51,6 +51,7 @@ import { Board } from './components/Board';
 import { CompanySettings } from './components/CompanySettings';
 import { Connections } from './components/Connections';
 import {HomeWorkspace} from './components/HomeWorkspace';
+import {QuickActivityLauncher} from './components/QuickActivityLauncher';
 import {taskScope,usePersonalTaskStore} from './store/personalTaskStore';
 import {startPersonalTaskCloudSync} from './services/personalTaskCloudSync';
 import {TasksWorkspace} from './components/TasksWorkspace';
@@ -332,6 +333,7 @@ function App() {
       )}
       </WorkspaceViewport>
       {!inRolePreview&&<NotebookPromotionDialog/>}
+      {!inRolePreview&&<QuickActivityLauncher global/>}
     </SalesShopShell>
   );
 }

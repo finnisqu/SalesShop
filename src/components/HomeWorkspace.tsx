@@ -15,6 +15,7 @@ import {followUpLocalDate} from '../services/quoteFollowUps';
 import {newQuickNoteEvent} from './GlobalPostIt';
 import {QuickCreate} from './QuickCreate';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {ActivityCloudIndicator} from './ActivityCloudIndicator';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import '../home-workspace.css';
 
@@ -107,6 +108,7 @@ export function HomeWorkspace(){
       </div>
     </section>
 
+    <ActivityCloudIndicator />
     <div className="sales-home-columns">
       <section className="sales-home-panel sales-home-attention" aria-label="My tasks and quote follow-ups">
         <div className="sales-home-section-head"><div><h2>My Today</h2>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {QuickActivityLauncher} from './QuickActivityLauncher';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork, type CompanyKind } from '../types/crm';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
@@ -117,6 +118,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     badge={<><span className="connections-record-stage">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</span><span>{related.relatedProjects.length} deals</span><span>{related.relatedQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => setEditing((current) => !current)}>{editing ? 'Cancel editing' : 'Edit company'}</button>
+      <QuickActivityLauncher context={{type:'company',id:company.id}} compact />
       {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>}
     </>}
     left={<>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {QuickActivityLauncher} from './QuickActivityLauncher';
 import { ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { dealRecordView } from '../services/dealRecordView';
 import { PrivateDealContactRoles } from './PrivateDealContactRoles';
@@ -88,6 +89,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{related.linkedQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => setEditing(value => !value)}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
+      <QuickActivityLauncher context={{type:'project',id:deal.id}} compact />
       <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>
     </>}
     left={<>

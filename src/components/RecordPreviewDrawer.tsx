@@ -1,4 +1,5 @@
 import {useEffect} from 'react';
+import {requestQuickActivity} from './QuickActivityLauncher';
 import {useCrmStore} from '../store/crmStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {useNavigationStore} from '../store/navigationStore';
@@ -129,6 +130,10 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        </>}
      </div>
      <footer className="record-preview-actions">
+       <button type="button" onClick={()=>{
+         requestQuickActivity({type:record.kind==='person'?'contact':record.kind==='deal'?'project':record.kind,id:record.id});
+         onClose();
+       }}>＋ Log Activity</button>
        {onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&
          <button type="button" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
        <button type="button" className="record-preview-full" onClick={goToPage}>Go to page</button>
