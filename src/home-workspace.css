@@ -127,3 +127,10 @@
  .sales-home-heading{flex-wrap:wrap}
  .sales-home-top-actions{width:100%;justify-content:flex-start}
 }
+
+.sales-home-task-open{display:grid;flex:1;min-width:0;text-align:left;gap:4px;
+ background:transparent;color:inherit;border:0;padding:2px 0;cursor:pointer}
+.sales-home-task-open:hover strong{text-decoration:underline}
+.sales-home-task-open:focus-visible{outline:2px solid var(--ss-theme-accent,#917246);outline-offset:3px}
+.sales-home-task-open strong{font-size:14px;overflow:hidden;text-overflow:ellipsis}
+.sales-home-task-open small{color:var(--ss-theme-muted,#66716b);font-size:11px}
