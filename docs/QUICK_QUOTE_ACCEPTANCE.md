@@ -69,8 +69,10 @@ Test on iPhone Safari at a normal portrait viewport (~390 CSS px), then at 320px
 - Select one or more Areas and Takeoffs rows. The bulk toolbar stays in the header as a compact button grid, not a tall vertical stack. One Undo reverses a grouped duplicate.
 - The quote footer must show the full Back and next-stage button text and remain reachable when the keyboard opens. No floating Undo/Redo/More cluster should cover editing cells or review actions.
 - Verify Undo, Redo and document More are in the quote's header. Open the More menu and ensure it appears above the quote identity and is scrollable/tappable.
-- In Pricing Review, stage 1 must show *all* selling components (stone, sinks, specialty, General, totals) on the phone without a horizontally clipped spreadsheet.
+- In Pricing Review, the oversized intro header and duplicate Back control must be absent. The three pricing sections use the same docked bottom Previous/Next bar as the main quote steps; scrolling the table must not hide the navigation.
+- Stage 1 must present a compact phone table (Area/material, SF, stone, total, and a sinks/specialty breakdown when applicable), including General, without horizontal clipping.
 - Check the Costs & margin and Pricing questions stages; navigate Forward/Previous and open customer preview without inaccessible buttons.
+- Open material, sink, charge, Area settings, private Calculator and advanced Area editors. On mobile they should slide up with a rounded top and a visible grab handle; their internal content scrolls independently, and a downward swipe on the header or Close dismisses them. Desktop side drawers stay unchanged.
 - Open Copy Area. It must display as a reachable, theme-aware sheet with Cancel and Copy visible; iOS selection should not zoom the page. Open Saved layouts and scroll a long list with close and footer actions accessible.
 - Check cloud-save feedback, reloading and pricing totals after editing; compare with the same quote on desktop. The customer-facing print document must remain unchanged.
 
