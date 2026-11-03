@@ -53,7 +53,7 @@ interface CrmState {
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
   deleteProject: (projectId: string) => void;
   recordActivity: (activity: ActivityInput) => string;
-  updateManualActivity: (activityId:string,change:{summary?:string;notes?:string;interactionMethod?:ActivityMetadata['interactionMethod'];occurredAt?:string})=>boolean;
+  updateManualActivity: (activityId:string,change:{summary?:string;notes?:string;interactionMethod?:ActivityMetadata['interactionMethod'];occurredAt?:string;companyId?:string|null;contactId?:string|null;projectId?:string|null;quoteId?:string|null})=>boolean;
   voidManualActivity:(activityId:string)=>boolean;
 }
 
@@ -295,6 +295,10 @@ export const useCrmStore = create<CrmState>((set, get) => ({
    if(auth.mode==='cloud'&&(!auth.user?.id||!auth.organizationId||
      !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')))return false;
    const next:Activity={...original,
+    companyId:change.companyId===undefined?original.companyId:change.companyId||undefined,
+    contactId:change.contactId===undefined?original.contactId:change.contactId||undefined,
+    projectId:change.projectId===undefined?original.projectId:change.projectId||undefined,
+    quoteId:change.quoteId===undefined?original.quoteId:change.quoteId||undefined,
     summary:change.summary?.trim().slice(0,240)||original.summary,
     occurredAt:change.occurredAt&&Number.isFinite(Date.parse(change.occurredAt))
       ?change.occurredAt:original.occurredAt,
@@ -305,6 +309,8 @@ export const useCrmStore = create<CrmState>((set, get) => ({
      correctionHistory:[...(original.metadata?.correctionHistory??[]),{
       at:now(),summary:original.summary,notes:original.metadata?.notes,
       method:original.metadata?.interactionMethod,
+      companyId:original.companyId,contactId:original.contactId,
+      projectId:original.projectId,quoteId:original.quoteId,
      }].slice(-15),
     }};
    if(auth.mode==='cloud'&&auth.organizationId&&auth.user?.id){

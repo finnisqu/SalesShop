@@ -102,7 +102,7 @@ export interface ActivityMetadata {
   notes?: string;
   editedAt?: string;
   voidedAt?: string;
-  correctionHistory?: Array<{at:string;summary:string;notes?:string;method?:ActivityMetadata['interactionMethod']}>;
+  correctionHistory?: Array<{at:string;summary:string;notes?:string;method?:ActivityMetadata['interactionMethod'];companyId?:string;contactId?:string;projectId?:string;quoteId?:string}>;
   quoteNumber?: string;
   revision?: number;
   amount?: number;
