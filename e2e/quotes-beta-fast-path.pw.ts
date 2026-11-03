@@ -10,7 +10,7 @@ test('Quick Quote Details flows into modern Areas and Takeoffs workbook without 
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:/^\\+ New(?: document)?$/}).first().click();
+  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Quick Quote/}).click();
   await picker.getByRole('textbox',{name:'Quote name'}).fill('Unified fast path QC');
