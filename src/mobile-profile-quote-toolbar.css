@@ -1,3 +1,38 @@
+/* Desktop and tablet fallback while the shared mobile toolbar is not present. */
+.sales-app .qmb .qmb-desktop-fallback-toolbar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:5px 14px;
+  min-height:42px;
+  background:var(--qmb-card);
+  border-top:1px solid var(--qmb-border);
+}
+.sales-app .qmb .qmb-desktop-fallback-toolbar>.qmb-back {
+  min-height:34px;
+  padding:5px 10px;
+  border:1px solid var(--qmb-border);
+  border-radius:8px;
+  background:var(--qmb-card);
+  color:var(--qmb-accent);
+  font-weight:750;
+}
+.sales-app .qmb .qmb-desktop-fallback-toolbar>div {
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.sales-app .qmb .qmb-desktop-fallback-toolbar>div>button {
+  min-height:34px;
+  padding:5px 10px;
+  border:1px solid var(--qmb-border);
+  border-radius:8px;
+  background:var(--qmb-card);
+  color:var(--qmb-accent);
+  font-weight:750;
+}
+.sales-app .qmb .qmb-desktop-fallback-toolbar>div>button:disabled {opacity:.4}
 /* Compact mobile application chrome: editing on the left, navigation/profile on the right.
    No document-level SVG back button; all quote history controls share the app toolbar. */
 .mobile-app-hidden-launchers {
@@ -274,4 +309,8 @@
     width:36px;min-width:36px;height:36px;min-height:36px;flex-basis:36px;
   }
   .sales-app > .mobile-app-commandbar .mobile-profile-menu {width:36px;flex-basis:36px;}
+}
+
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .sales-app .qmb .qmb-desktop-fallback-toolbar {display:none!important;}
 }
