@@ -87,3 +87,28 @@
 @media(max-width:700px),(orientation:landscape) and (max-height:520px) and (pointer:coarse){
   .sales-home-header-create{display:none}
 }
+
+/* Home shows future deadlines, never a sales-activity scorecard. */
+.sales-home-upcoming{margin:12px 0;display:grid;gap:8px;padding:12px 14px;
+ border:1px solid var(--ss-theme-border,#ded7c9);border-radius:12px;
+ background:var(--ss-theme-card,#fff);}
+.sales-home-upcoming>header{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.sales-home-upcoming>header h2{font-size:14px;margin:0;}
+.sales-home-upcoming>header p{font-size:11px;color:var(--ss-theme-muted,#777);margin:2px 0 0;}
+.sales-home-upcoming-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:4px;}
+.sales-home-upcoming-list>button{display:flex;align-items:center;gap:7px;width:100%;min-width:0;
+ border:0;border-radius:8px;padding:8px 6px;background:transparent;color:inherit;text-align:left;}
+.sales-home-upcoming-list>button:hover,.sales-home-upcoming-list>button:focus-visible{
+ background:var(--ss-theme-tint,#f1ede6);}
+.sales-home-upcoming-list>button strong{font-size:11px;font-weight:750;flex:1;min-width:0;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sales-home-upcoming-list>button small{font-size:10px;color:var(--ss-theme-muted,#777);
+ white-space:nowrap;font-variant-numeric:tabular-nums;}
+.sales-home-upcoming-kind{border-radius:5px;font-size:10px;font-weight:800;padding:4px 5px;
+ color:#fff;background:#6684a9;}
+.sales-home-upcoming-kind.is-bid{background:#bb8054;}
+.sales-home-upcoming-kind.is-follow-up{background:#9277b0;}
+@media(max-width:700px){
+ .sales-home-upcoming{padding:10px;}
+ .sales-home-upcoming-list{grid-template-columns:minmax(0,1fr);}
+}
