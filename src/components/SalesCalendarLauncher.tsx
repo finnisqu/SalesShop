@@ -23,6 +23,15 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [position,setPosition]=useState<CSSProperties>({});
  const [month,setMonth]=useState(()=>new Date(new Date().getFullYear(),new Date().getMonth(),1,12));
  const [selected,setSelected]=useState(()=>localDateKey(new Date()));
+ const [isPhone,setIsPhone]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches);
+ const [monthExpanded,setMonthExpanded]=useState(false);
+ useEffect(()=>{
+  if(!embedded)return;
+  const media=window.matchMedia('(max-width:760px)');
+  const update=()=>setIsPhone(media.matches);
+  update();media.addEventListener('change',update);
+  return()=>media.removeEventListener('change',update);
+ },[embedded]);
  const today=localDateKey(new Date());
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id);
@@ -38,7 +47,16 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,deals,activities,ownQuotes),
   [ownTasks,deals,activities,ownQuotes]);
  const days=useMemo(()=>calendarMonthDays(month.getFullYear(),month.getMonth()),[month]);
- const eventsForDay=events.filter(item=>item.date===selected);
+ const weekDays=useMemo(()=>{
+  const start=new Date(selected+'T12:00:00');
+  start.setDate(start.getDate()-start.getDay());
+  return Array.from({length:7},(_,i)=>{
+   const date=new Date(start);date.setDate(start.getDate()+i);return localDateKey(date);
+  });
+ },[selected]);
+ const weekMode=embedded&&isPhone&&!monthExpanded;
+ const visibleDays=weekMode?weekDays:days;
+ const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected),[events,selected]);
  const placement=()=>{
   if(!button.current)return;
   const rect=button.current.getBoundingClientRect();
@@ -65,6 +83,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   const next=new Date(month.getFullYear(),month.getMonth()+delta,1,12);
   setMonth(next);setSelected(localDateKey(next));
  };
+ const changePeriod=(delta:number)=>{
+  if(!weekMode){changeMonth(delta);return;}
+  const date=new Date(selected+'T12:00:00');
+  date.setDate(date.getDate()+7*delta);
+  setSelected(localDateKey(date));
+  setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
+ };
  const openRecord=(event:SalesCalendarEvent)=>{
   setOpen(false);
   const {recordType,recordId}=event;
@@ -85,18 +110,21 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  };
  if(preview)return null;
  const calendarPanel=(
-   <section className={"sales-calendar-popover"+(embedded?" is-inline":"")} style={embedded?undefined:position}
-    role="dialog" aria-modal="false" aria-label="SalesShop calendar"
+   <section className={"sales-calendar-popover"+(embedded?" is-inline":"")+(weekMode?" is-week":"")} style={embedded?undefined:position}
+    role={embedded?undefined:'dialog'} aria-modal={embedded?undefined:false} aria-label="SalesShop calendar"
     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
     <header className="sales-calendar-heading">
-     <div><small>WORK CALENDAR</small><strong>{plainName(month)}</strong></div>
+     <div>{!embedded&&<small>WORK CALENDAR</small>}<strong>{plainName(month)}</strong></div>
      <div>
-      <button type="button" aria-label="Previous month" onClick={()=>changeMonth(-1)}>‹</button>
+      <button type="button" aria-label={weekMode?'Previous week':'Previous month'} onClick={()=>changePeriod(-1)}>‹</button>
       <button type="button" aria-label="Jump to today" onClick={()=>{
        const now=new Date();setMonth(new Date(now.getFullYear(),now.getMonth(),1,12));
        setSelected(localDateKey(now));
       }}>Today</button>
-      <button type="button" aria-label="Next month" onClick={()=>changeMonth(1)}>›</button>
+      <button type="button" aria-label={weekMode?'Next week':'Next month'} onClick={()=>changePeriod(1)}>›</button>
+      {embedded&&isPhone&&<button type="button" className="sales-calendar-expand" aria-expanded={monthExpanded}
+       aria-label={monthExpanded?'Collapse to week':'Expand to full month'}
+       onClick={()=>setMonthExpanded(value=>!value)}>{monthExpanded?'Week':'Month'}</button>}
       {!embedded&&<button type="button" aria-label="Close calendar" onClick={()=>setOpen(false)}>×</button>}
      </div>
     </header>
@@ -105,7 +133,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       'Thursday','Friday','Saturday'][i]}>{name}</span>)}
     </div>
     <div className="sales-calendar-grid">
-     {days.map(key=>{
+     {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key),inMonth=key.slice(0,7)===localDateKey(month).slice(0,7);
       const kindCounts:Record<SalesCalendarKind,number>={
        task:counts.task,bid:counts.bid,activity:counts.activity,'follow-up':counts.followUp,
@@ -143,7 +171,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         </button>)}
       </div>:<p className="sales-calendar-empty">Nothing scheduled or logged for this day.</p>}
     </section>
-    <div className="sales-calendar-legend">
+    <div className="sales-calendar-legend" aria-label="Calendar event types">
      {(['task','bid','activity','follow-up'] as const).map(kind=><span key={kind}>
       <i className={'is-'+kind}/>{labels[kind]}</span>)}
     </div>
