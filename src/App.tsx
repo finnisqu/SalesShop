@@ -39,6 +39,7 @@ import { DeveloperPlaygroundToolbar } from './components/DeveloperPlaygroundTool
 import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
 import './developer-playground.css';
 import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
+import {TaskModalHost} from './components/TaskModalHost';
 import { ViewerWorkspace } from './components/ViewerWorkspace';
 import { RolePerspectiveBanner, RolePerspectiveSettings } from './components/RolePerspectiveControls';
 import { resolveOwnerPerspective } from './services/rolePerspective';
@@ -333,6 +334,7 @@ function App() {
         </main>
       )}
       </WorkspaceViewport>
+      {!inRolePreview&&<TaskModalHost/>}
       {!inRolePreview&&<NotebookPromotionDialog/>}
     </SalesShopShell>
   );
