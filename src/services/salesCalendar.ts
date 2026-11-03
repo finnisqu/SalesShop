@@ -76,5 +76,6 @@ export const calendarDayCounts=(events:readonly SalesCalendarEvent[],date:string
   bid:matches.filter(e=>e.kind==='bid').length,
   activity:matches.filter(e=>e.kind==='activity').length,
   followUp:matches.filter(e=>e.kind==='follow-up').length,
+  'follow-up':matches.filter(e=>e.kind==='follow-up').length,
   total:matches.length};
 };
