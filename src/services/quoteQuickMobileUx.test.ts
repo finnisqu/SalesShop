@@ -56,18 +56,29 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(takeoffs).toContain("takeoffPieceSplashSf(piece)");
   expect(takeoffs).toContain('Sink unit selling price');
  });
- it('anchors mobile Takeoffs More sheet between viewport top and Safari-safe bottom',()=>{
+ it('supports a touch-draggable Takeoffs handle with two snap positions and Safari-safe dismissal',()=>{
   expect(workbook).toContain('.qmb.qqt-overlay>.qqt-panel.qqt-panel');
   expect(workbook).toContain('position:fixed!important;');
-  expect(workbook).toContain('top:clamp(12px,3dvh,28px)!important;');
+  expect(workbook).toContain('top:var(--qqt-sheet-top,clamp(12px,3dvh,28px))!important;');
   expect(workbook).toContain('bottom:max(var(--ss-mobile-footer-inset,0px),env(safe-area-inset-bottom,0px))!important;');
   expect(workbook).toContain('height:auto!important;');
   expect(workbook).toContain('max-height:none!important;');
+  expect(workbook).toContain('.qqt-drag-handle');
+  expect(workbook).toContain('touch-action:none;');
+  expect(workbook).toContain('.is-dragging');
+  expect(workbook).toContain('transition:none!important;');
   expect(workbook).toContain('>.qqt-panel-body');
   expect(workbook).toContain('overflow-y:auto;');
   expect(workbook).toContain('>footer');
   expect(workbook).toContain('flex:0 0 auto;');
   expect(workbook).not.toContain('inset-block:auto!important;');
+  expect(takeoffs).toContain('aria-label="Resize details sheet"');
+  expect(takeoffs).toContain('setPointerCapture(event.pointerId)');
+  expect(takeoffs).toContain("sheetMode.current==='expanded'?'compact':'expanded'");
+  expect(takeoffs).toContain("snapSheet(gesture.lastTop>midpoint?'compact':'expanded')");
+  expect(takeoffs).toContain('onPointerCancel={event=>finishHandleDrag(event,true)}');
+  expect(takeoffs).toContain("event.key==='ArrowUp'");
+  expect(takeoffs).toContain("event.key==='ArrowDown'");
   expect(takeoffs).toContain('<footer><button type="button" onClick={onClose}>Done</button></footer>');
  });
  it('replaces phone-wide pricing tables with complete visible values',()=>{
