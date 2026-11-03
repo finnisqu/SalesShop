@@ -22,7 +22,7 @@ import {InitialOpenDetails} from './InitialOpenDetails';
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
 export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
-  canIssue,sending,error,onIssue,previewedKey,approvedKey,onApprove,reviewedKey,onReview}:{
+  canIssue,sending,error,onIssue,previewedKey,approvedKey,onApprove,reviewedKey,onReview,footerTarget}:{
   quote:Quote;
   onBack:()=>void;onFix:(destination:QuoteAuditDestination)=>void;
   initialFindingId?:string|null;
@@ -30,6 +30,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   canIssue:boolean;sending:boolean;error:string;onIssue:()=>void;
   previewedKey:string|null;approvedKey:string|null;onApprove:(approved:boolean)=>void;
   reviewedKey:string|null;onReview:(key:string|null)=>void;
+  footerTarget?:HTMLElement|null;
 }){
   const [reviewStep,setReviewStep]=useState<number>(()=>initialFindingId?2:0);
   useEffect(()=>{if(initialFindingId)setReviewStep(2);},[initialFindingId]);
@@ -151,11 +152,6 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
     </div>;
   }
   return <div className="qmb-editor qmb-review-editor qqr-workspace">
-    <header className="qmb-pagehead qqr-pagehead">
-      <div><small>QUICK QUOTE</small><strong>Pricing Review</strong>
-       <p>Confirm totals, costs, open questions and the exact customer contract.</p></div>
-      <button type="button" className="qmb-back" onClick={onBack}>‹ Back to Build Quote</button>
-    </header>
     <nav className="qqr-steps" aria-label="Pricing Review steps" ref={reviewNavRef}>
      {reviewSteps.map((label,index)=><button key={label} type="button"
        className={index===reviewStep?'is-active':''}
@@ -183,23 +179,29 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
        <td><strong>{money.format(quickGeneralSummary(quote).total)}</strong></td></tr>
      </tbody></table></div>
      <div className="qqr-mobile-totals" aria-label="Area pricing summary for phones">
-      {quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
-       const data=quickAreaSummary(quote,section);
-       return <article className="qqr-mobile-total-card" key={section.id}>
-        <header><strong>{section.title}</strong><b>{money.format(data.total)}</b></header>
-        <p>{section.scope?.takeoffMaterial||'Material not selected'}</p>
-        <dl>
-         <div><dt>Billable SF</dt><dd>{data.billedSf.toFixed(2)}</dd></div>
-         <div><dt>Stone</dt><dd>{money.format(data.materialPrice)}</dd></div>
-         <div><dt>Sinks</dt><dd>{money.format(data.sinkPrice)}</dd></div>
-         <div><dt>Specialty</dt><dd>{money.format(data.specialtyPrice)}</dd></div>
-        </dl>
-       </article>;
-      })}
-      <article className="qqr-mobile-total-card is-general">
-       <header><strong>General</strong><b>{money.format(quickGeneralSummary(quote).total)}</b></header>
-       <p>Unassigned charges and discounts</p>
-      </article>
+      <table className="qqr-mobile-price-table">
+       <thead><tr><th>Area / material</th><th>SF</th><th>Stone</th><th>Total</th></tr></thead>
+       <tbody>
+       {quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
+        const data=quickAreaSummary(quote,section);
+        return <tr key={section.id}>
+         <th scope="row"><strong>{section.title}</strong>
+          <small>{section.scope?.takeoffMaterial||'Select material'}</small>
+         </th>
+         <td>{data.billedSf.toFixed(2)}</td>
+         <td>{money.format(data.materialPrice)}</td>
+         <td><strong>{money.format(data.total)}</strong>
+          {(data.sinkPrice!==0||data.specialtyPrice!==0)&&
+           <small>Sinks {money.format(data.sinkPrice)} · Other {money.format(data.specialtyPrice)}</small>}
+         </td>
+        </tr>;
+       })}
+       <tr className="is-general">
+        <th scope="row" colSpan={3}>General <small>Charges and discounts</small></th>
+        <td><strong>{money.format(quickGeneralSummary(quote).total)}</strong></td>
+       </tr>
+       </tbody>
+      </table>
      </div>
      <div className="qqr-grand-total"><span>Quote total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
      <button type="button" className="qmb-outline" onClick={()=>onFix({view:'build'})}>Edit Areas in Build Quote ›</button>
@@ -250,13 +252,16 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
       {signatureOpen&&createPortal(<QuoteSignatureDialog quote={quote} onClose={()=>setSignatureOpen(false)}/>,document.body)}
 
     </div>
-    <footer className="qmb-footer qqr-footer">
-      <button type="button" className="qmb-outline" onClick={()=>reviewStep===0?onBack():setReviewStep(reviewStep-1)}>
-       {reviewStep===0?'‹ Back to Build Quote':'‹ Previous'}</button>
-      <div><small>Step {reviewStep+1} of 3 · {money.format(quoteTotal(quote))}</small>
-       {reviewStep<2?<button type="button" className="qmb-primary" onClick={()=>setReviewStep(reviewStep+1)}>
-        Next: {reviewSteps[reviewStep+1]} ›</button>
-       :<button type="button" className="qmb-primary" onClick={onPreview}>Continue to Contract Review ›</button>}</div>
-    </footer>
+    {(()=>{
+      const footer=<footer className="qmb-footer qqr-footer" aria-label="Pricing Review navigation">
+       <button type="button" className="qmb-guided-back" onClick={()=>reviewStep===0?onBack():setReviewStep(reviewStep-1)}>
+        {reviewStep===0?'‹ Back':'‹ Previous'}</button>
+       <button type="button" className="qmb-primary" onClick={()=>
+        reviewStep<2?setReviewStep(reviewStep+1):onPreview()}>
+        {reviewStep<2?'Next: '+reviewSteps[reviewStep+1]+' ›':'Continue to Contract Review ›'}
+       </button>
+      </footer>;
+      return footerTarget?createPortal(footer,footerTarget):footer;
+     })()}
   </div>;
 }
