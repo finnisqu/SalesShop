@@ -6,6 +6,8 @@ import {useQuoteStore} from '../store/quoteStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
+import {scopedStorageKey} from '../lib/developerPlayground';
+import {requestTaskModal} from './TaskModalHost';
 import {buildSalesCalendarEvents,personalCalendarSources,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
 import './sales-calendar.css';
@@ -17,6 +19,11 @@ const labels:Record<SalesCalendarKind,string>={
 const dateLabel=(key:string)=>new Date(key+'T12:00:00').toLocaleDateString(undefined,{
  weekday:'long',month:'long',day:'numeric'});
 const plainName=(date:Date)=>date.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+type CalendarDisplay='week'|'month';
+const readDisplay=(key:string,phone:boolean):CalendarDisplay=>{
+ try{const stored=localStorage.getItem(key);if(stored==='week'||stored==='month')return stored;}catch{/* best effort */}
+ return phone?'week':'month';
+};
 export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=false}:{compact?:boolean;label?:string;embedded?:boolean}){
  const button=useRef<HTMLButtonElement>(null);
  const [open,setOpen]=useState(false);
@@ -24,8 +31,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [month,setMonth]=useState(()=>new Date(new Date().getFullYear(),new Date().getMonth(),1,12));
  const [selected,setSelected]=useState(()=>localDateKey(new Date()));
  const [isPhone,setIsPhone]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches);
- const [monthExpanded,setMonthExpanded]=useState(false);
  const [showAllDay,setShowAllDay]=useState(false);
+ const [addOpen,setAddOpen]=useState(false);
  useEffect(()=>{
   if(!embedded)return;
   const media=window.matchMedia('(max-width:760px)');
@@ -42,6 +49,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const quotes=useQuoteStore(s=>s.quotes);
  const nav=useNavigationStore();
  const personal=taskScope(mode,org,userId);
+ const prefKey=scopedStorageKey('salesshop-calendar-display-v1:')+(personal??'pending');
+ const [savedDisplay,setSavedDisplay]=useState<{key:string;display:CalendarDisplay}>(
+  ()=>({key:prefKey,display:readDisplay(prefKey,isPhone)}));
+ const display=savedDisplay.key===prefKey?savedDisplay.display:readDisplay(prefKey,isPhone);
+ const chooseDisplay=(next:CalendarDisplay)=>{
+  setSavedDisplay({key:prefKey,display:next});
+  try{localStorage.setItem(prefKey,next);}catch{/* optional preference */}
+ };
  const ownTasks=!preview&&!!personal&&storedScope===personal?tasks.filter(t=>!t.deletedAt):[];
  const ownQuotes=useMemo(()=>quotes.filter(q=>!q.archivedAt&&(mode!=='cloud'||q.ownerUserId===userId)),
   [quotes,mode,userId]);
@@ -52,11 +67,19 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const days=useMemo(()=>calendarMonthDays(month.getFullYear(),month.getMonth()),[month]);
  const compactDays=useMemo(()=>calendarCompactMonthDays(month.getFullYear(),month.getMonth()),[month]);
  const weekDays=useMemo(()=>calendarWeekDays(selected),[selected]);
- const weekMode=embedded&&isPhone&&!monthExpanded;
+ const weekMode=embedded&&display==='week';
  const visibleDays=weekMode?weekDays:embedded?compactDays:days;
  const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected),[events,selected]);
  const shownDayEvents=embedded&&isPhone&&!showAllDay?eventsForDay.slice(0,5):eventsForDay;
- useEffect(()=>{setShowAllDay(false);},[selected]);
+ useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
+ useEffect(()=>{
+  if(!addOpen)return;
+  const dismiss=(event:PointerEvent)=>{
+   if(!(event.target as HTMLElement).closest('.sales-calendar-add-wrap'))setAddOpen(false);
+  };
+  document.addEventListener('pointerdown',dismiss);
+  return()=>document.removeEventListener('pointerdown',dismiss);
+ },[addOpen]);
  const placement=()=>{
   if(!button.current)return;
   const rect=button.current.getBoundingClientRect();
@@ -93,11 +116,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const openRecord=(event:SalesCalendarEvent)=>{
   setOpen(false);
   const {recordType,recordId}=event;
-  if(recordType==='task'){
-   try{window.sessionStorage.setItem('salesshop-open-task-id-v1',recordId);}catch{/* best effort */}
-   nav.setView('tasks');
-   window.dispatchEvent(new Event('salesshop:open-calendar-task'));
-  }
+  if(recordType==='task')requestTaskModal({mode:'preview',id:recordId});
   else if(recordType==='activity'){
    try{window.sessionStorage.setItem('salesshop-open-activity-history-v1','1');}catch{/* best effort */}
    nav.setView('dashboard');
@@ -114,17 +133,32 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     role={embedded?undefined:'dialog'} aria-modal={embedded?undefined:false} aria-label="SalesShop calendar"
     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
     <header className="sales-calendar-heading">
-     <div>{!embedded&&<small>WORK CALENDAR</small>}<strong>{plainName(month)}</strong></div>
-     <div>
-      <button type="button" aria-label={weekMode?'Previous week':'Previous month'} onClick={()=>changePeriod(-1)}>‹</button>
-      <button type="button" aria-label="Jump to today" onClick={()=>{
-       const now=new Date();setMonth(new Date(now.getFullYear(),now.getMonth(),1,12));
-       setSelected(localDateKey(now));
-      }}>Today</button>
-      <button type="button" aria-label={weekMode?'Next week':'Next month'} onClick={()=>changePeriod(1)}>›</button>
-      {embedded&&isPhone&&<button type="button" className="sales-calendar-expand" aria-expanded={monthExpanded}
-       aria-label={monthExpanded?'Collapse to week':'Expand to full month'}
-       onClick={()=>setMonthExpanded(value=>!value)}>{monthExpanded?'Week':'Month'}</button>}
+     <div className="sales-calendar-period">
+      <button type="button" aria-label={weekMode?'Previous week':'Previous month'}
+       onClick={()=>changePeriod(-1)}>‹</button>
+      <strong>{plainName(month)}</strong>
+      <button type="button" aria-label={weekMode?'Next week':'Next month'}
+       onClick={()=>changePeriod(1)}>›</button>
+     </div>
+     <div className="sales-calendar-tools">
+      <button type="button" className="sales-calendar-today" title="Jump to today"
+       aria-label="Jump to today" onClick={()=>{
+        const now=new Date();setMonth(new Date(now.getFullYear(),now.getMonth(),1,12));
+        setSelected(localDateKey(now));
+       }}>
+       <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+        strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="5" width="18" height="16" rx="2"/>
+        <path d="M7 3v4M17 3v4M3 10h18M12 14v4M10 16h4"/>
+       </svg>
+      </button>
+      {embedded&&<div className="sales-calendar-display-toggle" role="group" aria-label="Calendar display">
+       <button type="button" aria-pressed={display==='week'}
+        onClick={()=>chooseDisplay('week')}>7 days</button>
+       <button type="button" aria-pressed={display==='month'}
+        onClick={()=>chooseDisplay('month')}>Month</button>
+      </div>}
       {!embedded&&<button type="button" aria-label="Close calendar" onClick={()=>setOpen(false)}>×</button>}
      </div>
     </header>
@@ -145,11 +179,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         aria-label={dateLabel(key)+(counts.total?', '+[
          counts.task&&counts.task+' tasks',counts.bid&&counts.bid+' bids',
          counts.activity&&counts.activity+' activities',counts.followUp&&counts.followUp+' follow-ups'
-        ].filter(Boolean).join(', '):'')}
+        ].filter(Boolean).join(', '):'')+(counts.urgent?', urgent task':'')}
         onClick={()=>{setSelected(key);if(!inMonth){
          const date=new Date(key+'T12:00:00');setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
         }}}>
         <span>{Number(key.slice(-2))}</span>
+        {counts.urgent>0&&<span className="sales-calendar-urgent"
+          aria-hidden="true" title={counts.urgent+' urgent task(s)'}>!</span>}
         <span className="sales-calendar-dots" aria-hidden="true">
          {(['task','bid','activity','follow-up'] as const).filter(kind=>kindCounts[kind]>0)
           .map(kind=><i key={kind} className={'is-'+kind} title={kindCounts[kind]+' '+labels[kind]}>
@@ -161,8 +197,26 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     <section className="sales-calendar-day-preview" aria-label={'Items for '+dateLabel(selected)}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
       <div><span>{eventsForDay.length} {eventsForDay.length===1?'item':'items'}</span>
+       {embedded&&<div className="sales-calendar-add-wrap">
+        <button type="button" className="sales-calendar-add" aria-haspopup="menu"
+         aria-expanded={addOpen} aria-label={'Add to '+dateLabel(selected)}
+         title={'Add to '+dateLabel(selected)} onClick={()=>setAddOpen(value=>!value)}>+</button>
+        {addOpen&&<div className="sales-calendar-add-menu" role="menu">
+         <button type="button" role="menuitem" onClick={()=>{
+          setAddOpen(false);requestTaskModal({mode:'create',dueDate:selected});
+         }}>✓ New task</button>
+         <button type="button" role="menuitem" onClick={()=>{
+          setAddOpen(false);requestTaskModal({mode:'create',dueDate:selected,type:'follow-up'});
+         }}>↪ Follow-up task</button>
+         {selected<=today&&<button type="button" role="menuitem" onClick={()=>{
+          setAddOpen(false);
+          window.dispatchEvent(new CustomEvent('salesshop:open-activity',
+           {detail:{date:selected}}));
+         }}>☎ Log completed activity</button>}
+        </div>}
+       </div>}
        {embedded&&<button type="button" className="sales-calendar-all-tasks"
-        onClick={()=>nav.setView('tasks')}>Tasks ›</button>}
+        onClick={()=>nav.setView('tasks')}>All tasks ›</button>}
       </div></div>
      {eventsForDay.length?<div className="sales-calendar-agenda">
        {shownDayEvents.map(event=><button type="button" key={event.id}
