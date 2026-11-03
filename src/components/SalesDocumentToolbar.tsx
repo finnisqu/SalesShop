@@ -19,11 +19,18 @@ export function SalesDocumentSaveStatus({quote,cloudMode,compact=false}:{quote:Q
       :status==='error'?'Cloud save failed · Draft kept on device'
       :'Saved on device · Cloud status unknown'
     :'Saved on device';
+  const compactLabel=cloudMode
+    ?status==='saved'?'Cloud'
+      :status==='pending'?'Pending'
+      :status==='syncing'?'Saving…'
+      :status==='error'?'Save failed'
+      :'Offline'
+    :'Device';
   return <span className={'sales-document-save-status'+(cloudMode?' is-cloud-'+status:'')} role="status"
-    title={cloudMode?(error??'Draft is stored locally and cloud sync is handled separately.'):
-      'Document changes are automatically saved on this device.'}>
+    aria-label={compact?label:undefined}
+    title={cloudMode?(error??label):'Document changes are automatically saved on this device.'}>
     <span aria-hidden="true">{cloudMode&&status==='error'?'!':cloudMode&&status!=='saved'?'◷':'✓'}</span>
-    {label}{changed&&!compact?' · '+changed:''}
+    {compact?compactLabel:label}{changed&&!compact?' · '+changed:''}
     {cloudMode&&status==='error'&&<button type="button" aria-label="Retry saving quote to cloud"
       title="Retry cloud save" onClick={()=>useQuoteStore.getState().selectQuote(quote.id)}>Retry</button>}
   </span>;
