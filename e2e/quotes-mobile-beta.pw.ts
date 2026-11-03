@@ -283,6 +283,36 @@ test('Takeoffs More sheet occupies the usable Safari viewport and keeps Done vis
   expect(geometry.bottom).toBeLessThanOrEqual(geometry.visibleBottom+2);
   expect(geometry.footerBottom).toBeLessThanOrEqual(geometry.visibleBottom+2);
   expect(geometry.scrollable).toBe(true);
+  const handle=sheet.getByRole('button',{name:'Resize details sheet'});
+  await expect(handle).toBeVisible();
+  // Keyboard resize is available for accessibility.
+  await handle.press('ArrowDown');
+  await expect.poll(async()=>sheet.evaluate(el=>el.getBoundingClientRect().top))
+    .toBeGreaterThan(geometry.top+100);
+  await handle.press('ArrowUp');
+  await expect.poll(async()=>sheet.evaluate(el=>el.getBoundingClientRect().top))
+    .toBeLessThan(geometry.top+30);
+  // Pointer dragging follows the hand and snaps to the compact detent.
+  const start=await handle.boundingBox();
+  expect(start).not.toBeNull();
+  if(start){
+    await page.mouse.move(start.x+start.width/2,start.y+start.height/2);
+    await page.mouse.down();
+    await page.mouse.move(start.x+start.width/2,start.y+start.height/2+240,{steps:12});
+    await page.mouse.up();
+    await expect.poll(async()=>sheet.evaluate(el=>el.getBoundingClientRect().top))
+      .toBeGreaterThan(geometry.top+100);
+  }
+  // Drag the visible grip upward to restore the full-height sheet.
+  const compact=await handle.boundingBox();
+  if(compact){
+    await page.mouse.move(compact.x+compact.width/2,compact.y+compact.height/2);
+    await page.mouse.down();
+    await page.mouse.move(compact.x+compact.width/2,compact.y+compact.height/2-280,{steps:12});
+    await page.mouse.up();
+    await expect.poll(async()=>sheet.evaluate(el=>el.getBoundingClientRect().top))
+      .toBeLessThan(geometry.top+30);
+  }
   await sheet.getByRole('button',{name:'Done'}).click();
   await expect(sheet).toHaveCount(0);
 });
