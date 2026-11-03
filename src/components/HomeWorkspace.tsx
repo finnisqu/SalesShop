@@ -37,7 +37,7 @@ export function HomeWorkspace(){
   [quotes,userId,mode,rolePreview]);
  const attention=useMemo(()=>homeQuoteAttention(mine,activities),[mine,activities]);
  const recent=useMemo(()=>homeRecentQuotes(mine),[mine]);
- const myTasks=!rolePreview&&storedScope===myTaskScope?storedTasks:[];
+ const myTasks=!rolePreview&&!!myTaskScope&&storedScope===myTaskScope?storedTasks:[];
  const agenda=useMemo(()=>buildHomeAgenda(myTasks,attention),[myTasks,attention]);
  const canCreate=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'quotes')));
  const previewTask=(id:string)=>{
