@@ -1,10 +1,33 @@
-import type {Quote} from '../types/quote';
+import type {Quote,QuoteSplashEdge,QuoteTakeoffPiece} from '../types/quote';
 import {patchQuoteTakeoff,patchQuoteTakeoffSinks,ensureSmartTakeoffLine,
   setQuoteTakeoffSinkCharge} from './quoteTakeoffsLite';
 
 export type QuoteScopeRowKind='piece'|'splash'|'sink'|'line';
-export interface QuoteScopeRowRef {kind:QuoteScopeRowKind;id:string;sectionId?:string;}
+export interface QuoteScopeRowRef {
+  kind:QuoteScopeRowKind;id:string;sectionId?:string;
+  /** Optional edge key for independently editable mobile splash subrows. */
+  edge?:QuoteSplashEdge;
+}
 export type QuoteScopeBulkOperation='exclude'|'restore'|'move'|'delete';
+
+const splashField:Record<QuoteSplashEdge,'backsplash'|'leftSplash'|'rightSplash'>={
+  back:'backsplash',left:'leftSplash',right:'rightSplash'
+};
+const splashEdges=['back','left','right'] as const;
+
+/** Convert a legacy all-splashes exclusion to per-edge state when restoring a
+ * single edge; otherwise restoring just one would implicitly restore all. */
+function patchIndividualSplash(piece:QuoteTakeoffPiece,edge:QuoteSplashEdge,
+ operation:'exclude'|'restore'):QuoteTakeoffPiece {
+  const exclusions={...piece.excludedSplashEdges};
+  if(piece.excludeSplashFromQuote){
+    for(const item of splashEdges){
+      if(piece[splashField[item]])exclusions[item]=true;
+    }
+  }
+  exclusions[edge]=operation==='exclude';
+  return {...piece,excludeSplashFromQuote:false,excludedSplashEdges:exclusions};
+}
 
 /** Apply one grouped change so Undo restores the complete prior quote.
  * Moving a sink or piece preserves the original takeoff rather than making
@@ -17,7 +40,7 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
   let next=quote;
   const seen=new Set<string>();
   for(const row of rows){
-    const key=row.kind+':'+(row.sectionId??'general')+':'+row.id;
+    const key=row.kind+':'+(row.sectionId??'general')+':'+row.id+':'+(row.edge??'');
     if(seen.has(key))continue;
     seen.add(key);
     if(row.kind==='line'){
@@ -85,7 +108,11 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
       if(row.kind==='splash'){
         next=patchQuoteTakeoff(next,sectionId,
          (source.scope?.takeoffPieces??[]).map(item=>item.id===row.id
-          ?{...item,backsplash:false,leftSplash:false,rightSplash:false,excludeSplashFromQuote:false}:item));
+          ?row.edge
+            ?{...item,[splashField[row.edge]]:false,
+              excludedSplashEdges:{...item.excludedSplashEdges,[row.edge]:false}}
+            :{...item,backsplash:false,leftSplash:false,rightSplash:false,
+              excludeSplashFromQuote:false,excludedSplashEdges:{}}:item));
       }else{
         next=patchQuoteTakeoff(next,sectionId,
          (source.scope?.takeoffPieces??[]).filter(item=>item.id!==row.id));
@@ -103,8 +130,10 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
       next=patchQuoteTakeoff(next,targetSectionId,[...(dest?.scope?.takeoffPieces??[]),piece]);
       next=ensureSmartTakeoffLine(next,targetSectionId);
     }else{
-      const changed=row.kind==='splash'?{...piece,excludeSplashFromQuote:operation==='exclude'}:
-        {...piece,excludedFromQuote:operation==='exclude'};
+      const changed=row.kind==='splash'
+        ?row.edge?patchIndividualSplash(piece,row.edge,operation)
+          :{...piece,excludeSplashFromQuote:operation==='exclude',excludedSplashEdges:{}}
+        :{...piece,excludedFromQuote:operation==='exclude'};
       next=patchQuoteTakeoff(next,sectionId,
         (source.scope?.takeoffPieces??[]).map(item=>item.id===piece.id?changed:item));
       next={...next,sections:next.sections.map(item=>item.id===sectionId?
