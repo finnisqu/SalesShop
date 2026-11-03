@@ -7,7 +7,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 
 export interface CalendarTaskRequest {
- mode:'create'|'preview';id?:string;dueDate?:string;
+ mode:'create'|'preview'|'edit';id?:string;dueDate?:string;
  type?:TaskType;title?:string;associations?:TaskAssociation[];
 }
 export function requestTaskModal(detail:CalendarTaskRequest){
@@ -30,7 +30,7 @@ export function TaskModalHost(){
  useEffect(()=>{
   const receive=(event:Event)=>{
    const detail=(event as CustomEvent<CalendarTaskRequest>).detail;
-   if((detail.mode==='preview'&&!detail.id)||!detail.mode)return;
+   if((detail.mode==='preview'||detail.mode==='edit')&&!detail.id)return;
    setRequest(detail);
   };
   window.addEventListener('salesshop:task-modal',receive);
@@ -91,7 +91,7 @@ export function TaskModalHost(){
        close();
       }}>{task.status==='completed'?'Reopen':'Mark complete'}</button>
       <button type="button" className="tasks-primary"
-       onClick={()=>setRequest({mode:'edit' as 'create',id:task.id})}>Edit task</button>
+       onClick={()=>setRequest({mode:'edit',id:task.id})}>Edit task</button>
      </footer>
     </section>
    </div>:null;
