@@ -548,7 +548,9 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
         area.scope?.takeoffMaterial||'Choose stone',!area.scope?.takeoffMaterial,
         !area.scope?.takeoffMaterial&&data.billedSf>0)}
       {cell(area.id,'sf','Square feet for '+area.title,
-        sf.format(data.billedSf)+(data.measuredSf!==data.billedSf?' / '+sf.format(data.measuredSf):'')+' SF',
+        <><span className="qqs-sf-desktop">{sf.format(data.billedSf)+
+         (data.measuredSf!==data.billedSf?' / '+sf.format(data.measuredSf):'')+' SF'}</span>
+         <span className="qqs-sf-mobile">{sf.format(data.billedSf)}</span></>,
         false,false,!data.hasMeasuredPieces?{
          value:area.scope?.countertopSf??data.measuredSf,
          disabled:!editable,onCommit:v=>writeManualSf(quote,area,v),
