@@ -13,6 +13,7 @@ import {newTakeoffPiece,newTakeoffSink,takeoffPieceSf,takeoffPieceSplashSf,
 import {quickAreaSummary} from '../services/quoteQuickAreaSummary';
 import {TakeoffSinkCatalog} from './TakeoffCatalogPickers';
 import type {QuoteScopeRowRef,QuoteScopeBulkOperation} from '../services/quoteScopeRowBatch';
+import {QuoteBulkActionPopover} from './QuoteBulkActionPopover';
 import './quote-compact-takeoffs.css';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -423,8 +424,9 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
  },[focusArea]);
  const [selected,setSelected]=useState<QuoteScopeRowRef[]>([]);
  const [target,setTarget]=useState('');
+ const [moveOpen,setMoveOpen]=useState(false);
  const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
- useEffect(()=>{setSelected([]);setDetail(null);},[quote.id]);
+ useEffect(()=>{setSelected([]);setDetail(null);setMoveOpen(false);},[quote.id]);
  const selectedKeys=new Set(selected.map(key));
  const canDuplicateSelection=selected.every(ref=>ref.kind!=='line'||(()=>{
   const line=quote.lines.find(item=>item.id===ref.id);
@@ -545,28 +547,33 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
       index===5?<span aria-hidden="true">⋯</span>:null)}</div>)}
   </div>;
  return <section className="qqt-workspace" aria-label="Takeoffs spreadsheet">
-  <header className={'qqt-heading'+(selected.length?' is-selecting':'')}>
-    {selected.length?<div className="qqt-bulk" role="toolbar" aria-label="Bulk edit takeoff lines">
-     <strong>{selected.length} selected</strong>
-     <button type="button" disabled={!editable||!canDuplicateSelection}
-      title={canDuplicateSelection?'Duplicate selected rows (Undo available)':
-       'Managed prices cannot be duplicated as independent charges'}
-      onClick={()=>duplicateRows(selected)}>⧉ Duplicate</button>
-     <button type="button" disabled={!editable} onClick={()=>apply('exclude')}>Strike out</button>
-     <button type="button" disabled={!editable} onClick={()=>apply('restore')}>Restore</button>
+  <header className="qqt-heading">
+   <div className="qqt-heading-instructions"><h3>Takeoffs</h3>
+    <span className="qqt-desktop-hint">Click, type or paste to edit · Tab/Enter to move · pencil for more</span>
+    <span className="qqt-mobile-hint">Tap a cell to edit · ⋯ for options</span></div>
+   <button className="qqt-desktop-advanced" type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
+  </header>
+  <QuoteBulkActionPopover count={selected.length}
+   onClear={()=>{setSelected([]);setTarget('');setMoveOpen(false);}}
+   actions={[
+    {id:'duplicate',label:'Duplicate selected takeoff rows',icon:'copy',
+     disabled:!editable||!canDuplicateSelection,onClick:()=>duplicateRows(selected)},
+    {id:'exclude',label:'Strike out selected rows',icon:'strike',disabled:!editable,onClick:()=>apply('exclude')},
+    {id:'restore',label:'Restore selected rows',icon:'restore',disabled:!editable,onClick:()=>apply('restore')},
+    {id:'move',label:'Move selected rows to another Area',icon:'move',
+     disabled:!editable,active:moveOpen,onClick:()=>setMoveOpen(v=>!v)},
+    {id:'delete',label:'Delete selected takeoff rows',icon:'delete',danger:true,
+     disabled:!editable,onClick:()=>apply('delete')},
+   ]}>
+    {moveOpen&&<div className="qba-edit-flyout" role="group" aria-label="Move selected rows">
      <select aria-label="Move selected rows to Area" value={target} onChange={e=>setTarget(e.target.value)}>
-      <option value="">Move to…</option>{areas.map(a=><option key={a.id} value={a.id}>{a.title}</option>)}
-      <option value="general">General (charges only)</option>
+      <option value="">Destination…</option>
+      {areas.map(area=><option value={area.id} key={area.id}>{area.title}</option>)}
+      <option value="general">General · charges only</option>
      </select>
-     <button type="button" disabled={!editable||!target} onClick={()=>apply('move')}>Move</button>
-     <button type="button" className="qqt-delete-selected" disabled={!editable}
-      onClick={()=>apply('delete')}>Delete</button>
-     <button type="button" onClick={()=>{setSelected([]);setTarget('');}}>Clear ×</button>
-    </div>:<div className="qqt-heading-instructions"><h3>Takeoffs</h3>
-     <span className="qqt-desktop-hint">Click, type or paste to edit · Tab/Enter to move · pencil for more</span>
-     <span className="qqt-mobile-hint">Tap a cell to edit · ⋯ for options</span></div>}
-    <button className="qqt-desktop-advanced" type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
-   </header>
+     <button type="button" disabled={!target} onClick={()=>{apply('move');setMoveOpen(false);}}>Move</button>
+    </div>}
+  </QuoteBulkActionPopover>
   <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}
    onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}>
    <div className="qqt-header qqt-grid">
