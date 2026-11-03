@@ -390,3 +390,260 @@
   width:31px;min-width:31px}
  .sales-app .qmb .qqs-summary-head .qqs-inline-actions>button{font-size:10px}
 }
+
+/* Mobile compact worksheet refinement: use contiguous table rows, not cards.
+   The same editable cells and selection/undo logic remain in place. */
+@media(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ .sales-app .qmb .qqs-summary .qqs-summary-head{
+  padding:8px 10px;gap:7px}
+ .sales-app .qmb .qqs-summary .qqs-scroll{
+  padding:0!important;max-height:none!important}
+ .sales-app .qmb .qqs-grid.qqs-row{
+  grid-template-columns:32px repeat(4,minmax(0,1fr))!important;
+  margin:0!important;border-left:0;border-right:0;border-top:0;
+  border-radius:0!important;box-shadow:none}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell{
+  min-height:0!important;max-height:none!important;
+  padding:4px 7px!important;font-size:11px}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell.qqs-pin-check{
+  grid-column:1!important;grid-row:1!important;min-height:42px!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell.qqs-pin-area{
+  grid-column:2/5!important;grid-row:1!important;
+  min-height:42px!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(8){
+  grid-column:5!important;grid-row:1!important;
+  min-height:42px!important;align-items:flex-end;justify-content:center;
+  padding:3px 6px!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(8)::before{
+  font-size:9px}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(3){
+  grid-column:1/-1!important;grid-row:2!important;
+  min-height:32px!important;flex-direction:row;align-items:center;
+  justify-content:flex-start;gap:7px}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(3)::before{
+  content:"Stone";white-space:nowrap;flex:0 0 auto}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(4){
+  grid-column:1/3!important;grid-row:3!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(5){
+  grid-column:3!important;grid-row:3!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(6){
+  grid-column:4!important;grid-row:3!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(7){
+  grid-column:5!important;grid-row:3!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(n+4):nth-child(-n+7){
+  min-height:43px!important;padding:4px 5px!important;
+  border-bottom:0!important;border-right:1px solid var(--qmb-border)!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(7){
+  border-right:0!important}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(4)::before{content:"SF"}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(5)::before{content:"Stone"}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(6)::before{content:"Sinks"}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(7)::before{content:"Other"}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(n+4):nth-child(-n+7)::before{
+  font-size:9px}
+ .sales-app .qmb .qqs-grid.qqs-row .qqs-value{
+  min-height:24px;font-size:11px;line-height:1.2}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(8) .qqs-value{
+  font-size:12px}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(4) .qqs-value,
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(5) .qqs-value,
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(6) .qqs-value,
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell:nth-child(7) .qqs-value{
+  font-size:11px}
+ .sales-app .qmb .qqs-grid.qqs-row .qqs-pencil{
+  width:24px;min-width:24px;height:28px;flex:0 0 24px}
+ .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell.qqs-pin-area{
+  grid-column:1/5!important;grid-row:1!important}
+ .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell:nth-child(3){
+  grid-column:1/-1!important;grid-row:2!important;
+  font-size:10px}
+ .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell:nth-child(3)::before{content:none}
+ .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell:nth-child(7){
+  grid-column:1/-1!important;grid-row:3!important;
+  min-height:39px!important;padding:4px 8px!important}
+ .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell:nth-child(7)::before{
+  content:"General charges"}
+ .sales-app .qmb .qqs-summary-total{padding:7px 10px}
+ .sales-app .qmb .qqs-summary-total strong{font-size:15px}
+
+ .sales-app .qmb .qqt-heading{padding:8px 10px;gap:5px}
+ .sales-app .qmb .qqt-heading>div:first-child{display:flex;gap:7px;align-items:baseline}
+ .sales-app .qmb .qqt-heading>button{width:auto;justify-self:end}
+ .sales-app .qmb .qqt-workspace .qqt-scroll{
+  padding:0!important;max-height:none!important}
+ .sales-app .qmb .qqt-workspace .qqt-group{
+  margin:0!important;border-radius:0;border-left:0;border-right:0;
+  padding:7px 9px;gap:4px}
+ .sales-app .qmb .qqt-workspace .qqt-group>div{
+  margin:0;gap:4px}
+ .sales-app .qmb .qqt-workspace .qqt-group>div>button{
+  min-height:31px;padding:3px;font-size:10px}
+ .sales-app .qmb .qqt-grid.qqt-row{
+  grid-template-columns:32px repeat(4,minmax(0,1fr))!important;
+  margin:0!important;border-left:0;border-right:0;border-top:0;
+  border-radius:0!important;box-shadow:none}
+ .sales-app .qmb .qqt-row>.qqt-cell{
+  min-height:0!important;height:auto!important;padding:3px 6px!important;
+  font-size:11px;gap:2px;border-bottom:1px solid var(--qmb-border)}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(1){
+  grid-column:1!important;grid-row:1!important;min-height:40px!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(3){
+  grid-column:2/4!important;grid-row:1!important;
+  min-height:40px!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(9){
+  grid-column:4/6!important;grid-row:1!important;
+  min-height:40px!important;align-items:center;
+  background:var(--qmb-tint)!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(4){
+  grid-column:1/3!important;grid-row:2!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(5){
+  grid-column:3!important;grid-row:2!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(6){
+  grid-column:4/6!important;grid-row:2!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(7){
+  grid-column:1/3!important;grid-row:3!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(8){
+  grid-column:3!important;grid-row:3!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(10){
+  grid-column:4/6!important;grid-row:3!important;
+  min-height:40px!important;padding:2px 4px!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(n+4):nth-child(-n+8){
+  min-height:40px!important}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(4)::before{content:"Qty"}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(5)::before{content:"Length"}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(6)::before{content:"Width"}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(7)::before{content:"SF"}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(8)::before{content:"Price"}
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(3) .qqt-cell-value{
+  min-height:27px;font-size:11px;font-weight:780}
+ .sales-app .qmb .qqt-row>.qqt-cell .qqt-contract{
+  min-height:31px;padding:3px 4px;font-size:10px}
+ .sales-app .qmb .qqt-row>.qqt-cell .qqt-actions button{
+  min-width:30px;min-height:34px;font-size:15px}
+ .sales-app .qmb .qqt-row>.qqt-cell .qqt-cell-value,
+ .sales-app .qmb .qqt-row>.qqt-cell .qqt-readonly{
+  min-height:23px;font-size:11px}
+ .sales-app .qmb .qqt-workspace .qqt-empty{
+  border:0;border-bottom:1px solid var(--qmb-border);border-radius:0;margin:0;
+  text-align:left;padding:9px}
+ .sales-app .qmb .qqt-total{padding:7px 10px}
+
+ /* Pricing review now uses the same fixed bottom navigation as the other stages.
+    The scrolling pane no longer owns the footer. */
+ .sales-app .qmb .qmb-pricing-footer-slot{
+  flex:0 0 auto;position:relative;z-index:15;min-width:0;
+  border-top:1px solid var(--qmb-border);background:var(--qmb-card)}
+ .sales-app .qmb .qmb-pricing-footer-slot .qqr-footer{
+  display:grid;grid-template-columns:minmax(94px,.7fr) minmax(0,1.3fr);
+  gap:8px;min-height:64px;padding:9px 10px calc(9px + env(safe-area-inset-bottom))}
+ .sales-app .qmb .qmb-pricing-footer-slot .qqr-footer button{
+  width:100%;min-width:0;min-height:45px;white-space:normal;
+  padding:7px 9px;line-height:1.23;font-size:11px}
+ .sales-app .qmb .qqr-workspace{min-height:0;overflow:visible}
+ .sales-app .qmb .qqr-workspace .qqr-body{
+  padding:10px!important}
+ .sales-app .qmb .qqr-workspace .qqr-steps{
+  padding:5px;gap:4px}
+ .sales-app .qmb .qqr-workspace .qqr-steps button{
+  min-height:48px;padding:4px}
+ .sales-app .qmb .qqr-workspace .qqr-steps button strong{font-size:10px}
+ .sales-app .qmb .qqr-stage{gap:9px}
+ .sales-app .qmb .qqr-stage h3{font-size:15px}
+ .sales-app .qmb .qqr-stage>p{display:none}
+ .sales-app .qmb .qqr-mobile-totals{
+  display:block;min-width:0;max-width:100%;overflow:hidden;
+  border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card)}
+ .sales-app .qmb .qqr-mobile-price-table{
+  width:100%;min-width:0;border-collapse:collapse;table-layout:fixed;
+  font-size:11px;color:var(--qmb-ink)}
+ .sales-app .qmb .qqr-mobile-price-table th,
+ .sales-app .qmb .qqr-mobile-price-table td{
+  border-bottom:1px solid var(--qmb-border);padding:7px 6px;
+  vertical-align:middle;overflow-wrap:anywhere}
+ .sales-app .qmb .qqr-mobile-price-table thead th{
+  font-size:10px;color:var(--qmb-muted);background:var(--qmb-tint);
+  text-align:right;font-weight:780}
+ .sales-app .qmb .qqr-mobile-price-table thead th:first-child{text-align:left}
+ .sales-app .qmb .qqr-mobile-price-table thead th:nth-child(1){width:34%}
+ .sales-app .qmb .qqr-mobile-price-table thead th:nth-child(2){width:12%}
+ .sales-app .qmb .qqr-mobile-price-table thead th:nth-child(3){width:24%}
+ .sales-app .qmb .qqr-mobile-price-table thead th:nth-child(4){width:30%}
+ .sales-app .qmb .qqr-mobile-price-table tbody th{
+  text-align:left;font-size:11px;font-weight:760}
+ .sales-app .qmb .qqr-mobile-price-table tbody td{
+  text-align:right;font-variant-numeric:tabular-nums}
+ .sales-app .qmb .qqr-mobile-price-table small{
+  display:block;font-size:9px;line-height:1.25;color:var(--qmb-muted);
+  overflow-wrap:anywhere;font-weight:450;margin-top:3px}
+ .sales-app .qmb .qqr-mobile-price-table tbody td:last-child strong{
+  font-size:11px}
+ .sales-app .qmb .qqr-mobile-price-table .is-general{
+  background:var(--qmb-bg)}
+ .sales-app .qmb .qqr-mobile-price-table tbody tr:last-child>*{border-bottom:0}
+
+ /* All Quick Quote edit drawers become theme-safe iPhone-like bottom sheets. */
+ .sales-app .qmb.qqs-overlay,
+ .sales-app .qmb.qqt-overlay{
+  width:100vw;height:100dvh;align-items:flex-end!important;
+  justify-content:center!important;padding:0;
+  background:rgba(12,23,28,.5);overflow:hidden}
+ .sales-app .qmb.qqs-overlay>.qqs-panel,
+ .sales-app .qmb.qqt-overlay>.qqt-panel{
+  position:relative!important;inset:auto!important;
+  top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+  width:100%!important;max-width:100%!important;
+  height:auto!important;min-height:0!important;
+  max-height:min(88dvh,calc(100dvh - env(safe-area-inset-top) - 12px))!important;
+  flex:0 1 auto!important;align-self:flex-end!important;
+  margin:0!important;padding:0!important;overflow:hidden;
+  border:1px solid var(--qmb-border)!important;border-bottom:0!important;
+  border-radius:18px 18px 0 0!important;
+  box-shadow:0 -12px 44px rgba(0,0,0,.23);
+  background:var(--qmb-card);color:var(--qmb-ink);
+  animation:quickQuoteSheetEnter .18s ease-out both}
+ .sales-app .qmb.qqs-overlay>.qqs-panel::before,
+ .sales-app .qmb.qqt-overlay>.qqt-panel::before,
+ .sales-app .qra-panel::before{
+  content:"";display:block;align-self:center;flex:0 0 35px;
+  width:35px;height:5px;max-height:5px;
+  border-radius:10px;background:var(--qmb-border);margin:9px auto 2px}
+ .sales-app .qmb .qqs-panel>header,
+ .sales-app .qmb .qqt-panel>header{
+  min-height:0;padding:7px 15px 10px;touch-action:pan-y}
+ .sales-app .qmb .qqs-panel-body,
+ .sales-app .qmb .qqt-panel-body{
+  flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;
+  padding:11px 15px 18px;-webkit-overflow-scrolling:touch}
+ .sales-app .qmb .qqs-panel>footer,
+ .sales-app .qmb .qqt-panel>footer{
+  flex:0 0 auto;padding:9px 15px calc(11px + env(safe-area-inset-bottom))}
+ .sales-app .qmb .qqs-panel-body input[type=text],
+ .sales-app .qmb .qqt-panel-body input[type=text],
+ .sales-app .qmb .qqs-panel-body select,
+ .sales-app .qmb .qqt-panel-body select{font-size:16px}
+ .sales-app .qmb .qqs-panel-body .qqs-item-card{padding:9px;gap:8px}
+ .sales-app .qmb .qqt-two,
+ .sales-app .qmb .qqs-two{gap:7px}
+ .sales-app .qra-panel{
+  animation:quickQuoteSheetEnter .18s ease-out both}
+ .sales-app .qra-panel::before{flex:0 0 5px}
+ .sales-app .qmb-area-manager-backdrop{
+  align-items:flex-end!important}
+ .sales-app .qmb-area-manager-backdrop>.qmb-area-preset-dialog{
+  width:100%;max-width:100%;
+  max-height:min(88dvh,calc(100dvh - env(safe-area-inset-top) - 12px));
+  border-radius:18px 18px 0 0;
+  padding:12px 15px calc(12px + env(safe-area-inset-bottom));
+  animation:quickQuoteSheetEnter .18s ease-out both}
+}
+@keyframes quickQuoteSheetEnter{
+ from{translate:0 20px;opacity:.85}
+ to{translate:0 0;opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+ .sales-app .qmb.qqs-overlay>.qqs-panel,
+ .sales-app .qmb.qqt-overlay>.qqt-panel,
+ .sales-app .qra-panel,
+ .sales-app .qmb-area-preset-dialog{
+  animation:none!important}
+}
