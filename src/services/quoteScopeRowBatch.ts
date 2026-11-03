@@ -104,13 +104,14 @@ export function applyQuoteScopeRowBatch(quote:Quote,rows:QuoteScopeRowRef[],
     }
     const piece=source.scope?.takeoffPieces?.find(item=>item.id===row.id);
     if(!piece)continue;
+    const edge=row.edge;
     if(operation==='delete'){
       if(row.kind==='splash'){
         next=patchQuoteTakeoff(next,sectionId,
          (source.scope?.takeoffPieces??[]).map(item=>item.id===row.id
-          ?row.edge
-            ?{...item,[splashField[row.edge]]:false,
-              excludedSplashEdges:{...item.excludedSplashEdges,[row.edge]:false}}
+          ?edge
+            ?{...item,[splashField[edge]]:false,
+              excludedSplashEdges:{...item.excludedSplashEdges,[edge]:false}}
             :{...item,backsplash:false,leftSplash:false,rightSplash:false,
               excludeSplashFromQuote:false,excludedSplashEdges:{}}:item));
       }else{
