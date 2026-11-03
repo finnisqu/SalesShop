@@ -163,6 +163,20 @@ export function TasksWorkspace(){
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
   const today=localDay();
+  useEffect(()=>{
+    const launch=()=>{
+      let pending=false;
+      try{
+       pending=window.sessionStorage.getItem('salesshop-create-task-v1')==='1';
+       if(pending)window.sessionStorage.removeItem('salesshop-create-task-v1');
+      }catch{/* optional browser storage */}
+      if(pending){setViewingId(null);setEditing({title:''});}
+    };
+    launch();
+    window.addEventListener('salesshop:create-task',launch);
+    return()=>window.removeEventListener('salesshop:create-task',launch);
+  },[]);
+
   useEffect(()=>load(scope),[scope,load]);
   const own=(!rolePreview&&scope&&storedScope===scope)?tasks.filter(t=>!t.deletedAt):[];
   const queues=Array.from(new Set(ownQueueNames(own))).sort();
