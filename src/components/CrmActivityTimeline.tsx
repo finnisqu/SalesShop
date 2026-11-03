@@ -16,7 +16,7 @@ export function CrmActivityTimeline({activities,emptyMessage='No activity record
 }){
  const [showAll,setShowAll]=useState(false);
  const unique=[...new Map(activities.filter(a=>!a.metadata?.voidedAt)
-  .map(a=>[a.id,a])).values()]
+  .map(a=>[a.id,a] as const)).values()]
   .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)||b.id.localeCompare(a.id));
  const visible=showAll?unique:unique.slice(0,initialLimit);
  return <>
