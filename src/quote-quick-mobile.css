@@ -452,6 +452,12 @@
   font-size:11px}
  .sales-app .qmb .qqs-grid.qqs-row .qqs-pencil{
   width:24px;min-width:24px;height:28px;flex:0 0 24px}
+ /* Keep money values readable; reveal detailed settings after cell focus. */
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell.qqs-focusable:nth-child(n+4) .qqs-pencil{
+  display:none}
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell.qqs-focusable.is-focused:nth-child(n+4) .qqs-pencil,
+ .sales-app .qmb .qqs-grid.qqs-row>.qqs-cell.qqs-focusable:nth-child(n+4):focus-within .qqs-pencil{
+  display:grid;flex:0 0 22px;width:22px;min-width:22px}
  .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell.qqs-pin-area{
   grid-column:1/5!important;grid-row:1!important}
  .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell:nth-child(3){
