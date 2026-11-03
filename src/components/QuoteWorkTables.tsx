@@ -544,7 +544,7 @@ export function CalculatorDrawer({quote,section,onClose,onAdvanced}:{
         <small>Blank means unknown, not $0. Costs stay private and do not automatically change customer selling prices.</small>
        </section></>}
     <details className="qwt-shared-drawer">
-      <summary>Shared slab buying · automatic when compatible</summary>
+      <summary>Shared slab buying · automatically combined when compatible</summary>
       <QuoteSharedSlabPools quote={quote}/>
     </details>
    </div>

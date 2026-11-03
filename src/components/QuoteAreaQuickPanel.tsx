@@ -10,6 +10,7 @@ import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing'
 import {QuoteBetaMeasureGrid} from './QuoteBetaMeasureGrid';
 import {QuoteBetaMaterials} from './QuoteBetaMaterials';
 import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
+import {QuoteSharedSlabPools} from './QuoteSharedSlabPools';
 import './quote-area-quick-panel.css';
 export type QuickAreaTab='overview'|'measure'|'material'|'pricing'|'calculator';
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -105,8 +106,11 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
          editable={editable} part="all" />}
        {initialTab==='pricing'&&<QuoteBetaDesktopPricing quote={quote}
          section={section} editable={editable} view="selling"/>}
-       {initialTab==='calculator'&&<QuoteBetaDesktopPricing quote={quote}
-         section={section} editable={editable} view="calculator"/>}
+       {initialTab==='calculator'&&<><QuoteBetaDesktopPricing quote={quote}
+         section={section} editable={editable} view="calculator"/>
+         <details className="qwt-shared-drawer"><summary>Shared slab buying · automatically combined when compatible</summary>
+          <QuoteSharedSlabPools quote={quote}/>
+         </details></>}
        {showFullNote&&<p role="status">The full Area workspace has detailed sink, add-on and fabrication options.</p>}
      </div>
      <footer className="qmb-quick-area-footer">
