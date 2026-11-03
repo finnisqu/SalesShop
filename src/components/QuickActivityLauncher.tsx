@@ -109,6 +109,10 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
    contactId:personId,projectId:dealId||quote?.projectId,quoteId,
    occurredAt:timestamp.toISOString(),
    metadata:{source:'manual',interactionMethod:method,notes:notes.trim().slice(0,5000)||undefined}});
+  if(!activityId){
+   setError('Could not safely save the interaction. Your entry is preserved; check available storage and try again.');
+   return;
+  }
   const draft:TaskPromotion={
    title:'Follow up'+(person?' with '+person:'')+
     (description?' — '+description.slice(0,75):''),
