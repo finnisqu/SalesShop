@@ -10,6 +10,8 @@ import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,localDateKe
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
 import './sales-calendar.css';
 import {requestActivityDetail} from './ActivityDetailHost';
+import {requestCalendarQuickAction} from './CalendarQuickActionHost';
+import {canEditTeamArea} from '../services/teamDepartments';
 
 const week=['S','M','T','W','T','F','S'];
 const allKinds:SalesCalendarKind[]=['task','bid','activity','follow-up'];
@@ -30,6 +32,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
  const today=localDateKey(new Date());
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id);
+ const role=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
+ const canEditBid=mode==='local'||canEditTeamArea(role,department,'crm');
  const preview=useRolePerspectiveStore(s=>s.activePerspective);
  const storedScope=usePersonalTaskStore(s=>s.scope),tasks=usePersonalTaskStore(s=>s.tasks);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
@@ -183,6 +187,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
        <span aria-hidden="true">›</span>
       </button>):<p className="sales-calendar-empty">No events in this month for the selected filters.</p>}
     </section>}
+    <div className="sales-calendar-quick-actions" aria-label="Create from selected calendar date">
+     {personal&&<button type="button" onClick={()=>{
+      setOpen(false);requestCalendarQuickAction('task',selected);
+     }}>＋ Task</button>}
+     {canEditBid&&<button type="button" onClick={()=>{
+      setOpen(false);requestCalendarQuickAction('bid',selected);
+     }}>＋ Bid deadline</button>}
+    </div>
     <div className="sales-calendar-legend">
      {(['task','bid','activity','follow-up'] as const).map(kind=><span key={kind}>
       <i className={'is-'+kind}/>{labels[kind]}</span>)}
