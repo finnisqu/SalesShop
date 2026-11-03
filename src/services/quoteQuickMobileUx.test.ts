@@ -133,13 +133,23 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(review).toContain('money.format(data.total)');
   expect(review).toContain('quickGeneralSummary(quote).total');
  });
- it('keeps duplicate and selected-row actions reachable without a vertical toolbar',()=>{
-  expect(mobile).toContain('.qqs-summary-head.is-selecting>.qqs-bulk');
-  expect(mobile).toContain('.qqt-heading.is-selecting .qqt-bulk');
-  expect(mobile).toContain('grid-template-columns:repeat(3,minmax(0,1fr))');
-  expect(areas).toContain('onClick={duplicateSelected}');
-  expect(takeoffs).toContain('onClick={()=>duplicateRows(selected)}');
-  expect(mobile).toContain('.qqt-row .qqt-actions button');
+ it('floats icon-only bulk actions sideways instead of adding a selected-row toolbar',()=>{
+  const popover=source('src/components/QuoteBulkActionPopover.tsx');
+  const actionCss=source('src/components/quote-table-actions.css');
+  const reorder=source('src/components/QuoteReorderWorkspace.tsx');
+  expect(areas).toContain('<QuoteBulkActionPopover');
+  expect(takeoffs).toContain('<QuoteBulkActionPopover');
+  expect(areas).toContain('onClick:duplicateSelected');
+  expect(takeoffs).toContain('onClick:()=>duplicateRows(selected)');
+  expect(areas).toContain('store.bulkDeleteAreas(quote.id,selected)');
+  expect(popover).toContain('role="toolbar"');
+  expect(popover).toContain('<ActionIcon name={action.icon}/>');
+  expect(actionCss).toContain('position:absolute;top:52px;left:39px;');
+  expect(matrix).toContain('Reorder rows');
+  expect(matrix).toContain('<QuoteReorderWorkspace');
+  expect(reorder).toContain('commitQuoteTableOrder(quote.id,draft)');
+  expect(reorder).toContain('onPointerMove={pointerMove}');
+  expect(reorder).toContain('No cells are editable.');
  });
  it('moves quote navigation and history into the shared mobile app bar',()=>{
   expect(quote).not.toContain('qmb-quote-library-back');

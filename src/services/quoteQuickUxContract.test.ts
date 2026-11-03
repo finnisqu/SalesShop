@@ -96,7 +96,8 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain("onClick={()=>bulkApply('delete')}");
  });
  it('offers fast individual and bulk duplication without adding worksheet rows',()=>{
-  expect(areas).toContain("onClick={duplicateSelected}");
+  expect(areas).toContain("onClick:duplicateSelected");
+  expect(areas).toContain("<QuoteBulkActionPopover");
   expect(areas).toContain("store.duplicateAreas(quote.id,selected)");
   expect(areas).toContain("store.duplicateArea(quote.id,area.id)");
   expect(areas).toContain("Duplicate this Area");
