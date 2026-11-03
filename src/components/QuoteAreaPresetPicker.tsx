@@ -75,5 +75,5 @@ export function QuoteAreaPresetPicker({onSelect,onBlank,onClose,savedLayouts,onS
      <footer><button type="button" onClick={onBlank}>Blank Area</button>
        <button type="button" onClick={onClose}>Cancel</button></footer>
    </section>
- </div>,document.body);
+ </div>,document.querySelector('.sales-app')??document.body);
 }
