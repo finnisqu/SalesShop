@@ -647,3 +647,42 @@
  .sales-app .qmb-area-preset-dialog{
   animation:none!important}
 }
+
+/* Advanced Area and private Calculator join the same mobile sheet convention. */
+@media(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ .sales-app .qmb.qwt-drawer-backdrop.qwt-drawer-backdrop,
+ .sales-app .qmb.qmb-quick-area-backdrop.qmb-quick-area-backdrop{
+  align-items:flex-end!important;justify-content:center!important;
+  height:100dvh;overflow:hidden;padding:0}
+ .sales-app .qmb.qwt-drawer-backdrop .qwt-drawer.qwt-drawer,
+ .sales-app .qmb.qmb-quick-area-backdrop .qmb-quick-area-panel.qmb-quick-area-panel{
+  position:relative!important;inset:auto!important;
+  width:100%!important;max-width:100%!important;
+  height:auto!important;min-height:0!important;
+  max-height:min(88dvh,calc(100dvh - env(safe-area-inset-top) - 12px))!important;
+  align-self:flex-end!important;flex:0 1 auto!important;
+  overflow:hidden;background:var(--qmb-card);color:var(--qmb-ink);
+  border:1px solid var(--qmb-border);border-bottom:0;
+  border-radius:18px 18px 0 0;box-shadow:0 -12px 44px rgba(0,0,0,.23);
+  animation:quickQuoteSheetEnter .18s ease-out both}
+ .sales-app .qmb .qwt-drawer.qwt-drawer::before,
+ .sales-app .qmb .qmb-quick-area-panel.qmb-quick-area-panel::before{
+  content:"";display:block;flex:0 0 5px;width:35px;height:5px;
+  border-radius:10px;background:var(--qmb-border);margin:9px auto 2px}
+ .sales-app .qmb .qwt-drawer>header,
+ .sales-app .qmb .qmb-quick-area-header{
+  flex:0 0 auto;padding:8px 14px 10px;touch-action:pan-y}
+ .sales-app .qmb .qwt-drawer-body,
+ .sales-app .qmb .qmb-quick-area-body{
+  min-height:0;flex:1 1 auto;overflow-y:auto;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+ .sales-app .qmb .qwt-drawer>footer,
+ .sales-app .qmb .qmb-quick-area-footer{
+  flex:0 0 auto;padding-bottom:calc(11px + env(safe-area-inset-bottom))}
+ .sales-app .qmb .qmb-quick-area-panel :is(input,select){font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){
+ .sales-app .qmb .qwt-drawer.qwt-drawer,
+ .sales-app .qmb .qmb-quick-area-panel.qmb-quick-area-panel{
+  animation:none!important}
+}
