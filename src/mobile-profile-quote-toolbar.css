@@ -46,6 +46,7 @@
     min-height:50px;
     min-width:0;
     align-items:center;
+    justify-content:flex-start;
     gap:6px;
     padding:5px 8px;
     position:relative;
