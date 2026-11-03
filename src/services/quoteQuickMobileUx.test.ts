@@ -51,6 +51,15 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(quote).toContain('sales-shop:quotes-beta-back');
   expect(mobileChrome).toContain('mobile-quote-back');
   expect(mobileChrome).toContain('mobile-quote-history-button');
+  expect(mobileChrome).toContain('id="mobile-quote-actions-slot"');
+  expect(mobileChrome).toContain('window.visualViewport');
+  expect(mobileChrome).toContain('--ss-mobile-visual-height');
+  expect(quote).toContain('mobileActionsHost&&createPortal(');
+  expect(quote).toContain('qmb-quote-price-group');
+  expect(quote).toContain('qmb-quote-price-meta');
+  expect(compactChrome).toContain('mobile-quote-actions-slot');
+  expect(compactChrome).toContain('height:var(--ss-mobile-visual-height,100dvh)');
+  expect(compactChrome).toContain('padding-bottom:max(10px,env(safe-area-inset-bottom,0px))');
   expect(mobileChrome).toContain("onClick={backFromQuote}");
   expect(mobileChrome).toContain('undoQuote(activeQuote.id)');
   expect(mobileChrome).toContain('redoQuote(activeQuote.id)');
