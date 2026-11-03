@@ -185,6 +185,8 @@ export interface CompanySettingsData {
   quoteContactName: string;
   quoteContactPhone: string;
   stockMaterials: StockMaterial[];
+  /** Shared company metadata for free-form Material and variant feature tags. */
+  materialTagDefinitions?:Record<string,{description:string}>;
 }
 
 export const EMPTY_COMPANY_SETTINGS: CompanySettingsData = {
@@ -197,4 +199,5 @@ export const EMPTY_COMPANY_SETTINGS: CompanySettingsData = {
   quoteContactName: '',
   quoteContactPhone: '',
   stockMaterials: [],
+  materialTagDefinitions: {},
 };
