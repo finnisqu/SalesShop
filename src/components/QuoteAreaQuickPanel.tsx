@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {quoteLinesTotal} from '../types/quote';
@@ -27,6 +27,7 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
  const areas=quote.sections.filter(a=>!isGeneralTakeoffSection(a));
  const index=areas.findIndex(a=>a.id===areaId);
  const [showFullNote,setShowFullNote]=useState(false);
+ const sheetSwipeStart=useRef<number|null>(null);
  if(!section)return null;
  const total=quoteLinesTotal(quote.lines.filter(l=>l.sectionId===section.id));
  const defaults={splashHeightIn:section.scope?.takeoffDefaultSplashHeightIn??4,
@@ -36,7 +37,13 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
  }}>
    <aside ref={ref} role="dialog" aria-modal="true" aria-label={'Quick edit Area '+section.title}
      className="qmb-quick-area-panel">
-     <header className="qmb-quick-area-header">
+     <header className="qmb-quick-area-header" onTouchStart={event=>{
+      if((event.target as HTMLElement).closest('button,input,select'))return;
+      sheetSwipeStart.current=event.touches[0]?.clientY??null;
+     }} onTouchEnd={event=>{
+      const start=sheetSwipeStart.current;sheetSwipeStart.current=null;
+      if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
+     }}>
        <div><small>QUOTE BUILDER · AREA</small><h2>{section.title||'Untitled Area'}</h2>
          <span>{sf.format(section.scope?.countertopSf??0)} SF · {money.format(total)}</span></div>
        <button type="button" data-dialog-initial-focus onClick={onClose}
@@ -110,5 +117,5 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
        <button type="button" onClick={onClose}>Done</button>
      </footer>
    </aside>
- </div>,document.body);
+ </div>,document.querySelector('.sales-app')??document.body);
 }
