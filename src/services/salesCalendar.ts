@@ -4,7 +4,7 @@ import type {Quote} from '../types/quote';
 
 export type SalesCalendarKind='task'|'bid'|'activity'|'follow-up';
 export interface SalesCalendarEvent {
- id:string;date:string;kind:SalesCalendarKind;title:string;detail:string;
+ id:string;date:string;kind:SalesCalendarKind;title:string;detail:string;urgent?:boolean;
  recordType:'task'|'project'|'quote'|'company'|'contact'|'activity';recordId:string;
 }
 const datePattern=/^\d{4}-\d{2}-\d{2}$/;
@@ -77,15 +77,25 @@ export function buildSalesCalendarEvents(
  const events:SalesCalendarEvent[]=[];
  const quoteIds=new Set(visibleQuotes.map(q=>q.id));
  const quoteById=new Map(visibleQuotes.map(q=>[q.id,q]));
+ // Auto-generated submission Tasks represent their Deal's deadline; render one
+ // bid badge that opens the actual editable Task, not two calendar entries.
+ const autoDealIds=new Set<string>();
  for(const task of tasks){
   if(task.deletedAt||!task.dueDate||!datePattern.test(task.dueDate)||task.status==='canceled')continue;
-  events.push({id:'task:'+task.id,date:task.dueDate,kind:'task',title:task.title,
-   detail:task.status==='completed'||task.completedAt?'Completed task':'To-do',
+  const bidId=task.sourceObjectId?.startsWith('deal-submit:')
+   ?task.sourceObjectId.slice('deal-submit:'.length):null;
+  if(bidId)autoDealIds.add(bidId);
+  const kind:SalesCalendarKind=bidId?'bid':task.type==='follow-up'?'follow-up':'task';
+  const done=task.status==='completed'||!!task.completedAt;
+  events.push({id:'task:'+task.id,date:task.dueDate,kind,title:task.title,
+   detail:bidId?(done?'Quote submitted':'Submit quote · Bid deadline'):
+    done?'Completed task':kind==='follow-up'?'Planned follow-up':'To-do',
+   urgent:!done&&task.priority==='urgent',
    recordType:'task',recordId:task.id});
  }
  for(const deal of deals){
-  if(!deal.dueDate||!datePattern.test(deal.dueDate))continue;
-  events.push({id:'bid:'+deal.id,date:deal.dueDate,kind:'bid',title:deal.name,
+  if(!deal.dueDate||!datePattern.test(deal.dueDate)||autoDealIds.has(deal.id))continue;
+  events.push({id:'bid:'+deal.id,date:deal.dueDate,kind:'bid',title:'Submit quote · '+deal.name,
    detail:'Bid due · '+deal.stage,recordType:'project',recordId:deal.id});
  }
  for(const activity of activities){
@@ -126,5 +136,6 @@ export const calendarDayCounts=(events:readonly SalesCalendarEvent[],date:string
   bid:matches.filter(e=>e.kind==='bid').length,
   activity:matches.filter(e=>e.kind==='activity').length,
   followUp:matches.filter(e=>e.kind==='follow-up').length,
+  urgent:matches.filter(e=>e.urgent).length,
   total:matches.length};
 };
