@@ -432,7 +432,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
  })());
  const changeSelected=(ref:QuoteScopeRowRef,on:boolean)=>setSelected(old=>on?
   [...old.filter(r=>key(r)!==key(ref)),ref]:old.filter(r=>key(r)!==key(ref)));
- const select=(ref:QuoteScopeRowRef)=><input type="checkbox" aria-label={'Select '+ref.kind+' '+ref.id}
+ const select=(ref:QuoteScopeRowRef)=><input type="checkbox" aria-label={'Select '+(ref.edge?edgeNames[ref.edge]+' splash':ref.kind)+' '+ref.id}
   checked={selectedKeys.has(key(ref))} onChange={e=>changeSelected(ref,e.target.checked)}/>;
  const contract=(ref:QuoteScopeRowRef,isExcluded:boolean)=><button type="button"
   className={'qqt-contract'+(isExcluded?' is-excluded':'')}
@@ -548,10 +548,10 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
      <button type="button" className="qqt-delete-selected" disabled={!editable}
       onClick={()=>apply('delete')}>Delete</button>
      <button type="button" onClick={()=>{setSelected([]);setTarget('');}}>Clear ×</button>
-    </div>:<div><h3>Takeoffs</h3>
+    </div>:<div className="qqt-heading-instructions"><h3>Takeoffs</h3>
      <span className="qqt-desktop-hint">Click, type or paste to edit · Tab/Enter to move · pencil for more</span>
      <span className="qqt-mobile-hint">Tap a cell to edit · ⋯ for options</span></div>}
-    <button type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
+    <button className="qqt-desktop-advanced" type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
    </header>
   <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}
    onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}>
@@ -573,15 +573,16 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
     const otherLines=summary.specialty;
     const pieceTotal=summary.measuredSf;
     return <div className="qqt-area-block" key={section.id} data-area-id={section.id}>
-     <div className="qqt-group"><strong>{section.title}</strong>
-      <span>{sf.format(summary.measuredSf)} measured SF · {sf.format(summary.billedSf)} billed</span>
-      <div>
+     <div className="qqt-group">
+      <div className="qqt-area-identity"><strong>{section.title}</strong>
+       <span>{sf.format(summary.measuredSf)} SF</span></div>
+      <div className="qqt-area-actions">
        <button disabled={!editable} type="button" onClick={()=>addPiece(section)}>+ Piece</button>
        <button disabled={!editable} type="button" onClick={()=>addSink(section)}>+ Sink</button>
        <button disabled={!editable} type="button" onClick={()=>addLine(section)}>+ Charge</button>
        <button disabled={!editable} type="button" title="Duplicate this Area"
         onClick={()=>store.duplicateArea(quote.id,section.id)}>⧉ Area</button>
-      </div><strong>{money.format(summary.total)}</strong></div>
+      </div><strong className="qqt-area-price">{money.format(summary.total)}</strong></div>
      {pieces.map(piece=>{
       const topSf=takeoffPieceSf(piece);
       const allocated=pieceTotal>0&&!piece.excludedFromQuote&&primary?.includeInTotal
@@ -600,20 +601,24 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
         sf.format(topSf),<span className="qqt-readonly" title="Allocated Area price; not a second billable line">
          {money.format(allocated)}</span>,!!piece.excludedFromQuote,edit,!piece.lengthIn||!piece.widthIn,
          ()=>deleteRow(ref),()=>duplicateRows([ref]))}
-       {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&
-        row({kind:'splash',id:piece.id,sectionId:section.id},section.title,'↳ Splash · '+piece.name,
-         piece.count,'—',<>
-          <span className="qqt-splash-width-mobile" aria-label="Splash dimensions in details">—</span>
-          <span className="qqt-splash-height-desktop"><SmallInput label={'Splash height '+piece.name}
-           value={piece.splashHeightIn??4} disabled={!editable}
-           commit={v=>setPiece(section,piece,{splashHeightIn:v??4})}/></span>
-         </>,
-         sf.format(takeoffPieceSplashSf(piece)),
-         <span className="qqt-readonly" title="This selling price is included in Area stone pricing">Included in stone</span>,
-         !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,
-         ()=>setDetail({areaId:section.id,id:piece.id,kind:'splash'}),false,
-         ()=>deleteRow({kind:'splash',id:piece.id,sectionId:section.id}),
-         ()=>duplicateRows([{kind:'splash',id:piece.id,sectionId:section.id}]))}
+       {([
+        ['back','backsplash','Back'],['left','leftSplash','Left'],['right','rightSplash','Right']
+        ] as const).filter(([,field])=>piece[field]).map(([edge,,label])=>{
+         const splashRef:QuoteScopeRowRef={kind:'splash',edge,id:piece.id,sectionId:section.id};
+         const splashExcluded=isSplashEdgeExcluded(piece,edge);
+         return row(splashRef,section.title,<span className="qqt-splash-name">↳ {label} splash</span>,
+          piece.count,
+          edge==='back'?piece.lengthIn??'—':piece.widthIn??'—',
+          <SmallInput label={label+' splash height '+piece.name} disabled={!editable}
+           value={takeoffSplashEdgeHeightIn(piece,edge)}
+           commit={value=>setPiece(section,piece,{splashEdgeHeightsIn:{
+            ...piece.splashEdgeHeightsIn,[edge]:value??piece.splashHeightIn??4}})}/>,
+          sf.format(takeoffPieceSplashEdgeSf(piece,edge)),
+          <span className="qqt-readonly" title="Splash is part of the area's stone price">Included in stone</span>,
+          splashExcluded,
+          ()=>setDetail({areaId:section.id,id:piece.id,kind:'splash',edge}),false,
+          ()=>deleteRow(splashRef),()=>duplicateRows([splashRef]));
+       })}
       </div>;
      })}
      {sinks.map(sink=>{
@@ -680,7 +685,6 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
      })}
    </div>
   </div>
-  <footer className="qqt-total">Striking out a row preserves the measurements and excludes it from current pricing.</footer>
   {detail&&<DetailPopup quote={quote} section={quote.sections.find(s=>s.id===detail.areaId)??null}
    rowRef={{kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined,edge:detail.edge}}
    piece={detail.kind==='piece'||detail.kind==='splash'
