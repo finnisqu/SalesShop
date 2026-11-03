@@ -46,6 +46,19 @@ Use a fresh 2-Area Quick Quote:
 8. Confirm a manual selling price is not silently recalculated when geometry is excluded. Pricing Review should require the exclusion decision to be acknowledged.
 9. Undo, redo, bulk move, bulk delete, then undo. Check totals after every action.
 
+## Duplicate Areas and Takeoffs (desktop release pass)
+
+- In Areas, hover or focus the Area name; use ⧉ to duplicate that Area next to the original, preserving material selection, measured pieces, sinks, specialty charges and current selling prices. Confirm the original keeps its own IDs.
+- Open an Area settings panel and use **Duplicate this Area**. Verify it creates the same result without transferring charges to General.
+- Select two Areas with checkboxes and choose **Duplicate** from the existing header. Confirm both copies appear and one Undo restores the original state.
+- In Takeoffs, use the per-row ⧉ action on a piece, sink, manual charge and General fee. Verify the new row's pricing and measurements are independent of the source.
+- Select a mixed set of rows and choose the header's **Duplicate** action; one Undo should remove all new rows together. Selecting a piece plus its splash must produce only one new parent piece.
+- Duplicating a splash by itself must warn that the parent measured piece is copied as well; cancel should make no changes.
+- Verify managed live-SF material lines and sink-managed price lines cannot be cloned as ordinary manual charges.
+- Check **sum of Area totals + General = quote total** after every duplicate, and ensure existing exclusions/strikeouts are retained.
+- Test a quote reload after duplicating, followed by Undo/Redo before and after a save. No duplicate sink charge or stale line ID should appear.
+- Desktop first: confirm row action icons don't overlap when the table scrolls horizontally. Plan a dedicated narrow-screen/touch acceptance pass next.
+
 ## Catalog-guided pricing and reusable Areas
 
 - Select a material with a captured supplier cost. Verify the company Level recommendation is visible inside the selling-price editor, including SF price and margin only when costs are complete.
