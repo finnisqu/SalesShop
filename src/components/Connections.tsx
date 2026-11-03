@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {ActivityCloudIndicator} from './ActivityCloudIndicator';
+import {isoLocalDay} from '../services/salesCalendar';
 import {requestActivityDetail} from './ActivityDetailHost';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
@@ -187,7 +188,7 @@ export function Connections() {
     if(activityKind==='manual'&&!manual)return false;
     if(activityKind==='automatic'&&manual)return false;
     if(activityMethod!=='all'&&activity.metadata?.interactionMethod!==activityMethod)return false;
-    const day=activity.occurredAt.slice(0,10);
+    const day=isoLocalDay(activity.occurredAt)??activity.occurredAt.slice(0,10);
     if(activityFrom&&day<activityFrom)return false;
     if(activityTo&&day>activityTo)return false;
     return findText(activity.summary,activity.type,activity.metadata?.interactionMethod,

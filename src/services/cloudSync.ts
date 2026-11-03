@@ -222,12 +222,15 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   setQuoteSaveStatus(readPendingQuoteSync(scope)?'pending':'saved');
   const activityStatus=useActivityCloudStatusStore.getState().setStatus;
   const initialCrm=readPendingActivities(scope);
-  activityStatus(initialCrm.length?'pending':'saved',initialCrm.length);
+  activityStatus(initialCrm.length?'pending':'idle',initialCrm.length);
   let retryingCrm=false;
   const retryCrm=async()=>{
    if(options.readOnlyShared||retryingCrm)return;
    const snapshots=readPendingActivities(scope);
-   if(!snapshots.length){activityStatus('saved',0);return;}
+   if(!snapshots.length){
+    if(useActivityCloudStatusStore.getState().status!=='idle')activityStatus('saved',0);
+    return;
+   }
    if(typeof navigator!=='undefined'&&!navigator.onLine){
     activityStatus('pending',snapshots.length,'Offline · retry when connected');return;
    }
