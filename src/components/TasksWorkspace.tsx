@@ -65,10 +65,14 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const recovered=useMemo(()=>readSavedDraft<TaskEditorRecovery>(scopeKey),[scopeKey]);
   const draft:Partial<PersonalTask>=initial;
   const [title,setTitle]=useState(recovered?.title??draft.title??'');
-  const [type,setType]=useState<TaskType>(recovered?.type??draft.type??'todo');
+  const [type,setType]=useState<TaskType>(initialTaskId
+   ?recovered?.type??draft.type??'todo'
+   :draft.type??recovered?.type??'todo');
   const [priority,setPriority]=useState<TaskPriority>(recovered?.priority??draft.priority??'normal');
   const [status,setStatus]=useState<TaskStatus>(recovered?.status??draft.status??'open');
-  const [dueDate,setDueDate]=useState(recovered?.dueDate??draft.dueDate??'');
+  const [dueDate,setDueDate]=useState(initialTaskId
+   ?recovered?.dueDate??draft.dueDate??''
+   :draft.dueDate??recovered?.dueDate??'');
   const [startDate,setStartDate]=useState(recovered?.startDate??draft.startDate??'');
   const [dueTime,setDueTime]=useState(recovered?.dueTime??draft.dueTime??'');
   const [reminderAt,setReminderAt]=useState(recovered?.reminderAt??reminderValue(draft.reminderAt));
