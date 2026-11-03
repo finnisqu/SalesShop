@@ -8,6 +8,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
+import {MobileSheetGrabber} from './MobileSheetGrabber';
 import './sales-calendar.css';
 import {requestActivityDetail} from './ActivityDetailHost';
 import {requestCalendarQuickAction} from './CalendarQuickActionHost';
@@ -108,6 +109,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
    <section className="sales-calendar-popover" style={position}
     role="dialog" aria-modal="false" aria-label="SalesShop calendar"
     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
+    <MobileSheetGrabber onDismiss={()=>setOpen(false)}/>
     <header className="sales-calendar-heading">
      <div><small>WORK CALENDAR</small><strong>{plainName(month)}</strong></div>
      <div>

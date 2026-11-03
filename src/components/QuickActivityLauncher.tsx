@@ -10,6 +10,7 @@ import {usePersonalTaskStore,taskScope,type TaskAssociation,type TaskLink,type T
  type TaskChanges} from '../store/personalTaskStore';
 import {TaskEditor} from './TasksWorkspace';
 import {localDateKey} from '../services/salesCalendar';
+import {MobileSheetGrabber} from './MobileSheetGrabber';
 import './sales-calendar.css';
 
 type Method='email'|'call'|'text'|'video-call'|'in-person';
@@ -150,6 +151,7 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
    }}>
    <form role="dialog" aria-modal="true" aria-label="Log Activity" className="sales-activity-dialog"
     onSubmit={submit} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();close();}}}>
+    <MobileSheetGrabber onDismiss={close}/>
     <header><div><small>CRM · Completed interaction</small><h2>Log Activity</h2></div>
       <button type="button" onClick={close} aria-label="Close Log Activity">×</button></header>
     <div className="sales-activity-form-body">

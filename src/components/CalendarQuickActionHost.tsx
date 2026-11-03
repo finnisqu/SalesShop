@@ -6,6 +6,7 @@ import {useCrmStore} from '../store/crmStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {MobileSheetGrabber} from './MobileSheetGrabber';
 import './sales-calendar.css';
 
 export type CalendarQuickAction='task'|'bid';
@@ -60,6 +61,7 @@ export function CalendarQuickActionHost(){
       updateDeal(dealId,{bidDueDate:bidDate,bidDueTime:bidTime||undefined,dueDate:bidDate});
       setBidDate(null);
      }}>
+     <MobileSheetGrabber onDismiss={()=>setBidDate(null)}/>
      <header><div><small>CALENDAR · DEAL</small><h2>Set bid deadline</h2></div>
       <button type="button" aria-label="Close bid deadline editor" onClick={()=>setBidDate(null)}>×</button>
      </header>

@@ -10,6 +10,7 @@ import {usePersonalTaskStore} from '../store/personalTaskStore';
 import type {ActivityMetadata} from '../types/crm';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import type {TaskAssociation,TaskLink} from '../store/personalTaskStore';
+import {MobileSheetGrabber} from './MobileSheetGrabber';
 import './sales-calendar.css';
 
 const toInput=(text:string)=>{
@@ -129,6 +130,7 @@ export function ActivityDetailHost(){
   <section role="dialog" aria-modal="true" className="sales-activity-dialog sales-activity-detail"
    aria-label="Activity details"
    onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();close();}}}>
+   <MobileSheetGrabber onDismiss={close}/>
    <header><div><small>CRM · {activity.type==='manual-touchpoint'?'Logged interaction':'Activity'}</small>
       <h2>Activity details</h2></div><button type="button" aria-label="Close Activity details"
        onClick={close}>×</button></header>
