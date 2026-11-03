@@ -1159,6 +1159,15 @@ export function QuotesMobileBeta() {
             <span>Based on {quote.templateOrigin.sourceTitle} · Rev {quote.templateOrigin.sourceRevision}</span>
             <span>· Independent working copy</span>
           </div>}
+          <header className="qmb-pagehead qmb-desktop-fallback-toolbar" aria-label="Document navigation and history">
+            <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
+            <div role="toolbar" aria-label="Quote editing history">
+              <button type="button" disabled={!editable||undoDepth===0}
+                onClick={()=>undo(quote.id)} aria-label="Undo quote edit" title="Undo">↶ Undo</button>
+              <button type="button" disabled={!editable||redoDepth===0}
+                onClick={()=>redo(quote.id)} aria-label="Redo quote edit" title="Redo">↷ Redo</button>
+            </div>
+          </header>
           <nav className="qmb-tabs" aria-label="Quote views">
             {(quote.documentType==='pricing-schedule'
               ?([['build','Editor'],['details','Details'],['preview','Preview']] as const)
