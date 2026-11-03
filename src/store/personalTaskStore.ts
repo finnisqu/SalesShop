@@ -1,5 +1,6 @@
 import {create} from 'zustand';
 import {scopedStorageKey} from '../lib/developerPlayground';
+import type {Project} from '../types/crm';
 
 export type TaskLink={type:'quote'|'project'|'company'|'contact'|'notebook';id:string};
 export type TaskAssociation=TaskLink&{label?:string};
@@ -44,6 +45,7 @@ interface TaskState {
   snooze:(id:string,until:string)=>void;
   remove:(id:string)=>void;
   beginPromotion:(draft:TaskPromotion|null)=>void;
+  syncDealSubmissionTasks:(deals:readonly Project[])=>void;
 }
 export function taskScope(mode:'local'|'cloud',organizationId:string|null,userId:string|undefined){
   if(mode==='cloud'&&(!organizationId||!userId))return null;
@@ -135,6 +137,47 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     // Tombstones prevent another signed-in device from resurrecting deleted tasks.
     const next=tasks.map(task=>task.id===id?{...task,deletedAt:now,updatedAt:now}:task);
     set({tasks:next});persist(scope,next);
+  },
+  /** Exactly one private, editable submission task per deal due date.
+   * Tasks use stable ids, so cloud merge / rehydration can't duplicate them. */
+  syncDealSubmissionTasks:deals=>{
+    const {scope,tasks}=get();
+    if(!scope)return;
+    const due=new Map(deals.filter(deal=>!!deal.dueDate&&validDate(deal.dueDate))
+      .map(deal=>[deal.id,deal] as const));
+    const existing=new Set(tasks.map(task=>task.id));
+    const now=new Date().toISOString();
+    let changed=false;
+    const updated=tasks.map(task=>{
+      if(!task.sourceObjectId?.startsWith('deal-submit:')||task.deletedAt)return task;
+      const dealId=task.sourceObjectId.slice('deal-submit:'.length);
+      const deal=due.get(dealId);
+      if(!deal){
+       if(task.status==='canceled')return task;
+       changed=true;return {...task,status:'canceled' as const,updatedAt:now};
+      }
+      if(task.dueDate===deal.dueDate&&task.status!=='canceled')return task;
+      changed=true;
+      return {...task,dueDate:deal.dueDate,
+       status:task.status==='canceled'?'open' as const:task.status,
+       updatedAt:now};
+    });
+    for(const deal of due.values()){
+      const id='task_deal_submit_'+deal.id;
+      if(existing.has(id))continue;
+      changed=true;
+      updated.unshift({
+       id,title:'Submit quote · '+deal.name,dueDate:deal.dueDate,
+       type:'todo',priority:'normal',status:'open',queue:'Bid submissions',
+       sourceObjectId:'deal-submit:'+deal.id,
+       linked:{type:'project',id:deal.id},
+       associations:[{type:'project',id:deal.id,label:'Deal · '+deal.name}],
+       sourceLabel:'Deal · '+deal.name,
+       notes:'Automatically linked to the deal bid due date. Complete after submitting the quote.',
+       workspaceScope:scope,createdAt:now,updatedAt:now,
+      });
+    }
+    if(changed){set({tasks:updated});persist(scope,updated);}
   },
   beginPromotion:promotion=>set({promotion}),
 }));
