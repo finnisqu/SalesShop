@@ -356,6 +356,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
        <button disabled={!editable} type="button" onClick={()=>addPiece(section)}>+ Piece</button>
        <button disabled={!editable} type="button" onClick={()=>addSink(section)}>+ Sink</button>
        <button disabled={!editable} type="button" onClick={()=>addLine(section)}>+ Charge</button>
+       <button disabled={!editable} type="button" title="Duplicate this Area"
+        onClick={()=>store.duplicateArea(quote.id,section.id)}>⧉ Area</button>
       </div><strong>{money.format(summary.total)}</strong></div>
      {pieces.map(piece=>{
       const topSf=takeoffPieceSf(piece);
