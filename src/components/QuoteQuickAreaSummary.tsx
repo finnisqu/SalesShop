@@ -212,6 +212,10 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
       </label>
       <button type="button" className="qqs-secondary" onClick={()=>{onAdvanced(section.id);onClose();}}>
        Advanced Area settings ↗</button>
+      <button type="button" className="qqs-secondary" disabled={!editable}
+       onClick={()=>{if(store.duplicateArea(quote.id,section.id))onClose();}}>
+       ⧉ Duplicate this Area
+      </button>
       {editable&&<div className="qqs-danger-actions">
        <strong>Remove Area</strong>
        <button type="button" onClick={()=>{
@@ -433,6 +437,11 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
    focused={focus===label} onFocus={()=>setFocus(label)}
    onEdit={()=>open(areaId,kind)} muted={muted} warn={warn}
    inline={inline} numeric={kind!=='material'&&kind!=='area'}/>;
+ const duplicateSelected=()=>{
+  if(!editable||!selected.length)return;
+  const count=store.duplicateAreas(quote.id,selected);
+  if(count===selected.length)setSelected([]);
+ };
  const bulkApply=(mode:'detail'|'summary'|'hidden'|'visible'|'delete')=>{
   if(!editable||!selected.length)return;
   if(mode==='delete'){
@@ -451,6 +460,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
    <header className={'qqs-summary-head'+(selected.length?' is-selecting':'')}>
     {selected.length?<div className="qqs-bulk" role="toolbar" aria-label="Bulk Area actions">
      <strong>{selected.length} selected</strong>
+     <button type="button" disabled={!editable} onClick={duplicateSelected}>⧉ Duplicate</button>
      <button type="button" disabled={!editable} onClick={()=>bulkApply('summary')}>Lump sum</button>
      <button type="button" disabled={!editable} onClick={()=>bulkApply('detail')}>Itemize</button>
      <button type="button" disabled={!editable} onClick={()=>bulkApply('hidden')}>Hide</button>
