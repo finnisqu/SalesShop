@@ -979,6 +979,18 @@ export function QuotesMobileBeta() {
     catch(e){setError(e instanceof Error?e.message:'Could not issue quote');}
     finally{setSending(false);}
   };
+
+  const quoteProgress=quote&&quote.documentType!=='pricing-schedule'?
+    <QuoteBetaProgress
+        key={quote.id} quote={quote} editable={editable}
+        current={reviewOpen||page==='quote'&&quoteTab==='pricing'?'review':
+          page==='quote'&&quoteTab==='preview'?'contract':
+          page==='quote'&&quoteTab==='details'?'details':'areas'}
+        onDetails={()=>navigateDocument('details')}
+        onAreas={()=>navigateDocument('build')}
+        onOpenArea={openArea} onAddArea={newArea} onPricing={openPricingStage}
+        onReview={()=>navigateDocument('preview')}/> 
+    :null;
   if(!hydrated)return <main className="qmb"><p className="qmb-loading">Opening Quotes Beta…</p></main>;
   if(canBrowseTeam&&libraryMode==='team')return <main className="quotes-view qmb-team">
     <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes</button></div>
@@ -1023,15 +1035,7 @@ export function QuotesMobileBeta() {
               aria-label="Dismiss return to Review" onClick={()=>setReviewReturn(null)}>×</button>
           </div>
         </div>}
-      {quote&&page!=='library'&&quote.documentType!=='pricing-schedule'&&<QuoteBetaProgress
-        key={quote.id} quote={quote} editable={editable}
-        current={reviewOpen||page==='quote'&&quoteTab==='pricing'?'review':
-          page==='quote'&&quoteTab==='preview'?'contract':
-          page==='quote'&&quoteTab==='details'?'details':'areas'}
-        onDetails={()=>navigateDocument('details')}
-        onAreas={()=>navigateDocument('build')}
-        onOpenArea={openArea} onAddArea={newArea} onPricing={openPricingStage}
-        onReview={()=>navigateDocument('preview')}/>} 
+      {page==='area'&&quoteProgress}
     {page==='library'?<>
       <header className="qmb-top"><BuildBadge compact /><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div>
         <div className="qmb-headeractions"><AppMenu/></div></header>
@@ -1128,44 +1132,51 @@ export function QuotesMobileBeta() {
           onClick={()=>setShowNewDocument(true)}>+ New document</button></footer>
     </>:page==='quote'&&quote?<div className={'qmb-editor qmb-quote-editor'+
   (quote.documentType!=='pricing-schedule'?' is-quick-quote':'')}>
-      <div className="qmb-quote-scroll" ref={quoteScrollRef}>
-        <header className="qmb-pagehead">
-          <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
-          {quote.documentType!=='pricing-schedule'&&<div className="qmb-quick-history" role="toolbar" aria-label="Quote undo and redo">
-           <button type="button" disabled={!editable||undoDepth===0} onClick={()=>undo(quote.id)}
-            title="Undo last quote edit" aria-label="Undo quote edit">↶ <span>Undo</span></button>
-           <button type="button" disabled={!editable||redoDepth===0} onClick={()=>redo(quote.id)}
-            title="Redo last quote edit" aria-label="Redo quote edit">↷ <span>Redo</span></button>
-           <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
-            canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
-            onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
-            onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
-          </div>}
-          <span className="qmb-chip qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
-          <AppMenu/>
-        </header>
+      <div className="qmb-quote-chrome">
         <div className="qmb-quote-sticky">
           <div className="qmb-quote-identity">
             <input className="qmb-quote-name" aria-label="Quote title" maxLength={300}
-              disabled={!editable} placeholder="Document name"
-              value={quote.title}
+              disabled={!editable} placeholder="Document name" value={quote.title}
               onChange={e=>update(quote.id,{title:e.target.value})}/>
-            <strong className="qmb-quote-total" aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>{quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}</strong>
-          </div>
-          <div className="qmb-pad qmb-document-identity-note">
-            <button type="button" className="qmb-document-customer-link"
-              aria-label="Quick edit quote customer" aria-haspopup="dialog" aria-expanded={customerQuickOpen}
-              onClick={()=>setCustomerQuickOpen(true)} title="Quick edit customer without leaving this quote">
-              {quote.companyName||quote.contactName||'Assign a customer'}{quote.companyName&&quote.contactName?' · '+quote.contactName:''}
-              <span aria-hidden="true"> ›</span>
-            </button>
-            <span>{quoteBetaStatusLabel(quote)} · Revision {quote.revision}</span>
-            <SalesDocumentSaveStatus quote={quote} cloudMode={authMode==='cloud'}/>
+            <strong className="qmb-quote-total"
+              aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>
+              {quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}
+            </strong>
+            <div className="qmb-quote-meta" aria-label="Quote customer, status, revision and save status">
+              <button type="button" className="qmb-document-customer-link"
+                aria-label="Quick edit quote customer" aria-haspopup="dialog" aria-expanded={customerQuickOpen}
+                onClick={()=>setCustomerQuickOpen(true)} title="Quick edit customer without leaving this quote">
+                {quote.companyName||quote.contactName||'Assign customer'}{quote.companyName&&quote.contactName?' · '+quote.contactName:''}
+                <span aria-hidden="true"> ›</span>
+              </button>
+              <span className="qmb-chip qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
+              <span className="qmb-quote-revision">Revision {quote.revision}</span>
+              <SalesDocumentSaveStatus quote={quote} cloudMode={authMode==='cloud'} compact/>
+            </div>
           </div>
           {quote.templateOrigin&&<div className="qmb-pad qmb-document-origin">
             <span>Based on {quote.templateOrigin.sourceTitle} · Rev {quote.templateOrigin.sourceRevision}</span>
             <span>· Independent working copy</span>
           </div>}
+          <header className="qmb-pagehead qmb-quote-actions">
+            <button type="button" className="qmb-back" onClick={showLibrary}>‹ Documents</button>
+            {quote.documentType!=='pricing-schedule'&&<div className="qmb-quick-history" role="toolbar" aria-label="Quote editing actions">
+              <button type="button" disabled={!editable||undoDepth===0} onClick={()=>undo(quote.id)}
+                title="Undo last quote edit" aria-label="Undo quote edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/></svg>
+                <span>Undo</span>
+              </button>
+              <button type="button" disabled={!editable||redoDepth===0} onClick={()=>redo(quote.id)}
+                title="Redo last quote edit" aria-label="Redo quote edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/></svg>
+                <span>Redo</span>
+              </button>
+              <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
+                canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
+                onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
+                onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
+            </div>}
+          </header>
           <nav className="qmb-tabs" aria-label="Quote views">
             {(quote.documentType==='pricing-schedule'
               ?([['build','Editor'],['details','Details'],['preview','Preview']] as const)
@@ -1178,6 +1189,9 @@ export function QuotesMobileBeta() {
               aria-label="Open quote selections" onClick={()=>setSelectionsOpen(true)}>◇ Selections</button>}
           </nav>
         </div>
+        {quoteProgress}
+      </div>
+      <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <div className="qmb-pad qmb-pagecontent">
         {quoteTab==='build'&&quote.documentType==='pricing-schedule'&&
           <section className="qmb-pricing-schedule-beta" aria-label="Pricing Schedule workspace">
