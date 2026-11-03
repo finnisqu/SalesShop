@@ -41,6 +41,33 @@ export function calendarWeekDays(selected:string):string[]{
  });
 }
 
+/** Keep the Home calendar private while allowing work explicitly linked to a
+ * user's quotes or personal tasks. Team-wide CRM remains in Connections. */
+export function personalCalendarSources(
+ mode:'local'|'cloud',userId:string|undefined,
+ ownQuotes:readonly Quote[],ownTasks:readonly PersonalTask[],
+ deals:readonly Project[],activities:readonly Activity[],
+):{deals:Project[];activities:Activity[]}{
+ if(mode==='local')return {deals:[...deals],activities:[...activities]};
+ if(!userId)return {deals:[],activities:[]};
+ const quoteIds=new Set(ownQuotes.map(q=>q.id));
+ const relatedDealIds=new Set<string>();
+ ownQuotes.forEach(q=>{if(q.projectId)relatedDealIds.add(q.projectId);});
+ ownTasks.forEach(task=>{
+  const links=task.associations??(task.linked?[task.linked]:[]);
+  links.forEach(link=>{if(link.type==='project')relatedDealIds.add(link.id);});
+ });
+ return {
+  deals:deals.filter(deal=>relatedDealIds.has(deal.id)),
+  activities:activities.filter(activity=>
+   (!activity.quoteId||quoteIds.has(activity.quoteId))&&
+   (activity.metadata?.recordedByUserId===userId||
+    !!(activity.quoteId&&quoteIds.has(activity.quoteId))||
+    !!(activity.projectId&&relatedDealIds.has(activity.projectId)))
+  ),
+ };
+}
+
 /** No synthetic reminders: only explicit task deadlines, deal bid due dates,
  * scheduled quote follow-ups and completed CRM touchpoints. */
 export function buildSalesCalendarEvents(
