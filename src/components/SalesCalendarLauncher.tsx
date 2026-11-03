@@ -69,6 +69,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
   setOpen(false);
   const {recordType,recordId}=event;
   if(recordType==='task')nav.setView('tasks');
+  else if(recordType==='activity'){
+   try{window.sessionStorage.setItem('salesshop-open-activity-history-v1','1');}catch{/* best effort */}
+   nav.setView('dashboard');
+   window.dispatchEvent(new Event('salesshop:open-activity-history'));
+  }
   else if(recordType==='project')nav.openProject(recordId);
   else if(recordType==='quote')nav.openQuote(recordId);
   else if(recordType==='company')nav.openCompany(recordId);

@@ -68,8 +68,12 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
   const timestamp=new Date(occurred);
   if(!occurred||!Number.isFinite(timestamp.getTime()))return setError('Choose a valid date and time.');
   const find=(kind:TaskLink['type'])=>links.find(link=>link.type===kind)?.id;
-  record({type:'notebook-touchpoint',summary:description||(fallback+' with '+(person||'contact')),
-   companyId:find('company'),contactId:find('contact'),projectId:find('project'),quoteId:find('quote'),
+  const personId=find('contact'),dealId=find('project'),quoteId=find('quote');
+  const contact=contacts.find(c=>c.id===personId),deal=projects.find(d=>d.id===dealId);
+  const quote=quotes.find(q=>q.id===quoteId);
+  record({type:'manual-touchpoint',summary:description||(fallback+' with '+(person||'contact')),
+   companyId:find('company')||contact?.companyId||deal?.companyId||quote?.companyId,
+   contactId:personId,projectId:dealId||quote?.projectId,quoteId,
    occurredAt:timestamp.toISOString(),
    metadata:{source:'manual',interactionMethod:method,notes:notes.trim().slice(0,5000)||undefined}});
   setMethod('call');setSummary('');setNotes('');setOccurred(dateTimeLocal());

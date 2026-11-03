@@ -1,0 +1,15 @@
+-- Add manual CRM touchpoint to the existing append-only CRM activity stream.
+-- Also allow Notebook's existing touchpoint type, avoiding silent cloud sync failures.
+-- No new table, role grants, or RLS policies.
+begin;
+alter table public.activities drop constraint if exists activities_type_check;
+alter table public.activities add constraint activities_type_check check (type in (
+ 'project-created','project-stage-changed','quote-created','quote-linked',
+ 'quote-sent','quote-revision-created','quote-viewed','quote-signed',
+ 'quote-declined','quote-expired',
+ 'change-order-created','change-order-sent','change-order-revision-created',
+ 'change-order-viewed','change-order-signed','change-order-declined',
+ 'change-order-expired','contact-created','quote-follow-up',
+ 'notebook-touchpoint','manual-touchpoint'
+));
+commit;

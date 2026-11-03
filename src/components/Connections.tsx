@@ -51,6 +51,12 @@ export function resolveConnectionsLandingTab(stored: string | null): Connections
 
 function initialTab(): ConnectionsTab {
   if (typeof window === 'undefined') return 'companies';
+  try{
+   if(window.sessionStorage.getItem('salesshop-open-activity-history-v1')==='1'){
+    window.sessionStorage.removeItem('salesshop-open-activity-history-v1');
+    return 'activity';
+   }
+  }catch{/* best effort */}
   try { return resolveConnectionsLandingTab(window.sessionStorage.getItem(TAB_KEY)); }
   catch { return 'companies'; }
 }
@@ -69,6 +75,11 @@ function findText(...items: Array<string | undefined>) {
 
 export function Connections() {
   const [tab, setTab] = useState<ConnectionsTab>(initialTab);
+  useEffect(()=>{
+   const show=()=>setTab('activity');
+   window.addEventListener('salesshop:open-activity-history',show);
+   return()=>window.removeEventListener('salesshop:open-activity-history',show);
+  },[]);
   const [query, setQuery] = useState('');
   const [moreOpen, setMoreOpen] = useState(false);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);

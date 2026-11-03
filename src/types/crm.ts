@@ -48,6 +48,7 @@ export const ACTIVITY_TYPES = [
   'change-order-expired',
   'contact-created',
   'notebook-touchpoint',
+  'manual-touchpoint',
 ] as const;
 
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];

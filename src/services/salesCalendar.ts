@@ -5,7 +5,7 @@ import type {Quote} from '../types/quote';
 export type SalesCalendarKind='task'|'bid'|'activity'|'follow-up';
 export interface SalesCalendarEvent {
  id:string;date:string;kind:SalesCalendarKind;title:string;detail:string;
- recordType:'task'|'project'|'quote'|'company'|'contact';recordId:string;
+ recordType:'task'|'project'|'quote'|'company'|'contact'|'activity';recordId:string;
 }
 const datePattern=/^\d{4}-\d{2}-\d{2}$/;
 export function localDateKey(value:Date):string {
@@ -44,18 +44,19 @@ export function buildSalesCalendarEvents(
    detail:'Bid due · '+deal.stage,recordType:'project',recordId:deal.id});
  }
  for(const activity of activities){
-  if(activity.type==='notebook-touchpoint'){
+  if(activity.type==='notebook-touchpoint'||activity.type==='manual-touchpoint'){
+   if(activity.quoteId&&!quoteIds.has(activity.quoteId))continue;
    const date=isoLocalDay(activity.occurredAt);if(!date)continue;
    const type=activity.quoteId&&quoteIds.has(activity.quoteId)?'quote':
     activity.projectId?'project':activity.contactId?'contact':activity.companyId?'company':null;
    const id=type==='quote'?activity.quoteId:type==='project'?activity.projectId:
     type==='contact'?activity.contactId:activity.companyId;
-   if(!type||!id)continue;
+   const destination=type||'activity',destinationId=id||activity.id;
    const method=activity.metadata?.interactionMethod;
    events.push({id:'activity:'+activity.id,date,kind:'activity',title:activity.summary,
     detail:(method?method.charAt(0).toUpperCase()+method.slice(1).replaceAll('-',' '):'Touchpoint')+
       (activity.metadata?.notes?' · '+activity.metadata.notes.slice(0,90):''),
-    recordType:type,recordId:id});
+    recordType:destination,recordId:destinationId});
   }
  }
  // Only the most recent follow-up event for a quote is authoritative.
