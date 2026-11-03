@@ -160,11 +160,10 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
        if(task.status==='canceled'||task.status==='completed')return task;
        changed=true;return {...task,status:'canceled' as const,updatedAt:now};
       }
-      if(task.dueDate===deal.dueDate&&task.status!=='canceled')return task;
+      // An intentional cancel is a user override, not a retry condition.
+      if(task.status==='canceled'||task.dueDate===deal.dueDate)return task;
       changed=true;
-      return {...task,dueDate:deal.dueDate,
-       status:task.status==='canceled'?'open' as const:task.status,
-       updatedAt:now};
+      return {...task,dueDate:deal.dueDate,updatedAt:now};
     });
     for(const deal of due.values()){
       const id='task_deal_submit_'+deal.id;
