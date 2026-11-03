@@ -101,7 +101,8 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const [moveTarget,setMoveTarget]=useState('');
  const currentAreaId=rowRef.sectionId;
  const eligibleAreas=quote.sections.filter(s=>!isGeneralTakeoffSection(s)&&s.id!==currentAreaId);
- const canChangeRow=editable&&(!line||!line.takeoffSinkId&&line.quantitySource?.syncMode!=='live');
+ const canChangeRow=editable&&!!(piece||sink||line)&&
+  (!line||!line.takeoffSinkId&&line.quantitySource?.syncMode!=='live');
  const excluded=rowRef.kind==='splash'
   ?!!piece?.excludedFromQuote||!!piece?.excludeSplashFromQuote
   :rowRef.kind==='piece'?!!piece?.excludedFromQuote
@@ -110,7 +111,7 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const measuredSf=piece?(rowRef.kind==='splash'?takeoffPieceSplashSf(piece):takeoffPieceSf(piece)):null;
  const areaSummary=section?quickAreaSummary(quote,section):null;
  const pieceMeasuredTotal=areaSummary?.measuredSf??0;
- const allocatedPiecePrice=piece&&areaSummary?.primary?.includeInTotal&&pieceMeasuredTotal>0
+ const allocatedPiecePrice=piece&&!piece.excludedFromQuote&&areaSummary?.primary?.includeInTotal&&pieceMeasuredTotal>0
   ?quoteLineAmount(areaSummary.primary)*takeoffPieceSf(piece)/pieceMeasuredTotal:0;
  const sinkSellingPrice=sink&&section?quote.lines
   .filter(item=>item.sectionId===section.id&&item.takeoffSinkId===sink.id&&item.includeInTotal)
@@ -120,7 +121,9 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const canMove=canChangeRow&&(eligibleAreas.length>0||rowRef.kind==='line'&&!!currentAreaId);
  const toggleContract=()=>{
   if(!canChangeRow)return;
-  store.bulkScopeRows(quote.id,[rowRef],excluded?'restore':'exclude');
+  const affected=rowRef.kind==='splash'&&piece?.excludedFromQuote&&excluded
+   ?[{...rowRef,kind:'piece' as const},rowRef]:[rowRef];
+  store.bulkScopeRows(quote.id,affected,excluded?'restore':'exclude');
  };
  const moveRow=()=>{
   if(!canMove||!moveTarget)return;
@@ -469,8 +472,12 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
          ()=>deleteRow(ref),()=>duplicateRows([ref]))}
        {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&
         row({kind:'splash',id:piece.id,sectionId:section.id},section.title,'↳ Splash · '+piece.name,
-         piece.count,'—',<SmallInput label={'Splash height '+piece.name} value={piece.splashHeightIn??4}
-          disabled={!editable} commit={v=>setPiece(section,piece,{splashHeightIn:v??4})}/>,
+         piece.count,'—',<>
+          <span className="qqt-splash-width-mobile" aria-label="Splash dimensions in details">—</span>
+          <span className="qqt-splash-height-desktop"><SmallInput label={'Splash height '+piece.name}
+           value={piece.splashHeightIn??4} disabled={!editable}
+           commit={v=>setPiece(section,piece,{splashHeightIn:v??4})}/></span>
+         </>,
          sf.format(takeoffPieceSplashSf(piece)),
          <span className="qqt-readonly" title="This selling price is included in Area stone pricing">Included in stone</span>,
          !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,
