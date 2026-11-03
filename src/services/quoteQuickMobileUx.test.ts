@@ -5,6 +5,8 @@ import {join} from 'node:path';
 const source=(path:string)=>readFileSync(join(process.cwd(),path),'utf8');
 const mobile=source('src/quote-quick-mobile.css');
 const quote=source('src/components/QuotesMobileBeta.tsx');
+const mobileChrome=source('src/components/MobileAppChrome.tsx');
+const compactChrome=source('src/mobile-profile-quote-toolbar.css');
 const areas=source('src/components/QuoteQuickAreaSummary.tsx');
 const takeoffs=source('src/components/QuoteCompactTakeoffs.tsx');
 const review=source('src/components/QuoteBetaReview.tsx');
@@ -42,13 +44,23 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(takeoffs).toContain('onClick={()=>duplicateRows(selected)}');
   expect(mobile).toContain('.qqt-row .qqt-actions button');
  });
- it('does not leave floating Undo or More controls over phone worksheets',()=>{
-  expect(quote).toContain('qmb-quick-history');
+ it('moves quote navigation and history into the shared mobile app bar',()=>{
+  expect(quote).not.toContain('qmb-quote-library-back');
+  expect(quote).not.toContain('qmb-quick-history');
   expect(quote).toContain('SalesDocumentActionsMenu quote={quote}');
-  expect(quote).toContain("quote.documentType==='pricing-schedule'&&quoteTab!=='preview'&&<div className=\"qmb-history\"");
-  expect(mobile).toContain('.qmb-quote-footer');
-  expect(mobile).toContain('white-space:normal');
-  expect(mobile).toContain('.qqr-footer');
+  expect(quote).toContain('sales-shop:quotes-beta-back');
+  expect(mobileChrome).toContain('mobile-quote-back');
+  expect(mobileChrome).toContain('mobile-quote-history-button');
+  expect(mobileChrome).toContain("onClick={backFromQuote}");
+  expect(mobileChrome).toContain('undoQuote(activeQuote.id)');
+  expect(mobileChrome).toContain('redoQuote(activeQuote.id)');
+  expect(mobileChrome).toContain('mobile-profile-trigger');
+  expect(mobileChrome).toContain('openQuickNote');
+  expect(mobileChrome).toContain('openSearch');
+  expect(mobileChrome).toContain('openCreate');
+  expect(mobileChrome).toContain('<BuildBadge compact />');
+  expect(compactChrome).toContain('.mobile-profile-panel');
+  expect(compactChrome).toContain('.mobile-quote-toolbar-spacer');
   expect(quote).toContain('qmb-pricing-footer-slot');
   expect(review).toContain('footerTarget?createPortal(footer,footerTarget):footer');
   expect(review).not.toContain('className="qmb-pagehead qqr-pagehead"');
