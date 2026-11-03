@@ -230,3 +230,29 @@
 .sales-activity-dialog select{min-width:0;width:100%;min-height:38px;padding:8px;
  border:1px solid var(--ss-theme-border,#ddd);border-radius:7px;
  background:var(--ss-theme-card,#fff);color:inherit;font-size:16px;}
+
+/* Native-feeling, grabber-only mobile sheets. Form scrolling never triggers a swipe-close. */
+.sales-sheet-grabber{display:none;}
+@media(max-width:700px){
+ .sales-sheet-grabber{display:flex;align-items:center;justify-content:center;flex:0 0 22px;
+  height:22px;width:100%;touch-action:none;user-select:none;cursor:grab;}
+ .sales-sheet-grabber>span{display:block;width:38px;height:5px;border-radius:99px;
+  background:var(--ss-theme-muted,#888);opacity:.48;}
+ .sales-activity-dialog,.sales-calendar-popover{
+  animation:sales-sheet-rise .19s ease-out both;
+  max-height:min(92dvh,calc(100svh - 12px));
+  overscroll-behavior:contain;
+ }
+ .sales-activity-dialog{padding-bottom:max(0px,env(safe-area-inset-bottom,0px));}
+ .sales-activity-dialog>footer{position:sticky;bottom:0;z-index:5;
+  background:var(--ss-theme-card,#fff);padding-bottom:max(12px,env(safe-area-inset-bottom,0px));}
+ .sales-activity-form-body{min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+ .sales-calendar-popover{padding-bottom:max(0px,env(safe-area-inset-bottom,0px));}
+ .sales-calendar-weekdays,.sales-calendar-grid{flex-shrink:0;}
+ .sales-calendar-day-preview{min-height:60px;max-height:30dvh;}
+ .sales-calendar-legend{flex-shrink:0;}
+}
+@keyframes sales-sheet-rise{from{opacity:.6;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+ .sales-activity-dialog,.sales-calendar-popover{animation:none!important;}
+}
