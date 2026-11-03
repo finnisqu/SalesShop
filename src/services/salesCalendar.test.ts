@@ -7,8 +7,8 @@ const task=(id:string,dueDate?:string,extra:Partial<PersonalTask>={})=>({
  id,title:'Task '+id,dueDate,status:'open',createdAt:'2026-11-01T12:00:00Z',
  updatedAt:'2026-11-01T12:00:00Z',...extra,
 }) as PersonalTask;
-const deal=(dueDate:string):Project=>({
- id:'d1',name:'Riverwalk Apartments',stage:'Intent to Bid',dueDate,
+const deal=(bidDueDate:string):Project=>({
+ id:'d1',name:'Riverwalk Apartments',stage:'Intent to Bid',bidDueDate,
  createdAt:'2026-11-01T12:00:00Z',updatedAt:'2026-11-01T12:00:00Z',
 });
 const quote=(id:string):Quote=>({

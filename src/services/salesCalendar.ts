@@ -39,9 +39,10 @@ export function buildSalesCalendarEvents(
    recordType:'task',recordId:task.id});
  }
  for(const deal of deals){
-  if(!deal.dueDate||!datePattern.test(deal.dueDate))continue;
-  events.push({id:'bid:'+deal.id,date:deal.dueDate,kind:'bid',title:deal.name,
-   detail:'Bid due · '+deal.stage,recordType:'project',recordId:deal.id});
+  if(!deal.bidDueDate||!datePattern.test(deal.bidDueDate))continue;
+  events.push({id:'bid:'+deal.id,date:deal.bidDueDate,kind:'bid',title:deal.name,
+   detail:'Bid due'+(deal.bidDueTime?' at '+deal.bidDueTime:'')+' · '+deal.stage,
+   time:deal.bidDueTime,recordType:'project',recordId:deal.id});
  }
  for(const activity of activities){
   if((activity.type==='notebook-touchpoint'||activity.type==='manual-touchpoint')&&!activity.metadata?.voidedAt){

@@ -39,6 +39,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     companyId: deal?.companyId ?? '',
     amount: deal?.amount?.toString() ?? '',
     dueDate: deal?.dueDate ?? '',
+    bidDueDate: deal?.bidDueDate??deal?.dueDate??'',
+    bidDueTime: deal?.bidDueTime??'',
     nextAction: deal?.nextAction ?? '',
     lastTouchpoint: deal?.lastTouchpoint ?? '',
   });
@@ -49,6 +51,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     if (!editing && deal) setDraft({
       name: deal.name, stage: deal.stage, companyId: deal.companyId ?? '',
       amount: deal.amount?.toString() ?? '', dueDate: deal.dueDate ?? '',
+      bidDueDate:deal.bidDueDate??deal.dueDate??'',bidDueTime:deal.bidDueTime??'',
       nextAction: deal.nextAction ?? '', lastTouchpoint: deal.lastTouchpoint ?? '',
     });
   }, [deal, editing]);
@@ -71,7 +74,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     if (amount !== undefined && (!Number.isFinite(amount) || amount < 0)) return;
     updateDeal(deal.id, {
       name: draft.name.trim(), stage: draft.stage, amount,
-      dueDate: draft.dueDate || undefined,
+      // Keep the older dueDate mirror for Board and existing quote links.
+      dueDate:draft.bidDueDate||undefined,
+      bidDueDate:draft.bidDueDate||undefined,
+      bidDueTime:draft.bidDueDate?(draft.bidDueTime||undefined):undefined,
       nextAction: draft.nextAction.trim() || undefined,
       lastTouchpoint: draft.lastTouchpoint || undefined,
       ...(!draft.companyId && deal.companyId ? { companyName: '' } : {}),
@@ -100,7 +106,9 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             {PROJECT_STAGES.map(stage => <option key={stage} value={stage}>{stage}</option>)}
           </select></label>
           <label>Amount<input type="number" min="0" step="0.01" value={draft.amount} onChange={event => setDraft({...draft,amount:event.target.value})} /></label>
-          <label>Bid due date<input type="date" value={draft.dueDate} onChange={event => setDraft({...draft,dueDate:event.target.value})} /></label>
+          <label>Bid due date<input type="date" value={draft.bidDueDate} onChange={event => setDraft({...draft,bidDueDate:event.target.value})} /></label>
+          <label>Bid due time (optional)<input type="time" disabled={!draft.bidDueDate}
+           value={draft.bidDueTime} onChange={event=>setDraft({...draft,bidDueTime:event.target.value})}/></label>
           <label>Company<select value={draft.companyId} onChange={event => setDraft({...draft,companyId:event.target.value})}>
             <option value="">No company selected</option>
             {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map(company =>
@@ -115,7 +123,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Stage">{deal.stage}</RecordProperty>
           <RecordProperty label="Amount">{deal.amount === undefined ? 'Not set' : money.format(deal.amount)}</RecordProperty>
-          <RecordProperty label="Bid due date">{displayDate(deal.dueDate)}</RecordProperty>
+          <RecordProperty label="Bid deadline">{displayDate(deal.bidDueDate??deal.dueDate)}{deal.bidDueTime?' · '+deal.bidDueTime:''}</RecordProperty>
           <RecordProperty label="Next action">{deal.nextAction || 'Not set'}</RecordProperty>
           <RecordProperty label="Last touchpoint">{displayDate(deal.lastTouchpoint)}</RecordProperty>
           <RecordProperty label="Created">{displayDate(deal.createdAt)}</RecordProperty>
