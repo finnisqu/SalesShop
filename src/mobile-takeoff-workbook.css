@@ -355,18 +355,31 @@
   }
 }
 
-/* Give mobile row-detail sheets a consistent, usable editing canvas.
-   The previous height:auto stopped at the first handful of fields, leaving
-   most of the screen behind the sheet. Keep the header and Done footer fixed
-   within the sheet; only the form body scrolls. */
+/* The Takeoffs ... sheet is a near-full-height viewport panel, not an
+   auto-height card. Anchor BOTH edges in the visible mobile viewport instead
+   of mixing a 100dvh overlay with a capped visualViewport panel: that mix
+   could place most of the 84dvh panel below Safari's toolbar.
+   The quote footer already uses --ss-mobile-footer-inset successfully, so
+   use that same live browser clearance here. */
 @media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
   .sales-app .qmb.qqt-overlay>.qqt-panel.qqt-panel {
-    height:min(84dvh,calc(var(--ss-mobile-visual-height,100dvh) - 14px))!important;
-    max-height:min(90dvh,calc(var(--ss-mobile-visual-height,100dvh) - 14px))!important;
+    position:fixed!important;
+    top:clamp(12px,3dvh,28px)!important;
+    right:0!important;
+    bottom:max(var(--ss-mobile-footer-inset,0px),env(safe-area-inset-bottom,0px))!important;
+    left:0!important;
+    inset-block:auto!important;
+    inset-inline:auto!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    max-height:none!important;
     min-height:0!important;
-    flex:0 0 auto!important;
+    flex:none!important;
+    align-self:auto!important;
     display:flex;
     flex-direction:column;
+    overflow:hidden;
   }
   .sales-app .qmb.qqt-overlay>.qqt-panel.qqt-panel>header {
     flex:0 0 auto;
