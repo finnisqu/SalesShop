@@ -4,6 +4,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase';
 import { appAbsoluteUrl } from '../lib/appUrl';
 import { clearCloudIdentityCache, ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
 import {recordAuthLifecycle} from '../services/appLifecycleDiagnostics';
+import {reuseReadyWorkspace} from '../services/authSessionPolicy';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
 import type { TeamDepartment } from '../services/teamDepartments';
@@ -107,11 +108,11 @@ async function applySession(session: Session | null, eventName='GET_SESSION'): P
   const userId = session?.user.id ?? null;
   if (activeSessionApplication && activeSessionUserId === userId) return activeSessionApplication;
   const current=useAuthStore.getState();
-  const sameReadyWorkspace=Boolean(
-   current.ready&&!current.busy&&session&&current.mode==='cloud'&&
-   current.user?.id===userId&&!current.inviteProblem&&
-   (current.organizationId||current.platformRole==='developer')
-  );
+  const sameReadyWorkspace=reuseReadyWorkspace({
+   ready:current.ready,busy:current.busy,mode:current.mode,
+   userId:current.user?.id,organizationId:current.organizationId,
+   platformRole:current.platformRole,inviteProblem:current.inviteProblem,
+  },userId);
   if(sameReadyWorkspace&&session){
    useAuthStore.setState({session,user:session.user});
    recordAuthLifecycle(eventName,true);
