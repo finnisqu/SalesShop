@@ -68,6 +68,11 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
     .map(q=>({key:'quote:'+q.id,linked:{type:'quote' as const,id:q.id,label:'Quote · '+q.title},label:'Quote · '+q.title})),
  ],[contacts,companies,projects,quotes,mode,currentUser]);
  const close=()=>{setOpen(false);setError('');};
+ const discard=()=>{
+  clearSavedDraft(draftKey);
+  setMethod('call');setNotes('');setLinks([]);setOccurred(dateTimeLocal());
+  close();
+ };
  const addLinks=(items:TaskAssociation[])=>{
   // CRM activity schema stores one ID per record kind. Newest selection wins.
   const seen=new Set<TaskLink['type']>();
@@ -123,7 +128,11 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
      <p className="sales-activity-note">Unsaved details are recovered on this device if SalesShop reloads. Saving logs the interaction to CRM history; it doesn't send a message.</p>
      {error&&<p role="alert" className="sales-activity-error">{error}</p>}
     </div>
-    <footer><button type="button" onClick={close}>Cancel</button><button type="submit">Save activity</button></footer>
+    <footer>
+     <button type="button" onClick={discard} title="Erase this unsaved activity draft">Discard draft</button>
+     <button type="button" onClick={close}>Close</button>
+     <button type="submit">Save activity</button>
+    </footer>
    </form>
   </div>,document.body)}
  </>;
