@@ -115,7 +115,12 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
   <button type="button" className="qqs-value" title={typeof value==='string'?value:label}
    data-quick-grid-editable={inline&&!inline.disabled?'true':undefined}
    onFocus={onFocus}
-   onClick={()=>{onFocus();setStartWith(undefined);if(inline&&!inline.disabled)setEditing(true);}}
+   onClick={()=>{
+    onFocus();setStartWith(undefined);
+    if(inline&&!inline.disabled)setEditing(true);
+    else if(window.matchMedia('(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse)').matches)
+     onEdit();
+   }}
    onKeyDown={event=>{
     if(!inline||inline.disabled||event.ctrlKey||event.metaKey||event.altKey)return;
     if(/^[0-9.-]$/.test(event.key)){
