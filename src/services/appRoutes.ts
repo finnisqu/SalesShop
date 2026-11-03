@@ -1,7 +1,7 @@
 import type {NavigationLocation,AppView,CatalogSection} from '../store/navigationStore';
 
 /** Pure route mapping. Customer signing (/q/) stays in the isolated public shell. */
-const SECTIONS:readonly CatalogSection[]=['materials','sinks','other','rates','suppliers'];
+const SECTIONS:readonly CatalogSection[]=['materials','sinks','other','rates','suppliers','tags'];
 const clean=(id:string)=>{
   try {return decodeURIComponent(id);} catch {return '';}
 };
