@@ -169,7 +169,6 @@ export function MobileAppChrome() {
               <path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/>
             </svg>
           </button>
-          <span className="mobile-quote-actions-slot" id="mobile-quote-actions-slot" aria-label="Document options"/>
           <span className="mobile-quote-toolbar-spacer" aria-hidden="true"/>
         </> : <>
           {canGoBack&&<button type="button" className="mobile-app-back-button"
@@ -178,6 +177,7 @@ export function MobileAppChrome() {
             {view!=='quotes'&&<strong>{contextTitle}</strong>}
           </div>
         </>}
+        <div className="mobile-quote-actions-slot" id="mobile-quote-actions-slot" aria-label="Document options"/>
         <button type="button" className="mobile-app-menu-button" onClick={openNavigation}
           aria-label="Open SalesShop navigation" title="SalesShop navigation">☰</button>
         <div className="mobile-profile-menu" ref={profileRef}>
