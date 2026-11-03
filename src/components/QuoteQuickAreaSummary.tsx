@@ -167,6 +167,7 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
  const extras=section?data?.specialty??[]:general.lines;
  const title=section?.title??'General';
  const input=useRef<HTMLDivElement>(null);
+ const sheetSwipeStart=useRef<number|null>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
  useEffect(()=>{
@@ -198,7 +199,14 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
  }}>
    <div className="qqs-panel" role="dialog" aria-modal="true"
     aria-label={detailName[detail.kind]+' for '+title} ref={input}>
-    <header><div><small>QUICK QUOTE · {title}</small><h2>{detailName[detail.kind]}</h2></div>
+    <header onTouchStart={event=>{
+      if((event.target as HTMLElement).closest('button,input,select'))return;
+      sheetSwipeStart.current=event.touches[0]?.clientY??null;
+     }} onTouchEnd={event=>{
+      const start=sheetSwipeStart.current;
+      sheetSwipeStart.current=null;
+      if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
+     }}><div><small>QUICK QUOTE · {title}</small><h2>{detailName[detail.kind]}</h2></div>
      <button type="button" className="qqs-panel-close" onClick={onClose}
       aria-label="Close editor">×</button></header>
     <div className="qqs-panel-body">
