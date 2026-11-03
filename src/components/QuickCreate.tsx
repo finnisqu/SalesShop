@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { createPricingScheduleData } from '../services/pricingSchedule';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
-import { useQuoteStore } from '../store/quoteStore';
 import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
+import {useQuotesMobileBetaStore} from '../store/quotesMobileBetaStore';
 
 type NamedCreateMode = 'project' | 'account' | null;
 
@@ -14,13 +13,9 @@ export function QuickCreate() {
   const [namedMode, setNamedMode] = useState<NamedCreateMode>(null);
   const [name, setName] = useState('');
 
-  const hydrateQuotes = useQuoteStore((state) => state.hydrate);
-  const createQuote = useQuoteStore((state) => state.createQuote);
-  const updateQuote = useQuoteStore((state) => state.updateQuote);
   const createProject = useCrmStore((state) => state.createProject);
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createEntry = useNotebookStore((state) => state.createEntry);
-  const openQuote = useNavigationStore((state) => state.openQuote);
   const openProject = useNavigationStore((state) => state.openProject);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const setView = useNavigationStore((state) => state.setView);
@@ -31,18 +26,24 @@ export function QuickCreate() {
     setName('');
   };
 
-  const makeQuote = (pricingSchedule = false) => {
-    hydrateQuotes();
-    const quoteId = createQuote({
-      documentType: pricingSchedule ? 'pricing-schedule' : 'quote',
-      title: pricingSchedule ? 'Untitled pricing schedule' : 'Untitled quote',
-    });
-    if (pricingSchedule) {
-      updateQuote(quoteId, { pricingSchedule: createPricingScheduleData(quoteId) });
-    }
+  const openDocumentPicker = () => {
     close();
+    // Quote creation always starts with the guided template picker.
     useQuoteLibraryStore.getState().setMode('mine');
-    openQuote(quoteId);
+    useQuotesMobileBetaStore.getState().setEnabled(true);
+    useQuotesMobileBetaStore.getState().setLocation({
+      page:'library',quoteTab:'build',areaTab:'measure',areaId:null,
+    });
+    try{window.sessionStorage.setItem('salesshop-open-document-picker-v1','1');}catch{/* optional */}
+    setView('quotes');
+    window.dispatchEvent(new Event('salesshop:open-document-picker'));
+  };
+
+  const startTask = () => {
+    close();
+    try{window.sessionStorage.setItem('salesshop-create-task-v1','1');}catch{/* optional */}
+    setView('tasks');
+    window.dispatchEvent(new Event('salesshop:create-task'));
   };
 
   const makeNotebookPage = () => {
@@ -90,15 +91,14 @@ export function QuickCreate() {
           </form>
         ) : (
           <div className="quick-create-options">
-            <button type="button" className="quick-create-option quick-create-option-primary" onClick={() => makeQuote(false)}>
+            <button type="button" className="quick-create-option quick-create-option-primary" onClick={openDocumentPicker}>
               <span className="quick-create-icon">Q</span>
-              <span><strong>New Quote</strong><small>Start selling. CRM fills in underneath.</small></span>
+              <span><strong>New Quote / Schedule</strong><small>Choose a template, then follow the guided editor.</small></span>
               <b>›</b>
             </button>
-            <button type="button" className="quick-create-option" onClick={() => makeQuote(true)}>
-              <span className="quick-create-icon">$</span>
-              <span><strong>New Pricing Schedule</strong><small>Simple Rates, Plan Pricing, or Spreadsheet.</small></span>
-              <b>›</b>
+            <button type="button" className="quick-create-option compact" onClick={startTask}>
+              <span className="quick-create-icon">✓</span>
+              <span><strong>New Task</strong><small>Open the task editor immediately.</small></span><b>›</b>
             </button>
             <div className="quick-create-divider" />
             <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('project')}><span className="quick-create-icon">D</span><span><strong>New Deal</strong><small>Add an opportunity or job.</small></span><b>›</b></button>
