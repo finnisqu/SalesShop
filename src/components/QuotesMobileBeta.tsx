@@ -516,6 +516,7 @@ export function QuotesMobileBeta() {
   const organizationId=useAuthStore(s=>s.organizationId);
   const builderScope=quoteBuilderPreferenceScope(authMode,organizationId,userId??null);
   const quickAddMenuRef=useRef<HTMLDetailsElement>(null);
+  const [pricingFooterTarget,setPricingFooterTarget]=useState<HTMLDivElement|null>(null);
   const [builderPrefsState,setBuilderPrefsState]=useState<{scope:string|null;prefs:QuoteBuilderPreferences}>(
     ()=>({scope:builderScope,prefs:readQuoteBuilderPreferences(builderScope)}));
   const builderPrefs=builderPrefsState.scope===builderScope
@@ -1204,7 +1205,8 @@ export function QuotesMobileBeta() {
             canIssue={canIssue} sending={sending} error={error} onIssue={issueQuote}
             previewedKey={previewedDeliveryKey} approvedKey={approvedDeliveryKey}
             onApprove={approved=>setApprovedDeliveryKey(approved?quoteDeliveryApprovalKey(quote):null)}
-            reviewedKey={reviewedDeliveryKey} onReview={setReviewedDeliveryKey}/>}
+            reviewedKey={reviewedDeliveryKey} onReview={setReviewedDeliveryKey}
+            footerTarget={pricingFooterTarget}/>}
         {quoteTab==='details'&&<QuoteBetaDetails quote={quote}/>} 
         {quoteTab==='preview'&&<>
           <QuoteBetaEditablePreview quote={quote}
@@ -1225,6 +1227,8 @@ export function QuotesMobileBeta() {
         </>}
         </div>
       </div>
+      {quoteTab==='pricing'&&quote.documentType!=='pricing-schedule'&&
+       <div className="qmb-pricing-footer-slot" ref={setPricingFooterTarget}/>}
       {quoteTab!=='pricing'&&(quoteTab!=='preview'||quote.documentType==='pricing-schedule')&&<footer className="qmb-footer qmb-quote-footer">
         <div className="qmb-guided-footer-left">
           <button type="button" className="qmb-guided-back" onClick={()=>
