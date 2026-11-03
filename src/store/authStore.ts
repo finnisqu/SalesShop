@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 import { appAbsoluteUrl } from '../lib/appUrl';
 import { clearCloudIdentityCache, ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
+import {recordAuthLifecycle} from '../services/appLifecycleDiagnostics';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
 import type { TeamDepartment } from '../services/teamDepartments';
@@ -100,11 +101,27 @@ function browserTimezone() {
   }
 }
 
-async function applySession(session: Session | null): Promise<void> {
-  // SIGNED_IN, INITIAL_SESSION and getSession can arrive together. Do not
-  // race the one-use invitation RPC or hydrate one account twice.
+async function applySession(session: Session | null, eventName='GET_SESSION'): Promise<void> {
+  // Routine SIGNED_IN / TOKEN_REFRESHED events can fire when a browser tab regains focus.
+  // Preserve mounted screens when the workspace is already ready for this user.
   const userId = session?.user.id ?? null;
   if (activeSessionApplication && activeSessionUserId === userId) return activeSessionApplication;
+  const current=useAuthStore.getState();
+  const sameReadyWorkspace=Boolean(
+   current.ready&&!current.busy&&session&&current.mode==='cloud'&&
+   current.user?.id===userId&&!current.inviteProblem&&
+   (current.organizationId||current.platformRole==='developer')
+  );
+  if(sameReadyWorkspace&&session){
+   useAuthStore.setState({session,user:session.user});
+   recordAuthLifecycle(eventName,true);
+   return;
+  }
+  if(!session&&current.ready&&!current.user){
+   recordAuthLifecycle(eventName,true);
+   return;
+  }
+  recordAuthLifecycle(eventName,false);
   activeSessionUserId = userId;
   const running = performSessionApplication(session);
   activeSessionApplication = running;
@@ -259,7 +276,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         authListenerStarted = true;
         supabase.auth.onAuthStateChange((event, session) => {
           if (event === 'PASSWORD_RECOVERY') useAuthStore.setState({ passwordRecovery: true });
-          void applySession(session);
+          void applySession(session,event);
         });
       }
 
