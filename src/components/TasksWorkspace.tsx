@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
+import {requestActivityDetail} from './ActivityDetailHost';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
@@ -282,6 +283,9 @@ export function TasksWorkspace(){
             </div>
             {task.notes&&<p>{task.notes}</p>}
             {task.sourceText&&<blockquote>{task.sourceText.slice(0,260)}</blockquote>}
+            {task.sourceLabel==='CRM Activity'&&task.sourceObjectId&&
+             <button type="button" className="tasks-source" onClick={()=>
+              requestActivityDetail(task.sourceObjectId!)}>Open original Activity ↗</button>}
             {normalizedTaskAssociations(task).map(link=>
               <button key={link.type+':'+link.id} type="button" className="tasks-source"
                 onClick={()=>openSource(link)}>Open {link.label??link.type} ↗</button>)}

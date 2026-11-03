@@ -6,6 +6,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useNavigationStore} from '../store/navigationStore';
+import {usePersonalTaskStore} from '../store/personalTaskStore';
 import type {ActivityMetadata} from '../types/crm';
 import './sales-calendar.css';
 
@@ -39,6 +40,16 @@ export function ActivityDetailHost(){
   department=useAuthStore(s=>s.teamDepartment),user=useAuthStore(s=>s.user?.id);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const nav=useNavigationStore();
+ const personalScope=usePersonalTaskStore(s=>s.scope);
+ const tasks=usePersonalTaskStore(s=>s.tasks);
+ const relevantTasks=tasks.filter(t=>personalScope&&t.workspaceScope===personalScope&&
+  !t.deletedAt&&t.sourceLabel==='CRM Activity'&&t.sourceObjectId===id);
+ const openTask=(taskId:string)=>{
+  close();
+  try{window.sessionStorage.setItem('salesshop-open-task-id-v1',taskId);}catch{/* optional */}
+  nav.setView('tasks');
+  window.dispatchEvent(new Event('salesshop:open-calendar-task'));
+ };
  const quote=quotes.find(q=>q.id===activity?.quoteId&&(!q.archivedAt||mode==='local'));
  const editable=!!activity&&!activity.metadata?.voidedAt&&
   ['manual-touchpoint','notebook-touchpoint'].includes(activity.type)&&
@@ -116,6 +127,13 @@ export function ActivityDetailHost(){
        {!activity.contactId&&!activity.companyId&&!activity.projectId&&!activity.quoteId&&
         <p className="sales-activity-note">No linked CRM records.</p>}
       </section>
+      {relevantTasks.length>0&&<section className="sales-activity-related">
+       <h3>My follow-up Tasks</h3>
+       {relevantTasks.map(task=><button type="button" key={task.id}
+         className="sales-activity-detail-link" onClick={()=>openTask(task.id)}>
+        <strong>{task.title}</strong><small>{task.dueDate?'Due '+task.dueDate:'No due date'}</small>
+        <span aria-hidden="true">›</span></button>)}
+      </section>}
       <p className="sales-activity-note">Shared CRM history · this is not a private note.</p>
      </>}
     {confirmVoid&&<p role="alert" className="sales-activity-void-warning">
