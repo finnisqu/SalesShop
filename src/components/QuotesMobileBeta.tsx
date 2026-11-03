@@ -712,6 +712,12 @@ export function QuotesMobileBeta() {
     setPage('quote');setQuoteTab(tab);setAreaId(null);
     if(quoteScrollRef.current)quoteScrollRef.current.scrollTop=0;
   };
+  // The shared mobile app bar owns Back while the Beta editor owns navigation.
+  useEffect(()=>{
+    const onBack=()=>{if(page==='area'||page==='review')navigateDocument('build');else if(page==='quote')showLibrary();};
+    window.addEventListener('sales-shop:quotes-beta-back',onBack);
+    return ()=>window.removeEventListener('sales-shop:quotes-beta-back',onBack);
+  },[page,navigateDocument,showLibrary]);
   const requestCopy=(target:Quote)=>{
     if(!canManageLibrary||target.archivedAt)return;
     setCopyRequest({id:target.id,title:target.title});
@@ -1119,14 +1125,6 @@ export function QuotesMobileBeta() {
       <div className="qmb-quote-chrome">
         <div className="qmb-quote-sticky">
           <div className="qmb-quote-identity">
-            <button type="button" className="qmb-quote-library-back"
-              onClick={showLibrary} aria-label="Back to Documents" title="Back to Documents">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="m15 18-6-6 6-6"/>
-              </svg>
-              <span>Documents</span>
-            </button>
             <input className="qmb-quote-name" aria-label="Quote title" maxLength={300}
               disabled={!editable} placeholder="Document name" value={quote.title}
               onChange={e=>update(quote.id,{title:e.target.value})}/>
@@ -1151,29 +1149,10 @@ export function QuotesMobileBeta() {
                 </span>
                 <SalesDocumentSaveStatus quote={quote} cloudMode={authMode==='cloud'} compact/>
               </div>
-              {quote.documentType!=='pricing-schedule'&&<div className="qmb-quick-history" role="toolbar"
-                aria-label="Quote editing actions">
-                <button type="button" disabled={!editable||undoDepth===0} onClick={()=>undo(quote.id)}
-                  title="Undo last quote edit" aria-label="Undo quote edit">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/>
-                  </svg>
-                  <span>Undo</span>
-                </button>
-                <button type="button" disabled={!editable||redoDepth===0} onClick={()=>redo(quote.id)}
-                  title="Redo last quote edit" aria-label="Redo quote edit">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/>
-                  </svg>
-                  <span>Redo</span>
-                </button>
-                <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
-                  canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
-                  onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
-                  onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
-              </div>}
+              <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
+                canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
+                onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
+                onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
             </div>
           </div>
           {quote.templateOrigin&&<div className="qmb-pad qmb-document-origin">
@@ -1429,14 +1408,7 @@ export function QuotesMobileBeta() {
         setQuoteTab('preview');setPage('quote');setAreaId(null);
       }}
       />}
-    {quote&&page==='quote'&&quote.documentType==='pricing-schedule'&&quoteTab!=='preview'&&<div className="qmb-history" aria-label="Undo or redo">
-      <button type="button" disabled={!editable||!undoDepth} onClick={()=>undo(quote.id)} aria-label="Undo">↶</button>
-      <button type="button" disabled={!editable||!redoDepth} onClick={()=>redo(quote.id)} aria-label="Redo">↷</button>
-      <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
-        canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
-        onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
-        onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
-    </div>}
+
   </main>;
 }
 
