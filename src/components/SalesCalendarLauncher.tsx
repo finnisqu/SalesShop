@@ -25,6 +25,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [selected,setSelected]=useState(()=>localDateKey(new Date()));
  const [isPhone,setIsPhone]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches);
  const [monthExpanded,setMonthExpanded]=useState(false);
+ const [showAllDay,setShowAllDay]=useState(false);
  useEffect(()=>{
   if(!embedded)return;
   const media=window.matchMedia('(max-width:760px)');
@@ -57,6 +58,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const weekMode=embedded&&isPhone&&!monthExpanded;
  const visibleDays=weekMode?weekDays:days;
  const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected),[events,selected]);
+ const shownDayEvents=embedded&&isPhone&&!showAllDay?eventsForDay.slice(0,5):eventsForDay;
+ useEffect(()=>{setShowAllDay(false);},[selected]);
  const placement=()=>{
   if(!button.current)return;
   const rect=button.current.getBoundingClientRect();
@@ -160,15 +163,23 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     </div>
     <section className="sales-calendar-day-preview" aria-label={'Items for '+dateLabel(selected)}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
-      <span>{eventsForDay.length} {eventsForDay.length===1?'item':'items'}</span></div>
+      <div><span>{eventsForDay.length} {eventsForDay.length===1?'item':'items'}</span>
+       {embedded&&<button type="button" className="sales-calendar-all-tasks"
+        onClick={()=>nav.setView('tasks')}>Tasks ›</button>}
+      </div></div>
      {eventsForDay.length?<div className="sales-calendar-agenda">
-       {eventsForDay.map(event=><button type="button" key={event.id}
+       {shownDayEvents.map(event=><button type="button" key={event.id}
         onClick={()=>openRecord(event)}>
          <span className={'sales-calendar-event-dot is-'+event.kind} aria-hidden="true"/>
          <span className="sales-calendar-event-text"><strong>{event.title}</strong>
           <small>{labels[event.kind]} · {event.detail}</small></span>
          <span aria-hidden="true">›</span>
         </button>)}
+       {embedded&&isPhone&&eventsForDay.length>5&&
+        <button type="button" className="sales-calendar-show-more"
+         onClick={()=>setShowAllDay(value=>!value)}>
+         {showAllDay?'Show fewer':'Show '+(eventsForDay.length-5)+' more'}
+        </button>}
       </div>:<p className="sales-calendar-empty">Nothing scheduled or logged for this day.</p>}
     </section>
     <div className="sales-calendar-legend" aria-label="Calendar event types">
