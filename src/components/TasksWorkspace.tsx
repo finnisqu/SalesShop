@@ -83,7 +83,8 @@ export function TaskEditor({initial,onCancel,onSave}:{
     id:initialTaskId??undefined,
    });
   },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks]);
-  const cancel=()=>{clearSavedDraft(scopeKey);clearSavedDraft(activeKey);onCancel();};
+  const close=()=>{clearSavedDraft(activeKey);onCancel();};
+  const discard=()=>{clearSavedDraft(scopeKey);close();};
   const sourceLabel=initial.sourceLabel;
   const suggestionScope=usePersonalTaskStore(s=>s.scope);
   const suggestionTasks=usePersonalTaskStore(s=>s.tasks);
@@ -111,11 +112,11 @@ export function TaskEditor({initial,onCancel,onSave}:{
       sourceLabel:selectedLinks[0]?.label??sourceLabel,sourceText,sourceObjectId});
     clearSavedDraft(scopeKey);clearSavedDraft(activeKey);
   };
-  return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)cancel();}}>
+  return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)close();}}>
     <form className="tasks-editor" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
       onSubmit={submit}>
       <header><strong>{'id'in initial?'Edit task':'New task'}</strong>
-        <button type="button" aria-label="Close task editor" onClick={cancel}>×</button></header>
+        <button type="button" aria-label="Close task editor" onClick={close}>×</button></header>
       <label>Task title<input autoFocus required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/></label>
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
       <TaskAssociationsField options={associations.map(item=>({...item,
@@ -142,7 +143,10 @@ export function TaskEditor({initial,onCancel,onSave}:{
       </div>
       <label>Notes<textarea rows={3} maxLength={5000} value={notes} onChange={e=>setNotes(e.target.value)}
         placeholder="Context, next steps, or call notes…"/></label>
-      <footer><button type="button" onClick={cancel}>Cancel</button><button type="submit" className="tasks-primary">Save task</button></footer>
+      <p className="tasks-editor-due-hint">Unsaved changes are kept on this device if you close or reload SalesShop.</p>
+      <footer><button type="button" onClick={discard}>Discard draft</button>
+       <button type="button" onClick={close}>Close</button>
+       <button type="submit" className="tasks-primary">Save task</button></footer>
     </form>
   </div>;
 }
@@ -184,7 +188,7 @@ export function TasksWorkspace(){
   const viewing=own.find(task=>task.id===viewingId)??null;
   // Reopen an in-progress editor after the browser discards and restores its tab.
   useEffect(()=>{
-    if(!scope||storedScope!==scope||editing||rolePreview)return;
+    if(!scope||storedScope!==scope||editing||viewingId||rolePreview)return;
     const activeKey=draftStorageKey('task:active',mode,orgId,userId);
     const pending=readSavedDraft<ActiveTaskDraft>(activeKey);
     if(!pending)return;
@@ -193,7 +197,7 @@ export function TasksWorkspace(){
       const current=tasks.find(t=>t.id===pending.id&&!t.deletedAt&&t.workspaceScope===scope);
       if(current)setEditing(current);
     }
-  },[scope,storedScope,tasks,mode,orgId,userId,rolePreview]);
+  },[scope,storedScope,tasks,mode,orgId,userId,rolePreview,viewingId]);
   const counts=useMemo(()=>({
     active:own.filter(t=>condition(t,today)!=='complete').length,
     today:own.filter(t=>condition(t,today)!=='complete'&&
