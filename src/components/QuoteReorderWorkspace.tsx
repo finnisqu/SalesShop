@@ -1,11 +1,10 @@
 import {useRef,useState,type KeyboardEvent as ReactKeyboardEvent,
  type PointerEvent as ReactPointerEvent, type ReactNode} from 'react';
-import type {Quote,QuoteSection,QuoteLine,QuoteTakeoffPiece} from '../types/quote';
+import type {Quote,QuoteSection,QuoteLine} from '../types/quote';
 import {quoteLineAmount} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {quickAreaSummary} from '../services/quoteQuickAreaSummary';
 import {createQuoteTableOrder,type QuoteTableOrder} from '../services/quoteStructure';
-import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import './quote-table-actions.css';
 
 type RowKind='areas'|'pieces'|'sinks'|'charges';
@@ -14,11 +13,11 @@ const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
 const general='__general';
 const orderOf=(draft:QuoteTableOrder,kind:RowKind,group:string):string[] =>
  kind==='areas'?draft.areas:draft[kind][group]??[];
-const moveId=(draft:QuoteTableOrder,kind:RowKind,group:string,id:string,target:string)=>{
+const moveId=(draft:QuoteTableOrder,kind:RowKind,group:string,id:string,target:string,after:boolean)=>{
  const ids=orderOf(draft,kind,group);
  const from=ids.indexOf(id),to=ids.indexOf(target);
  if(from<0||to<0||from===to)return draft;
- const next=[...ids];next.splice(from,1);next.splice(next.indexOf(target),0,id);
+ const next=[...ids];next.splice(from,1);next.splice(next.indexOf(target)+(after?1:0),0,id);
  return kind==='areas'?{...draft,areas:next}:{...draft,[kind]:{...draft[kind],[group]:next}};
 };
 /** Handle-only modal table; editing and selection do not mount until Done. */
@@ -31,11 +30,13 @@ export function QuoteReorderWorkspace({quote,kind,onDone,onCancel}:{
  const arrow=(rowKind:RowKind,group:string,id:string,event:ReactKeyboardEvent<HTMLButtonElement>)=>{
   if(event.key!=='ArrowUp'&&event.key!=='ArrowDown'&&event.key!=='Home'&&event.key!=='End')return;
   event.preventDefault();event.stopPropagation();
-  const ids=orderOf(draft,rowKind,group),index=ids.indexOf(id);
-  const to=event.key==='Home'?0:event.key==='End'?ids.length-1:index+(event.key==='ArrowUp'?-1:1);
-  if(to<0||to>=ids.length||to===index)return;
-  const next=[...ids];next.splice(index,1);next.splice(to,0,id);
-  setDraft(old=>rowKind==='areas'?{...old,areas:next}:{...old,[rowKind]:{...old[rowKind],[group]:next}});
+  setDraft(old=>{
+   const ids=orderOf(old,rowKind,group),index=ids.indexOf(id);
+   const to=event.key==='Home'?0:event.key==='End'?ids.length-1:index+(event.key==='ArrowUp'?-1:1);
+   if(to<0||to>=ids.length||to===index)return old;
+   const next=[...ids];next.splice(index,1);next.splice(to,0,id);
+   return rowKind==='areas'?{...old,areas:next}:{...old,[rowKind]:{...old[rowKind],[group]:next}};
+  });
  };
  const pointerStart=(rowKind:RowKind,group:string,id:string,e:ReactPointerEvent<HTMLButtonElement>)=>{
   if(e.pointerType==='mouse'&&e.button!==0)return;
@@ -47,7 +48,11 @@ export function QuoteReorderWorkspace({quote,kind,onDone,onCancel}:{
   if(!active||active.pointerId!==e.pointerId)return;
   const target=document.elementFromPoint(e.clientX,e.clientY)?.closest<HTMLElement>('[data-qtr-id]');
   if(!target||target.dataset.qtrKind!==active.kind||target.dataset.qtrGroup!==active.group)return;
-  if(target.dataset.qtrId)setDraft(old=>moveId(old,active.kind,active.group,active.id,target.dataset.qtrId!));
+  if(target.dataset.qtrId){
+   const bounds=target.getBoundingClientRect();
+   const after=e.clientY>=bounds.top+bounds.height/2;
+   setDraft(old=>moveId(old,active.kind,active.group,active.id,target.dataset.qtrId!,after));
+  }
  };
  const pointerEnd=()=>{drag.current=null;};
  const handle=(rowKind:RowKind,group:string,id:string,label:string)=>
@@ -74,7 +79,8 @@ export function QuoteReorderWorkspace({quote,kind,onDone,onCancel}:{
    return <div key={p.id} className="qtr-piece-block">
     {row('pieces',section.id,p.id,p.name,p.count,p.lengthIn??'—',p.widthIn??'—',
       sf.format(p.count*(p.lengthIn??0)*(p.widthIn??0)/144)+' SF')}
-    {edges.map(([label,edge])=><div className="qtr-row qtr-attached" key={p.id+edge}>
+    {edges.map(([label,edge])=><div className="qtr-row qtr-attached" key={p.id+edge}
+      data-qtr-id={p.id} data-qtr-kind="pieces" data-qtr-group={section.id}>
      <div className="qtr-handle-cell">{handle('pieces',section.id,p.id,label+' splash with '+p.name)}</div>
      <div className="qtr-row-title">↳ {label} splash</div>
      <div className="qtr-number">{p.count}</div><div className="qtr-number">—</div>
@@ -92,7 +98,8 @@ export function QuoteReorderWorkspace({quote,kind,onDone,onCancel}:{
      line?.includeInTotal?money.format(quoteLineAmount(line)):'Excluded');
   });
  };
- return <section className="qtr-workspace" aria-label={'Reorder '+kind+' without editing'}>
+ return <section className="qtr-workspace" aria-label={'Reorder '+kind+' without editing'}
+  onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();onCancel();}}}>
   <header className="qtr-floating-header">
    <div><strong>Reorder {kind==='areas'?'Areas':'Takeoffs'}</strong>
     <small>Drag ☷ or focus a handle and use ↑ / ↓. No cells are editable.</small></div>
