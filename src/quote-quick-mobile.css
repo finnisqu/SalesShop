@@ -2,6 +2,8 @@
  * navigable tables. The phone view uses the same cells/data as readable cards.
  * Keep this stylesheet scoped to Quick Quote, never schedules or templates. */
 .sales-app .qmb .qqr-mobile-totals{display:none}
+.sales-app .qmb .qqs-mobile-empty,.sales-app .qmb .qqs-mobile-hint,
+.sales-app .qmb .qqt-mobile-hint{display:none}
 
 @media(max-width:700px){
  /* One set of quote controls in the header, not over the customer's work. */
@@ -46,6 +48,8 @@
  .sales-app .qmb .qqs-summary-head>div:first-child{display:grid;gap:3px}
  .sales-app .qmb .qqs-summary-head h3{font-size:15px}
  .sales-app .qmb .qqs-summary-head span{font-size:11px;line-height:1.35}
+ .sales-app .qmb .qqs-summary-head .qqs-desktop-hint{display:none}
+ .sales-app .qmb .qqs-summary-head .qqs-mobile-hint{display:block}
  .sales-app .qmb .qqs-inline-actions{
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}
  .sales-app .qmb .qqs-inline-actions>button{
@@ -164,6 +168,8 @@
  .sales-app .qmb .qqt-heading>div:first-child{display:grid;gap:3px}
  .sales-app .qmb .qqt-heading h3{font-size:15px}
  .sales-app .qmb .qqt-heading span{font-size:11px;line-height:1.35}
+ .sales-app .qmb .qqt-heading .qqt-desktop-hint{display:none}
+ .sales-app .qmb .qqt-heading .qqt-mobile-hint{display:block}
  .sales-app .qmb .qqt-heading>button{
   width:100%;min-height:37px;white-space:normal;font-size:11px}
  .sales-app .qmb .qqt-heading.is-selecting .qqt-bulk{
@@ -331,7 +337,15 @@
  .sales-app .qmb .qqr-grand-total strong{font-size:20px}
 
  /* Reuse picker and preset picker act as reachable mobile sheets. */
- .qra-backdrop{align-items:flex-end;justify-content:center}
+ .qra-backdrop{
+  --qmb-card:var(--ss-theme-card,#fff);
+  --qmb-bg:var(--ss-theme-base,#f5f7f3);
+  --qmb-tint:var(--ss-theme-tint,#e5f2e8);
+  --qmb-ink:var(--ss-theme-ink,#26392e);
+  --qmb-muted:var(--ss-theme-muted,#63796b);
+  --qmb-accent:var(--ss-theme-accent,#286f5d);
+  --qmb-border:var(--ss-theme-border,#cddcd1);
+  align-items:flex-end;justify-content:center}
  .qra-panel{
   width:100%;max-width:100%;height:min(78dvh,720px);
   border-radius:16px 16px 0 0;border:1px solid var(--qmb-border);
