@@ -1148,7 +1148,7 @@ export function QuotesMobileBeta() {
                 {quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}
               </strong>
               <div className="qmb-quote-price-meta" aria-label="Quote status, revision and cloud save">
-                <span className="qmb-chip qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
+                <span className="qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
                 <span className="qmb-quote-revision" aria-label={`Revision ${quote.revision}`}
                   title={`Revision ${quote.revision}`}>
                   <span className="qmb-revision-full">Revision </span>
