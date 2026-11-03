@@ -156,9 +156,20 @@ export function MobileAppChrome() {
           <button type="button" className="mobile-app-back-button mobile-quote-back"
             onClick={backFromQuote} aria-label={betaQuoteLocation.page==='area'?'Back to quote':'Back to Documents'} title="Back">‹</button>
           <button type="button" className="mobile-quote-history-button" disabled={!canEditQuote||quoteUndoDepth===0}
-            aria-label="Undo quote edit" title="Undo" onClick={()=>{if(activeQuote)useQuoteStore.getState().undoQuote(activeQuote.id);}}>↶</button>
+            aria-label="Undo quote edit" title="Undo" onClick={()=>{if(activeQuote)useQuoteStore.getState().undoQuote(activeQuote.id);}}>
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor"
+              strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/>
+            </svg>
+          </button>
           <button type="button" className="mobile-quote-history-button" disabled={!canEditQuote||quoteRedoDepth===0}
-            aria-label="Redo quote edit" title="Redo" onClick={()=>{if(activeQuote)useQuoteStore.getState().redoQuote(activeQuote.id);}}>↷</button>
+            aria-label="Redo quote edit" title="Redo" onClick={()=>{if(activeQuote)useQuoteStore.getState().redoQuote(activeQuote.id);}}>
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor"
+              strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/>
+            </svg>
+          </button>
+          <span className="mobile-quote-actions-slot" id="mobile-quote-actions-slot" aria-label="Document options"/>
           <span className="mobile-quote-toolbar-spacer" aria-hidden="true"/>
         </> : <>
           {canGoBack&&<button type="button" className="mobile-app-back-button"
