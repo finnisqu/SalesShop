@@ -6,7 +6,7 @@ import '../sales-document-cloud-save.css';
 
 /** Autosave metadata only. Edit/Preview remain in document navigation,
  * while document commands now live beside Undo and Redo in the left rail. */
-export function SalesDocumentSaveStatus({quote,cloudMode}:{quote:Quote;cloudMode:boolean}){
+export function SalesDocumentSaveStatus({quote,cloudMode,compact=false}:{quote:Quote;cloudMode:boolean;compact?:boolean}){
   const status=useQuoteCloudStatusStore(state=>state.status);
   const error=useQuoteCloudStatusStore(state=>state.message);
   const changed=Number.isFinite(new Date(quote.updatedAt).getTime())
@@ -23,7 +23,7 @@ export function SalesDocumentSaveStatus({quote,cloudMode}:{quote:Quote;cloudMode
     title={cloudMode?(error??'Draft is stored locally and cloud sync is handled separately.'):
       'Document changes are automatically saved on this device.'}>
     <span aria-hidden="true">{cloudMode&&status==='error'?'!':cloudMode&&status!=='saved'?'◷':'✓'}</span>
-    {label}{changed?' · '+changed:''}
+    {label}{changed&&!compact?' · '+changed:''}
     {cloudMode&&status==='error'&&<button type="button" aria-label="Retry saving quote to cloud"
       title="Retry cloud save" onClick={()=>useQuoteStore.getState().selectQuote(quote.id)}>Retry</button>}
   </span>;
