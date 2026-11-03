@@ -209,8 +209,8 @@ function App() {
     ? projects.find((project) => project.id === entry.context?.projectId) ?? null
     : null;
 
-  if (!hydrated || !entry) return <div className="loading-screen">Opening SalesShop…</div>;
-
+  // Notebook state should not block Home, Tasks, Catalog or Quotes from opening.
+  // Only the Notebook branch depends on its selected entry.
   return (
     <SalesShopShell mode="legacy" className={`sales-app view-${view}${readOnlyArea ? ' sales-app-viewer' : ''}${inRolePreview ? ' owner-perspective-active' : ''}${teamQuotesOverview ? ' team-quotes-overview-active' : ''}`}>
       {isDeveloperPlaygroundRoute() && <DeveloperPlaygroundToolbar />}
@@ -257,6 +257,8 @@ function App() {
         <Connections />
       ) : view === 'settings' ? (
         <CompanySettings />
+      ) : !hydrated || !entry ? (
+        <div className="loading-screen" role="status">Opening Notebook…</div>
       ) : (
         <main className={`notebook-workspace ${companion?'is-side-by-side':''}`}>
           <Sidebar onOpenBeside={openCompanion} onOpenLeft={openPrimary}
