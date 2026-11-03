@@ -84,7 +84,7 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
  it('exposes distinct Delete and Strike-out behaviors without losing inline takeoff editing',()=>{
   expect(takeoffs).toContain('qqt-delete-button');
   expect(scopeBatch).toContain("'delete'");
-  expect(takeoffs).toContain("onClick={()=>apply('delete')}");
+  expect(takeoffs).toContain("onClick:()=>apply('delete')");
   expect(takeoffs).toContain("className=\"qqt-cell-value is-editable\"");
   expect(takeoffs).toContain("ref.kind==='splash'");
   expect(takeoffs).toContain("store.deleteLine(quote.id,line.id)");
@@ -93,7 +93,7 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain("Remove Area · keep charges in General");
   expect(areas).toContain('Delete sink');
   expect(areas).toContain('Delete line');
-  expect(areas).toContain("onClick={()=>bulkApply('delete')}");
+  expect(areas).toContain("onClick:()=>bulkApply('delete')");
  });
  it('offers fast individual and bulk duplication without adding worksheet rows',()=>{
   expect(areas).toContain("onClick:duplicateSelected");
@@ -102,7 +102,7 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain("store.duplicateArea(quote.id,area.id)");
   expect(areas).toContain("Duplicate this Area");
   expect(takeoffs).toContain("qqt-duplicate-button");
-  expect(takeoffs).toContain("onClick={()=>duplicateRows(selected)}");
+  expect(takeoffs).toContain("onClick:()=>duplicateRows(selected)");
   expect(takeoffs).toContain("store.duplicateScopeRows(quote.id,refs)");
   expect(takeoffs).toContain("Duplicating this splash also copies its parent piece");
   expect(scopeDuplicate).toContain("function duplicateQuoteScopeRows");
