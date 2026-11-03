@@ -342,3 +342,79 @@
   .sales-app .qmb .qqt-group>.qqt-area-identity {gap:3px 6px}
   .sales-app .qmb .qqt-group>.qqt-area-price {font-size:12px}
 }
+
+/* Nov 3: the existing generic .qmx-subtabs>div grid rule was making More
+   stretch as a third tab. Give the worksheet tabs all remaining space and
+   keep the persistent menu a true square, on BOTH Areas and Takeoffs. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-subtabs>div[role="group"] {
+    flex:1 1 0%!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-subtabs>.qmx-mobile-overflow {
+    display:block!important;
+    flex:0 0 40px!important;
+    width:40px!important;
+    min-width:40px!important;
+    max-width:40px!important;
+    height:40px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    grid-template-columns:none!important;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-subtabs>.qmx-mobile-overflow>.qmx-mobile-overflow-trigger {
+    display:grid!important;
+    place-items:center;
+    flex:none!important;
+    width:40px!important;
+    min-width:40px!important;
+    max-width:40px!important;
+    height:40px!important;
+    min-height:40px!important;
+    margin:0!important;
+    padding:0!important;
+    border:1px solid var(--qmb-border)!important;
+    border-radius:9px!important;
+    background:var(--qmb-card)!important;
+    font-size:22px!important;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-subtabs>.qmx-mobile-overflow>.qmx-mobile-overflow-trigger[aria-expanded="true"] {
+    background:var(--qmb-tint)!important;
+    border-color:var(--qmb-accent)!important;
+  }
+
+  /* Each area's workbook header now sits BELOW the name/SF/price summary.
+     Only horizontal top/bottom rules remain; no column separators. */
+  .sales-app .qmb .qqt-workspace .qqt-area-block>.qqt-group {
+    border-bottom:0!important;
+  }
+  .sales-app .qmb .qqt-workspace .qqt-area-block>.qqt-mobile-header {
+    border-top:1px solid var(--qmb-border)!important;
+    border-bottom:1px solid var(--qmb-border)!important;
+  }
+  .sales-app .qmb .qqt-workspace .qqt-area-block>.qqt-mobile-header>.qqt-mobile-column {
+    border-left:0!important;
+    border-right:0!important;
+  }
+}
+@media (max-width:355px) {
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-subtabs>.qmx-mobile-overflow {
+    flex-basis:36px!important;
+    width:36px!important;
+    min-width:36px!important;
+    max-width:36px!important;
+    height:38px!important;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-subtabs>.qmx-mobile-overflow>.qmx-mobile-overflow-trigger {
+    width:36px!important;
+    min-width:36px!important;
+    max-width:36px!important;
+    height:38px!important;
+    min-height:38px!important;
+  }
+}
