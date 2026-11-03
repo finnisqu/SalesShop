@@ -1,0 +1,106 @@
+/* Compact calendar/CRM overlays shared by Home, Tasks, Notebook and Connections. */
+.sales-calendar-trigger,.sales-log-launcher {
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;
+ padding:7px 11px;border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:9px;
+ background:var(--ss-theme-card,#fffcf7);color:var(--ss-theme-ink,#34312e);
+ font:750 12px/1.2 inherit;cursor:pointer;white-space:nowrap;
+}
+.sales-calendar-trigger.is-compact,.sales-log-launcher.is-compact{min-height:33px;padding:6px 9px;}
+.sales-calendar-trigger svg{flex:0 0 17px;}
+.sales-calendar-backdrop,.sales-activity-backdrop{position:fixed;inset:0;z-index:2200;}
+.sales-calendar-backdrop{background:transparent;}
+.sales-calendar-popover{position:fixed;z-index:2201;width:min(440px,calc(100vw - 16px));
+ max-height:min(85dvh,700px);display:flex;flex-direction:column;
+ border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:15px;
+ background:var(--ss-theme-card,#fffcf7);color:var(--ss-theme-ink,#34312e);
+ box-shadow:0 20px 54px rgba(0,0,0,.25);overflow:hidden;}
+.sales-calendar-heading{display:flex;justify-content:space-between;align-items:center;gap:9px;
+ padding:12px 13px 10px;border-bottom:1px solid var(--ss-theme-border,#d4c9b5);}
+.sales-calendar-heading>div:first-child{display:grid;gap:2px;}
+.sales-calendar-heading small{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--ss-theme-muted,#796d5b);}
+.sales-calendar-heading strong{font-size:16px;}
+.sales-calendar-heading>div:last-child{display:flex;align-items:center;gap:3px;}
+.sales-calendar-heading button{min-width:30px;min-height:31px;padding:3px 7px;border:0;border-radius:7px;
+ background:transparent;color:inherit;font-size:15px;font-weight:750;}
+.sales-calendar-heading button:hover{background:var(--ss-theme-tint,#ede6d8);}
+.sales-calendar-weekdays,.sales-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));}
+.sales-calendar-weekdays{padding:8px 10px 4px;gap:2px;text-align:center;
+ font-size:10px;color:var(--ss-theme-muted,#796d5b);font-weight:800;}
+.sales-calendar-grid{padding:0 10px 10px;gap:3px;}
+.sales-calendar-day{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;
+ gap:3px;min-width:0;min-height:46px;border:1px solid transparent;border-radius:8px;
+ background:transparent;color:inherit;padding:6px 5px;cursor:pointer;font-size:12px;font-weight:650;}
+.sales-calendar-day.is-outside{opacity:.42;}
+.sales-calendar-day.is-today{border-color:var(--ss-theme-accent,#917246);}
+.sales-calendar-day.is-selected{background:var(--ss-theme-tint,#ede6d8);border-color:var(--ss-theme-border,#d4c9b5);}
+.sales-calendar-dots{display:flex;gap:3px;align-items:center;min-height:5px;max-width:100%;}
+.sales-calendar-dots i,.sales-calendar-event-dot,.sales-calendar-legend i{
+ display:inline-block;width:6px;height:6px;flex:0 0 6px;border-radius:999px;background:#77899b;}
+.sales-calendar-dots .is-task,.sales-calendar-event-dot.is-task,.sales-calendar-legend .is-task{background:#6083ab;}
+.sales-calendar-dots .is-bid,.sales-calendar-event-dot.is-bid,.sales-calendar-legend .is-bid{background:#bb8054;}
+.sales-calendar-dots .is-activity,.sales-calendar-event-dot.is-activity,.sales-calendar-legend .is-activity{background:#579b83;}
+.sales-calendar-dots .is-follow-up,.sales-calendar-event-dot.is-follow-up,.sales-calendar-legend .is-follow-up{background:#9575b5;}
+.sales-calendar-day-preview{border-top:1px solid var(--ss-theme-border,#d4c9b5);min-height:88px;overflow-y:auto;}
+.sales-calendar-preview-heading{display:flex;justify-content:space-between;align-items:center;
+ gap:10px;padding:10px 13px 7px;}
+.sales-calendar-preview-heading strong{font-size:12px;}
+.sales-calendar-preview-heading span{font-size:10px;color:var(--ss-theme-muted,#796d5b);}
+.sales-calendar-agenda{display:grid;max-height:200px;overflow-y:auto;}
+.sales-calendar-agenda>button{display:flex;align-items:center;gap:9px;text-align:left;
+ min-width:0;width:100%;padding:8px 13px;border:0;background:transparent;color:inherit;}
+.sales-calendar-agenda>button+button{border-top:1px solid var(--ss-theme-border,#d4c9b5);}
+.sales-calendar-agenda>button:hover{background:var(--ss-theme-tint,#ede6d8);}
+.sales-calendar-event-text{display:grid;gap:2px;min-width:0;flex:1;}
+.sales-calendar-event-text strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sales-calendar-event-text small{font-size:10px;color:var(--ss-theme-muted,#796d5b);
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sales-calendar-empty{margin:0;padding:12px 13px 18px;color:var(--ss-theme-muted,#796d5b);font-size:12px;}
+.sales-calendar-legend{display:flex;gap:10px;flex-wrap:wrap;padding:8px 13px;
+ border-top:1px solid var(--ss-theme-border,#d4c9b5);}
+.sales-calendar-legend span{display:flex;gap:4px;align-items:center;color:var(--ss-theme-muted,#796d5b);font-size:10px;}
+/* Log Activity is a fast CRM dialog, not a new page. */
+.sales-activity-backdrop{display:grid;place-items:center;background:rgba(0,0,0,.32);padding:12px;}
+.sales-activity-dialog{width:min(510px,100%);max-height:min(91dvh,780px);display:flex;flex-direction:column;
+ border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:15px;
+ background:var(--ss-theme-card,#fffcf7);color:var(--ss-theme-ink,#34312e);
+ box-shadow:0 16px 48px rgba(0,0,0,.27);overflow:hidden;}
+.sales-activity-dialog>header,.sales-activity-dialog>footer{display:flex;align-items:center;
+ justify-content:space-between;gap:8px;padding:12px 15px;flex:0 0 auto;}
+.sales-activity-dialog>header{border-bottom:1px solid var(--ss-theme-border,#d4c9b5);}
+.sales-activity-dialog>header>div{display:grid;gap:2px;}
+.sales-activity-dialog>header small{color:var(--ss-theme-muted,#796d5b);font-size:10px;}
+.sales-activity-dialog h2{margin:0;font-size:18px;}
+.sales-activity-dialog>header>button{border:0;background:transparent;color:inherit;
+ font-size:23px;width:34px;height:34px;cursor:pointer;}
+.sales-activity-dialog>footer{border-top:1px solid var(--ss-theme-border,#d4c9b5);justify-content:flex-end;}
+.sales-activity-dialog>footer button{min-height:40px;padding:8px 13px;border-radius:8px;
+ border:1px solid var(--ss-theme-border,#d4c9b5);background:transparent;color:inherit;font-weight:750;}
+.sales-activity-dialog>footer button[type="submit"]{background:var(--ss-theme-accent,#917246);color:white;
+ border-color:var(--ss-theme-accent,#917246);}
+.sales-activity-form-body{display:grid;gap:12px;padding:14px 15px;overflow-y:auto;
+ min-height:0;overscroll-behavior:contain;}
+.sales-activity-form-body>label{display:grid;gap:5px;font-size:12px;font-weight:730;}
+.sales-activity-form-body :is(input,textarea){min-width:0;width:100%;padding:9px 10px;
+ border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:8px;
+ background:var(--ss-theme-card,#fffcf7);color:inherit;font-size:16px;}
+.sales-activity-form-body textarea{resize:vertical;font-family:inherit;}
+.sales-activity-methods{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;}
+.sales-activity-methods button{display:grid;justify-items:center;gap:5px;padding:7px 2px;min-height:55px;
+ border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:8px;background:transparent;
+ color:inherit;font-size:10px;cursor:pointer;}
+.sales-activity-methods button span{font-size:18px;}
+.sales-activity-methods button[aria-pressed=true]{background:var(--ss-theme-tint,#ede6d8);
+ border-color:var(--ss-theme-accent,#917246);}
+.sales-activity-note{margin:0;font-size:11px;color:var(--ss-theme-muted,#796d5b);}
+.sales-activity-error{color:#b94e45;font-size:12px;}
+@media(max-width:700px){
+ .sales-calendar-popover{left:8px!important;right:8px!important;top:auto!important;
+ bottom:max(10px,env(safe-area-inset-bottom,0px))!important;width:auto;
+ max-height:min(87dvh,720px);border-radius:17px;}
+ .sales-calendar-day{min-height:41px;padding:5px 3px;}
+ .sales-calendar-legend{gap:8px;}
+ .sales-calendar-global{display:none!important;}
+ .sales-activity-backdrop{align-items:end;padding:0;}
+ .sales-activity-dialog{width:100%;max-height:91dvh;border-radius:18px 18px 0 0;
+ padding-bottom:max(0px,env(safe-area-inset-bottom,0px));}
+}
