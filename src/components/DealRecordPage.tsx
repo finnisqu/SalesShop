@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {CrmActivityTimeline} from './CrmActivityTimeline';
 import { ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { dealRecordView } from '../services/dealRecordView';
 import { PrivateDealContactRoles } from './PrivateDealContactRoles';
@@ -32,7 +33,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const openCompany = useNavigationStore(state => state.openCompany);
   const openPerson = useNavigationStore(state => state.openPerson);
   const [editing, setEditing] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(true);
   const deal = deals.find(item => item.id === dealId);
   const [draft, setDraft] = useState({
     name: deal?.name ?? '', stage: deal?.stage ?? 'Discovery' as ProjectStage,
@@ -46,7 +47,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   });
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
-  useEffect(() => { setEditing(false); setHistoryOpen(false); }, [dealId]);
+  useEffect(() => { setEditing(false); setHistoryOpen(true); }, [dealId]);
   useEffect(() => {
     if (!editing && deal) setDraft({
       name: deal.name, stage: deal.stage, companyId: deal.companyId ?? '',
@@ -170,15 +171,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         </button>
         {historyOpen && <div className="connections-record-panel-body">
           <p className="connections-record-helper">Only events explicitly linked to this deal or its quotes.</p>
-          <ol className="connections-record-timeline">
-            {related.directHistory.map(activity => <li key={activity.id}>
-              <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{displayDate(activity.occurredAt)}</time></div>
-              <small>{activity.type.replaceAll('-', ' ')}</small>
-              {activity.quoteId && related.linkedQuotes.some(quote => quote.id === activity.quoteId) &&
-                <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
-            </li>)}
-          </ol>
-          {!related.directHistory.length && <p className="connections-record-empty">No directly linked history available.</p>}
+          <CrmActivityTimeline activities={related.directHistory} />
         </div>}
       </section>
     </>}

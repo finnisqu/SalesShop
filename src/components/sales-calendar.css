@@ -200,3 +200,22 @@
 .sales-activity-history-filters .sales-activity-voided-switch input{width:16px;height:16px;}
 .sales-activity-load-more{margin:12px 0;padding:10px 16px;border:1px solid var(--ss-theme-border,#ddd);
  border-radius:8px;background:var(--ss-theme-card,#fff);color:inherit;font-weight:750;}
+
+/* Shared CRM timeline: no duplicate cards for the same multi-linked Activity. */
+.sales-crm-activity-timeline{list-style:none;display:grid;gap:0;margin:0;padding:0;}
+.sales-crm-activity-timeline>li{margin:0;border-bottom:1px solid var(--ss-theme-border,#ded7c9);}
+.sales-crm-activity-entry{display:flex;gap:9px;align-items:flex-start;width:100%;
+ padding:10px 4px;border:0;background:transparent;color:inherit;text-align:left;}
+.sales-crm-activity-entry:hover,.sales-crm-activity-entry:focus-visible{
+ background:var(--ss-theme-tint,#f3efe7);}
+.sales-crm-activity-method{width:29px;height:29px;flex:0 0 29px;display:grid;place-items:center;
+ border:1px solid var(--ss-theme-border,#ded7c9);border-radius:8px;font-size:17px;}
+.sales-crm-activity-description{flex:1;min-width:0;display:grid;gap:3px;}
+.sales-crm-activity-description strong{font-size:12px;line-height:1.4;}
+.sales-crm-activity-description small{font-size:10px;color:var(--ss-theme-muted,#777);}
+.sales-crm-activity-excerpt{font-size:11px;color:var(--ss-theme-muted,#777);
+ line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;
+ -webkit-box-orient:vertical;overflow-wrap:anywhere;}
+.sales-crm-activity-arrow{align-self:center;font-size:19px;color:var(--ss-theme-muted,#777);}
+.sales-crm-activity-more{margin:8px 0 0;padding:8px 12px;border:1px solid var(--ss-theme-border,#ded7c9);
+ border-radius:7px;background:transparent;color:inherit;font-weight:750;font-size:11px;}

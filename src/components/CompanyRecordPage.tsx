@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {CrmActivityTimeline} from './CrmActivityTimeline';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork, type CompanyKind } from '../types/crm';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
@@ -36,7 +37,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const [contactEmail, setContactEmail] = useState('');
   const [newAlias, setNewAlias] = useState('');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(true);
   const company = companies.find((candidate) => candidate.id === companyId);
   const [draft, setDraft] = useState({
     name: company?.name ?? '', kind: company?.kind ?? 'customer' as CompanyKind,
@@ -50,7 +51,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     setEditing(false);
     setAddingContact(false);
     setActivityFilter('all');
-    setHistoryOpen(false);
+    setHistoryOpen(true);
     setContactName(''); setContactEmail(''); setNewAlias('');
   }, [companyId]);
   useEffect(() => {
@@ -221,17 +222,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
               {filter === 'all' ? 'All' : filter === 'quote' ? 'Quotes' : filter === 'project' ? 'Deals' : 'Contacts'}
             </button>)}
         </div>
-        <ol className="connections-record-timeline">
-          {filteredActivities.map((activity) => <li key={activity.id}>
-            <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{dateLabel(activity.occurredAt)}</time></div>
-            <small>{activity.type.replaceAll('-', ' ')}</small>
-            {activity.quoteId && related.relatedQuotes.some((quote) => quote.id === activity.quoteId) &&
-              <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
-            {!activity.quoteId && activity.projectId && related.relatedProjects.some((project) => project.id === activity.projectId) &&
-              <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked deal →</button>}
-          </li>)}
-        </ol>
-        {!filteredActivities.length && <p className="connections-record-empty">No activity history matches these filters.</p>}
+        <CrmActivityTimeline activities={filteredActivities} />
 
 
         </div>}
