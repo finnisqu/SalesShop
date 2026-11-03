@@ -368,8 +368,6 @@
     right:0!important;
     bottom:max(var(--ss-mobile-footer-inset,0px),env(safe-area-inset-bottom,0px))!important;
     left:0!important;
-    inset-block:auto!important;
-    inset-inline:auto!important;
     width:100%!important;
     max-width:100%!important;
     height:auto!important;
