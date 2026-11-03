@@ -2,7 +2,7 @@
    spreadsheet intact; mobile only shows Select | Item | Qty | L | W | More.
    All hidden pricing/contract values remain available in the row detail sheet. */
 .sales-app .qmb .qqt-mobile-header,
-.sales-app .qmb .qqt-more-button {display:none}
+.sales-app .qmb .qqt-actions button.qqt-more-button {display:none}
 
 .sales-app .qmb .qqt-splash-width-mobile {display:none}
 .sales-app .qmb .qqt-splash-height-desktop {display:flex;min-width:0;width:100%}
