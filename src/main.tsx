@@ -111,6 +111,7 @@ import './quotes-beta-overlays.css';
 import './customer-quote-polish.css';
 import './quotes-beta-batch-b.css';
 import './quote-mobile-chrome.css';
+import './mobile-profile-quote-toolbar.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
