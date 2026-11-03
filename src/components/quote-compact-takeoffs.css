@@ -15,8 +15,8 @@
 .sales-app .qmb .qqt-grid{display:grid;
  grid-template-columns:34px minmax(125px,1fr) minmax(220px,2fr)
  minmax(65px,.5fr) minmax(87px,.75fr) minmax(87px,.75fr)
- minmax(92px,.8fr) minmax(115px,.95fr) minmax(95px,.85fr) 86px;
- width:100%;min-width:1060px;}
+ minmax(92px,.8fr) minmax(115px,.95fr) minmax(95px,.85fr) 112px;
+ width:100%;min-width:1090px;}
 .sales-app .qmb .qqt-header{background:var(--qmb-tint);font-size:10px;
  font-weight:800;color:var(--qmb-muted);}
 .sales-app .qmb .qqt-cell{height:38px;min-width:0;display:flex;align-items:center;
@@ -155,3 +155,13 @@
  background:var(--qmb-tint)!important;color:var(--qmb-muted);cursor:default;
 }
 .sales-app .qmb .qqt-row .qqt-cell.qqt-derived-cell>*{color:inherit;}
+
+/* Three compact per-row actions: edit, duplicate, remove. */
+.sales-app .qmb .qqt-actions{gap:2px;padding:0 4px;}
+.sales-app .qmb .qqt-actions button{flex:0 0 29px;}
+.sales-app .qmb .qqt-actions .qqt-duplicate-button{color:var(--qmb-accent);font-size:17px;}
+.sales-app .qmb .qqt-actions .qqt-duplicate-button:hover,
+.sales-app .qmb .qqt-actions .qqt-duplicate-button:focus-visible{
+ border-color:var(--qmb-accent);background:var(--qmb-tint);}
+.sales-app .qmb .qqt-heading .qqt-bulk button:first-of-type{
+ background:var(--qmb-tint);color:var(--qmb-accent);font-weight:800;}
