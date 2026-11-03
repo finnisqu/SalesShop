@@ -1,4 +1,4 @@
-import {useMemo,useState,type FormEvent} from 'react';
+import {useMemo,useState,useEffect,type FormEvent} from 'react';
 import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
 import {useQuoteStore} from '../store/quoteStore';
@@ -6,11 +6,17 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {TaskAssociationsField} from './TaskAssociationsField';
-import {type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,type TaskAssociation,type TaskLink,type TaskPromotion,
+ type TaskChanges} from '../store/personalTaskStore';
+import {TaskEditor} from './TasksWorkspace';
 import {localDateKey} from '../services/salesCalendar';
 import './sales-calendar.css';
 
 type Method='email'|'call'|'text'|'video-call'|'in-person';
+export type ActivityContext={type:'company'|'contact'|'project'|'quote';id:string};
+export function requestQuickActivity(context:ActivityContext){
+ window.dispatchEvent(new CustomEvent<ActivityContext>('salesshop:quick-log-activity',{detail:context}));
+}
 const methods:ReadonlyArray<{id:Method;label:string;icon:string}>=[
  {id:'call',label:'Call',icon:'☎'},{id:'email',label:'Email',icon:'✉'},
  {id:'text',label:'Text',icon:'▤'},{id:'video-call',label:'Video call',icon:'▣'},
@@ -24,8 +30,8 @@ const primaryName=(associations:TaskAssociation[])=>{
  const person=associations.find(x=>x.type==='contact');
  return (person??associations[0])?.label?.replace(/^(Quote|Deal|Company|Person) · /,'');
 };
-export function QuickActivityLauncher({label='Log Activity',compact=false,tile=false}:{
- label?:string;compact?:boolean;tile?:boolean;
+export function QuickActivityLauncher({label='Log Activity',compact=false,tile=false,context,global=false}:{
+ label?:string;compact?:boolean;tile?:boolean;context?:ActivityContext;global?:boolean;
 }){
  const [open,setOpen]=useState(false);
  const [method,setMethod]=useState<Method>('call');
@@ -34,15 +40,21 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
  const [occurred,setOccurred]=useState(dateTimeLocal);
  const [links,setLinks]=useState<TaskAssociation[]>([]);
  const [error,setError]=useState('');
+ const [allowDifferentCompany,setAllowDifferentCompany]=useState(false);
+ const [followUp,setFollowUp]=useState<TaskPromotion|null>(null);
+ const [savedSuggestion,setSavedSuggestion]=useState<TaskPromotion|null>(null);
  const mode=useAuthStore(s=>s.mode),role=useAuthStore(s=>s.teamRole);
  const department=useAuthStore(s=>s.teamDepartment);
  const currentUser=useAuthStore(s=>s.user?.id);
+ const org=useAuthStore(s=>s.organizationId);
+ const loadTasks=usePersonalTaskStore(s=>s.load);
+ const createTask=usePersonalTaskStore(s=>s.createTask);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
  const projects=useCrmStore(s=>s.projects);
  const record=useCrmStore(s=>s.recordActivity);
  const quotes=useQuoteStore(s=>s.quotes);
- const permitted=!perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'));
+ const permitted=!perspective&&(mode==='local'||(!!org&&!!currentUser&&canEditTeamArea(role,department,'crm')));
  const options=useMemo(()=>[
   ...contacts.map(c=>({key:'contact:'+c.id,linked:{type:'contact' as const,id:c.id,label:'Person · '+c.name},label:'Person · '+c.name})),
   ...companies.map(c=>({key:'company:'+c.id,linked:{type:'company' as const,id:c.id,label:'Company · '+c.name},label:'Company · '+c.name})),
@@ -50,6 +62,23 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
   ...quotes.filter(q=>!q.archivedAt&&(mode!=='cloud'||q.ownerUserId===currentUser))
     .map(q=>({key:'quote:'+q.id,linked:{type:'quote' as const,id:q.id,label:'Quote · '+q.title},label:'Quote · '+q.title})),
  ],[contacts,companies,projects,quotes,mode,currentUser]);
+ const openWithContext=(selected?:ActivityContext)=>{
+  const primary=selected&&options.find(item=>item.linked.type===selected.type&&item.linked.id===selected.id);
+  const companyId=selected?.type==='company'?selected.id:
+   selected?.type==='contact'?contacts.find(c=>c.id===selected.id)?.companyId:
+   selected?.type==='project'?projects.find(d=>d.id===selected.id)?.companyId:
+   selected?.type==='quote'?quotes.find(q=>q.id===selected.id)?.companyId:undefined;
+  const company=companyId&&options.find(item=>item.linked.type==='company'&&item.linked.id===companyId);
+  setLinks([primary?.linked,company?.linked].filter((item):item is TaskAssociation=>!!item));
+  setMethod('call');setSummary('');setNotes('');setOccurred(dateTimeLocal());
+  setAllowDifferentCompany(false);setError('');setSavedSuggestion(null);setOpen(true);
+ };
+ useEffect(()=>{
+  if(!global)return;
+  const handler=(event:Event)=>openWithContext((event as CustomEvent<ActivityContext>).detail);
+  window.addEventListener('salesshop:quick-log-activity',handler);
+  return()=>window.removeEventListener('salesshop:quick-log-activity',handler);
+ },[global,options,contacts,projects,quotes]);
  const close=()=>{setOpen(false);setError('');};
  const addLinks=(items:TaskAssociation[])=>{
   // CRM activity schema stores one ID per record kind. Newest selection wins.
@@ -71,20 +100,47 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
   const personId=find('contact'),dealId=find('project'),quoteId=find('quote');
   const contact=contacts.find(c=>c.id===personId),deal=projects.find(d=>d.id===dealId);
   const quote=quotes.find(q=>q.id===quoteId);
-  record({type:'manual-touchpoint',summary:description||(fallback+' with '+(person||'contact')),
+  const companyChoices=[find('company'),contact?.companyId,deal?.companyId,quote?.companyId]
+   .filter((id):id is string=>!!id);
+  if(new Set(companyChoices).size>1&&!allowDifferentCompany)
+   return setError('These linked records belong to different companies. Correct the links or allow this exception.');
+  const activityId=record({type:'manual-touchpoint',summary:description||(fallback+' with '+(person||'contact')),
    companyId:find('company')||contact?.companyId||deal?.companyId||quote?.companyId,
    contactId:personId,projectId:dealId||quote?.projectId,quoteId,
    occurredAt:timestamp.toISOString(),
    metadata:{source:'manual',interactionMethod:method,notes:notes.trim().slice(0,5000)||undefined}});
+  const draft:TaskPromotion={
+   title:'Follow up'+(person?' with '+person:'')+
+    (description?' — '+description.slice(0,75):''),
+   target:'task',associations:links,
+   linked:links[0]?{type:links[0].type,id:links[0].id}:undefined,
+   sourceLabel:'CRM Activity',sourceObjectId:activityId,
+   sourceText:description||notes.trim().slice(0,2000),
+  };
+  setSavedSuggestion(draft);
   setMethod('call');setSummary('');setNotes('');setOccurred(dateTimeLocal());
   setLinks([]);close();
  };
  if(!permitted)return null;
  return <>
-  <button type="button" className={'sales-log-launcher'+(compact?' is-compact':'')+(tile?' is-tile':'')}
-   onClick={()=>{setOccurred(dateTimeLocal());setOpen(true);}}>
+  {!global&&<button type="button" className={'sales-log-launcher'+(compact?' is-compact':'')+(tile?' is-tile':'')}
+   onClick={()=>openWithContext(context)}>
    <span aria-hidden="true">{tile?'◉':'＋'}</span>{tile?<><strong>{label}</strong><small>Call, email or meeting</small></>:label}
-  </button>
+  </button>}
+  {savedSuggestion&&createPortal(<div className="sales-activity-success" role="status">
+   <strong>Activity recorded on this device</strong>
+   <button type="button" onClick={()=>{
+     const scope=taskScope(mode,org,currentUser);
+     if(!scope)return;
+     loadTasks(scope);setFollowUp(savedSuggestion);setSavedSuggestion(null);
+   }}>+ Follow-up task</button>
+   <button type="button" aria-label="Dismiss follow-up suggestion" onClick={()=>setSavedSuggestion(null)}>×</button>
+  </div>,document.body)}
+  {followUp&&<TaskEditor key={followUp.sourceObjectId??followUp.title} initial={followUp}
+    onCancel={()=>setFollowUp(null)}
+    onSave={(changes:TaskChanges&{title:string})=>{
+     createTask(changes.title,changes);setFollowUp(null);
+    }}/>} 
   {open&&createPortal(<div className="sales-activity-backdrop" onPointerDown={e=>{
     if(e.target===e.currentTarget)close();
    }}>
@@ -103,10 +159,19 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
       <input autoFocus value={summary} onChange={e=>setSummary(e.target.value)}
        placeholder="What happened?" maxLength={240}/></label>
      <TaskAssociationsField options={options} value={links} onChange={addLinks}/>
+     {new Set([links.find(l=>l.type==='company')?.id,
+       contacts.find(c=>c.id===links.find(l=>l.type==='contact')?.id)?.companyId,
+       projects.find(d=>d.id===links.find(l=>l.type==='project')?.id)?.companyId,
+       quotes.find(q=>q.id===links.find(l=>l.type==='quote')?.id)?.companyId]
+       .filter(Boolean)).size>1&&<label className="sales-activity-exception">
+        <input type="checkbox" checked={allowDifferentCompany}
+         onChange={e=>setAllowDifferentCompany(e.target.checked)}/>
+        These records belong to different companies; link intentionally.
+       </label>}
      <label>Notes (optional)
       <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3}
        maxLength={5000} placeholder="Key details, questions, next steps…"/></label>
-     <p className="sales-activity-note">Saved to CRM activity history; this doesn't create a task or send a message.</p>
+     <p className="sales-activity-note">Shared CRM history · visible to members of your company. It doesn't create a task or send an email.</p>
      {error&&<p role="alert" className="sales-activity-error">{error}</p>}
     </div>
     <footer><button type="button" onClick={close}>Cancel</button><button type="submit">Save activity</button></footer>
