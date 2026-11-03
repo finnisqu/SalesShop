@@ -126,3 +126,38 @@
  font-weight:800;line-height:1;color:#fff;}
 .sales-calendar-dots i.is-task,.sales-calendar-dots i.is-bid,
 .sales-calendar-dots i.is-activity,.sales-calendar-dots i.is-follow-up{color:white;}
+
+
+/* Home owns a full calendar, while other surfaces keep the small launcher. */
+.sales-calendar-inline{width:100%;min-width:0}
+.sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover{
+ position:static!important;left:auto!important;right:auto!important;top:auto!important;
+ bottom:auto!important;width:100%!important;max-height:none!important;max-width:none;
+ border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:11px;
+ box-shadow:none;overflow:hidden}
+.sales-calendar-inline .sales-calendar-grid{gap:4px;padding:0 10px 10px}
+.sales-calendar-inline .sales-calendar-day{min-height:65px;border-color:var(--ss-theme-border,#e8e0d4)}
+.sales-calendar-inline .sales-calendar-day:not(.is-outside):hover{background:var(--ss-theme-tint,#ede6d8)}
+.sales-calendar-inline .sales-calendar-day-preview{max-height:205px}
+.sales-calendar-inline .sales-calendar-agenda{max-height:165px}
+.sales-calendar-trigger{width:36px;min-width:36px;height:36px;min-height:36px;
+ padding:0;display:grid;place-items:center;transition:background .16s ease,box-shadow .16s ease}
+.sales-calendar-trigger.is-compact{min-height:36px;padding:0}
+.sales-calendar-trigger:hover{background:var(--ss-theme-tint,#ede6d8)}
+.app-header :is(.sales-calendar-trigger,.global-search-launcher,.global-postit-launcher,.quick-create-launcher){
+ display:inline-grid;place-items:center;flex:0 0 36px;width:36px;min-width:36px;
+ height:36px;min-height:36px;padding:0;border-radius:10px;
+ border:1px solid var(--ss-theme-border,#d4c9b5);
+ background:var(--ss-theme-card,#fffcf7);color:var(--ss-theme-ink,#34312e);
+ box-shadow:0 1px 2px rgba(0,0,0,.035);
+ transition:background .16s,border-color .16s,transform .16s}
+.app-header :is(.sales-calendar-trigger,.global-search-launcher,.global-postit-launcher,.quick-create-launcher):hover{
+ background:var(--ss-theme-tint,#ede6d8);border-color:var(--ss-theme-accent,#917246);transform:translateY(-1px)}
+.app-header :is(.sales-calendar-trigger,.global-search-launcher,.global-postit-launcher,.quick-create-launcher):focus-visible{
+ outline:2px solid var(--ss-theme-accent,#917246);outline-offset:2px}
+.app-header .global-postit-launcher svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75}
+@media(max-width:700px){
+ .sales-calendar-inline .sales-calendar-day{min-height:48px;padding:5px 3px}
+ .sales-calendar-inline .sales-calendar-grid{gap:2px;padding:0 6px 8px}
+ .sales-calendar-inline .sales-calendar-dots i{min-width:10px;font-size:7px;padding:0 1px}
+}
