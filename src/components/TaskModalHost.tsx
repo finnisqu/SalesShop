@@ -5,6 +5,7 @@ import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
+import {useQuoteStore} from '../store/quoteStore';
 
 export interface CalendarTaskRequest {
  mode:'create'|'preview'|'edit';id?:string;dueDate?:string;
@@ -26,6 +27,7 @@ export function TaskModalHost(){
  const reopen=usePersonalTaskStore(s=>s.reopen);
  const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
  const nav=useNavigationStore();
+ const quotes=useQuoteStore(s=>s.quotes);
  const [request,setRequest]=useState<CalendarTaskRequest|null>(null);
  useEffect(()=>{
   const receive=(event:Event)=>{
@@ -39,6 +41,13 @@ export function TaskModalHost(){
  useEffect(()=>{setRequest(null);},[scope]);
  if(!request||!scope||storedScope!==scope||previewRole)return null;
  const task=request.mode==='preview'?tasks.find(t=>t.id===request.id&&!t.deletedAt):null;
+ const linkedDealId=task?.sourceObjectId?.startsWith('deal-submit:')
+  ?task.sourceObjectId.slice('deal-submit:'.length)
+  :task?.linked?.type==='project'?task.linked.id:null;
+ const relatedQuote=task?quotes.find(quote=>!quote.archivedAt&&
+  (mode!=='cloud'||quote.ownerUserId===userId)&&
+  (quote.projectId===linkedDealId||normalizedTaskAssociations(task)
+   .some(link=>link.type==='quote'&&link.id===quote.id))):undefined;
  const editTarget=request.mode==='create'?{
   title:request.title??'',dueDate:request.dueDate,type:request.type??'todo',
   associations:request.associations??[],
@@ -86,6 +95,9 @@ export function TaskModalHost(){
      </div>
      <footer>
       <button type="button" onClick={close}>Close</button>
+      {relatedQuote&&<button type="button" onClick={()=>{
+       close();nav.openQuote(relatedQuote.id);
+      }}>Open linked quote ↗</button>}
       <button type="button" onClick={()=>{
        if(task.status==='completed')reopen(task.id);else complete(task.id);
        close();
