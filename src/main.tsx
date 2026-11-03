@@ -6,6 +6,7 @@ import { DeveloperPlaygroundGate } from './components/DeveloperPlaygroundGate';
 import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
 import { PublicQuotePage } from './components/PublicQuotePage';
 import { appRelativePath } from './lib/appUrl';
+import {recordSalesShopBoot} from './services/appLifecycleDiagnostics';
 import './design-system/tokens.css';
 import './design-system/primitives.css';
 import './index.css';
@@ -118,6 +119,8 @@ import './mobile-takeoff-workbook.css';
 import './mobile-takeoff-cleanup.css';
 import './mobile-area-summary-v2.css';
 import './mobile-area-review-parity.css';
+
+recordSalesShopBoot();
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
