@@ -23,6 +23,16 @@ export function calendarMonthDays(year:number,month:number):string[]{
   const date=new Date(start);date.setDate(start.getDate()+i);return localDateKey(date);
  });
 }
+/** One mobile calendar week, anchored at local noon across DST changes. */
+export function calendarWeekDays(selected:string):string[]{
+ const chosen=new Date(selected+'T12:00:00');
+ if(!Number.isFinite(chosen.getTime()))return[];
+ chosen.setDate(chosen.getDate()-chosen.getDay());
+ return Array.from({length:7},(_,i)=>{
+  const date=new Date(chosen);date.setDate(chosen.getDate()+i);return localDateKey(date);
+ });
+}
+
 /** No synthetic reminders: only explicit task deadlines, deal bid due dates,
  * scheduled quote follow-ups and completed CRM touchpoints. */
 export function buildSalesCalendarEvents(
