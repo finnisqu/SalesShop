@@ -260,9 +260,10 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const dayKey=Number.isFinite(day.getTime())
       ?[day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),String(day.getDate()).padStart(2,'0')].join('-')
       :null;
-    const projects=touchpoint&&activity.projectId&&dayKey
-      ?get().projects.map(p=>p.id===activity.projectId&&(!p.lastTouchpoint||p.lastTouchpoint<dayKey)
-       ?{...p,lastTouchpoint:dayKey,updatedAt:now()}:p):get().projects;
+    const projectId=activity.projectId||'',touchDay=dayKey||'';
+    const projects=touchpoint&&projectId&&touchDay
+      ?get().projects.map(p=>p.id===projectId&&(!p.lastTouchpoint||p.lastTouchpoint<touchDay)
+       ?{...p,lastTouchpoint:touchDay,updatedAt:now()}:p):get().projects;
     persist(get().companies, get().contacts, projects, activities);
     set({ activities,projects });
     return activity.id;

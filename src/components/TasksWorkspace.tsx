@@ -173,6 +173,21 @@ export function TasksWorkspace(){
     return (a.dueDate??'9999').localeCompare(b.dueDate??'9999')||
       weight(a.priority)-weight(b.priority)||b.updatedAt.localeCompare(a.updatedAt);
   }),[own,filter,search,queueFilter,today]);
+  // A Calendar glimpse should open its exact Task, not just the Tasks index.
+  useEffect(()=>{
+   const show=()=>{
+    let id='';
+    try{id=window.sessionStorage.getItem('salesshop-open-task-id-v1')||'';}
+    catch{/* unavailable storage */}
+    const task=own.find(item=>item.id===id);
+    if(!task)return;
+    try{window.sessionStorage.removeItem('salesshop-open-task-id-v1');}catch{/* best effort */}
+    setEditing(task);
+   };
+   show();
+   window.addEventListener('salesshop:open-calendar-task',show);
+   return()=>window.removeEventListener('salesshop:open-calendar-task',show);
+  },[own]);
   const taskTableRows:ConnectionTableRow[]=visible.map(task=>({
     id:task.id,name:task.title,
     values:{name:task.title,type:task.type||'todo',priority:task.priority||'normal',

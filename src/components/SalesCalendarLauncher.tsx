@@ -68,7 +68,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
  const openRecord=(event:SalesCalendarEvent)=>{
   setOpen(false);
   const {recordType,recordId}=event;
-  if(recordType==='task')nav.setView('tasks');
+  if(recordType==='task'){
+   try{window.sessionStorage.setItem('salesshop-open-task-id-v1',recordId);}catch{/* best effort */}
+   nav.setView('tasks');
+   window.dispatchEvent(new Event('salesshop:open-calendar-task'));
+  }
   else if(recordType==='activity'){
    try{window.sessionStorage.setItem('salesshop-open-activity-history-v1','1');}catch{/* best effort */}
    nav.setView('dashboard');
