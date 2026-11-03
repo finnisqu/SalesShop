@@ -82,8 +82,13 @@ export function buildSalesCalendarEvents(
  const autoDealIds=new Set<string>();
  for(const task of tasks){
   if(task.deletedAt||!task.dueDate||!datePattern.test(task.dueDate)||task.status==='canceled')continue;
-  const bidId=task.sourceObjectId?.startsWith('deal-submit:')
+  const autoBidId=task.sourceObjectId?.startsWith('deal-submit:')
    ?task.sourceObjectId.slice('deal-submit:'.length):null;
+  const authoredBidId=!autoBidId&&/submit.*quote/i.test(task.title)
+   ?(task.associations??(task.linked?[task.linked]:[]))
+    .find(link=>link.type==='project'&&deals.some(deal=>
+     deal.id===link.id&&deal.dueDate===task.dueDate))?.id:null;
+  const bidId=autoBidId||authoredBidId;
   if(bidId)autoDealIds.add(bidId);
   const kind:SalesCalendarKind=bidId?'bid':task.type==='follow-up'?'follow-up':'task';
   const done=task.status==='completed'||!!task.completedAt;
