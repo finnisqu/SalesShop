@@ -5,7 +5,7 @@ import '../connections-table.css';
 import {visibleConnectionColumns,compareConnectionSortValues} from '../services/connectionsTablePreferences';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;}
-interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks';columns:ConnectionColumn[];rows:ConnectionTableRow[];
+interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
  onBulkComplete?:(records:ConnectionTableRow[])=>void;
  onTaskDuePreset?:(id:string,preset:TaskDuePreset)=>void;
