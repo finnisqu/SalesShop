@@ -205,3 +205,15 @@
 .sales-app .qmb .qqs-summary-head .qqs-bulk button.qqs-bulk-delete{
  color:var(--ss-danger,#ad4d43);border-color:var(--ss-danger,#ad4d43);}
 .sales-app .qmb .qqs-summary-head .qqs-bulk button:disabled{opacity:.4;cursor:default;}
+
+/* Area duplication is available directly from the row without opening a drawer. */
+.sales-app .qmb .qqs-area-name .qqs-duplicate-action{font-size:16px;}
+.sales-app .qmb .qqs-area-name .qqs-duplicate-action:hover,
+.sales-app .qmb .qqs-area-name .qqs-duplicate-action:focus-visible{
+ background:var(--qmb-tint);border-color:var(--qmb-accent);}
+.sales-app .qmb .qqs-area-name .qqs-duplicate-action:disabled{
+ opacity:.25;cursor:default;}
+@media(hover:none){
+ .sales-app .qmb .qqs-area-name .qqs-pencil{
+  opacity:1;pointer-events:auto;}
+}
