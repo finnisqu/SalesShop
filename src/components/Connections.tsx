@@ -118,6 +118,12 @@ export function Connections() {
   const [newPersonEmail, setNewPersonEmail] = useState('');
   const [newPersonCompany, setNewPersonCompany] = useState('');
   const [notice, setNotice] = useState('');
+  const [activityKind,setActivityKind]=useState<'all'|'manual'|'automatic'>('all');
+  const [activityMethod,setActivityMethod]=useState('all');
+  const [activityFrom,setActivityFrom]=useState('');
+  const [activityTo,setActivityTo]=useState('');
+  const [activityShowVoided,setActivityShowVoided]=useState(false);
+  const [activityLimit,setActivityLimit]=useState(60);
 
   const crmHydrate = useCrmStore((state) => state.hydrate);
   const quoteHydrate = useQuoteStore((state) => state.hydrate);
@@ -175,14 +181,22 @@ export function Connections() {
     findText(q.title,q.companyName,q.contactName,displayQuoteNumber(q),q.status,
       projectsById.get(q.projectId??'')?.name).includes(needle))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[visibleQuotes,projectsById,needle]);
-  const activityRows = useMemo(() => [...activities]
-     .filter((activity) => !activity.metadata?.voidedAt)
-    .filter((activity) => findText(activity.summary, activity.type,
-      activity.metadata?.interactionMethod,activity.metadata?.notes,
-      companiesById.get(activity.companyId ?? '')?.name,
-      projectsById.get(activity.projectId ?? '')?.name).includes(needle))
-    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
-    .slice(0, 150), [activities, companiesById, projectsById, needle]);
+  const activityMatches=useMemo(()=>[...activities].filter(activity=>{
+    if(activity.metadata?.voidedAt&&!activityShowVoided)return false;
+    const manual=activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint';
+    if(activityKind==='manual'&&!manual)return false;
+    if(activityKind==='automatic'&&manual)return false;
+    if(activityMethod!=='all'&&activity.metadata?.interactionMethod!==activityMethod)return false;
+    const day=activity.occurredAt.slice(0,10);
+    if(activityFrom&&day<activityFrom)return false;
+    if(activityTo&&day>activityTo)return false;
+    return findText(activity.summary,activity.type,activity.metadata?.interactionMethod,
+      activity.metadata?.notes,companiesById.get(activity.companyId??'')?.name,
+      projectsById.get(activity.projectId??'')?.name).includes(needle);
+   }).sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)||b.id.localeCompare(a.id)),
+   [activities,activityKind,activityMethod,activityFrom,activityTo,activityShowVoided,
+    companiesById,projectsById,needle]);
+  const activityRows=activityMatches.slice(0,activityLimit);
 
   const companyTableRows:ConnectionTableRow[]=companyRows.map(c=>({
     id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
@@ -426,12 +440,32 @@ export function Connections() {
             </StatusText>}
           </section>}
           {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
-            <p className="connections-count">{activityRows.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
+            <p className="connections-count">{activityMatches.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
             <ActivityCloudIndicator />
+            <div className="sales-activity-history-filters" aria-label="Activity History filters">
+             <select aria-label="Activity source" value={activityKind}
+              onChange={e=>{setActivityKind(e.target.value as typeof activityKind);setActivityLimit(60);}}>
+              <option value="all">All activity</option><option value="manual">Logged interactions</option>
+              <option value="automatic">System events</option>
+             </select>
+             <select aria-label="Interaction method" value={activityMethod}
+              onChange={e=>{setActivityMethod(e.target.value);setActivityLimit(60);}}>
+              <option value="all">All methods</option>
+              <option value="call">Calls</option><option value="email">Emails</option>
+              <option value="text">Texts</option><option value="video-call">Video calls</option>
+              <option value="in-person">In person</option>
+             </select>
+             <label>From<input aria-label="Activity start date" type="date"
+              value={activityFrom} onChange={e=>{setActivityFrom(e.target.value);setActivityLimit(60);}}/></label>
+             <label>To<input aria-label="Activity end date" type="date"
+              value={activityTo} onChange={e=>{setActivityTo(e.target.value);setActivityLimit(60);}}/></label>
+             <label className="sales-activity-voided-switch"><input type="checkbox"
+              checked={activityShowVoided} onChange={e=>setActivityShowVoided(e.target.checked)}/> Show voided</label>
+            </div>
             <div className="connections-activity-list">
               {activityRows.map((activity) => {
                 return <button type="button" key={activity.id} onClick={() => openActivity(activity)}>
-                  <span><strong>{activity.summary}</strong><small>{[
+                  <span><strong>{activity.summary}{activity.metadata?.voidedAt?' · Voided':''}</strong><small>{[
                    activity.metadata?.interactionMethod?.replaceAll('-',' '),
                    companiesById.get(activity.companyId ?? '')?.name,
                    projectsById.get(activity.projectId ?? '')?.name,
@@ -440,8 +474,12 @@ export function Connections() {
                   <time>{timeLabel(activity.occurredAt)}</time>
                 </button>;
               })}
-              {!activityRows.length && <StatusText state="empty" className="connections-empty">No recorded history is available.</StatusText>}
+              {!activityRows.length && <StatusText state="empty" className="connections-empty">No matching Activity History records.</StatusText>}
             </div>
+            {activityRows.length<activityMatches.length&&<button type="button" className="sales-activity-load-more"
+             onClick={()=>setActivityLimit(limit=>limit+60)}>
+             Show more · {activityMatches.length-activityRows.length} remaining
+            </button>
           </section>}
       {preview&&<RecordPreviewDrawer record={preview}
         onClose={()=>setPreview(null)} onSelect={setPreview}
