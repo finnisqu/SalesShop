@@ -134,3 +134,54 @@
 .sales-home-task-open:focus-visible{outline:2px solid var(--ss-theme-accent,#917246);outline-offset:3px}
 .sales-home-task-open strong{font-size:14px;overflow:hidden;text-overflow:ellipsis}
 .sales-home-task-open small{color:var(--ss-theme-muted,#66716b);font-size:11px}
+
+
+/* Compact Home v2: calendar is the agenda, so no duplicated task cards or metrics. */
+.sales-home.is-compact-home{width:min(1160px,100%);gap:12px;
+ padding:clamp(12px,2.2vw,22px)}
+.sales-home.is-compact-home .sales-home-heading{align-items:center;gap:12px}
+.sales-home.is-compact-home .sales-home-heading-copy{display:flex;align-items:baseline;gap:13px;
+ flex-wrap:wrap;min-width:0}
+.sales-home.is-compact-home .sales-home-eyebrow{display:none}
+.sales-home.is-compact-home .sales-home-heading h1{font-size:clamp(23px,2.3vw,30px);
+ margin:0;letter-spacing:-.025em}
+.sales-home.is-compact-home .sales-home-heading p{font-size:12px;white-space:nowrap}
+.sales-home.is-compact-home .sales-home-calendar-card{border:0;border-radius:0;padding:0;
+ background:transparent;gap:0}
+.sales-home-recent-compact{display:grid;gap:8px;min-width:0}
+.sales-home-recent-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sales-home-recent-heading h2{font-size:14px;line-height:1.25}
+.sales-home-recent-heading button{border:0;background:transparent;
+ color:var(--ss-theme-accent,#917246);font-weight:750;font-size:12px;white-space:nowrap}
+.sales-home-recent-strip{display:flex;gap:9px;min-width:0;overflow-x:auto;
+ padding:1px 1px 8px;overscroll-behavior-x:contain;scroll-snap-type:x proximity;
+ scrollbar-width:thin;scrollbar-color:var(--ss-theme-border,#d4c9b5) transparent}
+.sales-home-recent-tile{display:flex;flex:0 0 clamp(176px,23vw,240px);flex-direction:column;
+ text-align:left;align-items:flex-start;gap:4px;min-width:0;min-height:76px;
+ padding:11px 12px;border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:10px;
+ background:var(--ss-theme-card,#fff);color:inherit;scroll-snap-align:start}
+.sales-home-recent-tile:hover{background:var(--ss-theme-tint,#eee9df)}
+.sales-home-recent-tile:focus-visible{outline:2px solid var(--ss-theme-accent,#917246);outline-offset:2px}
+.sales-home-recent-kind{text-transform:uppercase;letter-spacing:.07em;font-size:9px;
+ color:var(--ss-theme-muted,#777);font-weight:800}
+.sales-home-recent-tile strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;max-width:100%;font-weight:750}
+.sales-home-recent-tile small{font-size:10px;color:var(--ss-theme-muted,#777);
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.sales-home-recent-empty{margin:0;padding:11px 13px;
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:10px;
+ color:var(--ss-theme-muted,#777);font-size:12px}
+@media(max-width:760px){
+ .sales-home.is-compact-home{gap:10px;padding:12px 12px max(20px,env(safe-area-inset-bottom,0px))}
+ .sales-home.is-compact-home .sales-home-heading-copy{gap:4px 8px}
+ .sales-home.is-compact-home .sales-home-heading h1{font-size:23px}
+ .sales-home.is-compact-home .sales-home-heading p{font-size:11px}
+ .sales-home.is-compact-home .sales-home-top-actions{width:auto;justify-content:flex-end}
+ .sales-home-recent-tile{flex-basis:min(65vw,235px);min-height:73px}
+ .sales-home-recent-heading h2{font-size:13px}
+}
+@media(max-width:390px){
+ .sales-home.is-compact-home .sales-home-heading{flex-wrap:nowrap}
+ .sales-home.is-compact-home .sales-home-heading-copy{display:grid;gap:0}
+ .sales-home.is-compact-home .sales-home-top-actions{width:auto}
+}
