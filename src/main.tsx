@@ -113,6 +113,7 @@ import './quotes-beta-batch-b.css';
 import './quote-mobile-chrome.css';
 import './mobile-profile-quote-toolbar.css';
 import './quote-mobile-footer-dock.css';
+import './mobile-quote-visual-polish.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
