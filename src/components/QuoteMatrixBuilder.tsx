@@ -303,6 +303,17 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
    {subtab==='takeoffs'&&<button type="button" className="qmx-advanced-switch"
     onClick={()=>setAdvanced(v=>!v)} aria-pressed={advanced}>
     {advanced?'✓ Technical columns':'Technical columns ›'}</button>}
+   <details className="qmx-mobile-overflow">
+    <summary aria-label="More Build Quote tools" title="More Build Quote tools">⋯</summary>
+    <div className="qmx-mobile-overflow-menu">
+     <button type="button" aria-pressed={advanced} onClick={()=>setAdvanced(v=>!v)}>
+      {advanced?'✓ Standard Takeoffs':'Technical columns'}
+     </button>
+     <button type="button" disabled={!areas.length} onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>
+      Advanced fabrication
+     </button>
+    </div>
+   </details>
    <strong>Quote {cash.format(quoteTotal(quote))}</strong>
   </nav>
   {subtab==='areas'&&<QuoteQuickAreaSummary quote={quote} onAddArea={onAddArea}
