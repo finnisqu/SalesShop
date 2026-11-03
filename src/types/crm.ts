@@ -96,6 +96,8 @@ export interface Project {
 export interface ActivityMetadata {
   /** Completed interaction saved in existing CRM metadata; no new table required. */
   interactionMethod?: 'email'|'call'|'text'|'video-call'|'in-person';
+  /** Source actor for personal calendar display; remains in existing JSON metadata. */
+  recordedByUserId?:string;
   notes?: string;
   quoteNumber?: string;
   revision?: number;
