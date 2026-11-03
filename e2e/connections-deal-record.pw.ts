@@ -22,7 +22,7 @@ test('Deal page creates, edits, links quotes, returns to directory and reloads',
       await page.getByRole('navigation', { name: 'Jump to record section' }).getByRole('button', { name: 'Records' }).click();
       await expect(page.getByRole('heading', { name: 'Quotes' })).toBeInViewport();
     }
-    await expect(page.getByRole('button', { name: /Activity history/ })).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('button', { name: /Activity history/ })).toHaveAttribute('aria-expanded', 'true');
 
     await page.getByRole('button', { name: 'Edit deal' }).click();
     await page.getByRole('combobox', { name: 'Stage' }).selectOption('Bid Development');
