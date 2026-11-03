@@ -249,10 +249,15 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   },
 
   recordActivity: (input) => {
+    const auth=useAuthStore.getState();
+    const actor=auth.mode==='cloud'?auth.user?.id:undefined;
     const activity: Activity = {
       ...input,
       id: input.id ?? id('activity'),
       occurredAt: input.occurredAt ?? now(),
+      // The normalized activities table already persists this JSON metadata;
+      // no new SQL column or change to record permissions is required.
+      metadata:actor?{...input.metadata,recordedByUserId:actor}:input.metadata,
     };
     const activities = [...get().activities, activity];
     const touchpoint=activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint';
