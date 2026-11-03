@@ -225,3 +225,51 @@
  .sales-home.is-compact-home .sales-calendar-inline .sales-calendar-day.is-selected{
   background:var(--ss-theme-tint,#ede6d8)}
 }
+
+
+/* Calendar navigation: month/week arrows belong to the period, not to Today. */
+.sales-calendar-heading .sales-calendar-period{display:flex;flex-direction:row;align-items:center;gap:5px;min-width:0}
+.sales-calendar-heading .sales-calendar-period strong{min-width:0;font-size:15px;white-space:nowrap}
+.sales-calendar-heading .sales-calendar-tools{display:flex;flex-direction:row;align-items:center;gap:5px}
+.sales-calendar-period button{font-size:21px!important;min-width:31px!important;min-height:36px!important}
+.sales-calendar-today{display:grid;place-items:center;opacity:.77;min-width:35px!important}
+.sales-calendar-today:hover{opacity:1}
+.sales-calendar-display-toggle{display:flex;align-items:center;gap:2px;border:1px solid var(--ss-theme-border,#ddd);
+ border-radius:9px;padding:2px;background:var(--ss-theme-tint,#eee)}
+.sales-calendar-display-toggle button{font-size:11px!important;font-weight:750;min-height:31px!important;
+ min-width:51px!important;padding:4px 7px!important;border-radius:6px}
+.sales-calendar-display-toggle button[aria-pressed=true]{background:var(--ss-theme-card,#fff);
+ box-shadow:0 1px 3px rgba(0,0,0,.10)}
+.sales-calendar-day{position:relative}
+.sales-calendar-urgent{position:absolute;top:3px;right:3px;width:15px;height:15px;display:grid!important;
+ place-items:center;background:#bd3633;color:#fff;border-radius:50%;
+ font:900 10px/1 system-ui;box-shadow:0 0 0 1px var(--ss-theme-card,#fff);z-index:1}
+.sales-calendar-add-wrap{position:relative;display:inline-grid;z-index:22}
+.sales-calendar-add{display:grid;place-items:center;border:1px solid var(--ss-theme-border,#ddd);
+ border-radius:8px;background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#333);
+ font-size:20px;font-weight:700;min-width:32px;min-height:32px;line-height:1}
+.sales-calendar-add:hover{border-color:var(--ss-theme-accent,#917246)}
+.sales-calendar-add-menu{position:absolute;right:0;top:calc(100% + 5px);width:210px;z-index:50;
+ display:grid;gap:3px;border-radius:11px;padding:6px;border:1px solid var(--ss-theme-border,#ddd);
+ background:var(--ss-theme-card,#fff);box-shadow:0 12px 26px rgba(0,0,0,.20)}
+.sales-calendar-add-menu button{display:flex;align-items:center;min-height:40px;
+ width:100%;font-size:12px;font-weight:700;padding:8px 10px;text-align:left;
+ color:inherit;border:0;border-radius:7px;background:transparent}
+.sales-calendar-add-menu button:hover{background:var(--ss-theme-tint,#eee)}
+.sales-calendar-inline .sales-calendar-day-preview{overflow:visible!important}
+.sales-calendar-inline .sales-calendar-preview-heading{position:relative}
+.sales-activity-follow-up{padding:10px;border-radius:9px;border:1px solid var(--ss-theme-border,#ddd);
+ display:grid;gap:9px;background:var(--ss-theme-tint,#eee)}
+.sales-activity-follow-up>label:first-child{display:flex;align-items:center;gap:10px;
+ font-size:12px;cursor:pointer}
+.sales-activity-follow-up>label:first-child input{width:18px;height:18px;flex:0 0 18px;accent-color:var(--ss-theme-accent,#917246)}
+.sales-activity-follow-up>label:first-child span{display:grid;gap:3px}
+.sales-activity-follow-up small{color:var(--ss-theme-muted,#777);font-size:11px}
+.sales-activity-follow-date{font-size:11px;display:grid;gap:5px}
+.sales-activity-follow-date input{width:100%}
+@media(max-width:760px){
+ .sales-calendar-heading .sales-calendar-period{gap:1px}
+ .sales-calendar-heading .sales-calendar-period strong{font-size:12px}
+ .sales-calendar-display-toggle button{min-width:43px!important;font-size:10px!important}
+ .sales-calendar-add-menu{right:-3px;top:calc(100% + 3px)}
+}
