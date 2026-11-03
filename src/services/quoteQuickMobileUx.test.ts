@@ -10,6 +10,8 @@ const takeoffs=source('src/components/QuoteCompactTakeoffs.tsx');
 const review=source('src/components/QuoteBetaReview.tsx');
 const reuse=source('src/components/QuoteReuseAreaDialog.tsx');
 const layouts=source('src/components/QuoteAreaPresetPicker.tsx');
+const calculator=source('src/components/QuoteWorkTables.tsx');
+const quickArea=source('src/components/QuoteAreaQuickPanel.tsx');
 
 describe('Quick Quote dedicated phone usability contract',()=>{
  it('keeps desktop tables and uses contiguous compact mobile rows',()=>{
@@ -69,6 +71,10 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(takeoffs).toContain('onTouchEnd={event=>');
   expect(reuse).toContain('onTouchEnd={event=>');
   expect(layouts).toContain('onTouchEnd={event=>');
+  expect(calculator).toContain('sheetSwipeStart.current');
+  expect(quickArea).toContain('sheetSwipeStart.current');
+  expect(mobile).toContain('.qwt-drawer.qwt-drawer');
+  expect(mobile).toContain('.qmb-quick-area-panel.qmb-quick-area-panel');
  });
  it('keeps the reusable Area and Saved Layouts pickers accessible on phones',()=>{
   expect(mobile).toContain('.qra-panel');
