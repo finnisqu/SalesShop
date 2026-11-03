@@ -13,6 +13,7 @@ describe('SalesShop route navigation',()=>{
    expect(parseSalesShopRoute('/notebook')).toEqual({view:'notebook'});
    expect(parseSalesShopRoute('/settings')).toEqual({view:'settings'});
    expect(parseSalesShopRoute('/catalog/suppliers')).toEqual({view:'catalog',catalogSection:'suppliers'});
+   expect(parseSalesShopRoute('/catalog/tags')).toEqual({view:'catalog',catalogSection:'tags'});
    expect(parseSalesShopRoute('/board/projects/id%201')).toEqual({view:'board',focusedProjectId:'id 1'});
    expect(parseSalesShopRoute('/board/accounts/abc')).toEqual({view:'board',focusedCompanyId:'abc'});
    expect(parseSalesShopRoute('/quotes/quote%2Btwo')).toEqual({view:'quotes',focusedQuoteId:'quote+two'});
