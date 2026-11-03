@@ -17,7 +17,6 @@ import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
-import './mobile-profile-quote-toolbar.css';
 
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'home', label: 'Home', short: 'Home' },
@@ -80,6 +79,14 @@ export function MobileAppChrome() {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useDismissibleLayer<HTMLDivElement>(profileOpen, () => setProfileOpen(false));
+  useEffect(()=>{
+    if(!profileOpen)return;
+    const dismiss=(event:PointerEvent)=>{
+      if(profileRef.current&&!profileRef.current.contains(event.target as Node))setProfileOpen(false);
+    };
+    document.addEventListener('pointerdown',dismiss);
+    return ()=>document.removeEventListener('pointerdown',dismiss);
+  },[profileOpen,profileRef]);
   const searchRef = useRef<HTMLDivElement>(null);
   const createRef = useRef<HTMLDivElement>(null);
   const [catalogExpanded, setCatalogExpanded] = useState(false);
