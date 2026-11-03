@@ -158,3 +158,33 @@
  width:100%;min-width:0;padding:8px;border:1px solid var(--ss-theme-border,#ddd);
  background:var(--ss-theme-card,#fff);color:inherit;border-radius:7px;font-size:16px;}
 .sales-activity-void-warning,.sales-activity-detail footer .is-danger{color:#b7534b;}
+
+/* Calendar views and category toggles: secondary controls, not full pages. */
+.sales-calendar-tools{display:grid;gap:8px;padding:9px 11px;
+ border-bottom:1px solid var(--ss-theme-border,#ddd);}
+.sales-calendar-view-switch{display:flex;gap:3px;background:var(--ss-theme-tint,#eee);
+ border-radius:8px;padding:3px;align-self:start;width:max-content;}
+.sales-calendar-view-switch button{border:0;border-radius:6px;min-height:29px;padding:4px 11px;
+ background:transparent;color:inherit;font-size:11px;font-weight:800;}
+.sales-calendar-view-switch button[aria-selected=true]{background:var(--ss-theme-card,#fff);
+ box-shadow:0 1px 4px rgba(0,0,0,.09);}
+.sales-calendar-filters{display:flex;flex-wrap:wrap;gap:4px;}
+.sales-calendar-filters button{display:flex;align-items:center;gap:4px;padding:5px 8px;
+ min-height:30px;border:1px solid var(--ss-theme-border,#ddd);border-radius:99px;
+ background:transparent;color:var(--ss-theme-ink,#333);font-size:10px;font-weight:650;}
+.sales-calendar-filters button[aria-pressed=false]{opacity:.48;}
+.sales-calendar-filters i{display:block;width:7px;height:7px;border-radius:50%;background:#789;}
+.sales-calendar-filters .is-task{background:#6083ab;}
+.sales-calendar-filters .is-bid{background:#bb8054;}
+.sales-calendar-filters .is-activity{background:#579b83;}
+.sales-calendar-filters .is-follow-up{background:#9575b5;}
+.sales-calendar-agenda-view{overflow-y:auto;min-height:120px;max-height:min(52dvh,430px);
+ overscroll-behavior:contain;}
+.sales-calendar-agenda-item{width:100%;min-width:0;display:flex;align-items:center;gap:9px;
+ text-align:left;color:inherit;background:transparent;border:0;
+ border-bottom:1px solid var(--ss-theme-border,#ddd);padding:9px 12px;}
+.sales-calendar-agenda-item:hover,.sales-calendar-agenda-item:focus-visible{background:var(--ss-theme-tint,#eee);}
+.sales-calendar-agenda-date{display:grid;min-width:29px;text-align:center;}
+.sales-calendar-agenda-date strong{font-size:15px;}
+.sales-calendar-agenda-date small{font-size:9px;color:var(--ss-theme-muted,#777);}
+.sales-calendar-agenda-item>.sales-calendar-event-text{flex:1;min-width:0;}
