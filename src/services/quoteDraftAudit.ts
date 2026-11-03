@@ -111,7 +111,8 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
     const sinks=section.scope?.takeoffSinks??[];
     const lines=quote.lines.filter(line=>line.sectionId===section.id);
     const amount=quoteLinesTotal(lines);
-    const hasExcludedTopOrSplash=pieces.some(piece=>piece.excludedFromQuote||piece.excludeSplashFromQuote);
+    const hasExcludedTopOrSplash=pieces.some(piece=>piece.excludedFromQuote||piece.excludeSplashFromQuote||
+      Object.values(piece.excludedSplashEdges??{}).some(Boolean));
     const hasExcludedSink=sinks.some(sink=>sink.excludedFromContract);
     const primary=lines.find(line=>line.quantitySource?.field==='countertopSf'
       &&line.quantitySource?.syncMode==='live')
