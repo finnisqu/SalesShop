@@ -15,7 +15,11 @@ export function GlobalPostItLauncher() {
   return <button type="button" className="global-postit-launcher"
     aria-label="Quick Note" aria-keyshortcuts="Alt+Shift+N" title="Open private Quick Notes · Alt+Shift+N"
     onClick={() => window.dispatchEvent(new Event(quickNoteEvent))}>
-    <span aria-hidden="true">▧</span>
+    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none"
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 3h14a2 2 0 0 1 2 2v10l-6 6H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+      <path d="M15 21v-6h6M7 8h10M7 12h6"/>
+    </svg>
   </button>;
 }
 
