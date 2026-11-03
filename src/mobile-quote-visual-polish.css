@@ -137,7 +137,10 @@
     min-height:42px;
   }
   .sales-app .mobile-app-nav-popover-surface .mobile-notebook-page-list strong {
-    font:740 11px/1.2 inherit;
+    font-family:inherit;
+    font-size:11px;
+    font-weight:740;
+    line-height:1.2;
   }
   .sales-app > .mobile-app-commandbar .mobile-app-menu-button[aria-expanded="true"] {
     border-color:var(--ss-theme-accent,#94703b);
@@ -221,7 +224,7 @@
   .sales-app .qmb .qqs-summary.is-readonly .qqs-inline-actions {
     display:none!important;
   }
-  .sales-app .qmb .qqs-inline-actions {
+  .sales-app .qmb .qqs-summary .qqs-inline-actions {
     display:flex;
     flex:0 0 auto;
     align-items:center;
@@ -419,6 +422,7 @@
     background:var(--qmb-card);
   }
   .sales-app .qmb .qqr-workspace .qqr-steps button {
+    position:relative;
     min-height:43px;
     display:flex;
     flex-direction:row;
@@ -442,7 +446,20 @@
     line-height:1.14;
   }
   .sales-app .qmb .qqr-workspace .qqr-steps button small {
-    display:none;
+    position:absolute;
+    top:-3px;
+    right:1px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:2px 4px;
+    border:1px solid var(--ss-theme-warning,#c58d4c);
+    border-radius:12px;
+    background:var(--qmb-card);
+    color:var(--ss-theme-warning,#c58d4c);
+    font-size:8px;
+    font-weight:850;
+    line-height:1.15;
   }
   .sales-app .qmb .qqr-workspace .qqr-body {
     padding:10px!important;
