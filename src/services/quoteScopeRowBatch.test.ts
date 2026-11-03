@@ -58,6 +58,46 @@ describe('single-table scoped quote rows',()=>{
   expect(totalBillableTakeoffSf(updated.sections[0].scope!.takeoffPieces!)).toBe(8);
   expect(updated.sections[0].scope?.splashLf).toBe(0);
  });
+ it('strikes out and restores each splash edge independently without changing the parent top',()=>{
+  const base={...piece('p'),leftSplash:true,rightSplash:true,
+    splashEdgeHeightsIn:{right:6}};
+  let q=patchQuoteTakeoff(quote(),'k',[base]);
+  q=ensureSmartTakeoffLine(q,'k');
+  q={...q,lines:q.lines.map(line=>({...line,rate:50}))};
+  expect(totalBillableTakeoffSf([base])).toBe(11);
+  const left={kind:'splash' as const,id:'p',sectionId:'k',edge:'left' as const};
+  const right={kind:'splash' as const,id:'p',sectionId:'k',edge:'right' as const};
+  const excluded=applyQuoteScopeRowBatch(q,[left],'exclude');
+  const changed=excluded.sections[0].scope!.takeoffPieces![0];
+  expect(changed.excludedSplashEdges).toMatchObject({left:true});
+  expect(changed.backsplash).toBe(true);
+  expect(changed.leftSplash).toBe(true);
+  expect(changed.rightSplash).toBe(true);
+  expect(changed.lengthIn).toBe(48);
+  expect(totalBillableTakeoffSf([changed])).toBe(10.33);
+  expect(excluded.sections[0].scope?.splashLf).toBe(6);
+  expect(quoteLinesTotal(excluded.lines)).toBeLessThan(quoteLinesTotal(q.lines));
+  const restored=applyQuoteScopeRowBatch(excluded,[left],'restore');
+  expect(restored.sections[0].scope?.countertopSf).toBe(11);
+  const removed=applyQuoteScopeRowBatch(restored,[right],'delete');
+  const after=removed.sections[0].scope!.takeoffPieces![0];
+  expect(after.rightSplash).toBe(false);
+  expect(after.leftSplash).toBe(true);
+  expect(after.backsplash).toBe(true);
+  expect(after.splashEdgeHeightsIn?.right).toBe(6);
+  expect(removed.sections[0].scope?.countertopSf).toBe(10);
+ });
+ it('restoring one edge from a legacy all-splash exclusion does not reprice every edge',()=>{
+  const legacy={...piece('p'),leftSplash:true,rightSplash:true,excludeSplashFromQuote:true};
+  const q=patchQuoteTakeoff(quote(),'k',[legacy]);
+  expect(q.sections[0].scope?.countertopSf).toBe(8);
+  const restored=applyQuoteScopeRowBatch(q,[
+    {kind:'splash',id:'p',sectionId:'k',edge:'left'}],'restore');
+  const pieceAfter=restored.sections[0].scope!.takeoffPieces![0];
+  expect(pieceAfter.excludeSplashFromQuote).toBe(false);
+  expect(pieceAfter.excludedSplashEdges).toMatchObject({back:true,left:false,right:true});
+  expect(restored.sections[0].scope?.countertopSf).toBe(8.67);
+ });
  it('keeps excluded sink selections for restoration, out of prices and customer specs',()=>{
   const q=patchQuoteTakeoffSinks(quote(),'k',[{
     id:'s',name:'Vanity sink',category:'vanity',count:2,includeInPricing:true,unitPrice:125,
