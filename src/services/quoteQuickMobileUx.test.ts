@@ -58,7 +58,7 @@ describe('Quick Quote dedicated phone usability contract',()=>{
  });
  it('keeps the reusable Area and Saved Layouts pickers accessible on phones',()=>{
   expect(mobile).toContain('.qra-panel');
-  expect(mobile).toContain('height:min(78dvh,720px)');
+  expect(mobile).toContain('height:auto;max-height:min(85dvh,740px)');
   expect(mobile).toContain('.qmb-area-preset-dialog header');
   expect(mobile).toContain('position:sticky;bottom:-13px');
   expect(reuse).toContain("document.querySelector('.sales-app')??document.body");
