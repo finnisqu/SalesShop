@@ -300,7 +300,10 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       companyId: project.companyId,
       quoteId: details.quoteId,
       occurredAt: timestamp,
-      metadata: { source: details.source ?? 'manual', quoteNumber: details.quoteNumber, amount: project.amount, toStage: stage },
+      metadata: { source: details.source ?? 'manual', quoteNumber: details.quoteNumber,
+        amount: project.amount, toStage: stage,
+        recordedByUserId:useAuthStore.getState().mode==='cloud'
+          ?useAuthStore.getState().user?.id:undefined },
     };
     const activities = [...get().activities, activity];
     persist(ensured.companies, get().contacts, projects, activities);
