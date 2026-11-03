@@ -468,7 +468,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
    mode==='hidden'?{customerVisible:false}:{customerVisible:true});
   if(count===selected.length)setSelected([]);
  };
- return <section className="qqs-summary" aria-label="Quick Quote compact Area summary">
+ return <section className={'qqs-summary'+(!editable?' is-readonly':'')} aria-label="Quick Quote compact Area summary">
    <header className={'qqs-summary-head'+(selected.length?' is-selecting':'')}>
     {selected.length?<div className="qqs-bulk" role="toolbar" aria-label="Bulk Area actions">
      <strong>{selected.length} selected</strong>
@@ -484,9 +484,16 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
      <span className="qqs-desktop-hint">{areas.length} {areas.length===1?'room':'rooms'} · click or type to edit · Tab/Enter to move</span>
      <span className="qqs-mobile-hint">{areas.length} {areas.length===1?'Area':'Areas'} · tap a cell to edit</span></div>}
     <div className="qqs-inline-actions">
-     <button type="button" disabled={!editable} onClick={onCopyArea}>Copy Area</button>
-     <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
+     <button type="button" className="qqs-desktop-action" disabled={!editable} onClick={onCopyArea}>Copy Area</button>
+     <button type="button" className="qqs-desktop-action" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
      <button type="button" className="qqs-accent" disabled={!editable} onClick={onAddArea}>+ Area</button>
+     <details className="qqs-mobile-actions">
+      <summary aria-label="More Area tools">Tools <span aria-hidden="true">⌄</span></summary>
+      <div>
+       <button type="button" disabled={!editable} onClick={onCopyArea}>Copy Area</button>
+       <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
+      </div>
+     </details>
     </div>
    </header>
    {!areas.length&&<div className="qqs-mobile-empty">
