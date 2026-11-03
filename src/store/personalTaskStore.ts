@@ -54,6 +54,9 @@ export function taskScope(mode:'local'|'cloud',organizationId:string|null,userId
 const prefix=scopedStorageKey('salesshop-personal-tasks-v1:');
 const storageKey=(scope:string)=>prefix+scope;
 const validDate=(date?:string)=>!!date&&/^\d{4}-\d{2}-\d{2}$/.test(date);
+/** A submission obligation exists only before the bid is sent or closed. */
+export const dealNeedsSubmission=(deal:Project)=>!!deal.dueDate&&validDate(deal.dueDate)&&
+ ['Discovery','Intent to Bid','Bid Development'].includes(deal.stage);
 const trim=(value?:string,max=240)=>value?.trim().slice(0,max)||undefined;
 function read(scope:string):PersonalTask[]{
   try{
@@ -143,7 +146,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
   syncDealSubmissionTasks:deals=>{
     const {scope,tasks}=get();
     if(!scope)return;
-    const due=new Map(deals.filter(deal=>!!deal.dueDate&&validDate(deal.dueDate))
+    const due=new Map(deals.filter(dealNeedsSubmission)
       .map(deal=>[deal.id,deal] as const));
     const existing=new Set(tasks.map(task=>task.id));
     const now=new Date().toISOString();
@@ -153,7 +156,8 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       const dealId=task.sourceObjectId.slice('deal-submit:'.length);
       const deal=due.get(dealId);
       if(!deal){
-       if(task.status==='canceled')return task;
+       // Preserve completed submissions as history; cancel only unfinished work.
+       if(task.status==='canceled'||task.status==='completed')return task;
        changed=true;return {...task,status:'canceled' as const,updatedAt:now};
       }
       if(task.dueDate===deal.dueDate&&task.status!=='canceled')return task;
