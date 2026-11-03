@@ -239,7 +239,22 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
       };
     });
 
-  const activities = document.activities.map((activity, sortOrder) => ({
+  // Activity log rows are append-only in generic CRM sync. Never replay
+  // stale full-workspace snapshots over another user's correction or void.
+  // Explicit corrections are transmitted by the durable activity outbox.
+  const knownActivityIds=new Set<string>();
+  if(supabase){
+    for(let offset=0;;offset+=500){
+      const {data,error}=await supabase.from('activities').select('id')
+        .eq('organization_id',organizationId).range(offset,offset+499);
+      if(error)throw error;
+      for(const row of data??[])knownActivityIds.add(row.id);
+      if((data??[]).length<500)break;
+    }
+  }
+  const activities = document.activities
+    .filter(activity=>!knownActivityIds.has(activity.id))
+    .map((activity, sortOrder) => ({
     organization_id: organizationId,
     id: activity.id,
     type: activity.type,
