@@ -105,7 +105,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
  return <>
   <button type="button" className={'sales-log-launcher'+(compact?' is-compact':'')+(tile?' is-tile':'')}
    onClick={()=>{setOpen(true);}}>
-   <span aria-hidden="true">{tile?'◉':'＋'}</span>{tile?<><strong>{label}</strong><small>Call, email or meeting</small></>:label}
+   {tile&&<span aria-hidden="true">◉</span>}{tile?<><strong>{label}</strong><small>Call, email or meeting</small></>:label}
   </button>
   {open&&createPortal(<div className="sales-activity-backdrop" onPointerDown={e=>{
     if(e.target===e.currentTarget)close();
