@@ -14,6 +14,7 @@ import {CalculatorDrawer} from './QuoteWorkTables';
 import type {QuoteScopeRowRef,QuoteScopeBulkOperation} from '../services/quoteScopeRowBatch';
 import {QuoteQuickAreaSummary} from './QuoteQuickAreaSummary';
 import {QuoteCompactTakeoffs} from './QuoteCompactTakeoffs';
+import {QuoteReorderWorkspace} from './QuoteReorderWorkspace';
 import './quote-matrix-builder.css';
 
 const cash=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -228,6 +229,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
  const [focusArea,setFocusArea]=useState<string|null>(null);
  const [advanced,setAdvanced]=useState(false);
  const [moreOpen,setMoreOpen]=useState(false);
+ const [reordering,setReordering]=useState(false);
  const moreRef=useRef<HTMLDivElement>(null);
  useEffect(()=>{
   if(!moreOpen)return;
@@ -251,7 +253,7 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
  const [destination,setDestination]=useState('');
  const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
  const general=quote.sections.find(isGeneralTakeoffSection)??null;
- useEffect(()=>{setSelected([]);setSubtab('areas');setAdvanced(false);setFocusArea(null);},[quote.id]);
+ useEffect(()=>{setSelected([]);setSubtab('areas');setAdvanced(false);setFocusArea(null);setReordering(false);},[quote.id]);
  const selectedKeys=new Set(selected.map(keyOf));
  const choose=(ref:QuoteScopeRowRef,checked:boolean)=>setSelected(old=>checked?
   [...old.filter(x=>keyOf(x)!==keyOf(ref)),ref]:old.filter(x=>keyOf(x)!==keyOf(ref)));
@@ -311,20 +313,21 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
   <nav className="qmx-subtabs" aria-label="Build Quote views">
    <div role="group" aria-label="Quote worksheets">
     <button type="button" className={subtab==='areas'?'is-active':''}
-     aria-current={subtab==='areas'?'page':undefined} onClick={()=>setSubtab('areas')}>
+     aria-current={subtab==='areas'?'page':undefined} disabled={reordering} onClick={()=>setSubtab('areas')}>
       Areas <small>{areas.length}</small></button>
     <button type="button" className={subtab==='takeoffs'?'is-active':''}
-     aria-current={subtab==='takeoffs'?'page':undefined} onClick={()=>setSubtab('takeoffs')}>
+     aria-current={subtab==='takeoffs'?'page':undefined} disabled={reordering} onClick={()=>setSubtab('takeoffs')}>
       Takeoffs <small>{areas.reduce((n,a)=>n+(a.scope?.takeoffPieces?.length??0),0)}</small></button>
    </div>
-   {subtab==='takeoffs'&&<button type="button" className="qmx-advanced-switch"
+   {subtab==='takeoffs'&&!reordering&&<button type="button" className="qmx-advanced-switch"
     onClick={()=>setAdvanced(v=>!v)} aria-pressed={advanced}>
     {advanced?'✓ Technical columns':'Technical columns ›'}</button>}
    <div className="qmx-mobile-overflow" ref={moreRef}>
-    <button type="button" className="qmx-mobile-overflow-trigger"
+    <button type="button" className="qmx-mobile-overflow-trigger" disabled={reordering}
      aria-label="More Build Quote tools" aria-expanded={moreOpen}
      aria-haspopup="true" onClick={()=>setMoreOpen(open=>!open)}>⋯</button>
-    {moreOpen&&<div className="qmx-mobile-overflow-menu" role="group" aria-label="Build Quote tools">
+    {moreOpen&&!reordering&&<div className="qmx-mobile-overflow-menu" role="group" aria-label="Build Quote tools">
+     <button type="button" disabled={!editable} onClick={()=>{setMoreOpen(false);setReordering(true);}}>☷ Reorder rows</button>
      <button type="button" aria-pressed={advanced} onClick={()=>{
        if(subtab==='areas'){setSubtab('takeoffs');setAdvanced(true);}
        else setAdvanced(value=>!value);
@@ -333,16 +336,21 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
      <button type="button" disabled={!areas.length} onClick={()=>{
        setMoreOpen(false);if(areas[0])onAdvanced(areas[0].id);
      }}>Advanced fabrication</button>
+     <button type="button" disabled={!editable} onClick={()=>{
+       setSubtab('takeoffs');setAdvanced(true);setMoreOpen(false);
+     }}>Specialty charges &amp; adjustments</button>
     </div>}
    </div>
    <strong>Quote {cash.format(quoteTotal(quote))}</strong>
   </nav>
-  {subtab==='areas'&&<QuoteQuickAreaSummary quote={quote} onAddArea={onAddArea}
+  {reordering&&<QuoteReorderWorkspace key={quote.id+'-'+subtab} quote={quote} kind={subtab}
+    onDone={()=>setReordering(false)} onCancel={()=>setReordering(false)}/>}
+  {!reordering&&subtab==='areas'&&<QuoteQuickAreaSummary quote={quote} onAddArea={onAddArea}
     onLayouts={onLayouts} onCopyArea={onCopyArea} onAdvanced={onAdvanced} onTakeoffs={id=>{
      setFocusArea(id);setSubtab('takeoffs');
     }}/>}
-  {subtab==='takeoffs'&&!advanced&&<QuoteCompactTakeoffs quote={quote} focusArea={focusArea} onAdvanced={onAdvanced}/>}
-  {subtab==='takeoffs'&&advanced&&
+  {!reordering&&subtab==='takeoffs'&&!advanced&&<QuoteCompactTakeoffs quote={quote} focusArea={focusArea} onAdvanced={onAdvanced}/>}
+  {!reordering&&subtab==='takeoffs'&&advanced&&
   <section className="qmx-panel" aria-label="Takeoffs selections and pricing spreadsheet">
    <header className="qmx-panel-head"><div><h3>2 · Takeoffs, Selections &amp; Pricing</h3>
     <p>One measured piece, sink or charge per editable row. Exclusions preserve every measurement.</p></div>
