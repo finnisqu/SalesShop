@@ -1,4 +1,5 @@
 import type { Quote, QuoteLine } from '../types/quote';
+import {isGeneralTakeoffSection} from './quoteCustomerPresentation';
 
 /**
  * Presentation-independent quote ordering. All transformations preserve line
@@ -88,4 +89,60 @@ export function setQuoteGeneralLineOrder(quote: Quote, ids: string[]): Quote {
   let slot=0;
   return {...quote,lines:quote.lines.map(line=>isGeneral(line)
     ?selected.get(ids[slot++])!:line)};
+}
+
+/** A verified worktable permutation. All changes commit together after Done. */
+export interface QuoteTableOrder {
+ areas:string[];
+ pieces:Record<string,string[]>;
+ sinks:Record<string,string[]>;
+ charges:Record<string,string[]>;
+}
+const isGeneralLine=(quote:Quote,line:QuoteLine)=>!line.sectionId||
+ !quote.sections.some(s=>s.id===line.sectionId)||
+ quote.sections.some(s=>s.id===line.sectionId&&isGeneralTakeoffSection(s));
+const isMovable=(line:QuoteLine)=>!line.takeoffSinkId&&line.quantitySource?.syncMode!=='live';
+const permutation=(before:string[],after:string[])=>
+ before.length===after.length&&new Set(after).size===after.length&&after.every(id=>before.includes(id));
+
+export function createQuoteTableOrder(quote:Quote):QuoteTableOrder {
+ const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
+ const pieces:Record<string,string[]>={},sinks:Record<string,string[]>={},charges:Record<string,string[]>={};
+ for(const area of areas){
+  pieces[area.id]=(area.scope?.takeoffPieces??[]).map(p=>p.id);
+  sinks[area.id]=(area.scope?.takeoffSinks??[]).map(s=>s.id);
+  charges[area.id]=quote.lines.filter(l=>l.sectionId===area.id&&isMovable(l)).map(l=>l.id);
+ }
+ charges.__general=quote.lines.filter(l=>isGeneralLine(quote,l)&&isMovable(l)).map(l=>l.id);
+ return {areas:areas.map(a=>a.id),pieces,sinks,charges};
+}
+/** Reject stale rows and changed identities rather than reorder the wrong quote. */
+export function setQuoteTableOrder(quote:Quote,next:QuoteTableOrder):Quote {
+ const initial=createQuoteTableOrder(quote);
+ if(!permutation(initial.areas,next.areas))return quote;
+ for(const kind of ['pieces','sinks','charges'] as const)
+  for(const [id,ids] of Object.entries(initial[kind]))
+   if(!next[kind][id]||!permutation(ids,next[kind][id]))return quote;
+ const orderedIds=[...next.areas,...quote.sections.filter(isGeneralTakeoffSection).map(s=>s.id)];
+ const bySection=new Map(quote.sections.map(s=>[s.id,s]));
+ const sections=orderedIds.map(id=>{
+  const s=bySection.get(id)!;
+  if(!next.pieces[id]||!next.sinks[id])return s;
+  const byPiece=new Map((s.scope?.takeoffPieces??[]).map(p=>[p.id,p]));
+  const bySink=new Map((s.scope?.takeoffSinks??[]).map(item=>[item.id,item]));
+  return {...s,scope:{...s.scope,
+   takeoffPieces:next.pieces[id].map(key=>byPiece.get(key)!),
+   takeoffSinks:next.sinks[id].map(key=>bySink.get(key)!)}};
+ });
+ let lines=[...quote.lines];
+ for(const [id,ids] of Object.entries(next.charges)){
+  const inGroup=(l:QuoteLine)=>isMovable(l)&&(id==='__general'?isGeneralLine(quote,l):l.sectionId===id);
+  const byId=new Map(lines.filter(inGroup).map(l=>[l.id,l]));
+  let i=0;lines=lines.map(l=>inGroup(l)?byId.get(ids[i++])!:l);
+ }
+ const unchanged=quote.sections.every((s,i)=>sections[i]?.id===s.id&&
+  (s.scope?.takeoffPieces??[]).every((p,j)=>sections[i].scope?.takeoffPieces?.[j]?.id===p.id)&&
+  (s.scope?.takeoffSinks??[]).every((k,j)=>sections[i].scope?.takeoffSinks?.[j]?.id===k.id))
+  &&quote.lines.every((l,i)=>l===lines[i]);
+ return unchanged?quote:{...quote,sections,lines};
 }

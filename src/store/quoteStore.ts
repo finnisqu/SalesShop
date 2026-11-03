@@ -31,7 +31,7 @@ import {sectionFromQuoteAreaPreset,type QuoteAreaPresetId} from '../services/quo
 import {instantiateSavedAreaLayout,type SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
 import {createQuoteSlabPool} from '../services/quoteSharedSlabs';
 import {copySalesDocument} from '../services/quoteDocumentCopy';
-import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder } from '../services/quoteStructure';
+import { deleteQuoteAreaToGeneral, deleteQuoteAreaWithContents, moveQuoteLineToArea, reorderQuoteLine, setQuoteAreaOrder, setQuoteGeneralLineOrder, setQuoteTableOrder, type QuoteTableOrder } from '../services/quoteStructure';
 import { applyJobSelectionsToQuote,type JobSelectionsPatch } from '../services/quoteJobSelections';
 import { relinkQuotesForCompany, relinkQuotesForContact } from '../services/crmIdentity';
 import {
@@ -49,6 +49,7 @@ import {
 import type { Company, Contact } from '../types/crm';
 import { useAuthStore } from './authStore';
 import {applyQuoteScopeRowBatch,type QuoteScopeRowRef,type QuoteScopeBulkOperation} from '../services/quoteScopeRowBatch';
+import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import { detachQuoteTakeoff, patchQuoteTakeoff, patchQuoteTakeoffSinks, patchQuoteTakeoffMaterial, sectionTakeoffSf, ensureSmartTakeoffLine, upsertProjectMaterial, splitTakeoffPieces, syncManagedSinkLineEdit, unpriceDeletedTakeoffSink, setQuoteTakeoffSinkCharge } from '../services/quoteTakeoffsLite';
 import type { QuoteTakeoffPiece, QuoteTakeoffSink, QuoteLineMaterialReference, QuoteLineRateReference } from '../types/quote';
 
@@ -94,6 +95,8 @@ interface QuoteState {
   copyAreasFromQuote:(targetQuoteId:string,sourceQuoteId:string,sourceAreaIds:string[],includeSellingPrices?:boolean)=>number;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
   /** Atomic, undoable update to Area display or pre-existing live-SF selling rates. */
+  bulkDeleteAreas:(quoteId:string,sectionIds:string[])=>number;
+  commitQuoteTableOrder:(quoteId:string,order:QuoteTableOrder)=>void;
   bulkEditAreas:(quoteId:string,sectionIds:string[],patch:{
     customerDisplayMode?:'detail'|'summary';customerVisible?:boolean;sfRate?:number;
   })=>number;
@@ -727,6 +730,36 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, ...history });
   },
 
+
+  /** Delete all selected Areas in one snapshot, with one Undo action. */
+  bulkDeleteAreas:(quoteId,sectionIds)=>{
+   const q=get().quotes.find(q=>q.id===quoteId);
+   if(!q||!quoteIsCommerciallyEditable(q))return 0;
+   const ids=new Set(sectionIds),matched=q.sections.filter(s=>ids.has(s.id)&&!isGeneralTakeoffSection(s));
+   if(ids.size===0||matched.length!==ids.size)return 0;
+   const next={...q,updatedAt:now(),sections:q.sections.filter(s=>!ids.has(s.id)),
+    lines:q.lines.filter(l=>!l.sectionId||!ids.has(l.sectionId))};
+   const history=historyPatch(get(),quoteId,q);
+   const quotes=get().quotes.map(item=>item.id===quoteId?next:item);
+   persist(quotes,get().activeQuoteId);set({quotes,...history});
+   const org=cloudOrganizationId();
+   if(org)void (async()=>{
+    await Promise.all(q.lines.filter(l=>l.sectionId&&ids.has(l.sectionId))
+     .map(l=>deleteNormalizedQuoteLine(org,l.id)));
+    await Promise.all(matched.map(s=>deleteNormalizedQuoteSection(org,s.id)));
+   })().catch(reportCloudDeleteError);
+   return matched.length;
+  },
+  /** All handle drags persist once after Done, never while dragging. */
+  commitQuoteTableOrder:(quoteId,order)=>{
+   const q=get().quotes.find(q=>q.id===quoteId);
+   if(!q||!quoteIsCommerciallyEditable(q))return;
+   const next=setQuoteTableOrder(q,order);
+   if(next===q)return;
+   const history=historyPatch(get(),quoteId,q);
+   const quotes=get().quotes.map(item=>item.id===quoteId?{...next,updatedAt:now()}:item);
+   persist(quotes,get().activeQuoteId);set({quotes,...history});
+  },
   bulkEditAreas:(quoteId,sectionIds,patch)=>{
     const current=get().quotes.find(q=>q.id===quoteId);
     if(!current||!quoteIsCommerciallyEditable(current)||current.documentType==='pricing-schedule')return 0;
