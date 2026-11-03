@@ -2,7 +2,7 @@ import {describe,expect,it} from 'vitest';
 import type {Activity,Project} from '../types/crm';
 import type {PersonalTask} from '../store/personalTaskStore';
 import type {Quote} from '../types/quote';
-import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,calendarWeekDays,isoLocalDay,localDateKey} from './salesCalendar';
+import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,isoLocalDay,localDateKey} from './salesCalendar';
 const task=(id:string,dueDate?:string,extra:Partial<PersonalTask>={})=>({
  id,title:'Task '+id,dueDate,status:'open',createdAt:'2026-11-01T12:00:00Z',
  updatedAt:'2026-11-01T12:00:00Z',...extra,
@@ -28,6 +28,15 @@ describe('SalesShop shared Calendar',()=>{
   const feb=calendarMonthDays(2027,1);
   expect(feb).toHaveLength(42);
   expect(feb[0]).toBe('2027-01-31');
+ });
+ it('uses only four or five weeks when the Home month fits, without losing dates',()=>{
+  const november=calendarCompactMonthDays(2026,10);
+  expect(november).toHaveLength(35);
+  expect(november.at(-1)).toBe('2026-12-05');
+  const february=calendarCompactMonthDays(2026,1);
+  expect(february).toHaveLength(28);
+  expect(february.at(-1)).toBe('2026-02-28');
+  expect(calendarCompactMonthDays(2026,7)).toHaveLength(42);
  });
  it('builds a seven-day week without UTC shifts at DST and month boundaries',()=>{
   expect(calendarWeekDays('2026-11-03')).toEqual([
