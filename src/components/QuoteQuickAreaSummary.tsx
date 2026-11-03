@@ -515,6 +515,17 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
    </div>}
    <div className="qqs-scroll" role="region" aria-label="Area summary spreadsheet" tabIndex={0} ref={table}
     onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}>
+    <div className="qqs-mobile-table-head" role="row" aria-label="Area pricing columns">
+     <div role="columnheader" aria-label="Select all Areas">
+      <input type="checkbox" aria-label="Select all Areas on mobile"
+       checked={areas.length>0&&areas.every(area=>selected.includes(area.id))}
+       onChange={event=>setSelected(event.target.checked?areas.map(area=>area.id):[])}/>
+     </div>
+     <div role="columnheader">Area / breakdown</div>
+     <div role="columnheader">SF</div>
+     <div role="columnheader">Total</div>
+     <div role="columnheader" aria-label="Expand pricing"></div>
+    </div>
     <div className="qqs-grid qqs-header" role="row">
       <div className="qqs-cell qqs-pin-check"><input type="checkbox" aria-label="Select all Areas"
        checked={areas.length>0&&areas.every(area=>selected.includes(area.id))}
@@ -567,6 +578,11 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
          onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v)};
        })())}
       {cell(area.id,'total','Total price for '+area.title,amount(data.total))}
+      <div className="qqs-mobile-breakdown" aria-label={'Price breakdown for '+area.title}>
+       <span>Stone {amount(data.materialPrice)}</span>
+       {data.sinkPrice!==0&&<span> · Sinks {amount(data.sinkPrice)}</span>}
+       {data.specialtyPrice!==0&&<span> · Other {amount(data.specialtyPrice)}</span>}
+      </div>
       <button type="button" className="qqs-mobile-expand" aria-expanded={expanded}
        aria-controls={'qqs-area-row-'+area.id}
        aria-label={(expanded?'Collapse':'Expand')+' pricing details for '+area.title}
