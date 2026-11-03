@@ -268,7 +268,13 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
       const operation=key===PRIVATE_DOCUMENT_KEY
         ?upsertPrivateDocument(userId,document)
         :key===CRM_DOCUMENT_KEY
-          ?syncNormalizedCrm(orgId,document as CrmDocument)
+          ?(async()=>{
+             await syncNormalizedCrm(orgId,document as CrmDocument);
+             // Generic snapshot sync inserts new events but intentionally
+             // never overwrites an existing Activity. Corrections MUST be
+             // sent through the exact pending outbox before acknowledgment.
+             if(crmSnapshot.length)await upsertPendingCrmActivities(orgId,crmSnapshot);
+           })()
           :key===QUOTES_DOCUMENT_KEY
             ?syncNormalizedQuotes(orgId,document as QuoteDocument)
             :syncNormalizedSignatures(orgId,document as SignatureDocument);
