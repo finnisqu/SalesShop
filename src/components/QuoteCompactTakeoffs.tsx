@@ -221,6 +221,10 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
  const areas=quote.sections.filter(s=>!isGeneralTakeoffSection(s));
  useEffect(()=>{setSelected([]);setDetail(null);},[quote.id]);
  const selectedKeys=new Set(selected.map(key));
+ const canDuplicateSelection=selected.every(ref=>ref.kind!=='line'||(()=>{
+  const line=quote.lines.find(item=>item.id===ref.id);
+  return !!line&&!line.takeoffSinkId&&line.quantitySource?.syncMode!=='live';
+ })());
  const changeSelected=(ref:QuoteScopeRowRef,on:boolean)=>setSelected(old=>on?
   [...old.filter(r=>key(r)!==key(ref)),ref]:old.filter(r=>key(r)!==key(ref)));
  const select=(ref:QuoteScopeRowRef)=><input type="checkbox" aria-label={'Select '+ref.kind+' '+ref.id}
@@ -322,7 +326,10 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
   <header className={'qqt-heading'+(selected.length?' is-selecting':'')}>
     {selected.length?<div className="qqt-bulk" role="toolbar" aria-label="Bulk edit takeoff lines">
      <strong>{selected.length} selected</strong>
-     <button type="button" disabled={!editable} onClick={()=>duplicateRows(selected)}>⧉ Duplicate</button>
+     <button type="button" disabled={!editable||!canDuplicateSelection}
+      title={canDuplicateSelection?'Duplicate selected rows (Undo available)':
+       'Managed prices cannot be duplicated as independent charges'}
+      onClick={()=>duplicateRows(selected)}>⧉ Duplicate</button>
      <button type="button" disabled={!editable} onClick={()=>apply('exclude')}>Strike out</button>
      <button type="button" disabled={!editable} onClick={()=>apply('restore')}>Restore</button>
      <select aria-label="Move selected rows to Area" value={target} onChange={e=>setTarget(e.target.value)}>
@@ -420,7 +427,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
          allowNegative={line.kind==='discount'} commit={v=>setChargeTotal(line,v)}/>,
         !line.includeInTotal,
         ()=>setDetail({areaId:section.id,id:line.id,kind:'line'}),false,
-        ()=>deleteRow(ref),()=>duplicateRows([ref]));
+        ()=>deleteRow(ref),line.quantitySource?.syncMode==='live'||line.takeoffSinkId
+         ?undefined:()=>duplicateRows([ref]));
       })}
      {!pieces.length&&!sinks.length&&!otherLines.length&&
       <div className="qqt-empty">No takeoffs yet. Add a piece, sink or charge.</div>}
@@ -446,7 +454,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
         disabled={!editable||line.quantitySource?.syncMode==='live'||!line.includeInTotal}
         allowNegative={line.kind==='discount'} commit={v=>setChargeTotal(line,v)}/>,
        !line.includeInTotal,()=>setDetail({areaId:null,id:line.id,kind:'line'}),false,
-       ()=>deleteRow(ref),()=>duplicateRows([ref]));
+       ()=>deleteRow(ref),line.quantitySource?.syncMode==='live'||line.takeoffSinkId
+         ?undefined:()=>duplicateRows([ref]));
      })}
    </div>
   </div>
