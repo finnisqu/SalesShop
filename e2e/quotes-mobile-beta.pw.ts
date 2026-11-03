@@ -216,13 +216,18 @@ test('phone Ready status and customer action fit a compact Beta header',async({p
     const metadata=box('.qmb-quote-price-meta');
     const menu=box('.mobile-quote-actions-slot .sales-document-rail-actions');
     const hamburger=box('.mobile-app-menu-button');
-    const footer=box('.qmb-quote-editor .qmb-quote-footer');
+    const footerElement=document.querySelector<HTMLElement>('.qmb-quote-editor .qmb-quote-footer');
+    const footer=footerElement?.getBoundingClientRect();
+    const viewport=window.visualViewport;
     return {priceAboveStatus:!!total&&!!metadata&&metadata.top>=total.top,
       menuBeforeAppNav:!!menu&&!!hamburger&&menu.right<=hamburger.left+2,
-      footerWithinViewport:!!footer&&footer.bottom<=(window.visualViewport?.height??window.innerHeight)+2};
+      footerIsFixed:!!footerElement&&getComputedStyle(footerElement).position==='fixed',
+      footerWithinViewport:!!footer&&footer.top>=0&&
+        footer.bottom<=(viewport?viewport.offsetTop+viewport.height:window.innerHeight)+2};
   });
   expect(chrome.priceAboveStatus).toBe(true);
   expect(chrome.menuBeforeAppNav).toBe(true);
+  expect(chrome.footerIsFixed).toBe(true);
   expect(chrome.footerWithinViewport).toBe(true);
   // A Ready quote with incomplete pricing must route to resolution, not promise it can issue.
   await expect(beta.locator('.qmb-quote-footer .qmb-primary')).toHaveText('Resolve 1 pricing issue ›');
