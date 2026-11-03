@@ -247,6 +247,46 @@ test('phone Ready status and customer action fit a compact Beta header',async({p
   await expect(beta.locator('.qmb-quote-footer .qmb-primary')).toHaveText('Resolve 1 pricing issue ›');
 });
 
+test('Takeoffs More sheet occupies the usable Safari viewport and keeps Done visible',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Takeoff sheet visual viewport regression');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  await createQuickQuote(page);
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  const buildStage=beta.getByRole('navigation',{name:'Jump to quote stage'})
+    .getByRole('button',{name:/Build Quote/});
+  await buildStage.click();
+  await beta.locator('.qmx-subtabs').getByRole('button',{name:/Areas/}).click();
+  await beta.locator('.qqs-summary').getByRole('button',{name:/\+ Area/}).click();
+  await beta.locator('.qmx-subtabs').getByRole('button',{name:/Takeoffs/}).click();
+  await beta.locator('.qqt-group').getByRole('button',{name:'+ Piece'}).first().click();
+  await beta.locator('.qqt-grid.qqt-row').first().locator('.qqt-more-button').click();
+  const sheet=page.getByRole('dialog',{name:/Edit /});
+  await expect(sheet).toBeVisible();
+  const geometry=await sheet.evaluate(panel=>{
+    const rect=panel.getBoundingClientRect();
+    const footer=panel.querySelector('footer')?.getBoundingClientRect();
+    const body=panel.querySelector('.qqt-panel-body');
+    const visual=window.visualViewport;
+    const visibleBottom=(visual?.offsetTop??0)+(visual?.height??window.innerHeight);
+    return {top:rect.top,bottom:rect.bottom,height:rect.height,
+      visibleHeight:visual?.height??window.innerHeight,
+      visibleBottom,footerBottom:footer?.bottom??0,
+      scrollable:!!body&&getComputedStyle(body).overflowY==='auto'};
+  });
+  expect(geometry.top).toBeLessThanOrEqual(50);
+  expect(geometry.height).toBeGreaterThan(Math.min(440,geometry.visibleHeight*.7));
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.visibleBottom+2);
+  expect(geometry.footerBottom).toBeLessThanOrEqual(geometry.visibleBottom+2);
+  expect(geometry.scrollable).toBe(true);
+  await sheet.getByRole('button',{name:'Done'}).click();
+  await expect(sheet).toHaveCount(0);
+});
+
 test('Area takeoff grid keeps tabs visible and splash popover updates billable SF',async ({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','Targeted interactive mobile spreadsheet test');
   const pageErrors:string[]=[];
