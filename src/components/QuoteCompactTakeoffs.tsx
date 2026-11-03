@@ -436,7 +436,13 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
   checked={selectedKeys.has(key(ref))} onChange={e=>changeSelected(ref,e.target.checked)}/>;
  const contract=(ref:QuoteScopeRowRef,isExcluded:boolean)=><button type="button"
   className={'qqt-contract'+(isExcluded?' is-excluded':'')}
-  disabled={!editable} onClick={()=>store.bulkScopeRows(quote.id,[ref],isExcluded?'restore':'exclude')}>
+  disabled={!editable} onClick={()=>{
+    const piece=ref.kind==='splash'?quote.sections.find(section=>section.id===ref.sectionId)
+      ?.scope?.takeoffPieces?.find(item=>item.id===ref.id):undefined;
+    const refs=ref.kind==='splash'&&piece?.excludedFromQuote&&isExcluded
+      ?[{...ref,kind:'piece' as const,edge:undefined},ref]:[ref];
+    store.bulkScopeRows(quote.id,refs,isExcluded?'restore':'exclude');
+   }}>
    {isExcluded?'Restore':'Include ✓'}</button>;
  const addPiece=(section:QuoteSection)=>store.updateTakeoffPieces(quote.id,section.id,
   [...(section.scope?.takeoffPieces??[]),newTakeoffPiece((section.scope?.takeoffPieces?.length??0)+1)]);
@@ -517,7 +523,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    <div className="qqt-cell">{contract(ref,excluded)}</div>
    <div className="qqt-cell qqt-actions">
     <button type="button" className="qqt-more-button"
-     aria-label={'More options for '+area+' '+ref.kind+' '+ref.id}
+     aria-label={'More options for '+area+' '+(ref.edge?edgeNames[ref.edge]+' splash':ref.kind)+' '+ref.id}
      title="More details and actions" onClick={edit}>⋯</button>
     <button type="button" className="qqt-edit-button qqt-desktop-action"
      aria-label={'More settings for '+area+' '+ref.kind} onClick={edit} title="Detailed settings">✎</button>
@@ -660,7 +666,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
       <div className="qqt-empty">No takeoffs yet. Add a piece, sink or charge.</div>}
     </div>;
    })}
-   <div className="qqt-area-block"><div className="qqt-group">
+   <div className="qqt-area-block"><div className="qqt-group qqt-general-group">
     <strong>General</strong><span>Project-wide charges and adjustments</span>
     <div><button type="button" disabled={!editable} onClick={()=>addLine(null)}>+ Charge</button></div></div>
     {quote.lines.filter(line=>!line.sectionId||
