@@ -582,13 +582,13 @@
  .sales-app .qmb .qqr-mobile-price-table tbody tr:last-child>*{border-bottom:0}
 
  /* All Quick Quote edit drawers become theme-safe iPhone-like bottom sheets. */
- .sales-app .qmb.qqs-overlay,
- .sales-app .qmb.qqt-overlay{
+ .sales-app .qmb.qqs-overlay.qqs-overlay,
+ .sales-app .qmb.qqt-overlay.qqt-overlay{
   width:100vw;height:100dvh;align-items:flex-end!important;
   justify-content:center!important;padding:0;
   background:rgba(12,23,28,.5);overflow:hidden}
- .sales-app .qmb.qqs-overlay>.qqs-panel,
- .sales-app .qmb.qqt-overlay>.qqt-panel{
+ .sales-app .qmb.qqs-overlay>.qqs-panel.qqs-panel,
+ .sales-app .qmb.qqt-overlay>.qqt-panel.qqt-panel{
   position:relative!important;inset:auto!important;
   top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
   width:100%!important;max-width:100%!important;
@@ -601,17 +601,17 @@
   box-shadow:0 -12px 44px rgba(0,0,0,.23);
   background:var(--qmb-card);color:var(--qmb-ink);
   animation:quickQuoteSheetEnter .18s ease-out both}
- .sales-app .qmb.qqs-overlay>.qqs-panel::before,
- .sales-app .qmb.qqt-overlay>.qqt-panel::before,
+ .sales-app .qmb.qqs-overlay>.qqs-panel.qqs-panel::before,
+ .sales-app .qmb.qqt-overlay>.qqt-panel.qqt-panel::before,
  .sales-app .qra-panel::before{
   content:"";display:block;align-self:center;flex:0 0 35px;
   width:35px;height:5px;max-height:5px;
   border-radius:10px;background:var(--qmb-border);margin:9px auto 2px}
- .sales-app .qmb .qqs-panel>header,
- .sales-app .qmb .qqt-panel>header{
+ .sales-app .qmb.qqs-overlay .qqs-panel>header,
+ .sales-app .qmb.qqt-overlay .qqt-panel>header{
   min-height:0;padding:7px 15px 10px;touch-action:pan-y}
- .sales-app .qmb .qqs-panel-body,
- .sales-app .qmb .qqt-panel-body{
+ .sales-app .qmb.qqs-overlay .qqs-panel-body,
+ .sales-app .qmb.qqt-overlay .qqt-panel-body{
   flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;
   padding:11px 15px 18px;-webkit-overflow-scrolling:touch}
  .sales-app .qmb .qqs-panel>footer,
