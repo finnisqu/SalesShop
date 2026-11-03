@@ -11,6 +11,7 @@ export function QuoteAreaPresetPicker({onSelect,onBlank,onClose,savedLayouts,onS
  const [confirmDelete,setConfirmDelete]=useState<string|null>(null);
  const [deleteError,setDeleteError]=useState('');
  const dialogRef=useRef<HTMLElement>(null);
+ const sheetSwipeStart=useRef<number|null>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
  useEffect(()=>{
@@ -33,7 +34,14 @@ export function QuoteAreaPresetPicker({onSelect,onBlank,onClose,savedLayouts,onS
  }}>
    <section ref={dialogRef} className="qmb-area-preset-dialog" role="dialog" aria-modal="true"
      aria-label="Choose Area starting layout">
-     <header><div><strong>Start an Area</strong><small>Layouts add editable placeholders only.
+     <header onTouchStart={event=>{
+      if((event.target as HTMLElement).closest('button,input,select'))return;
+      sheetSwipeStart.current=event.touches[0]?.clientY??null;
+     }} onTouchEnd={event=>{
+      const start=sheetSwipeStart.current;
+      sheetSwipeStart.current=null;
+      if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
+     }}><div><strong>Start an Area</strong><small>Layouts add editable placeholders only.
        No measurements, material, sink charges or selling prices are guessed.</small></div>
        <button type="button" onClick={onClose} aria-label="Close Area layouts">×</button>
      </header>
