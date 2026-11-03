@@ -246,7 +246,7 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
   if(supabase){
     for(let offset=0;;offset+=500){
       const {data,error}=await supabase.from('activities').select('id')
-        .eq('organization_id',organizationId).range(offset,offset+499);
+        .eq('organization_id',organizationId).order('id',{ascending:true}).range(offset,offset+499);
       if(error)throw error;
       for(const row of data??[])knownActivityIds.add(row.id);
       if((data??[]).length<500)break;
