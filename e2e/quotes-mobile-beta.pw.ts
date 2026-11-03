@@ -221,6 +221,12 @@ test('phone Ready status and customer action fit a compact Beta header',async({p
   await beta.getByRole('combobox',{name:'Draft status'}).selectOption('Ready');
   const header=beta.locator('.qmb-quote-editor .qmb-quote-identity');
   await expect(header.locator('.qmb-editor-status')).toHaveText('Ready for review');
+  const statusPresentation=await header.locator('.qmb-editor-status').evaluate(node=>({
+    plain:!node.classList.contains('qmb-chip'),
+    background:getComputedStyle(node).backgroundColor,
+  }));
+  expect(statusPresentation.plain).toBe(true);
+  expect(['transparent','rgba(0, 0, 0, 0)']).toContain(statusPresentation.background);
   await expect(header.locator('.qmb-editor-status')).toHaveText('Ready for review');
   const geometry=await header.evaluate(node=>({scroll:node.scrollWidth,client:node.clientWidth}));
   expect(geometry.scroll).toBeLessThanOrEqual(geometry.client+1);
@@ -303,6 +309,30 @@ test('Takeoffs More sheet occupies the usable Safari viewport and keeps Done vis
   await beta.locator('.qqs-summary').getByRole('button',{name:/\+ Area/}).click();
   await beta.locator('.qmx-subtabs').getByRole('button',{name:/Takeoffs/}).click();
   await beta.locator('.qqt-group').getByRole('button',{name:'+ Piece'}).first().click();
+  const more=beta.locator('.qmx-mobile-overflow-trigger');
+  await expect(more).toBeVisible();
+  const moreBox=await more.boundingBox();
+  expect(moreBox?.width).toBeLessThanOrEqual(44);
+  const area=beta.locator('.qqt-area-block[data-area-id]').first();
+  const layout=await area.evaluate(node=>{
+    const group=node.querySelector('.qqt-group');
+    const headings=node.querySelector('.qqt-mobile-header');
+    const firstPiece=node.querySelector('.qqt-grid.qqt-row');
+    const column=headings?.querySelector('.qqt-mobile-column');
+    const headingStyle=headings?getComputedStyle(headings):null;
+    const columnStyle=column?getComputedStyle(column):null;
+    return {headerAfterArea:headings?.previousElementSibling===group,
+      headerBeforePiece:!!headings&&!!firstPiece&&
+        !!(headings.compareDocumentPosition(firstPiece)&Node.DOCUMENT_POSITION_FOLLOWING),
+      topBorder:headingStyle?.borderTopWidth,
+      bottomBorder:headingStyle?.borderBottomWidth,
+      noColumnDivider:columnStyle?.borderRightWidth==='0px'};
+  });
+  expect(layout.headerAfterArea).toBe(true);
+  expect(layout.headerBeforePiece).toBe(true);
+  expect(layout.topBorder).toBe('1px');
+  expect(layout.bottomBorder).toBe('1px');
+  expect(layout.noColumnDivider).toBe(true);
   await beta.locator('.qqt-grid.qqt-row').first().locator('.qqt-more-button').click();
   const sheet=page.getByRole('dialog',{name:/Edit /});
   await expect(sheet).toBeVisible();
