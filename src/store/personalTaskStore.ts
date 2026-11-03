@@ -148,6 +148,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     if(!scope)return;
     const due=new Map(deals.filter(dealNeedsSubmission)
       .map(deal=>[deal.id,deal] as const));
+    const allDeals=new Map(deals.map(deal=>[deal.id,deal] as const));
     const existing=new Set(tasks.map(task=>task.id));
     const now=new Date().toISOString();
     let changed=false;
@@ -156,9 +157,14 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       const dealId=task.sourceObjectId.slice('deal-submit:'.length);
       const deal=due.get(dealId);
       if(!deal){
-       // Preserve completed submissions as history; cancel only unfinished work.
        if(task.status==='canceled'||task.status==='completed')return task;
-       changed=true;return {...task,status:'canceled' as const,updatedAt:now};
+       const stage=allDeals.get(dealId)?.stage;
+       const submitted=stage!==undefined&&
+        ['Bid Sent','Negotiation','Closed Won','Completed'].includes(stage);
+       changed=true;
+       return submitted
+        ?{...task,status:'completed' as const,completedAt:now,updatedAt:now}
+        :{...task,status:'canceled' as const,updatedAt:now};
       }
       // An intentional cancel is a user override, not a retry condition.
       if(task.status==='canceled'||task.dueDate===deal.dueDate)return task;
