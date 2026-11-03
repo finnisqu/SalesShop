@@ -240,6 +240,16 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
  const setSink=(section:QuoteSection,sink:QuoteTakeoffSink,patch:Partial<QuoteTakeoffSink>)=>
   store.updateTakeoffSinks(quote.id,section.id,(section.scope?.takeoffSinks??[])
    .map(item=>item.id===sink.id?{...item,...patch}:item));
+ const duplicateRows=(refs:QuoteScopeRowRef[])=>{
+  if(!editable||!refs.length)return;
+  const copiesParent=refs.some(ref=>ref.kind==='splash'&&!refs.some(piece=>
+    piece.kind==='piece'&&piece.id===ref.id&&piece.sectionId===ref.sectionId));
+  if(copiesParent&&!window.confirm(
+   'A splash is attached to its measured piece. Duplicating this splash also copies its parent piece and all attached splash edges. Continue?'
+  ))return;
+  const created=store.duplicateScopeRows(quote.id,refs);
+  if(created)setSelected([]);
+ };
  const deleteRow=(ref:QuoteScopeRowRef)=>{
   if(!editable)return;
   const section=quote.sections.find(s=>s.id===ref.sectionId);
@@ -283,7 +293,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
   setSelected([]);
  };
  const row=(ref:QuoteScopeRowRef,area:string,description:ReactNode,qty:ReactNode,length:ReactNode,
-  width:ReactNode,sfValue:ReactNode,price:ReactNode,excluded:boolean,edit:()=>void,issue=false,remove?:()=>void)=>
+  width:ReactNode,sfValue:ReactNode,price:ReactNode,excluded:boolean,edit:()=>void,issue=false,
+  remove?:()=>void,duplicate?:()=>void)=>
   <div className={'qqt-row qqt-grid'+(excluded?' is-excluded':'')+(issue?' has-issue':'')}
    key={key(ref)} data-quick-grid-row={key(ref)}>
    <div className="qqt-cell qqt-check">{select(ref)}</div>
@@ -298,6 +309,10 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    <div className="qqt-cell qqt-actions">
     <button type="button" className="qqt-edit-button"
      aria-label={'More settings for '+area+' '+ref.kind} onClick={edit} title="Detailed settings">✎</button>
+    <button type="button" className="qqt-duplicate-button" disabled={!editable||!duplicate}
+     aria-label={'Duplicate '+area+' '+ref.kind}
+     title={ref.kind==='splash'?'Duplicate parent piece and attached splashes':'Duplicate row (Undo available)'}
+     onClick={duplicate}>⧉</button>
     <button type="button" className="qqt-delete-button" disabled={!editable||!remove}
      aria-label={'Delete '+area+' '+ref.kind} title="Delete row (Undo available)"
      onClick={remove}>×</button>
@@ -307,6 +322,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
   <header className={'qqt-heading'+(selected.length?' is-selecting':'')}>
     {selected.length?<div className="qqt-bulk" role="toolbar" aria-label="Bulk edit takeoff lines">
      <strong>{selected.length} selected</strong>
+     <button type="button" disabled={!editable} onClick={()=>duplicateRows(selected)}>⧉ Duplicate</button>
      <button type="button" disabled={!editable} onClick={()=>apply('exclude')}>Strike out</button>
      <button type="button" disabled={!editable} onClick={()=>apply('restore')}>Restore</button>
      <select aria-label="Move selected rows to Area" value={target} onChange={e=>setTarget(e.target.value)}>
@@ -358,7 +374,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
          commit={v=>setPiece(section,piece,{widthIn:v})}/>,
         sf.format(topSf),<span className="qqt-readonly" title="Allocated Area price; not a second billable line">
          {money.format(allocated)}</span>,!!piece.excludedFromQuote,edit,!piece.lengthIn||!piece.widthIn,
-         ()=>deleteRow(ref))}
+         ()=>deleteRow(ref),()=>duplicateRows([ref]))}
        {(piece.backsplash||piece.leftSplash||piece.rightSplash)&&
         row({kind:'splash',id:piece.id,sectionId:section.id},section.title,'↳ Splash · '+piece.name,
          piece.count,'—',<SmallInput label={'Splash height '+piece.name} value={piece.splashHeightIn??4}
@@ -366,7 +382,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
          sf.format(takeoffPieceSplashSf(piece)),
          <span className="qqt-readonly" title="This selling price is included in Area stone pricing">Included in stone</span>,
          !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,edit,false,
-         ()=>deleteRow({kind:'splash',id:piece.id,sectionId:section.id}))}
+         ()=>deleteRow({kind:'splash',id:piece.id,sectionId:section.id}),
+         ()=>duplicateRows([{kind:'splash',id:piece.id,sectionId:section.id}]))}
       </div>;
      })}
      {sinks.map(sink=>{
@@ -384,7 +401,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
          setSink(section,sink,{unitPrice:Math.round(v/sink.count*100)/100});}}/>,
        !!sink.excludedFromContract,
        ()=>setDetail({areaId:section.id,id:sink.id,kind:'sink'}),!sink.name.trim(),
-       ()=>deleteRow(ref));
+       ()=>deleteRow(ref),()=>duplicateRows([ref]));
      })}
      {otherLines.map(line=>{
        const ref:QuoteScopeRowRef={kind:'line',id:line.id,sectionId:section.id};
@@ -401,7 +418,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
          allowNegative={line.kind==='discount'} commit={v=>setChargeTotal(line,v)}/>,
         !line.includeInTotal,
         ()=>setDetail({areaId:section.id,id:line.id,kind:'line'}),false,
-        ()=>deleteRow(ref));
+        ()=>deleteRow(ref),()=>duplicateRows([ref]));
       })}
      {!pieces.length&&!sinks.length&&!otherLines.length&&
       <div className="qqt-empty">No takeoffs yet. Add a piece, sink or charge.</div>}
@@ -427,7 +444,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
         disabled={!editable||line.quantitySource?.syncMode==='live'||!line.includeInTotal}
         allowNegative={line.kind==='discount'} commit={v=>setChargeTotal(line,v)}/>,
        !line.includeInTotal,()=>setDetail({areaId:null,id:line.id,kind:'line'}),false,
-       ()=>deleteRow(ref));
+       ()=>deleteRow(ref),()=>duplicateRows([ref]));
      })}
    </div>
   </div>
