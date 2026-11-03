@@ -5,7 +5,7 @@
 .sales-app .qmb .qqs-mobile-empty,.sales-app .qmb .qqs-mobile-hint,
 .sales-app .qmb .qqt-mobile-hint{display:none}
 
-@media(max-width:700px){
+@media(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
  /* One set of quote controls in the header, not over the customer's work. */
  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-pagehead{
   position:relative;z-index:25;overflow:visible;
@@ -136,6 +136,10 @@
   opacity:1;pointer-events:auto;flex:0 0 28px;
   width:28px;height:32px}
  .sales-app .qmb .qqs-cell input[type=checkbox]{width:18px;height:18px}
+ .sales-app .qmb .qqs-cell :is(.qqs-edit,.qqs-inline-title input){
+  min-height:36px;font-size:16px!important}
+ .sales-app .qmb .qqs-cell .qqs-pencil{
+  min-width:29px;min-height:32px}
  .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell.qqs-pin-check{
   display:none!important}
  .sales-app .qmb .qqs-grid.qqs-row.qqs-general>.qqs-cell.qqs-pin-area{
@@ -202,6 +206,10 @@
  .sales-app .qmb .qqt-group>div>button{
   white-space:normal;min-width:0;min-height:36px;padding:5px 3px;
   line-height:1.2;font-size:10px}
+ .sales-app .qmb .qqt-group>div:has(>button:only-child){
+  display:flex;justify-content:flex-end}
+ .sales-app .qmb .qqt-group>div:has(>button:only-child)>button{
+  min-width:120px}
  .sales-app .qmb .qqt-grid.qqt-row{
   display:grid;width:100%;min-width:0;max-width:100%;
   grid-template-columns:38px repeat(3,minmax(0,1fr));
