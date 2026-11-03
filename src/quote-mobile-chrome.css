@@ -256,3 +256,72 @@
   }
   .sales-app .qmb .qmb-quote-meta .qmb-document-customer-link {max-width:145px}
 }
+
+/* Specificity guard against the earlier Quick Quote phone stylesheet. That
+   stylesheet intentionally styles the old header, so match its full scope. */
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-chrome .qmb-quote-identity {
+  padding:9px 17px 6px;
+}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-chrome .qmb-quote-sticky {
+  border-bottom:0;
+}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions .qmb-quick-history {
+  margin:0 0 0 auto;
+}
+.sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-meta .qmb-editor-status {
+  max-width:none;
+  font-size:10px;
+  padding:3px 9px;
+}
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-chrome .qmb-quote-identity {
+    padding:6px 11px 4px;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions {
+    padding:4px 10px;
+    min-height:46px;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions>.qmb-back {
+    display:inline-flex;
+    height:38px;
+    min-height:38px;
+    padding:0 10px;
+    flex:0 0 auto;
+    font-size:12px;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions .qmb-quick-history {
+    display:flex;
+    flex:0 0 auto;
+    margin:0 0 0 auto;
+    gap:5px;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions .qmb-quick-history>button,
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions .qmb-quick-history .sales-document-rail-actions>summary {
+    display:inline-flex;
+    width:38px;
+    min-width:38px;
+    height:38px;
+    min-height:38px;
+    padding:0;
+    border-radius:9px;
+    font-size:18px;
+    justify-content:center;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-meta .qmb-editor-status {
+    padding:2px 7px;
+    max-width:none;
+  }
+}
+@media (max-width:360px) {
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions>.qmb-back {
+    padding:0 7px;
+    font-size:11px;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions .qmb-quick-history>button,
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-actions .qmb-quick-history .sales-document-rail-actions>summary {
+    width:36px;
+    min-width:36px;
+    height:36px;
+    min-height:36px;
+  }
+}
