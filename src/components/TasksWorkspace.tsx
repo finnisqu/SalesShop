@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState,type FormEvent} from 'react';
+import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
@@ -155,6 +155,12 @@ export function TasksWorkspace(){
   const mode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),orgId=useAuthStore(s=>s.organizationId);
   const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
   const scope=taskScope(mode,orgId,userId);
+  const previousScope=useRef(scope);
+  useEffect(()=>{
+   if(previousScope.current===scope)return;
+   previousScope.current=scope;
+   setEditing(null);setViewingId(null);
+  },[scope]);
   const tasks=usePersonalTaskStore(s=>s.tasks),storedScope=usePersonalTaskStore(s=>s.scope);
   const syncStatus=usePersonalTaskStore(s=>s.syncStatus);
   const syncError=usePersonalTaskStore(s=>s.syncError);
