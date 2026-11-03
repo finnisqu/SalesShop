@@ -64,13 +64,29 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
     .map(q=>({key:'quote:'+q.id,linked:{type:'quote' as const,id:q.id,label:'Quote · '+q.title},label:'Quote · '+q.title})),
  ],[contacts,companies,projects,quotes,mode,currentUser]);
  const openWithContext=(selected?:ActivityContext)=>{
-  const primary=selected&&options.find(item=>item.linked.type===selected.type&&item.linked.id===selected.id);
+  const currentQuote=selected?.type==='quote'?quotes.find(q=>q.id===selected.id):undefined;
+  const currentDeal=selected?.type==='project'?projects.find(d=>d.id===selected.id):
+   currentQuote?.projectId?projects.find(d=>d.id===currentQuote.projectId):undefined;
+  // Select a person on Deal only when the linked quotes have a unique contact.
+  // Never guess which of several builders or subcontractors was contacted.
+  const dealContacts=selected?.type==='project'
+   ?[...new Set(quotes.filter(q=>q.projectId===selected.id&&q.contactId)
+      .map(q=>q.contactId).filter((id):id is string=>!!id))]
+   :[];
+  const contactId=selected?.type==='contact'?selected.id:
+   currentQuote?.contactId??(dealContacts.length===1?dealContacts[0]:undefined);
+  const contact=contacts.find(c=>c.id===contactId);
   const companyId=selected?.type==='company'?selected.id:
-   selected?.type==='contact'?contacts.find(c=>c.id===selected.id)?.companyId:
-   selected?.type==='project'?projects.find(d=>d.id===selected.id)?.companyId:
-   selected?.type==='quote'?quotes.find(q=>q.id===selected.id)?.companyId:undefined;
-  const company=companyId?options.find(item=>item.linked.type==='company'&&item.linked.id===companyId):undefined;
-  setLinks([primary?.linked,company?.linked].filter((item)=>item!==undefined));
+   contact?.companyId??currentQuote?.companyId??currentDeal?.companyId;
+  const candidates=[
+   selected&&options.find(item=>item.linked.type===selected.type&&item.linked.id===selected.id),
+   currentDeal&&options.find(item=>item.linked.type==='project'&&item.linked.id===currentDeal.id),
+   contact&&options.find(item=>item.linked.type==='contact'&&item.linked.id===contact.id),
+   companyId&&options.find(item=>item.linked.type==='company'&&item.linked.id===companyId),
+  ];
+  const unique=new Map<TaskLink['type'],TaskAssociation>();
+  for(const item of candidates)if(item&&!unique.has(item.linked.type))unique.set(item.linked.type,item.linked);
+  setLinks([...unique.values()]);
   setMethod('call');setSummary('');setNotes('');setOccurred(dateTimeLocal());
   setAllowDifferentCompany(false);setError('');setSavedSuggestion(null);setOpen(true);
  };
