@@ -180,25 +180,26 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
      </tbody></table></div>
      <div className="qqr-mobile-totals" aria-label="Area pricing summary for phones">
       <table className="qqr-mobile-price-table">
-       <thead><tr><th>Area / material</th><th>SF</th><th>Stone</th><th>Total</th></tr></thead>
+       <thead><tr><th>Area / breakdown</th><th>SF</th><th>Total</th></tr></thead>
        <tbody>
        {quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
         const data=quickAreaSummary(quote,section);
         return <tr key={section.id}>
          <th scope="row"><strong>{section.title}</strong>
           <small>{section.scope?.takeoffMaterial||'Select material'}</small>
+          <small className="qqr-mobile-breakdown">
+           Stone {money.format(data.materialPrice)}
+           {data.sinkPrice!==0&&<> · Sinks {money.format(data.sinkPrice)}</>}
+           {data.specialtyPrice!==0&&<> · Other {money.format(data.specialtyPrice)}</>}
+          </small>
          </th>
          <td>{data.billedSf.toFixed(2)}</td>
-         <td>{money.format(data.materialPrice)}</td>
-         <td><strong>{money.format(data.total)}</strong>
-          {(data.sinkPrice!==0||data.specialtyPrice!==0)&&
-           <small>Sinks {money.format(data.sinkPrice)} · Other {money.format(data.specialtyPrice)}</small>}
-         </td>
+         <td className="qqr-mobile-line-total"><strong>{money.format(data.total)}</strong></td>
         </tr>;
        })}
        <tr className="is-general">
-        <th scope="row" colSpan={3}>General <small>Charges and discounts</small></th>
-        <td><strong>{money.format(quickGeneralSummary(quote).total)}</strong></td>
+        <th scope="row" colSpan={2}>General <small>Charges and discounts</small></th>
+        <td className="qqr-mobile-line-total"><strong>{money.format(quickGeneralSummary(quote).total)}</strong></td>
        </tr>
        </tbody>
       </table>
