@@ -35,15 +35,7 @@
 .sales-app .qmb .qmb-desktop-fallback-toolbar>div>button:disabled {opacity:.4}
 /* Compact mobile application chrome: editing on the left, navigation/profile on the right.
    No document-level SVG back button; all quote history controls share the app toolbar. */
-.mobile-app-hidden-launchers {
-  position:fixed;
-  left:-10000px;
-  top:0;
-  height:0;
-  width:0;
-  overflow:hidden;
-  pointer-events:none;
-}
+.mobile-app-hidden-launchers {display:none;}
 @media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
   .sales-app > .mobile-app-commandbar,
   .sales-app.view-quotes:has(.qmb) > .mobile-app-commandbar {
@@ -58,6 +50,7 @@
     padding:5px 8px;
     position:relative;
     z-index:170;
+    overflow:visible;
     border-bottom:1px solid var(--ss-theme-border,#d8ccba);
     background:var(--ss-theme-card,#fffaf2);
     box-shadow:0 1px 5px #0000000a;
