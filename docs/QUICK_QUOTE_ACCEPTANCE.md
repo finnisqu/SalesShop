@@ -59,6 +59,21 @@ Use a fresh 2-Area Quick Quote:
 - Test a quote reload after duplicating, followed by Undo/Redo before and after a save. No duplicate sink charge or stale line ID should appear.
 - Desktop first: confirm row action icons don't overlap when the table scrolls horizontally. Plan a dedicated narrow-screen/touch acceptance pass next.
 
+## Phone acceptance: mobile Quick Quote
+
+Test on iPhone Safari at a normal portrait viewport (~390 CSS px), then at 320px, landscape and at least one dark theme.
+
+- Open an empty Quick Quote. The Add an Area call to action should be visible, and the General line should not require horizontal table scrolling.
+- Add a Kitchen, select a material, edit manual SF and selling price. All Area fields—including total—must be readable without sideways scrolling. Confirm the original edit drawer remains reachable and the iPhone does not zoom unexpectedly on numeric entry.
+- Open Takeoffs, add a piece, edit name/count/length/width, add a sink and charge, then duplicate the piece and sink. Check each compact row's Contract and Edit/Duplicate/Delete actions without horizontal scrolling.
+- Select one or more Areas and Takeoffs rows. The bulk toolbar stays in the header as a compact button grid, not a tall vertical stack. One Undo reverses a grouped duplicate.
+- The quote footer must show the full Back and next-stage button text and remain reachable when the keyboard opens. No floating Undo/Redo/More cluster should cover editing cells or review actions.
+- Verify Undo, Redo and document More are in the quote's header. Open the More menu and ensure it appears above the quote identity and is scrollable/tappable.
+- In Pricing Review, stage 1 must show *all* selling components (stone, sinks, specialty, General, totals) on the phone without a horizontally clipped spreadsheet.
+- Check the Costs & margin and Pricing questions stages; navigate Forward/Previous and open customer preview without inaccessible buttons.
+- Open Copy Area. It must display as a reachable, theme-aware sheet with Cancel and Copy visible; iOS selection should not zoom the page. Open Saved layouts and scroll a long list with close and footer actions accessible.
+- Check cloud-save feedback, reloading and pricing totals after editing; compare with the same quote on desktop. The customer-facing print document must remain unchanged.
+
 ## Catalog-guided pricing and reusable Areas
 
 - Select a material with a captured supplier cost. Verify the company Level recommendation is visible inside the selling-price editor, including SF price and margin only when costs are complete.
