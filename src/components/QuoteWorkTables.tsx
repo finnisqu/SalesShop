@@ -502,13 +502,13 @@ export function CalculatorDrawer({quote,section,onClose,onAdvanced}:{
   if(e.target===e.currentTarget)onClose();}}>
   <section ref={ref} role="dialog" aria-modal="true" aria-label={section?'Calculator for '+section.title:'General calculator'}
    className="qwt-drawer">
-   <header><div><small>PRIVATE ESTIMATING</small onTouchStart={event=>{
+   <header onTouchStart={event=>{
       if((event.target as HTMLElement).closest('button,input,select'))return;
       sheetSwipeStart.current=event.touches[0]?.clientY??null;
      }} onTouchEnd={event=>{
       const start=sheetSwipeStart.current;sheetSwipeStart.current=null;
       if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
-     }}><h2>{section?section.title+' · Calculator':'General · Calculator'}</h2>
+     }}><div><small>PRIVATE ESTIMATING</small><h2>{section?section.title+' · Calculator':'General · Calculator'}</h2>
     </div><button type="button" aria-label="Close calculator" onClick={onClose}>×</button></header>
    <div className="qwt-drawer-body">
     {section?<><p className="qwt-drawer-note">Choose selling method, then edit the corresponding rate or total.
