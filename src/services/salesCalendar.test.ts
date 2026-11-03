@@ -2,7 +2,7 @@ import {describe,expect,it} from 'vitest';
 import type {Activity,Project} from '../types/crm';
 import type {PersonalTask} from '../store/personalTaskStore';
 import type {Quote} from '../types/quote';
-import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,isoLocalDay,localDateKey} from './salesCalendar';
+import {buildSalesCalendarEvents,personalCalendarSources,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,isoLocalDay,localDateKey} from './salesCalendar';
 const task=(id:string,dueDate?:string,extra:Partial<PersonalTask>={})=>({
  id,title:'Task '+id,dueDate,status:'open',createdAt:'2026-11-01T12:00:00Z',
  updatedAt:'2026-11-01T12:00:00Z',...extra,
@@ -48,6 +48,33 @@ describe('SalesShop shared Calendar',()=>{
    '2026-03-12','2026-03-13','2026-03-14'
   ]);
   expect(calendarWeekDays('2026-11-30').at(-1)).toBe('2026-12-05');
+ });
+ it('shows only authored or personally linked CRM dates on cloud Home',()=>{
+  const ownQuote={...quote('q-own'),projectId:'mine'};
+  const ownTask=task('mytask',undefined,{
+   associations:[{type:'project',id:'linked'}],
+  });
+  const sharedDeals=[
+   {...deal('2026-11-05'),id:'mine'},
+   {...deal('2026-11-05'),id:'linked'},
+   {...deal('2026-11-05'),id:'other'},
+  ];
+  const activityItems=[
+   activity('authored','manual-touchpoint','2026-11-03T12:00:00Z',
+    {recordedByUserId:'me'},{contactId:'person'}),
+   activity('team','manual-touchpoint','2026-11-03T12:00:00Z',
+    {recordedByUserId:'coworker'},{contactId:'other-person'}),
+   activity('quote','manual-touchpoint','2026-11-03T12:00:00Z',
+    undefined,{quoteId:'q-own'}),
+   activity('unowned','manual-touchpoint','2026-11-03T12:00:00Z',
+    undefined,{quoteId:'q-other'}),
+  ];
+  const cloud=personalCalendarSources('cloud','me',[ownQuote],[ownTask],sharedDeals,activityItems);
+  expect(cloud.deals.map(d=>d.id)).toEqual(['mine','linked']);
+  expect(cloud.activities.map(a=>a.id)).toEqual(['authored','quote']);
+  expect(personalCalendarSources('cloud',undefined,[ownQuote],[ownTask],sharedDeals,activityItems))
+   .toEqual({deals:[],activities:[]});
+  expect(personalCalendarSources('local',undefined,[],[],sharedDeals,activityItems).deals).toHaveLength(3);
  });
  it('includes scheduled tasks, bid due dates, and manually logged touchpoints',()=>{
   const date='2026-11-03';
