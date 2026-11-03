@@ -6,7 +6,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {TaskAssociationsField} from './TaskAssociationsField';
-import {type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
 import {localDateKey} from '../services/salesCalendar';
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
 import './sales-calendar.css';
@@ -14,12 +14,16 @@ import './sales-calendar.css';
 type Method='email'|'call'|'text'|'video-call'|'in-person';
 interface ActivityDraft {
  open:boolean;method:Method;notes:string;occurred:string;links:TaskAssociation[];
+ createFollowUp?:boolean;followUpDate?:string;
 }
 const methods:ReadonlyArray<{id:Method;label:string;icon:string}>=[
  {id:'call',label:'Call',icon:'☎'},{id:'email',label:'Email',icon:'✉'},
  {id:'text',label:'Text',icon:'▤'},{id:'video-call',label:'Video call',icon:'▣'},
  {id:'in-person',label:'In person',icon:'⌖'},
 ];
+const tomorrowKey=()=>{
+ const date=new Date();date.setDate(date.getDate()+1);return localDateKey(date);
+};
 const dateTimeLocal=()=>{
  const now=new Date();return localDateKey(now)+'T'+[now.getHours(),now.getMinutes()]
   .map(n=>String(n).padStart(2,'0')).join(':');
@@ -47,13 +51,29 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
  const [notes,setNotes]=useState(()=>saved?.notes??'');
  const [occurred,setOccurred]=useState(()=>saved?.occurred??dateTimeLocal());
  const [links,setLinks]=useState<TaskAssociation[]>(()=>saved?.links??[]);
+ const [createFollowUp,setCreateFollowUp]=useState(()=>saved?.createFollowUp??false);
+ const [followUpDate,setFollowUpDate]=useState(()=>saved?.followUpDate??tomorrowKey());
  const [error,setError]=useState('');
+ const storedTaskScope=usePersonalTaskStore(s=>s.scope);
+ const addTask=usePersonalTaskStore(s=>s.createTask);
+ const orgId=useAuthStore(s=>s.organizationId);
  useEffect(()=>{
   if(!draftKey)return;
   // Save even while hidden so a browser tab discard or automatic reload cannot lose the form.
   if(open||notes.trim()||links.length)
-   writeSavedDraft(draftKey,{open,method,notes,occurred,links});
- },[draftKey,open,method,notes,occurred,links]);
+   writeSavedDraft(draftKey,{open,method,notes,occurred,links,createFollowUp,followUpDate});
+ },[draftKey,open,method,notes,occurred,links,createFollowUp,followUpDate]);
+ useEffect(()=>{
+  const openForDate=(event:Event)=>{
+   const day=(event as CustomEvent<{date:string}>).detail?.date;
+   if(day&&/^\d{4}-\d{2}-\d{2}$/.test(day)&&day<=localDateKey(new Date())){
+    setOccurred(day+'T'+dateTimeLocal().slice(11));
+   }
+   setOpen(true);
+  };
+  window.addEventListener('salesshop:open-activity',openForDate);
+  return()=>window.removeEventListener('salesshop:open-activity',openForDate);
+ },[]);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
  const projects=useCrmStore(s=>s.projects);
@@ -71,6 +91,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
  const discard=()=>{
   clearSavedDraft(draftKey);
   setMethod('call');setNotes('');setLinks([]);setOccurred(dateTimeLocal());
+  setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
   close();
  };
  const addLinks=(items:TaskAssociation[])=>{
@@ -88,17 +109,32 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
   if(!links.length)return setError('Link at least one person, company, deal, or quote.');
   const timestamp=new Date(occurred);
   if(!occurred||!Number.isFinite(timestamp.getTime()))return setError('Choose a valid date and time.');
+  if(timestamp.getTime()>Date.now()+60000)return setError('Completed interactions cannot be dated in the future. Create a task or follow-up instead.');
+  if(createFollowUp&&(!/^\d{4}-\d{2}-\d{2}$/.test(followUpDate)||followUpDate<localDateKey(new Date())))
+   return setError('Choose today or a future date for the follow-up task.');
+  if(createFollowUp&&storedTaskScope!==taskScope(mode,orgId,currentUser))
+   return setError('Your personal tasks are still loading; please try saving again.');
   const find=(kind:TaskLink['type'])=>links.find(link=>link.type===kind)?.id;
   const personId=find('contact'),dealId=find('project'),quoteId=find('quote');
   const contact=contacts.find(c=>c.id===personId),deal=projects.find(d=>d.id===dealId);
   const quote=quotes.find(q=>q.id===quoteId);
-  record({type:'manual-touchpoint',summary:fallback+' with '+(person||'related record'),
+  const loggedId=record({type:'manual-touchpoint',summary:fallback+' with '+(person||'related record'),
    companyId:find('company')||contact?.companyId||deal?.companyId||quote?.companyId,
    contactId:personId,projectId:dealId||quote?.projectId,quoteId,
    occurredAt:timestamp.toISOString(),
    metadata:{source:'manual',interactionMethod:method,notes:notes.trim().slice(0,5000)||undefined}});
+  if(createFollowUp){
+   addTask('Follow up · '+(person||'related record'),{
+    type:'follow-up',dueDate:followUpDate,priority:'normal',status:'open',
+    queue:'Follow-ups',associations:links,
+    sourceObjectId:'activity-followup:'+loggedId,
+    notes:'Follow-up from '+fallback.toLowerCase()+' on '+localDateKey(timestamp)+
+     (notes.trim()?' · '+notes.trim().slice(0,300):''),
+   });
+  }
   clearSavedDraft(draftKey);
   setMethod('call');setNotes('');setOccurred(dateTimeLocal());
+  setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
   setLinks([]);close();
  };
  if(!permitted)return null;
@@ -120,11 +156,22 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
        onClick={()=>setMethod(item.id)}>
        <span aria-hidden="true">{item.icon}</span>{item.label}</button>)}
      </div>
-     <label>When<input type="datetime-local" value={occurred} onChange={e=>setOccurred(e.target.value)} required/></label>
+     <label>When<input type="datetime-local" max={dateTimeLocal()} value={occurred}
+      onChange={e=>setOccurred(e.target.value)} required/></label>
       <TaskAssociationsField options={options} value={links} onChange={addLinks}/>
      <label>Notes (optional)
       <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3}
        maxLength={5000} placeholder="Key details, questions, next steps…"/></label>
+     <section className="sales-activity-follow-up">
+      <label><input type="checkbox" checked={createFollowUp}
+       onChange={e=>setCreateFollowUp(e.target.checked)}/>
+       <span><strong>Create a follow-up task</strong>
+        <small>Carry these same CRM links into a scheduled task.</small></span></label>
+      {createFollowUp&&<label className="sales-activity-follow-date">
+       Follow up on<input type="date" min={localDateKey(new Date())}
+        value={followUpDate} onChange={e=>setFollowUpDate(e.target.value)} required/>
+      </label>}
+     </section>
      <p className="sales-activity-note">Unsaved details are recovered on this device if SalesShop reloads. Saving logs the interaction to CRM history; it doesn't send a message.</p>
      {error&&<p role="alert" className="sales-activity-error">{error}</p>}
     </div>
