@@ -571,3 +571,26 @@
   .sales-app .qmb .qmb-quote-price-meta {gap:3px;}
   .sales-app .qmb .qmb-quote-price-meta .qmb-editor-status {padding-inline:4px;}
 }
+
+/* Document status is metadata, not a separate callout. Match R0/Cloud text
+   in the mobile price line, including Ready, Draft and Issued states. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .sales-app .qmb .qmb-quote-editor .qmb-quote-price-meta>.qmb-editor-status,
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-price-meta>.qmb-editor-status {
+    display:inline!important;
+    flex:0 0 auto;
+    margin:0!important;
+    padding:0!important;
+    min-width:0!important;
+    max-width:none!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    color:var(--qmb-muted)!important;
+    font-size:inherit!important;
+    font-weight:inherit!important;
+    line-height:inherit!important;
+    white-space:nowrap;
+  }
+}
