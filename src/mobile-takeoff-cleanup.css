@@ -1,0 +1,322 @@
+/* Mobile Takeoffs workbook cleanup: keep source geometry and desktop editing
+   intact while making the phone rows and their menus smaller and clearer. */
+.sales-app .qmb .qmx-mobile-overflow {display:none}
+
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  /* The modal retains outside-tap dismissal, but no longer shades the app. */
+  .sales-app .qmb.qqt-overlay.qqt-overlay {
+    background:transparent!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+  }
+
+  /* Areas/Takeoffs and a single persistent More popover share one line. */
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-subtabs {
+    display:flex;
+    align-items:center;
+    flex-wrap:nowrap!important;
+    gap:5px!important;
+    overflow:visible;
+    position:relative;
+    z-index:30;
+    padding:0 0 6px!important;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-subtabs>div[role="group"] {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    flex:1 1 auto;
+    min-width:0;
+    width:auto;
+    margin:0;
+  }
+  .sales-app .qmb .qmx-subtabs .qmx-advanced-switch {
+    display:none!important;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-mobile-overflow {
+    display:block;
+    flex:0 0 40px;
+    width:40px;
+    height:40px;
+    position:relative;
+    z-index:35;
+  }
+  .sales-app .qmb .qmx-mobile-overflow-trigger {
+    display:grid;
+    place-items:center;
+    width:40px;
+    height:40px;
+    min-height:40px;
+    min-width:40px;
+    border:1px solid var(--qmb-border);
+    border-radius:9px;
+    background:var(--qmb-card);
+    color:var(--qmb-ink);
+    font-size:23px;
+    font-weight:800;
+    line-height:1;
+    cursor:pointer;
+  }
+  .sales-app .qmb .qmx-mobile-overflow-trigger[aria-expanded="true"] {
+    background:var(--qmb-tint);
+    border-color:var(--qmb-accent);
+  }
+  .sales-app .qmb .qmx-mobile-overflow-menu {
+    position:absolute;
+    z-index:80;
+    right:0;
+    top:calc(100% + 6px);
+    width:min(235px,calc(100vw - 22px));
+    display:grid;
+    gap:4px;
+    padding:7px;
+    background:var(--qmb-card);
+    border:1px solid var(--qmb-border);
+    border-radius:11px;
+    box-shadow:0 14px 32px #0003;
+  }
+  .sales-app .qmb .qmx-mobile-overflow-menu>button {
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    width:100%;
+    min-height:42px;
+    padding:8px 11px;
+    border:0;
+    border-radius:8px;
+    background:transparent;
+    color:var(--qmb-ink);
+    text-align:left;
+    font-size:12px;
+    font-weight:700;
+  }
+  .sales-app .qmb .qmx-mobile-overflow-menu>button:active,
+  .sales-app .qmb .qmx-mobile-overflow-menu>button[aria-pressed="true"] {
+    background:var(--qmb-tint);
+    color:var(--qmb-accent);
+  }
+  .sales-app .qmb .qmx-mobile-overflow-menu>button:disabled {opacity:.4}
+
+  /* The column headings already say Takeoffs. Remove repeated title, hint,
+     and Advanced Fabrication toolbar without losing selection tools. */
+  .sales-app .qmb .qqt-workspace>.qqt-heading:not(.is-selecting) {
+    display:none!important;
+  }
+  .sales-app .qmb .qqt-workspace>.qqt-heading.is-selecting {
+    padding:7px!important;
+    min-height:0;
+  }
+  .sales-app .qmb .qqt-workspace>.qqt-heading.is-selecting>.qqt-desktop-advanced {
+    display:none!important;
+  }
+  .sales-app .qmb .qqt-group {
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-rows:auto auto;
+    align-items:center;
+    gap:4px 8px!important;
+    min-height:48px;
+    padding:8px 10px!important;
+    margin:0!important;
+    border-radius:0!important;
+  }
+  .sales-app .qmb .qqt-group>.qqt-area-identity {
+    grid-column:1!important;
+    grid-row:1!important;
+    display:flex!important;
+    align-items:baseline;
+    justify-content:flex-start;
+    flex-wrap:wrap;
+    gap:4px 9px;
+    min-width:0;
+    margin:0!important;
+  }
+  .sales-app .qmb .qqt-group>.qqt-area-identity strong {
+    font-size:13px;
+    font-weight:830;
+    color:var(--qmb-ink);
+    overflow-wrap:anywhere;
+  }
+  .sales-app .qmb .qqt-group>.qqt-area-identity span {
+    font-size:11px;
+    font-weight:650;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+    color:var(--qmb-muted);
+  }
+  .sales-app .qmb .qqt-group>.qqt-area-price {
+    grid-column:2!important;
+    grid-row:1!important;
+    justify-self:end;
+    font-size:13px;
+    color:var(--qmb-ink);
+    white-space:nowrap;
+  }
+  .sales-app .qmb .qqt-workspace .qqt-group>.qqt-area-actions {
+    grid-column:1/-1!important;
+    grid-row:2!important;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:5px;
+    margin:0!important;
+  }
+  .sales-app .qmb .qqt-group>.qqt-area-actions:not(:has(>button:not(:disabled))) {
+    display:none!important;
+  }
+  .sales-app .qmb .qqt-group>.qqt-area-actions>button {
+    flex:0 1 auto;
+    min-height:32px;
+    padding:4px 8px;
+    font-size:10px;
+    white-space:nowrap;
+  }
+  .sales-app .qmb .qqt-general-group {
+    grid-template-rows:auto auto;
+  }
+  .sales-app .qmb .qqt-general-group>strong:first-child {
+    grid-row:1;grid-column:1;
+    font-size:13px;
+  }
+  .sales-app .qmb .qqt-general-group>span {
+    display:none!important;
+  }
+  .sales-app .qmb .qqt-general-group>div {
+    grid-column:1/-1!important;
+    grid-row:2!important;
+    margin:0!important;
+  }
+  .sales-app .qmb .qqt-general-group>div:not(:has(>button:not(:disabled))) {
+    display:none!important;
+  }
+  /* The checkbox cell must have exactly the same fill as adjacent cells. */
+  .sales-app .qmb .qqt-workspace .qqt-grid.qqt-row>.qqt-cell.qqt-check {
+    background:var(--qmb-card)!important;
+    border-right:1px solid var(--qmb-border);
+  }
+  .sales-app .qmb .qqt-workspace .qqt-grid.qqt-row.is-excluded>.qqt-cell.qqt-check {
+    background:var(--qmb-card)!important;
+  }
+  .sales-app .qmb .qqt-workspace .qqt-splash-name {
+    display:block;
+    width:100%;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    font-size:11px;
+    font-weight:700;
+  }
+
+  /* Details sheet: group related inputs and treat splash vs parent editors
+     as different tasks rather than displaying every field in one long form. */
+  .sales-app .qmb.qqt-overlay .qqt-panel-body {
+    gap:10px;
+    padding:11px 14px 18px;
+  }
+  .sales-app .qmb .qqt-panel-section-title {
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:3px 8px;
+    margin-top:3px;
+    border-bottom:1px solid var(--qmb-border);
+    padding-bottom:6px;
+  }
+  .sales-app .qmb .qqt-panel-section-title strong {
+    font-size:13px;
+    font-weight:820;
+  }
+  .sales-app .qmb .qqt-panel-section-title small {
+    font-size:10px;
+    color:var(--qmb-muted);
+  }
+  .sales-app .qmb .qqt-panel-fields {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .sales-app .qmb .qqt-panel-fields>label:first-child,
+  .sales-app .qmb .qqt-panel-fields>label:nth-child(2) {
+    grid-column:1/-1;
+  }
+  .sales-app .qmb .qqt-panel-fields label {
+    min-width:0;
+    gap:4px;
+  }
+  .sales-app .qmb .qqt-panel-fields input {
+    min-width:0;
+    min-height:40px;
+    font-size:16px;
+  }
+  .sales-app .qmb .qqt-edge-options {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+  }
+  .sales-app .qmb .qqt-panel-body .qqt-edge-options>.qqt-check-label {
+    display:flex;
+    flex-direction:row;
+    gap:7px;
+    align-items:center;
+    min-width:0;
+    min-height:42px;
+    padding:7px 9px;
+    border:1px solid var(--qmb-border);
+    border-radius:8px;
+    background:var(--qmb-tint);
+    font-size:11px;
+  }
+  .sales-app .qmb .qqt-panel-body .qqt-edge-options input[type="checkbox"] {
+    width:17px;
+    height:17px;
+    min-width:17px;
+  }
+  .sales-app .qmb .qqt-panel-helper {
+    font-size:11px;
+    color:var(--qmb-muted);
+    line-height:1.4;
+  }
+  .sales-app .qmb .qqt-panel-compact-fields {
+    align-items:end;
+    gap:8px;
+  }
+  .sales-app .qmb .qqt-static-field {
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    min-height:40px;
+    padding:8px 10px;
+    border:1px solid var(--qmb-border);
+    border-radius:7px;
+    color:var(--qmb-muted);
+    background:var(--qmb-tint);
+    font-size:13px;
+  }
+  .sales-app .qmb .qqt-detail-facts {
+    gap:5px!important;
+    padding:6px!important;
+  }
+  .sales-app .qmb .qqt-detail-facts>div {
+    padding:7px 6px!important;
+    min-height:55px;
+  }
+  .sales-app .qmb .qqt-sheet-options {
+    margin-top:6px;
+    padding-top:11px;
+  }
+}
+@media (max-width:355px) {
+  .sales-app .qmb .qmx-mobile-overflow-trigger {
+    width:36px;
+    height:38px;
+    min-width:36px;
+    min-height:38px;
+  }
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmx-mobile-overflow {
+    width:36px;
+    height:38px;
+    flex-basis:36px;
+  }
+  .sales-app .qmb .qqt-group>.qqt-area-identity {gap:3px 6px}
+  .sales-app .qmb .qqt-group>.qqt-area-price {font-size:12px}
+}
