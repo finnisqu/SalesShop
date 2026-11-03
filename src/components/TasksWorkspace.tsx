@@ -59,7 +59,8 @@ export function TaskEditor({initial,onCancel,onSave}:{
   // A promotion draft is a subset of the ordinary task editor fields.
   // Use one typed draft shape so optional properties remain correctly typed.
   const auth=useAuthStore.getState();
-  const scopeKey=draftStorageKey('task:'+(('id'in initial&&initial.id)||'new'),auth.mode,auth.organizationId,auth.user?.id);
+  const initialTaskId='id'in initial&&typeof initial.id==='string'?initial.id:null;
+  const scopeKey=draftStorageKey('task:'+(initialTaskId??'new'),auth.mode,auth.organizationId,auth.user?.id);
   const activeKey=draftStorageKey('task:active',auth.mode,auth.organizationId,auth.user?.id);
   const recovered=useMemo(()=>readSavedDraft<TaskEditorRecovery>(scopeKey),[scopeKey]);
   const draft:Partial<PersonalTask>=initial;
@@ -78,8 +79,8 @@ export function TaskEditor({initial,onCancel,onSave}:{
   useEffect(()=>{
    writeSavedDraft(scopeKey,{title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks});
    writeSavedDraft<ActiveTaskDraft>(activeKey,{
-    kind:'id'in initial?'existing':'new',
-    id:'id'in initial?initial.id:undefined,
+    kind:initialTaskId?'existing':'new',
+    id:initialTaskId??undefined,
    });
   },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks]);
   const cancel=()=>{clearSavedDraft(scopeKey);clearSavedDraft(activeKey);onCancel();};
