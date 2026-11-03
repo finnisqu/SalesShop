@@ -13,6 +13,7 @@ import {QuoteInlineAreaName} from './QuoteInlineAreaEditing';
 import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
 import {QuoteBetaDesktopPricing} from './QuoteBetaDesktopPricing';
 import {CalculatorDrawer} from './QuoteWorkTables';
+import {QuoteBulkActionPopover} from './QuoteBulkActionPopover';
 import './quote-quick-areas.css';
 
 const currency=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
@@ -429,11 +430,14 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
  const [focus,setFocus]=useState('');
  const table=useRef<HTMLDivElement>(null);
  const [selected,setSelected]=useState<string[]>([]);
+ const [bulkRateOpen,setBulkRateOpen]=useState(false);
+ const [bulkRate,setBulkRate]=useState('');
+ const [bulkRateError,setBulkRateError]=useState('');
  const [expandedAreas,setExpandedAreas]=useState<string[]>([]);
  const [generalExpanded,setGeneralExpanded]=useState(false);
  const toggleArea=(id:string)=>setExpandedAreas(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
 
- useEffect(()=>{setSelected([]);setDetail(null);setFocus('');setExpandedAreas([]);setGeneralExpanded(false);},[quote.id]);
+ useEffect(()=>{setSelected([]);setDetail(null);setFocus('');setExpandedAreas([]);setGeneralExpanded(false);setBulkRateOpen(false);setBulkRateError('');},[quote.id]);
  useEffect(()=>{
   const outside=(event:PointerEvent)=>{
    if(table.current&&!table.current.contains(event.target as Node)){
@@ -469,9 +473,9 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
   if(!editable||!selected.length)return;
   if(mode==='delete'){
    if(!window.confirm('Delete '+selected.length+' selected Area(s) and their measured work? All associated charges are removed. You can Undo each deletion.'))return;
-   // Each Area uses the existing safe deletion path, including cloud cleanup.
-   for(const areaId of selected)store.deleteSection(quote.id,areaId,'delete');
-   setSelected([]);return;
+   // All selected Areas, dependent lines and one Undo history entry.
+   if(store.bulkDeleteAreas(quote.id,selected)===selected.length)setSelected([]);
+   return;
   }
   const count=store.bulkEditAreas(quote.id,selected,
    mode==='detail'?{customerDisplayMode:'detail'}:
@@ -480,21 +484,11 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
   if(count===selected.length)setSelected([]);
  };
  return <section className={'qqs-summary'+(!editable?' is-readonly':'')} aria-label="Quick Quote compact Area summary">
-   <header className={'qqs-summary-head'+(selected.length?' is-selecting':'')}>
-    {selected.length?<div className="qqs-bulk" role="toolbar" aria-label="Bulk Area actions">
-     <strong>{selected.length} selected</strong>
-     <button type="button" disabled={!editable} onClick={duplicateSelected}>⧉ Duplicate</button>
-     <button type="button" disabled={!editable} onClick={()=>bulkApply('summary')}>Lump sum</button>
-     <button type="button" disabled={!editable} onClick={()=>bulkApply('detail')}>Itemize</button>
-     <button type="button" disabled={!editable} onClick={()=>bulkApply('hidden')}>Hide</button>
-     <button type="button" disabled={!editable} onClick={()=>bulkApply('visible')}>Show</button>
-     <button type="button" className="qqs-bulk-delete" disabled={!editable}
-      onClick={()=>bulkApply('delete')}>Delete</button>
-     <button type="button" onClick={()=>setSelected([])}>Clear ×</button>
-    </div>:<div><h3>Areas</h3>
+   <header className="qqs-summary-head">
+    <div><h3>Areas</h3>
      <span className="qqs-mobile-count" aria-label={areas.length+' Areas'}>{areas.length}</span>
      <span className="qqs-desktop-hint">{areas.length} {areas.length===1?'room':'rooms'} · click or type to edit · Tab/Enter to move</span>
-     <span className="qqs-mobile-hint">{areas.length} {areas.length===1?'Area':'Areas'} · tap a cell to edit</span></div>}
+     <span className="qqs-mobile-hint">{areas.length} {areas.length===1?'Area':'Areas'} · tap a cell to edit</span></div>
     <div className="qqs-inline-actions">
      <button type="button" className="qqs-desktop-action" disabled={!editable} onClick={onCopyArea}>Copy Area</button>
      <button type="button" className="qqs-desktop-action" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
@@ -508,6 +502,30 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
      </details>
     </div>
    </header>
+   <QuoteBulkActionPopover count={selected.length} onClear={()=>{setSelected([]);setBulkRateOpen(false);setBulkRateError('');}}
+    actions={[
+     {id:'duplicate',label:'Duplicate selected Areas',icon:'copy',disabled:!editable,onClick:duplicateSelected},
+     {id:'lump',label:'Lump sum selected Areas',icon:'lump',disabled:!editable,onClick:()=>bulkApply('summary')},
+     {id:'itemize',label:'Itemize selected Areas',icon:'itemize',disabled:!editable,onClick:()=>bulkApply('detail')},
+     {id:'hide',label:'Hide selected Areas on contract',icon:'hide',disabled:!editable,onClick:()=>bulkApply('hidden')},
+     {id:'show',label:'Show selected Areas on contract',icon:'show',disabled:!editable,onClick:()=>bulkApply('visible')},
+     {id:'rate',label:'Edit selected SF selling rates',icon:'rate',disabled:!editable,active:bulkRateOpen,
+       onClick:()=>{setBulkRateError('');setBulkRateOpen(v=>!v);}},
+     {id:'delete',label:'Delete selected Areas',icon:'delete',disabled:!editable,danger:true,onClick:()=>bulkApply('delete')},
+    ]}>
+    {bulkRateOpen&&<form className="qba-edit-flyout" aria-label="Bulk SF selling rate" onSubmit={event=>{
+      event.preventDefault();const rate=Number(bulkRate);
+      if(!bulkRate.trim()||!Number.isFinite(rate)||rate<0){setBulkRateError('Enter a valid rate.');return;}
+      const changed=store.bulkEditAreas(quote.id,selected,{sfRate:rate});
+      if(changed===selected.length){setSelected([]);setBulkRateOpen(false);setBulkRate('');setBulkRateError('');}
+      else setBulkRateError('All selected Areas must already use live SF-rate pricing.');
+    }}>
+      <label>$/SF <input aria-label="New SF rate for selected Areas" inputMode="decimal"
+        type="number" min="0" step="any" value={bulkRate} onChange={e=>setBulkRate(e.target.value)}/></label>
+      <button type="submit">Apply</button>
+      {bulkRateError&&<small role="alert">{bulkRateError}</small>}
+    </form>}
+   </QuoteBulkActionPopover>
    {!areas.length&&<div className="qqs-mobile-empty">
     <strong>Start with your first Area</strong>
     <p>Add a Kitchen, Bathroom or other scope, or reuse an existing layout.</p>
