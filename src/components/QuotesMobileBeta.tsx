@@ -672,12 +672,13 @@ export function QuotesMobileBeta() {
   // Quick Create opens the template workflow, never a blank quote or just the Quotes index.
   useEffect(()=>{
     const launch=()=>{
+      if(!canManageLibrary)return;
       let pending=false;
       try{
        pending=window.sessionStorage.getItem('salesshop-open-document-picker-v1')==='1';
        if(pending)window.sessionStorage.removeItem('salesshop-open-document-picker-v1');
       }catch{/* session storage may be disabled */}
-      if(!pending||!canManageLibrary)return;
+      if(!pending)return;
       setPage('library');setShowNewDocument(true);
     };
     launch();
