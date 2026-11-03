@@ -30,6 +30,7 @@ import type {
 import { useAuthStore } from './authStore';
 import {stagePendingActivity,readPendingActivities} from '../services/activityCloudOutbox';
 import {useActivityCloudStatusStore} from './activityCloudStatusStore';
+import {canEditTeamArea} from '../services/teamDepartments';
 
 interface CrmState {
   companies: Company[];
@@ -259,17 +260,20 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       id: input.id ?? id('activity'),
       occurredAt: input.occurredAt ?? now(),
     };
-    const activities = [...get().activities, activity];
     const touchpoint=activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint';
-    // Stage a durable, identity-scoped snapshot before touching the CRM cache.
     const auth=useAuthStore.getState();
-    if(touchpoint&&auth.mode==='cloud'&&auth.user?.id&&auth.organizationId){
+    if(touchpoint&&auth.mode==='cloud'){
+      if(!auth.organizationId||!auth.user?.id||
+        !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm'))return '';
       const scope={organizationId:auth.organizationId,userId:auth.user.id};
-      const staged=stagePendingActivity(scope,activity);
-      useActivityCloudStatusStore.getState().setStatus(
-       staged?'pending':'error',readPendingActivities(scope).length,
-       staged?null:'Could not safely queue this interaction on this device.');
+      if(!stagePendingActivity(scope,activity)){
+        useActivityCloudStatusStore.getState().setStatus('error',
+          readPendingActivities(scope).length,'Unable to queue this interaction safely on this device.');
+        return '';
+      }
+      useActivityCloudStatusStore.getState().setStatus('pending',readPendingActivities(scope).length);
     }
+    const activities=[...get().activities,activity];
     const day=new Date(activity.occurredAt);
     const dayKey=Number.isFinite(day.getTime())
       ?[day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),String(day.getDate()).padStart(2,'0')].join('-')
@@ -288,7 +292,8 @@ export const useCrmStore = create<CrmState>((set, get) => ({
    if(!original||!['manual-touchpoint','notebook-touchpoint'].includes(original.type)||
     original.metadata?.voidedAt)return false;
    const auth=useAuthStore.getState();
-   if(auth.mode==='cloud'&&(!auth.user?.id||!auth.organizationId))return false;
+   if(auth.mode==='cloud'&&(!auth.user?.id||!auth.organizationId||
+     !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')))return false;
    const next:Activity={...original,
     summary:change.summary?.trim().slice(0,240)||original.summary,
     occurredAt:change.occurredAt&&Number.isFinite(Date.parse(change.occurredAt))
@@ -304,10 +309,12 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     }};
    if(auth.mode==='cloud'&&auth.organizationId&&auth.user?.id){
     const scope={organizationId:auth.organizationId,userId:auth.user.id};
-    const queued=stagePendingActivity(scope,next);
-    useActivityCloudStatusStore.getState().setStatus(
-     queued?'pending':'error',readPendingActivities(scope).length,
-     queued?null:'This correction could not be queued for reliable cloud saving.');
+    if(!stagePendingActivity(scope,next)){
+     useActivityCloudStatusStore.getState().setStatus('error',
+      readPendingActivities(scope).length,'Storage unavailable; the change was not applied.');
+     return false;
+    }
+    useActivityCloudStatusStore.getState().setStatus('pending',readPendingActivities(scope).length);
    }
    const activities=get().activities.map(a=>a.id===activityId?next:a);
    persist(get().companies,get().contacts,get().projects,activities);
@@ -318,14 +325,17 @@ export const useCrmStore = create<CrmState>((set, get) => ({
    if(!original||!['manual-touchpoint','notebook-touchpoint'].includes(original.type)||
      original.metadata?.voidedAt)return false;
    const auth=useAuthStore.getState();
-   if(auth.mode==='cloud'&&(!auth.organizationId||!auth.user?.id))return false;
+   if(auth.mode==='cloud'&&(!auth.organizationId||!auth.user?.id||
+     !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')))return false;
    const next={...original,metadata:{...original.metadata,voidedAt:now()}};
    if(auth.mode==='cloud'&&auth.organizationId&&auth.user?.id){
     const scope={organizationId:auth.organizationId,userId:auth.user.id};
-    const queued=stagePendingActivity(scope,next);
-    useActivityCloudStatusStore.getState().setStatus(
-     queued?'pending':'error',readPendingActivities(scope).length,
-     queued?null:'This change could not be queued for reliable cloud saving.');
+    if(!stagePendingActivity(scope,next)){
+     useActivityCloudStatusStore.getState().setStatus('error',
+      readPendingActivities(scope).length,'Storage unavailable; the change was not applied.');
+     return false;
+    }
+    useActivityCloudStatusStore.getState().setStatus('pending',readPendingActivities(scope).length);
    }
    const activities=get().activities.map(a=>a.id===activityId?next:a);
    persist(get().companies,get().contacts,get().projects,activities);
