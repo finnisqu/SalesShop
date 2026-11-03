@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
+import {requestActivityDetail} from './ActivityDetailHost';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
@@ -138,6 +139,7 @@ export function TasksWorkspace(){
   const [queueFilter,setQueueFilter]=useState('all');
   const nav=useNavigationStore();
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
+  const crmActivities=useCrmStore(s=>s.activities);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
   const today=localDay();
@@ -282,6 +284,9 @@ export function TasksWorkspace(){
             </div>
             {task.notes&&<p>{task.notes}</p>}
             {task.sourceText&&<blockquote>{task.sourceText.slice(0,260)}</blockquote>}
+            {task.sourceObjectId&&crmActivities.some(a=>a.id===task.sourceObjectId)&&
+             <button type="button" className="tasks-source" onClick={()=>
+              requestActivityDetail(task.sourceObjectId!)}>Open original Activity ↗</button>}
             {normalizedTaskAssociations(task).map(link=>
               <button key={link.type+':'+link.id} type="button" className="tasks-source"
                 onClick={()=>openSource(link)}>Open {link.label??link.type} ↗</button>)}

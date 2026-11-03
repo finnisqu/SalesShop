@@ -15,7 +15,7 @@ const quote=()=>({
   {id:'c2',sectionId:'a',kind:'item',description:'Delivery',pricingMode:'direct',amount:100,includeInTotal:true},
   {id:'g1',kind:'item',description:'General A',pricingMode:'direct',amount:10,includeInTotal:true},
   {id:'g2',kind:'item',description:'General B',pricingMode:'direct',amount:20,includeInTotal:true}]
- } as Quote);
+ } as unknown as Quote);
 describe('reorder-only Quick Quote transaction',()=>{
  it('commits entire Area, piece and charge permutation without changing money or identities',()=>{
   const source=quote(),order=createQuoteTableOrder(source),total=quoteTotal(source);

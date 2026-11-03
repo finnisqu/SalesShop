@@ -13,8 +13,9 @@ describe('HOME and Beta global navigation accessibility',()=>{
    expect(homeCss).toContain('.sales-home-header-create{display:none}');
  });
  it('exposes the Beta global menu trigger as a named button',()=>{
-   const beta=file('src/components/QuotesMobileBeta.tsx');
-   expect(beta).toContain('<summary role="button" aria-label="Open SalesShop navigation">');
-   expect(beta).toContain('<nav aria-label="SalesShop destinations">');
+   const chrome=file('src/components/MobileAppChrome.tsx');
+   expect(chrome).toContain('aria-label="Open SalesShop navigation"');
+   expect(chrome).toContain('aria-label="SalesShop navigation"');
+   expect(chrome).toContain('mobile-app-drawer-backdrop');
  });
 });

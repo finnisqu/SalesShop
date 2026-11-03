@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {CrmActivityTimeline} from './CrmActivityTimeline';
 import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -27,7 +29,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
 
   const person = people.find((candidate) => candidate.id === contactId);
   const [editing, setEditing] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(true);
   const [draft, setDraft] = useState({
     name: person?.name ?? '', email: person?.email ?? '', phone: person?.phone ?? '',
     title: person?.title ?? '', companyId: person?.companyId ?? '',
@@ -40,7 +42,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
 
   useEffect(() => {
     setEditing(false);
-    setHistoryOpen(false);
+    setHistoryOpen(true);
   }, [contactId]);
   useEffect(() => {
     if (!editing && person) setDraft({
@@ -71,9 +73,10 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   return <RecordPageLayout entityType="person" title={displayName} onBack={onBack}
     subtitle={[person.title, related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{related.company ? 'Associated company' : 'Unassigned'}</span>}
-    actions={<button type="button" onClick={() => setEditing((value) => !value)}>
+    actions={<><QuickActivityLauncher context={{type:'contact',id:person.id}} compact />
+    <button type="button" onClick={() => setEditing((value) => !value)}>
       {editing ? 'Cancel editing' : 'Edit person'}
-    </button>}
+    </button></>}
     left={<>
       <RecordCard title="About this person">
         {editing ? <form className="connections-record-edit-form" onSubmit={save}>
@@ -137,15 +140,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
         </button>
         {historyOpen && <div className="connections-record-panel-body">
           <p className="connections-record-helper">Only events explicitly linked to this person appear here.</p>
-          <ol className="connections-record-timeline">
-            {related.directActivities.map((activity) => <li key={activity.id}>
-              <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{dateLabel(activity.occurredAt)}</time></div>
-              <small>{activity.type.replaceAll('-', ' ')}</small>
-              {activity.quoteId && <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
-              {!activity.quoteId && activity.projectId && <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked deal →</button>}
-            </li>)}
-          </ol>
-          {!related.directActivities.length && <p className="connections-record-empty">No directly linked history on this contact.</p>}
+          <CrmActivityTimeline activities={related.directActivities} />
         </div>}
       </section>
     </>}

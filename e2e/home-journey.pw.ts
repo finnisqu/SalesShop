@@ -38,10 +38,9 @@ test('HOME named quote opens Beta editor, supports mobile/desktop Back and resum
 
     // Library navigation must clear the quote URL, and browser Back should
     // restore the same document (not leave the library on a stale deep link).
-    if(info.project.name==='desktop-1280')
-      await page.getByRole('button',{name:/All documents/}).click();
-    else
-      await page.locator('.qmb-quote-editor .qmb-back').click();
+    // The guided editor now uses its persistent bottom Back control to
+    // return to the library from Project Details on both breakpoints.
+    await page.locator('.qmb-quote-footer .qmb-guided-back').click();
     await expect(page).toHaveURL(/\/quotes$/);
     await expect(page.locator('.qmb-desktop-frame.is-library')).toBeVisible();
     await page.goBack();
@@ -79,7 +78,12 @@ test('HOME task, floating Quick Note and named deal preserve navigation and reco
       .fill('Batch 16G note persists through navigation');
     await notes.getByRole('button',{name:'Collapse Post-its'}).click();
 
-    await page.getByRole('button',{name:'Quick create'}).first().click();
+    if(info.project.name==='phone-390'){
+      await page.getByRole('button',{name:'Open profile and tools'}).click();
+      await page.getByRole('group',{name:'Profile and tools'})
+        .getByRole('button',{name:/Quick create/}).click();
+    }else await page.locator('.sales-home-header-create')
+      .getByRole('button',{name:'Quick create'}).click();
     const create=page.getByRole('dialog',{name:'Create in SalesShop'});
     await create.getByRole('button',{name:/New Deal/}).click();
     await create.getByRole('textbox',{name:'Deal name'}).fill('Batch 16G deal');
@@ -90,7 +94,12 @@ test('HOME task, floating Quick Note and named deal preserve navigation and reco
     await page.goBack();
     await expect(page).toHaveURL(/\/home$/);
 
-    await page.getByRole('button',{name:'Quick create'}).click();
+    if(info.project.name==='phone-390'){
+      await page.getByRole('button',{name:'Open profile and tools'}).click();
+      await page.getByRole('group',{name:'Profile and tools'})
+        .getByRole('button',{name:/Quick create/}).click();
+    }else await page.locator('.sales-home-header-create')
+      .getByRole('button',{name:'Quick create'}).click();
     const accountCreate=page.getByRole('dialog',{name:'Create in SalesShop'});
     await accountCreate.getByRole('button',{name:/New Account/}).click();
     await accountCreate.getByRole('textbox',{name:'Account / company name'}).fill('Batch 16G customer');

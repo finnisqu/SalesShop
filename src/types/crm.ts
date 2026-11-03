@@ -86,6 +86,9 @@ export interface Project {
   stage: ProjectStage;
   stageChangedAt?: string;
   dueDate?: string;
+  /** Explicit bid submission deadline (not a generic follow-up date). */
+  bidDueDate?: string;
+  bidDueTime?: string;
   amount?: number;
   nextAction?: string;
   lastTouchpoint?: string;
@@ -97,6 +100,9 @@ export interface ActivityMetadata {
   /** Completed interaction saved in existing CRM metadata; no new table required. */
   interactionMethod?: 'email'|'call'|'text'|'video-call'|'in-person';
   notes?: string;
+  editedAt?: string;
+  voidedAt?: string;
+  correctionHistory?: Array<{at:string;summary:string;notes?:string;method?:ActivityMetadata['interactionMethod'];companyId?:string;contactId?:string;projectId?:string;quoteId?:string}>;
   quoteNumber?: string;
   revision?: number;
   amount?: number;
@@ -165,7 +171,7 @@ export type ContactPatch = Partial<Pick<Contact, 'companyId' | 'name' | 'email' 
 
 export type ProjectPatch = Partial<Pick<
   Project,
-  'name' | 'companyName' | 'stage' | 'dueDate' | 'amount' | 'nextAction' | 'lastTouchpoint'
+  'name' | 'companyName' | 'stage' | 'dueDate' | 'bidDueDate' | 'bidDueTime' | 'amount' | 'nextAction' | 'lastTouchpoint'
 >>;
 
 export type ActivityInput = Omit<Activity, 'id' | 'occurredAt'> & { id?: string; occurredAt?: string };

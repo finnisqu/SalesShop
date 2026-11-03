@@ -63,7 +63,7 @@ describe('UI Foundation Batch 8 — role-aware shared shell',()=>{
   });
 
   it('preserves hamburger navigation in Owner preview and real Viewer paths',()=>{
-    expect(chrome).toContain("if (view === 'quotes' && !quoteReadOnly && !preview && !(quoteLibraryMode === 'team'");
+    expect(chrome).toContain("if (view === 'quotes' && !betaQuotesEnabled && !quoteReadOnly && !preview && !(quoteLibraryMode === 'team'");
     expect(chrome).toContain("teamRole === 'owner' || teamRole === 'admin'");
     expect(chrome).toContain('useQuoteLibraryStore');
     expect(chrome).toContain('aria-label="Open SalesShop navigation"');

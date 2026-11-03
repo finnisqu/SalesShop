@@ -12,6 +12,7 @@ import {
 import { deleteNormalizedProject } from '../services/normalizedCrmSync';
 import type {
   Activity,
+  ActivityMetadata,
   ActivityInput,
   Company,
   CompanyKind,
@@ -27,6 +28,9 @@ import type {
   StageChangeContext,
 } from '../types/crm';
 import { useAuthStore } from './authStore';
+import {stagePendingActivity,readPendingActivities} from '../services/activityCloudOutbox';
+import {useActivityCloudStatusStore} from './activityCloudStatusStore';
+import {canEditTeamArea} from '../services/teamDepartments';
 
 interface CrmState {
   companies: Company[];
@@ -49,6 +53,8 @@ interface CrmState {
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
   deleteProject: (projectId: string) => void;
   recordActivity: (activity: ActivityInput) => string;
+  updateManualActivity: (activityId:string,change:{summary?:string;notes?:string;interactionMethod?:ActivityMetadata['interactionMethod'];occurredAt?:string;companyId?:string|null;contactId?:string|null;projectId?:string|null;quoteId?:string|null})=>boolean;
+  voidManualActivity:(activityId:string)=>boolean;
 }
 
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
@@ -254,8 +260,20 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       id: input.id ?? id('activity'),
       occurredAt: input.occurredAt ?? now(),
     };
-    const activities = [...get().activities, activity];
     const touchpoint=activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint';
+    const auth=useAuthStore.getState();
+    if(touchpoint&&auth.mode==='cloud'){
+      if(!auth.organizationId||!auth.user?.id||
+        !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm'))return '';
+      const scope={organizationId:auth.organizationId,userId:auth.user.id};
+      if(!stagePendingActivity(scope,activity)){
+        useActivityCloudStatusStore.getState().setStatus('error',
+          readPendingActivities(scope).length,'Unable to queue this interaction safely on this device.');
+        return '';
+      }
+      useActivityCloudStatusStore.getState().setStatus('pending',readPendingActivities(scope).length);
+    }
+    const activities=[...get().activities,activity];
     const day=new Date(activity.occurredAt);
     const dayKey=Number.isFinite(day.getTime())
       ?[day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),String(day.getDate()).padStart(2,'0')].join('-')
@@ -267,6 +285,67 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     persist(get().companies, get().contacts, projects, activities);
     set({ activities,projects });
     return activity.id;
+  },
+
+  updateManualActivity:(activityId,change)=>{
+   const original=get().activities.find(a=>a.id===activityId);
+   if(!original||!['manual-touchpoint','notebook-touchpoint'].includes(original.type)||
+    original.metadata?.voidedAt)return false;
+   const auth=useAuthStore.getState();
+   if(auth.mode==='cloud'&&(!auth.user?.id||!auth.organizationId||
+     !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')))return false;
+   const next:Activity={...original,
+    companyId:change.companyId===undefined?original.companyId:change.companyId||undefined,
+    contactId:change.contactId===undefined?original.contactId:change.contactId||undefined,
+    projectId:change.projectId===undefined?original.projectId:change.projectId||undefined,
+    quoteId:change.quoteId===undefined?original.quoteId:change.quoteId||undefined,
+    summary:change.summary?.trim().slice(0,240)||original.summary,
+    occurredAt:change.occurredAt&&Number.isFinite(Date.parse(change.occurredAt))
+      ?change.occurredAt:original.occurredAt,
+    metadata:{...original.metadata,
+     notes:change.notes===undefined?original.metadata?.notes:change.notes.trim().slice(0,5000)||undefined,
+     interactionMethod:change.interactionMethod??original.metadata?.interactionMethod,
+     editedAt:now(),
+     correctionHistory:[...(original.metadata?.correctionHistory??[]),{
+      at:now(),summary:original.summary,notes:original.metadata?.notes,
+      method:original.metadata?.interactionMethod,
+      companyId:original.companyId,contactId:original.contactId,
+      projectId:original.projectId,quoteId:original.quoteId,
+     }].slice(-15),
+    }};
+   if(auth.mode==='cloud'&&auth.organizationId&&auth.user?.id){
+    const scope={organizationId:auth.organizationId,userId:auth.user.id};
+    if(!stagePendingActivity(scope,next)){
+     useActivityCloudStatusStore.getState().setStatus('error',
+      readPendingActivities(scope).length,'Storage unavailable; the change was not applied.');
+     return false;
+    }
+    useActivityCloudStatusStore.getState().setStatus('pending',readPendingActivities(scope).length);
+   }
+   const activities=get().activities.map(a=>a.id===activityId?next:a);
+   persist(get().companies,get().contacts,get().projects,activities);
+   set({activities});return true;
+  },
+  voidManualActivity:activityId=>{
+   const original=get().activities.find(a=>a.id===activityId);
+   if(!original||!['manual-touchpoint','notebook-touchpoint'].includes(original.type)||
+     original.metadata?.voidedAt)return false;
+   const auth=useAuthStore.getState();
+   if(auth.mode==='cloud'&&(!auth.organizationId||!auth.user?.id||
+     !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')))return false;
+   const next={...original,metadata:{...original.metadata,voidedAt:now()}};
+   if(auth.mode==='cloud'&&auth.organizationId&&auth.user?.id){
+    const scope={organizationId:auth.organizationId,userId:auth.user.id};
+    if(!stagePendingActivity(scope,next)){
+     useActivityCloudStatusStore.getState().setStatus('error',
+      readPendingActivities(scope).length,'Storage unavailable; the change was not applied.');
+     return false;
+    }
+    useActivityCloudStatusStore.getState().setStatus('pending',readPendingActivities(scope).length);
+   }
+   const activities=get().activities.map(a=>a.id===activityId?next:a);
+   persist(get().companies,get().contacts,get().projects,activities);
+   set({activities});return true;
   },
 
   createProject: (name, stage = 'Discovery', details = {}) => {

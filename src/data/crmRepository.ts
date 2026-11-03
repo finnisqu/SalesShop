@@ -47,6 +47,8 @@ function normalizeProject(raw: Partial<Project>, timestamp: string): Project | n
     stage,
     stageChangedAt: raw.stageChangedAt ?? raw.updatedAt ?? raw.createdAt ?? timestamp,
     dueDate: raw.dueDate,
+    bidDueDate: raw.bidDueDate,
+    bidDueTime: raw.bidDueTime,
     amount: typeof raw.amount === 'number' ? raw.amount : undefined,
     nextAction: raw.nextAction,
     lastTouchpoint: raw.lastTouchpoint,

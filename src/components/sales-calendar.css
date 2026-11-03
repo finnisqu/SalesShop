@@ -126,3 +126,133 @@
  font-weight:800;line-height:1;color:#fff;}
 .sales-calendar-dots i.is-task,.sales-calendar-dots i.is-bid,
 .sales-calendar-dots i.is-activity,.sales-calendar-dots i.is-follow-up{color:white;}
+
+.sales-activity-cloud-state{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ font-size:11px;color:var(--ss-theme-muted,#796d5b);padding:6px 10px;}
+.sales-activity-cloud-state.is-error{color:#ba5145;}
+.sales-activity-cloud-state button,.sales-activity-success button{min-height:32px;padding:5px 9px;
+ border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:7px;background:transparent;color:inherit;}
+.sales-activity-cloud-state small{overflow:hidden;max-width:250px;text-overflow:ellipsis;white-space:nowrap;}
+.sales-activity-exception{display:flex!important;flex-direction:row;align-items:start;gap:8px;font-size:11px;color:#b47a32;}
+.sales-activity-exception input{width:17px!important;min-width:17px;margin:0;}
+.sales-activity-success{position:fixed;z-index:9700;bottom:max(18px,env(safe-area-inset-bottom,0px));
+ right:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ max-width:min(400px,calc(100vw - 30px));padding:10px 12px;background:var(--ss-theme-card,#fff);
+ color:var(--ss-theme-ink,#333);border:1px solid var(--ss-theme-border,#ccc);
+ border-radius:11px;box-shadow:0 7px 24px rgba(0,0,0,.22);font-size:12px;}
+
+.sales-activity-detail .sales-activity-facts{display:grid;gap:5px;}
+.sales-activity-detail .sales-activity-facts strong{font-size:15px;line-height:1.4;}
+.sales-activity-detail .sales-activity-facts span{font-size:12px;color:var(--ss-theme-muted,#796d5b);}
+.sales-activity-detail .sales-activity-full-notes{padding:12px;white-space:pre-wrap;
+ overflow-wrap:anywhere;font-size:13px;line-height:1.5;
+ background:var(--ss-theme-tint,#f3efe7);border-radius:9px;}
+.sales-activity-related{display:grid;gap:6px;}
+.sales-activity-related h3{margin:0;font-size:12px;}
+.sales-activity-related .sales-activity-detail-link{display:flex;align-items:center;justify-content:space-between;
+ text-align:left;min-height:36px;padding:7px 9px;border:1px solid var(--ss-theme-border,#ddd);
+ background:transparent;color:inherit;border-radius:7px;font-size:12px;}
+.sales-activity-correction{display:grid;gap:10px;}
+.sales-activity-correction label{display:grid;gap:5px;font-size:12px;font-weight:700;}
+.sales-activity-correction input,.sales-activity-correction select,.sales-activity-correction textarea{
+ width:100%;min-width:0;padding:8px;border:1px solid var(--ss-theme-border,#ddd);
+ background:var(--ss-theme-card,#fff);color:inherit;border-radius:7px;font-size:16px;}
+.sales-activity-void-warning,.sales-activity-detail footer .is-danger{color:#b7534b;}
+
+/* Calendar views and category toggles: secondary controls, not full pages. */
+.sales-calendar-tools{display:grid;gap:8px;padding:9px 11px;
+ border-bottom:1px solid var(--ss-theme-border,#ddd);}
+.sales-calendar-view-switch{display:flex;gap:3px;background:var(--ss-theme-tint,#eee);
+ border-radius:8px;padding:3px;align-self:start;width:max-content;}
+.sales-calendar-view-switch button{border:0;border-radius:6px;min-height:29px;padding:4px 11px;
+ background:transparent;color:inherit;font-size:11px;font-weight:800;}
+.sales-calendar-view-switch button[aria-selected=true]{background:var(--ss-theme-card,#fff);
+ box-shadow:0 1px 4px rgba(0,0,0,.09);}
+.sales-calendar-filters{display:flex;flex-wrap:wrap;gap:4px;}
+.sales-calendar-filters button{display:flex;align-items:center;gap:4px;padding:5px 8px;
+ min-height:30px;border:1px solid var(--ss-theme-border,#ddd);border-radius:99px;
+ background:transparent;color:var(--ss-theme-ink,#333);font-size:10px;font-weight:650;}
+.sales-calendar-filters button[aria-pressed=false]{opacity:.48;}
+.sales-calendar-filters i{display:block;width:7px;height:7px;border-radius:50%;background:#789;}
+.sales-calendar-filters .is-task{background:#6083ab;}
+.sales-calendar-filters .is-bid{background:#bb8054;}
+.sales-calendar-filters .is-activity{background:#579b83;}
+.sales-calendar-filters .is-follow-up{background:#9575b5;}
+.sales-calendar-agenda-view{overflow-y:auto;min-height:120px;max-height:min(52dvh,430px);
+ overscroll-behavior:contain;}
+.sales-calendar-agenda-item{width:100%;min-width:0;display:flex;align-items:center;gap:9px;
+ text-align:left;color:inherit;background:transparent;border:0;
+ border-bottom:1px solid var(--ss-theme-border,#ddd);padding:9px 12px;}
+.sales-calendar-agenda-item:hover,.sales-calendar-agenda-item:focus-visible{background:var(--ss-theme-tint,#eee);}
+.sales-calendar-agenda-date{display:grid;min-width:29px;text-align:center;}
+.sales-calendar-agenda-date strong{font-size:15px;}
+.sales-calendar-agenda-date small{font-size:9px;color:var(--ss-theme-muted,#777);}
+.sales-calendar-agenda-item>.sales-calendar-event-text{flex:1;min-width:0;}
+
+/* Activity History: compact type, method and date filters without nagging. */
+.sales-activity-history-filters{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+ padding:8px 0 12px;}
+.sales-activity-history-filters select,.sales-activity-history-filters input[type=date]{
+ min-height:35px;max-width:170px;padding:5px 7px;border:1px solid var(--ss-theme-border,#ddd);
+ border-radius:7px;background:var(--ss-theme-card,#fff);color:inherit;font-size:12px;}
+.sales-activity-history-filters label{display:flex;align-items:center;gap:5px;
+ font-size:11px;color:var(--ss-theme-muted,#777);}
+.sales-activity-history-filters .sales-activity-voided-switch input{width:16px;height:16px;}
+.sales-activity-load-more{margin:12px 0;padding:10px 16px;border:1px solid var(--ss-theme-border,#ddd);
+ border-radius:8px;background:var(--ss-theme-card,#fff);color:inherit;font-weight:750;}
+
+/* Shared CRM timeline: no duplicate cards for the same multi-linked Activity. */
+.sales-crm-activity-timeline{list-style:none;display:grid;gap:0;margin:0;padding:0;}
+.sales-crm-activity-timeline>li{margin:0;border-bottom:1px solid var(--ss-theme-border,#ded7c9);}
+.sales-crm-activity-entry{display:flex;gap:9px;align-items:flex-start;width:100%;
+ padding:10px 4px;border:0;background:transparent;color:inherit;text-align:left;}
+.sales-crm-activity-entry:hover,.sales-crm-activity-entry:focus-visible{
+ background:var(--ss-theme-tint,#f3efe7);}
+.sales-crm-activity-method{width:29px;height:29px;flex:0 0 29px;display:grid;place-items:center;
+ border:1px solid var(--ss-theme-border,#ded7c9);border-radius:8px;font-size:17px;}
+.sales-crm-activity-description{flex:1;min-width:0;display:grid;gap:3px;}
+.sales-crm-activity-description strong{font-size:12px;line-height:1.4;}
+.sales-crm-activity-description small{font-size:10px;color:var(--ss-theme-muted,#777);}
+.sales-crm-activity-excerpt{font-size:11px;color:var(--ss-theme-muted,#777);
+ line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;
+ -webkit-box-orient:vertical;overflow-wrap:anywhere;}
+.sales-crm-activity-arrow{align-self:center;font-size:19px;color:var(--ss-theme-muted,#777);}
+.sales-crm-activity-more{margin:8px 0 0;padding:8px 12px;border:1px solid var(--ss-theme-border,#ded7c9);
+ border-radius:7px;background:transparent;color:inherit;font-weight:750;font-size:11px;}
+
+/* Calendar secondary creation actions, quiet until the user opens a date. */
+.sales-calendar-quick-actions{display:flex;gap:6px;padding:8px 12px;
+ border-top:1px solid var(--ss-theme-border,#ded7c9);}
+.sales-calendar-quick-actions button{border:1px solid var(--ss-theme-border,#ded7c9);
+ border-radius:7px;background:var(--ss-theme-card,#fff);color:inherit;font-size:11px;
+ font-weight:800;padding:8px 10px;min-height:36px;}
+.sales-calendar-quick-actions button:hover{background:var(--ss-theme-tint,#f3efe7);}
+.sales-activity-dialog select{min-width:0;width:100%;min-height:38px;padding:8px;
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:7px;
+ background:var(--ss-theme-card,#fff);color:inherit;font-size:16px;}
+
+/* Native-feeling, grabber-only mobile sheets. Form scrolling never triggers a swipe-close. */
+.sales-sheet-grabber{display:none;}
+@media(max-width:700px){
+ .sales-sheet-grabber{display:flex;align-items:center;justify-content:center;flex:0 0 22px;
+  height:22px;width:100%;touch-action:none;user-select:none;cursor:grab;}
+ .sales-sheet-grabber>span{display:block;width:38px;height:5px;border-radius:99px;
+  background:var(--ss-theme-muted,#888);opacity:.48;}
+ .sales-activity-dialog,.sales-calendar-popover{
+  animation:sales-sheet-rise .19s ease-out both;
+  max-height:min(92dvh,calc(100svh - 12px));
+  overscroll-behavior:contain;
+ }
+ .sales-activity-dialog{padding-bottom:max(0px,env(safe-area-inset-bottom,0px));}
+ .sales-activity-dialog>footer{position:sticky;bottom:0;z-index:5;
+  background:var(--ss-theme-card,#fff);padding-bottom:max(12px,env(safe-area-inset-bottom,0px));}
+ .sales-activity-form-body{min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+ .sales-calendar-popover{padding-bottom:max(0px,env(safe-area-inset-bottom,0px));}
+ .sales-calendar-weekdays,.sales-calendar-grid{flex-shrink:0;}
+ .sales-calendar-day-preview{min-height:60px;max-height:30dvh;}
+ .sales-calendar-legend{flex-shrink:0;}
+}
+@keyframes sales-sheet-rise{from{opacity:.6;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+ .sales-activity-dialog,.sales-calendar-popover{animation:none!important;}
+}

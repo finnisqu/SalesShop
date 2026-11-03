@@ -8,9 +8,14 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
+import {MobileSheetGrabber} from './MobileSheetGrabber';
 import './sales-calendar.css';
+import {requestActivityDetail} from './ActivityDetailHost';
+import {requestCalendarQuickAction} from './CalendarQuickActionHost';
+import {canEditTeamArea} from '../services/teamDepartments';
 
 const week=['S','M','T','W','T','F','S'];
+const allKinds:SalesCalendarKind[]=['task','bid','activity','follow-up'];
 const labels:Record<SalesCalendarKind,string>={
  task:'To-do',bid:'Bid due',activity:'Activity', 'follow-up':'Follow-up',
 };
@@ -20,12 +25,16 @@ const plainName=(date:Date)=>date.toLocaleDateString(undefined,{month:'long',yea
 export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?:boolean;label?:string}){
  const button=useRef<HTMLButtonElement>(null);
  const [open,setOpen]=useState(false);
+ const [viewMode,setViewMode]=useState<'month'|'agenda'>('month');
+ const [visibleKinds,setVisibleKinds]=useState<SalesCalendarKind[]>(allKinds);
  const [position,setPosition]=useState<CSSProperties>({});
  const [month,setMonth]=useState(()=>new Date(new Date().getFullYear(),new Date().getMonth(),1,12));
  const [selected,setSelected]=useState(()=>localDateKey(new Date()));
  const today=localDateKey(new Date());
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id);
+ const role=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
+ const canEditBid=mode==='local'||canEditTeamArea(role,department,'crm');
  const preview=useRolePerspectiveStore(s=>s.activePerspective);
  const storedScope=usePersonalTaskStore(s=>s.scope),tasks=usePersonalTaskStore(s=>s.tasks);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
@@ -38,7 +47,12 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
  const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,deals,activities,ownQuotes),
   [ownTasks,deals,activities,ownQuotes]);
  const days=useMemo(()=>calendarMonthDays(month.getFullYear(),month.getMonth()),[month]);
- const eventsForDay=events.filter(item=>item.date===selected);
+ const shown=events.filter(item=>visibleKinds.includes(item.kind));
+ const eventsForDay=shown.filter(item=>item.date===selected);
+ const monthKey=localDateKey(month).slice(0,7);
+ const agenda=shown.filter(item=>item.date.startsWith(monthKey));
+ const toggleKind=(kind:SalesCalendarKind)=>setVisibleKinds(old=>
+  old.includes(kind)?old.filter(x=>x!==kind):[...old,kind]);
  const placement=()=>{
   if(!button.current)return;
   const rect=button.current.getBoundingClientRect();
@@ -73,11 +87,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
    nav.setView('tasks');
    window.dispatchEvent(new Event('salesshop:open-calendar-task'));
   }
-  else if(recordType==='activity'){
-   try{window.sessionStorage.setItem('salesshop-open-activity-history-v1','1');}catch{/* best effort */}
-   nav.setView('dashboard');
-   window.dispatchEvent(new Event('salesshop:open-activity-history'));
-  }
+  else if(recordType==='activity')requestActivityDetail(recordId);
   else if(recordType==='project')nav.openProject(recordId);
   else if(recordType==='quote')nav.openQuote(recordId);
   else if(recordType==='company')nav.openCompany(recordId);
@@ -99,6 +109,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
    <section className="sales-calendar-popover" style={position}
     role="dialog" aria-modal="false" aria-label="SalesShop calendar"
     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
+    <MobileSheetGrabber onDismiss={()=>setOpen(false)}/>
     <header className="sales-calendar-heading">
      <div><small>WORK CALENDAR</small><strong>{plainName(month)}</strong></div>
      <div>
@@ -111,13 +122,28 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
       <button type="button" aria-label="Close calendar" onClick={()=>setOpen(false)}>×</button>
      </div>
     </header>
+    <div className="sales-calendar-tools">
+     <div role="tablist" aria-label="Calendar layout" className="sales-calendar-view-switch">
+      <button type="button" role="tab" aria-selected={viewMode==='month'}
+       onClick={()=>setViewMode('month')}>Month</button>
+      <button type="button" role="tab" aria-selected={viewMode==='agenda'}
+       onClick={()=>setViewMode('agenda')}>Agenda</button>
+     </div>
+     <div role="group" aria-label="Calendar event filters" className="sales-calendar-filters">
+      {allKinds.map(kind=><button type="button" key={kind}
+       aria-pressed={visibleKinds.includes(kind)} title={'Toggle '+labels[kind]}
+       onClick={()=>toggleKind(kind)}>
+       <i className={'is-'+kind} aria-hidden="true"/>{labels[kind]}</button>)}
+     </div>
+    </div>
+    {viewMode==='month'?<>
     <div className="sales-calendar-weekdays">
      {week.map((name,i)=><span key={i} aria-label={['Sunday','Monday','Tuesday','Wednesday',
       'Thursday','Friday','Saturday'][i]}>{name}</span>)}
     </div>
     <div className="sales-calendar-grid">
      {days.map(key=>{
-      const counts=calendarDayCounts(events,key),inMonth=key.slice(0,7)===localDateKey(month).slice(0,7);
+      const counts=calendarDayCounts(shown,key),inMonth=key.slice(0,7)===monthKey;
       return <button type="button" key={key}
         className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
          (key===today?' is-today':'')+(key===selected?' is-selected':'')}
@@ -151,6 +177,26 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
         </button>)}
       </div>:<p className="sales-calendar-empty">Nothing scheduled or logged for this day.</p>}
     </section>
+    </>:<section className="sales-calendar-agenda-view" aria-label={'Agenda for '+plainName(month)}>
+     {agenda.length?agenda.map(event=><button type="button" key={event.id} className="sales-calendar-agenda-item"
+       onClick={()=>openRecord(event)}>
+       <span className="sales-calendar-agenda-date">
+        <strong>{Number(event.date.slice(-2))}</strong><small>{new Date(event.date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short'})}</small>
+       </span>
+       <i className={'sales-calendar-event-dot is-'+event.kind} aria-hidden="true"/>
+       <span className="sales-calendar-event-text"><strong>{event.title}</strong>
+        <small>{event.time?event.time+' · ':''}{labels[event.kind]} · {event.detail}</small></span>
+       <span aria-hidden="true">›</span>
+      </button>):<p className="sales-calendar-empty">No events in this month for the selected filters.</p>}
+    </section>}
+    <div className="sales-calendar-quick-actions" aria-label="Create from selected calendar date">
+     {personal&&<button type="button" onClick={()=>{
+      setOpen(false);requestCalendarQuickAction('task',selected);
+     }}>＋ Task</button>}
+     {canEditBid&&<button type="button" onClick={()=>{
+      setOpen(false);requestCalendarQuickAction('bid',selected);
+     }}>＋ Bid deadline</button>}
+    </div>
     <div className="sales-calendar-legend">
      {(['task','bid','activity','follow-up'] as const).map(kind=><span key={kind}>
       <i className={'is-'+kind}/>{labels[kind]}</span>)}

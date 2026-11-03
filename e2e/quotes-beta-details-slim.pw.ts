@@ -35,10 +35,12 @@ for(const device of ['phone-390','desktop-1280']){
     await address.press('Enter');
     await expect(form.getByRole('combobox',{name:'Division / pricing'})).toBeFocused();
     await expect(beta.getByRole('button',{name:'Classic',exact:true})).toHaveCount(0);
-    if(device==='phone-390'){
-      await expect(beta.getByRole('button',{name:/Start first Area/})).toBeVisible();
-    }else{
-      await expect(beta.getByRole('button',{name:'Add Area from navigator'})).toBeVisible();
-    }
+    // The old first-Area wizard no longer appears in Project Details.
+    // It was deliberately replaced with the Build Quote workbook.
+    await expect(beta.getByRole('button',{name:/Continue to Build Quote/})).toBeVisible();
+    await beta.getByRole('button',{name:/Continue to Build Quote/}).click();
+    const workbook=beta.getByRole('region',{name:'Quick Quote compact Area summary'});
+    await expect(workbook).toBeVisible();
+    await expect(workbook.locator('.qqs-inline-actions .qqs-accent')).toBeVisible();
   });
 }
