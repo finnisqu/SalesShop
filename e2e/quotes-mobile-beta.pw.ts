@@ -2052,7 +2052,7 @@ test('phone Quick Quote and Builder Rates are distinct fixed template documents'
   const type=details.getByRole('combobox',{name:'Document type'});
   await expect(type).toHaveValue('quote');
   await expect(type).toBeDisabled();
-  await beta.locator('.qmb-quote-library-back').click();
+  await page.getByRole('button',{name:'Back to Documents'}).click();
   await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Builder Rate Schedule/}).click();
@@ -2062,7 +2062,7 @@ test('phone Quick Quote and Builder Rates are distinct fixed template documents'
   await expect(beta.getByLabel('Published pricing rows')).toContainText('0 price rows');
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview',exact:true}).click();
   await expect(beta.locator('.pricing-schedule-customer-preview')).toBeVisible();
-  await beta.locator('.qmb-quote-library-back').click();
+  await page.getByRole('button',{name:'Back to Documents'}).click();
   await beta.locator('.qmb-listcard').filter({hasText:'Test Quick Quote'}).first().click();
   await expect(beta.getByLabel('Pricing Schedule workspace')).toHaveCount(0);
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toBeVisible();
