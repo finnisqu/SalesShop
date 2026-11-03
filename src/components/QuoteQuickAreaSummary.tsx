@@ -135,8 +135,9 @@ function SummaryCell({value,label,focused,onFocus,onEdit,muted=false,warn=false,
    title={'More settings: '+label} onClick={()=>{setEditing(false);onEdit();}}>✎</button>
  </div>;
 }
-function AreaTitleCell({quote,area,onSelect,onEdit}:{
+function AreaTitleCell({quote,area,onSelect,onEdit,onDuplicate,editable}:{
  quote:Quote;area:QuoteSection;onSelect:()=>void;onEdit:()=>void;
+ onDuplicate:()=>void;editable:boolean;
 }){
  const [editing,setEditing]=useState(false);
  return <div className="qqs-cell qqs-pin-area qqs-area-name">
@@ -146,6 +147,9 @@ function AreaTitleCell({quote,area,onSelect,onEdit}:{
    <button type="button" title={area.title} data-quick-grid-editable="true"
     onFocus={onSelect} onClick={()=>{onSelect();setEditing(true);}}>
     {area.title||'New Area'}</button>}
+  <button type="button" className="qqs-pencil qqs-duplicate-action" disabled={!editable}
+   aria-label={'Duplicate Area '+area.title} title="Duplicate Area (Undo available)"
+   onClick={()=>{setEditing(false);onDuplicate();}}>⧉</button>
   <button type="button" className="qqs-pencil" aria-label={'Area settings for '+area.title}
    onClick={()=>{setEditing(false);onEdit();}}>✎</button>
  </div>;
@@ -492,6 +496,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
       <div className="qqs-cell qqs-pin-check"><input type="checkbox" aria-label={'Select '+area.title}
        checked={selected.includes(area.id)} onChange={event=>choose(area.id,event.target.checked)}/></div>
       <AreaTitleCell quote={quote} area={area} onSelect={()=>setFocus('Area '+area.id)}
+       onDuplicate={()=>store.duplicateArea(quote.id,area.id)} editable={editable}
        onEdit={()=>open(area.id,'area')}/>
       {cell(area.id,'material','Stone selection for '+area.title,
         area.scope?.takeoffMaterial||'Choose stone',!area.scope?.takeoffMaterial,
