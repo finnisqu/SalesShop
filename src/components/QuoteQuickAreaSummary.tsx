@@ -500,7 +500,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
      <button type="button" className="qqs-desktop-action" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
      <button type="button" className="qqs-accent" disabled={!editable} onClick={onAddArea}>+ Area</button>
      <details className="qqs-mobile-actions">
-      <summary aria-label="More Area tools">Tools <span aria-hidden="true">⌄</span></summary>
+      <summary aria-label="More Area tools" title="More Area tools">⋯</summary>
       <div>
        <button type="button" disabled={!editable} onClick={onCopyArea}>Copy Area</button>
        <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
