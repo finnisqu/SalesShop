@@ -28,14 +28,19 @@ const primaryName=(associations:TaskAssociation[])=>{
  const person=associations.find(x=>x.type==='contact');
  return (person??associations[0])?.label?.replace(/^(Quote|Deal|Company|Person) · /,'');
 };
-export function QuickActivityLauncher({label='Log Activity',compact=false,tile=false}:{
- label?:string;compact?:boolean;tile?:boolean;
-}){
+interface ActivityLauncherProps {label?:string;compact?:boolean;tile?:boolean;}
+/** Scope the form component by account so drafts cannot leak across company/user switches. */
+export function QuickActivityLauncher(props:ActivityLauncherProps){
+ const mode=useAuthStore(s=>s.mode),orgId=useAuthStore(s=>s.organizationId),
+  userId=useAuthStore(s=>s.user?.id);
+ const draftKey=draftStorageKey('activity',mode,orgId,userId);
+ return <ActivityLauncherInner key={draftKey??'no-account'} {...props} draftKey={draftKey}/>;
+}
+function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,draftKey}:
+ ActivityLauncherProps&{draftKey:string|null}){
  const mode=useAuthStore(s=>s.mode),role=useAuthStore(s=>s.teamRole);
  const department=useAuthStore(s=>s.teamDepartment);
  const currentUser=useAuthStore(s=>s.user?.id);
- const orgId=useAuthStore(s=>s.organizationId);
- const draftKey=draftStorageKey('activity',mode,orgId,currentUser);
  const saved=useMemo(()=>readSavedDraft<ActivityDraft>(draftKey),[draftKey]);
  const [open,setOpen]=useState(()=>saved?.open??false);
  const [method,setMethod]=useState<Method>(()=>saved?.method??'call');
