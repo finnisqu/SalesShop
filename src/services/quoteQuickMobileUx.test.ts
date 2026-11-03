@@ -13,6 +13,7 @@ const workbook=source('src/mobile-takeoff-workbook.css');
 const cleanup=source('src/mobile-takeoff-cleanup.css');
 const areas=source('src/components/QuoteQuickAreaSummary.tsx');
 const takeoffs=source('src/components/QuoteCompactTakeoffs.tsx');
+const matrix=source('src/components/QuoteMatrixBuilder.tsx');
 const review=source('src/components/QuoteBetaReview.tsx');
 const reuse=source('src/components/QuoteReuseAreaDialog.tsx');
 const layouts=source('src/components/QuoteAreaPresetPicker.tsx');
