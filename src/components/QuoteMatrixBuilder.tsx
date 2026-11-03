@@ -227,6 +227,23 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
  const [subtab,setSubtab]=useState<'areas'|'takeoffs'>('areas');
  const [focusArea,setFocusArea]=useState<string|null>(null);
  const [advanced,setAdvanced]=useState(false);
+ const [moreOpen,setMoreOpen]=useState(false);
+ const moreRef=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+  if(!moreOpen)return;
+  const close=(event:PointerEvent)=>{
+   if(moreRef.current&&!moreRef.current.contains(event.target as Node))setMoreOpen(false);
+  };
+  const escape=(event:globalThis.KeyboardEvent)=>{
+   if(event.key==='Escape')setMoreOpen(false);
+  };
+  document.addEventListener('pointerdown',close);
+  document.addEventListener('keydown',escape);
+  return()=>{
+   document.removeEventListener('pointerdown',close);
+   document.removeEventListener('keydown',escape);
+  };
+ },[moreOpen]);
  const [calculator,setCalculator]=useState<string|null|'general'>(null);
  const [selected,setSelected]=useState<QuoteScopeRowRef[]>([]);
  const [operation,setOperation]=useState<QuoteScopeBulkOperation>('exclude');
@@ -303,17 +320,19 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
    {subtab==='takeoffs'&&<button type="button" className="qmx-advanced-switch"
     onClick={()=>setAdvanced(v=>!v)} aria-pressed={advanced}>
     {advanced?'✓ Technical columns':'Technical columns ›'}</button>}
-   <details className="qmx-mobile-overflow">
-    <summary aria-label="More Build Quote tools" title="More Build Quote tools">⋯</summary>
-    <div className="qmx-mobile-overflow-menu">
-     <button type="button" aria-pressed={advanced} onClick={()=>setAdvanced(v=>!v)}>
-      {advanced?'✓ Standard Takeoffs':'Technical columns'}
-     </button>
-     <button type="button" disabled={!areas.length} onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>
-      Advanced fabrication
-     </button>
-    </div>
-   </details>
+   <div className="qmx-mobile-overflow" ref={moreRef}>
+    <button type="button" className="qmx-mobile-overflow-trigger"
+     aria-label="More Build Quote tools" aria-expanded={moreOpen}
+     aria-haspopup="true" onClick={()=>setMoreOpen(open=>!open)}>⋯</button>
+    {moreOpen&&<div className="qmx-mobile-overflow-menu" role="group" aria-label="Build Quote tools">
+     <button type="button" aria-pressed={advanced} onClick={()=>{
+       setAdvanced(value=>!value);setMoreOpen(false);
+     }}>{advanced?'✓ Standard Takeoffs':'Technical columns'}</button>
+     <button type="button" disabled={!areas.length} onClick={()=>{
+       setMoreOpen(false);if(areas[0])onAdvanced(areas[0].id);
+     }}>Advanced fabrication</button>
+    </div>}
+   </div>
    <strong>Quote {cash.format(quoteTotal(quote))}</strong>
   </nav>
   {subtab==='areas'&&<QuoteQuickAreaSummary quote={quote} onAddArea={onAddArea}
