@@ -107,6 +107,7 @@ export function MobileAppChrome() {
     };
   },[]);
   const [open, setOpen] = useState(false);
+  const navigationButtonRef=useRef<HTMLButtonElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useDismissibleLayer<HTMLDivElement>(profileOpen, () => setProfileOpen(false));
   useEffect(()=>{
@@ -124,9 +125,19 @@ export function MobileAppChrome() {
     setProfileOpen(false);
     // Every entry starts at the top level: Catalog only expands after an explicit tap.
     setCatalogExpanded(false);
-    setOpen(true);
+    setOpen(previous=>!previous);
   };
   const drawerRef = useDismissibleLayer<HTMLElement>(open, () => setOpen(false));
+  useEffect(()=>{
+    if(!open)return;
+    const outside=(event:PointerEvent)=>{
+      const target=event.target as Node;
+      if(!drawerRef.current?.contains(target)&&!navigationButtonRef.current?.contains(target))
+        setOpen(false);
+    };
+    document.addEventListener('pointerdown',outside);
+    return ()=>document.removeEventListener('pointerdown',outside);
+  },[open,drawerRef]);
   const [boardMode, setBoardMode] = useState<'projects' | 'accounts'>(() => {
     if (typeof window === 'undefined') return 'projects';
     return window.sessionStorage.getItem('salesshop-board-mode-v1') === 'accounts' ? 'accounts' : 'projects';
@@ -208,7 +219,8 @@ export function MobileAppChrome() {
           </div>
         </>}
         <div className="mobile-quote-actions-slot" id="mobile-quote-actions-slot" aria-label="Document options"/>
-        <button type="button" className="mobile-app-menu-button" onClick={openNavigation}
+        <button ref={navigationButtonRef} type="button" className="mobile-app-menu-button" onClick={openNavigation}
+          aria-expanded={open} aria-haspopup="dialog" aria-controls="mobile-app-navigation-popover"
           aria-label="Open SalesShop navigation" title="SalesShop navigation">☰</button>
         <div className="mobile-profile-menu" ref={profileRef}>
           <button type="button" className="mobile-profile-trigger" aria-label="Open profile and tools"
@@ -246,8 +258,8 @@ export function MobileAppChrome() {
         {!viewer&&!preview&&<div ref={searchRef}><GlobalSearch /></div>}
         {!viewer&&!scopedMember&&!preview&&<div ref={createRef}><QuickCreate /></div>}
       </div>
-      {open && <div className="mobile-app-drawer-backdrop" onPointerDown={() => setOpen(false)}>
-        <aside ref={drawerRef} className="mobile-app-drawer" role="dialog" aria-modal="true" aria-label="SalesShop navigation" onPointerDown={(event) => event.stopPropagation()}>
+      {open && <div className="mobile-app-drawer-backdrop mobile-app-nav-popover-surface">
+        <aside id="mobile-app-navigation-popover" ref={drawerRef} className="mobile-app-drawer" role="dialog" aria-modal="false" aria-label="SalesShop navigation">
           <header>
             <div><span>SalesShop</span><strong>{viewLabel(view)}</strong></div>
             <button type="button" data-dialog-initial-focus onClick={() => setOpen(false)} aria-label="Close navigation">×</button>
