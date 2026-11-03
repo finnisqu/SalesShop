@@ -89,7 +89,7 @@ export function CatalogTagsWorkspace(){
    !window.confirm('Rename this tag on '+selectedInfo.materials+
     ' materials and all matching variants?'))return;
   const nextDefinitions={...definitions};
-  if(changedName)delete nextDefinitions[selected];
+  if(changedName&&selected!==null)delete nextDefinitions[selected];
   nextDefinitions[clean]={description:description.trim().slice(0,2000)};
   let nextMaterials=settings.stockMaterials;
   if(changedName){
