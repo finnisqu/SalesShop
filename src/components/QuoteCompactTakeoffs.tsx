@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState,type ReactNode,type PointerEvent as ReactPointerEvent,type KeyboardEvent as ReactKeyboardEvent} from 'react';
 import {createPortal} from 'react-dom';
-import type {Quote,QuoteSection,QuoteTakeoffPiece,QuoteTakeoffSink,QuoteLine} from '../types/quote';
+import type {Quote,QuoteSection,QuoteTakeoffPiece,QuoteTakeoffSink,QuoteLine,QuoteSplashEdge} from '../types/quote';
 import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
@@ -8,6 +8,7 @@ import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {newTakeoffPiece,newTakeoffSink,takeoffPieceSf,takeoffPieceSplashSf,
+ takeoffPieceSplashEdgeSf,takeoffSplashEdgeHeightIn,takeoffSplashEdgeLengthIn,isSplashEdgeExcluded,
  parseInches,takeoffPieceMiterInches} from '../services/quoteTakeoffsLite';
 import {quickAreaSummary} from '../services/quoteQuickAreaSummary';
 import {TakeoffSinkCatalog} from './TakeoffCatalogPickers';
@@ -16,7 +17,8 @@ import './quote-compact-takeoffs.css';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 const sf=new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
-const key=(r:QuoteScopeRowRef)=>[r.kind,r.sectionId??'',r.id].join(':');
+const key=(r:QuoteScopeRowRef)=>[r.kind,r.sectionId??'',r.id,r.edge??''].join(':');
+const edgeNames:Record<QuoteSplashEdge,string>={back:'Back',left:'Left',right:'Right'};
 function SmallInput({value,label,commit,inches=false,integer=false,disabled=false,allowNegative=false,alwaysInput=false}:{
  value?:number;label:string;commit:(n:number|undefined)=>void;
  inches?:boolean;integer?:boolean;disabled?:boolean;allowNegative?:boolean;alwaysInput?:boolean;
@@ -188,11 +190,13 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const canChangeRow=editable&&!!(piece||sink||line)&&
   (!line||!line.takeoffSinkId&&line.quantitySource?.syncMode!=='live');
  const excluded=rowRef.kind==='splash'
-  ?!!piece?.excludedFromQuote||!!piece?.excludeSplashFromQuote
+  ?!!piece&&(rowRef.edge?isSplashEdgeExcluded(piece,rowRef.edge):
+    !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote)
   :rowRef.kind==='piece'?!!piece?.excludedFromQuote
   :rowRef.kind==='sink'?!!sink?.excludedFromContract
   :!!line&&!line.includeInTotal;
- const measuredSf=piece?(rowRef.kind==='splash'?takeoffPieceSplashSf(piece):takeoffPieceSf(piece)):null;
+ const measuredSf=piece?(rowRef.kind==='splash'?(rowRef.edge
+  ?takeoffPieceSplashEdgeSf(piece,rowRef.edge):takeoffPieceSplashSf(piece)):takeoffPieceSf(piece)):null;
  const areaSummary=section?quickAreaSummary(quote,section):null;
  const pieceMeasuredTotal=areaSummary?.measuredSf??0;
  const allocatedPiecePrice=piece&&!piece.excludedFromQuote&&areaSummary?.primary?.includeInTotal&&pieceMeasuredTotal>0
@@ -200,13 +204,13 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const sinkSellingPrice=sink&&section?quote.lines
   .filter(item=>item.sectionId===section.id&&item.takeoffSinkId===sink.id&&item.includeInTotal)
   .reduce((sum,item)=>sum+quoteLineAmount(item),0):0;
- const priceLabel=rowRef.kind==='splash'?'Included with stone':
+ const priceLabel=rowRef.kind==='splash'?(excluded?'Excluded':'Included with stone'):
   money.format(piece?allocatedPiecePrice:sink?sinkSellingPrice:line&&line.includeInTotal?quoteLineAmount(line):0);
  const canMove=canChangeRow&&(eligibleAreas.length>0||rowRef.kind==='line'&&!!currentAreaId);
  const toggleContract=()=>{
   if(!canChangeRow)return;
   const affected=rowRef.kind==='splash'&&piece?.excludedFromQuote&&excluded
-   ?[{...rowRef,kind:'piece' as const},rowRef]:[rowRef];
+   ?[{...rowRef,kind:'piece' as const,edge:undefined},rowRef]:[rowRef];
   store.bulkScopeRows(quote.id,affected,excluded?'restore':'exclude');
  };
  const moveRow=()=>{
@@ -237,7 +241,9 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const patchLine=(patch:Partial<QuoteLine>)=>{
   if(line)store.updateLine(quote.id,line.id,patch);
  };
- const title=piece?.name||sink?.name||line?.description||'Row details';
+ const title=rowRef.kind==='splash'&&rowRef.edge
+  ?edgeNames[rowRef.edge]+' splash · '+(piece?.name||'Piece')
+  :piece?.name||sink?.name||line?.description||'Row details';
  return createPortal(<div className="qmb qqt-overlay" onPointerDown={e=>{
   if(e.target===e.currentTarget)onClose();
  }}>
@@ -382,7 +388,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
 }){
  const store=useQuoteStore.getState(),editable=quoteIsCommerciallyEditable(quote);
  const list=useRef<HTMLDivElement>(null);
- const [detail,setDetail]=useState<{areaId:string|null;id:string;kind:'piece'|'splash'|'sink'|'line'}|null>(null);
+ const [detail,setDetail]=useState<{areaId:string|null;id:string;kind:'piece'|'splash'|'sink'|'line';edge?:QuoteSplashEdge}|null>(null);
  useEffect(()=>{
   if(!focusArea)return;
   const target=Array.from(list.current?.querySelectorAll<HTMLElement>('[data-area-id]')??[])
@@ -444,9 +450,9 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    if(window.confirm('Delete this measured piece and its attached splash? You can Undo.'))
     store.updateTakeoffPieces(quote.id,section.id,(section.scope?.takeoffPieces??[]).filter(p=>p.id!==ref.id));
   }else if(ref.kind==='splash'){
-   if(window.confirm('Remove splash edges from this piece? The top measurements stay. You can Undo.'))
-    store.updateTakeoffPieces(quote.id,section.id,(section.scope?.takeoffPieces??[]).map(p=>p.id===ref.id
-     ?{...p,backsplash:false,leftSplash:false,rightSplash:false,excludeSplashFromQuote:false}:p));
+   const description=ref.edge?edgeNames[ref.edge]+' splash':'all splash edges';
+   if(window.confirm('Remove '+description+'? The measured top remains, and Undo is available.'))
+    store.bulkScopeRows(quote.id,[ref],'delete');
   }
  };
  const setChargeTotal=(line:QuoteLine,total:number|undefined)=>{
@@ -650,13 +656,13 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
   </div>
   <footer className="qqt-total">Striking out a row preserves the measurements and excludes it from current pricing.</footer>
   {detail&&<DetailPopup quote={quote} section={quote.sections.find(s=>s.id===detail.areaId)??null}
-   rowRef={{kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined}}
+   rowRef={{kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined,edge:detail.edge}}
    piece={detail.kind==='piece'||detail.kind==='splash'
     ?quote.sections.find(s=>s.id===detail.areaId)?.scope?.takeoffPieces?.find(p=>p.id===detail.id):undefined}
    sink={detail.kind==='sink'?quote.sections.find(s=>s.id===detail.areaId)?.scope?.takeoffSinks?.find(p=>p.id===detail.id):undefined}
    line={detail.kind==='line'?quote.lines.find(l=>l.id===detail.id):undefined}
-   onDuplicate={()=>duplicateRows([{kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined}])}
-   onDelete={()=>{deleteRow({kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined});setDetail(null);}}
+   onDuplicate={()=>duplicateRows([{kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined,edge:detail.edge}])}
+   onDelete={()=>{deleteRow({kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined,edge:detail.edge});setDetail(null);}}
    onClose={()=>setDetail(null)}/>}
  </section>;
 }
