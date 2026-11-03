@@ -12,7 +12,7 @@ const deal=(bidDueDate:string):Project=>({
  createdAt:'2026-11-01T12:00:00Z',updatedAt:'2026-11-01T12:00:00Z',
 });
 const quote=(id:string):Quote=>({
- id,title:'Bid '+id,ownerUserId:'u1',
+ id,title:'Bid '+id,ownerUserId:'u1',revision:0,status:'Sent',
 }) as unknown as Quote;
 const activity=(id:string,type:Activity['type'],occurredAt:string,
  metadata?:Activity['metadata'],extra:Partial<Activity>={}):Activity=>({
@@ -53,10 +53,12 @@ describe('SalesShop shared Calendar',()=>{
  });
  it('shows only the latest active quote follow-up without private quote leakage',()=>{
   const activities=[
+   activity('delivery','quote-sent','2026-10-31T12:00:00Z',{
+    source:'manual',deliveryConfirmed:true,revision:0},{quoteId:'q1'}),
    activity('old','quote-follow-up','2026-11-01T12:00:00Z',{
-    followUpAction:'scheduled',followUpDueDate:'2026-11-08'},{quoteId:'q1'}),
+    revision:0,followUpAction:'scheduled',followUpDueDate:'2026-11-08'},{quoteId:'q1'}),
    activity('new','quote-follow-up','2026-11-02T12:00:00Z',{
-    followUpAction:'scheduled',followUpDueDate:'2026-11-09'},{quoteId:'q1'}),
+    revision:0,followUpAction:'scheduled',followUpDueDate:'2026-11-09'},{quoteId:'q1'}),
    activity('private','manual-touchpoint','2026-11-03T12:00:00Z',{
     interactionMethod:'text'},{quoteId:'q2',projectId:'d1'}),
   ];
@@ -65,7 +67,22 @@ describe('SalesShop shared Calendar',()=>{
   expect(onlyMine[0]).toMatchObject({recordType:'quote',recordId:'q1'});
   expect(buildSalesCalendarEvents([],[],[
    ...activities,activity('clear','quote-follow-up','2026-11-04T12:00:00Z',{
-    followUpAction:'cleared'},{quoteId:'q1'})],[quote('q1')])).toHaveLength(0);
+    revision:0,followUpAction:'cleared'},{quoteId:'q1'})],[quote('q1')])).toHaveLength(0);
+ });
+ it('never shows a reminder from a different revision or a completed quote',()=>{
+  const events=[
+   activity('delivered','quote-sent','2026-10-28T12:00:00Z',
+    {source:'manual',deliveryConfirmed:true,revision:1},{quoteId:'q1'}),
+   activity('old','quote-follow-up','2026-10-29T12:00:00Z',
+    {revision:0,followUpAction:'scheduled',followUpDueDate:'2026-11-12'},{quoteId:'q1'}),
+  ];
+  expect(buildSalesCalendarEvents([],[],events,[{...quote('q1'),revision:1}])).toHaveLength(0);
+  expect(buildSalesCalendarEvents([],[],events,[{...quote('q1'),revision:1,status:'Signed'}])).toHaveLength(0);
+ });
+ it('preserves due times for chronological agenda ordering',()=>{
+  const tasks=[task('late','2026-11-03',{dueTime:'16:30'}),
+   task('early','2026-11-03',{dueTime:'09:00'})];
+  expect(buildSalesCalendarEvents(tasks,[],[],[]).map(e=>e.recordId)).toEqual(['early','late']);
  });
  it('does not invent deadlines for anytime or canceled tasks',()=>{
   const items=buildSalesCalendarEvents([
