@@ -97,6 +97,9 @@ export interface ActivityMetadata {
   /** Completed interaction saved in existing CRM metadata; no new table required. */
   interactionMethod?: 'email'|'call'|'text'|'video-call'|'in-person';
   notes?: string;
+  editedAt?: string;
+  voidedAt?: string;
+  correctionHistory?: Array<{at:string;summary:string;notes?:string;method?:ActivityMetadata['interactionMethod']}>;
   quoteNumber?: string;
   revision?: number;
   amount?: number;

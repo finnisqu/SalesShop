@@ -44,7 +44,7 @@ export function buildSalesCalendarEvents(
    detail:'Bid due · '+deal.stage,recordType:'project',recordId:deal.id});
  }
  for(const activity of activities){
-  if(activity.type==='notebook-touchpoint'||activity.type==='manual-touchpoint'){
+  if((activity.type==='notebook-touchpoint'||activity.type==='manual-touchpoint')&&!activity.metadata?.voidedAt){
    if(activity.quoteId&&!quoteIds.has(activity.quoteId))continue;
    const date=isoLocalDay(activity.occurredAt);if(!date)continue;
    const type=activity.quoteId&&quoteIds.has(activity.quoteId)?'quote':

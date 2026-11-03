@@ -175,7 +175,9 @@ export function Connections() {
       projectsById.get(q.projectId??'')?.name).includes(needle))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[visibleQuotes,projectsById,needle]);
   const activityRows = useMemo(() => [...activities]
+     .filter((activity) => !activity.metadata?.voidedAt)
     .filter((activity) => findText(activity.summary, activity.type,
+      activity.metadata?.interactionMethod,activity.metadata?.notes,
       companiesById.get(activity.companyId ?? '')?.name,
       projectsById.get(activity.projectId ?? '')?.name).includes(needle))
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))

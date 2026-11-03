@@ -12,6 +12,7 @@ import {
 import { deleteNormalizedProject } from '../services/normalizedCrmSync';
 import type {
   Activity,
+  ActivityMetadata,
   ActivityInput,
   Company,
   CompanyKind,
@@ -51,7 +52,7 @@ interface CrmState {
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
   deleteProject: (projectId: string) => void;
   recordActivity: (activity: ActivityInput) => string;
-  updateManualActivity: (activityId:string,change:{summary?:string;notes?:string;interactionMethod?:Activity['metadata'] extends infer M?NonNullable<M>['interactionMethod']:never;occurredAt?:string})=>boolean;
+  updateManualActivity: (activityId:string,change:{summary?:string;notes?:string;interactionMethod?:ActivityMetadata['interactionMethod'];occurredAt?:string})=>boolean;
   voidManualActivity:(activityId:string)=>boolean;
 }
 
