@@ -271,6 +271,24 @@ test('phone Areas summary opens compact and expands editable price details',asyn
     await beta.locator('.qqs-summary').getByRole('button',{name:/\+ Area/}).click();
   const row=areaRows.first();
   await expect(row).toBeVisible();
+  const header=beta.locator('.qqs-mobile-table-head');
+  await expect(header).toBeVisible();
+  await expect(header.getByRole('columnheader',{name:'Area / breakdown'})).toBeVisible();
+  await expect(header.getByRole('columnheader',{name:'SF'})).toBeVisible();
+  await expect(header.getByRole('columnheader',{name:'Total'})).toBeVisible();
+  await expect(row.locator('.qqs-mobile-breakdown')).toContainText('Stone');
+  const alignment=await row.evaluate(node=>{
+    const table=node.closest('.qqs-summary');
+    const columns=table?.querySelector('.qqs-mobile-table-head');
+    const headerSf=columns?.children[2].getBoundingClientRect();
+    const headerTotal=columns?.children[3].getBoundingClientRect();
+    const areaSf=node.querySelector('.qqs-cell:nth-child(4)')?.getBoundingClientRect();
+    const areaTotal=node.querySelector('.qqs-cell:nth-child(8)')?.getBoundingClientRect();
+    return {sf:!!headerSf&&!!areaSf&&Math.abs(headerSf.left-areaSf.left)<2,
+      total:!!headerTotal&&!!areaTotal&&Math.abs(headerTotal.left-areaTotal.left)<2};
+  });
+  expect(alignment.sf).toBe(true);
+  expect(alignment.total).toBe(true);
   const open=row.getByRole('button',{name:/Expand pricing details/});
   await expect(open).toHaveAttribute('aria-expanded','false');
   await expect(row.locator('.qqs-cell').nth(4)).toBeHidden();
