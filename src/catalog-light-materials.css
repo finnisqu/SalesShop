@@ -40,3 +40,21 @@
 :root[data-sales-theme="light"] .sales-app.view-catalog .catalog-section-materials .materials-variant-expanded-row>td{
   background:var(--ss-theme-base)!important;
 }
+
+
+/* Reference list is paginated; full catalog remains searchable without huge DOM lists. */
+.materials-page-controls{display:flex;align-items:center;justify-content:space-between;
+ gap:10px;flex-wrap:wrap;padding:10px 13px;
+ border-bottom:1px solid var(--ss-theme-border,#ddd);
+ background:var(--ss-theme-tint,#f4f3ee)}
+.materials-page-controls>span,.materials-page-actions>span{font-size:12px;
+ color:var(--ss-theme-muted,#716b61);font-variant-numeric:tabular-nums}
+.materials-page-controls label{display:flex;align-items:center;gap:6px;font-size:12px}
+.materials-page-controls select,.materials-page-actions button{
+ background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#34312e);
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:8px;
+ padding:7px 9px;min-height:34px;font:inherit;font-size:12px}
+.materials-page-actions{display:flex;align-items:center;gap:8px}
+.materials-page-actions button:disabled{opacity:.35;cursor:not-allowed}
+@media(max-width:700px){.materials-page-controls{gap:8px}
+ .materials-page-actions{width:100%;justify-content:space-between}}
