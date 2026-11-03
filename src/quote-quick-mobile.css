@@ -547,7 +547,8 @@
   padding:7px 9px;line-height:1.23;font-size:11px}
  .sales-app .qmb .qqr-workspace{min-height:0;overflow:visible}
  .sales-app .qmb .qqr-workspace .qqr-body{
-  padding:10px!important}
+  padding:10px!important;flex:0 0 auto;overflow:visible}
+ /* Quote scroll owns the single vertical scroll; its footer is now a sibling. */
  .sales-app .qmb .qqr-workspace .qqr-steps{
   padding:5px;gap:4px}
  .sales-app .qmb .qqr-workspace .qqr-steps button{
