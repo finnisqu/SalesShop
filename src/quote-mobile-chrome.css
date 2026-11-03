@@ -635,3 +635,15 @@
     font-size:9px;
   }
 }
+
+/* An issued/frozen title is read-only, not missing or low priority. */
+.sales-app .qmb .qmb-quote-chrome .qmb-quote-name:disabled {
+  opacity:1;
+  color:var(--qmb-ink)!important;
+  -webkit-text-fill-color:var(--qmb-ink);
+  cursor:default;
+}
+.sales-app .qmb .qmb-quote-secondary .qmb-quick-history>button:disabled {
+  opacity:.52;
+  color:var(--qmb-muted);
+}
