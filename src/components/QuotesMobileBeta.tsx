@@ -669,6 +669,22 @@ export function QuotesMobileBeta() {
   const canBrowseTeam=authMode==='cloud'&&(teamRole==='owner'||teamRole==='admin')&&!previewRole;
   const canIssue=authMode!=='cloud'||canIssueTeamQuote(teamRole,department);
   const canManageLibrary=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,department));
+  // Quick Create opens the template workflow, never a blank quote or just the Quotes index.
+  useEffect(()=>{
+    const launch=()=>{
+      let pending=false;
+      try{
+       pending=window.sessionStorage.getItem('salesshop-open-document-picker-v1')==='1';
+       if(pending)window.sessionStorage.removeItem('salesshop-open-document-picker-v1');
+      }catch{/* session storage may be disabled */}
+      if(!pending||!canManageLibrary)return;
+      setPage('library');setShowNewDocument(true);
+    };
+    launch();
+    window.addEventListener('salesshop:open-document-picker',launch);
+    return()=>window.removeEventListener('salesshop:open-document-picker',launch);
+  },[canManageLibrary]);
+
   const counts=salesDocumentCounts(myQuotes);
   const list=filterSalesDocuments(myQuotes,{
     query:search,template:documentFilter,status:statusFilter,sort:documentSort,
