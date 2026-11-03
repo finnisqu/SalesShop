@@ -76,15 +76,21 @@ export function MobileAppChrome() {
   const selectEntry = useNotebookStore((state) => state.selectEntry);
   const createEntry = useNotebookStore((state) => state.createEntry);
 
-  // iOS Safari can report a 100dvh layout taller than the actually visible
-  // page when the bottom browser toolbar is expanded. Use the visual viewport
-  // for the quote workspace and update on toolbar / keyboard changes.
+  // Keep the mobile quote dock above iOS Safari's expanding browser toolbar.
+  // visualViewport describes what is actually visible; the layout viewport
+  // can extend beneath the toolbar. Both change when Safari chrome moves.
   useEffect(()=>{
     const viewport=window.visualViewport;
+    const root=document.documentElement;
     const sync=()=>{
       const height=viewport?.height??window.innerHeight;
+      const hiddenBottom=viewport
+        ?Math.max(0,window.innerHeight-viewport.height-viewport.offsetTop)
+        :0;
       if(Number.isFinite(height)&&height>200)
-        document.documentElement.style.setProperty('--ss-mobile-visual-height',Math.floor(height)+'px');
+        root.style.setProperty('--ss-mobile-visual-height',Math.floor(height)+'px');
+      if(Number.isFinite(hiddenBottom))
+        root.style.setProperty('--ss-mobile-footer-inset',Math.min(180,Math.ceil(hiddenBottom))+'px');
     };
     sync();
     viewport?.addEventListener('resize',sync);
@@ -96,7 +102,8 @@ export function MobileAppChrome() {
       viewport?.removeEventListener('scroll',sync);
       window.removeEventListener('resize',sync);
       window.removeEventListener('orientationchange',sync);
-      document.documentElement.style.removeProperty('--ss-mobile-visual-height');
+      root.style.removeProperty('--ss-mobile-visual-height');
+      root.style.removeProperty('--ss-mobile-footer-inset');
     };
   },[]);
   const [open, setOpen] = useState(false);
