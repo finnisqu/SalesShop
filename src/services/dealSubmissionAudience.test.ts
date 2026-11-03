@@ -6,7 +6,7 @@ const deal=(id:string):Project=>({id,name:id,stage:'Bid Development',
  dueDate:'2026-11-15',createdAt:'2026-11-03T00:00:00Z',updatedAt:'2026-11-03T00:00:00Z'});
 const quote=(id:string,projectId:string,ownerUserId:string)=>({
  id,projectId,ownerUserId,
-}) as Quote;
+}) as unknown as Quote;
 const created=(projectId:string,recordedByUserId:string):Activity=>({
  id:'a-'+projectId,projectId,type:'project-created',summary:'Deal created',
  occurredAt:'2026-11-03T00:00:00Z',metadata:{recordedByUserId},
