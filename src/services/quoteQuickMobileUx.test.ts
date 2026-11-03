@@ -56,14 +56,18 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(takeoffs).toContain("takeoffPieceSplashSf(piece)");
   expect(takeoffs).toContain('Sink unit selling price');
  });
- it('gives mobile Takeoffs More sheets a tall scrollable body and accessible Done footer',()=>{
+ it('anchors mobile Takeoffs More sheet between viewport top and Safari-safe bottom',()=>{
   expect(workbook).toContain('.qmb.qqt-overlay>.qqt-panel.qqt-panel');
-  expect(workbook).toContain('height:min(84dvh,calc(var(--ss-mobile-visual-height,100dvh) - 14px))!important;');
-  expect(workbook).toContain('max-height:min(90dvh,calc(var(--ss-mobile-visual-height,100dvh) - 14px))!important;');
+  expect(workbook).toContain('position:fixed!important;');
+  expect(workbook).toContain('top:clamp(12px,3dvh,28px)!important;');
+  expect(workbook).toContain('bottom:max(var(--ss-mobile-footer-inset,0px),env(safe-area-inset-bottom,0px))!important;');
+  expect(workbook).toContain('height:auto!important;');
+  expect(workbook).toContain('max-height:none!important;');
   expect(workbook).toContain('>.qqt-panel-body');
   expect(workbook).toContain('overflow-y:auto;');
   expect(workbook).toContain('>footer');
   expect(workbook).toContain('flex:0 0 auto;');
+  expect(workbook).not.toContain('inset-block:auto!important;');
   expect(takeoffs).toContain('<footer><button type="button" onClick={onClose}>Done</button></footer>');
  });
  it('replaces phone-wide pricing tables with complete visible values',()=>{
