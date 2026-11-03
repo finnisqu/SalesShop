@@ -182,6 +182,25 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
       <tr><th>General</th><td colSpan={5}>Unassigned charges and discounts</td>
        <td><strong>{money.format(quickGeneralSummary(quote).total)}</strong></td></tr>
      </tbody></table></div>
+     <div className="qqr-mobile-totals" aria-label="Area pricing summary for phones">
+      {quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
+       const data=quickAreaSummary(quote,section);
+       return <article className="qqr-mobile-total-card" key={section.id}>
+        <header><strong>{section.title}</strong><b>{money.format(data.total)}</b></header>
+        <p>{section.scope?.takeoffMaterial||'Material not selected'}</p>
+        <dl>
+         <div><dt>Billable SF</dt><dd>{data.billedSf.toFixed(2)}</dd></div>
+         <div><dt>Stone</dt><dd>{money.format(data.materialPrice)}</dd></div>
+         <div><dt>Sinks</dt><dd>{money.format(data.sinkPrice)}</dd></div>
+         <div><dt>Specialty</dt><dd>{money.format(data.specialtyPrice)}</dd></div>
+        </dl>
+       </article>;
+      })}
+      <article className="qqr-mobile-total-card is-general">
+       <header><strong>General</strong><b>{money.format(quickGeneralSummary(quote).total)}</b></header>
+       <p>Unassigned charges and discounts</p>
+      </article>
+     </div>
      <div className="qqr-grand-total"><span>Quote total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
      <button type="button" className="qmb-outline" onClick={()=>onFix({view:'build'})}>Edit Areas in Build Quote ›</button>
     </section>}
