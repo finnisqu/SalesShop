@@ -6,7 +6,7 @@ import {useQuoteStore} from '../store/quoteStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
-import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
+import {buildSalesCalendarEvents,personalCalendarSources,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
 import './sales-calendar.css';
 
@@ -42,11 +42,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const quotes=useQuoteStore(s=>s.quotes);
  const nav=useNavigationStore();
  const personal=taskScope(mode,org,userId);
- const ownTasks=!preview&&storedScope===personal?tasks.filter(t=>!t.deletedAt):[];
+ const ownTasks=!preview&&!!personal&&storedScope===personal?tasks.filter(t=>!t.deletedAt):[];
  const ownQuotes=useMemo(()=>quotes.filter(q=>!q.archivedAt&&(mode!=='cloud'||q.ownerUserId===userId)),
   [quotes,mode,userId]);
- const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,deals,activities,ownQuotes),
-  [ownTasks,deals,activities,ownQuotes]);
+ const sources=useMemo(()=>personalCalendarSources(mode,userId,ownQuotes,ownTasks,deals,activities),
+  [mode,userId,ownQuotes,ownTasks,deals,activities]);
+ const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,sources.deals,sources.activities,ownQuotes),
+  [ownTasks,sources,ownQuotes]);
  const days=useMemo(()=>calendarMonthDays(month.getFullYear(),month.getMonth()),[month]);
  const compactDays=useMemo(()=>calendarCompactMonthDays(month.getFullYear(),month.getMonth()),[month]);
  const weekDays=useMemo(()=>calendarWeekDays(selected),[selected]);
