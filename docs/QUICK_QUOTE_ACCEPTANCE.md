@@ -32,6 +32,16 @@ Do not claim a release is verified until the current commit passes. Source inspe
 - Repeat on Takeoffs: piece name, length/width/quantity; sink name/quantity/price; extra charge/price; splash height.
 - Mobile/touch still opens the same fields by tap; scrolling horizontally must not edit values.
 
+## Floating bulk actions and reorder-only mode
+
+- Phone and desktop: selecting any Area or Takeoff checkbox must show a horizontal, icon-centric floating action strip, never add a toolbar row or shift the table headers. Verify action tooltips/accessible names, horizontal overflow, and clearing selections.
+- Areas: bulk duplicate, itemize, lump sum, hide/show, SF-rate edit and delete. Numeric SF-rate edits are permitted only for existing live-SF Areas; a failed mixed selection must leave every rate unchanged. Deleting multiple Areas must be one Undo operation.
+- Takeoffs: bulk duplicate, strike through, restore, move, and delete. Splash duplication still explicitly includes its parent piece; never detach managed sink or live-SF charges.
+- From the persistent tab-adjacent More menu in either Areas or Takeoffs, enter **Reorder rows**. Checkboxes must become grab handles and ordinary inputs, prices, item pickers and contract controls must be unavailable.
+- Drag on a 390px iPhone and on desktop using the grab handle; test moving the first item to the last position. Also test keyboard focus plus Up/Down/Home/End, the attached splash moving with its parent, and General charge ordering.
+- **Done** commits the entire session in a single Undo; **Cancel** or Escape leaves the original sequence unchanged. No amount, geometry, material identity, price mode or contract selection changes due to reordering.
+- Open Calculator for two compatible Catalog Areas: they should auto-share buying slabs. The Shared slab buying disclosure permits review and manual compatible-pool override without automatically repricing customer selling totals.
+
 ## Pricing parity scenario
 
 Use a fresh 2-Area Quick Quote:
