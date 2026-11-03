@@ -6,7 +6,7 @@ import {useQuoteStore} from '../store/quoteStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
-import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,localDateKey,
+import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
 import './sales-calendar.css';
 
@@ -48,13 +48,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,deals,activities,ownQuotes),
   [ownTasks,deals,activities,ownQuotes]);
  const days=useMemo(()=>calendarMonthDays(month.getFullYear(),month.getMonth()),[month]);
- const weekDays=useMemo(()=>{
-  const start=new Date(selected+'T12:00:00');
-  start.setDate(start.getDate()-start.getDay());
-  return Array.from({length:7},(_,i)=>{
-   const date=new Date(start);date.setDate(start.getDate()+i);return localDateKey(date);
-  });
- },[selected]);
+ const weekDays=useMemo(()=>calendarWeekDays(selected),[selected]);
  const weekMode=embedded&&isPhone&&!monthExpanded;
  const visibleDays=weekMode?weekDays:days;
  const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected),[events,selected]);
