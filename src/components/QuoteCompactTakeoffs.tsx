@@ -90,13 +90,45 @@ function SmallText({value,label,commit,disabled=false,placeholder='—'}:{
    if(e.key==='Escape'){cancelled.current=true;setDraft(value);e.currentTarget.blur();}
   }}/>;
 }
-function DetailPopup({quote,section,piece,sink,line,onClose}:{
+function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,onDelete}:{
  quote:Quote;section:QuoteSection|null;piece?:QuoteTakeoffPiece;sink?:QuoteTakeoffSink;
- line?:QuoteLine;onClose:()=>void;
+ line?:QuoteLine;rowRef:QuoteScopeRowRef;onClose:()=>void;
+ onDuplicate:()=>void;onDelete:()=>void;
 }){
  const editable=quoteIsCommerciallyEditable(quote),store=useQuoteStore.getState();
  const ref=useRef<HTMLDivElement>(null);
  const sheetSwipeStart=useRef<number|null>(null);
+ const [moveTarget,setMoveTarget]=useState('');
+ const currentAreaId=rowRef.sectionId;
+ const eligibleAreas=quote.sections.filter(s=>!isGeneralTakeoffSection(s)&&s.id!==currentAreaId);
+ const canChangeRow=editable&&(!line||!line.takeoffSinkId&&line.quantitySource?.syncMode!=='live');
+ const excluded=rowRef.kind==='splash'
+  ?!!piece?.excludedFromQuote||!!piece?.excludeSplashFromQuote
+  :rowRef.kind==='piece'?!!piece?.excludedFromQuote
+  :rowRef.kind==='sink'?!!sink?.excludedFromContract
+  :!!line&&!line.includeInTotal;
+ const measuredSf=piece?(rowRef.kind==='splash'?takeoffPieceSplashSf(piece):takeoffPieceSf(piece)):null;
+ const areaSummary=section?quickAreaSummary(quote,section):null;
+ const pieceMeasuredTotal=areaSummary?.measuredSf??0;
+ const allocatedPiecePrice=piece&&areaSummary?.primary?.includeInTotal&&pieceMeasuredTotal>0
+  ?quoteLineAmount(areaSummary.primary)*takeoffPieceSf(piece)/pieceMeasuredTotal:0;
+ const sinkSellingPrice=sink&&section?quote.lines
+  .filter(item=>item.sectionId===section.id&&item.takeoffSinkId===sink.id&&item.includeInTotal)
+  .reduce((sum,item)=>sum+quoteLineAmount(item),0):0;
+ const priceLabel=rowRef.kind==='splash'?'Included with stone':
+  money.format(piece?allocatedPiecePrice:sink?sinkSellingPrice:line&&line.includeInTotal?quoteLineAmount(line):0);
+ const canMove=canChangeRow&&(eligibleAreas.length>0||rowRef.kind==='line'&&!!currentAreaId);
+ const toggleContract=()=>{
+  if(!canChangeRow)return;
+  store.bulkScopeRows(quote.id,[rowRef],excluded?'restore':'exclude');
+ };
+ const moveRow=()=>{
+  if(!canMove||!moveTarget)return;
+  // Splash geometry belongs to its parent piece. Move them together.
+  const sourceRef=rowRef.kind==='splash'?{...rowRef,kind:'piece' as const}:rowRef;
+  store.bulkScopeRows(quote.id,[sourceRef],'move',moveTarget==='__general'?undefined:moveTarget);
+  onClose();
+ };
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
  useEffect(()=>{
@@ -133,6 +165,14 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
      }}><div><small>{section?.title??'General'}</small><h2>{title||'Untitled item'}</h2></div>
      <button className="qqt-close" type="button" onClick={onClose} aria-label="Close line details">×</button></header>
     <div className="qqt-panel-body">
+     <div className="qqt-detail-facts" aria-label="Takeoff row information">
+      {piece&&<div><small>{rowRef.kind==='splash'?'Splash SF':'Measured SF'}</small>
+        <strong>{sf.format(measuredSf??0)} SF</strong></div>}
+      <div><small>{piece?'Allocated selling price':'Selling price'}</small>
+        <strong>{priceLabel}</strong></div>
+      <div><small>Contract</small>
+       <strong>{excluded?'Excluded':'Included'}</strong></div>
+     </div>
      {piece&&<><p>Measured geometry remains saved even if this piece or its splashes are excluded from the contract.</p>
        <label>Piece name<input type="text" disabled={!editable} value={piece.name}
         onChange={e=>patchPiece({name:e.target.value})}/></label>
@@ -207,6 +247,30 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
          onChange={e=>patchLine({productCode:e.target.value})}/></label>
        </div>}
       </>}
+     <section className="qqt-sheet-options" aria-label="Takeoff row options">
+      <h3>Row options</h3>
+      <div className="qqt-sheet-option-buttons">
+       <button type="button" disabled={!canChangeRow} onClick={toggleContract}>
+        {excluded?'✓ Restore to contract':'Strike out · exclude'}
+       </button>
+       <button type="button" disabled={!canChangeRow} onClick={()=>{
+        onDuplicate();onClose();
+       }}>⧉ Duplicate</button>
+       <button type="button" className="is-danger" disabled={!canChangeRow}
+        onClick={onDelete}>Delete row</button>
+      </div>
+      {canMove&&<div className="qqt-sheet-move">
+       <label>Move {rowRef.kind==='splash'?'parent piece and splash':'row'} to
+        <select value={moveTarget} aria-label="Move row to Area"
+         onChange={event=>setMoveTarget(event.target.value)}>
+         <option value="">Choose destination…</option>
+         {eligibleAreas.map(area=><option key={area.id} value={area.id}>{area.title}</option>)}
+         {rowRef.kind==='line'&&currentAreaId&&<option value="__general">General</option>}
+        </select>
+       </label>
+       <button type="button" disabled={!moveTarget} onClick={moveRow}>Move</button>
+      </div>}
+     </section>
     </div>
     <footer><button type="button" onClick={onClose}>Done</button></footer>
    </div>
@@ -217,7 +281,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
 }){
  const store=useQuoteStore.getState(),editable=quoteIsCommerciallyEditable(quote);
  const list=useRef<HTMLDivElement>(null);
- const [detail,setDetail]=useState<{areaId:string|null;id:string;kind:'piece'|'sink'|'line'}|null>(null);
+ const [detail,setDetail]=useState<{areaId:string|null;id:string;kind:'piece'|'splash'|'sink'|'line'}|null>(null);
  useEffect(()=>{
   if(!focusArea)return;
   const target=Array.from(list.current?.querySelectorAll<HTMLElement>('[data-area-id]')??[])
@@ -319,13 +383,16 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    <div className="qqt-cell qqt-number">{price}</div>
    <div className="qqt-cell">{contract(ref,excluded)}</div>
    <div className="qqt-cell qqt-actions">
-    <button type="button" className="qqt-edit-button"
+    <button type="button" className="qqt-more-button"
+     aria-label={'More options for '+area+' '+ref.kind+' '+ref.id}
+     title="More details and actions" onClick={edit}>⋯</button>
+    <button type="button" className="qqt-edit-button qqt-desktop-action"
      aria-label={'More settings for '+area+' '+ref.kind} onClick={edit} title="Detailed settings">✎</button>
-    <button type="button" className="qqt-duplicate-button" disabled={!editable||!duplicate}
+    <button type="button" className="qqt-duplicate-button qqt-desktop-action" disabled={!editable||!duplicate}
      aria-label={'Duplicate '+area+' '+ref.kind}
      title={ref.kind==='splash'?'Duplicate parent piece and attached splashes':'Duplicate row (Undo available)'}
      onClick={duplicate}>⧉</button>
-    <button type="button" className="qqt-delete-button" disabled={!editable||!remove}
+    <button type="button" className="qqt-delete-button qqt-desktop-action" disabled={!editable||!remove}
      aria-label={'Delete '+area+' '+ref.kind} title="Delete row (Undo available)"
      onClick={remove}>×</button>
    </div>
@@ -350,7 +417,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
      <button type="button" onClick={()=>{setSelected([]);setTarget('');}}>Clear ×</button>
     </div>:<div><h3>Takeoffs</h3>
      <span className="qqt-desktop-hint">Click, type or paste to edit · Tab/Enter to move · pencil for more</span>
-     <span className="qqt-mobile-hint">Tap a value to edit · use ⧉ to duplicate</span></div>}
+     <span className="qqt-mobile-hint">Tap a cell to edit · ⋯ for options</span></div>}
     <button type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
    </header>
   <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}
@@ -358,6 +425,13 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    <div className="qqt-header qqt-grid">
     {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling price','Contract','Actions']
      .map((h,i)=><div key={i} className="qqt-cell">{h}</div>)}
+   </div>
+   <div className="qqt-mobile-header qqt-workbook-grid" role="row"
+    aria-label="Select, piece name, quantity, length, width and more">
+    {['','Piece / Item','Qty','L','W',''].map((heading,index)=>
+     <div key={index} role="columnheader" className="qqt-mobile-column"
+      aria-label={heading||(index===0?'Select':'More options')}>{heading||(
+       index===5?<span aria-hidden="true">⋯</span>:null)}</div>)}
    </div>
    {areas.map(section=>{
     const pieces=section.scope?.takeoffPieces??[],sinks=section.scope?.takeoffSinks??[];
@@ -399,7 +473,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
           disabled={!editable} commit={v=>setPiece(section,piece,{splashHeightIn:v??4})}/>,
          sf.format(takeoffPieceSplashSf(piece)),
          <span className="qqt-readonly" title="This selling price is included in Area stone pricing">Included in stone</span>,
-         !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,edit,false,
+         !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote,
+         ()=>setDetail({areaId:section.id,id:piece.id,kind:'splash'}),false,
          ()=>deleteRow({kind:'splash',id:piece.id,sectionId:section.id}),
          ()=>duplicateRows([{kind:'splash',id:piece.id,sectionId:section.id}]))}
       </div>;
@@ -470,9 +545,13 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
   </div>
   <footer className="qqt-total">Striking out a row preserves the measurements and excludes it from current pricing.</footer>
   {detail&&<DetailPopup quote={quote} section={quote.sections.find(s=>s.id===detail.areaId)??null}
-   piece={detail.kind==='piece'?quote.sections.find(s=>s.id===detail.areaId)?.scope?.takeoffPieces?.find(p=>p.id===detail.id):undefined}
+   rowRef={{kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined}}
+   piece={detail.kind==='piece'||detail.kind==='splash'
+    ?quote.sections.find(s=>s.id===detail.areaId)?.scope?.takeoffPieces?.find(p=>p.id===detail.id):undefined}
    sink={detail.kind==='sink'?quote.sections.find(s=>s.id===detail.areaId)?.scope?.takeoffSinks?.find(p=>p.id===detail.id):undefined}
    line={detail.kind==='line'?quote.lines.find(l=>l.id===detail.id):undefined}
+   onDuplicate={()=>duplicateRows([{kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined}])}
+   onDelete={()=>{deleteRow({kind:detail.kind,id:detail.id,sectionId:detail.areaId??undefined});setDetail(null);}}
    onClose={()=>setDetail(null)}/>}
  </section>;
 }
