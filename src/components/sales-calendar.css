@@ -161,3 +161,19 @@
  .sales-calendar-inline .sales-calendar-grid{gap:2px;padding:0 6px 8px}
  .sales-calendar-inline .sales-calendar-dots i{min-width:10px;font-size:7px;padding:0 1px}
 }
+
+
+/* Wide Home screens: calendar and selected-day agenda sit together without making a tall dashboard. */
+@media(min-width:960px){
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,31%);
+  grid-template-rows:auto auto minmax(0,1fr) auto}
+ .sales-calendar-inline .sales-calendar-heading{grid-column:1 / -1;grid-row:1}
+ .sales-calendar-inline .sales-calendar-weekdays{grid-column:1;grid-row:2}
+ .sales-calendar-inline .sales-calendar-grid{grid-column:1;grid-row:3}
+ .sales-calendar-inline .sales-calendar-day{min-height:53px}
+ .sales-calendar-inline .sales-calendar-day-preview{grid-column:2;grid-row:2 / 4;
+  max-height:100%;min-height:0;border-top:0;border-left:1px solid var(--ss-theme-border,#d4c9b5)}
+ .sales-calendar-inline .sales-calendar-agenda{max-height:355px}
+ .sales-calendar-inline .sales-calendar-legend{grid-column:1 / -1;grid-row:4}
+}
