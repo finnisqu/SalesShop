@@ -5,6 +5,7 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
 import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 import {useQuotesMobileBetaStore} from '../store/quotesMobileBetaStore';
+import {requestTaskModal} from './TaskModalHost';
 
 type NamedCreateMode = 'project' | 'account' | null;
 
@@ -41,9 +42,7 @@ export function QuickCreate() {
 
   const startTask = () => {
     close();
-    try{window.sessionStorage.setItem('salesshop-create-task-v1','1');}catch{/* optional */}
-    setView('tasks');
-    window.dispatchEvent(new Event('salesshop:create-task'));
+    requestTaskModal({mode:'create'});
   };
 
   const makeNotebookPage = () => {
