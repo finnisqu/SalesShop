@@ -5,7 +5,7 @@ import { useQuoteStore } from './quoteStore';
 import { appPath,appRelativePath } from '../lib/appUrl';
 import {parseSalesShopRoute,salesShopRoutePath} from '../services/appRoutes';
 
-export type CatalogSection = 'materials' | 'sinks' | 'other' | 'rates' | 'suppliers';
+export type CatalogSection = 'materials' | 'sinks' | 'other' | 'rates' | 'suppliers' | 'tags';
 export type AppView = 'home' | 'notebook' | 'board' | 'quotes' | 'tasks' | 'catalog' | 'dashboard' | 'settings';
 
 export interface NavigationLocation {
@@ -45,7 +45,7 @@ interface NavigationState {
 const VIEW_STORAGE_KEY = scopedStorageKey('salesshop-active-view-v1');
 const CATALOG_SECTION_STORAGE_KEY = scopedStorageKey('salesshop-catalog-section-v1');
 const APP_VIEWS: AppView[] = ['home', 'notebook', 'board', 'quotes', 'tasks', 'catalog', 'dashboard', 'settings'];
-const CATALOG_SECTIONS: CatalogSection[] = ['materials', 'sinks', 'other', 'rates', 'suppliers'];
+const CATALOG_SECTIONS: CatalogSection[] = ['materials', 'sinks', 'other', 'rates', 'suppliers', 'tags'];
 
 function readInitialNavigation(): Pick<NavigationState, 'view' | 'catalogSection'> {
   try {
