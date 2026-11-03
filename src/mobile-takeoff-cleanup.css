@@ -1,6 +1,23 @@
 /* Mobile Takeoffs workbook cleanup: keep source geometry and desktop editing
    intact while making the phone rows and their menus smaller and clearer. */
 .sales-app .qmb .qmx-mobile-overflow {display:none}
+/* Desktop Area header still uses a single horizontal row. */
+.sales-app .qmb .qqt-workspace .qqt-group>.qqt-area-identity {
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  margin-left:0;
+  min-width:0;
+}
+.sales-app .qmb .qqt-workspace .qqt-group>.qqt-area-identity strong {
+  font-weight:830;
+}
+.sales-app .qmb .qqt-workspace .qqt-group>.qqt-area-actions {
+  margin-left:auto;
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+}
 
 @media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
   /* The modal retains outside-tap dismissal, but no longer shades the app. */
@@ -118,6 +135,11 @@
     padding:8px 10px!important;
     margin:0!important;
     border-radius:0!important;
+  }
+  /* Earlier mobile CSS hid divs without active buttons. Identity is data,
+     not an action group, so it must remain visible on issued/read-only quotes. */
+  .sales-app .qmb .qqt-workspace .qqt-group>.qqt-area-identity:not(:has(>button:not(:disabled))) {
+    display:flex!important;
   }
   .sales-app .qmb .qqt-group>.qqt-area-identity {
     grid-column:1!important;
