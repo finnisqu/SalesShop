@@ -105,3 +105,25 @@ export function copyQuoteAreasFromSource(
  }
  return {quote:current,newAreaIds};
 }
+
+/** Duplicate several Areas in the SAME quote as one atomic, undoable action.
+ * Invalid IDs reject the entire request; each clone retains its own remapped
+ * takeoff child/line IDs and appears immediately after its source. */
+export function duplicateQuoteAreas(
+ quote:Quote,sourceAreaIds:readonly string[],
+ newId:(kind:string)=>string=(kind)=>kind+'_'+crypto.randomUUID(),
+):{quote:Quote;newAreaIds:string[]}|undefined{
+ const unique=[...new Set(sourceAreaIds)];
+ if(!unique.length||unique.length!==sourceAreaIds.length)return undefined;
+ if(unique.some(id=>!quote.sections.some(section=>section.id===id
+  &&!isGeneralTakeoffSection(section))))return undefined;
+ let updated=quote;
+ const newAreaIds:string[]=[];
+ for(const areaId of unique){
+  const duplicated=duplicateQuoteArea(updated,areaId,newId);
+  if(!duplicated)return undefined;
+  updated=duplicated.quote;
+  newAreaIds.push(duplicated.newAreaId);
+ }
+ return {quote:updated,newAreaIds};
+}
