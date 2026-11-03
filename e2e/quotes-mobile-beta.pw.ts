@@ -247,6 +247,45 @@ test('phone Ready status and customer action fit a compact Beta header',async({p
   await expect(beta.locator('.qmb-quote-footer .qmb-primary')).toHaveText('Resolve 1 pricing issue ›');
 });
 
+test('phone Areas summary opens compact and expands editable price details',async({page},testInfo)=>{
+  test.skip(testInfo.project.name!=='phone-390','Areas compact phone summary');
+  await page.goto('/');
+  await page.evaluate(()=>{
+    localStorage.setItem('salesshop-active-view-v1','quotes');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+  });
+  await page.reload();
+  await createQuickQuote(page);
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await beta.getByRole('navigation',{name:'Jump to quote stage'})
+    .getByRole('button',{name:/Build Quote/}).click();
+  await beta.locator('.qmx-subtabs').getByRole('button',{name:/Areas/}).click();
+  const areaRows=beta.locator('.qqs-summary .qqs-grid.qqs-row:not(.qqs-general)');
+  if(await areaRows.count()===0)
+    await beta.locator('.qqs-summary').getByRole('button',{name:/\+ Area/}).click();
+  const row=areaRows.first();
+  await expect(row).toBeVisible();
+  const open=row.getByRole('button',{name:/Expand pricing details/});
+  await expect(open).toHaveAttribute('aria-expanded','false');
+  await expect(row.locator('.qqs-cell').nth(4)).toBeHidden();
+  const initial=await row.evaluate(node=>node.getBoundingClientRect().height);
+  expect(initial).toBeLessThan(115);
+  await open.click();
+  await expect(row).toHaveClass(/is-expanded/);
+  await expect(row.locator('.qqs-cell').nth(4)).toBeVisible();
+  await expect(row.getByRole('button',{name:/Collapse pricing details/}))
+    .toHaveAttribute('aria-expanded','true');
+  await row.getByRole('button',{name:/More options for Area/}).click();
+  await expect(page.getByRole('dialog',{name:/Area settings for/})).toBeVisible();
+  await page.getByRole('button',{name:'Close editor'}).click();
+  const general=beta.locator('.qqs-general');
+  await expect(general).toBeVisible();
+  await general.getByRole('button',{name:'Expand General charges'}).click();
+  await expect(general.locator('.qqs-cell').nth(6)).toBeVisible();
+  await general.getByRole('button',{name:'Collapse General charges'}).click();
+  await expect(general.locator('.qqs-cell').nth(6)).toBeHidden();
+});
+
 test('Takeoffs More sheet occupies the usable Safari viewport and keeps Done visible',async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='phone-390','Takeoff sheet visual viewport regression');
   await page.goto('/');
