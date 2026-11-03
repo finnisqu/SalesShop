@@ -1,0 +1,277 @@
+/* Compact mobile application chrome: editing on the left, navigation/profile on the right.
+   No document-level SVG back button; all quote history controls share the app toolbar. */
+.mobile-app-hidden-launchers {
+  position:fixed;
+  left:-10000px;
+  top:0;
+  height:0;
+  width:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .sales-app > .mobile-app-commandbar,
+  .sales-app.view-quotes:has(.qmb) > .mobile-app-commandbar {
+    display:flex;
+    flex:0 0 50px;
+    width:100%;
+    height:50px;
+    min-height:50px;
+    min-width:0;
+    align-items:center;
+    gap:6px;
+    padding:5px 8px;
+    position:relative;
+    z-index:170;
+    border-bottom:1px solid var(--ss-theme-border,#d8ccba);
+    background:var(--ss-theme-card,#fffaf2);
+    box-shadow:0 1px 5px #0000000a;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-app-current {
+    min-width:0;
+    flex:1 1 0;
+    display:flex;
+    align-items:center;
+    padding:0 3px;
+    gap:0;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-app-current strong {
+    display:block;
+    font:750 14px/1.2 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--ss-theme-ink,#333);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .sales-app.view-quotes:has(.qmb) > .mobile-app-commandbar .mobile-app-current {
+    flex:1 1 0;
+    min-height:1px;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-app-menu-button,
+  .sales-app > .mobile-app-commandbar .mobile-profile-trigger,
+  .sales-app > .mobile-app-commandbar .mobile-app-back-button,
+  .sales-app > .mobile-app-commandbar .mobile-quote-history-button {
+    display:grid;
+    place-items:center;
+    flex:0 0 38px;
+    width:38px;
+    height:38px;
+    min-width:38px;
+    min-height:38px;
+    margin:0;
+    padding:0;
+    border:1px solid var(--ss-theme-border,#d6c8af);
+    border-radius:10px;
+    color:var(--ss-theme-ink,#3a352c);
+    background:var(--ss-theme-card,#fffdf7);
+    font-size:20px;
+    line-height:1;
+    box-shadow:none;
+    cursor:pointer;
+  }
+  .sales-app > .mobile-app-commandbar.is-quote-editing .mobile-quote-toolbar-spacer {
+    display:block;
+    min-width:0;
+    flex:1 1 auto;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-quote-back {
+    font-size:30px;
+    font-weight:550;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-quote-history-button {
+    font-size:24px;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-quote-history-button:disabled {
+    opacity:.36;
+    cursor:not-allowed;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-profile-trigger {
+    border-radius:50%;
+    background:var(--ss-theme-tint,#ece5d6);
+    color:var(--ss-theme-ink,#3a352c);
+    font-size:14px;
+    font-weight:850;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-app-menu-button {
+    order:0;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-profile-menu {
+    position:relative;
+    z-index:175;
+    flex:0 0 38px;
+    width:38px;
+    height:38px;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-profile-panel {
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    width:min(328px,calc(100vw - 20px));
+    min-width:0;
+    max-height:calc(100dvh - 76px);
+    display:grid;
+    align-content:start;
+    gap:10px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding:14px;
+    border:1px solid var(--ss-theme-border,#d8cdb7);
+    border-radius:15px;
+    background:var(--ss-theme-card,#fffdf7);
+    color:var(--ss-theme-ink,#302e29);
+    box-shadow:0 16px 38px #0003;
+    z-index:2200;
+  }
+  .mobile-profile-heading {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 32px;
+    align-items:center;
+    gap:3px 8px;
+  }
+  .mobile-profile-heading strong {font-size:16px;font-weight:800;}
+  .mobile-profile-heading small {
+    grid-column:1/-1;
+    font-size:12px;
+    color:var(--ss-theme-muted,#736c60);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mobile-profile-heading>button {
+    grid-column:2;
+    grid-row:1;
+    height:32px;
+    border:1px solid var(--ss-theme-border,#ddd);
+    border-radius:8px;
+    background:transparent;
+    color:inherit;
+    font-size:19px;
+  }
+  .mobile-profile-tools {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:5px;
+  }
+  .mobile-profile-tools>button,
+  .mobile-profile-settings {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-height:42px;
+    padding:9px 11px;
+    border:1px solid var(--ss-theme-border,#d7cbb8);
+    border-radius:9px;
+    background:var(--ss-theme-tint,#f0e9dd);
+    color:var(--ss-theme-ink,#34312e);
+    font-size:16px;
+    font-weight:750;
+    text-align:left;
+    cursor:pointer;
+  }
+  .mobile-profile-tools>button span {font-size:13px;}
+  .mobile-profile-settings {font-size:13px;}
+  .mobile-profile-build {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px 12px;
+    padding:9px 2px;
+    border-top:1px solid var(--ss-theme-border,#ded5c7);
+  }
+  .mobile-profile-build small {font-size:11px;color:var(--ss-theme-muted,#746e60);}
+  .mobile-profile-session {
+    padding-top:8px;
+    border-top:1px solid var(--ss-theme-border,#ded5c7);
+  }
+  .mobile-profile-session .backend-account {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    justify-content:space-between;
+  }
+
+  /* The document's two rows now only display title, price and compact metadata.
+     The app bar owns Back and Undo/Redo; the document overflow stays available. */
+  .sales-app .qmb .qmb-quote-editor .qmb-quote-chrome .qmb-quote-identity,
+  .sales-app .qmb .qmb-quote-editor.is-quick-quote .qmb-quote-chrome .qmb-quote-identity {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    column-gap:10px;
+    row-gap:2px;
+    padding:7px 11px 6px;
+  }
+  .sales-app .qmb .qmb-quote-chrome .qmb-quote-name {
+    grid-column:1;
+    grid-row:1;
+    width:100%;
+    min-width:0;
+    font-size:16px;
+  }
+  .sales-app .qmb .qmb-quote-chrome .qmb-quote-total {
+    grid-column:2;
+    grid-row:1;
+    max-width:42vw;
+    text-align:right;
+    font-size:16px;
+  }
+  .sales-app .qmb .qmb-quote-secondary {
+    grid-column:1/-1;
+    grid-row:2;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 36px;
+    align-items:center;
+    gap:6px;
+    min-height:34px;
+  }
+  .sales-app .qmb .qmb-quote-editor .qmb-quote-meta {
+    display:flex;
+    flex-wrap:wrap;
+    gap:2px 7px;
+    align-content:center;
+    min-width:0;
+  }
+  .sales-app .qmb .qmb-quote-editor .qmb-quote-meta .qmb-document-customer-link {
+    flex:1 0 100%;
+    font-size:10px;
+    max-width:100%;
+    text-overflow:ellipsis;
+  }
+  .sales-app .qmb .qmb-quote-secondary .sales-document-rail-actions {
+    position:relative;
+    z-index:40;
+    height:36px;
+    justify-self:end;
+  }
+  .sales-app .qmb .qmb-quote-secondary .sales-document-rail-actions>summary {
+    display:grid;
+    place-items:center;
+    width:36px;
+    height:36px;
+    min-width:36px;
+    min-height:36px;
+    padding:0;
+    border-radius:9px;
+    font-size:20px;
+  }
+  .sales-app .qmb .qmb-quote-secondary .sales-document-rail-menu {
+    right:0;
+    left:auto;
+    top:calc(100% + 5px);
+    bottom:auto;
+    max-height:min(350px,60dvh);
+    overflow-y:auto;
+  }
+  /* Prevent the deleted back-arrow styling from ever leaking into this header. */
+  .sales-app .qmb .qmb-quote-chrome .qmb-quote-library-back {display:none;}
+}
+@media (max-width:365px) {
+  .sales-app > .mobile-app-commandbar,
+  .sales-app.view-quotes:has(.qmb) > .mobile-app-commandbar {gap:4px;padding-inline:6px;}
+  .sales-app > .mobile-app-commandbar :is(.mobile-app-menu-button,.mobile-profile-trigger,.mobile-app-back-button,.mobile-quote-history-button){
+    width:36px;min-width:36px;height:36px;min-height:36px;flex-basis:36px;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-profile-menu {width:36px;flex-basis:36px;}
+}
