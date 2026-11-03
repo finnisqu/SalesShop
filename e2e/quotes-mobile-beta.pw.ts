@@ -202,6 +202,20 @@ test('phone Ready status and customer action fit a compact Beta header',async({p
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   await createQuickQuote(page);
+  // The hamburger behaves like Profile: a small non-modal popover that
+  // closes on Escape, not a full-screen scrim that obscures the quote.
+  await page.getByRole('button',{name:'Open SalesShop navigation'}).click();
+  const navigation=page.getByRole('dialog',{name:'SalesShop navigation'});
+  await expect(navigation).toBeVisible();
+  await expect(navigation).toHaveAttribute('aria-modal','false');
+  const dimensions=await navigation.evaluate(node=>({
+    width:node.getBoundingClientRect().width,
+    height:node.getBoundingClientRect().height,
+  }));
+  expect(dimensions.width).toBeLessThan(350);
+  expect(dimensions.height).toBeLessThan(600);
+  await page.keyboard.press('Escape');
+  await expect(navigation).toHaveCount(0);
   await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Details'}).click();
   await beta.locator('.qmb-details-advanced > summary').click();
   await beta.getByRole('combobox',{name:'Draft status'}).selectOption('Ready');
