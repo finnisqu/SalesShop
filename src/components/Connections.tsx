@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { CompanyRecordPage } from './CompanyRecordPage';
+import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
 import { DealRecordPage } from './DealRecordPage';
 import { Button, Field, PageHeader, SectionTabs, StatusText } from '../design-system/components';
@@ -236,6 +238,7 @@ export function Connections() {
     if (activity.quoteId) openQuote(activity.quoteId);
     else if (activity.projectId) openProject(activity.projectId);
     else if (activity.companyId) openCompany(activity.companyId);
+    else if (activity.contactId) openPerson(activity.contactId);
   };
 
   const backToDeals = () => {
@@ -289,7 +292,10 @@ export function Connections() {
       {(tab === 'activity'||tab==='quotes') && <div className="connections-history-heading">
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
           <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
-        <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
+        <div className="connections-activity-tools">
+         {tab==='activity'&&<><SalesCalendarLauncher compact /><QuickActivityLauncher label="Log Activity" compact /></>}
+         <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
+        </div>
       </div>}
 
           <div className="connections-directory-toolbar">
@@ -410,12 +416,17 @@ export function Connections() {
             </StatusText>}
           </section>}
           {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
-            <p className="connections-count">{activityRows.length} recorded events. This is reference history, not a follow-up checklist.</p>
+            <p className="connections-count">{activityRows.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
             <div className="connections-activity-list">
               {activityRows.map((activity) => {
-                const actionable = Boolean(activity.quoteId || activity.projectId || activity.companyId);
+                const actionable = Boolean(activity.quoteId || activity.projectId || activity.companyId || activity.contactId);
                 return <button type="button" key={activity.id} disabled={!actionable} onClick={() => openActivity(activity)}>
-                  <span><strong>{activity.summary}</strong><small>{[companiesById.get(activity.companyId ?? '')?.name,projectsById.get(activity.projectId ?? '')?.name].filter(Boolean).join(' · ')}</small></span>
+                  <span><strong>{activity.summary}</strong><small>{[
+                   activity.metadata?.interactionMethod?.replaceAll('-',' '),
+                   companiesById.get(activity.companyId ?? '')?.name,
+                   projectsById.get(activity.projectId ?? '')?.name,
+                   activity.metadata?.notes?.slice(0,120)
+                  ].filter(Boolean).join(' · ')}</small></span>
                   <time>{timeLabel(activity.occurredAt)}</time>
                 </button>;
               })}

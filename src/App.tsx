@@ -54,6 +54,7 @@ import {HomeWorkspace} from './components/HomeWorkspace';
 import {taskScope,usePersonalTaskStore} from './store/personalTaskStore';
 import {startPersonalTaskCloudSync} from './services/personalTaskCloudSync';
 import {TasksWorkspace} from './components/TasksWorkspace';
+import {SalesCalendarLauncher} from './components/SalesCalendarLauncher';
 import {NotebookPromotionDialog} from './components/NotebookPromotionDialog';
 import {NotebookCompanionPage} from './components/NotebookCompanionPage';
 import {readNotebookSplitPreference,writeNotebookSplitPreference} from './services/notebookSplitPreference';
@@ -225,6 +226,7 @@ function App() {
           <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
           <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')}>Catalog</button>
         </nav>
+        {!inRolePreview&&<div className="sales-calendar-global"><SalesCalendarLauncher compact /></div>}
         {!viewer && !inRolePreview && <GlobalSearch />}
         {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
         {!inRolePreview && <GlobalPostItLauncher />}
@@ -265,6 +267,7 @@ function App() {
           <section className="binder-stage">
             <div className="notebook-split-controls">
               <strong>{companion?(splitStacked?'Stacked pages':'Split pages'):'Single page'}</strong>
+              <SalesCalendarLauncher compact />
               {companion&&<select aria-label="Choose second Notebook page" value={companion.id}
                 onChange={event=>openCompanion(event.target.value)}>
                 {companionOptions.map(page=><option key={page.id} value={page.id}>{page.title||'Untitled page'}</option>)}

@@ -93,6 +93,9 @@ export interface Project {
 }
 
 export interface ActivityMetadata {
+  /** Completed interaction saved in existing CRM metadata; no new table required. */
+  interactionMethod?: 'email'|'call'|'text'|'video-call'|'in-person';
+  notes?: string;
   quoteNumber?: string;
   revision?: number;
   amount?: number;

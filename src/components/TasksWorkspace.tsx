@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
+import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
 import '../tasks-table.css';
@@ -208,7 +209,8 @@ export function TasksWorkspace(){
     <header className="tasks-header">
       <div><span className="tasks-eyebrow">PERSONAL WORK QUEUE</span><h1>Tasks</h1>
         <p>Calls, follow-ups, reminders and work to finish. Keep completed tasks as a record.</p></div>
-      <button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})} disabled={!scope}>+ New task</button>
+      <div className="tasks-header-actions"><SalesCalendarLauncher compact />
+       <button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})} disabled={!scope}>+ New task</button></div>
     </header>
     <div className="tasks-summary" aria-label="Task counts">
       {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>

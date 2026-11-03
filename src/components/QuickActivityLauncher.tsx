@@ -24,8 +24,8 @@ const primaryName=(associations:TaskAssociation[])=>{
  const person=associations.find(x=>x.type==='contact');
  return (person??associations[0])?.label?.replace(/^(Quote|Deal|Company|Person) · /,'');
 };
-export function QuickActivityLauncher({label='Log Activity',compact=false}:{
- label?:string;compact?:boolean;
+export function QuickActivityLauncher({label='Log Activity',compact=false,tile=false}:{
+ label?:string;compact?:boolean;tile?:boolean;
 }){
  const [open,setOpen]=useState(false);
  const [method,setMethod]=useState<Method>('call');
@@ -77,9 +77,9 @@ export function QuickActivityLauncher({label='Log Activity',compact=false}:{
  };
  if(!permitted)return null;
  return <>
-  <button type="button" className={'sales-log-launcher'+(compact?' is-compact':'')}
+  <button type="button" className={'sales-log-launcher'+(compact?' is-compact':'')+(tile?' is-tile':'')}
    onClick={()=>{setOccurred(dateTimeLocal());setOpen(true);}}>
-   <span aria-hidden="true">＋</span>{label}
+   <span aria-hidden="true">{tile?'◉':'＋'}</span>{tile?<><strong>{label}</strong><small>Call, email or meeting</small></>:label}
   </button>
   {open&&createPortal(<div className="sales-activity-backdrop" onPointerDown={e=>{
     if(e.target===e.currentTarget)close();

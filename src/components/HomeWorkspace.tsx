@@ -14,6 +14,8 @@ import {buildHomeAgenda,nextLocalDay} from '../services/homeAgenda';
 import {followUpLocalDate} from '../services/quoteFollowUps';
 import {newQuickNoteEvent} from './GlobalPostIt';
 import {QuickCreate} from './QuickCreate';
+import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import '../home-workspace.css';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
@@ -100,6 +102,8 @@ export function HomeWorkspace(){
           <strong>{betaEnabled?'Quote templates':'Quote library'}</strong><small>Open the document library</small></button>
         <button type="button" onClick={()=>setView('board')}><span aria-hidden="true">▦</span><strong>Board</strong><small>Deals and accounts</small></button>
         {!rolePreview&&<button type="button" onClick={openQuickNote}><span aria-hidden="true">▧</span><strong>Quick Note</strong><small>Capture without leaving</small></button>}
+        <SalesCalendarLauncher label="Calendar" />
+        <QuickActivityLauncher tile />
       </div>
     </section>
 
