@@ -1,4 +1,4 @@
-import type { Quote, QuoteSection, QuoteTakeoffPiece, QuoteAreaScope, QuoteTakeoffSink, QuoteLine, QuoteLineMaterialReference, QuoteProjectMaterial } from '../types/quote';
+import type { Quote, QuoteSection, QuoteTakeoffPiece, QuoteAreaScope, QuoteTakeoffSink, QuoteLine, QuoteLineMaterialReference, QuoteProjectMaterial, QuoteSplashEdge } from '../types/quote';
 
 /** Compatible with common shop dimensions: 25.5, 25 1/2, 25-1/2, 1/4, 25½. */
 const unicodeFractions: Record<string,string> = {
@@ -44,16 +44,39 @@ export function takeoffPieceSf(piece: QuoteTakeoffPiece):number {
 }
 /** All geometry is summed before rounding, so small pieces retain their SF. */
 const roundSf=(n:number)=>Math.round((n+Number.EPSILON)*100)/100;
-function splashEdgeInches(piece:QuoteTakeoffPiece):number {
-  if(!isValidTakeoffPiece(piece))return 0;
-  const edges=(piece.backsplash?piece.lengthIn!:0)
-    +(piece.leftSplash?piece.widthIn!:0)+(piece.rightSplash?piece.widthIn!:0);
-  return edges*piece.count;
+const splashFlagByEdge:Record<QuoteSplashEdge,'backsplash'|'leftSplash'|'rightSplash'>={
+  back:'backsplash',left:'leftSplash',right:'rightSplash'
+};
+export const QUOTE_SPLASH_EDGES=['back','left','right'] as const;
+
+/** Measured edge length includes quantity. Independent edge rows use this in L. */
+export function takeoffSplashEdgeLengthIn(piece:QuoteTakeoffPiece,edge:QuoteSplashEdge):number {
+  if(!isValidTakeoffPiece(piece)||!piece[splashFlagByEdge[edge]])return 0;
+  return (edge==='back'?piece.lengthIn!:piece.widthIn!)*piece.count;
 }
-/** Piece-specific splash height, default 4 inches, affects material SF. */
+export function isSplashEdgeExcluded(piece:QuoteTakeoffPiece,edge:QuoteSplashEdge):boolean {
+  return !!piece.excludedFromQuote||!!piece.excludeSplashFromQuote||!!piece.excludedSplashEdges?.[edge];
+}
+export function takeoffSplashEdgeHeightIn(piece:QuoteTakeoffPiece,edge:QuoteSplashEdge):number {
+  return piece.splashEdgeHeightsIn?.[edge]??piece.splashHeightIn??DEFAULT_SPLASH_HEIGHT_IN;
+}
+export function takeoffPieceSplashEdgeSf(piece:QuoteTakeoffPiece,edge:QuoteSplashEdge):number {
+  const height=takeoffSplashEdgeHeightIn(piece,edge);
+  return Number.isFinite(height)&&height>=0&&height<=120
+    ?takeoffSplashEdgeLengthIn(piece,edge)*height/144:0;
+}
+function splashEdgeInches(piece:QuoteTakeoffPiece,onlyBillable=false):number {
+  return QUOTE_SPLASH_EDGES.reduce((sum,edge)=>
+    sum+(onlyBillable&&isSplashEdgeExcluded(piece,edge)?0:takeoffSplashEdgeLengthIn(piece,edge)),0);
+}
+/** Exact physical splash geometry, including retained excluded edges. */
 export function takeoffPieceSplashSf(piece:QuoteTakeoffPiece):number {
-  const height=piece.splashHeightIn??DEFAULT_SPLASH_HEIGHT_IN;
-  return Number.isFinite(height)&&height>=0&&height<=120?splashEdgeInches(piece)*height/144:0;
+  return QUOTE_SPLASH_EDGES.reduce((sum,edge)=>sum+takeoffPieceSplashEdgeSf(piece,edge),0);
+}
+/** Billable only: an excluded splash edge retains geometry but is not priced. */
+export function takeoffPieceBillableSplashSf(piece:QuoteTakeoffPiece):number {
+  return QUOTE_SPLASH_EDGES.reduce((sum,edge)=>
+    sum+(isSplashEdgeExcluded(piece,edge)?0:takeoffPieceSplashEdgeSf(piece,edge)),0);
 }
 export function takeoffPieceTotalSf(piece:QuoteTakeoffPiece):number {
   return takeoffPieceSf(piece)+takeoffPieceSplashSf(piece);
@@ -81,7 +104,7 @@ export function totalSplashSf(pieces:QuoteTakeoffPiece[]):number {
 /** Single billable SF quantity: tops + 4-inch splash material, rounded once. */
 export function totalBillableTakeoffSf(pieces:QuoteTakeoffPiece[]):number {
   return roundSf(pieces.reduce((acc,piece)=>acc+(piece.excludedFromQuote?0:
-    takeoffPieceSf(piece)+(piece.excludeSplashFromQuote?0:takeoffPieceSplashSf(piece))),0));
+    takeoffPieceSf(piece)+takeoffPieceBillableSplashSf(piece)),0));
 }
 /** Selling quantity only; internal shop and slab costs continue using precise SF. */
 export function roundedBillableTakeoffSf(pieces:QuoteTakeoffPiece[],
@@ -92,8 +115,7 @@ export function roundedBillableTakeoffSf(pieces:QuoteTakeoffPiece[],
 }
 /** Quoted splash linear feet: retained but struck-through splashes stay out of the active price. */
 export function totalBillableSplashLf(pieces:QuoteTakeoffPiece[]):number {
-  return roundSf(pieces.reduce((acc,piece)=>acc+(piece.excludedFromQuote||piece.excludeSplashFromQuote
-    ?0:splashEdgeInches(piece)),0)/12);
+  return roundSf(pieces.reduce((acc,piece)=>acc+splashEdgeInches(piece,true),0)/12);
 }
 export function newTakeoffSink():QuoteTakeoffSink {
   return {id:`sinktakeoff_${crypto.randomUUID()}`,category:'kitchen',name:'',count:1,
