@@ -536,6 +536,14 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
      onClick={remove}>×</button>
    </div>
   </div>;
+ const mobileColumnHeader=(groupLabel:string)=>
+  <div className="qqt-mobile-header qqt-workbook-grid" role="row"
+   aria-label={'Columns for '+groupLabel+': select, piece name, quantity, length, width and more'}>
+   {['','Piece / Item','Qty','L','W',''].map((heading,index)=>
+    <div key={index} role="columnheader" className="qqt-mobile-column"
+     aria-label={heading||(index===0?'Select':'More options')}>{heading||(
+      index===5?<span aria-hidden="true">⋯</span>:null)}</div>)}
+  </div>;
  return <section className="qqt-workspace" aria-label="Takeoffs spreadsheet">
   <header className={'qqt-heading'+(selected.length?' is-selecting':'')}>
     {selected.length?<div className="qqt-bulk" role="toolbar" aria-label="Bulk edit takeoff lines">
@@ -565,13 +573,6 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
     {['','Area','Piece / Item','Qty','Length (in)','Width (in)','Square feet','Selling price','Contract','Actions']
      .map((h,i)=><div key={i} className="qqt-cell">{h}</div>)}
    </div>
-   <div className="qqt-mobile-header qqt-workbook-grid" role="row"
-    aria-label="Select, piece name, quantity, length, width and more">
-    {['','Piece / Item','Qty','L','W',''].map((heading,index)=>
-     <div key={index} role="columnheader" className="qqt-mobile-column"
-      aria-label={heading||(index===0?'Select':'More options')}>{heading||(
-       index===5?<span aria-hidden="true">⋯</span>:null)}</div>)}
-   </div>
    {areas.map(section=>{
     const pieces=section.scope?.takeoffPieces??[],sinks=section.scope?.takeoffSinks??[];
     const summary=quickAreaSummary(quote,section);
@@ -589,6 +590,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
        <button disabled={!editable} type="button" title="Duplicate this Area"
         onClick={()=>store.duplicateArea(quote.id,section.id)}>⧉ Area</button>
       </div><strong className="qqt-area-price">{money.format(summary.total)}</strong></div>
+     {mobileColumnHeader(section.title)}
      {pieces.map(piece=>{
       const topSf=takeoffPieceSf(piece);
       const allocated=pieceTotal>0&&!piece.excludedFromQuote&&primary?.includeInTotal
@@ -669,6 +671,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
    <div className="qqt-area-block"><div className="qqt-group qqt-general-group">
     <strong>General</strong><span>Project-wide charges and adjustments</span>
     <div><button type="button" disabled={!editable} onClick={()=>addLine(null)}>+ Charge</button></div></div>
+    {mobileColumnHeader('General')}
     {quote.lines.filter(line=>!line.sectionId||
      !quote.sections.some(s=>s.id===line.sectionId)||quote.sections.some(s=>s.id===line.sectionId&&isGeneralTakeoffSection(s)))
      .map(line=>{
