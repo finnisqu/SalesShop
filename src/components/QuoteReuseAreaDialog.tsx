@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
@@ -18,6 +18,7 @@ export function QuoteReuseAreaDialog({quote,sources,onClose}:{
  const [areaId,setAreaId]=useState('');
  const [includePricing,setIncludePricing]=useState(false);
  const [error,setError]=useState('');
+ const sheetSwipeStart=useRef<number|null>(null);
  const source=eligible.find(candidate=>candidate.id===sourceId);
  const areas=source?.sections.filter(area=>!isGeneralTakeoffSection(area))??[];
  const currentArea=areaId==='__all__'&&areas.length?'__all__':
@@ -40,7 +41,14 @@ export function QuoteReuseAreaDialog({quote,sources,onClose}:{
   if(event.target===event.currentTarget)onClose();
  }}>
   <section className="qra-panel" role="dialog" aria-modal="true" aria-label="Copy Area from another quote">
-   <header><div><small>QUICK QUOTE · REUSE</small><h2>Copy an Area</h2></div>
+   <header onTouchStart={event=>{
+      if((event.target as HTMLElement).closest('button,input,select'))return;
+      sheetSwipeStart.current=event.touches[0]?.clientY??null;
+     }} onTouchEnd={event=>{
+      const start=sheetSwipeStart.current;
+      sheetSwipeStart.current=null;
+      if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
+     }}><div><small>QUICK QUOTE · REUSE</small><h2>Copy an Area</h2></div>
     <button type="button" onClick={onClose} aria-label="Close Area reuse">×</button></header>
    <div className="qra-body">
     <p>Reuse measurements, stone selections, sinks and specialty charges from an existing quote. The original won't change.</p>
