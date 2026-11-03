@@ -87,3 +87,43 @@
 @media(max-width:700px),(orientation:landscape) and (max-height:520px) and (pointer:coarse){
   .sales-home-header-create{display:none}
 }
+
+
+/* Calendar-first Home: navigation lives in the primary tabs, creation in the header. */
+.sales-home.is-calendar-home{gap:16px}
+.sales-home-top-actions{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.sales-home-top-actions .sales-log-launcher{min-height:42px;padding:9px 15px;
+ background:var(--ss-theme-accent,#917246);border-color:var(--ss-theme-accent,#917246);
+ color:var(--ss-theme-accent-ink,#fff);font-size:13px;font-weight:800}
+.sales-home-top-actions .sales-log-launcher:hover{filter:brightness(1.08)}
+.sales-home-top-actions .quick-create-launcher{display:grid;place-items:center;
+ min-width:42px;min-height:42px;border-radius:11px;font-size:21px}
+.sales-home-calendar-card{display:grid;gap:12px;padding:16px;
+ background:var(--ss-theme-card,#fff);border:1px solid var(--ss-theme-border,#ddd);
+ border-radius:15px;min-width:0}
+.sales-home-calendar-intro{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sales-home-calendar-intro h2{margin:0;font-size:17px}
+.sales-home-calendar-intro p{margin:4px 0 0;font-size:12px;color:var(--ss-theme-muted,#66716b)}
+.sales-home-calendar-intro button{border:0;background:transparent;color:var(--ss-theme-accent,#527663);
+ font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer}
+.sales-home-agenda-scroll,.sales-home-recent-scroll{max-height:355px;overflow-y:auto;
+ overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--ss-theme-border,#bbb) transparent}
+.sales-home-agenda-scroll{max-height:340px}
+.sales-home-recent-scroll{max-height:340px}
+.sales-home.is-calendar-home .sales-home-columns{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+.sales-home.is-calendar-home .sales-home-section-head{align-items:center}
+.sales-home.is-calendar-home .sales-home-add-task{white-space:nowrap}
+@media(max-width:800px){
+ .sales-home.is-calendar-home .sales-home-columns{grid-template-columns:minmax(0,1fr)}
+ .sales-home-top-actions{align-self:center;gap:7px}
+ .sales-home-top-actions .sales-log-launcher{min-height:40px;padding:8px 10px;font-size:12px}
+ .sales-home-top-actions .sales-log-launcher>span{display:none}
+ .sales-home-top-actions .quick-create-launcher{min-width:40px;min-height:40px}
+ .sales-home-calendar-card{padding:11px;gap:8px}
+ .sales-home-calendar-intro h2{font-size:16px}
+ .sales-home-calendar-intro p{font-size:11px}
+}
+@media(max-width:390px){
+ .sales-home-heading{flex-wrap:wrap}
+ .sales-home-top-actions{width:100%;justify-content:flex-start}
+}
