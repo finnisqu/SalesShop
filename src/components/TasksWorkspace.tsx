@@ -13,6 +13,7 @@ import {useNavigationStore} from '../store/navigationStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../tasks-workspace.css';
 import '../task-workflow-v2.css';
+import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
 
 type Filter='active'|'today'|'upcoming'|'overdue'|'scheduled'|'completed'|'all';
 const defaultQueues=['Prospecting','Quotes','Deliveries','Meetings','Follow-ups','Internal'];
@@ -46,23 +47,42 @@ function reminderValue(value?:string){
   const p=(n:number)=>String(n).padStart(2,'0');
   return Number.isNaN(d.getTime())?'':[d.getFullYear(),p(d.getMonth()+1),p(d.getDate())].join('-')+'T'+p(d.getHours())+':'+p(d.getMinutes());
 }
+type TaskEditorRecovery={
+ title:string;type:TaskType;priority:TaskPriority;status:TaskStatus;
+ dueDate:string;startDate:string;dueTime:string;reminderAt:string;
+ queue:string;notes:string;selectedLinks:TaskAssociation[];
+};
+type ActiveTaskDraft={kind:'new'|'existing';id?:string};
 export function TaskEditor({initial,onCancel,onSave}:{
   initial:Partial<PersonalTask>|TaskPromotion;onCancel:()=>void;onSave:(changes:TaskChanges&{title:string})=>void;
 }){
   // A promotion draft is a subset of the ordinary task editor fields.
   // Use one typed draft shape so optional properties remain correctly typed.
+  const auth=useAuthStore.getState();
+  const scopeKey=draftStorageKey('task:'+(('id'in initial&&initial.id)||'new'),auth.mode,auth.organizationId,auth.user?.id);
+  const activeKey=draftStorageKey('task:active',auth.mode,auth.organizationId,auth.user?.id);
+  const recovered=useMemo(()=>readSavedDraft<TaskEditorRecovery>(scopeKey),[scopeKey]);
   const draft:Partial<PersonalTask>=initial;
-  const [title,setTitle]=useState(draft.title??'');
-  const [type,setType]=useState<TaskType>(draft.type??'todo');
-  const [priority,setPriority]=useState<TaskPriority>(draft.priority??'normal');
-  const [status,setStatus]=useState<TaskStatus>(draft.status??'open');
-  const [dueDate,setDueDate]=useState(draft.dueDate??'');
-  const [startDate,setStartDate]=useState(draft.startDate??'');
-  const [dueTime,setDueTime]=useState(draft.dueTime??'');
-  const [reminderAt,setReminderAt]=useState(reminderValue(draft.reminderAt));
-  const [queue,setQueue]=useState(draft.queue??'');
-  const [notes,setNotes]=useState(draft.notes??'');
-  const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>normalizedTaskAssociations(initial));
+  const [title,setTitle]=useState(recovered?.title??draft.title??'');
+  const [type,setType]=useState<TaskType>(recovered?.type??draft.type??'todo');
+  const [priority,setPriority]=useState<TaskPriority>(recovered?.priority??draft.priority??'normal');
+  const [status,setStatus]=useState<TaskStatus>(recovered?.status??draft.status??'open');
+  const [dueDate,setDueDate]=useState(recovered?.dueDate??draft.dueDate??'');
+  const [startDate,setStartDate]=useState(recovered?.startDate??draft.startDate??'');
+  const [dueTime,setDueTime]=useState(recovered?.dueTime??draft.dueTime??'');
+  const [reminderAt,setReminderAt]=useState(recovered?.reminderAt??reminderValue(draft.reminderAt));
+  const [queue,setQueue]=useState(recovered?.queue??draft.queue??'');
+  const [notes,setNotes]=useState(recovered?.notes??draft.notes??'');
+  const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>recovered?.selectedLinks??normalizedTaskAssociations(initial));
+  // Every form change is durable locally before submission. No unsaved task is sent to cloud.
+  useEffect(()=>{
+   writeSavedDraft(scopeKey,{title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks});
+   writeSavedDraft<ActiveTaskDraft>(activeKey,{
+    kind:'id'in initial?'existing':'new',
+    id:'id'in initial?initial.id:undefined,
+   });
+  },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks]);
+  const cancel=()=>{clearSavedDraft(scopeKey);clearSavedDraft(activeKey);onCancel();};
   const sourceLabel=initial.sourceLabel;
   const suggestionScope=usePersonalTaskStore(s=>s.scope);
   const suggestionTasks=usePersonalTaskStore(s=>s.tasks);
@@ -88,12 +108,13 @@ export function TaskEditor({initial,onCancel,onSave}:{
       notes,queue,associations:selectedLinks,
       linked:selectedLinks[0]?{type:selectedLinks[0].type,id:selectedLinks[0].id}:undefined,
       sourceLabel:selectedLinks[0]?.label??sourceLabel,sourceText,sourceObjectId});
+    clearSavedDraft(scopeKey);clearSavedDraft(activeKey);
   };
-  return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)onCancel();}}>
+  return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)cancel();}}>
     <form className="tasks-editor" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
       onSubmit={submit}>
       <header><strong>{'id'in initial?'Edit task':'New task'}</strong>
-        <button type="button" aria-label="Close task editor" onClick={onCancel}>×</button></header>
+        <button type="button" aria-label="Close task editor" onClick={cancel}>×</button></header>
       <label>Task title<input autoFocus required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/></label>
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
       <TaskAssociationsField options={associations.map(item=>({...item,
@@ -120,7 +141,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
       </div>
       <label>Notes<textarea rows={3} maxLength={5000} value={notes} onChange={e=>setNotes(e.target.value)}
         placeholder="Context, next steps, or call notes…"/></label>
-      <footer><button type="button" onClick={onCancel}>Cancel</button><button type="submit" className="tasks-primary">Save task</button></footer>
+      <footer><button type="button" onClick={cancel}>Cancel</button><button type="submit" className="tasks-primary">Save task</button></footer>
     </form>
   </div>;
 }
@@ -138,12 +159,26 @@ export function TasksWorkspace(){
   const [queueFilter,setQueueFilter]=useState('all');
   const nav=useNavigationStore();
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
+  const [viewingId,setViewingId]=useState<string|null>(null);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
   const today=localDay();
   useEffect(()=>load(scope),[scope,load]);
   const own=(!rolePreview&&scope&&storedScope===scope)?tasks.filter(t=>!t.deletedAt):[];
   const queues=Array.from(new Set(ownQueueNames(own))).sort();
+  const viewing=own.find(task=>task.id===viewingId)??null;
+  // Reopen an in-progress editor after the browser discards and restores its tab.
+  useEffect(()=>{
+    if(!scope||storedScope!==scope||editing||rolePreview)return;
+    const activeKey=draftStorageKey('task:active',mode,orgId,userId);
+    const pending=readSavedDraft<ActiveTaskDraft>(activeKey);
+    if(!pending)return;
+    if(pending.kind==='new')setEditing({title:''});
+    else {
+      const current=tasks.find(t=>t.id===pending.id&&!t.deletedAt&&t.workspaceScope===scope);
+      if(current)setEditing(current);
+    }
+  },[scope,storedScope,tasks,mode,orgId,userId,rolePreview]);
   const counts=useMemo(()=>({
     active:own.filter(t=>condition(t,today)!=='complete').length,
     today:own.filter(t=>condition(t,today)!=='complete'&&
@@ -173,7 +208,7 @@ export function TasksWorkspace(){
     return (a.dueDate??'9999').localeCompare(b.dueDate??'9999')||
       weight(a.priority)-weight(b.priority)||b.updatedAt.localeCompare(a.updatedAt);
   }),[own,filter,search,queueFilter,today]);
-  // A Calendar glimpse should open its exact Task, not just the Tasks index.
+  // Calendar navigation is preview-first, with editing explicitly chosen from the preview.
   useEffect(()=>{
    const show=()=>{
     let id='';
@@ -182,7 +217,7 @@ export function TasksWorkspace(){
     const task=own.find(item=>item.id===id);
     if(!task)return;
     try{window.sessionStorage.removeItem('salesshop-open-task-id-v1');}catch{/* best effort */}
-    setEditing(task);
+    setViewingId(task.id);
    };
    show();
    window.addEventListener('salesshop:open-calendar-task',show);
@@ -253,7 +288,7 @@ export function TasksWorkspace(){
     {!scope&&<p className="tasks-state">Your personal Tasks workspace will load after you sign in to a company.</p>}
     {scope&&<div className="tasks-table-container">
       <ConnectionsTable tableKey="tasks" columns={taskColumns} rows={taskTableRows}
-        onOpen={id=>{const selected=visible.find(task=>task.id===id);if(selected)setEditing(selected);}}
+        onOpen={id=>{const selected=visible.find(task=>task.id===id);if(selected)setViewingId(selected.id);}}
         onTaskDuePreset={quickDue}
         onTaskToggleComplete={(id,finished)=>finished?reopen(id):complete(id)}
         onBulkComplete={items=>items.forEach(item=>{
@@ -315,6 +350,35 @@ export function TasksWorkspace(){
         :'Personal tasks saved on this device'}
       {' · '}Reminder dates are tracked in SalesShop. Background emails and push alerts are not enabled.
     </footer>
+    {viewing&&<div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setViewingId(null);}}>
+      <section className="tasks-preview-card" role="dialog" aria-modal="true" aria-label={'Task '+viewing.title}>
+       <header><div><small>TASK · QUICK VIEW</small><h2>{viewing.title}</h2></div>
+        <button type="button" aria-label="Close task preview" onClick={()=>setViewingId(null)}>×</button></header>
+       <div className="tasks-preview-body">
+        <div className="tasks-preview-meta">
+         <span>{viewing.type??'To-do'}</span><span>{viewing.status??'open'}</span>
+         <span>{viewing.priority??'normal'} priority</span>
+         {viewing.queue&&<span>{viewing.queue}</span>}
+        </div>
+        <dl>
+         <div><dt>Due</dt><dd>{viewing.dueDate?formatDate(viewing.dueDate)+(viewing.dueTime?' · '+viewing.dueTime:''):'No due date'}</dd></div>
+         {viewing.startDate&&<div><dt>Start</dt><dd>{formatDate(viewing.startDate)}</dd></div>}
+        </dl>
+        {viewing.notes&&<p className="tasks-preview-notes">{viewing.notes}</p>}
+        {!!normalizedTaskAssociations(viewing).length&&<div className="tasks-preview-related">
+         <strong>Related records</strong>{normalizedTaskAssociations(viewing).map(link=>
+          <button key={link.type+':'+link.id} type="button" onClick={()=>{setViewingId(null);openSource(link);}}>
+           {link.label??link.type} ↗</button>)}
+        </div>}
+       </div>
+       <footer>
+        <button type="button" onClick={()=>setViewingId(null)}>Close</button>
+        <button type="button" onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
+         {taskComplete(viewing)?'Reopen task':'Mark complete'}</button>
+        <button type="button" className="tasks-primary" onClick={()=>{setViewingId(null);setEditing(viewing);}}>Edit task</button>
+       </footer>
+      </section>
+     </div>}
     {editing&&<TaskEditor key={'id'in editing?editing.id:editing.title+'new'} initial={editing} onCancel={()=>setEditing(null)} onSave={save}/>}
   </main>;
 }
