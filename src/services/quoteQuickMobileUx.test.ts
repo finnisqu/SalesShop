@@ -8,6 +8,7 @@ const quote=source('src/components/QuotesMobileBeta.tsx');
 const mobileChrome=source('src/components/MobileAppChrome.tsx');
 const compactChrome=source('src/mobile-profile-quote-toolbar.css');
 const mobileDock=source('src/quote-mobile-footer-dock.css');
+const polish=source('src/mobile-quote-visual-polish.css');
 const areas=source('src/components/QuoteQuickAreaSummary.tsx');
 const takeoffs=source('src/components/QuoteCompactTakeoffs.tsx');
 const review=source('src/components/QuoteBetaReview.tsx');
@@ -79,6 +80,31 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(quote).toContain('qmb-pricing-footer-slot');
   expect(review).toContain('footerTarget?createPortal(footer,footerTarget):footer');
   expect(review).not.toContain('className="qmb-pagehead qqr-pagehead"');
+ });
+ it('shows a dismissible theme-aware app popover instead of the full-screen drawer',()=>{
+  expect(mobileChrome).toContain("setOpen(previous=>!previous)");
+  expect(mobileChrome).toContain('ref={navigationButtonRef}');
+  expect(mobileChrome).toContain('aria-modal="false"');
+  expect(mobileChrome).toContain('mobile-app-nav-popover-surface');
+  expect(mobileChrome).toContain("document.addEventListener('pointerdown',outside)");
+  expect(polish).toContain('.mobile-app-nav-popover-surface .mobile-app-drawer');
+  expect(polish).toContain('pointer-events:none');
+  expect(polish).toContain('background:var(--ss-theme-card');
+ });
+ it('keeps Build Quote dense and the Pricing Review breakdown readable on phones',()=>{
+  expect(areas).toContain('qqs-mobile-actions');
+  expect(areas).toContain('qqs-desktop-action');
+  expect(areas).toContain('is-readonly');
+  expect(polish).toContain('.qqs-summary.is-readonly .qqs-inline-actions');
+  expect(polish).toContain('.qqs-summary-total');
+  expect(polish).toContain('.qqt-grid.qqt-row');
+  expect(review).toContain('Area / breakdown');
+  expect(review).toContain('qqr-mobile-breakdown');
+  expect(review).toContain('Stone {money.format(data.materialPrice)}');
+  expect(review).toContain('Sinks {money.format(data.sinkPrice)}');
+  expect(review).toContain('Other {money.format(data.specialtyPrice)}');
+  expect(polish).toContain('.qqr-mobile-price-table thead th:nth-child(3)');
+  expect(polish).toContain('.qsr-table-scroll tbody tr');
  });
  it('uses an actionable empty state and touch rather than keyboard instructions',()=>{
   expect(areas).toContain('Start with your first Area');
