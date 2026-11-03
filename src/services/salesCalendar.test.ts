@@ -91,6 +91,16 @@ describe('SalesShop shared Calendar',()=>{
   });
   expect(calendarDayCounts(events,date)).toMatchObject({bid:1,task:0,total:1,urgent:1});
  });
+ it('recognizes a linked manual Submit Quote task as the sole bid badge',()=>{
+  const due='2026-11-13';
+  const existing=task('manual',due,{
+   title:'Submit quote for Riverwalk',linked:{type:'project',id:'d1'},
+   priority:'high',
+  });
+  const events=buildSalesCalendarEvents([existing],[deal(due)],[],[]);
+  expect(events).toHaveLength(1);
+  expect(events[0]).toMatchObject({kind:'bid',recordType:'task',recordId:'manual'});
+ });
  it('shows planned follow-up Tasks on their due dates apart from logged activities',()=>{
   const date='2026-11-06';
   const followUp=task('followup',date,{type:'follow-up',status:'open'});
