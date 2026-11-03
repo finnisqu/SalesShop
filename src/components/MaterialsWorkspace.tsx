@@ -616,7 +616,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
 
           <section className="rates-reference-card materials-reference-card">
             <header>
-              <div><strong>Supplier material catalog</strong><small>{materials.length} active material{materials.length === 1 ? '' : 's'} shown</small></div>
+              <div><strong>Supplier material catalog</strong><small>{materials.length} matching material{materials.length === 1 ? '' : 's'}</small></div>
               <span>Variants reveal slab size, square footage, availability, and every active supplier price program.</span>
             </header>
             {pagination}
