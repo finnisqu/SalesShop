@@ -152,6 +152,9 @@ function AreaTitleCell({quote,area,onSelect,onEdit,onDuplicate,editable}:{
    onClick={()=>{setEditing(false);onDuplicate();}}>⧉</button>
   <button type="button" className="qqs-pencil" aria-label={'Area settings for '+area.title}
    onClick={()=>{setEditing(false);onEdit();}}>✎</button>
+  <button type="button" className="qqs-mobile-area-options"
+   aria-label={'More options for Area '+area.title} title={'Area settings for '+area.title}
+   onClick={()=>{setEditing(false);onEdit();}}>⋯</button>
  </div>;
 }
 function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,onNext}:{
@@ -421,8 +424,11 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
  const [focus,setFocus]=useState('');
  const table=useRef<HTMLDivElement>(null);
  const [selected,setSelected]=useState<string[]>([]);
+ const [expandedAreas,setExpandedAreas]=useState<string[]>([]);
+ const [generalExpanded,setGeneralExpanded]=useState(false);
+ const toggleArea=(id:string)=>setExpandedAreas(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
 
- useEffect(()=>{setSelected([]);setDetail(null);setFocus('');},[quote.id]);
+ useEffect(()=>{setSelected([]);setDetail(null);setFocus('');setExpandedAreas([]);setGeneralExpanded(false);},[quote.id]);
  useEffect(()=>{
   const outside=(event:PointerEvent)=>{
    if(table.current&&!table.current.contains(event.target as Node)){
@@ -481,6 +487,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
       onClick={()=>bulkApply('delete')}>Delete</button>
      <button type="button" onClick={()=>setSelected([])}>Clear ×</button>
     </div>:<div><h3>Areas</h3>
+     <span className="qqs-mobile-count" aria-label={areas.length+' Areas'}>{areas.length}</span>
      <span className="qqs-desktop-hint">{areas.length} {areas.length===1?'room':'rooms'} · click or type to edit · Tab/Enter to move</span>
      <span className="qqs-mobile-hint">{areas.length} {areas.length===1?'Area':'Areas'} · tap a cell to edit</span></div>}
     <div className="qqs-inline-actions">
@@ -513,7 +520,9 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
     </div>
     {areas.map(area=>{
      const data=quickAreaSummary(quote,area);
-     return <div className="qqs-grid qqs-row" key={area.id} data-quick-grid-row={area.id} role="row">
+     const expanded=expandedAreas.includes(area.id);
+     return <div className={'qqs-grid qqs-row'+(expanded?' is-expanded':'')} key={area.id}
+      id={'qqs-area-row-'+area.id} data-quick-grid-row={area.id} role="row">
       <div className="qqs-cell qqs-pin-check"><input type="checkbox" aria-label={'Select '+area.title}
        checked={selected.includes(area.id)} onChange={event=>choose(area.id,event.target.checked)}/></div>
       <AreaTitleCell quote={quote} area={area} onSelect={()=>setFocus('Area '+area.id)}
@@ -553,9 +562,20 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
          onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v)};
        })())}
       {cell(area.id,'total','Total price for '+area.title,amount(data.total))}
+      <button type="button" className="qqs-mobile-expand" aria-expanded={expanded}
+       aria-controls={'qqs-area-row-'+area.id}
+       aria-label={(expanded?'Collapse':'Expand')+' pricing details for '+area.title}
+       title={expanded?'Hide pricing details':'Show pricing details'}
+       onClick={()=>toggleArea(area.id)}>
+       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+        strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m9 18 6-6-6-6"/>
+       </svg>
+      </button>
      </div>;
     })}
-    <div className="qqs-grid qqs-row qqs-general" data-quick-grid-row="general" role="row">
+    <div className={'qqs-grid qqs-row qqs-general'+(generalExpanded?' is-expanded':'')}
+     id="qqs-general-row" data-quick-grid-row="general" role="row">
      <div className="qqs-cell qqs-pin-check"></div>
      <div className="qqs-cell qqs-pin-area"><button type="button" onClick={()=>open(null,'specialty')}>General</button></div>
      <div className="qqs-cell qqs-general-note">Unassigned charges, freight, discounts and fees</div>
@@ -570,6 +590,15 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
          onCommit:(v:number|undefined)=>writeSingleChargeTotal(quote,line,v)};
        })())}
      {cell('general','total','General total',amount(general.total))}
+     <button type="button" className="qqs-mobile-expand" aria-expanded={generalExpanded}
+      aria-controls="qqs-general-row" aria-label={(generalExpanded?'Collapse':'Expand')+' General charges'}
+      title={generalExpanded?'Hide General breakdown':'Show General breakdown'}
+      onClick={()=>setGeneralExpanded(v=>!v)}>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+       strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+       <path d="m9 18 6-6-6-6"/>
+      </svg>
+     </button>
     </div>
    </div>
    <footer className="qqs-summary-total"><span>Quote total</span><strong>{amount(quoteTotal(quote))}</strong></footer>
