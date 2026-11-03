@@ -169,6 +169,11 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     for(const deal of due.values()){
       const id='task_deal_submit_'+deal.id;
       if(existing.has(id))continue;
+      // An existing user-authored submission Task takes precedence over automation.
+      if(tasks.some(task=>!task.deletedAt&&task.status!=='canceled'&&
+       task.dueDate===deal.dueDate&&/submit.*quote/i.test(task.title)&&
+       normalizedTaskAssociations(task).some(link=>link.type==='project'&&link.id===deal.id)))
+       continue;
       changed=true;
       updated.unshift({
        id,title:'Submit quote · '+deal.name,dueDate:deal.dueDate,
