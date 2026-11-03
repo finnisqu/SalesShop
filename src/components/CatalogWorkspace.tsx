@@ -3,6 +3,7 @@ import { MaterialsWorkspace } from './MaterialsWorkspace';
 import { RatesWorkspace } from './RatesWorkspace';
 import { SinksWorkspace } from './SinksWorkspace';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
+import { CatalogTagsWorkspace } from './CatalogTagsWorkspace';
 import { useNavigationStore, type CatalogSection } from '../store/navigationStore';
 import { PageHeader, SectionTabs, Panel } from '../design-system/components';
 
@@ -41,6 +42,12 @@ export const CATALOG_SECTIONS: Array<{
     label: 'Suppliers',
     eyebrow: 'Sources & price lists',
     description: 'The vendors behind materials, sinks, accessories, consumables, and future catalog purchasing.',
+  },
+  {
+    id: 'tags',
+    label: 'Tags',
+    eyebrow: 'Material classifications',
+    description: 'Browse and define the tags used across materials and slab variants.',
   },
 ];
 
@@ -114,6 +121,8 @@ export function CatalogWorkspace() {
           <OtherCatalogComingSoon />
         ) : section === 'rates' ? (
           <RatesWorkspace embedded />
+        ) : section === 'tags' ? (
+          <CatalogTagsWorkspace />
         ) : (
           <SuppliersWorkspace />
         )}
