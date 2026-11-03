@@ -27,6 +27,8 @@ import type {
   StageChangeContext,
 } from '../types/crm';
 import { useAuthStore } from './authStore';
+import {stagePendingActivity,readPendingActivities} from '../services/activityCloudOutbox';
+import {useActivityCloudStatusStore} from './activityCloudStatusStore';
 
 interface CrmState {
   companies: Company[];
@@ -256,6 +258,15 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     };
     const activities = [...get().activities, activity];
     const touchpoint=activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint';
+    // Stage a durable, identity-scoped snapshot before touching the CRM cache.
+    const auth=useAuthStore.getState();
+    if(touchpoint&&auth.mode==='cloud'&&auth.user?.id&&auth.organizationId){
+      const scope={organizationId:auth.organizationId,userId:auth.user.id};
+      const staged=stagePendingActivity(scope,activity);
+      useActivityCloudStatusStore.getState().setStatus(
+       staged?'pending':'error',readPendingActivities(scope).length,
+       staged?null:'Could not safely queue this interaction on this device.');
+    }
     const day=new Date(activity.occurredAt);
     const dayKey=Number.isFinite(day.getTime())
       ?[day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),String(day.getDate()).padStart(2,'0')].join('-')

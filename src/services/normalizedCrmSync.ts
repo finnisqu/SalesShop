@@ -255,6 +255,25 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
   await upsertRows('activities', activities);
 }
 
+/** Replay ONLY the unacknowledged Activity records, not a stale copy of
+ * companies/deals/contacts that another salesperson may have edited. */
+export async function upsertPendingCrmActivities(organizationId:string,activities:readonly Activity[]) {
+ if(!supabase||!activities.length)return;
+ await upsertRows('activities',activities.map(a=>({
+  organization_id:organizationId,id:a.id,type:a.type,summary:a.summary,
+  project_id:a.projectId??null,company_id:a.companyId??null,
+  contact_id:a.contactId??null,quote_id:a.quoteId??null,
+  occurred_at:a.occurredAt,metadata:a.metadata??null,
+  sort_order:0,
+ })));
+}
+
+export async function deleteNormalizedActivity(organizationId:string,activityId:string) {
+ if(!supabase)return;
+ const {error}=await supabase.from('activities').delete().eq('organization_id',organizationId).eq('id',activityId);
+ if(error)throw error;
+}
+
 export async function deleteNormalizedProject(organizationId: string, projectId: string) {
   if (!supabase) return;
   const { error } = await supabase

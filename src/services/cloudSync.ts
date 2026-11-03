@@ -10,7 +10,9 @@ import {
 import type { CrmDocument } from '../types/crm';
 import type { QuoteDocument } from '../types/quote';
 import type { SignatureDocument } from '../types/signature';
-import { loadNormalizedCrm, syncNormalizedCrm } from './normalizedCrmSync';
+import { loadNormalizedCrm, syncNormalizedCrm,upsertPendingCrmActivities } from './normalizedCrmSync';
+import {readPendingActivities,mergePendingActivities,acknowledgePendingActivities,pendingSnapshotContained} from './activityCloudOutbox';
+import {useActivityCloudStatusStore} from '../store/activityCloudStatusStore';
 import { loadNormalizedQuotes, syncNormalizedQuotes } from './normalizedQuoteSync';
 import {markPendingQuoteSync,clearPendingQuoteSync,readPendingQuoteSync,mergePendingQuoteDrafts} from './quoteCloudRecovery';
 import {useQuoteCloudStatusStore} from '../store/quoteCloudStatusStore';
@@ -129,8 +131,10 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
 
   // CRM uses normalized tables. The old org_documents.crm row is rollback-only.
   const normalizedCrm = await loadNormalizedCrm(orgId);
-  if (normalizedCrm) {
-    writeLocalDocument(CRM_DOCUMENT_KEY, normalizedCrm, false);
+  const pendingCrm=readPendingActivities({organizationId:orgId,userId});
+  const restoredCrm=mergePendingActivities(normalizedCrm,pendingCrm);
+  if (restoredCrm) {
+    writeLocalDocument(CRM_DOCUMENT_KEY, restoredCrm, false);
   } else if (canSeedOrgFromLocal) {
     const localCrm = readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument | null;
     if (localCrm?.schemaVersion === 3) {
@@ -216,17 +220,48 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   const scope={organizationId:orgId,userId};
   const setQuoteSaveStatus=useQuoteCloudStatusStore.getState().setStatus;
   setQuoteSaveStatus(readPendingQuoteSync(scope)?'pending':'saved');
+  const activityStatus=useActivityCloudStatusStore.getState().setStatus;
+  const initialCrm=readPendingActivities(scope);
+  activityStatus(initialCrm.length?'pending':'saved',initialCrm.length);
+  let retryingCrm=false;
+  const retryCrm=async()=>{
+   if(options.readOnlyShared||retryingCrm)return;
+   const snapshots=readPendingActivities(scope);
+   if(!snapshots.length){activityStatus('saved',0);return;}
+   if(typeof navigator!=='undefined'&&!navigator.onLine){
+    activityStatus('pending',snapshots.length,'Offline · retry when connected');return;
+   }
+   retryingCrm=true;
+   activityStatus('syncing',snapshots.length);
+   try{
+    await upsertPendingCrmActivities(orgId,snapshots);
+    acknowledgePendingActivities(scope,snapshots);
+    const remaining=readPendingActivities(scope);
+    activityStatus(remaining.length?'pending':'saved',remaining.length);
+   }catch(error){
+    activityStatus('error',readPendingActivities(scope).length,
+     error instanceof Error?error.message:'CRM activity sync failed');
+    onError?.(error instanceof Error?error.message:'CRM activity sync failed');
+   }finally{retryingCrm=false;}
+  };
   const schedule=(key:CloudDocumentKey,document:unknown)=>{
     const previous=pending.get(key);
     if(previous)window.clearTimeout(previous);
     // Local quote data already exists; persist an identity-scoped marker
     // BEFORE the debounce, so a refresh cannot silently erase a draft.
     const token=key===QUOTES_DOCUMENT_KEY?markPendingQuoteSync(scope,document):null;
+    const crmSnapshot=key===CRM_DOCUMENT_KEY&&
+      (document as CrmDocument)?.schemaVersion===3?
+      pendingSnapshotContained(document as CrmDocument,readPendingActivities(scope)):[];
     if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('pending');
+    if(key===CRM_DOCUMENT_KEY&&crmSnapshot.length)
+      activityStatus('pending',readPendingActivities(scope).length);
     const delay=key==='notebook'?1200:500;
     const timer=window.setTimeout(()=>{
       pending.delete(key);
       if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('syncing');
+      if(key===CRM_DOCUMENT_KEY&&crmSnapshot.length)
+       activityStatus('syncing',readPendingActivities(scope).length);
       const operation=key===PRIVATE_DOCUMENT_KEY
         ?upsertPrivateDocument(userId,document)
         :key===CRM_DOCUMENT_KEY
@@ -235,6 +270,11 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
             ?syncNormalizedQuotes(orgId,document as QuoteDocument)
             :syncNormalizedSignatures(orgId,document as SignatureDocument);
       void operation.then(()=>{
+        if(key===CRM_DOCUMENT_KEY&&crmSnapshot.length){
+         acknowledgePendingActivities(scope,crmSnapshot);
+         const left=readPendingActivities(scope);
+         activityStatus(left.length?'pending':'saved',left.length);
+        }
         if(token){
           clearPendingQuoteSync(scope,token);
           // Do not mark an earlier save as current when a newer local edit
@@ -244,6 +284,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
       }).catch((error:unknown)=>{
         const message=error instanceof Error?error.message:'Cloud sync failed.';
         if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('error',message);
+        if(key===CRM_DOCUMENT_KEY)activityStatus('error',readPendingActivities(scope).length,message);
         onError?.(message);
       });
     },delay);
@@ -256,8 +297,20 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     if(options.readOnlyShared&&detail.key!==PRIVATE_DOCUMENT_KEY)return;
     schedule(detail.key,detail.document);
   };
+  const online=()=>{void retryCrm();};
+  const retry=()=>{void retryCrm();};
+  const visible=()=>{if(document.visibilityState==='visible')void retryCrm();};
   window.addEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
-  activeCleanup=()=>window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
+  window.addEventListener('online',online);
+  window.addEventListener('salesshop:retry-activity-cloud',retry);
+  document.addEventListener('visibilitychange',visible);
+  activeCleanup=()=>{
+   window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
+   window.removeEventListener('online',online);
+   window.removeEventListener('salesshop:retry-activity-cloud',retry);
+   document.removeEventListener('visibilitychange',visible);
+  };
+  if(!options.readOnlyShared&&initialCrm.length)void retryCrm();
 
   // A previously interrupted debounced save survives a browser reload.
   // Re-attempt after the auth store finishes assigning this organization.
