@@ -84,6 +84,9 @@ export const QUOTE_AREA_SCOPE_FIELDS = [
 ] as const;
 export type QuoteAreaScopeField = (typeof QUOTE_AREA_SCOPE_FIELDS)[number];
 
+/** A splash edge belongs to a measured parent Piece but can be adjusted independently. */
+export type QuoteSplashEdge = 'back'|'left'|'right';
+
 /** A rectangular countertop piece measured in inches; future CAD Lite can map here. */
 export interface QuoteTakeoffPiece {
   id: string;
@@ -96,6 +99,10 @@ export interface QuoteTakeoffPiece {
   rightSplash?: boolean;
   /** Optional per-piece fabricated backsplash height; defaults to 4 inches. */
   splashHeightIn?: number;
+  /** Optional independent edge heights; absent values use splashHeightIn. */
+  splashEdgeHeightsIn?: Partial<Record<QuoteSplashEdge,number>>;
+  /** Keep individual splash measurements while excluding only selected edges from price. */
+  excludedSplashEdges?: Partial<Record<QuoteSplashEdge,boolean>>;
   /** Optional fabrication edge selection; defaults to Flat. */
   edgeProfile?: string;
   /** Checked fabrication edges measured for linked miter work (inches). */
