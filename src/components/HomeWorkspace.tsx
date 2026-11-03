@@ -40,6 +40,11 @@ export function HomeWorkspace(){
  const myTasks=!rolePreview&&storedScope===myTaskScope?storedTasks:[];
  const agenda=useMemo(()=>buildHomeAgenda(myTasks,attention),[myTasks,attention]);
  const canCreate=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'quotes')));
+ const previewTask=(id:string)=>{
+  try{window.sessionStorage.setItem('salesshop-open-task-id-v1',id);}catch{/* optional */}
+  setView('tasks');
+  window.dispatchEvent(new Event('salesshop:open-calendar-task'));
+ };
 
  return <main className="sales-home is-calendar-home" aria-label="My SalesShop home">
   <header className="sales-home-heading">
@@ -66,12 +71,14 @@ export function HomeWorkspace(){
     </div>
     {agenda.length?<ul className="sales-home-agenda-scroll">{agenda.map(item=>item.kind==='task'
      ?<li key={item.id} className="sales-home-task-row">
-       <label className="sales-home-task-check">
+       <div className="sales-home-task-check">
         <input type="checkbox" checked={false} onChange={()=>completeTask(item.task.id)}
          aria-label={'Complete '+item.task.title}/>
-        <span><strong>{item.task.title}</strong>
-         <small>{item.task.dueDate?'Due '+item.task.dueDate:'Anytime'} · Personal task</small></span>
-       </label>
+        <button type="button" className="sales-home-task-open" onClick={()=>previewTask(item.task.id)}>
+         <strong>{item.task.title}</strong>
+         <small>{item.task.dueDate?'Due '+item.task.dueDate:'Anytime'} · Personal task</small>
+        </button>
+       </div>
        <div className="sales-home-task-actions">
         {item.task.linked?.type==='quote'&&mine.some(q=>q.id===item.task.linked?.id)&&
          <button type="button" onClick={()=>openQuote(item.task.linked!.id)}>Open quote</button>}
