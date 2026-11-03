@@ -219,3 +219,14 @@
 .sales-crm-activity-arrow{align-self:center;font-size:19px;color:var(--ss-theme-muted,#777);}
 .sales-crm-activity-more{margin:8px 0 0;padding:8px 12px;border:1px solid var(--ss-theme-border,#ded7c9);
  border-radius:7px;background:transparent;color:inherit;font-weight:750;font-size:11px;}
+
+/* Calendar secondary creation actions, quiet until the user opens a date. */
+.sales-calendar-quick-actions{display:flex;gap:6px;padding:8px 12px;
+ border-top:1px solid var(--ss-theme-border,#ded7c9);}
+.sales-calendar-quick-actions button{border:1px solid var(--ss-theme-border,#ded7c9);
+ border-radius:7px;background:var(--ss-theme-card,#fff);color:inherit;font-size:11px;
+ font-weight:800;padding:8px 10px;min-height:36px;}
+.sales-calendar-quick-actions button:hover{background:var(--ss-theme-tint,#f3efe7);}
+.sales-activity-dialog select{min-width:0;width:100%;min-height:38px;padding:8px;
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:7px;
+ background:var(--ss-theme-card,#fff);color:inherit;font-size:16px;}
