@@ -115,21 +115,6 @@ type Page = 'library' | 'quote' | 'area' | 'review';
 type QuoteTab = 'build' | 'details' | 'pricing' | 'preview';
 type AreaTab = 'measure' | 'materials' | 'pricing' | 'calculator';
 
-function AppMenu() {
-  const setView = useNavigationStore(s=>s.setView);
-  const goBack = useNavigationStore(s=>s.goBack);
-  const canGoBack = useNavigationStore(s=>s.history.length>0);
-  return <div className="qmb-appnav-actions"><GlobalPostItLauncher />
-    {canGoBack&&<button type="button" className="qmb-app-back"
-      onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
-    <details className="qmb-appnav"><summary role="button" aria-label="Open SalesShop navigation">☰</summary>
-    <nav aria-label="SalesShop destinations">
-      {([['home','Home'],['quotes','Quotes'],['board','Board'],['dashboard','Connections'],['notebook','Notebook'],['catalog','Catalog'],['settings','Settings']] as const).map(([id,name])=>
-        <button type="button" key={id} onClick={()=>setView(id)}>{name}</button>)}
-    </nav>
-    </details>
-  </div>;
-}
 function InchField({value,onChange,disabled,label}:{
   value?:number;onChange:(next:number|undefined)=>void;disabled:boolean;label:string;
 }) {
@@ -1037,8 +1022,7 @@ export function QuotesMobileBeta() {
         </div>}
       {page==='area'&&quoteProgress}
     {page==='library'?<>
-      <header className="qmb-top"><BuildBadge compact /><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div>
-        <div className="qmb-headeractions"><AppMenu/></div></header>
+      <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div></header>
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
         <p className="qmb-subtitle">Open an existing agreement, quote or workbook—or create a new document from a purpose-built template.</p>
