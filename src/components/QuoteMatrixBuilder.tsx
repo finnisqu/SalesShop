@@ -6,7 +6,7 @@ import {quoteLineAmount,quoteLinesTotal,quoteTotal} from '../types/quote';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {newTakeoffPiece,newTakeoffSink,takeoffPieceSf,takeoffPieceSplashSf,
- takeoffPieceMiterInches,totalBillableTakeoffSf,roundedBillableTakeoffSf,parseInches} from '../services/quoteTakeoffsLite';
+ takeoffPieceMiterInches,takeoffPieceBillableSplashSf,totalBillableTakeoffSf,roundedBillableTakeoffSf,parseInches} from '../services/quoteTakeoffsLite';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
 import {SINK_CATEGORIES,SINK_CATEGORY_LABELS} from '../types/sink';
 import {TakeoffMaterialCatalog,TakeoffSinkCatalog} from './TakeoffCatalogPickers';
@@ -424,8 +424,8 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
         const measured=areaMeasured(section);
         const stonePrice=primary?.includeInTotal?quoteLineAmount(primary):0;
         const allocatedTop=!piece.excludedFromQuote&&measured>0?round(stonePrice*sf/measured):0;
-        const allocatedSplash=!piece.excludedFromQuote&&!piece.excludeSplashFromQuote&&measured>0
-         ?round(stonePrice*takeoffPieceSplashSf(piece)/measured):0;
+        const allocatedSplash=!piece.excludedFromQuote&&measured>0
+         ?round(stonePrice*takeoffPieceBillableSplashSf(piece)/measured):0;
         return <div key={piece.id}>
          <DetailRow excluded={!!piece.excludedFromQuote} issue={!valid}>
           <ReadCell className="qmx-sticky-area qmx-area-name">{tick(ref)}{section.title}</ReadCell>
