@@ -480,7 +480,7 @@ export function Connections() {
             {activityRows.length<activityMatches.length&&<button type="button" className="sales-activity-load-more"
              onClick={()=>setActivityLimit(limit=>limit+60)}>
              Show more · {activityMatches.length-activityRows.length} remaining
-            </button>
+            </button>}
           </section>}
       {preview&&<RecordPreviewDrawer record={preview}
         onClose={()=>setPreview(null)} onSelect={setPreview}
