@@ -118,6 +118,10 @@ function App() {
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
   const renameEntry = useNotebookStore((state) => state.renameEntry);
   const projects = useCrmStore((state) => state.projects);
+  const crmHydrated = useCrmStore((state) => state.hydrated);
+  const loadedTaskScope=usePersonalTaskStore((state)=>state.scope);
+  const personalSyncStatus=usePersonalTaskStore((state)=>state.syncStatus);
+  const syncDealSubmissionTasks=usePersonalTaskStore((state)=>state.syncDealSubmissionTasks);
   const taskUserId=useAuthStore(s=>s.user?.id);
   const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
   const [companionId,setCompanionId]=useState<string|null>(null);
@@ -138,6 +142,15 @@ function App() {
     hydrateCrm();
     void hydrateSettings();
   }, [hydrate, hydrateCrm, hydrateSettings]);
+  useEffect(()=>{
+    // In cloud mode wait for private Task reconciliation before creating
+    // deterministic deal-submission tasks. No duplicate after reload/sync.
+    if(!crmHydrated||!tasksScope||loadedTaskScope!==tasksScope||inRolePreview)return;
+    if(mode==='cloud'&&(personalSyncStatus!=='saved'||teamRole==='viewer'))return;
+    syncDealSubmissionTasks(projects);
+  },[crmHydrated,tasksScope,loadedTaskScope,inRolePreview,mode,personalSyncStatus,teamRole,
+    projects,syncDealSubmissionTasks]);
+
 
   // Browser back/forward updates the same store used by internal navigation.
   useEffect(()=>{
