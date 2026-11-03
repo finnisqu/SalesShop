@@ -115,6 +115,7 @@ import './mobile-profile-quote-toolbar.css';
 import './quote-mobile-footer-dock.css';
 import './mobile-quote-visual-polish.css';
 import './mobile-takeoff-workbook.css';
+import './mobile-takeoff-cleanup.css';
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
 const isPlayground = !isPublicQuote && isDeveloperPlaygroundRoute();
