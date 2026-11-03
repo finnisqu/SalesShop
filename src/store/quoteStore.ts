@@ -25,7 +25,8 @@ import {
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import {assertMatchingApprovedDraft} from '../services/quoteIssueGuard';
-import {duplicateQuoteArea,copyQuoteAreaFromSource,copyQuoteAreasFromSource} from '../services/quoteAreaDuplicate';
+import {duplicateQuoteArea,duplicateQuoteAreas,copyQuoteAreaFromSource,copyQuoteAreasFromSource} from '../services/quoteAreaDuplicate';
+import {duplicateQuoteScopeRows} from '../services/quoteScopeRowDuplicate';
 import {sectionFromQuoteAreaPreset,type QuoteAreaPresetId} from '../services/quoteAreaPresets';
 import {instantiateSavedAreaLayout,type SavedAreaLayout} from '../services/quoteSavedAreaLayouts';
 import {createQuoteSlabPool} from '../services/quoteSharedSlabs';
@@ -83,10 +84,12 @@ interface QuoteState {
   moveLine: (quoteId: string, lineId: string, sectionId?: string) => void;
   /** One undo step for multi-row exclude, restore or move, across work tables. */
   bulkScopeRows:(quoteId:string,rows:QuoteScopeRowRef[],operation:QuoteScopeBulkOperation,targetSectionId?:string)=>number;
+  duplicateScopeRows:(quoteId:string,rows:QuoteScopeRowRef[])=>number;
   addSection: (quoteId: string) => string;
   addAreaFromPreset: (quoteId:string,presetId:QuoteAreaPresetId)=>string;
   addAreaFromSavedLayout: (quoteId:string,layout:SavedAreaLayout)=>string;
   duplicateArea: (quoteId: string, sourceAreaId: string) => string;
+  duplicateAreas:(quoteId:string,sourceAreaIds:string[])=>number;
   copyAreaFromQuote:(targetQuoteId:string,sourceQuoteId:string,sourceAreaId:string,includeSellingPrices?:boolean)=>string;
   copyAreasFromQuote:(targetQuoteId:string,sourceQuoteId:string,sourceAreaIds:string[],includeSellingPrices?:boolean)=>number;
   updateSection: (quoteId: string, sectionId: string, patch: Partial<Omit<QuoteSection, 'id'>>) => void;
@@ -611,6 +614,18 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, ...history });
   },
 
+  duplicateScopeRows:(quoteId,rows)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return 0;
+    const result=duplicateQuoteScopeRows(current,rows);
+    if(!result)return 0;
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId
+      ?{...result.quote,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
+    return result.duplicated;
+  },
   bulkScopeRows:(quoteId,rows,operation,targetSectionId)=>{
     const current=get().quotes.find(q=>q.id===quoteId);
     if(!current||!quoteIsCommerciallyEditable(current)||!rows.length)return 0;
@@ -906,6 +921,18 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quotes=get().quotes.map(q=>q.id===quoteId?{...updated,updatedAt:now()}:q);
     persist(quotes,get().activeQuoteId);set({quotes,...history});
     return line?.id??'';
+  },
+  duplicateAreas:(quoteId,sourceAreaIds)=>{
+    const current=get().quotes.find(q=>q.id===quoteId);
+    if(!current||!quoteIsCommerciallyEditable(current))return 0;
+    const result=duplicateQuoteAreas(current,sourceAreaIds);
+    if(!result)return 0;
+    const history=historyPatch(get(),quoteId,current);
+    const quotes=get().quotes.map(q=>q.id===quoteId
+      ?{...result.quote,updatedAt:now()}:q);
+    persist(quotes,get().activeQuoteId);
+    set({quotes,...history});
+    return result.newAreaIds.length;
   },
   duplicateArea: (quoteId, sourceAreaId) => {
     const current=get().quotes.find(q=>q.id===quoteId);
