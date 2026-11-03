@@ -96,6 +96,7 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
 }){
  const editable=quoteIsCommerciallyEditable(quote),store=useQuoteStore.getState();
  const ref=useRef<HTMLDivElement>(null);
+ const sheetSwipeStart=useRef<number|null>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
  useEffect(()=>{
@@ -122,7 +123,14 @@ function DetailPopup({quote,section,piece,sink,line,onClose}:{
   if(e.target===e.currentTarget)onClose();
  }}>
    <div className="qqt-panel" role="dialog" aria-modal="true" ref={ref} aria-label={'Edit '+title}>
-    <header><div><small>{section?.title??'General'}</small><h2>{title||'Untitled item'}</h2></div>
+    <header onTouchStart={event=>{
+      if((event.target as HTMLElement).closest('button,input,select'))return;
+      sheetSwipeStart.current=event.touches[0]?.clientY??null;
+     }} onTouchEnd={event=>{
+      const start=sheetSwipeStart.current;
+      sheetSwipeStart.current=null;
+      if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
+     }}><div><small>{section?.title??'General'}</small><h2>{title||'Untitled item'}</h2></div>
      <button className="qqt-close" type="button" onClick={onClose} aria-label="Close line details">×</button></header>
     <div className="qqt-panel-body">
      {piece&&<><p>Measured geometry remains saved even if this piece or its splashes are excluded from the contract.</p>
