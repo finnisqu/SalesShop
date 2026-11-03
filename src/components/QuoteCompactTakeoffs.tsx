@@ -99,6 +99,7 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const ref=useRef<HTMLDivElement>(null);
  const sheetSwipeStart=useRef<number|null>(null);
  const sheetMode=useRef<'expanded'|'compact'>('expanded');
+ const [sheetExpanded,setSheetExpanded]=useState(true);
  const dragGesture=useRef<{pointerId:number;startY:number;startTop:number;lastTop:number}|null>(null);
  const suppressHandleClick=useRef(false);
  const [moveTarget,setMoveTarget]=useState('');
@@ -116,6 +117,7 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
   const panel=ref.current;
   if(!panel)return;
   sheetMode.current=mode;
+  setSheetExpanded(mode==='expanded');
   panel.classList.remove('is-dragging');
   const bounds=sheetBounds();
   if(mode==='expanded')panel.style.removeProperty('--qqt-sheet-top');
@@ -166,7 +168,7 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const handleGripKey=(event:ReactKeyboardEvent<HTMLButtonElement>)=>{
   if(event.key==='ArrowUp'){event.preventDefault();snapSheet('expanded');}
   if(event.key==='ArrowDown'){event.preventDefault();snapSheet('compact');}
-  if(event.key==='Escape'){event.preventDefault();onClose();}
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();onClose();}
  };
  useEffect(()=>{
   const adjust=()=>{
@@ -241,6 +243,7 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  }}>
    <div className="qqt-panel" role="dialog" aria-modal="true" ref={ref} aria-label={'Edit '+title}>
     <button type="button" className="qqt-drag-handle" aria-label="Resize details sheet"
+     aria-expanded={sheetExpanded}
      aria-description="Drag up to expand, drag down to collapse or dismiss. Use arrow keys to resize."
      onPointerDown={beginHandleDrag} onPointerMove={moveHandleDrag}
      onPointerUp={event=>finishHandleDrag(event)}
