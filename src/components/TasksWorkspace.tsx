@@ -156,11 +156,6 @@ export function TasksWorkspace(){
   const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
   const scope=taskScope(mode,orgId,userId);
   const previousScope=useRef(scope);
-  useEffect(()=>{
-   if(previousScope.current===scope)return;
-   previousScope.current=scope;
-   setEditing(null);setViewingId(null);
-  },[scope]);
   const tasks=usePersonalTaskStore(s=>s.tasks),storedScope=usePersonalTaskStore(s=>s.scope);
   const syncStatus=usePersonalTaskStore(s=>s.syncStatus);
   const syncError=usePersonalTaskStore(s=>s.syncError);
@@ -171,6 +166,11 @@ export function TasksWorkspace(){
   const nav=useNavigationStore();
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
   const [viewingId,setViewingId]=useState<string|null>(null);
+  useEffect(()=>{
+   if(previousScope.current===scope)return;
+   previousScope.current=scope;
+   setEditing(null);setViewingId(null);
+  },[scope]);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
   const today=localDay();
