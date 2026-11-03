@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState,type ReactNode} from 'react';
+import {useEffect,useRef,useState,type ReactNode,type PointerEvent as ReactPointerEvent,type KeyboardEvent as ReactKeyboardEvent} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote,QuoteSection,QuoteTakeoffPiece,QuoteTakeoffSink,QuoteLine} from '../types/quote';
 import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
@@ -98,7 +98,89 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const editable=quoteIsCommerciallyEditable(quote),store=useQuoteStore.getState();
  const ref=useRef<HTMLDivElement>(null);
  const sheetSwipeStart=useRef<number|null>(null);
+ const sheetMode=useRef<'expanded'|'compact'>('expanded');
+ const dragGesture=useRef<{pointerId:number;startY:number;startTop:number;lastTop:number}|null>(null);
+ const suppressHandleClick=useRef(false);
  const [moveTarget,setMoveTarget]=useState('');
+ const sheetBounds=()=>{
+  const panel=ref.current;
+  const bottom=panel?.getBoundingClientRect().bottom??
+   (window.visualViewport?.height??window.innerHeight);
+  const height=window.visualViewport?.height??window.innerHeight;
+  const expandedTop=Math.max(12,Math.min(28,height*.03));
+  const available=Math.max(240,bottom-expandedTop);
+  const compactHeight=Math.max(265,Math.min(480,available*.57));
+  return {expandedTop,compactTop:Math.max(expandedTop,bottom-compactHeight),bottom};
+ };
+ const snapSheet=(mode:'expanded'|'compact')=>{
+  const panel=ref.current;
+  if(!panel)return;
+  sheetMode.current=mode;
+  panel.classList.remove('is-dragging');
+  const bounds=sheetBounds();
+  if(mode==='expanded')panel.style.removeProperty('--qqt-sheet-top');
+  else panel.style.setProperty('--qqt-sheet-top',bounds.compactTop+'px');
+ };
+ const beginHandleDrag=(event:ReactPointerEvent<HTMLButtonElement>)=>{
+  if(event.button!==0)return;
+  const panel=ref.current;
+  if(!panel)return;
+  suppressHandleClick.current=false;
+  dragGesture.current={pointerId:event.pointerId,startY:event.clientY,
+   startTop:panel.getBoundingClientRect().top,lastTop:panel.getBoundingClientRect().top};
+  panel.classList.add('is-dragging');
+  event.currentTarget.setPointerCapture(event.pointerId);
+ };
+ const moveHandleDrag=(event:ReactPointerEvent<HTMLButtonElement>)=>{
+  const gesture=dragGesture.current;
+  if(!gesture||gesture.pointerId!==event.pointerId)return;
+  const panel=ref.current;
+  if(!panel)return;
+  const bounds=sheetBounds();
+  const maxTop=Math.min(bounds.bottom-125,bounds.compactTop+160);
+  const newTop=Math.max(bounds.expandedTop,
+   Math.min(maxTop,gesture.startTop+event.clientY-gesture.startY));
+  gesture.lastTop=newTop;
+  panel.style.setProperty('--qqt-sheet-top',newTop+'px');
+ };
+ const finishHandleDrag=(event:ReactPointerEvent<HTMLButtonElement>,cancelled=false)=>{
+  const gesture=dragGesture.current;
+  if(!gesture||gesture.pointerId!==event.pointerId)return;
+  dragGesture.current=null;
+  if(event.currentTarget.hasPointerCapture(event.pointerId))
+   event.currentTarget.releasePointerCapture(event.pointerId);
+  const dy=event.clientY-gesture.startY;
+  const moved=Math.abs(dy)>7;
+  suppressHandleClick.current=moved;
+  if(cancelled){snapSheet(sheetMode.current);return;}
+  if(!moved){snapSheet(sheetMode.current);return;}
+  const bounds=sheetBounds();
+  if(dy>0&&gesture.lastTop>bounds.compactTop+75){
+   ref.current?.classList.remove('is-dragging');
+   onClose();
+   return;
+  }
+  const midpoint=(bounds.expandedTop+bounds.compactTop)/2;
+  snapSheet(gesture.lastTop>midpoint?'compact':'expanded');
+ };
+ const handleGripKey=(event:ReactKeyboardEvent<HTMLButtonElement>)=>{
+  if(event.key==='ArrowUp'){event.preventDefault();snapSheet('expanded');}
+  if(event.key==='ArrowDown'){event.preventDefault();snapSheet('compact');}
+  if(event.key==='Escape'){event.preventDefault();onClose();}
+ };
+ useEffect(()=>{
+  const adjust=()=>{
+   if(dragGesture.current)return;
+   snapSheet(sheetMode.current);
+  };
+  window.visualViewport?.addEventListener('resize',adjust);
+  window.addEventListener('resize',adjust);
+  return()=>{
+   window.visualViewport?.removeEventListener('resize',adjust);
+   window.removeEventListener('resize',adjust);
+  };
+ },[]);
+
  const currentAreaId=rowRef.sectionId;
  const eligibleAreas=quote.sections.filter(s=>!isGeneralTakeoffSection(s)&&s.id!==currentAreaId);
  const canChangeRow=editable&&!!(piece||sink||line)&&
@@ -158,6 +240,19 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
   if(e.target===e.currentTarget)onClose();
  }}>
    <div className="qqt-panel" role="dialog" aria-modal="true" ref={ref} aria-label={'Edit '+title}>
+    <button type="button" className="qqt-drag-handle" aria-label="Resize details sheet"
+     aria-description="Drag up to expand, drag down to collapse or dismiss. Use arrow keys to resize."
+     onPointerDown={beginHandleDrag} onPointerMove={moveHandleDrag}
+     onPointerUp={event=>finishHandleDrag(event)}
+     onPointerCancel={event=>finishHandleDrag(event,true)}
+     onLostPointerCapture={event=>finishHandleDrag(event,true)}
+     onKeyDown={handleGripKey}
+     onClick={()=>{
+      if(suppressHandleClick.current){suppressHandleClick.current=false;return;}
+      snapSheet(sheetMode.current==='expanded'?'compact':'expanded');
+     }}>
+      <span aria-hidden="true"/>
+    </button>
     <header onTouchStart={event=>{
       if((event.target as HTMLElement).closest('button,input,select'))return;
       sheetSwipeStart.current=event.touches[0]?.clientY??null;
