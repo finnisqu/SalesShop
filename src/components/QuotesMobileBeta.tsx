@@ -473,6 +473,11 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
 }
 
 export function QuotesMobileBeta() {
+  const isPhoneLayout=useIsPhoneLayout();
+  const [mobileActionsHost,setMobileActionsHost]=useState<HTMLElement|null>(null);
+  useEffect(()=>{
+    setMobileActionsHost(isPhoneLayout?document.getElementById('mobile-quote-actions-slot'):null);
+  },[isPhoneLayout]);
   const hydrate=useQuoteStore(s=>s.hydrate);
   const hydrated=useQuoteStore(s=>s.hydrated);
   const quotes=useQuoteStore(s=>s.quotes);
@@ -1125,22 +1130,24 @@ export function QuotesMobileBeta() {
       <div className="qmb-quote-chrome">
         <div className="qmb-quote-sticky">
           <div className="qmb-quote-identity">
-            <input className="qmb-quote-name" aria-label="Quote title" maxLength={300}
-              disabled={!editable} placeholder="Document name" value={quote.title}
-              onChange={e=>update(quote.id,{title:e.target.value})}/>
-            <strong className="qmb-quote-total"
-              aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>
-              {quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}
-            </strong>
-            <div className="qmb-quote-secondary">
-              <div className="qmb-quote-meta" aria-label="Quote customer, status, revision and save status">
-                <button type="button" className="qmb-document-customer-link"
-                  aria-label="Quick edit quote customer" aria-haspopup="dialog"
-                  aria-expanded={customerQuickOpen} onClick={()=>setCustomerQuickOpen(true)}
-                  title={[quote.companyName,quote.contactName].filter(Boolean).join(' · ')||'Assign customer'}>
-                  {quote.companyName||quote.contactName||'Assign customer'}
-                  {quote.companyName&&quote.contactName?' · '+quote.contactName:''}
-                </button>
+            <div className="qmb-quote-title-group">
+              <input className="qmb-quote-name" aria-label="Quote title" maxLength={300}
+                disabled={!editable} placeholder="Document name" value={quote.title}
+                onChange={e=>update(quote.id,{title:e.target.value})}/>
+              <button type="button" className="qmb-document-customer-link"
+                aria-label="Quick edit quote customer" aria-haspopup="dialog"
+                aria-expanded={customerQuickOpen} onClick={()=>setCustomerQuickOpen(true)}
+                title={[quote.companyName,quote.contactName].filter(Boolean).join(' · ')||'Assign customer'}>
+                {quote.companyName||quote.contactName||'Assign customer'}
+                {quote.companyName&&quote.contactName?' · '+quote.contactName:''}
+              </button>
+            </div>
+            <div className="qmb-quote-price-group">
+              <strong className="qmb-quote-total"
+                aria-label={quote.documentType==='pricing-schedule'?'Published pricing rows':'Current quote total'}>
+                {quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}
+              </strong>
+              <div className="qmb-quote-price-meta" aria-label="Quote status, revision and cloud save">
                 <span className="qmb-chip qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
                 <span className="qmb-quote-revision" aria-label={`Revision ${quote.revision}`}
                   title={`Revision ${quote.revision}`}>
@@ -1149,10 +1156,6 @@ export function QuotesMobileBeta() {
                 </span>
                 <SalesDocumentSaveStatus quote={quote} cloudMode={authMode==='cloud'} compact/>
               </div>
-              <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
-                canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
-                onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
-                onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
             </div>
           </div>
           {quote.templateOrigin&&<div className="qmb-pad qmb-document-origin">
@@ -1166,6 +1169,10 @@ export function QuotesMobileBeta() {
                 onClick={()=>undo(quote.id)} aria-label="Undo quote edit" title="Undo">↶ Undo</button>
               <button type="button" disabled={!editable||redoDepth===0}
                 onClick={()=>redo(quote.id)} aria-label="Redo quote edit" title="Redo">↷ Redo</button>
+              <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
+                canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
+                onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
+                onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>
             </div>
           </header>
           <nav className="qmb-tabs" aria-label="Quote views">
@@ -1182,6 +1189,12 @@ export function QuotesMobileBeta() {
         </div>
         {quoteProgress}
       </div>
+      {isPhoneLayout&&mobileActionsHost&&createPortal(
+        <SalesDocumentActionsMenu quote={quote} canManage={canManageLibrary} canIssue={canIssue}
+          canDelete={canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)}
+          onCopy={copyCurrentDocument} onDelete={requestDocumentDelete}
+          onArchive={requestDocumentArchive} onRevise={reviseCurrentDocument}/>,
+        mobileActionsHost)}
       <div className="qmb-quote-scroll" ref={quoteScrollRef}>
         <div className="qmb-pad qmb-pagecontent">
         {quoteTab==='build'&&quote.documentType==='pricing-schedule'&&
