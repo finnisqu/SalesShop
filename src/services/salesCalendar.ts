@@ -23,6 +23,14 @@ export function calendarMonthDays(year:number,month:number):string[]{
   const date=new Date(start);date.setDate(start.getDate()+i);return localDateKey(date);
  });
 }
+/** A compact month drops only the entirely unused padding week(s). */
+export function calendarCompactMonthDays(year:number,month:number):string[]{
+ const firstDay=new Date(year,month,1,12).getDay();
+ const daysInMonth=new Date(year,month+1,0,12).getDate();
+ const visibleWeeks=Math.ceil((firstDay+daysInMonth)/7);
+ return calendarMonthDays(year,month).slice(0,visibleWeeks*7);
+}
+
 /** One mobile calendar week, anchored at local noon across DST changes. */
 export function calendarWeekDays(selected:string):string[]{
  const chosen=new Date(selected+'T12:00:00');
