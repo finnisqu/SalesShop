@@ -473,13 +473,19 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
       onClick={()=>bulkApply('delete')}>Delete</button>
      <button type="button" onClick={()=>setSelected([])}>Clear ×</button>
     </div>:<div><h3>Areas</h3>
-     <span>{areas.length} {areas.length===1?'room':'rooms'} · click or type to edit · Tab/Enter to move</span></div>}
+     <span className="qqs-desktop-hint">{areas.length} {areas.length===1?'room':'rooms'} · click or type to edit · Tab/Enter to move</span>
+     <span className="qqs-mobile-hint">{areas.length} {areas.length===1?'Area':'Areas'} · tap a cell to edit</span></div>}
     <div className="qqs-inline-actions">
      <button type="button" disabled={!editable} onClick={onCopyArea}>Copy Area</button>
      <button type="button" disabled={!editable} onClick={onLayouts}>Saved layouts</button>
      <button type="button" className="qqs-accent" disabled={!editable} onClick={onAddArea}>+ Area</button>
     </div>
    </header>
+   {!areas.length&&<div className="qqs-mobile-empty">
+    <strong>Start with your first Area</strong>
+    <p>Add a Kitchen, Bathroom or other scope, or reuse an existing layout.</p>
+    <button type="button" disabled={!editable} onClick={onAddArea}>+ Add an Area</button>
+   </div>}
    <div className="qqs-scroll" role="region" aria-label="Area summary spreadsheet" tabIndex={0} ref={table}
     onKeyDownCapture={event=>handleQuickGridKey(event,event.currentTarget)}>
     <div className="qqs-grid qqs-header" role="row">
