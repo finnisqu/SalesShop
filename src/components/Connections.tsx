@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {ActivityCloudIndicator} from './ActivityCloudIndicator';
+import {requestActivityDetail} from './ActivityDetailHost';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
 import { DealRecordPage } from './DealRecordPage';
@@ -248,12 +249,7 @@ export function Connections() {
     setNewDeal(''); setNewDealCompanyId(''); setDealCreating(false);
     openProject(id);
   };
-  const openActivity = (activity: (typeof activities)[number]) => {
-    if (activity.quoteId) openQuote(activity.quoteId);
-    else if (activity.projectId) openProject(activity.projectId);
-    else if (activity.companyId) openCompany(activity.companyId);
-    else if (activity.contactId) openPerson(activity.contactId);
-  };
+  const openActivity = (activity: (typeof activities)[number]) => requestActivityDetail(activity.id);
 
   const backToDeals = () => {
     chooseTab('deals');
@@ -434,8 +430,7 @@ export function Connections() {
             <ActivityCloudIndicator />
             <div className="connections-activity-list">
               {activityRows.map((activity) => {
-                const actionable = Boolean(activity.quoteId || activity.projectId || activity.companyId || activity.contactId);
-                return <button type="button" key={activity.id} disabled={!actionable} onClick={() => openActivity(activity)}>
+                return <button type="button" key={activity.id} onClick={() => openActivity(activity)}>
                   <span><strong>{activity.summary}</strong><small>{[
                    activity.metadata?.interactionMethod?.replaceAll('-',' '),
                    companiesById.get(activity.companyId ?? '')?.name,

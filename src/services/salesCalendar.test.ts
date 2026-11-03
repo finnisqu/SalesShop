@@ -41,7 +41,7 @@ describe('SalesShop shared Calendar',()=>{
   const counts=calendarDayCounts(events,date);
   expect(counts).toMatchObject({task:2,bid:1,activity:1,followUp:0,total:4});
   expect(events.find(x=>x.id==='activity:call')).toMatchObject({
-   recordType:'contact',recordId:'c1',kind:'activity'});
+   recordType:'activity',recordId:'call',kind:'activity'});
   expect(events.find(x=>x.id==='activity:call')?.detail).toContain('Discussed schedule');
  });
  it('shows unlinked interactions in Activity History rather than dropping them',()=>{

@@ -9,6 +9,7 @@ import {useNavigationStore} from '../store/navigationStore';
 import {buildSalesCalendarEvents,calendarDayCounts,calendarMonthDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
 import './sales-calendar.css';
+import {requestActivityDetail} from './ActivityDetailHost';
 
 const week=['S','M','T','W','T','F','S'];
 const labels:Record<SalesCalendarKind,string>={
@@ -73,11 +74,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
    nav.setView('tasks');
    window.dispatchEvent(new Event('salesshop:open-calendar-task'));
   }
-  else if(recordType==='activity'){
-   try{window.sessionStorage.setItem('salesshop-open-activity-history-v1','1');}catch{/* best effort */}
-   nav.setView('dashboard');
-   window.dispatchEvent(new Event('salesshop:open-activity-history'));
-  }
+  else if(recordType==='activity')requestActivityDetail(recordId);
   else if(recordType==='project')nav.openProject(recordId);
   else if(recordType==='quote')nav.openQuote(recordId);
   else if(recordType==='company')nav.openCompany(recordId);

@@ -47,11 +47,7 @@ export function buildSalesCalendarEvents(
   if((activity.type==='notebook-touchpoint'||activity.type==='manual-touchpoint')&&!activity.metadata?.voidedAt){
    if(activity.quoteId&&!quoteIds.has(activity.quoteId))continue;
    const date=isoLocalDay(activity.occurredAt);if(!date)continue;
-   const type=activity.quoteId&&quoteIds.has(activity.quoteId)?'quote':
-    activity.projectId?'project':activity.contactId?'contact':activity.companyId?'company':null;
-   const id=type==='quote'?activity.quoteId:type==='project'?activity.projectId:
-    type==='contact'?activity.contactId:activity.companyId;
-   const destination=type||'activity',destinationId=id||activity.id;
+   const destination='activity' as const,destinationId=activity.id;
    const method=activity.metadata?.interactionMethod;
    events.push({id:'activity:'+activity.id,date,kind:'activity',title:activity.summary,
     detail:(method?method.charAt(0).toUpperCase()+method.slice(1).replaceAll('-',' '):'Touchpoint')+
