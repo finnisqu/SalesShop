@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import type {Quote} from '../types/quote';
-import {duplicateQuoteArea,copyQuoteAreaFromSource,copyQuoteAreasFromSource} from './quoteAreaDuplicate';
+import {duplicateQuoteArea,duplicateQuoteAreas,copyQuoteAreaFromSource,copyQuoteAreasFromSource} from './quoteAreaDuplicate';
 import {quoteTotal} from '../types/quote';
 
 function sample():Quote {
@@ -49,6 +49,38 @@ describe('Duplicate Area for mobile quote speed',()=>{
     clonedPieces[0].lengthIn=100;
     expect(source.sections[0].scope?.takeoffPieces?.[0].lengthIn).toBe(48);
     expect(source.lines).toHaveLength(2);
+  });
+  it('duplicates selected Areas together and remaps every child and charge in one operation',()=>{
+    const source=sample();
+    source.sections.push({
+      id:'area-b',title:'Bath',customerVisible:true,
+      scope:{takeoffPieces:[{id:'piece-b',name:'Vanity',count:1,lengthIn:60,widthIn:22.5}],
+       takeoffSinks:[]},
+    });
+    source.lines.push({id:'line-c',sectionId:'area-b',kind:'item',description:'Template charge',
+     pricingMode:'direct',amount:75,customerVisible:true,includeInTotal:true});
+    const used=new Map<string,number>();
+    const ids=(kind:string)=>{const n=(used.get(kind)??0)+1;used.set(kind,n);return kind+'-'+n;};
+    const before=quoteTotal(source);
+    const result=duplicateQuoteAreas(source,['area-a','area-b'],ids)!;
+    expect(result.newAreaIds).toEqual(['section-1','section-2']);
+    expect(result.quote.sections.map(s=>s.title)).toEqual([
+      'Unit A Kitchen','Unit A Kitchen copy','Bath','Bath copy',
+    ]);
+    expect(result.quote.lines.filter(l=>l.sectionId==='section-1')).toHaveLength(2);
+    expect(result.quote.lines.filter(l=>l.sectionId==='section-2')).toHaveLength(1);
+    expect(result.quote.sections[1].scope?.takeoffPieces?.[0].id).not.toBe('piece-a');
+    expect(result.quote.sections[3].scope?.takeoffPieces?.[0].id).not.toBe('piece-b');
+    expect(quoteTotal(result.quote)).toBeCloseTo(before*2,2);
+    expect(source.sections).toHaveLength(2);
+    expect(source.lines).toHaveLength(3);
+  });
+  it('rejects invalid bulk Area selections without modifying the quote',()=>{
+    const original=sample();
+    expect(duplicateQuoteAreas(original,['area-a','missing'])).toBeUndefined();
+    expect(duplicateQuoteAreas(original,['area-a','area-a'])).toBeUndefined();
+    expect(duplicateQuoteAreas(original,[])).toBeUndefined();
+    expect(original.sections).toHaveLength(1);
   });
   it('copies another quote\'s measurements and selections without automatically carrying selling prices',()=>{
     const source=sample(),target={...sample(),id:'quote-b',sections:[],lines:[]};
