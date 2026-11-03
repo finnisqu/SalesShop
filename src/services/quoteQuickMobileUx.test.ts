@@ -9,6 +9,7 @@ const mobileChrome=source('src/components/MobileAppChrome.tsx');
 const compactChrome=source('src/mobile-profile-quote-toolbar.css');
 const mobileDock=source('src/quote-mobile-footer-dock.css');
 const polish=source('src/mobile-quote-visual-polish.css');
+const areasV2=source('src/mobile-area-summary-v2.css');
 const workbook=source('src/mobile-takeoff-workbook.css');
 const cleanup=source('src/mobile-takeoff-cleanup.css');
 const areas=source('src/components/QuoteQuickAreaSummary.tsx');
@@ -170,6 +171,29 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(polish).toContain('.mobile-app-nav-popover-surface .mobile-app-drawer');
   expect(polish).toContain('pointer-events:none');
   expect(polish).toContain('background:var(--ss-theme-card');
+ });
+ it('uses compact Areas summaries with expandable inline prices on mobile',()=>{
+  expect(areas).toContain("const [expandedAreas,setExpandedAreas]=useState<string[]>([])");
+  expect(areas).toContain('const [generalExpanded,setGeneralExpanded]=useState(false)');
+  expect(areas).toContain('qqs-mobile-count');
+  expect(areas).toContain('qqs-mobile-area-options');
+  expect(areas).toContain('qqs-mobile-expand');
+  expect(areas).toContain('aria-expanded={expanded}');
+  expect(areas).toContain('aria-expanded={generalExpanded}');
+  expect(areas).toContain('onClick={()=>toggleArea(area.id)}');
+  expect(areas).toContain('onClick={()=>setGeneralExpanded(v=>!v)}');
+  expect(areas).toContain('qqs-mobile-expand');
+  expect(areas).toContain("writeStoneTotal(quote,area,v)");
+  expect(areas).toContain('writeSingleChargeTotal(quote,line,v)');
+  expect(areas).toContain('window.matchMedia');
+  expect(areasV2).toContain('@media (max-width:700px)');
+  expect(areasV2).toContain('.qqs-grid.qqs-row:not(.qqs-general)');
+  expect(areasV2).toContain('.qqs-grid.qqs-row.is-expanded:not(.qqs-general)');
+  expect(areasV2).toContain('.qqs-grid.qqs-row.qqs-general.is-expanded');
+  expect(areasV2).toContain('.qqs-mobile-expand[aria-expanded="true"]');
+  expect(areasV2).toContain('.qqs-area-name>.qqs-mobile-area-options');
+  expect(areasV2).toContain('display:none!important;');
+  expect(areasV2).toContain('background:var(--qmb-card)!important;');
  });
  it('keeps Build Quote dense and the Pricing Review breakdown readable on phones',()=>{
   expect(areas).toContain('qqs-mobile-actions');
