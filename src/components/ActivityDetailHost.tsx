@@ -43,7 +43,7 @@ export function ActivityDetailHost(){
  const personalScope=usePersonalTaskStore(s=>s.scope);
  const tasks=usePersonalTaskStore(s=>s.tasks);
  const relevantTasks=tasks.filter(t=>personalScope&&t.workspaceScope===personalScope&&
-  !t.deletedAt&&t.sourceLabel==='CRM Activity'&&t.sourceObjectId===id);
+  !t.deletedAt&&t.sourceObjectId===id);
  const openTask=(taskId:string)=>{
   close();
   try{window.sessionStorage.setItem('salesshop-open-task-id-v1',taskId);}catch{/* optional */}

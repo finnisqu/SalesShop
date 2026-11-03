@@ -139,6 +139,7 @@ export function TasksWorkspace(){
   const [queueFilter,setQueueFilter]=useState('all');
   const nav=useNavigationStore();
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
+  const crmActivities=useCrmStore(s=>s.activities);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
   const today=localDay();
@@ -283,7 +284,7 @@ export function TasksWorkspace(){
             </div>
             {task.notes&&<p>{task.notes}</p>}
             {task.sourceText&&<blockquote>{task.sourceText.slice(0,260)}</blockquote>}
-            {task.sourceLabel==='CRM Activity'&&task.sourceObjectId&&
+            {task.sourceObjectId&&crmActivities.some(a=>a.id===task.sourceObjectId)&&
              <button type="button" className="tasks-source" onClick={()=>
               requestActivityDetail(task.sourceObjectId!)}>Open original Activity ↗</button>}
             {normalizedTaskAssociations(task).map(link=>
