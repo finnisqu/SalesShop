@@ -12,6 +12,7 @@ import {displayQuoteNumber} from '../types/quote';
 import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {buildHomeAgenda,nextLocalDay} from '../services/homeAgenda';
 import {followUpLocalDate} from '../services/quoteFollowUps';
+import {buildSalesCalendarEvents,localDateKey,type SalesCalendarEvent} from '../services/salesCalendar';
 import {newQuickNoteEvent} from './GlobalPostIt';
 import {QuickCreate} from './QuickCreate';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
@@ -28,6 +29,7 @@ export function HomeWorkspace(){
   const hydrated=useQuoteStore(s=>s.hydrated);
   const hydrate=useQuoteStore(s=>s.hydrate);
   const activities=useCrmStore(s=>s.activities);
+  const deals=useCrmStore(s=>s.projects);
   const mode=useAuthStore(s=>s.mode);
   const userId=useAuthStore(s=>s.user?.id);
   const organizationId=useAuthStore(s=>s.organizationId);
@@ -42,6 +44,7 @@ export function HomeWorkspace(){
   const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
   const setView=useNavigationStore(s=>s.setView);
   const openQuote=useNavigationStore(s=>s.openQuote);
+  const openProject=useNavigationStore(s=>s.openProject);
   const betaEnabled=useQuotesMobileBetaStore(s=>s.enabled);
   const [creating,setCreating]=useState(false);
   const [newName,setNewName]=useState('');
@@ -62,6 +65,28 @@ export function HomeWorkspace(){
   const myTasks=!rolePreview&&storedScope===myTaskScope?storedTasks:[];
   const agenda=useMemo(()=>buildHomeAgenda(myTasks,attention),[myTasks,attention]);
   const month=useMemo(()=>homeMonthlyMetrics(mine),[mine]);
+  const upcoming=useMemo(()=>{
+   if(rolePreview)return [];
+   const projectIds=new Set(mine.map(q=>q.projectId).filter((id):id is string=>!!id));
+   const today=localDateKey(new Date()),twoWeeks=new Date();
+   twoWeeks.setDate(twoWeeks.getDate()+14);
+   return buildSalesCalendarEvents(
+     myTasks.filter(t=>t.status!=='completed'&&!t.completedAt),
+     deals.filter(d=>projectIds.has(d.id)),activities,mine)
+    .filter(item=>item.kind!=='activity'&&item.date>=today&&
+      item.date<=localDateKey(twoWeeks)&&
+      (item.kind==='bid'||item.date>today))
+    .slice(0,6);
+  },[myTasks,deals,activities,mine,rolePreview]);
+  const openUpcoming=(entry:SalesCalendarEvent)=>{
+   if(entry.recordType==='project')openProject(entry.recordId);
+   else if(entry.recordType==='quote')openQuote(entry.recordId);
+   else if(entry.recordType==='task'){
+    try{sessionStorage.setItem('salesshop-open-task-id-v1',entry.recordId);}catch{/* optional */}
+    setView('tasks');
+    window.dispatchEvent(new Event('salesshop:open-calendar-task'));
+   }
+  };
   const create= (event:FormEvent)=>{
     event.preventDefault();
     const title=newName.trim();
@@ -109,6 +134,20 @@ export function HomeWorkspace(){
     </section>
 
     <ActivityCloudIndicator />
+    {upcoming.length>0&&<section className="sales-home-upcoming" aria-label="Upcoming deadlines">
+     <header><div><h2>Upcoming</h2><p>Next two weeks · deadlines only</p></div>
+      <SalesCalendarLauncher compact label="Open calendar" /></header>
+     <div className="sales-home-upcoming-list">
+      {upcoming.map(item=><button type="button" key={item.id}
+       onClick={()=>openUpcoming(item)} title={item.detail}>
+       <span className={'sales-home-upcoming-kind is-'+item.kind}>
+        {item.kind==='bid'?'Bid':item.kind==='task'?'Task':'Follow-up'}</span>
+       <strong>{item.title}</strong>
+       <small>{item.date}{item.time?' · '+item.time:''}</small>
+       <span aria-hidden="true">›</span>
+      </button>)}
+     </div>
+    </section>}
     <div className="sales-home-columns">
       <section className="sales-home-panel sales-home-attention" aria-label="My tasks and quote follow-ups">
         <div className="sales-home-section-head"><div><h2>My Today</h2>
