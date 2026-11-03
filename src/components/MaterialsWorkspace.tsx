@@ -116,6 +116,8 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   const [finishFilter, setFinishFilter] = useState('all');
   const [thicknessFilter, setThicknessFilter] = useState('all');
   const [sort, setSort] = useState<MaterialSort>('stock-brand');
+  const [pageSize,setPageSize]=useState(50);
+  const [page,setPage]=useState(1);
   const [pinnedKeys, setPinnedKeys] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(PIN_STORAGE_KEY);
@@ -185,6 +187,28 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
       return Number(b.stockProgram) - Number(a.stockProgram) || (a.brand ?? a.supplier ?? '').localeCompare(b.brand ?? b.supplier ?? '') || a.name.localeCompare(b.name);
     });
   }, [settings.stockMaterials, query, programFilter, materialFamilyFilter, materialTypeFilter, brandFilter,collectionFilter,tagFilter, finishFilter, thicknessFilter, sort]);
+
+  // Render only the selected slice; search/filter/sort continue across the full catalog.
+  const pageCount=Math.max(1,Math.ceil(materials.length/pageSize));
+  const currentPage=Math.min(page,pageCount);
+  const firstRow=(currentPage-1)*pageSize;
+  const pagedMaterials=useMemo(()=>materials.slice(firstRow,firstRow+pageSize),
+   [materials,firstRow,pageSize]);
+  useEffect(()=>{setPage(1);setExpandedMaterialId(null);},[
+   query,programFilter,materialFamilyFilter,materialTypeFilter,brandFilter,
+   collectionFilter,tagFilter,finishFilter,thicknessFilter,sort,pageSize]);
+  const pagination=<nav className="materials-page-controls" aria-label="Material results pagination">
+   <span>Showing {materials.length?firstRow+1:0}–{Math.min(firstRow+pageSize,materials.length)} of {materials.length}</span>
+   <label>Show <select aria-label="Materials per page" value={pageSize}
+    onChange={event=>setPageSize(Number(event.target.value))}>
+    {[25,50,100].map(count=><option key={count} value={count}>{count} per page</option>)}
+   </select></label>
+   <div className="materials-page-actions">
+    <button type="button" disabled={currentPage<=1} onClick={()=>{setPage(p=>Math.max(1,p-1));setExpandedMaterialId(null);}}>‹ Previous</button>
+    <span>Page {currentPage} of {pageCount}</span>
+    <button type="button" disabled={currentPage>=pageCount} onClick={()=>{setPage(p=>Math.min(pageCount,p+1));setExpandedMaterialId(null);}}>Next ›</button>
+   </div>
+  </nav>;
 
   const pinnedKeySet = useMemo(() => new Set(pinnedKeys), [pinnedKeys]);
 
@@ -595,6 +619,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
               <div><strong>Supplier material catalog</strong><small>{materials.length} active material{materials.length === 1 ? '' : 's'} shown</small></div>
               <span>Variants reveal slab size, square footage, availability, and every active supplier price program.</span>
             </header>
+            {pagination}
             {isMobileReference ? (
               <MobileCatalogReferenceList
                 label="Materials and default purchase costs"
@@ -602,7 +627,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
                 emptyMessage="No active materials match the current search and filters."
                 onReset={query.trim() || activeFilterCount ? () => { setQuery(''); clearFilters(); } : undefined}
               >
-                {materials.map((material) => {
+                {pagedMaterials.map((material) => {
                   const reference = resolveStockMaterialCostReference(material);
                   const expanded = expandedMaterialId === material.id;
                   const activeVariantCount = (material.variants ?? []).filter((variant) => variant.active !== false).length;
@@ -628,7 +653,7 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
               <table className="rates-reference-table materials-reference-table">
                 <thead><tr><th>Brand</th><th>Name</th><th>Type</th><th>Program</th><th>Default cost</th><th>Default spec</th><th>Product</th><th>Variants</th></tr></thead>
                 <tbody>
-                  {materials.map((material) => {
+                  {pagedMaterials.map((material) => {
                     const reference = resolveStockMaterialCostReference(material);
                     const links = productLinks(material);
                     const activeVariants = (material.variants ?? []).filter((variant) => variant.active !== false);
