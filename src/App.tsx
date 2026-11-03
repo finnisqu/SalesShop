@@ -40,6 +40,7 @@ import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
 import './developer-playground.css';
 import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
 import {TaskModalHost} from './components/TaskModalHost';
+import {visibleSubmissionDeals} from './services/dealSubmissionAudience';
 import { ViewerWorkspace } from './components/ViewerWorkspace';
 import { RolePerspectiveBanner, RolePerspectiveSettings } from './components/RolePerspectiveControls';
 import { resolveOwnerPerspective } from './services/rolePerspective';
@@ -118,6 +119,9 @@ function App() {
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
   const renameEntry = useNotebookStore((state) => state.renameEntry);
   const projects = useCrmStore((state) => state.projects);
+  const activities=useCrmStore((state)=>state.activities);
+  const allQuotes=useQuoteStore((state)=>state.quotes);
+  const personalTasks=usePersonalTaskStore((state)=>state.tasks);
   const crmHydrated = useCrmStore((state) => state.hydrated);
   const loadedTaskScope=usePersonalTaskStore((state)=>state.scope);
   const personalSyncStatus=usePersonalTaskStore((state)=>state.syncStatus);
@@ -131,6 +135,10 @@ function App() {
     ?(organizationId&&taskUserId?'org:'+organizationId+':user:'+taskUserId:null):'local';
   const [restoredSplitScope,setRestoredSplitScope]=useState<string|null>(null);
   const tasksScope=taskScope(mode,organizationId,taskUserId);
+  const submissionDeals=useMemo(()=>visibleSubmissionDeals(
+   mode,teamRole,taskUserId,projects,activities,allQuotes,
+   loadedTaskScope===tasksScope?personalTasks:[],
+  ),[mode,teamRole,taskUserId,projects,activities,allQuotes,personalTasks,loadedTaskScope,tasksScope]);
   useEffect(()=>{
     usePersonalTaskStore.getState().load(tasksScope);
     if(mode!=='cloud'||!taskUserId||!tasksScope)return;
@@ -147,9 +155,9 @@ function App() {
     // deterministic deal-submission tasks. No duplicate after reload/sync.
     if(!crmHydrated||!tasksScope||loadedTaskScope!==tasksScope||inRolePreview)return;
     if(mode==='cloud'&&(personalSyncStatus!=='saved'||teamRole==='viewer'))return;
-    syncDealSubmissionTasks(projects);
+    syncDealSubmissionTasks(submissionDeals);
   },[crmHydrated,tasksScope,loadedTaskScope,inRolePreview,mode,personalSyncStatus,teamRole,
-    projects,syncDealSubmissionTasks]);
+    submissionDeals,syncDealSubmissionTasks]);
 
 
   // Browser back/forward updates the same store used by internal navigation.
