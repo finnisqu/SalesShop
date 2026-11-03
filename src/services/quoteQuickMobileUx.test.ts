@@ -67,7 +67,7 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(takeoffs).toContain('qqt-sheet-options');
   expect(takeoffs).toContain('Strike out · exclude');
   expect(takeoffs).toContain('✓ Restore to contract');
-  expect(takeoffs).toContain('⧉ Duplicate');
+  expect(takeoffs).toContain("label:'Duplicate selected takeoff rows'");
   expect(takeoffs).toContain('Move row to Area');
   expect(takeoffs).toContain('Delete row');
   expect(takeoffs).toContain("kind:'piece' as const");
