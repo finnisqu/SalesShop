@@ -51,6 +51,8 @@ interface CrmState {
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
   deleteProject: (projectId: string) => void;
   recordActivity: (activity: ActivityInput) => string;
+  updateManualActivity: (activityId:string,change:{summary?:string;notes?:string;interactionMethod?:Activity['metadata'] extends infer M?NonNullable<M>['interactionMethod']:never;occurredAt?:string})=>boolean;
+  voidManualActivity:(activityId:string)=>boolean;
 }
 
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
@@ -278,6 +280,55 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     persist(get().companies, get().contacts, projects, activities);
     set({ activities,projects });
     return activity.id;
+  },
+
+  updateManualActivity:(activityId,change)=>{
+   const original=get().activities.find(a=>a.id===activityId);
+   if(!original||!['manual-touchpoint','notebook-touchpoint'].includes(original.type)||
+    original.metadata?.voidedAt)return false;
+   const auth=useAuthStore.getState();
+   if(auth.mode==='cloud'&&(!auth.user?.id||!auth.organizationId))return false;
+   const next:Activity={...original,
+    summary:change.summary?.trim().slice(0,240)||original.summary,
+    occurredAt:change.occurredAt&&Number.isFinite(Date.parse(change.occurredAt))
+      ?change.occurredAt:original.occurredAt,
+    metadata:{...original.metadata,
+     notes:change.notes===undefined?original.metadata?.notes:change.notes.trim().slice(0,5000)||undefined,
+     interactionMethod:change.interactionMethod??original.metadata?.interactionMethod,
+     editedAt:now(),
+     correctionHistory:[...(original.metadata?.correctionHistory??[]),{
+      at:now(),summary:original.summary,notes:original.metadata?.notes,
+      method:original.metadata?.interactionMethod,
+     }].slice(-15),
+    }};
+   if(auth.mode==='cloud'&&auth.organizationId&&auth.user?.id){
+    const scope={organizationId:auth.organizationId,userId:auth.user.id};
+    const queued=stagePendingActivity(scope,next);
+    useActivityCloudStatusStore.getState().setStatus(
+     queued?'pending':'error',readPendingActivities(scope).length,
+     queued?null:'This correction could not be queued for reliable cloud saving.');
+   }
+   const activities=get().activities.map(a=>a.id===activityId?next:a);
+   persist(get().companies,get().contacts,get().projects,activities);
+   set({activities});return true;
+  },
+  voidManualActivity:activityId=>{
+   const original=get().activities.find(a=>a.id===activityId);
+   if(!original||!['manual-touchpoint','notebook-touchpoint'].includes(original.type)||
+     original.metadata?.voidedAt)return false;
+   const auth=useAuthStore.getState();
+   if(auth.mode==='cloud'&&(!auth.organizationId||!auth.user?.id))return false;
+   const next={...original,metadata:{...original.metadata,voidedAt:now()}};
+   if(auth.mode==='cloud'&&auth.organizationId&&auth.user?.id){
+    const scope={organizationId:auth.organizationId,userId:auth.user.id};
+    const queued=stagePendingActivity(scope,next);
+    useActivityCloudStatusStore.getState().setStatus(
+     queued?'pending':'error',readPendingActivities(scope).length,
+     queued?null:'This change could not be queued for reliable cloud saving.');
+   }
+   const activities=get().activities.map(a=>a.id===activityId?next:a);
+   persist(get().companies,get().contacts,get().projects,activities);
+   set({activities});return true;
   },
 
   createProject: (name, stage = 'Discovery', details = {}) => {
