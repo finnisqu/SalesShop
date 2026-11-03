@@ -13,6 +13,9 @@ const gridValue=source('src/services/quoteGridValue.ts');
 const quickPricingParity=source('src/services/quoteQuickPricingParity.test.ts');
 const contract=source('src/components/QuoteContractApproval.tsx');
 const scopeBatch=source('src/services/quoteScopeRowBatch.ts');
+const scopeDuplicate=source('src/services/quoteScopeRowDuplicate.ts');
+const areaDuplicate=source('src/services/quoteAreaDuplicate.ts');
+const storeSource=source('src/store/quoteStore.ts');
 const review=source('src/components/QuoteBetaReview.tsx');
 const reviewCss=source('src/components/quote-pricing-review-workspace.css');
 const editablePreview=source('src/components/QuoteBetaEditablePreview.tsx');
@@ -91,6 +94,22 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain('Delete sink');
   expect(areas).toContain('Delete line');
   expect(areas).toContain("onClick={()=>bulkApply('delete')}");
+ });
+ it('offers fast individual and bulk duplication without adding worksheet rows',()=>{
+  expect(areas).toContain("onClick={duplicateSelected}");
+  expect(areas).toContain("store.duplicateAreas(quote.id,selected)");
+  expect(areas).toContain("store.duplicateArea(quote.id,area.id)");
+  expect(areas).toContain("Duplicate this Area");
+  expect(takeoffs).toContain("qqt-duplicate-button");
+  expect(takeoffs).toContain("onClick={()=>duplicateRows(selected)}");
+  expect(takeoffs).toContain("store.duplicateScopeRows(quote.id,refs)");
+  expect(takeoffs).toContain("Duplicating this splash also copies its parent piece");
+  expect(scopeDuplicate).toContain("function duplicateQuoteScopeRows");
+  expect(scopeDuplicate).toContain("patchQuoteTakeoffSinks");
+  expect(scopeDuplicate).toContain("ensureSmartTakeoffLine");
+  expect(areaDuplicate).toContain("function duplicateQuoteAreas");
+  expect(storeSource).toContain("duplicateAreas:(quoteId,sourceAreaIds)=>");
+  expect(storeSource).toContain("duplicateScopeRows:(quoteId,rows)=>");
  });
  it('prints only the customer document with preview and direct Print actions',()=>{
   expect(editablePreview).toContain('Print preview</button>');
