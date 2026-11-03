@@ -76,6 +76,31 @@ describe('SalesShop shared Calendar',()=>{
    .toEqual({deals:[],activities:[]});
   expect(personalCalendarSources('local',undefined,[],[],sharedDeals,activityItems).deals).toHaveLength(3);
  });
+ it('uses exactly one bid badge when a Deal has an automatic submission Task',()=>{
+  const date='2026-11-12';
+  const submission=task('task_deal_submit_d1',date,{
+   title:'Submit quote · Riverwalk Apartments',
+   sourceObjectId:'deal-submit:d1',
+   linked:{type:'project',id:'d1'},
+   priority:'urgent',
+  });
+  const events=buildSalesCalendarEvents([submission],[deal(date)],[],[]);
+  expect(events).toHaveLength(1);
+  expect(events[0]).toMatchObject({
+   kind:'bid',recordType:'task',recordId:'task_deal_submit_d1',urgent:true,
+  });
+  expect(calendarDayCounts(events,date)).toMatchObject({bid:1,task:0,total:1,urgent:1});
+ });
+ it('shows planned follow-up Tasks on their due dates apart from logged activities',()=>{
+  const date='2026-11-06';
+  const followUp=task('followup',date,{type:'follow-up',status:'open'});
+  const events=buildSalesCalendarEvents([followUp],[],[
+   activity('call','manual-touchpoint','2026-11-03T12:00:00',
+    {interactionMethod:'call'}),
+  ],[]);
+  expect(calendarDayCounts(events,date)).toMatchObject({followUp:1,activity:0,total:1});
+  expect(calendarDayCounts(events,'2026-11-03')).toMatchObject({activity:1,followUp:0});
+ });
  it('includes scheduled tasks, bid due dates, and manually logged touchpoints',()=>{
   const date='2026-11-03';
   const events=buildSalesCalendarEvents(
