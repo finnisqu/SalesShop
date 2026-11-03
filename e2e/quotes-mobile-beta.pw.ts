@@ -205,7 +205,7 @@ test('phone Ready status and customer action fit a compact Beta header',async({p
   await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Details'}).click();
   await beta.locator('.qmb-details-advanced > summary').click();
   await beta.getByRole('combobox',{name:'Draft status'}).selectOption('Ready');
-  const header=beta.locator('.qmb-quote-editor>.qmb-quote-scroll>.qmb-pagehead');
+  const header=beta.locator('.qmb-quote-editor .qmb-quote-identity');
   await expect(header.locator('.qmb-editor-status')).toHaveText('Ready for review');
   await expect(header.locator('.qmb-editor-status')).toHaveText('Ready for review');
   const geometry=await header.evaluate(node=>({scroll:node.scrollWidth,client:node.clientWidth}));
@@ -382,11 +382,11 @@ test('mobile quote scroll retains title, total and tabs while hiding larger head
   const layout=await page.evaluate(()=>{
     const scrolling=document.querySelector('.qmb-quote-scroll')!.getBoundingClientRect();
     const sticky=document.querySelector('.qmb-quote-sticky')!.getBoundingClientRect();
-    const head=document.querySelector('.qmb-quote-editor .qmb-pagehead')!.getBoundingClientRect();
-    return {top:scrolling.top,stickyTop:sticky.top,headBottom:head.bottom};
+    const chrome=document.querySelector('.qmb-quote-editor .qmb-quote-chrome')!.getBoundingClientRect();
+    return {top:scrolling.top,stickyTop:sticky.top,chromeBottom:chrome.bottom};
   });
-  expect(Math.abs(layout.top-layout.stickyTop)).toBeLessThanOrEqual(2);
-  expect(layout.headBottom).toBeLessThanOrEqual(layout.top+1);
+  expect(layout.stickyTop).toBeLessThan(layout.top);
+  expect(Math.abs(layout.top-layout.chromeBottom)).toBeLessThanOrEqual(2);
 });
 
 test('mobile Accounts has a complete stage picker below the persistent app nav',async ({page},testInfo)=>{
@@ -2052,7 +2052,7 @@ test('phone Quick Quote and Builder Rates are distinct fixed template documents'
   const type=details.getByRole('combobox',{name:'Document type'});
   await expect(type).toHaveValue('quote');
   await expect(type).toBeDisabled();
-  await beta.locator('.qmb-pagehead .qmb-back').click();
+  await beta.locator('.qmb-quote-library-back').click();
   await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Builder Rate Schedule/}).click();
@@ -2062,7 +2062,7 @@ test('phone Quick Quote and Builder Rates are distinct fixed template documents'
   await expect(beta.getByLabel('Published pricing rows')).toContainText('0 price rows');
   await beta.locator('.qmb-quote-sticky').getByRole('button',{name:'Preview',exact:true}).click();
   await expect(beta.locator('.pricing-schedule-customer-preview')).toBeVisible();
-  await beta.locator('.qmb-pagehead .qmb-back').click();
+  await beta.locator('.qmb-quote-library-back').click();
   await beta.locator('.qmb-listcard').filter({hasText:'Test Quick Quote'}).first().click();
   await expect(beta.getByLabel('Pricing Schedule workspace')).toHaveCount(0);
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toBeVisible();
