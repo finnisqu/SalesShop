@@ -31,6 +31,19 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(mobile).toContain('.qqs-header{display:none!important}');
   expect(mobile).toContain('.qqt-header{display:none!important}');
  });
+ it('uses plain document status, a square More control and per-Area border-only headers',()=>{
+  expect(quote).toContain('<span className="qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>');
+  expect(quote).not.toContain('qmb-chip qmb-editor-status');
+  expect(compactChrome).toContain('background:transparent!important;');
+  expect(compactChrome).toContain('.qmb-quote-price-meta>.qmb-editor-status');
+  expect(cleanup).toContain('.qmx-subtabs>.qmx-mobile-overflow');
+  expect(cleanup).toContain('flex:0 0 40px!important;');
+  expect(cleanup).toContain('width:40px!important;');
+  expect(cleanup).toContain('>.qqt-mobile-header>.qqt-mobile-column');
+  expect(cleanup).toContain('border-right:0!important;');
+  expect(takeoffs).toContain('mobileColumnHeader(section.title)');
+  expect(takeoffs).toContain("mobileColumnHeader('General')");
+ });
  it('keeps exactly six visible columns in mobile Takeoffs and moves row extras into More',()=>{
   expect(takeoffs).toContain('qqt-mobile-header qqt-workbook-grid');
   expect(takeoffs).toContain("['','Piece / Item','Qty','L','W','']");
