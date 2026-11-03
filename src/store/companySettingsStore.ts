@@ -119,7 +119,9 @@ function readLocal(): CompanySettingsData {
     const raw = localStorage.getItem(LOCAL_KEY);
     if (!raw) return isDeveloperPlaygroundRoute() ? seedPlaygroundSettings() : { ...EMPTY_COMPANY_SETTINGS };
     const parsed = JSON.parse(raw) as Partial<CompanySettingsData>;
-    return { ...EMPTY_COMPANY_SETTINGS, ...parsed, stockMaterials: normalizeMaterials(parsed.stockMaterials) };
+    return { ...EMPTY_COMPANY_SETTINGS, ...parsed,
+      stockMaterials: normalizeMaterials(parsed.stockMaterials),
+      materialTagDefinitions:normalizeTagDefinitions(parsed.materialTagDefinitions) };
   } catch {
     return { ...EMPTY_COMPANY_SETTINGS };
   }
@@ -141,6 +143,15 @@ function writeLocal(settings: CompanySettingsData) {
   }
 }
 
+function normalizeTagDefinitions(value:unknown):Record<string,{description:string}>{
+ if(!value||typeof value!=='object'||Array.isArray(value))return {};
+ return Object.fromEntries(Object.entries(value).filter(([name,entry])=>
+  name.length>0&&name.length<=120&&entry&&typeof entry==='object'
+ ).map(([name,entry])=>[name,{
+  description:typeof (entry as {description?:unknown}).description==='string'
+   ?(entry as {description:string}).description.slice(0,2000):''
+ }]));
+}
 function dbPayload(settings: CompanySettingsData) {
   return {
     name: settings.organizationName.trim() || 'My Shop',
@@ -152,6 +163,7 @@ function dbPayload(settings: CompanySettingsData) {
     quote_contact_name: settings.quoteContactName.trim() || null,
     quote_contact_phone: settings.quoteContactPhone.trim() || null,
     stock_materials: settings.stockMaterials,
+    material_tag_definitions:settings.materialTagDefinitions??{},
     updated_at: new Date().toISOString(),
   };
 }
@@ -197,7 +209,7 @@ export const useCompanySettingsStore = create<CompanySettingsState>((set, get) =
 
     const { data, error } = await supabase
       .from('organizations')
-      .select('name,address,phone,email,website,logo_url,quote_contact_name,quote_contact_phone,stock_materials')
+      .select('name,address,phone,email,website,logo_url,quote_contact_name,quote_contact_phone,stock_materials,material_tag_definitions')
       .eq('id', auth.organizationId)
       .single();
     if (error || !data) {
@@ -214,6 +226,7 @@ export const useCompanySettingsStore = create<CompanySettingsState>((set, get) =
       quoteContactName: String(data.quote_contact_name ?? ''),
       quoteContactPhone: String(data.quote_contact_phone ?? ''),
       stockMaterials: normalizeMaterials(data.stock_materials),
+      materialTagDefinitions:normalizeTagDefinitions(data.material_tag_definitions),
     };
     writeLocal(settings);
     set({ settings, hydrated: true, error: null });
