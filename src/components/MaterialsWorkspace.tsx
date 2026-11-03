@@ -113,6 +113,13 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   const [brandFilter, setBrandFilter] = useState('all');
   const [collectionFilter,setCollectionFilter]=useState('all');
   const [tagFilter,setTagFilter]=useState('all');
+  useEffect(()=>{
+    if(!embedded)return;
+    try{
+     const pending=sessionStorage.getItem('salesshop-catalog-tag-to-filter-v1');
+     if(pending){setTagFilter(pending);sessionStorage.removeItem('salesshop-catalog-tag-to-filter-v1');}
+    }catch{/* optional tab navigation */}
+  },[embedded]);
   const [finishFilter, setFinishFilter] = useState('all');
   const [thicknessFilter, setThicknessFilter] = useState('all');
   const [sort, setSort] = useState<MaterialSort>('stock-brand');
