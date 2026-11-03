@@ -70,7 +70,7 @@ export function QuickActivityLauncher({label='Log Activity',compact=false,tile=f
    selected?.type==='project'?projects.find(d=>d.id===selected.id)?.companyId:
    selected?.type==='quote'?quotes.find(q=>q.id===selected.id)?.companyId:undefined;
   const company=companyId?options.find(item=>item.linked.type==='company'&&item.linked.id===companyId):undefined;
-  setLinks([primary?.linked,company?.linked].filter((item):item is TaskAssociation=>!!item));
+  setLinks([primary?.linked,company?.linked].filter((item)=>item!==undefined));
   setMethod('call');setSummary('');setNotes('');setOccurred(dateTimeLocal());
   setAllowDifferentCompany(false);setError('');setSavedSuggestion(null);setOpen(true);
  };
