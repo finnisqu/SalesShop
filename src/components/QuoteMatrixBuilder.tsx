@@ -326,7 +326,9 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
      aria-haspopup="true" onClick={()=>setMoreOpen(open=>!open)}>⋯</button>
     {moreOpen&&<div className="qmx-mobile-overflow-menu" role="group" aria-label="Build Quote tools">
      <button type="button" aria-pressed={advanced} onClick={()=>{
-       setAdvanced(value=>!value);setMoreOpen(false);
+       if(subtab==='areas'){setSubtab('takeoffs');setAdvanced(true);}
+       else setAdvanced(value=>!value);
+       setMoreOpen(false);
      }}>{advanced?'✓ Standard Takeoffs':'Technical columns'}</button>
      <button type="button" disabled={!areas.length} onClick={()=>{
        setMoreOpen(false);if(areas[0])onAdvanced(areas[0].id);
