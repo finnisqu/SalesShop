@@ -341,7 +341,8 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
       onClick={()=>apply('delete')}>Delete</button>
      <button type="button" onClick={()=>{setSelected([]);setTarget('');}}>Clear ×</button>
     </div>:<div><h3>Takeoffs</h3>
-     <span>Click, type or paste to edit · Tab/Enter to move · pencil for more</span></div>}
+     <span className="qqt-desktop-hint">Click, type or paste to edit · Tab/Enter to move · pencil for more</span>
+     <span className="qqt-mobile-hint">Tap a value to edit · use ⧉ to duplicate</span></div>}
     <button type="button" onClick={()=>areas[0]&&onAdvanced(areas[0].id)}>Advanced fabrication ↗</button>
    </header>
   <div className="qqt-scroll" role="region" aria-label="Takeoff detail rows" tabIndex={0} ref={list}
