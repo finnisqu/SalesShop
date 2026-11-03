@@ -280,27 +280,53 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
       <div><small>Contract</small>
        <strong>{excluded?'Excluded':'Included'}</strong></div>
      </div>
-     {piece&&<><p>Measured geometry remains saved even if this piece or its splashes are excluded from the contract.</p>
-       <label>Piece name<input type="text" disabled={!editable} value={piece.name}
-        onChange={e=>patchPiece({name:e.target.value})}/></label>
-       <label>Edge profile<input type="text" disabled={!editable} value={piece.edgeProfile??'Flat'}
-        onChange={e=>patchPiece({edgeProfile:e.target.value})}/></label>
-       <div className="qqt-two">
+     {piece&&rowRef.kind==='splash'&&rowRef.edge&&<>
+       <div className="qqt-panel-section-title">
+        <strong>{edgeNames[rowRef.edge]} splash</strong>
+        <small>Measured from the {piece.name||'parent piece'} countertop</small>
+       </div>
+       <div className="qqt-two qqt-panel-compact-fields">
+        <label>Edge length (in)
+         <span className="qqt-static-field">{sf.format(takeoffSplashEdgeLengthIn(piece,rowRef.edge)/Math.max(1,piece.count))}</span>
+        </label>
+        <label>Splash height (in)
+         <SmallInput alwaysInput label={edgeNames[rowRef.edge]+' splash height'} disabled={!editable}
+          value={takeoffSplashEdgeHeightIn(piece,rowRef.edge)}
+          commit={v=>patchPiece({splashEdgeHeightsIn:{...piece.splashEdgeHeightsIn,
+           [rowRef.edge!]:v??piece.splashHeightIn??4}})}/>
+        </label>
+       </div>
+       <p className="qqt-panel-helper">Edge length and quantity follow the parent top. Height and contract inclusion are independent for this splash.</p>
+      </>}
+     {piece&&rowRef.kind!=='splash'&&<>
+       <div className="qqt-panel-section-title"><strong>Piece details</strong>
+        <small>Changes to dimensions update linked measurements</small></div>
+       <div className="qqt-panel-fields">
+        <label>Piece name<input type="text" disabled={!editable} value={piece.name}
+         onChange={e=>patchPiece({name:e.target.value})}/></label>
+        <label>Edge profile<input type="text" disabled={!editable} value={piece.edgeProfile??'Flat'}
+         onChange={e=>patchPiece({edgeProfile:e.target.value})}/></label>
         <label>Quantity<SmallInput alwaysInput label="Piece quantity" integer disabled={!editable}
          value={piece.count} commit={v=>{if(v!==undefined&&v>=1)patchPiece({count:v});}}/></label>
-        <label>Splash height (in)<SmallInput alwaysInput label="Splash height" disabled={!editable}
+        <label>Default splash height (in)<SmallInput alwaysInput label="Default splash height" disabled={!editable}
          value={piece.splashHeightIn??4} commit={v=>patchPiece({splashHeightIn:v??4})}/></label>
        </div>
-       <strong>Splash edges</strong>
+       <div className="qqt-panel-section-title"><strong>Splash edges</strong>
+        <small>Each checked edge has its own Takeoffs row</small></div>
+       <div className="qqt-edge-options">
        {([['backsplash','Back'],['leftSplash','Left'],['rightSplash','Right']] as const)
         .map(([field,label])=><label className="qqt-check-label" key={field}>
          <input type="checkbox" disabled={!editable} checked={!!piece[field]}
           onChange={e=>patchPiece({[field]:e.target.checked})}/>{label}</label>)}
-       <strong>Miter edges · {sf.format(takeoffPieceMiterInches(piece))} in</strong>
+       </div>
+       <div className="qqt-panel-section-title"><strong>Miter edges</strong>
+        <small>{sf.format(takeoffPieceMiterInches(piece))} in selected</small></div>
+       <div className="qqt-edge-options">
        {([['miterFront','Front'],['miterLeft','Left'],['miterRight','Right']] as const)
         .map(([field,label])=><label className="qqt-check-label" key={field}>
          <input type="checkbox" disabled={!editable} checked={!!piece[field]}
           onChange={e=>patchPiece({[field]:e.target.checked})}/>{label}</label>)}
+       </div>
       </>}
      {sink&&section&&<>
        <label>Sink model / Catalog
@@ -362,9 +388,9 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
        </button>
        <button type="button" disabled={!canChangeRow} onClick={()=>{
         onDuplicate();onClose();
-       }}>⧉ Duplicate</button>
+       }}>⧉ {rowRef.kind==='splash'?'Duplicate parent':'Duplicate'}</button>
        <button type="button" className="is-danger" disabled={!canChangeRow}
-        onClick={onDelete}>Delete row</button>
+        onClick={onDelete}>{rowRef.kind==='splash'?'Remove splash':'Delete row'}</button>
       </div>
       {canMove&&<div className="qqt-sheet-move">
        <label>Move {rowRef.kind==='splash'?'parent piece and splash':'row'} to
