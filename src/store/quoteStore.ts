@@ -737,7 +737,15 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
    if(!q||!quoteIsCommerciallyEditable(q))return 0;
    const ids=new Set(sectionIds),matched=q.sections.filter(s=>ids.has(s.id)&&!isGeneralTakeoffSection(s));
    if(ids.size===0||matched.length!==ids.size)return 0;
-   const next={...q,updatedAt:now(),sections:q.sections.filter(s=>!ids.has(s.id)),
+   // A manual pool loses its purchasing contract if any participant is removed.
+   // Drop that override and let compatible remaining Areas auto-pool again.
+   const invalidPools=new Set((q.slabPools??[]).filter(pool=>
+    pool.sectionIds.some(id=>ids.has(id))).map(pool=>pool.id));
+   const next={...q,updatedAt:now(),
+    sections:q.sections.filter(s=>!ids.has(s.id)).map(s=>
+     s.scope?.sharedSlabPool&&invalidPools.has(s.scope.sharedSlabPool.id)
+      ?{...s,scope:{...s.scope,sharedSlabPool:undefined}}:s),
+    slabPools:q.slabPools?.filter(pool=>!invalidPools.has(pool.id)),
     lines:q.lines.filter(l=>!l.sectionId||!ids.has(l.sectionId))};
    const history=historyPatch(get(),quoteId,q);
    const quotes=get().quotes.map(item=>item.id===quoteId?next:item);
