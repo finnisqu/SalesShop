@@ -14,7 +14,7 @@ type Method='email'|'call'|'text'|'video-call'|'in-person';
 const methods:ReadonlyArray<{id:Method;label:string;icon:string}>=[
  {id:'call',label:'Call',icon:'☎'},{id:'email',label:'Email',icon:'✉'},
  {id:'text',label:'Text',icon:'▤'},{id:'video-call',label:'Video call',icon:'▣'},
- {id:'in-person',label:'In person',icon:'♧'},
+ {id:'in-person',label:'In person',icon:'⌖'},
 ];
 const dateTimeLocal=()=>{
  const now=new Date();return localDateKey(now)+'T'+[now.getHours(),now.getMinutes()]

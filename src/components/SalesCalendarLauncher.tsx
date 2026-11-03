@@ -118,14 +118,18 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
         className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
          (key===today?' is-today':'')+(key===selected?' is-selected':'')}
         aria-pressed={key===selected}
-        aria-label={dateLabel(key)+(counts.total?', '+counts.total+' calendar items':'')}
+        aria-label={dateLabel(key)+(counts.total?', '+[
+         counts.task&&counts.task+' tasks',counts.bid&&counts.bid+' bids',
+         counts.activity&&counts.activity+' activities',counts.followUp&&counts.followUp+' follow-ups'
+        ].filter(Boolean).join(', '):'')}
         onClick={()=>{setSelected(key);if(!inMonth){
          const date=new Date(key+'T12:00:00');setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
         }}}>
         <span>{Number(key.slice(-2))}</span>
         <span className="sales-calendar-dots" aria-hidden="true">
          {(['task','bid','activity','follow-up'] as const).filter(kind=>counts[kind]>0)
-          .map(kind=><i key={kind} className={'is-'+kind} title={counts[kind]+' '+labels[kind]}/>)}
+          .map(kind=><i key={kind} className={'is-'+kind} title={counts[kind]+' '+labels[kind]}>
+           {counts[kind]}</i>)}
         </span>
        </button>;
      })}
