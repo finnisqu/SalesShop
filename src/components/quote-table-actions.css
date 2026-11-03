@@ -61,8 +61,36 @@
 .sales-app .qmb .qtr-group small{color:var(--qmb-muted);font-size:10px;}
 .sales-app .qmb .qtr-attached{background:var(--qmb-bg);color:var(--qmb-muted);}
 @media(max-width:440px){
- .sales-app .qmb .qtr-row{grid-template-columns:40px minmax(85px,1fr) 43px 53px 53px 85px;font-size:11px;}
+ .sales-app .qmb .qtr-row{grid-template-columns:34px minmax(74px,1fr) 39px 45px 45px 83px;font-size:11px;}
  .sales-app .qmb .qtr-floating-header small{display:none;}
  .sales-app .qmb .qtr-header-actions button{padding:6px 8px;}
  .sales-app .qmb .qba-popover{left:36px;max-width:calc(100% - 40px);}
+}
+
+/* Desktop retains the same tab-adjacent More entrypoint as mobile. */
+@media(min-width:701px){
+ .sales-app .qmb .qmx-subtabs>.qmx-mobile-overflow{
+  display:block!important;flex:0 0 39px!important;position:relative!important;
+  background:transparent!important;border:0!important;padding:0!important;
+  box-shadow:none!important;margin:0!important;min-width:39px!important;
+ }
+ .sales-app .qmb .qmx-subtabs>.qmx-mobile-overflow>.qmx-mobile-overflow-trigger{
+  display:grid!important;place-items:center;width:39px;height:39px;min-height:39px;
+  border:1px solid var(--qmb-border);border-radius:8px;background:var(--qmb-card);
+  color:var(--qmb-ink);font-size:19px;padding:0;
+ }
+ .sales-app .qmb .qmx-subtabs>.qmx-mobile-overflow>.qmx-mobile-overflow-menu{
+  display:flex;flex-direction:column;gap:2px;position:absolute;z-index:100;
+  top:calc(100% + 5px);right:0;min-width:215px;padding:6px;
+  border:1px solid var(--qmb-border);border-radius:10px;
+  background:var(--qmb-card);box-shadow:0 8px 24px rgba(0,0,0,.18);
+ }
+ .sales-app .qmb .qmx-subtabs>.qmx-mobile-overflow>.qmx-mobile-overflow-menu>button{
+  display:block;width:100%;text-align:left;padding:10px 12px;min-height:38px;
+  background:transparent;border:0;border-radius:7px;color:var(--qmb-ink);
+  font-size:12px;font-weight:750;white-space:nowrap;
+ }
+ .sales-app .qmb .qmx-subtabs>.qmx-mobile-overflow>.qmx-mobile-overflow-menu>button:hover{
+  background:var(--qmb-tint);
+ }
 }
