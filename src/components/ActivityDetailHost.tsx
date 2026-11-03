@@ -8,6 +8,8 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import {useNavigationStore} from '../store/navigationStore';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import type {ActivityMetadata} from '../types/crm';
+import {TaskAssociationsField} from './TaskAssociationsField';
+import type {TaskAssociation,TaskLink} from '../store/personalTaskStore';
 import './sales-calendar.css';
 
 const toInput=(text:string)=>{
@@ -30,6 +32,8 @@ export function ActivityDetailHost(){
  const [summary,setSummary]=useState(''),[notes,setNotes]=useState('');
  const [method,setMethod]=useState<NonNullable<ActivityMetadata['interactionMethod']>>('call');
  const [occurred,setOccurred]=useState('');
+ const [recordLinks,setRecordLinks]=useState<TaskAssociation[]>([]);
+ const [allowMismatch,setAllowMismatch]=useState(false);
  const activity=useCrmStore(s=>s.activities.find(a=>a.id===id));
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts),
   deals=useCrmStore(s=>s.projects);
@@ -51,6 +55,24 @@ export function ActivityDetailHost(){
   window.dispatchEvent(new Event('salesshop:open-calendar-task'));
  };
  const quote=quotes.find(q=>q.id===activity?.quoteId&&(!q.archivedAt||mode==='local'));
+ const options=[
+  ...people.map(p=>({key:'contact:'+p.id,linked:{type:'contact' as const,id:p.id,label:'Person · '+p.name},label:'Person · '+p.name})),
+  ...companies.map(c=>({key:'company:'+c.id,linked:{type:'company' as const,id:c.id,label:'Company · '+c.name},label:'Company · '+c.name})),
+  ...deals.map(d=>({key:'project:'+d.id,linked:{type:'project' as const,id:d.id,label:'Deal · '+d.name},label:'Deal · '+d.name})),
+  ...quotes.filter(q=>!q.archivedAt&&(mode!=='cloud'||q.ownerUserId===user))
+   .map(q=>({key:'quote:'+q.id,linked:{type:'quote' as const,id:q.id,label:'Quote · '+q.title},label:'Quote · '+q.title})),
+ ];
+ const startCorrection=()=>{
+  if(!activity)return;
+  const entries:TaskAssociation[]=[];
+  for(const [type,recordId] of [['company',activity.companyId],['contact',activity.contactId],
+   ['project',activity.projectId],['quote',activity.quoteId]] as const){
+   if(!recordId)continue;
+   const match=options.find(o=>o.linked.type===type&&o.linked.id===recordId);
+   if(match)entries.push(match.linked);
+  }
+  setRecordLinks(entries);setAllowMismatch(false);setError('');setEditing(true);
+ };
  const editable=!!activity&&!activity.metadata?.voidedAt&&
   ['manual-touchpoint','notebook-touchpoint'].includes(activity.type)&&
   !perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'))&&
@@ -82,7 +104,18 @@ export function ActivityDetailHost(){
   if(!summary.trim())return setError('Enter a short summary.');
   const date=new Date(occurred);
   if(!occurred||!Number.isFinite(date.getTime()))return setError('Enter a valid date/time.');
-  if(!update(id,{summary,notes,interactionMethod:method,occurredAt:date.toISOString()}))
+  const find=(kind:TaskLink['type'])=>recordLinks.find(l=>l.type===kind)?.id;
+  const person=people.find(p=>p.id===find('contact'));
+  const deal=deals.find(d=>d.id===find('project'));
+  const selectedQuote=quotes.find(q=>q.id===find('quote'));
+  const companiesLinked=[find('company'),person?.companyId,deal?.companyId,selectedQuote?.companyId]
+   .filter((value):value is string=>!!value);
+  if(new Set(companiesLinked).size>1&&!allowMismatch)
+   return setError('Selected records belong to different companies. Correct them or allow the exception.');
+  if(!update(id,{summary,notes,interactionMethod:method,occurredAt:date.toISOString(),
+   companyId:find('company')||person?.companyId||deal?.companyId||selectedQuote?.companyId||null,
+   contactId:find('contact')||null,projectId:find('project')||selectedQuote?.projectId||null,
+   quoteId:find('quote')||null}))
    return setError('This interaction could not be corrected.');
   setEditing(false);
  };
@@ -108,7 +141,17 @@ export function ActivityDetailHost(){
        <option value="in-person">In person</option>
       </select></label>
       <label>When<input type="datetime-local" value={occurred} onChange={e=>setOccurred(e.target.value)}/></label>
+      <TaskAssociationsField options={options} value={recordLinks} onChange={setRecordLinks}/>
       <label>Notes<textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={5} maxLength={5000}/></label>
+      {new Set([
+       recordLinks.find(x=>x.type==='company')?.id,
+       people.find(p=>p.id===recordLinks.find(x=>x.type==='contact')?.id)?.companyId,
+       deals.find(d=>d.id===recordLinks.find(x=>x.type==='project')?.id)?.companyId,
+       quotes.find(q=>q.id===recordLinks.find(x=>x.type==='quote')?.id)?.companyId,
+      ].filter(Boolean)).size>1&&<label className="sales-activity-exception">
+       <input type="checkbox" checked={allowMismatch} onChange={e=>setAllowMismatch(e.target.checked)}/>
+       Link these different companies intentionally.
+      </label>}
       {error&&<p role="alert">{error}</p>}
      </form>:<>
       <div className="sales-activity-facts">
@@ -144,7 +187,7 @@ export function ActivityDetailHost(){
    <footer>
     {editing?<><button type="button" onClick={()=>setEditing(false)}>Cancel</button>
      <button type="submit" form="sales-activity-edit-form">Save correction</button></>:
-     <>{editable&&<button type="button" onClick={()=>setEditing(true)}>Correct entry</button>}
+     <>{editable&&<button type="button" onClick={startCorrection}>Correct entry</button>}
       {editable&&<button type="button" className="is-danger" onClick={()=>{
        if(!confirmVoid){setConfirmVoid(true);return;}
        if(voidActivity(id))close();
