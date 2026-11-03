@@ -112,7 +112,9 @@ export function auditQuoteDraft(quote:Quote):QuoteAuditReport {
     const lines=quote.lines.filter(line=>line.sectionId===section.id);
     const amount=quoteLinesTotal(lines);
     const hasExcludedTopOrSplash=pieces.some(piece=>piece.excludedFromQuote||piece.excludeSplashFromQuote||
-      Object.values(piece.excludedSplashEdges??{}).some(Boolean));
+      (piece.backsplash&&piece.excludedSplashEdges?.back)||
+      (piece.leftSplash&&piece.excludedSplashEdges?.left)||
+      (piece.rightSplash&&piece.excludedSplashEdges?.right));
     const hasExcludedSink=sinks.some(sink=>sink.excludedFromContract);
     const primary=lines.find(line=>line.quantitySource?.field==='countertopSf'
       &&line.quantitySource?.syncMode==='live')
