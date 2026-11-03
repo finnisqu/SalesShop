@@ -17,7 +17,7 @@ const labels:Record<SalesCalendarKind,string>={
 const dateLabel=(key:string)=>new Date(key+'T12:00:00').toLocaleDateString(undefined,{
  weekday:'long',month:'long',day:'numeric'});
 const plainName=(date:Date)=>date.toLocaleDateString(undefined,{month:'long',year:'numeric'});
-export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?:boolean;label?:string}){
+export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=false}:{compact?:boolean;label?:string;embedded?:boolean}){
  const button=useRef<HTMLButtonElement>(null);
  const [open,setOpen]=useState(false);
  const [position,setPosition]=useState<CSSProperties>({});
@@ -84,19 +84,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
   else if(recordType==='contact')nav.openPerson(recordId);
  };
  if(preview)return null;
- return <>
-  <button ref={button} type="button" className={'sales-calendar-trigger'+(compact?' is-compact':'')}
-   aria-haspopup="dialog" aria-expanded={open} aria-label={'Open '+label.toLowerCase()}
-   onClick={()=>{setOpen(value=>!value);}}>
-   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
-    strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/>
-    <path d="M8 14h2M14 14h2M8 18h2"/>
-   </svg><span>{label}</span>
-  </button>
-  {open&&createPortal(<div className="sales-calendar-backdrop"
-    onPointerDown={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
-   <section className="sales-calendar-popover" style={position}
+ const calendarPanel=(
+   <section className={"sales-calendar-popover"+(embedded?" is-inline":"")} style={embedded?undefined:position}
     role="dialog" aria-modal="false" aria-label="SalesShop calendar"
     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
     <header className="sales-calendar-heading">
@@ -108,7 +97,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
        setSelected(localDateKey(now));
       }}>Today</button>
       <button type="button" aria-label="Next month" onClick={()=>changeMonth(1)}>›</button>
-      <button type="button" aria-label="Close calendar" onClick={()=>setOpen(false)}>×</button>
+      {!embedded&&<button type="button" aria-label="Close calendar" onClick={()=>setOpen(false)}>×</button>}
      </div>
     </header>
     <div className="sales-calendar-weekdays">
@@ -159,6 +148,20 @@ export function SalesCalendarLauncher({compact=false,label='Calendar'}:{compact?
       <i className={'is-'+kind}/>{labels[kind]}</span>)}
     </div>
    </section>
-  </div>,document.body)}
+ );
+ return <>
+  {!embedded&&<button ref={button} type="button" className={'sales-calendar-trigger'+(compact?' is-compact':'')}
+   title={label} aria-haspopup="dialog" aria-expanded={open} aria-label={'Open '+label.toLowerCase()}
+   onClick={()=>setOpen(value=>!value)}>
+   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/>
+    <path d="M8 14h2M14 14h2M8 18h2"/>
+   </svg>
+  </button>}
+  {embedded?<div className="sales-calendar-inline">{calendarPanel}</div>
+   :open&&createPortal(<div className="sales-calendar-backdrop"
+     onPointerDown={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
+     {calendarPanel}</div>,document.body)}
  </>;
 }
