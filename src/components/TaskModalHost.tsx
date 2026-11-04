@@ -4,6 +4,7 @@ import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskChanges,type TaskLink} from '../store/personalTaskStore';
 import type {CalendarTaskRequest} from '../services/taskModalEvents';
 export {requestTaskModal} from '../services/taskModalEvents';
+export type {CalendarTaskRequest} from '../services/taskModalEvents';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
