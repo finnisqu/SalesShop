@@ -17,8 +17,14 @@ export function taskActivityMethod(task:Pick<PersonalTask,'type'>):Method{
   return 'call';
 }
 /** Stable workflow identity makes a retry after a tab refresh idempotent. */
+function stableHash(value:string,seed:number):string{
+ let hash=seed>>>0;
+ for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619)>>>0;
+ return hash.toString(36);
+}
 export function completedTaskActivityId(taskId:string,taskScope:string):string{
-  // Two salespeople can have identically keyed auto-bid tasks for one Deal.
-  // Include the private task scope to avoid colliding in shared CRM history.
-  return 'activity_task_complete_'+taskScope+'_'+taskId;
+  // Two salespeople may have identically keyed Deal tasks, but shared CRM
+  // identifiers should not reveal their private Task IDs or account scopes.
+  const key=taskScope+'|'+taskId;
+  return 'activity_task_complete_'+stableHash(key,2166136261)+'_'+stableHash(key,2246822519);
 }
