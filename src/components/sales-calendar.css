@@ -273,3 +273,97 @@
  .sales-calendar-display-toggle button{min-width:43px!important;font-size:10px!important}
  .sales-calendar-add-menu{right:-3px;top:calc(100% + 3px)}
 }
+
+
+/* Home compact three-column calendar: always the same height when switching days. */
+.sales-calendar-heading>div.sales-calendar-period{display:flex!important;flex-direction:row!important;
+ align-items:center!important;gap:5px;white-space:nowrap;min-width:0}
+.sales-calendar-heading>div.sales-calendar-tools{display:flex!important;flex-direction:row!important;
+ align-items:center!important;gap:5px}
+.sales-calendar-heading .sales-calendar-period strong{font-size:14px;white-space:nowrap}
+.sales-calendar-heading .sales-calendar-period .sales-calendar-today{min-width:32px!important}
+.sales-calendar-popover.is-inline{position:relative;top:auto;left:auto;width:100%;max-height:none;
+ box-shadow:none;overflow:visible}
+.sales-calendar-inline{min-width:0}
+.sales-calendar-main{min-width:0}
+.sales-calendar-month{min-width:0}
+.sales-calendar-sidecar{display:none}
+.sales-calendar-agenda-urgent{display:grid;place-items:center;flex:0 0 17px;width:17px;height:17px;
+ border-radius:50%;background:#c93432;color:#fff;font:900 11px/1 system-ui}
+.sales-calendar-inline .sales-calendar-day{border:1px solid var(--ss-theme-border,#d4c9b5)!important;
+ border-radius:6px;position:relative;isolation:isolate}
+.sales-calendar-inline .sales-calendar-day.is-selected{border-color:var(--ss-theme-accent,#917246)!important}
+.sales-calendar-inline .sales-calendar-day.is-today:not(.is-selected){outline:1px solid var(--ss-theme-accent,#917246);
+ outline-offset:-2px}
+.sales-calendar-inline .sales-calendar-urgent{top:4px;right:4px;z-index:2;
+ box-shadow:0 0 0 2px var(--ss-theme-card,#fff)}
+.sales-calendar-sidecar h3{font-size:13px;margin:0;font-weight:800}
+.sales-calendar-sidecar>small{font-size:10px;color:var(--ss-theme-muted,#777)}
+.sales-calendar-sidecar-list{min-height:0;overflow:auto;display:grid;align-content:start;gap:0;
+ scrollbar-width:thin;overscroll-behavior-y:contain}
+.sales-calendar-sidecar-list button{min-height:55px;border:0;border-bottom:1px solid var(--ss-theme-border,#ddd);
+ padding:8px 10px;background:transparent;color:inherit;text-align:left;display:grid;align-content:center;gap:5px;
+ cursor:pointer;min-width:0}
+.sales-calendar-sidecar-list button:hover{background:var(--ss-theme-tint,#eee)}
+.sales-calendar-sidecar-list strong,.sales-calendar-sidecar-list small{
+ white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:11px}
+.sales-calendar-sidecar-list small{color:var(--ss-theme-muted,#777);font-size:10px}
+.sales-calendar-sidecar-list p{font-size:11px;color:var(--ss-theme-muted,#777)}
+.sales-calendar-cleanup-link{border:1px solid var(--ss-theme-border,#ddd);border-radius:9px;
+ background:var(--ss-theme-tint,#eee);min-height:38px;padding:7px 9px;text-align:left;
+ color:var(--ss-theme-ink,#333);font-size:11px;font-weight:750;cursor:pointer}
+.sales-calendar-cleanup-link:hover{border-color:var(--ss-theme-accent,#917246)}
+@media(min-width:1100px){
+ .sales-home.is-compact-home{width:min(1440px,100%)}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline{
+  display:grid;grid-template-columns:minmax(0,2.65fr) minmax(192px,.78fr);
+  grid-template-rows:auto minmax(0,1fr) auto;height:470px;min-height:470px;max-height:470px}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-heading{
+  grid-column:1 / -1;grid-row:1;min-height:56px;padding:8px 13px}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-main{
+  grid-column:1;grid-row:2;display:grid;grid-template-columns:minmax(0,1.32fr) minmax(215px,.9fr);
+  min-height:0;overflow:hidden}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-month{
+  display:grid;grid-template-rows:30px minmax(0,1fr);min-height:0;overflow:hidden}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-weekdays{grid-column:1;grid-row:1;
+  align-items:center}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-grid{
+  grid-column:1;grid-row:2;grid-template-rows:none;grid-auto-rows:minmax(0,1fr);min-height:0;height:100%}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-day{
+  min-height:0!important;padding:7px 6px!important}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-day-preview{
+  grid-column:2;grid-row:1;max-height:none!important;min-height:0;overflow:hidden!important;
+  border-left:1px solid var(--ss-theme-border,#ddd);border-top:0;display:flex;flex-direction:column}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-agenda{flex:1;min-height:0;
+  max-height:none!important;overflow-y:auto}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-sidecar{
+  grid-column:2;grid-row:2;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;
+  gap:7px;min-height:0;padding:11px;border-left:1px solid var(--ss-theme-border,#ddd)}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-legend{grid-column:1/-1;grid-row:3}
+}
+@media(min-width:760px) and (max-width:1099px){
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline{
+  display:flex;flex-direction:column;min-height:385px}
+ .sales-calendar-main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(190px,.85fr);
+  min-height:335px;max-height:335px}
+ .sales-calendar-month{display:grid;grid-template-rows:30px minmax(0,1fr);
+  min-height:0;overflow:hidden}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-weekdays{grid-column:1;grid-row:1}
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-grid{grid-column:1;grid-row:2;
+  grid-auto-rows:minmax(0,1fr);min-height:0}
+ .sales-calendar-main .sales-calendar-day-preview{grid-column:2;grid-row:1;min-height:0;
+  border-left:1px solid var(--ss-theme-border,#ddd);border-top:0;display:flex;flex-direction:column;
+  overflow:hidden!important}
+ .sales-calendar-main .sales-calendar-agenda{flex:1;overflow-y:auto!important;max-height:none!important}
+ .sales-calendar-main .sales-calendar-day{min-height:0!important}
+}
+@media(max-width:759px){
+ .sales-calendar-popover.is-inline .sales-calendar-main{display:flex;flex-direction:column}
+ .sales-calendar-popover.is-inline .sales-calendar-month{display:block}
+ .sales-home.is-compact-home .sales-calendar-inline .sales-calendar-day-preview{
+  overflow:visible!important;border-left:0}
+ .sales-calendar-popover.is-inline .sales-calendar-sidecar{display:grid;grid-template-rows:auto auto auto;
+  border-top:1px solid var(--ss-theme-border,#ddd);padding:11px;gap:8px}
+ .sales-calendar-popover.is-inline .sales-calendar-sidecar-list{max-height:140px;overflow:auto}
+ .sales-calendar-popover.is-inline .sales-calendar-sidecar-list button:nth-child(n+4){display:none}
+}
