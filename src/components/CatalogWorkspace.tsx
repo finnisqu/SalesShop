@@ -1,11 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MaterialsWorkspace } from './MaterialsWorkspace';
 import { RatesWorkspace } from './RatesWorkspace';
 import { SinksWorkspace } from './SinksWorkspace';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
 import { CatalogTagsWorkspace } from './CatalogTagsWorkspace';
 import { useNavigationStore, type CatalogSection } from '../store/navigationStore';
-import { PageHeader, SectionTabs, Panel } from '../design-system/components';
+import { SectionTabs, Panel } from '../design-system/components';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 
 export const CATALOG_SECTIONS: Array<{
   id: CatalogSection;
@@ -81,6 +84,20 @@ export function CatalogWorkspace() {
   const section = useNavigationStore((state) => state.catalogSection);
   const setSection = useNavigationStore((state) => state.setCatalogSection);
   const sectionScrollRef = useRef<HTMLElement>(null);
+  const [catalogSearch,setCatalogSearch]=useState('');
+  const authMode=useAuthStore(state=>state.mode);
+  const role=useAuthStore(state=>state.teamRole);
+  const perspective=useRolePerspectiveStore(state=>state.activePerspective);
+  const canAdd=!perspective&&(authMode==='local'||role==='owner'||role==='admin');
+  const addLabels:Record<CatalogSection,string>={
+    materials:'+ Material',sinks:'+ Sink',other:'+ Item',rates:'+ Rate',
+    suppliers:'+ Supplier',tags:'+ Tag',
+  };
+  const openBuilderRates=useNavigationStore(state=>state.openBuilderRates);
+  const requestCatalogAdd=()=>{
+    if(!canAdd||section==='other')return;
+    window.dispatchEvent(new Event('sales-shop:catalog-create'));
+  };
 
   // New sections start at the top instead of inheriting the previous section's
   // scroll position from the single shared mobile/desktop Catalog host.
@@ -90,30 +107,35 @@ export function CatalogWorkspace() {
 
   return (
     <main className="catalog-workspace">
-      <PageHeader className="catalog-header catalog-foundation-heading"
-        eyebrow="Commercial source of truth"
-        title="Catalog"
-        description="Materials, sinks, rates and suppliers for your quotes."
+      <WorkspaceHeader title="Catalog" className="catalog-header catalog-foundation-heading"
+        tabs={<SectionTabs className="catalog-section-nav catalog-foundation-tabs"
+          aria-label="Catalog sections" items={CATALOG_SECTIONS.map(({ id, label }) => ({ id, label }))}
+          selected={section} onSelect={next=>{setCatalogSearch('');setSection(next);}} />}
+        more={<WorkspaceMoreMenu items={[
+          {label:'Builder material levels',onClick:openBuilderRates},
+          {label:'Clear catalog search',onClick:()=>setCatalogSearch(''),disabled:!catalogSearch.trim()},
+          {label:'Supplier directory',onClick:()=>setSection('suppliers')},
+        ]}/>}
+        search={<input type="search" aria-label="Search Catalog" placeholder={'Search '+section+'…'}
+          value={catalogSearch} disabled={section==='other'}
+          onChange={event=>setCatalogSearch(event.target.value)}/>}
+        primary={<button type="button" disabled={!canAdd||section==='other'}
+          onClick={requestCatalogAdd}>{addLabels[section]}</button>}
       />
-
-      <SectionTabs className="catalog-section-nav catalog-foundation-tabs"
-        aria-label="Catalog sections"
-        items={CATALOG_SECTIONS.map(({ id, label }) => ({ id, label }))}
-        selected={section} onSelect={setSection} />
 
       <section ref={sectionScrollRef} className={`catalog-section-host catalog-section-${section}`}>
         {section === 'materials' ? (
-          <MaterialsWorkspace embedded />
+          <MaterialsWorkspace embedded externalQuery={catalogSearch} />
         ) : section === 'sinks' ? (
-          <SinksWorkspace embedded />
+          <SinksWorkspace embedded externalQuery={catalogSearch} />
         ) : section === 'other' ? (
           <OtherCatalogComingSoon />
         ) : section === 'rates' ? (
-          <RatesWorkspace embedded />
+          <RatesWorkspace embedded externalQuery={catalogSearch} />
         ) : section === 'tags' ? (
-          <CatalogTagsWorkspace />
+          <CatalogTagsWorkspace externalQuery={catalogSearch} />
         ) : (
-          <SuppliersWorkspace />
+          <SuppliersWorkspace externalQuery={catalogSearch} />
         )}
       </section>
     </main>

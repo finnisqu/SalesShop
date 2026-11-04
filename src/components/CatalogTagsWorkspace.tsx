@@ -1,4 +1,4 @@
-import {useMemo,useState,type FormEvent} from 'react';
+import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import {createPortal} from 'react-dom';
 import {useCompanySettingsStore} from '../store/companySettingsStore';
 import {useAuthStore} from '../store/authStore';
@@ -45,7 +45,7 @@ function tagStats(materials:readonly StockMaterial[],
   samples:[...item.samples].slice(0,12),
  })).sort((a,b)=>a.name.localeCompare(b.name));
 }
-export function CatalogTagsWorkspace(){
+export function CatalogTagsWorkspace({externalQuery}:{externalQuery?:string}={}){
  const settings=useCompanySettingsStore(s=>s.settings);
  const hydrated=useCompanySettingsStore(s=>s.hydrated);
  const update=useCompanySettingsStore(s=>s.update);
@@ -54,6 +54,7 @@ export function CatalogTagsWorkspace(){
  const setSection=useNavigationStore(s=>s.setCatalogSection);
  const canEdit=!perspective&&(mode==='local'||role==='owner'||role==='admin');
  const [query,setQuery]=useState('');
+ useEffect(()=>{if(externalQuery!==undefined)setQuery(externalQuery);},[externalQuery]);
  const [selected,setSelected]=useState<string|null>(null);
  const [name,setName]=useState('');
  const [description,setDescription]=useState('');
@@ -75,6 +76,12 @@ export function CatalogTagsWorkspace(){
   setSelected(tagName);setName(tagName);setDescription(item.description);setError('');
  };
  const startNew=()=>{setSelected('');setName('');setDescription('');setError('');};
+ useEffect(()=>{
+  if(externalQuery===undefined||!canEdit)return;
+  const open=()=>startNew();
+  window.addEventListener('sales-shop:catalog-create',open);
+  return()=>window.removeEventListener('sales-shop:catalog-create',open);
+ },[externalQuery===undefined,canEdit]);
  const close=()=>{setSelected(null);setError('');};
  const save=(event:FormEvent)=>{
   event.preventDefault();

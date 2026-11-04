@@ -131,6 +131,8 @@ import './board-layout-v3.css';
 import './connections-header-v2.css';
 // Desktop workbook/list scroll owners reserve a right gutter across views.
 import './workbook-scrollbar-gutters.css';
+// Fixed six-workspace header geometry and accessible slot-based controls.
+import './workspace-header-standard.css';
 
 recordSalesShopBoot();
 

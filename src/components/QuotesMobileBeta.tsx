@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {createPortal} from 'react-dom';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useQuoteStore } from '../store/quoteStore';
 import { useCrmStore } from '../store/crmStore';
@@ -1055,25 +1056,30 @@ export function QuotesMobileBeta() {
         </div>}
       {page==='area'&&quoteProgress}
     {page==='library'?<>
-      <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Documents</strong></div></header>
+      <WorkspaceHeader title="Quotes" className="qmb-library-workspace-header"
+        tabs={<nav className="qmb-library-filter-row" aria-label="Document library sections">
+          {[{id:'all' as const,title:'All'},...SALES_DOCUMENT_TEMPLATES.filter(t=>t.available).map(t=>({
+            id:t.id as SalesDocumentTemplate,title:t.title}))].map(item=>
+            <button key={item.id} type="button" className={!followUpsTab&&documentFilter===item.id?'active':''}
+              aria-pressed={!followUpsTab&&documentFilter===item.id}
+              onClick={()=>{setFollowUpsTab(false);setDocumentFilter(item.id);}}>{item.title}</button>)}
+          <button type="button" className={'qmb-library-followups-tab'+(followUpsTab?' active':'')}
+            aria-pressed={followUpsTab} onClick={()=>setFollowUpsTab(true)}>Follow-ups</button>
+        </nav>}
+        more={<WorkspaceMoreMenu items={[
+          {label:'Active documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('active');},active:statusFilter==='active'},
+          {label:'Draft documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('drafts');},active:statusFilter==='drafts'},
+          {label:'Issued documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('issued');},active:statusFilter==='issued'},
+          {label:'Archived documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('archived');},active:statusFilter==='archived'},
+          {label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
+          {label:'Clear search and filters',onClick:resetLibraryFilters,disabled:!hasLibraryFilters},
+        ]}/>}
+        search={<input type="search" value={search} onChange={event=>setSearch(event.target.value)}
+          aria-label="Search my documents" placeholder="Search documents…" disabled={followUpsTab}/>}
+        primary={<button type="button" disabled={!canManageLibrary}
+          onClick={()=>setShowNewDocument(true)}>+ Document</button>}
+      />
       <div className="qmb-pad qmb-pagecontent">
-        <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
-        <p className="qmb-subtitle">Open an existing agreement, quote or workbook—or create a new document from a purpose-built template.</p>
-        {!followUpsTab&&<label className="qmb-search"><span aria-hidden="true">⌕</span>
-           <input value={search} onChange={e=>setSearch(e.target.value)}
-             placeholder="Search documents, customers, contacts…" aria-label="Search my documents"/>
-           {search&&<button type="button" className="qmb-library-search-clear"
-             aria-label="Clear document search" onClick={()=>setSearch('')}>×</button>}
-         </label>}
-         <nav className="qmb-library-filter-row" aria-label="Document library sections">
-           {[{id:'all' as const,title:'All'},...SALES_DOCUMENT_TEMPLATES.filter(t=>t.available).map(t=>({
-             id:t.id as SalesDocumentTemplate,title:t.title}))].map(item=>
-             <button key={item.id} type="button" className={!followUpsTab&&documentFilter===item.id?'active':''}
-               aria-pressed={!followUpsTab&&documentFilter===item.id}
-               onClick={()=>{setFollowUpsTab(false);setDocumentFilter(item.id);}}>{item.title}</button>)}
-           <button type="button" className={'qmb-library-followups-tab'+(followUpsTab?' active':'')}
-             aria-pressed={followUpsTab} onClick={()=>setFollowUpsTab(true)}>Follow-ups</button>
-         </nav>
          {followUpsTab
            ?<QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>
            :<>

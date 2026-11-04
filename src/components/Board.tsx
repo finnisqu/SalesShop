@@ -285,6 +285,7 @@ export function Board() {
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
+  const [boardSearch,setBoardSearch]=useState('');
   const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
   const [pipelineMenuOpen,setPipelineMenuOpen]=useState(false);
   const pipelineMenuRef=useRef<HTMLDivElement>(null);
@@ -375,11 +376,13 @@ export function Board() {
   const projectsByStage = useMemo(() => {
     const grouped = new Map<ProjectStage, Project[]>();
     PROJECT_STAGES.forEach((stage) => grouped.set(stage, []));
-    projects.filter(project=>matchesDealPipeline(project,pipelineView))
+    projects.filter(project=>matchesDealPipeline(project,pipelineView)&&
+      [project.name,project.companyName,project.nextAction].some(value=>
+        (value??'').toLowerCase().includes(boardSearch.trim().toLowerCase())))
       .forEach((project) => grouped.get(project.stage)?.push(project));
     grouped.forEach((items) => items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
     return grouped;
-  }, [projects,pipelineView]);
+  }, [projects,pipelineView,boardSearch]);
 
   const editingProject = projects.find((project) => project.id === editingId) ?? null;
 
@@ -393,13 +396,14 @@ export function Board() {
   if (!hydrated) return <WorkspaceLoadingState title="Opening Board" detail="Loading deals and accounts…" />;
   if (boardMode === 'accounts') return <AccountsBoard
     onShowProjects={() => setBoardMode('projects')}
+    searchQuery={boardSearch} onSearchChange={setBoardSearch}
     compactCards={compactCards} onToggleCompact={toggleCompact}
     isStageCollapsed={stage=>isStageCollapsed('accounts',stage)}
     onToggleStage={stage=>toggleStage('accounts',stage)} />;
 
   return (
     <main className={'board-view'+(compactCards?' is-compact':'')}>
-      <PageHeader className="board-header-panel board-foundation-header"
+      <PageHeader className="board-header-panel board-foundation-header ss-workspace-header"
         eyebrow="Sales pipeline" title="Deals"
         description="Move deals from opportunity to completion."
         actions={<>
@@ -414,7 +418,7 @@ export function Board() {
                  aria-haspopup="true"
                  aria-label={'Choose pipeline, currently '+(pipelineView==='all'?'All pipelines':dealPipelineLabel(pipelineView))}
                  onClick={()=>setPipelineMenuOpen(open=>!open)}>
-                 Pipelines <span aria-hidden="true">⋯</span>
+                 More <span aria-hidden="true">⋯</span>
                </button>
                {pipelineMenuOpen&&<div id="board-pipeline-menu" className="board-pipeline-menu" role="group" aria-label="Filter deal pipelines">
                  <span className="board-pipeline-menu-label">SHOW PIPELINE</span>
@@ -428,13 +432,15 @@ export function Board() {
                  <button type="button" aria-pressed={pipelineView==='unassigned'} onClick={()=>{
                    setPipelineView('unassigned');setPipelineMenuOpen(false);boardRef.current?.scrollTo({left:0});
                  }}>Unassigned {pipelineView==='unassigned'&&<span aria-hidden="true">✓</span>}</button>
+                 <button type="button" className="board-density-toggle" aria-pressed={compactCards}
+                   onClick={()=>{toggleCompact();setPipelineMenuOpen(false);}}>
+                   {compactCards?'Standard cards':'Compact cards'} {compactCards&&<span aria-hidden="true">✓</span>}
+                 </button>
                </div>}
              </div>
-             <button type="button" className="board-density-toggle"
-              aria-pressed={compactCards} onClick={toggleCompact}
-              title="Show only the name on each card">
-              {compactCards?'Standard cards':'Compact cards'}
-            </button>
+             <div className="board-header-search"><input type="search"
+              aria-label="Search Board deals" placeholder="Search deals…"
+              value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/></div>
             <BoardQuickCreate kind="Deal" onCreate={name=>createProject(name,'Discovery',{
                pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
              })} />

@@ -90,7 +90,7 @@ function compareOptionalNumbers(left?: number, right?: number) {
   return left - right;
 }
 
-export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
+export function MaterialsWorkspace({ embedded = false,externalQuery }: { embedded?: boolean;externalQuery?:string } = {}) {
   const openBuilderRates = useNavigationStore(state=>state.openBuilderRates);
   const settings = useCompanySettingsStore((state) => state.settings);
   const hydrated = useCompanySettingsStore((state) => state.hydrated);
@@ -104,6 +104,13 @@ export function MaterialsWorkspace({ embedded = false }: { embedded?: boolean } 
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [quoteSource, setQuoteSource] = useState<CatalogQuoteSource | null>(null);
   const [query, setQuery] = useState('');
+  useEffect(()=>{if(embedded&&externalQuery!==undefined)setQuery(externalQuery);},[embedded,externalQuery]);
+  useEffect(()=>{
+    if(!embedded)return;
+    const open=()=>setEditing(true);
+    window.addEventListener('sales-shop:catalog-create',open);
+    return()=>window.removeEventListener('sales-shop:catalog-create',open);
+  },[embedded]);
   const [showInactive, setShowInactive] = useState(false);
   const [expandedMaterialId, setExpandedMaterialId] = useState<string | null>(null);
   const [isMobileReference, setIsMobileReference] = useState(() => typeof window !== 'undefined' && window.matchMedia(PHONE_LAYOUT_QUERY).matches);

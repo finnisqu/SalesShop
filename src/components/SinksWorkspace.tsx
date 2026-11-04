@@ -45,7 +45,7 @@ function variantSubtitle(variant: SinkVariant) {
   ].filter(Boolean).join(' · ');
 }
 
-export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
+export function SinksWorkspace({ embedded = false,externalQuery }: { embedded?: boolean;externalQuery?:string } = {}) {
   const models = useSinkCatalogStore((state) => state.models);
   const hydrated = useSinkCatalogStore((state) => state.hydrated);
   const saving = useSinkCatalogStore((state) => state.saving);
@@ -67,6 +67,7 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  useEffect(()=>{if(embedded&&externalQuery!==undefined)setQuery(externalQuery);},[embedded,externalQuery]);
   const [category, setCategory] = useState<'all' | SinkCategory>('all');
   const [showInactive, setShowInactive] = useState(false);
 
@@ -121,6 +122,12 @@ export function SinksWorkspace({ embedded = false }: { embedded?: boolean } = {}
     setEditing(true);
     setMobileToolsOpen(false);
   };
+  useEffect(()=>{
+    if(!embedded)return;
+    const open=()=>createModel();
+    window.addEventListener('sales-shop:catalog-create',open);
+    return()=>window.removeEventListener('sales-shop:catalog-create',open);
+  },[embedded,category,addModel]);
 
   // One model renderer is reused by the desktop detail pane and mobile inline cards.
   const renderSinkDetail = (selected: SinkModel | null) => (

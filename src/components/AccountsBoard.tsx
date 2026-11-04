@@ -22,6 +22,7 @@ import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { Button, PageHeader } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
+import {WorkspaceMoreMenu} from './WorkspaceHeader';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
@@ -188,8 +189,10 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
   );
 }
 
-export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isStageCollapsed,onToggleStage}:{
+export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isStageCollapsed,onToggleStage,searchQuery='',onSearchChange}:{
   onShowProjects:()=>void;
+  searchQuery?:string;
+  onSearchChange?:(value:string)=>void;
   compactCards:boolean;
   onToggleCompact:()=>void;
   isStageCollapsed:(stage:AccountStage)=>boolean;
@@ -216,13 +219,14 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   const accountsByStage = useMemo(() => {
     const grouped = new Map<AccountStage, AccountRow[]>();
     ACCOUNT_STAGES.forEach((stage) => grouped.set(stage, []));
-    companies.forEach((company) => {
+    companies.filter(company=>[company.name,...(company.aliases??[])].some(text=>
+      text.toLowerCase().includes(searchQuery.trim().toLowerCase()))).forEach((company) => {
       const health = inferAccountHealth(company, contacts, projects, activities);
       grouped.get(health.stage)?.push({ company, health });
     });
     grouped.forEach((items) => items.sort((a, b) => a.company.name.localeCompare(b.company.name)));
     return grouped;
-  }, [companies, contacts, projects, activities]);
+  }, [companies, contacts, projects, activities,searchQuery]);
 
   useEffect(() => {
     if (!mobileInteraction) return;
@@ -240,7 +244,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
 
   return (
     <main className={'board-view accounts-view'+(compactCards?' is-compact':'')}>
-      <PageHeader className="board-header-panel accounts-header-panel board-foundation-header"
+      <PageHeader className="board-header-panel accounts-header-panel board-foundation-header ss-workspace-header"
         eyebrow="Relationship health" title="Accounts"
         description="Same CRM data, viewed by customer relationship instead of deal stage."
         actions={<>
@@ -249,11 +253,12 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
             <Button variant="quiet" className="active" aria-pressed={true}>Accounts</Button>
           </div>
           <div className="board-header-tools">
-            <button type="button" className="board-density-toggle"
-              aria-pressed={compactCards} onClick={onToggleCompact}
-              title="Show only the name on each card">
-              {compactCards?'Standard cards':'Compact cards'}
-            </button>
+            <WorkspaceMoreMenu items={[{
+              label:compactCards?'Standard cards':'Compact cards',onClick:onToggleCompact,active:compactCards,
+            }]}/>
+            <div className="board-header-search"><input type="search"
+              aria-label="Search Board accounts" placeholder="Search accounts…"
+              value={searchQuery} onChange={event=>onSearchChange?.(event.target.value)}/></div>
             <BoardQuickCreate kind="Account" onCreate={name=>resolveCompany(name,'customer')} />
           </div>
         </>}

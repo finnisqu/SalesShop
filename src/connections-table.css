@@ -107,3 +107,18 @@
  .connections-directory:has(.connections-mobile-bulk.is-selecting)
  .connections-card-grid.connections-legacy-cards{display:none}
 }
+
+/* Task mobile bulk selection uses the same cross-page controls while preserving
+   the familiar personal task cards whenever selection mode is closed. */
+@media(max-width:820px){
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace .connections-grid-shell{
+  display:grid;gap:8px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace .connections-grid-shell>
+ :is(.connections-grid-toolbar,.connections-table-scroll,.connections-grid-pagination,.connections-pin-tray){
+  display:none;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .connections-mobile-bulk{display:grid;gap:8px}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace:has(.connections-mobile-bulk.is-selecting)
+ .tasks-list{display:none}
+}

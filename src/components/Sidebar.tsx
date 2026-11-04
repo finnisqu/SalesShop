@@ -61,6 +61,7 @@ function folderTree(folders:NotebookFolder[]): Array<{folder:NotebookFolder;dept
 }
 
 interface NotebookSidebarProps {
+  externalQuery?:string;
   onOpenBeside?:(pageId:string)=>void;
   onOpenLeft?:(pageId:string)=>void;
   companionId?:string|null;
@@ -72,7 +73,7 @@ const COLLAPSED_KEY='salesshop-notebook-folders-collapsed-v1';
 const UNFILED='__unfiled__';
 export function Sidebar({
   onOpenBeside,onOpenLeft,companionId,activePane='left',stacked=false,
-  onSwap,onCloseLeft,onCloseRight,onToggleStack,onFocusPane,
+  onSwap,onCloseLeft,onCloseRight,onToggleStack,onFocusPane,externalQuery,
 }:NotebookSidebarProps) {
   const entries = useNotebookStore((state) => state.entries);
   const folders = useNotebookStore((state) => state.folders);
@@ -104,6 +105,7 @@ export function Sidebar({
     current.filter(x=>x!==id):[...current,id]);
   const [showTrash, setShowTrash] = useState(false);
   const [query, setQuery] = useState('');
+  useEffect(()=>{if(externalQuery!==undefined)setQuery(externalQuery);},[externalQuery]);
   const [filter, setFilter] = useState<PageFilter>('all');
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ id: string; placement: 'before' | 'after' } | null>(null);

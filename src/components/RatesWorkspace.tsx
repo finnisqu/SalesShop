@@ -59,7 +59,7 @@ function editorTabMatches(button: HTMLButtonElement, category: ReferenceCategory
   return text.startsWith('material');
 }
 
-export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}) {
+export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: boolean;externalQuery?:string } = {}) {
   const items = useRateBookStore((state) => state.items);
   const hydrated = useRateBookStore((state) => state.hydrated);
   const hydrateRates = useRateBookStore((state) => state.hydrate);
@@ -77,6 +77,7 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
   const ratesFocus = useNavigationStore(s=>s.ratesFocus);
   const [category, setCategory] = useState<ReferenceCategory>(()=>ratesFocus==='material'?'material':'all');
   const [query, setQuery] = useState('');
+  useEffect(()=>{if(embedded&&externalQuery!==undefined)setQuery(externalQuery);},[embedded,externalQuery]);
   const [rateSort, setRateSort] = useState<RateSort>('category');
   const [behaviorFilter, setBehaviorFilter] = useState<'all' | RateBookPricingBehavior>('all');
   const [unitFilter, setUnitFilter] = useState<'all' | RateBookUnit>('all');
@@ -104,6 +105,13 @@ export function RatesWorkspace({ embedded = false }: { embedded?: boolean } = {}
     addRateItem(nextCategory);
     if (category === 'all') selectCategory(nextCategory);
   };
+
+  useEffect(()=>{
+    if(!embedded)return;
+    const open=()=>{if(category!=='material'){setEditing(true);addCurrentRate();}};
+    window.addEventListener('sales-shop:catalog-create',open);
+    return()=>window.removeEventListener('sales-shop:catalog-create',open);
+  },[embedded,category,addRateItem]);
 
   const nonMaterialItems = useMemo(() => items.filter((item) => item.category !== 'material'), [items]);
   const activeCount = nonMaterialItems.filter((item) => item.active).length;

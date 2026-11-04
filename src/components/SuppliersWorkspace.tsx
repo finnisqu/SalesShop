@@ -125,7 +125,7 @@ function emptyRule(supplierId: string, sortOrder: number): SupplierRule {
   return { id: `supplier_rule_${crypto.randomUUID()}`, supplierId, ruleType: 'General', ruleText: '', active: true, notes: '', sortOrder };
 }
 
-export function SuppliersWorkspace() {
+export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
   const materials = useCompanySettingsStore((state) => state.settings.stockMaterials);
   const updateSettings = useCompanySettingsStore((state) => state.update);
   const [profiles, setProfiles] = useState<SupplierProfile[]>([]);
@@ -137,10 +137,17 @@ export function SuppliersWorkspace() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  useEffect(()=>{if(externalQuery!==undefined)setQuery(externalQuery);},[externalQuery]);
   // Desktop opens as a full CRM-style supplier directory; selecting a row
   // focuses a record. Phone keeps its proven search-first navigator.
   const [directoryOpen, setDirectoryOpen] = useState(true);
   const [supplierCreateOpen, setSupplierCreateOpen] = useState(false);
+  useEffect(()=>{
+    if(externalQuery===undefined)return;
+    const open=()=>setSupplierCreateOpen(true);
+    window.addEventListener('sales-shop:catalog-create',open);
+    return()=>window.removeEventListener('sales-shop:catalog-create',open);
+  },[externalQuery===undefined]);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [mobileExpandedSupplierKey, setMobileExpandedSupplierKey] = useState<string | null>(null);
   const [filter, setFilter] = useState<SupplierFilter>('all');

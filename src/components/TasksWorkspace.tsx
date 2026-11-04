@@ -6,6 +6,8 @@ import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import type {TaskBulkChange} from './TaskBulkEditDialog';
 import '../tasks-table.css';
 import {useQuoteStore} from '../store/quoteStore';
 import {useCrmStore} from '../store/crmStore';
@@ -317,14 +319,23 @@ export function TasksWorkspace(){
   };
   if(rolePreview)return <main className="tasks-workspace"><h1>Tasks</h1><p>Personal tasks are not shown in role preview.</p></main>;
   return <main className="tasks-workspace" aria-label="SalesShop tasks">
-    <header className="tasks-header">
-      <div><span className="tasks-eyebrow">PERSONAL WORK QUEUE</span><h1>Tasks</h1>
-        <p>Calls, follow-ups and work to finish.</p></div>
-      <div className="tasks-header-actions">
-       <SalesCalendarLauncher compact />
-       <button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})} disabled={!scope}>+ New task</button>
-      </div>
-    </header>
+    <WorkspaceHeader title="Tasks" className="tasks-header"
+      tabs={<nav className="tasks-header-tabs" aria-label="Task views">
+       {([['active','Open'],['today','Today'],['upcoming','Upcoming'],
+         ['completed','Completed']] as const).map(([key,label])=>
+         <button type="button" key={key} className={filter===key?'active':''}
+           aria-pressed={filter===key} onClick={()=>setFilter(key)}>{label}</button>)}
+      </nav>}
+      more={<WorkspaceMoreMenu items={[
+        {label:'Overdue tasks',onClick:()=>setFilter('overdue'),active:filter==='overdue'},
+        {label:'Start later',onClick:()=>setFilter('scheduled'),active:filter==='scheduled'},
+        {label:'All history',onClick:()=>setFilter('all'),active:filter==='all'},
+      ]}/>}
+      search={<input type="search" aria-label="Search tasks" placeholder="Search tasks…"
+        value={search} onChange={event=>setSearch(event.target.value)}/>}
+      primary={<button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})}
+        disabled={!scope}>+ Task</button>}
+    />
     <div className="tasks-summary" aria-label="Task counts">
       {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
         <button key={key} type="button" onClick={()=>setFilter(key)} aria-pressed={filter===key}
@@ -334,11 +345,7 @@ export function TasksWorkspace(){
         </button>)}
     </div>
     <div className="tasks-tools">
-      <input type="search" aria-label="Search tasks" placeholder="Search tasks, notes, queues…" value={search} onChange={e=>setSearch(e.target.value)}/>
-      <button type="button" className={'tasks-history-toggle'+(filter==='all'?' is-selected':'')}
-        aria-pressed={filter==='all'} onClick={()=>setFilter(filter==='all'?'active':'all')}>
-        {filter==='all'?'Back to open tasks':'All history'}
-      </button>
+      <SalesCalendarLauncher compact />
       <label className="tasks-queue-filter">Queue
         <select aria-label="Filter task queue" value={queueFilter} onChange={e=>setQueueFilter(e.target.value)}>
           <option value="all">All queues</option>
@@ -357,7 +364,14 @@ export function TasksWorkspace(){
         onTaskToggleComplete={(id,finished)=>finished?reopen(id):complete(id)}
         onBulkComplete={items=>items.forEach(item=>{
           if(own.some(task=>task.id===item.id&&!taskComplete(task)))complete(item.id);
-        })}/>
+        })}
+        onBulkTaskProperty={async(items,change:TaskBulkChange)=>{
+          const current=usePersonalTaskStore.getState();
+          if(!scope||current.scope!==scope)throw new Error('Task workspace changed. Reopen Tasks before editing.');
+          const found=new Set(current.tasks.filter(t=>t.workspaceScope===scope&&!t.deletedAt).map(t=>t.id));
+          if(items.some(item=>!found.has(item.id)))throw new Error('Some tasks changed since selection. Refresh and select again.');
+          for(const item of items)update(item.id,change);
+        }}/>
     </div>}
     {scope&&<section className="tasks-list" aria-label="Task records">
       {!visible.length&&<div className="tasks-empty"><strong>No matching tasks</strong>

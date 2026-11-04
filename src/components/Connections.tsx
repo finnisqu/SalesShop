@@ -344,7 +344,7 @@ export function Connections() {
   const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
   return (
     <main className="connections-workspace connections-directory-layout">
-      <PageHeader className="connections-heading connections-foundation-heading"
+      <PageHeader className="connections-heading connections-foundation-heading ss-workspace-header"
         eyebrow="CRM"
         title="Connections"
         description="Your accounts, contacts and deals."
@@ -352,6 +352,9 @@ export function Connections() {
           <div className="connections-header-navigation">
             <SectionTabs className="connections-tabs" aria-label="Connections sections"
               items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
+
+          </div>
+          <div className="connections-header-tools">
             <div ref={moreRef} className="connections-section-more">
               <button type="button" aria-expanded={moreOpen} aria-haspopup="menu" aria-controls="connections-more-menu"
                 onClick={() => setMoreOpen((value) => !value)}>More <span aria-hidden="true">⋯</span></button>
@@ -360,8 +363,6 @@ export function Connections() {
                 <button type="button" onClick={() => chooseTab('quotes')}>Quotes · metadata</button>
               </div>}
             </div>
-          </div>
-          <div className="connections-header-tools">
             <div className="connections-header-search">
               <input id="connections-directory-search" type="search"
                 aria-label={`Search ${tab}`} value={query}

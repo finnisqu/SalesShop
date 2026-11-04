@@ -73,6 +73,7 @@ import { GlobalSearch } from './components/GlobalSearch';
 import { MobileAppChrome } from './components/MobileAppChrome';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './components/WorkspaceHeader';
 import { AccountMenu } from './components/AccountMenu';
 import { BuildBadge } from './components/BuildBadge';
 import { GlobalPostItLauncher, GlobalPostItLayer } from './components/GlobalPostIt';
@@ -134,6 +135,8 @@ function App() {
   const syncDealSubmissionTasks=usePersonalTaskStore((state)=>state.syncDealSubmissionTasks);
   const taskUserId=useAuthStore(s=>s.user?.id);
   const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
+  const [notebookHeaderSearch,setNotebookHeaderSearch]=useState('');
+  const [notebookHeaderSection,setNotebookHeaderSection]=useState<'pages'|'agenda'>('pages');
   const [companionId,setCompanionId]=useState<string|null>(null);
   const [focusedPane,setFocusedPane]=useState<'left'|'right'>('left');
   const [splitStacked,setSplitStacked]=useState(false);
@@ -291,7 +294,34 @@ function App() {
         <div className="loading-screen" role="status">Opening Notebook…</div>
       ) : (
         <main className={`notebook-workspace ${companion?'is-side-by-side':''}`}>
-          <Sidebar onOpenBeside={openCompanion} onOpenLeft={openPrimary}
+          <WorkspaceHeader title="Notebook"
+            tabs={<nav className="notebook-header-tabs" aria-label="Notebook views">
+              <button type="button" className={notebookHeaderSection==='pages'?'active':''}
+                aria-pressed={notebookHeaderSection==='pages'} onClick={()=>{
+                  setNotebookHeaderSection('pages');
+                  document.querySelector<HTMLElement>('.notebook-sidebar .notebook-page-search input')?.focus();
+                }}>Pages</button>
+              <button type="button" className={notebookHeaderSection==='agenda'?'active':''}
+                aria-pressed={notebookHeaderSection==='agenda'} onClick={()=>{
+                  setNotebookHeaderSection('agenda');
+                  document.querySelector<HTMLElement>('.notebook-linked-agenda')?.scrollIntoView({block:'nearest'});
+                }}>Agenda</button>
+            </nav>}
+            more={<WorkspaceMoreMenu items={[
+              {label:companion?'Close split page':'Open split page',
+                disabled:!companion&&companionOptions.length===0,
+                onClick:()=>companion?closeRightPane():companionOptions[0]&&openCompanion(companionOptions[0].id)},
+              {label:'Swap pages',onClick:swapPanes,disabled:!companion},
+              {label:'Clear page search',onClick:()=>setNotebookHeaderSearch(''),disabled:!notebookHeaderSearch},
+            ]}/>}
+            search={<input type="search" aria-label="Search notebook pages"
+              placeholder="Find pages…" value={notebookHeaderSearch}
+              onChange={event=>setNotebookHeaderSearch(event.target.value)}/>}
+            primary={<button type="button" disabled={inRolePreview}
+              onClick={()=>useNotebookStore.getState().createEntry()}>+ Page</button>}
+          />
+          <Sidebar externalQuery={notebookHeaderSearch}
+            onOpenBeside={openCompanion} onOpenLeft={openPrimary}
             companionId={companion?.id??null} activePane={companion?focusedPane:'left'}
             stacked={splitStacked} onToggleStack={()=>setSplitStacked(s=>!s)}
             onSwap={swapPanes} onCloseLeft={closeLeftPane} onCloseRight={closeRightPane}
