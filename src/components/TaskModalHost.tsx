@@ -97,7 +97,7 @@ export function TaskModalHost(){
        close();nav.openQuote(relatedQuote.id);
       }}>Open linked quote ↗</button>}
       {canLog&&task.status!=='completed'&&task.status!=='canceled'&&
-       <button type="button" onClick={()=>{
+       <button type="button" className="tasks-flow-action" onClick={()=>{
         close();openActivityComposer({taskId:task.id});
        }}>Complete + log activity</button>}
       <button type="button" onClick={()=>{
