@@ -8,6 +8,7 @@ import {useAuthStore} from '../store/authStore';
 import {recordManagementDependencies,type ManagedKind} from '../services/recordManagementDependencies';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
+import {planPracticeQuotePurge,purgeArchivedPracticeQuote} from '../services/practiceQuotePurge';
 import {crmDeletionBlockers} from '../services/crmDeletionBlockers';
 import type {Quote} from '../types/quote';
 import '../home-cleanup.css';
@@ -15,7 +16,8 @@ import '../home-cleanup.css';
 type CleanupKind=ManagedKind;
 interface CleanupRow{
  kind:CleanupKind;id:string;name:string;detail:string;
- blockers:string[];action:'delete'|'archive';
+ blockers:string[];action:'delete'|'archive'|'purge';
+ quoteNumber?:string;activityCount?:number;
 }
 type Tab=Exclude<CleanupKind,'task'>;
 type FocusRef={kind:CleanupKind;id:string};
@@ -26,6 +28,7 @@ export function CleanupCenter(){
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const [pending,setPending]=useState<CleanupRow[]|null>(null);
  const [confirmation,setConfirmation]=useState('');
+ const [practiceAcknowledged,setPracticeAcknowledged]=useState(false);
  const [testMode,setTestMode]=useState(false);
  const [focusTrail,setFocusTrail]=useState<FocusRef[]>([]);
  const quotes=useQuoteStore(s=>s.quotes),archiveQuote=useQuoteStore(s=>s.archiveQuote),
@@ -50,7 +53,7 @@ export function CleanupCenter(){
   const show=(event:Event)=>{
    const detail=(event as CustomEvent<OpenDetail>).detail;
    setOpen(true);setQuery('');setSelected([]);setError('');setPending(null);
-   setConfirmation('');setFocusTrail([]);
+   setConfirmation('');setPracticeAcknowledged(false);setFocusTrail([]);
    setTestMode(Boolean(detail?.testMode));setTab(detail?.kind&&detail.kind!=='task'?detail.kind:'quote');
   };
   window.addEventListener('salesshop:open-cleanup-center',show);
@@ -58,11 +61,17 @@ export function CleanupCenter(){
  },[]);
  const rows=useMemo(()=>{
   const refs={companies,contacts:people,projects:deals,activities,quotes, tasks:ownTasks};
-  const q=visibleQuotes.filter(quote=>!quote.archivedAt).map((quote:Quote):CleanupRow=>({
-   kind:'quote',id:quote.id,name:quote.title||'Untitled Quote',
-   detail:quote.quoteNumber+' · '+quote.status,
-   blockers:[],action:canPermanentlyDeleteQuote(quote,quotes)?'delete':'archive',
-  }));
+  const q=visibleQuotes.map((quote:Quote):CleanupRow=>{
+   const plan=quote.archivedAt?
+    planPracticeQuotePurge(quote,quotes,activities,ownTasks):null;
+   return {kind:'quote',id:quote.id,name:quote.title||'Untitled Quote',
+    quoteNumber:quote.quoteNumber,activityCount:plan?.activityIds.length,
+    detail:quote.quoteNumber+' · '+quote.status+(quote.archivedAt?' · Archived':''),
+    blockers:plan?.blockers??[],
+    action:quote.archivedAt?'purge':
+     canPermanentlyDeleteQuote(quote,quotes)?'delete':'archive',
+   };
+  });
   const p=people.map((person):CleanupRow=>({
    kind:'person',id:person.id,name:person.name||person.email||'Unnamed person',
    detail:companies.find(c=>c.id===person.companyId)?.name||'No company',
@@ -126,7 +135,8 @@ export function CleanupCenter(){
    usePersonalTaskStore.getState().remove(item.id);return;
   }
   if(item.kind==='quote'){
-   if(item.action==='archive')archiveQuote(item.id);
+   if(item.action==='purge')await purgeArchivedPracticeQuote(item.id);
+   else if(item.action==='archive')archiveQuote(item.id);
    else await deleteQuoteFromManagement(item.id);
    return;
   }
@@ -142,8 +152,9 @@ export function CleanupCenter(){
   }
  };
  const perform=(items:CleanupRow[])=>{
-  if(!items.length||busy||!canManage)return;
-  setPending(items);setConfirmation('');setError('');
+  if(!items.length||busy||!canManage||items.some(item=>item.blockers.length>0))return;
+  if(items.some(item=>item.action==='purge')&&items.length!==1)return;
+  setPending(items);setConfirmation('');setPracticeAcknowledged(false);setError('');
  };
  // Drill into dependencies without changing the active tab, search, or parent.
  const openRecord=(item:CleanupRow)=>{
@@ -160,8 +171,11 @@ export function CleanupCenter(){
  };
  const confirmPending=async()=>{
   if(!pending?.length||busy||!canManage)return;
-  const phrase=pending.some(item=>item.action==='delete')?'DELETE':'ARCHIVE';
+  const phrase=pending.some(item=>item.action==='purge')
+   ?'PURGE '+pending[0].quoteNumber:
+    pending.some(item=>item.action==='delete')?'DELETE':'ARCHIVE';
   if(confirmation.trim()!==phrase)return;
+  if(pending.some(item=>item.action==='purge')&&!practiceAcknowledged)return;
   setBusy(true);setError('');
   try{
    const auth=useAuthStore.getState();
@@ -180,10 +194,15 @@ export function CleanupCenter(){
      if(!itemTask)throw new Error('This personal Task is no longer available in your workspace.');
     }else if(item.kind==='quote'){
      const current=allQuotes.find(quote=>quote.id===item.id);
-     if(!current||current.archivedAt||
-       (auth.mode==='cloud'&&current.ownerUserId!==auth.user?.id))
-       throw new Error('This quote is unavailable or is not your own active document.');
-     if((canPermanentlyDeleteQuote(current,allQuotes)?'delete':'archive')!==item.action)
+     if(!current||(auth.mode==='cloud'&&current.ownerUserId!==auth.user?.id))
+       throw new Error('This quote is unavailable or is not your own document.');
+     if(item.action==='purge'){
+       const plan=planPracticeQuotePurge(current,allQuotes,crm.activities,own);
+       if(plan.blockers.length)throw new Error(plan.blockers.join('; '));
+       if(!current.archivedAt||current.quoteNumber!==item.quoteNumber)
+        throw new Error('This archived quote changed. Review it again before purging.');
+     }else if(current.archivedAt||
+       (canPermanentlyDeleteQuote(current,allQuotes)?'delete':'archive')!==item.action)
        throw new Error('This quote changed. Review it again before removing it.');
     }else if(item.kind==='person'||item.kind==='company'||item.kind==='deal'){
      const collection=item.kind==='person'?crm.contacts:item.kind==='company'?crm.companies:crm.projects;
@@ -215,8 +234,10 @@ export function CleanupCenter(){
   }finally{setBusy(false);}
  };
  if(!open||!canManage)return null;
+ const isPurging=Boolean(pending?.some(item=>item.action==='purge'));
  const isDeleting=Boolean(pending?.some(item=>item.action==='delete'));
- const confirmWord=isDeleting?'DELETE':'ARCHIVE';
+ const confirmWord=isPurging?'PURGE '+pending?.[0]?.quoteNumber:
+  isDeleting?'DELETE':'ARCHIVE';
  return createPortal(<div className="sales-cleanup-backdrop" onPointerDown={e=>{
   if(e.target===e.currentTarget&&!busy){setOpen(false);setPending(null);}
  }}>
@@ -230,7 +251,7 @@ export function CleanupCenter(){
     <h2>{testMode?'Clean up test records':'Record management'}</h2>
     <p>{testMode
      ?'Review sample records manually. Nothing is selected or deleted automatically.'
-     :'Remove unlinked records, or archive issued quotes while retaining their history.'}</p></div>
+     :'Delete drafts, archive issued quotes, or explicitly purge archived practice quotes.'}</p></div>
     <button type="button" aria-label="Close record management" disabled={busy}
      onClick={()=>{setOpen(false);setPending(null);}}>×</button>
    </header>
@@ -266,18 +287,30 @@ export function CleanupCenter(){
    </div>}
    {pending ? <div className="sales-record-confirmation" role="group" aria-label="Confirm record removal">
      <strong>{pending.length===1?pending[0].name:pending.length+' selected records'}</strong>
-     <p>{isDeleting
-      ?'Permanent deletion cannot be undone. Linked CRM history and tasks are protected.'
-      :'Archiving retains customer documents and their history for later restoration.'}</p>
+     <p>{isPurging
+       ?'This permanently removes the archived document, its revisions, customer share links and '+
+        (pending?.[0]?.activityCount??0)+' quote-specific CRM events. Previously sent links will stop working. '+
+        'Associated People, Companies, Deals and unrelated Activities are not deleted.'
+       :isDeleting
+       ?'Permanent deletion cannot be undone. Linked CRM history and tasks are protected.'
+       :'Archiving retains customer documents and their history for later restoration.'}</p>
+     {isPurging&&<label className="sales-practice-purge-ack">
+      <input type="checkbox" checked={practiceAcknowledged} disabled={busy}
+       onChange={e=>setPracticeAcknowledged(e.target.checked)}/>
+      <span>I confirm this was a practice/test quote, not an actual customer agreement,
+       and understand permanent deletion cannot be undone.</span>
+     </label>}
      <label>Type {confirmWord} to confirm
        <input autoFocus value={confirmation} aria-label="Type confirmation word"
         disabled={busy} onChange={e=>setConfirmation(e.target.value)}/>
      </label>
      <div className="sales-record-confirmation-actions">
        <button type="button" disabled={busy} onClick={()=>{setPending(null);setConfirmation('');}}>Cancel</button>
-       <button type="button" className="is-danger" disabled={busy||confirmation.trim()!==confirmWord}
+       <button type="button" className="is-danger" disabled={busy||
+         confirmation.trim()!==confirmWord||(isPurging&&!practiceAcknowledged)}
          onClick={()=>void confirmPending()}>
-         {busy?'Working…':isDeleting?'Permanently delete':'Archive'} ({pending.length})
+         {busy?'Working…':isPurging?'Purge practice quote':
+          isDeleting?'Permanently delete':'Archive'} ({pending.length})
        </button>
      </div>
    </div> : focused ? <section className="sales-record-dependency-panel"
@@ -299,7 +332,8 @@ export function CleanupCenter(){
        <button type="button" disabled={busy||focusRow.blockers.length>0||
         (focusRow.kind==='quote'?!canQuotes:!canCrm)}
         onClick={()=>perform([focusRow])}>
-         {focusRow.action==='archive'?'Archive this quote':'Delete this '+(
+         {focusRow.action==='purge'?'Purge this archived practice quote':
+          focusRow.action==='archive'?'Archive this quote':'Delete this '+(
           focusRow.kind==='person'?'person':focusRow.kind==='company'?'company':
           focusRow.kind==='deal'?'deal':focusRow.kind==='activity'?'activity':
           focusRow.kind==='task'?'task':'quote')}
@@ -322,11 +356,12 @@ export function CleanupCenter(){
        {row&&<div className="sales-record-dependency-actions">
         <button type="button" aria-label={'Inspect '+row.name} disabled={busy}
          onClick={()=>openRecord(row)}>Inspect</button>
-        <button type="button" aria-label={(row.action==='archive'?'Archive ':'Delete ')+row.name}
+        <button type="button" aria-label={(row.action==='purge'?'Purge ':
+          row.action==='archive'?'Archive ':'Delete ')+row.name}
          disabled={busy||row.blockers.length>0||
           (row.kind==='quote'?!canQuotes:!canCrm)}
          onClick={()=>perform([row])}>
-          {row.action==='archive'?'Archive':'Delete'}
+          {row.action==='purge'?'Purge':row.action==='archive'?'Archive':'Delete'}
         </button>
        </div>}
       </div>)}
@@ -334,9 +369,9 @@ export function CleanupCenter(){
       No linked records requiring deletion were found in the records accessible to you.
      </p>}
      <small className="sales-record-dependency-note">
-      All deletions still require typed confirmation. Protected audit events and issued
-      quotes cannot be permanently erased. After a child is deleted, this list updates
-      automatically while your original record stays open.
+      All deletions require typed confirmation. Unsigned archived practice quotes can
+      be purged separately; signed agreements and unrelated history remain protected.
+      After a child is deleted, this list updates while your parent stays open.
      </small>
    </section> : <div className="sales-record-cleanup-list">
     {filtered.map(item=><div className="sales-record-cleanup-row" key={item.kind+item.id}>
@@ -356,13 +391,15 @@ export function CleanupCenter(){
        onClick={()=>openRecord(item)}>Review links</button>}
      <button type="button" disabled={busy||item.blockers.length>0||
       (item.kind==='quote'?!canQuotes:!canCrm)}
-      onClick={()=>perform([item])}>{item.action==='archive'?'Archive':'Delete'}</button>
+      onClick={()=>perform([item])}>{item.action==='purge'?'Purge':
+       item.action==='archive'?'Archive':'Delete'}</button>
     </div>)}
     {!filtered.length&&<p className="sales-cleanup-empty">No matching records.</p>}
    </div>}
    <footer>
     {error&&<span role="alert" className="sales-cleanup-error">{error}</span>}
-    <small>Unlinked records can be deleted. Issued and revised quotes are archived instead; linked records must be unlinked first. No cascading deletion.</small>
+    <small>Issued quotes are normally archived. An unsigned archived practice quote
+     can be purged only with extra confirmation. Linked customer records stay separate.</small>
     <button type="button" onClick={()=>{setOpen(false);setPending(null);}} disabled={busy}>Done</button>
    </footer>
   </section>

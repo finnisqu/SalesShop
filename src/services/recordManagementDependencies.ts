@@ -60,8 +60,16 @@ export function recordManagementDependencies(
  if(kind==='quote'){
   for(const quote of data.quotes)if(quote.parentQuoteId===id)
    add('quote',quote.id,'Dependent change order or revision');
-  // Other quote associations are contextual, not grounds for deleting customer
-  // audit history. Restrict this panel to the dependencies relevant to deletion.
+  for(const activity of data.activities)if(activity.quoteId===id||
+   linkedActivity(activity,'quote'))
+   add('activity',activity.id,activity.quoteId===id?
+    'Quote activity (eligible lifecycle history removed during practice purge)':
+    'Other CRM activity linked to quote');
+  tasks('quote');
+  for(const task of data.tasks)if(!task.deletedAt&&(
+   task.sourceObjectId==='quote-followup:'+id||
+   task.sourceObjectId==='quote-follow-up:'+id))
+   add('task',task.id,'Quote follow-up task');
  }
  if(kind==='activity'){
   for(const task of data.tasks)if(!task.deletedAt&&
