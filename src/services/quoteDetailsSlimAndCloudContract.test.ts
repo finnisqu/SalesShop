@@ -34,13 +34,15 @@ describe('Quick Quote Details single-column and secure cloud-save contract',()=>
     expect(crm).toContain('visible[focused]?.onChoose()');
     expect(details).not.toContain("instanceof HTMLTextAreaElement");
   });
-  it('removes Beta Classic shortcuts while preserving the Settings feature switch',()=>{
+  it('keeps one named Detailed Editor fallback while preserving the Settings switch',()=>{
     expect(quoteUi).not.toContain('>Classic</button>');
     expect(quoteUi).not.toContain('>Classic ↗</button>');
     expect(review).not.toContain('Continue in Classic Quotes');
     expect(settings).toContain("tab === 'beta'");
     expect(settings).toContain('setQuotesBetaEnabled');
-    expect(settings).toContain('Open classic Quotes');
+    expect(settings).toContain('Open Detailed Editor');
+    expect(settings).toContain('Open Quick Quote');
+    expect(quoteUi).toContain('qmb-library-detailed-link');
   });
   it('inserts fresh owned quotes before upserting existing ones without widening RLS',()=>{
     expect(sync).toContain("const freshQuotes=quotes.filter(row=>!guards.has(String(row.id)));");
