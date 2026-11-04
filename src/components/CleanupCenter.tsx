@@ -25,7 +25,7 @@ export function CleanupCenter(){
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
  const deleteCompany=useCrmStore(s=>s.deleteCompany),deleteContact=useCrmStore(s=>s.deleteContact);
- const deleteDeal=useCrmStore(s=>s.deleteProject);
+ const deleteDeal=useCrmStore(s=>s.deleteCleanProject);
  const deleteActivity=useCrmStore(s=>s.deleteActivity);
  const tasks=usePersonalTaskStore(s=>s.tasks),taskStorageScope=usePersonalTaskStore(s=>s.scope);
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
@@ -83,7 +83,7 @@ export function CleanupCenter(){
   if(item.kind==='quote'){deleteQuote(item.id);return;}
   if(item.kind==='person')await deleteContact(item.id);
   if(item.kind==='company')await deleteCompany(item.id);
-  if(item.kind==='deal')deleteDeal(item.id);
+  if(item.kind==='deal')await deleteDeal(item.id);
   if(item.kind==='activity')await deleteActivity(item.id);
  };
  const perform=async(items:CleanupRow[])=>{
