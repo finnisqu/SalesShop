@@ -4,12 +4,13 @@ import type {TaskAssociation} from '../store/personalTaskStore';
 import '../connections-table.css';
 import {visibleConnectionColumns,compareConnectionSortValues} from '../services/connectionsTablePreferences';
 export interface ConnectionColumn {key:string;label:string;}
-export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;}
+export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
  onBulkComplete?:(records:ConnectionTableRow[])=>void;
  onTaskDuePreset?:(id:string,preset:TaskDuePreset)=>void;
- onTaskToggleComplete?:(id:string,finished:boolean)=>void;}
+ onTaskToggleComplete?:(id:string,finished:boolean)=>void;
+ onDocumentArchive?:(id:string)=>void;onDocumentRestore?:(id:string)=>void;}
 const PAGE_SIZE=25;
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
@@ -17,7 +18,8 @@ function read(key:string):string[]{
  return Array.isArray(data)?data.filter((x):x is string=>typeof x==='string'):[];}
  catch{return[];}
 }
-export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkComplete,onTaskDuePreset,onTaskToggleComplete}:Props){
+export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkComplete,
+ onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
@@ -48,6 +50,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
    setSelected(old=>old.every(id=>ids.has(id))?old:old.filter(id=>ids.has(id)));
  },[rows]);
  const hasTaskActions=tableKey==='tasks'&&Boolean(onTaskDuePreset||onTaskToggleComplete);
+ const hasDocumentActions=tableKey==='documents'&&Boolean(onDocumentArchive||onDocumentRestore);
+ const hasRowActions=hasTaskActions||hasDocumentActions;
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'cols'),JSON.stringify(keys));}catch{/* preference storage is optional */}},[tableKey,keys]);
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'pins'),JSON.stringify(pinned));}catch{/* preference storage is optional */}},[tableKey,pinned]);
  const active=visibleConnectionColumns(keys,columns.map(c=>c.key));
@@ -129,7 +133,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
              onClick={()=>{setSort(s=>({key:col.key,reverse:s.key===col.key?!s.reverse:false}));setPage(1);}}>
              {col.label}{sort.key===col.key?(sort.reverse?' ↓':' ↑'):' ↕'}
            </button></th>)}
-         {hasTaskActions&&<th className="connections-row-actions-heading">Quick actions</th>}
+         {hasRowActions&&<th className="connections-row-actions-heading">Quick actions</th>}
        </tr></thead>
        <tbody>{display.map(row=><tr key={row.id} className={selection.has(row.id)?'is-selected':''}>
          <td className="connections-check-cell"><input type="checkbox" checked={selection.has(row.id)}
@@ -144,7 +148,13 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
                {row.values.priority||'Normal'}</span>
              :(row.values[col.key]||'—')}
          </td>)}
-         {hasTaskActions&&<td className="connections-row-actions">
+         {hasRowActions&&<td className="connections-row-actions">
+           {hasDocumentActions&&
+             (row.archived
+               ?onDocumentRestore&&<button type="button" aria-label={'Restore '+row.name}
+                  onClick={()=>onDocumentRestore(row.id)}>Restore</button>
+               :onDocumentArchive&&<button type="button" aria-label={'Archive '+row.name}
+                  onClick={()=>onDocumentArchive(row.id)}>Archive</button>)}
            {onTaskToggleComplete&&<button type="button"
              onClick={()=>onTaskToggleComplete(row.id,row.values.status==='completed'||row.values.status==='canceled')}>
              {row.values.status==='completed'||row.values.status==='canceled'?'Reopen':'Complete'}
@@ -162,7 +172,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
            </select>}
          </td>}
        </tr>)}
-       {!display.length&&<tr><td colSpan={visible.length+2+(hasTaskActions?1:0)}>No matching records.</td></tr>}
+       {!display.length&&<tr><td colSpan={visible.length+2+(hasRowActions?1:0)}>No matching records.</td></tr>}
        </tbody>
      </table>
    </div>

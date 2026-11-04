@@ -691,7 +691,7 @@ export function QuotesMobileBeta() {
     query:search,template:documentFilter,status:statusFilter,sort:documentSort,
   });
   const documentTableRows:ConnectionTableRow[]=list.map(q=>({
-    id:q.id,name:q.title||'Untitled document',
+    id:q.id,name:q.title||'Untitled document',archived:!!q.archivedAt,
     association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
     values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
       company:q.companyName||q.contactName||'',
@@ -1097,6 +1097,8 @@ export function QuotesMobileBeta() {
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
              onOpen={id=>setDocumentPreviewId(id)}
+             onDocumentArchive={canManageLibrary?id=>setLibraryAction({id,kind:'archive'}):undefined}
+             onDocumentRestore={canManageLibrary?id=>restoreQuote(id):undefined}
              onBulkTask={items=>beginTaskPromotion({
                target:'task',title:'Follow up on '+items.length+' sales documents',
                sourceLabel:'Sales Documents selection',
