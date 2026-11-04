@@ -99,6 +99,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
       stage: String(row.stage) as ProjectStage,
       stageChangedAt: valueOrUndefined(row.stage_changed_at),
       dueDate: valueOrUndefined(row.due_date),
+      assignedUserId: valueOrUndefined(row.assigned_user_id),
       amount: numericOrUndefined(row.amount),
       nextAction: valueOrUndefined(row.next_action),
       lastTouchpoint: valueOrUndefined(row.last_touchpoint),
@@ -135,7 +136,7 @@ async function upsertRows(table: CrmTable, rows: Record<string, unknown>[]) {
 interface ServerCrmGuards {
   companies: Map<string, string>;
   contacts: Map<string, string>;
-  projects: Map<string, { updatedAt: string; stage: ProjectStage; stageChangedAt?: string; amount?: number; lastTouchpoint?: string }>;
+  projects: Map<string, { updatedAt: string; stage: ProjectStage; stageChangedAt?: string; amount?: number; lastTouchpoint?: string; assignedUserId?:string }>;
   activities: Map<string, ActivityMetadata | null>;
 }
 /** Historical Activities are immutable except for explicitly timestamped
@@ -163,7 +164,7 @@ async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards>
   const [companies, contacts, projects] = await Promise.all([
     supabase.from('companies').select('id,updated_at').eq('organization_id', organizationId),
     supabase.from('contacts').select('id,updated_at').eq('organization_id', organizationId),
-    supabase.from('projects').select('id,updated_at,stage,stage_changed_at,amount,last_touchpoint').eq('organization_id', organizationId),
+    supabase.from('projects').select('id,updated_at,stage,stage_changed_at,amount,last_touchpoint,assigned_user_id').eq('organization_id', organizationId),
   ]);
   if (companies.error) throw companies.error;
   if (contacts.error) throw contacts.error;
@@ -177,6 +178,7 @@ async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards>
     stageChangedAt: valueOrUndefined(row.stage_changed_at),
     amount: numericOrUndefined(row.amount),
     lastTouchpoint: valueOrUndefined(row.last_touchpoint),
+    assignedUserId: valueOrUndefined(row.assigned_user_id),
   }));
   // Only fetch immutable IDs and last explicit correction metadata, in pages.
   for(let start=0;;start+=CRM_PAGE_SIZE){
@@ -259,6 +261,9 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
         stage,
         stage_changed_at: stageChangedAt ?? project.updatedAt,
         due_date: project.dueDate ?? null,
+        // Assignment changes use a separately acknowledged server update.
+        // Ordinary CRM sync must never restore stale assignment values.
+        assigned_user_id: server ? (server.assignedUserId ?? null) : (project.assignedUserId ?? null),
         amount: amount ?? null,
         next_action: project.nextAction ?? null,
         last_touchpoint: lastTouchpoint ?? null,
