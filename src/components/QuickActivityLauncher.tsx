@@ -103,7 +103,13 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
     setError('');
    }else{
     // Normal Home/Calendar logging must never complete a previously selected task.
-    if(workflowTaskId&&
+    if(request.associations?.length){
+     if((notes.trim()||links.length||workflowTaskId)&&
+      !window.confirm('Replace your unfinished Activity draft with this related-record interaction?'))return;
+     setLinks(request.associations);setNotes('');setMethod('call');
+     setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
+     setOccurred(dateTimeLocal());
+    }else if(workflowTaskId&&
       !window.confirm('Start a separate Activity instead of finishing your task-linked draft?'))return;
     setWorkflowTaskId(null);
     if(day&&/^\d{4}-\d{2}-\d{2}$/.test(day)&&day<=localDateKey(new Date()))
