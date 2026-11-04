@@ -24,7 +24,7 @@ async function makeDocument(page:Page,template:string,name:string){
   if((page.viewportSize()?.width??1200)<=700)
     await page.getByRole('button',{name:'Back to Documents'}).click();
   else
-    await beta.getByRole('button',{name:/All documents/}).click();
+    await beta.getByRole('button',{name:/Documents/}).first().click();
   await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
 }
 test('mobile documents search by name/template and filter by status without losing the new action',async({page},info)=>{
@@ -53,22 +53,23 @@ test('desktop library sorts documents and safely restores an archived draft',asy
   const beta=await openLibrary(page);
   await makeDocument(page,'Quick Quote','Zulu Retail');
   await makeDocument(page,'Builder Rate Schedule','Alpha Builder');
-  await beta.getByRole('combobox',{name:'Sort documents'}).selectOption('name');
-  const names=await beta.locator('.qmb-listcard>strong').allTextContents();
+  // Desktop documents use the shared CRM table; mobile still uses cards.
+  const documents=beta.getByRole('region',{name:'documents table'});
+  await documents.getByRole('button',{name:'Sort by Document'}).click();
+  const names=await documents.locator('tbody .connections-table-open').allTextContents();
   expect(names.indexOf('Alpha Builder')).toBeGreaterThanOrEqual(0);
   expect(names.indexOf('Alpha Builder')).toBeLessThan(names.indexOf('Zulu Retail'));
   await beta.getByRole('combobox',{name:'Document status'}).selectOption('drafts');
-  await expect(beta.locator('.qmb-library-entry').filter({hasText:'Alpha Builder'})).toBeVisible();
-  await expect(beta.locator('.qmb-library-entry').filter({hasText:'Zulu Retail'})).toBeVisible();
-  const entry=beta.locator('.qmb-library-entry').filter({hasText:'Alpha Builder'});
-  await entry.getByRole('button',{name:'Archive'}).click();
-  await page.getByRole('dialog',{name:'Archive quote'}).getByRole('button',{name:'Archive quote'}).click();
-  await expect(entry).toHaveCount(0);
+  await expect(documents.getByRole('button',{name:'Alpha Builder',exact:true})).toBeVisible();
+  await expect(documents.getByRole('button',{name:'Zulu Retail',exact:true})).toBeVisible();
+  await documents.getByRole('button',{name:'Archive Alpha Builder'}).click();
+  await page.getByRole('dialog',{name:'Archive quote'})
+    .getByRole('button',{name:'Archive quote'}).click();
+  await expect(documents.getByRole('button',{name:'Alpha Builder',exact:true})).toHaveCount(0);
   await beta.getByRole('combobox',{name:'Document status'}).selectOption('archived');
-  const archived=beta.locator('.qmb-library-entry').filter({hasText:'Alpha Builder'});
-  await expect(archived).toBeVisible();
-  await archived.getByRole('button',{name:'Restore to active'}).click();
-  await expect(archived).toHaveCount(0);
+  await expect(documents.getByRole('button',{name:'Alpha Builder',exact:true})).toBeVisible();
+  await documents.getByRole('button',{name:'Restore Alpha Builder'}).click();
+  await expect(documents.getByRole('button',{name:'Alpha Builder',exact:true})).toHaveCount(0);
   await beta.getByRole('combobox',{name:'Document status'}).selectOption('active');
-  await expect(beta.locator('.qmb-library-entry').filter({hasText:'Alpha Builder'})).toBeVisible();
+  await expect(documents.getByRole('button',{name:'Alpha Builder',exact:true})).toBeVisible();
 });
