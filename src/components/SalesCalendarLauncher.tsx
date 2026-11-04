@@ -8,6 +8,9 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {scopedStorageKey} from '../lib/developerPlayground';
 import {requestTaskModal} from './TaskModalHost';
+import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
+import {homeRecentQuotes} from '../services/homeOverview';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {buildSalesCalendarEvents,personalCalendarSources,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
 import './sales-calendar.css';
@@ -33,6 +36,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [isPhone,setIsPhone]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches);
  const [showAllDay,setShowAllDay]=useState(false);
  const [addOpen,setAddOpen]=useState(false);
+ const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
+ const [activityPreview,setActivityPreview]=useState<string|null>(null);
  useEffect(()=>{
   if(!embedded)return;
   const media=window.matchMedia('(max-width:760px)');
@@ -69,8 +74,10 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const weekDays=useMemo(()=>calendarWeekDays(selected),[selected]);
  const weekMode=embedded&&display==='week';
  const visibleDays=weekMode?weekDays:embedded?compactDays:days;
- const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected),[events,selected]);
+ const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected).sort((a,b)=>
+  Number(Boolean(b.urgent))-Number(Boolean(a.urgent))||a.kind.localeCompare(b.kind)||a.title.localeCompare(b.title)),[events,selected]);
  const shownDayEvents=embedded&&isPhone&&!showAllDay?eventsForDay.slice(0,5):eventsForDay;
+ const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
  useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
  useEffect(()=>{
   if(!addOpen)return;
@@ -116,16 +123,19 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const openRecord=(event:SalesCalendarEvent)=>{
   setOpen(false);
   const {recordType,recordId}=event;
-  if(recordType==='task')requestTaskModal({mode:'preview',id:recordId});
-  else if(recordType==='activity'){
-   try{window.sessionStorage.setItem('salesshop-open-activity-history-v1','1');}catch{/* best effort */}
-   nav.setView('dashboard');
-   window.dispatchEvent(new Event('salesshop:open-activity-history'));
+  if(recordType==='task'){requestTaskModal({mode:'preview',id:recordId});return;}
+  if(event.kind==='activity'){
+   setActivityPreview(event.id.startsWith('activity:')?event.id.slice(9):recordId);
+   return;
   }
-  else if(recordType==='project')nav.openProject(recordId);
-  else if(recordType==='quote')nav.openQuote(recordId);
-  else if(recordType==='company')nav.openCompany(recordId);
-  else if(recordType==='contact')nav.openPerson(recordId);
+  const kind=recordType==='project'?'deal':
+   recordType==='contact'?'person':recordType==='company'?'company':
+   recordType==='quote'?'quote':null;
+  if(kind)setRecordPreview({kind,id:recordId});
+ };
+ const openLinkedRecord=(kind:PreviewRecord['kind'],id:string)=>{
+  setActivityPreview(null);
+  setRecordPreview({kind,id});
  };
  if(preview)return null;
  const calendarPanel=(
@@ -134,13 +144,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
     <header className="sales-calendar-heading">
      <div className="sales-calendar-period">
-      <button type="button" aria-label={weekMode?'Previous week':'Previous month'}
-       onClick={()=>changePeriod(-1)}>‹</button>
-      <strong>{plainName(month)}</strong>
-      <button type="button" aria-label={weekMode?'Next week':'Next month'}
-       onClick={()=>changePeriod(1)}>›</button>
-     </div>
-     <div className="sales-calendar-tools">
       <button type="button" className="sales-calendar-today" title="Jump to today"
        aria-label="Jump to today" onClick={()=>{
         const now=new Date();setMonth(new Date(now.getFullYear(),now.getMonth(),1,12));
@@ -153,6 +156,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <path d="M7 3v4M17 3v4M3 10h18M12 14v4M10 16h4"/>
        </svg>
       </button>
+      <button type="button" aria-label={weekMode?'Previous week':'Previous month'}
+       onClick={()=>changePeriod(-1)}>‹</button>
+      <strong>{plainName(month)}</strong>
+      <button type="button" aria-label={weekMode?'Next week':'Next month'}
+       onClick={()=>changePeriod(1)}>›</button>
+     </div>
+     <div className="sales-calendar-tools">
       {embedded&&<div className="sales-calendar-display-toggle" role="group" aria-label="Calendar display">
        <button type="button" aria-pressed={display==='week'}
         onClick={()=>chooseDisplay('week')}>7 days</button>
@@ -162,6 +172,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       {!embedded&&<button type="button" aria-label="Close calendar" onClick={()=>setOpen(false)}>×</button>}
      </div>
     </header>
+    <div className="sales-calendar-main">
+     <div className="sales-calendar-month">
     <div className="sales-calendar-weekdays">
      {week.map((name,i)=><span key={i} aria-label={['Sunday','Monday','Tuesday','Wednesday',
       'Thursday','Friday','Saturday'][i]}>{name}</span>)}
@@ -194,6 +206,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        </button>;
      })}
     </div>
+     </div>
     <section className="sales-calendar-day-preview" aria-label={'Items for '+dateLabel(selected)}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
       <div><span>{eventsForDay.length} {eventsForDay.length===1?'item':'items'}</span>
@@ -215,12 +228,12 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          }}>☎ Log completed activity</button>}
         </div>}
        </div>}
-       {embedded&&<button type="button" className="sales-calendar-all-tasks"
-        onClick={()=>nav.setView('tasks')}>All tasks ›</button>}
+ 
       </div></div>
      {eventsForDay.length?<div className="sales-calendar-agenda">
        {shownDayEvents.map(event=><button type="button" key={event.id}
         onClick={()=>openRecord(event)}>
+         {event.urgent&&<span className="sales-calendar-agenda-urgent" title="Urgent task" aria-label="Urgent task">!</span>}
          <span className={'sales-calendar-event-dot is-'+event.kind} aria-hidden="true"/>
          <span className="sales-calendar-event-text"><strong>{event.title}</strong>
           <small>{labels[event.kind]} · {event.detail}</small></span>
@@ -233,6 +246,22 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         </button>}
       </div>:<p className="sales-calendar-empty">Nothing scheduled or logged for this day.</p>}
     </section>
+    </div>
+    {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent quote work">
+      <h3>Pick up where you left off</h3>
+      <small>Recent quotes</small>
+      <div className="sales-calendar-sidecar-list">
+       {recentQuotes.length?recentQuotes.map(q=><button type="button" key={q.id}
+        onClick={()=>setRecordPreview({kind:'quote',id:q.id})}>
+        <strong>{q.title||'Untitled quote'}</strong>
+        <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
+       </button>):<p>Recently edited quotes will appear here.</p>}
+      </div>
+      <button type="button" className="sales-calendar-cleanup-link"
+        onClick={()=>window.dispatchEvent(new Event('salesshop:open-task-cleanup'))}>
+        <span aria-hidden="true">✓</span> Review overdue tasks
+      </button>
+    </aside>}
     <div className="sales-calendar-legend" aria-label="Calendar event types">
      {(['task','bid','activity','follow-up'] as const).map(kind=><span key={kind}>
       <i className={'is-'+kind}/>{labels[kind]}</span>)}
@@ -253,5 +282,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
    :open&&createPortal(<div className="sales-calendar-backdrop"
      onPointerDown={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
      {calendarPanel}</div>,document.body)}
+  {recordPreview&&<RecordPreviewDrawer record={recordPreview}
+   onSelect={setRecordPreview} onClose={()=>setRecordPreview(null)}/>}
+  {activityPreview&&<CalendarActivityPreview activityId={activityPreview}
+   onClose={()=>setActivityPreview(null)} onSelect={openLinkedRecord}/>}
  </>;
 }
