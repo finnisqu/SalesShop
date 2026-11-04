@@ -496,3 +496,49 @@
   grid-column:1/-1!important;grid-row:3!important;
  }
 }
+
+
+/* A tighter, fixed-height week-focus workspace. Month sizing stays unchanged.
+   Give the agenda a useful working area without a tall empty floor. */
+@media(min-width:760px){
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline.is-week{
+  box-sizing:border-box!important;
+  height:392px!important;min-height:392px!important;max-height:392px!important;
+  overflow:hidden!important;
+  grid-template-rows:52px minmax(0,1fr) 30px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-heading{
+  min-height:0!important;padding:7px 12px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-main{
+  min-height:0!important;max-height:none!important;height:100%!important;
+  overflow:hidden!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-month{
+  flex:0 0 94px!important;
+  height:94px!important;min-height:94px!important;max-height:94px!important;
+  grid-template-rows:25px 69px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-weekdays{
+  padding:4px 8px 2px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-grid{
+  height:69px!important;min-height:69px!important;max-height:69px!important;
+  grid-template-rows:69px!important;grid-auto-rows:69px!important;
+  padding:0 8px 5px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-day{
+  min-height:0!important;height:64px!important;padding:6px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-day-preview{
+  flex:1 1 0!important;height:0!important;min-height:0!important;
+  max-height:none!important;overflow:hidden!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-agenda{
+  flex:1 1 0!important;min-height:0!important;
+  max-height:none!important;overflow-y:auto!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-sidecar{
+  min-height:0!important;overflow:hidden!important;
+ }
+}
