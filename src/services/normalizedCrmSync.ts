@@ -33,15 +33,22 @@ function atLeastAsNew(localValue: string, serverValue?: string) {
   return localTime >= serverTime;
 }
 
+/** PostgREST commonly caps a response at 1,000 rows. Always page by a
+ * stable secondary key; don't silently hide older interactions. */
+const CRM_PAGE_SIZE=500;
 async function selectRows(table: CrmTable, organizationId: string) {
   if (!supabase) return [] as DbRow[];
-  const { data, error } = await supabase
-    .from(table)
-    .select('*')
-    .eq('organization_id', organizationId)
-    .order('sort_order', { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as DbRow[];
+  const rows:DbRow[]=[];
+  for(let start=0;;start+=CRM_PAGE_SIZE){
+    const {data,error}=await supabase.from(table).select('*')
+      .eq('organization_id',organizationId)
+      .order('sort_order',{ascending:true}).order('id',{ascending:true})
+      .range(start,start+CRM_PAGE_SIZE-1);
+    if(error)throw error;
+    const page=(data??[]) as DbRow[];
+    rows.push(...page);
+    if(page.length<CRM_PAGE_SIZE)return rows;
+  }
 }
 
 export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocument | null> {
@@ -129,6 +136,19 @@ interface ServerCrmGuards {
   companies: Map<string, string>;
   contacts: Map<string, string>;
   projects: Map<string, { updatedAt: string; stage: ProjectStage; stageChangedAt?: string; amount?: number; lastTouchpoint?: string }>;
+  activities: Map<string, ActivityMetadata | null>;
+}
+/** Historical Activities are immutable except for explicitly timestamped
+ * corrections. Skipping an older client copy protects a recent cloud edit. */
+export function activityNeedsUpload(local:Activity,remoteMetadata?:ActivityMetadata|null):boolean{
+  if(remoteMetadata===undefined)return true; // New Activity, no cloud row yet
+  const localEdit=local.metadata?.editedAt;
+  const serverEdit=remoteMetadata?.editedAt;
+  if(!localEdit)return false; // Historical row: never overwrite cloud from stale cache
+  if(!serverEdit)return true;
+  const localTime=Date.parse(localEdit),serverTime=Date.parse(serverEdit);
+  if(!Number.isFinite(localTime)||!Number.isFinite(serverTime))return false;
+  return localTime>serverTime;
 }
 
 async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards> {
@@ -136,6 +156,7 @@ async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards>
     companies: new Map(),
     contacts: new Map(),
     projects: new Map(),
+    activities: new Map(),
   };
   if (!supabase) return guards;
 
@@ -157,6 +178,18 @@ async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards>
     amount: numericOrUndefined(row.amount),
     lastTouchpoint: valueOrUndefined(row.last_touchpoint),
   }));
+  // Only fetch immutable IDs and last explicit correction metadata, in pages.
+  for(let start=0;;start+=CRM_PAGE_SIZE){
+    const {data,error}=await supabase.from('activities').select('id,metadata')
+      .eq('organization_id',organizationId)
+      .order('id',{ascending:true})
+      .range(start,start+CRM_PAGE_SIZE-1);
+    if(error)throw error;
+    const page=data??[];
+    page.forEach(row=>guards.activities.set(String(row.id),
+      row.metadata&&typeof row.metadata==='object'?row.metadata as ActivityMetadata:null));
+    if(page.length<CRM_PAGE_SIZE)break;
+  }
   return guards;
 }
 
@@ -235,7 +268,9 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
       };
     });
 
-  const activities = document.activities.map((activity, sortOrder) => ({
+  const activities = document.activities
+    .filter(activity=>activityNeedsUpload(activity,guards.activities.get(activity.id)))
+    .map((activity, sortOrder) => ({
     organization_id: organizationId,
     id: activity.id,
     type: activity.type,
