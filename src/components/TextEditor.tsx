@@ -121,7 +121,11 @@ export function TextEditor({ entry, onEditorReady, readOnly = false }: TextEdito
         aria-label="Selected Notebook text actions"
         style={{position:'fixed',left:selection.left,top:selection.top,zIndex:9000}}
         onMouseDown={event=>event.preventDefault()}
-        onPointerDown={event=>event.preventDefault()}>
+        onPointerDown={event=>{
+         // Preserve desktop text selection, but do not suppress iOS tap
+         // synthesis: touch buttons still need to receive their click.
+         if(event.pointerType==='mouse')event.preventDefault();
+        }}>
         <small title={selection.text}>“{selection.text.slice(0,35)}”</small>
         <button type="button" onClick={()=>selectedDate(selection.text)}>Add to calendar</button>
         <button type="button" onClick={()=>selectedTask(selection.text)}>Create task</button>
