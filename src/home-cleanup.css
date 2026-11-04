@@ -158,3 +158,17 @@
  .sales-record-dependency-actions{align-self:stretch}
  .sales-record-dependency-actions button{flex:1 1 auto;min-height:43px}
 }
+
+/* A higher-friction owner/admin flow for purging practice-issued documents. */
+.sales-record-confirmation .sales-practice-purge-ack{
+ display:flex;align-items:flex-start;gap:10px;
+ border:1px solid var(--ss-theme-border,#ddd);background:var(--ss-theme-tint,#f6f0e6);
+ border-radius:9px;padding:11px 12px;max-width:100%;
+ font-weight:600;font-size:12px;line-height:1.5;
+}
+.sales-record-confirmation .sales-practice-purge-ack input{
+ width:18px;height:18px;flex:0 0 18px;max-width:18px;margin:1px 0 0;padding:0;
+ accent-color:var(--ss-theme-accent,#917246);
+}
+.sales-record-confirmation .sales-practice-purge-ack span{min-width:0;flex:1}
+.sales-record-confirmation .sales-practice-purge-ack + label{line-height:1.5}
