@@ -63,3 +63,20 @@ A separate focused batch addressed edge cases without any schema migration or au
 7. Run `npm run build`, `npx vitest run src/services/notebookDaily.test.ts src/store/notebookStore.test.ts`, and Cloudflare/browser acceptance before calling the release fully verified.
 
 **Status:** The source changes and regression cases are committed; the build, test execution, Cloudflare deployment, and device acceptance remain unverified in this connector-only workflow.
+
+
+## Home sidecar Quick Create — November 4, 2026
+- The plus button next to **Pick up where you left off** remains visible in **Quotes**, **Activity**, and **Notes**.
+- Clicking + opens the same small, theme-aware menu in any tab: **New Quote**, **Log Activity**, **New Note**. Quotes use the existing guided template picker (also shared with the top-bar Quick Create); Activity and Note use their existing modal editors.
+- Selecting Activity or Note switches the sidecar to its corresponding tab, so saved work is immediately visible when the popup closes.
+- Existing team-area editing permissions determine whether Quote or Activity is offered. Private Note capture remains available in the signed-in Notebook.
+- The menu closes on selection, outside click, Escape, or tab change; keyboard arrow navigation and touch-sized controls are supported. No extra storage or CRM schema is introduced.
+
+### Checks
+1. Switch between all three Home tabs and confirm the + stays in the same top-right position, with the same options for a fully authorized salesperson.
+2. Choose New Quote and verify the same guided quote/schedule template chooser as top-bar Quick Create. No blank Quote is created just by opening the chooser.
+3. Choose Log Activity; verify the existing Activity popup and the Activity tab after saving.
+4. Choose New Note; verify today's Daily Notebook quick capture, without creating an empty daily page on cancel.
+5. Test desktop and iPhone tap, outside dismissal, Escape/arrow keys, narrow layouts, and light/dark themes.
+6. Check that read-only or department-restricted members don't see unauthorized Quote/Activity actions.
+7. Run `npx vitest run src/services/quoteCreationNavigation.test.ts` and `npm run build` when the build environment is available. Automatic CI remains disabled.
