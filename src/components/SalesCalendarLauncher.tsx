@@ -5,6 +5,7 @@ import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {useNotebookStore} from '../store/notebookStore';
 import {homeNotes,homeNoteTitle,homeNoteSummary,openHomeNote} from '../services/homeNotes';
+import {dailyNotebookPages,notebookPlainText,notebookCalendarDates,openNotebookCalendarDate} from '../services/notebookDaily';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
@@ -87,6 +88,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
  const notebookNotes=useMemo(()=>notebookReady?homeNotes(notebookEntries):[],
+  [notebookEntries,notebookReady]);
+ const dailyPages=useMemo(()=>notebookReady?dailyNotebookPages(notebookEntries):[],
   [notebookEntries,notebookReady]);
  useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
  useEffect(()=>{
@@ -298,16 +301,30 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           <strong>{item.title}</strong>
           <small>{new Date(item.timestamp).toLocaleDateString()} · {item.detail}</small>
          </button>):<p>Completed tasks and logged interactions will appear here.</p>
-        :notebookNotes.length?notebookNotes.map(note=><button type="button"
-          className="home-note-list-item" key={note.objectId}
-          onClick={()=>openHomeNote({mode:'preview',objectId:note.objectId})}>
-          <span className="home-note-list-indicator" aria-hidden="true"/>
-          <span className="home-note-list-copy">
-           <strong>{homeNoteTitle(note.text)}</strong>
-           <small>{homeNoteSummary(note.text)||
-            ('Edited '+new Date(note.updatedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}))}</small>
-          </span>
-         </button>):<p>No notes yet. Use + to capture a thought.</p>}
+        :<div className="home-daily-notes-list">
+          {dailyPages.length>0&&<small className="home-note-group-label">Daily pages</small>}
+          {dailyPages.map(page=><button type="button" className="home-note-list-item"
+           key={page.id} onClick={()=>openHomeNote({mode:'preview',entryId:page.id})}>
+           <span className="home-note-list-indicator" aria-hidden="true"/>
+           <span className="home-note-list-copy">
+            <strong>{page.title}</strong>
+            <small>{notebookPlainText(page.contentHtml).slice(0,145)||
+              ((page.agendaItems?.length??0)+' linked items')}</small>
+           </span>
+          </button>)}
+          {notebookNotes.length>0&&<small className="home-note-group-label">
+           Earlier Post-its · kept for reference</small>}
+          {notebookNotes.map(note=><button type="button" className="home-note-list-item"
+           key={note.objectId} onClick={()=>openHomeNote({mode:'preview',objectId:note.objectId})}>
+           <span className="home-note-list-indicator is-legacy" aria-hidden="true"/>
+           <span className="home-note-list-copy">
+            <strong>{homeNoteTitle(note.text)}</strong>
+            <small>{homeNoteSummary(note.text)||'Legacy quick note'}</small>
+           </span>
+          </button>)}
+          {!dailyPages.length&&!notebookNotes.length&&
+           <p>No notes yet. Use + to start today's Notebook page.</p>}
+         </div>}
       </div>
     </aside>}
     <div className="sales-calendar-legend" aria-label="Calendar event types">
