@@ -5,6 +5,7 @@ import {useQuoteStore} from '../store/quoteStore';
 import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useAuthStore} from '../store/authStore';
+import {useNavigationStore} from '../store/navigationStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
 import {crmDeletionBlockers} from '../services/crmDeletionBlockers';
@@ -17,11 +18,16 @@ interface CleanupRow{
  blockers:string[];action:'delete'|'archive';
 }
 type Tab=CleanupKind;
+type OpenDetail={kind?:CleanupKind;testMode?:boolean};
 export function CleanupCenter(){
  const [open,setOpen]=useState(false),[tab,setTab]=useState<Tab>('quote');
  const [query,setQuery]=useState(''),[selected,setSelected]=useState<string[]>([]);
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
- const quotes=useQuoteStore(s=>s.quotes),deleteQuote=useQuoteStore(s=>s.deleteQuote);
+ const [pending,setPending]=useState<CleanupRow[]|null>(null);
+ const [confirmation,setConfirmation]=useState('');
+ const [testMode,setTestMode]=useState(false);
+ const quotes=useQuoteStore(s=>s.quotes),archiveQuote=useQuoteStore(s=>s.archiveQuote),
+  deleteQuoteFromManagement=useQuoteStore(s=>s.deleteQuoteFromManagement);
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
  const deleteCompany=useCrmStore(s=>s.deleteCompany),deleteContact=useCrmStore(s=>s.deleteContact);
@@ -32,13 +38,18 @@ export function CleanupCenter(){
   userId=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   dept=useAuthStore(s=>s.teamDepartment);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
- const canCrm=!perspective&&(mode==='local'||canEditTeamArea(role,dept,'crm'));
- const canQuotes=!perspective&&(mode==='local'||canEditTeamArea(role,dept,'quotes'));
+ const canManage=!perspective&&(mode==='local'||role==='owner'||role==='admin');
+ const canCrm=canManage&&(mode==='local'||canEditTeamArea(role,dept,'crm'));
+ const canQuotes=canManage&&(mode==='local'||canEditTeamArea(role,dept,'quotes'));
  const scope=taskScope(mode,org,userId);
  const ownTasks=scope&&scope===taskStorageScope?tasks.filter(task=>!task.deletedAt):[];
  const visibleQuotes=mode==='cloud'?quotes.filter(quote=>quote.ownerUserId===userId):quotes;
  useEffect(()=>{
-  const show=()=>{setOpen(true);setQuery('');setSelected([]);setError('');setTab('quote');};
+  const show=(event:Event)=>{
+   const detail=(event as CustomEvent<OpenDetail>).detail;
+   setOpen(true);setQuery('');setSelected([]);setError('');setPending(null);
+   setConfirmation('');setTestMode(Boolean(detail?.testMode));setTab(detail?.kind??'quote');
+  };
   window.addEventListener('salesshop:open-cleanup-center',show);
   return()=>window.removeEventListener('salesshop:open-cleanup-center',show);
  },[]);
@@ -82,7 +93,11 @@ export function CleanupCenter(){
  const chosen=eligible.filter(item=>selected.includes(item.kind+':'+item.id)&&item.action==='delete');
  const removeRow=async(item:CleanupRow)=>{
   if(item.blockers.length)return;
-  if(item.kind==='quote'){deleteQuote(item.id);return;}
+  if(item.kind==='quote'){
+   if(item.action==='archive')archiveQuote(item.id);
+   else await deleteQuoteFromManagement(item.id);
+   return;
+  }
   if(item.kind==='person')await deleteContact(item.id);
   if(item.kind==='company')await deleteCompany(item.id);
   if(item.kind==='deal')await deleteDeal(item.id);
@@ -94,52 +109,112 @@ export function CleanupCenter(){
     await deleteActivity(item.id,orphaned);
   }
  };
- const perform=async(items:CleanupRow[])=>{
-  if(!items.length||busy)return;
-  const destructive=items.filter(item=>item.action==='delete');
-  const archives=items.length-destructive.length;
-  const message=destructive.length>1
-   ?'Permanently delete '+destructive.length+' unlinked records? This cannot be undone.'
-   :destructive.length===1?'Permanently delete '+destructive[0].name+'? This cannot be undone.'
-   :'Archive '+items[0].name+'? The original business record will be retained.';
-  if(!window.confirm(message))return;
+ const perform=(items:CleanupRow[])=>{
+  if(!items.length||busy||!canManage)return;
+  setPending(items);setConfirmation('');setError('');
+ };
+ const openRecord=(item:CleanupRow)=>{
+  if(busy)return;
+  setPending(null);setOpen(false);
+  const navigation=useNavigationStore.getState();
+  if(item.kind==='person')navigation.openPerson(item.id);
+  if(item.kind==='company')navigation.openCompany(item.id);
+  if(item.kind==='deal')navigation.openProject(item.id);
+  if(item.kind==='quote')navigation.openQuote(item.id);
+ };
+ const confirmPending=async()=>{
+  if(!pending?.length||busy||!canManage)return;
+  const phrase=pending.some(item=>item.action==='delete')?'DELETE':'ARCHIVE';
+  if(confirmation.trim()!==phrase)return;
   setBusy(true);setError('');
   try{
-   for(const item of items){
+   const auth=useAuthStore.getState();
+   if(useRolePerspectiveStore.getState().activePerspective||
+     (auth.mode!=='local'&&auth.teamRole!=='owner'&&auth.teamRole!=='admin'))
+     throw new Error('Record management requires an Owner or Admin account.');
+   for(const item of pending){
+    const crm=useCrmStore.getState(),allQuotes=useQuoteStore.getState().quotes;
+    const saved=usePersonalTaskStore.getState();
+    const currentScope=taskScope(auth.mode,auth.organizationId,auth.user?.id);
+    const own=currentScope===saved.scope?saved.tasks.filter(task=>!task.deletedAt):[];
+    const refs={companies:crm.companies,contacts:crm.contacts,projects:crm.projects,
+     activities:crm.activities,quotes:allQuotes,tasks:own};
+    if(item.kind==='quote'){
+     const current=allQuotes.find(quote=>quote.id===item.id);
+     if(!current||current.archivedAt||
+       (auth.mode==='cloud'&&current.ownerUserId!==auth.user?.id))
+       throw new Error('This quote is unavailable or is not your own active document.');
+     if((canPermanentlyDeleteQuote(current,allQuotes)?'delete':'archive')!==item.action)
+       throw new Error('This quote changed. Review it again before removing it.');
+    }else if(item.kind==='person'||item.kind==='company'||item.kind==='deal'){
+     const collection=item.kind==='person'?crm.contacts:item.kind==='company'?crm.companies:crm.projects;
+     if(!collection.some(record=>record.id===item.id)||
+       crmDeletionBlockers(item.kind,item.id,refs).length)
+       throw new Error(item.name+' now has linked records. Unlink them before deleting.');
+    }else if(!crm.activities.some(activity=>activity.id===item.id)){
+     throw new Error('This Activity is no longer available.');
+    }
     await removeRow(item);
     setSelected(old=>old.filter(key=>key!==item.kind+':'+item.id));
    }
-   if(archives)void archives;
-  }catch(e){setError(e instanceof Error?e.message:'Cleanup stopped. Earlier selections may already have been removed.');}
-  finally{setBusy(false);}
+   setPending(null);setConfirmation('');
+  }catch(e){
+   setPending(null);setConfirmation('');
+   setError(e instanceof Error?e.message:'Removal stopped. Earlier records may already have been removed.');
+  }finally{setBusy(false);}
  };
- if(!open||perspective)return null;
+ if(!open||!canManage)return null;
+ const isDeleting=Boolean(pending?.some(item=>item.action==='delete'));
+ const confirmWord=isDeleting?'DELETE':'ARCHIVE';
  return createPortal(<div className="sales-cleanup-backdrop" onPointerDown={e=>{
-  if(e.target===e.currentTarget&&!busy)setOpen(false);
+  if(e.target===e.currentTarget&&!busy){setOpen(false);setPending(null);}
  }}>
   <section className="sales-cleanup-dialog is-record-cleanup" role="dialog"
-   aria-modal="true" aria-label="Clean up test records">
-   <header><div><small>MAINTENANCE · REVIEW BEFORE DELETING</small>
-    <h2>Record cleanup</h2>
-    <p>Remove unused test records without breaking linked CRM history.</p></div>
-    <button type="button" aria-label="Close cleanup" disabled={busy} onClick={()=>setOpen(false)}>×</button>
+   aria-modal="true" aria-label={testMode?'Clean up test records':'Manage and delete records'}
+   onKeyDown={e=>{if(e.key==='Escape'&&!busy){
+    e.stopPropagation();if(pending)setPending(null);else setOpen(false);
+   }}}>
+   <header><div><small>SETTINGS · DATA MANAGEMENT</small>
+    <h2>{testMode?'Clean up test records':'Record management'}</h2>
+    <p>{testMode
+     ?'Review sample records manually. Nothing is selected or deleted automatically.'
+     :'Remove unlinked records, or archive issued quotes while retaining their history.'}</p></div>
+    <button type="button" aria-label="Close record management" disabled={busy}
+     onClick={()=>{setOpen(false);setPending(null);}}>×</button>
    </header>
    <div className="sales-record-cleanup-tabs" role="group" aria-label="Record type">
     {(['quote','person','company','deal','activity'] as const).map(kind=><button key={kind} type="button"
-     aria-pressed={tab===kind} onClick={()=>{setTab(kind);setSelected([]);setError('');}}>
+     disabled={busy||!!pending} aria-pressed={tab===kind}
+     onClick={()=>{setTab(kind);setSelected([]);setError('');}}>
      {kind==='quote'?'Quotes':kind==='person'?'People':kind==='company'?'Companies':
        kind==='deal'?'Deals':'Activities'}
      <small>{rows.filter(row=>row.kind===kind).length}</small>
     </button>)}
    </div>
    <div className="sales-record-cleanup-toolbar">
-    <input type="search" value={query} aria-label="Filter cleanup records"
+    <input type="search" value={query} aria-label="Filter records" disabled={busy||!!pending}
      onChange={e=>{setQuery(e.target.value);setSelected([]);}}
-     placeholder="Find a test record…"/>
-    {chosen.length>0&&<button type="button" disabled={busy} onClick={()=>void perform(chosen)}>
+     placeholder="Find a record…"/>
+    {chosen.length>0&&!pending&&<button type="button" disabled={busy} onClick={()=>perform(chosen)}>
       Delete selected ({chosen.length})</button>}
    </div>
-   <div className="sales-record-cleanup-list">
+   {pending ? <div className="sales-record-confirmation" role="group" aria-label="Confirm record removal">
+     <strong>{pending.length===1?pending[0].name:pending.length+' selected records'}</strong>
+     <p>{isDeleting
+      ?'Permanent deletion cannot be undone. Linked CRM history and tasks are protected.'
+      :'Archiving retains customer documents and their history for later restoration.'}</p>
+     <label>Type {confirmWord} to confirm
+       <input autoFocus value={confirmation} aria-label="Type confirmation word"
+        disabled={busy} onChange={e=>setConfirmation(e.target.value)}/>
+     </label>
+     <div className="sales-record-confirmation-actions">
+       <button type="button" disabled={busy} onClick={()=>{setPending(null);setConfirmation('');}}>Cancel</button>
+       <button type="button" className="is-danger" disabled={busy||confirmation.trim()!==confirmWord}
+         onClick={()=>void confirmPending()}>
+         {busy?'Working…':isDeleting?'Permanently delete':'Archive'} ({pending.length})
+       </button>
+     </div>
+   </div> : <div className="sales-record-cleanup-list">
     {filtered.map(item=><div className="sales-record-cleanup-row" key={item.kind+item.id}>
      <input type="checkbox" disabled={busy||item.blockers.length>0||item.action!=='delete'||
        (item.kind==='quote'?!canQuotes:!canCrm)}
@@ -147,18 +222,23 @@ export function CleanupCenter(){
       onChange={e=>setSelected(old=>e.target.checked?
        [...old,item.kind+':'+item.id]:old.filter(key=>key!==item.kind+':'+item.id))}/>
      <div><strong>{item.name}</strong><small>{item.detail}</small>
-      {item.blockers.length>0&&<small className="is-blocked">Cannot delete: {item.blockers.join(' · ')}</small>}
+      {item.blockers.length>0&&<small className="is-blocked">
+       Cannot delete yet: {item.blockers.join(' · ')}. Unlink dependent records first.
+      </small>}
      </div>
+     {item.blockers.length>0&&item.kind!=='activity'&&
+      <button type="button" className="sales-record-open" disabled={busy}
+       onClick={()=>openRecord(item)}>Open</button>}
      <button type="button" disabled={busy||item.blockers.length>0||
       (item.kind==='quote'?!canQuotes:!canCrm)}
-      onClick={()=>void perform([item])}>{item.action==='archive'?'Archive':'Delete'}</button>
+      onClick={()=>perform([item])}>{item.action==='archive'?'Archive':'Delete'}</button>
     </div>)}
     {!filtered.length&&<p className="sales-cleanup-empty">No matching records.</p>}
-   </div>
+   </div>}
    <footer>
     {error&&<span role="alert" className="sales-cleanup-error">{error}</span>}
-    <small>Issued quotes are archived. Orphaned draft-quote setup events may be cleaned in Activities; customer history stays protected.</small>
-    <button type="button" onClick={()=>setOpen(false)} disabled={busy}>Done</button>
+    <small>Unlinked records can be deleted. Issued and revised quotes are archived instead; linked records must be unlinked first. No cascading deletion.</small>
+    <button type="button" onClick={()=>{setOpen(false);setPending(null);}} disabled={busy}>Done</button>
    </footer>
   </section>
  </div>,document.body);
