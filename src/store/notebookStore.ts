@@ -9,6 +9,7 @@ import type {
   InkStroke,
   NotebookDocument,
   NotebookEntry,
+  NotebookAgendaItem,
   NotebookFolder,
   TrashedNotebookEntry,
   NotebookObject,
@@ -38,6 +39,10 @@ interface NotebookState {
   canRedo: boolean;
   hydrate: () => void;
   createEntry: (folderId?: string) => void;
+  appendDailyCapture: (date:string,text:string)=>string|null;
+  addAgendaItem: (entryId:string,item:Pick<NotebookAgendaItem,'title'|'sourceText'|'date'|'kind'> & Partial<Pick<NotebookAgendaItem,'time'|'annual'|'taskId'>>)=>string|null;
+  updateAgendaItem: (entryId:string,itemId:string,patch:Partial<Pick<NotebookAgendaItem,'title'|'date'|'time'|'annual'>>)=>void;
+  deleteAgendaItem: (entryId:string,itemId:string)=>void;
   createFolder: (name: string, parentId?: string) => string;
   renameFolder: (id: string, name: string) => void;
   removeFolder: (id: string) => void;
@@ -199,6 +204,8 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
     title: `${source.title || 'Untitled page'} copy`,
     // A copy is a regular page; only the original may be the global Post-it inbox.
     isPostItInbox: false,
+    dailyDate: undefined,
+    agendaItems: [],
     favorite: false,
     openAtStart: false,
     hidden: false,
@@ -286,6 +293,93 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const entries = [entry, ...get().entries];
     persist(entries, entry.id);
     set({ entries, activeEntryId: entry.id, selectedObjectId: null, activeTool: 'select', ...historyFlags() });
+  },
+
+  appendDailyCapture: (date,text) => {
+    const value=text.trim().slice(0,10000);
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00'))||!value)return null;
+    const escape=(v:string)=>v.replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const html=value.split(/\\r?\\n/).map(line=>'<p>'+escape(line||' ')+'</p>').join('');
+    const existing=get().entries.find(e=>e.dailyDate===date&&!e.isPostItInbox);
+    const timestamp=now();
+    if(existing){
+      checkpoint(get(),'content:daily:'+existing.id);
+      const previous=existing.contentHtml==='<p></p>'?'':existing.contentHtml;
+      const entries=mapEntry(get().entries,existing.id,e=>({
+       ...e,contentHtml:previous+html,updatedAt:timestamp,
+      }));
+      persist(entries,get().activeEntryId);
+      set({entries,...historyFlags()});
+      return existing.id;
+    }
+    checkpoint(get(),'page:daily:'+date);
+    const parsed=new Date(date+'T12:00:00');
+    const title='Daily Notes · '+parsed.toLocaleDateString(undefined,
+       {weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const entry:NotebookEntry={...newEntry(),title,dailyDate:date,
+     contentHtml:html,agendaItems:[],createdAt:timestamp,updatedAt:timestamp};
+    // One page per date: creation and lookup operate in one synchronous store
+    // transaction. Drafts alone never create a blank page.
+    const entries=[entry,...get().entries];
+    persist(entries,get().activeEntryId);
+    set({entries,...historyFlags()});
+    return entry.id;
+  },
+
+  addAgendaItem: (entryId,input) => {
+    const page=get().entries.find(e=>e.id===entryId&&!e.isPostItInbox);
+    const title=input.title.trim().slice(0,240);
+    if(!page||!title||!/^\\d{4}-\\d{2}-\\d{2}$/.test(input.date)||
+       !Number.isFinite(Date.parse(input.date+'T12:00:00')))return null;
+    if(input.kind==='task'&&!input.taskId)return null;
+    const timestamp=now();
+    const agendaItem:NotebookAgendaItem={
+      id:id('agenda'),kind:input.kind,title,date:input.date,
+      sourceText:input.sourceText.slice(0,2000),
+      ...(input.time?{time:input.time}:{}),
+      ...(input.annual?{annual:true}:{}),
+      ...(input.taskId?{taskId:input.taskId}:{}),
+      createdAt:timestamp,updatedAt:timestamp,
+    };
+    // Retry-safe linking to an already created Task.
+    if(input.taskId){
+      const found=page.agendaItems?.find(item=>item.taskId===input.taskId);
+      if(found)return found.id;
+    }
+    checkpoint(get(),'agenda:add:'+entryId);
+    const entries=mapEntry(get().entries,entryId,e=>({
+      ...e,agendaItems:[...(e.agendaItems??[]),agendaItem],updatedAt:timestamp,
+    }));
+    persist(entries,get().activeEntryId);
+    set({entries,...historyFlags()});
+    return agendaItem.id;
+  },
+
+  updateAgendaItem: (entryId,itemId,patch) => {
+    const page=get().entries.find(e=>e.id===entryId);
+    if(!page?.agendaItems?.some(item=>item.id===itemId))return;
+    if(patch.date&&(!/^\\d{4}-\\d{2}-\\d{2}$/.test(patch.date)||
+      !Number.isFinite(Date.parse(patch.date+'T12:00:00'))))return;
+    checkpoint(get(),'agenda:edit:'+entryId);
+    const timestamp=now();
+    const entries=mapEntry(get().entries,entryId,e=>({
+      ...e,agendaItems:e.agendaItems?.map(item=>item.id===itemId
+        ?{...item,...patch,title:(patch.title??item.title).trim().slice(0,240)||item.title,
+          updatedAt:timestamp}:item),
+      updatedAt:timestamp,
+    }));
+    persist(entries,get().activeEntryId);
+    set({entries,...historyFlags()});
+  },
+
+  deleteAgendaItem: (entryId,itemId) => {
+    if(!get().entries.some(e=>e.id===entryId&&e.agendaItems?.some(item=>item.id===itemId)))return;
+    checkpoint(get(),'agenda:delete:'+entryId);
+    const entries=mapEntry(get().entries,entryId,e=>({
+     ...e,agendaItems:e.agendaItems?.filter(item=>item.id!==itemId),updatedAt:now(),
+    }));
+    persist(entries,get().activeEntryId);set({entries,...historyFlags()});
   },
 
   createFolder: (name, parentId) => {
