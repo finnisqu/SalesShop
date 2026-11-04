@@ -198,3 +198,59 @@
     padding:8px 10px;
   }
 }
+
+/* Compact search lives between More and contextual Add; the directory no
+   longer has a dedicated search row. Keep theme contrast and clear affordance. */
+:root[data-sales-theme] .sales-app.view-dashboard
+.connections-directory-layout .connections-header-search{
+  display:flex;align-items:center;flex:0 1 205px;min-width:128px;max-width:225px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+.connections-directory-layout .connections-header-search input[type="search"]{
+  box-sizing:border-box;display:block;width:100%;min-width:0;
+  height:40px;min-height:40px;margin:0;padding:8px 11px;
+  border:1px solid var(--ss-connections-border);border-radius:9px;
+  outline-offset:2px;background:var(--ss-connections-card);
+  color:var(--ss-connections-ink);font:500 12px/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+.connections-directory-layout .connections-header-search input::placeholder{
+  color:var(--ss-connections-muted);opacity:1;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+.connections-directory-layout .connections-header-search input:focus-visible{
+  outline:2px solid var(--ss-focus);
+}
+@media(min-width:701px) and (max-width:1050px){
+  :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-header-search{
+    flex:0 1 175px;max-width:175px;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-header-navigation{
+    justify-content:center;
+  }
+}
+@media(max-width:700px),(orientation:landscape) and (max-height:520px) and (pointer:coarse){
+  :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-header-tools{
+    display:contents;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-header-search{
+    grid-column:1/-1;grid-row:3;
+    flex:none;width:100%;max-width:none;min-width:0;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-header-search input[type="search"]{
+    min-height:44px;height:44px;font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-header-tools .connections-add.ss-button{
+    grid-column:2;grid-row:1;justify-self:end;
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-header-navigation{
+    justify-content:center;
+  }
+}

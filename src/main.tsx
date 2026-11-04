@@ -129,6 +129,8 @@ import './design-system/workspace-visual-system-v2.css';
 import './board-layout-v3.css';
 // Board-style title / tabs / actions row, scoped to Connections directories.
 import './connections-header-v2.css';
+// Desktop workbook/list scroll owners reserve a right gutter across views.
+import './workbook-scrollbar-gutters.css';
 
 recordSalesShopBoot();
 

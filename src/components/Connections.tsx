@@ -305,6 +305,12 @@ export function Connections() {
             </div>
           </div>
           <div className="connections-header-tools">
+            <div className="connections-header-search">
+              <input id="connections-directory-search" type="search"
+                aria-label={`Search ${tab}`} value={query}
+                onChange={event=>setQuery(event.target.value)}
+                placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':tab==='deals'?'Search deals…':tab==='quotes'?'Search quotes…':'Search activities…'} />
+            </div>
             {tab === 'companies' && <Button variant="primary" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</Button>}
             {tab === 'people' && <Button variant="primary" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</Button>}
             {tab === 'deals' && <Button variant="primary" className="connections-add" onClick={() => setDealCreating((v) => !v)}>+ Deal</Button>}
@@ -320,19 +326,13 @@ export function Connections() {
         </div>
       </div>}
 
-          <div className="connections-directory-toolbar">
-            <Field className="connections-search" id="connections-directory-search" label={`Search ${tab}`}>
-              {(control) => <input {...control} type="search" value={query} onChange={(event) => setQuery(event.target.value)}
-                placeholder={tab === 'companies' ? 'Search company or alias…' : tab === 'people' ? 'Search names, email, company…' : `Search ${tab}…`} />}
+          {tab === 'companies' && <div className="connections-directory-toolbar">
+            <Field className="connections-filter" id="connections-company-filter" label="Type">
+              {(control) => <select {...control} value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyFilter)}>
+                <option value="all">All companies</option><option value="customer">Customers & prospects</option><option value="non-customer">Partners & other</option>
+              </select>}
             </Field>
-            {tab === 'companies' && <>
-              <Field className="connections-filter" id="connections-company-filter" label="Type">
-                {(control) => <select {...control} value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyFilter)}>
-                  <option value="all">All companies</option><option value="customer">Customers & prospects</option><option value="non-customer">Partners & other</option>
-                </select>}
-              </Field>
-            </>}
-          </div>
+          </div>}
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab === 'companies' && (
             <section className="connections-directory" aria-label="Company directory">

@@ -7,6 +7,8 @@ const page = readFileSync(new URL('../components/Connections.tsx', import.meta.u
 const css = readFileSync(new URL('./connections-adapter.css', import.meta.url), 'utf8');
 const recordsCss = readFileSync(new URL('../connections-record-pages.css', import.meta.url), 'utf8');
 const entry = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
+const headerCss = readFileSync(new URL('../connections-header-v2.css', import.meta.url), 'utf8');
+const gutterCss = readFileSync(new URL('../workbook-scrollbar-gutters.css', import.meta.url), 'utf8');
 const connectionsHeaderCss = readFileSync(new URL('../connections-header-v2.css', import.meta.url), 'utf8');
 
 describe('Connections foundation — privacy-first navigation', () => {
@@ -89,6 +91,21 @@ describe('Connections foundation — privacy-first navigation', () => {
     expect(connectionsHeaderCss).toContain('.connections-header-tools .connections-add.ss-button');
     expect(entry).toContain("import './connections-header-v2.css'");
     expect(entry.indexOf("import './connections-header-v2.css'")).toBeGreaterThan(entry.indexOf("import './design-system/workspace-visual-system-v2.css'"));
+  });
+  it('moves Connections search into the header and reserves desktop scrollbar lanes',()=>{
+    expect(page).toContain('connections-header-search');
+    expect(page.match(/id="connections-directory-search"/g)).toHaveLength(1);
+    expect(page).not.toContain('className="connections-search"');
+    expect(page).toContain("tab === 'companies' && <div className=\"connections-directory-toolbar\"");
+    expect(page.indexOf('connections-header-search')).toBeLessThan(page.indexOf('className="connections-add"'));
+    expect(headerCss).toContain('.connections-header-search input[type="search"]');
+    expect(headerCss).toContain('grid-column:1/-1;grid-row:3');
+    expect(gutterCss).toContain('.connections-table-scroll');
+    expect(gutterCss).toContain('.tasks-workspace');
+    expect(gutterCss).toContain('.supplier-directory-table-scroll');
+    expect(gutterCss).toContain('.qmb-quote-scroll');
+    expect(gutterCss).toContain('scrollbar-gutter:stable');
+    expect(entry).toContain("import './workbook-scrollbar-gutters.css'");
   });
   it('retains mobile directory scrolling, accessible tools and settings navigation', () => {
     expect(css).toContain('overflow-x:auto');

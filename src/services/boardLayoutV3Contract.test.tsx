@@ -66,13 +66,20 @@ describe('Board display and quick creation',()=>{
  it('filters Board stages by saved deal pipeline and preserves unassigned records',()=>{
   expect(board).toContain('BOARD_PIPELINE_KEY');
   expect(board).toContain('matchesDealPipeline(project,pipelineView)');
-  expect(board).toContain('<option value="all">All pipelines</option>');
-  expect(board).toContain('<option value="unassigned">Unassigned</option>');
-  expect(board).toContain('aria-label="Deal pipeline"');
+  expect(board).toContain('className="board-pipeline-more-trigger"');
+  expect(board).toContain('aria-expanded={pipelineMenuOpen}');
+  expect(board).toContain('aria-pressed={pipelineView');
+  expect(board).toContain('setPipelineView(\'unassigned\')');
+  expect(board).toContain('setPipelineView(\'all\')');
+  expect(board).toContain("document.addEventListener('pointerdown',dismiss)");
+  expect(board).toContain("document.addEventListener('keydown',escape)");
   expect(board).toContain('pipeline: draft.pipeline || undefined');
   expect(sync).toContain('pipeline: normalizeDealPipeline(row.pipeline)');
   expect(sync).toContain('pipeline: normalizeDealPipeline(project.pipeline) ?? null');
-  expect(css).toContain('.board-pipeline-picker select');
+  expect(css).toContain('.board-pipeline-more-trigger');
+  expect(css).toContain('.board-pipeline-menu');
+  expect(css).toContain('grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)');
+  expect(accounts).toContain('className="board-view-toggle"');
  });
  it('fits stage mats to desktop viewport and scrolls cards independently',()=>{
   expect(css).not.toContain('.sales-app.view-board .role-perspective-content{');

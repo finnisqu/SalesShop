@@ -286,6 +286,25 @@ export function Board() {
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
   const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
+  const [pipelineMenuOpen,setPipelineMenuOpen]=useState(false);
+  const pipelineMenuRef=useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    if(!pipelineMenuOpen)return;
+    const dismiss=(event:PointerEvent)=>{
+      if(!pipelineMenuRef.current?.contains(event.target as Node))setPipelineMenuOpen(false);
+    };
+    const escape=(event:KeyboardEvent)=>{
+      if(event.key!=='Escape')return;
+      setPipelineMenuOpen(false);
+      pipelineMenuRef.current?.querySelector<HTMLButtonElement>('.board-pipeline-more-trigger')?.focus();
+    };
+    document.addEventListener('pointerdown',dismiss);
+    document.addEventListener('keydown',escape);
+    return ()=>{
+      document.removeEventListener('pointerdown',dismiss);
+      document.removeEventListener('keydown',escape);
+    };
+  },[pipelineMenuOpen]);
   const [compactCards,setCompactCards]=useState(()=>{
     try{return window.localStorage.getItem(BOARD_COMPACT_KEY)==='true';}
     catch{return false;}
@@ -389,19 +408,28 @@ export function Board() {
             <Button variant="quiet" aria-pressed={false} onClick={() => setBoardMode('accounts')}>Accounts</Button>
           </div>
           <div className="board-header-tools">
-            <label className="board-pipeline-picker">
-               <span>Pipeline</span>
-               <select aria-label="Deal pipeline" value={pipelineView}
-                 title="Filter deals; new deals use the selected pipeline"
-                 onChange={event=>{
-                   setPipelineView(event.target.value as DealPipelineFilter);
-                   boardRef.current?.scrollTo({left:0});
-                 }}>
-                 <option value="all">All pipelines</option>
-                 {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
-                 <option value="unassigned">Unassigned</option>
-               </select>
-             </label>
+            <div className="board-pipeline-more" ref={pipelineMenuRef}>
+               <button type="button" className="board-pipeline-more-trigger"
+                 aria-controls="board-pipeline-menu" aria-expanded={pipelineMenuOpen}
+                 aria-haspopup="true"
+                 aria-label={'Choose pipeline, currently '+(pipelineView==='all'?'All pipelines':dealPipelineLabel(pipelineView))}
+                 onClick={()=>setPipelineMenuOpen(open=>!open)}>
+                 Pipelines <span aria-hidden="true">⋯</span>
+               </button>
+               {pipelineMenuOpen&&<div id="board-pipeline-menu" className="board-pipeline-menu" role="group" aria-label="Filter deal pipelines">
+                 <span className="board-pipeline-menu-label">SHOW PIPELINE</span>
+                 <button type="button" aria-pressed={pipelineView==='all'} onClick={()=>{
+                   setPipelineView('all');setPipelineMenuOpen(false);boardRef.current?.scrollTo({left:0});
+                 }}>All pipelines {pipelineView==='all'&&<span aria-hidden="true">✓</span>}</button>
+                 {DEAL_PIPELINES.map(item=><button type="button" key={item.id}
+                   aria-pressed={pipelineView===item.id} onClick={()=>{
+                     setPipelineView(item.id);setPipelineMenuOpen(false);boardRef.current?.scrollTo({left:0});
+                   }}>{item.label}{pipelineView===item.id&&<span aria-hidden="true">✓</span>}</button>)}
+                 <button type="button" aria-pressed={pipelineView==='unassigned'} onClick={()=>{
+                   setPipelineView('unassigned');setPipelineMenuOpen(false);boardRef.current?.scrollTo({left:0});
+                 }}>Unassigned {pipelineView==='unassigned'&&<span aria-hidden="true">✓</span>}</button>
+               </div>}
+             </div>
              <button type="button" className="board-density-toggle"
               aria-pressed={compactCards} onClick={toggleCompact}
               title="Show only the name on each card">
