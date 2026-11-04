@@ -14,6 +14,7 @@ import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '..
 import {localDateKey} from '../services/salesCalendar';
 import type {ActivityMetadata} from '../types/crm';
 import '../record-preview.css';
+import '../tasks-workspace.css';
 
 type Method=NonNullable<ActivityMetadata['interactionMethod']>;
 const labels:Record<ActivityRelation['type'],string>={
@@ -115,10 +116,10 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   }catch(e){setError(e instanceof Error?e.message:'Activity save was not confirmed. Try again.');}
   finally{setSaving(false);}
  };
- return createPortal(<div className="project-editor-backdrop record-preview-backdrop activity-preview-backdrop"
+ return createPortal(<div className="tasks-dialog-backdrop activity-quick-backdrop"
   onPointerDown={event=>{if(event.target===event.currentTarget)close();}}>
-  <aside className="project-editor record-preview-panel activity-preview-panel" role="dialog" aria-modal="true"
-   aria-label={editing?'Edit Activity':'Activity preview'}>
+  <section className="tasks-preview-card record-preview-panel activity-preview-panel activity-quick-card"
+   role="dialog" aria-modal="true" aria-label={editing?'Edit Activity':'Activity preview'}>
    <header className="activity-preview-header">
     <div><span className="board-eyebrow">CRM · COMPLETED INTERACTION</span>
      <h2>{editing?'Edit activity':activity.summary}</h2>
@@ -127,7 +128,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
     <button type="button" aria-label="Close activity preview" className="editor-close"
      disabled={saving} onClick={close}>×</button>
    </header>
-   <div className="record-preview-body activity-preview-body">
+   <div className="tasks-preview-body record-preview-body activity-preview-body">
     {editing?<form id="activity-preview-edit" className="activity-preview-edit" onSubmit={submit}>
       <div className="activity-preview-fields">
        <label>Method<select value={method} onChange={e=>setMethod(e.target.value as Method)}>
@@ -179,6 +180,6 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
        Edit activity</button>}
      </>}
    </footer>
-  </aside>
+  </section>
  </div>,document.body);
 }
