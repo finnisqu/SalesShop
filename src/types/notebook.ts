@@ -24,6 +24,21 @@ export type NotebookObjectFrame = Pick<NotebookObjectBase, 'x' | 'y' | 'width' |
 export type BusinessCardField = 'name' | 'company' | 'title' | 'email' | 'phone';
 
 export interface NotebookContext { projectId?: string; }
+/** Linked Agenda is page metadata, never a movable page object or rich-text
+ * fragment. It can describe a calendar date or reference a created Task. */
+export interface NotebookAgendaItem {
+ id:string;
+ kind:'calendar-date'|'task';
+ title:string;
+ sourceText:string;
+ date:string;
+ time?:string;
+ annual?:boolean;
+ taskId?:string;
+ createdAt:string;
+ updatedAt:string;
+}
+
 
 export interface NotebookFolder { id: string; name: string; parentId?: string; createdAt: string; }
 
@@ -32,6 +47,10 @@ export interface NotebookEntry {
   folderId?: string;
   /** Stable marker for the private global Post-it collection page. */
   isPostItInbox?: boolean;
+  /** YYYY-MM-DD only for Daily Notes, absent on normal pages and Post-it inbox. */
+  dailyDate?: string;
+  /** Separately positioned linked schedule, unaffected by the canvas geometry. */
+  agendaItems?: NotebookAgendaItem[];
   title: string;
   contentHtml: string;
   strokes: InkStroke[];
