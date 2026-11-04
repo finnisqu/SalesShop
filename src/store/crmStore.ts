@@ -448,7 +448,9 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     if(!current.projects.some(project=>project.id===projectId))return;
     const toRemove=current.activities.filter(a=>a.projectId===projectId&&
      (a.type==='project-created'||a.type==='project-stage-changed')).map(a=>a.id);
-    if(current.activities.some(a=>a.projectId===projectId&&!toRemove.includes(a.id)))
+    if(current.activities.some(a=>(a.projectId===projectId||
+      a.metadata?.relatedRecords?.some(link=>link.type==='project'&&link.id===projectId))
+      &&!toRemove.includes(a.id)))
       throw new Error('This Deal has additional CRM history that must be reviewed first.');
     const organizationId=cloudOrganizationId();
     if(organizationId){
@@ -466,7 +468,9 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     if(!current.contacts.some(contact=>contact.id===contactId))return;
     const creationIds=current.activities.filter(a=>a.contactId===contactId&&
      a.type==='contact-created').map(a=>a.id);
-    if(current.activities.some(a=>a.contactId===contactId&&!creationIds.includes(a.id)))
+    if(current.activities.some(a=>(a.contactId===contactId||
+      a.metadata?.relatedRecords?.some(link=>link.type==='contact'&&link.id===contactId))
+      &&!creationIds.includes(a.id)))
      throw new Error('This person has additional Activity history. Review it before deleting.');
     const organizationId=cloudOrganizationId();
     if(organizationId){
@@ -483,7 +487,8 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     if(!current.companies.some(company=>company.id===companyId))return;
     if(current.contacts.some(c=>c.companyId===companyId)||
        current.projects.some(d=>d.companyId===companyId)||
-       current.activities.some(a=>a.companyId===companyId))
+       current.activities.some(a=>a.companyId===companyId||
+         a.metadata?.relatedRecords?.some(link=>link.type==='company'&&link.id===companyId)))
       throw new Error('This company still has People, Deals, or Activities linked to it.');
     const organizationId=cloudOrganizationId();
     if(organizationId)await deleteNormalizedCrmRecord(organizationId,'companies',companyId);
