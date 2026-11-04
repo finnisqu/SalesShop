@@ -65,8 +65,10 @@ export function CleanupCenter(){
   const a=activities.map((activity):CleanupRow=>({
    kind:'activity',id:activity.id,name:activity.summary,
    detail:new Date(activity.occurredAt).toLocaleDateString()+' · '+activity.type,
-   blockers:['manual-touchpoint','notebook-touchpoint'].includes(activity.type)
-    ?[]:['Automatic CRM audit history is protected'],
+   blockers:!['manual-touchpoint','notebook-touchpoint'].includes(activity.type)
+    ?['Automatic CRM audit history is protected']
+    :ownTasks.some(task=>task.sourceObjectId==='activity-followup:'+activity.id)
+     ?['A follow-up task still references this activity']:[],
    action:'delete',
   }));
   return [...q,...p,...c,...d,...a];
