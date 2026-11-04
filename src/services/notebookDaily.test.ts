@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import type {NotebookEntry,NotebookAgendaItem} from '../types/notebook';
-import {dailyNotebookPages,notebookPlainText,notebookCalendarDates,agendaOccurrence,agendaTitle}
+import {dailyNotebookPages,notebookPlainText,notebookCalendarDates,agendaOccurrence,agendaTitle,validNotebookDay}
  from './notebookDaily';
 const page=(id:string,dailyDate?:string):NotebookEntry=>({
  id,title:'Daily Notes',dailyDate,contentHtml:'<p>Aaron &amp; Bryant</p><p>Send a message</p>',
@@ -11,6 +11,23 @@ const page=(id:string,dailyDate?:string):NotebookEntry=>({
 const calendar=(id:string,date:string,annual=false):NotebookAgendaItem=>({
  id,kind:'calendar-date',title:"Aaron's birthday",date,sourceText:'Aaron',
  annual,createdAt:'2026-11-04T10:00:00Z',updatedAt:'2026-11-04T10:00:00Z',
+});
+describe('calendar-day validation',()=>{
+ it('accepts real dates including leap day, and rejects normalized overflow',()=>{
+  expect(validNotebookDay('2028-02-29')).toBe(true);
+  expect(validNotebookDay('2026-11-04')).toBe(true);
+  for(const invalid of ['2026-02-29','2026-02-30','2026-02-31',
+   '2026-04-31','2026-13-01','2026-00-22','2026-11-00',
+   'not-a-date','2026-1-04','0000-01-01']){
+   expect(validNotebookDay(invalid)).toBe(false);
+  }
+ });
+ it('never lists calendar events on an invalid request date',()=>{
+  const p={...page('calendar','2026-11-04'),agendaItems:[
+    calendar('birthday','2026-02-28',true),
+  ]};
+  expect(notebookCalendarDates([p],'2026-02-31')).toEqual([]);
+ });
 });
 describe('Daily Notebook Home helpers',()=>{
  it('shows only dated pages in most recent day order',()=>{
