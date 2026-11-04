@@ -586,3 +586,16 @@
   height:520px!important;min-height:520px!important;max-height:520px!important;
  }
 }
+
+
+/* Existing Activity popup doubles as the Task-completion workflow. */
+.sales-activity-task-context{
+ display:grid;gap:4px;margin:0;padding:10px 12px;
+ border:1px solid var(--ss-theme-border,#d4c9b5);
+ border-left:3px solid var(--ss-theme-accent,#917246);
+ border-radius:9px;background:var(--ss-theme-tint,#eee7d9);
+ color:var(--ss-theme-ink,#333);
+}
+.sales-activity-task-context strong{font-size:12px;font-weight:800}
+.sales-activity-task-context span{font-size:11px;line-height:1.45;
+ color:var(--ss-theme-muted,#777)}
