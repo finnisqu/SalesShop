@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
+import {useEffect,useLayoutEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
 import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
@@ -59,6 +59,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
  const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
  const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
+ const [sidecarMenuPosition,setSidecarMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
  const sidecarMenuRef=useRef<HTMLDivElement>(null);
  const sidecarCreateRef=useRef<HTMLDivElement>(null);
  const sidecarCreateButton=useRef<HTMLButtonElement>(null);
@@ -98,7 +99,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   if(!sidecarCreateOpen)return;
   sidecarMenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus({preventScroll:true});
   const outside=(event:PointerEvent)=>{
-   if(!sidecarCreateRef.current?.contains(event.target as Node))
+   if(!sidecarCreateRef.current?.contains(event.target as Node)&&
+      !sidecarMenuRef.current?.contains(event.target as Node))
     setSidecarCreateOpen(false);
   };
   const escape=(event:KeyboardEvent)=>{
@@ -112,6 +114,37 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   return()=>{
    document.removeEventListener('pointerdown',outside);
    document.removeEventListener('keydown',escape);
+  };
+ },[sidecarCreateOpen]);
+ // The menu lives in document.body so the compact calendar's overflow clipping
+ // cannot cut it off when a tab has no history rows beneath the launcher.
+ useLayoutEffect(()=>{
+  if(!sidecarCreateOpen)return;
+  const placeMenu=()=>{
+   const trigger=sidecarCreateButton.current,menu=sidecarMenuRef.current;
+   if(!trigger||!menu)return;
+   const rect=trigger.getBoundingClientRect(),viewport=window.visualViewport;
+   const viewLeft=viewport?.offsetLeft??0,viewTop=viewport?.offsetTop??0;
+   const viewRight=viewLeft+(viewport?.width??window.innerWidth);
+   const viewBottom=viewTop+(viewport?.height??window.innerHeight);
+   const width=menu.offsetWidth,height=menu.offsetHeight,gap=6,margin=8;
+   const below=viewBottom-rect.bottom-gap-margin;
+   const above=rect.top-viewTop-gap-margin;
+   const desiredTop=below<height&&above>below?rect.top-gap-height:rect.bottom+gap;
+   const top=Math.max(viewTop+margin,Math.min(desiredTop,viewBottom-height-margin));
+   const left=Math.max(viewLeft+margin,Math.min(rect.right-width,viewRight-width-margin));
+   setSidecarMenuPosition({top:Math.round(top),left:Math.round(left)});
+  };
+  placeMenu();
+  window.addEventListener('resize',placeMenu);
+  document.addEventListener('scroll',placeMenu,true);
+  window.visualViewport?.addEventListener('resize',placeMenu);
+  window.visualViewport?.addEventListener('scroll',placeMenu);
+  return()=>{
+   window.removeEventListener('resize',placeMenu);
+   document.removeEventListener('scroll',placeMenu,true);
+   window.visualViewport?.removeEventListener('resize',placeMenu);
+   window.visualViewport?.removeEventListener('scroll',placeMenu);
   };
  },[sidecarCreateOpen]);
  const prefKey=scopedStorageKey('salesshop-calendar-display-v1:')+(personal??'pending');
@@ -352,8 +385,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          aria-label="Quick create" aria-haspopup="menu"
          aria-expanded={sidecarCreateOpen}
          onClick={()=>setSidecarCreateOpen(value=>!value)}>+</button>
-        {sidecarCreateOpen&&<div ref={sidecarMenuRef}
-          className="home-sidecar-create-menu" role="menu"
+        {sidecarCreateOpen&&createPortal(<div ref={sidecarMenuRef}
+          className="home-sidecar-create-menu" style={sidecarMenuPosition} role="menu"
           aria-label="Quick create"
           onKeyDown={event=>{
            if(event.key!=='ArrowDown'&&event.key!=='ArrowUp')return;
@@ -375,7 +408,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          <button type="button" role="menuitem" onClick={()=>createFromSidecar('note')}>
            <SidecarCreateIcon kind="note"/><span>New Note</span>
          </button>
-        </div>}
+        </div>,document.body)}
        </div>
       </div>
       <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
