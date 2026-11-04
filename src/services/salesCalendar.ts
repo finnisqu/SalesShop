@@ -19,6 +19,14 @@ export interface HomeRecentItem{
  title:string;detail:string;recordId:string;
 }
 const datePattern=/^\d{4}-\d{2}-\d{2}$/;
+// Match whole CRM names already visible in a title, not incidental substrings
+// (e.g. "Case" must not disappear because a title contains "Casework").
+const agendaWords=(value:string)=>value.normalize('NFKC').toLocaleLowerCase()
+ .replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ');
+const namedInTitle=(title:string,name:string)=>{
+ const words=agendaWords(name);
+ return Boolean(words&&(' '+agendaWords(title)+' ').includes(' '+words+' '));
+};
 export function localDateKey(value:Date):string {
  return [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),
   String(value.getDate()).padStart(2,'0')].join('-');
@@ -98,14 +106,19 @@ export function buildSalesCalendarEvents(
  // potentially stale snapshot labels.
  const relatedLine=(links:readonly TaskAssociation[],title:string)=>{
   const names:string[]=[];
+  const seen=new Set<string>();
   for(const link of links){
    const name=(link.type==='project'?dealById.get(link.id)?.name:
     link.type==='contact'?contactById.get(link.id)?.name:
     link.type==='company'?companyById.get(link.id)?.name:
     link.type==='quote'?quoteById.get(link.id)?.title:undefined)?.trim();
-   if(!name||name.toLocaleLowerCase()===title.trim().toLocaleLowerCase()||
-     names.some(value=>value.toLocaleLowerCase()===name.toLocaleLowerCase()))continue;
+   if(!name)continue;
+   const normalized=agendaWords(name);
+   // Auto-created bid and follow-up titles usually name their Deal or Person.
+   // Show only additional CRM context, filling from subsequent links if needed.
+   if(!normalized||namedInTitle(title,name)||seen.has(normalized))continue;
    names.push(name);
+   seen.add(normalized);
    if(names.length===2)break;
   }
   return names.join(' · ');
@@ -137,7 +150,8 @@ export function buildSalesCalendarEvents(
   // The title already names the Deal; the Company is the helpful association.
   const companyName=deal.companyId?companyById.get(deal.companyId)?.name:deal.companyName;
   events.push({id:'bid:'+deal.id,date:deal.dueDate,kind:'bid',
-   title:'Submit quote · '+deal.name,detail:companyName?.trim()??'',
+   title:'Submit quote · '+deal.name,
+   detail:companyName&&!namedInTitle('Submit quote · '+deal.name,companyName)?companyName.trim():'',
    recordType:'project',recordId:deal.id});
  }
  // Legacy quote follow-up scheduling remains actionable until it is cleared.

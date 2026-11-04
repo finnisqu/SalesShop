@@ -132,6 +132,50 @@ describe('SalesShop shared Calendar',()=>{
    .toBe('Riverwalk Apartments · Aaron Case');
   expect(buildSalesCalendarEvents([task('none',due)],[],[],[],context)[0].detail).toBe('');
  });
+ it('suppresses title-visible Deal and Person names on automatic bid and follow-up Tasks',()=>{
+  const due='2026-11-10';
+  const context={
+   contacts:[{id:'c1',name:'Aaron Case',createdAt:due,updatedAt:due}],
+   companies:[{id:'co1',name:'Acme Builder',kind:'customer' as const,createdAt:due,updatedAt:due}],
+  };
+  const bid=task('submit',due,{
+   title:'Submit quote · RIVERWALK APARTMENTS',
+   sourceObjectId:'deal-submit:d1',type:'todo',
+   associations:[{type:'project',id:'d1'},{type:'company',id:'co1'},{type:'contact',id:'c1'}],
+  });
+  const followUp=task('follow',due,{
+   title:'Follow up · Aaron Case',type:'follow-up',
+   associations:[{type:'contact',id:'c1'},{type:'project',id:'d1'},{type:'company',id:'co1'}],
+  });
+  const onlyContact=task('only',due,{
+   title:'Follow up: Aaron Case',type:'follow-up',associations:[{type:'contact',id:'c1'}],
+  });
+  const events=buildSalesCalendarEvents([bid,followUp,onlyContact],[deal(due)],[],[],context);
+  expect(events.find(event=>event.id==='task:submit')?.detail).toBe('Acme Builder · Aaron Case');
+  expect(events.find(event=>event.id==='task:follow')?.detail).toBe('Riverwalk Apartments · Acme Builder');
+  expect(events.find(event=>event.id==='task:only')?.detail).toBe('');
+ });
+ it('omits title-visible Quote names while keeping unrelated association names',()=>{
+  const due='2026-11-10';
+  const linkedQuote={...quote('q1'),title:'Bid for Riverwalk Apartments',projectId:'d1',contactId:'c1'};
+  const followUp=task('follow-quote',due,{
+   title:'Follow up · Bid for Riverwalk Apartments',type:'follow-up',
+   associations:[{type:'quote',id:'q1'},{type:'project',id:'d1'},{type:'contact',id:'c1'}],
+  });
+  const context={contacts:[{id:'c1',name:'Aaron Case',createdAt:due,updatedAt:due}],companies:[]};
+  const events=buildSalesCalendarEvents([followUp],[deal(due)],[],[linkedQuote],context);
+  expect(events.find(event=>event.id==='task:follow-quote')?.detail).toBe('Aaron Case');
+ });
+ it('keeps legitimate CRM names when only part of a word appears in the title',()=>{
+  const due='2026-11-10';
+  const context={contacts:[{id:'c1',name:'Case',createdAt:due,updatedAt:due}],
+   companies:[{id:'co1',name:'Acme Builder',kind:'customer' as const,createdAt:due,updatedAt:due}]};
+  const item=task('partial',due,{
+   title:'Review Casework estimate with Acme Builder',associations:[
+    {type:'contact',id:'c1'},{type:'company',id:'co1'}],
+  });
+  expect(buildSalesCalendarEvents([item],[],[],[],context)[0].detail).toBe('Case');
+ });
  it('skips deleted, duplicate, inaccessible, and notebook links without leaking old labels',()=>{
   const due='2026-11-06';
   const t=task('mixed',due,{associations:[
