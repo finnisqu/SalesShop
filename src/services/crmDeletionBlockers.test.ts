@@ -38,6 +38,16 @@ describe('safe test-record deletion references',()=>{
   }]};
   expect(crmDeletionBlockers('deal','d1',refs)).toEqual([]);
  });
+ it('protects a second Person attached only through Activity metadata',()=>{
+  const refs={...references(),activities:[activity('call','manual-touchpoint',{
+   contactId:'person-aaron',
+   metadata:{relatedRecords:[
+    {type:'contact',id:'person-aaron'},
+    {type:'contact',id:'person-bryan'},
+   ]},
+  })]};
+  expect(crmDeletionBlockers('person','person-bryan',refs)).toContain('1 activities');
+ });
  it('blocks deletion when an active personal task references the record',()=>{
   const refs={...references(),tasks:[{
    id:'t1',title:'Call',createdAt:'2026-11-03',updatedAt:'2026-11-03',
