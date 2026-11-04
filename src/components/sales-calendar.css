@@ -542,3 +542,47 @@
   min-height:0!important;overflow:hidden!important;
  }
 }
+
+
+/* Method buttons use one monochrome SVG set everywhere, not platform glyphs. */
+.sales-activity-methods button{
+ display:grid;grid-template-rows:25px auto;align-content:center;
+ justify-items:center;gap:5px;min-width:0;min-height:69px;
+ padding:8px 3px;font-weight:600;
+ background:var(--ss-theme-card,#fffaf0);
+ color:var(--ss-theme-ink,#34312e);
+}
+.sales-activity-methods button[aria-pressed=true]{
+ background:var(--ss-theme-tint,#ede6d8);
+ border-color:var(--ss-theme-accent,#917246);
+}
+.sales-activity-methods .sales-activity-method-icon{
+ height:25px;display:grid;place-items:center;
+ color:var(--ss-theme-ink,#2d2d2d);
+}
+.sales-activity-method-icon svg{display:block;width:21px;height:21px;stroke:currentColor}
+.sales-activity-dialog .tasks-associations-search :is(select,input){
+ box-sizing:border-box;min-height:48px;
+ background:var(--ss-theme-card,#fffaf0)!important;
+ color:var(--ss-theme-ink,#34312e)!important;
+ border:1px solid var(--ss-theme-border,#d4c9b5)!important;
+ border-radius:9px!important;
+ font-family:inherit;font-size:13px;
+}
+.sales-activity-dialog .tasks-associations-search select{
+ appearance:auto;background-color:var(--ss-theme-card,#fffaf0)!important;
+ padding:9px 10px;min-width:0;
+}
+.sales-activity-dialog .tasks-associations-search input{
+ padding:9px 12px;
+}
+:root[data-sales-theme="dark"] .sales-activity-dialog .tasks-associations-search select{
+ color-scheme:dark;
+}
+/* Restore a useful taller 7-day focus workspace; the week strip stays fixed
+   while only the agenda scrolls, so switching dates cannot resize the card. */
+@media(min-width:760px){
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline.is-week{
+  height:520px!important;min-height:520px!important;max-height:520px!important;
+ }
+}
