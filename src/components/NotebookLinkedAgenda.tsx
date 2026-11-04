@@ -19,7 +19,8 @@ export function NotebookLinkedAgenda({entry}:{entry:NotebookEntry}){
  const activeScope=taskScope(mode,orgId,userId);
  // Task storage rehydrates separately from Notebook. Never render a previous
  // user's task details while a workspace/account transition is in progress.
- const tasks=activeScope&&loadedScope===activeScope?loadedTasks:[];
+ const tasksReady=!!activeScope&&loadedScope===activeScope;
+ const tasks=tasksReady?loadedTasks:[];
  const removeAgendaItem=useNotebookStore(s=>s.deleteAgendaItem);
  const agenda=entry.agendaItems??[];
  if(entry.isPostItInbox)return null;
@@ -51,13 +52,13 @@ export function NotebookLinkedAgenda({entry}:{entry:NotebookEntry}){
            ?(item.annual?'Annual · ':'')+item.date+(item.time?' · '+item.time:'')
            :task?(task.status==='completed'?'Completed · ':
              task.status==='canceled'?'Canceled · ':'Task · ')+(task.dueDate||'No deadline')
-            :'Linked Task unavailable'}</small>
+            :tasksReady?'Linked Task unavailable':'Loading linked Task…'}</small>
          {item.sourceText&&<small className="notebook-linked-agenda-source">
           From: {item.sourceText.slice(0,135)}</small>}
         </span>
         <span aria-hidden="true">›</span>
        </button>
-       {item.kind==='task'&&<button type="button" className="notebook-linked-agenda-unlink"
+       {item.kind==='task'&&tasksReady&&<button type="button" className="notebook-linked-agenda-unlink"
         title="Remove Notebook link (keeps the Task)"
         aria-label={'Remove Notebook link to '+item.title}
         onClick={()=>removeAgendaItem(entry.id,item.id)}>×</button>}
