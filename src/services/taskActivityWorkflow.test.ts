@@ -16,5 +16,8 @@ describe('guided Task completion → Activity',()=>{
   expect(completedTaskActivityId('task-2',owner)).not.toBe(completedTaskActivityId('task-1',owner));
   expect(completedTaskActivityId('task_deal_submit_deal1',owner))
    .not.toBe(completedTaskActivityId('task_deal_submit_deal1',coworker));
+  const key=completedTaskActivityId('task_deal_submit_deal1',owner);
+  expect(key).not.toContain(owner);
+  expect(key).not.toContain('task_deal_submit_deal1');
  });
 });
