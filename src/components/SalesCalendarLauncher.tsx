@@ -248,11 +248,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {eventsForDay.length?<div className="sales-calendar-agenda">
        {shownDayEvents.map(event=><button type="button" key={event.id}
         onClick={()=>openRecord(event)}>
-         {event.urgent&&<span className="sales-calendar-agenda-urgent" title="Urgent task" aria-label="Urgent task">!</span>}
          <span className={'sales-calendar-event-dot is-'+event.kind} aria-hidden="true"/>
          <span className="sales-calendar-event-text"><strong>{event.title}</strong>
           <small>{labels[event.kind]} · {event.detail}</small></span>
-         <span aria-hidden="true">›</span>
+         {event.urgent&&<span className="sales-calendar-agenda-urgent" title="Urgent task" aria-label="Urgent task">!</span>}
+         <span className="sales-calendar-agenda-chevron" aria-hidden="true">›</span>
         </button>)}
        {embedded&&isPhone&&eventsForDay.length>5&&
         <button type="button" className="sales-calendar-show-more"
@@ -282,16 +282,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           <strong>{event.title}</strong>
           <small>{event.date} · {event.detail}</small>
          </button>):<p>Recent logged interactions will appear here.</p>}
-      </div>
-      <div className="sales-calendar-sidecar-actions">
-       <button type="button" className="sales-calendar-cleanup-link"
-        onClick={()=>window.dispatchEvent(new Event('salesshop:open-task-cleanup'))}>
-        <span aria-hidden="true">✓</span> Review overdue tasks
-       </button>
-       <button type="button" className="sales-calendar-cleanup-link"
-        onClick={()=>window.dispatchEvent(new Event('salesshop:open-cleanup-center'))}>
-        <span aria-hidden="true">⌫</span> Clean up test records
-       </button>
       </div>
     </aside>}
     <div className="sales-calendar-legend" aria-label="Calendar event types">
