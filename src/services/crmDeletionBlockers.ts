@@ -15,6 +15,8 @@ export function crmDeletionBlockers(
 ):string[]{
  const blocked:string[]=[];
  const taskType=kind==='person'?'contact':kind==='deal'?'project':'company';
+ const linksActivity=(activity:Activity,type:'contact'|'company'|'project')=>
+  activity.metadata?.relatedRecords?.some(link=>link.type===type&&link.id===id)??false;
  const linkedTasks=count(data.tasks,task=>!task.deletedAt&&
   // The auto-generated Submit Quote task will be canceled when its Deal disappears.
   !(kind==='deal'&&task.sourceObjectId==='deal-submit:'+id)&&
@@ -26,7 +28,7 @@ export function crmDeletionBlockers(
   const deals=count(data.projects,deal=>deal.companyId===id);
   const quotes=count(data.quotes,quote=>quote.companyId===id||
    (!quote.companyId&&!!name&&quote.companyName?.trim().toLocaleLowerCase()===name));
-  const activities=count(data.activities,activity=>activity.companyId===id);
+  const activities=count(data.activities,activity=>activity.companyId===id||linksActivity(activity,'company'));
   if(people)blocked.push(people+' linked people');
   if(deals)blocked.push(deals+' linked deals');
   if(quotes)blocked.push(quotes+' linked quotes');
@@ -34,12 +36,12 @@ export function crmDeletionBlockers(
  }else if(kind==='person'){
   const quotes=count(data.quotes,quote=>quote.contactId===id);
   const activities=count(data.activities,activity=>
-    activity.contactId===id&&activity.type!=='contact-created');
+    (activity.contactId===id||linksActivity(activity,'contact'))&&activity.type!=='contact-created');
   if(quotes)blocked.push(quotes+' linked quotes');
   if(activities)blocked.push(activities+' activities');
  }else{
   const quotes=count(data.quotes,quote=>quote.projectId===id);
-  const activities=count(data.activities,activity=>activity.projectId===id&&
+  const activities=count(data.activities,activity=>(activity.projectId===id||linksActivity(activity,'project'))&&
    activity.type!=='project-created'&&activity.type!=='project-stage-changed');
   if(quotes)blocked.push(quotes+' linked quotes');
   if(activities)blocked.push(activities+' activities');
