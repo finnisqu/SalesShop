@@ -15,13 +15,18 @@ import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 
-type SettingsTab = 'company' | 'account' | 'team' | 'appearance' | 'beta' | 'advanced';
+type SettingsTab = 'company' | 'account' | 'team' | 'appearance' | 'beta' | 'data' | 'advanced';
+type RecordKind = 'quote' | 'person' | 'company' | 'deal' | 'activity';
+const manageRecords=(kind:RecordKind,testMode=false)=>{
+  window.dispatchEvent(new CustomEvent('salesshop:open-cleanup-center',{detail:{kind,testMode}}));
+};
 const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
   { id: 'company', title: 'Company & Branding', subtitle: 'Customer-facing identity' },
   { id: 'account', title: 'My Account', subtitle: 'Salesperson profile' },
   { id: 'team', title: 'Team', subtitle: 'People in your shop' },
   { id: 'appearance', title: 'Appearance & Accessibility', subtitle: 'Personal preferences' },
   { id: 'beta', title: 'Beta Features', subtitle: 'Try upcoming workflows' },
+  { id: 'data', title: 'Data Management', subtitle: 'Delete & archive records' },
   { id: 'advanced', title: 'Advanced', subtitle: 'Optional tools' },
 ];
 const localMessage = 'Sign in to a cloud workspace to manage your salesperson profile and team.';
@@ -52,6 +57,8 @@ export function CompanySettings() {
   const cloudReady = mode === 'cloud' && Boolean(user && organizationId && supabase);
   const [companyRole, setCompanyRole] = useState<TeamRole | null>(null);
   const canEditCompany = mode === 'local' || companyRole === 'owner' || companyRole === 'admin';
+  // Shared-record deletion is deliberate maintenance, not ordinary CRM editing.
+  const canManageRecords = mode === 'local' || actualRole === 'owner' || actualRole === 'admin';
   useEffect(() => {
     if (!cloudReady || !user || !organizationId || !supabase) return;
     let cancelled = false;
@@ -134,7 +141,8 @@ export function CompanySettings() {
           actions={tab === 'company' ? <div className="company-settings-save-state" role="status">{error ? <strong className="has-error">{error}</strong> : <span>{saving ? 'Saving…' : 'Saved automatically'}</span>}</div> : undefined}
         />
         <nav className="settings-tabs" aria-label="Settings sections">
-          {TABS.filter((item) => item.id !== 'advanced' || (mode === 'cloud' && actualRole === 'owner')).map((item) => (
+          {TABS.filter((item) => item.id === 'data' ? canManageRecords :
+            item.id !== 'advanced' || (mode === 'cloud' && actualRole === 'owner')).map((item) => (
             <button key={item.id} type="button" className={tab === item.id ? 'active' : ''}
               aria-current={tab === item.id ? 'page' : undefined} onClick={() => setTab(item.id)}>
               <strong>{item.title}</strong><small>{item.subtitle}</small>
@@ -252,6 +260,26 @@ export function CompanySettings() {
               <Button variant="secondary" onClick={()=>{setQuotesBetaEnabled(false);setAppView('quotes');}}>Open classic Quotes</Button>
             </div>
             <small className="settings-muted">Preference is saved on this device. Return to Settings → Beta Features to switch editors.</small>
+          </article>
+        </section>}
+        {tab === 'data' && canManageRecords && <section className="settings-panel-grid" aria-label="Data management">
+          <article className="company-settings-card settings-main-card settings-record-management">
+            <header><div>
+              <strong>Manage CRM records and documents</strong>
+              <small>Administrative tools for records that should no longer be in SalesShop.</small>
+            </div></header>
+            <p className="settings-help">Choose a record type, find the exact item, then review its relationships before removal. Records linked to quotes, other CRM history, or tasks cannot be deleted until those links are resolved. Issued quotes are archived, not permanently erased.</p>
+            <div className="settings-record-management-actions" role="group" aria-label="Manage records by type">
+              {([['person','People'],['company','Companies'],['deal','Deals'],['quote','Quotes'],['activity','Activities']] as const)
+                .map(([kind,label])=><button key={kind} type="button" onClick={()=>manageRecords(kind)}>
+                  Manage {label}
+                </button>)}
+            </div>
+            <details className="settings-maintenance-tools">
+              <summary>Maintenance and test data</summary>
+              <p className="settings-help">Review sample or test records one by one. This does not automatically delete or identify test records.</p>
+              <button type="button" onClick={()=>manageRecords('quote',true)}>Clean up test records</button>
+            </details>
           </article>
         </section>}
         {tab === 'advanced' && mode === 'cloud' && actualRole === 'owner' && (
