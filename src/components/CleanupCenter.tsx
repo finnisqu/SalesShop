@@ -110,7 +110,7 @@ export function CleanupCenter(){
     setSelected(old=>old.filter(key=>key!==item.kind+':'+item.id));
    }
    if(archives)void archives;
-  }catch(e){setError(e instanceof Error?e.message:'Delete failed. Nothing else was removed.');}
+  }catch(e){setError(e instanceof Error?e.message:'Cleanup stopped. Earlier selections may already have been removed.');}
   finally{setBusy(false);}
  };
  if(!open||perspective)return null;
