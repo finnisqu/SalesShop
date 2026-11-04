@@ -4,6 +4,7 @@ import {Toolbar} from './Toolbar';
 import {TextEditor} from './TextEditor';
 import {DrawingCanvas} from './DrawingCanvas';
 import {NotebookObjectLayer} from './NotebookObjectLayer';
+import {NotebookLinkedAgenda} from './NotebookLinkedAgenda';
 import {useNotebookStore} from '../store/notebookStore';
 import type {NotebookEntry} from '../types/notebook';
 
@@ -40,6 +41,7 @@ export function NotebookCompanionPage({entry,onMakePrimary,onClose,onFocus,activ
          <NotebookObjectLayer key={'right-objects-'+entry.id} entry={entry} activePane={active}/>
        </div>
      </article>
+     <NotebookLinkedAgenda key={'agenda-'+entry.id} entry={entry}/>
    </div>
  </section>;
 }
