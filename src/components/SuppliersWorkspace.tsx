@@ -397,7 +397,7 @@ export function SuppliersWorkspace() {
 
   return (
     <>
-      <section className="supplier-directory-page" aria-label="Supplier directory">
+      <section className={'supplier-directory-page'+(directoryOpen?' is-active':'')} aria-label="Supplier directory">
         <header className="supplier-directory-heading">
           <div>
             <h2>Suppliers</h2>
@@ -416,6 +416,7 @@ export function SuppliersWorkspace() {
             <option value="missing">Missing pricing</option>
           </select>
         </div>
+        {loadError && <p className="supplier-directory-error" role="alert">{loadError}</p>}
         <div className="supplier-directory-table-scroll">
           <table className="supplier-directory-table">
             <thead><tr>
@@ -665,7 +666,7 @@ export function SuppliersWorkspace() {
         if (event.currentTarget === event.target) setSupplierCreateOpen(false);
       }}>
         <section role="dialog" aria-modal="true" aria-label="New supplier"
-          className="connections-create-dialog" onKeyDown={event => {
+          className="connections-create-dialog supplier-create-dialog" onKeyDown={event => {
             if (event.key === 'Escape') { event.stopPropagation(); setSupplierCreateOpen(false); }
           }}>
           <header className="connections-create-heading">
