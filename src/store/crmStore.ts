@@ -313,8 +313,10 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       }).eq('organization_id',organizationId).eq('id',activityId).select('id');
       if(error)throw error;
       if(!data?.length)throw new Error('Activity update was not confirmed. Check your permissions and try again.');
-      if(useAuthStore.getState().organizationId!==organizationId)
-        throw new Error('Workspace changed while saving. Reopen the activity in the current account.');
+      const afterAuth=useAuthStore.getState();
+      if(afterAuth.mode!=='cloud'||afterAuth.organizationId!==organizationId||
+         afterAuth.user?.id!==auth.user?.id)
+        throw new Error('Account or workspace changed while saving. Reopen the activity in the current account.');
     }
     const activities=get().activities.map(item=>item.id===activityId?next:item);
     persist(get().companies,get().contacts,get().projects,activities);
