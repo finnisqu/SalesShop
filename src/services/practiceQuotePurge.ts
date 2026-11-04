@@ -1,6 +1,6 @@
 import type {Activity} from '../types/crm';
 import type {Quote} from '../types/quote';
-import {normalizedTaskAssociations,type PersonalTask} from '../store/personalTaskStore';
+import {normalizedTaskAssociations,taskScope,usePersonalTaskStore,type PersonalTask} from '../store/personalTaskStore';
 import {supabase} from '../lib/supabase';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -129,6 +129,3 @@ export async function purgeArchivedPracticeQuote(quoteId:string):Promise<number>
  useCrmStore.getState().discardPurgedQuoteActivities(quoteId,[...ids]);
  return ids.size;
 }
-// Imports are deliberately grouped at the end to avoid a store import cycle
-// at runtime: both are referenced only inside the user-triggered function.
-import {taskScope,usePersonalTaskStore} from '../store/personalTaskStore';

@@ -45,6 +45,23 @@ describe('Settings record management safety contract',()=>{
   expect(modal).toContain('if(!itemTask)throw new Error');
   expect(modal).toContain('onClick={()=>perform([row])}');
  });
+ it('offers archived practice quotes a distinct single-record purge with an explicit warning',()=>{
+  const service=source('src/services/practiceQuotePurge.ts');
+  const deps=source('src/services/recordManagementDependencies.ts');
+  expect(modal).toContain('const q=visibleQuotes.map((quote:Quote)');
+  expect(modal).toContain("action:quote.archivedAt?'purge'");
+  expect(modal).toContain('planPracticeQuotePurge(current,allQuotes,crm.activities,own)');
+  expect(modal).toContain("if(item.action==='purge')await purgeArchivedPracticeQuote(item.id)");
+  expect(modal).toContain("const isPurging=Boolean(pending?.some(item=>item.action==='purge'))");
+  expect(modal).toContain("'PURGE '+pending");
+  expect(modal).toContain('practiceAcknowledged');
+  expect(modal).toContain('Purge practice quote');
+  expect(deps).toContain("if(kind==='quote')");
+  expect(service).toContain("if(signatures?.length)throw new Error");
+  expect(service).toContain("await supabase.from('activities')");
+  expect(service).toContain("deleteQuoteFromManagement(quoteId,{purgeArchivedPractice:true})");
+  expect(service).toContain("useCrmStore.getState().discardPurgedQuoteActivities(quoteId");
+ });
  it('archives protected quotes and remotely verifies draft deletion before changing local state',()=>{
   expect(modal).toContain("if(item.action==='archive')archiveQuote(item.id)");
   expect(modal).toContain("await deleteQuoteFromManagement(item.id)");
