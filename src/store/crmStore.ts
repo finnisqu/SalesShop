@@ -27,6 +27,7 @@ import type {
   StageChangeContext,
 } from '../types/crm';
 import { useAuthStore } from './authStore';
+import {canEditTeamArea} from '../services/teamDepartments';
 
 interface CrmState {
   companies: Company[];
@@ -53,6 +54,8 @@ interface CrmState {
   deleteActivity:(activityId:string,orphanedDraftAudit?:boolean)=>Promise<void>;
   deleteCleanProject:(projectId:string)=>Promise<void>;
   recordActivity: (activity: ActivityInput) => string;
+  updateActivity: (id:string,patch:Pick<Activity,'summary'|'occurredAt'|'metadata'|
+   'contactId'|'companyId'|'projectId'|'quoteId'>)=>Promise<void>;
 }
 
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
@@ -276,6 +279,46 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     persist(get().companies, get().contacts, projects, activities);
     set({ activities,projects });
     return activity.id;
+  },
+
+  updateActivity:async(activityId,patch)=>{
+    const auth=useAuthStore.getState();
+    const source=get().activities.find(item=>item.id===activityId);
+    if(!source||source.type!=='manual-touchpoint')
+      throw new Error('Only manually logged interactions can be edited here.');
+    if(auth.mode==='cloud'){
+      if(!auth.organizationId||!supabase||!canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm'))
+        throw new Error('You do not have permission to edit this interaction.');
+      if(source.metadata?.recordedByUserId&&source.metadata.recordedByUserId!==auth.user?.id&&
+        auth.teamRole!=='owner'&&auth.teamRole!=='admin')
+        throw new Error('You can edit your own interactions, but not another salesperson’s log.');
+    }
+    if(!patch.summary.trim()||!Number.isFinite(new Date(patch.occurredAt).getTime())||
+       new Date(patch.occurredAt).getTime()>Date.now()+60000)
+      throw new Error('Choose a valid completed interaction date and description.');
+    const metadata={
+      ...source.metadata,...patch.metadata,
+      recordedByUserId:source.metadata?.recordedByUserId??auth.user?.id,
+      editedAt:now(),editedByUserId:auth.user?.id,
+    };
+    const next:Activity={...source,...patch,summary:patch.summary.trim(),metadata};
+    const organizationId=auth.mode==='cloud'?auth.organizationId:null;
+    if(organizationId&&supabase){
+      // Confirm the normalized row was updated before changing the local cache.
+      const {data,error}=await supabase.from('activities').update({
+        summary:next.summary,occurred_at:next.occurredAt,
+        contact_id:next.contactId??null,company_id:next.companyId??null,
+        project_id:next.projectId??null,quote_id:next.quoteId??null,
+        metadata:next.metadata,
+      }).eq('organization_id',organizationId).eq('id',activityId).select('id');
+      if(error)throw error;
+      if(!data?.length)throw new Error('Activity update was not confirmed. Check your permissions and try again.');
+      if(useAuthStore.getState().organizationId!==organizationId)
+        throw new Error('Workspace changed while saving. Reopen the activity in the current account.');
+    }
+    const activities=get().activities.map(item=>item.id===activityId?next:item);
+    persist(get().companies,get().contacts,get().projects,activities);
+    set({activities});
   },
 
   createProject: (name, stage = 'Discovery', details = {}) => {
