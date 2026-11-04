@@ -3,6 +3,8 @@ import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssoc
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
+import {canEditTeamArea} from '../services/teamDepartments';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
 import '../tasks-table.css';
 import {useQuoteStore} from '../store/quoteStore';
@@ -179,7 +181,9 @@ export function TaskEditor({initial,onCancel,onSave}:{
 
 export function TasksWorkspace(){
   const mode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),orgId=useAuthStore(s=>s.organizationId);
+  const teamRole=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
   const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
+  const canLog=!rolePreview&&(mode==='local'||canEditTeamArea(teamRole,department,'crm'));
   const scope=taskScope(mode,orgId,userId);
   const previousScope=useRef(scope);
   const tasks=usePersonalTaskStore(s=>s.tasks),storedScope=usePersonalTaskStore(s=>s.scope);
@@ -429,6 +433,10 @@ export function TasksWorkspace(){
        </div>
        <footer>
         <button type="button" onClick={()=>setViewingId(null)}>Close</button>
+        {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&
+         <button type="button" onClick={()=>{
+          setViewingId(null);openActivityComposer({taskId:viewing.id});
+         }}>Complete + log activity</button>}
         <button type="button" onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
          {taskComplete(viewing)?'Reopen task':'Mark complete'}</button>
         <button type="button" className="tasks-primary" onClick={()=>{setViewingId(null);setEditing(viewing);}}>Edit task</button>
