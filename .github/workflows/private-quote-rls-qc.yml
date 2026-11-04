@@ -52,3 +52,11 @@ jobs:
           PGPASSWORD: disposable_test_only
           PGDATABASE: sales_shop_rls_test
         run: psql -v ON_ERROR_STOP=1 -f tests/security/private_quote_rls_bootstrap.sql
+      - name: Validate guarded signed-practice purge in disposable PostgreSQL
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: disposable_test_only
+          PGDATABASE: sales_shop_rls_test
+        run: psql -v ON_ERROR_STOP=1 -f tests/security/practice_quote_purge_qc.sql
