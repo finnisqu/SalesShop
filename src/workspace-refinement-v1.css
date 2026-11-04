@@ -102,3 +102,14 @@
   }
   :root[data-sales-theme] .sales-app.view-board .board-quick-add {margin-top:6px}
 }
+
+/* Alternative editor remains a quiet, explicit library choice. */
+.qmb .qmb-library-heading-actions{display:flex;flex:0 0 auto;align-items:center;gap:7px}
+.qmb .qmb-library-detailed-link{min-height:37px;padding:8px 10px;
+  border:1px solid var(--qmb-border);border-radius:8px;
+  background:transparent;color:var(--qmb-muted);
+  font-size:11px;font-weight:750;white-space:nowrap;cursor:pointer}
+.qmb .qmb-library-detailed-link:is(:hover,:focus-visible){
+  border-color:var(--qmb-accent);color:var(--qmb-ink)}
+@media(max-width:410px){.qmb .qmb-library-heading-actions{gap:5px}
+  .qmb .qmb-library-detailed-link{min-height:40px;padding:7px;font-size:10px}}

@@ -49,7 +49,7 @@ export function QuoteBetaDesktopRails({
     <aside className="qmb-desktop-navigation" aria-label="Quote workspace navigation">
       <div className="qmb-desktop-rail-head">
         <button type="button" className="qmb-desktop-library-link" onClick={onLibrary}>‹ All documents</button>
-        <strong>{salesTemplateLabel(salesDocumentTemplate(quote))} <span>Beta</span></strong>
+        <strong>{salesTemplateLabel(salesDocumentTemplate(quote))} editor</strong>
         <small>{displayQuoteNumber(quote)} · {quoteBetaStatusLabel(quote)}</small>
         <div className="qmb-desktop-history" role="toolbar" aria-label="Quote history controls">
           <button type="button" onClick={onUndo} disabled={!editable||!undoDepth}

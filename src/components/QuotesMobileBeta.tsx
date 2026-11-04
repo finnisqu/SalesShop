@@ -6,6 +6,7 @@ import { useCrmStore } from '../store/crmStore';
 import { useAuthStore } from '../store/authStore';
 import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
+import {openDetailedQuoteEditor} from '../services/quoteEditorNavigation';
 import { useNavigationStore } from '../store/navigationStore';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { canIssueTeamQuote } from '../services/teamDepartments';
@@ -749,6 +750,10 @@ export function QuotesMobileBeta() {
   const quoteMenuActions=(target:Quote):AppContextAction[]=>{
     const actions:AppContextAction[]=[];
     if(!target.archivedAt)actions.push({label:'Open document',onSelect:()=>openQuote(target.id)});
+    if(target.documentType!=='pricing-schedule'&&
+       (!target.archivedAt||canManageLibrary))actions.push({
+       label:'Open in Detailed Editor',onSelect:()=>openDetailedQuoteEditor(target.id),
+    });
     if(canManageLibrary){
       if(target.archivedAt)actions.push({label:'Restore to active',onSelect:()=>restoreQuote(target.id)});
       else{
@@ -1004,7 +1009,7 @@ export function QuotesMobileBeta() {
         onOpenArea={openArea} onAddArea={newArea} onPricing={openPricingStage}
         onReview={()=>navigateDocument('preview')}/> 
     :null;
-  if(!hydrated)return <main className="qmb"><p className="qmb-loading">Opening Quotes Beta…</p></main>;
+  if(!hydrated)return <main className="qmb"><p className="qmb-loading">Opening sales documents…</p></main>;
   if(canBrowseTeam&&libraryMode==='team')return <main className="quotes-view qmb-team">
     <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes</button></div>
     {signedShopOutcomesEnabled
@@ -1050,7 +1055,7 @@ export function QuotesMobileBeta() {
         </div>}
       {page==='area'&&quoteProgress}
     {page==='library'?<>
-      <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Documents <span>Beta</span></strong></div></header>
+      <header className="qmb-top"><div className="qmb-brand"><b>S</b><strong>Documents</strong></div></header>
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-kicker">YOUR SALES WORKSPACE</div><h1>Sales Documents</h1>
         <p className="qmb-subtitle">Open an existing agreement, quote or workbook—or create a new document from a purpose-built template.</p>
@@ -1092,7 +1097,13 @@ export function QuotesMobileBeta() {
          <div className="qmb-section-head qmb-library-results-head">
            <div><h3>{statusFilter==='archived'?'Archived documents':'My documents'}</h3>
              <small>{list.length} {list.length===1?'document':'documents'} shown</small></div>
-           <button type="button" className="qmb-library-new-inline" onClick={()=>setShowNewDocument(true)}>+ New</button>
+           <div className="qmb-library-heading-actions">
+             <button type="button" className="qmb-library-detailed-link"
+               title="Open the selected quote in the alternative detailed editor"
+               onClick={()=>openDetailedQuoteEditor(quote?.id)}>Detailed Editor</button>
+             <button type="button" className="qmb-library-new-inline"
+               onClick={()=>setShowNewDocument(true)}>+ New</button>
+           </div>
          </div>
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}

@@ -1,6 +1,7 @@
 import {useRef} from 'react';
 import type {Quote} from '../types/quote';
 import {quoteCanCreateRevision} from '../services/quoteIntegrity';
+import {openDetailedQuoteEditor} from '../services/quoteEditorNavigation';
 import '../sales-document-workspace.css';
 
 export function SalesDocumentActionsMenu({quote,canManage,canIssue,canDelete,
@@ -13,6 +14,10 @@ export function SalesDocumentActionsMenu({quote,canManage,canIssue,canDelete,
   return <details ref={ref} className="sales-document-rail-actions">
     <summary role="button" aria-label="Document options" title="Document options">⋯</summary>
     <div className="sales-document-rail-menu">
+      {quote.documentType!=='pricing-schedule'&&
+        <button type="button" onClick={()=>run(()=>openDetailedQuoteEditor(quote.id))}>
+          Open in Detailed Editor
+        </button>}
       {canManage&&<>
         <button type="button" onClick={()=>run(onCopy)}>Make independent copy…</button>
         <button type="button" onClick={()=>run(onArchive)}>Archive document…</button>

@@ -991,7 +991,7 @@ function QuoteEditor({ quote, mode, onModeChange, onOpenMobileNavigator, onOpenB
             <small>{viewMode === 'edit' ? 'Build the quote' : viewMode === 'split' ? 'Editor + customer sheet' : viewMode === 'workbook' ? 'Pricing workspace' : 'Customer document'}</small>
           </button>)}
           <button type="button" className="quote-mobile-editor-beta-option" onClick={() => { setMobileMenu(null); onOpenBeta(); }}>
-            <strong>Open Quotes Beta</strong><small>Keep working with this same quote in the new editor</small>
+            <strong>Open Quick Quote</strong><small>Continue working with this same quote in the guided editor</small>
           </button>
         </div>}
 
@@ -1323,8 +1323,8 @@ export function Quotes() {
   if (!hydrated) return <div className="quotes-loading">Opening quotes…</div>;
   if (canBrowseTeam && quoteLibraryMode === 'team') return (
     <section className="quotes-classic-team-shell">
-      <header className="quotes-classic-team-switch"><strong>Classic Quotes</strong>
-        <button type="button" onClick={() => openBeta()}>Open Quotes Beta</button></header>
+      <header className="quotes-classic-team-switch"><strong>Detailed Editor</strong>
+        <button type="button" onClick={() => openBeta()}>Open Quick Quote</button></header>
       {signedShopOutcomesEnabled
           ? <ShopOutcomesWorkspace onShowMine={() => setQuoteLibraryMode('mine')} />
           : <TeamQuotesWorkspace quotes={quotes} onShowMine={() => setQuoteLibraryMode('mine')} />}
@@ -1335,7 +1335,7 @@ export function Quotes() {
       <h1>My Quotes</h1>
       <p>You have no quotes assigned to you yet. {signedShopOutcomesEnabled ? 'Shop Outcomes lists signed company commitments only.' : 'Existing organization quotes are still available in Team Quotes, labeled Unassigned until an owner or admin assigns them.'}</p>
       <button type="button" onClick={() => createQuote()}>+ New Quote</button>
-      <button type="button" onClick={() => openBeta()}>Open Quotes Beta</button>
+      <button type="button" onClick={() => openBeta()}>Open Quick Quote</button>
       {canBrowseTeam && <button type="button" onClick={() => setQuoteLibraryMode('team')}>{signedShopOutcomesEnabled ? 'View Shop Outcomes' : 'View Team Quotes'}</button>}
     </section>
   </main>;
@@ -1388,8 +1388,8 @@ export function Quotes() {
     <aside className="quotes-sidebar"><header><div><span>My documents</span><strong>My Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>
     <div className="quote-editor-mode-chooser" role="group" aria-label="Quote editor">
       <span>Editor</span>
-      <button type="button" aria-pressed={true}>Classic</button>
-      <button type="button" aria-pressed={false} onClick={() => openBeta(quote.id)}>Beta</button>
+      <button type="button" aria-pressed={true}>Detailed Editor</button>
+      <button type="button" aria-pressed={false} onClick={() => openBeta(quote.id)}>Quick Quote</button>
     </div>{canBrowseTeam && <div className="quote-library-mode-switch" role="group" aria-label="Quote library">
       <button type="button" aria-pressed={true}>My Quotes</button>
       <button type="button" onClick={() => setQuoteLibraryMode('team')}>{signedShopOutcomesEnabled ? 'Shop Outcomes' : 'Team Quotes'}</button>

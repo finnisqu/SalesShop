@@ -26,7 +26,7 @@ const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
   { id: 'account', title: 'My Account', subtitle: 'Salesperson profile' },
   { id: 'team', title: 'Team', subtitle: 'People in your shop' },
   { id: 'appearance', title: 'Appearance & Accessibility', subtitle: 'Personal preferences' },
-  { id: 'beta', title: 'Beta Features', subtitle: 'Try upcoming workflows' },
+  { id: 'beta', title: 'Quote Editors', subtitle: 'Quick & detailed editing' },
   { id: 'data', title: 'Data Management', subtitle: 'Delete & archive records' },
   { id: 'advanced', title: 'Advanced', subtitle: 'Optional tools' },
 ];
@@ -244,24 +244,24 @@ export function CompanySettings() {
             <p className="settings-help">Preferences affect your interface, not the pricing or document values your customers see.</p>
           </article>
         </section>}
-        {tab === 'beta' && <section className="settings-panel-grid" aria-label="Beta features">
+        {tab === 'beta' && <section className="settings-panel-grid" aria-label="Quote editors">
           <article className="company-settings-card settings-main-card">
-            <header><div><strong>Quotes 2.0 · Responsive Beta</strong>
-              <small>A more flexible, Area-first quote builder. Your existing quotes and Catalog stay connected.</small></div>
-              <span className="settings-card-save">{quotesBetaEnabled ? 'Opted in' : 'Off by default'}</span>
+            <header><div><strong>Choose your Quote editor</strong>
+              <small>Use Quick Quote for everyday estimating; keep Detailed Editor for specialist tools.</small></div>
+              <span className="settings-card-save">{quotesBetaEnabled ? 'Quick Quote' : 'Detailed Editor'}</span>
             </header>
             <label className="settings-preference-row">
-              <div><strong>Use Quotes Beta on phone & desktop</strong>
-                <small>Uses the compact editor on phones and a spacious three-pane workspace on desktop. Classic Quotes stays available.</small></div>
+              <div><strong>Use Quick Quote as my editor</strong>
+                <small>Compact spreadsheet workflow on phone and desktop. Detailed Editor remains available for advanced and legacy workflows.</small></div>
               <input type="checkbox" checked={quotesBetaEnabled}
                 onChange={event=>setQuotesBetaEnabled(event.target.checked)} />
             </label>
-            <p className="settings-help">This is a view switch, not a migration. The same quote records, Areas, takeoffs, Catalog selections, customer preview, secure shares, and company permissions are used in either editor. Switching back will not discard saved changes.</p>
+            <p className="settings-help">Both editors open the same records. Switching changes this device's editor preference only; no data is migrated, copied, or deleted. Detailed Editor retains specialist workbook and split-view workflows while parity is validated.</p>
             <div className="settings-inline-actions">
-              <Button variant="primary" onClick={()=>{setQuotesBetaEnabled(true);setAppView('quotes');}}>Open Quotes Beta</Button>
-              <Button variant="secondary" onClick={()=>{setQuotesBetaEnabled(false);setAppView('quotes');}}>Open classic Quotes</Button>
+              <Button variant="primary" onClick={()=>{setQuotesBetaEnabled(true);setAppView('quotes');}}>Open Quick Quote</Button>
+              <Button variant="secondary" onClick={()=>{setQuotesBetaEnabled(false);setAppView('quotes');}}>Open Detailed Editor</Button>
             </div>
-            <small className="settings-muted">Preference is saved on this device. Return to Settings → Beta Features to switch editors.</small>
+            <small className="settings-muted">This preference is saved on the device. You can also switch from a Quote's Document options menu.</small>
           </article>
         </section>}
         {tab === 'data' && canManageRecords && <section className="settings-panel-grid" aria-label="Data management">
