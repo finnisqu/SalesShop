@@ -103,7 +103,7 @@ function DailyNoteDialog({entryId,onClose}:{entryId?:string;onClose:()=>void}){
  const page=useNotebookStore(s=>s.entries.find(e=>e.id===entryId));
  const append=useNotebookStore(s=>s.appendDailyCapture);
  const nav=useNavigationStore(s=>s.openNotebookPage);
- const draftKey=draftStorageKey('daily-note:'+today,mode,orgId,userId);
+ const draftKey=draftStorageKey('daily-note:'+(page?.dailyDate??today),mode,orgId,userId);
  const [editing,setEditing]=useState(!entryId);
  const [text,setText]=useState(()=>readSavedDraft<{text:string}>(draftKey)?.text??'');
  const [error,setError]=useState('');
