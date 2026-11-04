@@ -48,7 +48,11 @@ export function CleanupCenter(){
  const canQuotes=canManage&&(mode==='local'||canEditTeamArea(role,dept,'quotes'));
  const scope=taskScope(mode,org,userId);
  const ownTasks=scope&&scope===taskStorageScope?tasks.filter(task=>!task.deletedAt):[];
- const visibleQuotes=mode==='cloud'?quotes.filter(quote=>quote.ownerUserId===userId):quotes;
+ // Legacy unassigned quotes are recoverable by Owners/Admins, while quotes
+ // assigned to another salesperson are never offered in this maintenance list.
+ const visibleQuotes=mode==='cloud'?quotes.filter(quote=>
+  quote.ownerUserId===userId||
+  (!quote.ownerUserId&&(role==='owner'||role==='admin'))):quotes;
  useEffect(()=>{
   const show=(event:Event)=>{
    const detail=(event as CustomEvent<OpenDetail>).detail;
@@ -111,7 +115,8 @@ export function CleanupCenter(){
   if(kind==='quote'){
    const quote=quotes.find(item=>item.id===id);
    if(!quote)return undefined;
-   const restricted=mode==='cloud'&&quote.ownerUserId!==userId;
+   const restricted=mode==='cloud'&&quote.ownerUserId!==userId&&
+    !(quote.ownerUserId==null&&(role==='owner'||role==='admin'));
    return {kind:'quote',id,name:restricted?'Quote owned by another user':quote.title||'Untitled Quote',
     detail:restricted?'Not manageable from your account':'Archived document',
     blockers:[restricted?'Another owner must manage this quote':'Archived documents retain CRM history'],
@@ -194,8 +199,10 @@ export function CleanupCenter(){
      if(!itemTask)throw new Error('This personal Task is no longer available in your workspace.');
     }else if(item.kind==='quote'){
      const current=allQuotes.find(quote=>quote.id===item.id);
-     if(!current||(auth.mode==='cloud'&&current.ownerUserId!==auth.user?.id))
-       throw new Error('This quote is unavailable or is not your own document.');
+     if(!current||(auth.mode==='cloud'&&current.ownerUserId!==auth.user?.id&&
+       !(current.ownerUserId==null&&
+        (auth.teamRole==='owner'||auth.teamRole==='admin'))))
+       throw new Error('This quote is unavailable or not manageable by your account.');
      if(item.action==='purge'){
        const plan=planPracticeQuotePurge(current,allQuotes,crm.activities,own);
        if(plan.blockers.length)throw new Error(plan.blockers.join('; '));

@@ -70,8 +70,10 @@ export async function purgeArchivedPracticeQuote(quoteId:string):Promise<number>
   throw new Error('Only an Owner or Admin may permanently purge archived practice quotes.');
  const quote=useQuoteStore.getState().quotes.find(item=>item.id===quoteId);
  if(!quote)throw new Error('This quote is no longer available.');
- if(auth.mode==='cloud'&&quote.ownerUserId!==auth.user?.id)
-  throw new Error('Only your own archived quotes can be purged in this workspace.');
+ if(auth.mode==='cloud'&&quote.ownerUserId!==auth.user?.id&&
+  !(quote.ownerUserId==null&&
+   (auth.teamRole==='owner'||auth.teamRole==='admin')))
+  throw new Error('You cannot purge another salesperson\'s quote.');
  const crm=useCrmStore.getState();
  const saved=usePersonalTaskStore.getState();
  const scope=taskScope(auth.mode,auth.organizationId,auth.user?.id);
@@ -87,8 +89,8 @@ export async function purgeArchivedPracticeQuote(quoteId:string):Promise<number>
    .select('id,owner_user_id,archived_at,status,signed_at')
    .eq('organization_id',org).eq('id',quoteId).single();
   if(quoteError||!stored)throw new Error('Unable to verify the archived quote on the server.');
-  if(stored.owner_user_id!==auth.user?.id||!stored.archived_at||
-   stored.status==='Signed'||!!stored.signed_at)
+  if((stored.owner_user_id!==auth.user?.id&&stored.owner_user_id!==null)||
+   !stored.archived_at||stored.status==='Signed'||!!stored.signed_at)
    throw new Error('The server does not confirm an archived, unsigned quote you own.');
   const {data:signatures,error:signatureError}=await supabase.from('signatures')
    .select('id').eq('organization_id',org).eq('quote_id',quoteId).limit(1);

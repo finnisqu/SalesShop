@@ -499,8 +499,10 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if(auth.mode==='cloud'){
       const organizationId=cloudOrganizationId();
       if(!organizationId)throw new Error('Cloud workspace unavailable. No quote was deleted.');
-      if(quote.ownerUserId!==auth.user?.id)
-        throw new Error('Only your own quotes can be deleted here.');
+      if(quote.ownerUserId!==auth.user?.id&&
+        !(quote.ownerUserId==null&&
+         (auth.teamRole==='owner'||auth.teamRole==='admin')))
+        throw new Error('Only your own or unassigned legacy quotes can be deleted here.');
       await deleteConfirmedNormalizedQuote(organizationId,quoteId);
     }
     const next=get().quotes.filter(item=>item.id!==quoteId);
