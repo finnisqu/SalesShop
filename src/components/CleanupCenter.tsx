@@ -43,21 +43,21 @@ export function CleanupCenter(){
  },[]);
  const rows=useMemo(()=>{
   const refs={companies,contacts:people,projects:deals,activities,quotes, tasks:ownTasks};
-  const q=visibleQuotes.filter(quote=>!quote.archivedAt).map(quote:Quote):CleanupRow=>({
+  const q=visibleQuotes.filter(quote=>!quote.archivedAt).map((quote:Quote):CleanupRow=>({
    kind:'quote',id:quote.id,name:quote.title||'Untitled Quote',
    detail:quote.quoteNumber+' · '+quote.status,
    blockers:[],action:canPermanentlyDeleteQuote(quote,quotes)?'delete':'archive',
   }));
-  const p=people.map(person:CleanupRow=>({
+  const p=people.map((person):CleanupRow=>({
    kind:'person',id:person.id,name:person.name||person.email||'Unnamed person',
    detail:companies.find(c=>c.id===person.companyId)?.name||'No company',
    blockers:crmDeletionBlockers('person',person.id,refs),action:'delete',
   }));
-  const c=companies.map(company:CleanupRow=>({
+  const c=companies.map((company):CleanupRow=>({
    kind:'company',id:company.id,name:company.name,detail:company.kind,
    blockers:crmDeletionBlockers('company',company.id,refs),action:'delete',
   }));
-  const d=deals.map(deal:CleanupRow=>({
+  const d=deals.map((deal):CleanupRow=>({
    kind:'deal',id:deal.id,name:deal.name,detail:deal.stage,
    blockers:crmDeletionBlockers('deal',deal.id,refs),action:'delete',
   }));
