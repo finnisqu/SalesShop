@@ -54,7 +54,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
   ...(quote?[{type:'quote' as const,id:quote.id,label:'Quote · '+(quote.title||displayQuoteNumber(quote))}]:[]),
   ...(quote?.projectId&&deals.some(d=>d.id===quote.projectId)
    ?[{type:'project' as const,id:quote.projectId!,
-      label:'Deal · '+(deals.find(d=>d.id===quote.projectId)?.name??'Linked deal')}]:[]),
+      label:'Deal · '+(deals.find(d=>d.id===quote?.projectId)?.name??'Linked deal')}]:[]),
   ...(company||linkedCompany
    ?[{type:'company' as const,id:(company??linkedCompany)!.id,
       label:'Company · '+(company??linkedCompany)!.name}]:[]),
