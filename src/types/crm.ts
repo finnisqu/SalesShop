@@ -86,6 +86,8 @@ export interface Project {
   stage: ProjectStage;
   stageChangedAt?: string;
   dueDate?: string;
+  /** Organization member explicitly responsible for this Deal. */
+  assignedUserId?: string;
   amount?: number;
   nextAction?: string;
   lastTouchpoint?: string;
