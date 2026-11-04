@@ -97,9 +97,12 @@
  display:flex;align-items:center;gap:10px;width:100%;min-height:38px;
  padding:7px 9px;background:transparent;border:0;border-radius:7px;
  color:inherit;text-align:left;cursor:pointer;
- font:750 12px/1.35 inherit;
+ font-family:inherit;font-weight:750;font-size:12px;line-height:1.35;
 }
 .home-sidecar-create-menu>button svg{flex:0 0 18px;display:block}
+.sales-home-calendar-card .sales-calendar-inline .sales-calendar-sidecar{
+ overflow:visible!important;
+}
 .home-sidecar-create-menu>button:hover,
 .home-sidecar-create-menu>button:focus-visible{
  background:var(--ss-theme-tint,#eee7d9);outline:0;
