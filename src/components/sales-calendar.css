@@ -436,3 +436,63 @@
 .sales-calendar-agenda-urgent{
  margin-left:auto;
 }
+
+
+/* Desktop 7-day focus: week strip ABOVE the full daily agenda, and recents
+   alongside. Month retains the established three-column arrangement. */
+@media (min-width:760px){
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline.is-week{
+  display:grid!important;
+  grid-template-columns:minmax(0,2.15fr) minmax(224px,.82fr)!important;
+  grid-template-rows:56px minmax(0,1fr) auto!important;
+  height:470px!important;min-height:470px!important;max-height:470px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-heading{
+  grid-column:1/-1!important;grid-row:1!important;
+  min-height:0!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-main{
+  grid-column:1!important;grid-row:2!important;display:flex!important;
+  flex-direction:column!important;min-height:0!important;overflow:hidden!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-month{
+  display:grid!important;grid-template-rows:27px 76px!important;
+  flex:0 0 103px!important;height:103px!important;min-height:103px!important;
+  overflow:hidden!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-weekdays{
+  grid-column:1!important;grid-row:1!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-grid{
+  grid-column:1!important;grid-row:2!important;
+  height:76px!important;min-height:76px!important;
+  grid-template-rows:76px!important;grid-auto-rows:76px!important;
+  padding:2px 8px 6px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-day{
+  height:auto!important;min-height:0!important;
+  padding:7px 6px!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-week-glimpse{
+  display:none!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-day-preview{
+  display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+  min-height:0!important;max-height:none!important;overflow:hidden!important;
+  border-left:0!important;border-top:1px solid var(--ss-theme-border,#d4c9b5)!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-agenda{
+  flex:1 1 0!important;min-height:0!important;
+  max-height:none!important;overflow-y:auto!important;
+  align-content:start!important;grid-auto-rows:max-content!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-sidecar{
+  display:grid!important;grid-column:2!important;grid-row:2!important;
+  grid-template-rows:auto auto minmax(0,1fr)!important;
+  min-height:0!important;padding:11px!important;
+  border-left:1px solid var(--ss-theme-border,#d4c9b5)!important;
+ }
+ .sales-home-calendar-card .sales-calendar-inline .is-week .sales-calendar-legend{
+  grid-column:1/-1!important;grid-row:3!important;
+ }
+}
