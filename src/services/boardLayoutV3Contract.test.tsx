@@ -67,6 +67,9 @@ describe('Board display and quick creation',()=>{
   expect(css).toContain('overflow-x:hidden;overflow-y:auto');
   expect(css).toContain('flex:1 1 0;height:0;min-height:0');
   expect(css).toContain('max-height:100%');
+  expect(css).toContain('flex:0 0 274px;width:274px;min-width:274px');
+  expect(css).not.toContain('.account-board .account-column{');
+  expect(css).toContain('flex:0 0 45px;width:45px;min-width:45px');
   expect(css).toContain('scrollbar-gutter:stable');
   expect(main).toContain("import './board-layout-v3.css'");
  });
