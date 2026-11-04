@@ -31,12 +31,14 @@ export function crmDeletionBlockers(
   if(activities)blocked.push(activities+' activities');
  }else if(kind==='person'){
   const quotes=count(data.quotes,quote=>quote.contactId===id);
-  const activities=count(data.activities,activity=>activity.contactId===id);
+  const activities=count(data.activities,activity=>
+    activity.contactId===id&&activity.type!=='contact-created');
   if(quotes)blocked.push(quotes+' linked quotes');
   if(activities)blocked.push(activities+' activities');
  }else{
   const quotes=count(data.quotes,quote=>quote.projectId===id);
-  const activities=count(data.activities,activity=>activity.projectId===id);
+  const activities=count(data.activities,activity=>activity.projectId===id&&
+   activity.type!=='project-created'&&activity.type!=='project-stage-changed');
   if(quotes)blocked.push(quotes+' linked quotes');
   if(activities)blocked.push(activities+' activities');
  }
