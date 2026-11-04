@@ -389,6 +389,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           className="home-sidecar-create-menu" style={sidecarMenuPosition} role="menu"
           aria-label="Quick create"
           onKeyDown={event=>{
+           if(event.key==='Escape'){
+            event.preventDefault();event.stopPropagation();
+            setSidecarCreateOpen(false);sidecarCreateButton.current?.focus();
+            return;
+           }
            if(event.key!=='ArrowDown'&&event.key!=='ArrowUp')return;
            event.preventDefault();
            const items=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button'));
