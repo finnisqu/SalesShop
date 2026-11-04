@@ -61,6 +61,11 @@ export function CompanySettings() {
   const canEditCompany = mode === 'local' || companyRole === 'owner' || companyRole === 'admin';
   // Shared-record deletion is deliberate maintenance, not ordinary CRM editing.
   const canManageRecords = !perspective && (mode === 'local' || actualRole === 'owner' || actualRole === 'admin');
+  const visibleTabs = TABS.filter((item) => item.id === 'data' ? canManageRecords :
+    item.id !== 'advanced' || (mode === 'cloud' && actualRole === 'owner'));
+  useEffect(() => {
+    if (!visibleTabs.some(item => item.id === tab)) setTab('company');
+  }, [tab, mode, actualRole, canManageRecords]);
   useEffect(() => {
     if (!cloudReady || !user || !organizationId || !supabase) return;
     let cancelled = false;
@@ -142,9 +147,15 @@ export function CompanySettings() {
           description="Company identity, account information, and the way SalesShop feels to you."
           actions={tab === 'company' ? <div className="company-settings-save-state" role="status">{error ? <strong className="has-error">{error}</strong> : <span>{saving ? 'Saving…' : 'Saved automatically'}</span>}</div> : undefined}
         />
+        <label className="settings-mobile-section-select">
+          <span>Settings section</span>
+          <select aria-label="Settings section" value={tab}
+            onChange={event => setTab(event.target.value as SettingsTab)}>
+            {visibleTabs.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
+          </select>
+        </label>
         <nav className="settings-tabs" aria-label="Settings sections">
-          {TABS.filter((item) => item.id === 'data' ? canManageRecords :
-            item.id !== 'advanced' || (mode === 'cloud' && actualRole === 'owner')).map((item) => (
+          {visibleTabs.map((item) => (
             <button key={item.id} type="button" className={tab === item.id ? 'active' : ''}
               aria-current={tab === item.id ? 'page' : undefined} onClick={() => setTab(item.id)}>
               <strong>{item.title}</strong><small>{item.subtitle}</small>

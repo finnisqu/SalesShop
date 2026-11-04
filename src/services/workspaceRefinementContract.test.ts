@@ -36,6 +36,10 @@ describe('SalesShop streamlined workspace contract',()=>{
  });
  it('offers two named editors without duplicating saved quote records',()=>{
   expect(settings).toContain("title: 'Quote Editors'");
+  expect(settings).toContain('settings-mobile-section-select');
+  expect(settings).toContain('aria-label="Settings section"');
+  expect(settings).toContain('visibleTabs.map');
+  expect(css).toContain('.settings-mobile-section-select');
   expect(settings).toContain('Open Detailed Editor');
   expect(settings).toContain('Open Quick Quote');
   expect(beta).toContain('qmb-library-detailed-link');

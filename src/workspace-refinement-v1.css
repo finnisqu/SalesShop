@@ -185,3 +185,27 @@
  }
  .connections-create-heading{padding:13px 15px}
 }
+
+/* Desktop Settings keeps the sidebar; phone uses one compact native selector. */
+:root[data-sales-theme] .sales-app.view-settings .settings-mobile-section-select{
+ display:none;
+}
+@media(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-settings .settings-tabs{
+  display:none;
+ }
+ :root[data-sales-theme] .sales-app.view-settings .settings-mobile-section-select{
+  display:grid;grid-column:1;gap:5px;min-width:0;
+  padding:7px 10px;border:1px solid var(--ss-theme-border);
+  border-radius:10px;background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .sales-app.view-settings .settings-mobile-section-select>span{
+  font-size:10px;font-weight:750;color:var(--ss-theme-muted);
+ }
+ :root[data-sales-theme] .sales-app.view-settings .settings-mobile-section-select select{
+  width:100%;min-width:0;min-height:44px;
+  padding:8px 10px;border:1px solid var(--ss-theme-border);
+  border-radius:8px;background:var(--ss-theme-base);color:var(--ss-theme-ink);
+  font-size:16px;font-weight:700;
+ }
+}
