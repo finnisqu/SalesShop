@@ -1,7 +1,9 @@
 import {useEffect,useState} from 'react';
 import {TaskEditor} from './TasksWorkspace';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
- type TaskChanges,type TaskType,type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
+ type TaskChanges,type TaskLink} from '../store/personalTaskStore';
+import type {CalendarTaskRequest} from '../services/taskModalEvents';
+export {requestTaskModal} from '../services/taskModalEvents';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
@@ -10,13 +12,6 @@ import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
 
-export interface CalendarTaskRequest {
- mode:'create'|'preview'|'edit';id?:string;dueDate?:string;
- type?:TaskType;title?:string;associations?:TaskAssociation[];
-}
-export function requestTaskModal(detail:CalendarTaskRequest){
- window.dispatchEvent(new CustomEvent<CalendarTaskRequest>('salesshop:task-modal',{detail}));
-}
 /** Globally mounted editor; Home and Calendar remain visible underneath the modal. */
 export function TaskModalHost(){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
