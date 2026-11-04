@@ -317,8 +317,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const parsed=new Date(date+'T12:00:00');
     const title='Daily Notes · '+parsed.toLocaleDateString(undefined,
        {weekday:'short',month:'short',day:'numeric',year:'numeric'});
-    const entry:NotebookEntry={...newEntry(),title,dailyDate:date,
-     contentHtml:html,agendaItems:[],createdAt:timestamp,updatedAt:timestamp};
+    // Stable per-day identity limits duplicates when different tabs create
+    // today's entry at nearly the same time in an account-scoped Notebook.
+    const entry:NotebookEntry={...newEntry(),id:'page_daily_'+date,
+     title,dailyDate:date,contentHtml:html,agendaItems:[],
+     createdAt:timestamp,updatedAt:timestamp};
     // One page per date: creation and lookup operate in one synchronous store
     // transaction. Drafts alone never create a blank page.
     const entries=[entry,...get().entries];
