@@ -30,7 +30,7 @@ export function useDealAssigneeDirectory(){
     const roster=await client.from('organization_members')
      .select('user_id,role,job_function').eq('organization_id',orgId);
     if(roster.error)throw roster.error;
-    const valid=(roster.data??[] as MemberRow[]).filter(member=>
+    const valid=((roster.data??[]) as MemberRow[]).filter(member=>
       eligibleDealAssignee(member.role as TeamRole,(member.job_function??'general') as TeamDepartment));
     const profiles=valid.length?await client.from('profiles')
      .select('user_id,display_name').in('user_id',valid.map(m=>m.user_id)):null;
