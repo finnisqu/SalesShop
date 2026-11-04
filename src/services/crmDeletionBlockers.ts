@@ -16,6 +16,8 @@ export function crmDeletionBlockers(
  const blocked:string[]=[];
  const taskType=kind==='person'?'contact':kind==='deal'?'project':'company';
  const linkedTasks=count(data.tasks,task=>!task.deletedAt&&
+  // The auto-generated Submit Quote task will be canceled when its Deal disappears.
+  !(kind==='deal'&&task.sourceObjectId==='deal-submit:'+id)&&
   (task.associations??(task.linked?[task.linked]:[])).some(link=>
    link.type===taskType&&link.id===id));
  if(kind==='company'){
