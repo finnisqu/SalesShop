@@ -3,7 +3,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNotebookStore} from '../store/notebookStore';
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
-import {homeNotes,homeNoteTitle,openHomeNote,type HomeNote,type HomeNoteRequest} from '../services/homeNotes';
+import {homeNotes,homeNoteTitle,type HomeNote,type HomeNoteRequest} from '../services/homeNotes';
 import {requestTaskModal} from '../services/taskModalEvents';
 import '../tasks-workspace.css';
 import '../home-notes.css';
@@ -15,6 +15,7 @@ function NoteDialog({note,onClose}:{note?:HomeNote;onClose:()=>void}){
  const update=useNotebookStore(s=>s.updateTextObject);
  const remove=useNotebookStore(s=>s.deleteObject);
  const draftKey=draftStorageKey('home-note:'+(note?.objectId??'new'),mode,org,userId);
+ const [original]=useState(note?.text);
  const [editing,setEditing]=useState(!note);
  const [text,setText]=useState(()=>readSavedDraft<{text:string}>(draftKey)?.text??note?.text??'');
  const [error,setError]=useState('');
@@ -29,6 +30,9 @@ function NoteDialog({note,onClose}:{note?:HomeNote;onClose:()=>void}){
    const existing=homeNotes(useNotebookStore.getState().entries)
     .find(item=>item.objectId===note.objectId&&item.entryId===note.entryId);
    if(!existing){setError('This note was removed. Close and refresh Notes.');return;}
+   if(existing.text!==original){
+    setError('This note changed elsewhere. Close and reopen it before saving.');return;
+   }
    update(note.entryId,note.objectId,value);
   }else{
    const id=create();
