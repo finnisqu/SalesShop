@@ -48,10 +48,16 @@ describe('UI Foundation Batch 5A — Catalog shell', () => {
       'onSelect={setSection}', 'sectionScrollRef.current.scrollTop = 0',
       'MaterialsWorkspace embedded', 'SinksWorkspace embedded',
       'RatesWorkspace embedded', '<SuppliersWorkspace />',
-      'catalog-section-host', 'catalog-current-section',
+      'catalog-section-host',
     ]) {
       expect(page, `Catalog shell lost: ${required}`).toContain(required);
     }
+  });
+
+  it('lets the active section tabs carry context without an oversized duplicate header card', () => {
+    expect(page).not.toContain('catalog-current-section');
+    expect(page).toContain('description="Materials, sinks, rates and suppliers for your quotes."');
+    expect(page).toContain('onSelect={setSection}');
   });
 
   it('preserves mobile drawer navigation and the touch-first browsing workspace', () => {
