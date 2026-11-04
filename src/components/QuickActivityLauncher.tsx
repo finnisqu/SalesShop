@@ -6,7 +6,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {TaskAssociationsField} from './TaskAssociationsField';
-import {usePersonalTaskStore,taskScope,type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,type TaskAssociation} from '../store/personalTaskStore';
 import {localDateKey} from '../services/salesCalendar';
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
 import './sales-calendar.css';
