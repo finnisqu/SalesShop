@@ -4,7 +4,7 @@ import {useCrmStore} from '../store/crmStore';
 import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {useNotebookStore} from '../store/notebookStore';
-import {homeNotes,homeNoteTitle,homeNoteSummary,openHomeNote} from '../services/homeNotes';
+import {openHomeNote} from '../services/homeNotes';
 import {dailyNotebookPages,notebookPlainText,notebookCalendarDates,openNotebookCalendarDate} from '../services/notebookDaily';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -141,8 +141,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
- const notebookNotes=useMemo(()=>notebookReady?homeNotes(notebookEntries):[],
-  [notebookEntries,notebookReady]);
  const dailyPages=useMemo(()=>notebookReady?dailyNotebookPages(notebookEntries):[],
   [notebookEntries,notebookReady]);
  const calendarDatesForDay=useMemo(()=>notebookReady?notebookCalendarDates(notebookEntries,selected):[],
@@ -412,17 +410,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
               ((page.agendaItems?.length??0)+' linked items')}</small>
            </span>
           </button>)}
-          {notebookNotes.length>0&&<small className="home-note-group-label">
-           Earlier Post-its · kept for reference</small>}
-          {notebookNotes.map(note=><button type="button" className="home-note-list-item"
-           key={note.objectId} onClick={()=>openHomeNote({mode:'preview',objectId:note.objectId})}>
-           <span className="home-note-list-indicator is-legacy" aria-hidden="true"/>
-           <span className="home-note-list-copy">
-            <strong>{homeNoteTitle(note.text)}</strong>
-            <small>{homeNoteSummary(note.text)||'Legacy quick note'}</small>
-           </span>
-          </button>)}
-          {!dailyPages.length&&!notebookNotes.length&&
+          {!dailyPages.length&&
            <p>No notes yet. Use + to start today's Notebook page.</p>}
          </div>}
       </div>
