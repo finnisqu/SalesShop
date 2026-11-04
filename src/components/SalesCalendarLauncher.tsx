@@ -59,6 +59,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
  const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
  const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
+ const sidecarMenuRef=useRef<HTMLDivElement>(null);
  const sidecarCreateRef=useRef<HTMLDivElement>(null);
  const sidecarCreateButton=useRef<HTMLButtonElement>(null);
  useEffect(()=>{
@@ -91,6 +92,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  };
  useEffect(()=>{
   if(!sidecarCreateOpen)return;
+  sidecarMenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus({preventScroll:true});
   const outside=(event:PointerEvent)=>{
    if(!sidecarCreateRef.current?.contains(event.target as Node))
     setSidecarCreateOpen(false);
@@ -344,12 +346,22 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        <h3>Pick up where you left off</h3>
        <div className="home-sidecar-create" ref={sidecarCreateRef}>
         <button ref={sidecarCreateButton} type="button"
-         className="home-note-sidecar-add" title="Create in SalesShop"
-         aria-label="Create quote, activity, or note" aria-haspopup="menu"
+         className="home-note-sidecar-add" title="Quick create"
+         aria-label="Quick create" aria-haspopup="menu"
          aria-expanded={sidecarCreateOpen}
          onClick={()=>setSidecarCreateOpen(value=>!value)}>+</button>
-        {sidecarCreateOpen&&<div className="home-sidecar-create-menu" role="menu"
-          aria-label="Quick create">
+        {sidecarCreateOpen&&<div ref={sidecarMenuRef}
+          className="home-sidecar-create-menu" role="menu"
+          aria-label="Quick create"
+          onKeyDown={event=>{
+           if(event.key!=='ArrowDown'&&event.key!=='ArrowUp')return;
+           event.preventDefault();
+           const items=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button'));
+           if(!items.length)return;
+           const current=items.indexOf(document.activeElement as HTMLButtonElement);
+           const delta=event.key==='ArrowDown'?1:-1;
+           items[(current+delta+items.length)%items.length].focus();
+          }}>
          {mayCreateQuote&&<button type="button" role="menuitem"
            onClick={()=>createFromSidecar('quote')}>
            <SidecarCreateIcon kind="quote"/><span>New Quote</span>
