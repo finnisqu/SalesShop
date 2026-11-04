@@ -38,14 +38,21 @@ describe('Board display and quick creation',()=>{
   expect(accounts).toContain('aria-pressed={compactCards}');
   expect(css).toContain('.board-view.is-compact');
  });
- it('supports accessible, reversible collapse controls on both board lenses',()=>{
-  expect(board).toContain('aria-expanded={!collapsed}');
-  expect(accounts).toContain('aria-expanded={!collapsed}');
-  expect(board).toContain('Collapse ');
-  expect(accounts).toContain('Expand ');
+ it('supports accessible, full-header collapse on both Board views',()=>{
+  expect(board).toContain('className="board-column-toggle"');
+  expect(accounts).toContain('className="board-column-toggle"');
+  expect(board).toContain('aria-expanded={mobileInteraction || !collapsed}');
+  expect(accounts).toContain('aria-expanded={mobileInteraction || !collapsed}');
+  expect(board).toContain("onClick={()=>toggleStage('projects',stage)}");
+  expect(accounts).toContain('onClick={()=>onToggleStage(stage)}');
+  expect(board).toContain('disabled={mobileInteraction}');
+  expect(accounts).toContain('disabled={mobileInteraction}');
+  expect(board).not.toContain('className="board-column-collapse"');
+  expect(accounts).not.toContain('className="board-column-collapse"');
   expect(css).toContain('.board-column.is-collapsed');
   expect(css).toContain('writing-mode:vertical-rl');
-  expect(css).toContain('.board-column.is-collapsed :is(.board-column-rule,.board-card-stack)');
+  expect(css).toContain('.board-column.is-collapsed .board-column-count');
+  expect(css).toContain('.board-column-count-suffix,.board-column-trailing,.board-column-rule,.board-card-stack');
  });
  it('fits stage mats to desktop viewport and scrolls cards independently',()=>{
   expect(css).not.toContain('.sales-app.view-board .role-perspective-content{');

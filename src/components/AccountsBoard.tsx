@@ -280,17 +280,22 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
               key={stage}
             >
               <header className="board-column-header">
-                <div><h2>{stage}</h2><span>{accounts.length} {accounts.length === 1 ? 'account' : 'accounts'}</span></div>
-                <div className="board-column-trailing">
-                  <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {ACCOUNT_STAGES.length}</span>
-                  <button type="button" className="board-column-collapse"
-                    aria-expanded={!collapsed}
-                    aria-label={(collapsed?'Expand ':'Collapse ')+stage+' column'}
-                    title={collapsed?'Expand column':'Collapse column'}
-                    onClick={()=>onToggleStage(stage)}>
-                    <span aria-hidden="true">{collapsed?'›':'‹'}</span>
-                  </button>
-                </div>
+                <button type="button" className="board-column-toggle"
+                  aria-expanded={mobileInteraction || !collapsed}
+                  aria-label={(collapsed?'Expand ':'Collapse ')+stage+' column'}
+                  title={collapsed?'Expand column':'Collapse column'}
+                  disabled={mobileInteraction}
+                  onClick={()=>onToggleStage(stage)}>
+                  <span className="board-column-title">
+                    <span className="board-column-stage-name">{stage}</span>
+                    <span className="board-column-count">{accounts.length}<span className="board-column-count-suffix"> {accounts.length === 1 ? 'account' : 'accounts'}</span></span>
+                  </span>
+                  <span className="board-column-trailing">
+                    
+                    <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {ACCOUNT_STAGES.length}</span>
+                    <span className="board-column-hint" aria-hidden="true">{collapsed?'›':'‹'}</span>
+                  </span>
+                </button>
               </header>
               <div className="board-column-rule" />
               <div

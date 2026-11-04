@@ -404,18 +404,22 @@ export function Board() {
               onDrop={(event) => dropOnStage(event, stage)}
             >
               <header className="board-column-header">
-                <div><h2>{stage}</h2><span>{stageProjects.length} {stageProjects.length === 1 ? 'deal' : 'deals'}</span></div>
-                <div className="board-column-trailing">
-                  {stageTotal > 0 && <strong>{money.format(stageTotal)}</strong>}
-                  <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {PROJECT_STAGES.length}</span>
-                  <button type="button" className="board-column-collapse"
-                    aria-expanded={!collapsed}
-                    aria-label={(collapsed?'Expand ':'Collapse ')+stage+' column'}
-                    title={collapsed?'Expand column':'Collapse column'}
-                    onClick={()=>toggleStage('projects',stage)}>
-                    <span aria-hidden="true">{collapsed?'›':'‹'}</span>
-                  </button>
-                </div>
+                <button type="button" className="board-column-toggle"
+                  aria-expanded={mobileInteraction || !collapsed}
+                  aria-label={(collapsed?'Expand ':'Collapse ')+stage+' column'}
+                  title={collapsed?'Expand column':'Collapse column'}
+                  disabled={mobileInteraction}
+                  onClick={()=>toggleStage('projects',stage)}>
+                  <span className="board-column-title">
+                    <span className="board-column-stage-name">{stage}</span>
+                    <span className="board-column-count">{stageProjects.length}<span className="board-column-count-suffix"> {stageProjects.length === 1 ? 'deal' : 'deals'}</span></span>
+                  </span>
+                  <span className="board-column-trailing">
+                    {stageTotal > 0 && <strong>{money.format(stageTotal)}</strong>}
+                    <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {PROJECT_STAGES.length}</span>
+                    <span className="board-column-hint" aria-hidden="true">{collapsed?'›':'‹'}</span>
+                  </span>
+                </button>
               </header>
               <div className="board-column-rule" aria-hidden="true" />
               <div

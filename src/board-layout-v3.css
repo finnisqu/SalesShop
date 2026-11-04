@@ -23,18 +23,43 @@
   color:var(--ss-theme-contrast);
 }
 :root[data-sales-theme] .sales-app.view-board
-:is(.board-density-toggle,.board-add-button,.board-column-collapse):focus-visible{
+:is(.board-density-toggle,.board-add-button,.board-column-toggle):focus-visible{
   outline:2px solid var(--ss-focus);outline-offset:2px;
 }
-:root[data-sales-theme] .sales-app.view-board .board-column-collapse {
-  display:inline-flex;align-items:center;justify-content:center;
-  flex:0 0 28px;width:28px;height:30px;
-  border:1px solid var(--ss-theme-border);
-  border-radius:8px;background:transparent;color:var(--ss-theme-muted);
-  cursor:pointer;font:600 19px/1 var(--ss-font-body);
+/* Entire stage header toggles collapse; chevron is an unobtrusive cue only. */
+:root[data-sales-theme] .sales-app.view-board .board-column-header{
+  display:block;padding:0;
 }
-:root[data-sales-theme] .sales-app.view-board .board-column-collapse:hover{
-  background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+:root[data-sales-theme] .sales-app.view-board .board-column-toggle{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  width:100%;min-width:0;min-height:62px;padding:10px 6px 8px;
+  border:0;border-radius:7px;background:transparent;
+  color:var(--ss-board-ink);font:inherit;text-align:left;
+  cursor:pointer;transition:background-color 120ms ease;
+}
+:root[data-sales-theme] .sales-app.view-board
+.board-column-toggle:not(:disabled):hover{background:var(--ss-theme-tint)}
+:root[data-sales-theme] .sales-app.view-board
+.board-column-toggle:disabled{cursor:default;opacity:1}
+:root[data-sales-theme] .sales-app.view-board .board-column-title{
+  display:block;min-width:0;flex:1 1 auto;
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-stage-name{
+  display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--ss-board-ink);
+  font:750 10px/1.2 var(--ss-font-body);letter-spacing:.02em;
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-count{
+  display:block;margin-top:4px;
+  color:var(--ss-board-muted);font-size:9px;
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-trailing{
+  display:flex;align-items:center;flex:0 0 auto;gap:5px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-hint{
+  display:inline-flex;align-items:center;justify-content:center;
+  margin:0;color:var(--ss-board-muted);
+  font:600 12px/1 var(--ss-font-body);opacity:.62;
 }
 /* Card details remain in the DOM and record data. Compact mode only changes
    presentation so reopening standard cards restores everything immediately. */
@@ -160,48 +185,49 @@
   :root[data-sales-theme] .sales-app.view-board .board-card-stack>.project-card {
     flex:0 0 auto;
   }
+  /* Collapsed stages remain a full-height, 45px rail with stage and count. */
   :root[data-sales-theme] .sales-app.view-board .board-column.is-collapsed{
-    flex:0 0 49px;width:49px;min-width:49px;
-    padding-inline:4px;
+    flex:0 0 45px;width:45px;min-width:45px;padding-inline:4px;
   }
   :root[data-sales-theme] .sales-app.view-board
   .board-column.is-collapsed .board-column-header{
     min-height:0;flex:1 1 auto;
-    display:flex;flex-direction:column-reverse;
-    justify-content:flex-end;align-items:center;
-    padding:9px 1px;gap:12px;
   }
   :root[data-sales-theme] .sales-app.view-board
-  .board-column.is-collapsed .board-column-header>div:first-child{
-    display:flex;flex-direction:column;align-items:center;
-    width:100%;min-width:0;gap:8px;
+  .board-column.is-collapsed .board-column-toggle{
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+    height:100%;min-height:0;gap:0;padding:12px 1px 9px;border-radius:6px;
   }
   :root[data-sales-theme] .sales-app.view-board
-  .board-column.is-collapsed .board-column-header h2{
-    writing-mode:vertical-rl;
-    transform:rotate(180deg);
-    white-space:nowrap;
-    line-height:1.2;
+  .board-column.is-collapsed .board-column-title{
+    display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-end;
+    width:100%;height:100%;min-height:0;gap:12px;
   }
   :root[data-sales-theme] .sales-app.view-board
-  .board-column.is-collapsed .board-column-header span {
-    margin:0;
+  .board-column.is-collapsed .board-column-stage-name{
+    writing-mode:vertical-rl;transform:rotate(180deg);
+    max-height:calc(100% - 38px);min-height:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-size:11px;line-height:1.25;letter-spacing:.025em;
   }
   :root[data-sales-theme] .sales-app.view-board
-  .board-column.is-collapsed .board-column-trailing {
-    flex-direction:column-reverse;gap:5px;
+  .board-column.is-collapsed .board-column-count{
+    flex:0 0 24px;display:grid;place-items:center;
+    width:24px;height:24px;margin:0;
+    border:1px solid var(--ss-board-border);border-radius:50%;
+    background:var(--ss-board-card);color:var(--ss-board-ink);
+    font:750 10px/1 var(--ss-font-body);
   }
   :root[data-sales-theme] .sales-app.view-board
-  .board-column.is-collapsed .board-column-trailing>strong,
-  :root[data-sales-theme] .sales-app.view-board
-  .board-column.is-collapsed :is(.board-column-rule,.board-card-stack) {
+  .board-column.is-collapsed
+  :is(.board-column-count-suffix,.board-column-trailing,.board-column-rule,.board-card-stack){
     display:none;
   }
 }
 @media(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
   /* The existing mobile stage picker and independent per-stage scrolling win.
      Collapse is a desktop-only interaction. */
-  :root[data-sales-theme] .sales-app.view-board .board-column-collapse{display:none}
+  :root[data-sales-theme] .sales-app.view-board .board-column-hint{display:none}
   :root[data-sales-theme] .sales-app.view-board .board-header-tools{
     flex:0 1 auto;margin:0;gap:6px;
   }
