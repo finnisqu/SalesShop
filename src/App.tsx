@@ -41,6 +41,8 @@ import './developer-playground.css';
 import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
 import {TaskModalHost} from './components/TaskModalHost';
 import {HomeNoteModalHost} from './components/HomeNoteModalHost';
+import {NotebookCalendarDateModalHost} from './components/NotebookCalendarDateModalHost';
+import {NotebookLinkedAgenda} from './components/NotebookLinkedAgenda';
 import {QuickActivityLauncher} from './components/QuickActivityLauncher';
 import {TaskCleanupPanel} from './components/TaskCleanupPanel';
 import {CleanupCenter} from './components/CleanupCenter';
@@ -349,6 +351,7 @@ function App() {
                     activePane={focusedPane==='left'||!companion} />
                 </div>
               </article>
+              <NotebookLinkedAgenda key={'agenda-'+entry.id} entry={entry}/>
               </div>
             </div>
             {companion&&<NotebookCompanionPage entry={companion} onMakePrimary={swapPanes}
@@ -361,6 +364,7 @@ function App() {
       </WorkspaceViewport>
       {!inRolePreview&&<TaskModalHost/>}
       {!inRolePreview&&<HomeNoteModalHost/>}
+      {!inRolePreview&&<NotebookCalendarDateModalHost/>}
       {!inRolePreview&&<QuickActivityLauncher headless/>}
       {!inRolePreview&&<TaskCleanupPanel/>}
       {!inRolePreview&&<CleanupCenter/>}
