@@ -1,0 +1,73 @@
+/* Account-scoped cleanup dialogs. No deletion occurs without an explicit click + confirmation. */
+.sales-cleanup-backdrop{position:fixed;inset:0;z-index:9900;display:grid;place-items:center;
+ padding:16px;background:rgba(19,21,22,.45)}
+.sales-cleanup-dialog{width:min(560px,100%);max-height:min(90dvh,820px);overflow:hidden;
+ display:flex;flex-direction:column;background:var(--ss-theme-card,#fff);
+ color:var(--ss-theme-ink,#333);border:1px solid var(--ss-theme-border,#ddd);
+ border-radius:15px;box-shadow:0 20px 65px rgba(0,0,0,.30)}
+.sales-cleanup-dialog header{display:flex;align-items:flex-start;justify-content:space-between;
+ gap:12px;padding:17px;border-bottom:1px solid var(--ss-theme-border,#ddd)}
+.sales-cleanup-dialog header small{font-size:10px;font-weight:800;letter-spacing:.07em;color:var(--ss-theme-muted,#777)}
+.sales-cleanup-dialog header h2{margin:5px 0;font-size:20px}
+.sales-cleanup-dialog header p{margin:0;font-size:11px;color:var(--ss-theme-muted,#777)}
+.sales-cleanup-dialog header>button{font-size:24px;min-height:32px;min-width:32px;
+ border:0;background:transparent;color:inherit}
+.sales-cleanup-body{padding:17px;min-height:170px;display:grid;align-content:start;gap:11px}
+.sales-cleanup-body h3{font-size:18px;margin:0}
+.sales-cleanup-body p{font-size:12px;color:var(--ss-theme-muted,#777);margin:0}
+.sales-cleanup-body blockquote{margin:0;font-size:12px;padding:9px 12px;
+ border-left:3px solid var(--ss-theme-accent,#917246);background:var(--ss-theme-tint,#eee)}
+.sales-cleanup-progress{color:var(--ss-theme-muted,#777);font-size:11px}
+.sales-cleanup-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sales-cleanup-actions strong{flex-basis:100%;font-size:12px}
+.sales-cleanup-actions button{border-radius:7px;background:var(--ss-theme-tint,#eee);
+ border:1px solid var(--ss-theme-border,#ddd);color:inherit;padding:8px 10px;min-height:37px;font-size:12px}
+.sales-cleanup-dialog footer{border-top:1px solid var(--ss-theme-border,#ddd);
+ display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end;padding:13px 16px}
+.sales-cleanup-dialog footer button{padding:9px 12px;min-height:39px;border-radius:8px;
+ background:var(--ss-theme-card,#fff);border:1px solid var(--ss-theme-border,#ddd);
+ color:inherit;font-weight:750;font-size:12px}
+.sales-cleanup-dialog footer button.is-primary{background:var(--ss-theme-accent,#917246);
+ color:var(--ss-theme-contrast,#fff)}
+.sales-cleanup-dialog footer button.is-danger{color:#c64b45}
+.sales-cleanup-dialog.is-record-cleanup{width:min(790px,100%)}
+.sales-record-cleanup-tabs{display:flex;gap:5px;padding:10px 15px;
+ border-bottom:1px solid var(--ss-theme-border,#ddd);overflow-x:auto}
+.sales-record-cleanup-tabs button{padding:8px 13px;min-height:37px;display:flex;align-items:center;gap:7px;
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:8px;
+ background:var(--ss-theme-card,#fff);color:inherit;font-size:12px;font-weight:750;white-space:nowrap}
+.sales-record-cleanup-tabs button[aria-pressed=true]{background:var(--ss-theme-tint,#eee);
+ border-color:var(--ss-theme-accent,#917246)}
+.sales-record-cleanup-tabs button small{font-size:10px;color:var(--ss-theme-muted,#777)}
+.sales-record-cleanup-toolbar{display:flex;gap:9px;padding:12px 15px;align-items:center}
+.sales-record-cleanup-toolbar input{flex:1;min-width:0;background:var(--ss-theme-base,#fff);
+ color:inherit;padding:10px;border:1px solid var(--ss-theme-border,#ddd);
+ border-radius:8px;font-size:13px}
+.sales-record-cleanup-toolbar button{padding:8px 10px;border-radius:8px;min-height:38px;
+ border:1px solid var(--ss-theme-accent,#917246);background:var(--ss-theme-tint,#eee);
+ color:inherit;font-weight:750;font-size:11px}
+.sales-record-cleanup-list{display:grid;align-content:start;gap:0;overflow-y:auto;min-height:120px;
+ max-height:52dvh;padding:0 15px 12px;overscroll-behavior:contain}
+.sales-record-cleanup-row{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:12px;
+ align-items:center;min-height:58px;padding:10px 0;border-bottom:1px solid var(--ss-theme-border,#ddd)}
+.sales-record-cleanup-row input{width:17px;height:17px;accent-color:var(--ss-theme-accent,#917246)}
+.sales-record-cleanup-row>div{display:grid;gap:4px;min-width:0}
+.sales-record-cleanup-row strong{font-size:12px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+.sales-record-cleanup-row small{font-size:10px;color:var(--ss-theme-muted,#777)}
+.sales-record-cleanup-row small.is-blocked{color:#bb6754}
+.sales-record-cleanup-row>button{font-size:12px;padding:8px 10px;border-radius:8px;
+ min-width:68px;background:var(--ss-theme-base,#fff);color:var(--ss-theme-ink,#333);
+ border:1px solid var(--ss-theme-border,#ddd);font-weight:700}
+.sales-record-cleanup-row>button:disabled{opacity:.42}
+.sales-cleanup-dialog footer small{flex:1;min-width:180px;color:var(--ss-theme-muted,#777);font-size:10px}
+.sales-cleanup-error{color:#c44c43;font-size:12px}
+.sales-cleanup-empty{padding:22px;font-size:12px;color:var(--ss-theme-muted,#777)}
+@media(max-width:760px){
+ .sales-cleanup-backdrop{padding:0;align-items:end}
+ .sales-cleanup-dialog{width:100%;border-radius:17px 17px 0 0;
+  max-height:91dvh;padding-bottom:env(safe-area-inset-bottom,0px)}
+ .sales-cleanup-dialog footer{justify-content:flex-end}
+ .sales-record-cleanup-tabs{padding-inline:10px}
+ .sales-record-cleanup-list{padding-inline:11px}
+ .sales-record-cleanup-row{gap:8px}
+}
