@@ -95,11 +95,14 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
   close();
  };
  const addLinks=(items:TaskAssociation[])=>{
-  // CRM activity schema stores one ID per record kind. Newest selection wins.
-  const seen=new Set<TaskLink['type']>();
-  setLinks([...items].reverse().filter(link=>{
-   if(seen.has(link.type))return false;seen.add(link.type);return true;
-  }).reverse());
+  // The normalized columns keep the primary link of each kind, while metadata
+  // retains every explicitly linked person, deal, company and quote.
+  const seen=new Set<string>();
+  setLinks(items.filter(link=>{
+   const key=link.type+':'+link.id;
+   if(seen.has(key))return false;
+   seen.add(key);return true;
+  }));
  };
  const submit=(event:FormEvent)=>{
   event.preventDefault();setError('');
@@ -122,7 +125,11 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
    companyId:find('company')||contact?.companyId||deal?.companyId||quote?.companyId,
    contactId:personId,projectId:dealId||quote?.projectId,quoteId,
    occurredAt:timestamp.toISOString(),
-   metadata:{source:'manual',interactionMethod:method,notes:notes.trim().slice(0,5000)||undefined}});
+   metadata:{source:'manual',interactionMethod:method,
+    relatedRecords:links.filter(link=>link.type!=='notebook').map(link=>({
+     type:link.type as 'contact'|'company'|'project'|'quote',id:link.id,label:link.label,
+    })),
+    notes:notes.trim().slice(0,5000)||undefined}});
   if(createFollowUp){
    addTask('Follow up · '+(person||'related record'),{
     type:'follow-up',dueDate:followUpDate,priority:'normal',status:'open',
