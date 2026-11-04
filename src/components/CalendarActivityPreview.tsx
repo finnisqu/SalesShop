@@ -164,7 +164,8 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
         {labels[item.type]} · {(item.label??item.id).replace(/^(Quote|Deal|Company|Person) · /,'')} ↗
        </button>)}
        {!relationList.length&&<p className="record-preview-empty">No linked CRM record.</p>}
-      </div>     </>}
+      </div>
+     </>}
    </div>
    <footer className="record-preview-actions activity-preview-actions">
     {editing?<>
