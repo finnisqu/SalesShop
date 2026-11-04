@@ -41,3 +41,8 @@
  .home-note-editor{padding:14px 16px}
  .home-note-editor textarea{min-height:140px;font-size:16px}
 }
+
+@media(max-width:759px){
+ .sales-calendar-popover.is-inline .sales-calendar-sidecar-list.is-notes{max-height:270px;overflow-y:auto}
+ .sales-calendar-popover.is-inline .sales-calendar-sidecar-list.is-notes button:nth-child(n+4){display:grid!important}
+}
