@@ -11,13 +11,14 @@ describe('Board display and quick creation',()=>{
  const accounts=source('src/components/AccountsBoard.tsx');
  const quick=source('src/components/BoardQuickCreate.tsx');
  const css=source('src/board-layout-v3.css');
+ const sync=source('src/services/normalizedCrmSync.ts');
  const legacyAccounts=source('src/accounts.css');
  const legacyBoard=source('src/board.css');
  const main=source('src/main.tsx');
  it('keeps both name-only create actions on the Board instead of navigating',()=>{
   expect(board).toContain('<BoardQuickCreate kind="Deal"');
   expect(accounts).toContain('<BoardQuickCreate kind="Account"');
-  expect(board).toContain('onCreate={name=>createProject(name)}');
+  expect(board).toContain("onCreate={name=>createProject(name,'Discovery',{");
   expect(accounts).toContain("onCreate={name=>resolveCompany(name,'customer')}");
   expect(quick).toContain('onCreate(clean)');
   expect(quick).not.toContain('openCompany(');
@@ -61,6 +62,17 @@ describe('Board display and quick creation',()=>{
   expect(css).toContain('width:calc(100% + 18px)');
   expect(css).toContain('background:color-mix(in srgb,var(--ss-board-ink) 6%,transparent)');
   expect(css).toContain('width:calc(100% + 8px);margin-inline:-4px');
+ });
+ it('filters Board stages by saved deal pipeline and preserves unassigned records',()=>{
+  expect(board).toContain('BOARD_PIPELINE_KEY');
+  expect(board).toContain('matchesDealPipeline(project,pipelineView)');
+  expect(board).toContain('<option value="all">All pipelines</option>');
+  expect(board).toContain('<option value="unassigned">Unassigned</option>');
+  expect(board).toContain('aria-label="Deal pipeline"');
+  expect(board).toContain('pipeline: draft.pipeline || undefined');
+  expect(sync).toContain('pipeline: normalizeDealPipeline(row.pipeline)');
+  expect(sync).toContain('pipeline: normalizeDealPipeline(project.pipeline) ?? null');
+  expect(css).toContain('.board-pipeline-picker select');
  });
  it('fits stage mats to desktop viewport and scrolls cards independently',()=>{
   expect(css).not.toContain('.sales-app.view-board .role-perspective-content{');

@@ -10,6 +10,7 @@ import type {
   Project,
   ProjectStage,
 } from '../types/crm';
+import {normalizeDealPipeline} from '../types/crm';
 
 const CRM_TABLES = ['activities', 'projects', 'contacts', 'companies'] as const;
 type CrmTable = (typeof CRM_TABLES)[number];
@@ -97,6 +98,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
       companyId,
       companyName: companyId ? companyNames.get(companyId) : undefined,
       stage: String(row.stage) as ProjectStage,
+      pipeline: normalizeDealPipeline(row.pipeline),
       stageChangedAt: valueOrUndefined(row.stage_changed_at),
       dueDate: valueOrUndefined(row.due_date),
       assignedUserId: valueOrUndefined(row.assigned_user_id),
@@ -266,6 +268,7 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
         company_id: project.companyId ?? null,
         name: project.name,
         stage,
+        pipeline: normalizeDealPipeline(project.pipeline) ?? null,
         stage_changed_at: stageChangedAt ?? project.updatedAt,
         due_date: project.dueDate ?? null,
         // Assignment changes use a separately acknowledged server update.

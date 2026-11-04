@@ -17,7 +17,7 @@ import {useAuthStore} from '../store/authStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
-import type { CompanyKind } from '../types/crm';
+import {DEAL_PIPELINES,dealPipelineLabel,type CompanyKind,type DealPipeline} from '../types/crm';
 
 type ConnectionsTab = 'companies' | 'people' | 'deals' | 'quotes' | 'activity';
 type CompanyFilter = 'all' | 'customer' | 'non-customer';
@@ -37,7 +37,7 @@ const peopleColumns:ConnectionColumn[]=[
  {key:'name',label:'Name'},{key:'company',label:'Company'},{key:'title',label:'Job title'},
  {key:'email',label:'Email'},{key:'phone',label:'Phone'},{key:'updated',label:'Updated'}];
 const dealColumns:ConnectionColumn[]=[
- {key:'name',label:'Deal name'},{key:'company',label:'Company'},{key:'stage',label:'Stage'},
+ {key:'name',label:'Deal name'},{key:'company',label:'Company'},{key:'pipeline',label:'Pipeline'},{key:'stage',label:'Stage'},
  {key:'due',label:'Due'},{key:'amount',label:'Value'},{key:'next',label:'Next action'},
  {key:'updated',label:'Updated'}];
 const quoteColumns:ConnectionColumn[]=[
@@ -113,6 +113,7 @@ export function Connections() {
   const [dealCreating, setDealCreating] = useState(false);
   const [newDeal, setNewDeal] = useState('');
   const [newDealCompanyId, setNewDealCompanyId] = useState('');
+  const [newDealPipeline, setNewDealPipeline] = useState<DealPipeline | ''>('');
   const [newPerson, setNewPerson] = useState('');
   const [newPersonEmail, setNewPersonEmail] = useState('');
   const [newPersonCompany, setNewPersonCompany] = useState('');
@@ -168,7 +169,7 @@ export function Connections() {
       companiesById.get(person.companyId ?? '')?.name).includes(needle))
     .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById, needle]);
   const projectRows = useMemo(() => projects
-    .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction).includes(needle))
+    .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction, dealPipelineLabel(project.pipeline)).includes(needle))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
   const quoteRows=useMemo(()=>visibleQuotes.filter(q=>
     findText(q.title,q.companyName,q.contactName,displayQuoteNumber(q),q.status,
@@ -198,7 +199,7 @@ export function Connections() {
   const dealTableRows:ConnectionTableRow[]=projectRows.map(d=>({
     id:d.id,name:d.name,association:{type:'project',id:d.id,label:'Deal · '+d.name},
     values:{name:d.name,company:d.companyName??companiesById.get(d.companyId??'')?.name??'',
-      stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
+      pipeline:dealPipelineLabel(d.pipeline),stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
       next:d.nextAction??'',updated:timeLabel(d.updatedAt)},
     sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}}));
   const quoteTableRows:ConnectionTableRow[]=quoteRows.map(q=>({
@@ -240,10 +241,10 @@ export function Connections() {
   const addDeal = (event: FormEvent) => {
     event.preventDefault();
     if (!newDeal.trim()) return;
-    const id = createDeal(newDeal.trim());
+    const id = createDeal(newDeal.trim(),'Discovery',{pipeline:newDealPipeline || undefined});
     if (!id) { setNotice('Could not create this deal.'); return; }
     if (newDealCompanyId) relinkDealCompany(id, newDealCompanyId);
-    setNewDeal(''); setNewDealCompanyId(''); setDealCreating(false);
+    setNewDeal(''); setNewDealCompanyId(''); setNewDealPipeline(''); setDealCreating(false);
     openProject(id);
   };
   const openActivity = (activity: (typeof activities)[number]) => {
@@ -382,7 +383,7 @@ export function Connections() {
               {projectRows.map((project) => {
                 const linked = quotesForProject(project, quotes).filter((q) => !q.archivedAt);
                 return <button type="button" key={project.id} className="connections-record" onClick={() => previewRecord('deal',project.id)}>
-                  <span className="connections-record-eyebrow">{project.stage}</span>
+                  <span className="connections-record-eyebrow">{dealPipelineLabel(project.pipeline)} · {project.stage}</span>
                   <strong>{project.name}</strong>
                   <small>{[project.companyName,project.dueDate ? `Due ${timeLabel(project.dueDate)}` : undefined,`${linked.length} linked quotes`].filter(Boolean).join(' · ')}</small>
                   {project.amount !== undefined && <b>{money.format(project.amount)}</b>}
@@ -462,7 +463,12 @@ export function Connections() {
             {dealCreating && <form className="connections-add-form" onSubmit={addDeal}>
               
               <label><span>Deal name</span><input autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
-              <label><span>Company</span><select value={newDealCompanyId} onChange={event => setNewDealCompanyId(event.target.value)}>
+              <label><span>Pipeline</span><select value={newDealPipeline}
+                 onChange={event=>setNewDealPipeline(event.target.value as DealPipeline | '')}>
+                 <option value="">Unassigned</option>
+                 {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+               </select></label>
+               <label><span>Company</span><select value={newDealCompanyId} onChange={event => setNewDealCompanyId(event.target.value)}>
                 <option value="">No company yet</option>
                 {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map(company =>
                   <option key={company.id} value={company.id}>{company.name}</option>)}

@@ -3,7 +3,7 @@ import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout
 import { ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { dealRecordView } from '../services/dealRecordView';
 import { PrivateDealContactRoles } from './PrivateDealContactRoles';
-import { PROJECT_STAGES, type ProjectStage } from '../types/crm';
+import { DEAL_PIPELINES, PROJECT_STAGES, dealPipelineLabel, type DealPipeline, type ProjectStage } from '../types/crm';
 import { quoteTotal, displayQuoteNumber } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -40,6 +40,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const deal = deals.find(item => item.id === dealId);
   const [draft, setDraft] = useState({
     name: deal?.name ?? '', stage: deal?.stage ?? 'Discovery' as ProjectStage,
+    pipeline: (deal?.pipeline ?? '') as DealPipeline | '',
     companyId: deal?.companyId ?? '',
     assignedUserId: deal?.assignedUserId ?? '',
     amount: deal?.amount?.toString() ?? '',
@@ -52,7 +53,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   useEffect(() => { setEditing(false); setHistoryOpen(false); }, [dealId]);
   useEffect(() => {
     if (!editing && deal) setDraft({
-      name: deal.name, stage: deal.stage, companyId: deal.companyId ?? '',
+      name: deal.name, stage: deal.stage,
+      pipeline: (deal.pipeline ?? '') as DealPipeline | '', companyId: deal.companyId ?? '',
       assignedUserId: deal.assignedUserId ?? '',
       amount: deal.amount?.toString() ?? '', dueDate: deal.dueDate ?? '',
       nextAction: deal.nextAction ?? '', lastTouchpoint: deal.lastTouchpoint ?? '',
@@ -80,7 +82,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     if((deal.assignedUserId??'')!==draft.assignedUserId)
       await assignDeal(deal.id,draft.assignedUserId||undefined);
     updateDeal(deal.id, {
-      name: draft.name.trim(), stage: draft.stage, amount,
+      name: draft.name.trim(), stage: draft.stage, pipeline: draft.pipeline || undefined, amount,
       dueDate: draft.dueDate || undefined,
       nextAction: draft.nextAction.trim() || undefined,
       lastTouchpoint: draft.lastTouchpoint || undefined,
@@ -98,7 +100,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
 
   return <RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack}
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
-    badge={<><span className="connections-record-stage">{deal.stage}</span><span>{related.linkedQuotes.length} linked quotes</span></>}
+    badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => setEditing(value => !value)}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
       <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>
@@ -109,6 +111,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           <label>Deal name<input required autoFocus value={draft.name} onChange={event => setDraft({...draft,name:event.target.value})} /></label>
           <label>Stage<select value={draft.stage} onChange={event => setDraft({...draft,stage:event.target.value as ProjectStage})}>
             {PROJECT_STAGES.map(stage => <option key={stage} value={stage}>{stage}</option>)}
+          </select></label>
+          <label>Pipeline<select value={draft.pipeline} onChange={event=>setDraft({...draft,pipeline:event.target.value as DealPipeline | ''})}>
+            <option value="">Unassigned</option>
+            {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
           </select></label>
           <label>Amount<input type="number" min="0" step="0.01" value={draft.amount} onChange={event => setDraft({...draft,amount:event.target.value})} /></label>
           <label>Bid due date<input type="date" value={draft.dueDate} onChange={event => setDraft({...draft,dueDate:event.target.value})} /></label>
@@ -128,6 +134,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Stage">{deal.stage}</RecordProperty>
+          <RecordProperty label="Pipeline">{dealPipelineLabel(deal.pipeline)}</RecordProperty>
           <RecordProperty label="Amount">{deal.amount === undefined ? 'Not set' : money.format(deal.amount)}</RecordProperty>
           <RecordProperty label="Bid due date">{displayDate(deal.dueDate)}</RecordProperty>
           <RecordProperty label="Assigned salesperson">{dealAssigneeLabel(deal.assignedUserId,assignees)}</RecordProperty>

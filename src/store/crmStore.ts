@@ -341,6 +341,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       companyId: ensured.companyId,
       companyName: ensured.companyName,
       stage,
+      pipeline: details.pipeline,
       stageChangedAt: timestamp,
       amount: typeof details.amount === 'number' && Number.isFinite(details.amount) ? details.amount : undefined,
       lastTouchpoint: details.lastTouchpoint,

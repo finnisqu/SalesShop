@@ -21,7 +21,8 @@ import {
 } from '../lib/mobileBoardState';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
-import { PROJECT_STAGES, type Project, type ProjectPatch, type ProjectStage } from '../types/crm';
+import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,matchesDealPipeline,
+  type DealPipeline,type DealPipelineFilter,type Project,type ProjectPatch,type ProjectStage} from '../types/crm';
 import {DealAssigneeSelect} from '../services/dealAssignees';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -29,6 +30,14 @@ const PROJECT_BOARD_POSITION_KEY = 'salesshop-mobile-board-projects-v1';
 const BOARD_MODE_KEY = 'salesshop-board-mode-v1';
 const BOARD_COMPACT_KEY = 'salesshop-board-compact-v1';
 const BOARD_COLLAPSED_KEY = 'salesshop-board-collapsed-v1';
+const BOARD_PIPELINE_KEY = 'salesshop-board-pipeline-v1';
+function initialPipelineView():DealPipelineFilter {
+  try{
+    const key=window.localStorage.getItem(BOARD_PIPELINE_KEY);
+    if(key==='all'||key==='unassigned'||DEAL_PIPELINES.some(item=>item.id===key))return key as DealPipelineFilter;
+  }catch{/* no browser storage */}
+  return 'all';
+}
 
 function savedCollapsedStages():string[] {
   try {
@@ -117,6 +126,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
     companyName: project.companyName ?? '',
     assignedUserId: project.assignedUserId ?? '',
     stage: project.stage,
+    pipeline: (project.pipeline ?? '') as DealPipeline | '',
     amount: project.amount?.toString() ?? '',
     dueDate: project.dueDate ?? '',
     nextAction: project.nextAction ?? '',
@@ -129,6 +139,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
       companyName: project.companyName ?? '',
       assignedUserId: project.assignedUserId ?? '',
       stage: project.stage,
+      pipeline: (project.pipeline ?? '') as DealPipeline | '',
       amount: project.amount?.toString() ?? '',
       dueDate: project.dueDate ?? '',
       nextAction: project.nextAction ?? '',
@@ -152,6 +163,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
       name: draft.name,
       companyName: draft.companyName,
       stage: draft.stage,
+      pipeline: draft.pipeline || undefined,
       amount: draft.amount.trim() ? Number(draft.amount) : undefined,
       dueDate: draft.dueDate || undefined,
       nextAction: draft.nextAction.trim() || undefined,
@@ -178,6 +190,11 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
             <label><span>Stage</span><select value={draft.stage} onChange={(event) => setDraft({ ...draft, stage: event.target.value as ProjectStage })}>{PROJECT_STAGES.map((stage) => <option key={stage}>{stage}</option>)}</select></label>
             <label><span>Amount</span><input type="number" min="0" step="0.01" inputMode="decimal" value={draft.amount} onChange={(event) => setDraft({ ...draft, amount: event.target.value })} placeholder="$0" /></label>
           </div>
+          <label><span>Pipeline</span><select value={draft.pipeline}
+            onChange={event=>setDraft({...draft,pipeline:event.target.value as DealPipeline | ''})}>
+            <option value="">Unassigned</option>
+            {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+          </select></label>
           <div className="editor-two-up">
             <label><span>Due date</span><input type="date" value={draft.dueDate} onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })} /></label>
             <label><span>Last touch</span><input type="date" value={draft.lastTouchpoint} onChange={(event) => setDraft({ ...draft, lastTouchpoint: event.target.value })} /></label>
@@ -268,6 +285,7 @@ export function Board() {
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
+  const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
   const [compactCards,setCompactCards]=useState(()=>{
     try{return window.localStorage.getItem(BOARD_COMPACT_KEY)==='true';}
     catch{return false;}
@@ -282,6 +300,7 @@ export function Board() {
       current.filter(item=>item!==key):[...current,key]);
   };
   useEffect(()=>{try{window.localStorage.setItem(BOARD_COMPACT_KEY,String(compactCards));}catch{}},[compactCards]);
+  useEffect(()=>{try{window.localStorage.setItem(BOARD_PIPELINE_KEY,pipelineView);}catch{}},[pipelineView]);
   useEffect(()=>{try{window.localStorage.setItem(BOARD_COLLAPSED_KEY,JSON.stringify(collapsedStages));}catch{}},[collapsedStages]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
@@ -337,10 +356,11 @@ export function Board() {
   const projectsByStage = useMemo(() => {
     const grouped = new Map<ProjectStage, Project[]>();
     PROJECT_STAGES.forEach((stage) => grouped.set(stage, []));
-    projects.forEach((project) => grouped.get(project.stage)?.push(project));
+    projects.filter(project=>matchesDealPipeline(project,pipelineView))
+      .forEach((project) => grouped.get(project.stage)?.push(project));
     grouped.forEach((items) => items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
     return grouped;
-  }, [projects]);
+  }, [projects,pipelineView]);
 
   const editingProject = projects.find((project) => project.id === editingId) ?? null;
 
@@ -369,12 +389,27 @@ export function Board() {
             <Button variant="quiet" aria-pressed={false} onClick={() => setBoardMode('accounts')}>Accounts</Button>
           </div>
           <div className="board-header-tools">
-            <button type="button" className="board-density-toggle"
+            <label className="board-pipeline-picker">
+               <span>Pipeline</span>
+               <select aria-label="Deal pipeline" value={pipelineView}
+                 title="Filter deals; new deals use the selected pipeline"
+                 onChange={event=>{
+                   setPipelineView(event.target.value as DealPipelineFilter);
+                   boardRef.current?.scrollTo({left:0});
+                 }}>
+                 <option value="all">All pipelines</option>
+                 {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+                 <option value="unassigned">Unassigned</option>
+               </select>
+             </label>
+             <button type="button" className="board-density-toggle"
               aria-pressed={compactCards} onClick={toggleCompact}
               title="Show only the name on each card">
               {compactCards?'Standard cards':'Compact cards'}
             </button>
-            <BoardQuickCreate kind="Deal" onCreate={name=>createProject(name)} />
+            <BoardQuickCreate kind="Deal" onCreate={name=>createProject(name,'Discovery',{
+               pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
+             })} />
           </div>
         </>}
       />
@@ -387,7 +422,7 @@ export function Board() {
       <section
         ref={boardRef}
         className="project-board"
-        aria-label="Deal pipeline board"
+        aria-label={pipelineView==='all'?'All deal pipelines':dealPipelineLabel(pipelineView)+' deal pipeline'}
         onScroll={(event) => rememberMobileBoardStage(PROJECT_BOARD_POSITION_KEY, event.currentTarget)}
       >
         {PROJECT_STAGES.map((stage, stageIndex) => {

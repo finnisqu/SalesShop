@@ -12,6 +12,25 @@ export const PROJECT_STAGES = [
 
 export type ProjectStage = (typeof PROJECT_STAGES)[number];
 
+/** Deal pipelines are independent of their shared stage progression. */
+export const DEAL_PIPELINES = [
+  {id:'residential',label:'Residential'},
+  {id:'commercial',label:'Commercial'},
+  {id:'multifamily',label:'Multifamily'},
+] as const;
+export type DealPipeline=(typeof DEAL_PIPELINES)[number]['id'];
+export type DealPipelineFilter='all'|'unassigned'|DealPipeline;
+export function normalizeDealPipeline(value:unknown):DealPipeline|undefined {
+  return DEAL_PIPELINES.find(item=>item.id===value)?.id;
+}
+export function dealPipelineLabel(value:unknown):string {
+  return DEAL_PIPELINES.find(item=>item.id===value)?.label??'Unassigned';
+}
+export function matchesDealPipeline(deal:{pipeline?:DealPipeline},filter:DealPipelineFilter):boolean {
+  return filter==='all'||(filter==='unassigned'?!normalizeDealPipeline(deal.pipeline):deal.pipeline===filter);
+}
+
+
 export const ACCOUNT_STAGES = [
   'Discovery',
   'Outreach',
@@ -84,6 +103,7 @@ export interface Project {
   companyId?: string;
   companyName?: string;
   stage: ProjectStage;
+  pipeline?: DealPipeline;
   stageChangedAt?: string;
   dueDate?: string;
   /** Organization member explicitly responsible for this Deal. */
@@ -144,6 +164,7 @@ export interface CrmDocument {
 
 export interface CreateProjectDetails {
   companyName?: string;
+  pipeline?: DealPipeline;
   amount?: number;
   lastTouchpoint?: string;
   source?: 'manual' | 'quote' | 'system';
@@ -173,7 +194,7 @@ export type ContactPatch = Partial<Pick<Contact, 'companyId' | 'name' | 'email' 
 
 export type ProjectPatch = Partial<Pick<
   Project,
-  'name' | 'companyName' | 'stage' | 'dueDate' | 'amount' | 'nextAction' | 'lastTouchpoint'
+  'name' | 'companyName' | 'stage' | 'pipeline' | 'dueDate' | 'amount' | 'nextAction' | 'lastTouchpoint'
 >>;
 
 export type ActivityInput = Omit<Activity, 'id' | 'occurredAt'> & { id?: string; occurredAt?: string };

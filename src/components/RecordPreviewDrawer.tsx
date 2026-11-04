@@ -13,6 +13,7 @@ import {requestTaskModal} from '../services/taskModalEvents';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {dealPipelineLabel} from '../types/crm';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import '../record-preview.css';
 import '../tasks-workspace.css';
@@ -130,7 +131,8 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
              <p className="record-preview-empty">{deal.companyName||'No company linked.'}</p>}
          </section>
          <section><h3>About this deal</h3><dl>
-           <dt>Stage</dt><dd>{deal.stage}</dd><dt>Value</dt><dd>{deal.amount===undefined?'—':money.format(deal.amount)}</dd>
+           <dt>Pipeline</dt><dd>{dealPipelineLabel(deal.pipeline)}</dd>
+            <dt>Stage</dt><dd>{deal.stage}</dd><dt>Value</dt><dd>{deal.amount===undefined?'—':money.format(deal.amount)}</dd>
            <dt>Assigned salesperson</dt><dd>{dealAssigneeLabel(deal.assignedUserId,assignees)}</dd>
            <dt>Due date</dt><dd>{shortDate(deal.dueDate)}</dd><dt>Next action</dt><dd>{deal.nextAction||'—'}</dd></dl></section>
          <section><h3>Quotes <span>{relatedQuotes.length}</span></h3>

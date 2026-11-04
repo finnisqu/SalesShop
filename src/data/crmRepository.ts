@@ -2,7 +2,7 @@ import { readLocalDocument, writeLocalDocument } from './cloudAwareStorage';
 import { isDeveloperPlaygroundRoute } from '../lib/developerPlayground';
 import { seedPlaygroundCrm } from '../services/playgroundFixtures';
 import type { Activity, Company, Contact, CrmDocument, Project, ProjectStage } from '../types/crm';
-import { ACTIVITY_TYPES, PROJECT_STAGES } from '../types/crm';
+import { ACTIVITY_TYPES, PROJECT_STAGES, normalizeDealPipeline } from '../types/crm';
 
 export interface CrmRepository {
   load(): CrmDocument;
@@ -45,6 +45,7 @@ function normalizeProject(raw: Partial<Project>, timestamp: string): Project | n
     companyId: raw.companyId,
     companyName: raw.companyName,
     stage,
+    pipeline: normalizeDealPipeline(raw.pipeline),
     stageChangedAt: raw.stageChangedAt ?? raw.updatedAt ?? raw.createdAt ?? timestamp,
     dueDate: raw.dueDate,
     assignedUserId: raw.assignedUserId,
