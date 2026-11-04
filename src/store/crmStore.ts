@@ -28,6 +28,9 @@ import type {
 } from '../types/crm';
 import { useAuthStore } from './authStore';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {useRolePerspectiveStore} from './rolePerspectiveStore';
+import {useQuoteStore} from './quoteStore';
+import {canDeleteAutomaticCrmHistory} from '../services/recordManagementActivity';
 
 interface CrmState {
   companies: Company[];
@@ -53,7 +56,7 @@ interface CrmState {
   deleteProject: (projectId: string) => void;
   deleteContact: (contactId:string)=>Promise<void>;
   deleteCompany: (companyId:string)=>Promise<void>;
-  deleteActivity:(activityId:string,orphanedDraftAudit?:boolean)=>Promise<void>;
+  deleteActivity:(activityId:string,orphanedDraftAudit?:boolean,administrativeHistory?:boolean)=>Promise<void>;
   /** Local cache cleanup ONLY after server-confirmed quote practice purge. */
   discardPurgedQuoteActivities:(quoteId:string,activityIds:readonly string[])=>void;
   deleteCleanProject:(projectId:string)=>Promise<void>;
@@ -488,14 +491,20 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     persist(current.companies,current.contacts,current.projects,activities);
     set({activities});
   },
-  deleteActivity:async(activityId,orphanedDraftAudit=false)=>{
+  deleteActivity:async(activityId,orphanedDraftAudit=false,administrativeHistory=false)=>{
     const current=get().activities.find(a=>a.id===activityId);
     if(!current)return;
     const removableManual=current.type==='manual-touchpoint'||current.type==='notebook-touchpoint';
     const orphanedSetup=orphanedDraftAudit&&!!current.quoteId&&
       (current.type==='quote-created'||current.type==='quote-linked');
-    if(!removableManual&&!orphanedSetup)
-      throw new Error('Automatic CRM audit history cannot be removed from this cleanup tool.');
+    const auth=useAuthStore.getState();
+    const permittedAdmin=administrativeHistory&&
+     !useRolePerspectiveStore.getState().activePerspective&&
+     (auth.mode==='local'||auth.teamRole==='owner'||auth.teamRole==='admin');
+    const removableAuto=permittedAdmin&&
+     canDeleteAutomaticCrmHistory(current,useQuoteStore.getState().quotes);
+    if(!removableManual&&!orphanedSetup&&!removableAuto)
+      throw new Error('Automatic CRM history is protected outside Settings Data Management.');
     const organizationId=cloudOrganizationId();
     if(organizationId)await deleteNormalizedCrmRecord(organizationId,'activities',activityId);
     const activities=get().activities.filter(a=>a.id!==activityId);

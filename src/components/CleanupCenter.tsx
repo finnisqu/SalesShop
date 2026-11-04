@@ -10,6 +10,7 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import {canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
 import {planPracticeQuotePurge,purgeArchivedPracticeQuote} from '../services/practiceQuotePurge';
 import {crmDeletionBlockers} from '../services/crmDeletionBlockers';
+import {canDeleteAutomaticCrmHistory} from '../services/recordManagementActivity';
 import type {Quote} from '../types/quote';
 import '../home-cleanup.css';
 
@@ -92,12 +93,11 @@ export function CleanupCenter(){
   const a=activities.map((activity):CleanupRow=>({
    kind:'activity',id:activity.id,name:activity.summary,
    detail:new Date(activity.occurredAt).toLocaleDateString()+' · '+activity.type,
-   blockers:!['manual-touchpoint','notebook-touchpoint'].includes(activity.type)&&
-    !(['quote-created','quote-linked'].includes(activity.type)&&
-      !!activity.quoteId&&!quotes.some(quote=>quote.id===activity.quoteId))
-    ?['Automatic CRM audit history is protected']
-    :ownTasks.some(task=>task.sourceObjectId==='activity-followup:'+activity.id)
-     ?['A follow-up task still references this activity']:[],
+   blockers:ownTasks.some(task=>task.sourceObjectId==='activity-followup:'+activity.id)
+     ?['A follow-up Task still references this Activity']
+     :['manual-touchpoint','notebook-touchpoint'].includes(activity.type)||
+       canDeleteAutomaticCrmHistory(activity,quotes)
+       ?[]:['Signing history or live quote audit must be handled through the archived practice quote purge'],
    action:'delete',
   }));
   return [...q,...p,...c,...d,...a];
@@ -150,10 +150,8 @@ export function CleanupCenter(){
   if(item.kind==='deal')await deleteDeal(item.id);
   if(item.kind==='activity'){
     const event=activities.find(activity=>activity.id===item.id);
-    const orphaned=!!event&&!!event.quoteId&&
-      ['quote-created','quote-linked'].includes(event.type)&&
-      !quotes.some(quote=>quote.id===event.quoteId);
-    await deleteActivity(item.id,orphaned);
+    if(!event)throw new Error('Activity no longer available.');
+    await deleteActivity(item.id,false,canDeleteAutomaticCrmHistory(event,quotes));
   }
  };
  const perform=(items:CleanupRow[])=>{
@@ -221,11 +219,9 @@ export function CleanupCenter(){
      if(!activity)throw new Error('This Activity is no longer available.');
      if(own.some(task=>task.sourceObjectId==='activity-followup:'+activity.id))
       throw new Error('A follow-up Task now depends on this Activity. Unlink it before deleting.');
-     const orphaned=!!activity.quoteId&&
-      ['quote-created','quote-linked'].includes(activity.type)&&
-      !allQuotes.some(quote=>quote.id===activity.quoteId);
-     if(!['manual-touchpoint','notebook-touchpoint'].includes(activity.type)&&!orphaned)
-      throw new Error('Automatic CRM audit history cannot be deleted.');
+     if(!['manual-touchpoint','notebook-touchpoint'].includes(activity.type)&&
+       !canDeleteAutomaticCrmHistory(activity,allQuotes))
+      throw new Error('Signing history and live quote audit are protected. Archive and purge the practice quote first.');
     }
     await removeRow(item);
     setSelected(old=>old.filter(key=>key!==item.kind+':'+item.id));
@@ -299,7 +295,7 @@ export function CleanupCenter(){
         (pending?.[0]?.activityCount??0)+' quote-specific CRM events. Previously sent links will stop working. '+
         'Associated People, Companies, Deals and unrelated Activities are not deleted.'
        :isDeleting
-       ?'Permanent deletion cannot be undone. Linked CRM history and tasks are protected.'
+       ?'Permanent deletion cannot be undone. Removing automatic CRM activities may change the visible deal history.'
        :'Archiving retains customer documents and their history for later restoration.'}</p>
      {isPurging&&<label className="sales-practice-purge-ack">
       <input type="checkbox" checked={practiceAcknowledged} disabled={busy}
