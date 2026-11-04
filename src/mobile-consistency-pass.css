@@ -1,0 +1,54 @@
+/* Targeted mobile consistency pass; preserve the Quick Quote spreadsheet
+   geometry, CRM record hierarchy, and existing desktop behavior. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  .sales-app > .mobile-app-commandbar {
+    box-sizing:border-box;min-width:0;
+    padding-left:max(7px,env(safe-area-inset-left));
+    padding-right:max(7px,env(safe-area-inset-right));
+  }
+  .sales-app > .mobile-app-commandbar .mobile-app-current {
+    flex:1 1 0;min-width:0;overflow:hidden;
+  }
+  .sales-app > .mobile-app-commandbar .mobile-app-current strong {
+    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .sales-app > .mobile-app-commandbar :is(.mobile-app-menu-button,.mobile-profile-menu) {
+    flex-shrink:0;
+  }
+  /* Task filters remain reachable without using several stacked rows. */
+  .sales-app.view-tasks .tasks-tools {
+    display:grid;grid-template-columns:minmax(0,1fr);gap:8px;
+  }
+  .sales-app.view-tasks .tasks-tools > input[type="search"] {
+    box-sizing:border-box;width:100%;min-width:0;font-size:16px;
+  }
+  .sales-app.view-tasks .tasks-filter-row {
+    display:flex;flex-wrap:nowrap;min-width:0;max-width:100%;
+    overflow-x:auto;overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding:1px 1px 4px;
+  }
+  .sales-app.view-tasks .tasks-filter-row::-webkit-scrollbar {display:none}
+  .sales-app.view-tasks .tasks-filter-row > button {
+    flex:0 0 auto;min-height:42px;white-space:nowrap;
+  }
+  /* Inputs should not cause iOS Safari to zoom the entire sheet. */
+  .tasks-editor :is(input,select,textarea) {font-size:16px}
+  .tasks-editor footer {padding-bottom:max(8px,env(safe-area-inset-bottom))}
+  /* Long records can truncate but must never squeeze the Back control. */
+  .sales-app.view-dashboard .connections-record-breadcrumb {
+    min-width:0;max-width:100%;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .sales-app.view-dashboard .connections-record-breadcrumb [aria-current="page"] {
+    min-width:0;overflow:hidden;text-overflow:ellipsis;
+  }
+  .sales-app.view-dashboard .connections-record-actions,
+  .sales-app.view-dashboard .connections-record-actions > button {min-width:0}
+  /* Notebook companion actions should be thumb-friendly without moving paper. */
+  .notebook-linked-agenda-head,.notebook-linked-agenda-collapse {min-width:0}
+  .notebook-linked-agenda-add {flex:0 0 auto;min-height:40px}
+  .notebook-linked-agenda-row .notebook-linked-agenda-unlink {
+    min-height:40px;min-width:40px;
+  }
+}

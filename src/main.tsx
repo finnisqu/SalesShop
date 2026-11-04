@@ -119,6 +119,8 @@ import './mobile-takeoff-workbook.css';
 import './mobile-takeoff-cleanup.css';
 import './mobile-area-summary-v2.css';
 import './mobile-area-review-parity.css';
+// Final targeted mobile consistency and safe-area overrides.
+import './mobile-consistency-pass.css';
 
 recordSalesShopBoot();
 
