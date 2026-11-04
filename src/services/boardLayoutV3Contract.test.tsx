@@ -11,6 +11,8 @@ describe('Board display and quick creation',()=>{
  const accounts=source('src/components/AccountsBoard.tsx');
  const quick=source('src/components/BoardQuickCreate.tsx');
  const css=source('src/board-layout-v3.css');
+ const legacyAccounts=source('src/accounts.css');
+ const legacyBoard=source('src/board.css');
  const main=source('src/main.tsx');
  it('keeps both name-only create actions on the Board instead of navigating',()=>{
   expect(board).toContain('<BoardQuickCreate kind="Deal"');
@@ -70,6 +72,9 @@ describe('Board display and quick creation',()=>{
   expect(css).toContain('flex:0 0 274px;width:274px;min-width:274px');
   expect(css).not.toContain('.account-board .account-column{');
   expect(css).toContain('flex:0 0 45px;width:45px;min-width:45px');
+  expect(legacyBoard).toContain('gap: 12px;');
+  expect(legacyAccounts).not.toContain('.account-board { gap:');
+  expect(legacyAccounts).not.toContain('.account-column { width:');
   expect(css).toContain('scrollbar-gutter:stable');
   expect(main).toContain("import './board-layout-v3.css'");
  });

@@ -30,8 +30,7 @@
   font-size: 9px;
 }
 .accounts-inference-note strong { color: #4e5b55; font-size: 9px; }
-.account-board { gap: 10px; }
-.account-column { width: 246px; min-width: 246px; }
+/* Board column spacing and sizing inherit from shared .project-board/.board-column rules. */
 .account-card { min-height: 136px; cursor: default; }
 .account-card-stats {
   display: flex;
