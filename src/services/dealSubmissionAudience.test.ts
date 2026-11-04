@@ -37,6 +37,22 @@ describe('private deal submission task audience',()=>{
   expect(visibleSubmissionDeals('cloud','member','rep',[unassigned],
    [created('legacy','rep')],[],[])).toEqual([unassigned]);
  });
+ it('stops submission obligations when a salesperson loses quote issuance rights',()=>{
+  const assigned={...deal('assigned'),assignedUserId:'rep'};
+  for(const department of ['estimator','purchasing','project_manager'] as const){
+    expect(visibleSubmissionDeals('cloud','member','rep',[assigned],[],[],[],department))
+      .toEqual([]);
+  }
+  expect(visibleSubmissionDeals('cloud','member','rep',[assigned],[],[],[],'salesperson'))
+    .toEqual([assigned]);
+  expect(visibleSubmissionDeals('cloud','member','rep',[assigned],[],[],[],'general'))
+    .toEqual([assigned]);
+ });
+ it('retains the owner/admin submission queue even with a specialist department',()=>{
+  const unassigned=deal('unassigned');
+  expect(visibleSubmissionDeals('cloud','admin','admin',[unassigned],[],[],[],'estimator'))
+    .toEqual([unassigned]);
+ });
  it('does not deliver personal submission tasks to cloud viewers',()=>{
   expect(visibleSubmissionDeals('cloud','viewer','viewer',[deal('legacy')],[],[],[]))
    .toEqual([]);
