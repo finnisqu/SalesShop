@@ -69,6 +69,16 @@ describe('Settings record management safety contract',()=>{
   expect(sql).toContain("delete from public.activities");
   expect(sql).toContain("delete from public.quotes");
  });
+ it('keeps record-type tabs fitted and linked records vertically scrollable at normal zoom',()=>{
+  const css=source('src/home-cleanup.css');
+  expect(css).toContain('grid-template-columns:repeat(5,minmax(0,1fr))');
+  expect(css).toContain('>.sales-record-dependency-panel');
+  expect(css).toContain('flex:1 1 auto');
+  expect(css).toContain('min-height:0');
+  expect(css).toContain('overflow-y:auto');
+  expect(css).toContain('max-height:none');
+  expect(css).toContain('grid-template-columns:repeat(3,minmax(0,1fr))');
+ });
  it('archives protected quotes and remotely verifies draft deletion before changing local state',()=>{
   expect(modal).toContain("if(item.action==='archive')archiveQuote(item.id)");
   expect(modal).toContain("await deleteQuoteFromManagement(item.id)");
