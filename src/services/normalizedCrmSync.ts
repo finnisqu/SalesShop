@@ -268,7 +268,7 @@ export async function deleteNormalizedProject(organizationId: string, projectId:
 /** Remote-first deletion for standalone CRM records. Do not update the local
  * cache until the server confirms a row was removed. Existing RLS still applies. */
 export async function deleteNormalizedCrmRecord(
- organizationId:string,table:'companies'|'contacts'|'activities',recordId:string,
+ organizationId:string,table:'companies'|'contacts'|'activities'|'projects',recordId:string,
 ):Promise<void>{
  if(!supabase)return;
  const {data,error}=await supabase.from(table).delete()
