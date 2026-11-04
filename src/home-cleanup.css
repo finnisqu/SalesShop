@@ -98,3 +98,63 @@
  .sales-record-cleanup-row .sales-record-open{grid-column:2;justify-self:start}
  .sales-record-cleanup-row>button:not(.sales-record-open){grid-column:3;grid-row:1 / span 2}
 }
+
+/* Drill into linked records without leaving Settings or losing the parent. */
+.sales-record-dependency-trail{display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+ padding:10px 15px;border-bottom:1px solid var(--ss-theme-border,#ddd)}
+.sales-record-dependency-trail>span{display:inline-flex;gap:5px;align-items:center;min-width:0}
+.sales-record-dependency-trail button{max-width:205px;min-height:32px;
+ padding:5px 7px;border:1px solid transparent;border-radius:7px;
+ background:transparent;color:var(--ss-theme-ink,#333);font-size:11px;
+ white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.sales-record-dependency-trail button[aria-current=page]{font-weight:800;
+ background:var(--ss-theme-tint,#f5f0e8)}
+.sales-record-dependency-panel{min-height:140px;max-height:55dvh;overflow-y:auto;
+ display:grid;align-content:start;gap:12px;padding:16px;
+ overscroll-behavior:contain}
+.sales-record-dependency-heading{display:flex;gap:12px;align-items:flex-start}
+.sales-record-dependency-heading>button{flex:0 0 auto;min-height:37px;
+ border:1px solid var(--ss-theme-border,#ddd);padding:7px 10px;
+ background:var(--ss-theme-card,#fff);border-radius:8px;color:inherit;font-weight:750}
+.sales-record-dependency-heading>div{min-width:0}
+.sales-record-dependency-heading h3{font-size:16px;margin:3px 0 4px;overflow-wrap:anywhere}
+.sales-record-dependency-heading p{font-size:11px;color:var(--ss-theme-muted,#777);margin:0}
+.sales-record-dependency-heading small{font-size:10px;color:var(--ss-theme-muted,#777);
+ letter-spacing:.07em;font-weight:800}
+.sales-record-dependency-warning,.sales-record-dependency-ready{
+ margin:0;padding:10px 12px;border-radius:8px;line-height:1.5;font-size:12px;
+ background:var(--ss-theme-tint,#f5f0e8)}
+.sales-record-dependency-warning{border-left:3px solid #b98765}
+.sales-record-dependency-main-actions{display:flex;justify-content:flex-end}
+.sales-record-dependency-main-actions>button{min-height:40px;border-radius:8px;
+ padding:9px 12px;color:var(--ss-theme-ink,#333);
+ border:1px solid var(--ss-theme-border,#ddd);background:var(--ss-theme-card,#fff);
+ font-size:12px;font-weight:750}
+.sales-record-dependency-main-actions>button:disabled{opacity:.45}
+.sales-record-dependency-panel h4{margin:6px 0 0;font-size:12px}
+.sales-record-dependency-list{display:grid;border:1px solid var(--ss-theme-border,#ddd);
+ border-radius:10px;overflow:hidden}
+.sales-record-dependency-row{display:flex;align-items:center;justify-content:space-between;
+ gap:10px;min-width:0;padding:10px;border-bottom:1px solid var(--ss-theme-border,#ddd)}
+.sales-record-dependency-row:last-child{border-bottom:0}
+.sales-record-dependency-row>div:first-child{display:grid;gap:5px;min-width:0}
+.sales-record-dependency-row strong{font-size:12px;overflow-wrap:anywhere}
+.sales-record-dependency-row small{font-size:10px;color:var(--ss-theme-muted,#777)}
+.sales-record-dependency-row small.is-blocked{color:#b65f46}
+.sales-record-dependency-actions{display:flex;gap:7px;flex:0 0 auto}
+.sales-record-dependency-actions button{min-height:38px;padding:7px 9px;
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:8px;
+ background:var(--ss-theme-card,#fff);color:inherit;font-size:11px;font-weight:750}
+.sales-record-dependency-actions button:disabled{opacity:.42}
+.sales-record-dependency-note{font-size:10px;line-height:1.6;
+ color:var(--ss-theme-muted,#777)}
+@media(max-width:760px){
+ .sales-record-dependency-trail{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+  padding:8px 10px}
+ .sales-record-dependency-trail>span{flex:0 0 auto}
+ .sales-record-dependency-panel{padding:12px;max-height:55dvh}
+ .sales-record-dependency-heading{gap:9px}
+ .sales-record-dependency-row{align-items:flex-start;flex-direction:column}
+ .sales-record-dependency-actions{align-self:stretch}
+ .sales-record-dependency-actions button{flex:1 1 auto;min-height:43px}
+}
