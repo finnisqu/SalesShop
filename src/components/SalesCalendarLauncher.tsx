@@ -63,7 +63,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   setSavedDisplay({key:prefKey,display:next});
   try{localStorage.setItem(prefKey,next);}catch{/* optional preference */}
  };
- const ownTasks=!preview&&!!personal&&storedScope===personal?tasks.filter(t=>!t.deletedAt):[];
+ const ownTasks=useMemo(()=>!preview&&!!personal&&storedScope===personal
+  ?tasks.filter(t=>!t.deletedAt):[],[preview,personal,storedScope,tasks]);
  const ownQuotes=useMemo(()=>quotes.filter(q=>!q.archivedAt&&(mode!=='cloud'||q.ownerUserId===userId)),
   [quotes,mode,userId]);
  const sources=useMemo(()=>personalCalendarSources(mode,userId,ownQuotes,ownTasks,deals,activities),
