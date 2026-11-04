@@ -51,6 +51,7 @@ interface CrmState {
   deleteContact: (contactId:string)=>Promise<void>;
   deleteCompany: (companyId:string)=>Promise<void>;
   deleteActivity:(activityId:string)=>Promise<void>;
+  deleteCleanProject:(projectId:string)=>Promise<void>;
   recordActivity: (activity: ActivityInput) => string;
 }
 
@@ -396,16 +397,40 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     persist(get().companies,get().contacts,get().projects,activities);
     set({activities});
   },
+  deleteCleanProject:async(projectId)=>{
+    const current=get();
+    if(!current.projects.some(project=>project.id===projectId))return;
+    const toRemove=current.activities.filter(a=>a.projectId===projectId&&
+     (a.type==='project-created'||a.type==='project-stage-changed')).map(a=>a.id);
+    if(current.activities.some(a=>a.projectId===projectId&&!toRemove.includes(a.id)))
+      throw new Error('This Deal has additional CRM history that must be reviewed first.');
+    const organizationId=cloudOrganizationId();
+    if(organizationId){
+      // Delete only automatic creation/stage events before the unlinked Deal.
+      for(const id of toRemove)await deleteNormalizedCrmRecord(organizationId,'activities',id);
+      await deleteNormalizedCrmRecord(organizationId,'projects',projectId);
+    }
+    const projects=get().projects.filter(project=>project.id!==projectId);
+    const activities=get().activities.filter(a=>!toRemove.includes(a.id));
+    persist(get().companies,get().contacts,projects,activities);
+    set({projects,activities});
+  },
   deleteContact:async(contactId)=>{
     const current=get();
     if(!current.contacts.some(contact=>contact.id===contactId))return;
-    if(current.activities.some(a=>a.contactId===contactId))
-     throw new Error('This person has Activity history. Preserve the CRM links or review those records first.');
+    const creationIds=current.activities.filter(a=>a.contactId===contactId&&
+     a.type==='contact-created').map(a=>a.id);
+    if(current.activities.some(a=>a.contactId===contactId&&!creationIds.includes(a.id)))
+     throw new Error('This person has additional Activity history. Review it before deleting.');
     const organizationId=cloudOrganizationId();
-    if(organizationId)await deleteNormalizedCrmRecord(organizationId,'contacts',contactId);
+    if(organizationId){
+      for(const id of creationIds)await deleteNormalizedCrmRecord(organizationId,'activities',id);
+      await deleteNormalizedCrmRecord(organizationId,'contacts',contactId);
+    }
     const contacts=get().contacts.filter(contact=>contact.id!==contactId);
-    persist(get().companies,contacts,get().projects,get().activities);
-    set({contacts});
+    const activities=get().activities.filter(a=>!creationIds.includes(a.id));
+    persist(get().companies,contacts,get().projects,activities);
+    set({contacts,activities});
   },
   deleteCompany:async(companyId)=>{
     const current=get();
