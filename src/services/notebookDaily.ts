@@ -8,7 +8,7 @@ export function dailyNotebookPages(entries:readonly NotebookEntry[]):NotebookEnt
 }
 /** Show a short searchable excerpt without exposing stored markup in Home. */
 export function notebookPlainText(contentHtml:string):string{
- return contentHtml.replace(/<\\/p>/gi,'\n').replace(/<[^>]*>/g,' ')
+ return contentHtml.replace(/<\/p>/gi,'\n').replace(/<[^>]*>/g,' ')
   .replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
   .replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&')
   .replace(/[ \t]+/g,' ').replace(/\n[ \n]+/g,'\n').trim();
