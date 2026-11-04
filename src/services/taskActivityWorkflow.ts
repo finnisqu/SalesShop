@@ -1,9 +1,10 @@
-import type {PersonalTask} from '../store/personalTaskStore';
+import type {PersonalTask,TaskAssociation} from '../store/personalTaskStore';
 import type {ActivityMetadata} from '../types/crm';
 
 export interface ActivityComposerRequest {
   date?:string;
   taskId?:string;
+  associations?:TaskAssociation[];
 }
 /** One global Activity editor services Home, Calendar, Tasks and CRM previews. */
 export function openActivityComposer(detail:ActivityComposerRequest={}):void{
