@@ -187,3 +187,191 @@
   :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host {width:100%;max-width:none}
   :root[data-sales-theme] .sales-app {--ss-workspace-title-size:22px}
 }
+/* Suppliers now follow Connections: full directory -> focused record on desktop.
+   Phone keeps the existing mobile Catalog reference cards, tools sheet and
+   independently functioning search/filter/record controls. */
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-page {
+  display:none;
+}
+@media (min-width:901px) and (min-height:550px) {
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-section-suppliers>.supplier-directory-page.is-active {
+    display:flex;
+    flex-direction:column;
+    flex:1 1 auto;
+    min-height:0;
+    min-width:0;
+    overflow:hidden;
+    color:var(--ss-theme-ink);
+    background:var(--ss-theme-canvas);
+    padding:10px 0 0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-section-suppliers>.supplier-workbench.is-directory-hidden {
+    display:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-section-suppliers>.supplier-workbench.is-record-mode {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    height:auto;
+    max-width:none;
+    min-height:0;
+    width:100%;
+    margin:0;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    background:var(--ss-theme-canvas);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .supplier-workbench.is-record-mode>.supplier-navigator {display:none}
+  :root[data-sales-theme] .sales-app.view-catalog
+  .supplier-workbench.is-record-mode>.supplier-record {
+    min-height:0;
+    height:100%;
+    margin:0;
+    overflow-y:auto;
+    background:var(--ss-theme-canvas);
+    border:0;
+    border-radius:0;
+    color:var(--ss-theme-ink);
+    padding:0 0 24px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench.is-record-mode
+  .supplier-record-back {
+    display:inline-flex;align-items:center;
+    border:1px solid var(--ss-theme-border);
+    border-radius:8px;min-height:37px;
+    background:var(--ss-theme-card);
+    color:var(--ss-theme-ink);
+    cursor:pointer;font-size:12px;font-weight:700;
+    margin:10px 0 10px;padding:7px 12px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench.is-record-mode
+  .supplier-record-header {
+    border:1px solid var(--ss-theme-border);
+    border-radius:10px;
+    padding:14px 16px;
+    gap:12px;
+    background:var(--ss-theme-card);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench.is-record-mode
+  .supplier-record-title-line h2 {
+    font:750 22px/1.15 var(--ss-font-body);
+    letter-spacing:-.02em;color:var(--ss-theme-ink);
+  }
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-record-back {display:none}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-heading {
+  display:flex;justify-content:space-between;align-items:center;
+  flex:0 0 auto;gap:10px;min-width:0;
+  padding:0 4px 12px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-heading>div {
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-heading h2 {
+  margin:0;color:var(--ss-theme-ink);
+  font:750 20px/1.2 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-heading span {
+  color:var(--ss-theme-muted);font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-heading>.ss-button {
+  min-height:40px;padding:9px 14px;white-space:nowrap;
+  background:var(--ss-theme-accent);color:var(--ss-theme-contrast);
+  border:1px solid var(--ss-theme-accent);font-size:12px;font-weight:750;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-toolbar {
+  display:flex;flex:0 0 auto;align-items:center;gap:8px;
+  padding:0 0 12px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-toolbar :is(input,select) {
+  border:1px solid var(--ss-theme-border);border-radius:9px;
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  padding:8px 12px;min-width:0;min-height:42px;font:400 13px/1.35 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-toolbar input {
+  flex:1 1 auto;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-toolbar select {
+  flex:0 0 auto;max-width:min(220px,45%);
+  font-weight:650;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table-scroll {
+  overflow:auto;flex:1 1 auto;min-height:0;
+  border:1px solid var(--ss-theme-border);
+  border-radius:10px;background:var(--ss-theme-card);
+  overscroll-behavior:contain;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table {
+  width:100%;border-spacing:0;border-collapse:separate;
+  color:var(--ss-theme-ink);
+  font:400 12px/1.4 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table th,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table td {
+  text-align:left;padding:11px 13px;
+  border-bottom:1px solid var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table thead th {
+  position:sticky;top:0;z-index:1;
+  background:var(--ss-theme-tint);color:var(--ss-theme-muted);
+  font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table tbody tr:hover {
+  background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table tbody tr:last-child> :is(th,td) {
+  border-bottom:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table tbody th {
+  min-width:195px;font-weight:700;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table tbody th button {
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  width:100%;min-width:0;min-height:35px;padding:5px 0;
+  background:transparent;border:0;color:var(--ss-theme-ink);
+  text-align:left;font:750 12px/1.3 var(--ss-font-body);cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table tbody th button:hover {
+  text-decoration:underline;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table tbody th button span {
+  color:var(--ss-theme-muted);font-size:19px;font-weight:400;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table td {
+  color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-status {
+  display:inline-block;white-space:nowrap;
+  border:1px solid var(--ss-theme-border);
+  border-radius:999px;padding:4px 8px;
+  font:750 10px/1.2 var(--ss-font-body);
+  background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-status:is(.freshness-missing,.freshness-stale) {
+  border-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-empty,
+:root[data-sales-theme] .sales-app.view-catalog .supplier-directory-error {
+  padding:18px;color:var(--ss-theme-muted);
+  margin:0;font-size:12px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-create-dialog>.connections-add-form label {
+  grid-column:1/-1;
+}
+:root[data-sales-theme] .sales-app.view-catalog .supplier-create-dialog>.connections-add-form p {
+  grid-column:1/-1;color:var(--ss-danger,#a6473e);
+}
+/* Supplier creation is portaled to body, so theme tokens must be inherited
+   from the root rather than a Catalog-specific subtree. */
+.supplier-create-dialog>.connections-add-form label{grid-column:1/-1}
+.supplier-create-dialog>.connections-add-form p{grid-column:1/-1}
+@media (min-width:901px) and (min-height:550px) {
+  :root[data-sales-theme] .sales-app.view-catalog .supplier-workbench.is-record-mode
+  :is(.supplier-info-card,.supplier-rules-card,.supplier-pricing-history,.supplier-edit-card,.supplier-health-strip) {
+    border-radius:10px;border-color:var(--ss-theme-border);
+  }
+}
