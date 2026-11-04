@@ -11,6 +11,7 @@ import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {requestTaskModal} from '../services/taskModalEvents';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import '../record-preview.css';
@@ -28,6 +29,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
  const deals=useCrmStore(s=>s.projects),allQuotes=useQuoteStore(s=>s.quotes);
+ const {members:assignees}=useDealAssigneeDirectory();
  const authMode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),
   teamRole=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
@@ -129,6 +131,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          </section>
          <section><h3>About this deal</h3><dl>
            <dt>Stage</dt><dd>{deal.stage}</dd><dt>Value</dt><dd>{deal.amount===undefined?'—':money.format(deal.amount)}</dd>
+           <dt>Assigned salesperson</dt><dd>{dealAssigneeLabel(deal.assignedUserId,assignees)}</dd>
            <dt>Due date</dt><dd>{shortDate(deal.dueDate)}</dd><dt>Next action</dt><dd>{deal.nextAction||'—'}</dd></dl></section>
          <section><h3>Quotes <span>{relatedQuotes.length}</span></h3>
            {relatedQuotes.slice(0,12).map(q=>related('quote',q.id,q.title||displayQuoteNumber(q),q.status))}
