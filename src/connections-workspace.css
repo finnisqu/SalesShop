@@ -156,3 +156,20 @@
   .connections-overview .leadership-dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .connections-overview .leadership-dashboard .dashboard-grid{grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* Cleanup belongs to Connections, alongside its record navigation. */
+.connections-section-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.connections-section-row .connections-tabs{flex:1 1 auto;min-width:0}
+.connections-record-cleanup{margin-left:auto;flex:0 0 auto;min-height:39px;padding:8px 12px;
+ border:1px solid var(--ss-theme-border,#d7cbb6);border-radius:9px;
+ background:var(--ss-theme-card,#fffaf0);color:var(--ss-theme-ink,#4b3f2d);
+ font-weight:750;font-size:12px;white-space:nowrap}
+.connections-record-cleanup:hover{background:var(--ss-theme-tint,#eee7d9);
+ border-color:var(--ss-theme-accent,#b49a63)}
+.connections-record-cleanup:focus-visible{outline:2px solid var(--ss-theme-accent,#b49a63);
+ outline-offset:2px}
+@media(max-width:760px){
+ .connections-section-row .connections-tabs{flex:1 1 100%}
+ .connections-record-cleanup{min-height:36px;padding:7px 10px;font-size:11px}
+}
