@@ -6,6 +6,9 @@ export interface CalendarTaskRequest{
  /** Copy a private Notebook Post-it into a Task; convert deletes only after
   * a successful Task creation, while keep retains the original note. */
  noteSource?:{entryId:string;objectId:string;mode:'convert'|'keep'};
+ /** A selection from a Notebook page gets a separate Linked Agenda Task entry
+  * only after the ordinary Task editor saves successfully. */
+ agendaSource?:{entryId:string;sourceText:string};
 }
 /** Central event contract for in-place Task editing across workspaces. */
 export function requestTaskModal(detail:CalendarTaskRequest):void{
