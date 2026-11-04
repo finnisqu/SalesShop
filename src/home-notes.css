@@ -85,8 +85,10 @@
  background:var(--ss-theme-tint,#eee7d9);
 }
 .home-sidecar-create-menu{
- position:absolute;z-index:40;right:0;top:calc(100% + 6px);
+ /* Portaled to body: no calendar/card height can clip the menu. */
+ position:fixed;z-index:2400;top:0;left:0;
  box-sizing:border-box;width:190px;max-width:calc(100vw - 28px);
+ max-height:calc(100dvh - 16px);overflow-y:auto;overscroll-behavior:contain;
  display:grid;gap:2px;padding:6px;
  border:1px solid var(--ss-theme-border,#d4c9b5);
  border-radius:10px;background:var(--ss-theme-card,#fff);
