@@ -392,3 +392,30 @@
   font-size:10px;
   white-space:nowrap;
 }
+
+/* Destructive tools are deliberately inside Settings, not CRM browse headers. */
+.sales-app.view-settings .settings-record-management{min-width:0;grid-column:1 / -1}
+.sales-app.view-settings .settings-record-management-actions{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(136px,1fr));gap:9px;padding:12px 0;
+}
+.sales-app.view-settings .settings-record-management-actions button,
+.sales-app.view-settings .settings-maintenance-tools button{
+ min-height:42px;padding:10px 12px;border:1px solid var(--ss-theme-border,#ddd);
+ background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#333);
+ border-radius:9px;font:700 12px/1.2 inherit;cursor:pointer;
+}
+.sales-app.view-settings .settings-record-management-actions button:hover,
+.sales-app.view-settings .settings-maintenance-tools button:hover{
+ border-color:var(--ss-theme-accent,#917246);background:var(--ss-theme-tint,#f6f0e2);
+}
+.sales-app.view-settings .settings-maintenance-tools{
+ margin-top:13px;padding:12px 0 4px;border-top:1px solid var(--ss-theme-border,#ddd);
+}
+.sales-app.view-settings .settings-maintenance-tools summary{
+ cursor:pointer;font-size:12px;font-weight:750;color:var(--ss-theme-muted,#777);
+}
+.sales-app.view-settings .settings-maintenance-tools .settings-help{margin:11px 0}
+@media(max-width:700px){
+ .sales-app.view-settings .settings-record-management-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sales-app.view-settings .settings-record-management-actions button{min-height:44px}
+}
