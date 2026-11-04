@@ -6,6 +6,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {useQuoteStore} from '../store/quoteStore';
+import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
 export interface CalendarTaskRequest {
  mode:'create'|'preview'|'edit';id?:string;dueDate?:string;
@@ -29,6 +30,7 @@ export function TaskModalHost(){
  const nav=useNavigationStore();
  const quotes=useQuoteStore(s=>s.quotes);
  const [request,setRequest]=useState<CalendarTaskRequest|null>(null);
+ const [linkedPreview,setLinkedPreview]=useState<PreviewRecord|null>(null);
  useEffect(()=>{
   const receive=(event:Event)=>{
    const detail=(event as CustomEvent<CalendarTaskRequest>).detail;
@@ -38,9 +40,9 @@ export function TaskModalHost(){
   window.addEventListener('salesshop:task-modal',receive);
   return()=>window.removeEventListener('salesshop:task-modal',receive);
  },[]);
- useEffect(()=>{setRequest(null);},[scope]);
- if(!request||!scope||storedScope!==scope||previewRole)return null;
- const task=request.mode==='preview'?tasks.find(t=>t.id===request.id&&!t.deletedAt):null;
+ useEffect(()=>{setRequest(null);setLinkedPreview(null);},[scope]);
+ if((!request&&!linkedPreview)||!scope||storedScope!==scope||previewRole)return null;
+ const task=request?.mode==='preview'?tasks.find(t=>t.id===request.id&&!t.deletedAt):null;
  const linkedDealId=task?.sourceObjectId?.startsWith('deal-submit:')
   ?task.sourceObjectId.slice('deal-submit:'.length)
   :task?.linked?.type==='project'?task.linked.id:null;
@@ -48,28 +50,24 @@ export function TaskModalHost(){
   (mode!=='cloud'||quote.ownerUserId===userId)&&
   (quote.projectId===linkedDealId||normalizedTaskAssociations(task)
    .some(link=>link.type==='quote'&&link.id===quote.id))):undefined;
- const editTarget=request.mode==='create'?{
+ const editTarget=request?.mode==='create'?{
   title:request.title??'',dueDate:request.dueDate,type:request.type??'todo',
   associations:request.associations??[],
- }:request.mode==='preview'?null:tasks.find(t=>t.id===request.id&&!t.deletedAt);
+ }:request?.mode==='edit'?tasks.find(t=>t.id===request.id&&!t.deletedAt):null;
  const close=()=>setRequest(null);
  const save=(changes:TaskChanges&{title:string})=>{
-  if(request.mode==='create')create(changes.title,changes);
-  else if(request.id)update(request.id,changes);
+  if(request?.mode==='create')create(changes.title,changes);
+  else if(request?.id)update(request.id,changes);
   close();
  };
  const openLink=(link:TaskLink)=>{
   close();
-  switch(link.type){
-   case 'project':nav.openProject(link.id);break;
-   case 'quote':nav.openQuote(link.id);break;
-   case 'company':nav.openCompany(link.id);break;
-   case 'contact':nav.openPerson(link.id);break;
-   case 'notebook':nav.openNotebookPage(link.id);break;
-  }
+  if(link.type==='notebook'){nav.openNotebookPage(link.id);return;}
+  setLinkedPreview({kind:link.type==='contact'?'person':
+   link.type==='project'?'deal':link.type==='company'?'company':'quote',id:link.id});
  };
- return editTarget?<TaskEditor
-  key={request.mode+':'+(request.id??request.dueDate??'new')}
+ return <>{editTarget?<TaskEditor
+  key={(request?.mode??'create')+':'+(request?.id??request?.dueDate??'new')}
   initial={editTarget} onCancel={close} onSave={save}
  />:task?<div className="tasks-dialog-backdrop" onMouseDown={event=>{
     if(event.target===event.currentTarget)close();
@@ -106,5 +104,8 @@ export function TaskModalHost(){
        onClick={()=>setRequest({mode:'edit',id:task.id})}>Edit task</button>
      </footer>
     </section>
-   </div>:null;
+   </div>:null}
+   {linkedPreview&&<RecordPreviewDrawer record={linkedPreview}
+    onClose={()=>setLinkedPreview(null)} onSelect={setLinkedPreview}/>}
+  </>;
 }
