@@ -47,11 +47,10 @@ test('HOME Quick Create opens a named Quote and its recent Quote can be reopened
  if(info.project.name==='phone-390')
   await page.getByRole('button',{name:'Back to Documents'}).click();
  else {
-  // Quick Quote deliberately hides the old desktop rail. Back goes from
-  // Build -> Details -> Documents using its guided footer.
-  await editor.locator('.qmb-quote-footer .qmb-guided-back').click();
-  await expect(editor.getByRole('region',{name:'Quote customer and deal details'})).toBeVisible();
-  await editor.locator('.qmb-quote-footer .qmb-guided-back').click();
+  // Reopened Quotes can resume on Details or Build. Use the guided Back
+  // action until the library appears without assuming a fixed starting tab.
+  for(let attempt=0;attempt<3&&await editor.locator('.qmb-quote-editor').isVisible();attempt++)
+    await editor.locator('.qmb-quote-footer .qmb-guided-back').click();
  }
  await expect(editor.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
 });
