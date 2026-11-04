@@ -188,3 +188,18 @@
  .tasks-editor footer{bottom:-13px;flex-wrap:wrap}
  .tasks-editor footer button{flex:1 1 auto}
 }
+
+
+/* Guided CRM completion: gently emphasize, without adding another screen. */
+.tasks-preview-card>footer .tasks-flow-action{
+ border-color:var(--ss-theme-accent,#917246);
+ background:var(--ss-theme-tint,#eee7d9);
+ color:var(--ss-theme-ink,#333);
+ font-weight:780;
+}
+.tasks-preview-card>footer .tasks-flow-action:hover{
+ filter:brightness(.98);
+}
+.tasks-preview-card>footer{
+ flex-wrap:wrap;justify-content:flex-end;gap:7px;
+}
