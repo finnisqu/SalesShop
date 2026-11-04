@@ -3,6 +3,8 @@ import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
 import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {useQuoteStore} from '../store/quoteStore';
+import {useNotebookStore} from '../store/notebookStore';
+import {homeNotes,homeNoteTitle,homeNoteSummary,openHomeNote} from '../services/homeNotes';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
@@ -38,7 +40,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [addOpen,setAddOpen]=useState(false);
  const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
- const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'>('quotes');
+ const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
  useEffect(()=>{
   if(!embedded)return;
   const media=window.matchMedia('(max-width:760px)');
@@ -53,6 +55,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const storedScope=usePersonalTaskStore(s=>s.scope),tasks=usePersonalTaskStore(s=>s.tasks);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
  const quotes=useQuoteStore(s=>s.quotes);
+ const notebookEntries=useNotebookStore(s=>s.entries);
+ const notebookReady=useNotebookStore(s=>s.hydrated);
  const nav=useNavigationStore();
  const personal=taskScope(mode,org,userId);
  const prefKey=scopedStorageKey('salesshop-calendar-display-v1:')+(personal??'pending');
@@ -82,6 +86,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
+ const notebookNotes=useMemo(()=>notebookReady?homeNotes(notebookEntries):[],
+  [notebookEntries,notebookReady]);
  useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
  useEffect(()=>{
   if(!addOpen)return;
@@ -265,13 +271,19 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       </div>:<p className="sales-calendar-empty">All caught up for this day.</p>}
     </section>
     </div>
-    {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent quote work">
-      <h3>Pick up where you left off</h3>
+    {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
+      <div className="sales-calendar-sidecar-topline">
+       <h3>Pick up where you left off</h3>
+       {sidecarTab==='notes'&&<button type="button" className="home-note-sidecar-add"
+        title="New private note" aria-label="New note" onClick={()=>openHomeNote()}>+</button>}
+      </div>
       <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
        <button type="button" role="tab" aria-selected={sidecarTab==='quotes'}
         onClick={()=>setSidecarTab('quotes')}>Quotes</button>
        <button type="button" role="tab" aria-selected={sidecarTab==='recent'}
-        onClick={()=>setSidecarTab('recent')}>Recents</button>
+        onClick={()=>setSidecarTab('recent')}>Activity</button>
+       <button type="button" role="tab" aria-selected={sidecarTab==='notes'}
+        onClick={()=>setSidecarTab('notes')}>Notes</button>
       </div>
       <div className="sales-calendar-sidecar-list">
        {sidecarTab==='quotes'
@@ -280,11 +292,21 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           <strong>{q.title||'Untitled quote'}</strong>
           <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
          </button>):<p>Recently edited quotes will appear here.</p>
-        :recentItems.length?recentItems.map(item=><button type="button"
+        :sidecarTab==='recent'
+        ?recentItems.length?recentItems.map(item=><button type="button"
           key={item.id} onClick={()=>openRecent(item)}>
           <strong>{item.title}</strong>
           <small>{new Date(item.timestamp).toLocaleDateString()} · {item.detail}</small>
-         </button>):<p>Completed tasks and logged interactions will appear here.</p>}
+         </button>):<p>Completed tasks and logged interactions will appear here.</p>
+        :notebookNotes.length?notebookNotes.map(note=><button type="button"
+          className="home-note-list-item" key={note.objectId}
+          onClick={()=>openHomeNote({mode:'preview',objectId:note.objectId})}>
+          <span className="home-note-list-indicator" aria-hidden="true"/>
+          <span className="home-note-list-copy">
+           <strong>{homeNoteTitle(note.text)}</strong>
+           <small>{homeNoteSummary(note.text)}</small>
+          </span>
+         </button>):<p>No notes yet. Use + to capture a thought.</p>}
       </div>
     </aside>}
     <div className="sales-calendar-legend" aria-label="Calendar event types">
