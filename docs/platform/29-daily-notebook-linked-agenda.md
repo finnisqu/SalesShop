@@ -42,3 +42,24 @@ A date with a Notebook calendar-date record receives **one subtle hollow dot** o
 Team-shared calendar dates, Google/Apple Calendar sync, recurring weekly events, automatic customer birthday extraction, or an atomic multi-device Notebook merge. These can be added deliberately later.
 
 **Verification boundary:** Source review and regression test cases were prepared. Full TypeScript/Vite build, Cloudflare deployment, and cross-device visual acceptance were not executable from this GitHub-only development pass.
+
+
+## Hardening follow-up — November 4, 2026
+A separate focused batch addressed edge cases without any schema migration or automated tests being enabled:
+- **Exact date validation** now rejects invalid days such as February 30, February 31, and April 31 in the quick capture, Linked Agenda store, edit popup, and Home date lookup. A true February 29 remains valid in leap years and can now repeat annually; the event appears only in leap years.
+- **Mobile text selection:** when iOS reports an empty native selection rectangle, Tiptap's document coordinates provide a fallback. The floating action menu is clamped to the visible viewport, uses finger-sized controls, and keeps touch taps enabled instead of cancelling them.
+- **Private Task scope:** a Notebook Linked Agenda only resolves Task details if the active private Task collection belongs to the current account. During a workspace transition it won't display the previous user's Task details.
+- **Stale links:** Notebook Task links have a separate remove-link control. Unlinking affects the Notebook entry only; the Task is never deleted or marked complete. The Post-it inbox does not show nonfunctional Linked Agenda controls.
+- **Draft recovery:** closing after a successful Daily Note save no longer triggers an empty-text state update that could recreate an unwanted recovery draft.
+- **Dependency isolation:** the Notebook date helpers no longer pull in the CRM calendar module while Notebook state is hydrating.
+
+### Additional acceptance cases
+1. Enter invalid dates (including April 31 and non-leap February 29) when creating or editing an event; confirm they cannot save and leave the original event untouched.
+2. Create an annual February 29 reminder; confirm it appears in leap years, not on February 28 or March 1 in other years.
+3. Highlight text in iPhone Safari with the on-screen keyboard open. Confirm the action toolbar stays on-screen and both Add to calendar and Create task remain tappable.
+4. Remove a Task link from a Notebook's Linked Agenda. The Task must remain in Tasks; remove a link to a deleted Task to clear the orphaned row.
+5. Switch accounts/workspaces and verify the Linked Agenda never shows Task details loaded for a different account.
+6. Verify the legacy Post-it inbox still opens, edits, and preserves existing Post-its without displaying an unusable Linked Agenda.
+7. Run `npm run build`, `npx vitest run src/services/notebookDaily.test.ts src/store/notebookStore.test.ts`, and Cloudflare/browser acceptance before calling the release fully verified.
+
+**Status:** The source changes and regression cases are committed; the build, test execution, Cloudflare deployment, and device acceptance remain unverified in this connector-only workflow.
