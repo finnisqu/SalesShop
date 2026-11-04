@@ -8,6 +8,11 @@ import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {useAuthStore} from '../store/authStore';
 import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
+import {requestTaskModal} from '../services/taskModalEvents';
+import {canEditTeamArea} from '../services/teamDepartments';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import type {TaskAssociation} from '../store/personalTaskStore';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -23,7 +28,10 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
  const deals=useCrmStore(s=>s.projects),allQuotes=useQuoteStore(s=>s.quotes);
- const authMode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id);
+ const authMode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),
+  teamRole=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
+ const perspective=useRolePerspectiveStore(s=>s.activePerspective);
+ const canLog=!perspective&&(authMode==='local'||canEditTeamArea(teamRole,department,'crm'));
  const quotes=authMode==='cloud'?allQuotes.filter(q=>q.ownerUserId===userId):allQuotes;
  const navigate=useNavigationStore();
  const company=record.kind==='company'?companies.find(x=>x.id===record.id):undefined;
@@ -40,6 +48,17 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const heading=company?.name||person?.name||deal?.name||quote?.title||'Record unavailable';
  const label=record.kind==='person'?'Person':record.kind==='deal'?'Deal':
    record.kind==='quote'?'Quote metadata':'Company';
+ const contextualLinks:TaskAssociation[]=[
+  ...(person?[{type:'contact' as const,id:person.id,label:'Person · '+person.name}]:[]),
+  ...(deal?[{type:'project' as const,id:deal.id,label:'Deal · '+deal.name}]:[]),
+  ...(quote?[{type:'quote' as const,id:quote.id,label:'Quote · '+(quote.title||displayQuoteNumber(quote))}]:[]),
+  ...(quote?.projectId&&deals.some(d=>d.id===quote.projectId)
+   ?[{type:'project' as const,id:quote.projectId,
+      label:'Deal · '+(deals.find(d=>d.id===quote.projectId)?.name??'Linked deal')}]:[]),
+  ...(company||linkedCompany
+   ?[{type:'company' as const,id:(company??linkedCompany)!.id,
+      label:'Company · '+(company??linkedCompany)!.name}]:[]),
+ ];
  const open=(kind:PreviewRecord['kind'],id:string)=>{
    if(onSelect)onSelect({kind,id});
    else {
@@ -146,6 +165,12 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
      </div>
      <footer className="record-preview-actions">
        {center&&<button type="button" onClick={onClose}>Close</button>}
+       {!perspective&&<button type="button" onClick={()=>{
+        onClose();requestTaskModal({mode:'create',associations:contextualLinks});
+       }}>New task</button>}
+       {canLog&&<button type="button" onClick={()=>{
+        onClose();openActivityComposer({associations:contextualLinks});
+       }}>Log activity</button>}
        {onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&
          <button type="button" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
        <button type="button" className="record-preview-full" onClick={goToPage}>Go to page</button>
