@@ -68,3 +68,118 @@
  color:var(--ss-theme-ink)}
 :root[data-sales-theme] .record-preview-actions button.record-preview-full{
  border-color:var(--ss-theme-accent)}
+
+
+/* Shared preview polish: match the entire drawer, including the header and
+   long-form activity text, to the current SalesShop appearance. */
+:root[data-sales-theme] .project-editor.record-preview-panel{
+ display:flex;flex-direction:column;
+ background:var(--ss-theme-card)!important;color:var(--ss-theme-ink)!important;
+ border-color:var(--ss-theme-border)!important;
+ box-shadow:-18px 0 42px rgba(0,0,0,.25);
+}
+:root[data-sales-theme] .project-editor.record-preview-panel>header{
+ background:var(--ss-theme-card)!important;
+ color:var(--ss-theme-ink)!important;
+ border-bottom:1px solid var(--ss-theme-border)!important;
+ padding:17px 18px!important;
+ min-height:0!important;
+}
+:root[data-sales-theme] .record-preview-panel>header .board-eyebrow{
+ font-size:10px!important;font-weight:800!important;
+ letter-spacing:.08em!important;color:var(--ss-theme-muted)!important;
+}
+:root[data-sales-theme] .record-preview-panel>header h2{
+ font-size:21px!important;line-height:1.25!important;
+ margin:5px 0 0!important;color:var(--ss-theme-ink)!important;
+ font-family:inherit!important;font-weight:760!important;
+ overflow-wrap:anywhere;
+}
+:root[data-sales-theme] .record-preview-panel>header .editor-close{
+ min-width:35px;min-height:35px;border-radius:9px;
+ color:var(--ss-theme-muted)!important;
+ background:var(--ss-theme-tint)!important;
+ border:1px solid var(--ss-theme-border)!important;
+}
+:root[data-sales-theme] .record-preview-panel .record-preview-body{
+ padding:14px 16px!important;gap:12px!important;
+ background:var(--ss-theme-card)!important;
+}
+:root[data-sales-theme] .record-preview-panel .record-preview-body section{
+ background:var(--ss-theme-card)!important;
+ border:1px solid var(--ss-theme-border)!important;border-radius:10px;
+}
+:root[data-sales-theme] .record-preview-panel .record-preview-body section>h3{
+ padding:10px 12px!important;background:var(--ss-theme-tint)!important;
+ color:var(--ss-theme-ink)!important;font-size:12px!important;
+ line-height:1.4!important;
+}
+:root[data-sales-theme] .record-preview-panel .record-preview-body section dl{
+ font-size:12px!important;line-height:1.55!important;
+ padding:12px!important;
+}
+:root[data-sales-theme] .record-preview-panel .record-preview-body .record-preview-related{
+ padding:10px 12px!important;min-height:46px;
+}
+:root[data-sales-theme] .record-preview-panel .record-preview-body .record-preview-related strong{
+ font-size:12px!important;
+}
+:root[data-sales-theme] .record-preview-panel .record-preview-actions{
+ padding:12px 16px max(14px,env(safe-area-inset-bottom))!important;
+ background:var(--ss-theme-card)!important;gap:8px;
+}
+
+.activity-preview-panel{width:min(490px,100vw)!important;max-height:100dvh!important}
+.activity-preview-panel .activity-preview-header>div{min-width:0}
+.activity-preview-panel .activity-preview-header p{
+ margin:5px 0 0;font:normal 12px/1.45 system-ui,sans-serif;
+ color:var(--ss-theme-muted);
+}
+.activity-preview-panel .activity-preview-body{align-content:start;gap:12px}
+:root[data-sales-theme] .activity-preview-panel .activity-preview-details dl{
+ grid-template-columns:82px minmax(0,1fr);gap:7px 12px;
+}
+:root[data-sales-theme] .activity-preview-panel .activity-preview-note{
+ margin:0;padding:2px 12px 14px;
+ white-space:pre-wrap;overflow-wrap:anywhere;
+ color:var(--ss-theme-ink)!important;
+ font:normal 13px/1.55 system-ui,sans-serif!important;
+ letter-spacing:normal!important;
+}
+:root[data-sales-theme] .activity-preview-panel .activity-preview-empty{
+ padding:3px 12px 14px;margin:0;
+ color:var(--ss-theme-muted);
+ font-size:12px!important;
+}
+.activity-preview-panel .activity-preview-edit{display:grid;align-content:start;gap:15px;min-width:0}
+.activity-preview-panel .activity-preview-edit>label{display:grid;gap:6px;
+ font-size:11px;font-weight:750}
+.activity-preview-fields{display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:9px}
+.activity-preview-fields label{display:grid;gap:6px;font-size:11px;font-weight:750;min-width:0}
+:root[data-sales-theme] .activity-preview-edit :is(input,select,textarea){
+ width:100%;min-width:0;min-height:38px;
+ background:var(--ss-theme-base)!important;color:var(--ss-theme-ink)!important;
+ border:1px solid var(--ss-theme-border)!important;
+ border-radius:8px;padding:9px 10px;font:normal 13px/1.4 system-ui,sans-serif;
+}
+:root[data-sales-theme] .activity-preview-edit textarea{
+ min-height:130px;resize:vertical;white-space:pre-wrap;
+}
+.activity-preview-hint{font:normal 11px/1.45 system-ui,sans-serif!important;
+ color:var(--ss-theme-muted);margin:0}
+.activity-preview-error{font:normal 12px/1.45 system-ui,sans-serif!important;color:#d05447}
+:root[data-sales-theme] .record-preview-actions button.activity-preview-primary{
+ background:var(--ss-theme-accent)!important;
+ color:var(--ss-theme-contrast,#fff)!important;
+ border-color:var(--ss-theme-accent)!important;
+}
+:root[data-sales-theme] .record-preview-actions button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:760px){
+ .activity-preview-backdrop{align-items:flex-end}
+ .activity-preview-panel{max-height:93dvh!important;width:100vw!important;
+  border-radius:18px 18px 0 0!important}
+ .activity-preview-fields{grid-template-columns:1fr}
+ :root[data-sales-theme] .activity-preview-panel>header{padding:13px 15px!important}
+ :root[data-sales-theme] .activity-preview-panel .record-preview-body{padding:12px!important}
+ :root[data-sales-theme] .activity-preview-panel .record-preview-actions{padding:11px 13px max(13px,env(safe-area-inset-bottom))!important}
+}
