@@ -215,3 +215,73 @@ describe('Notebook 2.0 private folder organization', () => {
     expect(after.entries.find(entry=>entry.id===after.activeEntryId)?.isPostItInbox).toBe(false);
   });
 });
+
+
+describe('Day One-style Daily Notebook pages',()=>{
+ beforeEach(()=>{
+  storage.document=null;
+  useNotebookStore.getState().hydrate();
+ });
+ it('creates a daily page only after a saved thought and reuses it for the same date',()=>{
+  const before=useNotebookStore.getState().entries.length;
+  expect(useNotebookStore.getState().appendDailyCapture('2026-11-04','')).toBeNull();
+  expect(useNotebookStore.getState().entries).toHaveLength(before);
+  const first=useNotebookStore.getState().appendDailyCapture('2026-11-04',"Aaron's birthday");
+  const second=useNotebookStore.getState().appendDailyCapture('2026-11-04','Send a card');
+  expect(first).toBe(second);
+  const pages=useNotebookStore.getState().entries.filter(e=>e.dailyDate==='2026-11-04');
+  expect(pages).toHaveLength(1);
+  expect(pages[0].contentHtml).toContain("Aaron's birthday");
+  expect(pages[0].contentHtml).toContain('Send a card');
+  expect(useNotebookStore.getState().activeEntryId).not.toBe(first);
+ });
+ it('escapes untrusted quick-capture HTML instead of injecting markup',()=>{
+  const id=useNotebookStore.getState().appendDailyCapture('2026-11-04',
+   '<img onerror=alert(1)> & an appointment');
+  const page=useNotebookStore.getState().entries.find(e=>e.id===id);
+  expect(page?.contentHtml).toContain('&lt;img');
+  expect(page?.contentHtml).toContain('&amp; an appointment');
+  expect(page?.contentHtml).not.toContain('<img');
+ });
+ it('persists Linked Agenda records independently of page content and objects',()=>{
+  const id=useNotebookStore.getState().appendDailyCapture('2026-11-04',
+   "Aaron's birthday")!;
+  const before=useNotebookStore.getState().entries.find(e=>e.id===id)!;
+  const agendaId=useNotebookStore.getState().addAgendaItem(id,{
+   kind:'calendar-date',title:"Aaron's birthday",date:'2026-12-12',
+   sourceText:"Aaron's birthday",annual:true,
+  });
+  expect(agendaId).toBeTruthy();
+  const after=useNotebookStore.getState().entries.find(e=>e.id===id)!;
+  expect(after.contentHtml).toBe(before.contentHtml);
+  expect(after.objects).toBe(before.objects);
+  expect(after.agendaItems?.[0]).toMatchObject({
+   date:'2026-12-12',annual:true,kind:'calendar-date',
+  });
+  useNotebookStore.getState().updateAgendaItem(id,agendaId!,{date:'2026-12-13'});
+  useNotebookStore.getState().hydrate();
+  expect(useNotebookStore.getState().entries.find(e=>e.id===id)?.agendaItems?.[0].date)
+   .toBe('2026-12-13');
+  useNotebookStore.getState().deleteAgendaItem(id,agendaId!);
+  expect(useNotebookStore.getState().entries.find(e=>e.id===id)?.agendaItems)
+   .toEqual([]);
+ });
+ it('never duplicates a linked Task agenda item after a creation retry',()=>{
+  const id=useNotebookStore.getState().appendDailyCapture('2026-11-04','Call Aaron')!;
+  const input={kind:'task' as const,taskId:'task-1',title:'Call Aaron',
+   sourceText:'Call Aaron',date:'2026-11-06'};
+  const a=useNotebookStore.getState().addAgendaItem(id,input);
+  const b=useNotebookStore.getState().addAgendaItem(id,input);
+  expect(a).toBe(b);
+  expect(useNotebookStore.getState().entries.find(e=>e.id===id)?.agendaItems).toHaveLength(1);
+ });
+ it('keeps existing Post-its unchanged after new daily capture',()=>{
+  const postId=useNotebookStore.getState().createGlobalPostIt();
+  const old=useNotebookStore.getState().entries.find(e=>e.isPostItInbox)!;
+  useNotebookStore.getState().updateTextObject(old.id,postId,'Legacy private note');
+  useNotebookStore.getState().appendDailyCapture('2026-11-04','New daily note');
+  const after=useNotebookStore.getState().entries.find(e=>e.isPostItInbox)!;
+  expect(after.objects.find(x=>x.id===postId&&x.type==='post-it'))
+   .toMatchObject({text:'Legacy private note'});
+ });
+});
