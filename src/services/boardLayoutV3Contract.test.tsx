@@ -53,6 +53,12 @@ describe('Board display and quick creation',()=>{
   expect(css).toContain('writing-mode:vertical-rl');
   expect(css).toContain('.board-column.is-collapsed .board-column-count');
   expect(css).toContain('.board-column-count-suffix,.board-column-trailing,.board-column-rule,.board-card-stack');
+  expect(css).toContain('.board-column-count-suffix{');
+  expect(css).toContain('display:inline;margin:0;font-size:inherit');
+  expect(css).toContain('.board-column-header .board-carousel-position{display:none}');
+  expect(css).toContain('width:calc(100% + 18px)');
+  expect(css).toContain('background:color-mix(in srgb,var(--ss-board-ink) 6%,transparent)');
+  expect(css).toContain('width:calc(100% + 8px);margin-inline:-4px');
  });
  it('fits stage mats to desktop viewport and scrolls cards independently',()=>{
   expect(css).not.toContain('.sales-app.view-board .role-perspective-content{');

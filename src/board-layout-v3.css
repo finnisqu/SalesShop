@@ -28,39 +28,56 @@
 }
 /* Entire stage header toggles collapse; chevron is an unobtrusive cue only. */
 :root[data-sales-theme] .sales-app.view-board .board-column-header{
-  display:block;padding:0;
+  display:block;padding:0;background:transparent;
 }
+/* The tray has 9px side padding. Let the one-piece header target reach
+   the inside edges, instead of showing a smaller colored rectangle on hover. */
 :root[data-sales-theme] .sales-app.view-board .board-column-toggle{
+  appearance:none;box-sizing:border-box;
   display:flex;align-items:center;justify-content:space-between;gap:8px;
-  width:100%;min-width:0;min-height:62px;padding:10px 6px 8px;
-  border:0;border-radius:7px;background:transparent;
+  width:calc(100% + 18px);min-width:0;min-height:62px;
+  margin:0 -9px;padding:10px 12px 8px;
+  border:0;border-radius:7px 7px 0 0;
+  background:transparent;box-shadow:none;
   color:var(--ss-board-ink);font:inherit;text-align:left;
   cursor:pointer;transition:background-color 120ms ease;
 }
 :root[data-sales-theme] .sales-app.view-board
-.board-column-toggle:not(:disabled):hover{background:var(--ss-theme-tint)}
+.board-column-toggle:not(:disabled):hover{
+  background:color-mix(in srgb,var(--ss-board-ink) 6%,transparent);
+}
 :root[data-sales-theme] .sales-app.view-board
 .board-column-toggle:disabled{cursor:default;opacity:1}
 :root[data-sales-theme] .sales-app.view-board .board-column-title{
-  display:block;min-width:0;flex:1 1 auto;
+  display:block;min-width:0;flex:1 1 auto;margin:0;
 }
 :root[data-sales-theme] .sales-app.view-board .board-column-stage-name{
   display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--ss-board-ink);
+  margin:0;color:var(--ss-board-ink);
   font:750 10px/1.2 var(--ss-font-body);letter-spacing:.02em;
 }
 :root[data-sales-theme] .sales-app.view-board .board-column-count{
-  display:block;margin-top:4px;
-  color:var(--ss-board-muted);font-size:9px;
+  display:block;margin:4px 0 0;
+  white-space:nowrap;color:var(--ss-board-muted);font-size:9px;
+}
+/* Older .board-column-header span rules used display:block and margins
+   indiscriminately: the count suffix must stay on its number's line. */
+:root[data-sales-theme] .sales-app.view-board .board-column-count-suffix{
+  display:inline;margin:0;font-size:inherit;line-height:inherit;
+  white-space:inherit;color:inherit;
 }
 :root[data-sales-theme] .sales-app.view-board .board-column-trailing{
-  display:flex;align-items:center;flex:0 0 auto;gap:5px;min-width:0;
+  display:flex;align-items:center;flex:0 0 auto;gap:5px;min-width:0;margin:0;
 }
 :root[data-sales-theme] .sales-app.view-board .board-column-hint{
   display:inline-flex;align-items:center;justify-content:center;
   margin:0;color:var(--ss-board-muted);
   font:600 12px/1 var(--ss-font-body);opacity:.62;
 }
+/* This position counter belongs to the mobile stage carousel, not desktop.
+   The old generic span rule was leaking it into desktop headers. */
+:root[data-sales-theme] .sales-app.view-board
+.board-column-header .board-carousel-position{display:none}
 /* Card details remain in the DOM and record data. Compact mode only changes
    presentation so reopening standard cards restores everything immediately. */
 :root[data-sales-theme] .sales-app.view-board .board-view.is-compact
@@ -196,7 +213,8 @@
   :root[data-sales-theme] .sales-app.view-board
   .board-column.is-collapsed .board-column-toggle{
     display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-    height:100%;min-height:0;gap:0;padding:12px 1px 9px;border-radius:6px;
+    width:calc(100% + 8px);margin-inline:-4px;
+    height:100%;min-height:0;gap:0;padding:12px 1px 9px;border-radius:6px 6px 0 0;
   }
   :root[data-sales-theme] .sales-app.view-board
   .board-column.is-collapsed .board-column-title{
@@ -228,6 +246,15 @@
   /* The existing mobile stage picker and independent per-stage scrolling win.
      Collapse is a desktop-only interaction. */
   :root[data-sales-theme] .sales-app.view-board .board-column-hint{display:none}
+  /* A mobile stage is a swipeable page, not a collapsible desktop rail. */
+  :root[data-sales-theme] .sales-app.view-board .board-column-toggle{
+    width:100%;margin-inline:0;padding-inline:6px;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+  .board-column-header .board-carousel-position{
+    display:inline-flex;margin:0;border-color:transparent;background:transparent;
+    color:var(--ss-board-muted);
+  }
   :root[data-sales-theme] .sales-app.view-board .board-header-tools{
     flex:0 1 auto;margin:0;gap:6px;
   }
