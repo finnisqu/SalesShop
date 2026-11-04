@@ -1,5 +1,5 @@
-import type {Activity,Project} from '../types/crm';
-import {dealNeedsSubmission,type PersonalTask,normalizedTaskAssociations} from '../store/personalTaskStore';
+import type {Activity,Company,Contact,Project} from '../types/crm';
+import {dealNeedsSubmission,type PersonalTask,type TaskAssociation,normalizedTaskAssociations} from '../store/personalTaskStore';
 import {completedTaskActivityId} from './taskActivityWorkflow';
 import type {Quote} from '../types/quote';
 
@@ -8,6 +8,11 @@ export type SalesCalendarKind='task'|'bid';
 export interface SalesCalendarEvent {
  id:string;date:string;kind:SalesCalendarKind;title:string;detail:string;urgent?:boolean;
  recordType:'task'|'project'|'quote';recordId:string;
+}
+/** References already available to the active user's CRM workspace. */
+export interface SalesCalendarRelatedRecords {
+ companies:readonly Company[];
+ contacts:readonly Contact[];
 }
 export interface HomeRecentItem{
  id:string;timestamp:string;kind:'activity'|'completed-task';
@@ -80,11 +85,31 @@ export const outstandingTask=(task:PersonalTask):boolean=>
  * share the ordinary Task counter. Completed items go to Recents. */
 export function buildSalesCalendarEvents(
  tasks:readonly PersonalTask[],deals:readonly Project[],activities:readonly Activity[],
- visibleQuotes:readonly Quote[],
+ visibleQuotes:readonly Quote[],relatedRecords:SalesCalendarRelatedRecords={companies:[],contacts:[]},
 ):SalesCalendarEvent[]{
  const events:SalesCalendarEvent[]=[];
  const quoteIds=new Set(visibleQuotes.map(q=>q.id));
  const quoteById=new Map(visibleQuotes.map(q=>[q.id,q]));
+ const dealById=new Map(deals.map(deal=>[deal.id,deal]));
+ const companyById=new Map(relatedRecords.companies.map(company=>[company.id,company]));
+ const contactById=new Map(relatedRecords.contacts.map(contact=>[contact.id,contact]));
+ // Prefer the task's own association order; show at most two distinct, current
+ // CRM names. Missing/deleted or inaccessible records are never replaced by
+ // potentially stale snapshot labels.
+ const relatedLine=(links:readonly TaskAssociation[],title:string)=>{
+  const names:string[]=[];
+  for(const link of links){
+   const name=(link.type==='project'?dealById.get(link.id)?.name:
+    link.type==='contact'?contactById.get(link.id)?.name:
+    link.type==='company'?companyById.get(link.id)?.name:
+    link.type==='quote'?quoteById.get(link.id)?.title:undefined)?.trim();
+   if(!name||name.toLocaleLowerCase()===title.trim().toLocaleLowerCase()||
+     names.some(value=>value.toLocaleLowerCase()===name.toLocaleLowerCase()))continue;
+   names.push(name);
+   if(names.length===2)break;
+  }
+  return names.join(' · ');
+ };
  const representedBidIds=new Set<string>();
  for(const task of tasks){
   if(!task.dueDate||!datePattern.test(task.dueDate))continue;
@@ -99,15 +124,20 @@ export function buildSalesCalendarEvents(
   if(bidId&&(autoBidId||!task.deletedAt))representedBidIds.add(bidId);
   if(!outstandingTask(task))continue;
   const kind:SalesCalendarKind=bidId?'bid':'task';
+  const associations=normalizedTaskAssociations(task);
+  // Legacy automatic submissions may identify their Deal only in sourceObjectId.
+  if(bidId&&!associations.some(link=>link.type==='project'&&link.id===bidId))
+   associations.unshift({type:'project',id:bidId});
   events.push({id:'task:'+task.id,date:task.dueDate,kind,title:task.title,
-   detail:bidId?'Submit quote · Bid deadline':
-    task.type==='follow-up'?'Follow-up task':'To-do',
+   detail:relatedLine(associations,task.title),
    urgent:task.priority==='urgent',recordType:'task',recordId:task.id});
  }
  for(const deal of deals){
   if(!dealNeedsSubmission(deal)||!deal.dueDate||representedBidIds.has(deal.id))continue;
+  // The title already names the Deal; the Company is the helpful association.
+  const companyName=deal.companyId?companyById.get(deal.companyId)?.name:deal.companyName;
   events.push({id:'bid:'+deal.id,date:deal.dueDate,kind:'bid',
-   title:'Submit quote · '+deal.name,detail:'Bid due · '+deal.stage,
+   title:'Submit quote · '+deal.name,detail:companyName?.trim()??'',
    recordType:'project',recordId:deal.id});
  }
  // Legacy quote follow-up scheduling remains actionable until it is cleared.
@@ -124,9 +154,14 @@ export function buildSalesCalendarEvents(
   if(activity.metadata?.followUpAction!=='scheduled'||!date||!datePattern.test(date))continue;
   if(tasks.some(task=>!task.deletedAt&&task.dueDate===date&&task.type==='follow-up'&&
    normalizedTaskAssociations(task).some(link=>link.type==='quote'&&link.id===quoteId)))continue;
+  const linkedQuote=quoteById.get(quoteId);
+  const title=linkedQuote?.title||'Quote follow-up';
+  const related:TaskAssociation[]=[];
+  if(linkedQuote?.projectId)related.push({type:'project',id:linkedQuote.projectId});
+  if(linkedQuote?.contactId)related.push({type:'contact',id:linkedQuote.contactId});
+  if(linkedQuote?.companyId)related.push({type:'company',id:linkedQuote.companyId});
   events.push({id:'quote-followup:'+quoteId,date,kind:'task',
-   title:quoteById.get(quoteId)?.title||'Quote follow-up',
-   detail:'Scheduled quote follow-up',recordType:'quote',recordId:quoteId});
+   title,detail:relatedLine(related,title),recordType:'quote',recordId:quoteId});
  }
  return events.sort((a,b)=>a.date.localeCompare(b.date)||a.kind.localeCompare(b.kind)||a.title.localeCompare(b.title));
 }

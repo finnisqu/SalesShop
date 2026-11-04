@@ -80,6 +80,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const preview=useRolePerspectiveStore(s=>s.activePerspective);
  const storedScope=usePersonalTaskStore(s=>s.scope),tasks=usePersonalTaskStore(s=>s.tasks);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
+ const contacts=useCrmStore(s=>s.contacts),companies=useCrmStore(s=>s.companies);
  const quotes=useQuoteStore(s=>s.quotes);
  const notebookEntries=useNotebookStore(s=>s.entries);
  const notebookReady=useNotebookStore(s=>s.hydrated);
@@ -161,8 +162,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   [quotes,mode,userId]);
  const sources=useMemo(()=>personalCalendarSources(mode,userId,ownQuotes,ownTasks,deals,activities),
   [mode,userId,ownQuotes,ownTasks,deals,activities]);
- const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,sources.deals,sources.activities,ownQuotes),
-  [ownTasks,sources,ownQuotes]);
+ const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,sources.deals,sources.activities,
+  ownQuotes,{contacts,companies}),[ownTasks,sources,ownQuotes,contacts,companies]);
  const days=useMemo(()=>calendarMonthDays(month.getFullYear(),month.getMonth()),[month]);
  const compactDays=useMemo(()=>calendarCompactMonthDays(month.getFullYear(),month.getMonth()),[month]);
  const weekDays=useMemo(()=>calendarWeekDays(selected),[selected]);
@@ -353,7 +354,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         onClick={()=>openRecord(event)}>
          <span className={'sales-calendar-event-dot is-'+event.kind} aria-hidden="true"/>
          <span className="sales-calendar-event-text"><strong>{event.title}</strong>
-          <small>{labels[event.kind]} · {event.detail}</small></span>
+          <small>{event.detail}</small></span>
          {event.urgent&&<span className="sales-calendar-agenda-urgent" title="Urgent task" aria-label="Urgent task">!</span>}
          <span className="sales-calendar-agenda-chevron" aria-hidden="true">›</span>
         </button>)}

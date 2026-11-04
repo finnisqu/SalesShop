@@ -111,7 +111,53 @@ describe('SalesShop shared Calendar',()=>{
   ],[]);
   expect(calendarDayCounts(events,date)).toEqual({task:1,bid:0,urgent:0,total:1});
   expect(calendarDayCounts(events,'2026-11-03')).toEqual({task:0,bid:0,urgent:0,total:0});
-  expect(events[0].detail).toContain('Follow-up task');
+  expect(events[0].detail).toBe('');
+ });
+ it('shows up to two current CRM association names in authored order, without status duplicates',()=>{
+  const due='2026-11-06';
+  const linked=task('linked',due,{
+   title:'Price the job',associations:[
+    {type:'project',id:'d1',label:'Old deal name'},
+    {type:'contact',id:'c1'},
+    {type:'company',id:'co1'},
+    {type:'quote',id:'q1'},
+   ],
+  });
+  const context={
+   contacts:[{id:'c1',name:'Aaron Case',createdAt:'2026-11-01',updatedAt:'2026-11-01'}],
+   companies:[{id:'co1',name:'Acme Builder',kind:'customer' as const,createdAt:'2026-11-01',updatedAt:'2026-11-01'}],
+  };
+  expect(buildSalesCalendarEvents([linked],[deal(due)],[],[quote('q1')],context)[0].detail)
+   .toBe('Riverwalk Apartments · Aaron Case');
+  expect(buildSalesCalendarEvents([task('none',due)],[],[],[],context)[0].detail).toBe('');
+ });
+ it('skips deleted, duplicate, inaccessible, and notebook links without leaking old labels',()=>{
+  const due='2026-11-06';
+  const t=task('mixed',due,{associations:[
+   {type:'notebook',id:'n1',label:'Personal notes'},
+   {type:'quote',id:'private',label:'Private quote'},
+   {type:'project',id:'missing',label:'Deleted project'},
+   {type:'contact',id:'c1'},
+   {type:'company',id:'co1'},
+  ]});
+  const context={
+   contacts:[{id:'c1',name:'Aaron Case',createdAt:due,updatedAt:due}],
+   companies:[{id:'co1',name:'Aaron Case',kind:'customer' as const,createdAt:due,updatedAt:due}],
+  };
+  expect(buildSalesCalendarEvents([t],[],[],[],context)[0].detail).toBe('Aaron Case');
+ });
+ it('uses associated Company for fallback Deal deadline and related records for quote follow-ups',()=>{
+  const due='2026-11-06';
+  const context={contacts:[{id:'c1',name:'Aaron Case',createdAt:due,updatedAt:due}],
+   companies:[{id:'co1',name:'Acme Builder',kind:'customer' as const,createdAt:due,updatedAt:due}]};
+  const d={...deal(due),companyId:'co1'};
+  expect(buildSalesCalendarEvents([],[d],[],[],context)[0].detail).toBe('Acme Builder');
+  const followup=activity('plan','quote-follow-up','2026-11-03T12:00:00Z',
+   {followUpAction:'scheduled',followUpDueDate:due},{quoteId:'q1'});
+  const q={...quote('q1'),projectId:'d1',contactId:'c1'};
+  const events=buildSalesCalendarEvents([],[{...d,dueDate:undefined}],[followup],[q],context);
+  expect(events).toHaveLength(1);
+  expect(events[0].detail).toBe('Riverwalk Apartments · Aaron Case');
  });
  it('keeps only outstanding Tasks and bids in the agenda',()=>{
   const date='2026-11-03';
