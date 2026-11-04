@@ -172,3 +172,68 @@
 }
 .sales-record-confirmation .sales-practice-purge-ack span{min-width:0;flex:1}
 .sales-record-confirmation .sales-practice-purge-ack + label{line-height:1.5}
+
+/* Data Management modal: one owned vertical scrollport, no phantom scrollbars.
+   Flex children must have min-height:0 or browser zoom can trap list content. */
+.sales-cleanup-dialog.is-record-cleanup{
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+}
+.sales-cleanup-dialog.is-record-cleanup>header,
+.sales-cleanup-dialog.is-record-cleanup>.sales-record-cleanup-tabs,
+.sales-cleanup-dialog.is-record-cleanup>.sales-record-dependency-trail,
+.sales-cleanup-dialog.is-record-cleanup>.sales-record-cleanup-toolbar,
+.sales-cleanup-dialog.is-record-cleanup>footer{
+  flex:0 0 auto;
+}
+.sales-cleanup-dialog.is-record-cleanup>.sales-record-cleanup-tabs{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  overflow:visible;
+  gap:7px;
+  padding:10px 14px;
+  min-height:0;
+}
+.sales-cleanup-dialog.is-record-cleanup>.sales-record-cleanup-tabs button{
+  box-sizing:border-box;
+  min-width:0;
+  width:100%;
+  justify-content:center;
+  padding:8px 5px;
+  white-space:nowrap;
+  overflow:hidden;
+}
+.sales-cleanup-dialog.is-record-cleanup>.sales-record-dependency-panel,
+.sales-cleanup-dialog.is-record-cleanup>.sales-record-cleanup-list,
+.sales-cleanup-dialog.is-record-cleanup>.sales-record-confirmation{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior-y:contain;
+  scrollbar-gutter:stable;
+  -webkit-overflow-scrolling:touch;
+}
+.sales-cleanup-dialog.is-record-cleanup .sales-record-dependency-list{
+  min-height:0;
+  overflow:visible;
+}
+.sales-cleanup-dialog.is-record-cleanup .sales-record-dependency-panel h4{
+  flex-shrink:0;
+}
+@media(max-width:600px){
+  .sales-cleanup-dialog.is-record-cleanup>.sales-record-cleanup-tabs{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    row-gap:6px;
+    padding-inline:8px;
+  }
+  .sales-cleanup-dialog.is-record-cleanup>.sales-record-cleanup-tabs button{
+    font-size:11px;
+    min-height:38px;
+  }
+  .sales-cleanup-dialog.is-record-cleanup>.sales-record-dependency-panel{
+    padding:12px 10px;
+  }
+}
