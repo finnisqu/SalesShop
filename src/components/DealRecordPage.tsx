@@ -8,6 +8,7 @@ import { quoteTotal, displayQuoteNumber } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
+import {DealAssigneeSelect,useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const displayDate = (value?: string) => {
@@ -23,6 +24,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const contacts = useCrmStore(state => state.contacts);
   const activities = useCrmStore(state => state.activities);
   const updateDeal = useCrmStore(state => state.updateProject);
+  const assignDeal = useCrmStore(state => state.assignProject);
+  const {members:assignees}=useDealAssigneeDirectory();
   const relinkCompany = useCrmStore(state => state.relinkProjectCompany);
   const quotes = useQuoteStore(state => state.quotes);
   const hydrateQuotes = useQuoteStore(state => state.hydrate);
@@ -31,11 +34,14 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const openCompany = useNavigationStore(state => state.openCompany);
   const openPerson = useNavigationStore(state => state.openPerson);
   const [editing, setEditing] = useState(false);
+  const [saving,setSaving]=useState(false);
+  const [saveError,setSaveError]=useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
   const deal = deals.find(item => item.id === dealId);
   const [draft, setDraft] = useState({
     name: deal?.name ?? '', stage: deal?.stage ?? 'Discovery' as ProjectStage,
     companyId: deal?.companyId ?? '',
+    assignedUserId: deal?.assignedUserId ?? '',
     amount: deal?.amount?.toString() ?? '',
     dueDate: deal?.dueDate ?? '',
     nextAction: deal?.nextAction ?? '',
@@ -47,6 +53,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   useEffect(() => {
     if (!editing && deal) setDraft({
       name: deal.name, stage: deal.stage, companyId: deal.companyId ?? '',
+      assignedUserId: deal.assignedUserId ?? '',
       amount: deal.amount?.toString() ?? '', dueDate: deal.dueDate ?? '',
       nextAction: deal.nextAction ?? '', lastTouchpoint: deal.lastTouchpoint ?? '',
     });
@@ -63,11 +70,15 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     <button type="button" onClick={onBack}>Back to Deals</button>
   </section>;
 
-  const saveDeal = (event: FormEvent) => {
+  const saveDeal = async (event: FormEvent) => {
     event.preventDefault();
-    if (!draft.name.trim()) return;
+    if (saving || !draft.name.trim()) return;
     const amount = draft.amount.trim() ? Number(draft.amount) : undefined;
     if (amount !== undefined && (!Number.isFinite(amount) || amount < 0)) return;
+    setSaving(true);setSaveError('');
+    try{
+    if((deal.assignedUserId??'')!==draft.assignedUserId)
+      await assignDeal(deal.id,draft.assignedUserId||undefined);
     updateDeal(deal.id, {
       name: draft.name.trim(), stage: draft.stage, amount,
       dueDate: draft.dueDate || undefined,
@@ -77,6 +88,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     });
     if (draft.companyId && draft.companyId !== deal.companyId) relinkCompany(deal.id, draft.companyId);
     setEditing(false);
+    }catch(reason){setSaveError(reason instanceof Error?reason.message:'Unable to save Deal assignment.');}
+    finally{setSaving(false);}
   };
   const newQuote = () => {
     const id = createQuote({ title: deal.name, projectId: deal.id, companyId: deal.companyId, companyName: deal.companyName });
@@ -99,6 +112,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </select></label>
           <label>Amount<input type="number" min="0" step="0.01" value={draft.amount} onChange={event => setDraft({...draft,amount:event.target.value})} /></label>
           <label>Bid due date<input type="date" value={draft.dueDate} onChange={event => setDraft({...draft,dueDate:event.target.value})} /></label>
+          <label>Assigned salesperson<DealAssigneeSelect value={draft.assignedUserId}
+            onChange={value=>setDraft({...draft,assignedUserId:value})} disabled={saving}/></label>
           <label>Company<select value={draft.companyId} onChange={event => setDraft({...draft,companyId:event.target.value})}>
             <option value="">No company selected</option>
             {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map(company =>
@@ -106,14 +121,16 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </select></label>
           <label>Next action<textarea rows={3} value={draft.nextAction} onChange={event => setDraft({...draft,nextAction:event.target.value})} /></label>
           <label>Last touchpoint<input type="date" value={draft.lastTouchpoint} onChange={event => setDraft({...draft,lastTouchpoint:event.target.value})} /></label>
+          {saveError&&<p role="alert" className="connections-record-helper">{saveError}</p>}
           <div className="connections-record-form-actions">
-            <button type="button" onClick={() => setEditing(false)}>Cancel</button>
-            <button className="connections-record-primary" type="submit" disabled={!draft.name.trim()}>Save changes</button>
+            <button type="button" onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+            <button className="connections-record-primary" type="submit" disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save changes'}</button>
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Stage">{deal.stage}</RecordProperty>
           <RecordProperty label="Amount">{deal.amount === undefined ? 'Not set' : money.format(deal.amount)}</RecordProperty>
           <RecordProperty label="Bid due date">{displayDate(deal.dueDate)}</RecordProperty>
+          <RecordProperty label="Assigned salesperson">{dealAssigneeLabel(deal.assignedUserId,assignees)}</RecordProperty>
           <RecordProperty label="Next action">{deal.nextAction || 'Not set'}</RecordProperty>
           <RecordProperty label="Last touchpoint">{displayDate(deal.lastTouchpoint)}</RecordProperty>
           <RecordProperty label="Created">{displayDate(deal.createdAt)}</RecordProperty>
