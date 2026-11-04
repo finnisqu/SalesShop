@@ -99,9 +99,11 @@
     cursor:pointer;
   }
   .sales-app > .mobile-app-commandbar.is-quote-editing .mobile-quote-toolbar-spacer {
-    display:block;
+    display:flex;
+    align-items:center;
     min-width:0;
     flex:1 1 auto;
+    padding:0 3px;
   }
   .sales-app > .mobile-app-commandbar .mobile-quote-back {
     font-size:30px;

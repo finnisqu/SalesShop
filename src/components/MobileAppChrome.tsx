@@ -210,12 +210,14 @@ export function MobileAppChrome() {
               <path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/>
             </svg>
           </button>
-          <span className="mobile-quote-toolbar-spacer" aria-hidden="true"/>
+          <div className="mobile-quote-toolbar-spacer mobile-app-current" aria-label="Quote editor">
+            <strong>Quote</strong>
+          </div>
         </> : <>
           {canGoBack&&<button type="button" className="mobile-app-back-button"
             onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
           <div className="mobile-app-current">
-            {view!=='quotes'&&<strong>{contextTitle}</strong>}
+            <strong>{contextTitle}</strong>
           </div>
         </>}
         <div className="mobile-quote-actions-slot" id="mobile-quote-actions-slot" aria-label="Document options"/>

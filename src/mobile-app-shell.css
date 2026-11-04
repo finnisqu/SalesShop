@@ -1,5 +1,5 @@
-/* Shared immersive mobile shell for SalesShop tabs other than Quotes.
-   Quotes keeps its specialized command bar; the rest share this compact chrome. */
+/* Shared immersive mobile shell. The command bar uses one flex layout across
+   destinations; quote editing adds its own actions without changing the shell. */
 
 .mobile-app-commandbar,
 .mobile-app-drawer-backdrop {
@@ -24,8 +24,8 @@
     min-height: 50px;
     height: 50px;
     flex: 0 0 50px;
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
+    display: flex;
+    min-width: 0;
     align-items: center;
     gap: 4px;
     padding: 5px 6px;
@@ -786,8 +786,8 @@
   .sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) > .mobile-app-commandbar {
     position: relative;
     z-index: 170;
-    display: grid;
-    grid-template-columns: 40px minmax(0,1fr) 40px 40px;
+    display: flex;
+    min-width: 0;
     align-items: center;
     gap: 4px;
     height: 50px;
@@ -838,11 +838,9 @@
   }
 }
 
-/* Tab history: compact Back control only while an in-app return target exists. */
+/* Tab history: compact Back control only while an in-app return target exists.
+   Flexbox allows titles to use the remaining space whether Back is present. */
 @media (max-width: 700px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
-  .sales-app:not(.view-quotes) > .mobile-app-commandbar:has(.mobile-app-back-button) {
-    grid-template-columns: 38px 40px minmax(0,1fr) 40px 40px;
-  }
   .mobile-app-back-button {
     display:grid;place-items:center;min-height:38px;width:38px;
     border:1px solid rgba(91,78,58,.16);border-radius:7px;

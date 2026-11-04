@@ -63,6 +63,7 @@ describe('mobile shared navigation for restricted roles', () => {
     const html = renderToStaticMarkup(<MobileAppChrome />);
     expect(html).toContain('class="mobile-app-commandbar"');
     expect(html).toContain('aria-label="Open SalesShop navigation"');
+    expect(html).toContain('<strong>Quotes</strong>');
   });
 
   it('keeps hamburger outside disabled role-preview workspaces', () => {
@@ -84,6 +85,34 @@ describe('mobile shared navigation for restricted roles', () => {
     expect(html).toContain('aria-label="Back to previous SalesShop tab"');
     expect(html).toContain('class="mobile-app-back-button"');
     fixture.navigation.history=[];
+  });
+
+  it('shows full current page labels in the shared shell', () => {
+    fixture.auth.teamRole = 'viewer';
+    fixture.perspective.activePerspective = null;
+    fixture.navigation.history = [];
+    for (const [view, label] of [
+      ['home', 'Home'], ['tasks', 'Tasks'], ['quotes', 'Quotes'],
+    ] as const) {
+      fixture.navigation.view = view;
+      const html = renderToStaticMarkup(<MobileAppChrome />);
+      expect(html).toContain('<strong>' + label + '</strong>');
+    }
+  });
+
+  it('keeps the mobile commandbar flexible whether Back exists or not', () => {
+    const css = readFileSync(new URL('../mobile-app-shell.css', import.meta.url), 'utf8');
+    const standard = css.split('.sales-app:not(.view-quotes) > .mobile-app-commandbar {')[1]?.split('}')[0];
+    const restricted = css.split('.sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) > .mobile-app-commandbar {')[1]?.split('}')[0];
+    expect(standard).toContain('display: flex');
+    expect(restricted).toContain('display: flex');
+    expect(standard).not.toContain('grid-template-columns');
+  });
+
+  it('keeps an accessible Quote label in the editing toolbar', () => {
+    const source = readFileSync(new URL('./MobileAppChrome.tsx', import.meta.url), 'utf8');
+    expect(source).toContain('className="mobile-quote-toolbar-spacer mobile-app-current"');
+    expect(source).toContain('<strong>Quote</strong>');
   });
 
   it('gives restricted Quotes routes an explicit CSS navigation fallback', () => {
