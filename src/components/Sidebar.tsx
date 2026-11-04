@@ -5,14 +5,16 @@ import {usePersonalTaskStore} from '../store/personalTaskStore';
 import {notebookPromotionActions} from '../services/notebookPromotionActions';
 import type { NotebookEntry, NotebookFolder, NotebookObject } from '../types/notebook';
 
-type PageFilter = 'all' | 'favorites' | 'project' | 'postits';
-type NotebookIconName='search'|'all'|'favorites'|'project'|'postits'|'trash';
+type PageFilter = 'all' | 'daily' | 'favorites' | 'project' | 'postits';
+type NotebookIconName='search'|'all'|'daily'|'favorites'|'project'|'postits'|'trash';
 function NotebookIcon({name}:{name:NotebookIconName}){
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
     aria-hidden="true" focusable="false">
     {name==='search'&&<><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></>}
     {name==='all'&&<><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></>}
+    {name==='daily'&&<><rect x="3" y="5" width="18" height="16" rx="2"/>
+      <path d="M7 3v4M17 3v4M3 10h18M8 14h4M8 17h8"/></>}
     {name==='favorites'&&<path d="m12 3 2.8 6 6.6.9-4.8 4.6 1.2 6.5L12 18l-5.8 3 1.2-6.5-4.8-4.6 6.6-.9z"/>}
     {name==='project'&&<><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></>}
     {name==='postits'&&<><path d="M5 3h14a2 2 0 0 1 2 2v10l-6 6H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 21v-6h6M7 8h9M7 12h5"/></>}
@@ -192,12 +194,15 @@ export function Sidebar({
       if(filter==='all'&&activeFolderId===UNFILED&&entry.folderId)return false;
       if (filter==='all' && visibleFolderIds && activeFolderId!==UNFILED &&
         (!entry.folderId || !visibleFolderIds.has(entry.folderId))) return false;
+      if (filter === 'daily' && !entry.dailyDate) return false;
       if (filter === 'favorites' && !entry.favorite) return false;
       if (filter === 'project' && !entry.context?.projectId) return false;
       if (filter === 'postits' && !entry.objects.some(object=>object.type==='post-it')) return false;
       if (needle && !entrySearchText(entry).includes(needle)) return false;
       return true;
-    });
+    }).sort((a,b)=>filter==='daily'
+     ?(b.dailyDate??'').localeCompare(a.dailyDate??'')
+     :0);
   }, [activeEntryId, entries, filter, query, showHidden, visibleFolderIds]);
 
   const onDragOver = (event: DragEvent<HTMLButtonElement>, targetId: string) => {
@@ -299,6 +304,10 @@ export function Sidebar({
             title="All pages" aria-label="All pages" aria-pressed={filter==='all'&&!showTrash&&!activeFolderId}
             onClick={()=>{setShowTrash(false);setActiveFolderId(null);setFilter('all');}}>
             <NotebookIcon name="all"/><span>All</span></button>
+          <button type="button" className={filter==='daily'&&!showTrash?'active':''}
+            title="Daily Notes" aria-label="Daily Notes" aria-pressed={filter==='daily'&&!showTrash}
+            onClick={()=>{setShowTrash(false);setActiveFolderId(null);setFilter('daily');}}>
+            <NotebookIcon name="daily"/><span>Daily</span></button>
           <button type="button" className={filter==='favorites'&&!showTrash?'active':''}
             title="Favorite pages" aria-label="Favorite pages" aria-pressed={filter==='favorites'&&!showTrash}
             onClick={()=>{setShowTrash(false);setActiveFolderId(null);setFilter('favorites');}}>
