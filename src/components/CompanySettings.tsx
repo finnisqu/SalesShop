@@ -13,6 +13,7 @@ import { TeamAccessSettings } from './TeamAccessSettings';
 import { SalesTeamManagement } from './SalesTeamManagement';
 import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
+import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 
 type SettingsTab = 'company' | 'account' | 'team' | 'appearance' | 'beta' | 'data' | 'advanced';
@@ -38,6 +39,7 @@ export function CompanySettings() {
   const error = useCompanySettingsStore((state) => state.error);
   const mode = useAuthStore((state) => state.mode);
   const actualRole = useAuthStore((state) => state.teamRole);
+  const perspective = useRolePerspectiveStore((state) => state.activePerspective);
   const user = useAuthStore((state) => state.user);
   const organizationId = useAuthStore((state) => state.organizationId);
   const signOut = useAuthStore((state) => state.signOut);
@@ -58,7 +60,7 @@ export function CompanySettings() {
   const [companyRole, setCompanyRole] = useState<TeamRole | null>(null);
   const canEditCompany = mode === 'local' || companyRole === 'owner' || companyRole === 'admin';
   // Shared-record deletion is deliberate maintenance, not ordinary CRM editing.
-  const canManageRecords = mode === 'local' || actualRole === 'owner' || actualRole === 'admin';
+  const canManageRecords = !perspective && (mode === 'local' || actualRole === 'owner' || actualRole === 'admin');
   useEffect(() => {
     if (!cloudReady || !user || !organizationId || !supabase) return;
     let cancelled = false;
@@ -278,7 +280,10 @@ export function CompanySettings() {
             <details className="settings-maintenance-tools">
               <summary>Maintenance and test data</summary>
               <p className="settings-help">Review sample or test records one by one. This does not automatically delete or identify test records.</p>
-              <button type="button" onClick={()=>manageRecords('quote',true)}>Clean up test records</button>
+              <div className="settings-inline-actions">
+                <button type="button" onClick={()=>manageRecords('quote',true)}>Clean up test records</button>
+                <button type="button" onClick={()=>window.dispatchEvent(new Event('salesshop:open-task-cleanup'))}>Review overdue tasks</button>
+              </div>
             </details>
           </article>
         </section>}
