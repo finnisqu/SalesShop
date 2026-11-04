@@ -235,6 +235,23 @@ describe('Day One-style Daily Notebook pages',()=>{
   expect(pages[0].contentHtml).toContain('Send a card');
   expect(useNotebookStore.getState().activeEntryId).not.toBe(first);
  });
+ it('rejects impossible Daily and Linked Agenda dates without mutating the page',()=>{
+  const initial=useNotebookStore.getState().entries.length;
+  expect(useNotebookStore.getState().appendDailyCapture('2026-02-31','No such day')).toBeNull();
+  expect(useNotebookStore.getState().entries).toHaveLength(initial);
+  const id=useNotebookStore.getState().appendDailyCapture('2028-02-29','Leap day')!;
+  const invalid=useNotebookStore.getState().addAgendaItem(id,{
+   kind:'calendar-date',title:'Impossible',date:'2026-04-31',sourceText:'No date',
+  });
+  expect(invalid).toBeNull();
+  const saved=useNotebookStore.getState().addAgendaItem(id,{
+   kind:'calendar-date',title:'Real event',date:'2028-02-29',sourceText:'Leap day',annual:true,
+  });
+  expect(saved).toBeTruthy();
+  useNotebookStore.getState().updateAgendaItem(id,saved!,{date:'2027-02-29'});
+  expect(useNotebookStore.getState().entries.find(e=>e.id===id)?.agendaItems?.[0].date)
+   .toBe('2028-02-29');
+ });
  it('escapes untrusted quick-capture HTML instead of injecting markup',()=>{
   const id=useNotebookStore.getState().appendDailyCapture('2026-11-04',
    '<img onerror=alert(1)> & an appointment');
