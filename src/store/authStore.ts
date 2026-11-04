@@ -163,7 +163,7 @@ async function performSessionApplication(session: Session | null) {
     // Consult only a boolean, JWT-scoped RPC before any tenant workspace
     // selection, creation, local hydration, or cloud sync.
     if (!supabase) throw new Error('Cloud is unavailable.');
-    const { data: isDeveloper, error: developerError } = await timeStartupStep('developer-check',()=>supabase.rpc('is_platform_developer'));
+    const { data: isDeveloper, error: developerError } = await timeStartupStep('developer-check',()=>supabase!.rpc('is_platform_developer'));
     if (developerError) throw developerError;
     if (isDeveloper === true) {
       clearCloudIdentityCache();
@@ -288,7 +288,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         });
       }
 
-      const { data, error } = await timeStartupStep('session',()=>supabase.auth.getSession());
+      const { data, error } = await timeStartupStep('session',()=>supabase!.auth.getSession());
       if (error) {
         set({ ready: true, busy: false, loadingStep:'', error: error.message });
         return;
