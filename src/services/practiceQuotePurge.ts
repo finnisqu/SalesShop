@@ -35,13 +35,13 @@ export interface PracticeQuotePurgePlan {
  * A live customer agreement is NEVER automatically identified as a test. */
 export function planPracticeQuotePurge(
  quote:Quote,allQuotes:readonly Quote[],activities:readonly Activity[],
- tasks:readonly PersonalTask[],
+ tasks:readonly PersonalTask[],hasAcceptedSignature=false,
 ):PracticeQuotePurgePlan {
  const blockers:string[]=[];
  if(!quote.archivedAt)blockers.push('Archive this document before permanent deletion');
  // A test-only signature requires an explicit stronger confirmation, not an
  // automatic blanket prohibition. The server also checks stored signatures.
- const signed=quote.status==='Signed'||!!quote.signedAt||
+ const signed=hasAcceptedSignature||quote.status==='Signed'||!!quote.signedAt||
   quote.history.some(revision=>revision.status==='Signed')||
   activities.some(activity=>activity.quoteId===quote.id&&
    ['quote-signed','change-order-signed'].includes(activity.type));
@@ -81,7 +81,8 @@ export async function purgeArchivedPracticeQuote(quoteId:string,confirmation:str
  const tasks=scope&&scope===saved.scope?saved.tasks.filter(task=>!task.deletedAt):[];
  useSignatureStore.getState().hydrate();
  const signatures=useSignatureStore.getState().signatures.filter(s=>s.quoteId===quoteId);
- const plan=planPracticeQuotePurge(quote,useQuoteStore.getState().quotes,crm.activities,tasks);
+ const plan=planPracticeQuotePurge(quote,useQuoteStore.getState().quotes,
+  crm.activities,tasks,signatures.length>0);
  if(plan.blockers.length)throw new Error(plan.blockers.join('; '));
  const signed=plan.signed||signatures.length>0;
  const expected='PURGE '+(signed?'SIGNED ':'')+quote.quoteNumber;
