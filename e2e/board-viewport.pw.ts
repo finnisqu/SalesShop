@@ -34,7 +34,17 @@ test('Deals and Accounts both render visible, nonzero-height boards',async({page
  await page.getByRole('button',{name:'Accounts',exact:true}).click();
  await expect(page.locator('.accounts-view')).toBeVisible();
  await hasUsableBoardViewport(page,'Accounts');
- await page.getByRole('button',{name:'Deals',exact:true}).click();
+ // Phone deliberately hides the desktop Board type toggle. It lives inside
+ // the app's navigation drawer; exercise that real user path instead.
+ if((page.viewportSize()?.width??0)<=700){
+  await page.getByRole('button',{name:'Open SalesShop navigation'}).click();
+  const drawer=page.getByRole('dialog',{name:'SalesShop navigation'});
+  await expect(drawer).toBeVisible();
+  await drawer.locator('.mobile-board-mode-list')
+   .getByRole('button',{name:/^Deals/}).click();
+ }else{
+  await page.getByRole('button',{name:'Deals',exact:true}).click();
+ }
  await hasUsableBoardViewport(page,'Deals after switch');
 });
 
