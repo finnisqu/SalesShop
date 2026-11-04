@@ -1,0 +1,41 @@
+import type {NotebookAgendaItem,NotebookEntry} from '../types/notebook';
+import {localDateKey} from './salesCalendar';
+
+export function dailyNotebookPages(entries:readonly NotebookEntry[]):NotebookEntry[]{
+ return entries.filter(e=>!!e.dailyDate&&!e.isPostItInbox)
+  .slice().sort((a,b)=>(b.dailyDate??'').localeCompare(a.dailyDate??'')||
+   b.updatedAt.localeCompare(a.updatedAt));
+}
+/** Show a short searchable excerpt without exposing stored markup in Home. */
+export function notebookPlainText(contentHtml:string):string{
+ return contentHtml.replace(/<\\/p>/gi,'\n').replace(/<[^>]*>/g,' ')
+  .replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+  .replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&')
+  .replace(/[ \t]+/g,' ').replace(/\n[ \n]+/g,'\n').trim();
+}
+export function agendaOccurrence(item:NotebookAgendaItem,year:number):string{
+ if(!item.annual)return item.date;
+ const monthDay=item.date.slice(5);
+ // Feb 29 repeats only in leap years, rather than silently moving to Mar 1.
+ if(monthDay==='02-29'&&new Date(year,1,29).getMonth()!==1)return '';
+ return String(year)+'-'+monthDay;
+}
+export function notebookCalendarDates(entries:readonly NotebookEntry[],date:string){
+ const year=Number(date.slice(0,4));
+ return entries.flatMap(page=>(page.agendaItems??[])
+  .filter(item=>item.kind==='calendar-date'&&agendaOccurrence(item,year)===date)
+  .map(item=>({entryId:page.id,item,pageTitle:page.title})))
+  .sort((a,b)=>(a.item.time??'').localeCompare(b.item.time??'')||
+   a.item.title.localeCompare(b.item.title));
+}
+export const notebookToday=()=>localDateKey(new Date());
+export interface NotebookCalendarRequest{
+ entryId:string;itemId?:string;selectedText?:string;date?:string;
+}
+export function openNotebookCalendarDate(detail:NotebookCalendarRequest):void{
+ window.dispatchEvent(new CustomEvent<NotebookCalendarRequest>(
+  'salesshop:notebook-calendar-date',{detail}));
+}
+export function agendaTitle(text:string):string{
+ return text.trim().split(/\r?\n/)[0].trim().slice(0,240)||'New calendar date';
+}
