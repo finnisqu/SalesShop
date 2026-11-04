@@ -33,7 +33,7 @@ describe('archived practice quote purge policy',()=>{
    .blockers).toContain('Signed documents and accepted agreements cannot be purged');
   expect(planPracticeQuotePurge(quote({signedAt:date}),[],[],[])
    .blockers).toContain('Signed documents and accepted agreements cannot be purged');
-  expect(planPracticeQuotePurge(quote({history:[{status:'Signed'}] as Quote['history']}),[],[],[])
+  expect(planPracticeQuotePurge(quote({history:[{status:'Signed'}] as unknown as Quote['history']}),[],[],[])
    .blockers).toContain('Signed documents and accepted agreements cannot be purged');
  });
  it('blocks dependent Change Orders and linked personal tasks',()=>{
@@ -50,6 +50,17 @@ describe('archived practice quote purge policy',()=>{
   const plan=planPracticeQuotePurge(quote(),[],[manual,linked],[]);
   expect(plan.blockers).toContain('2 other linked CRM activities need review');
   expect(plan.activityIds).toEqual([]);
+ });
+ it('removes quote-generated Deal/Contact setup history without deleting their records',()=>{
+  const events=[event('project-created','deal'),event('project-stage-changed','stage'),
+   event('contact-created','contact')].map(activity=>({
+    ...activity,metadata:{source:'quote' as const},
+   }));
+  expect(planPracticeQuotePurge(quote(),[],events,[]).activityIds)
+   .toEqual(['deal','stage','contact']);
+  expect(planPracticeQuotePurge(quote(),[],[
+   event('project-created','unrelated')],[]).blockers)
+   .toContain('1 other linked CRM activities need review');
  });
  it('never classifies signed or manual events as removable lifecycle records',()=>{
   expect(PRACTICE_QUOTE_ACTIVITY_TYPES).not.toContain('quote-signed');

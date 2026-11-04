@@ -16,6 +16,13 @@ export const PRACTICE_QUOTE_ACTIVITY_TYPES:readonly Activity['type'][]=[
  'change-order-viewed','change-order-declined','change-order-expired',
 ];
 const purgeTypes=new Set<Activity['type']>(PRACTICE_QUOTE_ACTIVITY_TYPES);
+/** Quote-generated setup breadcrumbs may be purged, but their People/Deals
+ * records themselves remain for separate deliberate review. */
+export function isPracticeQuoteActivity(event:Pick<Activity,'type'|'metadata'>):boolean{
+ return purgeTypes.has(event.type)||
+  (event.metadata?.source==='quote'&&
+   ['contact-created','project-created','project-stage-changed'].includes(event.type));
+}
 
 export interface PracticeQuotePurgePlan {
  blockers:string[];
@@ -42,12 +49,12 @@ export function planPracticeQuotePurge(
  ));
  if(linkedTasks.length)blockers.push(linkedTasks.length+' linked personal tasks');
  const direct=activities.filter(activity=>activity.quoteId===quote.id);
- const protectedEvents=direct.filter(activity=>!purgeTypes.has(activity.type));
+ const protectedEvents=direct.filter(activity=>!isPracticeQuoteActivity(activity));
  const indirect=activities.filter(activity=>activity.quoteId!==quote.id&&
   activity.metadata?.relatedRecords?.some(link=>link.type==='quote'&&link.id===quote.id));
  if(protectedEvents.length||indirect.length)
   blockers.push(protectedEvents.length+indirect.length+' other linked CRM activities need review');
- return {blockers,activityIds:direct.filter(activity=>purgeTypes.has(activity.type)).map(a=>a.id)};
+ return {blockers,activityIds:direct.filter(isPracticeQuoteActivity).map(a=>a.id)};
 }
 
 function errMessage(error:unknown):string {
@@ -92,10 +99,10 @@ export async function purgeArchivedPracticeQuote(quoteId:string):Promise<number>
   if(childrenError)throw new Error('Unable to check dependent Change Orders. Nothing was deleted.');
   if(children?.length)throw new Error('Dependent Change Orders must be reviewed first.');
   const {data:events,error:eventsError}=await supabase.from('activities')
-   .select('id,type').eq('organization_id',org).eq('quote_id',quoteId);
+   .select('id,type,metadata').eq('organization_id',org).eq('quote_id',quoteId);
   if(eventsError)throw new Error('Unable to check quote activity history. Nothing was deleted.');
   const remote=events??[];
-  if(remote.some(event=>!purgeTypes.has(event.type as Activity['type'])))
+  if(remote.some(event=>!isPracticeQuoteActivity(event as Pick<Activity,'type'|'metadata'>)))
    throw new Error('This quote has other CRM activity history. Review it before purging.');
   remoteIds=remote.map(event=>event.id);
   if(remoteIds.length){
