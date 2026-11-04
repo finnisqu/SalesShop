@@ -354,3 +354,13 @@ body { overflow: hidden; }
  }
  .sales-app>.app-header .app-account-zone{align-self:center}
 }
+
+
+@media(min-width:761px){
+ .sales-app>.app-header .global-postit-launcher{width:38px!important;height:38px!important;
+  min-width:38px!important;min-height:38px!important;flex:0 0 38px!important;
+  margin:0!important;padding:0!important;align-self:center!important;border-radius:11px!important;
+  display:grid!important;place-items:center!important;
+  border:1px solid var(--ss-theme-border,#ddd);background:var(--ss-theme-card,#fff);
+  color:var(--ss-theme-ink,#333)}
+}
