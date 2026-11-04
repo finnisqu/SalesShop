@@ -7,7 +7,8 @@ import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useQuoteStore } from '../store/quoteStore';
 import { AccountsBoard } from './AccountsBoard';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
-import { Button, Field, PageHeader } from '../design-system/components';
+import { Button, PageHeader } from '../design-system/components';
+import {BoardQuickCreate} from './BoardQuickCreate';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
@@ -26,6 +27,15 @@ import {DealAssigneeSelect} from '../services/dealAssignees';
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const PROJECT_BOARD_POSITION_KEY = 'salesshop-mobile-board-projects-v1';
 const BOARD_MODE_KEY = 'salesshop-board-mode-v1';
+const BOARD_COMPACT_KEY = 'salesshop-board-compact-v1';
+const BOARD_COLLAPSED_KEY = 'salesshop-board-collapsed-v1';
+
+function savedCollapsedStages():string[] {
+  try {
+    const value=JSON.parse(window.localStorage.getItem(BOARD_COLLAPSED_KEY)||'[]');
+    return Array.isArray(value)?value.filter((item):item is string=>typeof item==='string'):[];
+  }catch{return [];}
+}
 
 function formatDate(value?: string) {
   if (!value) return '';
@@ -258,7 +268,21 @@ export function Board() {
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
-  const [newName, setNewName] = useState('');
+  const [compactCards,setCompactCards]=useState(()=>{
+    try{return window.localStorage.getItem(BOARD_COMPACT_KEY)==='true';}
+    catch{return false;}
+  });
+  const [collapsedStages,setCollapsedStages]=useState<string[]>(savedCollapsedStages);
+  const toggleCompact=()=>setCompactCards(current=>!current);
+  const isStageCollapsed=(mode:'projects'|'accounts',stage:string)=>
+    collapsedStages.includes(mode+':'+stage);
+  const toggleStage=(mode:'projects'|'accounts',stage:string)=>{
+    const key=mode+':'+stage;
+    setCollapsedStages(current=>current.includes(key)?
+      current.filter(item=>item!==key):[...current,key]);
+  };
+  useEffect(()=>{try{window.localStorage.setItem(BOARD_COMPACT_KEY,String(compactCards));}catch{}},[compactCards]);
+  useEffect(()=>{try{window.localStorage.setItem(BOARD_COLLAPSED_KEY,JSON.stringify(collapsedStages));}catch{}},[collapsedStages]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -320,12 +344,6 @@ export function Board() {
 
   const editingProject = projects.find((project) => project.id === editingId) ?? null;
 
-  const quickAdd = (event: FormEvent) => {
-    event.preventDefault();
-    const projectId = createProject(newName);
-    if (projectId) { setNewName(''); setEditingId(projectId); }
-  };
-
   const dropOnStage = (event: DragEvent<HTMLElement>, stage: ProjectStage) => {
     event.preventDefault();
     const projectId = draggedId || event.dataTransfer.getData('text/plain');
@@ -334,10 +352,14 @@ export function Board() {
   };
 
   if (!hydrated) return <WorkspaceLoadingState title="Opening Board" detail="Loading deals and accounts…" />;
-  if (boardMode === 'accounts') return <AccountsBoard onShowProjects={() => setBoardMode('projects')} />;
+  if (boardMode === 'accounts') return <AccountsBoard
+    onShowProjects={() => setBoardMode('projects')}
+    compactCards={compactCards} onToggleCompact={toggleCompact}
+    isStageCollapsed={stage=>isStageCollapsed('accounts',stage)}
+    onToggleStage={stage=>toggleStage('accounts',stage)} />;
 
   return (
-    <main className="board-view">
+    <main className={'board-view'+(compactCards?' is-compact':'')}>
       <PageHeader className="board-header-panel board-foundation-header"
         eyebrow="Sales pipeline" title="Deals"
         description="Move deals from opportunity to completion."
@@ -346,14 +368,14 @@ export function Board() {
             <Button variant="quiet" className="active" aria-pressed={true}>Deals</Button>
             <Button variant="quiet" aria-pressed={false} onClick={() => setBoardMode('accounts')}>Accounts</Button>
           </div>
-          <form className="board-quick-add" onSubmit={quickAdd}>
-            <Field id="new-project-name" label="Quick deal" className="board-foundation-quick-field">
-              {(control) => <div className="board-foundation-quick-row">
-                <input {...control} value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Type a deal name…" />
-                <Button type="submit" variant="secondary" disabled={!newName.trim()}>Add</Button>
-              </div>}
-            </Field>
-          </form>
+          <div className="board-header-tools">
+            <button type="button" className="board-density-toggle"
+              aria-pressed={compactCards} onClick={toggleCompact}
+              title="Show only the name on each card">
+              {compactCards?'Standard cards':'Compact cards'}
+            </button>
+            <BoardQuickCreate kind="Deal" onCreate={name=>createProject(name)} />
+          </div>
         </>}
       />
 
@@ -371,11 +393,12 @@ export function Board() {
         {PROJECT_STAGES.map((stage, stageIndex) => {
           const stageProjects = projectsByStage.get(stage) ?? [];
           const stageTotal = stageProjects.reduce((sum, project) => sum + (project.amount ?? 0), 0);
+          const collapsed=isStageCollapsed('projects',stage);
           return (
             <section
               key={stage}
               data-board-stage={stage}
-              className={`board-column ${dragStage === stage ? 'is-drag-over' : ''}`}
+              className={`board-column ${collapsed?'is-collapsed':''} ${dragStage === stage ? 'is-drag-over' : ''}`}
               onDragOver={(event) => { event.preventDefault(); setDragStage(stage); }}
               onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragStage(null); }}
               onDrop={(event) => dropOnStage(event, stage)}
@@ -385,6 +408,13 @@ export function Board() {
                 <div className="board-column-trailing">
                   {stageTotal > 0 && <strong>{money.format(stageTotal)}</strong>}
                   <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {PROJECT_STAGES.length}</span>
+                  <button type="button" className="board-column-collapse"
+                    aria-expanded={!collapsed}
+                    aria-label={(collapsed?'Expand ':'Collapse ')+stage+' column'}
+                    title={collapsed?'Expand column':'Collapse column'}
+                    onClick={()=>toggleStage('projects',stage)}>
+                    <span aria-hidden="true">{collapsed?'›':'‹'}</span>
+                  </button>
                 </div>
               </header>
               <div className="board-column-rule" aria-hidden="true" />

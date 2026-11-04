@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { inferAccountHealth } from '../services/accountHealth';
-import { buildCrmIntegrityReport } from '../services/crmIdentity';
 import {
   isMobileBoardInteraction,
   rememberMobileBoardStage,
@@ -22,7 +21,7 @@ import {
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { Button, PageHeader } from '../design-system/components';
-import { CrmCleanupPanel } from './CrmCleanupPanel';
+import {BoardQuickCreate} from './BoardQuickCreate';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
@@ -189,8 +188,15 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
   );
 }
 
-export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }) {
+export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isStageCollapsed,onToggleStage}:{
+  onShowProjects:()=>void;
+  compactCards:boolean;
+  onToggleCompact:()=>void;
+  isStageCollapsed:(stage:AccountStage)=>boolean;
+  onToggleStage:(stage:AccountStage)=>void;
+}) {
   const companies = useCrmStore((state) => state.companies);
+  const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const contacts = useCrmStore((state) => state.contacts);
   const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
@@ -200,18 +206,12 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
   const clearFocusedCompany = useNavigationStore((state) => state.clearFocusedCompany);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
-  const [cleanupOpen, setCleanupOpen] = useState(false);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
 
   useEffect(() => {
     hydrateQuotes();
   }, [hydrateQuotes]);
-
-  const integrityReport = useMemo(
-    () => buildCrmIntegrityReport(companies, contacts, projects, quotes),
-    [companies, contacts, projects, quotes],
-  );
 
   const accountsByStage = useMemo(() => {
     const grouped = new Map<AccountStage, AccountRow[]>();
@@ -239,7 +239,7 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
   const editingCompany = companies.find((company) => company.id === editingId) ?? null;
 
   return (
-    <main className="board-view accounts-view">
+    <main className={'board-view accounts-view'+(compactCards?' is-compact':'')}>
       <PageHeader className="board-header-panel accounts-header-panel board-foundation-header"
         eyebrow="Relationship health" title="Accounts"
         description="Same CRM data, viewed by customer relationship instead of deal stage."
@@ -248,11 +248,13 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
             <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Deals</Button>
             <Button variant="quiet" className="active" aria-pressed={true}>Accounts</Button>
           </div>
-          <div className="accounts-header-actions">
-            <div className="accounts-inference-note"><strong>Auto-inferred</strong><span>Each card explains why.</span></div>
-            <Button variant="secondary" className={`accounts-cleanup-button ${integrityReport.issueCount ? 'has-issues' : ''}`} onClick={() => setCleanupOpen(true)}>
-              CRM cleanup{integrityReport.issueCount ? ` · ${integrityReport.issueCount}` : ''}
-            </Button>
+          <div className="board-header-tools">
+            <button type="button" className="board-density-toggle"
+              aria-pressed={compactCards} onClick={onToggleCompact}
+              title="Show only the name on each card">
+              {compactCards?'Standard cards':'Compact cards'}
+            </button>
+            <BoardQuickCreate kind="Account" onCreate={name=>resolveCompany(name,'customer')} />
           </div>
         </>}
       />
@@ -261,8 +263,6 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
         boardRef={boardRef}
         stages={ACCOUNT_STAGES}
         counts={ACCOUNT_STAGES.map((stage) => (accountsByStage.get(stage) ?? []).length)}
-        actions={<button type="button" className="accounts-mobile-tools"
-          onClick={()=>setCleanupOpen(true)} aria-label="Open CRM cleanup">⋯</button>}
       />
       <section
         ref={boardRef}
@@ -272,9 +272,10 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
       >
         {ACCOUNT_STAGES.map((stage, stageIndex) => {
           const accounts = accountsByStage.get(stage) ?? [];
+          const collapsed=isStageCollapsed(stage);
           return (
             <section
-              className={`board-column account-column account-stage-${stage.toLowerCase().replaceAll(' ', '-')}`}
+              className={`board-column account-column ${collapsed?'is-collapsed':''} account-stage-${stage.toLowerCase().replaceAll(' ', '-')}`}
               data-board-stage={stage}
               key={stage}
             >
@@ -282,6 +283,13 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                 <div><h2>{stage}</h2><span>{accounts.length} {accounts.length === 1 ? 'account' : 'accounts'}</span></div>
                 <div className="board-column-trailing">
                   <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {ACCOUNT_STAGES.length}</span>
+                  <button type="button" className="board-column-collapse"
+                    aria-expanded={!collapsed}
+                    aria-label={(collapsed?'Expand ':'Collapse ')+stage+' column'}
+                    title={collapsed?'Expand column':'Collapse column'}
+                    onClick={()=>onToggleStage(stage)}>
+                    <span aria-hidden="true">{collapsed?'›':'‹'}</span>
+                  </button>
                 </div>
               </header>
               <div className="board-column-rule" />
@@ -300,7 +308,6 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
                       onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPreview({kind:'company',id:company.id}); } }}
                       title={mobileInteraction ? 'Tap name to preview' : 'Click name to preview'}
                     >
-                      <div className="project-card-company">{health.stage}</div>
                       <div className="account-card-title-row">
                         <h3><button type="button" className="board-entity-name"
                           aria-label={'Preview account '+company.name}
@@ -332,7 +339,6 @@ export function AccountsBoard({ onShowProjects }: { onShowProjects: () => void }
         setEditingId(null);
         if(focusedCompanyId===editingCompany.id)clearFocusedCompany();
       }} />}
-      {cleanupOpen && <CrmCleanupPanel onClose={() => setCleanupOpen(false)} />}
     </main>
   );
 }

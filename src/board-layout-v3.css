@@ -1,0 +1,220 @@
+/* Board refinement v3 — keep the familiar Kanban surface, but give each stage
+   its own bounded card scroller and support compact/collapsed desktop columns.
+   Do not alter CRM objects or the existing phone-stage carousel. */
+:root[data-sales-theme] .sales-app.view-board .board-header-tools{
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  margin-left:auto;min-width:0;flex:0 0 auto;
+}
+:root[data-sales-theme] .sales-app.view-board
+:is(.board-density-toggle,.board-add-button){
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:40px;border:1px solid var(--ss-theme-border);
+  border-radius:9px;padding:8px 12px;
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  font:750 12px/1.3 var(--ss-font-body);cursor:pointer;white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app.view-board .board-density-toggle[aria-pressed=true]{
+  border-color:var(--ss-theme-accent);
+  background:var(--ss-theme-tint);
+  box-shadow:inset 0 -2px var(--ss-theme-accent);
+}
+:root[data-sales-theme] .sales-app.view-board .board-add-button {
+  background:var(--ss-theme-accent);border-color:var(--ss-theme-accent);
+  color:var(--ss-theme-contrast);
+}
+:root[data-sales-theme] .sales-app.view-board
+:is(.board-density-toggle,.board-add-button,.board-column-collapse):focus-visible{
+  outline:2px solid var(--ss-focus);outline-offset:2px;
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-collapse {
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 28px;width:28px;height:30px;
+  border:1px solid var(--ss-theme-border);
+  border-radius:8px;background:transparent;color:var(--ss-theme-muted);
+  cursor:pointer;font:600 19px/1 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-board .board-column-collapse:hover{
+  background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+}
+/* Card details remain in the DOM and record data. Compact mode only changes
+   presentation so reopening standard cards restores everything immediately. */
+:root[data-sales-theme] .sales-app.view-board .board-view.is-compact
+  :is(.project-card,.account-card) {
+  min-height:0;height:auto;flex:0 0 auto;
+  padding:10px 11px;transform:none;box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-board .board-view.is-compact .project-card
+ :is(.project-card-pin,.project-card-company,.project-card-title-value,
+     .project-card-facts,.project-next-action,.project-attention-flags,
+     .project-last-touch,.project-card-open,.account-card-title-value,
+     .account-card-stats,.account-card-annual-value,.account-card-reason){
+  display:none;
+}
+:root[data-sales-theme] .sales-app.view-board .board-view.is-compact
+ :is(.project-card-title-row,.account-card-title-row){
+  display:block;min-width:0;margin:0;
+}
+:root[data-sales-theme] .sales-app.view-board .board-view.is-compact
+ :is(.project-card-title-row h3,.account-card-title-row h3) {
+  margin:0;color:var(--ss-theme-ink);font:750 12px/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-board .board-view.is-compact
+ .board-entity-name {
+  text-align:left;white-space:normal;overflow-wrap:anywhere;
+  font:inherit;line-height:inherit;
+}
+/* Small create sheet shared by Deals and Accounts, no navigation. Portal is
+   mounted in body and uses root theme tokens for both light/dark appearances. */
+.board-create-backdrop{
+  position:fixed;inset:0;z-index:4500;
+  display:grid;place-items:center;
+  padding:16px;background:rgba(15,20,24,.42);
+}
+.board-create-sheet{
+  display:grid;gap:12px;width:min(440px,100%);min-width:0;
+  max-height:calc(100dvh - 32px);overflow-y:auto;
+  padding:16px;border:1px solid var(--ss-theme-border,#ddd);
+  border-radius:15px;background:var(--ss-theme-card,#fff);
+  color:var(--ss-theme-ink,#333);
+  box-shadow:0 22px 75px rgba(0,0,0,.24);
+  font-family:var(--ss-font-body,system-ui);
+}
+.board-create-sheet>header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.board-create-sheet>header>div{min-width:0}
+.board-create-sheet>header small{
+  font:750 10px/1.3 var(--ss-font-body,system-ui);
+  letter-spacing:.08em;color:var(--ss-theme-muted,#777);
+}
+.board-create-sheet>header h2{
+  margin:3px 0 0;font:750 20px/1.2 var(--ss-font-body,system-ui);
+  color:var(--ss-theme-ink,#333);
+}
+.board-create-sheet>header>button{
+  flex:0 0 37px;width:37px;height:37px;
+  border:1px solid var(--ss-theme-border,#ddd);border-radius:9px;
+  background:transparent;color:inherit;font-size:22px;cursor:pointer;
+}
+.board-create-sheet>label{
+  margin-top:6px;font-size:12px;font-weight:750;
+}
+.board-create-sheet>input{
+  width:100%;min-width:0;box-sizing:border-box;min-height:45px;
+  padding:10px 12px;border:1px solid var(--ss-theme-border,#ddd);
+  border-radius:9px;background:var(--ss-theme-base,#fff);
+  color:var(--ss-theme-ink,#333);font-size:16px;
+}
+.board-create-sheet>p[role=alert]{
+  margin:0;font-size:12px;color:var(--ss-danger,#af4438);
+}
+.board-create-sheet>footer{
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;
+}
+.board-create-sheet>footer>button{
+  min-height:42px;padding:9px 13px;
+  border:1px solid var(--ss-theme-border,#ddd);border-radius:9px;
+  background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#333);
+  font:750 12px/1.3 var(--ss-font-body,system-ui);cursor:pointer;
+}
+.board-create-sheet>footer>button.is-primary{
+  background:var(--ss-theme-accent,#c4a467);
+  border-color:var(--ss-theme-accent,#c4a467);
+  color:var(--ss-theme-contrast,#262626);
+}
+.board-create-sheet>footer>button:disabled{opacity:.46;cursor:default}
+@media(min-width:701px) and (min-height:521px){
+  /* The Board is a flex viewport: only the horizontal stage rail and each
+     card stack scroll. Three or thirty cards cannot spill off the mat. */
+  :root[data-sales-theme] .sales-app.view-board .role-perspective-content{
+    display:flex;flex:1 1 0;height:0;min-height:0;overflow:hidden;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-view{
+    display:flex;flex:1 1 0;min-height:0;height:0;overflow:hidden;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+   :is(.project-board,.account-board) {
+    flex:1 1 0;height:0;min-height:0;
+    overflow-x:auto;overflow-y:hidden;
+    align-items:stretch;overscroll-behavior:contain;
+    padding-bottom:14px;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-column{
+    flex:0 0 274px;width:274px;min-width:274px;
+    height:100%;min-height:0;max-height:100%;
+    overflow:hidden;box-sizing:border-box;padding-bottom:0;
+  }
+  :root[data-sales-theme] .sales-app.view-board .account-board .account-column{
+    flex-basis:246px;width:246px;min-width:246px;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-column-header{
+    flex:0 0 auto;min-height:62px;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-column-rule{flex:0 0 1px}
+  :root[data-sales-theme] .sales-app.view-board .board-card-stack {
+    flex:1 1 0;height:0;min-height:0;
+    overflow-x:hidden;overflow-y:auto;
+    padding:0 4px 12px 0;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-gutter:stable;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-card-stack>.project-card {
+    flex:0 0 auto;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-column.is-collapsed{
+    flex:0 0 49px;width:49px;min-width:49px;
+    padding-inline:4px;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+  .board-column.is-collapsed .board-column-header{
+    min-height:0;flex:1 1 auto;
+    display:flex;flex-direction:column-reverse;
+    justify-content:flex-end;align-items:center;
+    padding:9px 1px;gap:12px;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+  .board-column.is-collapsed .board-column-header>div:first-child{
+    display:flex;flex-direction:column;align-items:center;
+    width:100%;min-width:0;gap:8px;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+  .board-column.is-collapsed .board-column-header h2{
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    white-space:nowrap;
+    line-height:1.2;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+  .board-column.is-collapsed .board-column-header span {
+    margin:0;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+  .board-column.is-collapsed .board-column-trailing {
+    flex-direction:column-reverse;gap:5px;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+  .board-column.is-collapsed .board-column-trailing>strong,
+  :root[data-sales-theme] .sales-app.view-board
+  .board-column.is-collapsed :is(.board-column-rule,.board-card-stack) {
+    display:none;
+  }
+}
+@media(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+  /* The existing mobile stage picker and independent per-stage scrolling win.
+     Collapse is a desktop-only interaction. */
+  :root[data-sales-theme] .sales-app.view-board .board-column-collapse{display:none}
+  :root[data-sales-theme] .sales-app.view-board .board-header-tools{
+    flex:0 1 auto;margin:0;gap:6px;
+  }
+  :root[data-sales-theme] .sales-app.view-board
+  :is(.board-density-toggle,.board-add-button){
+    min-height:38px;padding:7px 9px;font-size:11px;
+  }
+  .board-create-backdrop{padding:0;align-items:end;justify-items:stretch}
+  .board-create-sheet{
+    width:100%;max-height:min(88dvh,750px);
+    box-sizing:border-box;border-radius:20px 20px 0 0;
+    padding:16px 15px calc(17px + env(safe-area-inset-bottom));
+  }
+}

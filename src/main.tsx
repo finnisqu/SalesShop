@@ -125,6 +125,8 @@ import './mobile-consistency-pass.css';
 import './workspace-refinement-v1.css';
 // One desktop scale, content width, and toolbar placement across internal workspaces.
 import './design-system/workspace-visual-system-v2.css';
+// Board columns own vertical scrolling; optional compact cards and collapsible stages.
+import './board-layout-v3.css';
 
 recordSalesShopBoot();
 
