@@ -39,14 +39,16 @@ test('document library creates independent Quick Quote and Builder Rate editors'
   await dialog.getByRole('button',{name:/Create document/}).click();
   await expect(beta.getByRole('textbox',{name:'Quote title'})).toBeVisible();
   await expect(beta.getByRole('region',{name:'Pricing Schedule workspace'})).toHaveCount(0);
-  await beta.getByRole('button',{name:/All documents/}).first().click();
+  await beta.getByRole('button',{name:/Documents/}).first().click();
   await create(page,'Builder Rate Schedule');
   await expect(beta.getByRole('region',{name:'Builder Rate Schedule editor'})).toBeVisible();
   await expect(beta.getByRole('region',{name:'Pricing Schedule workspace'})
     .getByText('Builder Rate Schedule')).toBeVisible();
   await expect(beta.getByRole('button',{name:/Plan Pricing|Spreadsheet/})).toHaveCount(0);
-  await beta.getByRole('button',{name:/All documents/}).first().click();
-  await expect(beta.getByRole('button',{name:/Builder Rate Schedule/}).first()).toBeVisible();
+  await beta.getByRole('button',{name:/Documents/}).first().click();
+  await expect(beta.getByRole('region',{name:'documents table'})
+    .getByRole('row').filter({hasText:'Builder Rate Schedule'})
+    .getByRole('button',{name:'QC 1 Document'})).toBeVisible();
 });
 
 test('create new community from a previous builder rate agreement without making it live-linked',async({page},info)=>{
@@ -55,7 +57,7 @@ test('create new community from a previous builder rate agreement without making
   await create(page,'Builder Rate Schedule');
   const editor=beta.getByRole('region',{name:'Builder Rate Schedule editor'});
   await editor.getByRole('button',{name:/Add material|\+ Material|material level/i}).first().click();
-  await beta.getByRole('button',{name:/All documents/}).first().click();
+  await beta.getByRole('button',{name:/Documents/}).first().click();
   await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
   const dialog=page.getByRole('dialog',{name:'New Sales Document'});
   await dialog.getByRole('button',{name:/^Community Plan Pricing/}).click();
@@ -66,10 +68,11 @@ test('create new community from a previous builder rate agreement without making
   await expect(beta.getByRole('region',{name:'Community Plan Pricing editor'})).toBeVisible();
   await expect(beta.getByRole('navigation',{name:'Calculated builder workflow'})).toBeVisible();
   await expect(beta.getByRole('button',{name:/Spreadsheet/})).toHaveCount(0);
-  await beta.getByRole('button',{name:/All documents/}).first().click();
+  await beta.getByRole('button',{name:/Documents/}).first().click();
   await beta.getByRole('button',{name:'Community Plan Pricing',exact:true}).click();
   await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
-  await expect(beta.locator('.qmb-listcard').filter({hasText:'QC 1 Document'})).toBeVisible();
+  await expect(beta.getByRole('region',{name:'documents table'})
+    .getByRole('button',{name:'QC 1 Document'})).toBeVisible();
 });
 
 test('Custom Spreadsheet opens directly in isolated Univer editor',async({page},info)=>{
@@ -131,6 +134,8 @@ test('Builder Rate company template snapshots stock colors and approved level se
   await expect(cards.nth(1)).toContainText('$44.00 / SF');
   await expect(cards.nth(0).locator('textarea')).toHaveValue('Azul Plata');
   await expect(cards.nth(1).locator('textarea')).toHaveValue('Bright White');
-  await beta.getByRole('button',{name:/All documents/}).first().click();
-  await expect(beta.locator('.qmb-listcard').filter({hasText:'Builder Rate Schedule'})).toBeVisible();
+  await beta.getByRole('button',{name:/Documents/}).first().click();
+  await expect(beta.getByRole('region',{name:'documents table'})
+    .getByRole('row').filter({hasText:'Builder Rate Schedule'})
+    .getByRole('button',{name:'QC 1 Document'})).toBeVisible();
 });
