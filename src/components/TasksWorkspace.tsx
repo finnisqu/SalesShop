@@ -76,6 +76,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [startDate,setStartDate]=useState(recovered?.startDate??draft.startDate??'');
   const [dueTime,setDueTime]=useState(recovered?.dueTime??draft.dueTime??'');
   const [reminderAt,setReminderAt]=useState(recovered?.reminderAt??reminderValue(draft.reminderAt));
+  const [showReminder,setShowReminder]=useState(Boolean(recovered?.reminderAt??draft.reminderAt));
   const [queue,setQueue]=useState(recovered?.queue??draft.queue??'');
   const [notes,setNotes]=useState(recovered?.notes??draft.notes??'');
   const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>recovered?.selectedLinks??normalizedTaskAssociations(initial));
@@ -125,28 +126,45 @@ export function TaskEditor({initial,onCancel,onSave}:{
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
       <TaskAssociationsField options={associations.map(item=>({...item,
         linked:{...item.linked,label:item.label}}))} value={selectedLinks} onChange={setSelectedLinks}/>
-      <div className="tasks-editor-grid">
+      <section className="tasks-editor-section">
+       <div className="tasks-editor-section-heading"><strong>Details</strong></div>
+       <div className="tasks-editor-grid">
         <label>Type<select value={type} onChange={e=>setType(e.target.value as TaskType)}>
-          {types.map(t=><option key={t} value={t}>{t==='todo'?'To-do':t==='follow-up'?'Follow-up':t[0].toUpperCase()+t.slice(1)}</option>)}</select></label>
+         {types.map(t=><option key={t} value={t}>{t==='todo'?'To-do':t==='follow-up'?'Follow-up':t[0].toUpperCase()+t.slice(1)}</option>)}</select></label>
         <label>Priority<select value={priority} onChange={e=>setPriority(e.target.value as TaskPriority)}>
-          {priorities.map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
+         {priorities.map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
         <label>Status<select value={status} onChange={e=>setStatus(e.target.value as TaskStatus)}>
-          {statusOptions.map(x=><option value={x} key={x}>{x==='in-progress'?'In progress':x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
+         {statusOptions.map(x=><option value={x} key={x}>{x==='in-progress'?'In progress':x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
         <label>Queue / category<input list="tasks-queue-choices" value={queue} maxLength={80}
-          placeholder="e.g. Quotes" onChange={e=>setQueue(e.target.value)}/>
-          <datalist id="tasks-queue-choices">{commonQueues.map(q=><option key={q} value={q}/>)}</datalist>
-          <small className="tasks-editor-due-hint">Choose an existing queue or type a new name.</small>
+         placeholder="e.g. Quotes" onChange={e=>setQueue(e.target.value)}/>
+         <datalist id="tasks-queue-choices">{commonQueues.map(q=><option key={q} value={q}/>)}</datalist>
         </label>
-        <label>Start on<input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}/>
-          <small className="tasks-editor-due-hint">When you plan to begin; blank means available now.</small></label>
-        <label>Due date<input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}/>
-          <small className="tasks-editor-due-hint">Deadline, not the date the task becomes visible.</small></label>
-        <label>Due time<input type="time" disabled={!dueDate} value={dueTime} onChange={e=>setDueTime(e.target.value)}/></label>
-        <label className="tasks-editor-full">Reminder (in-app only)<input type="datetime-local" value={reminderAt}
-          onChange={e=>setReminderAt(e.target.value)}/></label>
-      </div>
-      <label>Notes<textarea rows={3} maxLength={5000} value={notes} onChange={e=>setNotes(e.target.value)}
-        placeholder="Context, next steps, or call notes…"/></label>
+       </div>
+      </section>
+      <section className="tasks-editor-section">
+       <div className="tasks-editor-section-heading"><strong>Schedule</strong>
+        <small>Leave Start blank if available now.</small></div>
+       <div className="tasks-editor-grid tasks-editor-date-grid">
+        <label>Start on<input type="date" value={startDate} title="Optional start date"
+         onChange={e=>setStartDate(e.target.value)}/></label>
+        <label>Due date<input type="date" value={dueDate} title="Task deadline"
+         onChange={e=>setDueDate(e.target.value)}/></label>
+        <label>Due time<input type="time" disabled={!dueDate} value={dueTime}
+         onChange={e=>setDueTime(e.target.value)}/></label>
+       </div>
+       <button type="button" className="tasks-editor-reminder-toggle"
+        aria-expanded={showReminder} onClick={()=>setShowReminder(value=>!value)}>
+        <span aria-hidden="true">◷</span> {showReminder?'Hide reminder':'Add / edit reminder'}
+        {reminderAt&&<small>Set</small>}
+       </button>
+       {showReminder&&<label className="tasks-editor-reminder-label">
+        Reminder (in-app only)<input type="datetime-local" value={reminderAt}
+         onChange={e=>setReminderAt(e.target.value)}/>
+       </label>}
+      </section>
+      <label className="tasks-editor-notes">Notes<textarea rows={2} maxLength={5000}
+       value={notes} onChange={e=>setNotes(e.target.value)}
+       placeholder="Context or next steps…"/></label>
       <p className="tasks-editor-due-hint">Unsaved changes are kept on this device if you close or reload SalesShop.</p>
       <footer><button type="button" onClick={discard}>Discard draft</button>
        <button type="button" onClick={close}>Close</button>
