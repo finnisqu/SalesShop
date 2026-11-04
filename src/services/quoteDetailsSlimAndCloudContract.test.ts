@@ -42,7 +42,8 @@ describe('Quick Quote Details single-column and secure cloud-save contract',()=>
     expect(settings).toContain('setQuotesBetaEnabled');
     expect(settings).toContain('Open Detailed Editor');
     expect(settings).toContain('Open Quick Quote');
-    expect(quoteUi).toContain('qmb-library-detailed-link');
+    expect(quoteUi).toContain("label:'Detailed Editor'");
+    expect(quoteUi).not.toContain('qmb-library-heading-actions');
   });
   it('inserts fresh owned quotes before upserting existing ones without widening RLS',()=>{
     expect(sync).toContain("const freshQuotes=quotes.filter(row=>!guards.has(String(row.id)));");
