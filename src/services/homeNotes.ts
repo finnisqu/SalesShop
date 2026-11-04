@@ -21,7 +21,7 @@ export function homeNoteSummary(text:string):string{
  const lines=text.trim().split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  return lines.slice(1).join(' ').slice(0,180);
 }
-export interface HomeNoteRequest{mode:'create'|'preview';objectId?:string}
+export interface HomeNoteRequest{mode:'create'|'preview';objectId?:string;entryId?:string}
 export function openHomeNote(detail:HomeNoteRequest={mode:'create'}):void{
  window.dispatchEvent(new CustomEvent<HomeNoteRequest>('salesshop:home-note',{detail}));
 }
