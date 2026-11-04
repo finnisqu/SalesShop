@@ -7,6 +7,8 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
+import {canEditTeamArea} from '../services/teamDepartments';
 
 export interface CalendarTaskRequest {
  mode:'create'|'preview'|'edit';id?:string;dueDate?:string;
@@ -18,7 +20,9 @@ export function requestTaskModal(detail:CalendarTaskRequest){
 /** Globally mounted editor; Home and Calendar remain visible underneath the modal. */
 export function TaskModalHost(){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
-  userId=useAuthStore(s=>s.user?.id);
+  userId=useAuthStore(s=>s.user?.id),
+  teamRole=useAuthStore(s=>s.teamRole),
+  department=useAuthStore(s=>s.teamDepartment);
  const scope=taskScope(mode,org,userId);
  const storedScope=usePersonalTaskStore(s=>s.scope);
  const tasks=usePersonalTaskStore(s=>s.tasks);
@@ -27,6 +31,7 @@ export function TaskModalHost(){
  const complete=usePersonalTaskStore(s=>s.complete);
  const reopen=usePersonalTaskStore(s=>s.reopen);
  const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
+ const canLog=mode==='local'||canEditTeamArea(teamRole,department,'crm');
  const nav=useNavigationStore();
  const quotes=useQuoteStore(s=>s.quotes);
  const [request,setRequest]=useState<CalendarTaskRequest|null>(null);
@@ -96,6 +101,10 @@ export function TaskModalHost(){
       {relatedQuote&&<button type="button" onClick={()=>{
        close();nav.openQuote(relatedQuote.id);
       }}>Open linked quote ↗</button>}
+      {canLog&&task.status!=='completed'&&task.status!=='canceled'&&
+       <button type="button" onClick={()=>{
+        close();openActivityComposer({taskId:task.id});
+       }}>Complete + log activity</button>}
       <button type="button" onClick={()=>{
        if(task.status==='completed')reopen(task.id);else complete(task.id);
        close();
