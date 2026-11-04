@@ -531,3 +531,84 @@
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+/* Same compact section-navigation rhythm in Connections as Catalog. */
+@media(min-width:761px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-section-row {
+   gap:8px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs {
+   display:flex;align-items:center;gap:6px;padding:5px;
+   border:1px solid var(--ss-theme-border);border-radius:10px;
+   background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab {
+   display:flex;align-items:center;justify-content:center;
+   flex:1 1 0;min-width:100px;min-height:38px;
+   border:1px solid transparent;border-radius:8px;
+   padding:8px 12px;text-align:center;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab strong {
+   font:700 12px/1.2 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab small {
+   display:none;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-tabs.ss-section-tabs .ss-section-tab.active {
+   border-color:var(--ss-theme-border);background:var(--ss-theme-tint);
+   box-shadow:inset 0 -2px var(--ss-theme-accent);
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-section-more>button {
+   min-height:48px;border:1px solid var(--ss-theme-border);
+   border-radius:9px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+   font:700 12px/1.2 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app.view-board .board-header-panel.board-foundation-header {
+   padding-inline:max(var(--ss-page-inset),calc((100vw - var(--ss-workspace-width)) / 2));
+ }
+}
+/* Documents library only; leave the Quick Quote form, approval screens and
+   customer document unchanged. The app's global header already says Quotes. */
+@media(min-width:1000px) and (min-height:550px){
+ .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-desktop-main>.qmb-top {display:none}
+ .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-desktop-main>.qmb-pagecontent {
+   max-width:var(--ss-workspace-width,1360px);
+   width:100%;margin-inline:auto;
+   padding-top:16px;
+ }
+ .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-pagecontent>.qmb-kicker,
+ .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-pagecontent>.qmb-subtitle {
+   display:none;
+ }
+ .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-pagecontent>h1 {
+   font:750 26px/1.2 var(--ss-font-body);
+   letter-spacing:-.03em;
+   margin:0 0 10px;
+ }
+ .sales-app.view-quotes .qmb .qmb-library-results-head {
+   align-items:center;
+ }
+ .sales-app.view-quotes .qmb .qmb-library-results-head .qmb-library-heading-actions {
+   display:flex;flex-direction:row;flex-wrap:nowrap;
+   align-items:center;justify-content:flex-end;
+   gap:8px;min-width:0;
+ }
+ .sales-app.view-quotes .qmb .qmb-library-results-head
+ :is(.qmb-library-new-inline,.qmb-library-detailed-link) {
+   min-height:40px;white-space:nowrap;padding:9px 12px;
+   border-radius:9px;font:700 12px/1.2 var(--ss-font-body);
+ }
+ .sales-app.view-quotes .qmb .qmb-library-results-head .qmb-library-new-inline {
+   background:var(--qmb-accent);color:var(--qmb-on-accent);
+   border:1px solid var(--qmb-accent);
+ }
+ .sales-app.view-quotes .qmb .qmb-library-results-head .qmb-library-detailed-link {
+   background:var(--qmb-card);color:var(--qmb-ink);
+   border:1px solid var(--qmb-border);
+ }
+}
