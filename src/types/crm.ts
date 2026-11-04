@@ -98,6 +98,10 @@ export interface ActivityMetadata {
   interactionMethod?: 'email'|'call'|'text'|'video-call'|'in-person';
   /** Source actor for personal calendar display; remains in existing JSON metadata. */
   recordedByUserId?:string;
+  /** Additional associated CRM records beyond the legacy single-ID columns. */
+  relatedRecords?:Array<{type:'contact'|'company'|'project'|'quote';id:string;label?:string}>;
+  editedAt?:string;
+  editedByUserId?:string;
   notes?: string;
   quoteNumber?: string;
   revision?: number;
