@@ -110,7 +110,7 @@ export function CleanupCenter(){
   }
   return undefined;
  };
- const focused=focusTrail.at(-1);
+ const focused=focusTrail[focusTrail.length-1];
  const focusRow=focused?findRow(focused.kind,focused.id):undefined;
  const related=focused?recordManagementDependencies(focused.kind,focused.id,{
   companies,contacts:people,projects:deals,activities,quotes,tasks:ownTasks,
@@ -203,8 +203,10 @@ export function CleanupCenter(){
     }
     await removeRow(item);
     setSelected(old=>old.filter(key=>key!==item.kind+':'+item.id));
-    setFocusTrail(current=>current.at(-1)?.kind===item.kind&&
-      current.at(-1)?.id===item.id?current.slice(0,-1):current);
+    setFocusTrail(current=>{
+     const last=current[current.length-1];
+     return last?.kind===item.kind&&last.id===item.id?current.slice(0,-1):current;
+    });
    }
    setPending(null);setConfirmation('');
   }catch(e){
@@ -318,9 +320,10 @@ export function CleanupCenter(){
         </small>}
        </div>
        {row&&<div className="sales-record-dependency-actions">
-        <button type="button" disabled={busy}
+        <button type="button" aria-label={'Inspect '+row.name} disabled={busy}
          onClick={()=>openRecord(row)}>Inspect</button>
-        <button type="button" disabled={busy||row.blockers.length>0||
+        <button type="button" aria-label={(row.action==='archive'?'Archive ':'Delete ')+row.name}
+         disabled={busy||row.blockers.length>0||
           (row.kind==='quote'?!canQuotes:!canCrm)}
          onClick={()=>perform([row])}>
           {row.action==='archive'?'Archive':'Delete'}
@@ -347,8 +350,9 @@ export function CleanupCenter(){
        Cannot delete yet: {item.blockers.join(' · ')}. Unlink dependent records first.
       </small>}
      </div>
-     {item.blockers.length>0&&
-      <button type="button" className="sales-record-open" disabled={busy}
+     {(item.blockers.length>0||item.kind==='quote')&&
+      <button type="button" className="sales-record-open"
+       aria-label={'Review links for '+item.name} disabled={busy}
        onClick={()=>openRecord(item)}>Review links</button>}
      <button type="button" disabled={busy||item.blockers.length>0||
       (item.kind==='quote'?!canQuotes:!canCrm)}
