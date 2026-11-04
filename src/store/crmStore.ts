@@ -46,6 +46,8 @@ interface CrmState {
   relinkContactCompany: (contactId: string, companyId?: string) => void;
   resolveContact: (input: ContactInput) => string | undefined;
   createProject: (name: string, stage?: ProjectStage, details?: CreateProjectDetails) => string | null;
+  /** Server-confirmed, conflict-aware reassignment; no optimistic silent save. */
+  assignProject: (projectId:string,assignedUserId?:string)=>Promise<void>;
   updateProject: (projectId: string, patch: ProjectPatch, context?: StageChangeContext) => void;
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
   deleteProject: (projectId: string) => void;
@@ -358,6 +360,50 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     persist(ensured.companies, get().contacts, projects, activities);
     set({ companies: ensured.companies, projects, activities });
     return project.id;
+  },
+
+  assignProject:async(projectId,assignedUserId)=>{
+    const current=get().projects.find(p=>p.id===projectId);
+    if(!current)throw new Error('Deal is no longer available.');
+    const selected=assignedUserId||undefined;
+    if((current.assignedUserId||undefined)===selected)return;
+    const auth=useAuthStore.getState();
+    if(auth.mode==='cloud'){
+      if(!auth.organizationId||!auth.user?.id||!supabase||
+         !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm'))
+        throw new Error('You do not have permission to assign Deals.');
+      if(selected&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(selected))
+        throw new Error('Choose a valid teammate.');
+      const organizationId=auth.organizationId;
+      const updatedAt=now();
+      let query=supabase.from('projects').update({
+         assigned_user_id:selected??null,updated_at:updatedAt,
+       }).eq('organization_id',organizationId).eq('id',projectId);
+      // Compare-and-swap prevents an older tab from silently reassigning
+      // another salesperson's Deal. RLS enforces editor permission; a
+      // composite membership FK rejects cross-company assignees.
+      query=current.assignedUserId
+        ?query.eq('assigned_user_id',current.assignedUserId)
+        :query.is('assigned_user_id',null);
+      const {data,error}=await query.select('assigned_user_id,updated_at').maybeSingle();
+      if(error)throw error;
+      if(!data)throw new Error('This Deal assignment changed elsewhere, or the Deal is still saving. Refresh and try again.');
+      const latestAuth=useAuthStore.getState();
+      if(latestAuth.mode!=='cloud'||latestAuth.user?.id!==auth.user.id||
+         latestAuth.organizationId!==organizationId)
+        throw new Error('Workspace changed during assignment. Reopen the Deal in the current account.');
+      const latest=get().projects.find(p=>p.id===projectId);
+      if(!latest||latest.assignedUserId!==current.assignedUserId)
+        throw new Error('Deal changed during assignment. Refresh before making further changes.');
+      const serverTime=String(data.updated_at??updatedAt);
+      const nextTime=Date.parse(serverTime)>Date.parse(latest.updatedAt)?serverTime:now();
+      const projects=get().projects.map(p=>p.id===projectId
+        ?{...p,assignedUserId:selected,updatedAt:nextTime}:p);
+      persist(get().companies,get().contacts,projects,get().activities);
+      set({projects});
+      return;
+    }
+    if(selected)throw new Error('Team assignments require a connected workspace.');
   },
 
   updateProject: (projectId, patch, context) => {
