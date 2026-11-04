@@ -304,7 +304,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           <span className="home-note-list-indicator" aria-hidden="true"/>
           <span className="home-note-list-copy">
            <strong>{homeNoteTitle(note.text)}</strong>
-           <small>{homeNoteSummary(note.text)}</small>
+           <small>{homeNoteSummary(note.text)||
+            ('Edited '+new Date(note.updatedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}))}</small>
           </span>
          </button>):<p>No notes yet. Use + to capture a thought.</p>}
       </div>
