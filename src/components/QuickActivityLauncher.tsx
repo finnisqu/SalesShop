@@ -83,6 +83,8 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
    writeSavedDraft(draftKey,{open,method,notes,occurred,links,createFollowUp,followUpDate,workflowTaskId});
  },[draftKey,open,method,notes,occurred,links,createFollowUp,followUpDate,workflowTaskId]);
  useEffect(()=>{
+  // Only the single app-level headless editor handles global action requests.
+  if(!headless)return;
   const openForDate=(event:Event)=>{
    const request=(event as CustomEvent<ActivityComposerRequest>).detail??{};
    const day=request.date;
@@ -119,7 +121,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   };
   window.addEventListener('salesshop:open-activity',openForDate);
   return()=>window.removeEventListener('salesshop:open-activity',openForDate);
- },[mode,orgId,currentUser,notes,links,workflowTaskId]);
+ },[headless,mode,orgId,currentUser,notes,links,workflowTaskId]);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
  const projects=useCrmStore(s=>s.projects);
