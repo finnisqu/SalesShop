@@ -97,7 +97,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
       !window.confirm('Replace your unfinished Activity draft with this task-linked interaction?'))return;
     setWorkflowTaskId(current.id);
     setMethod(taskActivityMethod(current));
-    setLinks(normalizedTaskAssociations(current));
+    setLinks(normalizedTaskAssociations(current).filter(link=>link.type!=='notebook'));
     setNotes('');setOccurred(dateTimeLocal());
     setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
     setError('');
@@ -158,7 +158,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   if(!permitted)return setError('Your role cannot log shared CRM interactions.');
   const person=primaryName(links);
   const fallback=methods.find(x=>x.id===method)?.label||'Interaction';
-  if(!links.length)return setError('Link at least one person, company, deal, or quote.');
+  if(!links.some(link=>link.type!=='notebook'))return setError('Link at least one person, company, deal, or quote.');
   const timestamp=new Date(occurred);
   if(!occurred||!Number.isFinite(timestamp.getTime()))return setError('Choose a valid date and time.');
   if(timestamp.getTime()>Date.now()+60000)return setError('Completed interactions cannot be dated in the future. Create a task or follow-up instead.');
