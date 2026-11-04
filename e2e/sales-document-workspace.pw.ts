@@ -43,9 +43,9 @@ test('mobile Quick Quote requires a name; defended copy retains original and res
   // On phones the text is visually hidden to keep the header compact.
   await expect(beta.locator('.sales-document-save-status').first())
     .toHaveAttribute('title',/automatically saved on this device/);
-  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Contract review',exact:true}).click();
-  await expect(beta.locator('.qmb-preview')).toBeVisible();
-  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Takeoffs & selections',exact:true}).click();
+  // On mobile the guided progress replaces the hidden desktop Quote views.
+  await beta.getByRole('button',{name:/Continue to Build Quote/}).click();
+  await expect(beta.getByRole('navigation',{name:'Build Quote views'})).toBeVisible();
   await expect(title).toHaveValue('Smith Residence');
   const options=await openOptions(page);
   await options.getByRole('button',{name:/Make independent copy/}).click();

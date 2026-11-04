@@ -38,12 +38,16 @@ test('HOME Quick Create opens a named Quote and its recent Quote can be reopened
  await sidecar.getByRole('tab',{name:'Quotes'}).click();
  await expect(sidecar.getByRole('button',{name:/Home journey quote/})).toBeVisible();
  await sidecar.getByRole('button',{name:/Home journey quote/}).click();
+ // First click is intentionally a CRM preview rather than immediate navigation.
+ const preview=page.getByRole('dialog',{name:'Quote metadata preview'});
+ await expect(preview).toBeVisible();
+ await preview.getByRole('button',{name:'Open quote'}).click();
  await expect(page).toHaveURL(/\/quotes\/quote_/);
  await expect(editor.getByRole('textbox',{name:'Quote title'})).toHaveValue('Home journey quote');
  if(info.project.name==='phone-390')
   await page.getByRole('button',{name:'Back to Documents'}).click();
  else
-  await editor.getByRole('button',{name:/All documents/}).click();
+  await editor.getByRole('button',{name:/Documents/}).first().click();
  await expect(editor.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
 });
 

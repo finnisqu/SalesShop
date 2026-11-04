@@ -41,6 +41,6 @@ for(const device of ['phone-390','desktop-1280']){
     if(device==='phone-390')
       await expect(beta.getByRole('button',{name:/Add an Area/}).first()).toBeVisible();
     else
-      await expect(beta.getByRole('button',{name:'Add Area from navigator'})).toBeVisible();
+      await expect(beta.getByRole('button',{name:'+ Area',exact:true}).first()).toBeVisible();
   });
 }

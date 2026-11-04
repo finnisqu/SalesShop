@@ -21,7 +21,7 @@ test('Quick Quote Details flows into unified Area tables, strike-through and cal
   await expect(beta.getByRole('navigation',{name:'Build Quote views'})).toBeVisible();
   await expect(beta.locator('.qqs-mobile-empty')).toBeVisible();
   await beta.getByRole('button',{name:/Add an Area/}).first().click();
-  await expect(beta.locator('.qqs-row')).toHaveCount(1);
+  await expect(beta.locator('.qqs-row:not(.qqs-general)')).toHaveCount(1);
   await expect(beta.getByRole('button',{name:/Continue to Pricing Review/})).toBeVisible();
   // This stage is still internal; no send or issue dialog may open automatically.
   await expect(beta.getByRole('dialog',{name:'Review and issue quote'})).toHaveCount(0);
