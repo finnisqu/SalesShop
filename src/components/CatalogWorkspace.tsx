@@ -64,19 +64,14 @@ function OtherCatalogComingSoon() {
   return (
     <section className="catalog-other-coming-soon">
       <Panel className="catalog-other-card catalog-foundation-other-card"
-        heading={<><span className="board-eyebrow">Accessories & shop inputs</span><h2>Other</h2></>}>
+        heading={<><h2>Other</h2><span className="catalog-other-state">Planned</span></>}>
         <p>
-          This catalog will hold the physical items that do not belong under Materials or Sinks—whether we sell them directly
-          to a customer or consume them while fabricating and installing countertops.
+          Accessories, shop supplies, and related purchasing items will live here.
         </p>
         <div className="catalog-other-example-grid">
           {examples.map((item) => <span key={item}>{item}</span>)}
         </div>
-        <div className="catalog-coming-soon-badge">Coming soon!</div>
-        <small>
-          The goal is one place for product cost, sell price, supplier, inventory relevance, and margin impact without forcing
-          every shop input to become a customer-facing quote item.
-        </small>
+        <small>Examples of future catalog categories.</small>
       </Panel>
     </section>
   );

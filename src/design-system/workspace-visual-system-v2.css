@@ -375,3 +375,159 @@
     border-radius:10px;border-color:var(--ss-theme-border);
   }
 }
+
+/* Catalog section parity — one header vocabulary and one action palette. */
+@media (min-width:761px) {
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+  :is(.materials-workspace.is-catalog-embedded,.rates-workspace.is-catalog-embedded,
+      .sinks-workspace.is-catalog-embedded) > :is(.rates-workspace-header,.sinks-workspace-header),
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-tags-heading {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    min-height:62px;
+    gap:10px;
+    margin:0 0 10px;
+    padding:12px 14px;
+    border:1px solid var(--ss-theme-border);
+    border-radius:10px;
+    box-shadow:none;
+    background:var(--ss-theme-card);
+    color:var(--ss-theme-ink);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+  :is(.materials-workspace.is-catalog-embedded,.rates-workspace.is-catalog-embedded,
+      .sinks-workspace.is-catalog-embedded) > :is(.rates-workspace-header,.sinks-workspace-header)
+    :is(h1,.ss-page-header__title),
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-tags-heading h2,
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-other-card h2 {
+    font:750 20px/1.2 var(--ss-font-body);
+    letter-spacing:-.02em;
+    color:var(--ss-theme-ink);
+    margin:0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+  :is(.materials-workspace.is-catalog-embedded,.rates-workspace.is-catalog-embedded,
+      .sinks-workspace.is-catalog-embedded) > :is(.rates-workspace-header,.sinks-workspace-header)
+    :is(.ss-page-header__eyebrow,.board-eyebrow,.ss-page-header__description,p),
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-tags-heading :is(small,p) {
+    display:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+  :is(.rates-workspace-header,.sinks-workspace-header) :is(
+    .rates-mode-actions,.sinks-header-actions,.ss-page-header__actions
+  ) {align-items:center;gap:7px}
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+  :is(.rates-workspace-header,.sinks-workspace-header) .rates-mode-badge:not(.is-editing){
+    display:none;
+  }
+  /* Gold denotes the intentional edit/create action, regardless of which
+     catalog page owns the underlying control implementation. */
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+  :is(.materials-workspace,.rates-workspace,.sinks-workspace)
+  :is(.rates-edit-button:not(.materials-builder-rates-link),.rates-done-button,
+      .sinks-edit-button,.sinks-done-button),
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-tags-heading>button,
+  :root[data-sales-theme] .sales-app.view-catalog
+  .supplier-workbench.is-record-mode .supplier-record-actions>.ss-button:first-child {
+    min-height:40px;
+    border:1px solid var(--ss-theme-accent);
+    border-radius:9px;
+    background:var(--ss-theme-accent);
+    color:var(--ss-theme-contrast);
+    padding:9px 13px;
+    font:750 12px/1.2 var(--ss-font-body);
+  }
+  /* Older sinks/rates editing states carried hard-coded dark primary colors. */
+  :root[data-sales-theme] .sales-app.view-catalog
+  .sinks-workspace .sinks-header-actions .ss-button.sinks-done-button,
+  :root[data-sales-theme] .sales-app.view-catalog
+  .rates-workspace .rates-mode-actions .ss-button.rates-done-button {
+    background:var(--ss-theme-accent) !important;
+    border-color:var(--ss-theme-accent) !important;
+    color:var(--ss-theme-contrast) !important;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+  :is(.materials-workspace,.rates-workspace,.sinks-workspace)
+  :is(.materials-builder-rates-link,.rates-builder-level-shortcut,
+      .rates-add-button,.sinks-add-model) {
+    min-height:40px;
+    border:1px solid var(--ss-theme-border);
+    border-radius:9px;
+    background:var(--ss-theme-card);
+    color:var(--ss-theme-ink);
+    padding:9px 12px;
+    font:700 12px/1.2 var(--ss-font-body);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host :is(.rates-mode-actions,.sinks-header-actions) .rates-mode-badge.is-editing {
+    font:750 10px/1.3 var(--ss-font-body);
+  }
+}
+/* Empty catalog categories use the same full-width content canvas, not
+   their own centered landing-page card or explanatory sales pitch. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-coming-soon {
+  display:block;
+  height:auto;
+  min-height:100%;
+  padding:10px 0;
+  overflow-y:auto;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+  .catalog-other-card.catalog-foundation-other-card.ss-panel {
+  width:100%;
+  max-width:none;
+  padding:0;
+  margin:0;
+  border:1px solid var(--ss-theme-border);
+  border-radius:10px;
+  box-shadow:none;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-card .ss-panel__header {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 14px;
+  border-bottom:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-card .ss-panel__header h2{
+  margin:0;
+  font:750 20px/1.2 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-state {
+  padding:5px 9px;border-radius:999px;
+  border:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-tint);color:var(--ss-theme-muted);
+  font:700 10px/1.2 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-card .ss-panel__body {
+  display:grid;gap:13px;padding:15px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-card .ss-panel__body>p {
+  margin:0;
+  max-width:none;
+  color:var(--ss-theme-muted);
+  font:400 12px/1.5 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-example-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;margin:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-example-grid span {
+  min-height:44px;
+  border:1px solid var(--ss-theme-border);border-radius:8px;
+  background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+  padding:10px 12px;
+  font:700 12px/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-other-card .ss-panel__body>small {
+  display:none;
+}
+@media(max-width:700px) {
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-other-example-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
