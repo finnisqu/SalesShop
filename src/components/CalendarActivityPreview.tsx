@@ -147,7 +147,11 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       <section className="activity-preview-details">
        <h3>Activity details</h3>
        <dl><dt>When</dt><dd>{new Date(activity.occurredAt).toLocaleString()}</dd>
-        <dt>Method</dt><dd>{methodLabel(activity.metadata?.interactionMethod??'call')}</dd>
+        <dt>Method</dt><dd>{activity.metadata?.interactionMethod?
+         methodLabel(activity.metadata.interactionMethod):'Interaction'}</dd>
+        {activity.metadata?.editedAt&&<>
+         <dt>Edited</dt><dd>{new Date(activity.metadata.editedAt).toLocaleString()}</dd>
+        </>}
        </dl>
        {activity.metadata?.notes?<p className="activity-preview-note">{activity.metadata.notes}</p>:
         <p className="activity-preview-empty">No notes were recorded.</p>}
