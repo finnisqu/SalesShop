@@ -9,6 +9,7 @@ import {recordManagementDependencies,type ManagedKind} from '../services/recordM
 import {canEditTeamArea} from '../services/teamDepartments';
 import {canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
 import {planPracticeQuotePurge,purgeArchivedPracticeQuote} from '../services/practiceQuotePurge';
+import {useSignatureStore} from '../store/signatureStore';
 import {crmDeletionBlockers} from '../services/crmDeletionBlockers';
 import {canDeleteAutomaticCrmHistory} from '../services/recordManagementActivity';
 import type {Quote} from '../types/quote';
@@ -18,7 +19,7 @@ type CleanupKind=ManagedKind;
 interface CleanupRow{
  kind:CleanupKind;id:string;name:string;detail:string;
  blockers:string[];action:'delete'|'archive'|'purge';
- quoteNumber?:string;activityCount?:number;
+ quoteNumber?:string;activityCount?:number;signedPractice?:boolean;
 }
 type Tab=Exclude<CleanupKind,'task'>;
 type FocusRef={kind:CleanupKind;id:string};
@@ -32,6 +33,7 @@ export function CleanupCenter(){
  const [practiceAcknowledged,setPracticeAcknowledged]=useState(false);
  const [testMode,setTestMode]=useState(false);
  const [focusTrail,setFocusTrail]=useState<FocusRef[]>([]);
+ const signatures=useSignatureStore(s=>s.signatures);
  const quotes=useQuoteStore(s=>s.quotes),archiveQuote=useQuoteStore(s=>s.archiveQuote),
   deleteQuoteFromManagement=useQuoteStore(s=>s.deleteQuoteFromManagement);
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
@@ -68,9 +70,11 @@ export function CleanupCenter(){
   const refs={companies,contacts:people,projects:deals,activities,quotes, tasks:ownTasks};
   const q=visibleQuotes.map((quote:Quote):CleanupRow=>{
    const plan=quote.archivedAt?
-    planPracticeQuotePurge(quote,quotes,activities,ownTasks):null;
+    planPracticeQuotePurge(quote,quotes,activities,ownTasks,
+     signatures.some(record=>record.quoteId===quote.id)):null;
    return {kind:'quote',id:quote.id,name:quote.title||'Untitled Quote',
     quoteNumber:quote.quoteNumber,activityCount:plan?.activityIds.length,
+    signedPractice:plan?.signed,
     detail:quote.quoteNumber+' · '+quote.status+(quote.archivedAt?' · Archived':''),
     blockers:plan?.blockers??[],
     action:quote.archivedAt?'purge':
@@ -101,7 +105,7 @@ export function CleanupCenter(){
    action:'delete',
   }));
   return [...q,...p,...c,...d,...a];
- },[visibleQuotes,quotes,people,companies,deals,activities,ownTasks]);
+ },[visibleQuotes,quotes,people,companies,deals,activities,ownTasks,signatures]);
  const findRow=(kind:CleanupKind,id:string):CleanupRow|undefined=>{
   if(kind==='task'){
    const task=ownTasks.find(item=>item.id===id);
@@ -140,7 +144,11 @@ export function CleanupCenter(){
    usePersonalTaskStore.getState().remove(item.id);return;
   }
   if(item.kind==='quote'){
-   if(item.action==='purge')await purgeArchivedPracticeQuote(item.id);
+   if(item.action==='purge'){
+    const signed=item.signedPractice===true;
+    const phrase='PURGE '+(signed?'SIGNED ':'')+item.quoteNumber;
+    await purgeArchivedPracticeQuote(item.id,phrase);
+   }
    else if(item.action==='archive')archiveQuote(item.id);
    else await deleteQuoteFromManagement(item.id);
    return;
@@ -175,7 +183,7 @@ export function CleanupCenter(){
  const confirmPending=async()=>{
   if(!pending?.length||busy||!canManage)return;
   const phrase=pending.some(item=>item.action==='purge')
-   ?'PURGE '+pending[0].quoteNumber:
+   ?'PURGE '+(pending[0].signedPractice?'SIGNED ':'')+pending[0].quoteNumber:
     pending.some(item=>item.action==='delete')?'DELETE':'ARCHIVE';
   if(confirmation.trim()!==phrase)return;
   if(pending.some(item=>item.action==='purge')&&!practiceAcknowledged)return;
@@ -202,9 +210,11 @@ export function CleanupCenter(){
         (auth.teamRole==='owner'||auth.teamRole==='admin'))))
        throw new Error('This quote is unavailable or not manageable by your account.');
      if(item.action==='purge'){
-       const plan=planPracticeQuotePurge(current,allQuotes,crm.activities,own);
+       const plan=planPracticeQuotePurge(current,allQuotes,crm.activities,own,
+        useSignatureStore.getState().signatures.some(record=>record.quoteId===current.id));
        if(plan.blockers.length)throw new Error(plan.blockers.join('; '));
-       if(!current.archivedAt||current.quoteNumber!==item.quoteNumber)
+       if(!current.archivedAt||current.quoteNumber!==item.quoteNumber||
+        plan.signed!==item.signedPractice)
         throw new Error('This archived quote changed. Review it again before purging.');
      }else if(current.archivedAt||
        (canPermanentlyDeleteQuote(current,allQuotes)?'delete':'archive')!==item.action)
@@ -238,8 +248,10 @@ export function CleanupCenter(){
  };
  if(!open||!canManage)return null;
  const isPurging=Boolean(pending?.some(item=>item.action==='purge'));
+ const signedPurge=isPurging&&pending?.[0]?.signedPractice===true;
  const isDeleting=Boolean(pending?.some(item=>item.action==='delete'));
- const confirmWord=isPurging?'PURGE '+pending?.[0]?.quoteNumber:
+ const confirmWord=isPurging?'PURGE '+(signedPurge?'SIGNED ':'')+
+  pending?.[0]?.quoteNumber:
   isDeleting?'DELETE':'ARCHIVE';
  return createPortal(<div className="sales-cleanup-backdrop" onPointerDown={e=>{
   if(e.target===e.currentTarget&&!busy){setOpen(false);setPending(null);}
@@ -291,7 +303,9 @@ export function CleanupCenter(){
    {pending ? <div className="sales-record-confirmation" role="group" aria-label="Confirm record removal">
      <strong>{pending.length===1?pending[0].name:pending.length+' selected records'}</strong>
      <p>{isPurging
-       ?'This permanently removes the archived document, its revisions, customer share links and '+
+       ?(signedPurge?'This signed test contract includes an accepted signature. ':
+         'This archived practice quote has no accepted signature. ')+
+        'This permanently removes the document, its stored signatures, revisions, share links and '+
         (pending?.[0]?.activityCount??0)+' quote-specific CRM events. Previously sent links will stop working. '+
         'Associated People, Companies, Deals and unrelated Activities are not deleted.'
        :isDeleting
@@ -300,8 +314,9 @@ export function CleanupCenter(){
      {isPurging&&<label className="sales-practice-purge-ack">
       <input type="checkbox" checked={practiceAcknowledged} disabled={busy}
        onChange={e=>setPracticeAcknowledged(e.target.checked)}/>
-      <span>I confirm this was a practice/test quote, not an actual customer agreement,
-       and understand permanent deletion cannot be undone.</span>
+      <span>I certify this {signedPurge?'signed contract':'quote'} was a practice/test,
+       is not a real customer agreement, and must be permanently erased.
+       I understand this cannot be undone.</span>
      </label>}
      <label>Type {confirmWord} to confirm
        <input autoFocus value={confirmation} aria-label="Type confirmation word"
@@ -312,7 +327,7 @@ export function CleanupCenter(){
        <button type="button" className="is-danger" disabled={busy||
          confirmation.trim()!==confirmWord||(isPurging&&!practiceAcknowledged)}
          onClick={()=>void confirmPending()}>
-         {busy?'Working…':isPurging?'Purge practice quote':
+         {busy?'Working…':isPurging?(signedPurge?'Purge signed test contract':'Purge practice quote'):
           isDeleting?'Permanently delete':'Archive'} ({pending.length})
        </button>
      </div>
@@ -335,7 +350,8 @@ export function CleanupCenter(){
        <button type="button" disabled={busy||focusRow.blockers.length>0||
         (focusRow.kind==='quote'?!canQuotes:!canCrm)}
         onClick={()=>perform([focusRow])}>
-         {focusRow.action==='purge'?'Purge this archived practice quote':
+         {focusRow.action==='purge'?(focusRow.signedPractice?
+          'Purge this signed test contract':'Purge this archived practice quote'):
           focusRow.action==='archive'?'Archive this quote':'Delete this '+(
           focusRow.kind==='person'?'person':focusRow.kind==='company'?'company':
           focusRow.kind==='deal'?'deal':focusRow.kind==='activity'?'activity':
