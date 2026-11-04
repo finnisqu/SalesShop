@@ -12,6 +12,8 @@ import {useQuoteStore} from '../store/quoteStore';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {useNotebookStore} from '../store/notebookStore';
+import {homeNotes,openHomeNote} from '../services/homeNotes';
 
 /** Globally mounted editor; Home and Calendar remain visible underneath the modal. */
 export function TaskModalHost(){
@@ -30,6 +32,7 @@ export function TaskModalHost(){
  const canLog=mode==='local'||canEditTeamArea(teamRole,department,'crm');
  const nav=useNavigationStore();
  const quotes=useQuoteStore(s=>s.quotes);
+ const notebookEntries=useNotebookStore(s=>s.entries);
  const [request,setRequest]=useState<CalendarTaskRequest|null>(null);
  const [linkedPreview,setLinkedPreview]=useState<PreviewRecord|null>(null);
  useEffect(()=>{
@@ -53,12 +56,29 @@ export function TaskModalHost(){
    .some(link=>link.type==='quote'&&link.id===quote.id))):undefined;
  const editTarget=request?.mode==='create'?{
   title:request.title??'',dueDate:request.dueDate,type:request.type??'todo',
-  associations:request.associations??[],
+  associations:request.associations??[],notes:request.notes,
+  ...(request.noteSource?{
+   sourceObjectId:'home-note:'+request.noteSource.objectId,
+   draftIdentity:'home-note:'+request.noteSource.objectId,
+   ...(request.noteSource.mode==='keep'?{
+    sourceText:request.notes?.slice(0,2000),sourceLabel:'Home Note',
+   }:{}),
+  }:{}),
  }:request?.mode==='edit'?tasks.find(t=>t.id===request.id&&!t.deletedAt):null;
  const close=()=>setRequest(null);
  const save=(changes:TaskChanges&{title:string})=>{
-  if(request?.mode==='create')create(changes.title,changes);
-  else if(request?.id)update(request.id,changes);
+  if(request?.mode==='create'){
+   const newId=create(changes.title,changes);
+   if(!newId)return; // Never remove a note without a Task.
+   if(request.noteSource?.mode==='convert'){
+    const {entryId,objectId}=request.noteSource;
+    const entry=useNotebookStore.getState().entries.find(e=>e.id===entryId&&e.isPostItInbox);
+    const note=entry?.objects.find(o=>o.type==='post-it'&&o.id===objectId);
+    // A concurrently edited note is preserved rather than discarded.
+    if(note?.type==='post-it'&&note.text===request.notes)
+     useNotebookStore.getState().deleteObject(entryId,objectId);
+   }
+  }else if(request?.id)update(request.id,changes);
   close();
  };
  const openLink=(link:TaskLink)=>{
@@ -94,6 +114,13 @@ export function TaskModalHost(){
      </div>
      <footer>
       <button type="button" onClick={close}>Close</button>
+      {task.sourceObjectId?.startsWith('home-note:')&&
+        homeNotes(notebookEntries).some(note=>
+         note.objectId===task.sourceObjectId?.slice('home-note:'.length))&&
+        <button type="button" onClick={()=>{
+         close();openHomeNote({mode:'preview',
+          objectId:task.sourceObjectId!.slice('home-note:'.length)});
+        }}>Open source note</button>}
       {relatedQuote&&<button type="button" onClick={()=>{
        close();nav.openQuote(relatedQuote.id);
       }}>Open linked quote ↗</button>}
