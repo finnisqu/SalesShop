@@ -8,6 +8,8 @@ import { DeveloperConsole } from './DeveloperConsole';
 export function AuthGate({ children }: { children: ReactNode }) {
   const initialize = useAuthStore((state) => state.initialize);
   const ready = useAuthStore((state) => state.ready);
+  const loadingStep = useAuthStore((state) => state.loadingStep);
+  const [slowStart,setSlowStart]=useState(false);
   const busy = useAuthStore((state) => state.busy);
   const mode = useAuthStore((state) => state.mode);
   const user = useAuthStore((state) => state.user);
@@ -43,6 +45,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [guestInviteError, setGuestInviteError] = useState(false);
 
   useEffect(() => { void initialize(); }, [initialize]);
+  useEffect(()=>{
+    if(ready){setSlowStart(false);return;}
+    const timer=window.setTimeout(()=>setSlowStart(true),12000);
+    return()=>window.clearTimeout(timer);
+  },[ready]);
   useEffect(() => {
     if (!invited) return;
     const token = pendingTeamInviteToken();
@@ -55,7 +62,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, [invited]);
 
   if (mode === 'local') return <>{children}</>;
-  if (!ready) return <div className="auth-loading">Connecting SalesShop…</div>;
+  if (!ready) return <div className="auth-loading" role="status">
+    <span>{loadingStep||'Connecting SalesShop…'}</span>
+    {slowStart&&<div className="auth-loading-slow">
+      Taking longer than expected. If this does not finish, refresh the page.
+    </div>}
+  </div>;
   if (user && inviteProblem && !passwordRecovery) {
     const switching = inviteProblem === 'switch-account';
     const invalid = inviteProblem === 'unavailable';

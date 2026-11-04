@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { supabase, supabaseConfigured } from '../lib/supabase';
 import { appAbsoluteUrl } from '../lib/appUrl';
 import { clearCloudIdentityCache, ensureCurrentWorkspace, hydrateCloudDocuments, startCloudSync, stopCloudSync } from '../services/cloudSync';
-import {recordAuthLifecycle} from '../services/appLifecycleDiagnostics';
+import {recordAuthLifecycle,timeStartupStep} from '../services/appLifecycleDiagnostics';
 import {reuseReadyWorkspace} from '../services/authSessionPolicy';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
@@ -18,6 +18,7 @@ interface AuthState {
   mode: BackendMode;
   ready: boolean;
   busy: boolean;
+  loadingStep: string;
   user: User | null;
   session: Session | null;
   organizationId: string | null;
@@ -156,13 +157,13 @@ async function performSessionApplication(session: Session | null) {
     return;
   }
 
-  useAuthStore.setState({ busy: true, ready: false, user: session.user, session,
+  useAuthStore.setState({ busy: true, ready: false, loadingStep:'Checking workspace access…', user: session.user, session,
     organizationId: null, platformRole: null, teamRole: null, teamDepartment: 'general', inviteProblem: null, activeInvitePreview: null, error: null, notice: null });
   try {
     // Consult only a boolean, JWT-scoped RPC before any tenant workspace
     // selection, creation, local hydration, or cloud sync.
     if (!supabase) throw new Error('Cloud is unavailable.');
-    const { data: isDeveloper, error: developerError } = await supabase.rpc('is_platform_developer');
+    const { data: isDeveloper, error: developerError } = await timeStartupStep('developer-check',()=>supabase.rpc('is_platform_developer'));
     if (developerError) throw developerError;
     if (isDeveloper === true) {
       clearCloudIdentityCache();
@@ -191,16 +192,18 @@ async function performSessionApplication(session: Session | null) {
     // Join the invited organization BEFORE workspace bootstrap or data hydration.
     // Otherwise an invited account could seed and switch to an unrelated shop.
     const acceptedOrganizationId = await acceptPendingInvitation();
-    const organizationId = await ensureCurrentWorkspace();
+    const organizationId = await timeStartupStep('workspace',ensureCurrentWorkspace);
     if (acceptedOrganizationId && acceptedOrganizationId !== organizationId) {
       throw new Error('Invitation joined a different workspace than the one selected.');
     }
     // Only owners bootstrapping their own shop may import existing local sales data.
     // Joining members must never upload another device's CRM/quotes into the team.
     if (!supabase) throw new Error('Cloud is unavailable.');
-    const { data: membership, error: memberError } = await supabase.from('organization_members')
-      .select('role,job_function').eq('organization_id', organizationId).eq('user_id', session.user.id).single();
+    useAuthStore.setState({loadingStep:'Checking team membership…'});
+    const { data: membership, error: memberError } = await timeStartupStep('membership',()=>supabase!.from('organization_members')
+      .select('role,job_function').eq('organization_id', organizationId).eq('user_id', session.user.id).single());
     if (memberError || !membership) throw memberError ?? new Error('No team access found.');
+    useAuthStore.setState({loadingStep:'Loading sales records…'});
     await hydrateCloudDocuments(organizationId, session.user.id, {
       allowCompanySeed: maySeedCompanyFromLocal(membership.role as TeamRole, Boolean(acceptedOrganizationId)),
       allowNotebookSeed: !acceptedOrganizationId,
@@ -250,6 +253,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   mode: supabaseConfigured ? 'cloud' : 'local',
   ready: !supabaseConfigured,
   busy: false,
+  loadingStep: 'Restoring session…',
   user: null,
   session: null,
   organizationId: null,
@@ -272,18 +276,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (initializePromise) return initializePromise;
 
     initializePromise = (async () => {
-      set({ mode: 'cloud', ready: false, busy: true, error: null });
+      set({ mode: 'cloud', ready: false, busy: true, loadingStep:'Restoring login session…', error: null });
       if (!authListenerStarted) {
         authListenerStarted = true;
         supabase.auth.onAuthStateChange((event, session) => {
           if (event === 'PASSWORD_RECOVERY') useAuthStore.setState({ passwordRecovery: true });
-          void applySession(session,event);
+          // Avoid async Supabase RPC/data calls under GoTrue's auth lock.
+          // getSession below owns initial hydration; auth changes run in a new task.
+          if(event==='INITIAL_SESSION')return;
+          window.setTimeout(()=>{void applySession(session,event);},0);
         });
       }
 
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await timeStartupStep('session',()=>supabase.auth.getSession());
       if (error) {
-        set({ ready: true, busy: false, error: error.message });
+        set({ ready: true, busy: false, loadingStep:'', error: error.message });
         return;
       }
       await applySession(data.session);

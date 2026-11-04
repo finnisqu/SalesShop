@@ -141,3 +141,9 @@
   .auth-card { padding: 24px 22px; }
   .auth-invite-summary { padding: 13px; }
 }
+
+/* Make slow-start status readable without adding more controls to auth. */
+.auth-loading-slow{
+ max-width:320px;margin:12px auto 0;
+ font-size:12px;line-height:1.5;color:var(--ss-theme-muted,#81786a);
+}

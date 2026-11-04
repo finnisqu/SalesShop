@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import {timeStartupStep} from './appLifecycleDiagnostics';
 import {
   CLOUD_DOCUMENT_SAVED_EVENT,
   readLocalDocument,
@@ -127,8 +128,20 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   const canSeedOrgFromLocal = options.allowCompanySeed === true && !previousScope;
   const canSeedNotebookFromLocal = options.allowNotebookSeed !== false && (!previousScope || previousScope.userId === userId);
 
-  // CRM uses normalized tables. The old org_documents.crm row is rollback-only.
-  const normalizedCrm = await loadNormalizedCrm(orgId);
+  // Parallelize READS only, after membership/organization authorization is
+  // established by authStore. Keep the existing CRM -> Quotes -> Signatures ->
+  // Notebook write and seed sequence, including pending-quote recovery.
+  // The old org_documents.crm row is rollback-only.
+  const localQuotes = readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument | null;
+  const preferredActiveQuoteId = localQuotes?.schemaVersion === 2 ? localQuotes.activeQuoteId : null;
+  const [normalizedCrm, normalizedQuotes, normalizedSignatures, notebookResult] = await Promise.all([
+    timeStartupStep('crm',()=>loadNormalizedCrm(orgId)),
+    timeStartupStep('quotes',()=>loadNormalizedQuotes(orgId, preferredActiveQuoteId)),
+    timeStartupStep('signatures',()=>loadNormalizedSignatures(orgId)),
+    timeStartupStep('notebook',()=>supabase!.from('private_documents')
+      .select('document').eq('owner_id',userId)
+      .eq('document_key',PRIVATE_DOCUMENT_KEY).maybeSingle()),
+  ]);
   if (normalizedCrm) {
     writeLocalDocument(CRM_DOCUMENT_KEY, normalizedCrm, false);
   } else if (canSeedOrgFromLocal) {
@@ -143,9 +156,6 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   }
 
   // Quotes use normalized current rows + immutable revision snapshots.
-  const localQuotes = readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument | null;
-  const preferredActiveQuoteId = localQuotes?.schemaVersion === 2 ? localQuotes.activeQuoteId : null;
-  const normalizedQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
   const pendingQuoteSync=readPendingQuoteSync({organizationId:orgId,userId});
   // Keep only explicitly pending drafts owned by this user. A stale local
   // cache cannot overwrite issued revisions, archived rows or anyone else's
@@ -171,7 +181,6 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   }
 
   // Signatures are immutable business records. Existing cloud records always win.
-  const normalizedSignatures = await loadNormalizedSignatures(orgId);
   if (normalizedSignatures) {
     writeLocalDocument(SIGNATURES_DOCUMENT_KEY, normalizedSignatures, false);
   } else if (canSeedOrgFromLocal) {
@@ -188,12 +197,7 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   }
 
   // Notebook remains intentionally private and document-shaped.
-  const { data: notebookRow, error: notebookError } = await supabase
-    .from('private_documents')
-    .select('document')
-    .eq('owner_id', userId)
-    .eq('document_key', PRIVATE_DOCUMENT_KEY)
-    .maybeSingle();
+  const { data: notebookRow, error: notebookError } = notebookResult;
   if (notebookError) throw notebookError;
 
   if (notebookRow?.document !== undefined) {
