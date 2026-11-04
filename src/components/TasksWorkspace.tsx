@@ -54,7 +54,7 @@ type TaskEditorRecovery={
  dueDate:string;startDate:string;dueTime:string;reminderAt:string;
  queue:string;notes:string;selectedLinks:TaskAssociation[];
 };
-type ActiveTaskDraft={kind:'new'|'existing';id?:string};
+type ActiveTaskDraft={kind:'new'|'existing';id?:string;draftIdentity?:string};
 export function TaskEditor({initial,onCancel,onSave}:{
   initial:Partial<PersonalTask>|TaskPromotion;onCancel:()=>void;onSave:(changes:TaskChanges&{title:string})=>void;
 }){
@@ -64,7 +64,8 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const initialTaskId='id'in initial&&typeof initial.id==='string'?initial.id:null;
   const initialLinks=normalizedTaskAssociations(initial);
   // Separate contextual new-task drafts from a user's general new-task draft.
-  const draftIdentity=initialTaskId??(initialLinks.length
+  const draftIdentity=initialTaskId??('draftIdentity' in initial&&typeof initial.draftIdentity==='string'
+   ?initial.draftIdentity:initialLinks.length
    ?'new:context:'+initialLinks[0].type+':'+initialLinks[0].id:'new');
   const scopeKey=draftStorageKey('task:'+draftIdentity,auth.mode,auth.organizationId,auth.user?.id);
   const activeKey=draftStorageKey('task:active',auth.mode,auth.organizationId,auth.user?.id);
@@ -92,6 +93,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
    writeSavedDraft<ActiveTaskDraft>(activeKey,{
     kind:initialTaskId?'existing':'new',
     id:initialTaskId??undefined,
+    draftIdentity:initialTaskId?undefined:draftIdentity,
    });
   },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks]);
   const close=()=>{clearSavedDraft(activeKey);onCancel();};
@@ -232,7 +234,7 @@ export function TasksWorkspace(){
     const activeKey=draftStorageKey('task:active',mode,orgId,userId);
     const pending=readSavedDraft<ActiveTaskDraft>(activeKey);
     if(!pending)return;
-    if(pending.kind==='new')setEditing({title:''});
+    if(pending.kind==='new')setEditing({title:'',draftIdentity:pending.draftIdentity});
     else {
       const current=tasks.find(t=>t.id===pending.id&&!t.deletedAt&&t.workspaceScope===scope);
       if(current)setEditing(current);
