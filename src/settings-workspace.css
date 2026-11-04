@@ -402,7 +402,7 @@
 .sales-app.view-settings .settings-maintenance-tools button{
  min-height:42px;padding:10px 12px;border:1px solid var(--ss-theme-border,#ddd);
  background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#333);
- border-radius:9px;font:700 12px/1.2 inherit;cursor:pointer;
+ border-radius:9px;font-size:12px;font-weight:700;line-height:1.2;cursor:pointer;
 }
 .sales-app.view-settings .settings-record-management-actions button:hover,
 .sales-app.view-settings .settings-maintenance-tools button:hover{
