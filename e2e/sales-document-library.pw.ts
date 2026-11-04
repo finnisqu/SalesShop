@@ -23,8 +23,11 @@ async function makeDocument(page:Page,template:string,name:string){
   await expect(picker).not.toBeVisible();
   if((page.viewportSize()?.width??1200)<=700)
     await page.getByRole('button',{name:'Back to Documents'}).click();
-  else
-    await beta.getByRole('button',{name:/Documents/}).first().click();
+  else {
+    // Stage navigation replaces the hidden desktop rail on Quick Quotes.
+    for(let attempt=0;attempt<3&&await beta.locator('.qmb-quote-editor').isVisible();attempt++)
+      await beta.locator('.qmb-quote-footer .qmb-guided-back').click();
+  }
   await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
 }
 test('mobile documents search by name/template and filter by status without losing the new action',async({page},info)=>{
