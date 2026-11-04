@@ -33,6 +33,18 @@ describe('Settings record management safety contract',()=>{
   expect(modal).toContain('Unlink dependent records first.');
   expect(modal).toContain('openRecord(item)');
  });
+ it('allows dependency drill-down with an intact parent/search context and safe personal task removal',()=>{
+  expect(modal).toContain('setFocusTrail(current=>');
+  expect(modal).toContain('sales-record-dependency-trail');
+  expect(modal).toContain('recordManagementDependencies(focused.kind,focused.id');
+  expect(modal).toContain('setFocusTrail(current=>current.slice(0,-1))');
+  expect(modal).toContain('aria-label="Manage linked records"');
+  expect(modal).toContain("aria-label={'Review links for '+item.name}");
+  expect(modal).toContain("if(item.kind==='task')");
+  expect(modal).toContain('usePersonalTaskStore.getState().remove(item.id)');
+  expect(modal).toContain('if(!itemTask)throw new Error');
+  expect(modal).toContain('onClick={()=>perform([row])}');
+ });
  it('archives protected quotes and remotely verifies draft deletion before changing local state',()=>{
   expect(modal).toContain("if(item.action==='archive')archiveQuote(item.id)");
   expect(modal).toContain("await deleteQuoteFromManagement(item.id)");
