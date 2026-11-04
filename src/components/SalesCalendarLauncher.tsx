@@ -87,8 +87,12 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const createFromSidecar=(kind:SidecarCreateKind)=>{
   setSidecarCreateOpen(false);
   if(kind==='quote'&&mayCreateQuote)openGuidedQuoteCreation();
-  if(kind==='activity'&&mayLogActivity)openActivityComposer();
-  if(kind==='note')openHomeNote();
+  if(kind==='activity'&&mayLogActivity){
+   setSidecarTab('recent');openActivityComposer();
+  }
+  if(kind==='note'){
+   setSidecarTab('notes');openHomeNote();
+  }
  };
  useEffect(()=>{
   if(!sidecarCreateOpen)return;
