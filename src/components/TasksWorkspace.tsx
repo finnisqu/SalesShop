@@ -319,30 +319,26 @@ export function TasksWorkspace(){
   return <main className="tasks-workspace" aria-label="SalesShop tasks">
     <header className="tasks-header">
       <div><span className="tasks-eyebrow">PERSONAL WORK QUEUE</span><h1>Tasks</h1>
-        <p>Calls, follow-ups, reminders and work to finish. Keep completed tasks as a record.</p></div>
+        <p>Calls, follow-ups and work to finish.</p></div>
       <div className="tasks-header-actions">
        <SalesCalendarLauncher compact />
-       <button type="button" className="tasks-cleanup-action"
-        onClick={()=>window.dispatchEvent(new Event('salesshop:open-task-cleanup'))}
-        disabled={!scope} title="Review and reschedule overdue tasks">Review overdue tasks</button>
        <button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})} disabled={!scope}>+ New task</button>
       </div>
     </header>
     <div className="tasks-summary" aria-label="Task counts">
       {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
-        <button key={key} type="button" onClick={()=>setFilter(key)} className={filter===key?'is-selected':''}>
+        <button key={key} type="button" onClick={()=>setFilter(key)} aria-pressed={filter===key}
+          title={key==='scheduled'?'Tasks you plan to start later':label+' tasks'}
+          className={filter===key?'is-selected':''}>
           <strong>{counts[key]}</strong><span>{label}</span>
         </button>)}
     </div>
     <div className="tasks-tools">
       <input type="search" aria-label="Search tasks" placeholder="Search tasks, notes, queues…" value={search} onChange={e=>setSearch(e.target.value)}/>
-      <div className="tasks-filter-row" role="group" aria-label="Task status filter">
-        {(['active','today','upcoming','overdue','scheduled','completed','all'] as const).map(key=>
-          <button key={key} type="button" aria-pressed={filter===key}
-            className={filter===key?'is-selected':''} onClick={()=>setFilter(key)}>{
-              key==='active'?'All open':key==='all'?'All history':key==='scheduled'?'Start later':
-              key[0].toUpperCase()+key.slice(1)}</button>)}
-      </div>
+      <button type="button" className={'tasks-history-toggle'+(filter==='all'?' is-selected':'')}
+        aria-pressed={filter==='all'} onClick={()=>setFilter(filter==='all'?'active':'all')}>
+        {filter==='all'?'Back to open tasks':'All history'}
+      </button>
       <label className="tasks-queue-filter">Queue
         <select aria-label="Filter task queue" value={queueFilter} onChange={e=>setQueueFilter(e.target.value)}>
           <option value="all">All queues</option>
@@ -350,7 +346,9 @@ export function TasksWorkspace(){
         </select>
       </label>
     </div>
-    <p className="tasks-view-description">A due date never hides a task from All open. “Start later” is for tasks you don't plan to work on yet.</p>
+    <details className="tasks-filter-help"><summary>About task dates</summary>
+      <p>A due date never hides a task from All open. “Start later” is for tasks you don't plan to work on yet.</p>
+    </details>
     {!scope&&<p className="tasks-state">Your personal Tasks workspace will load after you sign in to a company.</p>}
     {scope&&<div className="tasks-table-container">
       <ConnectionsTable tableKey="tasks" columns={taskColumns} rows={taskTableRows}

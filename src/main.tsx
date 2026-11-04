@@ -121,6 +121,8 @@ import './mobile-area-summary-v2.css';
 import './mobile-area-review-parity.css';
 // Final targeted mobile consistency and safe-area overrides.
 import './mobile-consistency-pass.css';
+// Compact workspace rhythm shared by Tasks, Connections, Board and Catalog.
+import './workspace-refinement-v1.css';
 
 recordSalesShopBoot();
 

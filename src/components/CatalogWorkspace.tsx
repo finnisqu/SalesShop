@@ -92,19 +92,13 @@ export function CatalogWorkspace() {
   useEffect(() => {
     if (sectionScrollRef.current) sectionScrollRef.current.scrollTop = 0;
   }, [section]);
-  const current = CATALOG_SECTIONS.find((candidate) => candidate.id === section) ?? CATALOG_SECTIONS[0];
 
   return (
     <main className="catalog-workspace">
       <PageHeader className="catalog-header catalog-foundation-heading"
         eyebrow="Commercial source of truth"
         title="Catalog"
-        description="Products, purchasing inputs, supplier sources, and pricing references that feed SalesShop quoting and margin."
-        actions={<div className="catalog-current-section" aria-live="polite">
-          <span>{current.eyebrow}</span>
-          <strong>{current.label}</strong>
-          <small>{current.description}</small>
-        </div>}
+        description="Materials, sinks, rates and suppliers for your quotes."
       />
 
       <SectionTabs className="catalog-section-nav catalog-foundation-tabs"

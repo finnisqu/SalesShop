@@ -283,16 +283,16 @@ export function Connections() {
   return (
     <main className="connections-workspace">
       <PageHeader className="connections-heading connections-foundation-heading"
-        eyebrow="SalesShop · Relationships & information"
+        eyebrow="CRM"
         title="Connections"
-        description="Companies, people, and deals connected to your work."
+        description="Your accounts, contacts and deals."
       />
 
       <div className="connections-section-row">
         <SectionTabs className="connections-tabs" aria-label="Connections sections"
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
         <div ref={moreRef} className="connections-section-more">
-          <button type="button" aria-expanded={moreOpen} aria-controls="connections-more-menu"
+          <button type="button" aria-expanded={moreOpen} aria-haspopup="menu" aria-controls="connections-more-menu"
             onClick={() => setMoreOpen((value) => !value)}>More <span aria-hidden="true">⋯</span></button>
           {moreOpen && <div id="connections-more-menu" className="connections-more-menu">
             <button type="button" onClick={() => chooseTab('activity')}>Activity history</button>

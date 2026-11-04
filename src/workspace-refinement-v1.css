@@ -1,0 +1,104 @@
+/* Compact workspace polish. Deliberately scoped away from Quick Quote and customer paper. */
+:root[data-sales-theme] .sales-app.view-tasks .tasks-header {
+  gap:12px;margin-bottom:10px;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-header h1 {
+  font-size:clamp(21px,2.1vw,27px);
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-header p {
+  font-size:12px;line-height:1.35;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-summary {
+  display:flex;flex-wrap:nowrap;gap:7px;min-width:0;
+  margin-bottom:10px;overflow-x:auto;overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-summary button {
+  display:flex;align-items:center;flex:1 0 0;
+  justify-content:space-between;gap:7px;
+  min-width:105px;min-height:47px;padding:9px 10px;
+  border-radius:9px;text-align:left;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-summary strong {
+  font-size:19px;line-height:1;font-variant-numeric:tabular-nums;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-summary span {
+  min-width:0;font-size:11px;line-height:1.2;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-tools {
+  display:flex;flex-wrap:wrap;align-items:end;
+  justify-content:flex-start;gap:8px;margin-bottom:6px;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-tools>input[type="search"] {
+  flex:1 1 265px;min-width:0;max-width:none;min-height:39px;box-sizing:border-box;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-history-toggle {
+  flex:0 0 auto;min-height:39px;padding:8px 11px;
+  border:1px solid var(--ss-theme-border);border-radius:9px;
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  font-size:11px;font-weight:700;line-height:1.2;cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-history-toggle.is-selected {
+  background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-filter-help {
+  max-width:1280px;margin:0 auto 8px;color:var(--ss-theme-muted);font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-filter-help summary {
+  width:max-content;max-width:100%;cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-filter-help p {
+  margin:5px 0 0;line-height:1.4;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-heading.connections-foundation-heading,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-header.catalog-foundation-heading {
+  gap:10px;padding-block:10px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-heading .ss-page-header__description,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-header .ss-page-header__description {
+  line-height:1.35;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-section-row,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory-toolbar {
+  gap:7px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-header.catalog-foundation-heading {
+  display:flex;flex-wrap:nowrap;align-items:center;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-header.catalog-foundation-heading .ss-page-header__intro {
+  flex:1 1 auto;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-board .board-header-panel {
+  gap:12px;min-height:0;
+}
+:root[data-sales-theme] .sales-app.view-board .board-quick-add {min-width:0}
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse) {
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-header {align-items:center}
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-summary {
+    gap:6px;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;padding-bottom:4px;
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-summary::-webkit-scrollbar {display:none}
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-summary button {
+    flex:0 0 112px;min-width:112px;min-height:43px;padding:8px;
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-summary strong {font-size:18px}
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-tools {
+    display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-tools>input[type="search"] {
+    grid-column:1/-1;min-width:0;width:100%;font-size:16px;
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-history-toggle {min-height:43px}
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-queue-filter {
+    grid-column:1;min-width:0;
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-queue-filter select {max-width:100%}
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-header.catalog-foundation-heading {
+    padding-block:8px;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-header-panel {
+    min-height:0;padding:10px;
+  }
+  :root[data-sales-theme] .sales-app.view-board .board-quick-add {margin-top:6px}
+}

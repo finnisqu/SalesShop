@@ -340,7 +340,7 @@ export function Board() {
     <main className="board-view">
       <PageHeader className="board-header-panel board-foundation-header"
         eyebrow="Sales pipeline" title="Deals"
-        description="What work are we trying to win, perform, or finish?"
+        description="Move deals from opportunity to completion."
         actions={<>
           <div className="board-view-toggle" role="group" aria-label="Board type">
             <Button variant="quiet" className="active" aria-pressed={true}>Deals</Button>
