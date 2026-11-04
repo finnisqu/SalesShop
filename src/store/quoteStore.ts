@@ -469,9 +469,11 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     }
 
     const organizationId = cloudOrganizationId();
-    let quotes = get().quotes.filter((quote) => quote.id !== quoteId);
-    if (!quotes.length) quotes = [newQuote()];
-    const activeQuoteId = get().activeQuoteId === quoteId ? quotes[0].id : get().activeQuoteId;
+    const quotes = get().quotes.filter((quote) => quote.id !== quoteId);
+    // A genuinely empty quote library is valid. Never replace the last deleted
+    // test draft with a fresh fake "Untitled Quote".
+    const activeQuoteId = chooseActiveQuoteId(quotes,
+      get().activeQuoteId === quoteId ? null : get().activeQuoteId);
     persist(quotes, activeQuoteId);
     set({ quotes, activeQuoteId });
     if (organizationId) void deleteNormalizedQuote(organizationId, quoteId).catch(reportCloudDeleteError);
