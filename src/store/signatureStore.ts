@@ -10,6 +10,7 @@ interface SignatureState {
   createSignature: (quote: Quote, input: SignatureInput) => SignatureRecord;
   relinkCompanyIdentity: (primaryId: string, duplicateId: string) => void;
   relinkContactIdentity: (primaryId: string, duplicateId: string) => void;
+  discardPurgedQuoteSignatures:(quoteId:string)=>void;
 }
 
 const id = () => `signature_${crypto.randomUUID()}`;
@@ -54,6 +55,13 @@ export const useSignatureStore = create<SignatureState>((set, get) => ({
     persist(signatures);
     set({ signatures });
     return record;
+  },
+
+  discardPurgedQuoteSignatures:(quoteId)=>{
+    const signatures=get().signatures.filter(record=>record.quoteId!==quoteId);
+    if(signatures.length===get().signatures.length)return;
+    persist(signatures);
+    set({signatures});
   },
 
   relinkCompanyIdentity: (primaryId, duplicateId) => {
