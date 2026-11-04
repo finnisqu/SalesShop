@@ -12,7 +12,8 @@ export function activityRelations(activity:Activity):ActivityRelation[]{
   ...(activity.quoteId?[{type:'quote' as const,id:activity.quoteId}]:[]),
  ];
  const stored=activity.metadata?.relatedRecords;
- const list=stored===undefined?legacy:stored;
+ // Older data and imported CRM metadata may not contain a valid list.
+ const list=Array.isArray(stored)?stored:legacy;
  const seen=new Set<string>();
  return list.filter(item=>{
   if(!item||!allowed.has(item.type)||typeof item.id!=='string'||!item.id.trim())return false;
