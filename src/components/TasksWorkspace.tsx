@@ -62,7 +62,11 @@ export function TaskEditor({initial,onCancel,onSave}:{
   // Use one typed draft shape so optional properties remain correctly typed.
   const auth=useAuthStore.getState();
   const initialTaskId='id'in initial&&typeof initial.id==='string'?initial.id:null;
-  const scopeKey=draftStorageKey('task:'+(initialTaskId??'new'),auth.mode,auth.organizationId,auth.user?.id);
+  const initialLinks=normalizedTaskAssociations(initial);
+  // Separate contextual new-task drafts from a user's general new-task draft.
+  const draftIdentity=initialTaskId??(initialLinks.length
+   ?'new:context:'+initialLinks[0].type+':'+initialLinks[0].id:'new');
+  const scopeKey=draftStorageKey('task:'+draftIdentity,auth.mode,auth.organizationId,auth.user?.id);
   const activeKey=draftStorageKey('task:active',auth.mode,auth.organizationId,auth.user?.id);
   const recovered=useMemo(()=>readSavedDraft<TaskEditorRecovery>(scopeKey),[scopeKey]);
   const draft:Partial<PersonalTask>=initial;
