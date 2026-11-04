@@ -169,6 +169,6 @@ export function recentHomeItems(
    title:task.title,detail:task.type==='follow-up'?'Completed follow-up':'Completed task',
    recordId:task.id});
  }
- return items.sort((a,b)=>b.timestamp.localeCompare(a.timestamp)||
+ return items.sort((a,b)=>Date.parse(b.timestamp)-Date.parse(a.timestamp)||
   a.id.localeCompare(b.id)).slice(0,limit);
 }
