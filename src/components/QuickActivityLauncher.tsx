@@ -16,11 +16,24 @@ interface ActivityDraft {
  open:boolean;method:Method;notes:string;occurred:string;links:TaskAssociation[];
  createFollowUp?:boolean;followUpDate?:string;
 }
-const methods:ReadonlyArray<{id:Method;label:string;icon:string}>=[
- {id:'call',label:'Call',icon:'☎'},{id:'email',label:'Email',icon:'✉'},
- {id:'text',label:'Text',icon:'▤'},{id:'video-call',label:'Video call',icon:'▣'},
- {id:'in-person',label:'In person',icon:'⌖'},
+const methods:ReadonlyArray<{id:Method;label:string}>=[
+ {id:'call',label:'Call'},{id:'email',label:'Email'},
+ {id:'text',label:'Text'},{id:'video-call',label:'Video call'},
+ {id:'in-person',label:'In person'},
 ];
+/** Explicit vector artwork renders identically across Apple, Android and desktop,
+ * unlike Unicode symbols that vary by system font. */
+function ActivityMethodIcon({method}:{method:Method}){
+ return <svg viewBox="0 0 24 24" width="21" height="21" fill="none"
+   stroke="currentColor" strokeWidth="1.85" strokeLinecap="round"
+   strokeLinejoin="round" aria-hidden="true">
+  {method==='call'?<path d="M5 3h3l2.1 5.2-2.3 2.1a16 16 0 0 0 6 6l2.1-2.3L21 16v3.1a2 2 0 0 1-2.2 2C10.6 20.4 3.6 13.4 3 5.2A2 2 0 0 1 5 3Z"/>:
+   method==='email'?<><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></>:
+   method==='text'?<path d="M20.5 16a3 3 0 0 1-3 3H9l-5.5 3V6a3 3 0 0 1 3-3h11a3 3 0 0 1 3 3v10ZM7 9h10M7 13h7"/>:
+   method==='video-call'?<><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m17 10 5-3v10l-5-3"/></>:
+   <><circle cx="9" cy="7.5" r="3"/><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2M17 6a3 3 0 0 1 0 6M19 15a5 5 0 0 1 2.5 4.5"/></>}
+ </svg>;
+}
 const tomorrowKey=()=>{
  const date=new Date();date.setDate(date.getDate()+1);return localDateKey(date);
 };
@@ -161,7 +174,8 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,dr
      <div className="sales-activity-methods" role="group" aria-label="Interaction method">
       {methods.map(item=><button type="button" key={item.id} aria-pressed={method===item.id}
        onClick={()=>setMethod(item.id)}>
-       <span aria-hidden="true">{item.icon}</span>{item.label}</button>)}
+       <span className="sales-activity-method-icon"><ActivityMethodIcon method={item.id}/></span>
+       {item.label}</button>)}
      </div>
      <label>When<input type="datetime-local" max={dateTimeLocal()} value={occurred}
       onChange={e=>setOccurred(e.target.value)} required/></label>
