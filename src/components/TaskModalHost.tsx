@@ -14,6 +14,7 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useNotebookStore} from '../store/notebookStore';
 import {homeNotes,openHomeNote} from '../services/homeNotes';
+import {notebookToday} from '../services/notebookDaily';
 
 /** Globally mounted editor; Home and Calendar remain visible underneath the modal. */
 export function TaskModalHost(){
@@ -57,6 +58,7 @@ export function TaskModalHost(){
  const editTarget=request?.mode==='create'?{
   title:request.title??'',dueDate:request.dueDate,type:request.type??'todo',
   associations:request.associations??[],notes:request.notes,
+  ...(request.agendaSource?{draftIdentity:'notebook-agenda:'+request.agendaSource.entryId}:{}),
   ...(request.noteSource?{
    sourceObjectId:'home-note:'+request.noteSource.objectId,
    draftIdentity:'home-note:'+request.noteSource.objectId,
@@ -70,6 +72,14 @@ export function TaskModalHost(){
   if(request?.mode==='create'){
    const newId=create(changes.title,changes);
    if(!newId)return; // Never remove a note without a Task.
+   if(request.agendaSource){
+    const {entryId,sourceText}=request.agendaSource;
+    if(useNotebookStore.getState().entries.some(e=>e.id===entryId))
+     useNotebookStore.getState().addAgendaItem(entryId,{
+      kind:'task',taskId:newId,title:changes.title,sourceText,
+      date:changes.dueDate??notebookToday(),
+     });
+   }
    if(request.noteSource?.mode==='convert'){
     const {entryId,objectId}=request.noteSource;
     const entry=useNotebookStore.getState().entries.find(e=>e.id===entryId&&e.isPostItInbox);
