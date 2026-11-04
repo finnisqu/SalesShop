@@ -46,3 +46,27 @@
  .sales-calendar-popover.is-inline .sales-calendar-sidecar-list.is-notes{max-height:270px;overflow-y:auto}
  .sales-calendar-popover.is-inline .sales-calendar-sidecar-list.is-notes button:nth-child(n+4){display:grid!important}
 }
+
+
+/* Daily pages now own Home Notes. Legacy Post-its are read-only grouped here,
+   not silently migrated, deleted, or hidden. */
+.home-daily-notes-list{display:grid;gap:2px;min-width:0}
+.home-note-group-label{display:block;padding:9px 6px 3px;color:var(--ss-theme-muted);
+ font-size:10px;font-weight:780;letter-spacing:.04em;text-transform:uppercase}
+.home-daily-notes-list .home-note-list-item{display:grid;grid-template-columns:8px minmax(0,1fr);
+ gap:10px;align-items:center;min-height:53px}
+.home-note-list-indicator.is-legacy{background:transparent;border:1.5px solid var(--ss-theme-muted)}
+.home-note-daily-agenda{display:grid;gap:7px;
+ border-top:1px solid var(--ss-theme-border);padding-top:10px}
+.home-note-daily-agenda strong{font-size:12px}
+.home-note-daily-agenda span{font-size:11px;line-height:1.5;
+ color:var(--ss-theme-muted)}
+.home-note-read .tasks-preview-notes{max-height:40dvh;overflow-y:auto;
+ white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:759px){
+ .sales-calendar-popover.is-inline .sales-calendar-sidecar-list.is-notes{
+  max-height:330px;overflow-y:auto;
+ }
+ .sales-calendar-popover.is-inline .sales-calendar-sidecar-list.is-notes
+  .home-daily-notes-list button:nth-of-type(n+4){display:grid!important}
+}
