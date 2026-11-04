@@ -1,4 +1,4 @@
-import {useEffect,useState,type FormEvent} from 'react';
+import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {createPortal} from 'react-dom';
 import {useNotebookStore} from '../store/notebookStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -13,6 +13,7 @@ export function NotebookCalendarDateModalHost(){
  const [time,setTime]=useState('');
  const [annual,setAnnual]=useState(false);
  const [error,setError]=useState('');
+ const submitting=useRef(false);
  const entries=useNotebookStore(s=>s.entries),hydrated=useNotebookStore(s=>s.hydrated);
  const add=useNotebookStore(s=>s.addAgendaItem);
  const update=useNotebookStore(s=>s.updateAgendaItem);
@@ -27,6 +28,7 @@ export function NotebookCalendarDateModalHost(){
    const page=useNotebookStore.getState().entries.find(e=>e.id===detail.entryId);
    if(!page)return;
    const item=page.agendaItems?.find(a=>a.id===detail.itemId&&a.kind==='calendar-date');
+   submitting.current=false;
    setRequest(detail);
    setTitle(item?.title??agendaTitle(detail.selectedText??''));
    setDate(item?.date??detail.date??notebookToday());
@@ -42,16 +44,18 @@ export function NotebookCalendarDateModalHost(){
  const current=page.agendaItems?.find(item=>item.id===request.itemId);
  const submit=(event:FormEvent)=>{
   event.preventDefault();
+  if(submitting.current)return;
+  submitting.current=true;
   if(!title.trim()||!/^\d{4}-\d{2}-\d{2}$/.test(date)||
     !Number.isFinite(Date.parse(date+'T12:00:00'))){
-   setError('Enter a title and valid date.');return;
+   setError('Enter a title and valid date.');submitting.current=false;return;
   }
   if(current){
    update(page.id,current.id,{title:title.trim(),date,time:time||undefined,annual});
   }else{
    const created=add(page.id,{kind:'calendar-date',title:title.trim(),date,
     sourceText:request.selectedText??'',time:time||undefined,annual});
-   if(!created){setError('Could not add this date to the Notebook.');return;}
+   if(!created){setError('Could not add this date to the Notebook.');submitting.current=false;return;}
   }
   setRequest(null);
  };
