@@ -1,4 +1,5 @@
 import {useEffect} from 'react';
+import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {useNavigationStore} from '../store/navigationStore';
@@ -8,6 +9,7 @@ import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {useAuthStore} from '../store/authStore';
 import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import '../record-preview.css';
+import '../tasks-workspace.css';
 
 export type PreviewRecord = {kind:'company'|'person'|'deal'|'quote';id:string};
 type Props={record:PreviewRecord;onClose:()=>void;onSelect?:(record:PreviewRecord)=>void;
@@ -63,15 +65,20 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
      onClick={()=>open(kind,id)}><span><strong>{title}</strong>{description&&<small>{description}</small>}</span><span aria-hidden="true">›</span></button>;
  useEffect(()=>{if(!company&&!person&&!deal&&!quote)onClose();},[company,person,deal,quote,onClose]);
  if(!company&&!person&&!deal&&!quote)return null;
- return <div className="project-editor-backdrop record-preview-backdrop"
+ const center=record.kind==='quote';
+ const preview=<div className={center
+     ?'tasks-dialog-backdrop record-preview-center-backdrop'
+     :'project-editor-backdrop record-preview-backdrop'}
    onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
    <aside ref={ref} role="dialog" aria-modal="true" aria-label={label+' preview'}
-     className="project-editor record-preview-panel">
-     <header><div><span className="board-eyebrow">{label} · Quick preview</span><h2>{heading}</h2></div>
+     className={center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel'}>
+     <header><div>{center?<small>QUOTE · QUICK VIEW</small>:
+       <span className="board-eyebrow">{label} · Quick preview</span>}
+       <h2>{heading}</h2></div>
        <button type="button" data-dialog-initial-focus className="editor-close"
          aria-label="Close preview" onClick={onClose}>×</button>
      </header>
-     <div className="record-preview-body">
+     <div className={center?'tasks-preview-body record-preview-body':'record-preview-body'}>
        {company&&<>
          <section><h3>About this company</h3>
            <dl><dt>Relationship</dt><dd>{company.kind==='customer'?'Customer / prospect':'Partner / supplier'}</dd>
@@ -129,13 +136,15 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        </>}
      </div>
      <footer className="record-preview-actions">
+       {center&&<button type="button" onClick={onClose}>Close</button>}
        {onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&
          <button type="button" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
        <button type="button" className="record-preview-full" onClick={goToPage}>Go to page</button>
-       {quote&&<button type="button" className="record-preview-open-quote"
+       {quote&&<button type="button" className={center?'tasks-primary record-preview-open-quote':'record-preview-open-quote'}
          disabled={Boolean(quote.archivedAt)} title={quote.archivedAt?'Restore this document before opening it':undefined}
          onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
      </footer>
    </aside>
  </div>;
+ return center?createPortal(preview,document.body):preview;
 }
