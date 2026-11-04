@@ -1,6 +1,16 @@
 import type {NotebookAgendaItem,NotebookEntry} from '../types/notebook';
 import {localDateKey} from './salesCalendar';
 
+/** Date-only values must be real calendar days. Date.parse and new Date()
+ * silently normalize impossible dates such as February 31, so neither
+ * should be used as a validity check. */
+export function validNotebookDay(value:string):boolean{
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+ const [year,month,day]=value.split('-').map(Number);
+ if(year<1000||year>9999||month<1||month>12||day<1)return false;
+ return day<=new Date(year,month,0).getDate();
+}
+
 export function dailyNotebookPages(entries:readonly NotebookEntry[]):NotebookEntry[]{
  return entries.filter(e=>!!e.dailyDate&&!e.isPostItInbox)
   .slice().sort((a,b)=>(b.dailyDate??'').localeCompare(a.dailyDate??'')||
@@ -21,6 +31,7 @@ export function agendaOccurrence(item:NotebookAgendaItem,year:number):string{
  return String(year)+'-'+monthDay;
 }
 export function notebookCalendarDates(entries:readonly NotebookEntry[],date:string){
+ if(!validNotebookDay(date))return[];
  const year=Number(date.slice(0,4));
  return entries.flatMap(page=>(page.agendaItems??[])
   .filter(item=>item.kind==='calendar-date'&&agendaOccurrence(item,year)===date)
