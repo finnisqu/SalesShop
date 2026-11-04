@@ -299,6 +299,11 @@ export function Connections() {
             <button type="button" onClick={() => chooseTab('quotes')}>Quotes · metadata</button>
           </div>}
         </div>
+        <button type="button" className="connections-record-cleanup"
+         title="Review and remove test records"
+         onClick={()=>window.dispatchEvent(new Event('salesshop:open-cleanup-center'))}>
+         Clean up test records
+        </button>
       </div>
       {(tab === 'activity'||tab==='quotes') && <div className="connections-history-heading">
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
