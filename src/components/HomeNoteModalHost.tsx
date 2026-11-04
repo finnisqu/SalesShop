@@ -121,7 +121,9 @@ function DailyNoteDialog({entryId,onClose}:{entryId?:string;onClose:()=>void}){
   const targetDate=page?.dailyDate??today;
   const id=append(targetDate,value);
   if(!id){setError('Could not save your daily note. Please retry.');return;}
-  clearSavedDraft(draftKey);setText('');onClose();
+  // Closing unmounts this editor. Avoid a last empty-text state update
+  // accidentally rewriting the cleared recovery draft.
+  clearSavedDraft(draftKey);onClose();
  };
  const openFull=()=>{
   if(!page)return;
