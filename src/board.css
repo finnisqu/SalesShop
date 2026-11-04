@@ -368,3 +368,24 @@
   .project-editor-backdrop { inset-top: 50px; }
   .editor-two-up { grid-template-columns: 1fr; gap: 0; }
 }
+
+
+/* Deal assignment edits stay as compact as other Board form controls. */
+.project-editor form label>small{
+ display:block;margin-top:4px;font-size:11px;line-height:1.4;
+ color:var(--ss-theme-muted,#777);
+}
+.project-editor form label select[aria-label="Assigned salesperson"]{
+ width:100%;min-height:40px;
+ border:1px solid var(--ss-theme-border,#d5cab8);
+ border-radius:8px;
+ background:var(--ss-theme-card,#fffaf0);
+ color:var(--ss-theme-ink,#302d27);
+ padding:8px 10px;font:inherit;
+}
+.project-editor-save-error{
+ margin:6px 0;padding:8px 11px;
+ border:1px solid var(--ss-theme-border,#d5cab8);
+ border-radius:8px;color:var(--ss-theme-ink,#302d27);
+ font-size:12px;line-height:1.4;
+}
