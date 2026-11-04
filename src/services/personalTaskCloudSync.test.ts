@@ -15,6 +15,17 @@ describe('private task history merge',()=>{
   expect(result).toHaveLength(1);
   expect(result[0].title).toBe('newer');
  });
+ it('keeps a deletion over an equally timed edit, regardless of merge direction',()=>{
+  const date='2026-11-03T20:00:00Z';
+  const deleted=t('a',date,{deletedAt:date});
+  const active=t('a',date,{title:'edited elsewhere'});
+  expect(mergePrivateTasks([deleted],[active])[0].deletedAt).toBe(date);
+  expect(mergePrivateTasks([active],[deleted])[0].deletedAt).toBe(date);
+ });
+ it('chooses consistent stable ordering for equal timestamps',()=>{
+  const date='2026-11-03T20:00:00Z';
+  expect(mergePrivateTasks([t('z',date),t('a',date)],[]).map(t=>t.id)).toEqual(['a','z']);
+ });
  it('retains deletion tombstones across device merges',()=>{
   const result=mergePrivateTasks([t('a','2026-11-01T20:00:00Z',{deletedAt:'2026-11-01T20:00:00Z'})],
     [t('a','2026-11-01T19:00:00Z')]);
