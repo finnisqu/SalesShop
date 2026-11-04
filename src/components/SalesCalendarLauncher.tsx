@@ -38,6 +38,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [addOpen,setAddOpen]=useState(false);
  const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
+ const [sidecarTab,setSidecarTab]=useState<'quotes'|'activity'>('quotes');
  useEffect(()=>{
   if(!embedded)return;
   const media=window.matchMedia('(max-width:760px)');
@@ -78,6 +79,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   Number(Boolean(b.urgent))-Number(Boolean(a.urgent))||a.kind.localeCompare(b.kind)||a.title.localeCompare(b.title)),[events,selected]);
  const shownDayEvents=embedded&&isPhone&&!showAllDay?eventsForDay.slice(0,5):eventsForDay;
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
+ const recentActivityEvents=useMemo(()=>events.filter(event=>event.kind==='activity')
+  .sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,5),[events]);
  useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
  useEffect(()=>{
   if(!addOpen)return;
@@ -249,13 +252,24 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     </div>
     {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent quote work">
       <h3>Pick up where you left off</h3>
-      <small>Recent quotes</small>
+      <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
+       <button type="button" role="tab" aria-selected={sidecarTab==='quotes'}
+        onClick={()=>setSidecarTab('quotes')}>Quotes</button>
+       <button type="button" role="tab" aria-selected={sidecarTab==='activity'}
+        onClick={()=>setSidecarTab('activity')}>Activity</button>
+      </div>
       <div className="sales-calendar-sidecar-list">
-       {recentQuotes.length?recentQuotes.map(q=><button type="button" key={q.id}
-        onClick={()=>setRecordPreview({kind:'quote',id:q.id})}>
-        <strong>{q.title||'Untitled quote'}</strong>
-        <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
-       </button>):<p>Recently edited quotes will appear here.</p>}
+       {sidecarTab==='quotes'
+        ?recentQuotes.length?recentQuotes.map(q=><button type="button" key={q.id}
+          onClick={()=>setRecordPreview({kind:'quote',id:q.id})}>
+          <strong>{q.title||'Untitled quote'}</strong>
+          <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
+         </button>):<p>Recently edited quotes will appear here.</p>
+        :recentActivityEvents.length?recentActivityEvents.map(event=><button type="button"
+          key={event.id} onClick={()=>openRecord(event)}>
+          <strong>{event.title}</strong>
+          <small>{event.date} · {event.detail}</small>
+         </button>):<p>Recent logged interactions will appear here.</p>}
       </div>
       <div className="sales-calendar-sidecar-actions">
        <button type="button" className="sales-calendar-cleanup-link"
