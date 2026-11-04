@@ -17,6 +17,8 @@ export function taskActivityMethod(task:Pick<PersonalTask,'type'>):Method{
   return 'call';
 }
 /** Stable workflow identity makes a retry after a tab refresh idempotent. */
-export function completedTaskActivityId(taskId:string):string{
-  return 'activity_task_complete_'+taskId;
+export function completedTaskActivityId(taskId:string,taskScope:string):string{
+  // Two salespeople can have identically keyed auto-bid tasks for one Deal.
+  // Include the private task scope to avoid colliding in shared CRM history.
+  return 'activity_task_complete_'+taskScope+'_'+taskId;
 }
