@@ -21,6 +21,7 @@ import {
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { PROJECT_STAGES, type Project, type ProjectPatch, type ProjectStage } from '../types/crm';
+import {DealAssigneeSelect} from '../services/dealAssignees';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const PROJECT_BOARD_POSITION_KEY = 'salesshop-mobile-board-projects-v1';
@@ -88,6 +89,7 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
 
 function ProjectEditor({ project, onClose }: { project: Project; onClose: () => void }) {
   const updateProject = useCrmStore((state) => state.updateProject);
+  const assignProject = useCrmStore((state) => state.assignProject);
   const deleteProject = useCrmStore((state) => state.deleteProject);
   const activities = useCrmStore((state) => state.activities);
   const quotes = useQuoteStore((state) => state.quotes);
@@ -98,9 +100,12 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   const linkedQuotes = quotesForProject(project, quotes).filter((quote) => !quote.archivedAt);
   const dialogRef = useDismissibleLayer<HTMLElement>(true, onClose);
+  const [saving,setSaving]=useState(false);
+  const [saveError,setSaveError]=useState('');
   const [draft, setDraft] = useState({
     name: project.name,
     companyName: project.companyName ?? '',
+    assignedUserId: project.assignedUserId ?? '',
     stage: project.stage,
     amount: project.amount?.toString() ?? '',
     dueDate: project.dueDate ?? '',
@@ -112,6 +117,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
     setDraft({
       name: project.name,
       companyName: project.companyName ?? '',
+      assignedUserId: project.assignedUserId ?? '',
       stage: project.stage,
       amount: project.amount?.toString() ?? '',
       dueDate: project.dueDate ?? '',
@@ -125,8 +131,13 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
     .slice(0, 10), [activities, project.id]);
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if(saving)return;
+    setSaving(true);setSaveError('');
+    try{
+    if((project.assignedUserId??'')!==draft.assignedUserId)
+      await assignProject(project.id,draft.assignedUserId||undefined);
     const patch: ProjectPatch = {
       name: draft.name,
       companyName: draft.companyName,
@@ -138,6 +149,8 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
     };
     updateProject(project.id, patch);
     onClose();
+    }catch(reason){setSaveError(reason instanceof Error?reason.message:'Unable to save Deal assignment.');}
+    finally{setSaving(false);}
   };
 
   return (
@@ -159,6 +172,9 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
             <label><span>Due date</span><input type="date" value={draft.dueDate} onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })} /></label>
             <label><span>Last touch</span><input type="date" value={draft.lastTouchpoint} onChange={(event) => setDraft({ ...draft, lastTouchpoint: event.target.value })} /></label>
           </div>
+          <label><span>Assigned salesperson</span><DealAssigneeSelect
+            value={draft.assignedUserId} onChange={value=>setDraft({...draft,assignedUserId:value})}
+            disabled={saving}/></label>
           <label><span>Next action</span><textarea value={draft.nextAction} onChange={(event) => setDraft({ ...draft, nextAction: event.target.value })} placeholder="What should happen next?" /></label>
 
           <section className="crm-linked-quotes" aria-label="Deal quotes">
@@ -213,6 +229,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
             </div>
           </details>
 
+          {saveError&&<p role="alert" className="project-editor-save-error">{saveError}</p>}
           <div className="editor-actions">
             <button type="button" className="danger-button" onClick={() => {
               if (window.confirm(`Delete ${project.name}?`)) {
@@ -222,8 +239,8 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
               }
             }}>Delete</button>
             <div className="editor-action-spacer" />
-            <button type="button" className="secondary-button" onClick={onClose}>Cancel</button>
-            <button type="submit" className="primary-button">Save deal</button>
+            <button type="button" className="secondary-button" onClick={onClose} disabled={saving}>Cancel</button>
+            <button type="submit" className="primary-button" disabled={saving}>{saving?'Saving…':'Save deal'}</button>
           </div>
         </form>
       </aside>
