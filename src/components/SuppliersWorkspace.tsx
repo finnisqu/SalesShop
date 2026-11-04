@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   fetchSupplierImportPublicationHistory,
   type SupplierImportPublicationHistoryRow,
@@ -136,6 +137,10 @@ export function SuppliersWorkspace() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  // Desktop opens as a full CRM-style supplier directory; selecting a row
+  // focuses a record. Phone keeps its proven search-first navigator.
+  const [directoryOpen, setDirectoryOpen] = useState(true);
+  const [supplierCreateOpen, setSupplierCreateOpen] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [mobileExpandedSupplierKey, setMobileExpandedSupplierKey] = useState<string | null>(null);
   const [filter, setFilter] = useState<SupplierFilter>('all');
@@ -255,6 +260,7 @@ export function SuppliersWorkspace() {
 
   const chooseSupplier = (key: string) => {
     setSelectedKey(key);
+    setDirectoryOpen(false);
     setEditingProfile(false);
     setProfileDraft(null);
     setContactDraft(null);
@@ -274,6 +280,8 @@ export function SuppliersWorkspace() {
       setProfileDraft(created);
       setEditingProfile(true);
       setMobileToolsOpen(false);
+      setSupplierCreateOpen(false);
+      setDirectoryOpen(false);
     } catch (reason) {
       setLoadError(reason instanceof Error ? reason.message : 'Supplier could not be added.');
     } finally { setAdding(false); }
@@ -388,7 +396,56 @@ export function SuppliersWorkspace() {
   if (loading) return <WorkspaceLoadingState title="Opening Suppliers" detail="Loading suppliers, pricing history, and contacts…" />;
 
   return (
-    <div className="supplier-workbench">
+    <>
+      <section className="supplier-directory-page" aria-label="Supplier directory">
+        <header className="supplier-directory-heading">
+          <div>
+            <h2>Suppliers</h2>
+            <span>{rollups.length} suppliers · {filtered.length} shown</span>
+          </div>
+          <Button variant="primary" onClick={() => setSupplierCreateOpen(true)}>+ Supplier</Button>
+        </header>
+        <div className="supplier-directory-toolbar">
+          <input type="search" value={query} onChange={event => setQuery(event.target.value)}
+            aria-label="Search suppliers" placeholder="Search suppliers and brands…" />
+          <select value={filter} onChange={event => setFilter(event.target.value as SupplierFilter)}
+            aria-label="Supplier status filter">
+            <option value="all">All suppliers</option>
+            <option value="attention">Needs attention</option>
+            <option value="current">Current pricing</option>
+            <option value="missing">Missing pricing</option>
+          </select>
+        </div>
+        <div className="supplier-directory-table-scroll">
+          <table className="supplier-directory-table">
+            <thead><tr>
+              <th scope="col">Supplier</th>
+              <th scope="col">Brands</th>
+              <th scope="col">Materials</th>
+              <th scope="col">Pricing status</th>
+              <th scope="col">Effective</th>
+              <th scope="col">Next review</th>
+            </tr></thead>
+            <tbody>
+              {filtered.map(supplier => <tr key={supplier.key}>
+                <th scope="row"><button type="button" onClick={() => chooseSupplier(supplier.key)}>
+                  {supplier.name}<span aria-hidden="true">›</span>
+                </button></th>
+                <td>{supplier.brands.length ? supplier.brands.join(' · ') : '—'}</td>
+                <td>{supplier.materials.length}</td>
+                <td><span className={'supplier-directory-status freshness-'+supplier.freshness}>
+                  {statusLabels[supplier.freshness]}</span></td>
+                <td>{displayDate(supplier.latestEffectiveDate)}</td>
+                <td>{displayDate(supplier.nextReviewDate)}</td>
+              </tr>)}
+            </tbody>
+          </table>
+          {!filtered.length && <p className="supplier-directory-empty">
+            No suppliers match. Clear the search or select another status.
+          </p>}
+        </div>
+      </section>
+      <div className={'supplier-workbench'+(directoryOpen?' is-directory-hidden':' is-record-mode')}>
       <aside className="supplier-navigator">
         <header><div><span className="board-eyebrow">Reverse CRM</span><strong>Suppliers</strong></div><span>{rollups.length}</span></header>
         <div className="supplier-nav-search">
@@ -488,6 +545,8 @@ export function SuppliersWorkspace() {
       )}
 
       <section className="supplier-record">
+        <button type="button" className="supplier-record-back"
+          onClick={() => setDirectoryOpen(true)}>‹ All suppliers</button>
         {loadError && <div className="supplier-directory-error">{loadError}</div>}
         {!selected ? <div className="supplier-record-empty"><strong>No supplier selected</strong><span>Add or select a supplier from the navigator.</span></div> : (
           <>
@@ -601,5 +660,34 @@ export function SuppliersWorkspace() {
         )}
       </section>
     </div>
+    {supplierCreateOpen && createPortal(
+      <div className="connections-create-backdrop" onPointerDown={event => {
+        if (event.currentTarget === event.target) setSupplierCreateOpen(false);
+      }}>
+        <section role="dialog" aria-modal="true" aria-label="New supplier"
+          className="connections-create-dialog" onKeyDown={event => {
+            if (event.key === 'Escape') { event.stopPropagation(); setSupplierCreateOpen(false); }
+          }}>
+          <header className="connections-create-heading">
+            <div><small>CATALOG · SUPPLIERS</small><h2>New supplier</h2></div>
+            <button type="button" onClick={() => setSupplierCreateOpen(false)}
+              aria-label="Close supplier creation">×</button>
+          </header>
+          <form className="connections-add-form" onSubmit={event => {
+            event.preventDefault(); void addSupplier();
+          }}>
+            <label><span>Supplier name</span><input autoFocus required value={newSupplierName}
+              onChange={event => setNewSupplierName(event.target.value)}
+              placeholder="Supplier or brand name" /></label>
+            {loadError && <p role="alert">{loadError}</p>}
+            <div>
+              <button type="button" onClick={() => setSupplierCreateOpen(false)}>Cancel</button>
+              <button type="submit" className="primary"
+                disabled={!newSupplierName.trim() || adding}>{adding ? 'Adding…' : 'Create supplier'}</button>
+            </div>
+          </form>
+        </section>
+      </div>,document.body)}
+    </>
   );
 }
