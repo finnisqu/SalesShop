@@ -264,3 +264,15 @@ export async function deleteNormalizedProject(organizationId: string, projectId:
     .eq('id', projectId);
   if (error) throw error;
 }
+
+/** Remote-first deletion for standalone CRM records. Do not update the local
+ * cache until the server confirms a row was removed. Existing RLS still applies. */
+export async function deleteNormalizedCrmRecord(
+ organizationId:string,table:'companies'|'contacts',recordId:string,
+):Promise<void>{
+ if(!supabase)return;
+ const {data,error}=await supabase.from(table).delete()
+  .eq('organization_id',organizationId).eq('id',recordId).select('id');
+ if(error)throw error;
+ if(!data?.length)throw new Error('The record could not be deleted in this workspace. Check your permissions or its linked records.');
+}
