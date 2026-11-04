@@ -103,6 +103,12 @@ export function QuickCreate() {
             <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('project')}><span className="quick-create-icon">D</span><span><strong>New Deal</strong><small>Add an opportunity or job.</small></span><b>›</b></button>
             <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('account')}><span className="quick-create-icon">A</span><span><strong>New Account</strong><small>Add a builder, customer, or prospect.</small></span><b>›</b></button>
             <button type="button" className="quick-create-option compact" onClick={makeNotebookPage}><span className="quick-create-icon">N</span><span><strong>New Notebook Page</strong><small>Capture the thought first.</small></span><b>›</b></button>
+            <button type="button" className="quick-create-option compact" onClick={()=>{
+              close();window.dispatchEvent(new Event('salesshop:open-task-cleanup'));
+            }}><span className="quick-create-icon">✓</span><span><strong>Review overdue tasks</strong><small>Reschedule, complete, or remove stale tasks.</small></span><b>›</b></button>
+            <button type="button" className="quick-create-option compact" onClick={()=>{
+              close();window.dispatchEvent(new Event('salesshop:open-cleanup-center'));
+            }}><span className="quick-create-icon">⌫</span><span><strong>Record cleanup</strong><small>Remove unused test records safely.</small></span><b>›</b></button>
           </div>
         )}
       </section>
