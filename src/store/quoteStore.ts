@@ -509,8 +509,13 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     const quotes=get().quotes.filter(item=>item.id!==quoteId);
     const activeQuoteId=chooseActiveQuoteId(quotes,
       get().activeQuoteId===quoteId?null:get().activeQuoteId);
+    // The local editing history must not retain purged test contracts.
+    const {undoStacks,redoStacks}=get();
+    const nextUndo={...undoStacks},nextRedo={...redoStacks};
+    delete nextUndo[quoteId];
+    delete nextRedo[quoteId];
     persist(quotes,activeQuoteId);
-    set({quotes,activeQuoteId});
+    set({quotes,activeQuoteId,undoStacks:nextUndo,redoStacks:nextRedo});
   },
 
   restoreQuote: (quoteId) => {
