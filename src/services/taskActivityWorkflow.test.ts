@@ -11,7 +11,10 @@ describe('guided Task completion → Activity',()=>{
   expect(taskActivityMethod(task('todo'))).toBe('call');
  });
  it('retries a completion using the same Activity ID, avoiding duplicate logs',()=>{
-  expect(completedTaskActivityId('task-1')).toBe(completedTaskActivityId('task-1'));
-  expect(completedTaskActivityId('task-2')).not.toBe(completedTaskActivityId('task-1'));
+  const owner='org:shop:user:owner',coworker='org:shop:user:coworker';
+  expect(completedTaskActivityId('task-1',owner)).toBe(completedTaskActivityId('task-1',owner));
+  expect(completedTaskActivityId('task-2',owner)).not.toBe(completedTaskActivityId('task-1',owner));
+  expect(completedTaskActivityId('task_deal_submit_deal1',owner))
+   .not.toBe(completedTaskActivityId('task_deal_submit_deal1',coworker));
  });
 });
