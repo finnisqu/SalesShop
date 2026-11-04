@@ -65,7 +65,9 @@ export function CleanupCenter(){
   const a=activities.map((activity):CleanupRow=>({
    kind:'activity',id:activity.id,name:activity.summary,
    detail:new Date(activity.occurredAt).toLocaleDateString()+' · '+activity.type,
-   blockers:!['manual-touchpoint','notebook-touchpoint'].includes(activity.type)
+   blockers:!['manual-touchpoint','notebook-touchpoint'].includes(activity.type)&&
+    !(['quote-created','quote-linked'].includes(activity.type)&&
+      !!activity.quoteId&&!quotes.some(quote=>quote.id===activity.quoteId))
     ?['Automatic CRM audit history is protected']
     :ownTasks.some(task=>task.sourceObjectId==='activity-followup:'+activity.id)
      ?['A follow-up task still references this activity']:[],
@@ -84,7 +86,13 @@ export function CleanupCenter(){
   if(item.kind==='person')await deleteContact(item.id);
   if(item.kind==='company')await deleteCompany(item.id);
   if(item.kind==='deal')await deleteDeal(item.id);
-  if(item.kind==='activity')await deleteActivity(item.id);
+  if(item.kind==='activity'){
+    const event=activities.find(activity=>activity.id===item.id);
+    const orphaned=!!event&&!!event.quoteId&&
+      ['quote-created','quote-linked'].includes(event.type)&&
+      !quotes.some(quote=>quote.id===event.quoteId);
+    await deleteActivity(item.id,orphaned);
+  }
  };
  const perform=async(items:CleanupRow[])=>{
   if(!items.length||busy)return;
@@ -149,7 +157,7 @@ export function CleanupCenter(){
    </div>
    <footer>
     {error&&<span role="alert" className="sales-cleanup-error">{error}</span>}
-    <small>Issued quotes are archived, not permanently erased. Linked records stay protected.</small>
+    <small>Issued quotes are archived. Orphaned draft-quote setup events may be cleaned in Activities; customer history stays protected.</small>
     <button type="button" onClick={()=>setOpen(false)} disabled={busy}>Done</button>
    </footer>
   </section>
