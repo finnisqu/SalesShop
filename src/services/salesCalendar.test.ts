@@ -148,6 +148,19 @@ describe('SalesShop shared Calendar',()=>{
    ...activities,activity('clear','quote-follow-up','2026-11-04T12:00:00Z',{
     followUpAction:'cleared'},{quoteId:'q1'})],[quote('q1')])).toHaveLength(0);
  });
+ it('does not revive a legacy quote follow-up after its linked Task was completed',()=>{
+  const date='2026-11-09';
+  const planned=activity('plan','quote-follow-up','2026-11-03T12:00:00Z',{
+   followUpAction:'scheduled',followUpDueDate:date,
+  },{quoteId:'q1'});
+  const done=task('followup',date,{
+   type:'follow-up',status:'completed',completedAt:'2026-11-09T16:00:00Z',
+   associations:[{type:'quote',id:'q1'}],
+  });
+  const events=buildSalesCalendarEvents([done],[],[planned],[quote('q1')]);
+  expect(events).toEqual([]);
+  expect(calendarDayCounts(events,date).total).toBe(0);
+ });
  it('removes completed and canceled bid Tasks without reviving the raw Deal date',()=>{
   const date='2026-11-04';
   const completed=task('submit',date,{
