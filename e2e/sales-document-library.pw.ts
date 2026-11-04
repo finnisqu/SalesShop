@@ -21,7 +21,10 @@ async function makeDocument(page:Page,template:string,name:string){
   await picker.getByRole('textbox',{name:template==='Quick Quote'?'Quote name':'Document name'}).fill(name);
   await picker.getByRole('button',{name:/Create document/}).click();
   await expect(picker).not.toBeVisible();
-  await beta.locator('.qmb-pagehead .qmb-back').click();
+  if((page.viewportSize()?.width??1200)<=700)
+    await page.getByRole('button',{name:'Back to Documents'}).click();
+  else
+    await beta.getByRole('button',{name:/All documents/}).click();
   await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
 }
 test('mobile documents search by name/template and filter by status without losing the new action',async({page},info)=>{
