@@ -176,7 +176,8 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   const personId=find('contact'),dealId=find('project'),quoteId=find('quote');
   const contact=contacts.find(c=>c.id===personId),deal=projects.find(d=>d.id===dealId);
   const quote=quotes.find(q=>q.id===quoteId);
-  const activityId=workflowTaskId?completedTaskActivityId(workflowTaskId):undefined;
+  const activityId=workflowTaskId
+   ?completedTaskActivityId(workflowTaskId,privateScope??'local:user'):undefined;
   const existing=activityId?useCrmStore.getState().activities.find(a=>a.id===activityId):undefined;
   // A browser discard between logging and Task completion can retry without
   // making two Activities for the same completion.
