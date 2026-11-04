@@ -80,3 +80,18 @@
  .notebook-selection-actions{margin:6px;gap:4px}
  .notebook-selection-actions button{font-size:11px}
 }
+
+
+/* The selection popover must fit the iPhone visual viewport while its
+   keyboard is shown. Touch targets preserve the selected editor range. */
+.notebook-selection-actions{
+ box-sizing:border-box;width:min(300px,calc(100vw - 16px));
+ max-height:min(170px,calc(100dvh - 20px));overflow-y:auto;
+ margin:0;box-shadow:0 8px 26px rgba(0,0,0,.16);
+ touch-action:manipulation;
+}
+.notebook-selection-actions button{touch-action:manipulation}
+@media(pointer:coarse){
+ .notebook-selection-actions{gap:5px}
+ .notebook-selection-actions button{min-height:39px;padding:8px 10px}
+}
