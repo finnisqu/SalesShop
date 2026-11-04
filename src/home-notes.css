@@ -8,7 +8,7 @@
  box-sizing:border-box;width:100%;min-height:170px;max-height:48dvh;
  padding:12px;border:1px solid var(--ss-theme-border);
  border-radius:9px;background:var(--ss-theme-base);
- color:var(--ss-theme-ink);font:13px/1.55 inherit;
+ color:var(--ss-theme-ink);font-family:inherit;font-size:13px;line-height:1.55;
  resize:vertical;
 }
 .home-note-editor textarea:focus-visible{outline:2px solid var(--ss-theme-accent);outline-offset:1px}
