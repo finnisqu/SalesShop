@@ -489,8 +489,6 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if(!canPermanentlyDeleteQuote(quote,get().quotes))
       throw new Error('Only untouched drafts can be deleted normally.');
     const auth=useAuthStore.getState();
-    if(isPracticePurge&&(auth.mode!=='local'&&auth.teamRole!=='owner'&&auth.teamRole!=='admin'))
-      throw new Error('Only an Owner or Admin may purge archived practice quotes.');
     if(auth.mode==='cloud'){
       const organizationId=cloudOrganizationId();
       if(!organizationId)throw new Error('Cloud workspace unavailable. No quote was deleted.');
