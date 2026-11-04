@@ -334,3 +334,23 @@ body { overflow: hidden; }
   .paper-sheet { min-height: calc(100vh - 120px); }
   .paper-writing-surface { min-height: 820px; }
 }
+
+
+/* Uniform center-aligned desktop action cluster; navigation tabs remain bottom-aligned. */
+@media(min-width:761px){
+ .sales-app>.app-header{align-items:center!important;gap:6px!important}
+ .sales-app>.app-header .app-tabs{align-self:flex-end}
+ .sales-app>.app-header .brand-lockup{align-self:center}
+ .sales-app>.app-header .sales-calendar-global{display:flex;align-items:center;margin:0}
+ .sales-app>.app-header .sales-calendar-trigger,
+ .sales-app>.app-header .global-search-launcher,
+ .sales-app>.app-header .quick-create-launcher{
+   width:38px!important;height:38px!important;min-width:38px!important;
+   min-height:38px!important;flex:0 0 38px!important;
+   border-radius:11px!important;padding:0!important;
+   display:grid!important;place-items:center!important;align-self:center!important;
+   background:var(--ss-theme-card,#fff);color:var(--ss-theme-ink,#333);
+   border:1px solid var(--ss-theme-border,#ddd)
+ }
+ .sales-app>.app-header .app-account-zone{align-self:center}
+}
