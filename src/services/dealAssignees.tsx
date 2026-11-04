@@ -35,8 +35,9 @@ export function useDealAssigneeDirectory(){
     const profiles=valid.length?await client.from('profiles')
      .select('user_id,display_name').in('user_id',valid.map(m=>m.user_id)):null;
     if(profiles?.error)throw profiles.error;
-    const names=new Map((profiles?.data??[]).map(p=>[String(p.user_id),
-     String(p.display_name??'').trim()]));
+    const names=new Map<string,string>((profiles?.data??[]).map(p=>[
+      String(p.user_id),String(p.display_name??'').trim(),
+    ] as const));
     if(cancelled)return;
     setMembers(valid.map(member=>({
       userId:member.user_id,role:member.role,department:member.job_function??'general',
