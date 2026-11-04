@@ -91,6 +91,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   [notebookEntries,notebookReady]);
  const dailyPages=useMemo(()=>notebookReady?dailyNotebookPages(notebookEntries):[],
   [notebookEntries,notebookReady]);
+ const calendarDatesForDay=useMemo(()=>notebookReady?notebookCalendarDates(notebookEntries,selected):[],
+  [notebookEntries,notebookReady,selected]);
  useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
  useEffect(()=>{
   if(!addOpen)return;
@@ -193,6 +195,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     <div className="sales-calendar-grid">
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key),inMonth=key.slice(0,7)===localDateKey(month).slice(0,7);
+      const hasNotebookDate=notebookReady&&notebookCalendarDates(notebookEntries,key).length>0;
       const kindCounts:Record<SalesCalendarKind,number>={task:counts.task,bid:counts.bid};
       return <button type="button" key={key}
         className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
@@ -200,7 +203,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         aria-pressed={key===selected}
         aria-label={dateLabel(key)+(counts.total?', '+[
          counts.task&&counts.task+' tasks',counts.bid&&counts.bid+' bids'
-        ].filter(Boolean).join(', '):', all caught up')+(counts.urgent?', urgent task':'')}
+        ].filter(Boolean).join(', '):', all caught up')+(counts.urgent?', urgent task':'')+
+         (hasNotebookDate?', has calendar date':'')}
         onClick={()=>{setSelected(key);if(!inMonth){
          const date=new Date(key+'T12:00:00');setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
         }}}>
@@ -212,6 +216,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           .map(kind=><i key={kind} className={'is-'+kind} title={kindCounts[kind]+' '+labels[kind]}>
            {kindCounts[kind]}</i>)}
         </span>
+        {hasNotebookDate&&<span className="notebook-calendar-dot" title="Calendar date"
+         aria-hidden="true"/>}
        </button>;
      })}
     </div>
@@ -272,6 +278,17 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          {showAllDay?'Show fewer':'Show '+(eventsForDay.length-5)+' more'}
         </button>}
       </div>:<p className="sales-calendar-empty">All caught up for this day.</p>}
+     {calendarDatesForDay.length>0&&<div className="sales-calendar-on-calendar"
+       aria-label="Calendar dates and events">
+      <h4>On the calendar</h4>
+      {calendarDatesForDay.map(({entryId,item})=><button type="button"
+        key={entryId+':'+item.id}
+        onClick={()=>openNotebookCalendarDate({entryId,itemId:item.id})}>
+        <span className="notebook-calendar-dot-inline" aria-hidden="true">◦</span>
+        <span>{item.title}</span>
+        <small>{item.time||'All day'}{item.annual?' · Yearly':''}</small>
+       </button>)}
+     </div>}
     </section>
     </div>
     {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
