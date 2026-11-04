@@ -22,19 +22,24 @@ describe('archived practice quote purge policy',()=>{
   const events=[event('quote-created','a'),event('quote-sent','b'),
    event('quote-follow-up','c'),event('quote-viewed','d')];
   expect(planPracticeQuotePurge(quote(),[quote()],events,[]))
-   .toEqual({blockers:[],activityIds:['a','b','c','d']});
+   .toEqual({blockers:[],activityIds:['a','b','c','d'],signed:false});
  });
  it('requires archive first and does not silently identify a sent customer quote as test',()=>{
   expect(planPracticeQuotePurge(quote({archivedAt:undefined}),[],[],[])
    .blockers).toContain('Archive this document before permanent deletion');
  });
- it('blocks signed documents and accepted revision history even when archived',()=>{
-  expect(planPracticeQuotePurge(quote({status:'Signed'}),[],[],[])
-   .blockers).toContain('Signed documents and accepted agreements cannot be purged');
-  expect(planPracticeQuotePurge(quote({signedAt:date}),[],[],[])
-   .blockers).toContain('Signed documents and accepted agreements cannot be purged');
-  expect(planPracticeQuotePurge(quote({history:[{status:'Signed'}] as unknown as Quote['history']}),[],[],[])
-   .blockers).toContain('Signed documents and accepted agreements cannot be purged');
+ it('allows signed test agreements only through a stronger explicit signed confirmation',()=>{
+  const signed=planPracticeQuotePurge(quote({status:'Signed'}),[],[
+   event('quote-signed','signature'),event('quote-sent','send'),
+  ],[]);
+  expect(signed.blockers).toEqual([]);
+  expect(signed.signed).toBe(true);
+  expect(signed.activityIds).toEqual(['signature','send']);
+  expect(planPracticeQuotePurge(quote({signedAt:date}),[],[],[]).signed).toBe(true);
+  expect(planPracticeQuotePurge(
+   quote({history:[{status:'Signed'}] as unknown as Quote['history']}),[],[],[]).signed)
+   .toBe(true);
+  expect(planPracticeQuotePurge(quote(),[],[],[],true).signed).toBe(true);
  });
  it('blocks dependent Change Orders and linked personal tasks',()=>{
   const q=quote();
@@ -62,8 +67,9 @@ describe('archived practice quote purge policy',()=>{
    event('project-created','unrelated')],[]).blockers)
    .toContain('1 other linked CRM activities need review');
  });
- it('never classifies signed or manual events as removable lifecycle records',()=>{
-  expect(PRACTICE_QUOTE_ACTIVITY_TYPES).not.toContain('quote-signed');
+ it('classifies signed-test lifecycle activity but not unrelated manual CRM work',()=>{
+  expect(PRACTICE_QUOTE_ACTIVITY_TYPES).toContain('quote-signed');
+  expect(PRACTICE_QUOTE_ACTIVITY_TYPES).toContain('change-order-signed');
   expect(PRACTICE_QUOTE_ACTIVITY_TYPES).not.toContain('manual-touchpoint');
  });
 });
