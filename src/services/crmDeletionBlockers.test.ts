@@ -30,6 +30,14 @@ describe('safe test-record deletion references',()=>{
   };
   expect(crmDeletionBlockers('company','c1',refs)).toContain('1 linked quotes');
  });
+ it('ignores generated bid reminders when deleting otherwise-unlinked test Deals',()=>{
+  const refs={...references(),tasks:[{
+   id:'task_deal_submit_d1',title:'Submit quote',dueDate:'2026-11-12',
+   sourceObjectId:'deal-submit:d1',createdAt:'2026-11-03',updatedAt:'2026-11-03',
+   associations:[{type:'project' as const,id:'d1'}],
+  }]};
+  expect(crmDeletionBlockers('deal','d1',refs)).toEqual([]);
+ });
  it('blocks deletion when an active personal task references the record',()=>{
   const refs={...references(),tasks:[{
    id:'t1',title:'Call',createdAt:'2026-11-03',updatedAt:'2026-11-03',
