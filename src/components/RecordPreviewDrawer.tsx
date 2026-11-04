@@ -117,22 +117,31 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          </section>
        </>}
        {quote&&<>
-         <section><h3>About this document</h3><dl>
-           <dt>Number</dt><dd>{displayQuoteNumber(quote)}</dd>
-           <dt>Type</dt><dd>{quote.documentType==='pricing-schedule'?'Pricing schedule':quote.documentType==='change-order'?'Change order':'Quote'}</dd>
-           <dt>Status</dt><dd>{quote.status}{quote.archivedAt?' · Archived':''}</dd>
-           <dt>Revision</dt><dd>{quote.revision}</dd>
-           <dt>Value</dt><dd>{money.format(quoteTotal(quote))}</dd>
-           <dt>Updated</dt><dd>{shortDate(quote.updatedAt)}</dd></dl></section>
-         <section><h3>Company</h3>
-           {linkedCompany?related('company',linkedCompany.id,linkedCompany.name)
-             :<p className="record-preview-empty">{quote.companyName||'No company linked.'}</p>}
-         </section>
-         <section><h3>Deal</h3>
-           {quote.projectId&&deals.find(x=>x.id===quote.projectId)
-             ?related('deal',quote.projectId,deals.find(x=>x.id===quote.projectId)!.name)
-             :<p className="record-preview-empty">No deal linked.</p>}
-         </section>
+         <div className="tasks-preview-meta record-preview-quote-meta">
+           <span>{quote.status}</span>
+           <span>{quote.documentType==='pricing-schedule'?'Pricing schedule':
+             quote.documentType==='change-order'?'Change order':'Quote'}</span>
+           <span>Revision {quote.revision}</span>
+           {quote.archivedAt&&<span>Archived</span>}
+         </div>
+         <dl className="record-preview-quote-facts">
+           <div><dt>Number</dt><dd>{displayQuoteNumber(quote)}</dd></div>
+           <div><dt>Value</dt><dd>{money.format(quoteTotal(quote))}</dd></div>
+           <div><dt>Updated</dt><dd>{shortDate(quote.updatedAt)}</dd></div>
+         </dl>
+         <div className="tasks-preview-related record-preview-quote-links">
+           <strong>Related records</strong>
+           {linkedCompany?<button type="button" onClick={()=>open('company',linkedCompany.id)}>
+             Company · {linkedCompany.name} ↗</button>
+            :quote.companyName&&<span className="record-preview-quote-unlinked">Company · {quote.companyName}</span>}
+           {quote.projectId&&deals.find(x=>x.id===quote.projectId)&&
+             <button type="button" onClick={()=>open('deal',quote.projectId!)}>
+               Deal · {deals.find(x=>x.id===quote.projectId)!.name} ↗
+             </button>}
+           {!linkedCompany&&!quote.companyName&&
+            !(quote.projectId&&deals.some(x=>x.id===quote.projectId))&&
+            <p className="record-preview-empty">No linked company or deal.</p>}
+         </div>
        </>}
      </div>
      <footer className="record-preview-actions">
