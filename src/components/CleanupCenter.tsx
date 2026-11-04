@@ -11,7 +11,7 @@ import {crmDeletionBlockers} from '../services/crmDeletionBlockers';
 import type {Quote} from '../types/quote';
 import '../home-cleanup.css';
 
-type CleanupKind='quote'|'person'|'company'|'deal';
+type CleanupKind='quote'|'person'|'company'|'deal'|'activity';
 interface CleanupRow{
  kind:CleanupKind;id:string;name:string;detail:string;
  blockers:string[];action:'delete'|'archive';
@@ -26,6 +26,7 @@ export function CleanupCenter(){
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
  const deleteCompany=useCrmStore(s=>s.deleteCompany),deleteContact=useCrmStore(s=>s.deleteContact);
  const deleteDeal=useCrmStore(s=>s.deleteProject);
+ const deleteActivity=useCrmStore(s=>s.deleteActivity);
  const tasks=usePersonalTaskStore(s=>s.tasks),taskStorageScope=usePersonalTaskStore(s=>s.scope);
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
@@ -61,7 +62,14 @@ export function CleanupCenter(){
    kind:'deal',id:deal.id,name:deal.name,detail:deal.stage,
    blockers:crmDeletionBlockers('deal',deal.id,refs),action:'delete',
   }));
-  return [...q,...p,...c,...d];
+  const a=activities.map((activity):CleanupRow=>({
+   kind:'activity',id:activity.id,name:activity.summary,
+   detail:new Date(activity.occurredAt).toLocaleDateString()+' · '+activity.type,
+   blockers:['manual-touchpoint','notebook-touchpoint'].includes(activity.type)
+    ?[]:['Automatic CRM audit history is protected'],
+   action:'delete',
+  }));
+  return [...q,...p,...c,...d,...a];
  },[visibleQuotes,quotes,people,companies,deals,activities,ownTasks]);
  const filtered=rows.filter(item=>item.kind===tab&&
   (item.name+' '+item.detail).toLowerCase().includes(query.trim().toLowerCase()));
@@ -74,6 +82,7 @@ export function CleanupCenter(){
   if(item.kind==='person')await deleteContact(item.id);
   if(item.kind==='company')await deleteCompany(item.id);
   if(item.kind==='deal')deleteDeal(item.id);
+  if(item.kind==='activity')await deleteActivity(item.id);
  };
  const perform=async(items:CleanupRow[])=>{
   if(!items.length||busy)return;
@@ -106,9 +115,10 @@ export function CleanupCenter(){
     <button type="button" aria-label="Close cleanup" disabled={busy} onClick={()=>setOpen(false)}>×</button>
    </header>
    <div className="sales-record-cleanup-tabs" role="group" aria-label="Record type">
-    {(['quote','person','company','deal'] as const).map(kind=><button key={kind} type="button"
+    {(['quote','person','company','deal','activity'] as const).map(kind=><button key={kind} type="button"
      aria-pressed={tab===kind} onClick={()=>{setTab(kind);setSelected([]);setError('');}}>
-     {kind==='quote'?'Quotes':kind==='person'?'People':kind==='company'?'Companies':'Deals'}
+     {kind==='quote'?'Quotes':kind==='person'?'People':kind==='company'?'Companies':
+       kind==='deal'?'Deals':'Activities'}
      <small>{rows.filter(row=>row.kind===kind).length}</small>
     </button>)}
    </div>
