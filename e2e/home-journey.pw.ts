@@ -53,7 +53,7 @@ test('HOME Quick Create saves a due Task, daily Notebook note, Deal and Account'
  await home(page);
  let menu=await quickCreate(page);
  await menu.getByRole('button',{name:/New Task/}).click();
- const task=page.getByRole('dialog',{name:/Edit task new/});
+ const task=page.getByRole('dialog',{name:/Edit task/});
  await expect(task).toBeVisible();
  await task.getByRole('textbox',{name:'Task title'}).fill('Home journey callback');
  const today=await page.evaluate(()=>{
