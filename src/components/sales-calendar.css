@@ -383,3 +383,7 @@
  .sales-calendar-popover.is-inline .sales-calendar-sidecar-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
  .sales-calendar-cleanup-link{white-space:normal}
 }
+
+
+/* Inline Calendar is a normal dashboard surface, never a layer above record previews. */
+.sales-calendar-popover.is-inline{z-index:auto!important}
