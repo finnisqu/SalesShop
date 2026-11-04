@@ -11,7 +11,7 @@ import '../home-workspace.css';
 const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'short',day:'numeric'});
 
 export function HomeWorkspace(){
- const quotes=useQuoteStore(s=>s.quotes),hydrate=useQuoteStore(s=>s.hydrate);
+ const hydrate=useQuoteStore(s=>s.hydrate);
  const mode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id);
  const role=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
  const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
