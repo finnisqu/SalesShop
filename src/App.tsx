@@ -140,8 +140,8 @@ function App() {
   const tasksScope=taskScope(mode,organizationId,taskUserId);
   const submissionDeals=useMemo(()=>visibleSubmissionDeals(
    mode,teamRole,taskUserId,projects,activities,allQuotes,
-   loadedTaskScope===tasksScope?personalTasks:[],
-  ),[mode,teamRole,taskUserId,projects,activities,allQuotes,personalTasks,loadedTaskScope,tasksScope]);
+   loadedTaskScope===tasksScope?personalTasks:[],department,
+  ),[mode,teamRole,department,taskUserId,projects,activities,allQuotes,personalTasks,loadedTaskScope,tasksScope]);
   useEffect(()=>{
     usePersonalTaskStore.getState().load(tasksScope);
     if(mode!=='cloud'||!taskUserId||!tasksScope)return;
