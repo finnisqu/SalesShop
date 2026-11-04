@@ -40,6 +40,7 @@ import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
 import './developer-playground.css';
 import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
 import {TaskModalHost} from './components/TaskModalHost';
+import {HomeNoteModalHost} from './components/HomeNoteModalHost';
 import {QuickActivityLauncher} from './components/QuickActivityLauncher';
 import {TaskCleanupPanel} from './components/TaskCleanupPanel';
 import {CleanupCenter} from './components/CleanupCenter';
@@ -359,6 +360,7 @@ function App() {
       )}
       </WorkspaceViewport>
       {!inRolePreview&&<TaskModalHost/>}
+      {!inRolePreview&&<HomeNoteModalHost/>}
       {!inRolePreview&&<QuickActivityLauncher headless/>}
       {!inRolePreview&&<TaskCleanupPanel/>}
       {!inRolePreview&&<CleanupCenter/>}
