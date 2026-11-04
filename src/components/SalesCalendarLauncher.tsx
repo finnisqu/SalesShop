@@ -11,13 +11,13 @@ import {requestTaskModal} from './TaskModalHost';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {homeRecentQuotes} from '../services/homeOverview';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
-import {buildSalesCalendarEvents,personalCalendarSources,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
+import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
 import './sales-calendar.css';
 
 const week=['S','M','T','W','T','F','S'];
 const labels:Record<SalesCalendarKind,string>={
- task:'To-do',bid:'Bid due',activity:'Activity', 'follow-up':'Follow-up',
+ task:'To-do',bid:'Bid due',
 };
 const dateLabel=(key:string)=>new Date(key+'T12:00:00').toLocaleDateString(undefined,{
  weekday:'long',month:'long',day:'numeric'});
@@ -38,7 +38,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [addOpen,setAddOpen]=useState(false);
  const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
- const [sidecarTab,setSidecarTab]=useState<'quotes'|'activity'>('quotes');
+ const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'>('quotes');
  useEffect(()=>{
   if(!embedded)return;
   const media=window.matchMedia('(max-width:760px)');
@@ -79,8 +79,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   Number(Boolean(b.urgent))-Number(Boolean(a.urgent))||a.kind.localeCompare(b.kind)||a.title.localeCompare(b.title)),[events,selected]);
  const shownDayEvents=embedded&&isPhone&&!showAllDay?eventsForDay.slice(0,5):eventsForDay;
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
- const recentActivityEvents=useMemo(()=>events.filter(event=>event.kind==='activity')
-  .sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,5),[events]);
+ const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
+  [ownTasks,sources.activities,ownQuotes,personal]);
  useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
  useEffect(()=>{
   if(!addOpen)return;
@@ -127,14 +127,15 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   setOpen(false);
   const {recordType,recordId}=event;
   if(recordType==='task'){requestTaskModal({mode:'preview',id:recordId});return;}
-  if(event.kind==='activity'){
-   setActivityPreview(event.id.startsWith('activity:')?event.id.slice(9):recordId);
-   return;
-  }
-  const kind=recordType==='project'?'deal':
+   const kind=recordType==='project'?'deal':
    recordType==='contact'?'person':recordType==='company'?'company':
    recordType==='quote'?'quote':null;
   if(kind)setRecordPreview({kind,id:recordId});
+ };
+ const openRecent=(item:ReturnType<typeof recentHomeItems>[number])=>{
+  setOpen(false);
+  if(item.kind==='completed-task')requestTaskModal({mode:'preview',id:item.recordId});
+  else setActivityPreview(item.recordId);
  };
  const openLinkedRecord=(kind:PreviewRecord['kind'],id:string)=>{
   setActivityPreview(null);
@@ -184,17 +185,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     <div className="sales-calendar-grid">
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key),inMonth=key.slice(0,7)===localDateKey(month).slice(0,7);
-      const kindCounts:Record<SalesCalendarKind,number>={
-       task:counts.task,bid:counts.bid,activity:counts.activity,'follow-up':counts.followUp,
-      };
+      const kindCounts:Record<SalesCalendarKind,number>={task:counts.task,bid:counts.bid};
       return <button type="button" key={key}
         className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
          (key===today?' is-today':'')+(key===selected?' is-selected':'')}
         aria-pressed={key===selected}
         aria-label={dateLabel(key)+(counts.total?', '+[
-         counts.task&&counts.task+' tasks',counts.bid&&counts.bid+' bids',
-         counts.activity&&counts.activity+' activities',counts.followUp&&counts.followUp+' follow-ups'
-        ].filter(Boolean).join(', '):'')+(counts.urgent?', urgent task':'')}
+         counts.task&&counts.task+' tasks',counts.bid&&counts.bid+' bids'
+        ].filter(Boolean).join(', '):', all caught up')+(counts.urgent?', urgent task':'')}
         onClick={()=>{setSelected(key);if(!inMonth){
          const date=new Date(key+'T12:00:00');setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
         }}}>
@@ -202,7 +200,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         {counts.urgent>0&&<span className="sales-calendar-urgent"
           aria-hidden="true" title={counts.urgent+' urgent task(s)'}>!</span>}
         <span className="sales-calendar-dots" aria-hidden="true">
-         {(['task','bid','activity','follow-up'] as const).filter(kind=>kindCounts[kind]>0)
+         {(['task','bid'] as const).filter(kind=>kindCounts[kind]>0)
           .map(kind=><i key={kind} className={'is-'+kind} title={kindCounts[kind]+' '+labels[kind]}>
            {kindCounts[kind]}</i>)}
         </span>
@@ -224,7 +222,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      </div>
     <section className="sales-calendar-day-preview" aria-label={'Items for '+dateLabel(selected)}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
-      <div><span>{eventsForDay.length} {eventsForDay.length===1?'item':'items'}</span>
+      <div><span>{eventsForDay.length} remaining</span>
        {embedded&&<div className="sales-calendar-add-wrap">
         <button type="button" className="sales-calendar-add" aria-haspopup="menu"
          aria-expanded={addOpen} aria-label={'Add to '+dateLabel(selected)}
@@ -233,14 +231,15 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          <button type="button" role="menuitem" onClick={()=>{
           setAddOpen(false);requestTaskModal({mode:'create',dueDate:selected});
          }}>✓ New task</button>
-         <button type="button" role="menuitem" onClick={()=>{
-          setAddOpen(false);requestTaskModal({mode:'create',dueDate:selected,type:'follow-up'});
-         }}>↪ Follow-up task</button>
-         {selected<=today&&<button type="button" role="menuitem" onClick={()=>{
+          {selected<=today&&<button type="button" role="menuitem" onClick={()=>{
           setAddOpen(false);
           window.dispatchEvent(new CustomEvent('salesshop:open-activity',
            {detail:{date:selected}}));
-         }}>☎ Log completed activity</button>}
+         }}><svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+           stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+           strokeLinejoin="round" aria-hidden="true">
+            <path d="M5 3h3l2.1 5.2-2.3 2.1a16 16 0 0 0 6 6l2.1-2.3L21 16v3.1a2 2 0 0 1-2.2 2C10.6 20.4 3.6 13.4 3 5.2A2 2 0 0 1 5 3Z"/>
+           </svg> Log completed activity</button>}
         </div>}
        </div>}
  
@@ -259,7 +258,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          onClick={()=>setShowAllDay(value=>!value)}>
          {showAllDay?'Show fewer':'Show '+(eventsForDay.length-5)+' more'}
         </button>}
-      </div>:<p className="sales-calendar-empty">Nothing scheduled or logged for this day.</p>}
+      </div>:<p className="sales-calendar-empty">All caught up for this day.</p>}
     </section>
     </div>
     {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent quote work">
@@ -267,8 +266,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
        <button type="button" role="tab" aria-selected={sidecarTab==='quotes'}
         onClick={()=>setSidecarTab('quotes')}>Quotes</button>
-       <button type="button" role="tab" aria-selected={sidecarTab==='activity'}
-        onClick={()=>setSidecarTab('activity')}>Activity</button>
+       <button type="button" role="tab" aria-selected={sidecarTab==='recent'}
+        onClick={()=>setSidecarTab('recent')}>Recents</button>
       </div>
       <div className="sales-calendar-sidecar-list">
        {sidecarTab==='quotes'
@@ -277,15 +276,15 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           <strong>{q.title||'Untitled quote'}</strong>
           <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
          </button>):<p>Recently edited quotes will appear here.</p>
-        :recentActivityEvents.length?recentActivityEvents.map(event=><button type="button"
-          key={event.id} onClick={()=>openRecord(event)}>
-          <strong>{event.title}</strong>
-          <small>{event.date} · {event.detail}</small>
-         </button>):<p>Recent logged interactions will appear here.</p>}
+        :recentItems.length?recentItems.map(item=><button type="button"
+          key={item.id} onClick={()=>openRecent(item)}>
+          <strong>{item.title}</strong>
+          <small>{new Date(item.timestamp).toLocaleDateString()} · {item.detail}</small>
+         </button>):<p>Completed tasks and logged interactions will appear here.</p>}
       </div>
     </aside>}
     <div className="sales-calendar-legend" aria-label="Calendar event types">
-     {(['task','bid','activity','follow-up'] as const).map(kind=><span key={kind}>
+     {(['task','bid'] as const).map(kind=><span key={kind}>
       <i className={'is-'+kind}/>{labels[kind]}</span>)}
     </div>
    </section>
