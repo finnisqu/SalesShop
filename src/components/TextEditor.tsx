@@ -41,11 +41,29 @@ export function TextEditor({ entry, onEditorReady, readOnly = false }: TextEdito
       if(readOnly||editor.state.selection.empty){setSelection(null);return;}
       const {from,to}=editor.state.selection;
       const text=editor.state.doc.textBetween(from,to,' ').trim().slice(0,2000);
+      if(!text){setSelection(null);return;}
+      // iOS Safari may report a zero-size native selection rectangle while
+      // dragging a handle. The editor's document position is a safer fallback.
       const native=window.getSelection();
       const rect=native?.rangeCount?native.getRangeAt(0).getBoundingClientRect():null;
-      if(!text||!rect||rect.width===0){setSelection(null);return;}
-      setSelection({text,left:Math.max(8,Math.min(rect.left,window.innerWidth-270)),
-       top:Math.min(window.innerHeight-80,rect.bottom+8)});
+      let left=rect?.left??0;
+      let bottom=rect?.bottom??0;
+      if(!rect||rect.width===0||!Number.isFinite(left)||!Number.isFinite(bottom)){
+        try{
+          const coords=editor.view.coordsAtPos(to);
+          left=coords.left;bottom=coords.bottom;
+        }catch{setSelection(null);return;}
+      }
+      const viewport=window.visualViewport;
+      const visibleLeft=viewport?.offsetLeft??0;
+      const visibleTop=viewport?.offsetTop??0;
+      const visibleWidth=viewport?.width??window.innerWidth;
+      const visibleHeight=viewport?.height??window.innerHeight;
+      const toolbarWidth=Math.min(300,Math.max(1,visibleWidth-16));
+      setSelection({text,
+       left:Math.max(visibleLeft+8,Math.min(left,visibleLeft+visibleWidth-toolbarWidth-8)),
+       top:Math.max(visibleTop+8,Math.min(bottom+8,visibleTop+visibleHeight-86)),
+      });
     },
   });
 
@@ -102,7 +120,8 @@ export function TextEditor({ entry, onEditorReady, readOnly = false }: TextEdito
        <div className="notebook-selection-actions" role="toolbar"
         aria-label="Selected Notebook text actions"
         style={{position:'fixed',left:selection.left,top:selection.top,zIndex:9000}}
-        onMouseDown={event=>event.preventDefault()}>
+        onMouseDown={event=>event.preventDefault()}
+        onPointerDown={event=>event.preventDefault()}>
         <small title={selection.text}>“{selection.text.slice(0,35)}”</small>
         <button type="button" onClick={()=>selectedDate(selection.text)}>Add to calendar</button>
         <button type="button" onClick={()=>selectedTask(selection.text)}>Create task</button>
