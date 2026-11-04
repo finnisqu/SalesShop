@@ -71,3 +71,30 @@
  .sales-record-cleanup-list{padding-inline:11px}
  .sales-record-cleanup-row{gap:8px}
 }
+
+/* The final confirmation lives inside the existing safe-area-aware dialog. */
+.sales-record-confirmation{display:grid;align-content:start;gap:13px;min-height:190px;
+ padding:22px;overflow-y:auto;background:var(--ss-theme-card,#fff)}
+.sales-record-confirmation>strong{font-size:16px;overflow-wrap:anywhere}
+.sales-record-confirmation p{margin:0;font-size:12px;line-height:1.5;
+ color:var(--ss-theme-muted,#777)}
+.sales-record-confirmation label{display:grid;gap:7px;font-size:12px;font-weight:750}
+.sales-record-confirmation input{width:100%;box-sizing:border-box;max-width:350px;
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:8px;padding:11px 12px;
+ background:var(--ss-theme-base,#fff);color:var(--ss-theme-ink,#333);font-size:16px}
+.sales-record-confirmation-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.sales-record-confirmation-actions button{min-height:43px;padding:10px 14px;
+ background:var(--ss-theme-card,#fff);color:inherit;
+ border:1px solid var(--ss-theme-border,#ddd);border-radius:8px;font-weight:750}
+.sales-record-confirmation-actions button.is-danger:not(:disabled){border-color:#bb6754;color:#b84f43}
+.sales-record-confirmation-actions button:disabled{opacity:.45}
+.sales-record-cleanup-tabs button:disabled{opacity:.5}
+.sales-record-cleanup-row{grid-template-columns:20px minmax(0,1fr) auto auto}
+.sales-record-cleanup-row .sales-record-open{color:var(--ss-theme-accent,#917246)}
+@media(max-width:760px){
+ .sales-record-confirmation{padding:16px;min-height:210px}
+ .sales-record-confirmation-actions button{flex:1 1 auto}
+ .sales-record-cleanup-row{grid-template-columns:20px minmax(0,1fr) auto;gap:7px}
+ .sales-record-cleanup-row .sales-record-open{grid-column:2;justify-self:start}
+ .sales-record-cleanup-row>button:not(.sales-record-open){grid-column:3;grid-row:1 / span 2}
+}
