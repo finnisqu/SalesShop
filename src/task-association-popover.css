@@ -20,3 +20,14 @@
 .tasks-associations-popover-foot>.tasks-associations-close{width:auto;margin:0;padding:5px 10px;
  border:1px solid var(--ss-theme-border,#ddd);border-radius:6px;color:var(--ss-theme-ink,#444);
  background:var(--ss-theme-base,#fafafa);font-size:11px;white-space:nowrap;}
+
+
+/* Avoid horizontal scrollbars and truncated one-result menus in Activity dialogs. */
+.tasks-associations-popover{overflow-x:hidden!important;min-width:0;max-width:calc(100vw - 16px);
+ word-break:normal;scrollbar-width:thin}
+.tasks-associations-popover>button[role="option"]{grid-template-columns:70px minmax(0,1fr) 18px;
+ box-sizing:border-box;min-width:0}
+.tasks-associations-popover>button[role="option"] strong{min-width:0}
+.tasks-associations-popover-foot{min-width:0;flex-wrap:wrap;position:sticky;bottom:-5px}
+.tasks-associations-popover-foot small{min-width:0;flex:1;white-space:normal}
+.tasks-associations-popover-foot>.tasks-associations-close{flex:0 0 auto}
