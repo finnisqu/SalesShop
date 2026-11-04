@@ -151,8 +151,16 @@ export function CleanupCenter(){
      if(!collection.some(record=>record.id===item.id)||
        crmDeletionBlockers(item.kind,item.id,refs).length)
        throw new Error(item.name+' now has linked records. Unlink them before deleting.');
-    }else if(!crm.activities.some(activity=>activity.id===item.id)){
-     throw new Error('This Activity is no longer available.');
+    }else{
+     const activity=crm.activities.find(activity=>activity.id===item.id);
+     if(!activity)throw new Error('This Activity is no longer available.');
+     if(own.some(task=>task.sourceObjectId==='activity-followup:'+activity.id))
+      throw new Error('A follow-up Task now depends on this Activity. Unlink it before deleting.');
+     const orphaned=!!activity.quoteId&&
+      ['quote-created','quote-linked'].includes(activity.type)&&
+      !allQuotes.some(quote=>quote.id===activity.quoteId);
+     if(!['manual-touchpoint','notebook-touchpoint'].includes(activity.type)&&!orphaned)
+      throw new Error('Automatic CRM audit history cannot be deleted.');
     }
     await removeRow(item);
     setSelected(old=>old.filter(key=>key!==item.kind+':'+item.id));
