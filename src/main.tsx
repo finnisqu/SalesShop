@@ -123,6 +123,8 @@ import './mobile-area-review-parity.css';
 import './mobile-consistency-pass.css';
 // Compact workspace rhythm shared by Tasks, Connections, Board and Catalog.
 import './workspace-refinement-v1.css';
+// One desktop scale, content width, and toolbar placement across internal workspaces.
+import './design-system/workspace-visual-system-v2.css';
 
 recordSalesShopBoot();
 

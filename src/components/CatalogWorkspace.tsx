@@ -103,7 +103,7 @@ export function CatalogWorkspace() {
 
       <SectionTabs className="catalog-section-nav catalog-foundation-tabs"
         aria-label="Catalog sections"
-        items={CATALOG_SECTIONS.map(({ id, label, eyebrow }) => ({ id, label, description: eyebrow }))}
+        items={CATALOG_SECTIONS.map(({ id, label }) => ({ id, label }))}
         selected={section} onSelect={setSection} />
 
       <section ref={sectionScrollRef} className={`catalog-section-host catalog-section-${section}`}>

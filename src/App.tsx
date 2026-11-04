@@ -254,10 +254,12 @@ function App() {
           <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
           <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')}>Catalog</button>
         </nav>
-        {!inRolePreview&&<div className="sales-calendar-global"><SalesCalendarLauncher compact /></div>}
-        {!viewer && !inRolePreview && <GlobalSearch />}
-        {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
-        {!inRolePreview && <GlobalPostItLauncher />}
+        <div className="app-primary-actions" role="group" aria-label="Calendar, search, create and notebook tools">
+          {!inRolePreview&&<div className="sales-calendar-global"><SalesCalendarLauncher compact /></div>}
+          {!viewer && !inRolePreview && <GlobalSearch />}
+          {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
+          {!inRolePreview && <GlobalPostItLauncher />}
+        </div>
         <div className="app-account-zone">
           <BuildBadge />
           <AccountMenu />
