@@ -58,7 +58,10 @@ describe('Quick Quote guided workflow and compact table contract',()=>{
   expect(areas).toContain("writeSingleChargeTotal");
   expect(areas).toContain('onPointerDown');
   expect(areas).toContain("onCommit:v=>writeStoneTotal");
-  expect(quoteUi).toContain('qmb-quick-history');
+  const chrome=source('src/components/MobileAppChrome.tsx');
+  expect(chrome).toContain('mobile-quote-history-button');
+  expect(chrome).toContain('mobile-quote-actions-slot');
+  expect(quoteUi).toContain('qmb-desktop-fallback-toolbar');
   expect(quoteUi).toContain('is-quick-quote-frame');
   expect(areas).toContain("table.current.querySelector<HTMLInputElement>('input.qqs-edit:focus')?.blur()");
  });

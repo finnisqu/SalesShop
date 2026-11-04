@@ -3,18 +3,22 @@ import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 const file=(p:string)=>readFileSync(join(process.cwd(),p),'utf8');
 describe('HOME and Beta global navigation accessibility',()=>{
- it('does not hide the desktop HOME quick-create entry behind global mobile-only CSS',()=>{
+ it('exposes HOME Quick Create in the live top actions',()=>{
    const home=file('src/components/HomeWorkspace.tsx');
    const globalCss=file('src/quick-create.css');
    const homeCss=file('src/home-workspace.css');
-   expect(home).toContain('<div className="sales-home-header-create"><QuickCreate /></div>');
-   expect(globalCss).toContain('.quick-create-launcher {\n  display: none;');
-   expect(homeCss).toContain('.sales-home-header-create .quick-create-launcher{display:inline-grid;');
-   expect(homeCss).toContain('.sales-home-header-create{display:none}');
+   expect(home).toContain('className="sales-home-top-actions"');
+   expect(home).toContain('{canCreate&&<QuickCreate />}');
+   expect(globalCss).toContain('.quick-create-launcher {');
+   expect(globalCss).toContain('display: none;');
+   expect(homeCss).toContain('.sales-home-top-actions .quick-create-launcher{display:grid;');
  });
- it('exposes the Beta global menu trigger as a named button',()=>{
+ it('keeps a named shared navigation button for Beta and other app views',()=>{
+   const chrome=file('src/components/MobileAppChrome.tsx');
    const beta=file('src/components/QuotesMobileBeta.tsx');
-   expect(beta).toContain('<summary role="button" aria-label="Open SalesShop navigation">');
-   expect(beta).toContain('<nav aria-label="SalesShop destinations">');
+   expect(chrome).toContain('aria-label="Open SalesShop navigation"');
+   expect(chrome).toContain('mobile-app-drawer-nav');
+   expect(chrome).toContain("const isEditingQuote = view === 'quotes' && betaQuotesEnabled");
+   expect(beta).toContain("'sales-shop:quotes-beta-back'");
  });
 });
