@@ -7,7 +7,9 @@ export function taskAssociationPopoverPlacement(
  const margin=8,gap=6,desiredHeight=Math.min(264,Math.max(64,measuredHeight??264));
  const below=Math.max(0,viewport.height-anchor.bottom-gap-margin);
  const above=Math.max(0,anchor.top-gap-margin);
- const showAbove=below<175&&above>below;
+ // Prefer the side with enough room for a complete result and footer,
+ // rather than clipping a one-item result under the Activity form.
+ const showAbove=(below<desiredHeight+8&&above>below)||(below<125&&above>below);
  const available=showAbove?above:below;
  const maxHeight=Math.min(desiredHeight,available);
  const width=Math.min(Math.max(anchor.width,230),Math.max(0,viewport.width-2*margin));
