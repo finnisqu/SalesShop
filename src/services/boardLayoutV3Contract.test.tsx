@@ -48,7 +48,8 @@ describe('Board display and quick creation',()=>{
   expect(css).toContain('.board-column.is-collapsed :is(.board-column-rule,.board-card-stack)');
  });
  it('fits stage mats to desktop viewport and scrolls cards independently',()=>{
-  expect(css).toContain('.role-perspective-content');
+  expect(css).not.toContain('.sales-app.view-board .role-perspective-content{');
+  expect(css).not.toContain('.sales-app.view-board .board-view{');
   expect(css).toContain('overflow-x:auto;overflow-y:hidden');
   expect(css).toContain('overflow-x:hidden;overflow-y:auto');
   expect(css).toContain('flex:1 1 0;height:0;min-height:0');

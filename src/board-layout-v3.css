@@ -126,12 +126,10 @@
 @media(min-width:701px) and (min-height:521px){
   /* The Board is a flex viewport: only the horizontal stage rail and each
      card stack scroll. Three or thirty cards cannot spill off the mat. */
-  :root[data-sales-theme] .sales-app.view-board .role-perspective-content{
-    display:flex;flex:1 1 0;height:0;min-height:0;overflow:hidden;
-  }
-  :root[data-sales-theme] .sales-app.view-board .board-view{
-    display:flex;flex:1 1 0;min-height:0;height:0;overflow:hidden;
-  }
+  /* WorkspaceViewport uses mode="legacy" and a display:contents wrapper.
+     Do not turn that wrapper into a zero-height flex child. The existing
+     .board-view owns the available height, and only its stage rail / stacks
+     need explicit scroll sizing. */
   :root[data-sales-theme] .sales-app.view-board
    :is(.project-board,.account-board) {
     flex:1 1 0;height:0;min-height:0;
