@@ -209,6 +209,18 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        </button>;
      })}
     </div>
+    {embedded&&weekMode&&!isPhone&&<div className="sales-calendar-week-glimpse">
+     <strong>This week</strong>
+     {visibleDays.map(key=>{
+      const counts=calendarDayCounts(events,key);
+      return <button key={key} type="button" className={key===selected?'is-selected':''}
+       onClick={()=>setSelected(key)}>
+       <span>{new Date(key+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}</span>
+       <small>{counts.total} {counts.total===1?'item':'items'}{counts.urgent?' · Urgent':''}</small>
+       {counts.urgent>0&&<b aria-label="Urgent">!</b>}
+      </button>;
+     })}
+    </div>}
      </div>
     <section className="sales-calendar-day-preview" aria-label={'Items for '+dateLabel(selected)}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
