@@ -9,7 +9,7 @@ import {
   mergeContactCrmDocument,
   normalizeCompanyIdentity,
 } from '../services/crmIdentity';
-import { deleteNormalizedProject } from '../services/normalizedCrmSync';
+import { deleteNormalizedProject,deleteNormalizedCrmRecord } from '../services/normalizedCrmSync';
 import type {
   Activity,
   ActivityInput,
@@ -48,6 +48,8 @@ interface CrmState {
   updateProject: (projectId: string, patch: ProjectPatch, context?: StageChangeContext) => void;
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
   deleteProject: (projectId: string) => void;
+  deleteContact: (contactId:string)=>Promise<void>;
+  deleteCompany: (companyId:string)=>Promise<void>;
   recordActivity: (activity: ActivityInput) => string;
 }
 
@@ -382,6 +384,30 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     set({ projects, activities });
   },
 
+  deleteContact:async(contactId)=>{
+    const current=get();
+    if(!current.contacts.some(contact=>contact.id===contactId))return;
+    if(current.activities.some(a=>a.contactId===contactId))
+     throw new Error('This person has Activity history. Preserve the CRM links or review those records first.');
+    const organizationId=cloudOrganizationId();
+    if(organizationId)await deleteNormalizedCrmRecord(organizationId,'contacts',contactId);
+    const contacts=get().contacts.filter(contact=>contact.id!==contactId);
+    persist(get().companies,contacts,get().projects,get().activities);
+    set({contacts});
+  },
+  deleteCompany:async(companyId)=>{
+    const current=get();
+    if(!current.companies.some(company=>company.id===companyId))return;
+    if(current.contacts.some(c=>c.companyId===companyId)||
+       current.projects.some(d=>d.companyId===companyId)||
+       current.activities.some(a=>a.companyId===companyId))
+      throw new Error('This company still has People, Deals, or Activities linked to it.');
+    const organizationId=cloudOrganizationId();
+    if(organizationId)await deleteNormalizedCrmRecord(organizationId,'companies',companyId);
+    const companies=get().companies.filter(company=>company.id!==companyId);
+    persist(companies,get().contacts,get().projects,get().activities);
+    set({companies});
+  },
   deleteProject: (projectId) => {
     const organizationId = cloudOrganizationId();
     const projects = get().projects.filter((project) => project.id !== projectId);
