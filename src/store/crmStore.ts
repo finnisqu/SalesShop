@@ -50,7 +50,7 @@ interface CrmState {
   deleteProject: (projectId: string) => void;
   deleteContact: (contactId:string)=>Promise<void>;
   deleteCompany: (companyId:string)=>Promise<void>;
-  deleteActivity:(activityId:string)=>Promise<void>;
+  deleteActivity:(activityId:string,orphanedDraftAudit?:boolean)=>Promise<void>;
   deleteCleanProject:(projectId:string)=>Promise<void>;
   recordActivity: (activity: ActivityInput) => string;
 }
@@ -386,10 +386,13 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     set({ projects, activities });
   },
 
-  deleteActivity:async(activityId)=>{
+  deleteActivity:async(activityId,orphanedDraftAudit=false)=>{
     const current=get().activities.find(a=>a.id===activityId);
     if(!current)return;
-    if(current.type!=='manual-touchpoint'&&current.type!=='notebook-touchpoint')
+    const removableManual=current.type==='manual-touchpoint'||current.type==='notebook-touchpoint';
+    const orphanedSetup=orphanedDraftAudit&&!!current.quoteId&&
+      (current.type==='quote-created'||current.type==='quote-linked');
+    if(!removableManual&&!orphanedSetup)
       throw new Error('Automatic CRM audit history cannot be removed from this cleanup tool.');
     const organizationId=cloudOrganizationId();
     if(organizationId)await deleteNormalizedCrmRecord(organizationId,'activities',activityId);
