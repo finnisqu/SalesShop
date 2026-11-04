@@ -4,7 +4,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {QuickCreate} from './QuickCreate';
-import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import '../home-workspace.css';
 
@@ -17,6 +17,7 @@ export function HomeWorkspace(){
  const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
  useEffect(()=>hydrate(),[hydrate]);
  const canCreate=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'quotes')));
+ const canLog=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'crm')));
  return <main className="sales-home is-calendar-home is-compact-home" aria-label="My SalesShop home">
   <header className="sales-home-heading">
    <div className="sales-home-heading-copy">
@@ -24,7 +25,8 @@ export function HomeWorkspace(){
     <h1>Today</h1><p>{dateLabel.format(new Date())}</p>
    </div>
    <div className="sales-home-top-actions" aria-label="Start work">
-    <QuickActivityLauncher />
+    {canLog&&<button type="button" className="sales-log-launcher"
+      onClick={()=>openActivityComposer()}>Log Activity</button>}
     {canCreate&&<QuickCreate />}
    </div>
   </header>
