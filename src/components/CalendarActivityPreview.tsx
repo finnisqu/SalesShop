@@ -100,17 +100,14 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
    .map(link=>({type:link.type as ActivityRelation['type'],id:link.id,label:link.label}));
   if(!relations.length){setError('Link at least one CRM record.');return;}
   const primary=primaryActivityRelations(relations);
-  const contact=people.find(p=>p.id===primary.contactId);
-  const project=deals.find(d=>d.id===primary.projectId);
-  const quote=quotes.find(q=>q.id===primary.quoteId);
-  const normalized={...primary,
-   companyId:primary.companyId??contact?.companyId??project?.companyId??quote?.companyId};
+  // Respect the edited associations exactly: removing a Company link must
+  // not silently re-add it through an associated Person or Deal.
   setSaving(true);setError('');
   try{
    await saveActivity(activityId,{
     summary:activityMethodSummary(method,relations),
     occurredAt:when.toISOString(),
-    ...normalized,
+    ...primary,
     metadata:{...activity.metadata,interactionMethod:method,
      relatedRecords:relations,notes:notes.trim().slice(0,5000)||undefined},
    });
