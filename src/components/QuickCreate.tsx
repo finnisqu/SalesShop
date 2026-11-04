@@ -3,9 +3,8 @@ import { createPortal } from 'react-dom';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
-import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
-import {useQuotesMobileBetaStore} from '../store/quotesMobileBetaStore';
 import {requestTaskModal} from './TaskModalHost';
+import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
 
 type NamedCreateMode = 'project' | 'account' | null;
 type QuickCreateGlyph = 'quote'|'task'|'deal'|'account'|'notebook';
@@ -41,15 +40,7 @@ export function QuickCreate() {
 
   const openDocumentPicker = () => {
     close();
-    // Quote creation always starts with the guided template picker.
-    useQuoteLibraryStore.getState().setMode('mine');
-    useQuotesMobileBetaStore.getState().setEnabled(true);
-    useQuotesMobileBetaStore.getState().setLocation({
-      page:'library',quoteTab:'build',areaTab:'measure',areaId:null,
-    });
-    try{window.sessionStorage.setItem('salesshop-open-document-picker-v1','1');}catch{/* optional */}
-    setView('quotes');
-    window.dispatchEvent(new Event('salesshop:open-document-picker'));
+    openGuidedQuoteCreation();
   };
 
   const startTask = () => {
