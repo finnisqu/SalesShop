@@ -10,6 +10,9 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {scopedStorageKey} from '../lib/developerPlayground';
+import {canEditTeamArea} from '../services/teamDepartments';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
+import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
 import {requestTaskModal} from './TaskModalHost';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {homeRecentQuotes} from '../services/homeOverview';
@@ -17,6 +20,19 @@ import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
 import './sales-calendar.css';
+
+type SidecarCreateKind='quote'|'activity'|'note';
+function SidecarCreateIcon({kind}:{kind:SidecarCreateKind}){
+ return <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+  strokeLinejoin="round" aria-hidden="true">
+  {kind==='quote'?<><rect x="5" y="3" width="14" height="18" rx="2"/>
+   <path d="M9 8h6M9 12h6M9 16h4"/></>:
+   kind==='activity'?<><path d="M5 3h3l2 5-2 2a16 16 0 0 0 6 6l2-2 5 2v3a2 2 0 0 1-2 2C11 20 4 13 3 5a2 2 0 0 1 2-2Z"/></>:
+   <><rect x="5" y="3" width="14" height="18" rx="2"/>
+    <path d="M9 8h6M9 12h6M9 16h4M3 7v11"/></>}
+ </svg>;
+}
 
 const week=['S','M','T','W','T','F','S'];
 const labels:Record<SalesCalendarKind,string>={
@@ -42,6 +58,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
  const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
+ const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
+ const sidecarCreateRef=useRef<HTMLDivElement>(null);
+ const sidecarCreateButton=useRef<HTMLButtonElement>(null);
  useEffect(()=>{
   if(!embedded)return;
   const media=window.matchMedia('(max-width:760px)');
@@ -52,6 +71,10 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const today=localDateKey(new Date());
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id);
+ const teamRole=useAuthStore(s=>s.teamRole);
+ const department=useAuthStore(s=>s.teamDepartment);
+ const mayCreateQuote=mode==='local'||!!(userId&&canEditTeamArea(teamRole,department,'quotes'));
+ const mayLogActivity=mode==='local'||!!(userId&&canEditTeamArea(teamRole,department,'crm'));
  const preview=useRolePerspectiveStore(s=>s.activePerspective);
  const storedScope=usePersonalTaskStore(s=>s.scope),tasks=usePersonalTaskStore(s=>s.tasks);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
@@ -60,6 +83,31 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const notebookReady=useNotebookStore(s=>s.hydrated);
  const nav=useNavigationStore();
  const personal=taskScope(mode,org,userId);
+ const createFromSidecar=(kind:SidecarCreateKind)=>{
+  setSidecarCreateOpen(false);
+  if(kind==='quote'&&mayCreateQuote)openGuidedQuoteCreation();
+  if(kind==='activity'&&mayLogActivity)openActivityComposer();
+  if(kind==='note')openHomeNote();
+ };
+ useEffect(()=>{
+  if(!sidecarCreateOpen)return;
+  const outside=(event:PointerEvent)=>{
+   if(!sidecarCreateRef.current?.contains(event.target as Node))
+    setSidecarCreateOpen(false);
+  };
+  const escape=(event:KeyboardEvent)=>{
+   if(event.key!=='Escape')return;
+   event.preventDefault();event.stopPropagation();
+   setSidecarCreateOpen(false);
+   sidecarCreateButton.current?.focus();
+  };
+  document.addEventListener('pointerdown',outside);
+  document.addEventListener('keydown',escape);
+  return()=>{
+   document.removeEventListener('pointerdown',outside);
+   document.removeEventListener('keydown',escape);
+  };
+ },[sidecarCreateOpen]);
  const prefKey=scopedStorageKey('salesshop-calendar-display-v1:')+(personal??'pending');
  const [savedDisplay,setSavedDisplay]=useState<{key:string;display:CalendarDisplay}>(
   ()=>({key:prefKey,display:readDisplay(prefKey,isPhone)}));
@@ -294,16 +342,35 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
       <div className="sales-calendar-sidecar-topline">
        <h3>Pick up where you left off</h3>
-       {sidecarTab==='notes'&&<button type="button" className="home-note-sidecar-add"
-        title="New private note" aria-label="New note" onClick={()=>openHomeNote()}>+</button>}
+       <div className="home-sidecar-create" ref={sidecarCreateRef}>
+        <button ref={sidecarCreateButton} type="button"
+         className="home-note-sidecar-add" title="Create in SalesShop"
+         aria-label="Create quote, activity, or note" aria-haspopup="menu"
+         aria-expanded={sidecarCreateOpen}
+         onClick={()=>setSidecarCreateOpen(value=>!value)}>+</button>
+        {sidecarCreateOpen&&<div className="home-sidecar-create-menu" role="menu"
+          aria-label="Quick create">
+         {mayCreateQuote&&<button type="button" role="menuitem"
+           onClick={()=>createFromSidecar('quote')}>
+           <SidecarCreateIcon kind="quote"/><span>New Quote</span>
+         </button>}
+         {mayLogActivity&&<button type="button" role="menuitem"
+           onClick={()=>createFromSidecar('activity')}>
+           <SidecarCreateIcon kind="activity"/><span>Log Activity</span>
+         </button>}
+         <button type="button" role="menuitem" onClick={()=>createFromSidecar('note')}>
+           <SidecarCreateIcon kind="note"/><span>New Note</span>
+         </button>
+        </div>}
+       </div>
       </div>
       <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
        <button type="button" role="tab" aria-selected={sidecarTab==='quotes'}
-        onClick={()=>setSidecarTab('quotes')}>Quotes</button>
+        onClick={()=>{setSidecarTab('quotes');setSidecarCreateOpen(false);}}>Quotes</button>
        <button type="button" role="tab" aria-selected={sidecarTab==='recent'}
-        onClick={()=>setSidecarTab('recent')}>Activity</button>
+        onClick={()=>{setSidecarTab('recent');setSidecarCreateOpen(false);}}>Activity</button>
        <button type="button" role="tab" aria-selected={sidecarTab==='notes'}
-        onClick={()=>setSidecarTab('notes')}>Notes</button>
+        onClick={()=>{setSidecarTab('notes');setSidecarCreateOpen(false);}}>Notes</button>
       </div>
       <div className={'sales-calendar-sidecar-list'+(sidecarTab==='notes'?' is-notes':'')}>
        {sidecarTab==='quotes'
