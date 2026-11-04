@@ -145,28 +145,26 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       <p className="activity-preview-hint">Changes are saved to your CRM activity. Unsubmitted edits remain on this device if you close the panel.</p>
       {error&&<p className="activity-preview-error" role="alert">{error}</p>}
      </form>:<>
-      <section className="activity-preview-details">
-       <h3>Activity details</h3>
-       <dl><dt>When</dt><dd>{new Date(activity.occurredAt).toLocaleString()}</dd>
-        <dt>Method</dt><dd>{activity.metadata?.interactionMethod?
-         methodLabel(activity.metadata.interactionMethod):'Interaction'}</dd>
-        {activity.metadata?.editedAt&&<>
-         <dt>Edited</dt><dd>{new Date(activity.metadata.editedAt).toLocaleString()}</dd>
-        </>}
-       </dl>
-       {activity.metadata?.notes?<p className="activity-preview-note">{activity.metadata.notes}</p>:
-        <p className="activity-preview-empty">No notes were recorded.</p>}
-      </section>
-      <section><h3>Related records <span>{relationList.length}</span></h3>
-       {relationList.map(item=><button type="button" className="record-preview-related"
+      <div className="tasks-preview-meta activity-quick-meta">
+       <span>{activity.metadata?.interactionMethod?
+        methodLabel(activity.metadata.interactionMethod):'Interaction'}</span>
+       <span>Completed</span>
+       <span>{new Date(activity.occurredAt).toLocaleString()}</span>
+      </div>
+      {activity.metadata?.notes?
+       <p className="tasks-preview-notes activity-quick-notes">{activity.metadata.notes}</p>:
+       <p className="activity-preview-empty">No notes were recorded.</p>}
+      {activity.metadata?.editedAt&&
+       <p className="activity-quick-edited">Edited {new Date(activity.metadata.editedAt).toLocaleString()}</p>}
+      <div className="tasks-preview-related activity-quick-related">
+       <strong>Related records</strong>
+       {relationList.map(item=><button type="button"
         key={item.type+':'+item.id} onClick={()=>onSelect(
          item.type==='contact'?'person':item.type==='project'?'deal':item.type,item.id)}>
-        <span><strong>{(item.label??item.id).replace(/^(Quote|Deal|Company|Person) · /,'')}</strong>
-         <small>{labels[item.type]}</small></span>
-        <span aria-hidden="true">›</span></button>)}
+        {labels[item.type]} · {(item.label??item.id).replace(/^(Quote|Deal|Company|Person) · /,'')} ↗
+       </button>)}
        {!relationList.length&&<p className="record-preview-empty">No linked CRM record.</p>}
-      </section>
-     </>}
+      </div>     </>}
    </div>
    <footer className="record-preview-actions activity-preview-actions">
     {editing?<>
