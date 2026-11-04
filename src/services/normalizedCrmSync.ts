@@ -133,6 +133,13 @@ async function upsertRows(table: CrmTable, rows: Record<string, unknown>[]) {
   if (error) throw error;
 }
 
+/** A server row is authoritative for assignment; routine document saves
+ * cannot undo a separately confirmed team reassignment. */
+export function assigneeForCrmSync(localAssignee?:string,
+  server?:{assignedUserId?:string}):string|null{
+  return server ? (server.assignedUserId??null) : (localAssignee??null);
+}
+
 interface ServerCrmGuards {
   companies: Map<string, string>;
   contacts: Map<string, string>;
@@ -263,7 +270,7 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
         due_date: project.dueDate ?? null,
         // Assignment changes use a separately acknowledged server update.
         // Ordinary CRM sync must never restore stale assignment values.
-        assigned_user_id: server ? (server.assignedUserId ?? null) : (project.assignedUserId ?? null),
+        assigned_user_id: assigneeForCrmSync(project.assignedUserId,server),
         amount: amount ?? null,
         next_action: project.nextAction ?? null,
         last_touchpoint: lastTouchpoint ?? null,
