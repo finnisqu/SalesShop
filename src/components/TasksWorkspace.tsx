@@ -154,7 +154,11 @@ export function TaskEditor({initial,onCancel,onSave}:{
        </div>
        <button type="button" className="tasks-editor-reminder-toggle"
         aria-expanded={showReminder} onClick={()=>setShowReminder(value=>!value)}>
-        <span aria-hidden="true">◷</span> {showReminder?'Hide reminder':'Add / edit reminder'}
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+         strokeLinejoin="round" aria-hidden="true">
+         <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+        </svg> {showReminder?'Hide reminder':'Add / edit reminder'}
         {reminderAt&&<small>Set</small>}
        </button>
        {showReminder&&<label className="tasks-editor-reminder-label">
