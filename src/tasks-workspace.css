@@ -96,3 +96,16 @@
  color:inherit;font-size:12px;cursor:pointer}
 @media(max-width:700px){.tasks-preview-card{align-self:end;width:100%;border-radius:18px 18px 0 0;
  max-height:92dvh}.tasks-preview-card>footer{padding-bottom:max(14px,env(safe-area-inset-bottom))}}
+
+
+/* Keep maintenance next to task management, never in the Home calendar. */
+.tasks-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.tasks-cleanup-action{min-height:40px;padding:8px 12px;border-radius:9px;
+ border:1px solid var(--ss-theme-border);background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);font-weight:700;font-size:12px;white-space:nowrap}
+.tasks-cleanup-action:hover{background:var(--ss-theme-tint);border-color:var(--ss-theme-accent)}
+.tasks-cleanup-action:disabled{opacity:.5}
+@media(max-width:680px){
+ .tasks-header-actions{justify-content:flex-end;gap:6px}
+ .tasks-cleanup-action{min-height:38px;padding:7px 9px;font-size:11px}
+}
