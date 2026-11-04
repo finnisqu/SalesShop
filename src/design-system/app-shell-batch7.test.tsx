@@ -26,7 +26,7 @@ describe('UI Foundation Batch 7 — Board / Quotes / Notebook',()=>{
     const quick=renderToStaticMarkup(<BoardQuickCreate kind="Deal" onCreate={()=>null}/>);
     expect(quick).toContain('+ Deal');
     expect(quick).toContain('aria-haspopup="dialog"');
-    expect(board).toContain('<PageHeader className="board-header-panel board-foundation-header"');
+    expect(board).toContain('<PageHeader className="board-header-panel board-foundation-header ss-workspace-header"');
     expect(board).toContain('<BoardQuickCreate kind="Deal"');
     expect(board).toContain('aria-pressed={compactCards}');
     expect(board).not.toContain('onSubmit={quickAdd}');
@@ -36,10 +36,10 @@ describe('UI Foundation Batch 7 — Board / Quotes / Notebook',()=>{
   });
 
   it('reuses the same Board header on Accounts without losing CRM and stage interactions',()=>{
-    expect(accounts).toContain('className="board-header-panel accounts-header-panel board-foundation-header"');
+    expect(accounts).toContain('className="board-header-panel accounts-header-panel board-foundation-header ss-workspace-header"');
     expect(accounts).toContain('onClick={onShowProjects}');
     expect(accounts).toContain('<BoardQuickCreate kind="Account"');
-    expect(accounts).toContain('onClick={onToggleCompact}');
+    expect(accounts).toContain('onClick:onToggleCompact');
     expect(accounts).not.toContain('setCleanupOpen(true)');
     expect(accounts).toContain('<MobileBoardStagePicker');
     expect(accounts).not.toContain('<BoardScrollControls');
@@ -82,7 +82,7 @@ describe('UI Foundation Batch 7 — Board / Quotes / Notebook',()=>{
 
   it('themes Notebook sidebar and toolbar but preserves physical paper and text/ink engines',()=>{
     expect(notebook).toContain('className={`notebook-workspace ');
-    expect(notebook).toContain('<Sidebar onOpenBeside={openCompanion}');
+    expect(notebook).toContain('<Sidebar externalQuery={notebookHeaderSearch}');
     expect(notebook).toContain('<Toolbar entry={entry} editor={notebookEditor} enableShortcuts');
     expect(notebook).toContain('className={`paper-sheet paper-${entry.paperStyle}');
     expect(notebook).toContain('<TextEditor key={`text-${entry.id}`}');

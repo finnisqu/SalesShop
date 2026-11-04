@@ -44,10 +44,10 @@ describe('UI Foundation Batch 5A — Catalog shell', () => {
   it('keeps all five Catalog sections and their existing workspaces mounted', () => {
     for (const required of [
       "id: 'materials'", "id: 'sinks'", "id: 'other'", "id: 'rates'", "id: 'suppliers'",
-      '<PageHeader', '<SectionTabs', '<Panel',
-      'onSelect={setSection}', 'sectionScrollRef.current.scrollTop = 0',
+      '<WorkspaceHeader', '<SectionTabs', '<Panel',
+      "onSelect={next=>{setCatalogSearch('');setSection(next);}}", 'sectionScrollRef.current.scrollTop = 0',
       'MaterialsWorkspace embedded', 'SinksWorkspace embedded',
-      'RatesWorkspace embedded', '<SuppliersWorkspace />',
+      'RatesWorkspace embedded', '<SuppliersWorkspace externalQuery={catalogSearch} />',
       'catalog-section-host',
     ]) {
       expect(page, `Catalog shell lost: ${required}`).toContain(required);
@@ -56,8 +56,9 @@ describe('UI Foundation Batch 5A — Catalog shell', () => {
 
   it('lets the active section tabs carry context without an oversized duplicate header card', () => {
     expect(page).not.toContain('catalog-current-section');
-    expect(page).toContain('description="Materials, sinks, rates and suppliers for your quotes."');
-    expect(page).toContain('onSelect={setSection}');
+    expect(page).toContain('WorkspaceHeader title="Catalog"');
+    expect(page).toContain('className="catalog-header catalog-foundation-heading"');
+    expect(page).toContain("setCatalogSearch('');setSection(next);");
   });
 
   it('preserves mobile drawer navigation and the touch-first browsing workspace', () => {

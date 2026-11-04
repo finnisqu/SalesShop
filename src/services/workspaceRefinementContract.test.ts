@@ -14,7 +14,8 @@ describe('SalesShop streamlined workspace contract',()=>{
  const css=src('src/workspace-refinement-v1.css');
  it('uses task count chips as single status filter and offers full history',()=>{
   expect(tasks).toContain('aria-pressed={filter===key}');
-  expect(tasks).toContain('tasks-history-toggle');
+  expect(tasks).toContain("label:'All history'");
+   expect(tasks).toContain('WorkspaceMoreMenu');
   expect(tasks).toContain('tasks-filter-help');
   expect(tasks).not.toContain('className="tasks-filter-row"');
  });

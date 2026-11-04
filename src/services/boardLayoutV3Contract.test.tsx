@@ -36,9 +36,9 @@ describe('Board display and quick creation',()=>{
   expect(board).toContain('onToggleCompact={toggleCompact}');
   expect(board).toContain("isStageCollapsed('projects',stage)");
   expect(board).toContain("isStageCollapsed('accounts',stage)");
-  expect(accounts).toContain('onClick={onToggleCompact}');
+  expect(accounts).toContain('onClick:onToggleCompact');
   expect(board).toContain('aria-pressed={compactCards}');
-  expect(accounts).toContain('aria-pressed={compactCards}');
+  expect(accounts).toContain('active:compactCards');
   expect(css).toContain('.board-view.is-compact');
  });
  it('supports accessible, full-header collapse on both Board views',()=>{
