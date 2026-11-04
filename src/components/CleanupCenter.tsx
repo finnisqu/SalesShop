@@ -5,19 +5,20 @@ import {useQuoteStore} from '../store/quoteStore';
 import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useAuthStore} from '../store/authStore';
-import {useNavigationStore} from '../store/navigationStore';
+import {recordManagementDependencies,type ManagedKind} from '../services/recordManagementDependencies';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
 import {crmDeletionBlockers} from '../services/crmDeletionBlockers';
 import type {Quote} from '../types/quote';
 import '../home-cleanup.css';
 
-type CleanupKind='quote'|'person'|'company'|'deal'|'activity';
+type CleanupKind=ManagedKind;
 interface CleanupRow{
  kind:CleanupKind;id:string;name:string;detail:string;
  blockers:string[];action:'delete'|'archive';
 }
-type Tab=CleanupKind;
+type Tab=Exclude<CleanupKind,'task'>;
+type FocusRef={kind:CleanupKind;id:string};
 type OpenDetail={kind?:CleanupKind;testMode?:boolean};
 export function CleanupCenter(){
  const [open,setOpen]=useState(false),[tab,setTab]=useState<Tab>('quote');
@@ -26,6 +27,7 @@ export function CleanupCenter(){
  const [pending,setPending]=useState<CleanupRow[]|null>(null);
  const [confirmation,setConfirmation]=useState('');
  const [testMode,setTestMode]=useState(false);
+ const [focusTrail,setFocusTrail]=useState<FocusRef[]>([]);
  const quotes=useQuoteStore(s=>s.quotes),archiveQuote=useQuoteStore(s=>s.archiveQuote),
   deleteQuoteFromManagement=useQuoteStore(s=>s.deleteQuoteFromManagement);
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
@@ -48,7 +50,8 @@ export function CleanupCenter(){
   const show=(event:Event)=>{
    const detail=(event as CustomEvent<OpenDetail>).detail;
    setOpen(true);setQuery('');setSelected([]);setError('');setPending(null);
-   setConfirmation('');setTestMode(Boolean(detail?.testMode));setTab(detail?.kind??'quote');
+   setConfirmation('');setFocusTrail([]);
+   setTestMode(Boolean(detail?.testMode));setTab(detail?.kind&&detail.kind!=='task'?detail.kind:'quote');
   };
   window.addEventListener('salesshop:open-cleanup-center',show);
   return()=>window.removeEventListener('salesshop:open-cleanup-center',show);
@@ -86,6 +89,32 @@ export function CleanupCenter(){
   }));
   return [...q,...p,...c,...d,...a];
  },[visibleQuotes,quotes,people,companies,deals,activities,ownTasks]);
+ const findRow=(kind:CleanupKind,id:string):CleanupRow|undefined=>{
+  if(kind==='task'){
+   const task=ownTasks.find(item=>item.id===id);
+   return task?{kind:'task',id:task.id,name:task.title,
+    detail:task.dueDate?'Due '+task.dueDate:'Personal task',blockers:[],action:'delete'}:undefined;
+  }
+  const row=rows.find(item=>item.kind===kind&&item.id===id);
+  if(row)return row;
+  // Archived quotes still block deletion of linked CRM records. Do not
+  // present another salesperson's quote as a deletable document.
+  if(kind==='quote'){
+   const quote=quotes.find(item=>item.id===id);
+   if(!quote)return undefined;
+   const restricted=mode==='cloud'&&quote.ownerUserId!==userId;
+   return {kind:'quote',id,name:restricted?'Quote owned by another user':quote.title||'Untitled Quote',
+    detail:restricted?'Not manageable from your account':'Archived document',
+    blockers:[restricted?'Another owner must manage this quote':'Archived documents retain CRM history'],
+    action:'archive'};
+  }
+  return undefined;
+ };
+ const focused=focusTrail.at(-1);
+ const focusRow=focused?findRow(focused.kind,focused.id):undefined;
+ const related=focused?recordManagementDependencies(focused.kind,focused.id,{
+  companies,contacts:people,projects:deals,activities,quotes,tasks:ownTasks,
+ }).map(reference=>({...reference,row:findRow(reference.kind,reference.id)})):[];
  const filtered=rows.filter(item=>item.kind===tab&&
   (item.name+' '+item.detail).toLowerCase().includes(query.trim().toLowerCase()));
  const eligible=filtered.filter(item=>item.blockers.length===0&&
@@ -93,6 +122,9 @@ export function CleanupCenter(){
  const chosen=eligible.filter(item=>selected.includes(item.kind+':'+item.id)&&item.action==='delete');
  const removeRow=async(item:CleanupRow)=>{
   if(item.blockers.length)return;
+  if(item.kind==='task'){
+   usePersonalTaskStore.getState().remove(item.id);return;
+  }
   if(item.kind==='quote'){
    if(item.action==='archive')archiveQuote(item.id);
    else await deleteQuoteFromManagement(item.id);
@@ -113,14 +145,18 @@ export function CleanupCenter(){
   if(!items.length||busy||!canManage)return;
   setPending(items);setConfirmation('');setError('');
  };
+ // Drill into dependencies without changing the active tab, search, or parent.
  const openRecord=(item:CleanupRow)=>{
   if(busy)return;
-  setPending(null);setOpen(false);
-  const navigation=useNavigationStore.getState();
-  if(item.kind==='person')navigation.openPerson(item.id);
-  if(item.kind==='company')navigation.openCompany(item.id);
-  if(item.kind==='deal')navigation.openProject(item.id);
-  if(item.kind==='quote')navigation.openQuote(item.id);
+  setPending(null);setError('');
+  setFocusTrail(current=>{
+   const existing=current.findIndex(ref=>ref.kind===item.kind&&ref.id===item.id);
+   return existing>=0?current.slice(0,existing+1):
+    [...current,{kind:item.kind,id:item.id}];
+  });
+ };
+ const backToParent=()=>{setPending(null);setError('');
+  setFocusTrail(current=>current.slice(0,-1));
  };
  const confirmPending=async()=>{
   if(!pending?.length||busy||!canManage)return;
@@ -139,7 +175,10 @@ export function CleanupCenter(){
     const own=currentScope===saved.scope?saved.tasks.filter(task=>!task.deletedAt):[];
     const refs={companies:crm.companies,contacts:crm.contacts,projects:crm.projects,
      activities:crm.activities,quotes:allQuotes,tasks:own};
-    if(item.kind==='quote'){
+    if(item.kind==='task'){
+     const itemTask=own.find(task=>task.id===item.id);
+     if(!itemTask)throw new Error('This personal Task is no longer available in your workspace.');
+    }else if(item.kind==='quote'){
      const current=allQuotes.find(quote=>quote.id===item.id);
      if(!current||current.archivedAt||
        (auth.mode==='cloud'&&current.ownerUserId!==auth.user?.id))
@@ -164,6 +203,8 @@ export function CleanupCenter(){
     }
     await removeRow(item);
     setSelected(old=>old.filter(key=>key!==item.kind+':'+item.id));
+    setFocusTrail(current=>current.at(-1)?.kind===item.kind&&
+      current.at(-1)?.id===item.id?current.slice(0,-1):current);
    }
    setPending(null);setConfirmation('');
   }catch(e){
@@ -180,7 +221,8 @@ export function CleanupCenter(){
   <section className="sales-cleanup-dialog is-record-cleanup" role="dialog"
    aria-modal="true" aria-label={testMode?'Clean up test records':'Manage and delete records'}
    onKeyDown={e=>{if(e.key==='Escape'&&!busy){
-    e.stopPropagation();if(pending)setPending(null);else setOpen(false);
+    e.stopPropagation();if(pending)setPending(null);
+    else if(focusTrail.length)backToParent();else setOpen(false);
    }}}>
    <header><div><small>SETTINGS · DATA MANAGEMENT</small>
     <h2>{testMode?'Clean up test records':'Record management'}</h2>
@@ -193,19 +235,33 @@ export function CleanupCenter(){
    <div className="sales-record-cleanup-tabs" role="group" aria-label="Record type">
     {(['quote','person','company','deal','activity'] as const).map(kind=><button key={kind} type="button"
      disabled={busy||!!pending} aria-pressed={tab===kind}
-     onClick={()=>{setTab(kind);setSelected([]);setError('');}}>
+     onClick={()=>{setTab(kind);setSelected([]);setError('');setFocusTrail([]);}}>
      {kind==='quote'?'Quotes':kind==='person'?'People':kind==='company'?'Companies':
        kind==='deal'?'Deals':'Activities'}
      <small>{rows.filter(row=>row.kind===kind).length}</small>
     </button>)}
    </div>
-   <div className="sales-record-cleanup-toolbar">
+   {focusTrail.length>0&&<nav className="sales-record-dependency-trail"
+      aria-label="Record management trail">
+     <button type="button" disabled={busy||!!pending} onClick={()=>{setFocusTrail([]);setError('');}}>
+       {tab==='person'?'People':tab==='company'?'Companies':tab==='deal'?'Deals':
+        tab==='quote'?'Quotes':'Activities'}
+     </button>
+     {focusTrail.map((ref,index)=><span key={ref.kind+':'+ref.id}>
+       <span aria-hidden="true">›</span>
+       <button type="button" aria-current={index===focusTrail.length-1?'page':undefined}
+        disabled={busy||!!pending} onClick={()=>setFocusTrail(current=>current.slice(0,index+1))}>
+         {findRow(ref.kind,ref.id)?.name||'Removed record'}
+       </button>
+     </span>)}
+   </nav>}
+   {!focusTrail.length&&<div className="sales-record-cleanup-toolbar">
     <input type="search" value={query} aria-label="Filter records" disabled={busy||!!pending}
      onChange={e=>{setQuery(e.target.value);setSelected([]);}}
      placeholder="Find a record…"/>
     {chosen.length>0&&!pending&&<button type="button" disabled={busy} onClick={()=>perform(chosen)}>
       Delete selected ({chosen.length})</button>}
-   </div>
+   </div>}
    {pending ? <div className="sales-record-confirmation" role="group" aria-label="Confirm record removal">
      <strong>{pending.length===1?pending[0].name:pending.length+' selected records'}</strong>
      <p>{isDeleting
@@ -222,7 +278,64 @@ export function CleanupCenter(){
          {busy?'Working…':isDeleting?'Permanently delete':'Archive'} ({pending.length})
        </button>
      </div>
-   </div> : <div className="sales-record-cleanup-list">
+   </div> : focused ? <section className="sales-record-dependency-panel"
+      aria-label="Manage linked records">
+     <div className="sales-record-dependency-heading">
+      <button type="button" onClick={backToParent} disabled={busy}>← Back</button>
+      <div><small>RECORD & DEPENDENCIES</small>
+       <h3>{focusRow?.name||'Record no longer available'}</h3>
+       {focusRow&&<p>{focusRow.detail}</p>}
+      </div>
+     </div>
+     {focusRow?.blockers.length ? <p className="sales-record-dependency-warning">
+       Cannot delete yet: {focusRow.blockers.join(' · ')}.
+       Review linked records below. Deleting a linked record never deletes its parent automatically.
+     </p>:focusRow&&<p className="sales-record-dependency-ready">
+       No blocking relationships. This record is eligible for {focusRow.action==='archive'?'archiving':'deletion'}.
+     </p>}
+     {focusRow&&<div className="sales-record-dependency-main-actions">
+       <button type="button" disabled={busy||focusRow.blockers.length>0||
+        (focusRow.kind==='quote'?!canQuotes:!canCrm)}
+        onClick={()=>perform([focusRow])}>
+         {focusRow.action==='archive'?'Archive this quote':'Delete this '+(
+          focusRow.kind==='person'?'person':focusRow.kind==='company'?'company':
+          focusRow.kind==='deal'?'deal':focusRow.kind==='activity'?'activity':
+          focusRow.kind==='task'?'task':'quote')}
+       </button>
+     </div>}
+     <h4>Linked records ({related.length})</h4>
+     {related.length ? <div className="sales-record-dependency-list">
+      {related.map(({kind,id,reason,row})=><div className="sales-record-dependency-row"
+         key={kind+':'+id}>
+       <div><strong>{row?.name||'Unavailable record'}</strong>
+        <small>{kind==='person'?'Person':kind==='company'?'Company':
+          kind==='deal'?'Deal':kind==='quote'?'Quote':
+          kind==='activity'?'Activity':'Task'} · {reason}</small>
+        {row?.blockers.length ? <small className="is-blocked">
+          {row.blockers.join(' · ')}
+        </small>:row?.action==='archive'&&<small>
+          Archiving preserves linked history and will not unblock this record.
+        </small>}
+       </div>
+       {row&&<div className="sales-record-dependency-actions">
+        <button type="button" disabled={busy}
+         onClick={()=>openRecord(row)}>Inspect</button>
+        <button type="button" disabled={busy||row.blockers.length>0||
+          (row.kind==='quote'?!canQuotes:!canCrm)}
+         onClick={()=>perform([row])}>
+          {row.action==='archive'?'Archive':'Delete'}
+        </button>
+       </div>}
+      </div>)}
+     </div>:<p className="sales-cleanup-empty">
+      No linked records requiring deletion were found in the records accessible to you.
+     </p>}
+     <small className="sales-record-dependency-note">
+      All deletions still require typed confirmation. Protected audit events and issued
+      quotes cannot be permanently erased. After a child is deleted, this list updates
+      automatically while your original record stays open.
+     </small>
+   </section> : <div className="sales-record-cleanup-list">
     {filtered.map(item=><div className="sales-record-cleanup-row" key={item.kind+item.id}>
      <input type="checkbox" disabled={busy||item.blockers.length>0||item.action!=='delete'||
        (item.kind==='quote'?!canQuotes:!canCrm)}
@@ -234,9 +347,9 @@ export function CleanupCenter(){
        Cannot delete yet: {item.blockers.join(' · ')}. Unlink dependent records first.
       </small>}
      </div>
-     {item.blockers.length>0&&item.kind!=='activity'&&
+     {item.blockers.length>0&&
       <button type="button" className="sales-record-open" disabled={busy}
-       onClick={()=>openRecord(item)}>Open</button>}
+       onClick={()=>openRecord(item)}>Review links</button>}
      <button type="button" disabled={busy||item.blockers.length>0||
       (item.kind==='quote'?!canQuotes:!canCrm)}
       onClick={()=>perform([item])}>{item.action==='archive'?'Archive':'Delete'}</button>
