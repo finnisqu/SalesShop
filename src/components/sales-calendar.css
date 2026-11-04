@@ -414,3 +414,25 @@
   border-radius:50%;height:14px;width:14px}
 }
 @media(max-width:759px){.sales-calendar-week-glimpse{display:none}}
+
+
+/* Short daily agendas stay at the top; unused height remains below the rows. */
+.sales-calendar-agenda{
+ align-content:start;
+ align-items:start;
+ grid-auto-rows:max-content;
+}
+.sales-calendar-agenda>button:not(.sales-calendar-show-more){
+ flex:0 0 auto;
+ align-self:start;
+}
+.sales-calendar-agenda-chevron{
+ flex:0 0 auto;
+ font-size:18px;
+ line-height:1;
+ margin-left:2px;
+ color:var(--ss-theme-muted,#796d5b);
+}
+.sales-calendar-agenda-urgent{
+ margin-left:auto;
+}
