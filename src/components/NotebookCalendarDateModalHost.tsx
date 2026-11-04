@@ -3,7 +3,7 @@ import {createPortal} from 'react-dom';
 import {useNotebookStore} from '../store/notebookStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useAuthStore} from '../store/authStore';
-import {agendaTitle,notebookToday,type NotebookCalendarRequest} from '../services/notebookDaily';
+import {agendaTitle,notebookToday,validNotebookDay,type NotebookCalendarRequest} from '../services/notebookDaily';
 import '../notebook-linked-agenda.css';
 
 export function NotebookCalendarDateModalHost(){
@@ -46,8 +46,7 @@ export function NotebookCalendarDateModalHost(){
   event.preventDefault();
   if(submitting.current)return;
   submitting.current=true;
-  if(!title.trim()||!/^\d{4}-\d{2}-\d{2}$/.test(date)||
-    !Number.isFinite(Date.parse(date+'T12:00:00'))){
+  if(!title.trim()||!validNotebookDay(date)){
    setError('Enter a title and valid date.');submitting.current=false;return;
   }
   if(current){
@@ -76,7 +75,6 @@ export function NotebookCalendarDateModalHost(){
     <label>Time (optional)<input type="time" value={time} onChange={e=>setTime(e.target.value)}/></label>
    </div>
    <label className="notebook-agenda-checkbox"><input type="checkbox" checked={annual}
-    disabled={date.slice(5)==='02-29'}
     onChange={e=>setAnnual(e.target.checked)}/>
     Repeat yearly (birthdays, anniversaries)</label>
    <p className="notebook-agenda-hint">Calendar dates appear on Home without becoming overdue Tasks.
