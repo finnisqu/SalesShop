@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Button, Field, PageHeader } from './components';
+import { Button, PageHeader } from './components';
+import {BoardQuickCreate} from '../components/BoardQuickCreate';
 import { PHONE_LAYOUT_QUERY, isPhoneLayoutViewport } from '../lib/mobileViewport';
 
 const load=(path:string)=>readFileSync(new URL(path,import.meta.url),'utf8');
@@ -15,30 +16,31 @@ const notebookCss=load('./notebook-chrome-adapter.css');
 const main=load('../main.tsx');
 
 describe('UI Foundation Batch 7 — Board / Quotes / Notebook',()=>{
-  it('renders common Board heading, button toggle and accessible quick deal field',()=>{
+  it('renders common Board heading, accessible name-only creation and density controls',()=>{
     const header=renderToStaticMarkup(<PageHeader
       eyebrow="Sales pipeline" title="Deals"
       actions={<Button variant="quiet" aria-pressed={true}>Deals</Button>}
     />);
     expect(header).toContain('ss-page-header__title');
     expect(header).toContain('aria-pressed="true"');
-    const field=renderToStaticMarkup(<Field label="Quick deal" id="new-project-name">
-      {(control)=><input {...control} value="Example" readOnly />}
-    </Field>);
-    expect(field).toContain('for="new-project-name"');
-    expect(field).toContain('id="new-project-name"');
+    const quick=renderToStaticMarkup(<BoardQuickCreate kind="Deal" onCreate={()=>null}/>);
+    expect(quick).toContain('+ Deal');
+    expect(quick).toContain('aria-haspopup="dialog"');
     expect(board).toContain('<PageHeader className="board-header-panel board-foundation-header"');
-    expect(board).toContain('<Field id="new-project-name" label="Quick deal"');
-    expect(board).toContain('<Button type="submit" variant="secondary" disabled={!newName.trim()}>Add</Button>');
-    expect(board).toContain('onSubmit={quickAdd}');
-    expect(boardCss).toContain('.board-quick-add > .board-foundation-quick-field');
-    expect(boardCss).toContain('grid-template-columns:minmax(0,1fr)');
+    expect(board).toContain('<BoardQuickCreate kind="Deal"');
+    expect(board).toContain('aria-pressed={compactCards}');
+    expect(board).not.toContain('onSubmit={quickAdd}');
+    const layout=load('../board-layout-v3.css');
+    expect(layout).toContain('.board-create-sheet');
+    expect(layout).toContain('.board-density-toggle');
   });
 
   it('reuses the same Board header on Accounts without losing CRM and stage interactions',()=>{
     expect(accounts).toContain('className="board-header-panel accounts-header-panel board-foundation-header"');
     expect(accounts).toContain('onClick={onShowProjects}');
-    expect(accounts).toContain('onClick={() => setCleanupOpen(true)}');
+    expect(accounts).toContain('<BoardQuickCreate kind="Account"');
+    expect(accounts).toContain('onClick={onToggleCompact}');
+    expect(accounts).not.toContain('setCleanupOpen(true)');
     expect(accounts).toContain('<MobileBoardStagePicker');
     expect(accounts).not.toContain('<BoardScrollControls');
     expect(board).not.toContain('<BoardScrollControls');
