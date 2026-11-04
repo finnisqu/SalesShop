@@ -28,7 +28,7 @@ async function newTemplate(page:Page,title:string,name:string){
 async function openOptions(page:Page){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
   const desktop=beta.getByRole('complementary',{name:'Quote workspace navigation'});
-  const controls=(await desktop.isVisible())?desktop:beta.locator('.qmb-history');
+  const controls=(await desktop.isVisible())?desktop:page.locator('.mobile-quote-actions-slot');
   await controls.getByRole('button',{name:'Document options'}).click();
   return controls;
 }
@@ -40,10 +40,12 @@ test('mobile Quick Quote requires a name; defended copy retains original and res
   await newTemplate(page,'Quick Quote','Smith Residence');
   const title=beta.getByRole('textbox',{name:'Quote title'});
   await expect(title).toHaveValue('Smith Residence');
-  await expect(beta.getByText('Saved on device').first()).toBeVisible();
-  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Preview',exact:true}).click();
+  // On phones the text is visually hidden to keep the header compact.
+  await expect(beta.locator('.sales-document-save-status').first())
+    .toHaveAttribute('title',/automatically saved on this device/);
+  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Contract review',exact:true}).click();
   await expect(beta.locator('.qmb-preview')).toBeVisible();
-  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Build',exact:true}).click();
+  await beta.getByRole('navigation',{name:'Quote views'}).getByRole('button',{name:'Takeoffs & selections',exact:true}).click();
   await expect(title).toHaveValue('Smith Residence');
   const options=await openOptions(page);
   await options.getByRole('button',{name:/Make independent copy/}).click();
@@ -62,7 +64,7 @@ test('mobile Quick Quote requires a name; defended copy retains original and res
   await confirm.getByRole('button',{name:'Create independent copy'}).click();
   await expect(title).toHaveValue('Smith Residence Copy A');
   await expect(beta.locator('.qmb-document-origin')).toContainText('Independent working copy');
-  await beta.locator('.qmb-pagehead .qmb-back').click();
+  await page.getByRole('button',{name:'Back to Documents'}).click();
   await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
   await expect(beta.locator('.qmb-listcard').filter({hasText:'Smith Residence'})).toHaveCount(2);
   await beta.locator('.qmb-listcard').filter({hasText:'Smith Residence Copy A'}).click();
