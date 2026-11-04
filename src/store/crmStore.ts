@@ -54,6 +54,8 @@ interface CrmState {
   deleteContact: (contactId:string)=>Promise<void>;
   deleteCompany: (companyId:string)=>Promise<void>;
   deleteActivity:(activityId:string,orphanedDraftAudit?:boolean)=>Promise<void>;
+  /** Local cache cleanup ONLY after server-confirmed quote practice purge. */
+  discardPurgedQuoteActivities:(quoteId:string,activityIds:readonly string[])=>void;
   deleteCleanProject:(projectId:string)=>Promise<void>;
   recordActivity: (activity: ActivityInput) => string;
   updateActivity: (id:string,patch:Pick<Activity,'summary'|'occurredAt'|'metadata'|
@@ -477,6 +479,15 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     set({ projects, activities });
   },
 
+  discardPurgedQuoteActivities:(quoteId,activityIds)=>{
+    if(!activityIds.length)return;
+    const ids=new Set(activityIds);
+    const current=get(),activities=current.activities.filter(a=>
+      !(a.quoteId===quoteId&&ids.has(a.id)));
+    if(activities.length===current.activities.length)return;
+    persist(current.companies,current.contacts,current.projects,activities);
+    set({activities});
+  },
   deleteActivity:async(activityId,orphanedDraftAudit=false)=>{
     const current=get().activities.find(a=>a.id===activityId);
     if(!current)return;
