@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import type {NotebookEntry} from '../types/notebook';
-import {usePersonalTaskStore} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
+import {useAuthStore} from '../store/authStore';
 import {openNotebookCalendarDate} from '../services/notebookDaily';
 import {requestTaskModal} from '../services/taskModalEvents';
 import '../notebook-linked-agenda.css';
@@ -9,7 +10,15 @@ import '../notebook-linked-agenda.css';
  * resize or reposition ink, rich text or object coordinates. */
 export function NotebookLinkedAgenda({entry}:{entry:NotebookEntry}){
  const [expanded,setExpanded]=useState(true);
- const tasks=usePersonalTaskStore(s=>s.tasks);
+ const loadedTasks=usePersonalTaskStore(s=>s.tasks);
+ const loadedScope=usePersonalTaskStore(s=>s.scope);
+ const mode=useAuthStore(s=>s.mode);
+ const orgId=useAuthStore(s=>s.organizationId);
+ const userId=useAuthStore(s=>s.user?.id);
+ const activeScope=taskScope(mode,orgId,userId);
+ // Task storage rehydrates separately from Notebook. Never render a previous
+ // user's task details while a workspace/account transition is in progress.
+ const tasks=activeScope&&loadedScope===activeScope?loadedTasks:[];
  const agenda=entry.agendaItems??[];
  return <aside className="notebook-linked-agenda" aria-label={'Linked agenda for '+entry.title}>
   <div className="notebook-linked-agenda-head">
