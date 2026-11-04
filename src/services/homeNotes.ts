@@ -19,8 +19,7 @@ export function homeNoteTitle(text:string):string{
 }
 export function homeNoteSummary(text:string):string{
  const lines=text.trim().split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- return (lines.slice(1).join(' ')||lines[0]||'Write something worth remembering…')
-  .slice(0,180);
+ return lines.slice(1).join(' ').slice(0,180);
 }
 export interface HomeNoteRequest{mode:'create'|'preview';objectId?:string}
 export function openHomeNote(detail:HomeNoteRequest={mode:'create'}):void{
