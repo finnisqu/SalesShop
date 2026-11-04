@@ -2,7 +2,8 @@ import {describe,expect,it} from 'vitest';
 import type {Activity,Project} from '../types/crm';
 import type {PersonalTask} from '../store/personalTaskStore';
 import type {Quote} from '../types/quote';
-import {buildSalesCalendarEvents,personalCalendarSources,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,isoLocalDay,localDateKey} from './salesCalendar';
+import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,isoLocalDay,localDateKey} from './salesCalendar';
+import {completedTaskActivityId} from './taskActivityWorkflow';
 const task=(id:string,dueDate?:string,extra:Partial<PersonalTask>={})=>({
  id,title:'Task '+id,dueDate,status:'open',createdAt:'2026-11-01T12:00:00Z',
  updatedAt:'2026-11-01T12:00:00Z',...extra,
@@ -101,37 +102,35 @@ describe('SalesShop shared Calendar',()=>{
   expect(events).toHaveLength(1);
   expect(events[0]).toMatchObject({kind:'bid',recordType:'task',recordId:'manual'});
  });
- it('shows planned follow-up Tasks on their due dates apart from logged activities',()=>{
+ it('counts pending follow-ups as ordinary Tasks and never counts Activity logs',()=>{
   const date='2026-11-06';
   const followUp=task('followup',date,{type:'follow-up',status:'open'});
   const events=buildSalesCalendarEvents([followUp],[],[
    activity('call','manual-touchpoint','2026-11-03T12:00:00',
     {interactionMethod:'call'}),
   ],[]);
-  expect(calendarDayCounts(events,date)).toMatchObject({followUp:1,activity:0,total:1});
-  expect(calendarDayCounts(events,'2026-11-03')).toMatchObject({activity:1,followUp:0});
+  expect(calendarDayCounts(events,date)).toEqual({task:1,bid:0,urgent:0,total:1});
+  expect(calendarDayCounts(events,'2026-11-03')).toEqual({task:0,bid:0,urgent:0,total:0});
+  expect(events[0].detail).toContain('Follow-up task');
  });
- it('includes scheduled tasks, bid due dates, and manually logged touchpoints',()=>{
+ it('keeps only outstanding Tasks and bids in the agenda',()=>{
   const date='2026-11-03';
   const events=buildSalesCalendarEvents(
-   [task('a',date),task('b',date,{status:'completed'})],
+   [task('a',date),task('b',date,{status:'completed',completedAt:date+'T16:00:00Z'})],
    [deal(date)],
    [activity('call','manual-touchpoint',date+'T12:45:00',{
      interactionMethod:'video-call',notes:'Discussed schedule'}, {contactId:'c1'})],
    []
   );
-  const counts=calendarDayCounts(events,date);
-  expect(counts).toMatchObject({task:2,bid:1,activity:1,followUp:0,total:4});
-  expect(events.find(x=>x.id==='activity:call')).toMatchObject({
-   recordType:'contact',recordId:'c1',kind:'activity'});
-  expect(events.find(x=>x.id==='activity:call')?.detail).toContain('Discussed schedule');
+  expect(calendarDayCounts(events,date)).toEqual({task:1,bid:1,urgent:0,total:2});
+  expect(events.some(event=>event.id==='task:b'||event.id==='activity:call')).toBe(false);
  });
- it('shows unlinked interactions in Activity History rather than dropping them',()=>{
-  const result=buildSalesCalendarEvents([],[],[
-   activity('unlinked','manual-touchpoint','2026-11-03T14:00:00', {interactionMethod:'email'})
-  ],[]);
-  expect(result).toHaveLength(1);
-  expect(result[0]).toMatchObject({recordType:'activity',recordId:'unlinked'});
+ it('shows unlinked interactions in Recents without creating calendar work',()=>{
+  const logged=activity('unlinked','manual-touchpoint','2026-11-03T14:00:00',
+   {interactionMethod:'email'});
+  expect(buildSalesCalendarEvents([],[],[logged],[])).toEqual([]);
+  expect(recentHomeItems([],[logged],[],'local:user')[0])
+   .toMatchObject({kind:'activity',recordId:'unlinked'});
  });
  it('shows only the latest active quote follow-up without private quote leakage',()=>{
   const activities=[
@@ -144,10 +143,55 @@ describe('SalesShop shared Calendar',()=>{
   ];
   const onlyMine=buildSalesCalendarEvents([],[],activities,[quote('q1')]);
   expect(onlyMine.map(e=>e.date)).toEqual(['2026-11-09']);
-  expect(onlyMine[0]).toMatchObject({recordType:'quote',recordId:'q1'});
+  expect(onlyMine[0]).toMatchObject({kind:'task',recordType:'quote',recordId:'q1'});
   expect(buildSalesCalendarEvents([],[],[
    ...activities,activity('clear','quote-follow-up','2026-11-04T12:00:00Z',{
     followUpAction:'cleared'},{quoteId:'q1'})],[quote('q1')])).toHaveLength(0);
+ });
+ it('removes completed and canceled bid Tasks without reviving the raw Deal date',()=>{
+  const date='2026-11-04';
+  const completed=task('submit',date,{
+   title:'Submit quote · Riverwalk Apartments',
+   sourceObjectId:'deal-submit:d1',status:'completed',
+   completedAt:'2026-11-04T18:00:00Z',
+  });
+  expect(buildSalesCalendarEvents([completed],[deal(date)],[],[])).toEqual([]);
+  const canceled={...completed,status:'canceled' as const,completedAt:undefined};
+  expect(buildSalesCalendarEvents([canceled],[deal(date)],[],[])).toEqual([]);
+  const deleted={...completed,deletedAt:'2026-11-04T19:00:00Z'};
+  expect(buildSalesCalendarEvents([deleted],[deal(date)],[],[])).toEqual([]);
+ });
+ it('clears the fallback bid deadline after the Deal is submitted',()=>{
+  const submitted={...deal('2026-11-04'),stage:'Bid Sent' as const};
+  expect(buildSalesCalendarEvents([],[submitted],[],[])).toEqual([]);
+ });
+ it('merges completed tasks and logged CRM interactions into Recents',()=>{
+  const done=task('t1','2026-11-04',{
+   status:'completed',completedAt:'2026-11-04T19:00:00Z',
+  });
+  const logged=activity('call','manual-touchpoint','2026-11-04T20:00:00Z',
+   {interactionMethod:'call',notes:'Reviewed quote'});
+  const recent=recentHomeItems([done],[logged],[],'local:user');
+  expect(recent.map(item=>item.kind)).toEqual(['activity','completed-task']);
+  expect(recent[1].title).toBe('Task t1');
+ });
+ it('shows one Recents entry for a Task that completed through logging Activity',()=>{
+  const scope='local:user';
+  const completed=task('task-logged','2026-11-04',{
+   status:'completed',completedAt:'2026-11-04T19:00:00Z',
+  });
+  const logged=activity(completedTaskActivityId(completed.id,scope),
+   'manual-touchpoint','2026-11-04T19:00:00Z',
+   {interactionMethod:'call'});
+  const recent=recentHomeItems([completed],[logged],[],scope);
+  expect(recent).toHaveLength(1);
+  expect(recent[0].kind).toBe('activity');
+ });
+ it('reopened Tasks appear in the agenda and leave completed Recents',()=>{
+  const date='2026-11-04';
+  const reopened=task('again',date,{status:'open',completedAt:undefined});
+  expect(buildSalesCalendarEvents([reopened],[],[],[])).toHaveLength(1);
+  expect(recentHomeItems([reopened],[],[],'local:user')).toHaveLength(0);
  });
  it('does not invent deadlines for anytime or canceled tasks',()=>{
   const items=buildSalesCalendarEvents([
