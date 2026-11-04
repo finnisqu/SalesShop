@@ -194,8 +194,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
     relatedRecords:links.filter(link=>link.type!=='notebook').map(link=>({
      type:link.type as 'contact'|'company'|'project'|'quote',id:link.id,label:link.label,
     })),
-    notes:notes.trim().slice(0,5000)||undefined,
-    completedTaskId:workflowTaskId??undefined}});
+    notes:notes.trim().slice(0,5000)||undefined}});
   if(createFollowUp){
    const already=usePersonalTaskStore.getState().tasks.some(t=>
     !t.deletedAt&&t.sourceObjectId==='activity-followup:'+loggedId);
