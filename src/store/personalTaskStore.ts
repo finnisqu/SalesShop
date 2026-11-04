@@ -30,6 +30,8 @@ export type NotebookPromotionKind='task'|'touchpoint'|'deal'|'contact'|'company'
 export interface TaskPromotion {
   title:string;target?:NotebookPromotionKind;linked?:TaskLink;associations?:TaskAssociation[];
   sourceLabel?:string;sourceText?:string;sourceObjectId?:string;
+  /** Unsaved contextual new-Task draft identity, never persisted as a Task field. */
+  draftIdentity?:string;
 }
 interface TaskState {
   scope:string|null;tasks:PersonalTask[];promotion:TaskPromotion|null;
