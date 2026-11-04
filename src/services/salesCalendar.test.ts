@@ -127,7 +127,8 @@ describe('SalesShop shared Calendar',()=>{
    contacts:[{id:'c1',name:'Aaron Case',createdAt:'2026-11-01',updatedAt:'2026-11-01'}],
    companies:[{id:'co1',name:'Acme Builder',kind:'customer' as const,createdAt:'2026-11-01',updatedAt:'2026-11-01'}],
   };
-  expect(buildSalesCalendarEvents([linked],[deal(due)],[],[quote('q1')],context)[0].detail)
+  const events=buildSalesCalendarEvents([linked],[deal(due)],[],[quote('q1')],context);
+  expect(events.find(event=>event.id==='task:linked')?.detail)
    .toBe('Riverwalk Apartments · Aaron Case');
   expect(buildSalesCalendarEvents([task('none',due)],[],[],[],context)[0].detail).toBe('');
  });
