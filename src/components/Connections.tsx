@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import {createPortal} from 'react-dom';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
@@ -252,6 +253,9 @@ export function Connections() {
     else if (activity.contactId) openPerson(activity.contactId);
   };
 
+  const closeNewRecord=()=>{
+    setCompanyCreating(false);setPersonCreating(false);setDealCreating(false);
+  };
   const backToDeals = () => {
     chooseTab('deals');
     setView('dashboard');
@@ -328,14 +332,7 @@ export function Connections() {
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab === 'companies' && (
             <section className="connections-directory" aria-label="Company directory">
-              {companyCreating && <form className="connections-add-form" onSubmit={addCompany}>
-                <strong>New company or relationship</strong>
-                <label><span>Company name</span><input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} autoFocus required placeholder="Builder or supplier name" /></label>
-                <label><span>Relationship</span><select value={newCompanyKind} onChange={(e) => setNewCompanyKind(e.target.value as CompanyKind)}>
-                  <option value="customer">Customer / prospect</option><option value="non-customer">Partner / non-customer</option>
-                </select></label>
-                <div><button type="button" onClick={() => setCompanyCreating(false)}>Cancel</button><button type="submit" className="primary">Save & open</button></div>
-              </form>}
+              
               <p className="connections-count">{companyRows.length} companies · select to open the full account record</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}/>
@@ -357,15 +354,7 @@ export function Connections() {
           )}
           {tab === 'people' && (
             <section className="connections-directory" aria-label="People directory">
-              {personCreating && <form className="connections-add-form" onSubmit={addPerson}>
-                <strong>Add a person</strong>
-                <label><span>Name</span><input value={newPerson} onChange={(e) => setNewPerson(e.target.value)} placeholder="Contact name" /></label>
-                <label><span>Email</span><input type="email" value={newPersonEmail} onChange={(e) => setNewPersonEmail(e.target.value)} placeholder="Email address" /></label>
-                <label><span>Company</span><select value={newPersonCompany} onChange={(e) => setNewPersonCompany(e.target.value)}>
-                  <option value="">No company yet</option>{companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
-                </select></label>
-                <div><button type="button" onClick={() => setPersonCreating(false)}>Cancel</button><button className="primary" type="submit" disabled={!newPerson.trim() && !newPersonEmail.trim()}>Add person</button></div>
-              </form>}
+              
               <p className="connections-count">{peopleRows.length} people · select a person to open their full record</p>
               <ConnectionsTable key="people" tableKey="people" columns={peopleColumns}
                 rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}/>
@@ -382,17 +371,7 @@ export function Connections() {
             </section>
           )}
           {tab === 'deals' && <section className="connections-directory" aria-label="Deals directory">
-            {dealCreating && <form className="connections-add-form" onSubmit={addDeal}>
-              <strong>New deal</strong>
-              <label><span>Deal name</span><input autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
-              <label><span>Company</span><select value={newDealCompanyId} onChange={event => setNewDealCompanyId(event.target.value)}>
-                <option value="">No company yet</option>
-                {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map(company =>
-                  <option key={company.id} value={company.id}>{company.name}</option>)}
-              </select></label>
-              <div><button type="button" onClick={() => setDealCreating(false)}>Cancel</button>
-                <button type="submit" className="primary" disabled={!newDeal.trim()}>Create & open</button></div>
-            </form>}
+            
             <p className="connections-count">{projectRows.length} deals · stage, bid dates and quotes on each deal record</p>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}/>
@@ -447,6 +426,49 @@ export function Connections() {
       {preview&&<RecordPreviewDrawer record={preview}
         onClose={()=>setPreview(null)} onSelect={setPreview}
         onGoToQuotePage={id=>{setPreview(null);setQuoteRecordId(id);setTab('quotes');}}/>}
+      {(companyCreating||personCreating||dealCreating)&&createPortal(
+        <div className="connections-create-backdrop" onPointerDown={event=>{
+          if(event.target===event.currentTarget)closeNewRecord();
+        }}>
+          <section className="connections-create-dialog" role="dialog" aria-modal="true"
+            aria-label={companyCreating?'New company':personCreating?'New person':'New deal'}
+            onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();closeNewRecord();}}}>
+            <header className="connections-create-heading">
+              <div><small>CONNECTIONS · CREATE</small>
+                <h2>{companyCreating?'New company':personCreating?'New person':'New deal'}</h2>
+              </div>
+              <button type="button" onClick={closeNewRecord} aria-label="Close new record">×</button>
+            </header>
+            {companyCreating && <form className="connections-add-form" onSubmit={addCompany}>
+                
+                <label><span>Company name</span><input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} autoFocus required placeholder="Builder or supplier name" /></label>
+                <label><span>Relationship</span><select value={newCompanyKind} onChange={(e) => setNewCompanyKind(e.target.value as CompanyKind)}>
+                  <option value="customer">Customer / prospect</option><option value="non-customer">Partner / non-customer</option>
+                </select></label>
+                <div><button type="button" onClick={() => setCompanyCreating(false)}>Cancel</button><button type="submit" className="primary">Save & open</button></div>
+              </form>}
+            {personCreating && <form className="connections-add-form" onSubmit={addPerson}>
+                
+                <label><span>Name</span><input autoFocus value={newPerson} onChange={(e) => setNewPerson(e.target.value)} placeholder="Contact name" /></label>
+                <label><span>Email</span><input type="email" value={newPersonEmail} onChange={(e) => setNewPersonEmail(e.target.value)} placeholder="Email address" /></label>
+                <label><span>Company</span><select value={newPersonCompany} onChange={(e) => setNewPersonCompany(e.target.value)}>
+                  <option value="">No company yet</option>{companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
+                </select></label>
+                <div><button type="button" onClick={() => setPersonCreating(false)}>Cancel</button><button className="primary" type="submit" disabled={!newPerson.trim() && !newPersonEmail.trim()}>Add person</button></div>
+              </form>}
+            {dealCreating && <form className="connections-add-form" onSubmit={addDeal}>
+              
+              <label><span>Deal name</span><input autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
+              <label><span>Company</span><select value={newDealCompanyId} onChange={event => setNewDealCompanyId(event.target.value)}>
+                <option value="">No company yet</option>
+                {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map(company =>
+                  <option key={company.id} value={company.id}>{company.name}</option>)}
+              </select></label>
+              <div><button type="button" onClick={() => setDealCreating(false)}>Cancel</button>
+                <button type="submit" className="primary" disabled={!newDeal.trim()}>Create & open</button></div>
+            </form>}
+          </section>
+        </div>,document.body)}
       <footer className="connections-footer">
         <span>People and sales records are managed here. Team accounts, permissions, and invitations belong in Settings.</span>
         <button type="button" onClick={() => setView('settings')}>Open team settings →</button>
