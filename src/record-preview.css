@@ -42,3 +42,29 @@
  .record-preview-body section dl{grid-template-columns:minmax(80px,100px) minmax(0,1fr);}
  .record-preview-actions{padding-bottom:max(14px,env(safe-area-inset-bottom));}
 }
+
+
+/* Home preview drawers should match the selected SalesShop palette, even portaled. */
+:root[data-sales-theme] .record-preview-backdrop{z-index:5600}
+:root[data-sales-theme] .record-preview-panel{background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);border-color:var(--ss-theme-border)}
+:root[data-sales-theme] .record-preview-body section{
+ background:var(--ss-theme-card);border-color:var(--ss-theme-border)}
+:root[data-sales-theme] .record-preview-body section>h3{
+ background:var(--ss-theme-tint);color:var(--ss-theme-ink)}
+:root[data-sales-theme] .record-preview-body section :is(dt,dd){
+ color:var(--ss-theme-muted)}
+:root[data-sales-theme] .record-preview-body section dd{color:var(--ss-theme-ink)}
+:root[data-sales-theme] .record-preview-related{border-color:var(--ss-theme-border);
+ color:var(--ss-theme-ink)}
+:root[data-sales-theme] .record-preview-related :is(strong,small){color:var(--ss-theme-ink)}
+:root[data-sales-theme] .record-preview-related small{color:var(--ss-theme-muted)}
+:root[data-sales-theme] .record-preview-related:hover{
+ background:var(--ss-theme-tint)}
+:root[data-sales-theme] .record-preview-actions{background:var(--ss-theme-card);
+ border-color:var(--ss-theme-border)}
+:root[data-sales-theme] .record-preview-actions button{
+ background:var(--ss-theme-tint);border-color:var(--ss-theme-border);
+ color:var(--ss-theme-ink)}
+:root[data-sales-theme] .record-preview-actions button.record-preview-full{
+ border-color:var(--ss-theme-accent)}
