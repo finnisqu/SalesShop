@@ -297,10 +297,10 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
 
   appendDailyCapture: (date,text) => {
     const value=text.trim().slice(0,10000);
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00'))||!value)return null;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00'))||!value)return null;
     const escape=(v:string)=>v.replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    const html=value.split(/\\r?\\n/).map(line=>'<p>'+escape(line||' ')+'</p>').join('');
+    const html=value.split(/\r?\n/).map(line=>'<p>'+escape(line||' ')+'</p>').join('');
     const existing=get().entries.find(e=>e.dailyDate===date&&!e.isPostItInbox);
     const timestamp=now();
     if(existing){
@@ -330,7 +330,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   addAgendaItem: (entryId,input) => {
     const page=get().entries.find(e=>e.id===entryId&&!e.isPostItInbox);
     const title=input.title.trim().slice(0,240);
-    if(!page||!title||!/^\\d{4}-\\d{2}-\\d{2}$/.test(input.date)||
+    if(!page||!title||!/^\d{4}-\d{2}-\d{2}$/.test(input.date)||
        !Number.isFinite(Date.parse(input.date+'T12:00:00')))return null;
     if(input.kind==='task'&&!input.taskId)return null;
     const timestamp=now();
@@ -359,7 +359,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   updateAgendaItem: (entryId,itemId,patch) => {
     const page=get().entries.find(e=>e.id===entryId);
     if(!page?.agendaItems?.some(item=>item.id===itemId))return;
-    if(patch.date&&(!/^\\d{4}-\\d{2}-\\d{2}$/.test(patch.date)||
+    if(patch.date&&(!/^\d{4}-\d{2}-\d{2}$/.test(patch.date)||
       !Number.isFinite(Date.parse(patch.date+'T12:00:00'))))return;
     checkpoint(get(),'agenda:edit:'+entryId);
     const timestamp=now();
