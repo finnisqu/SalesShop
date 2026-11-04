@@ -1,5 +1,4 @@
 import type {NotebookAgendaItem,NotebookEntry} from '../types/notebook';
-import {localDateKey} from './salesCalendar';
 
 /** Date-only values must be real calendar days. Date.parse and new Date()
  * silently normalize impossible dates such as February 31, so neither
@@ -39,7 +38,13 @@ export function notebookCalendarDates(entries:readonly NotebookEntry[],date:stri
   .sort((a,b)=>(a.item.time??'').localeCompare(b.item.time??'')||
    a.item.title.localeCompare(b.item.title));
 }
-export const notebookToday=()=>localDateKey(new Date());
+/** A local calendar date should not depend on the Task/CRM calendar module
+ * during Notebook store hydration. */
+export const notebookToday=()=>{
+ const value=new Date();
+ return [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),
+  String(value.getDate()).padStart(2,'0')].join('-');
+};
 export interface NotebookCalendarRequest{
  entryId:string;itemId?:string;selectedText?:string;date?:string;
 }
