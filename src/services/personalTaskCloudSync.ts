@@ -10,13 +10,23 @@ function readDocument(value:unknown):PersonalTask[]{
   return record.tasks.filter(t=>t&&typeof t.id==='string'&&typeof t.title==='string'
     &&typeof t.updatedAt==='string');
 }
+/** Prefer explicit tombstones on equal clocks; never resurrect a deleted
+ * task merely because another device sent an equally-timestamped edit. */
+export function taskWinsMerge(candidate:PersonalTask,existing:PersonalTask):boolean{
+  const a=Date.parse(candidate.updatedAt),b=Date.parse(existing.updatedAt);
+  if(Number.isFinite(a)&&Number.isFinite(b)&&a!==b)return a>b;
+  if(candidate.updatedAt!==existing.updatedAt)return candidate.updatedAt>existing.updatedAt;
+  if(Boolean(candidate.deletedAt)!==Boolean(existing.deletedAt))return Boolean(candidate.deletedAt);
+  return false; // Stable tie: retain existing remote record
+}
 export function mergePrivateTasks(local:readonly PersonalTask[],remote:readonly PersonalTask[]):PersonalTask[]{
   const all=new Map<string,PersonalTask>();
   for(const task of [...remote,...local]){
     const old=all.get(task.id);
-    if(!old||Date.parse(task.updatedAt)>=Date.parse(old.updatedAt))all.set(task.id,task);
+    if(!old||taskWinsMerge(task,old))all.set(task.id,task);
   }
-  return Array.from(all.values()).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
+  return Array.from(all.values()).sort((a,b)=>
+    b.updatedAt.localeCompare(a.updatedAt)||a.id.localeCompare(b.id));
 }
 /** Reuses the per-user private_documents RLS policy. A row with document_key
  * "tasks" is never associated with the organization or any public CRM table.
