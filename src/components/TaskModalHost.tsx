@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react';
 import {TaskEditor} from './TasksWorkspace';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
- type PersonalTask,type TaskChanges,type TaskType,type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
+ type TaskChanges,type TaskType,type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
