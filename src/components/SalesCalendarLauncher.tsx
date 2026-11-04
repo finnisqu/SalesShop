@@ -257,10 +257,16 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
        </button>):<p>Recently edited quotes will appear here.</p>}
       </div>
-      <button type="button" className="sales-calendar-cleanup-link"
+      <div className="sales-calendar-sidecar-actions">
+       <button type="button" className="sales-calendar-cleanup-link"
         onClick={()=>window.dispatchEvent(new Event('salesshop:open-task-cleanup'))}>
         <span aria-hidden="true">✓</span> Review overdue tasks
-      </button>
+       </button>
+       <button type="button" className="sales-calendar-cleanup-link"
+        onClick={()=>window.dispatchEvent(new Event('salesshop:open-cleanup-center'))}>
+        <span aria-hidden="true">⌫</span> Clean up test records
+       </button>
+      </div>
     </aside>}
     <div className="sales-calendar-legend" aria-label="Calendar event types">
      {(['task','bid','activity','follow-up'] as const).map(kind=><span key={kind}>
