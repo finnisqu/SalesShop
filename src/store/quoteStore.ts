@@ -72,7 +72,8 @@ interface QuoteState {
   archiveQuote: (quoteId: string) => void;
   deleteQuote: (quoteId: string) => void;
   /** Remote-confirmed removal for the Settings record-management dialog. */
-  deleteQuoteFromManagement: (quoteId:string,options?:{purgeArchivedPractice?:boolean})=>Promise<void>;
+  deleteQuoteFromManagement: (quoteId:string)=>Promise<void>;
+  discardPurgedQuote:(quoteId:string)=>void;
   restoreQuote: (quoteId: string) => void;
   touchQuote: (quoteId: string) => void;
   relinkCompanyIdentity: (primary: Pick<Company, 'id' | 'name'>, duplicateId: string) => void;
@@ -482,17 +483,11 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     if (organizationId) void deleteNormalizedQuote(organizationId, quoteId).catch(reportCloudDeleteError);
   },
 
-  deleteQuoteFromManagement:async(quoteId,options)=>{
+  deleteQuoteFromManagement:async(quoteId)=>{
     const quote=get().quotes.find(item=>item.id===quoteId);
     if(!quote)throw new Error('This quote is no longer available.');
-    const isPracticePurge=options?.purgeArchivedPractice===true;
-    if(isPracticePurge){
-      if(!quote.archivedAt||quote.status==='Signed'||!!quote.signedAt||
-        quote.history.some(revision=>revision.status==='Signed')||
-        get().quotes.some(item=>item.parentQuoteId===quote.id&&item.id!==quote.id))
-        throw new Error('Only unsigned archived documents without dependent Change Orders can be purged.');
-    }else if(!canPermanentlyDeleteQuote(quote,get().quotes))
-      throw new Error('Only unissued draft quotes without revisions or dependent change orders may be deleted. Archive this document instead.');
+    if(!canPermanentlyDeleteQuote(quote,get().quotes))
+      throw new Error('Only untouched drafts can be deleted normally.');
     const auth=useAuthStore.getState();
     if(isPracticePurge&&(auth.mode!=='local'&&auth.teamRole!=='owner'&&auth.teamRole!=='admin'))
       throw new Error('Only an Owner or Admin may purge archived practice quotes.');
@@ -510,6 +505,14 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       get().activeQuoteId===quoteId?null:get().activeQuoteId);
     persist(next,activeQuoteId);
     set({quotes:next,activeQuoteId});
+  },
+
+  discardPurgedQuote:(quoteId)=>{
+    const quotes=get().quotes.filter(item=>item.id!==quoteId);
+    const activeQuoteId=chooseActiveQuoteId(quotes,
+      get().activeQuoteId===quoteId?null:get().activeQuoteId);
+    persist(quotes,activeQuoteId);
+    set({quotes,activeQuoteId});
   },
 
   restoreQuote: (quoteId) => {
