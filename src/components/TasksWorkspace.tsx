@@ -438,7 +438,7 @@ export function TasksWorkspace(){
        <footer>
         <button type="button" onClick={()=>setViewingId(null)}>Close</button>
         {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&
-         <button type="button" onClick={()=>{
+         <button type="button" className="tasks-flow-action" onClick={()=>{
           setViewingId(null);openActivityComposer({taskId:viewing.id});
          }}>Complete + log activity</button>}
         <button type="button" onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
