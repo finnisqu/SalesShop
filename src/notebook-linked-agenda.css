@@ -1,0 +1,82 @@
+/* Linked Agenda is always outside the paper canvas; no object geometry shifts. */
+.notebook-linked-agenda{
+ flex:0 0 auto;min-width:0;margin:9px 12px 15px;
+ border:1px solid var(--ss-theme-border,#d6cab7);border-radius:11px;
+ background:var(--ss-theme-card,#faf6ed);color:var(--ss-theme-ink,#302d27);
+ overflow:hidden;
+}
+.notebook-linked-agenda-head{
+ display:flex;align-items:center;gap:8px;padding:8px 12px;
+ border-bottom:1px solid var(--ss-theme-border,#d6cab7);
+}
+.notebook-linked-agenda-collapse{display:inline-flex;align-items:center;gap:8px;
+ flex:1;min-width:0;border:0;background:transparent;color:inherit;
+ font-size:12px;text-align:left;cursor:pointer}
+.notebook-linked-agenda-collapse small{font-size:10px;font-weight:600;
+ color:var(--ss-theme-muted,#777)}
+.notebook-linked-agenda-add{min-height:30px;padding:5px 9px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+ font-size:11px;font-weight:750;cursor:pointer}
+.notebook-linked-agenda-content{max-height:285px;overflow-y:auto;padding:7px 10px}
+.notebook-linked-agenda-content>p{padding:12px;margin:0;color:var(--ss-theme-muted);
+ font-size:11px;line-height:1.5}
+.notebook-linked-agenda-item{display:flex;align-items:center;gap:10px;width:100%;
+ padding:9px 7px;background:transparent;border:0;border-bottom:1px solid
+ var(--ss-theme-border);color:inherit;text-align:left;cursor:pointer}
+.notebook-linked-agenda-item:last-child{border-bottom:0}
+.notebook-linked-agenda-item:hover{background:var(--ss-theme-tint)}
+.notebook-linked-agenda-indicator{width:8px;height:8px;border-radius:50%;flex:0 0 auto;
+ background:var(--ss-theme-accent,#997c43)}
+.notebook-linked-agenda-indicator.is-calendar-date{background:transparent;border:2px solid
+ var(--ss-theme-accent,#997c43);width:9px;height:9px}
+.notebook-linked-agenda-copy{flex:1;min-width:0;display:grid;gap:3px}
+.notebook-linked-agenda-copy strong{font-size:12px;font-weight:760;overflow-wrap:anywhere}
+.notebook-linked-agenda-copy small{font-size:10px;color:var(--ss-theme-muted);
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notebook-linked-agenda-source{font-style:italic}
+.notebook-agenda-date-modal{width:min(480px,calc(100vw - 22px));max-height:91dvh}
+.notebook-agenda-date-modal .notebook-agenda-source{
+ margin:0;padding:7px 11px;border-radius:8px;background:var(--ss-theme-tint);
+ color:var(--ss-theme-muted);font-size:11px;line-height:1.4;
+ overflow-wrap:anywhere}
+.notebook-agenda-date-modal label{font-size:11px;font-weight:750}
+.notebook-agenda-date-modal :is(input[type="text"],input[type="date"],input[type="time"],input:not([type])){
+ min-height:38px;border-radius:8px;border:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-base);color:var(--ss-theme-ink)}
+.notebook-agenda-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.notebook-agenda-checkbox{display:flex!important;flex-direction:row!important;
+ align-items:center;gap:9px!important}
+.notebook-agenda-checkbox input{width:16px;height:16px;min-height:16px;accent-color:var(--ss-theme-accent)}
+.notebook-agenda-hint{font-size:11px;line-height:1.5;color:var(--ss-theme-muted)}
+.notebook-agenda-error{font-size:12px;color:#d34c49}
+.notebook-selection-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+ margin:8px 0;padding:6px;border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-card);color:var(--ss-theme-ink)}
+.notebook-selection-actions small{max-width:240px;font-size:11px;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ss-theme-muted)}
+.notebook-selection-actions button{min-height:30px;padding:6px 10px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-tint);color:var(--ss-theme-ink);font-size:11px;
+ font-weight:750;cursor:pointer}
+.notebook-selection-actions button:hover{border-color:var(--ss-theme-accent)}
+.sales-calendar-day .notebook-calendar-dot{display:block;position:absolute;
+ right:7px;bottom:6px;width:6px;height:6px;box-sizing:border-box;
+ border:1.6px solid var(--ss-theme-accent,#c8a564);border-radius:50%}
+.sales-calendar-day .notebook-calendar-dot.is-with-work{right:7px;bottom:5px}
+.sales-calendar-on-calendar{border-top:1px solid var(--ss-theme-border);
+ padding:9px 10px;display:grid;gap:4px;max-height:116px;overflow-y:auto}
+.sales-calendar-on-calendar h4{font-size:11px;font-weight:790;margin:0 0 4px}
+.sales-calendar-on-calendar button{display:flex;align-items:center;gap:9px;
+ background:transparent;border:0;border-radius:6px;padding:6px 7px;
+ color:var(--ss-theme-ink);text-align:left;font-size:11px}
+.sales-calendar-on-calendar button:hover{background:var(--ss-theme-tint)}
+.sales-calendar-on-calendar button small{margin-left:auto;color:var(--ss-theme-muted);
+ font-size:10px}
+@media(max-width:700px){
+ .notebook-linked-agenda{margin:7px 7px 11px}
+ .notebook-agenda-two{grid-template-columns:1fr}
+ .notebook-agenda-date-modal{width:100%;max-height:92dvh}
+ .notebook-selection-actions{margin:6px;gap:4px}
+ .notebook-selection-actions button{font-size:11px}
+}
