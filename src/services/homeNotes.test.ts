@@ -34,5 +34,6 @@ describe('Home Notes backed by the private Notebook inbox',()=>{
   expect(homeNoteTitle(text)).toBe("Aaron's birthday");
   expect(homeNoteSummary(text)).toBe('Send him a birthday message');
   expect(homeNoteTitle('')).toBe('Untitled note');
+  expect(homeNoteSummary("Aaron's birthday")).toBe('');
  });
 });
