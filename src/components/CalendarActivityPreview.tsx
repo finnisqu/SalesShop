@@ -10,15 +10,14 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  const companies=useCrmStore(s=>s.companies);
  const deals=useCrmStore(s=>s.projects);
  if(!activity)return null;
- const related=[
-  activity.contactId&&{kind:'person' as const,id:activity.contactId,
-    title:people.find(p=>p.id===activity.contactId)?.name||'Person'},
-  activity.companyId&&{kind:'company' as const,id:activity.companyId,
-    title:companies.find(c=>c.id===activity.companyId)?.name||'Company'},
-  activity.projectId&&{kind:'deal' as const,id:activity.projectId,
-    title:deals.find(d=>d.id===activity.projectId)?.name||'Deal'},
-  activity.quoteId&&{kind:'quote' as const,id:activity.quoteId,title:'Linked quote'},
- ].filter((v):v is {kind:PreviewRecord['kind'];id:string;title:string}=>!!v);
+ const related:{kind:PreviewRecord['kind'];id:string;title:string}[]=[];
+ if(activity.contactId)related.push({kind:'person',id:activity.contactId,
+  title:people.find(p=>p.id===activity.contactId)?.name||'Person'});
+ if(activity.companyId)related.push({kind:'company',id:activity.companyId,
+  title:companies.find(c=>c.id===activity.companyId)?.name||'Company'});
+ if(activity.projectId)related.push({kind:'deal',id:activity.projectId,
+  title:deals.find(d=>d.id===activity.projectId)?.name||'Deal'});
+ if(activity.quoteId)related.push({kind:'quote',id:activity.quoteId,title:'Linked quote'});
  return createPortal(<div className="project-editor-backdrop record-preview-backdrop"
   onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
   <aside className="project-editor record-preview-panel" role="dialog" aria-modal="true"
