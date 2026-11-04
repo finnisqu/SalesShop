@@ -288,8 +288,13 @@ export function TasksWorkspace(){
     <header className="tasks-header">
       <div><span className="tasks-eyebrow">PERSONAL WORK QUEUE</span><h1>Tasks</h1>
         <p>Calls, follow-ups, reminders and work to finish. Keep completed tasks as a record.</p></div>
-      <div className="tasks-header-actions"><SalesCalendarLauncher compact />
-       <button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})} disabled={!scope}>+ New task</button></div>
+      <div className="tasks-header-actions">
+       <SalesCalendarLauncher compact />
+       <button type="button" className="tasks-cleanup-action"
+        onClick={()=>window.dispatchEvent(new Event('salesshop:open-task-cleanup'))}
+        disabled={!scope} title="Review and reschedule overdue tasks">Review overdue tasks</button>
+       <button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})} disabled={!scope}>+ New task</button>
+      </div>
     </header>
     <div className="tasks-summary" aria-label="Task counts">
       {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
