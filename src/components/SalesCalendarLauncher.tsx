@@ -127,9 +127,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   setOpen(false);
   const {recordType,recordId}=event;
   if(recordType==='task'){requestTaskModal({mode:'preview',id:recordId});return;}
-   const kind=recordType==='project'?'deal':
-   recordType==='contact'?'person':recordType==='company'?'company':
-   recordType==='quote'?'quote':null;
+   const kind=recordType==='project'?'deal':recordType==='quote'?'quote':null;
   if(kind)setRecordPreview({kind,id:recordId});
  };
  const openRecent=(item:ReturnType<typeof recentHomeItems>[number])=>{
@@ -230,7 +228,12 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         {addOpen&&<div className="sales-calendar-add-menu" role="menu">
          <button type="button" role="menuitem" onClick={()=>{
           setAddOpen(false);requestTaskModal({mode:'create',dueDate:selected});
-         }}>✓ New task</button>
+         }}><svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+           stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+           strokeLinejoin="round" aria-hidden="true">
+            <rect x="3.5" y="3.5" width="17" height="17" rx="3"/>
+            <path d="m7.5 12 3 3 6-6"/>
+           </svg> New task</button>
           {selected<=today&&<button type="button" role="menuitem" onClick={()=>{
           setAddOpen(false);
           window.dispatchEvent(new CustomEvent('salesshop:open-activity',
