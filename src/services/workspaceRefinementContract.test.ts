@@ -43,7 +43,8 @@ describe('SalesShop streamlined workspace contract',()=>{
   expect(css).toContain('.settings-mobile-section-select');
   expect(settings).toContain('Open Detailed Editor');
   expect(settings).toContain('Open Quick Quote');
-  expect(beta).toContain('qmb-library-detailed-link');
+  expect(beta).toContain("label:'Detailed Editor'");
+  expect(beta).not.toContain('qmb-library-heading-actions');
   expect(beta).toContain('openDetailedQuoteEditor(quote?.id)');
   expect(menu).toContain('Open in Detailed Editor');
   expect(detailed).toContain('>Detailed Editor</button>');

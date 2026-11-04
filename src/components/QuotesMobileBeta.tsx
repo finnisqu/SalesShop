@@ -1058,15 +1058,27 @@ export function QuotesMobileBeta() {
     {page==='library'?<>
       <WorkspaceHeader title="Quotes" className="qmb-library-workspace-header"
         tabs={<nav className="qmb-library-filter-row" aria-label="Document library sections">
-          {[{id:'all' as const,title:'All'},...SALES_DOCUMENT_TEMPLATES.filter(t=>t.available).map(t=>({
-            id:t.id as SalesDocumentTemplate,title:t.title}))].map(item=>
-            <button key={item.id} type="button" className={!followUpsTab&&documentFilter===item.id?'active':''}
-              aria-pressed={!followUpsTab&&documentFilter===item.id}
-              onClick={()=>{setFollowUpsTab(false);setDocumentFilter(item.id);}}>{item.title}</button>)}
-          <button type="button" className={'qmb-library-followups-tab'+(followUpsTab?' active':'')}
-            aria-pressed={followUpsTab} onClick={()=>setFollowUpsTab(true)}>Follow-ups</button>
+          {([
+            {id:'all',title:'All'},
+            {id:'quick-quote',title:'Quick Quote'},
+            followUpsTab?{id:'follow-ups',title:'Follow-ups'}:
+              documentFilter==='community-pricing'?{id:'community-pricing',title:'Community Plan Pricing'}:
+              documentFilter==='spreadsheet'?{id:'spreadsheet',title:'Custom Spreadsheet'}:
+              {id:'builder-rates',title:'Builder Rate Schedule'},
+          ] as Array<{id:'all'|SalesDocumentTemplate|'follow-ups';title:string}>).map(item=>
+            <button key={item.id} type="button"
+              className={(item.id==='follow-ups'?followUpsTab:!followUpsTab&&documentFilter===item.id)?'active':''}
+              aria-pressed={item.id==='follow-ups'?followUpsTab:!followUpsTab&&documentFilter===item.id}
+              onClick={()=>{
+                if(item.id==='follow-ups')setFollowUpsTab(true);
+                else{setFollowUpsTab(false);setDocumentFilter(item.id);}
+              }}>{item.title}</button>)}
         </nav>}
         more={<WorkspaceMoreMenu items={[
+          {label:'Builder Rate Schedule',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('builder-rates');},active:!followUpsTab&&documentFilter==='builder-rates'},
+          {label:'Community Plan Pricing',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('community-pricing');},active:!followUpsTab&&documentFilter==='community-pricing'},
+          {label:'Custom Spreadsheet',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('spreadsheet');},active:!followUpsTab&&documentFilter==='spreadsheet'},
+          {label:'Follow-ups',onClick:()=>setFollowUpsTab(true),active:followUpsTab},
           {label:'Active documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('active');},active:statusFilter==='active'},
           {label:'Draft documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('drafts');},active:statusFilter==='drafts'},
           {label:'Issued documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('issued');},active:statusFilter==='issued'},
@@ -1103,13 +1115,7 @@ export function QuotesMobileBeta() {
          <div className="qmb-section-head qmb-library-results-head">
            <div><h3>{statusFilter==='archived'?'Archived documents':'My documents'}</h3>
              <small>{list.length} {list.length===1?'document':'documents'} shown</small></div>
-           <div className="qmb-library-heading-actions">
-             <button type="button" className="qmb-library-detailed-link"
-               title="Open the selected quote in the alternative detailed editor"
-               onClick={()=>openDetailedQuoteEditor(quote?.id)}>Detailed Editor</button>
-             <button type="button" className="qmb-library-new-inline"
-               onClick={()=>setShowNewDocument(true)}>+ New</button>
-           </div>
+
          </div>
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}

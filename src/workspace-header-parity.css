@@ -1,0 +1,184 @@
+/* 2026-11-04 visual parity: Connections is the reference header.
+   Keep one title | compact, centered tab pill | More / Search / Create.
+   Desktop-only corrections deliberately preserve phone sheets and drawers. */
+@media (min-width:761px) {
+ :root[data-sales-theme] .sales-app .ss-workspace-header{
+  --ss-header-more-width:86px;
+  --ss-header-search-width:184px;
+  --ss-header-create-width:126px;
+  --ss-header-control-height:40px;
+  box-sizing:border-box;
+ }
+ /* The original Catalog PageHeader adapter still declares display:flex.
+    Its broad grid/flex rules caused the first tab to collide with "Catalog". */
+ :root[data-sales-theme] .sales-app.view-catalog
+ .catalog-workspace>.catalog-header.catalog-foundation-heading.ss-workspace-header{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,440px) minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:12px!important;
+  flex-wrap:nowrap!important;
+  min-width:0;max-width:none!important;width:100%;
+  height:var(--ss-workspace-header-height);
+  min-height:var(--ss-workspace-header-height);
+  padding:10px max(18px,calc((100vw - var(--ss-workspace-width,1360px))/2))!important;
+  margin:0!important;border-radius:0;
+ }
+ /* The measured title offset used by Connections must also apply to Tasks. */
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace{
+  max-width:none!important;width:100%!important;margin:0!important;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks
+ .tasks-workspace>.tasks-header.ss-workspace-header{
+  max-width:none!important;width:100%!important;
+  height:var(--ss-workspace-header-height);
+  min-height:var(--ss-workspace-header-height);
+  margin:0!important;
+  padding:10px max(18px,calc((100vw - var(--ss-workspace-width,1360px))/2))!important;
+ }
+ /* One centered navigation slot for the custom PageHeader and common header. */
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs{
+  grid-column:2;grid-row:1;
+  width:100%;max-width:100%;min-width:0;
+  justify-self:center;justify-content:center;
+  overflow:visible;box-sizing:border-box;
+ }
+ /* Connections-style segmented navigation, never the full 440px rail.
+    Buttons size to their labels, with the whole group physically centered. */
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+ .ss-workspace-header__tabs>nav,
+ :root[data-sales-theme] .sales-app.view-board
+ .board-header-panel.board-foundation-header.ss-workspace-header .board-view-toggle{
+  display:inline-flex!important;flex:0 0 auto!important;
+  width:max-content!important;max-width:100%!important;min-width:0!important;
+  align-items:center!important;justify-content:center!important;
+  flex-wrap:nowrap!important;gap:4px!important;
+  padding:4px!important;
+  border:1px solid var(--ss-theme-border)!important;
+  border-radius:10px!important;
+  background:var(--ss-theme-card)!important;
+  box-sizing:border-box;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+ .ss-workspace-header__tabs>nav{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;}
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+ .ss-workspace-header__tabs>nav::-webkit-scrollbar{display:none;}
+ /* Catalog's older seven-column width/padding rules were escaping its slot. */
+ :root[data-sales-theme] .sales-app.view-catalog .ss-workspace-header
+ .ss-workspace-header__tabs>.catalog-section-nav.catalog-foundation-tabs.ss-section-tabs{
+  display:inline-flex!important;grid-template-columns:none!important;
+  width:max-content!important;min-width:0!important;max-width:100%!important;
+  padding:4px!important;margin:0!important;
+  flex:0 0 auto!important;gap:3px!important;
+  border:1px solid var(--ss-theme-border)!important;
+  border-radius:10px!important;
+  background:var(--ss-theme-card)!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .ss-workspace-header
+ .catalog-section-nav.catalog-foundation-tabs .ss-section-tab{
+  display:flex!important;flex:0 0 auto!important;
+  align-items:center;justify-content:center;
+  min-width:0!important;width:auto!important;max-width:none;
+  height:36px;min-height:36px;max-height:36px;
+  padding:7px 9px!important;white-space:nowrap!important;
+  border:1px solid transparent!important;border-radius:7px;
+  box-sizing:border-box;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .ss-workspace-header
+ .catalog-section-nav.catalog-foundation-tabs .ss-section-tab.active{
+  background:var(--ss-theme-tint)!important;
+  border-color:var(--ss-theme-border)!important;
+  box-shadow:inset 0 -2px var(--ss-theme-accent)!important;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .ss-workspace-header
+ .catalog-section-nav.catalog-foundation-tabs .ss-section-tab strong{
+  font:750 11px/1.2 var(--ss-font-body)!important;
+  white-space:nowrap!important;text-overflow:clip;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+ .ss-workspace-header__tabs>nav:not(.catalog-section-nav)>button,
+ :root[data-sales-theme] .sales-app.view-board
+ .board-header-panel.board-foundation-header.ss-workspace-header .board-view-toggle>button{
+  flex:0 0 auto!important;min-width:68px;
+  min-height:36px;max-height:36px;
+  padding:7px 10px!important;border-radius:7px!important;
+  white-space:nowrap!important;
+ }
+ /* Quotes has three prominent tabs; other templates and follow-ups are in More.
+    A selected overflow destination replaces the third tab, so it stays visible. */
+ :root[data-sales-theme] .sales-app.view-quotes
+ .qmb-library-workspace-header .qmb-library-filter-row{
+  display:inline-flex!important;width:max-content!important;
+  max-width:100%!important;min-height:0!important;height:auto!important;
+  flex:0 0 auto!important;flex-wrap:nowrap!important;gap:4px!important;
+  padding:4px!important;margin:0!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+  border:1px solid var(--ss-theme-border)!important;
+  border-radius:10px!important;
+  background:var(--ss-theme-card)!important;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb-library-workspace-header
+ .qmb-library-filter-row>button{
+  flex:0 0 auto!important;width:auto!important;max-width:none!important;
+  min-height:36px!important;max-height:36px!important;
+  padding:7px 10px!important;margin:0!important;
+  font:750 12px/1.2 var(--ss-font-body)!important;
+  white-space:nowrap!important;
+ }
+ /* Keep one library create action and one advanced-editor entry (in More).
+    Internal document editors and mobile footer controls are unaffected. */
+ :root[data-sales-theme] .sales-app.view-quotes .qmb-desktop-frame.is-library
+ .qmb-library-results-head{min-height:42px;}
+ /* The Catalog header now owns searching and section creation. Suppress the
+    repeated full-width section searches while retaining filter/sort controls. */
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ :is(.materials-foundation-search,.sinks-foundation-search,.rates-foundation-search),
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ .supplier-directory-toolbar>input[type="search"],
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ .catalog-tags-search>input[type="search"]{
+  display:none!important;
+ }
+ /* Catalog tools remain usable, but repeated section titles no longer occupy
+    an oversized card directly beneath the Catalog header. */
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ .is-catalog-embedded>:is(.rates-workspace-header,.sinks-workspace-header){
+  display:flex;align-items:center;justify-content:flex-end;
+  min-height:48px;height:auto;max-width:none;
+  padding:6px 10px;margin:0 0 10px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ .is-catalog-embedded>.rates-workspace-header>div:first-child,
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ .is-catalog-embedded>.sinks-workspace-header>.ss-page-header__intro{
+  display:none!important;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ .is-catalog-embedded :is(.rates-mode-actions,.sinks-header-actions){
+  margin-left:auto;
+ }
+ /* These add actions exactly duplicate the main Catalog + control. Keep
+    status/edit/filters, and retain the original add affordances on phones. */
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ :is(.sinks-add-model,.rates-add-button),
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ .supplier-directory-heading>.ss-button,
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+ .catalog-tags-heading>button{display:none!important;}
+ /* Notebook already has a header search; don't repeat it above the page list.
+    Preserve the sidebar's folder and page filters. */
+ :root[data-sales-theme] .sales-app.view-notebook
+ .notebook-sidebar .notebook-page-search .notebook-search-field{display:none;}
+}
+@media(min-width:761px) and (max-width:1399px){
+ :root[data-sales-theme] .sales-app.view-catalog
+ .catalog-workspace>.catalog-header.catalog-foundation-heading.ss-workspace-header{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:50px 46px;row-gap:5px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog
+ .ss-workspace-header>.ss-workspace-header__tabs{
+  grid-row:2;grid-column:1/-1;
+ }
+}

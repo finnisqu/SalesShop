@@ -133,6 +133,8 @@ import './connections-header-v2.css';
 import './workbook-scrollbar-gutters.css';
 // Fixed six-workspace header geometry and accessible slot-based controls.
 import './workspace-header-standard.css';
+// Restore Connections-style visual parity for all six workspace headers.
+import './workspace-header-parity.css';
 
 recordSalesShopBoot();
 
