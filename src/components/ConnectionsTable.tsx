@@ -3,10 +3,14 @@ import type {TaskDuePreset} from '../services/taskSchedule';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import '../connections-table.css';
 import {visibleConnectionColumns,compareConnectionSortValues} from '../services/connectionsTablePreferences';
+import {ConnectionsBulkEditDialog,type BulkEditChange} from './ConnectionsBulkEditDialog';
+import type {Company} from '../types/crm';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
+ onBulkEdit?:(records:ConnectionTableRow[],change:BulkEditChange)=>Promise<void>;
+ bulkEditCompanies?:readonly Company[];
  onBulkComplete?:(records:ConnectionTableRow[])=>void;
  onTaskDuePreset?:(id:string,preset:TaskDuePreset)=>void;
  onTaskToggleComplete?:(id:string,finished:boolean)=>void;
@@ -18,11 +22,13 @@ function read(key:string):string[]{
  return Array.isArray(data)?data.filter((x):x is string=>typeof x==='string'):[];}
  catch{return[];}
 }
-export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkComplete,
+export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkEdit,bulkEditCompanies=[],onBulkComplete,
  onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
+ const [bulkEditing,setBulkEditing]=useState(false);
+ const [mobileBulkMode,setMobileBulkMode]=useState(false);
  const [sort,setSort]=useState({
    key:tableKey==='documents'?'updated':tableKey==='tasks'?'due':'name',
    reverse:tableKey==='documents',
@@ -83,9 +89,42 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
    return next.includes(key)?(next.length>1?next.filter(x=>x!==key):next):[...next,key];
  });
  return <section className="connections-grid-shell" aria-label={tableKey+' table'}>
+   {onBulkEdit&&['companies','people','deals'].includes(tableKey)&&
+    <div className={'connections-mobile-bulk'+(mobileBulkMode?' is-selecting':'')}>
+     <div className="connections-mobile-bulk-toolbar">
+      <span>{mobileBulkMode?selected.length+' selected':'Select multiple '+tableKey}</span>
+      <button type="button" onClick={()=>{
+        setMobileBulkMode(open=>!open);setSelected([]);
+      }}>{mobileBulkMode?'Done selecting':'Select records'}</button>
+     </div>
+     {mobileBulkMode&&<div className="connections-mobile-bulk-list">
+       <div className="connections-mobile-bulk-actions">
+        <button type="button" onClick={()=>{
+          const ids=new Set(display.map(item=>item.id));
+          setSelected(old=>[...new Set([...old,...ids])]);
+        }}>Select page</button>
+        <button type="button" onClick={()=>setSelected([])} disabled={!selected.length}>Clear</button>
+        <button type="button" className="connections-mobile-bulk-apply" disabled={!chosen.length}
+         onClick={()=>setBulkEditing(true)}>Bulk edit ({chosen.length})</button>
+       </div>
+       {display.map(row=><label key={row.id}>
+        <input type="checkbox" checked={selection.has(row.id)}
+          onChange={event=>setSelected(old=>event.target.checked?
+           [...new Set([...old,row.id])]:old.filter(id=>id!==row.id))}/>
+        <span>{row.name}</span>
+       </label>)}
+       <div className="connections-mobile-bulk-pages">
+        <button type="button" disabled={currentPage<=1} onClick={()=>setPage(page=>page-1)}>Previous</button>
+        <span>Page {currentPage} of {pages}</span>
+        <button type="button" disabled={currentPage>=pages} onClick={()=>setPage(page=>page+1)}>Next</button>
+       </div>
+     </div>}
+    </div>}
    <div className="connections-grid-toolbar">
      <span>{rows.length} records · {chosen.length} selected</span>
      {chosen.length>0&&<>
+       {onBulkEdit&&['companies','people','deals'].includes(tableKey)&&<button type="button"
+         className="connections-bulk-edit-action" onClick={()=>setBulkEditing(true)}>Bulk edit ({chosen.length})</button>}
        {onBulkTask&&<button type="button" onClick={()=>onBulkTask(chosen)}>Create task with selected ({chosen.length})</button>}
        {onBulkComplete&&<button type="button" onClick={()=>{
          if(window.confirm('Mark '+chosen.length+' selected tasks complete?')){
@@ -176,6 +215,15 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
        </tbody>
      </table>
    </div>
+   {bulkEditing&&onBulkEdit&&['companies','people','deals'].includes(tableKey)&&<ConnectionsBulkEditDialog
+     scope={tableKey as 'companies'|'people'|'deals'} count={chosen.length}
+     companies={bulkEditCompanies} onClose={()=>setBulkEditing(false)}
+     onApply={async change=>{
+       await onBulkEdit(chosen,change);
+       setBulkEditing(false);
+       setMobileBulkMode(false);
+       setSelected([]);
+     }}/>} 
    <footer className="connections-grid-pagination">
      <span>{sorted.length?String((currentPage-1)*PAGE_SIZE+1)+'–'+String(Math.min(currentPage*PAGE_SIZE,sorted.length)):'0'} of {sorted.length}</span>
      <button type="button" disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>← Previous</button>

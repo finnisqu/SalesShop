@@ -45,3 +45,65 @@
 .connections-columns-popover{max-width:min(280px,calc(100vw - 24px));}
 .connections-data-table thead th>button:focus-visible,
 .connections-table-open:focus-visible,.connections-row-actions :focus-visible{outline:2px solid var(--ss-theme-accent);outline-offset:2px;}
+
+/* Selected-record bulk editing sits alongside existing task/clear actions. */
+.connections-grid-toolbar>.connections-bulk-edit-action{
+ border-color:var(--ss-theme-accent);color:var(--ss-theme-ink);
+ background:var(--ss-theme-tint);min-height:35px;padding-inline:13px;
+}
+.connections-grid-toolbar>.connections-bulk-edit-action:hover{
+ box-shadow:inset 0 0 0 1px var(--ss-theme-accent);
+}
+.connections-grid-toolbar>.connections-bulk-edit-action:focus-visible{
+ outline:2px solid var(--ss-focus);outline-offset:2px;
+}
+
+/* The phone directory keeps its normal cards until selection mode is opened.
+   Mobile bulk selection reuses the table's cross-page checkbox state. */
+.connections-mobile-bulk{display:none}
+@media(max-width:820px){
+ .connections-directory .connections-grid-shell:has(.connections-mobile-bulk){display:grid;gap:8px}
+ .connections-directory .connections-grid-shell:has(.connections-mobile-bulk) >
+ :is(.connections-grid-toolbar,.connections-table-scroll,.connections-grid-pagination,.connections-pin-tray){
+   display:none;
+ }
+ .connections-directory .connections-mobile-bulk{display:grid;gap:8px;min-width:0}
+ .connections-mobile-bulk-toolbar{
+   display:flex;align-items:center;justify-content:space-between;gap:9px;
+   padding:8px 10px;border:1px solid var(--ss-theme-border);
+   border-radius:10px;background:var(--ss-theme-card);
+ }
+ .connections-mobile-bulk-toolbar span{font-size:11px;color:var(--ss-theme-muted)}
+ .connections-mobile-bulk-toolbar button,.connections-mobile-bulk-actions button,
+ .connections-mobile-bulk-pages button{
+   min-height:34px;padding:7px 10px;border:1px solid var(--ss-theme-border);
+   border-radius:8px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+   font-size:11px;font-weight:750;
+ }
+ .connections-mobile-bulk-list{
+   display:grid;gap:5px;padding:10px;border:1px solid var(--ss-theme-border);
+   border-radius:10px;background:var(--ss-theme-card);min-width:0;
+ }
+ .connections-mobile-bulk-list>label{
+   display:flex;align-items:center;gap:10px;padding:10px;
+   border:1px solid var(--ss-theme-border);
+   border-radius:7px;font-size:12px;min-height:42px;cursor:pointer;
+ }
+ .connections-mobile-bulk-list>label:has(input:checked){background:var(--ss-theme-tint)}
+ .connections-mobile-bulk-list>label input{width:17px;height:17px;accent-color:var(--ss-theme-accent)}
+ .connections-mobile-bulk-list>label span{
+   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ }
+ .connections-mobile-bulk-actions,.connections-mobile-bulk-pages{
+   display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+ }
+ .connections-mobile-bulk-actions .connections-mobile-bulk-apply{
+   margin-left:auto;color:var(--ss-theme-contrast);
+   background:var(--ss-theme-accent);border-color:var(--ss-theme-accent);
+ }
+ .connections-mobile-bulk-pages{justify-content:center;margin-top:4px;font-size:11px}
+ .connections-mobile-bulk-pages span{color:var(--ss-theme-muted)}
+ .connections-mobile-bulk button:disabled{opacity:.45}
+ .connections-directory:has(.connections-mobile-bulk.is-selecting)
+ .connections-card-grid.connections-legacy-cards{display:none}
+}

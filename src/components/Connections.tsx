@@ -11,6 +11,9 @@ import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
+import type {BulkEditChange} from './ConnectionsBulkEditDialog';
+import {canEditTeamArea} from '../services/teamDepartments';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
@@ -128,9 +131,20 @@ export function Connections() {
   const quotes = useQuoteStore((state) => state.quotes);
   const authMode=useAuthStore(state=>state.mode);
   const authUser=useAuthStore(state=>state.user?.id);
+  const authOrgId=useAuthStore(state=>state.organizationId);
+  const authRole=useAuthStore(state=>state.teamRole);
+  const authDepartment=useAuthStore(state=>state.teamDepartment);
+  const previewPerspective=useRolePerspectiveStore(state=>state.activePerspective);
+  const canBulkEdit=!previewPerspective&&(authMode==='local'||
+    Boolean(authOrgId&&authUser&&canEditTeamArea(authRole,authDepartment,'crm')));
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createContact = useCrmStore((state) => state.createContact);
   const createDeal = useCrmStore((state) => state.createProject);
+  const updateCompany = useCrmStore((state) => state.updateCompany);
+  const updateContact = useCrmStore((state) => state.updateContact);
+  const relinkContactCompany = useCrmStore((state) => state.relinkContactCompany);
+  const updateDeal = useCrmStore((state) => state.updateProject);
+  const assignDeal = useCrmStore((state) => state.assignProject);
   const relinkDealCompany = useCrmStore((state) => state.relinkProjectCompany);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
@@ -214,6 +228,49 @@ export function Connections() {
   const bulkTask=(items:ConnectionTableRow[])=>{
     beginTaskPromotion({target:'task',title:'Follow up: '+items.length+' '+tab,
       sourceLabel:'Connections selection',associations:items.flatMap(x=>x.association?[x.association]:[])});
+  };
+  const bulkEdit = async(items:ConnectionTableRow[],change:BulkEditChange):Promise<void>=>{
+    if(!canBulkEdit)throw new Error('You do not have permission to bulk edit CRM records.');
+    if(!items.length)throw new Error('Select records to update.');
+    // Validate all selected IDs in the current workspace before changing any.
+    const live=useCrmStore.getState();
+    const available=new Set((change.scope==='companies'?live.companies:
+      change.scope==='people'?live.contacts:live.projects).map(record=>record.id));
+    if(items.some(item=>!available.has(item.id)))
+      throw new Error('Some selected records are no longer available. Refresh your selection.');
+    let updated=0;
+    for(const item of items){
+      try{
+        if(change.scope==='companies'){
+          updateCompany(item.id,{kind:change.value});
+        }else if(change.scope==='people'){
+          if(change.property==='companyId')
+            relinkContactCompany(item.id,change.value||undefined);
+          else if(change.property==='title')updateContact(item.id,{title:change.value});
+          else updateContact(item.id,{phone:change.value});
+        }else if(change.property==='assignedUserId'){
+          // Owner changes are server-confirmed one at a time. Never imply all
+          // succeeded if a membership/permission/conflict check rejects one.
+          await assignDeal(item.id,change.value||undefined);
+        }else if(change.property==='pipeline'){
+          updateDeal(item.id,{pipeline:change.pipeline,stage:change.stage},{source:'manual'});
+        }else if(change.property==='stage'){
+          updateDeal(item.id,{stage:change.value},{source:'manual'});
+        }else if(change.property==='amount'){
+          updateDeal(item.id,{amount:change.value===''?undefined:Number(change.value)});
+        }else if(change.property==='dueDate'){
+          updateDeal(item.id,{dueDate:change.value||undefined});
+        }else{
+          updateDeal(item.id,{nextAction:change.value||undefined});
+        }
+        updated++;
+      }catch(error){
+        const reason=error instanceof Error?error.message:'Unable to update the record.';
+        throw new Error('Updated '+updated+' of '+items.length+' records. '+reason);
+      }
+    }
+    setNotice('Updated '+updated+' '+(updated===1?'record':'records')+' · '+(
+      change.scope==='deals'?'Deals':change.scope==='people'?'People':'Companies')+'.');
   };
 
   const addCompany = (event: FormEvent) => {
@@ -339,7 +396,8 @@ export function Connections() {
               
               <p className="connections-count">{companyRows.length} companies · select to open the full account record</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
-                rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}/>
+                rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
+                 onBulkEdit={canBulkEdit?bulkEdit:undefined}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
                   const peopleCount = contacts.filter((person) => person.companyId === company.id).length;
@@ -361,7 +419,8 @@ export function Connections() {
               
               <p className="connections-count">{peopleRows.length} people · select a person to open their full record</p>
               <ConnectionsTable key="people" tableKey="people" columns={peopleColumns}
-                rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}/>
+                rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}
+                 onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {peopleRows.map((person) => <button type="button" className="connections-record connections-person-record" key={person.id} onClick={() => previewRecord('person',person.id)}>
                   <span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
@@ -378,7 +437,8 @@ export function Connections() {
             
             <p className="connections-count">{projectRows.length} deals · stage, bid dates and quotes on each deal record</p>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
-              rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}/>
+              rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
+               onBulkEdit={canBulkEdit?bulkEdit:undefined}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
                 const linked = quotesForProject(project, quotes).filter((q) => !q.archivedAt);
