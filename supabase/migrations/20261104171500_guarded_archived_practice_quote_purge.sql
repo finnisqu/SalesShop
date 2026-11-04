@@ -172,9 +172,6 @@ grant execute on function public.purge_archived_practice_quote(uuid,text,text)
   to authenticated;
 
 comment on function public.purge_archived_practice_quote(uuid,text,text) is
-  'Explicit test-only deletion of archived self-owned/unassigned quote, signed '
-  'test signatures and quote-owned generated CRM history. Owner/Admin + exact '
-  'PURGE [SIGNED] quote-number required; no automatic cascading of Deals, '
-  'Companies, People, Tasks or manual CRM activities.';
+  'Owner/Admin test-only archival purge, including explicit signed practice signatures and generated CRM history; no unrelated CRM cascading.';
 
 commit;
