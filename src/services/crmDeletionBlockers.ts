@@ -2,39 +2,44 @@ import type {Company,Contact,Project,Activity} from '../types/crm';
 import type {Quote} from '../types/quote';
 import type {PersonalTask} from '../store/personalTaskStore';
 
-/** All blockers are explicit: no cascading deletion or silent detachment. */
+export interface CrmDeletionReferences {
+ companies:readonly Company[];contacts:readonly Contact[];projects:readonly Project[];
+ activities:readonly Activity[];quotes:readonly Quote[];tasks:readonly PersonalTask[];
+}
+const count=<T,>(values:readonly T[],predicate:(record:T)=>boolean)=>values.filter(predicate).length;
+
+/** No cascading deletes; explain dependent records before allowing cleanup.
+ * Task references are limited to tasks visible to the current user. */
 export function crmDeletionBlockers(
- kind:'company'|'person'|'deal',id:string,
- data:{companies:readonly Company[];contacts:readonly Contact[];
-  projects:readonly Project[];activities:readonly Activity[];
-  quotes:readonly Quote[];tasks:readonly PersonalTask[]},
+ kind:'company'|'person'|'deal',id:string,data:CrmDeletionReferences,
 ):string[]{
  const blocked:string[]=[];
- const matched=(items:readonly unknown[],predicate:(item:any)=>boolean)=>
-  items.filter(predicate).length;
- const anyTask=matched(data.tasks,t=>!t.deletedAt&&
-  ((t.associations??(t.linked?[t.linked]:[])) as {type:string;id:string}[]).some(link=>
-   link.type===(kind==='person'?'contact':kind==='deal'?'project':'company')&&link.id===id));
+ const taskType=kind==='person'?'contact':kind==='deal'?'project':'company';
+ const linkedTasks=count(data.tasks,task=>!task.deletedAt&&
+  (task.associations??(task.linked?[task.linked]:[])).some(link=>
+   link.type===taskType&&link.id===id));
  if(kind==='company'){
-  const contacts=matched(data.contacts,c=>c.companyId===id);
-  const deals=matched(data.projects,d=>d.companyId===id);
-  const quotes=matched(data.quotes,q=>q.companyId===id);
-  const events=matched(data.activities,a=>a.companyId===id);
-  if(contacts)blocked.push(contacts+' linked people');
+  const name=data.companies.find(c=>c.id===id)?.name?.trim().toLocaleLowerCase();
+  const people=count(data.contacts,contact=>contact.companyId===id);
+  const deals=count(data.projects,deal=>deal.companyId===id);
+  const quotes=count(data.quotes,quote=>quote.companyId===id||
+   (!quote.companyId&&!!name&&quote.companyName?.trim().toLocaleLowerCase()===name));
+  const activities=count(data.activities,activity=>activity.companyId===id);
+  if(people)blocked.push(people+' linked people');
   if(deals)blocked.push(deals+' linked deals');
   if(quotes)blocked.push(quotes+' linked quotes');
-  if(events)blocked.push(events+' activities');
+  if(activities)blocked.push(activities+' activities');
  }else if(kind==='person'){
-  const quotes=matched(data.quotes,q=>q.contactId===id);
-  const events=matched(data.activities,a=>a.contactId===id);
+  const quotes=count(data.quotes,quote=>quote.contactId===id);
+  const activities=count(data.activities,activity=>activity.contactId===id);
   if(quotes)blocked.push(quotes+' linked quotes');
-  if(events)blocked.push(events+' activities');
+  if(activities)blocked.push(activities+' activities');
  }else{
-  const quotes=matched(data.quotes,q=>q.projectId===id);
-  const events=matched(data.activities,a=>a.projectId===id);
+  const quotes=count(data.quotes,quote=>quote.projectId===id);
+  const activities=count(data.activities,activity=>activity.projectId===id);
   if(quotes)blocked.push(quotes+' linked quotes');
-  if(events)blocked.push(events+' activities');
+  if(activities)blocked.push(activities+' activities');
  }
- if(anyTask)blocked.push(anyTask+' linked tasks');
+ if(linkedTasks)blocked.push(linkedTasks+' linked personal tasks');
  return blocked;
 }
