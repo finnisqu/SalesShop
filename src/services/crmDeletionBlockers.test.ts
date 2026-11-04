@@ -25,8 +25,8 @@ describe('safe test-record deletion references',()=>{
  });
  it('protects Companies linked to people, activity or historical quote names',()=>{
   const refs={...references(),
-   companies:[{id:'c1',name:'Mock Builder'}] as CrmDeletionReferences['companies'],
-   quotes:[{id:'q1',companyName:'Mock Builder'}] as CrmDeletionReferences['quotes'],
+   companies:[{id:'c1',name:'Mock Builder'}] as unknown as CrmDeletionReferences['companies'],
+   quotes:[{id:'q1',companyName:'Mock Builder'}] as unknown as CrmDeletionReferences['quotes'],
   };
   expect(crmDeletionBlockers('company','c1',refs)).toContain('1 linked quotes');
  });
