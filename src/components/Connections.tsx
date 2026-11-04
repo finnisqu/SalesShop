@@ -285,25 +285,31 @@ export function Connections() {
   </main>;
   const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
   return (
-    <main className="connections-workspace">
+    <main className="connections-workspace connections-directory-layout">
       <PageHeader className="connections-heading connections-foundation-heading"
         eyebrow="CRM"
         title="Connections"
         description="Your accounts, contacts and deals."
+        actions={<>
+          <div className="connections-header-navigation">
+            <SectionTabs className="connections-tabs" aria-label="Connections sections"
+              items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
+            <div ref={moreRef} className="connections-section-more">
+              <button type="button" aria-expanded={moreOpen} aria-haspopup="menu" aria-controls="connections-more-menu"
+                onClick={() => setMoreOpen((value) => !value)}>More <span aria-hidden="true">⋯</span></button>
+              {moreOpen && <div id="connections-more-menu" className="connections-more-menu">
+                <button type="button" onClick={() => chooseTab('activity')}>Activity history</button>
+                <button type="button" onClick={() => chooseTab('quotes')}>Quotes · metadata</button>
+              </div>}
+            </div>
+          </div>
+          <div className="connections-header-tools">
+            {tab === 'companies' && <Button variant="primary" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</Button>}
+            {tab === 'people' && <Button variant="primary" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</Button>}
+            {tab === 'deals' && <Button variant="primary" className="connections-add" onClick={() => setDealCreating((v) => !v)}>+ Deal</Button>}
+          </div>
+        </>}
       />
-
-      <div className="connections-section-row">
-        <SectionTabs className="connections-tabs" aria-label="Connections sections"
-          items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
-        <div ref={moreRef} className="connections-section-more">
-          <button type="button" aria-expanded={moreOpen} aria-haspopup="menu" aria-controls="connections-more-menu"
-            onClick={() => setMoreOpen((value) => !value)}>More <span aria-hidden="true">⋯</span></button>
-          {moreOpen && <div id="connections-more-menu" className="connections-more-menu">
-            <button type="button" onClick={() => chooseTab('activity')}>Activity history</button>
-            <button type="button" onClick={() => chooseTab('quotes')}>Quotes · metadata</button>
-          </div>}
-        </div>
-      </div>
       {(tab === 'activity'||tab==='quotes') && <div className="connections-history-heading">
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
           <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
@@ -324,10 +330,7 @@ export function Connections() {
                   <option value="all">All companies</option><option value="customer">Customers & prospects</option><option value="non-customer">Partners & other</option>
                 </select>}
               </Field>
-              <Button variant="primary" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</Button>
             </>}
-            {tab === 'people' && <Button variant="primary" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</Button>}
-            {tab === 'deals' && <Button variant="primary" className="connections-add" onClick={() => setDealCreating((v) => !v)}>+ Deal</Button>}
           </div>
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab === 'companies' && (

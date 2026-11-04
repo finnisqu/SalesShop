@@ -127,6 +127,8 @@ import './workspace-refinement-v1.css';
 import './design-system/workspace-visual-system-v2.css';
 // Board columns own vertical scrolling; optional compact cards and collapsible stages.
 import './board-layout-v3.css';
+// Board-style title / tabs / actions row, scoped to Connections directories.
+import './connections-header-v2.css';
 
 recordSalesShopBoot();
 

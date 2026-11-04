@@ -7,6 +7,7 @@ const page = readFileSync(new URL('../components/Connections.tsx', import.meta.u
 const css = readFileSync(new URL('./connections-adapter.css', import.meta.url), 'utf8');
 const recordsCss = readFileSync(new URL('../connections-record-pages.css', import.meta.url), 'utf8');
 const entry = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
+const connectionsHeaderCss = readFileSync(new URL('../connections-header-v2.css', import.meta.url), 'utf8');
 
 describe('Connections foundation — privacy-first navigation', () => {
   it('uses shared section navigation for Companies, People and Deals only', () => {
@@ -73,6 +74,22 @@ describe('Connections foundation — privacy-first navigation', () => {
     expect(recordsCss).toContain('connections-record-history');
   });
 
+  it('renders Board-style full width Connections header and contextual creation',()=>{
+    expect(page).toContain('connections-workspace connections-directory-layout');
+    expect(page).toContain('connections-header-navigation');
+    expect(page).toContain('connections-header-tools');
+    expect(page.indexOf('connections-header-navigation')).toBeLessThan(page.indexOf('connections-directory-toolbar'));
+    expect(page.indexOf('connections-header-tools')).toBeLessThan(page.indexOf('connections-directory-toolbar'));
+    for(const label of ['+ Company','+ Person','+ Deal']){
+      expect(page.match(new RegExp('>'+label.replace('+','\\+')+'<','g'))).toHaveLength(1);
+    }
+    expect(connectionsHeaderCss).toContain('grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)');
+    expect(connectionsHeaderCss).toContain('max-width:none');
+    expect(connectionsHeaderCss).toContain('grid-row:2');
+    expect(connectionsHeaderCss).toContain('.connections-header-tools .connections-add.ss-button');
+    expect(entry).toContain("import './connections-header-v2.css'");
+    expect(entry.indexOf("import './connections-header-v2.css'")).toBeGreaterThan(entry.indexOf("import './design-system/workspace-visual-system-v2.css'"));
+  });
   it('retains mobile directory scrolling, accessible tools and settings navigation', () => {
     expect(css).toContain('overflow-x:auto');
     expect(css).toContain('scroll-snap-type:x proximity');
