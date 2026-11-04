@@ -68,12 +68,14 @@ export function DealAssigneeSelect({value,onChange,disabled=false}:{
    onChange={e=>onChange(e.target.value)} disabled={disabled||loading||!!error}>
    <option value="">Unassigned — legacy deadline routing</option>
    {value&&!members.some(member=>member.userId===value)&&
-    <option value={value}>Previously assigned teammate</option>}
+    <option value={value}>Current assignee · no longer eligible or unavailable</option>}
    {members.map(member=><option key={member.userId} value={member.userId}>
     {member.name}</option>)}
   </select>
   {loading&&<small>Loading eligible teammates…</small>}
   {error&&<small role="alert">Could not load team assignments: {error}</small>}
+  {value&&!loading&&!error&&!members.some(member=>member.userId===value)&&
+    <small role="alert">This assignee can no longer be selected. Choose an eligible teammate to restore a reliable submission-task owner.</small>}
   {!loading&&!error&&<small>Only eligible salespeople appear. Unassigned Deals keep existing deadline routing.</small>}
  </>;
 }
