@@ -2,6 +2,8 @@ import type {Project,Activity} from '../types/crm';
 import type {Quote} from '../types/quote';
 import type {PersonalTask} from '../store/personalTaskStore';
 import type {TeamRole} from './teamAccess';
+import type {TeamDepartment} from './teamDepartments';
+import {canIssueTeamQuote} from './teamDepartments';
 
 /** Explicit assignments take priority over any prior creator/quote inference.
  * Legacy unassigned Deals retain their original routing during the rollout,
@@ -9,10 +11,11 @@ import type {TeamRole} from './teamAccess';
 export function visibleSubmissionDeals(
  mode:'local'|'cloud',role:TeamRole|null,userId:string|undefined,
  deals:readonly Project[],activities:readonly Activity[],quotes:readonly Quote[],
- tasks:readonly PersonalTask[],
+ tasks:readonly PersonalTask[],department:TeamDepartment='general',
 ):Project[]{
  if(mode==='local')return [...deals];
- if(!userId||role==='viewer')return [];
+ // Don't create submission obligations for members who cannot issue quotes.
+ if(!userId||!canIssueTeamQuote(role,department))return [];
  const relevant=new Set<string>();
  quotes.filter(quote=>!quote.archivedAt&&quote.ownerUserId===userId).forEach(quote=>{
   if(quote.projectId)relevant.add(quote.projectId);
