@@ -4,7 +4,7 @@
 - **Task Quick View** from Home/Calendar or Tasks now offers **Complete + log activity** for active Tasks when CRM editing is permitted. Existing **Mark complete** is still available for work that does not warrant a CRM log.
 - The Action opens the existing Log Activity form without changing tabs. The task's CRM relationships and appropriate interaction method are prefilled; **private task notes are not copied into shared CRM automatically**.
 - Saving the Activity optionally creates a dated follow-up Task with the same CRM relationships, then marks the source Task completed. Closing or discarding the popup does not complete the Task.
-- For a reload after partial progress, a Task-completion Activity is keyed by private scope plus Task ID and existing records are reused rather than duplicated. The original Task is marked completed only after a local Activity is saved and optional follow-up creation succeeds.
+- For a reload after partial progress, a Task-completion Activity uses a stable opaque key derived from the private scope and Task ID and existing records are reused rather than duplicated. The original Task is marked completed only after a local Activity is saved and optional follow-up creation succeeds.
 - **CRM Quick Views** (Person, Company, Deal, Quote) now include contextual New Task and Log Activity actions. Related records are preselected; full pages are not required.
 - A **single account-scoped Activity composer** is mounted for Home, Calendar, Tasks and CRM previews. It recovers drafts without mounting duplicate listeners. Explicitly starting a task-linked interaction asks before replacing an unfinished Activity draft.
 - New Tasks from a CRM record use separate contextual draft identities so they do not overwrite the general unsaved New Task draft. The Tasks page restoration path can recover a contextual draft's identity after a reload.
@@ -12,7 +12,7 @@
 ## Privacy and reliability
 - Only roles allowed to edit shared CRM see Log Activity completion and CRM quick actions. Personal Task creation remains available per existing account permissions.
 - New Activity notes are entered deliberately. Only the task's CRM associations, not its private notes, are prefilled.
-- Activity IDs include the private task scope because an owner and administrator may have identically keyed auto-generated Deal submission Tasks.
+- Activity IDs use deterministic scope-aware hashes, not raw private Task IDs or user scopes, because two salespeople may have identically keyed auto-generated Deal submission Tasks.
 - The existing source author, personal task scopes, related CRM permissions, and local-first sync mechanisms are preserved. No database migration was required.
 - **Known limitation:** Task + Activity + optional follow-up are local-first writes that synchronize through existing independent stores, not one cloud database transaction. A disconnected client can show pending/error sync until it reconnects. Cross-device acceptance is required before treating the workflow as fully reliable.
 
