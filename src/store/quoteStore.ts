@@ -18,6 +18,7 @@ import {
 } from '../services/quoteIntegrity';
 import {
   deleteNormalizedQuote,
+  deleteConfirmedNormalizedQuote,
   deleteNormalizedQuoteLine,
   deleteNormalizedQuoteSection,
   syncNormalizedQuotes,
@@ -70,6 +71,8 @@ interface QuoteState {
   updateQuote: (quoteId: string, patch: QuotePatch) => void;
   archiveQuote: (quoteId: string) => void;
   deleteQuote: (quoteId: string) => void;
+  /** Remote-confirmed removal for the Settings record-management dialog. */
+  deleteQuoteFromManagement: (quoteId:string)=>Promise<void>;
   restoreQuote: (quoteId: string) => void;
   touchQuote: (quoteId: string) => void;
   relinkCompanyIdentity: (primary: Pick<Company, 'id' | 'name'>, duplicateId: string) => void;
@@ -477,6 +480,26 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     persist(quotes, activeQuoteId);
     set({ quotes, activeQuoteId });
     if (organizationId) void deleteNormalizedQuote(organizationId, quoteId).catch(reportCloudDeleteError);
+  },
+
+  deleteQuoteFromManagement:async(quoteId)=>{
+    const quote=get().quotes.find(item=>item.id===quoteId);
+    if(!quote)throw new Error('This quote is no longer available.');
+    if(!canPermanentlyDeleteQuote(quote,get().quotes))
+      throw new Error('Only unissued draft quotes without revisions or dependent change orders may be deleted. Archive this document instead.');
+    const auth=useAuthStore.getState();
+    if(auth.mode==='cloud'){
+      const organizationId=cloudOrganizationId();
+      if(!organizationId)throw new Error('Cloud workspace unavailable. No quote was deleted.');
+      if(quote.ownerUserId!==auth.user?.id)
+        throw new Error('Only your own draft quotes can be deleted here.');
+      await deleteConfirmedNormalizedQuote(organizationId,quoteId);
+    }
+    const next=get().quotes.filter(item=>item.id!==quoteId);
+    const activeQuoteId=chooseActiveQuoteId(next,
+      get().activeQuoteId===quoteId?null:get().activeQuoteId);
+    persist(next,activeQuoteId);
+    set({quotes:next,activeQuoteId});
   },
 
   restoreQuote: (quoteId) => {

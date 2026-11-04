@@ -405,6 +405,16 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   await insertRevisionSnapshots(revisions);
 }
 
+/** Administrative deletion must be confirmed by the database, not merely a
+ * successful HTTP response (RLS can otherwise produce zero affected rows). */
+export async function deleteConfirmedNormalizedQuote(organizationId:string,quoteId:string):Promise<void>{
+ if(!supabase)throw new Error('Cloud storage is unavailable. No quote was deleted.');
+ const {data,error}=await supabase.from('quotes').delete()
+  .eq('organization_id',organizationId).eq('id',quoteId).select('id');
+ if(error)throw error;
+ if(!data?.length)throw new Error('The quote could not be deleted. Check its linked records or your access.');
+}
+
 export async function deleteNormalizedQuote(organizationId: string, quoteId: string) {
   if (!supabase) return;
   const { error } = await supabase.from('quotes').delete().eq('organization_id', organizationId).eq('id', quoteId);
