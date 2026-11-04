@@ -76,8 +76,10 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
      value:requiresText&&clearValue?'':value};
   }else if(property==='pipeline'){
    change={scope,property,pipeline:value?value as DealPipeline:undefined,stage:stage as ProjectStage};
+  }else if(property==='stage'){
+   change={scope,property:'stage',value:value as ProjectStage};
   }else{
-   change={scope,property:property as 'stage'|'dueDate'|'nextAction'|'amount'|'assignedUserId',
+   change={scope,property:property as 'dueDate'|'nextAction'|'amount'|'assignedUserId',
     value:requiresText&&clearValue?'':value};
   }
   setSaving(true);setError('');
