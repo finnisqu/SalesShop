@@ -13,7 +13,7 @@ describe('Notebook-backed HOME notes contract',()=>{
   expect(calendar).toContain("createFromSidecar('note')");
   expect(noteHost).toContain('append(targetDate,value)');
   expect(noteHost).toContain("entry?.id??'today'");
-  expect(app).toContain('<HomeNoteModalHost />');
+  expect(app).toContain('<HomeNoteModalHost/>');
  });
  it('preserves the legacy Post-it editor handoff in Notebook',()=>{
   expect(notes).toContain("newQuickNoteEvent = 'sales-shop:new-quick-note'");
