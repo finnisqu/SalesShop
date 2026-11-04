@@ -32,7 +32,7 @@ describe('platform operator vs company tenant boundaries',()=>{
     }
   });
   it('routes developers before workspace bootstrapping, seeding and syncing',()=>{
-    const check=auth.indexOf("supabase.rpc('is_platform_developer')");
+    const check=auth.indexOf("supabase!.rpc('is_platform_developer')");
     const bootstrap=auth.indexOf("const organizationId = await timeStartupStep('workspace',ensureCurrentWorkspace)");
     const hydrate=auth.indexOf('await hydrateCloudDocuments(organizationId');
     expect(check).toBeGreaterThan(0);
