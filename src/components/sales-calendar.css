@@ -387,3 +387,30 @@
 
 /* Inline Calendar is a normal dashboard surface, never a layer above record previews. */
 .sales-calendar-popover.is-inline{z-index:auto!important}
+
+
+/* Desktop seven-day mode uses a short date strip and a useful weekly summary. */
+@media(min-width:760px){
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-month{
+  grid-template-rows:30px 76px minmax(0,1fr)!important}
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-grid{
+  grid-row:2!important;height:76px!important;grid-auto-rows:minmax(0,76px)!important}
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day{
+  height:70px!important;min-height:0!important}
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-week-glimpse{
+  grid-column:1;grid-row:3;display:grid;grid-template-columns:1fr;align-content:start;
+  overflow:auto;min-height:0;padding:7px 9px;gap:0;
+  border-top:1px solid var(--ss-theme-border,#ddd)}
+ .sales-calendar-week-glimpse>strong{font-size:11px;margin-bottom:4px}
+ .sales-calendar-week-glimpse>button{border:0;border-bottom:1px solid var(--ss-theme-border,#ddd);
+  min-height:29px;display:flex;gap:10px;align-items:center;text-align:left;
+  background:transparent;color:var(--ss-theme-ink,#333);font-size:11px;padding:4px 8px}
+ .sales-calendar-week-glimpse>button:hover,
+ .sales-calendar-week-glimpse>button.is-selected{background:var(--ss-theme-tint,#eee)}
+ .sales-calendar-week-glimpse>button span{min-width:55px;font-weight:750}
+ .sales-calendar-week-glimpse>button small{flex:1;color:var(--ss-theme-muted,#777);font-size:10px}
+ .sales-calendar-week-glimpse>button b{display:grid;place-items:center;
+  background:#c93432;color:white;font:900 10px/1 system-ui;
+  border-radius:50%;height:14px;width:14px}
+}
+@media(max-width:759px){.sales-calendar-week-glimpse{display:none}}
