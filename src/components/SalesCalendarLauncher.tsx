@@ -285,7 +285,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        <button type="button" role="tab" aria-selected={sidecarTab==='notes'}
         onClick={()=>setSidecarTab('notes')}>Notes</button>
       </div>
-      <div className="sales-calendar-sidecar-list">
+      <div className={'sales-calendar-sidecar-list'+(sidecarTab==='notes'?' is-notes':'')}>
        {sidecarTab==='quotes'
         ?recentQuotes.length?recentQuotes.map(q=><button type="button" key={q.id}
           onClick={()=>setRecordPreview({kind:'quote',id:q.id})}>
