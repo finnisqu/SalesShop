@@ -1,0 +1,224 @@
+/* Mobile preview parity — Board/Connections record previews and Task/Quote
+   quick views use a consistent bottom-sheet treatment on touch screens.
+   Preview data, related navigation, and dialog dismissal remain unchanged. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ /* The old record preview was a right-anchored desktop drawer. On phones,
+    constrain it to the visible viewport and align it with the other sheets. */
+ :root[data-sales-theme] .sales-app
+ .project-editor-backdrop.record-preview-backdrop{
+  position:fixed;
+  top:var(--ss-mobile-visual-top,0px);
+  left:0;
+  right:0;
+  bottom:auto;
+  height:var(--ss-mobile-visual-height,100dvh);
+  width:100%;
+  max-height:100dvh;
+  box-sizing:border-box;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0;
+  background:rgb(12 18 25 / 43%);
+  overscroll-behavior:contain;
+ }
+ :root[data-sales-theme] .sales-app
+ .project-editor.record-preview-panel{
+  box-sizing:border-box;
+  flex:0 1 auto;
+  align-self:flex-end;
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  max-width:100%;
+  height:min(88dvh,calc(var(--ss-mobile-visual-height,100dvh) - 12px));
+  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 12px);
+  min-height:0;
+  padding:0!important;
+  border:1px solid var(--ss-theme-border)!important;
+  border-bottom:0!important;
+  border-radius:19px 19px 0 0!important;
+  background:var(--ss-theme-card)!important;
+  color:var(--ss-theme-ink);
+  box-shadow:0 -16px 42px rgb(0 0 0 / 23%);
+  overflow:hidden;
+ }
+ :root[data-sales-theme] .sales-app
+ .project-editor.record-preview-panel > header{
+  position:relative;
+  flex:0 0 auto;
+  box-sizing:border-box;
+  min-height:70px!important;
+  padding:23px 13px 11px!important;
+  margin:0;
+  border-bottom:1px solid var(--ss-theme-border)!important;
+  background:var(--ss-theme-card)!important;
+ }
+ :root[data-sales-theme] .sales-app
+ .project-editor.record-preview-panel > header::before,
+ :root[data-sales-theme] .tasks-dialog-backdrop
+ .tasks-preview-card > header::before{
+  content:"";
+  position:absolute;
+  top:8px;
+  left:50%;
+  transform:translateX(-50%);
+  width:36px;
+  height:4px;
+  border-radius:999px;
+  background:var(--ss-theme-border);
+  pointer-events:none;
+ }
+ :root[data-sales-theme] .sales-app
+ .project-editor.record-preview-panel > header h2{
+  font:750 17px/1.25 var(--ss-font-body)!important;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .sales-app
+ .project-editor.record-preview-panel > header .ss-preview-close{
+  display:grid;
+  place-items:center;
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  min-width:38px;
+  min-height:38px;
+  border:1px solid var(--ss-theme-border)!important;
+  border-radius:8px;
+  background:var(--ss-theme-card)!important;
+  color:var(--ss-theme-ink)!important;
+ }
+ :root[data-sales-theme] .sales-app
+ .project-editor.record-preview-panel .record-preview-body{
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-height:0;
+  padding:12px 12px 22px!important;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-bottom:24px;
+ }
+ :root[data-sales-theme] .sales-app
+ .project-editor.record-preview-panel .record-preview-actions{
+  box-sizing:border-box;
+  display:flex;
+  flex:0 0 auto;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:center;
+  gap:7px;
+  min-height:60px;
+  margin:0;
+  padding:10px 12px max(12px,env(safe-area-inset-bottom))!important;
+  border-top:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .sales-app
+ .project-editor.record-preview-panel .record-preview-actions button{
+  flex:1 1 110px;
+  box-sizing:border-box;
+  min-height:44px;
+  padding:8px 11px;
+  border-radius:8px;
+  font:750 12px/1.3 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app .project-editor.record-preview-panel
+ .record-preview-related{
+  min-height:44px;
+ }
+ /* The quote/task quick views already came from a centered dialog; align
+    their scrollable body and bottom actions with record preview sheets. */
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-preview-card{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  flex:0 1 auto;
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 12px)!important;
+  min-height:0;
+  border:1px solid var(--ss-theme-border);
+  border-bottom:0;
+  border-radius:19px 19px 0 0!important;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  overflow:hidden;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-preview-card > header{
+  box-sizing:border-box;
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+  min-height:67px;
+  padding:22px 13px 10px!important;
+  background:var(--ss-theme-card);
+  border-bottom:1px solid var(--ss-theme-border);
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-preview-card > header h2{
+  min-width:0;
+  margin:3px 0 0;
+  font:750 16px/1.25 var(--ss-font-body);
+  overflow-wrap:anywhere;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-preview-card > header
+ :is(.ss-preview-close,button[aria-label^="Close"]){
+  box-sizing:border-box;
+  flex:0 0 38px;
+  min-width:38px;
+  min-height:38px;
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--ss-theme-border);
+  border-radius:8px;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-preview-card
+ :is(.tasks-preview-body,.record-preview-body){
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-height:0;
+  padding:12px 13px 20px!important;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-preview-card
+ :is(footer,.record-preview-actions){
+  box-sizing:border-box;
+  display:flex;
+  flex:0 0 auto;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:7px;
+  margin:0;
+  padding:10px 12px max(12px,env(safe-area-inset-bottom))!important;
+  border-top:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-preview-card
+ :is(footer,.record-preview-actions) button{
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-height:44px;
+  border-radius:8px;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-preview-card
+ :is(button,a):focus-visible,
+ :root[data-sales-theme] .sales-app .project-editor.record-preview-panel
+ :is(button,a):focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-theme-accent));
+  outline-offset:2px;
+ }
+}

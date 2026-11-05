@@ -169,6 +169,8 @@ import './mobile-quote-panel-parity.css';
 import './mobile-workspace-parity.css';
 // Mobile keyboard-safe Task, CRM bulk editing and related-record sheets.
 import './mobile-form-sheet-parity.css';
+// Matching mobile record and quick-preview bottom sheets.
+import './mobile-preview-sheet-parity.css';
 
 recordSalesShopBoot();
 
