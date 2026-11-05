@@ -56,6 +56,13 @@ export function taskScope(mode:'local'|'cloud',organizationId:string|null,userId
 const prefix=scopedStorageKey('salesshop-personal-tasks-v1:');
 const storageKey=(scope:string)=>prefix+scope;
 const validDate=(date?:string)=>!!date&&/^\d{4}-\d{2}-\d{2}$/.test(date);
+/** A second edit in the same millisecond must still beat a prior cloud copy.
+ * This timestamp is the private Task merge's concurrency version. */
+export function nextTaskEditTimestamp(previous:string,clock=Date.now()):string {
+  const old=Date.parse(previous);
+  const time=Number.isFinite(old)?Math.max(clock,old+1):clock;
+  return new Date(time).toISOString();
+}
 /** A submission obligation exists only before the bid is sent or closed. */
 export const dealNeedsSubmission=(deal:Project)=>!!deal.dueDate&&validDate(deal.dueDate)&&
  ['Discovery','Intent to Bid','Bid Development'].includes(deal.stage);
@@ -123,7 +130,10 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
   add:(title,dueDate,linked)=>get().createTask(title,{dueDate,linked}),
   updateTask:(id,changes)=>{
     const {scope,tasks}=get();if(!scope)return;
-    const now=new Date().toISOString(),patch=sanitize(changes);
+    const original=tasks.find(task=>task.id===id&&
+      task.workspaceScope===scope&&!task.deletedAt);
+    if(!original)return;
+    const now=nextTaskEditTimestamp(original.updatedAt),patch=sanitize(changes);
     const next=tasks.map(task=>{
       if(task.id!==id)return task;
       const status=patch.status??task.status??'open';
@@ -138,7 +148,10 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
   snooze:(id,until)=>{if(validDate(until))get().updateTask(id,{dueDate:until,status:'open'});},
   remove:id=>{
     const {scope,tasks}=get();if(!scope)return;
-    const now=new Date().toISOString();
+    const original=tasks.find(task=>task.id===id&&
+      task.workspaceScope===scope&&!task.deletedAt);
+    if(!original)return;
+    const now=nextTaskEditTimestamp(original.updatedAt);
     // Tombstones prevent another signed-in device from resurrecting deleted tasks.
     const next=tasks.map(task=>task.id===id?{...task,deletedAt:now,updatedAt:now}:task);
     set({tasks:next});persist(scope,next);
