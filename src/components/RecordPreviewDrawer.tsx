@@ -23,7 +23,7 @@ import '../tasks-workspace.css';
 export type PreviewRecord = {kind:'company'|'person'|'deal'|'quote';id:string};
 type Props={record:PreviewRecord;onClose:()=>void;onSelect?:(record:PreviewRecord)=>void;
   onGoToQuotePage?:(id:string)=>void;onEditBoard?:(record:PreviewRecord)=>void};
-const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
 const shortDate=(date?:string)=>date?new Date(date.includes('T')?date:date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
 
 /** A consistent, nondestructive focus preview across Board and Connections.
