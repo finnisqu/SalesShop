@@ -9,6 +9,7 @@ import { AccountsBoard } from './AccountsBoard';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import { Button, PageHeader } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError} from './RecordFormFeedback';
 import {useDismissiblePopover} from './useDismissibleDetails';
@@ -421,7 +422,7 @@ export function Board() {
                  aria-haspopup="true"
                  aria-label={'Choose pipeline, currently '+(pipelineView==='all'?'All pipelines':dealPipelineLabel(pipelineView))}
                  onClick={()=>setPipelineMenuOpen(open=>!open)}>
-                 More <span aria-hidden="true">⋯</span>
+                 More <WorkspaceChromeIcon name="more"/>
                </button>
                {pipelineMenuOpen&&<div id="board-pipeline-menu" className="board-pipeline-menu" role="group" aria-label="Filter deal pipelines">
                  <span className="board-pipeline-menu-label">SHOW PIPELINE</span>
@@ -489,7 +490,7 @@ export function Board() {
                   <span className="board-column-trailing">
                     {stageTotal > 0 && <strong>{money.format(stageTotal)}</strong>}
                     <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {PROJECT_STAGES.length}</span>
-                    <span className="board-column-hint" aria-hidden="true">{collapsed?'›':'‹'}</span>
+                    <span className="board-column-hint" aria-hidden="true"><WorkspaceChromeIcon name={collapsed?'chevron-right':'chevron-left'}/></span>
                   </span>
                 </button>
               </header>

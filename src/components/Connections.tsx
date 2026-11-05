@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {createPortal} from 'react-dom';
 import {useDismissiblePopover} from './useDismissibleDetails';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
@@ -344,7 +345,7 @@ export function Connections() {
           <div className="connections-header-tools">
             <div ref={moreRef} className="connections-section-more">
               <button type="button" aria-expanded={moreOpen} aria-haspopup="menu" aria-controls="connections-more-menu"
-                onClick={() => setMoreOpen((value) => !value)}>More <span aria-hidden="true">⋯</span></button>
+                onClick={() => setMoreOpen((value) => !value)}>More <WorkspaceChromeIcon name="more"/></button>
               {moreOpen && <div id="connections-more-menu" className="connections-more-menu">
                 <button type="button" onClick={() => chooseTab('activity')}>Activity history</button>
                 <button type="button" onClick={() => chooseTab('quotes')}>Quotes · metadata</button>

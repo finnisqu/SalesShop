@@ -1,5 +1,6 @@
 import {useRef,type ReactNode} from 'react';
 import {useDismissibleDetails} from './useDismissibleDetails';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import '../workspace-header-standard.css';
 
 /** Shared top-level workspace chrome. Stable slots across all six workspaces. */
@@ -21,7 +22,7 @@ export function WorkspaceMoreMenu({items,label='More'}:{items:readonly Workspace
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
  return <details className="ss-workspace-more" ref={ref}>
-  <summary aria-label={label+' menu'}>{label} <span aria-hidden="true">⋯</span></summary>
+  <summary aria-label={label+' menu'}>{label} <WorkspaceChromeIcon name="more"/></summary>
   <div className="ss-workspace-more__menu" role="group" aria-label={label+' options'}>
    {items.map((item,index)=><button type="button" key={index} disabled={item.disabled}
     aria-pressed={item.active===undefined?undefined:item.active}

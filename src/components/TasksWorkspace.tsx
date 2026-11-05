@@ -7,6 +7,7 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
@@ -387,7 +388,7 @@ export function TasksWorkspace(){
         toolbarTarget={taskToolbarHost}
         toolbarControls={<>
           <details className="tasks-overview-menu">
-            <summary>Overview <span aria-hidden="true">⌄</span></summary>
+            <summary>Overview <WorkspaceChromeIcon name="chevron-down"/></summary>
             <div className="tasks-summary" aria-label="Task counts">
               {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
               <button key={key} type="button" onClick={event=>{

@@ -9,6 +9,7 @@ import type {Company} from '../types/crm';
 import {TaskBulkEditDialog,type TaskBulkChange} from './TaskBulkEditDialog';
 import {useWorkbookTableDensity} from '../services/workbookTableDensity';
 import {useDismissibleDetails} from './useDismissibleDetails';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags';columns:ConnectionColumn[];rows:ConnectionTableRow[];
@@ -107,7 +108,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
        <button type="button" onClick={()=>setSelected([])}>Clear</button>
      </>}
      {toolbarControls&&<div className="connections-toolbar-controls">{toolbarControls}</div>}
-     <details className="connections-columns-menu" ref={columnsMenuRef}><summary>⚙ Columns</summary>
+     <details className="connections-columns-menu" ref={columnsMenuRef}><summary><WorkspaceChromeIcon name="columns"/> Columns</summary>
        <div className="connections-columns-popover"><strong>Columns</strong>
          <small>Choose and reorder. Saved on this device.</small>
          {columns.map(col=><div key={col.key} className="connections-column-choice">

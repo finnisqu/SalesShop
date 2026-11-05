@@ -23,6 +23,7 @@ import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { Button, PageHeader } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {WorkspaceMoreMenu} from './WorkspaceHeader';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
@@ -300,7 +301,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
                   <span className="board-column-trailing">
                     
                     <span className="board-carousel-position" aria-hidden="true">{stageIndex + 1} / {ACCOUNT_STAGES.length}</span>
-                    <span className="board-column-hint" aria-hidden="true">{collapsed?'›':'‹'}</span>
+                    <span className="board-column-hint" aria-hidden="true"><WorkspaceChromeIcon name={collapsed?'chevron-right':'chevron-left'}/></span>
                   </span>
                 </button>
               </header>
