@@ -432,7 +432,8 @@ export function TasksWorkspace(){
             aria-label={(isDone?'Reopen ':'Complete ')+task.title}
             onChange={()=>isDone?reopen(task.id):complete(task.id)}/></label>
           <div className="tasks-row-body">
-            <div className="tasks-row-top"><strong>{task.title}</strong>
+            <div className="tasks-row-top"><button type="button" className="tasks-row-title"
+              onClick={()=>setViewingId(task.id)} aria-label={'Preview task '+task.title}>{task.title}</button>
               <span className={'tasks-priority is-'+(task.priority??'normal')}>{task.priority??'normal'}</span></div>
             <div className="tasks-row-meta"><span>{task.type==='todo'||!task.type?'To-do':task.type}</span>
               <span className={state==='overdue'?'is-overdue':''}>{task.dueDate?'Due '+formatDate(task.dueDate)+(task.dueTime?' · '+task.dueTime:''):'No due date'}</span>
@@ -449,6 +450,19 @@ export function TasksWorkspace(){
             {isDone&&task.completedAt&&<small>Completed {new Date(task.completedAt).toLocaleString()}</small>}
           </div>
           <div className="tasks-row-actions">
+            <label className="tasks-mobile-priority">Priority
+              <select aria-label={'Priority for '+task.title}
+                value={task.priority??'normal'} disabled={isDone||task.status==='canceled'}
+                onChange={event=>update(task.id,{priority:event.currentTarget.value as TaskPriority})}>
+                {priorities.map(level=><option key={level} value={level}>{level[0].toUpperCase()+level.slice(1)}</option>)}
+              </select>
+            </label>
+            <button type="button" className="tasks-mobile-today"
+              disabled={isDone||task.status==='canceled'}
+              aria-label={(task.dueDate===today?'Clear today's due date for ':'Set due date to today for ')+task.title}
+              onClick={()=>quickDue(task.id,task.dueDate===today?'clear':'today')}>
+              {task.dueDate===today?'Clear today':'Due today'}
+            </button>
             <select className="tasks-quick-due" defaultValue="" aria-label={'Quick due date for '+task.title}
               disabled={state==='complete'} onChange={event=>{
                 const preset=event.currentTarget.value as TaskDuePreset|'';

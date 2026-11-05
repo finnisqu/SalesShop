@@ -171,6 +171,8 @@ import './mobile-workspace-parity.css';
 import './mobile-form-sheet-parity.css';
 // Matching mobile record and quick-preview bottom sheets.
 import './mobile-preview-sheet-parity.css';
+// Mobile task inline priority and today shortcuts.
+import './mobile-task-inline.css';
 
 recordSalesShopBoot();
 
