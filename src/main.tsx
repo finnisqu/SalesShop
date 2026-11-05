@@ -165,6 +165,8 @@ import './workspace-help.css';
 import './mobile-chrome-parity.css';
 // Thumb-friendly mobile Quote Area sheet; preserves existing workbook and editor logic.
 import './mobile-quote-panel-parity.css';
+// Mobile Board, Tasks, Connections and Catalog surface parity.
+import './mobile-workspace-parity.css';
 
 recordSalesShopBoot();
 
