@@ -3,7 +3,7 @@
    Catalog management/filter controls: 40px.
    Only desktop/work-table chrome; never change modal, quote editor, mobile
    native sheets, table cell editing, or customer-facing documents. */
-@media (min-width:821px) {
+@media (min-width:761px) {
  :root[data-sales-theme] .sales-app {
   --ss-directory-toolbar-height:62px;
   --ss-directory-control-height:36px;
