@@ -543,6 +543,6 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error(error);
-    return json({ error: error instanceof Error ? error.message : 'Document request failed.' }, 500);
+    return json({ error: 'Document service is temporarily unavailable. Please retry.' }, 500);
   }
 });

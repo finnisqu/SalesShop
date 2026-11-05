@@ -222,6 +222,6 @@ Deno.serve(async (req) => {
     return json({ share: publicShare(created as Record<string, unknown>) });
   } catch (error) {
     console.error(error);
-    return json({ error: error instanceof Error ? error.message : 'Share operation failed.' }, 500);
+    return json({ error: 'Customer link service is temporarily unavailable. Please retry.' }, 500);
   }
 });
