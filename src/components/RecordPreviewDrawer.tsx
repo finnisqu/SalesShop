@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
@@ -29,6 +29,25 @@ const shortDate=(date?:string)=>date?new Date(date).toLocaleDateString(undefined
  * Full record pages and document editors stay separate from preview clicks. */
 export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard}:Props){
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
+ // Follow related records in the same preview; the phone Back control
+ // returns through the prior previews without resetting the directory.
+ const [previewTrail,setPreviewTrail]=useState<PreviewRecord[]>([]);
+ const previousRecordRef=useRef(record);
+ const returningRef=useRef(false);
+ useEffect(()=>{
+  const previous=previousRecordRef.current;
+  if(previous.kind===record.kind&&previous.id===record.id)return;
+  previousRecordRef.current=record;
+  if(returningRef.current){returningRef.current=false;return;}
+  if(onSelect)setPreviewTrail(trail=>[...trail.slice(-11),previous]);
+ },[record.kind,record.id,onSelect]);
+ const backToRelated=()=>{
+  const previous=previewTrail[previewTrail.length-1];
+  if(!previous||!onSelect)return;
+  returningRef.current=true;
+  setPreviewTrail(trail=>trail.slice(0,-1));
+  onSelect(previous);
+ };
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
  const deals=useCrmStore(s=>s.projects),allQuotes=useQuoteStore(s=>s.quotes);
  const {members:assignees}=useDealAssigneeDirectory();
@@ -95,7 +114,10 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
    onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
    <aside ref={ref} role="dialog" aria-modal="true" aria-label={label+' preview'}
      className={center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel'}>
-     <header><PreviewPanelHeading eyebrow={center?'QUOTE · QUICK VIEW':label+' · Quick preview'} title={heading}/>
+     <header>
+       {Boolean(onSelect&&previewTrail.length)&&<button type="button" className="record-preview-back"
+         onClick={backToRelated} aria-label="Back to previous related record">← Back</button>}
+       <PreviewPanelHeading eyebrow={center?'QUOTE · QUICK VIEW':label+' · Quick preview'} title={heading}/>
        <PreviewPanelClose onClose={onClose} label="Close preview" className="editor-close"/>
      </header>
      <div className={center?'tasks-preview-body record-preview-body':'record-preview-body'}>
