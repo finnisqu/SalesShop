@@ -1,0 +1,140 @@
+/* Batch 3b: shared desktop popover surfaces, including portaled widgets.
+   Only presentation changes: positioning, overflow, dismissal and focus logic
+   stay owned by the existing React components. */
+@media(min-width:821px){
+ :root[data-sales-theme]{
+  --ss-overlay-menu-radius:10px;
+  --ss-overlay-menu-item-radius:7px;
+  --ss-overlay-menu-item-height:36px;
+  --ss-overlay-menu-shadow:0 12px 30px rgb(0 0 0 / 22%);
+ }
+ /* Inline menus across all six workspaces. */
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,.board-pipeline-menu,.connections-more-menu,
+  .connections-columns-popover,.qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel,.tasks-overview-menu > .tasks-summary,
+  .tasks-filter-help > p
+ ),
+ :root[data-sales-theme] .sales-app.view-catalog .rates-filter-popover,
+ /* Portaled related-record and small calendar flyouts live outside .sales-app. */
+ :root[data-sales-theme] .tasks-associations-popover,
+ :root[data-sales-theme] .sales-calendar-popover:not(.is-inline){
+  box-sizing:border-box;
+  border:1px solid var(--ss-theme-border)!important;
+  border-radius:var(--ss-overlay-menu-radius)!important;
+  background:var(--ss-theme-card)!important;
+  color:var(--ss-theme-ink);
+  box-shadow:var(--ss-overlay-menu-shadow)!important;
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,.board-pipeline-menu,.connections-more-menu,
+  .qmb .sales-document-rail-menu,.insert-menu .insert-menu-panel
+ ) > button{
+  box-sizing:border-box;
+  min-height:var(--ss-overlay-menu-item-height);
+  border-radius:var(--ss-overlay-menu-item-radius);
+  color:var(--ss-theme-ink);
+  font:650 12px/1.3 var(--ss-font-body);
+  cursor:pointer;
+ }
+ /* The selected menu choice remains highlighted with the accent treatment. */
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,.board-pipeline-menu,.connections-more-menu,
+  .connections-columns-popover,.qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel
+ ) :is(button,[role="option"]):is(:hover,:focus-visible):not(:disabled),
+ :root[data-sales-theme] .tasks-associations-popover
+ > button[role="option"]:is(:hover,:focus-visible,.is-active):not(:disabled){
+  background:var(--ss-theme-tint);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,.board-pipeline-menu,.connections-more-menu,
+  .connections-columns-popover,.qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel
+ ) button:focus-visible,
+ :root[data-sales-theme] .tasks-associations-popover :is(button,select,input):focus-visible{
+  outline:2px solid var(--ss-focus);
+  outline-offset:-2px;
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,.board-pipeline-menu,.connections-more-menu,
+  .connections-columns-popover,.qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel
+ ) button:disabled{opacity:.45;cursor:not-allowed}
+ :root[data-sales-theme] .sales-app.view-tasks
+ .tasks-overview-menu > .tasks-summary button,
+ :root[data-sales-theme] .sales-app .connections-columns-popover
+ > .connections-column-choice button{
+  box-sizing:border-box;
+  min-height:var(--ss-overlay-menu-item-height);
+  border-radius:var(--ss-overlay-menu-item-radius);
+ }
+ :root[data-sales-theme] .sales-app.view-tasks
+ .tasks-filter-help > p{
+  color:var(--ss-theme-muted);
+  font:500 12px/1.5 var(--ss-font-body);
+ }
+ /* Catalog used a different beige Filter popover, including its controls. */
+ :root[data-sales-theme] .sales-app.view-catalog .rates-filter-popover{
+  padding:11px;
+  gap:8px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .rates-filter-popover
+ :is(select,button){
+  box-sizing:border-box;
+  min-height:var(--ss-overlay-menu-item-height);
+  border:1px solid var(--ss-theme-border);
+  border-radius:var(--ss-overlay-menu-item-radius);
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  font:650 12px/1.3 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .rates-filter-popover
+ :is(select,button):focus-visible{
+  outline:2px solid var(--ss-focus);outline-offset:2px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .rates-filter-popover
+ button:hover:not(:disabled){background:var(--ss-theme-tint)}
+ /* Related-record lookup is portaled so it never pushes Task fields down. */
+ :root[data-sales-theme] .tasks-associations-popover{padding:6px}
+ :root[data-sales-theme] .tasks-associations-popover > button[role="option"]{
+  box-sizing:border-box;
+  min-height:var(--ss-overlay-menu-item-height);
+  border-radius:var(--ss-overlay-menu-item-radius);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .tasks-associations-popover-foot{
+  border-color:var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .tasks-associations-popover-foot > .tasks-associations-close{
+  box-sizing:border-box;
+  min-height:32px;
+  padding:6px 10px;
+  border:1px solid var(--ss-theme-border);
+  border-radius:var(--ss-overlay-menu-item-radius);
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+ }
+ /* The floating calendar differs from the embedded Home calendar. */
+ :root[data-sales-theme] .sales-calendar-popover:not(.is-inline)
+ > .sales-calendar-heading{
+  box-sizing:border-box;
+  display:flex;align-items:center;gap:9px;
+  padding:11px 13px;
+  border-bottom:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .sales-calendar-popover:not(.is-inline)
+ .sales-calendar-heading button{
+  box-sizing:border-box;
+  min-width:32px;min-height:32px;
+  border-radius:var(--ss-overlay-menu-item-radius);
+ }
+ :root[data-sales-theme] .sales-calendar-popover:not(.is-inline)
+ :is(button,input,select):focus-visible{
+  outline:2px solid var(--ss-focus);outline-offset:2px;
+ }
+}

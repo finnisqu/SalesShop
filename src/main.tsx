@@ -155,6 +155,8 @@ import './workspace-surface-parity.css';
 import './workspace-table-polish.css';
 // Shared desktop drawer/preview/bulk-dialog chrome (portals included).
 import './workspace-overlay-parity.css';
+// Shared popover/menu surfaces (in-app and portaled) without layout changes.
+import './workspace-popover-parity.css';
 
 recordSalesShopBoot();
 
