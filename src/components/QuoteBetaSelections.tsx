@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Quote, QuoteLineMaterialReference } from '../types/quote';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import { useQuoteStore } from '../store/quoteStore';
@@ -26,6 +26,18 @@ export function QuoteBetaSelections({quote,onClose}:{
   const [materialRef,setMaterialRef]=useState<QuoteLineMaterialReference|undefined>();
   const [applyMaterial,setApplyMaterial]=useState(false);
   const [message,setMessage]=useState('');
+  const bodyRef=useRef<HTMLDivElement>(null);
+  const materialsRef=useRef<HTMLDivElement>(null);
+  const sinksRef=useRef<HTMLDivElement>(null);
+  const jobMaterialRef=useRef<HTMLDivElement>(null);
+  const defaultsRef=useRef<HTMLDivElement>(null);
+  const appendixRef=useRef<HTMLDivElement>(null);
+  const jumpTo=(target:HTMLDivElement|null)=>{
+    const parent=bodyRef.current;
+    if(!parent||!target)return;
+    const dy=target.getBoundingClientRect().top-parent.getBoundingClientRect().top;
+    parent.scrollTo({top:Math.max(0,parent.scrollTop+dy-5),behavior:'smooth'});
+  };
   // Derived from Area takeoffs. Sink selections are not duplicated or silently shared.
   const selectedSinks=quote.sections.flatMap(area=>(area.scope?.takeoffSinks??[])
     .filter(sink=>sink.name.trim())
@@ -56,9 +68,18 @@ export function QuoteBetaSelections({quote,onClose}:{
         <div><strong>Selections</strong><small>Materials and job fabrication defaults</small></div>
         <button type="button" onClick={onClose} aria-label="Close selections">×</button>
       </header>
-      <div className="qmb-selections-body">
-        <QuoteProjectMaterials quote={quote}/>
-        <div className="qmb-selections-card" aria-label="Job sink selections">
+      <nav className="qmb-selections-jump" aria-label="Jump to selection section">
+        <button type="button" onClick={()=>jumpTo(materialsRef.current)}>Materials</button>
+        <button type="button" onClick={()=>jumpTo(sinksRef.current)}>Sinks</button>
+        <button type="button" onClick={()=>jumpTo(jobMaterialRef.current)}>Add material</button>
+        <button type="button" onClick={()=>jumpTo(defaultsRef.current)}>Defaults</button>
+        <button type="button" onClick={()=>jumpTo(appendixRef.current)}>Appendix</button>
+      </nav>
+      <div className="qmb-selections-body" ref={bodyRef}>
+        <div ref={materialsRef} className="qmb-selections-anchor">
+          <QuoteProjectMaterials quote={quote}/>
+        </div>
+        <div ref={sinksRef} className="qmb-selections-card" aria-label="Job sink selections">
           <strong>Job sinks · {selectedSinks.length+manualSinks.length}</strong>
           {selectedSinks.length+manualSinks.length===0
             ?<p className="qmb-help">No sinks selected yet. Choose one in any Area and it will appear here automatically.</p>
@@ -68,7 +89,7 @@ export function QuoteBetaSelections({quote,onClose}:{
                   <span>{sink.qty} each</span></li>)}
             </ul>}
         </div>
-        <div className="qmb-selections-card">
+        <div ref={jobMaterialRef} className="qmb-selections-card">
           <strong>Find a job material</strong>
           <TakeoffMaterialCatalog disabled={!editable} value={material} selected={materialRef}
             pinned={quote.projectMaterials??[]}
@@ -83,7 +104,7 @@ export function QuoteBetaSelections({quote,onClose}:{
             onClick={()=>{if(material.trim()){pinMaterial(quote.id,material,materialRef);
               setMessage('Material added to Deal Materials.');}}}>+ Pin for this quote</button>
         </div>
-        <div className="qmb-selections-card">
+        <div ref={defaultsRef} className="qmb-selections-card">
           <strong>Fabrication defaults</strong>
           <div className="qmb-two">
             <label className="qmb-field"><span>Backsplash height</span>
@@ -104,7 +125,7 @@ export function QuoteBetaSelections({quote,onClose}:{
           </div>
           <p className="qmb-help">Set defaults affects new pieces in existing Areas. Apply to all also updates individual pieces. You can override any piece later.</p>
         </div>
-        <div className="qmb-selections-card">
+        <div ref={appendixRef} className="qmb-selections-card">
           <strong>Customer selections appendix</strong>
           <label className="qmb-check">
             <input type="checkbox" disabled={!editable} checked={Boolean(quote.attachSelectionsSheet)}

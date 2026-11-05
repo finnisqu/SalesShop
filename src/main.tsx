@@ -175,6 +175,8 @@ import './mobile-preview-sheet-parity.css';
 import './mobile-task-inline.css';
 // Mobile inline CRM relationship/stage edits and direct record actions.
 import './mobile-connections-inline.css';
+// Compact Selections sheet and mobile section jumps.
+import './mobile-quote-selections-efficiency.css';
 
 recordSalesShopBoot();
 
