@@ -147,6 +147,8 @@ import './desktop-preview-record-consistency.css';
 import './desktop-record-form-consistency.css';
 // Full-width desktop scrollports with a shared content measure.
 import './workspace-scroll-shell-parity.css';
+// One desktop control size system for headers, workbooks, and catalog toolbars.
+import './workspace-control-parity.css';
 
 recordSalesShopBoot();
 

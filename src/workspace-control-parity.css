@@ -1,0 +1,162 @@
+/* SalesShop cross-workspace control geometry, November 2026.
+   Header controls: 40px. Tab chips: 36px. Record directory tools: 36px.
+   Catalog management/filter controls: 40px.
+   Only desktop/work-table chrome; never change modal, quote editor, mobile
+   native sheets, table cell editing, or customer-facing documents. */
+@media (min-width:821px) {
+ :root[data-sales-theme] .sales-app {
+  --ss-directory-toolbar-height:62px;
+  --ss-directory-control-height:36px;
+  --ss-catalog-control-height:40px;
+ }
+ /* Keep all six header action slots physically equal even where legacy
+    Connections/Board selectors still request a taller min-height. */
+ :root[data-sales-theme] .sales-app .ss-workspace-header :is(
+   .ss-workspace-more > summary,
+   .connections-section-more > button,
+   .board-pipeline-more-trigger,
+   .ss-workspace-header__search input[type="search"],
+   .connections-header-search input[type="search"],
+   .board-header-search input[type="search"],
+   .ss-workspace-header__primary > button,
+   .connections-header-tools .connections-add,
+   .board-header-tools .board-add-button
+ ) {
+  box-sizing:border-box;
+  height:var(--ss-header-control-height,40px)!important;
+  min-height:var(--ss-header-control-height,40px)!important;
+  max-height:var(--ss-header-control-height,40px)!important;
+  margin-block:0;
+  align-self:center;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header :is(
+   .ss-workspace-more > summary,
+   .connections-section-more > button,
+   .board-pipeline-more-trigger
+ ) {
+  width:var(--ss-header-more-width,86px)!important;
+  min-width:var(--ss-header-more-width,86px)!important;
+  max-width:var(--ss-header-more-width,86px)!important;
+  padding:7px 8px!important;
+  gap:5px;
+  border:1px solid var(--ss-theme-border);
+  border-radius:9px;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  font:750 12px/1.3 var(--ss-font-body);
+ }
+ /* Different sources used 36, 37, 38 and 40px tab minimums. Keep the
+    segmented navigation's individual choices a fixed 36px border-box. */
+ :root[data-sales-theme] .sales-app .ss-workspace-header :is(
+   .tasks-header-tabs > button,
+   .notebook-header-tabs > button,
+   .qmb-library-filter-row > button,
+   .catalog-section-nav > .ss-section-tab,
+   .connections-tabs > .ss-section-tab,
+   .board-view-toggle > button
+ ) {
+  box-sizing:border-box;
+  height:36px!important;
+  min-height:36px!important;
+  max-height:36px!important;
+  margin-block:0;
+  align-self:center;
+ }
+ /* Connection, task and quote-library tables share the same toolbar shell. */
+ :root[data-sales-theme] .sales-app .connections-grid-toolbar {
+  box-sizing:border-box;
+  min-height:var(--ss-directory-toolbar-height);
+  align-items:center;
+  gap:8px;
+  padding:9px 12px;
+  border-radius:10px;
+ }
+ :root[data-sales-theme] .sales-app :is(
+   .connections-grid-toolbar > button,
+   .connections-grid-toolbar > .connections-columns-menu > summary,
+   .connections-toolbar-controls > .tasks-overview-menu > summary,
+   .connections-toolbar-controls > .tasks-filter-help > summary,
+   .connections-toolbar-controls > .tasks-queue-filter select,
+   .connections-toolbar-controls > .qmb-library-tools select,
+   .connections-toolbar-controls > .sales-calendar-trigger
+ ) {
+  box-sizing:border-box;
+  height:var(--ss-directory-control-height)!important;
+  min-height:var(--ss-directory-control-height)!important;
+  max-height:var(--ss-directory-control-height)!important;
+  margin-block:0!important;
+  border-radius:7px;
+  font-size:11px;
+ }
+ :root[data-sales-theme] .sales-app .connections-grid-toolbar > button,
+ :root[data-sales-theme] .sales-app .connections-grid-toolbar > .connections-columns-menu > summary,
+ :root[data-sales-theme] .sales-app .connections-toolbar-controls > .tasks-overview-menu > summary {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:7px 10px;
+  line-height:1.2;
+  white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app .connections-grid-toolbar > .connections-columns-menu > summary {
+  list-style:none;
+  cursor:pointer;
+ }
+ :root[data-sales-theme] .sales-app .connections-grid-toolbar > .connections-columns-menu > summary::-webkit-details-marker{display:none;}
+ :root[data-sales-theme] .sales-app .connections-toolbar-controls > .tasks-filter-help > summary {
+  width:var(--ss-directory-control-height)!important;
+  min-width:var(--ss-directory-control-height)!important;
+ }
+ :root[data-sales-theme] .sales-app .connections-toolbar-controls > .sales-calendar-trigger {
+  width:var(--ss-directory-control-height)!important;
+  min-width:var(--ss-directory-control-height)!important;
+  padding:0;
+ }
+ :root[data-sales-theme] .sales-app .connections-toolbar-controls > :is(
+  .tasks-overview-menu,.tasks-filter-help,.tasks-queue-filter,.qmb-library-tools
+ ) {
+  align-self:center;
+ }
+ :root[data-sales-theme] .sales-app .connections-grid-toolbar > span {
+  line-height:1.3;
+  margin-right:auto;
+ }
+ /* Catalog's embedded sections historically mixed 38/40/42px controls.
+    The management strip below Catalog uses the same 40px rhythm as header
+    buttons; the nested table grid controls above remain 36px. */
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host :is(
+   .rates-mode-actions > button,
+   .rates-mode-actions > .ss-button,
+   .rates-mode-actions > .supplier-import-launcher.is-toolbar,
+   .sinks-header-actions > button,
+   .sinks-header-actions > .ss-button,
+   .rates-reference-tools > .rates-filter-menu > summary,
+   .rates-reference-tools > .rates-sort-control select,
+   .supplier-directory-toolbar > button,
+   .supplier-directory-toolbar > select
+ ) {
+  box-sizing:border-box;
+  height:var(--ss-catalog-control-height)!important;
+  min-height:var(--ss-catalog-control-height)!important;
+  max-height:var(--ss-catalog-control-height)!important;
+  margin-block:0;
+  border-radius:9px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+   .rates-reference-controls :is(.rates-filter-menu > summary,.rates-sort-control select) {
+  box-sizing:border-box;
+  height:var(--ss-catalog-control-height)!important;
+  min-height:var(--ss-catalog-control-height)!important;
+  max-height:var(--ss-catalog-control-height)!important;
+  border-radius:9px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host .rates-sort-control {
+  min-height:var(--ss-catalog-control-height);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+   :is(.rates-mode-actions,.sinks-header-actions,.rates-reference-tools) {
+  align-items:center;
+  gap:8px;
+ }
+}
