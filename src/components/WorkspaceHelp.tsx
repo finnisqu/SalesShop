@@ -16,15 +16,15 @@ const pages:Record<WorkspaceHelpPage,Article>={
  tasks:{name:'Tasks',intro:'Personal tasks connected to the rest of SalesShop.',tips:[
   {label:'Dates',text:'A due date never hides a task from All open. Start later is for work you do not plan to begin yet.'},
   {label:'Queue & Overview',text:'Filter by workstream, check daily totals, and open Calendar for dated tasks.'},
-  {label:'Bulk editing',text:'Select task rows to change properties or complete several tasks together.'}]},
+  {label:'Quick changes',text:'On mobile, tap the title to preview, set priority inline, or tap Due today. Use bulk editing to update several tasks.'}]},
  board:{name:'Board',intro:'Deals and accounts organized into visual columns.',tips:[
   {label:'Preview',text:'Click a card name to see its record without leaving Board.'},
   {label:'Scroll',text:'Shift + mouse wheel moves across the whole Board, even over a column. Ordinary wheel scrolls within columns.'},
   {label:'Reduce clutter',text:'Collapse column headings or use More to show compact cards.'}]},
  connections:{name:'Connections',intro:'Your CRM directory of companies, people, deals, and their relationships.',tips:[
-  {label:'Quick preview',text:'Click a name to inspect the record; choose Go to page for full details.'},
+  {label:'Explore related records',text:'Tap a name to preview. Follow related records inside the preview and use Back on mobile to return to the previous one.'},
   {label:'Related records',text:'Link people to companies and deals to quotes so everyone can find the connected work.'},
-  {label:'Manage rows',text:'Select checkboxes for bulk actions; use Columns to change visible fields and row spacing.'}]},
+  {label:'Quick actions',text:'On mobile, change company type or deal stage inline, call or email a contact, or open its full record directly.'}]},
  notebook:{name:'Notebook',intro:'Pages, daily notes, and a linked agenda.',tips:[
   {label:'Daily pages',text:'A daily page is created when you use Notes on Home, not automatically every day.'},
   {label:'Linked agenda',text:'Keep calendar items alongside your notes without disrupting the page layout.'},

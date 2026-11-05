@@ -385,7 +385,7 @@ export function Connections() {
           {tab === 'companies' && (
             <section className="connections-directory" aria-label="Company directory">
               
-              <p className="connections-count">{companyRows.length} companies · select to open the full account record</p>
+              <p className="connections-count">{companyRows.length} companies · preview or open full details</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined}/>
@@ -401,7 +401,7 @@ export function Connections() {
                     <small>{peopleCount} people · {projectCount} deals · {companyQuotes.length} linked quotes</small>
                     <span className="connections-record-arrow" aria-hidden="true">↗</span>
                   </button>
-<div className="connections-mobile-inline">
+                  <div className="connections-mobile-inline">
                       {canBulkEdit&&<label>Relationship
                         <select aria-label={'Relationship for '+company.name} value={company.kind}
                           onChange={event=>updateCompany(company.id,{kind:event.currentTarget.value as CompanyKind})}>
@@ -412,7 +412,7 @@ export function Connections() {
                       <button type="button" className="connections-mobile-open-full"
                         onClick={()=>openCompany(company.id)}>Full record</button>
                     </div>
-</div>;
+                </div>;
                 })}
               </div>
               {!companyRows.length && <StatusText state="empty" className="connections-empty">No companies match. Try another search or relationship type.</StatusText>}
@@ -421,7 +421,7 @@ export function Connections() {
           {tab === 'people' && (
             <section className="connections-directory" aria-label="People directory">
               
-              <p className="connections-count">{peopleRows.length} people · select a person to open their full record</p>
+              <p className="connections-count">{peopleRows.length} people · preview or open full details</p>
               <ConnectionsTable key="people" tableKey="people" columns={peopleColumns}
                 rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
@@ -446,7 +446,7 @@ export function Connections() {
           )}
           {tab === 'deals' && <section className="connections-directory" aria-label="Deals directory">
             
-            <p className="connections-count">{projectRows.length} deals · stage, bid dates and quotes on each deal record</p>
+            <p className="connections-count">{projectRows.length} deals · stages, bid dates and linked quotes</p>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
                onBulkEdit={canBulkEdit?bulkEdit:undefined}/>
@@ -461,7 +461,7 @@ export function Connections() {
                   {project.amount !== undefined && <b>{money.format(project.amount)}</b>}
                   <span className="connections-record-arrow" aria-hidden="true">↗</span>
                 </button>
-<div className="connections-mobile-inline">
+                  <div className="connections-mobile-inline">
                     {canBulkEdit&&<label>Stage
                       <select aria-label={'Stage for '+project.name} value={project.stage}
                         onChange={event=>updateDeal(project.id,{stage:event.currentTarget.value as ProjectStage},{source:'manual'})}>
@@ -471,7 +471,7 @@ export function Connections() {
                     <button type="button" className="connections-mobile-open-full"
                       onClick={()=>openProject(project.id)}>Full record</button>
                   </div>
-</div>;
+                </div>;
               })}
             </div>
             {!projectRows.length && <StatusText state="empty" className="connections-empty">No deals match your search.</StatusText>}
