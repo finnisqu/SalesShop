@@ -8,6 +8,7 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
+import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
@@ -384,7 +385,9 @@ export function TasksWorkspace(){
       </div>
     </section>
     {!scope&&<p className="tasks-state">Your personal Tasks workspace will load after you sign in to a company.</p>}
-    {scope&&<div className="tasks-table-container">
+    {scope&&storedScope!==scope&&<WorkspaceLoadingState title="Loading Tasks"
+      detail="Opening your personal task list for this workspace…" />}
+    {scope&&storedScope===scope&&<div className="tasks-table-container">
       <ConnectionsTable tableKey="tasks" columns={taskColumns} rows={taskTableRows}
         toolbarTarget={taskToolbarHost}
         toolbarControls={<>

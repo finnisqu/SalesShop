@@ -3,6 +3,7 @@ import {createPortal} from 'react-dom';
 import {useDismissiblePopover} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {WorkspaceHelp} from './WorkspaceHelp';
+import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
@@ -113,6 +114,9 @@ export function Connections() {
 
   const crmHydrate = useCrmStore((state) => state.hydrate);
   const quoteHydrate = useQuoteStore((state) => state.hydrate);
+  const crmReady=useCrmStore(state=>state.hydrated);
+  const quotesReady=useQuoteStore(state=>state.hydrated);
+  const recordsReady=crmReady&&quotesReady;
   const companies = useCrmStore((state) => state.companies);
   const contacts = useCrmStore((state) => state.contacts);
   const projects = useCrmStore((state) => state.projects);
@@ -368,7 +372,10 @@ export function Connections() {
           </div>
         </>}
       />
-      <div className="connections-directory-content">
+      {!recordsReady&&<WorkspaceLoadingState title="Loading Connections"
+        detail="Opening accounts, contacts, deals and quote links…" />}
+      <div className="connections-directory-content"
+        style={!recordsReady?{display:'none'}:undefined}>
       {(tab === 'activity'||tab==='quotes') && <div className="connections-history-heading">
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
           <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
