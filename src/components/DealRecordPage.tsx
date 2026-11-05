@@ -128,7 +128,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           <label>Next action<textarea rows={3} value={draft.nextAction} onChange={event => setDraft({...draft,nextAction:event.target.value})} /></label>
           <label>Last touchpoint<input type="date" value={draft.lastTouchpoint} onChange={event => setDraft({...draft,lastTouchpoint:event.target.value})} /></label>
           {saveError&&<p role="alert" className="connections-record-helper">{saveError}</p>}
-          <div className="connections-record-form-actions">
+          <div className="connections-record-form-actions ss-record-editor-actions">
             <button type="button" onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
             <button className="connections-record-primary" type="submit" disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save changes'}</button>
           </div>

@@ -5,6 +5,7 @@ import {quoteLinesTotal} from '../types/quote';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {useQuoteStore} from '../store/quoteStore';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
 import {QuoteBetaMeasureGrid} from './QuoteBetaMeasureGrid';
@@ -45,10 +46,9 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
       const start=sheetSwipeStart.current;sheetSwipeStart.current=null;
       if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
      }}>
-       <div><small>QUOTE BUILDER · AREA</small><h2>{section.title||'Untitled Area'}</h2>
-         <span>{sf.format(section.scope?.countertopSf??0)} SF · {money.format(total)}</span></div>
-       <button type="button" data-dialog-initial-focus onClick={onClose}
-         aria-label="Close Area quick editor">×</button>
+       <PreviewPanelHeading eyebrow="QUOTE BUILDER · AREA" title={section.title||'Untitled Area'}
+         detail={<>{sf.format(section.scope?.countertopSf??0)} SF · {money.format(total)}</>}/>
+       <PreviewPanelClose onClose={onClose} label="Close Area quick editor"/>
      </header>
      <div className="qmb-quick-area-nav">
        <button type="button" disabled={index<=0} onClick={()=>onSelect(areas[index-1].id)}>‹ Previous</button>
@@ -113,13 +113,13 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
          </details></>}
        {showFullNote&&<p role="status">The full Area workspace has detailed sink, add-on and fabrication options.</p>}
      </div>
-     <footer className="qmb-quick-area-footer">
+     <PreviewPanelActions className="qmb-quick-area-footer">
        <button type="button" onClick={()=>setShowFullNote(v=>!v)} aria-expanded={showFullNote}>ⓘ</button>
        <button type="button" onClick={()=>onFull(initialTab==='material'?'materials':
          initialTab==='calculator'?'calculator':initialTab==='pricing'?'pricing':'measure')}>
          Open full Area ↗</button>
        <button type="button" onClick={onClose}>Done</button>
-     </footer>
+     </PreviewPanelActions>
    </aside>
  </div>,document.querySelector('.sales-app')??document.body);
 }

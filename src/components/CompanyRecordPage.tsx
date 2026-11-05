@@ -129,7 +129,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <label>Annual units<input type="number" min="0" step="1" value={draft.annualUnits} onChange={(event) => setDraft({ ...draft, annualUnits: event.target.value })} /></label>
           <label>Average revenue / unit<input type="number" min="0" step="0.01" value={draft.averageUnitValue} onChange={(event) => setDraft({ ...draft, averageUnitValue: event.target.value })} /></label>
           <label>Expected share (%)<input type="number" min="0" max="100" step="0.1" value={draft.expectedSharePct} onChange={(event) => setDraft({ ...draft, expectedSharePct: event.target.value })} /></label>
-          <div className="connections-record-form-actions">
+          <div className="connections-record-form-actions ss-record-editor-actions">
             <button type="button" onClick={() => setEditing(false)}>Cancel</button>
             <button type="submit" className="connections-record-primary" disabled={!draft.name.trim()}>Save changes</button>
           </div>
@@ -199,7 +199,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
         {addingContact && <form className="connections-record-edit-form" onSubmit={addContact}>
           <label>Name<input autoFocus value={contactName} onChange={(event) => setContactName(event.target.value)} /></label>
           <label>Email<input type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} /></label>
-          <div className="connections-record-form-actions">
+          <div className="connections-record-form-actions ss-record-editor-actions">
             <button type="button" onClick={() => setAddingContact(false)}>Cancel</button>
             <button type="submit" className="connections-record-primary" disabled={!contactName.trim() && !contactEmail.trim()}>Save person</button>
           </div>

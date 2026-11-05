@@ -1,4 +1,5 @@
 import {useEffect} from 'react';
+import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
 import {useQuoteStore} from '../store/quoteStore';
@@ -94,11 +95,8 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
    onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
    <aside ref={ref} role="dialog" aria-modal="true" aria-label={label+' preview'}
      className={center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel'}>
-     <header><div>{center?<small>QUOTE · QUICK VIEW</small>:
-       <span className="board-eyebrow">{label} · Quick preview</span>}
-       <h2>{heading}</h2></div>
-       <button type="button" data-dialog-initial-focus className="editor-close"
-         aria-label="Close preview" onClick={onClose}>×</button>
+     <header><PreviewPanelHeading eyebrow={center?'QUOTE · QUICK VIEW':label+' · Quick preview'} title={heading}/>
+       <PreviewPanelClose onClose={onClose} label="Close preview" className="editor-close"/>
      </header>
      <div className={center?'tasks-preview-body record-preview-body':'record-preview-body'}>
        {company&&<>
@@ -168,7 +166,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          </div>
        </>}
      </div>
-     <footer className="record-preview-actions">
+     <PreviewPanelActions className="record-preview-actions">
        {center&&<button type="button" onClick={onClose}>Close</button>}
        {!perspective&&<button type="button" onClick={()=>{
         onClose();requestTaskModal({mode:'create',associations:contextualLinks});
@@ -182,7 +180,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {quote&&<button type="button" className={center?'tasks-primary record-preview-open-quote':'record-preview-open-quote'}
          disabled={Boolean(quote.archivedAt)} title={quote.archivedAt?'Restore this document before opening it':undefined}
          onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
-     </footer>
+     </PreviewPanelActions>
    </aside>
  </div>;
  return center?createPortal(preview,document.body):preview;

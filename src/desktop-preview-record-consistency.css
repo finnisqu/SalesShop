@@ -1,0 +1,131 @@
+/* Shared desktop identity + action chrome for CRM drawers, Task previews,
+   Quote Area quick editors and their record/edit workflows.
+   Mobile sheet geometry remains untouched. */
+@media(min-width:821px){
+ :root[data-sales-theme]{
+  --ss-preview-header-pad-block:15px;
+  --ss-preview-header-pad-inline:17px;
+  --ss-preview-actions-pad-block:11px;
+  --ss-preview-actions-pad-inline:16px;
+  --ss-preview-control-height:38px;
+  --ss-preview-close-size:36px;
+  --ss-preview-section-gap:12px;
+ }
+ :root[data-sales-theme] .ss-preview-heading{
+  display:grid;align-content:center;gap:4px;min-width:0;flex:1 1 auto;
+ }
+ :root[data-sales-theme] .ss-preview-heading>.ss-preview-eyebrow{
+  display:block;margin:0;color:var(--ss-theme-muted);
+  font:800 10px/1.3 var(--ss-font-body);
+  letter-spacing:.08em;text-transform:uppercase;
+ }
+ :root[data-sales-theme] .ss-preview-heading>h2{
+  margin:0!important;color:var(--ss-theme-ink)!important;
+  font:760 19px/1.25 var(--ss-font-body)!important;
+  overflow-wrap:anywhere;min-width:0;
+ }
+ :root[data-sales-theme] .ss-preview-heading>.ss-preview-detail{
+  color:var(--ss-theme-muted);
+  font:600 11px/1.4 var(--ss-font-body);
+ }
+ /* All close buttons: one obvious hit target, no unthemed floating X. */
+ :root[data-sales-theme] :is(
+   .record-preview-panel,.record-preview-center-card,.qmb-quick-area-panel,
+   .tasks-preview-card,.tasks-editor,.project-editor,.sales-activity-dialog
+ ) .ss-preview-close{
+  display:grid;place-items:center;flex:0 0 auto;
+  width:var(--ss-preview-close-size)!important;
+  min-width:var(--ss-preview-close-size)!important;
+  height:var(--ss-preview-close-size)!important;
+  min-height:var(--ss-preview-close-size)!important;
+  padding:0!important;margin:0;
+  border:1px solid var(--ss-theme-border)!important;
+  border-radius:9px!important;background:var(--ss-theme-card)!important;
+  color:var(--ss-theme-ink)!important;
+  font:500 22px/1 var(--ss-font-body)!important;
+  cursor:pointer;
+ }
+ :root[data-sales-theme] :is(
+   .record-preview-panel,.record-preview-center-card,.qmb-quick-area-panel,
+   .tasks-preview-card,.tasks-editor,.project-editor,.sales-activity-dialog
+ ) .ss-preview-close:is(:hover,:focus-visible){
+  background:var(--ss-theme-tint)!important;
+ }
+ :root[data-sales-theme] :is(
+   .record-preview-panel,.record-preview-center-card,.qmb-quick-area-panel,
+   .tasks-preview-card,.tasks-editor,.project-editor,.sales-activity-dialog
+ ) .ss-preview-close:focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px;
+ }
+ :root[data-sales-theme] :is(
+   .record-preview-panel,.record-preview-center-card,.qmb-quick-area-panel,
+   .tasks-preview-card,.project-editor,.sales-activity-dialog
+ )>header:has(.ss-preview-heading){
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex:0 0 auto;min-width:0;
+  padding:var(--ss-preview-header-pad-block) var(--ss-preview-header-pad-inline);
+  border-bottom:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ }
+ /* The dialog body is the scroll owner, not the header or action toolbar. */
+ :root[data-sales-theme] :is(
+   .record-preview-panel,.record-preview-center-card,.qmb-quick-area-panel,
+   .tasks-preview-card
+ ){
+  min-width:0;overflow:hidden;
+ }
+ :root[data-sales-theme] :is(
+   .record-preview-panel,.record-preview-center-card,.qmb-quick-area-panel,
+   .tasks-preview-card
+ ) :is(.record-preview-body,.qmb-quick-area-body,.tasks-preview-body){
+  min-height:0;overscroll-behavior:contain;scrollbar-gutter:stable;
+ }
+ :root[data-sales-theme] .ss-preview-actions{
+  display:flex;flex:0 0 auto;align-items:center;
+  justify-content:flex-end;gap:8px;flex-wrap:wrap;min-width:0;
+  border-top:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] :is(
+   .record-preview-panel,.record-preview-center-card,.qmb-quick-area-panel,
+   .tasks-preview-card
+ )>.ss-preview-actions{
+  min-height:59px;padding:var(--ss-preview-actions-pad-block) var(--ss-preview-actions-pad-inline);
+ }
+ :root[data-sales-theme] .ss-preview-actions>button,
+ :root[data-sales-theme] .ss-record-page-actions>button,
+ :root[data-sales-theme] .ss-record-editor-actions>button{
+  box-sizing:border-box;min-height:var(--ss-preview-control-height);
+  border-radius:8px;font:750 12px/1.3 var(--ss-font-body);
+  cursor:pointer;
+ }
+ :root[data-sales-theme] .ss-preview-actions>button:disabled,
+ :root[data-sales-theme] .ss-record-page-actions>button:disabled,
+ :root[data-sales-theme] .ss-record-editor-actions>button:disabled{
+  opacity:.5;cursor:not-allowed;
+ }
+ :root[data-sales-theme] :is(
+  .ss-preview-actions,.ss-record-page-actions,.ss-record-editor-actions
+ )>button:focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px;
+ }
+ /* All full record pages inherit the same action rhythm, without changing
+    Company/Person/Deal action handlers or mobile jump navigation. */
+ :root[data-sales-theme] .sales-app.view-dashboard .ss-record-page-actions{
+  display:flex;justify-content:flex-end;align-items:center;gap:8px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .ss-record-page-actions>button{
+  min-height:var(--ss-preview-control-height);
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .ss-record-editor-actions{
+  display:flex;gap:8px;justify-content:flex-end;align-items:center;
+ }
+ /* Keep destructive/discard shortcuts on the left, primary save on the right. */
+ :root[data-sales-theme] :is(.tasks-editor,.sales-activity-dialog)
+ .ss-record-editor-actions>button:first-child{
+  margin-right:auto;
+ }
+ :root[data-sales-theme] .project-editor .ss-record-editor-actions{
+  align-items:center;gap:8px;
+ }
+}

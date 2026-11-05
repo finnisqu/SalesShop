@@ -51,7 +51,7 @@ export function RecordPageLayout({
         {subtitle && <p>{subtitle}</p>}
         {badge && <div className="connections-record-badges">{badge}</div>}
       </div>
-      {actions && <div className="connections-record-actions">{actions}</div>}
+      {actions && <div className="connections-record-actions ss-record-page-actions">{actions}</div>}
     </header>
     <nav className="connections-record-jump-nav" aria-label="Jump to record section">
       <button type="button" onClick={() => jumpTo('details')}>Details</button>

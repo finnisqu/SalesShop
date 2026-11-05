@@ -7,6 +7,8 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import type {TaskBulkChange} from './TaskBulkEditDialog';
 import '../tasks-table.css';
 import {useQuoteStore} from '../store/quoteStore';
@@ -99,6 +101,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
    });
   },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks]);
   const close=()=>{clearSavedDraft(activeKey);onCancel();};
+  const editorRef=useDismissibleLayer<HTMLFormElement>(true,close);
   const discard=()=>{clearSavedDraft(scopeKey);close();};
   const sourceLabel=initial.sourceLabel;
   const suggestionScope=usePersonalTaskStore(s=>s.scope);
@@ -128,11 +131,11 @@ export function TaskEditor({initial,onCancel,onSave}:{
     clearSavedDraft(scopeKey);clearSavedDraft(activeKey);
   };
   return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)close();}}>
-    <form className="tasks-editor" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
+    <form ref={editorRef} className="tasks-editor" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
       onSubmit={submit}>
       <header><strong>{'id'in initial?'Edit task':'New task'}</strong>
-        <button type="button" aria-label="Close task editor" onClick={close}>×</button></header>
-      <label>Task title<input autoFocus required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/></label>
+        <PreviewPanelClose label="Close task editor" onClose={close} initialFocus={false}/></header>
+      <label>Task title<input autoFocus data-dialog-initial-focus required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/></label>
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
       <TaskAssociationsField options={associations.map(item=>({...item,
         linked:{...item.linked,label:item.label}}))} value={selectedLinks} onChange={setSelectedLinks}/>
@@ -180,9 +183,9 @@ export function TaskEditor({initial,onCancel,onSave}:{
        value={notes} onChange={e=>setNotes(e.target.value)}
        placeholder="Context or next steps…"/></label>
       <p className="tasks-editor-due-hint">Unsaved changes are kept on this device if you close or reload SalesShop.</p>
-      <footer><button type="button" onClick={discard}>Discard draft</button>
+      <PreviewPanelActions className="ss-record-editor-actions"><button type="button" onClick={discard}>Discard draft</button>
        <button type="button" onClick={close}>Close</button>
-       <button type="submit" className="tasks-primary">Save task</button></footer>
+       <button type="submit" className="tasks-primary">Save task</button></PreviewPanelActions>
     </form>
   </div>;
 }
@@ -231,6 +234,7 @@ export function TasksWorkspace(){
   const own=(!rolePreview&&scope&&storedScope===scope)?tasks.filter(t=>!t.deletedAt):[];
   const queues=Array.from(new Set(ownQueueNames(own))).sort();
   const viewing=own.find(task=>task.id===viewingId)??null;
+  const previewRef=useDismissibleLayer<HTMLElement>(Boolean(viewing),()=>setViewingId(null));
   // Reopen an in-progress editor after the browser discards and restores its tab.
   useEffect(()=>{
     if(!scope||storedScope!==scope||editing||viewingId||rolePreview)return;
@@ -457,9 +461,9 @@ export function TasksWorkspace(){
       {' · '}Reminder dates are tracked in SalesShop. Background emails and push alerts are not enabled.
     </footer>
     {viewing&&<div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setViewingId(null);}}>
-      <section className="tasks-preview-card" role="dialog" aria-modal="true" aria-label={'Task '+viewing.title}>
-       <header><div><small>TASK · QUICK VIEW</small><h2>{viewing.title}</h2></div>
-        <button type="button" aria-label="Close task preview" onClick={()=>setViewingId(null)}>×</button></header>
+      <section ref={previewRef} className="tasks-preview-card" role="dialog" aria-modal="true" aria-label={'Task '+viewing.title}>
+       <header><PreviewPanelHeading eyebrow="TASK · QUICK VIEW" title={viewing.title}/>
+        <PreviewPanelClose label="Close task preview" onClose={()=>setViewingId(null)}/></header>
        <div className="tasks-preview-body">
         <div className="tasks-preview-meta">
          <span>{viewing.type??'To-do'}</span><span>{viewing.status??'open'}</span>
@@ -477,7 +481,7 @@ export function TasksWorkspace(){
            {link.label??link.type} ↗</button>)}
         </div>}
        </div>
-       <footer>
+       <PreviewPanelActions>
         <button type="button" onClick={()=>setViewingId(null)}>Close</button>
         {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&
          <button type="button" className="tasks-flow-action" onClick={()=>{
@@ -486,7 +490,7 @@ export function TasksWorkspace(){
         <button type="button" onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
          {taskComplete(viewing)?'Reopen task':'Mark complete'}</button>
         <button type="button" className="tasks-primary" onClick={()=>{setViewingId(null);setEditing(viewing);}}>Edit task</button>
-       </footer>
+       </PreviewPanelActions>
       </section>
      </div>}
     {editing&&<TaskEditor key={'id'in editing?editing.id:editing.title+'new'} initial={editing} onCancel={()=>setEditing(null)} onSave={save}/>}

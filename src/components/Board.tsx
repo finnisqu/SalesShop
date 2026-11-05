@@ -9,6 +9,7 @@ import { AccountsBoard } from './AccountsBoard';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import { Button, PageHeader } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
+import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
 import {useDismissiblePopover} from './useDismissibleDetails';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
@@ -180,8 +181,8 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
     <div className="project-editor-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor" aria-label="Edit deal">
         <header>
-          <div><span className="board-eyebrow">Deal card</span><h2>{project.name}</h2></div>
-          <button type="button" className="editor-close" data-dialog-initial-focus onClick={onClose} aria-label="Close editor">×</button>
+          <PreviewPanelHeading eyebrow="Deal card" title={project.name}/>
+          <PreviewPanelClose className="editor-close" onClose={onClose} label="Close editor"/>
         </header>
 
         <form onSubmit={submit}>
@@ -258,7 +259,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
           </details>
 
           {saveError&&<p role="alert" className="project-editor-save-error">{saveError}</p>}
-          <div className="editor-actions">
+          <div className="editor-actions ss-preview-actions ss-record-editor-actions">
             <button type="button" className="danger-button" onClick={() => {
               if (window.confirm(`Delete ${project.name}?`)) {
                 detachNotebookPagesForProject(project.id);

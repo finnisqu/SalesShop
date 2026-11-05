@@ -6,6 +6,8 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {TaskAssociationsField} from './TaskAssociationsField';
+import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
 import {completedTaskActivityId,taskActivityMethod,type ActivityComposerRequest}
@@ -136,6 +138,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
     .map(q=>({key:'quote:'+q.id,linked:{type:'quote' as const,id:q.id,label:'Quote · '+q.title},label:'Quote · '+q.title})),
  ],[contacts,companies,projects,quotes,mode,currentUser]);
  const close=()=>{setOpen(false);setError('');};
+ const activityRef=useDismissibleLayer<HTMLFormElement>(open&&permitted,()=>{if(!saving)close();});
  const discard=()=>{
   clearSavedDraft(draftKey);
   setMethod('call');setNotes('');setLinks([]);setOccurred(dateTimeLocal());
@@ -227,10 +230,11 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   {open&&createPortal(<div className="sales-activity-backdrop" onPointerDown={e=>{
     if(e.target===e.currentTarget)close();
    }}>
-   <form role="dialog" aria-modal="true" aria-label="Log Activity" className="sales-activity-dialog"
-    onSubmit={submit} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();close();}}}>
-    <header><div><small>CRM · Completed interaction</small><h2>{workflowTaskId?'Log & complete task':'Log Activity'}</h2></div>
-      <button type="button" onClick={close} aria-label="Close Log Activity">×</button></header>
+   <form ref={activityRef} role="dialog" aria-modal="true" aria-label="Log Activity"
+    className="sales-activity-dialog" onSubmit={submit}>
+    <header><PreviewPanelHeading eyebrow="CRM · Completed interaction"
+      title={workflowTaskId?'Log & complete task':'Log Activity'}/>
+      <PreviewPanelClose onClose={close} label="Close Log Activity" initialFocus={false}/></header>
     <div className="sales-activity-form-body">
      {workflowTaskId&&<p className="sales-activity-task-context">
       <strong>Task-linked interaction</strong>
@@ -238,6 +242,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
      </p>}
      <div className="sales-activity-methods" role="group" aria-label="Interaction method">
       {methods.map(item=><button type="button" key={item.id} aria-pressed={method===item.id}
+       data-dialog-initial-focus={method===item.id?true:undefined}
        onClick={()=>setMethod(item.id)}>
        <span className="sales-activity-method-icon"><ActivityMethodIcon method={item.id}/></span>
        {item.label}</button>)}
@@ -261,11 +266,11 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
      <p className="sales-activity-note">Unsaved details are recovered on this device if SalesShop reloads. Saving logs the interaction to CRM history; it doesn't send a message.</p>
      {error&&<p role="alert" className="sales-activity-error">{error}</p>}
     </div>
-    <footer>
+    <PreviewPanelActions className="ss-record-editor-actions">
      <button type="button" onClick={discard} disabled={saving} title="Erase this unsaved activity draft">Discard draft</button>
      <button type="button" onClick={close} disabled={saving}>Close</button>
      <button type="submit" disabled={saving}>{saving?'Saving…':workflowTaskId?'Log & complete task':'Save activity'}</button>
-    </footer>
+    </PreviewPanelActions>
    </form>
   </div>,document.body)}
  </>;

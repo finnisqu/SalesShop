@@ -86,7 +86,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((item) =>
               <option key={item.id} value={item.id}>{item.name}</option>)}
           </select></label>
-          <div className="connections-record-form-actions">
+          <div className="connections-record-form-actions ss-record-editor-actions">
             <button type="button" onClick={() => setEditing(false)}>Cancel</button>
             <button type="submit" className="connections-record-primary" disabled={!draft.name.trim() && !draft.email.trim()}>Save changes</button>
           </div>

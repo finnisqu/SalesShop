@@ -141,6 +141,8 @@ import './workspace-table-control-strip.css';
 import './workbook-table-foundation.css';
 // Shared desktop menus and bulk-dialog interaction styling.
 import './shared-desktop-interactions.css';
+// Shared desktop preview/editor identity, close controls and action bars.
+import './desktop-preview-record-consistency.css';
 
 recordSalesShopBoot();
 
