@@ -24,6 +24,7 @@ import {
 } from '../lib/mobileBoardState';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
+import {useBoardShiftWheelScroll} from '../lib/useBoardShiftWheelScroll';
 import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,matchesDealPipeline,
   type DealPipeline,type DealPipelineFilter,type Project,type ProjectPatch,type ProjectStage} from '../types/crm';
 import {DealAssigneeSelect} from '../services/dealAssignees';
@@ -329,6 +330,7 @@ export function Board() {
   const [dragStage, setDragStage] = useState<ProjectStage | null>(null);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
+  useBoardShiftWheelScroll(boardRef,hydrated&&boardMode==='projects');
 
   const setBoardMode = (mode: 'projects' | 'accounts') => {
     if (mobileInteraction && mode !== boardMode) {

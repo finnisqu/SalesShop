@@ -8,6 +8,7 @@ import {
 } from '../lib/mobileBoardState';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
+import {useBoardShiftWheelScroll} from '../lib/useBoardShiftWheelScroll';
 import { useQuoteStore } from '../store/quoteStore';
 import { quotesForCompany } from '../services/quoteCrmLinks';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
@@ -211,6 +212,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
+  useBoardShiftWheelScroll(boardRef);
 
   useEffect(() => {
     hydrateQuotes();
