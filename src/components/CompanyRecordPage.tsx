@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,RECORD_ADDED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork, type CompanyKind } from '../types/crm';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
@@ -36,6 +37,9 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const [newAlias, setNewAlias] = useState('');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [editError,setEditError]=useState('');
+  const [contactError,setContactError]=useState('');
+  const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const company = companies.find((candidate) => candidate.id === companyId);
   const [draft, setDraft] = useState({
     name: company?.name ?? '', kind: company?.kind ?? 'customer' as CompanyKind,
@@ -51,6 +55,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     setActivityFilter('all');
     setHistoryOpen(false);
     setContactName(''); setContactEmail(''); setNewAlias('');
+    setEditError('');setContactError('');setNotice(null);
   }, [companyId]);
   useEffect(() => {
     if (!editing && company) setDraft({
@@ -80,25 +85,36 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   });
   const saveCompany = (event: FormEvent) => {
     event.preventDefault();
-    if (!draft.name.trim()) return;
-    const nums = [draft.annualUnits, draft.averageUnitValue, draft.expectedSharePct];
-    if (nums.some((value) => value.trim() && (!Number.isFinite(Number(value)) || Number(value) < 0))) return;
-    if (draft.expectedSharePct.trim() && Number(draft.expectedSharePct) > 100) return;
-    updateCompany(company.id, {
-      name: draft.name.trim(), kind: draft.kind,
-      annualUnits: optionalNumber(draft.annualUnits),
-      averageUnitValue: optionalNumber(draft.averageUnitValue),
-      expectedSharePct: optionalNumber(draft.expectedSharePct),
-    });
-    setEditing(false);
+    const message=!draft.name.trim()?'Enter a company name.':
+      nonnegativeFieldError(draft.annualUnits,'Annual units')||
+      (draft.annualUnits.trim()&&!Number.isInteger(Number(draft.annualUnits))?'Annual units must be a whole number.':'')||
+      nonnegativeFieldError(draft.averageUnitValue,'Average revenue / unit')||
+      nonnegativeFieldError(draft.expectedSharePct,'Expected share',100);
+    if(message){setEditError(message);return;}
+    setEditError('');
+    try{
+      updateCompany(company.id, {
+        name: draft.name.trim(), kind: draft.kind,
+        annualUnits: optionalNumber(draft.annualUnits),
+        averageUnitValue: optionalNumber(draft.averageUnitValue),
+        expectedSharePct: optionalNumber(draft.expectedSharePct),
+      });
+      setEditing(false);
+      setNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
+    }catch(reason){setEditError(reason instanceof Error?reason.message:'Unable to apply company changes.');}
   };
   const addContact = (event: FormEvent) => {
     event.preventDefault();
-    if (!contactName.trim() && !contactEmail.trim()) return;
-    const id = createContact({ companyId: company.id, name: contactName, email: contactEmail, source: 'manual' });
-    if (id) {
-      setContactName(''); setContactEmail(''); setAddingContact(false);
-    }
+    if (!contactName.trim() && !contactEmail.trim()){setContactError('Enter a name or email.');return;}
+    const emailError=recordEmailError(contactEmail);
+    if(emailError){setContactError(emailError);return;}
+    setContactError('');
+    try{
+      const id=createContact({companyId:company.id,name:contactName,email:contactEmail,source:'manual'});
+      if(!id){setContactError('Unable to add this person. Please retry.');return;}
+      setContactName('');setContactEmail('');setAddingContact(false);
+      setNotice({kind:'applied',message:RECORD_ADDED_MESSAGE});
+    }catch(reason){setContactError(reason instanceof Error?reason.message:'Unable to add this person.');}
   };
   const newQuote = () => {
     const quoteId = createQuote({ title: 'Quote · ' + company.name, companyId: company.id, companyName: company.name });
@@ -116,22 +132,26 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     subtitle={company.kind === 'non-customer' ? 'Partner / non-customer relationship' : 'Customer / prospect'}
     badge={<><span className="connections-record-stage">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</span><span>{related.relatedProjects.length} deals</span><span>{related.relatedQuotes.length} linked quotes</span></>}
     actions={<>
-      <button type="button" onClick={() => setEditing((current) => !current)}>{editing ? 'Cancel editing' : 'Edit company'}</button>
+      <button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(current=>!current);}}>{editing ? 'Cancel editing' : 'Edit company'}</button>
       {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>}
     </>}
     left={<>
       <RecordCard title="About this company">
-        {editing ? <form className="connections-record-edit-form" onSubmit={saveCompany}>
-          <label>Company name<input autoFocus required value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
+        <RecordFormFeedback notice={notice}/>
+        {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={saveCompany}>
+          <RecordEditField label="Company name" required error={editError==='Enter a company name.'?editError:undefined}>
+            {control=><input {...control} autoFocus value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
+          </RecordEditField>
           <label>Relationship<select value={draft.kind} onChange={(event) => setDraft({ ...draft, kind: event.target.value as CompanyKind })}>
             <option value="customer">Customer / prospect</option><option value="non-customer">Partner / non-customer</option>
           </select></label>
           <label>Annual units<input type="number" min="0" step="1" value={draft.annualUnits} onChange={(event) => setDraft({ ...draft, annualUnits: event.target.value })} /></label>
           <label>Average revenue / unit<input type="number" min="0" step="0.01" value={draft.averageUnitValue} onChange={(event) => setDraft({ ...draft, averageUnitValue: event.target.value })} /></label>
           <label>Expected share (%)<input type="number" min="0" max="100" step="0.1" value={draft.expectedSharePct} onChange={(event) => setDraft({ ...draft, expectedSharePct: event.target.value })} /></label>
+          <RecordFormFeedback notice={editError&&editError!=='Enter a company name.'?{kind:'error',message:editError}:null}/>
           <div className="connections-record-form-actions ss-record-editor-actions">
             <button type="button" onClick={() => setEditing(false)}>Cancel</button>
-            <button type="submit" className="connections-record-primary" disabled={!draft.name.trim()}>Save changes</button>
+            <button type="submit" className="connections-record-primary">Save changes</button>
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Relationship">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</RecordProperty>
@@ -196,9 +216,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           {!related.relatedContacts.length && <p className="connections-record-empty">No people linked yet.</p>}
         </div>
         <button type="button" className="connections-record-add" onClick={() => setAddingContact((value) => !value)}>{addingContact ? 'Cancel' : '+ Add person'}</button>
-        {addingContact && <form className="connections-record-edit-form" onSubmit={addContact}>
+        {addingContact && <form className="connections-record-edit-form" noValidate onChange={()=>setContactError('')} onSubmit={addContact}>
           <label>Name<input autoFocus value={contactName} onChange={(event) => setContactName(event.target.value)} /></label>
-          <label>Email<input type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} /></label>
+          <RecordEditField label="Email" error={contactError==='Enter a valid email address.'?contactError:undefined}>
+            {control=><input {...control} type="email" value={contactEmail} onChange={event=>setContactEmail(event.target.value)}/>}
+          </RecordEditField>
+          <RecordFormFeedback notice={contactError&&contactError!=='Enter a valid email address.'?{kind:'error',message:contactError}:null}/>
           <div className="connections-record-form-actions ss-record-editor-actions">
             <button type="button" onClick={() => setAddingContact(false)}>Cancel</button>
             <button type="submit" className="connections-record-primary" disabled={!contactName.trim() && !contactEmail.trim()}>Save person</button>

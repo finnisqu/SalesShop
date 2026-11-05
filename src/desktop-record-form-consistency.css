@@ -1,0 +1,119 @@
+/* Shared desktop form language for CRM record pages, Tasks, Activity
+   and bulk editors. Deliberately excludes the pricing/takeoff grid and
+   leaves mobile input sizes, bottom sheets, and keyboard safe-areas alone. */
+@media(min-width:821px){
+ :root[data-sales-theme]{
+  --ss-record-field-height:40px;
+  --ss-record-field-radius:8px;
+  --ss-record-form-gap:10px;
+ }
+ :root[data-sales-theme] :is(
+  .sales-app.view-dashboard .connections-record-edit-form,
+  .sales-app.view-tasks .tasks-editor,
+  .sales-activity-dialog,
+  .connections-bulk-dialog form
+ ){
+  row-gap:var(--ss-record-form-gap);
+ }
+ :root[data-sales-theme] :is(
+  .sales-app.view-dashboard .connections-record-edit-form,
+  .sales-app.view-tasks .tasks-editor,
+  .sales-activity-dialog,
+  .connections-bulk-dialog
+ ) .ss-record-edit-field{
+  display:grid;gap:5px;min-width:0;width:100%;
+ }
+ :root[data-sales-theme] :is(
+  .sales-app.view-dashboard .connections-record-edit-form,
+  .sales-app.view-tasks .tasks-editor,
+  .sales-activity-dialog,
+  .connections-bulk-dialog
+ ) .ss-record-edit-field>.ss-field__label{
+  font:750 11px/1.35 var(--ss-font-body);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] :is(
+  .sales-app.view-dashboard .connections-record-edit-form,
+  .sales-app.view-tasks .tasks-editor,
+  .sales-activity-dialog,
+  .connections-bulk-dialog
+ ) :is(input:not([type="checkbox"]),select,textarea){
+  box-sizing:border-box;min-width:0;
+  min-height:var(--ss-record-field-height);
+  border:1px solid var(--ss-theme-border);
+  border-radius:var(--ss-record-field-radius);
+  color:var(--ss-theme-ink);
+  background:var(--ss-theme-base);
+  font-family:var(--ss-font-body);
+  font-size:12px;line-height:1.4;
+ }
+ :root[data-sales-theme] :is(
+  .sales-app.view-dashboard .connections-record-edit-form,
+  .sales-app.view-tasks .tasks-editor,
+  .sales-activity-dialog,
+  .connections-bulk-dialog
+ ) :is(input,select,textarea)[aria-invalid="true"]{
+  border-color:var(--ss-danger,#a13a37)!important;
+  box-shadow:0 0 0 1px var(--ss-danger,#a13a37);
+ }
+ :root[data-sales-theme] :is(
+  .sales-app.view-dashboard .connections-record-edit-form,
+  .sales-app.view-tasks .tasks-editor,
+  .sales-activity-dialog,
+  .connections-bulk-dialog
+ ) :is(input:not([type="checkbox"]),select,textarea):focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-theme-accent));
+  outline-offset:1px;
+ }
+ :root[data-sales-theme] .ss-record-edit-field>.ss-field__error{
+  font:650 11px/1.4 var(--ss-font-body);
+  color:var(--ss-danger,#a13a37);
+  margin:0;
+ }
+ :root[data-sales-theme] .ss-record-edit-field>.ss-field__help{
+  font:500 10px/1.45 var(--ss-font-body);
+  color:var(--ss-theme-muted);
+  margin:0;
+ }
+ /* Unified feedback is readable, unobtrusive, and has live-region semantics.
+    "Applied" deliberately does not imply the cloud sync promise completed. */
+ :root[data-sales-theme] .ss-record-form-feedback{
+  display:flex;align-items:flex-start;gap:8px;min-width:0;
+  box-sizing:border-box;width:100%;margin:0;padding:9px 11px;
+  border:1px solid var(--ss-theme-border);
+  border-radius:var(--ss-record-field-radius);
+  background:var(--ss-theme-tint);
+  color:var(--ss-theme-ink);
+  font:600 11px/1.45 var(--ss-font-body);
+  overflow-wrap:anywhere;
+ }
+ :root[data-sales-theme] .ss-record-form-feedback>span:first-child{
+  flex:0 0 14px;text-align:center;
+  font-weight:850;font-variant-numeric:tabular-nums;
+ }
+ :root[data-sales-theme] .ss-record-form-feedback--error{
+  border-color:var(--ss-danger,#a13a37);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .ss-record-form-feedback--error>span:first-child{
+  color:var(--ss-danger,#a13a37);
+ }
+ :root[data-sales-theme] .ss-record-form-feedback--saving{
+  color:var(--ss-theme-muted);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace>.tasks-save-feedback{
+  box-sizing:border-box;
+  width:calc(100% - 36px);max-width:var(--ss-workspace-width,1360px);
+  margin:10px auto 0;
+ }
+ /* Do not style record-page error feedback as the old single line of
+    muted helper copy; show it with the same alert treatment as other editors. */
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-edit-form>.ss-record-form-feedback{
+  justify-self:stretch;
+ }
+ :root[data-sales-theme] .connections-bulk-dialog .ss-record-form-feedback{
+  max-width:100%;
+ }
+}

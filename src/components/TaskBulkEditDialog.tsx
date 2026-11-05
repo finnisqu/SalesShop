@@ -1,5 +1,6 @@
 import {useState,type FormEvent} from 'react';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {RecordFormFeedback} from './RecordFormFeedback';
 import {createPortal} from 'react-dom';
 import type {TaskChanges,TaskPriority,TaskStatus,TaskType} from '../store/personalTaskStore';
 import '../connections-bulk-edit.css';
@@ -84,7 +85,8 @@ export function TaskBulkEditDialog({count,onApply,onClose}:{
    </label>}
    {property==='status'&&<p className="connections-bulk-hint">Completing or reopening tasks updates their completion state. This does not delete task history.</p>}
    {notes&&<p role="status" className="connections-bulk-hint">{notes}</p>}
-   {error&&<p role="alert" className="connections-bulk-error">{error}</p>}
+   <RecordFormFeedback notice={error?{kind:'error',message:error}:saving?{kind:'saving',message:'Updating selected tasks…'}:null}
+     className="connections-bulk-error"/>
    <footer><button className="connections-bulk-primary" type="submit" disabled={!valid}>
     {saving?'Updating…':'Update '+count}
    </button><button type="button" onClick={onClose} disabled={saving}>Cancel</button></footer>

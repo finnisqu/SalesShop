@@ -1,5 +1,6 @@
 import {useMemo,useState,type FormEvent} from 'react';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {RecordFormFeedback} from './RecordFormFeedback';
 import {createPortal} from 'react-dom';
 import {DEAL_PIPELINES,PROJECT_STAGES,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
 import {useDealAssigneeDirectory} from '../services/dealAssignees';
@@ -182,7 +183,8 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
       Clear this property on selected records
      </label>
     </>}
-    {error&&<p role="alert" className="connections-bulk-error">{error}</p>}
+   <RecordFormFeedback notice={error?{kind:'error',message:error}:saving?{kind:'saving',message:'Updating selected records…'}:null}
+     className="connections-bulk-error"/>
     <footer>
      <button type="submit" className="connections-bulk-primary" disabled={!canSubmit}>
       {saving?'Updating…':'Update '+count}

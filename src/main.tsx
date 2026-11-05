@@ -143,6 +143,8 @@ import './workbook-table-foundation.css';
 import './shared-desktop-interactions.css';
 // Shared desktop preview/editor identity, close controls and action bars.
 import './desktop-preview-record-consistency.css';
+// Shared validated fields and honest save/pending states in desktop record editors.
+import './desktop-record-form-consistency.css';
 
 recordSalesShopBoot();
 

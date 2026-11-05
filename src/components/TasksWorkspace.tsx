@@ -8,6 +8,7 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
+import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import type {TaskBulkChange} from './TaskBulkEditDialog';
 import '../tasks-table.css';
@@ -90,6 +91,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [showReminder,setShowReminder]=useState(Boolean(recovered?.reminderAt??draft.reminderAt));
   const [queue,setQueue]=useState(recovered?.queue??draft.queue??'');
   const [notes,setNotes]=useState(recovered?.notes??draft.notes??'');
+  const [formError,setFormError]=useState('');
   const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>recovered?.selectedLinks??normalizedTaskAssociations(initial));
   // Every form change is durable locally before submission. No unsaved task is sent to cloud.
   useEffect(()=>{
@@ -122,20 +124,28 @@ export function TaskEditor({initial,onCancel,onSave}:{
   ];
   const [sourceText]=useState(initial.sourceText);
   const [sourceObjectId]=useState(initial.sourceObjectId);
-  const submit=(event:FormEvent)=>{event.preventDefault();if(!title.trim())return;
-    onSave({title:title.trim(),type,priority,status,startDate:startDate||undefined,dueDate:dueDate||undefined,
-      dueTime:dueDate?dueTime||undefined:undefined,reminderAt:normalizeLocalReminder(reminderAt),
-      notes,queue,associations:selectedLinks,
-      linked:selectedLinks[0]?{type:selectedLinks[0].type,id:selectedLinks[0].id}:undefined,
-      sourceLabel:selectedLinks[0]?.label??sourceLabel,sourceText,sourceObjectId});
-    clearSavedDraft(scopeKey);clearSavedDraft(activeKey);
+  const submit=(event:FormEvent)=>{
+    event.preventDefault();
+    if(!title.trim()){setFormError('Enter a task title.');return;}
+    setFormError('');
+    try{
+      onSave({title:title.trim(),type,priority,status,startDate:startDate||undefined,dueDate:dueDate||undefined,
+        dueTime:dueDate?dueTime||undefined:undefined,reminderAt:normalizeLocalReminder(reminderAt),
+        notes,queue,associations:selectedLinks,
+        linked:selectedLinks[0]?{type:selectedLinks[0].type,id:selectedLinks[0].id}:undefined,
+        sourceLabel:selectedLinks[0]?.label??sourceLabel,sourceText,sourceObjectId});
+      clearSavedDraft(scopeKey);clearSavedDraft(activeKey);
+    }catch(reason){setFormError(reason instanceof Error?reason.message:'Unable to apply task changes. Draft preserved.');}
   };
   return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)close();}}>
     <form ref={editorRef} className="tasks-editor" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
-      onSubmit={submit}>
+      noValidate onChange={()=>setFormError('')} onSubmit={submit}>
       <header><strong>{'id'in initial?'Edit task':'New task'}</strong>
         <PreviewPanelClose label="Close task editor" onClose={close} initialFocus={false}/></header>
-      <label>Task title<input autoFocus data-dialog-initial-focus required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/></label>
+      <RecordEditField label="Task title" required error={formError==='Enter a task title.'?formError:undefined}>
+        {control=><input {...control} autoFocus data-dialog-initial-focus maxLength={240}
+          value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/>}
+      </RecordEditField>
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
       <TaskAssociationsField options={associations.map(item=>({...item,
         linked:{...item.linked,label:item.label}}))} value={selectedLinks} onChange={setSelectedLinks}/>
@@ -183,6 +193,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
        value={notes} onChange={e=>setNotes(e.target.value)}
        placeholder="Context or next steps…"/></label>
       <p className="tasks-editor-due-hint">Unsaved changes are kept on this device if you close or reload SalesShop.</p>
+      <RecordFormFeedback notice={formError&&formError!=='Enter a task title.'?{kind:'error',message:formError}:null}/>
       <PreviewPanelActions className="ss-record-editor-actions"><button type="button" onClick={discard}>Discard draft</button>
        <button type="button" onClick={close}>Close</button>
        <button type="submit" className="tasks-primary">Save task</button></PreviewPanelActions>
@@ -206,11 +217,12 @@ export function TasksWorkspace(){
   const [queueFilter,setQueueFilter]=useState('all');
   const nav=useNavigationStore();
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
+  const [taskNotice,setTaskNotice]=useState<RecordFormNotice|null>(null);
   const [viewingId,setViewingId]=useState<string|null>(null);
   useEffect(()=>{
    if(previousScope.current===scope)return;
    previousScope.current=scope;
-   setEditing(null);setViewingId(null);
+   setEditing(null);setViewingId(null);setTaskNotice(null);
   },[scope]);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
@@ -317,10 +329,14 @@ export function TasksWorkspace(){
     update(id,{dueDate:date,dueTime:date?task.dueTime:undefined});
   };
   const save=(changes:TaskChanges&{title:string})=>{
-    if(!scope)return;
+    if(!scope)throw new Error('Task workspace is unavailable. Keep this draft and try again.');
     if(editing&&'id'in editing)update(editing.id,changes);
-    else create(changes.title,changes);
+    else{
+      const created=create(changes.title,changes);
+      if(!created)throw new Error('Unable to add this task. Your draft is preserved.');
+    }
     setEditing(null);
+    setTaskNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
   };
   if(rolePreview)return <main className="tasks-workspace"><h1>Tasks</h1><p>Personal tasks are not shown in role preview.</p></main>;
   return <main className="tasks-workspace" aria-label="SalesShop tasks">
@@ -341,6 +357,7 @@ export function TasksWorkspace(){
       primary={<button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})}
         disabled={!scope}>+ Task</button>}
     />
+    <RecordFormFeedback notice={taskNotice} className="tasks-save-feedback"/>
     <section className="tasks-directory-controls" aria-label="Task directory controls">
       <p className="tasks-directory-caption">{visible.length} {visible.length===1?'task':'tasks'} · {counts.active} open · {counts.today} due today · {counts.overdue} overdue</p>
       <div className="tasks-toolbar-slot" ref={setTaskToolbarHost}/>

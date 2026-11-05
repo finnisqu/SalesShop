@@ -7,6 +7,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
+import {RecordFormFeedback} from './RecordFormFeedback';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
@@ -264,7 +265,8 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
       </label>}
      </section>
      <p className="sales-activity-note">Unsaved details are recovered on this device if SalesShop reloads. Saving logs the interaction to CRM history; it doesn't send a message.</p>
-     {error&&<p role="alert" className="sales-activity-error">{error}</p>}
+     <RecordFormFeedback notice={error?{kind:'error',message:error}:saving?{kind:'saving',message:'Logging activity…'}:null}
+       className="sales-activity-error"/>
     </div>
     <PreviewPanelActions className="ss-record-editor-actions">
      <button type="button" onClick={discard} disabled={saving} title="Erase this unsaved activity draft">Discard draft</button>

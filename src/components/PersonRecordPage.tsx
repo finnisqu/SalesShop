@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -28,6 +29,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const person = people.find((candidate) => candidate.id === contactId);
   const [editing, setEditing] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [editError,setEditError]=useState('');
+  const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const [draft, setDraft] = useState({
     name: person?.name ?? '', email: person?.email ?? '', phone: person?.phone ?? '',
     title: person?.title ?? '', companyId: person?.companyId ?? '',
@@ -40,7 +43,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
 
   useEffect(() => {
     setEditing(false);
-    setHistoryOpen(false);
+    setHistoryOpen(false);setEditError('');setNotice(null);
   }, [contactId]);
   useEffect(() => {
     if (!editing && person) setDraft({
@@ -58,27 +61,39 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
 
   const save = (event: FormEvent) => {
     event.preventDefault();
-    const name = draft.name.trim() || draft.email.trim();
-    if (!name) return;
-    updateContact(person.id, {
-      name, email: draft.email.trim(), phone: draft.phone.trim(),
-      title: draft.title.trim(), companyId: draft.companyId || undefined,
-    });
-    setEditing(false);
+    const name=draft.name.trim()||draft.email.trim();
+    if(!name){setEditError('Enter a name or email.');return;}
+    const emailError=recordEmailError(draft.email);
+    if(emailError){setEditError(emailError);return;}
+    setEditError('');
+    try{
+      updateContact(person.id, {
+        name,email:draft.email.trim(),phone:draft.phone.trim(),
+        title:draft.title.trim(),companyId:draft.companyId||undefined,
+      });
+      setEditing(false);
+      setNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
+    }catch(reason){setEditError(reason instanceof Error?reason.message:'Unable to apply person changes.');}
   };
   const displayName = person.name || person.email || 'Unnamed contact';
 
   return <RecordPageLayout entityType="person" title={displayName} onBack={onBack}
     subtitle={[person.title, related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{related.company ? 'Associated company' : 'Unassigned'}</span>}
-    actions={<button type="button" onClick={() => setEditing((value) => !value)}>
+    actions={<button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(value=>!value);}}>
       {editing ? 'Cancel editing' : 'Edit person'}
     </button>}
     left={<>
       <RecordCard title="About this person">
-        {editing ? <form className="connections-record-edit-form" onSubmit={save}>
-          <label>Name<input autoFocus value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
-          <label>Email<input type="email" value={draft.email} onChange={(event) => setDraft({ ...draft, email: event.target.value })} /></label>
+        <RecordFormFeedback notice={notice}/>
+        {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={save}>
+          <RecordEditField label="Name" error={editError==='Enter a name or email.'?editError:undefined}
+            help="A name or email is required for this contact.">
+            {control=><input {...control} autoFocus value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
+          </RecordEditField>
+          <RecordEditField label="Email" error={editError==='Enter a valid email address.'?editError:undefined}>
+            {control=><input {...control} type="email" value={draft.email} onChange={event=>setDraft({...draft,email:event.target.value})}/>}
+          </RecordEditField>
           <label>Phone<input type="tel" value={draft.phone} onChange={(event) => setDraft({ ...draft, phone: event.target.value })} /></label>
           <label>Job title<input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
           <label>Company<select value={draft.companyId} onChange={(event) => setDraft({ ...draft, companyId: event.target.value })}>
@@ -86,9 +101,10 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((item) =>
               <option key={item.id} value={item.id}>{item.name}</option>)}
           </select></label>
+          <RecordFormFeedback notice={editError&&!['Enter a name or email.','Enter a valid email address.'].includes(editError)?{kind:'error',message:editError}:null}/>
           <div className="connections-record-form-actions ss-record-editor-actions">
             <button type="button" onClick={() => setEditing(false)}>Cancel</button>
-            <button type="submit" className="connections-record-primary" disabled={!draft.name.trim() && !draft.email.trim()}>Save changes</button>
+            <button type="submit" className="connections-record-primary">Save changes</button>
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Name">{displayName}</RecordProperty>
