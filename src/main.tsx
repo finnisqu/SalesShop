@@ -159,6 +159,8 @@ import './workspace-overlay-parity.css';
 import './workspace-popover-parity.css';
 // Common workspace typography and consistent SVG control icon sizing.
 import './workspace-type-icon-parity.css';
+// Contextual page help, anchored beside each page title.
+import './workspace-help.css';
 
 recordSalesShopBoot();
 

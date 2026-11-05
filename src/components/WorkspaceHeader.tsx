@@ -4,11 +4,11 @@ import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import '../workspace-header-standard.css';
 
 /** Shared top-level workspace chrome. Stable slots across all six workspaces. */
-export function WorkspaceHeader({title,tabs,more,search,primary,className=''}:{
- title:string;tabs?:ReactNode;more?:ReactNode;search?:ReactNode;primary?:ReactNode;className?:string;
+export function WorkspaceHeader({title,help,tabs,more,search,primary,className=''}:{
+ title:string;help?:ReactNode;tabs?:ReactNode;more?:ReactNode;search?:ReactNode;primary?:ReactNode;className?:string;
 }){
  return <header className={'ss-workspace-header '+className}>
-  <div className="ss-workspace-header__intro"><h1>{title}</h1></div>
+  <div className="ss-workspace-header__intro">{help ? <div className="ss-workspace-title-row"><h1>{title}</h1>{help}</div> : <h1>{title}</h1>}</div>
   <div className="ss-workspace-header__tabs">{tabs}</div>
   <div className="ss-workspace-header__tools">
    <div className="ss-workspace-header__more">{more}</div>
