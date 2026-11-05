@@ -222,12 +222,13 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
 }
 
 export function startCloudSync(orgId: string, userId: string, onError?: (message: string) => void,
-  options: { readOnlyShared?: boolean; onRecovered?: () => void } = {}) {
+  options: { readOnlyShared?: boolean; onRecovered?: () => void; isActive?: () => boolean } = {}) {
   stopCloudSync();
   if (!supabase || typeof window === 'undefined') return;
 
   const scope={organizationId:orgId,userId};
   let disposed=false;
+  const active=()=>!disposed&&options.isActive?.()!==false;
   const retryableFailures=new Set<CloudDocumentKey>();
   // Serialize writes to each document so a slower older request cannot
   // finish after a newer record edit and restore stale cloud values.
@@ -255,7 +256,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
       // A failed earlier write must not block a newer one, but successful
       // writes must never overtake one another for the same document.
       const operation=(inFlight.get(key)??Promise.resolve()).catch(()=>{}).then(()=>{
-        if(disposed)return;
+        if(!active())return;
         return key===PRIVATE_DOCUMENT_KEY
           ?upsertPrivateDocument(userId,document)
           :key===CRM_DOCUMENT_KEY
@@ -266,7 +267,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
       });
       inFlight.set(key,operation);
       void operation.then(()=>{
-        if(disposed)return;
+        if(!active())return;
         if(key===CRM_DOCUMENT_KEY&&token)clearPendingCrmSync(scope,token);
         if(key===QUOTES_DOCUMENT_KEY&&token)clearPendingQuoteSync(scope,token);
         // A later edit superseded this response: only the latest generation
@@ -281,7 +282,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
           !readPendingCrmSync(scope)&&!readPendingQuoteSync(scope))
           options.onRecovered?.();
       }).catch((error:unknown)=>{
-        if(disposed||scheduledRevision.get(key)!==revision)return;
+        if(!active()||scheduledRevision.get(key)!==revision)return;
         retryableFailures.add(key);
         const message=error instanceof Error?error.message:'Cloud sync failed.';
         if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('error',message);
@@ -292,7 +293,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   };
   const handler=(event:Event)=>{
     const detail=(event as CustomEvent<CloudDocumentSavedDetail>).detail;
-    if(!detail?.key)return;
+    if(!detail?.key||!active())return;
     // Viewers may sync only their own notebook, never shared company quotes.
     if(options.readOnlyShared&&detail.key!==PRIVATE_DOCUMENT_KEY)return;
     schedule(detail.key,detail.document);
@@ -301,20 +302,31 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   // Retry only previously failed saves with still-present, scoped recovery
   // markers. Do not continually resubmit every record on tab focus.
   const retryFailed=()=>{
-    if(disposed||options.readOnlyShared)return;
+    if(!active())return;
     if(Date.now()-lastRecoveryRetry<15000)return;
     let attempted=false;
-    if(retryableFailures.has(CRM_DOCUMENT_KEY)&&readPendingCrmSync(scope)){
+    if(!options.readOnlyShared&&retryableFailures.has(CRM_DOCUMENT_KEY)&&readPendingCrmSync(scope)){
       const doc=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
       if(doc?.schemaVersion===3){
         schedule(CRM_DOCUMENT_KEY,doc);attempted=true;
       }
     }
-    if(retryableFailures.has(QUOTES_DOCUMENT_KEY)&&readPendingQuoteSync(scope)){
+    if(!options.readOnlyShared&&retryableFailures.has(QUOTES_DOCUMENT_KEY)&&readPendingQuoteSync(scope)){
       const doc=readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument|null;
       if(doc?.schemaVersion===2){
         schedule(QUOTES_DOCUMENT_KEY,doc);attempted=true;
       }
+    }
+    // Unlike shared records, a private Notebook may also be saved by viewers.
+    // These two classes retry only within this still-active session; they do
+    // not replay a stale local cache on a different login or browser reload.
+    if(retryableFailures.has(PRIVATE_DOCUMENT_KEY)){
+      const doc=readLocalDocument(PRIVATE_DOCUMENT_KEY);
+      if(doc!==null){schedule(PRIVATE_DOCUMENT_KEY,doc);attempted=true;}
+    }
+    if(!options.readOnlyShared&&retryableFailures.has(SIGNATURES_DOCUMENT_KEY)){
+      const doc=readLocalDocument(SIGNATURES_DOCUMENT_KEY) as SignatureDocument|null;
+      if(doc?.schemaVersion===1){schedule(SIGNATURES_DOCUMENT_KEY,doc);attempted=true;}
     }
     if(attempted)lastRecoveryRetry=Date.now();
   };
