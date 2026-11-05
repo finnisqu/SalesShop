@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import type {TaskDuePreset} from '../services/taskSchedule';
 import type {TaskAssociation} from '../store/personalTaskStore';
@@ -19,7 +19,9 @@ interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tas
  onTaskToggleComplete?:(id:string,finished:boolean)=>void;
  onDocumentArchive?:(id:string)=>void;onDocumentRestore?:(id:string)=>void;
  /** Optional host for rendering the existing selection/column controls in the page's single toolbar row. */
- toolbarTarget?:HTMLElement|null;}
+ toolbarTarget?:HTMLElement|null;
+ /** Filters/overview controls slotted before Columns, sharing the same toolbar and selection state. */
+ toolbarControls?:ReactNode;}
 const PAGE_SIZE=25;
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
@@ -28,7 +30,7 @@ function read(key:string):string[]{
  catch{return[];}
 }
 export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,
- onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget}:Props){
+ onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
@@ -110,6 +112,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
        }}>Complete selected ({chosen.length})</button>}
        <button type="button" onClick={()=>setSelected([])}>Clear</button>
      </>}
+     {toolbarControls&&<div className="connections-toolbar-controls">{toolbarControls}</div>}
      <details className="connections-columns-menu" ref={columnsMenuRef}><summary>⚙ Columns</summary>
        <div className="connections-columns-popover"><strong>Columns</strong>
          <small>Choose and reorder. Saved on this device.</small>

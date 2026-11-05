@@ -5,49 +5,56 @@ const tasks=read('components/TasksWorkspace.tsx');
 const quotes=read('components/QuotesMobileBeta.tsx');
 const table=read('components/ConnectionsTable.tsx');
 const css=read('workspace-table-control-strip.css');
-describe('Tasks and Quotes compact workbook control strip',()=>{
- it('keeps task counts, queue, date help, record controls and columns on one desktop row',()=>{
-  const start=tasks.indexOf('className="tasks-compact-controls"');
+describe('Connections-style Tasks and Quotes directory rows',()=>{
+ it('puts the task caption above the same full-width record toolbar as Connections',()=>{
+  const start=tasks.indexOf('className="tasks-directory-controls"');
   const end=tasks.indexOf("!scope&&<p",start);
-  const strip=tasks.slice(start,end);
+  const intro=tasks.slice(start,end);
   expect(start).toBeGreaterThan(0);
-  for(const name of ['tasks-summary','tasks-tools','tasks-filter-help','tasks-toolbar-slot']){
-   expect(strip).toContain(name);
-  }
-  expect(strip).toContain('ref={setTaskToolbarHost}');
-  expect(strip).toContain('aria-label="About task dates"');
+  expect(intro).toContain('tasks-directory-caption');
+  expect(intro).toContain('tasks-toolbar-slot');
+  expect(intro).toContain('ref={setTaskToolbarHost}');
   expect(tasks).toContain('toolbarTarget={taskToolbarHost}');
-  expect(css).toContain('.tasks-compact-controls>.tasks-summary');
-  expect(css).toContain('flex-wrap:nowrap');
+  expect(tasks).toContain('toolbarControls={<>');
+  expect(tasks).toContain('tasks-overview-menu');
+  expect(tasks).toContain('className="tasks-queue-filter"');
+  expect(tasks).toContain('aria-label="About task dates"');
+  expect(css).toContain('.tasks-directory-controls .tasks-directory-caption');
   expect(css).toContain('.tasks-toolbar-slot>.connections-grid-toolbar');
+  expect(css).toContain('min-height:62px');
  });
- it('keeps Quotes library status, heading and table tools on one row',()=>{
-  const start=quotes.indexOf('className="qmb-library-compact-controls"');
+ it('puts the document caption above the same full-width record toolbar',()=>{
+  const start=quotes.indexOf('className="qmb-library-directory-controls"');
   const end=quotes.indexOf('className="qmb-documents-table"',start);
-  const strip=quotes.slice(start,end);
-  for(const name of ['qmb-library-tools','qmb-library-results-head','qmb-library-toolbar-slot']){
-   expect(strip).toContain(name);
-  }
-  expect(strip).toContain('ref={setDocumentToolbarHost}');
+  const intro=quotes.slice(start,end);
+  expect(intro).toContain('qmb-library-directory-caption');
+  expect(intro).toContain('qmb-library-results-head');
+  expect(intro).toContain('qmb-library-toolbar-slot');
+  expect(intro).toContain('ref={setDocumentToolbarHost}');
   expect(quotes).toContain('toolbarTarget={documentToolbarHost}');
-  expect(css).toContain('.qmb-library-compact-controls>.qmb-library-tools');
+  expect(quotes).toContain('toolbarControls={<div className="qmb-library-tools">');
   expect(css).toContain('.qmb-library-toolbar-slot>.connections-grid-toolbar');
+  expect(css).toContain('.qmb-library-directory-caption');
   expect(quotes).toContain('onDocumentArchive=');
   expect(quotes).toContain('onDocumentRestore=');
  });
- it('ports the existing controls instead of duplicating selection state',()=>{
+ it('slots filters without duplicating selection or column management state',()=>{
   expect(table).toContain('toolbarTarget?:HTMLElement|null;');
+  expect(table).toContain('toolbarControls?:ReactNode;');
   expect(table).toContain('createPortal(toolbar,toolbarTarget)');
   expect(table).toContain('toolbarTarget===undefined?toolbar:toolbarTarget?');
+  expect(table).toContain('connections-toolbar-controls');
   expect((table.match(/className="connections-grid-toolbar"/g)||[])).toHaveLength(1);
   expect(table).toContain('onBulkTaskProperty');
   expect(table).toContain('connections-columns-menu');
   expect(table).toContain('onBulkTask&&');
  });
- it('keeps narrow/mobile workspaces usable and leaves other tables alone',()=>{
+ it('preserves mobile task cards, counters, and document filters',()=>{
   expect(css).toContain('@media(max-width:820px)');
-  expect(css).toContain('.tasks-compact-controls>.tasks-summary');
-  expect(css).toContain('.qmb-library-compact-controls');
+  expect(tasks).toContain('tasks-mobile-controls');
+  expect(tasks).toContain('tasks-summary');
+  expect(quotes).toContain('qmb-library-mobile-filters');
+  expect(css).toContain('.qmb-library-mobile-filters');
   expect(read('main.tsx')).toContain("import './workspace-table-control-strip.css'");
   expect(read('components/Connections.tsx')).not.toContain('toolbarTarget=');
  });
