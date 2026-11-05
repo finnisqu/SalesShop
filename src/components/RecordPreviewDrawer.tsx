@@ -16,6 +16,7 @@ import {useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssign
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {dealPipelineLabel} from '../types/crm';
 import type {TaskAssociation} from '../store/personalTaskStore';
+import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -23,7 +24,7 @@ export type PreviewRecord = {kind:'company'|'person'|'deal'|'quote';id:string};
 type Props={record:PreviewRecord;onClose:()=>void;onSelect?:(record:PreviewRecord)=>void;
   onGoToQuotePage?:(id:string)=>void;onEditBoard?:(record:PreviewRecord)=>void};
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
-const shortDate=(date?:string)=>date?new Date(date).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
+const shortDate=(date?:string)=>date?new Date(date.includes('T')?date:date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
 
 /** A consistent, nondestructive focus preview across Board and Connections.
  * Full record pages and document editors stay separate from preview clicks. */
@@ -32,6 +33,8 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  // Follow related records in the same preview; the phone Back control
  // returns through the prior previews without resetting the directory.
  const [previewTrail,setPreviewTrail]=useState<PreviewRecord[]>([]);
+ const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
+ useEffect(()=>{setExternalQuoteOpen(false);},[record.kind,record.id]);
  const previousRecordRef=useRef(record);
  const returningRef=useRef(false);
  useEffect(()=>{
@@ -49,7 +52,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
   onSelect(previous);
  };
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
- const deals=useCrmStore(s=>s.projects),allQuotes=useQuoteStore(s=>s.quotes);
+ const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities),allQuotes=useQuoteStore(s=>s.quotes);
  const {members:assignees}=useDealAssigneeDirectory();
  const authMode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),
   teamRole=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
@@ -61,6 +64,8 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const person=record.kind==='person'?people.find(x=>x.id===record.id):undefined;
  const deal=record.kind==='deal'?deals.find(x=>x.id===record.id):undefined;
  const quote=record.kind==='quote'?quotes.find(x=>x.id===record.id):undefined;
+ const externalQuotes=deal?activities.filter(a=>a.projectId===deal.id&&a.metadata?.externalQuoteSent)
+   .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)):[];
  const linkedCompany=person?companies.find(x=>x.id===person.companyId)
     :deal?companies.find(x=>x.id===deal.companyId):quote?companies.find(x=>x.id===quote.companyId):undefined;
  const relatedPeople=company?people.filter(p=>p.companyId===company.id):[];
@@ -155,9 +160,18 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
             <dt>Stage</dt><dd>{deal.stage}</dd><dt>Value</dt><dd>{deal.amount===undefined?'—':money.format(deal.amount)}</dd>
            <dt>Assigned salesperson</dt><dd>{dealAssigneeLabel(deal.assignedUserId,assignees)}</dd>
            <dt>Due date</dt><dd>{shortDate(deal.dueDate)}</dd><dt>Next action</dt><dd>{deal.nextAction||'—'}</dd></dl></section>
-         <section><h3>Quotes <span>{relatedQuotes.length}</span></h3>
+         <section><h3>Quotes <span>{relatedQuotes.length} SalesShop</span></h3>
            {relatedQuotes.slice(0,12).map(q=>related('quote',q.id,q.title||displayQuoteNumber(q),q.status))}
-           {!relatedQuotes.length&&<p className="record-preview-empty">No linked quotes.</p>}
+           {!relatedQuotes.length&&<p className="record-preview-empty">No SalesShop quotes linked.</p>}
+           {externalQuotes.length>0&&<div className="external-quote-history">
+             <strong>Outside SalesShop</strong>
+             {externalQuotes.slice(0,3).map(a=><div className="external-quote-history-entry" key={a.id}>
+               <span><b>{a.metadata?.amount===undefined?'External bid':money.format(a.metadata.amount)}</b>
+                 <small>{a.metadata?.externalQuoteFormat||'External quote'} · Sent {shortDate(a.metadata?.bidSentDate||a.occurredAt)}</small></span>
+             </div>)}
+           </div>}
+           {externalQuoteOpen&&<ExternalQuoteSentForm key={deal.id} deal={deal}
+             onCancel={()=>setExternalQuoteOpen(false)} onRecorded={()=>setExternalQuoteOpen(false)}/>}
          </section>
        </>}
        {quote&&<>
@@ -193,6 +207,10 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {!perspective&&<button type="button" onClick={()=>{
         onClose();requestTaskModal({mode:'create',associations:contextualLinks});
        }}>New task</button>}
+       {deal&&canLog&&!['Closed Won','Completed','Closed Lost','Discarded'].includes(deal.stage)&&
+         <button type="button" onClick={()=>setExternalQuoteOpen(value=>!value)}>
+           {externalQuoteOpen?'Cancel external quote':'Record external quote sent'}
+         </button>}
        {canLog&&<button type="button" onClick={()=>{
         onClose();openActivityComposer({associations:contextualLinks});
        }}>Log activity</button>}
