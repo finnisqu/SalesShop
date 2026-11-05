@@ -207,6 +207,8 @@ async function performSessionApplication(session: Session | null) {
     await hydrateCloudDocuments(organizationId, session.user.id, {
       allowCompanySeed: maySeedCompanyFromLocal(membership.role as TeamRole, Boolean(acceptedOrganizationId)),
       allowNotebookSeed: !acceptedOrganizationId,
+      // Viewers can hydrate team CRM, but never replay pending local edits.
+      allowCrmRecovery: membership.role !== 'viewer',
     });
     startCloudSync(organizationId, session.user.id, (error) => {
       useAuthStore.setState({ error: `Cloud sync: ${error}` });

@@ -14,6 +14,7 @@ import type { SignatureDocument } from '../types/signature';
 import { loadNormalizedCrm, syncNormalizedCrm } from './normalizedCrmSync';
 import { loadNormalizedQuotes, syncNormalizedQuotes } from './normalizedQuoteSync';
 import {markPendingQuoteSync,clearPendingQuoteSync,readPendingQuoteSync,mergePendingQuoteDrafts} from './quoteCloudRecovery';
+import {markPendingCrmSync,clearPendingCrmSync,readPendingCrmSync,mergePendingCrmChanges} from './crmCloudRecovery';
 import {useQuoteCloudStatusStore} from '../store/quoteCloudStatusStore';
 import { loadNormalizedSignatures, syncNormalizedSignatures } from './normalizedSignatureSync';
 
@@ -120,6 +121,7 @@ export async function ensureCurrentWorkspace() {
 export async function hydrateCloudDocuments(orgId: string, userId: string, options: {
   allowCompanySeed?: boolean;
   allowNotebookSeed?: boolean;
+  allowCrmRecovery?: boolean;
 } = {}) {
   if (!supabase) return;
 
@@ -132,6 +134,7 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   // established by authStore. Keep the existing CRM -> Quotes -> Signatures ->
   // Notebook write and seed sequence, including pending-quote recovery.
   // The old org_documents.crm row is rollback-only.
+  const localCrm = readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument | null;
   const localQuotes = readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument | null;
   const preferredActiveQuoteId = localQuotes?.schemaVersion === 2 ? localQuotes.activeQuoteId : null;
   const [normalizedCrm, normalizedQuotes, normalizedSignatures, notebookResult] = await Promise.all([
@@ -142,10 +145,16 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
       .select('document').eq('owner_id',userId)
       .eq('document_key',PRIVATE_DOCUMENT_KEY).maybeSingle()),
   ]);
-  if (normalizedCrm) {
-    writeLocalDocument(CRM_DOCUMENT_KEY, normalizedCrm, false);
+  // The existing local cache is not authoritative: recover only rows recorded
+  // by a same-user/same-org write-ahead marker, and only if newer than cloud.
+  // Viewers and identity switches must never replay writable CRM data.
+  const ownCache=previousScope?.userId===userId&&previousScope.organizationId===orgId;
+  const pendingCrm=ownCache&&options.allowCrmRecovery!==false
+    ?readPendingCrmSync({organizationId:orgId,userId}):null;
+  const recoveredCrm=mergePendingCrmChanges(normalizedCrm,localCrm,pendingCrm);
+  if (recoveredCrm) {
+    writeLocalDocument(CRM_DOCUMENT_KEY, recoveredCrm, false);
   } else if (canSeedOrgFromLocal) {
-    const localCrm = readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument | null;
     if (localCrm?.schemaVersion === 3) {
       await syncNormalizedCrm(orgId, localCrm);
     } else {
@@ -218,6 +227,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   if (!supabase || typeof window === 'undefined') return;
 
   const scope={organizationId:orgId,userId};
+  let baselineCrm=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
   const setQuoteSaveStatus=useQuoteCloudStatusStore.getState().setStatus;
   setQuoteSaveStatus(readPendingQuoteSync(scope)?'pending':'saved');
   const schedule=(key:CloudDocumentKey,document:unknown)=>{
@@ -225,7 +235,8 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     if(previous)window.clearTimeout(previous);
     // Local quote data already exists; persist an identity-scoped marker
     // BEFORE the debounce, so a refresh cannot silently erase a draft.
-    const token=key===QUOTES_DOCUMENT_KEY?markPendingQuoteSync(scope,document):null;
+    const token=key===QUOTES_DOCUMENT_KEY?markPendingQuoteSync(scope,document)
+      :key===CRM_DOCUMENT_KEY?markPendingCrmSync(scope,document,baselineCrm):null;
     if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('pending');
     const delay=key==='notebook'?1200:500;
     const timer=window.setTimeout(()=>{
@@ -239,7 +250,12 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
             ?syncNormalizedQuotes(orgId,document as QuoteDocument)
             :syncNormalizedSignatures(orgId,document as SignatureDocument);
       void operation.then(()=>{
-        if(token){
+        if(key===CRM_DOCUMENT_KEY){
+          if(token)clearPendingCrmSync(scope,token);
+          // Never clear a newer pending CRM edit after an older write finishes.
+          if(!readPendingCrmSync(scope))baselineCrm=document as CrmDocument;
+        }
+        if(key===QUOTES_DOCUMENT_KEY&&token){
           clearPendingQuoteSync(scope,token);
           // Do not mark an earlier save as current when a newer local edit
           // is still pending in the same browser.
@@ -268,6 +284,10 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   if(!options.readOnlyShared&&readPendingQuoteSync(scope)){
     const restored=readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument|null;
     if(restored?.schemaVersion===2)schedule(QUOTES_DOCUMENT_KEY,restored);
+  }
+  if(!options.readOnlyShared&&readPendingCrmSync(scope)){
+    const restored=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
+    if(restored?.schemaVersion===3)schedule(CRM_DOCUMENT_KEY,restored);
   }
 }
 
