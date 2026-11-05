@@ -357,6 +357,7 @@ export function TasksWorkspace(){
       primary={<button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})}
         disabled={!scope}>+ Task</button>}
     />
+    <div className="tasks-directory-content">
     <RecordFormFeedback notice={taskNotice} className="tasks-save-feedback"/>
     <section className="tasks-directory-controls" aria-label="Task directory controls">
       <p className="tasks-directory-caption">{visible.length} {visible.length===1?'task':'tasks'} · {counts.active} open · {counts.today} due today · {counts.overdue} overdue</p>
@@ -477,6 +478,7 @@ export function TasksWorkspace(){
         :'Personal tasks saved on this device'}
       {' · '}Reminder dates are tracked in SalesShop. Background emails and push alerts are not enabled.
     </footer>
+    </div>
     {viewing&&<div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setViewingId(null);}}>
       <section ref={previewRef} className="tasks-preview-card" role="dialog" aria-modal="true" aria-label={'Task '+viewing.title}>
        <header><PreviewPanelHeading eyebrow="TASK · QUICK VIEW" title={viewing.title}/>

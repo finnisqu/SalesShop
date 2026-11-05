@@ -1,10 +1,8 @@
-/* Reserve the desktop vertical scrollbar lane on spreadsheet-like workspaces.
+/* Reserve the desktop vertical scrollbar lane on inner workbook tables.
    This prevents the header, filters and table columns from shifting when the
    content changes between short and long views. Never reserve mobile space. */
 @media(min-width:761px){
-  :root[data-sales-theme] .sales-app.view-dashboard .connections-workspace,
   :root[data-sales-theme] .sales-app.view-dashboard .connections-table-scroll,
-  :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace,
   :root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table-scroll,
   :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host>.rates-workspace.is-catalog-embedded,
   :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host>.sinks-workspace.is-catalog-embedded{

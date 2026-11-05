@@ -3,7 +3,7 @@
    then the table. Task/quote filters are injected into the existing shared
    ConnectionsTable toolbar, preserving selection state and Columns popover. */
 @media(min-width:821px){
- :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace>.tasks-directory-controls{
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace>.tasks-directory-content>.tasks-directory-controls{
   display:grid;gap:10px;align-content:start;
   box-sizing:border-box;width:calc(100% - 36px);max-width:var(--ss-workspace-width,1360px);
   min-width:0;margin:0 auto 8px;padding:14px 0 0;

@@ -1,24 +1,95 @@
-/* Desktop workspace scroll lanes.
-   The scrollport spans the page; the content inside it owns the common measure.
-   Keeping the scrollbar outside that measure prevents inset scrollbars and
-   alternating widths between the six SalesShop work tabs. */
-@media (min-width:821px) {
-  /* Tasks and Connections scroll their header and content together. Reserve
-     the lane even for short lists; paint its track to match the header's
-     full-width base above the canvas (rather than leaving a white notch). */
-  :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace,
-  :root[data-sales-theme] .sales-app.view-dashboard .connections-workspace {
+/* Shared work-tab scroll shell.
+   Page headers are full-width, fixed siblings. Only body content scrolls,
+   just as in Catalog and the Quotes library; no header owns a scroll gutter. */
+:root[data-sales-theme] .sales-app.view-dashboard
+  .connections-workspace.connections-directory-layout,
+:root[data-sales-theme] .sales-app.view-tasks
+  .tasks-workspace:has(> .tasks-header.ss-workspace-header) {
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  width:100%;
+  max-width:none;
+  min-width:0;
+  min-height:0;
+  height:100%;
+  margin:0;
+  padding:0;
+  gap:0;
+  overflow:hidden;
+  scrollbar-gutter:auto;
+  background:var(--ss-theme-canvas);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content,
+:root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content {
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  background:var(--ss-theme-canvas);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content {
+  gap:12px;
+  padding:14px 0 32px;
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content {
+  gap:8px;
+  padding:0 0 32px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content > :is(
+  .connections-history-heading,.connections-directory-toolbar,
+  .connections-directory,.connections-footer,.connections-notice
+) {
+  box-sizing:border-box;
+  width:100%;
+  max-width:calc(var(--ss-workspace-width,1360px) + 2 * var(--ss-page-inset,24px));
+  min-width:0;
+  margin-inline:auto;
+  padding-inline:var(--ss-page-inset,24px);
+}
+:root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content > :is(
+  .tasks-save-feedback,.tasks-summary,.tasks-tools,.tasks-list,
+  .tasks-table-container,.tasks-footer,.tasks-filter-help,.tasks-state
+) {
+  box-sizing:border-box;
+  width:calc(100% - 36px);
+  max-width:var(--ss-workspace-width,1360px);
+  min-width:0;
+  margin-inline:auto;
+}
+@media (min-width:761px) {
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content,
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content {
     scrollbar-gutter:stable;
   }
-  :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace::-webkit-scrollbar-track,
-  :root[data-sales-theme] .sales-app.view-dashboard .connections-workspace::-webkit-scrollbar-track {
-    background:linear-gradient(to bottom,
-      var(--ss-theme-base) 0,
-      var(--ss-theme-base) var(--ss-workspace-header-height,82px),
-      var(--ss-theme-canvas) var(--ss-workspace-header-height,82px),
-      var(--ss-theme-canvas) 100%);
+}
+/* Preserve the compact mobile margins without bringing back a scrolling header. */
+@media (max-width:760px) {
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content {
+    gap:9px;
+    padding:9px 0 calc(22px + env(safe-area-inset-bottom));
   }
-
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content > :is(
+    .connections-history-heading,.connections-directory-toolbar,
+    .connections-directory,.connections-footer,.connections-notice
+  ) {padding-inline:8px;}
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content {
+    gap:8px;
+    padding:10px 0 calc(22px + env(safe-area-inset-bottom));
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content > :is(
+    .tasks-save-feedback,.tasks-summary,.tasks-tools,.tasks-list,
+    .tasks-table-container,.tasks-footer,.tasks-filter-help,.tasks-state
+  ) {width:calc(100% - 20px);}
+}
+@media (min-width:821px) {
   /* Catalog used to center the scroll-owning section (max 1360px). Its
      scrollbar consequently stopped well short of the right window edge.
      Make the full-width host the one vertical scroll owner, then center its

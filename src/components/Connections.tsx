@@ -362,6 +362,7 @@ export function Connections() {
           </div>
         </>}
       />
+      <div className="connections-directory-content">
       {(tab === 'activity'||tab==='quotes') && <div className="connections-history-heading">
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
           <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
@@ -475,6 +476,11 @@ export function Connections() {
               {!activityRows.length && <StatusText state="empty" className="connections-empty">No recorded history is available.</StatusText>}
             </div>
           </section>}
+      <footer className="connections-footer">
+        <span>People and sales records are managed here. Team accounts, permissions, and invitations belong in Settings.</span>
+        <button type="button" onClick={() => setView('settings')}>Open team settings →</button>
+      </footer>
+      </div>
       {preview&&<RecordPreviewDrawer record={preview}
         onClose={()=>setPreview(null)} onSelect={setPreview}
         onGoToQuotePage={id=>{setPreview(null);setQuoteRecordId(id);setTab('quotes');}}/>}
@@ -526,10 +532,6 @@ export function Connections() {
             </form>}
           </section>
         </div>,document.body)}
-      <footer className="connections-footer">
-        <span>People and sales records are managed here. Team accounts, permissions, and invitations belong in Settings.</span>
-        <button type="button" onClick={() => setView('settings')}>Open team settings →</button>
-      </footer>
     </main>
   );
 }

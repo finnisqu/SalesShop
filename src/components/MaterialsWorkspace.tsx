@@ -519,17 +519,16 @@ export function MaterialsWorkspace({ embedded = false,externalQuery }: { embedde
         </div>
       ) : (
         <div className="materials-reference-host">
-          <section className={`materials-comparison-board ${pinnedVariants.length ? 'has-pins' : ''}`} aria-label="Pinned material comparison">
+          {pinnedVariants.length > 0 && <section className="materials-comparison-board has-pins" aria-label="Pinned material comparison">
             <header>
               <div>
                 <span className="board-eyebrow">Comparison board</span>
-                <strong>{pinnedVariants.length ? `${pinnedVariants.length} pinned variant${pinnedVariants.length === 1 ? '' : 's'}` : 'Pin slab variants while you browse'}</strong>
+                <strong>{pinnedVariants.length} pinned variant{pinnedVariants.length === 1 ? '' : 's'}</strong>
                 <small>Pinned variants stay here while search and filters change.</small>
               </div>
-              {pinnedVariants.length > 0 && <button type="button" onClick={() => setPinnedKeys([])}>Clear all</button>}
+              <button type="button" onClick={() => setPinnedKeys([])}>Clear all</button>
             </header>
-            {pinnedVariants.length > 0 ? (
-              <div className="materials-comparison-strip">
+            <div className="materials-comparison-strip">
                 {pinnedVariants.map(({ material, variant }) => {
                   const option = defaultMaterialPurchaseOption(variant);
                   const costPerSf = materialPurchaseCostPerSf(variant, option);
@@ -623,10 +622,7 @@ export function MaterialsWorkspace({ embedded = false,externalQuery }: { embedde
                   );
                 })}
               </div>
-            ) : (
-              <div className="materials-comparison-empty">Expand <strong>Variants</strong> on any material, then pin the slab options you want to compare.</div>
-            )}
-          </section>
+          </section>}
 
           <section className="rates-reference-card materials-reference-card">
             <header>
