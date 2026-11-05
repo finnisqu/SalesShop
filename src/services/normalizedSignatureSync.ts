@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import {forEachCloudWriteBatch} from './cloudWriteBatches';
 import type { AcceptedQuoteSnapshot, SignatureDocument, SignatureMethod, SignatureRecord, SignatureStroke } from '../types/signature';
 
 type DbRow = Record<string, unknown>;
@@ -7,16 +8,28 @@ function valueOrUndefined(value: unknown) {
   return value === null || value === undefined || value === '' ? undefined : String(value);
 }
 
+const SIGNATURE_PAGE_SIZE=500;
+/** The customer signature trail is immutable; load all authorized pages
+ * before determining whether an ID is genuinely new. */
+async function selectSignatureRows(organizationId:string,columns:string,orderColumn:string){
+  if(!supabase)return [] as DbRow[];
+  const rows:DbRow[]=[];
+  for(let start=0;;start+=SIGNATURE_PAGE_SIZE){
+    const base=supabase.from('signatures').select(columns)
+      .eq('organization_id',organizationId)
+      .order(orderColumn,{ascending:true});
+    const query=orderColumn==='id'?base:base.order('id',{ascending:true});
+    const {data,error}=await query.range(start,start+SIGNATURE_PAGE_SIZE-1);
+    if(error)throw error;
+    const page=(data??[]) as DbRow[];
+    rows.push(...page);
+    if(page.length<SIGNATURE_PAGE_SIZE)return rows;
+  }
+}
+
 export async function loadNormalizedSignatures(organizationId: string): Promise<SignatureDocument | null> {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('signatures')
-    .select('*')
-    .eq('organization_id', organizationId)
-    .order('accepted_at', { ascending: true });
-  if (error) throw error;
-
-  const rows = (data ?? []) as DbRow[];
+  const rows=await selectSignatureRows(organizationId,'*','accepted_at');
   if (!rows.length) return null;
 
   const signatures: SignatureRecord[] = rows.map((row) => ({
@@ -45,13 +58,8 @@ export async function syncNormalizedSignatures(organizationId: string, document:
   if (document.schemaVersion !== 1) throw new Error('Unsupported Signature document schema.');
   if (!document.signatures.length) return;
 
-  const { data, error } = await supabase
-    .from('signatures')
-    .select('id')
-    .eq('organization_id', organizationId);
-  if (error) throw error;
-
-  const existing = new Set((data ?? []).map((row) => String(row.id)));
+  const existingRows=await selectSignatureRows(organizationId,'id','id');
+  const existing=new Set(existingRows.map(row=>String(row.id)));
   const missing = document.signatures
     .filter((signature) => !existing.has(signature.id))
     .map((signature) => ({
@@ -73,7 +81,8 @@ export async function syncNormalizedSignatures(organizationId: string, document:
       accepted_snapshot: signature.acceptedSnapshot,
     }));
 
-  if (!missing.length) return;
-  const { error: insertError } = await supabase.from('signatures').insert(missing);
-  if (insertError) throw insertError;
+  await forEachCloudWriteBatch(missing,async batch=>{
+    const {error}=await supabase.from('signatures').insert(batch);
+    if(error)throw error;
+  });
 }
