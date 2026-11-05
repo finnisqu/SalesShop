@@ -9,6 +9,7 @@ import { AccountsBoard } from './AccountsBoard';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import { Button, PageHeader } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
+import {useDismissiblePopover} from './useDismissibleDetails';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
@@ -289,23 +290,7 @@ export function Board() {
   const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
   const [pipelineMenuOpen,setPipelineMenuOpen]=useState(false);
   const pipelineMenuRef=useRef<HTMLDivElement>(null);
-  useEffect(()=>{
-    if(!pipelineMenuOpen)return;
-    const dismiss=(event:PointerEvent)=>{
-      if(!pipelineMenuRef.current?.contains(event.target as Node))setPipelineMenuOpen(false);
-    };
-    const escape=(event:KeyboardEvent)=>{
-      if(event.key!=='Escape')return;
-      setPipelineMenuOpen(false);
-      pipelineMenuRef.current?.querySelector<HTMLButtonElement>('.board-pipeline-more-trigger')?.focus();
-    };
-    document.addEventListener('pointerdown',dismiss);
-    document.addEventListener('keydown',escape);
-    return ()=>{
-      document.removeEventListener('pointerdown',dismiss);
-      document.removeEventListener('keydown',escape);
-    };
-  },[pipelineMenuOpen]);
+  useDismissiblePopover(pipelineMenuRef,pipelineMenuOpen,()=>setPipelineMenuOpen(false),'.board-pipeline-more-trigger');
   const [compactCards,setCompactCards]=useState(()=>{
     try{return window.localStorage.getItem(BOARD_COMPACT_KEY)==='true';}
     catch{return false;}

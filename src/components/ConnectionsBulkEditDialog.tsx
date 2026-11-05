@@ -1,4 +1,5 @@
-import {useEffect,useMemo,useState,type FormEvent} from 'react';
+import {useMemo,useState,type FormEvent} from 'react';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {createPortal} from 'react-dom';
 import {DEAL_PIPELINES,PROJECT_STAGES,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
 import {useDealAssigneeDirectory} from '../services/dealAssignees';
@@ -54,13 +55,7 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
  const amountValid=property!=='amount'||clearValue||
    (value.trim()!==''&&Number.isFinite(Number(value))&&Number(value)>=0);
  const canSubmit=Boolean(property&&eligible&&amountValid&&!saving);
- useEffect(()=>{
-  const close=(event:KeyboardEvent)=>{
-   if(event.key==='Escape'&&!saving){event.stopPropagation();onClose();}
-  };
-  document.addEventListener('keydown',close,true);
-  return()=>document.removeEventListener('keydown',close,true);
- },[onClose,saving]);
+ const dialogRef=useDismissibleLayer<HTMLElement>(true,()=>{if(!saving)onClose();});
  const chooseProperty=(key:string)=>{
   setProperty(key);setValue(key==='kind'||key==='pipeline'||key==='companyId'||key==='assignedUserId'?'__choose__':'');
   setStage('');setClearValue(false);setError('');setOwnerSearch('');
@@ -94,7 +89,7 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
  return createPortal(<div className="connections-bulk-backdrop" onMouseDown={event=>{
    if(event.target===event.currentTarget&&!saving)onClose();
   }}>
-  <section role="dialog" aria-modal="true" aria-labelledby="connections-bulk-title"
+  <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="connections-bulk-title"
    className="connections-bulk-dialog">
    <header className="connections-bulk-heading">
     <h2 id="connections-bulk-title">Bulk edit {count} {count===1?'record':'records'}</h2>
@@ -103,7 +98,7 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
    <form onSubmit={event=>void submit(event)}>
     <label className="connections-bulk-field">
      <span>Property to update</span>
-     <select autoFocus value={property} disabled={saving} onChange={event=>chooseProperty(event.target.value)}
+     <select autoFocus data-dialog-initial-focus value={property} disabled={saving} onChange={event=>chooseProperty(event.target.value)}
       aria-label="Property to update">
       <option value="">Select a property to edit</option>
       {fields[scope].map(field=><option key={field.key} value={field.key}>{field.label}</option>)}

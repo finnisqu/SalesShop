@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {createPortal} from 'react-dom';
+import {useDismissiblePopover} from './useDismissibleDetails';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
@@ -93,21 +94,7 @@ export function Connections() {
     if(id){setQuoteRecordId(id);setTab('quotes');}
   },[]);
   const moreRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!moreOpen) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      if (!moreRef.current?.contains(event.target as Node)) setMoreOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMoreOpen(false);
-    };
-    document.addEventListener('pointerdown', closeOnOutside);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOnOutside);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [moreOpen]);
+  useDismissiblePopover(moreRef,moreOpen,()=>setMoreOpen(false));
   const [companyFilter, setCompanyFilter] = useState<CompanyFilter>('all');
   const [companyCreating, setCompanyCreating] = useState(false);
   const [newCompany, setNewCompany] = useState('');

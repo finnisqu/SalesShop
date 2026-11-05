@@ -1,0 +1,93 @@
+/* Shared action-menu and modal language across desktop workspaces.
+   Only common surface, item and focus tokens are normalized; placement,
+   menu contents, record actions, and all phone layouts remain owned locally. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app{
+  --ss-menu-radius:10px;
+  --ss-menu-item-radius:7px;
+  --ss-menu-item-height:36px;
+  --ss-menu-pad:6px;
+  --ss-menu-shadow:0 12px 30px rgb(0 0 0 / 22%);
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,
+  .board-pipeline-menu,
+  .connections-more-menu,
+  .connections-columns-popover,
+  .qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel
+ ){
+  box-sizing:border-box;
+  border-color:var(--ss-theme-border);
+  border-radius:var(--ss-menu-radius);
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  box-shadow:var(--ss-menu-shadow);
+  padding:var(--ss-menu-pad);
+  scrollbar-gutter:stable;
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,
+  .board-pipeline-menu,
+  .connections-more-menu,
+  .connections-columns-popover,
+  .qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel
+ ) button{
+  box-sizing:border-box;
+  min-height:var(--ss-menu-item-height);
+  border-radius:var(--ss-menu-item-radius);
+  font:650 12px/1.3 var(--ss-font-body);
+  cursor:pointer;
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,
+  .board-pipeline-menu,
+  .connections-more-menu,
+  .connections-columns-popover,
+  .qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel
+ ) button:is(:hover,:focus-visible):not(:disabled){
+  background:var(--ss-theme-tint);
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,
+  .board-pipeline-menu,
+  .connections-more-menu,
+  .connections-columns-popover,
+  .qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel
+ ) button:focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-theme-accent));
+  outline-offset:-2px;
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more__menu,
+  .board-pipeline-menu,
+  .connections-more-menu,
+  .connections-columns-popover,
+  .qmb .sales-document-rail-menu,
+  .insert-menu .insert-menu-panel
+ ) button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+ }
+ :root[data-sales-theme] .sales-app
+ .ss-workspace-more__menu>button[aria-pressed="true"]{
+  background:var(--ss-theme-tint);
+  box-shadow:inset 3px 0 var(--ss-theme-accent);
+ }
+ /* Keep the two bulk-edit dialogs visually identical even though their
+    available fields and server persistence paths differ. */
+ :root[data-sales-theme] .sales-app .connections-bulk-dialog,
+ :root[data-sales-theme] .connections-bulk-dialog{
+  --ss-bulk-control-height:40px;
+ }
+ :root[data-sales-theme] .connections-bulk-dialog form
+ :is(input:not([type="checkbox"]),select){
+  min-height:var(--ss-bulk-control-height,40px);
+ }
+ :root[data-sales-theme] .connections-bulk-dialog footer button{
+  min-height:var(--ss-bulk-control-height,40px);
+ }
+}

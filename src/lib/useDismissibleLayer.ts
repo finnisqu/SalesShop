@@ -22,15 +22,20 @@ export function useDismissibleLayer<T extends HTMLElement>(
   const layerRef = useRef<T>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  // Capture the trigger during render, before a dialog child can autofocus.
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  if (!open) returnFocusRef.current = null;
+  else if (!returnFocusRef.current && typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+    returnFocusRef.current = document.activeElement;
+  }
 
   useEffect(() => {
     if (!open) return;
-    const previouslyFocused = document.activeElement instanceof HTMLElement
-      ? document.activeElement : null;
+    const previouslyFocused = returnFocusRef.current;
     const frame = requestAnimationFrame(() => {
       const layer = layerRef.current;
-      const first = layer?.querySelector<HTMLElement>(
-        '[data-dialog-initial-focus],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]',
+      const first = layer?.querySelector<HTMLElement>('[data-dialog-initial-focus]') ?? layer?.querySelector<HTMLElement>(
+        'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]',
       );
       first?.focus({ preventScroll: true });
     });

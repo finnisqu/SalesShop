@@ -1,4 +1,5 @@
 import {useRef} from 'react';
+import {useDismissibleDetails} from './useDismissibleDetails';
 import type {Quote} from '../types/quote';
 import {quoteCanCreateRevision} from '../services/quoteIntegrity';
 import {openDetailedQuoteEditor} from '../services/quoteEditorNavigation';
@@ -10,6 +11,7 @@ export function SalesDocumentActionsMenu({quote,canManage,canIssue,canDelete,
   onCopy:()=>void;onDelete:()=>void;onArchive:()=>void;onRevise:()=>void;
 }){
   const ref=useRef<HTMLDetailsElement>(null);
+  useDismissibleDetails(ref);
   const run=(fn:()=>void)=>{ref.current?.removeAttribute('open');fn();};
   return <details ref={ref} className="sales-document-rail-actions">
     <summary role="button" aria-label="Document options" title="Document options">⋯</summary>

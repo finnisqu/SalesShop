@@ -8,6 +8,7 @@ import {ConnectionsBulkEditDialog,type BulkEditChange} from './ConnectionsBulkEd
 import type {Company} from '../types/crm';
 import {TaskBulkEditDialog,type TaskBulkChange} from './TaskBulkEditDialog';
 import {useWorkbookTableDensity} from '../services/workbookTableDensity';
+import {useDismissibleDetails} from './useDismissibleDetails';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags';columns:ConnectionColumn[];rows:ConnectionTableRow[];
@@ -46,21 +47,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
  });
  const [page,setPage]=useState(1);
  const columnsMenuRef=useRef<HTMLDetailsElement>(null);
- // The native details element remains keyboard accessible; dismiss it like other popovers.
- useEffect(()=>{
-   const outside=(event:PointerEvent)=>{
-     if(!columnsMenuRef.current?.contains(event.target as Node))columnsMenuRef.current?.removeAttribute('open');
-   };
-   const escape=(event:KeyboardEvent)=>{
-     if(event.key!=='Escape'||!columnsMenuRef.current?.open)return;
-     event.stopPropagation();
-     columnsMenuRef.current.open=false;
-     columnsMenuRef.current.querySelector('summary')?.focus();
-   };
-   document.addEventListener('pointerdown',outside);
-   document.addEventListener('keydown',escape);
-   return ()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape);};
- },[]);
+ useDismissibleDetails(columnsMenuRef);
  // Preserve selections across pages, but never act on records removed by a new filter.
  useEffect(()=>{
    const ids=new Set(rows.map(row=>row.id));

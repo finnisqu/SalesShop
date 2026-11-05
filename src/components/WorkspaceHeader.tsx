@@ -1,4 +1,5 @@
-import {useEffect,useRef,type ReactNode} from 'react';
+import {useRef,type ReactNode} from 'react';
+import {useDismissibleDetails} from './useDismissibleDetails';
 import '../workspace-header-standard.css';
 
 /** Shared top-level workspace chrome. Stable slots across all six workspaces. */
@@ -18,19 +19,7 @@ export function WorkspaceHeader({title,tabs,more,search,primary,className=''}:{
 export interface WorkspaceMoreItem{label:string;onClick:()=>void;active?:boolean;disabled?:boolean}
 export function WorkspaceMoreMenu({items,label='More'}:{items:readonly WorkspaceMoreItem[];label?:string}){
  const ref=useRef<HTMLDetailsElement>(null);
- useEffect(()=>{
-  const outside=(event:PointerEvent)=>{
-   if(ref.current?.open&&!ref.current.contains(event.target as Node))ref.current.open=false;
-  };
-  const escape=(event:KeyboardEvent)=>{
-   if(event.key==='Escape'&&ref.current?.open){
-    ref.current.open=false;ref.current.querySelector('summary')?.focus();
-   }
-  };
-  document.addEventListener('pointerdown',outside);
-  document.addEventListener('keydown',escape);
-  return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape);};
- },[]);
+ useDismissibleDetails(ref);
  return <details className="ss-workspace-more" ref={ref}>
   <summary aria-label={label+' menu'}>{label} <span aria-hidden="true">⋯</span></summary>
   <div className="ss-workspace-more__menu" role="group" aria-label={label+' options'}>

@@ -1,4 +1,5 @@
-import {useEffect,useState,type FormEvent} from 'react';
+import {useState,type FormEvent} from 'react';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {createPortal} from 'react-dom';
 import type {TaskChanges,TaskPriority,TaskStatus,TaskType} from '../store/personalTaskStore';
 import '../connections-bulk-edit.css';
@@ -23,13 +24,7 @@ export function TaskBulkEditDialog({count,onApply,onClose}:{
  const valid=Boolean(property)&&!saving&&(
    clearable&&clear||Boolean(value.trim())
  );
- useEffect(()=>{
-  const onKey=(event:KeyboardEvent)=>{
-   if(event.key==='Escape'&&!saving){event.stopPropagation();onClose();}
-  };
-  document.addEventListener('keydown',onKey,true);
-  return()=>document.removeEventListener('keydown',onKey,true);
- },[onClose,saving]);
+ const dialogRef=useDismissibleLayer<HTMLElement>(true,()=>{if(!saving)onClose();});
  const apply=async(event:FormEvent)=>{
   event.preventDefault();if(!valid||!property)return;
   const next=clear&&clearable?undefined:value;
@@ -50,13 +45,13 @@ export function TaskBulkEditDialog({count,onApply,onClose}:{
  return createPortal(<div className="connections-bulk-backdrop" onMouseDown={event=>{
   if(event.target===event.currentTarget&&!saving)onClose();
  }}>
- <section role="dialog" aria-modal="true" aria-label={'Bulk edit '+count+' tasks'} className="connections-bulk-dialog">
+ <section ref={dialogRef} role="dialog" aria-modal="true" aria-label={'Bulk edit '+count+' tasks'} className="connections-bulk-dialog">
   <header className="connections-bulk-heading"><h2>Bulk edit {count} {count===1?'task':'tasks'}</h2>
    <button type="button" onClick={onClose} aria-label="Close task bulk editor" disabled={saving}>×</button>
   </header>
   <form onSubmit={event=>void apply(event)}>
    <label className="connections-bulk-field"><span>Property to update</span>
-    <select autoFocus value={property} disabled={saving} onChange={event=>{
+    <select autoFocus data-dialog-initial-focus value={property} disabled={saving} onChange={event=>{
      setProperty(event.target.value as TaskBulkField|'');setValue('');setClear(false);setError('');setNotes('');
     }}>
      <option value="">Select a property to edit</option>

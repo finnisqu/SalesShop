@@ -139,6 +139,8 @@ import './workspace-header-parity.css';
 import './workspace-table-control-strip.css';
 // Single workbook table geometry/density source of truth, applied last.
 import './workbook-table-foundation.css';
+// Shared desktop menus and bulk-dialog interaction styling.
+import './shared-desktop-interactions.css';
 
 recordSalesShopBoot();
 

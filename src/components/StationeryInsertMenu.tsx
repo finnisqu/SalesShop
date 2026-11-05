@@ -1,6 +1,7 @@
 import { useRef, type ChangeEvent } from 'react';
 import { useNotebookStore } from '../store/notebookStore';
 import type { PostItTone, ShapeKind } from '../types/notebook';
+import {useDismissibleDetails} from './useDismissibleDetails';
 
 interface StationeryInsertMenuProps {
   entryId: string;
@@ -19,6 +20,7 @@ function readFileAsDataUrl(file: File) {
 
 export function StationeryInsertMenu({ entryId }: StationeryInsertMenuProps) {
   const menuRef = useRef<HTMLDetailsElement>(null);
+  useDismissibleDetails(menuRef);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
