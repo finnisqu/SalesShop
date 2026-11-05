@@ -26,6 +26,7 @@ import {
 import { validatePricingScheduleForSend } from '../services/pricingSchedule';
 import { assertQuoteHasNoPricingBlockers } from '../services/quoteDraftAudit';
 import {assertMatchingApprovedDraft} from '../services/quoteIssueGuard';
+import {mergeConfirmedSentQuote} from '../services/quoteIssueFinalize';
 import {duplicateQuoteArea,duplicateQuoteAreas,copyQuoteAreaFromSource,copyQuoteAreasFromSource} from '../services/quoteAreaDuplicate';
 import {duplicateQuoteScopeRows} from '../services/quoteScopeRowDuplicate';
 import {sectionFromQuoteAreaPreset,type QuoteAreaPresetId} from '../services/quoteAreaPresets';
@@ -1190,8 +1191,22 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
       if(freezeError||!frozen)
         throw new Error('Quote revision was not confirmed saved in the cloud. Please retry.');
     }
-    persist(quotes, get().activeQuoteId);
-    set({ quotes });
+    // Cloud confirmation can take seconds; another quote may have been
+    // edited or the user may have switched documents in the meantime.
+    // Finalize only the original unchanged draft against the LATEST store
+    // snapshot. Never replace all the quotes with a stale pre-await array.
+    const latestAuth=useAuthStore.getState();
+    if(auth.mode==='cloud'&&(latestAuth.mode!==auth.mode||
+      latestAuth.organizationId!==auth.organizationId||
+      latestAuth.user?.id!==auth.user?.id))
+      throw new Error('Your SalesShop workspace changed during issuance. Check the cloud quote before retrying.');
+    const finalDocument=mergeConfirmedSentQuote({
+      schemaVersion:2,
+      quotes:get().quotes,
+      activeQuoteId:get().activeQuoteId,
+    },current,sentQuote);
+    persist(finalDocument.quotes,finalDocument.activeQuoteId);
+    set({ quotes: finalDocument.quotes });
   },
 
   createRevision: (quoteId) => {
