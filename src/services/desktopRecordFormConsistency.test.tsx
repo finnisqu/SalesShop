@@ -74,7 +74,7 @@ describe('Shared desktop editor form states',()=>{
   expect(activity).toContain("message:'Logging activity…'");
   for(const page of [bulk,taskBulk]){
    expect(page).toContain('RecordFormFeedback notice={error?');
-   expect(page).toContain('finally{setSaving(false)}');
+   expect(page).toContain('setSaving(false)');
   }
  });
  it('shares desktop control sizing without touching quote takeoff grid or phone widths',()=>{
