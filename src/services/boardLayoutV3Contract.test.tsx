@@ -71,8 +71,10 @@ describe('Board display and quick creation',()=>{
   expect(board).toContain('aria-pressed={pipelineView');
   expect(board).toContain('setPipelineView(\'unassigned\')');
   expect(board).toContain('setPipelineView(\'all\')');
-  expect(board).toContain("document.addEventListener('pointerdown',dismiss)");
-  expect(board).toContain("document.addEventListener('keydown',escape)");
+  expect(board).toContain('useDismissiblePopover(pipelineMenuRef,pipelineMenuOpen');
+  const sharedMenus=source('src/components/useDismissibleDetails.ts');
+  expect(sharedMenus).toContain("document.addEventListener('pointerdown',outside,true)");
+  expect(sharedMenus).toContain("document.addEventListener('keydown',escape,true)");
   expect(board).toContain('pipeline: draft.pipeline || undefined');
   expect(sync).toContain('pipeline: normalizeDealPipeline(row.pipeline)');
   expect(sync).toContain('pipeline: normalizeDealPipeline(project.pipeline) ?? null');
