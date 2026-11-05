@@ -1,3 +1,4 @@
+import {useMemo} from 'react';
 import type { Quote } from '../types/quote';
 import { quoteTotal } from '../types/quote';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
@@ -19,12 +20,25 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
   onResolve:(destination:QuoteAuditDestination)=>void;
   onReview:()=>void;
 }) {
-  const report=auditQuoteDraft(quote);
-  const overview=quotePricingOverview(quote,report);
-  const issueFor=(id:string)=>report.blockers.find(f=>f.destination.view==='area'&&f.destination.areaId===id)
-    ??report.review.find(f=>f.destination.view==='area'&&f.destination.areaId===id);
-  const incompleteCosts=overview.rows.filter(row=>row.measuredSf>0
-    &&!projectAreaCost(quote,row.section).complete);
+  const report=useMemo(()=>auditQuoteDraft(quote),[quote]);
+  const overview=useMemo(()=>quotePricingOverview(quote,report),[quote,report]);
+  // Area issue order remains blockers-first, matching the previous find().
+  const issueByArea=useMemo(()=>{
+    const index=new Map<string,(typeof report.blockers)[number]>();
+    for(const finding of [...report.blockers,...report.review]){
+      if(finding.destination.view!=='area'||!finding.destination.areaId||
+        index.has(finding.destination.areaId))continue;
+      index.set(finding.destination.areaId,finding);
+    }
+    return index;
+  },[report]);
+  const issueFor=(id:string)=>issueByArea.get(id);
+  const measuredRows=useMemo(()=>overview.rows.filter(row=>row.measuredSf>0),[overview]);
+  const costsByArea=useMemo(()=>new Map(measuredRows.map(row=>
+    [row.section.id,projectAreaCost(quote,row.section)] as const)),[quote,measuredRows]);
+  const incompleteCosts=useMemo(()=>measuredRows.filter(row=>
+    !costsByArea.get(row.section.id)?.complete),[measuredRows,costsByArea]);
+  const total=useMemo(()=>quoteTotal(quote),[quote]);
   const nextBlocker=overview.blockers[0];
   const nextAction=nextBlocker
     ?{label:'Resolve next pricing issue',detail:nextBlocker.title,
@@ -42,10 +56,10 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
       <p>Review buying-cost coverage, selling prices and pricing findings across all Areas. Edit everyday line items in Takeoffs, or open Calculator for advanced pricing.</p>
     </header>
     <div className="qmb-pricing-overview-summary">
-      <div><small>Quote total</small><strong>{currency.format(quoteTotal(quote))}</strong></div>
+      <div><small>Quote total</small><strong>{currency.format(total)}</strong></div>
       <div><small>Areas</small><strong>{overview.rows.length}</strong></div>
       <div><small>Pricing issues</small><strong>{overview.blockers.length}</strong></div>
-      <div><small>Internal estimates</small><strong>{overview.rows.filter(row=>row.measuredSf>0).length-incompleteCosts.length}/{overview.rows.filter(row=>row.measuredSf>0).length}</strong></div>
+      <div><small>Internal estimates</small><strong>{measuredRows.length-incompleteCosts.length}/{measuredRows.length}</strong></div>
     </div>
     <div className="qmb-pricing-overview-next" aria-label="Next quote pricing action">
       <div><strong>{nextAction.label}</strong><small>{nextAction.detail}</small></div>
@@ -76,7 +90,7 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
         const issue=issueFor(row.section.id);
         // This is private estimating guidance, NOT a quote issuing requirement.
         // No slab/production estimate is implied for an unmeasured flat-fee Area.
-        const cost=row.measuredSf>0?projectAreaCost(quote,row.section):null;
+        const cost=row.measuredSf>0?costsByArea.get(row.section.id)??null:null;
         const covered=cost?Object.values(cost.costCoverage).filter(Boolean).length:0;
         return <section className="qmb-pricing-overview-row" key={row.section.id} aria-label={row.section.title||'Untitled Area'}>
           <div className="qmb-pricing-overview-row-top">
