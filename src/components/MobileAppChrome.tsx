@@ -7,6 +7,7 @@ import { resolveMobileDrawerChoice } from '../lib/mobileDrawerNavigation';
 import { AuthStatus } from './AuthGate';
 import { GlobalSearch } from './GlobalSearch';
 import { QuickCreate } from './QuickCreate';
+import { WorkspaceHelp } from './WorkspaceHelp';
 import { BuildBadge } from './BuildBadge';
 import { useAuthStore } from '../store/authStore';
 import { useAppearanceStore } from '../store/appearanceStore';
@@ -220,6 +221,10 @@ export function MobileAppChrome() {
             <strong>{contextTitle}</strong>
           </div>
         </>}
+        {!isEditingQuote&&<div className="mobile-app-help">
+          <WorkspaceHelp page={view==='dashboard'?'connections':view}
+            section={view==='catalog'?catalogSection:view==='board'?(boardMode==='accounts'?'accounts':'deals'):undefined}/>
+        </div>}
         <div className="mobile-quote-actions-slot" id="mobile-quote-actions-slot" aria-label="Document options"/>
         <button ref={navigationButtonRef} type="button" className="mobile-app-menu-button" onClick={openNavigation}
           aria-expanded={open} aria-haspopup="dialog" aria-controls="mobile-app-navigation-popover"

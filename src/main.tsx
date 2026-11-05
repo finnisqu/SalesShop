@@ -161,6 +161,8 @@ import './workspace-popover-parity.css';
 import './workspace-type-icon-parity.css';
 // Contextual page help, anchored beside each page title.
 import './workspace-help.css';
+// Mobile command bar, contextual help, and themed navigation parity.
+import './mobile-chrome-parity.css';
 
 recordSalesShopBoot();
 
