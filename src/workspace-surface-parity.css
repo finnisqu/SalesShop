@@ -27,7 +27,7 @@
     .connections-directory,.connections-notice,.connections-footer
   ) {
     box-sizing:border-box;
-    width:calc(100% - 2 * var(--ss-workspace-content-edge));
+    width:calc(100% - var(--ss-workspace-content-edge) - var(--ss-workspace-content-edge));
     max-width:var(--ss-workspace-width,1360px);
     min-width:0;
     padding-inline:0;
@@ -39,7 +39,7 @@
     .tasks-filter-help,.tasks-state
   ) {
     box-sizing:border-box;
-    width:calc(100% - 2 * var(--ss-workspace-content-edge));
+    width:calc(100% - var(--ss-workspace-content-edge) - var(--ss-workspace-content-edge));
     max-width:var(--ss-workspace-width,1360px);
     min-width:0;
     margin-inline:auto;
@@ -61,7 +61,7 @@
   }
   :root[data-sales-theme] .sales-app.view-quotes .qmb
     .qmb-library-measure {
-    width:calc(100% - 2 * var(--ss-workspace-content-edge));
+    width:calc(100% - var(--ss-workspace-content-edge) - var(--ss-workspace-content-edge));
     max-width:var(--ss-workspace-width,1360px);
   }
   :root[data-sales-theme] .sales-app.view-quotes .qmb
