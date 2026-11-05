@@ -17,7 +17,7 @@ describe('Shared workbook table density and regression guard',()=>{
   expect(density).toContain("document.documentElement.dataset.ssWorkbookDensity=value");
   expect(density).toContain("window.addEventListener('storage',onStorage)");
   expect(density).toContain("window.dispatchEvent(new Event(EVENT))");
-  expect(density).toContain('useSyncExternalStore(');
+  expect(density).toContain('useSyncExternalStore<WorkbookTableDensity>(');
  });
  it('makes the preference available in Connections, Tasks and Quotes tables as well as Catalog',()=>{
   const connections=read('components/ConnectionsTable.tsx');
