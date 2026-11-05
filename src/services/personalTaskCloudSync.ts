@@ -36,6 +36,7 @@ export function startPersonalTaskCloudSync(scope:string,userId:string):()=>void{
   const client=supabase;
   let cancelled=false,initializing=true,suppress=false,timer:ReturnType<typeof setTimeout>|null=null;
   let saving:Promise<void>|null=null,dirty=false;
+  let lastRecoveryRetry=0;
   const store=usePersonalTaskStore;
   const status=store.getState().setSyncStatus;
   status('loading');
@@ -51,7 +52,7 @@ export function startPersonalTaskCloudSync(scope:string,userId:string):()=>void{
     saving=(async()=>{
       try{
         const remote=await fetchRemote();
-        if(cancelled)return;
+        if(cancelled||store.getState().scope!==scope)return;
         const latest=store.getState().tasks;
         const merged=mergePrivateTasks(latest,remote.filter(task=>task.workspaceScope===scope));
         // Never replace current local work with an outdated cloud response.
@@ -60,11 +61,15 @@ export function startPersonalTaskCloudSync(scope:string,userId:string):()=>void{
         // document. Tasks remain invisible to other users through RLS.
         const document:TaskDocument={schemaVersion:1,
           tasks:[...remote.filter(task=>task.workspaceScope!==scope),...merged]};
+        if(cancelled||store.getState().scope!==scope)return;
         const {error}=await client.from('private_documents').upsert({
           owner_id:userId,document_key:DOCUMENT_KEY,document,
         },{onConflict:'owner_id,document_key'});
         if(error)throw error;
-        if(!cancelled&&store.getState().scope===scope)status('saved');
+        // A newer edit may be queued while this older save is in flight.
+        // Do not show "Saved" until that latest version is acknowledged.
+        if(!cancelled&&store.getState().scope===scope&&
+          !dirty&&!timer&&store.getState().tasks===merged)status('saved');
       }catch(error){
         suppress=false;
         if(!cancelled)status('error',error instanceof Error?error.message:'Task cloud sync failed');
@@ -81,6 +86,18 @@ export function startPersonalTaskCloudSync(scope:string,userId:string):()=>void{
     status('pending');
     timer=setTimeout(()=>{timer=null;void upload();},650);
   };
+  // Offline errors otherwise stay red indefinitely unless the user edits
+  // another Task. Retry on reconnect or foreground, but never in a new scope.
+  const retryFailed=()=>{
+    if(cancelled||initializing||store.getState().scope!==scope||
+      store.getState().syncStatus!=='error')return;
+    if(Date.now()-lastRecoveryRetry<15000)return;
+    lastRecoveryRetry=Date.now();
+    queue();
+  };
+  const retryWhenVisible=()=>{if(document.visibilityState==='visible')retryFailed();};
+  window.addEventListener('online',retryFailed);
+  document.addEventListener('visibilitychange',retryWhenVisible);
   const subscription=store.subscribe((next,previous)=>{
     if(next.scope!==scope||suppress||next.tasks===previous.tasks)return;
     queue();
@@ -104,6 +121,8 @@ export function startPersonalTaskCloudSync(scope:string,userId:string):()=>void{
   })();
   return()=>{
     cancelled=true;subscription();
+    window.removeEventListener('online',retryFailed);
+    document.removeEventListener('visibilitychange',retryWhenVisible);
     if(timer)clearTimeout(timer);
   };
 }
