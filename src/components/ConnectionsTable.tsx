@@ -59,8 +59,12 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
  const hasRowActions=hasTaskActions||hasDocumentActions;
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'cols'),JSON.stringify(keys));}catch{/* preference storage is optional */}},[tableKey,keys]);
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'pins'),JSON.stringify(pinned));}catch{/* preference storage is optional */}},[tableKey,pinned]);
- const active=visibleConnectionColumns(keys,columns.map(c=>c.key));
- const visible=active.map(k=>columns.find(c=>c.key===k)).filter((c):c is ConnectionColumn=>!!c);
+ const active=useMemo(()=>visibleConnectionColumns(keys,columns.map(c=>c.key)),[keys,columns]);
+ const visible=useMemo(()=>{
+   const byKey=new Map(columns.map(col=>[col.key,col]));
+   return active.map(key=>byKey.get(key))
+     .filter((col):col is ConnectionColumn=>Boolean(col));
+ },[active,columns]);
  const sorted=useMemo(()=>[...rows].sort((a,b)=>{
    const diff=compareConnectionSortValues(
      a.sortValues?.[sort.key]??a.values[sort.key],
@@ -72,14 +76,17 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
  const pages=Math.max(1,Math.ceil(sorted.length/PAGE_SIZE));
  const currentPage=Math.min(page,pages);
  const display=sorted.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
- const selection=new Set(selected);
- const chosen=rows.filter(x=>selection.has(x.id));
+ const selection=useMemo(()=>new Set(selected),[selected]);
+ const chosen=useMemo(()=>rows.filter(row=>selection.has(row.id)),[rows,selection]);
  const allOnPage=display.length>0&&display.every(x=>selection.has(x.id));
  const someOnPage=display.some(x=>selection.has(x.id));
  useEffect(()=>{
   if(selectPageRef.current)selectPageRef.current.indeterminate=someOnPage&&!allOnPage;
  },[someOnPage,allOnPage]);
- const pins=rows.filter(x=>pinned.includes(x.id));
+ const pins=useMemo(()=>{
+   const pinnedIds=new Set(pinned);
+   return rows.filter(row=>pinnedIds.has(row.id));
+ },[rows,pinned]);
  const togglePin=(id:string)=>setPinned(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const move=(key:string,dir:-1|1)=>{
    const next=[...active],index=next.indexOf(key),destination=index+dir;
