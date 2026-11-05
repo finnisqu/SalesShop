@@ -159,7 +159,6 @@ export function Connections() {
   const companiesById = useMemo(() => new Map(companies.map((company) => [company.id, company])), [companies]);
   const projectsById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
   const counts=useMemo(()=>indexConnectionsCounts(contacts,projects,quotes),[contacts,projects,quotes]);
-  const quoteTotals=useMemo(()=>new Map(quotes.map(q=>[q.id,quoteTotal(q)])),[quotes]);
   const needle = query.trim().toLowerCase();
   // The Connections metadata directory mirrors My Documents ownership, not
   // team-wide private quotes or the old global sales dashboard.
@@ -187,28 +186,28 @@ export function Connections() {
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
     .slice(0, 150), [activities, companiesById, projectsById, needle]);
 
-  const companyTableRows=useMemo<ConnectionTableRow[]>(()=>companyRows.map(c=>({
+  const companyTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='companies'?companyRows.map(c=>({
     id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
     values:{name:c.name,type:c.kind==='customer'?'Customer / prospect':'Partner / other',
       people:String(counts.peopleByCompany.get(c.id)??0),
       deals:String(counts.dealsByCompany.get(c.id)??0),
       quotes:String(counts.quotesByCompany.get(c.id)??0),
       created:timeLabel(c.createdAt),updated:timeLabel(c.updatedAt)},
-    sortValues:{created:c.createdAt,updated:c.updatedAt}})),[companyRows,counts]);
-  const peopleTableRows=useMemo<ConnectionTableRow[]>(()=>peopleRows.map(c=>({
+    sortValues:{created:c.createdAt,updated:c.updatedAt}})):[],[tab,companyRows,counts]);
+  const peopleTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='people'?peopleRows.map(c=>({
     id:c.id,name:c.name||c.email||'Unnamed person',
     association:{type:'contact',id:c.id,label:'Person · '+(c.name||c.email||'Unnamed')},
     values:{name:c.name||c.email||'Unnamed person',company:companiesById.get(c.companyId??'')?.name??'',
       title:c.title??'',email:c.email??'',phone:c.phone??'',updated:timeLabel(c.updatedAt)},
-    sortValues:{updated:c.updatedAt}})),[peopleRows,companiesById]);
-  const dealTableRows=useMemo<ConnectionTableRow[]>(()=>projectRows.map(d=>({
+    sortValues:{updated:c.updatedAt}})):[],[tab,peopleRows,companiesById]);
+  const dealTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='deals'?projectRows.map(d=>({
     id:d.id,name:d.name,association:{type:'project',id:d.id,label:'Deal · '+d.name},
     values:{name:d.name,company:d.companyName??companiesById.get(d.companyId??'')?.name??'',
       pipeline:dealPipelineLabel(d.pipeline),stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
       next:d.nextAction??'',updated:timeLabel(d.updatedAt)},
-    sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}})),[projectRows,companiesById]);
-  const quoteTableRows=useMemo<ConnectionTableRow[]>(()=>quoteRows.map(q=>{
-    const total=quoteTotals.get(q.id)??0;
+    sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}})):[],[tab,projectRows,companiesById]);
+  const quoteTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='quotes'?quoteRows.map(q=>{
+    const total=quoteTotal(q);
     return {
     id:q.id,name:q.title||'Untitled document',
     association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
@@ -218,7 +217,7 @@ export function Connections() {
       status:q.status+(q.archivedAt?' · Archived':''),
       value:money.format(total),updated:timeLabel(q.updatedAt)},
     sortValues:{value:total,updated:q.updatedAt}};
-  }),[quoteRows,projectsById,quoteTotals]);
+  }):[],[tab,quoteRows,projectsById]);
   const bulkTask=(items:ConnectionTableRow[])=>{
     beginTaskPromotion({target:'task',title:'Follow up: '+items.length+' '+tab,
       sourceLabel:'Connections selection',associations:items.flatMap(x=>x.association?[x.association]:[])});
