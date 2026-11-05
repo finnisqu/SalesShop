@@ -49,6 +49,8 @@ let authListenerStarted = false;
 let inviteAcceptance: Promise<string> | null = null;
 let activeSessionApplication: Promise<void> | null = null;
 let activeSessionUserId: string | null = null;
+// Every real identity transition invalidates earlier async workspace loads.
+let sessionApplyEpoch=0;
 const JOIN_WELCOME_KEY = 'salesshop-joined-team-welcome-v1';
 
 function readJoinWelcome(userId: string, organizationId: string): JoinWelcome | null {
@@ -137,6 +139,8 @@ async function applySession(session: Session | null, eventName='GET_SESSION'): P
 }
 
 async function performSessionApplication(session: Session | null) {
+  const epoch=++sessionApplyEpoch;
+  const isCurrent=()=>epoch===sessionApplyEpoch;
   stopCloudSync();
 
   if (!session) {
@@ -164,6 +168,7 @@ async function performSessionApplication(session: Session | null) {
     // selection, creation, local hydration, or cloud sync.
     if (!supabase) throw new Error('Cloud is unavailable.');
     const { data: isDeveloper, error: developerError } = await timeStartupStep('developer-check',()=>supabase!.rpc('is_platform_developer'));
+    if(!isCurrent())return;
     if (developerError) throw developerError;
     if (isDeveloper === true) {
       clearCloudIdentityCache();
@@ -179,6 +184,7 @@ async function performSessionApplication(session: Session | null) {
     }
     const inviteToken = pendingTeamInviteToken();
     const invitePreview = inviteToken ? await previewTeamInvite(inviteToken) : null;
+    if(!isCurrent())return;
     if (inviteToken) {
       const decision = inviteAccountDecision(invitePreview, true);
       if (decision !== 'continue') {
@@ -192,7 +198,9 @@ async function performSessionApplication(session: Session | null) {
     // Join the invited organization BEFORE workspace bootstrap or data hydration.
     // Otherwise an invited account could seed and switch to an unrelated shop.
     const acceptedOrganizationId = await acceptPendingInvitation();
+    if(!isCurrent())return;
     const organizationId = await timeStartupStep('workspace',ensureCurrentWorkspace);
+    if(!isCurrent())return;
     if (acceptedOrganizationId && acceptedOrganizationId !== organizationId) {
       throw new Error('Invitation joined a different workspace than the one selected.');
     }
@@ -202,6 +210,7 @@ async function performSessionApplication(session: Session | null) {
     useAuthStore.setState({loadingStep:'Checking team membership…'});
     const { data: membership, error: memberError } = await timeStartupStep('membership',()=>supabase!.from('organization_members')
       .select('role,job_function').eq('organization_id', organizationId).eq('user_id', session.user.id).single());
+    if(!isCurrent())return;
     if (memberError || !membership) throw memberError ?? new Error('No team access found.');
     useAuthStore.setState({loadingStep:'Loading sales records…'});
     await hydrateCloudDocuments(organizationId, session.user.id, {
@@ -209,14 +218,19 @@ async function performSessionApplication(session: Session | null) {
       allowNotebookSeed: !acceptedOrganizationId,
       // Viewers can hydrate team CRM, but never replay pending local edits.
       allowCrmRecovery: membership.role !== 'viewer',
+      isCurrent,
     });
+    if(!isCurrent())return;
     let lastCloudSyncError:string|null=null;
     startCloudSync(organizationId, session.user.id, (error) => {
+      if(!isCurrent())return;
       lastCloudSyncError=`Cloud sync: ${error}`;
       useAuthStore.setState({error:lastCloudSyncError});
     }, {
       readOnlyShared: membership.role === 'viewer',
+      isActive:isCurrent,
       onRecovered:()=>{
+        if(!isCurrent())return;
         const current=useAuthStore.getState();
         if(lastCloudSyncError&&current.organizationId===organizationId&&current.error===lastCloudSyncError)
           useAuthStore.setState({error:null});
@@ -242,6 +256,7 @@ async function performSessionApplication(session: Session | null) {
       activeInvitePreview: null,
     });
   } catch (error) {
+    if(!isCurrent())return;
     if (/This account has left its previous workspace|Developer accounts cannot create or enter customer workspaces/i.test(messageFrom(error))) {
       clearCloudIdentityCache();
     }

@@ -122,8 +122,21 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   allowCompanySeed?: boolean;
   allowNotebookSeed?: boolean;
   allowCrmRecovery?: boolean;
+  isCurrent?: () => boolean;
 } = {}) {
   if (!supabase) return;
+  const assertCurrent=()=>{
+    if(options.isCurrent?.()===false)
+      throw new Error('Workspace changed while loading cloud records.');
+  };
+  const writeHydrated=(key:CloudDocumentKey,value:unknown)=>{
+    assertCurrent();
+    writeLocalDocument(key,value,false);
+  };
+  const removeHydrated=(key:CloudDocumentKey)=>{
+    assertCurrent();
+    removeLocalDocument(key);
+  };
 
   const previousScope = readCacheScope();
   // A previously hydrated cloud cache is never an authoritative company seed.
@@ -145,6 +158,7 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
       .select('document').eq('owner_id',userId)
       .eq('document_key',PRIVATE_DOCUMENT_KEY).maybeSingle()),
   ]);
+  assertCurrent();
   // The existing local cache is not authoritative: recover only rows recorded
   // by a same-user/same-org write-ahead marker, and only if newer than cloud.
   // Viewers and identity switches must never replay writable CRM data.
@@ -153,15 +167,16 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
     ?readPendingCrmSync({organizationId:orgId,userId}):null;
   const recoveredCrm=mergePendingCrmChanges(normalizedCrm,localCrm,pendingCrm);
   if (recoveredCrm) {
-    writeLocalDocument(CRM_DOCUMENT_KEY, recoveredCrm, false);
+    writeHydrated(CRM_DOCUMENT_KEY, recoveredCrm, false);
   } else if (canSeedOrgFromLocal) {
     if (localCrm?.schemaVersion === 3) {
+      assertCurrent();
       await syncNormalizedCrm(orgId, localCrm);
     } else {
-      writeLocalDocument(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
+      writeHydrated(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
     }
   } else {
-    writeLocalDocument(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
+    writeHydrated(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
   }
 
   // Quotes use normalized current rows + immutable revision snapshots.
@@ -171,38 +186,41 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   // quotes, even if the server has newer versions.
   const recoveredQuotes=mergePendingQuoteDrafts(normalizedQuotes,localQuotes,pendingQuoteSync);
   if (recoveredQuotes) {
-    writeLocalDocument(QUOTES_DOCUMENT_KEY,recoveredQuotes,false);
+    writeHydrated(QUOTES_DOCUMENT_KEY,recoveredQuotes,false);
   } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2 &&
     localQuotes.quotes.length > 0 && localQuotes.quotes.every(quote=>quote.ownerUserId===userId)) {
+    assertCurrent();
     await syncNormalizedQuotes(orgId, localQuotes);
     const seededQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
-    writeLocalDocument(QUOTES_DOCUMENT_KEY, seededQuotes ?? localQuotes, false);
+    writeHydrated(QUOTES_DOCUMENT_KEY, seededQuotes ?? localQuotes, false);
   } else {
     // Collaborators never seed a company with their own local/demo data.
     // Only a workspace owner initializing a new shop creates the starter quote.
     if (canSeedOrgFromLocal) {
       const starter = starterQuoteDocument(userId);
+      assertCurrent();
       await syncNormalizedQuotes(orgId, starter);
-      writeLocalDocument(QUOTES_DOCUMENT_KEY, starter, false);
+      writeHydrated(QUOTES_DOCUMENT_KEY, starter, false);
     } else {
-      writeLocalDocument(QUOTES_DOCUMENT_KEY, { schemaVersion: 2, activeQuoteId: null, quotes: [] }, false);
+      writeHydrated(QUOTES_DOCUMENT_KEY, { schemaVersion: 2, activeQuoteId: null, quotes: [] }, false);
     }
   }
 
   // Signatures are immutable business records. Existing cloud records always win.
   if (normalizedSignatures) {
-    writeLocalDocument(SIGNATURES_DOCUMENT_KEY, normalizedSignatures, false);
+    writeHydrated(SIGNATURES_DOCUMENT_KEY, normalizedSignatures, false);
   } else if (canSeedOrgFromLocal) {
     const localSignatures = readLocalDocument(SIGNATURES_DOCUMENT_KEY) as SignatureDocument | null;
     if (localSignatures?.schemaVersion === 1) {
+      assertCurrent();
       await syncNormalizedSignatures(orgId, localSignatures);
       const seededSignatures = await loadNormalizedSignatures(orgId);
-      writeLocalDocument(SIGNATURES_DOCUMENT_KEY, seededSignatures ?? emptySignatureDocument(), false);
+      writeHydrated(SIGNATURES_DOCUMENT_KEY, seededSignatures ?? emptySignatureDocument(), false);
     } else {
-      writeLocalDocument(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument(), false);
+      writeHydrated(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument(), false);
     }
   } else {
-    writeLocalDocument(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument(), false);
+    writeHydrated(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument(), false);
   }
 
   // Notebook remains intentionally private and document-shaped.
@@ -210,14 +228,15 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   if (notebookError) throw notebookError;
 
   if (notebookRow?.document !== undefined) {
-    writeLocalDocument(PRIVATE_DOCUMENT_KEY, notebookRow.document, false);
+    writeHydrated(PRIVATE_DOCUMENT_KEY, notebookRow.document, false);
   } else if (canSeedNotebookFromLocal) {
     const localNotebook = readLocalDocument(PRIVATE_DOCUMENT_KEY);
-    if (localNotebook !== null) await upsertPrivateDocument(userId, localNotebook);
+    if (localNotebook !== null){assertCurrent();await upsertPrivateDocument(userId, localNotebook);}
   } else {
-    removeLocalDocument(PRIVATE_DOCUMENT_KEY);
+    removeHydrated(PRIVATE_DOCUMENT_KEY);
   }
 
+  assertCurrent();
   writeCacheScope({ userId, organizationId: orgId });
 }
 

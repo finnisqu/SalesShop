@@ -138,7 +138,8 @@ describe('CRM interrupted-save recovery',()=>{
   expect(sync).toContain("document.addEventListener('visibilitychange',retryWhenVisible)");
   expect(sync).toContain("window.removeEventListener('online',retryFailed)");
   expect(sync).toContain("document.removeEventListener('visibilitychange',retryWhenVisible)");
-  expect(sync).toContain('if(disposed||options.readOnlyShared)return');
+  expect(sync).toContain('if(!active())return');
+  expect(sync).toContain('if(!options.readOnlyShared&&retryableFailures.has(CRM_DOCUMENT_KEY)');
   expect(sync).toContain('if(Date.now()-lastRecoveryRetry<15000)return');
   expect(sync).toContain('retryableFailures.has(CRM_DOCUMENT_KEY)&&readPendingCrmSync(scope)');
   expect(sync).toContain('retryableFailures.has(QUOTES_DOCUMENT_KEY)&&readPendingQuoteSync(scope)');
