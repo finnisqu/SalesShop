@@ -12,7 +12,7 @@ import { useNavigationStore } from '../store/navigationStore';
 import {DealAssigneeSelect,useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 
-const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const displayDate = (value?: string) => {
   if (!value) return 'Not set';
   const date = new Date(value.includes('T') ? value : value + 'T12:00:00');
