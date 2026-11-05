@@ -1,6 +1,7 @@
 import {useMemo,useState,type FormEvent} from 'react';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {RecordFormFeedback} from './RecordFormFeedback';
+import {PreviewPanelClose} from './PreviewPanelChrome';
 import {createPortal} from 'react-dom';
 import {DEAL_PIPELINES,PROJECT_STAGES,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
 import {useDealAssigneeDirectory} from '../services/dealAssignees';
@@ -94,7 +95,7 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
    className="connections-bulk-dialog">
    <header className="connections-bulk-heading">
     <h2 id="connections-bulk-title">Bulk edit {count} {count===1?'record':'records'}</h2>
-    <button type="button" aria-label="Close bulk editor" disabled={saving} onClick={onClose}>×</button>
+    <PreviewPanelClose onClose={onClose} label="Close bulk editor" disabled={saving} initialFocus={false}/>
    </header>
    <form onSubmit={event=>void submit(event)}>
     <label className="connections-bulk-field">

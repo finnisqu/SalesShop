@@ -5,6 +5,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
+import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
 import type {StockMaterial} from '../types/settings';
 import '../catalog-tags-workspace.css';
 
@@ -132,9 +133,9 @@ export function CatalogTagsWorkspace({externalQuery}:{externalQuery?:string}={})
   }}>
    <aside className="catalog-tags-drawer" role="dialog" aria-modal="true"
     aria-label={selected?'Tag '+selected:'Create tag'}>
-    <header><div><small>CATALOG · TAG PREVIEW</small><h2>{selected||'New tag'}</h2>
-     <p>{selectedInfo?.materials??0} materials · {selectedInfo?.variants??0} variants</p></div>
-     <button type="button" onClick={close} aria-label="Close tag preview">×</button>
+    <header><PreviewPanelHeading eyebrow="CATALOG · TAG PREVIEW" title={selected||'New tag'}
+     detail={<>{selectedInfo?.materials??0} materials · {selectedInfo?.variants??0} variants</>}/>
+     <PreviewPanelClose onClose={close} label="Close tag preview"/>
     </header>
     <form onSubmit={save}>
      <section className="catalog-tags-form">

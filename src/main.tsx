@@ -153,6 +153,8 @@ import './workspace-control-parity.css';
 import './workspace-surface-parity.css';
 // Shared workbook header/empty-row/pagination styling across directory views.
 import './workspace-table-polish.css';
+// Shared desktop drawer/preview/bulk-dialog chrome (portals included).
+import './workspace-overlay-parity.css';
 
 recordSalesShopBoot();
 

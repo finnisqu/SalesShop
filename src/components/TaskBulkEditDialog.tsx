@@ -1,6 +1,7 @@
 import {useState,type FormEvent} from 'react';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {RecordFormFeedback} from './RecordFormFeedback';
+import {PreviewPanelClose} from './PreviewPanelChrome';
 import {createPortal} from 'react-dom';
 import type {TaskChanges,TaskPriority,TaskStatus,TaskType} from '../store/personalTaskStore';
 import '../connections-bulk-edit.css';
@@ -48,7 +49,7 @@ export function TaskBulkEditDialog({count,onApply,onClose}:{
  }}>
  <section ref={dialogRef} role="dialog" aria-modal="true" aria-label={'Bulk edit '+count+' tasks'} className="connections-bulk-dialog">
   <header className="connections-bulk-heading"><h2>Bulk edit {count} {count===1?'task':'tasks'}</h2>
-   <button type="button" onClick={onClose} aria-label="Close task bulk editor" disabled={saving}>×</button>
+   <PreviewPanelClose onClose={onClose} label="Close task bulk editor" disabled={saving} initialFocus={false}/>
   </header>
   <form onSubmit={event=>void apply(event)}>
    <label className="connections-bulk-field"><span>Property to update</span>
