@@ -1,0 +1,185 @@
+/* SalesShop workspace surface system — Batch 1.
+   Desktop chrome only. Quote editors, Board stages/cards, Notebook paper,
+   phone layouts, record forms, and customer-facing documents are excluded.
+   Shared tokens are deliberately local to the application, theme-aware, and
+   reusable by later workspace components instead of adding magic numbers. */
+@media (min-width:821px) {
+  :root[data-sales-theme] .sales-app {
+    --ss-workspace-stage-gap:12px;
+    --ss-workspace-content-top:14px;
+    --ss-workspace-content-bottom:28px;
+    --ss-workspace-content-edge:18px;
+    --ss-workspace-surface-radius:10px;
+    --ss-workspace-surface-border:1px solid var(--ss-theme-border);
+    --ss-workspace-surface-shadow:none;
+  }
+
+  /* Only the body scrolls. Do not add gutters/padding to the six headers. */
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content,
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content {
+    gap:var(--ss-workspace-stage-gap);
+    padding-top:var(--ss-workspace-content-top);
+    padding-bottom:var(--ss-workspace-content-bottom);
+    background:var(--ss-theme-canvas);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content > :is(
+    .connections-history-heading,.connections-directory-toolbar,
+    .connections-directory,.connections-notice,.connections-footer
+  ) {
+    box-sizing:border-box;
+    width:calc(100% - 2 * var(--ss-workspace-content-edge));
+    max-width:var(--ss-workspace-width,1360px);
+    min-width:0;
+    padding-inline:0;
+    margin-inline:auto;
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content > :is(
+    .tasks-save-feedback,.tasks-directory-controls,.tasks-summary,
+    .tasks-tools,.tasks-list,.tasks-table-container,.tasks-footer,
+    .tasks-filter-help,.tasks-state
+  ) {
+    box-sizing:border-box;
+    width:calc(100% - 2 * var(--ss-workspace-content-edge));
+    max-width:var(--ss-workspace-width,1360px);
+    min-width:0;
+    margin-inline:auto;
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content
+    > .tasks-directory-controls {
+    padding-top:0;
+    margin-bottom:0;
+    gap:var(--ss-workspace-stage-gap);
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content
+    > .tasks-table-container {
+    margin-top:0;
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .qmb
+    .qmb-desktop-frame.is-library > .qmb-desktop-main > .qmb-pagecontent {
+    padding-top:var(--ss-workspace-content-top);
+    padding-bottom:var(--ss-workspace-content-bottom);
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .qmb
+    .qmb-library-measure {
+    width:calc(100% - 2 * var(--ss-workspace-content-edge));
+    max-width:var(--ss-workspace-width,1360px);
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .qmb
+    .qmb-library-directory-controls {
+    gap:var(--ss-workspace-stage-gap);
+    margin-bottom:0;
+  }
+  /* Board's canvas/stages are deliberately distinctive; normalize only
+     their outer inset to the other workspaces. */
+  :root[data-sales-theme] .sales-app.view-board
+    :is(.project-board,.account-board) {
+    padding-top:var(--ss-workspace-content-top);
+    padding-inline:var(--ss-workspace-content-edge);
+  }
+
+  /* Catalog's embedded pages already have a global header. The large
+     duplicated Materials/Rates/Sinks title card is only an action strip.
+     Do not hide the buttons, import launcher, save state, or edit mode. */
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    > :is(.rates-workspace.is-catalog-embedded,.sinks-workspace.is-catalog-embedded) {
+    padding-top:var(--ss-workspace-content-top);
+    padding-bottom:var(--ss-workspace-content-bottom);
+    background:var(--ss-theme-canvas);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    > :is(.rates-workspace.is-catalog-embedded,.sinks-workspace.is-catalog-embedded)
+    > :is(.rates-workspace-header,.sinks-workspace-header) {
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+    width:100%;
+    max-width:var(--ss-workspace-width,1360px);
+    min-height:40px;
+    height:auto;
+    gap:8px;
+    padding:0;
+    margin:0 auto 10px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    > :is(.rates-workspace.is-catalog-embedded,.sinks-workspace.is-catalog-embedded)
+    > :is(.rates-workspace-header,.sinks-workspace-header)
+    > :is(.ss-page-header__intro,div:first-child:not(.rates-mode-actions):not(.sinks-header-actions)) {
+    display:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    :is(.rates-workspace,.sinks-workspace).is-catalog-embedded
+    > .rates-reference-controls.rates-shared-controls,
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    .materials-workspace.is-catalog-embedded > .materials-controls.rates-shared-controls,
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    .sinks-workspace.is-catalog-embedded > .sinks-shared-controls {
+    box-sizing:border-box;
+    width:100%;
+    max-width:var(--ss-workspace-width,1360px);
+    min-height:0;
+    margin:0 auto 10px;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    :is(.rates-workspace,.sinks-workspace).is-catalog-embedded
+    > .rates-reference-controls.rates-shared-controls {
+    align-items:center;
+  }
+  /* The structural panel around Catalog tables should have the same neutral
+     border, 10px radius, and no extra shadow as shared CRM workbooks. */
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    :is(.rates-reference-card,.sinks-catalog-shell) {
+    box-sizing:border-box;
+    max-width:var(--ss-workspace-width,1360px);
+    border:var(--ss-workspace-surface-border);
+    border-radius:var(--ss-workspace-surface-radius);
+    background:var(--ss-theme-card);
+    box-shadow:var(--ss-workspace-surface-shadow);
+    color:var(--ss-theme-ink);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    .rates-reference-card > header {
+    background:var(--ss-theme-base);
+    border-bottom:1px solid var(--ss-theme-border);
+    border-radius:9px 9px 0 0;
+    color:var(--ss-theme-ink);
+    gap:12px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    .rates-reference-card > header :is(strong,h2) {
+    color:var(--ss-theme-ink);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    .rates-reference-card > header :is(span,small) {
+    color:var(--ss-theme-muted);
+  }
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-table-scroll,
+  :root[data-sales-theme] .sales-app.view-tasks .connections-table-scroll,
+  :root[data-sales-theme] .sales-app.view-quotes .qmb-documents-table .connections-table-scroll {
+    border:var(--ss-workspace-surface-border);
+    border-radius:var(--ss-workspace-surface-radius);
+    background:var(--ss-theme-card);
+    box-shadow:var(--ss-workspace-surface-shadow);
+  }
+  /* Single card for each directory toolbar. The surrounding selection
+     containers should not accidentally add a second border/shadow. */
+  :root[data-sales-theme] .sales-app :is(
+    .connections-grid-toolbar,.tasks-toolbar-slot > .connections-grid-toolbar,
+    .qmb-library-toolbar-slot > .connections-grid-toolbar
+  ) {
+    border:var(--ss-workspace-surface-border);
+    border-radius:var(--ss-workspace-surface-radius);
+    background:var(--ss-theme-card);
+    box-shadow:var(--ss-workspace-surface-shadow);
+  }
+}

@@ -149,6 +149,8 @@ import './desktop-record-form-consistency.css';
 import './workspace-scroll-shell-parity.css';
 // One desktop control size system for headers, workbooks, and catalog toolbars.
 import './workspace-control-parity.css';
+// Shared visual surfaces, spacing rhythm, and nested Catalog strip cleanup.
+import './workspace-surface-parity.css';
 
 recordSalesShopBoot();
 
