@@ -11,6 +11,8 @@ import {
 import type { CrmDocument } from '../types/crm';
 import type { QuoteDocument } from '../types/quote';
 import type { SignatureDocument } from '../types/signature';
+import type {NotebookDocument} from '../types/notebook';
+import {markPendingNotebookSync,readPendingNotebookSync,clearPendingNotebookSync,mergePendingNotebookChanges} from './notebookCloudRecovery';
 import { loadNormalizedCrm, syncNormalizedCrm } from './normalizedCrmSync';
 import { loadNormalizedQuotes, syncNormalizedQuotes } from './normalizedQuoteSync';
 import {markPendingQuoteSync,clearPendingQuoteSync,readPendingQuoteSync,mergePendingQuoteDrafts} from './quoteCloudRecovery';
@@ -227,7 +229,14 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   const { data: notebookRow, error: notebookError } = notebookResult;
   if (notebookError) throw notebookError;
 
-  if (notebookRow?.document !== undefined) {
+  // Recover only marked, newer pages from the same user's same-org cache.
+  // An unrelated or older cloud page is never overwritten by this merge.
+  const pendingNotebook=ownCache?readPendingNotebookSync({organizationId:orgId,userId}):null;
+  const recoveredNotebook=mergePendingNotebookChanges(notebookRow?.document,
+    readLocalDocument(PRIVATE_DOCUMENT_KEY),pendingNotebook);
+  if (recoveredNotebook) {
+    writeHydrated(PRIVATE_DOCUMENT_KEY,recoveredNotebook);
+  } else if (notebookRow?.document !== undefined) {
     writeHydrated(PRIVATE_DOCUMENT_KEY, notebookRow.document);
   } else if (canSeedNotebookFromLocal) {
     const localNotebook = readLocalDocument(PRIVATE_DOCUMENT_KEY);
@@ -255,6 +264,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   const scheduledRevision=new Map<CloudDocumentKey,number>();
   let lastRecoveryRetry=0;
   let baselineCrm=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
+  let baselineNotebook=readLocalDocument(PRIVATE_DOCUMENT_KEY) as NotebookDocument|null;
   const setQuoteSaveStatus=useQuoteCloudStatusStore.getState().setStatus;
   setQuoteSaveStatus(readPendingQuoteSync(scope)?'pending':'saved');
   const schedule=(key:CloudDocumentKey,document:unknown)=>{
@@ -265,7 +275,8 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     // Local quote data already exists; persist an identity-scoped marker
     // BEFORE the debounce, so a refresh cannot silently erase a draft.
     const token=key===QUOTES_DOCUMENT_KEY?markPendingQuoteSync(scope,document)
-      :key===CRM_DOCUMENT_KEY?markPendingCrmSync(scope,document,baselineCrm):null;
+      :key===CRM_DOCUMENT_KEY?markPendingCrmSync(scope,document,baselineCrm)
+      :key===PRIVATE_DOCUMENT_KEY?markPendingNotebookSync(scope,document,baselineNotebook):null;
     if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('pending');
     const delay=key==='notebook'?1200:500;
     const timer=window.setTimeout(()=>{
@@ -289,16 +300,19 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
         if(!active())return;
         if(key===CRM_DOCUMENT_KEY&&token)clearPendingCrmSync(scope,token);
         if(key===QUOTES_DOCUMENT_KEY&&token)clearPendingQuoteSync(scope,token);
+        if(key===PRIVATE_DOCUMENT_KEY&&token)clearPendingNotebookSync(scope,token);
         // A later edit superseded this response: only the latest generation
         // may change save banners, failure states or the sync baseline.
         if(scheduledRevision.get(key)!==revision)return;
         const recoveredFailure=retryableFailures.delete(key);
         if(key===CRM_DOCUMENT_KEY&&!readPendingCrmSync(scope))
           baselineCrm=document as CrmDocument;
+        if(key===PRIVATE_DOCUMENT_KEY&&!readPendingNotebookSync(scope))
+          baselineNotebook=document as NotebookDocument;
         if(key===QUOTES_DOCUMENT_KEY&&token&&!readPendingQuoteSync(scope))
           setQuoteSaveStatus('saved');
         if(recoveredFailure&&!retryableFailures.size&&
-          !readPendingCrmSync(scope)&&!readPendingQuoteSync(scope))
+          !readPendingCrmSync(scope)&&!readPendingQuoteSync(scope)&&!readPendingNotebookSync(scope))
           options.onRecovered?.();
       }).catch((error:unknown)=>{
         if(!active()||scheduledRevision.get(key)!==revision)return;
@@ -368,6 +382,12 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   if(!options.readOnlyShared&&readPendingCrmSync(scope)){
     const restored=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
     if(restored?.schemaVersion===3)schedule(CRM_DOCUMENT_KEY,restored);
+  }
+  // Notebook is private even for Viewers; recover interrupted pages only
+  // after identity-scoped cloud hydration has safely merged their revisions.
+  if(readPendingNotebookSync(scope)){
+    const restored=readLocalDocument(PRIVATE_DOCUMENT_KEY) as NotebookDocument|null;
+    if(restored?.schemaVersion===3)schedule(PRIVATE_DOCUMENT_KEY,restored);
   }
 }
 

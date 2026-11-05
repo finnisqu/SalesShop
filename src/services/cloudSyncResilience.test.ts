@@ -17,9 +17,11 @@ describe('Cloud sync reconnect and stale-session safety contract',()=>{
     expect(cloud).toContain('if(!options.readOnlyShared&&retryableFailures.has(QUOTES_DOCUMENT_KEY)');
     expect(cloud).toContain('if(!options.readOnlyShared&&retryableFailures.has(SIGNATURES_DOCUMENT_KEY))');
   });
-  it('only replays CRM and Quotes after restart with scoped pending markers',()=>{
+  it('replays CRM, Quotes and private Notebook only with scoped recovery markers',()=>{
     expect(cloud).toContain('if(!options.readOnlyShared&&readPendingQuoteSync(scope))');
     expect(cloud).toContain('if(!options.readOnlyShared&&readPendingCrmSync(scope))');
+    expect(cloud).toContain('if(readPendingNotebookSync(scope))');
+    expect(cloud).toContain('mergePendingNotebookChanges(notebookRow?.document,');
     expect(cloud).toContain('window.addEventListener(\'online\',retryFailed)');
     expect(cloud).toContain('document.addEventListener(\'visibilitychange\',retryWhenVisible)');
   });
