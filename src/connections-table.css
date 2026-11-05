@@ -21,7 +21,7 @@
 .connections-data-table .connections-check-cell,.connections-data-table .connections-pin-cell{width:43px;max-width:43px;min-width:43px;text-align:center;padding:5px;}
 .connections-data-table input[type=checkbox]{width:16px;height:16px;accent-color:var(--ss-theme-accent);}
 .connections-data-table .connections-pin-cell button{border:0;background:transparent;color:var(--ss-theme-muted);font-size:19px;min-height:30px;min-width:30px;}
-.connections-data-table .connections-pin-cell button[aria-pressed=true]{color:#af801e;}
+.connections-data-table .connections-pin-cell button[aria-pressed=true]{color:var(--ss-theme-accent);}
 .connections-table-open{background:transparent;border:0;color:var(--ss-theme-accent);font-weight:800;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
 .connections-grid-pagination{display:flex;align-items:center;justify-content:center;gap:12px;padding:5px;font-size:11px;color:var(--ss-theme-muted);}
 .connections-grid-pagination button{padding:6px 9px;min-height:32px;border:1px solid var(--ss-theme-border);border-radius:7px;background:var(--ss-theme-card);color:var(--ss-theme-ink);}
@@ -56,6 +56,49 @@
 }
 .connections-grid-toolbar>.connections-bulk-edit-action:focus-visible{
  outline:2px solid var(--ss-focus);outline-offset:2px;
+}
+
+/* Shared table interactions: controls should react the same way in
+   Connections, Tasks, Quotes and Catalog Tags without changing row density,
+   data sorting, pinned comparison contents or selection logic. */
+:root[data-sales-theme] .sales-app .connections-data-table .connections-pin-cell button {
+ display:inline-grid;place-items:center;
+ border-radius:7px;cursor:pointer;
+}
+:root[data-sales-theme] .sales-app .connections-data-table .connections-pin-cell button .ss-chrome-icon{
+ width:16px;height:16px;flex-basis:16px;
+}
+:root[data-sales-theme] .sales-app .connections-data-table .connections-pin-cell button:is(:hover,:focus-visible){
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app .connections-data-table .connections-pin-cell button:focus-visible,
+:root[data-sales-theme] .sales-app .connections-column-choice button:focus-visible,
+:root[data-sales-theme] .sales-app .connections-grid-pagination button:focus-visible,
+:root[data-sales-theme] .sales-app .connections-grid-toolbar > button:focus-visible,
+:root[data-sales-theme] .sales-app .connections-columns-menu > summary:focus-visible{
+ outline:2px solid var(--ss-focus,var(--ss-theme-accent));
+ outline-offset:2px;
+}
+:root[data-sales-theme] .sales-app .connections-grid-toolbar > button:not(.connections-bulk-edit-action):hover:not(:disabled),
+:root[data-sales-theme] .sales-app .connections-columns-menu > summary:hover,
+:root[data-sales-theme] .sales-app .connections-column-choice button:hover:not(:disabled),
+:root[data-sales-theme] .sales-app .connections-grid-pagination button:hover:not(:disabled){
+ background:var(--ss-theme-tint);
+ border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app :is(
+ .connections-grid-toolbar > button,
+ .connections-column-choice button,
+ .connections-grid-pagination button,
+ .connections-row-actions button,
+ .connections-row-actions select
+ ):disabled{
+ opacity:.48;
+ cursor:not-allowed;
+}
+:root[data-sales-theme] .sales-app .connections-data-table .connections-table-open:hover:not(:disabled){
+ text-decoration:underline;
+ text-underline-offset:2px;
 }
 
 /* The phone directory keeps its normal cards until selection mode is opened.

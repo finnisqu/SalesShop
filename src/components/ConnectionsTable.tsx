@@ -196,7 +196,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
              [...new Set([...old,row.id])]:old.filter(id=>id!==row.id))}/></td>
          <td className="connections-pin-cell"><button type="button" aria-pressed={pinned.includes(row.id)}
            aria-label={(pinned.includes(row.id)?'Unpin ':'Pin ')+row.name}
-           onClick={()=>togglePin(row.id)}>{pinned.includes(row.id)?'★':'☆'}</button></td>
+           onClick={()=>togglePin(row.id)} title={(pinned.includes(row.id)?'Unpin ':'Pin ')+row.name}><WorkspaceChromeIcon name="pin"/></button></td>
          {visible.map(col=><td key={col.key}>
            {col.key==='name'?<button type="button" className="connections-table-open" onClick={()=>onOpen(row.id)}>{row.name}</button>
              :tableKey==='tasks'&&col.key==='priority'?<span className={'tasks-priority is-'+(row.values.priority||'normal')}>
