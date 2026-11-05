@@ -4,7 +4,7 @@ import type {QuoteAuditReport} from './quoteDraftAudit';
 import {isGeneralTakeoffSection} from './quoteCustomerPresentation';
 import {quotePricingOverview} from './quotePricingOverview';
 
-const section=(id:string):QuoteSection=>({id,title:id});
+const section=(id:string):QuoteSection=>({id,title:id,customerVisible:true});
 const line=(id:string,sectionId:string|undefined,amount:number):QuoteLine=>({
  id,sectionId,kind:'item',description:id,pricingMode:'direct',amount,
  includeInTotal:true,customerVisible:true,
@@ -20,7 +20,7 @@ const quote=(sections:QuoteSection[],lines:QuoteLine[]):Quote=>({
 const report=(blockers:string[],review:string[]):QuoteAuditReport=>({
  blockers:blockers.map(areaId=>({destination:{view:'area',areaId}})),
  review:review.map(areaId=>({destination:{view:'area',areaId}})),
-}) as QuoteAuditReport;
+}) as unknown as QuoteAuditReport;
 
 describe('Indexed Quick Quote pricing overview',()=>{
  it('preserves exact Area and General totals for mixed linked and orphan lines',()=>{
