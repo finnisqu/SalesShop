@@ -8,10 +8,10 @@
 .rates-add-button {
   min-height: 40px;
   padding: 0 14px;
-  border: 1px solid #aa9b71;
+  border: 1px solid var(--ss-theme-accent);
   border-radius: 5px;
-  background: #f7efd8;
-  color: #3d382f;
+  background: var(--ss-theme-tint);
+  color: var(--ss-theme-ink);
   font-size: 11px;
   font-weight: 850;
   white-space: nowrap;
@@ -47,10 +47,10 @@
   align-items: center;
   justify-content: center;
   padding: 0 12px;
-  border: 1px solid rgba(62, 55, 45, .18);
+  border: 1px solid var(--ss-theme-border);
   border-radius: 5px;
-  background: rgba(255, 253, 247, .86);
-  color: #625c52;
+  background: var(--ss-theme-card);
+  color: var(--ss-theme-muted);
   font-size: 10.5px;
   font-weight: 800;
   list-style: none;
@@ -60,8 +60,8 @@
 
 .rates-filter-menu > summary::-webkit-details-marker { display: none; }
 .rates-filter-menu[open] > summary {
-  background: #fff9e8;
-  box-shadow: inset 0 -2px #c2a541;
+  background: var(--ss-theme-tint);
+  box-shadow: inset 0 -2px var(--ss-theme-accent);
 }
 
 .rates-filter-popover {
@@ -72,9 +72,9 @@
   display: grid;
   gap: 8px;
   padding: 11px;
-  border: 1px solid rgba(61, 54, 45, .18);
+  border: 1px solid var(--ss-theme-border);
   border-radius: 6px;
-  background: #fffdf6;
+  background: var(--ss-theme-card);
   box-shadow: 0 12px 30px rgba(49, 41, 31, .16);
 }
 
@@ -85,7 +85,7 @@
 
 .rates-filter-popover label > span,
 .rates-sort-control > span {
-  color: #7a7367;
+  color: var(--ss-theme-muted);
   font-size: 8px;
   font-weight: 850;
   letter-spacing: .06em;
@@ -97,17 +97,17 @@
 .rates-sort-control select {
   min-height: 36px;
   box-sizing: border-box;
-  border: 1px solid rgba(61, 54, 45, .16);
+  border: 1px solid var(--ss-theme-border);
   border-radius: 4px;
-  background: #fffef9;
-  color: #514b42;
+  background: var(--ss-theme-card);
+  color: var(--ss-theme-ink);
   padding: 0 8px;
   font-size: 10px;
 }
 
 .rates-filter-popover button {
   margin-top: 2px;
-  background: #f4f0e6;
+  background: var(--ss-theme-base);
   font-weight: 800;
 }
 
@@ -127,7 +127,28 @@
 
 .rates-sort-control select {
   min-height: 42px;
-  background: rgba(255, 253, 247, .86);
+  background: var(--ss-theme-card);
+}
+
+/* Rate filters now share the workspace hover, disabled, and focus treatment.
+   Control behavior and all pricing calculations are unchanged. */
+.rates-filter-menu > summary:is(:hover,:focus-visible),
+.rates-filter-menu[open] > summary{
+ background:var(--ss-theme-tint);
+ color:var(--ss-theme-ink);
+ border-color:var(--ss-theme-border);
+}
+.rates-add-button:hover:not(:disabled),
+.rates-filter-popover button:hover:not(:disabled){background:var(--ss-theme-tint)}
+.rates-filter-menu > summary:focus-visible,
+.rates-add-button:focus-visible,
+.rates-filter-popover :is(button,select,input):focus-visible,
+.rates-sort-control select:focus-visible{
+ outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px;
+}
+.rates-add-button:disabled,
+.rates-filter-menu > summary[aria-disabled="true"]{
+ opacity:.5;cursor:not-allowed;
 }
 
 /* The shared workspace category tabs replace the editor's older category strip. */
@@ -241,13 +262,13 @@
   align-items: baseline;
   gap: 10px;
   padding: 10px 12px;
-  border-top: 1px solid rgba(72, 63, 50, .1);
-  background: rgba(246, 239, 216, .72);
+  border-top: 1px solid var(--ss-theme-border);
+  background: var(--ss-theme-base);
 }
 
 .rates-material-pricing-footer strong {
   flex: 0 0 auto;
-  color: #654f27;
+  color: var(--ss-theme-ink);
   font-size: 9px;
   font-weight: 850;
   letter-spacing: .035em;
@@ -255,7 +276,7 @@
 }
 
 .rates-material-pricing-footer span {
-  color: #766b56;
+  color: var(--ss-theme-muted);
   font-size: 9px;
   line-height: 1.4;
 }
