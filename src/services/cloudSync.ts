@@ -334,8 +334,8 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     schedule(detail.key,detail.document);
   };
   window.addEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
-  // Retry only previously failed saves with still-present, scoped recovery
-  // markers. Do not continually resubmit every record on tab focus.
+  // Retry failed saves within the active session, even if metadata storage
+  // was blocked. Reload recovery still requires scoped pending markers.
   const retryFailed=()=>{
     if(!active())return;
     if(Date.now()-lastRecoveryRetry<15000)return;
@@ -354,9 +354,9 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
         schedule(QUOTES_DOCUMENT_KEY,doc);attempted=true;
       }
     }
-    // Unlike shared records, a private Notebook may also be saved by viewers.
-    // These two classes retry only within this still-active session; they do
-    // not replay a stale local cache on a different login or browser reload.
+    // A private Notebook may be saved by viewers. Failed Notebook and
+    // Signature requests can be retried in-session; on reload, Notebook
+    // recovery separately requires an identity-scoped pending marker.
     if(retryableFailures.has(PRIVATE_DOCUMENT_KEY)){
       const doc=readLocalDocument(PRIVATE_DOCUMENT_KEY);
       if(doc!==null){schedule(PRIVATE_DOCUMENT_KEY,doc);attempted=true;}
