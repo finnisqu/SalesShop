@@ -90,8 +90,15 @@ export function MobileAppChrome() {
         :0;
       if(Number.isFinite(height)&&height>200)
         root.style.setProperty('--ss-mobile-visual-height',Math.floor(height)+'px');
-      if(Number.isFinite(hiddenBottom))
+      if(Number.isFinite(hiddenBottom)){
         root.style.setProperty('--ss-mobile-footer-inset',Math.min(180,Math.ceil(hiddenBottom))+'px');
+        root.style.setProperty('--ss-mobile-occluded-bottom',Math.ceil(hiddenBottom)+'px');
+        const active=document.activeElement;
+        const editing=active instanceof HTMLElement&&active.matches(
+          'input:not([type=checkbox]):not([type=radio]),textarea,[contenteditable="true"]');
+        if(hiddenBottom>160&&editing)root.dataset.ssMobileKeyboard='open';
+        else delete root.dataset.ssMobileKeyboard;
+      }
       // Keep modal sheets inside the visible screen when the keyboard opens.
       root.style.setProperty('--ss-mobile-visual-top',Math.max(0,Math.floor(viewport?.offsetTop??0))+'px');
     };
@@ -107,7 +114,9 @@ export function MobileAppChrome() {
       window.removeEventListener('orientationchange',sync);
       root.style.removeProperty('--ss-mobile-visual-height');
       root.style.removeProperty('--ss-mobile-footer-inset');
+      root.style.removeProperty('--ss-mobile-occluded-bottom');
       root.style.removeProperty('--ss-mobile-visual-top');
+      delete root.dataset.ssMobileKeyboard;
     };
   },[]);
   const [open, setOpen] = useState(false);

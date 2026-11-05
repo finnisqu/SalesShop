@@ -619,6 +619,71 @@ export function QuotesMobileBeta() {
   const [approvedDeliveryKey,setApprovedDeliveryKey]=useState<string|null>(null);
   const [reviewedDeliveryKey,setReviewedDeliveryKey]=useState<string|null>(null);
   const quoteScrollRef=useRef<HTMLDivElement>(null);
+  const quoteWorkspaceRef=useRef<HTMLElement>(null);
+  useEffect(()=>{
+    const root=quoteWorkspaceRef.current;
+    if(!isPhoneLayout||!root||page==='library')return;
+    const selector=page==='area'
+      ?'.qmb-area-editor > .qmb-area-footer'
+      :quoteTab==='pricing'
+        ?'.qmb-pricing-footer-slot'
+        :'.qmb-quote-editor > .qmb-quote-footer';
+    const footer=root.querySelector<HTMLElement>(selector);
+    if(!footer)return;
+    const sync=()=>root.style.setProperty('--ss-quote-footer-height',
+      Math.max(62,Math.ceil(footer.getBoundingClientRect().height))+'px');
+    sync();
+    const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(sync):null;
+    observer?.observe(footer);
+    window.addEventListener('resize',sync);
+    return ()=>{
+      observer?.disconnect();window.removeEventListener('resize',sync);
+      root.style.removeProperty('--ss-quote-footer-height');
+    };
+  },[isPhoneLayout,page,quoteTab,areaId,pricingFooterTarget]);
+  useEffect(()=>{
+    if(!isPhoneLayout||page==='library')return;
+    const visual=window.visualViewport;
+    let pending=0;
+    const keepFocusedFieldVisible=()=>{
+      pending=0;
+      if(!visual||window.innerHeight-visual.height-visual.offsetTop<160)return;
+      const active=document.activeElement;
+      if(!(active instanceof HTMLElement)||
+        !active.matches('input:not([type=checkbox]):not([type=radio]),textarea,[contenteditable="true"]'))return;
+      const root=quoteWorkspaceRef.current;
+      const portal=document.querySelector<HTMLElement>('body > .qmb.qmb-quick-area-backdrop');
+      if(!root?.contains(active)&&!portal?.contains(active))return;
+      const bounds=active.getBoundingClientRect();
+      const low=visual.offsetTop+visual.height-18;
+      const high=visual.offsetTop+12;
+      const displacement=bounds.bottom>low?bounds.bottom-low:
+        bounds.top<high?bounds.top-high:0;
+      if(Math.abs(displacement)<2)return;
+      let parent=active.parentElement;
+      while(parent&&parent!==root&&parent!==portal){
+        const style=window.getComputedStyle(parent);
+        if(parent.scrollHeight>parent.clientHeight+2&&
+          (style.overflowY==='auto'||style.overflowY==='scroll'))break;
+        parent=parent.parentElement;
+      }
+      if(parent&&parent!==root&&parent!==portal)
+        parent.scrollBy({top:displacement,behavior:'auto'});
+    };
+    const schedule=()=>{
+      if(pending)cancelAnimationFrame(pending);
+      pending=requestAnimationFrame(keepFocusedFieldVisible);
+    };
+    visual?.addEventListener('resize',schedule);
+    visual?.addEventListener('scroll',schedule);
+    document.addEventListener('focusin',schedule);
+    return ()=>{
+      visual?.removeEventListener('resize',schedule);
+      visual?.removeEventListener('scroll',schedule);
+      document.removeEventListener('focusin',schedule);
+      if(pending)cancelAnimationFrame(pending);
+    };
+  },[isPhoneLayout,page,quoteTab,areaId]);
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
   useEffect(()=>{
@@ -1023,7 +1088,7 @@ export function QuotesMobileBeta() {
       ? <ShopOutcomesWorkspace onShowMine={()=>setLibraryMode('mine')}/>
       : <TeamQuotesWorkspace quotes={quotes} onShowMine={()=>setLibraryMode('mine')}/>}
   </main>;
-  return <main className={"quotes-view qmb"+(reviewOpen?" is-review-expanded":"")} aria-label="Quotes mobile beta">
+  return <main ref={quoteWorkspaceRef} className={"quotes-view qmb"+(reviewOpen?" is-review-expanded":"")} aria-label="Quotes mobile beta">
     <div className={'qmb-desktop-frame'+(page==='library'?' is-library':'')+
       (page!=='library'&&quote?.documentType==='quote'?' is-quick-quote-frame':'')}>
       {quote&&page!=='library'&&<QuoteBetaDesktopRails

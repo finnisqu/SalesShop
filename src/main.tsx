@@ -179,6 +179,8 @@ import './mobile-connections-inline.css';
 import './mobile-quote-selections-efficiency.css';
 // One-tap mobile Quote pricing review navigation and line edit links.
 import './mobile-quote-review-efficiency.css';
+// Keyboard-safe Quick Quote sheets and measured footer scroll clearance.
+import './mobile-quote-viewport-reliability.css';
 
 recordSalesShopBoot();
 
