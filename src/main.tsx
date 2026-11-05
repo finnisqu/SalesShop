@@ -173,6 +173,8 @@ import './mobile-form-sheet-parity.css';
 import './mobile-preview-sheet-parity.css';
 // Mobile task inline priority and today shortcuts.
 import './mobile-task-inline.css';
+// Mobile inline CRM relationship/stage edits and direct record actions.
+import './mobile-connections-inline.css';
 
 recordSalesShopBoot();
 

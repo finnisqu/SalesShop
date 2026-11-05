@@ -23,7 +23,7 @@ import {useAuthStore} from '../store/authStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
-import {DEAL_PIPELINES,dealPipelineLabel,type CompanyKind,type DealPipeline} from '../types/crm';
+import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
 
 type ConnectionsTab = 'companies' | 'people' | 'deals' | 'quotes' | 'activity';
 type CompanyFilter = 'all' | 'customer' | 'non-customer';
@@ -394,12 +394,25 @@ export function Connections() {
                   const peopleCount = contacts.filter((person) => person.companyId === company.id).length;
                   const projectCount = projects.filter((project) => project.companyId === company.id).length;
                   const companyQuotes = quotesForCompany(company, projects, quotes).filter((q) => !q.archivedAt);
-                  return <button type="button" key={company.id} className="connections-record" onClick={() => previewRecord('company',company.id)}>
+                  return <div key={company.id} className="connections-mobile-record-group">
+                    <button type="button" className="connections-record" onClick={() => previewRecord('company',company.id)}>
                     <span className="connections-record-eyebrow">{company.kind === 'non-customer' ? 'Partner / other' : 'Customer / prospect'}</span>
                     <strong>{company.name}</strong>
                     <small>{peopleCount} people · {projectCount} deals · {companyQuotes.length} linked quotes</small>
                     <span className="connections-record-arrow" aria-hidden="true">↗</span>
-                  </button>;
+                  </button>
+<div className="connections-mobile-inline">
+                      {canBulkEdit&&<label>Relationship
+                        <select aria-label={'Relationship for '+company.name} value={company.kind}
+                          onChange={event=>updateCompany(company.id,{kind:event.currentTarget.value as CompanyKind})}>
+                          <option value="customer">Customer / prospect</option>
+                          <option value="non-customer">Partner / other</option>
+                        </select>
+                      </label>}
+                      <button type="button" className="connections-mobile-open-full"
+                        onClick={()=>openCompany(company.id)}>Full record</button>
+                    </div>
+</div>;
                 })}
               </div>
               {!companyRows.length && <StatusText state="empty" className="connections-empty">No companies match. Try another search or relationship type.</StatusText>}
@@ -413,12 +426,19 @@ export function Connections() {
                 rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
-                {peopleRows.map((person) => <button type="button" className="connections-record connections-person-record" key={person.id} onClick={() => previewRecord('person',person.id)}>
+                {peopleRows.map((person) => <div key={person.id} className="connections-mobile-record-group">
+                <button type="button" className="connections-record connections-person-record" onClick={() => previewRecord('person',person.id)}>
                   <span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
                   <strong>{person.name || person.email || 'Unnamed contact'}</strong>
                   <small>{[person.title,person.email,person.phone].filter(Boolean).join(' · ') || 'No contact details'}</small>
                   <span className="connections-record-arrow" aria-hidden="true">↗</span>
-                </button>)}
+                </button>
+                <div className="connections-mobile-inline connections-mobile-contact-actions">
+                  {person.email&&<a href={'mailto:'+person.email} aria-label={'Email '+(person.name||person.email)}>Email</a>}
+                  {person.phone&&<a href={'tel:'+person.phone} aria-label={'Call '+(person.name||person.phone)}>Call</a>}
+                  <button type="button" className="connections-mobile-open-full" onClick={()=>openPerson(person.id)}>Full record</button>
+                </div>
+              </div>)}
               </div>
               {!peopleRows.length && <StatusText state="empty" className="connections-empty">No contacts match. Adjust your search or add a person.</StatusText>}
 
@@ -433,13 +453,25 @@ export function Connections() {
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
                 const linked = quotesForProject(project, quotes).filter((q) => !q.archivedAt);
-                return <button type="button" key={project.id} className="connections-record" onClick={() => previewRecord('deal',project.id)}>
+                return <div key={project.id} className="connections-mobile-record-group">
+                  <button type="button" className="connections-record" onClick={() => previewRecord('deal',project.id)}>
                   <span className="connections-record-eyebrow">{dealPipelineLabel(project.pipeline)} · {project.stage}</span>
                   <strong>{project.name}</strong>
                   <small>{[project.companyName,project.dueDate ? `Due ${timeLabel(project.dueDate)}` : undefined,`${linked.length} linked quotes`].filter(Boolean).join(' · ')}</small>
                   {project.amount !== undefined && <b>{money.format(project.amount)}</b>}
                   <span className="connections-record-arrow" aria-hidden="true">↗</span>
-                </button>;
+                </button>
+<div className="connections-mobile-inline">
+                    {canBulkEdit&&<label>Stage
+                      <select aria-label={'Stage for '+project.name} value={project.stage}
+                        onChange={event=>updateDeal(project.id,{stage:event.currentTarget.value as ProjectStage},{source:'manual'})}>
+                        {PROJECT_STAGES.map(stage=><option key={stage} value={stage}>{stage}</option>)}
+                      </select>
+                    </label>}
+                    <button type="button" className="connections-mobile-open-full"
+                      onClick={()=>openProject(project.id)}>Full record</button>
+                  </div>
+</div>;
               })}
             </div>
             {!projectRows.length && <StatusText state="empty" className="connections-empty">No deals match your search.</StatusText>}
