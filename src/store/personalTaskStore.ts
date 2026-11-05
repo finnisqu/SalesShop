@@ -48,6 +48,7 @@ interface TaskState {
   remove:(id:string)=>void;
   beginPromotion:(draft:TaskPromotion|null)=>void;
   syncDealSubmissionTasks:(deals:readonly Project[])=>void;
+  completeDealSubmissionTasks:(dealId:string)=>void;
 }
 export function taskScope(mode:'local'|'cloud',organizationId:string|null,userId:string|undefined){
   if(mode==='cloud'&&(!organizationId||!userId))return null;
@@ -155,6 +156,24 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     // Tombstones prevent another signed-in device from resurrecting deleted tasks.
     const next=tasks.map(task=>task.id===id?{...task,deletedAt:now,updatedAt:now}:task);
     set({tasks:next});persist(scope,next);
+  },
+  /** Close only submission work associated with this Deal. Unrelated tasks remain open. */
+  completeDealSubmissionTasks:dealId=>{
+    const {scope,tasks}=get();
+    if(!scope)return;
+    let changed=false;
+    const updated=tasks.map(task=>{
+      if(task.deletedAt||task.completedAt||
+         task.status==='completed'||task.status==='canceled')return task;
+      const automated=task.sourceObjectId==='deal-submit:'+dealId;
+      const authored=/submit.*(quote|bid)|send.*(quote|bid)/i.test(task.title)&&
+        normalizedTaskAssociations(task).some(link=>link.type==='project'&&link.id===dealId);
+      if(!automated&&!authored)return task;
+      changed=true;
+      const timestamp=nextTaskEditTimestamp(task.updatedAt);
+      return {...task,status:'completed' as const,completedAt:timestamp,updatedAt:timestamp};
+    });
+    if(changed){set({tasks:updated});persist(scope,updated);}
   },
   /** Exactly one private, editable submission task per deal due date.
    * Tasks use stable ids, so cloud merge / rehydration can't duplicate them. */
