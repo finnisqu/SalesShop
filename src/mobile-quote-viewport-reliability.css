@@ -50,8 +50,9 @@
  :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-selections-body{
   scroll-padding-bottom:35px;
  }
- /* The Area quick panel is portaled DIRECTLY TO document.body, so older
-    .sales-app descendants did not style this sheet on mobile. */
+ /* The Area quick editor normally portals under .sales-app and uses the
+    primary mobile panel rules. If the app root is unavailable, it falls
+    back to document.body; keep these fallback rules for that mount path. */
  :root[data-sales-theme] body > .qmb.qmb-quick-area-backdrop{
   box-sizing:border-box;
   position:fixed;
