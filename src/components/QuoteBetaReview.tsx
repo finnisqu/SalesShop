@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {quoteTotal,displayQuoteNumber} from '../types/quote';
@@ -36,7 +36,12 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   const [reviewStep,setReviewStep]=useState<number>(()=>initialFindingId?2:0);
   useEffect(()=>{if(initialFindingId)setReviewStep(2);},[initialFindingId]);
   const reviewSteps=['Area totals','Costs & margin','Pricing questions'] as const;
-  const report=auditQuoteDraft(quote);
+  const report=useMemo(()=>auditQuoteDraft(quote),[quote]);
+  const areaSummaries=useMemo(()=>quote.sections
+    .filter(section=>!isGeneralTakeoffSection(section))
+    .map(section=>({section,data:quickAreaSummary(quote,section)})),[quote]);
+  const generalSummary=useMemo(()=>quickGeneralSummary(quote),[quote]);
+  const customerTotal=useMemo(()=>quoteTotal(quote),[quote]);
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [signatureOpen,setSignatureOpen]=useState(false);
   const reviewNavRef=useRef<HTMLElement>(null);
@@ -82,7 +87,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   const needsRecheck=lastCheckedAt!==quote.updatedAt;
   const [expandedId,setExpandedId]=useState<string|null>(initialFindingId??null);
   const issueSet=report.findings.map(f=>f.id+':'+f.severity).join('|');
-  const reviewKey=quoteDeliveryReviewKey(quote,report.findings);
+  const reviewKey=useMemo(()=>quoteDeliveryReviewKey(quote,report.findings),[quote,report]);
   const acknowledged=reviewedKey===reviewKey;
   useEffect(()=>{setExpandedId(initialFindingId??null);},[initialFindingId]);
   useEffect(()=>{
@@ -93,7 +98,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   const scheduleError=quote.documentType==='pricing-schedule'
     ?pricingScheduleValidationError(quote.pricingSchedule):null;
   const ready=!needsRecheck&&report.blockers.length===0&&(!report.review.length||acknowledged);
-  const deliveryKey=quoteDeliveryApprovalKey(quote);
+  const deliveryKey=useMemo(()=>quoteDeliveryApprovalKey(quote),[quote]);
   const previewed=previewedKey===deliveryKey;
   const approved=approvedCustomerDraft(quote,previewedKey,approvedKey);
   const canApprove=editable&&previewed&&ready&&canIssue;
@@ -190,8 +195,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
       <th>Area</th><th>Material</th><th>Billable SF</th><th>Stone</th>
       <th>Sinks</th><th>Specialty</th><th>Total</th>
      </tr></thead><tbody>
-      {quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
-       const data=quickAreaSummary(quote,section);
+      {areaSummaries.map(({section,data})=>{
        return <tr key={section.id}><th>{section.title}</th>
         <td title={section.scope?.takeoffMaterial??''}>{section.scope?.takeoffMaterial||'Choose material'}</td>
         <td>{data.billedSf.toFixed(2)}</td><td>{money.format(data.materialPrice)}</td>
@@ -199,14 +203,13 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
         <td><strong>{money.format(data.total)}</strong></td></tr>;
       })}
       <tr><th>General</th><td colSpan={5}>Unassigned charges and discounts</td>
-       <td><strong>{money.format(quickGeneralSummary(quote).total)}</strong></td></tr>
+       <td><strong>{money.format(generalSummary.total)}</strong></td></tr>
      </tbody></table></div>
      <div className="qqr-mobile-totals" aria-label="Area pricing summary for phones">
       <table className="qqr-mobile-price-table">
        <thead><tr><th>Area / breakdown</th><th>SF</th><th>Total</th></tr></thead>
        <tbody>
-       {quote.sections.filter(section=>!isGeneralTakeoffSection(section)).map(section=>{
-        const data=quickAreaSummary(quote,section);
+       {areaSummaries.map(({section,data})=>{
         return <tr key={section.id}>
          <th scope="row"><strong>{section.title}</strong>
           <small>{section.scope?.takeoffMaterial||'Select material'}</small>
@@ -225,12 +228,12 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
        })}
        <tr className="is-general">
         <th scope="row" colSpan={2}>General <small>Charges and discounts</small></th>
-        <td className="qqr-mobile-line-total"><strong>{money.format(quickGeneralSummary(quote).total)}</strong></td>
+        <td className="qqr-mobile-line-total"><strong>{money.format(generalSummary.total)}</strong></td>
        </tr>
        </tbody>
       </table>
      </div>
-     <div className="qqr-grand-total"><span>Quote total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
+     <div className="qqr-grand-total"><span>Quote total</span><strong>{money.format(customerTotal)}</strong></div>
      <div className="qqr-mobile-review-shortcuts">
        <button type="button" onClick={()=>setReviewStep(2)} className={report.blockers.length?'is-attention':''}>
          {report.blockers.length?report.blockers.length+' pricing '+(report.blockers.length===1?'issue':'issues'):'Pricing questions'} ›
