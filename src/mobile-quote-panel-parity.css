@@ -1,0 +1,159 @@
+/* Mobile parity B — Quick Quote's Area quick editor behaves like a
+   bottom sheet on phones. All fields/calculations/section switching remain
+   in the original component; the sheet keeps its existing swipe-to-dismiss
+   gesture and does not replace the compact takeoff workbook with cards. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app .qmb.qmb-quick-area-backdrop{
+  box-sizing:border-box;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0 0 max(var(--ss-mobile-footer-inset,0px),env(safe-area-inset-bottom,0px));
+  background:rgb(12 18 25 / 46%);
+  overscroll-behavior:contain;
+ }
+ :root[data-sales-theme] .sales-app .qmb.qmb-quick-area-backdrop .qmb-quick-area-panel{
+  box-sizing:border-box;
+  flex:0 1 auto;
+  width:100%;
+  max-width:100%;
+  height:min(89dvh,calc(var(--ss-mobile-visual-height,100dvh) - 24px));
+  max-height:calc(100dvh - 24px - max(var(--ss-mobile-footer-inset,0px),env(safe-area-inset-bottom,0px)));
+  min-height:0;
+  border:1px solid var(--qmb-border);
+  border-bottom:0;
+  border-radius:19px 19px 0 0;
+  background:var(--qmb-card);
+  box-shadow:0 -16px 40px rgb(0 0 0 / 24%);
+  overflow:hidden;
+  overscroll-behavior:contain;
+ }
+ /* The existing header touch handlers allow a downward swipe to close.
+    Add a visible handle, not another button or a second header row. */
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-header{
+  position:relative;
+  flex:0 0 auto;
+  gap:8px;
+  min-height:69px;
+  padding:23px 13px 10px;
+  border-bottom:1px solid var(--qmb-border);
+  background:var(--qmb-card);
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-header::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:8px;
+  width:36px;
+  height:4px;
+  border-radius:999px;
+  background:var(--qmb-border);
+  transform:translateX(-50%);
+  pointer-events:none;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-header h2{
+  font:750 16px/1.25 var(--ss-font-body);
+  color:var(--qmb-ink);
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-header > button{
+  flex:0 0 36px;
+  width:36px;
+  min-width:36px;
+  min-height:36px;
+  border:1px solid var(--qmb-border);
+  border-radius:9px;
+  background:var(--qmb-card);
+  color:var(--qmb-ink);
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-nav{
+  flex:0 0 auto;
+  gap:6px;
+  padding:7px 11px;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-nav button{
+  box-sizing:border-box;
+  flex:0 0 auto;
+  min-height:40px;
+  padding:7px 9px;
+  border-radius:8px;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-nav > span{
+  min-width:0;
+  color:var(--qmb-muted);
+  font:650 11px/1.3 var(--ss-font-body);
+  text-align:center;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-tabs{
+  flex:0 0 auto;
+  gap:3px;
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:6px 8px;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-tabs::-webkit-scrollbar{display:none}
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-tabs button{
+  box-sizing:border-box;
+  flex:0 0 auto;
+  min-width:69px;
+  min-height:40px;
+  padding:8px 7px;
+  white-space:nowrap;
+  font:750 11px/1.2 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-body{
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:12px 12px 25px;
+  scroll-padding-bottom:24px;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-field :is(input,select,textarea){
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  font-size:16px;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-footer{
+  box-sizing:border-box;
+  display:flex;
+  flex:0 0 auto;
+  justify-content:flex-end;
+  align-items:center;
+  flex-wrap:wrap;
+  min-height:62px;
+  gap:6px;
+  padding:9px 11px 12px;
+  border-top:1px solid var(--qmb-border);
+  background:var(--qmb-card);
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-footer button{
+  box-sizing:border-box;
+  min-height:44px;
+  padding:8px 10px;
+  border-radius:8px;
+  font:750 12px/1.25 var(--ss-font-body);
+  white-space:normal;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-footer button:nth-child(2){
+  flex:1 1 auto;
+  min-width:130px;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-panel
+ :is(button,input,select,textarea):focus-visible{
+  outline:2px solid var(--qmb-accent);
+  outline-offset:2px;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-quick-area-panel button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+ }
+}

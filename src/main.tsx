@@ -163,6 +163,8 @@ import './workspace-type-icon-parity.css';
 import './workspace-help.css';
 // Mobile command bar, contextual help, and themed navigation parity.
 import './mobile-chrome-parity.css';
+// Thumb-friendly mobile Quote Area sheet; preserves existing workbook and editor logic.
+import './mobile-quote-panel-parity.css';
 
 recordSalesShopBoot();
 
