@@ -459,7 +459,7 @@ export function TasksWorkspace(){
             </label>
             <button type="button" className="tasks-mobile-today"
               disabled={isDone||task.status==='canceled'}
-              aria-label={(task.dueDate===today?'Clear today's due date for ':'Set due date to today for ')+task.title}
+              aria-label={(task.dueDate===today?'Clear due-today date for ':'Set due date to today for ')+task.title}
               onClick={()=>quickDue(task.id,task.dueDate===today?'clear':'today')}>
               {task.dueDate===today?'Clear today':'Due today'}
             </button>
