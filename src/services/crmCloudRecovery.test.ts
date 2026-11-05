@@ -119,7 +119,7 @@ describe('CRM interrupted-save recovery',()=>{
   expect(cloudSync).toContain('previousScope?.userId===userId&&previousScope.organizationId===orgId');
   expect(cloudSync).toContain('markPendingCrmSync(scope,document,baselineCrm)');
   expect(cloudSync).toContain('clearPendingCrmSync(scope,token)');
-  expect(cloudSync).toContain('if(!options.readOnlyShared&&readPendingCrmSync(scope))');
+  expect(cloudSync).toContain('if(canWriteCrm&&readPendingCrmSync(scope))');
   expect(auth).toContain("allowCrmRecovery: membership.role !== 'viewer'");
  });
  it('serializes cloud writes by document and ignores out-of-order responses',()=>{
@@ -139,7 +139,7 @@ describe('CRM interrupted-save recovery',()=>{
   expect(sync).toContain("window.removeEventListener('online',retryFailed)");
   expect(sync).toContain("document.removeEventListener('visibilitychange',retryWhenVisible)");
   expect(sync).toContain('if(!active())return');
-  expect(sync).toContain('if(!options.readOnlyShared&&retryableFailures.has(CRM_DOCUMENT_KEY)');
+  expect(sync).toContain('if(canWriteCrm&&retryableFailures.has(CRM_DOCUMENT_KEY)');
   expect(sync).toContain('if(Date.now()-lastRecoveryRetry<15000)return');
   expect(sync).toContain('retryableFailures.has(CRM_DOCUMENT_KEY)&&readPendingCrmSync(scope)');
   expect(sync).toContain('retryableFailures.has(QUOTES_DOCUMENT_KEY)&&readPendingQuoteSync(scope)');

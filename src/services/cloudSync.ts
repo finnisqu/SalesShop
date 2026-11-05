@@ -124,6 +124,7 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   allowCompanySeed?: boolean;
   allowNotebookSeed?: boolean;
   allowCrmRecovery?: boolean;
+  allowQuoteRecovery?: boolean;
   isCurrent?: () => boolean;
 } = {}) {
   if (!supabase) return;
@@ -182,7 +183,8 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   }
 
   // Quotes use normalized current rows + immutable revision snapshots.
-  const pendingQuoteSync=readPendingQuoteSync({organizationId:orgId,userId});
+  const pendingQuoteSync=ownCache&&options.allowQuoteRecovery!==false
+    ?readPendingQuoteSync({organizationId:orgId,userId}):null;
   // Keep only explicitly pending drafts owned by this user. A stale local
   // cache cannot overwrite issued revisions, archived rows or anyone else's
   // quotes, even if the server has newer versions.
@@ -250,13 +252,20 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
 }
 
 export function startCloudSync(orgId: string, userId: string, onError?: (message: string) => void,
-  options: { readOnlyShared?: boolean; onRecovered?: () => void; isActive?: () => boolean } = {}) {
+  options: {readOnlyShared?:boolean;canWriteCrm?:boolean;canWriteQuotes?:boolean;
+    canWriteSignatures?:boolean;onRecovered?:()=>void;isActive?:()=>boolean} = {}) {
   stopCloudSync();
   if (!supabase || typeof window === 'undefined') return;
 
   const scope={organizationId:orgId,userId};
   let disposed=false;
   const active=()=>!disposed&&options.isActive?.()!==false;
+  const canWriteCrm=!options.readOnlyShared&&options.canWriteCrm!==false;
+  const canWriteQuotes=!options.readOnlyShared&&options.canWriteQuotes!==false;
+  const canWriteSignatures=!options.readOnlyShared&&options.canWriteSignatures!==false;
+  const canWrite=(key:CloudDocumentKey)=>key===PRIVATE_DOCUMENT_KEY||
+    (key===CRM_DOCUMENT_KEY?canWriteCrm:
+      key===QUOTES_DOCUMENT_KEY?canWriteQuotes:canWriteSignatures);
   const retryableFailures=new Set<CloudDocumentKey>();
   // Serialize writes to each document so a slower older request cannot
   // finish after a newer record edit and restore stale cloud values.
@@ -266,7 +275,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   let baselineCrm=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
   let baselineNotebook=readLocalDocument(PRIVATE_DOCUMENT_KEY) as NotebookDocument|null;
   const setQuoteSaveStatus=useQuoteCloudStatusStore.getState().setStatus;
-  setQuoteSaveStatus(readPendingQuoteSync(scope)?'pending':'saved');
+  setQuoteSaveStatus(canWriteQuotes&&readPendingQuoteSync(scope)?'pending':'saved');
   const schedule=(key:CloudDocumentKey,document:unknown)=>{
     const revision=(scheduledRevision.get(key)??0)+1;
     scheduledRevision.set(key,revision);
@@ -329,8 +338,9 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   const handler=(event:Event)=>{
     const detail=(event as CustomEvent<CloudDocumentSavedDetail>).detail;
     if(!detail?.key||!active())return;
-    // Viewers may sync only their own notebook, never shared company quotes.
-    if(options.readOnlyShared&&detail.key!==PRIVATE_DOCUMENT_KEY)return;
+    // Mirror the member's department-specific write privileges. Database
+    // RLS independently checks every actual cloud mutation.
+    if(!canWrite(detail.key))return;
     schedule(detail.key,detail.document);
   };
   window.addEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
@@ -342,13 +352,13 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     let attempted=false;
     // Within this live, identity-checked session a failed write is retryable
     // even if browser storage rejected the metadata recovery marker.
-    if(!options.readOnlyShared&&retryableFailures.has(CRM_DOCUMENT_KEY)){
+    if(canWriteCrm&&retryableFailures.has(CRM_DOCUMENT_KEY)){
       const doc=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
       if(doc?.schemaVersion===3){
         schedule(CRM_DOCUMENT_KEY,doc);attempted=true;
       }
     }
-    if(!options.readOnlyShared&&retryableFailures.has(QUOTES_DOCUMENT_KEY)){
+    if(canWriteQuotes&&retryableFailures.has(QUOTES_DOCUMENT_KEY)){
       const doc=readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument|null;
       if(doc?.schemaVersion===2){
         schedule(QUOTES_DOCUMENT_KEY,doc);attempted=true;
@@ -361,7 +371,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
       const doc=readLocalDocument(PRIVATE_DOCUMENT_KEY);
       if(doc!==null){schedule(PRIVATE_DOCUMENT_KEY,doc);attempted=true;}
     }
-    if(!options.readOnlyShared&&retryableFailures.has(SIGNATURES_DOCUMENT_KEY)){
+    if(canWriteSignatures&&retryableFailures.has(SIGNATURES_DOCUMENT_KEY)){
       const doc=readLocalDocument(SIGNATURES_DOCUMENT_KEY) as SignatureDocument|null;
       if(doc?.schemaVersion===1){schedule(SIGNATURES_DOCUMENT_KEY,doc);attempted=true;}
     }
@@ -379,11 +389,11 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
 
   // A previously interrupted debounced save survives a browser reload.
   // Re-attempt after the auth store finishes assigning this organization.
-  if(!options.readOnlyShared&&readPendingQuoteSync(scope)){
+  if(canWriteQuotes&&readPendingQuoteSync(scope)){
     const restored=readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument|null;
     if(restored?.schemaVersion===2)schedule(QUOTES_DOCUMENT_KEY,restored);
   }
-  if(!options.readOnlyShared&&readPendingCrmSync(scope)){
+  if(canWriteCrm&&readPendingCrmSync(scope)){
     const restored=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
     if(restored?.schemaVersion===3)schedule(CRM_DOCUMENT_KEY,restored);
   }

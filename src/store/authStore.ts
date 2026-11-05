@@ -7,7 +7,7 @@ import {recordAuthLifecycle,timeStartupStep} from '../services/appLifecycleDiagn
 import {reuseReadyWorkspace} from '../services/authSessionPolicy';
 import { clearPendingTeamInvite, pendingTeamInviteToken } from '../services/teamInvitationLink';
 import { maySeedCompanyFromLocal, type TeamRole } from '../services/teamAccess';
-import type { TeamDepartment } from '../services/teamDepartments';
+import {canEditTeamArea,canIssueTeamQuote,type TeamDepartment} from '../services/teamDepartments';
 import { inviteAccountDecision, previewTeamInvite, type TeamInvitePreview } from '../services/teamInvitePreview';
 
 export type BackendMode = 'local' | 'cloud';
@@ -212,12 +212,19 @@ async function performSessionApplication(session: Session | null) {
       .select('role,job_function').eq('organization_id', organizationId).eq('user_id', session.user.id).single());
     if(!isCurrent())return;
     if (memberError || !membership) throw memberError ?? new Error('No team access found.');
+    const memberRole=membership.role as TeamRole;
+    const memberDepartment=(membership.job_function as TeamDepartment)||'general';
+    const canWriteCrm=canEditTeamArea(memberRole,memberDepartment,'crm');
+    const canWriteQuotes=canEditTeamArea(memberRole,memberDepartment,'quotes');
+    const canWriteSignatures=canWriteQuotes&&canIssueTeamQuote(memberRole,memberDepartment);
     useAuthStore.setState({loadingStep:'Loading sales records…'});
     await hydrateCloudDocuments(organizationId, session.user.id, {
       allowCompanySeed: maySeedCompanyFromLocal(membership.role as TeamRole, Boolean(acceptedOrganizationId)),
       allowNotebookSeed: !acceptedOrganizationId,
-      // Viewers can hydrate team CRM, but never replay pending local edits.
-      allowCrmRecovery: membership.role !== 'viewer',
+      // Hydration may recover pending edits only when the department can
+      // write that area; database RLS independently enforces the same rules.
+      allowCrmRecovery:canWriteCrm,
+      allowQuoteRecovery:canWriteQuotes,
       isCurrent,
     });
     if(!isCurrent())return;
@@ -228,6 +235,7 @@ async function performSessionApplication(session: Session | null) {
       useAuthStore.setState({error:lastCloudSyncError});
     }, {
       readOnlyShared: membership.role === 'viewer',
+      canWriteCrm,canWriteQuotes,canWriteSignatures,
       isActive:isCurrent,
       onRecovered:()=>{
         if(!isCurrent())return;
@@ -249,8 +257,8 @@ async function performSessionApplication(session: Session | null) {
       session,
       organizationId,
       platformRole: null,
-      teamRole: membership.role as TeamRole,
-      teamDepartment: (membership.job_function as TeamDepartment) || 'general',
+      teamRole: memberRole,
+      teamDepartment: memberDepartment,
       joinWelcome: readJoinWelcome(session.user.id, organizationId),
       inviteProblem: null,
       activeInvitePreview: null,

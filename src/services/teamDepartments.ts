@@ -38,7 +38,7 @@ export const TEAM_DEPARTMENT_DETAILS: Record<TeamDepartment, {
 export function canEditTeamArea(role: TeamRole | null, department: TeamDepartment, area: TeamArea) {
   if (role === 'owner' || role === 'admin') return true;
   if (role !== 'member') return false;
-  return TEAM_DEPARTMENT_DETAILS[department].writableAreas.includes(area);
+  return TEAM_DEPARTMENT_DETAILS[department]?.writableAreas.includes(area)??false;
 }
 
 /** Local UX mirror; the server independently guards quote issuance. */
@@ -48,5 +48,5 @@ export function canIssueTeamQuote(role: TeamRole | null, department: TeamDepartm
 }
 
 export function departmentName(value: TeamDepartment) {
-  return TEAM_DEPARTMENT_DETAILS[value].name;
+  return TEAM_DEPARTMENT_DETAILS[value]?.name??'Unknown department';
 }
