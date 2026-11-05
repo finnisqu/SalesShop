@@ -145,6 +145,8 @@ import './shared-desktop-interactions.css';
 import './desktop-preview-record-consistency.css';
 // Shared validated fields and honest save/pending states in desktop record editors.
 import './desktop-record-form-consistency.css';
+// Full-width desktop scrollports with a shared content measure.
+import './workspace-scroll-shell-parity.css';
 
 recordSalesShopBoot();
 

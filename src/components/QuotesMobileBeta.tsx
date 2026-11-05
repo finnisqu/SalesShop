@@ -1093,6 +1093,7 @@ export function QuotesMobileBeta() {
           onClick={()=>setShowNewDocument(true)}>+ Document</button>}
       />
       <div className="qmb-pad qmb-pagecontent">
+        <div className="qmb-library-measure">
          {followUpsTab
            ?<QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>
            :<>
@@ -1186,6 +1187,7 @@ export function QuotesMobileBeta() {
         </div>}
         {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>{signedShopOutcomesEnabled ? 'Shop Outcomes ›' : 'Team Quotes ›'}</button>}
          </>}
+        </div>
       </div>
       <footer className="qmb-footer qmb-footer-single"><button type="button" className="qmb-primary"
           onClick={()=>setShowNewDocument(true)}>+ New document</button></footer>

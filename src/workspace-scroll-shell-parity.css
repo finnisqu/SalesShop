@@ -1,0 +1,104 @@
+/* Desktop workspace scroll lanes.
+   The scrollport spans the page; the content inside it owns the common measure.
+   Keeping the scrollbar outside that measure prevents inset scrollbars and
+   alternating widths between the six SalesShop work tabs. */
+@media (min-width:821px) {
+  /* Tasks and Connections scroll their header and content together. Reserve
+     the lane even for short lists; paint its track to match the header's
+     full-width base above the canvas (rather than leaving a white notch). */
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace,
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-workspace {
+    scrollbar-gutter:stable;
+  }
+  :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace::-webkit-scrollbar-track,
+  :root[data-sales-theme] .sales-app.view-dashboard .connections-workspace::-webkit-scrollbar-track {
+    background:linear-gradient(to bottom,
+      var(--ss-theme-base) 0,
+      var(--ss-theme-base) var(--ss-workspace-header-height,82px),
+      var(--ss-theme-canvas) var(--ss-workspace-header-height,82px),
+      var(--ss-theme-canvas) 100%);
+  }
+
+  /* Catalog used to center the scroll-owning section (max 1360px). Its
+     scrollbar consequently stopped well short of the right window edge.
+     Make the full-width host the one vertical scroll owner, then center its
+     inner catalog pages using the same measure as Connections and Tasks. */
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host {
+    box-sizing:border-box;
+    width:100%;
+    max-width:none;
+    min-width:0;
+    margin:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    scrollbar-gutter:stable;
+    overscroll-behavior-y:contain;
+    background:var(--ss-theme-canvas);
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host
+    > :is(.rates-workspace.is-catalog-embedded,.sinks-workspace.is-catalog-embedded) {
+    box-sizing:border-box;
+    width:100%;
+    max-width:none;
+    height:auto;
+    min-height:100%;
+    max-height:none;
+    margin:0;
+    overflow:visible;
+    padding:12px max(18px,calc((100% - var(--ss-workspace-width,1360px))/2)) 28px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+    .catalog-section-host.catalog-section-suppliers,
+  :root[data-sales-theme] .sales-app.view-catalog
+    .catalog-section-host.catalog-section-tags,
+  :root[data-sales-theme] .sales-app.view-catalog
+    .catalog-section-host.catalog-section-other {
+    padding:12px max(18px,calc((100% - var(--ss-workspace-width,1360px))/2)) 28px;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+    .catalog-section-host.catalog-section-tags > .catalog-tags-workspace {
+    box-sizing:border-box;
+    width:100%;
+    max-width:var(--ss-workspace-width,1360px);
+    margin-inline:auto;
+    padding:0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog
+    .catalog-section-host.catalog-section-other > .catalog-other-coming-soon {
+    height:auto;
+    min-height:100%;
+    padding:0;
+    overflow:visible;
+  }
+
+  /* The document library was its own 1160px-wide scrollport, with a
+     different, warmer base background than the other directory tabs.
+     Scroll at page width and constrain only its contents. Quick Quote
+     editor / review / customer-paper scrolling intentionally stays intact. */
+  :root[data-sales-theme] .sales-app.view-quotes .qmb
+    .qmb-desktop-frame.is-library,
+  :root[data-sales-theme] .sales-app.view-quotes .qmb
+    .qmb-desktop-frame.is-library > .qmb-desktop-main {
+    background:var(--ss-theme-canvas);
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .qmb
+    .qmb-desktop-frame.is-library > .qmb-desktop-main > .qmb-pagecontent {
+    box-sizing:border-box;
+    width:100%;
+    max-width:none;
+    min-width:0;
+    margin:0;
+    padding:14px 0 28px;
+    overflow-x:hidden;
+    overflow-y:auto;
+    scrollbar-gutter:stable;
+    background:var(--ss-theme-canvas);
+  }
+  :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-library-measure {
+    box-sizing:border-box;
+    width:calc(100% - 36px);
+    max-width:var(--ss-workspace-width,1360px);
+    min-width:0;
+    margin-inline:auto;
+  }
+}
