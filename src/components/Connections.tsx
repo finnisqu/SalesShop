@@ -22,7 +22,7 @@ import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
-import { quotesForCompany, quotesForProject } from '../services/quoteCrmLinks';
+import {indexConnectionsCounts} from '../services/connectionsCountIndex';
 import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
 
 type ConnectionsTab = 'companies' | 'people' | 'deals' | 'quotes' | 'activity';
@@ -158,6 +158,8 @@ export function Connections() {
 
   const companiesById = useMemo(() => new Map(companies.map((company) => [company.id, company])), [companies]);
   const projectsById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
+  const counts=useMemo(()=>indexConnectionsCounts(contacts,projects,quotes),[contacts,projects,quotes]);
+  const quoteTotals=useMemo(()=>new Map(quotes.map(q=>[q.id,quoteTotal(q)])),[quotes]);
   const needle = query.trim().toLowerCase();
   // The Connections metadata directory mirrors My Documents ownership, not
   // team-wide private quotes or the old global sales dashboard.
@@ -185,35 +187,38 @@ export function Connections() {
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
     .slice(0, 150), [activities, companiesById, projectsById, needle]);
 
-  const companyTableRows:ConnectionTableRow[]=companyRows.map(c=>({
+  const companyTableRows=useMemo<ConnectionTableRow[]>(()=>companyRows.map(c=>({
     id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
     values:{name:c.name,type:c.kind==='customer'?'Customer / prospect':'Partner / other',
-      people:String(contacts.filter(p=>p.companyId===c.id).length),
-      deals:String(projects.filter(p=>p.companyId===c.id).length),
-      quotes:String(quotesForCompany(c,projects,quotes).filter(q=>!q.archivedAt).length),
+      people:String(counts.peopleByCompany.get(c.id)??0),
+      deals:String(counts.dealsByCompany.get(c.id)??0),
+      quotes:String(counts.quotesByCompany.get(c.id)??0),
       created:timeLabel(c.createdAt),updated:timeLabel(c.updatedAt)},
-    sortValues:{created:c.createdAt,updated:c.updatedAt}}));
-  const peopleTableRows:ConnectionTableRow[]=peopleRows.map(c=>({
+    sortValues:{created:c.createdAt,updated:c.updatedAt}})),[companyRows,counts]);
+  const peopleTableRows=useMemo<ConnectionTableRow[]>(()=>peopleRows.map(c=>({
     id:c.id,name:c.name||c.email||'Unnamed person',
     association:{type:'contact',id:c.id,label:'Person · '+(c.name||c.email||'Unnamed')},
     values:{name:c.name||c.email||'Unnamed person',company:companiesById.get(c.companyId??'')?.name??'',
       title:c.title??'',email:c.email??'',phone:c.phone??'',updated:timeLabel(c.updatedAt)},
-    sortValues:{updated:c.updatedAt}}));
-  const dealTableRows:ConnectionTableRow[]=projectRows.map(d=>({
+    sortValues:{updated:c.updatedAt}})),[peopleRows,companiesById]);
+  const dealTableRows=useMemo<ConnectionTableRow[]>(()=>projectRows.map(d=>({
     id:d.id,name:d.name,association:{type:'project',id:d.id,label:'Deal · '+d.name},
     values:{name:d.name,company:d.companyName??companiesById.get(d.companyId??'')?.name??'',
       pipeline:dealPipelineLabel(d.pipeline),stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
       next:d.nextAction??'',updated:timeLabel(d.updatedAt)},
-    sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}}));
-  const quoteTableRows:ConnectionTableRow[]=quoteRows.map(q=>({
+    sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}})),[projectRows,companiesById]);
+  const quoteTableRows=useMemo<ConnectionTableRow[]>(()=>quoteRows.map(q=>{
+    const total=quoteTotals.get(q.id)??0;
+    return {
     id:q.id,name:q.title||'Untitled document',
     association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
     values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
       type:q.documentType==='pricing-schedule'?'Pricing schedule':q.documentType==='change-order'?'Change order':'Quote',
       company:q.companyName??'',deal:projectsById.get(q.projectId??'')?.name??'',
       status:q.status+(q.archivedAt?' · Archived':''),
-      value:money.format(quoteTotal(q)),updated:timeLabel(q.updatedAt)},
-    sortValues:{value:quoteTotal(q),updated:q.updatedAt}}));
+      value:money.format(total),updated:timeLabel(q.updatedAt)},
+    sortValues:{value:total,updated:q.updatedAt}};
+  }),[quoteRows,projectsById,quoteTotals]);
   const bulkTask=(items:ConnectionTableRow[])=>{
     beginTaskPromotion({target:'task',title:'Follow up: '+items.length+' '+tab,
       sourceLabel:'Connections selection',associations:items.flatMap(x=>x.association?[x.association]:[])});
@@ -391,14 +396,14 @@ export function Connections() {
                  onBulkEdit={canBulkEdit?bulkEdit:undefined}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
-                  const peopleCount = contacts.filter((person) => person.companyId === company.id).length;
-                  const projectCount = projects.filter((project) => project.companyId === company.id).length;
-                  const companyQuotes = quotesForCompany(company, projects, quotes).filter((q) => !q.archivedAt);
+                  const peopleCount=counts.peopleByCompany.get(company.id)??0;
+                  const projectCount=counts.dealsByCompany.get(company.id)??0;
+                  const companyQuoteCount=counts.quotesByCompany.get(company.id)??0;
                   return <div key={company.id} className="connections-mobile-record-group">
                     <button type="button" className="connections-record" onClick={() => previewRecord('company',company.id)}>
                     <span className="connections-record-eyebrow">{company.kind === 'non-customer' ? 'Partner / other' : 'Customer / prospect'}</span>
                     <strong>{company.name}</strong>
-                    <small>{peopleCount} people · {projectCount} deals · {companyQuotes.length} linked quotes</small>
+                    <small>{peopleCount} people · {projectCount} deals · {companyQuoteCount} linked quotes</small>
                     <span className="connections-record-arrow" aria-hidden="true">↗</span>
                   </button>
                   <div className="connections-mobile-inline">
@@ -452,12 +457,12 @@ export function Connections() {
                onBulkEdit={canBulkEdit?bulkEdit:undefined}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
-                const linked = quotesForProject(project, quotes).filter((q) => !q.archivedAt);
+                const linkedQuoteCount=counts.quotesByDeal.get(project.id)??0;
                 return <div key={project.id} className="connections-mobile-record-group">
                   <button type="button" className="connections-record" onClick={() => previewRecord('deal',project.id)}>
                   <span className="connections-record-eyebrow">{dealPipelineLabel(project.pipeline)} · {project.stage}</span>
                   <strong>{project.name}</strong>
-                  <small>{[project.companyName,project.dueDate ? `Due ${timeLabel(project.dueDate)}` : undefined,`${linked.length} linked quotes`].filter(Boolean).join(' · ')}</small>
+                  <small>{[project.companyName,project.dueDate ? `Due ${timeLabel(project.dueDate)}` : undefined,`${linkedQuoteCount} linked quotes`].filter(Boolean).join(' · ')}</small>
                   {project.amount !== undefined && <b>{money.format(project.amount)}</b>}
                   <span className="connections-record-arrow" aria-hidden="true">↗</span>
                 </button>
