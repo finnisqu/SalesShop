@@ -122,4 +122,28 @@ describe('CRM interrupted-save recovery',()=>{
   expect(cloudSync).toContain('if(!options.readOnlyShared&&readPendingCrmSync(scope))');
   expect(auth).toContain("allowCrmRecovery: membership.role !== 'viewer'");
  });
+ it('serializes cloud writes by document and ignores out-of-order responses',()=>{
+  const sync=readFileSync(new URL('./cloudSync.ts',import.meta.url),'utf8');
+  expect(sync).toContain('const inFlight=new Map<CloudDocumentKey,Promise<void>>()');
+  expect(sync).toContain('const scheduledRevision=new Map<CloudDocumentKey,number>()');
+  expect(sync).toContain('const operation=(inFlight.get(key)??Promise.resolve()).catch(()=>{}).then(()=>');
+  expect(sync).toContain('inFlight.set(key,operation)');
+  expect(sync).toContain('if(scheduledRevision.get(key)!==revision)return');
+  expect(sync).toContain('if(disposed)return');
+ });
+ it('retries only failed, scoped saves when a connection or foreground session returns',()=>{
+  const sync=readFileSync(new URL('./cloudSync.ts',import.meta.url),'utf8');
+  const auth=readFileSync(new URL('../store/authStore.ts',import.meta.url),'utf8');
+  expect(sync).toContain("window.addEventListener('online',retryFailed)");
+  expect(sync).toContain("document.addEventListener('visibilitychange',retryWhenVisible)");
+  expect(sync).toContain("window.removeEventListener('online',retryFailed)");
+  expect(sync).toContain("document.removeEventListener('visibilitychange',retryWhenVisible)");
+  expect(sync).toContain('if(disposed||options.readOnlyShared)return');
+  expect(sync).toContain('if(Date.now()-lastRecoveryRetry<15000)return');
+  expect(sync).toContain('retryableFailures.has(CRM_DOCUMENT_KEY)&&readPendingCrmSync(scope)');
+  expect(sync).toContain('retryableFailures.has(QUOTES_DOCUMENT_KEY)&&readPendingQuoteSync(scope)');
+  expect(auth).toContain('lastCloudSyncError');
+  expect(auth).toContain('current.error===lastCloudSyncError');
+  expect(auth).toContain('onRecovered:()=>');
+ });
 });

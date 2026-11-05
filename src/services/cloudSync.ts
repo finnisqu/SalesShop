@@ -222,15 +222,24 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
 }
 
 export function startCloudSync(orgId: string, userId: string, onError?: (message: string) => void,
-  options: { readOnlyShared?: boolean } = {}) {
+  options: { readOnlyShared?: boolean; onRecovered?: () => void } = {}) {
   stopCloudSync();
   if (!supabase || typeof window === 'undefined') return;
 
   const scope={organizationId:orgId,userId};
+  let disposed=false;
+  const retryableFailures=new Set<CloudDocumentKey>();
+  // Serialize writes to each document so a slower older request cannot
+  // finish after a newer record edit and restore stale cloud values.
+  const inFlight=new Map<CloudDocumentKey,Promise<void>>();
+  const scheduledRevision=new Map<CloudDocumentKey,number>();
+  let lastRecoveryRetry=0;
   let baselineCrm=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
   const setQuoteSaveStatus=useQuoteCloudStatusStore.getState().setStatus;
   setQuoteSaveStatus(readPendingQuoteSync(scope)?'pending':'saved');
   const schedule=(key:CloudDocumentKey,document:unknown)=>{
+    const revision=(scheduledRevision.get(key)??0)+1;
+    scheduledRevision.set(key,revision);
     const previous=pending.get(key);
     if(previous)window.clearTimeout(previous);
     // Local quote data already exists; persist an identity-scoped marker
@@ -241,27 +250,39 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     const delay=key==='notebook'?1200:500;
     const timer=window.setTimeout(()=>{
       pending.delete(key);
+      if(disposed)return;
       if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('syncing');
-      const operation=key===PRIVATE_DOCUMENT_KEY
-        ?upsertPrivateDocument(userId,document)
-        :key===CRM_DOCUMENT_KEY
-          ?syncNormalizedCrm(orgId,document as CrmDocument)
+      // A failed earlier write must not block a newer one, but successful
+      // writes must never overtake one another for the same document.
+      const operation=(inFlight.get(key)??Promise.resolve()).catch(()=>{}).then(()=>{
+        if(disposed)return;
+        return key===PRIVATE_DOCUMENT_KEY
+          ?upsertPrivateDocument(userId,document)
+          :key===CRM_DOCUMENT_KEY
+            ?syncNormalizedCrm(orgId,document as CrmDocument)
           :key===QUOTES_DOCUMENT_KEY
             ?syncNormalizedQuotes(orgId,document as QuoteDocument)
             :syncNormalizedSignatures(orgId,document as SignatureDocument);
+      });
+      inFlight.set(key,operation);
       void operation.then(()=>{
-        if(key===CRM_DOCUMENT_KEY){
-          if(token)clearPendingCrmSync(scope,token);
-          // Never clear a newer pending CRM edit after an older write finishes.
-          if(!readPendingCrmSync(scope))baselineCrm=document as CrmDocument;
-        }
-        if(key===QUOTES_DOCUMENT_KEY&&token){
-          clearPendingQuoteSync(scope,token);
-          // Do not mark an earlier save as current when a newer local edit
-          // is still pending in the same browser.
-          if(!readPendingQuoteSync(scope))setQuoteSaveStatus('saved');
-        }
+        if(disposed)return;
+        if(key===CRM_DOCUMENT_KEY&&token)clearPendingCrmSync(scope,token);
+        if(key===QUOTES_DOCUMENT_KEY&&token)clearPendingQuoteSync(scope,token);
+        // A later edit superseded this response: only the latest generation
+        // may change save banners, failure states or the sync baseline.
+        if(scheduledRevision.get(key)!==revision)return;
+        const recoveredFailure=retryableFailures.delete(key);
+        if(key===CRM_DOCUMENT_KEY&&!readPendingCrmSync(scope))
+          baselineCrm=document as CrmDocument;
+        if(key===QUOTES_DOCUMENT_KEY&&token&&!readPendingQuoteSync(scope))
+          setQuoteSaveStatus('saved');
+        if(recoveredFailure&&!retryableFailures.size&&
+          !readPendingCrmSync(scope)&&!readPendingQuoteSync(scope))
+          options.onRecovered?.();
       }).catch((error:unknown)=>{
+        if(disposed||scheduledRevision.get(key)!==revision)return;
+        retryableFailures.add(key);
         const message=error instanceof Error?error.message:'Cloud sync failed.';
         if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('error',message);
         onError?.(message);
@@ -277,7 +298,35 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     schedule(detail.key,detail.document);
   };
   window.addEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
-  activeCleanup=()=>window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
+  // Retry only previously failed saves with still-present, scoped recovery
+  // markers. Do not continually resubmit every record on tab focus.
+  const retryFailed=()=>{
+    if(disposed||options.readOnlyShared)return;
+    if(Date.now()-lastRecoveryRetry<15000)return;
+    let attempted=false;
+    if(retryableFailures.has(CRM_DOCUMENT_KEY)&&readPendingCrmSync(scope)){
+      const doc=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
+      if(doc?.schemaVersion===3){
+        schedule(CRM_DOCUMENT_KEY,doc);attempted=true;
+      }
+    }
+    if(retryableFailures.has(QUOTES_DOCUMENT_KEY)&&readPendingQuoteSync(scope)){
+      const doc=readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument|null;
+      if(doc?.schemaVersion===2){
+        schedule(QUOTES_DOCUMENT_KEY,doc);attempted=true;
+      }
+    }
+    if(attempted)lastRecoveryRetry=Date.now();
+  };
+  const retryWhenVisible=()=>{if(document.visibilityState==='visible')retryFailed();};
+  window.addEventListener('online',retryFailed);
+  document.addEventListener('visibilitychange',retryWhenVisible);
+  activeCleanup=()=>{
+    disposed=true;
+    window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
+    window.removeEventListener('online',retryFailed);
+    document.removeEventListener('visibilitychange',retryWhenVisible);
+  };
 
   // A previously interrupted debounced save survives a browser reload.
   // Re-attempt after the auth store finishes assigning this organization.

@@ -210,9 +210,19 @@ async function performSessionApplication(session: Session | null) {
       // Viewers can hydrate team CRM, but never replay pending local edits.
       allowCrmRecovery: membership.role !== 'viewer',
     });
+    let lastCloudSyncError:string|null=null;
     startCloudSync(organizationId, session.user.id, (error) => {
-      useAuthStore.setState({ error: `Cloud sync: ${error}` });
-    }, { readOnlyShared: membership.role === 'viewer' });
+      lastCloudSyncError=`Cloud sync: ${error}`;
+      useAuthStore.setState({error:lastCloudSyncError});
+    }, {
+      readOnlyShared: membership.role === 'viewer',
+      onRecovered:()=>{
+        const current=useAuthStore.getState();
+        if(lastCloudSyncError&&current.organizationId===organizationId&&current.error===lastCloudSyncError)
+          useAuthStore.setState({error:null});
+        lastCloudSyncError=null;
+      },
+    });
     if (acceptedOrganizationId && invitePreview) saveJoinWelcome({
       userId: session.user.id, organizationId, organizationName: invitePreview.organizationName,
       role: invitePreview.role,

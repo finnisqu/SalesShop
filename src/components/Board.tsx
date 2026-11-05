@@ -10,6 +10,7 @@ import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import { Button, PageHeader } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
+import {RecordEditField,RecordFormFeedback,nonnegativeFieldError} from './RecordFormFeedback';
 import {useDismissiblePopover} from './useDismissibleDetails';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
@@ -120,8 +121,8 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   const openDeal = useNavigationStore((state) => state.openProject);
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   const linkedQuotes = quotesForProject(project, quotes).filter((quote) => !quote.archivedAt);
-  const dialogRef = useDismissibleLayer<HTMLElement>(true, onClose);
   const [saving,setSaving]=useState(false);
+  const dialogRef=useDismissibleLayer<HTMLElement>(true,()=>{if(!saving)onClose();});
   const [saveError,setSaveError]=useState('');
   const [draft, setDraft] = useState({
     name: project.name,
@@ -157,12 +158,15 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if(saving)return;
+    if(!draft.name.trim()){setSaveError('Enter a deal name.');return;}
+    const amountError=nonnegativeFieldError(draft.amount,'Deal amount');
+    if(amountError){setSaveError(amountError);return;}
     setSaving(true);setSaveError('');
     try{
     if((project.assignedUserId??'')!==draft.assignedUserId)
       await assignProject(project.id,draft.assignedUserId||undefined);
     const patch: ProjectPatch = {
-      name: draft.name,
+      name: draft.name.trim(),
       companyName: draft.companyName,
       stage: draft.stage,
       pipeline: draft.pipeline || undefined,
@@ -178,19 +182,27 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   };
 
   return (
-    <div className="project-editor-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="project-editor-backdrop" onPointerDown={(event) => {
+      if(!saving&&event.target===event.currentTarget)onClose();
+    }}>
       <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor" aria-label="Edit deal">
         <header>
           <PreviewPanelHeading eyebrow="Deal card" title={project.name}/>
-          <PreviewPanelClose className="editor-close" onClose={onClose} label="Close editor"/>
+          <PreviewPanelClose className="editor-close" disabled={saving}
+            onClose={()=>{if(!saving)onClose();}} label="Close editor"/>
         </header>
 
-        <form onSubmit={submit}>
-          <label><span>Deal name</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })}  /></label>
+        <form onSubmit={submit} noValidate onChange={()=>setSaveError('')} aria-busy={saving}>
+          <RecordEditField label="Deal name" required error={saveError==='Enter a deal name.'?saveError:undefined}>
+            {control=><input {...control} value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
+          </RecordEditField>
           <label><span>Company</span><input value={draft.companyName} onChange={(event) => setDraft({ ...draft, companyName: event.target.value })} placeholder="Optional" /></label>
           <div className="editor-two-up">
             <label><span>Stage</span><select value={draft.stage} onChange={(event) => setDraft({ ...draft, stage: event.target.value as ProjectStage })}>{PROJECT_STAGES.map((stage) => <option key={stage}>{stage}</option>)}</select></label>
-            <label><span>Amount</span><input type="number" min="0" step="0.01" inputMode="decimal" value={draft.amount} onChange={(event) => setDraft({ ...draft, amount: event.target.value })} placeholder="$0" /></label>
+            <RecordEditField label="Amount" error={saveError.startsWith('Deal amount')?saveError:undefined}>
+              {control=><input {...control} type="number" min="0" step="0.01" inputMode="decimal"
+                value={draft.amount} onChange={event=>setDraft({...draft,amount:event.target.value})} placeholder="$0"/>}
+            </RecordEditField>
           </div>
           <label><span>Pipeline</span><select value={draft.pipeline}
             onChange={event=>setDraft({...draft,pipeline:event.target.value as DealPipeline | ''})}>
@@ -227,7 +239,8 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
             }}>+ New quote for deal</button>
           </section>
 
-          <button type="button" className="crm-linked-create" onClick={() => { onClose(); openDeal(project.id); }}>Open full deal page →</button>
+          <button type="button" className="crm-linked-create" disabled={saving}
+            onClick={() => { onClose(); openDeal(project.id); }}>Open full deal page →</button>
           <ProjectNotebookLinks project={project} />
 
           <details className="project-activity-panel" aria-label="Deal activity history">
@@ -258,9 +271,11 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
             </div>
           </details>
 
-          {saveError&&<p role="alert" className="project-editor-save-error">{saveError}</p>}
+          <RecordFormFeedback notice={saveError&&!saveError.startsWith('Deal amount')&&saveError!=='Enter a deal name.'
+            ?{kind:'error',message:saveError}:saving?{kind:'saving',message:'Saving deal…'}:null}
+            className="project-editor-save-error"/>
           <div className="editor-actions ss-preview-actions ss-record-editor-actions">
-            <button type="button" className="danger-button" onClick={() => {
+            <button type="button" className="danger-button" disabled={saving} onClick={() => {
               if (window.confirm(`Delete ${project.name}?`)) {
                 detachNotebookPagesForProject(project.id);
                 deleteProject(project.id);

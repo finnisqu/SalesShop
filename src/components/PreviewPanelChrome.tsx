@@ -11,10 +11,10 @@ export function PreviewPanelHeading({eyebrow,title,detail}:{eyebrow:string;title
  </div>;
 }
 
-export function PreviewPanelClose({onClose,label,className='',initialFocus=true}:{
- onClose:()=>void;label:string;className?:string;initialFocus?:boolean;
+export function PreviewPanelClose({onClose,label,className='',initialFocus=true,disabled=false}:{
+ onClose:()=>void;label:string;className?:string;initialFocus?:boolean;disabled?:boolean;
 }){
- return <button type="button" data-dialog-initial-focus={initialFocus?true:undefined}
+ return <button type="button" disabled={disabled} data-dialog-initial-focus={initialFocus&&!disabled?true:undefined}
    className={('ss-preview-close '+className).trim()}
    onClick={onClose} aria-label={label}>×</button>;
 }
