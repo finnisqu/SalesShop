@@ -7,6 +7,7 @@ import {visibleConnectionColumns,compareConnectionSortValues} from '../services/
 import {ConnectionsBulkEditDialog,type BulkEditChange} from './ConnectionsBulkEditDialog';
 import type {Company} from '../types/crm';
 import {TaskBulkEditDialog,type TaskBulkChange} from './TaskBulkEditDialog';
+import {useWorkbookTableDensity} from '../services/workbookTableDensity';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags';columns:ConnectionColumn[];rows:ConnectionTableRow[];
@@ -34,6 +35,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
+ const [density,setDensity]=useWorkbookTableDensity();
+ const selectPageRef=useRef<HTMLInputElement>(null);
  const [bulkEditing,setBulkEditing]=useState(false);
  const [bulkTaskEditing,setBulkTaskEditing]=useState(false);
  const [mobileBulkMode,setMobileBulkMode]=useState(false);
@@ -84,6 +87,10 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
  const selection=new Set(selected);
  const chosen=rows.filter(x=>selection.has(x.id));
  const allOnPage=display.length>0&&display.every(x=>selection.has(x.id));
+ const someOnPage=display.some(x=>selection.has(x.id));
+ useEffect(()=>{
+  if(selectPageRef.current)selectPageRef.current.indeterminate=someOnPage&&!allOnPage;
+ },[someOnPage,allOnPage]);
  const pins=rows.filter(x=>pinned.includes(x.id));
  const togglePin=(id:string)=>setPinned(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
  const move=(key:string,dir:-1|1)=>{
@@ -126,6 +133,13 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
              onClick={()=>move(col.key,1)} aria-label={'Move '+col.label+' right'}>→</button>
          </div>)}
          <button type="button" onClick={()=>setKeys(columns.map(c=>c.key))}>Reset columns</button>
+         <fieldset className="connections-density-setting">
+           <legend>Row spacing · all workbooks</legend>
+           <div role="group" aria-label="Workbook table row density">
+             <button type="button" aria-pressed={density==='compact'} onClick={()=>setDensity('compact')}>Compact</button>
+             <button type="button" aria-pressed={density==='comfortable'} onClick={()=>setDensity('comfortable')}>Comfortable</button>
+           </div>
+         </fieldset>
        </div>
      </details>
    </div>
@@ -175,13 +189,13 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
    <div className="connections-table-scroll" role="region" aria-label="Scrollable connections table" tabIndex={0}>
      <table className="connections-data-table">
        <thead><tr>
-         <th className="connections-check-cell"><input type="checkbox" checked={allOnPage}
+         <th className="connections-check-cell"><input ref={selectPageRef} type="checkbox" checked={allOnPage}
            aria-label="Select all on page" onChange={event=>{
              const ids=new Set(display.map(row=>row.id));
              setSelected(old=>event.target.checked?[...new Set([...old,...ids])]:old.filter(id=>!ids.has(id)));
            }}/></th>
          <th className="connections-pin-cell">Pin</th>
-         {visible.map(col=><th key={col.key}>
+         {visible.map(col=><th key={col.key} aria-sort={sort.key===col.key?(sort.reverse?'descending':'ascending'):'none'}>
            <button type="button" aria-label={'Sort by '+col.label}
              onClick={()=>{setSort(s=>({key:col.key,reverse:s.key===col.key?!s.reverse:false}));setPage(1);}}>
              {col.label}{sort.key===col.key?(sort.reverse?' ↓':' ↑'):' ↕'}

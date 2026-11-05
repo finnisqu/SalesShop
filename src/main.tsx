@@ -137,6 +137,8 @@ import './workspace-header-standard.css';
 import './workspace-header-parity.css';
 // Single compact controls rows in Tasks and the Quotes document library.
 import './workspace-table-control-strip.css';
+// Single workbook table geometry/density source of truth, applied last.
+import './workbook-table-foundation.css';
 
 recordSalesShopBoot();
 

@@ -312,7 +312,7 @@
 }
 :root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table th,
 :root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table td {
-  text-align:left;padding:11px 13px;
+  text-align:left;padding:var(--ss-workbook-cell-pad-y,11px) 13px;
   border-bottom:1px solid var(--ss-theme-border);
 }
 :root[data-sales-theme] .sales-app.view-catalog .supplier-directory-table thead th {

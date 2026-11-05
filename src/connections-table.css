@@ -15,7 +15,7 @@
 .connections-data-table{width:100%;min-width:650px;border-collapse:collapse;font-size:12px;}
 .connections-data-table thead th{position:sticky;top:0;z-index:1;background:var(--ss-theme-tint);text-align:left;white-space:nowrap;padding:0 11px;border-bottom:1px solid var(--ss-theme-border);}
 .connections-data-table thead th>button{border:0;background:transparent;color:var(--ss-theme-ink);font-size:11px;font-weight:800;min-height:38px;padding:5px 0;white-space:nowrap;}
-.connections-data-table tbody td{padding:8px 11px;white-space:nowrap;border-bottom:1px solid var(--ss-theme-border);color:var(--ss-theme-ink);max-width:245px;overflow:hidden;text-overflow:ellipsis;}
+.connections-data-table tbody td{padding:var(--ss-workbook-cell-pad-y,8px) 11px;white-space:nowrap;border-bottom:1px solid var(--ss-theme-border);color:var(--ss-theme-ink);max-width:245px;overflow:hidden;text-overflow:ellipsis;}
 .connections-data-table tbody tr:nth-child(even){background:var(--ss-theme-base);}
 .connections-data-table tbody tr:hover,.connections-data-table tbody tr.is-selected{background:var(--ss-theme-tint);}
 .connections-data-table .connections-check-cell,.connections-data-table .connections-pin-cell{width:43px;max-width:43px;min-width:43px;text-align:center;padding:5px;}

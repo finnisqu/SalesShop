@@ -9,6 +9,7 @@ import { SectionTabs, Panel } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {useWorkbookTableDensity} from '../services/workbookTableDensity';
 
 export const CATALOG_SECTIONS: Array<{
   id: CatalogSection;
@@ -85,6 +86,7 @@ export function CatalogWorkspace() {
   const setSection = useNavigationStore((state) => state.setCatalogSection);
   const sectionScrollRef = useRef<HTMLElement>(null);
   const [catalogSearch,setCatalogSearch]=useState('');
+  const [tableDensity,setTableDensity]=useWorkbookTableDensity();
   const authMode=useAuthStore(state=>state.mode);
   const role=useAuthStore(state=>state.teamRole);
   const perspective=useRolePerspectiveStore(state=>state.activePerspective);
@@ -115,6 +117,8 @@ export function CatalogWorkspace() {
           {label:'Builder material levels',onClick:openBuilderRates},
           {label:'Clear catalog search',onClick:()=>setCatalogSearch(''),disabled:!catalogSearch.trim()},
           {label:'Supplier directory',onClick:()=>setSection('suppliers')},
+          {label:tableDensity==='compact'?'Use comfortable table rows':'Use compact table rows',
+            onClick:()=>setTableDensity(tableDensity==='compact'?'comfortable':'compact'),active:tableDensity==='compact'},
         ]}/>}
         search={<input type="search" aria-label="Search Catalog" placeholder={'Search '+section+'…'}
           value={catalogSearch} disabled={section==='other'}
