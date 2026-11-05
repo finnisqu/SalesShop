@@ -1,0 +1,259 @@
+/* Mobile forms & dialogs: Task editor/preview and CRM bulk edit share a
+   thumb-friendly sheet shell. All submissions, cancellation, draft recovery
+   and association logic stay in their original React components. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ /* Dialogs are portaled outside .sales-app, so scope them to the document
+    theme and to their specific backdrop classes. The visual height reacts
+    when Safari's keyboard opens, without changing the Quote footer inset. */
+ :root[data-sales-theme] :is(.tasks-dialog-backdrop,.connections-bulk-backdrop){
+  box-sizing:border-box;
+  position:fixed;
+  top:var(--ss-mobile-visual-top,0px);
+  bottom:auto;
+  left:0;
+  right:0;
+  width:100%;
+  height:var(--ss-mobile-visual-height,100dvh);
+  max-height:100dvh;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0;
+  overflow:hidden;
+  background:rgb(12 18 25 / 45%);
+  overscroll-behavior:contain;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor,
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-dialog{
+  box-sizing:border-box;
+  position:relative;
+  flex:0 1 auto;
+  align-self:flex-end;
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 12px);
+  min-height:0;
+  border:1px solid var(--ss-theme-border);
+  border-bottom:0;
+  border-radius:19px 19px 0 0;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  box-shadow:0 -16px 42px rgb(0 0 0 / 24%);
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-bottom:82px;
+  scrollbar-gutter:stable;
+ }
+ /* Task form remains an editable compact grid, not a multi-page wizard. */
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor{
+  display:grid;
+  align-content:start;
+  gap:9px!important;
+  padding:0 12px 12px!important;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor>header{
+  position:sticky;
+  top:0;
+  z-index:3;
+  min-height:60px;
+  box-sizing:border-box;
+  padding:18px 3px 9px;
+  margin:0;
+  border-bottom:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor>header::before,
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-heading::before{
+  content:"";
+  position:absolute;
+  width:36px;
+  height:4px;
+  top:6px;
+  left:50%;
+  transform:translateX(-50%);
+  border-radius:999px;
+  background:var(--ss-theme-border);
+  pointer-events:none;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor>header
+ .ss-preview-close{
+  display:grid;
+  place-items:center;
+  flex:0 0 38px;
+  width:38px;
+  min-height:38px;
+  border:1px solid var(--ss-theme-border);
+  border-radius:8px;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor
+ .tasks-editor-grid,
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor .tasks-editor-date-grid{
+  min-width:0;
+  gap:7px;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor
+ :is(input:not([type=checkbox]),select,textarea){
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  min-height:42px;
+  height:auto;
+  font-size:16px;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor .tasks-associations-search{
+  min-width:0;
+  max-width:100%;
+  gap:6px;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor
+ .tasks-associations-search :is(input,select){
+  width:100%;
+  min-width:0;
+  height:42px;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor>footer.ss-record-editor-actions{
+  position:sticky;
+  bottom:-12px;
+  z-index:3;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:7px;
+  margin:4px -12px -12px;
+  padding:10px 12px max(12px,env(safe-area-inset-bottom));
+  min-height:65px;
+  border-top:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor
+ >footer.ss-record-editor-actions button{
+  flex:1 1 auto;
+  min-height:44px;
+  border-radius:8px;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor
+ >footer.ss-record-editor-actions button.tasks-primary{
+  background:var(--ss-theme-accent);
+  color:var(--ss-theme-contrast);
+ }
+ /* CRM and Tasks bulk editing both use .connections-bulk-dialog. */
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-dialog{
+  display:block;
+  padding:0;
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-heading{
+  box-sizing:border-box;
+  position:sticky;
+  top:0;
+  z-index:4;
+  min-height:64px;
+  gap:10px;
+  padding:22px 13px 10px;
+  border-bottom:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-heading h2{
+  min-width:0;
+  overflow-wrap:anywhere;
+  font:750 16px/1.3 var(--ss-font-body);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-heading
+ .ss-preview-close{
+  display:grid;
+  place-items:center;
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  border:1px solid var(--ss-theme-border);
+  border-radius:8px;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-dialog form{
+  display:grid;
+  min-width:0;
+  gap:12px;
+  padding:13px 13px 0;
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-field
+ :is(input:not([type=checkbox]),select,textarea){
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  min-height:44px;
+  font-size:16px;
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-owner-options{
+  box-sizing:border-box;
+  max-height:min(26dvh,170px);
+  min-width:0;
+  overscroll-behavior:contain;
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-owner-options button{
+  min-height:42px;
+  border-radius:7px;
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-dialog footer{
+  position:sticky;
+  bottom:0;
+  z-index:3;
+  box-sizing:border-box;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  min-height:65px;
+  margin:7px -13px 0;
+  padding:10px 13px max(12px,env(safe-area-inset-bottom));
+  border-top:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-dialog footer button{
+  flex:1 1 120px;
+  min-height:44px;
+  border-radius:8px;
+  padding:9px 12px;
+  text-align:center;
+ }
+ :root[data-sales-theme] .connections-bulk-backdrop .connections-bulk-dialog
+ :is(button,input,select,textarea):focus-visible,
+ :root[data-sales-theme] .tasks-dialog-backdrop .tasks-editor
+ :is(button,input,select,textarea):focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-theme-accent));
+  outline-offset:2px;
+ }
+ /* Task related-record matches are a portal over the keyboard, not a new
+    row that pushes the form downward. Keep the selection/listbox semantics. */
+ :root[data-sales-theme] .tasks-associations-popover{
+  max-width:calc(100vw - 16px);
+  border-color:var(--ss-theme-border);
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  scrollbar-gutter:stable;
+ }
+ :root[data-sales-theme] .tasks-associations-popover>button[role="option"]{
+  box-sizing:border-box;
+  min-height:44px;
+  grid-template-columns:minmax(50px,68px) minmax(0,1fr) 18px;
+  border-radius:7px;
+ }
+ :root[data-sales-theme] .tasks-associations-popover-foot{
+  min-height:44px;
+  border-color:var(--ss-theme-border);
+  background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .tasks-associations-popover-foot>.tasks-associations-close{
+  box-sizing:border-box;
+  min-height:38px;
+  padding:8px 12px;
+  border-radius:8px;
+ }
+}

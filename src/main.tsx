@@ -167,6 +167,8 @@ import './mobile-chrome-parity.css';
 import './mobile-quote-panel-parity.css';
 // Mobile Board, Tasks, Connections and Catalog surface parity.
 import './mobile-workspace-parity.css';
+// Mobile keyboard-safe Task, CRM bulk editing and related-record sheets.
+import './mobile-form-sheet-parity.css';
 
 recordSalesShopBoot();
 

@@ -92,6 +92,8 @@ export function MobileAppChrome() {
         root.style.setProperty('--ss-mobile-visual-height',Math.floor(height)+'px');
       if(Number.isFinite(hiddenBottom))
         root.style.setProperty('--ss-mobile-footer-inset',Math.min(180,Math.ceil(hiddenBottom))+'px');
+      // Keep modal sheets inside the visible screen when the keyboard opens.
+      root.style.setProperty('--ss-mobile-visual-top',Math.max(0,Math.floor(viewport?.offsetTop??0))+'px');
     };
     sync();
     viewport?.addEventListener('resize',sync);
@@ -105,6 +107,7 @@ export function MobileAppChrome() {
       window.removeEventListener('orientationchange',sync);
       root.style.removeProperty('--ss-mobile-visual-height');
       root.style.removeProperty('--ss-mobile-footer-inset');
+      root.style.removeProperty('--ss-mobile-visual-top');
     };
   },[]);
   const [open, setOpen] = useState(false);
