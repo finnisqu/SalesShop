@@ -1,21 +1,7 @@
 name: Private Deal Role RLS SQL QC
 
-# Cloudflare Workers deploys production separately; this is automated validation only.
+# Cloudflare Workers deploys production separately; this is manual release validation only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'supabase/migrations/**'
-      - 'tests/security/**'
-      - '.github/workflows/private-quote-rls-qc.yml'
-      - '.github/workflows/private-deal-roles-qc.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'supabase/migrations/**'
-      - 'tests/security/**'
-      - '.github/workflows/private-quote-rls-qc.yml'
-      - '.github/workflows/private-deal-roles-qc.yml'
   workflow_dispatch:
 
 permissions:

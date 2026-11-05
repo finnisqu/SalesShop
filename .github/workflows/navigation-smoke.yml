@@ -1,29 +1,7 @@
 name: SalesShop Navigation Smoke
 
-# Cloudflare Workers deploys production separately; this is automated validation only.
+# Cloudflare Workers deploys production separately; this is manual release validation only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'e2e/**'
-      - 'public/**'
-      - 'package.json'
-      - 'vite.config.*'
-      - 'playwright.config.*'
-      - 'tsconfig.json'
-      - '.github/workflows/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'e2e/**'
-      - 'public/**'
-      - 'package.json'
-      - 'vite.config.*'
-      - 'playwright.config.*'
-      - 'tsconfig.json'
-      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:

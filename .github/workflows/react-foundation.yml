@@ -3,10 +3,6 @@ name: SalesShop CI
 # Cloudflare Workers Git integration owns production deployment.
 # Never deploy to GitHub Pages or configure its custom domain from Actions.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
