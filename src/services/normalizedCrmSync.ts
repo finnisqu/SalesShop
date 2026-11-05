@@ -161,6 +161,23 @@ export function activityNeedsUpload(local:Activity,remoteMetadata?:ActivityMetad
   return localTime>serverTime;
 }
 
+/** Fetch every conflict guard with deterministic pagination. A truncated
+ * guard set must never treat existing CRM rows as new during a bulk sync. */
+async function selectGuardRows(table:CrmTable,organizationId:string,columns:string):Promise<DbRow[]>{
+  if(!supabase)return [];
+  const rows:DbRow[]=[];
+  for(let start=0;;start+=CRM_PAGE_SIZE){
+    const {data,error}=await supabase.from(table).select(columns)
+      .eq('organization_id',organizationId)
+      .order('id',{ascending:true})
+      .range(start,start+CRM_PAGE_SIZE-1);
+    if(error)throw error;
+    const page=(data??[]) as DbRow[];
+    rows.push(...page);
+    if(page.length<CRM_PAGE_SIZE)return rows;
+  }
+}
+
 async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards> {
   const guards: ServerCrmGuards = {
     companies: new Map(),
@@ -171,17 +188,14 @@ async function serverCrmGuards(organizationId: string): Promise<ServerCrmGuards>
   if (!supabase) return guards;
 
   const [companies, contacts, projects] = await Promise.all([
-    supabase.from('companies').select('id,updated_at').eq('organization_id', organizationId),
-    supabase.from('contacts').select('id,updated_at').eq('organization_id', organizationId),
-    supabase.from('projects').select('id,updated_at,stage,stage_changed_at,amount,last_touchpoint,assigned_user_id').eq('organization_id', organizationId),
+    selectGuardRows('companies',organizationId,'id,updated_at'),
+    selectGuardRows('contacts',organizationId,'id,updated_at'),
+    selectGuardRows('projects',organizationId,
+      'id,updated_at,stage,stage_changed_at,amount,last_touchpoint,assigned_user_id'),
   ]);
-  if (companies.error) throw companies.error;
-  if (contacts.error) throw contacts.error;
-  if (projects.error) throw projects.error;
-
-  (companies.data ?? []).forEach((row) => guards.companies.set(String(row.id), String(row.updated_at)));
-  (contacts.data ?? []).forEach((row) => guards.contacts.set(String(row.id), String(row.updated_at)));
-  (projects.data ?? []).forEach((row) => guards.projects.set(String(row.id), {
+  companies.forEach((row) => guards.companies.set(String(row.id), String(row.updated_at)));
+  contacts.forEach((row) => guards.contacts.set(String(row.id), String(row.updated_at)));
+  projects.forEach((row) => guards.projects.set(String(row.id), {
     updatedAt: String(row.updated_at),
     stage: String(row.stage) as ProjectStage,
     stageChangedAt: valueOrUndefined(row.stage_changed_at),
