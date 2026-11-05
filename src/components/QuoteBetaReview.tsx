@@ -187,6 +187,9 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
         return <tr key={section.id}>
          <th scope="row"><strong>{section.title}</strong>
           <small>{section.scope?.takeoffMaterial||'Select material'}</small>
+          <button type="button" className="qqr-mobile-edit-price"
+            aria-label={'Edit selling price for '+section.title}
+            onClick={()=>onFix({view:'area',areaId:section.id,tab:'pricing'})}>Edit price ›</button>
           <small className="qqr-mobile-breakdown">
            Stone {money.format(data.materialPrice)}
            {data.sinkPrice!==0&&<> · Sinks {money.format(data.sinkPrice)}</>}
@@ -205,6 +208,12 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
       </table>
      </div>
      <div className="qqr-grand-total"><span>Quote total</span><strong>{money.format(quoteTotal(quote))}</strong></div>
+     <div className="qqr-mobile-review-shortcuts">
+       <button type="button" onClick={()=>setReviewStep(2)} className={report.blockers.length?'is-attention':''}>
+         {report.blockers.length?report.blockers.length+' pricing '+(report.blockers.length===1?'issue':'issues'):'Pricing questions'} ›
+       </button>
+       <button type="button" onClick={()=>setReviewStep(1)}>Costs &amp; margin ›</button>
+     </div>
      <button type="button" className="qmb-outline" onClick={()=>onFix({view:'build'})}>Edit Areas in Build Quote ›</button>
     </section>}
     {reviewStep===1&&<section className="qqr-stage">
@@ -217,6 +226,8 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
        <span>{value.measuredSf.toFixed(2)} SF measured</span></div>;
      })}</div>
      <QuotePricingScenarioReview quote={quote}/>
+     <button type="button" className="qqr-mobile-questions-next"
+       onClick={()=>setReviewStep(2)}>Continue to pricing questions ›</button>
     </section>}
       {reviewStep===2&&<div className="qqr-stage"><h3>Resolve or acknowledge questions</h3>
        <p>Blocking items must be fixed. Other decisions can be deliberately acknowledged.</p></div>}

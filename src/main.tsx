@@ -177,6 +177,8 @@ import './mobile-task-inline.css';
 import './mobile-connections-inline.css';
 // Compact Selections sheet and mobile section jumps.
 import './mobile-quote-selections-efficiency.css';
+// One-tap mobile Quote pricing review navigation and line edit links.
+import './mobile-quote-review-efficiency.css';
 
 recordSalesShopBoot();
 

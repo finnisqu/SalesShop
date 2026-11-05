@@ -1,0 +1,78 @@
+/* Mobile Pricing Review: direct editing from a compact Area totals table.
+   The three review stages, pricing audit and issue requirements are intact. */
+.qqr-mobile-review-shortcuts,.qqr-mobile-questions-next{display:none}
+.qqr-mobile-edit-price{display:none}
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-price-table th{
+  vertical-align:top;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-edit-price{
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  min-height:38px;
+  padding:6px 8px;
+  margin:5px 0 0;
+  border:1px solid var(--qmb-border);
+  border-radius:7px;
+  background:var(--qmb-tint);
+  color:var(--qmb-ink);
+  font:750 11px/1.25 var(--ss-font-body);
+  text-align:left;
+  white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-review-shortcuts{
+  box-sizing:border-box;
+  display:flex;
+  align-items:stretch;
+  gap:7px;
+  min-width:0;
+  width:100%;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-review-shortcuts button,
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-questions-next{
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:1 1 0;
+  min-width:0;
+  min-height:43px;
+  padding:9px 11px;
+  border:1px solid var(--qmb-border);
+  border-radius:8px;
+  background:var(--qmb-tint);
+  color:var(--qmb-ink);
+  font:750 11px/1.25 var(--ss-font-body);
+  text-align:center;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-review-shortcuts button.is-attention{
+  border-color:var(--ss-theme-warning,var(--qmb-accent));
+  color:var(--ss-theme-warning,var(--qmb-ink));
+  background:var(--qmb-card);
+ }
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-questions-next{
+  width:100%;
+  flex:0 0 auto;
+ }
+ :root[data-sales-theme] .sales-app .qmb :is(
+  .qqr-mobile-edit-price,
+  .qqr-mobile-review-shortcuts button,
+  .qqr-mobile-questions-next
+ ):focus-visible{
+  outline:2px solid var(--ss-focus,var(--qmb-accent));
+  outline-offset:2px;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-totals{
+  min-width:0;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-price-table{
+  width:100%;
+  table-layout:fixed;
+ }
+ :root[data-sales-theme] .sales-app .qmb .qqr-mobile-price-table th:first-child{
+  overflow-wrap:anywhere;
+ }
+}
