@@ -1,0 +1,184 @@
+/* SalesShop desktop typography & toolbar icon system — Batch 4.
+   Preserve Quote document/Takeoff editors and Notebook stationery. Only
+   shared workspace chrome, directory rows, and Board labels opt in. */
+.ss-chrome-icon{
+ display:inline-block;
+ width:16px;
+ height:16px;
+ flex:0 0 16px;
+ vertical-align:middle;
+ stroke-width:1.8;
+ pointer-events:none;
+}
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app{
+  --ss-workspace-type-page:26px;
+  --ss-workspace-type-section:13px;
+  --ss-workspace-type-body:12px;
+  --ss-workspace-type-caption:11px;
+  --ss-workspace-type-eyebrow:10px;
+  --ss-workspace-icon-size:16px;
+ }
+ /* Six workspace headers are the same level, regardless of PageHeader vs
+    WorkspaceHeader implementation. Never change reserved header height. */
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+ :is(.ss-workspace-header__intro h1,.ss-page-header__title){
+  margin:0;
+  color:var(--ss-theme-ink);
+  font:750 var(--ss-workspace-type-page)/1.15 var(--ss-font-body);
+  letter-spacing:-.035em;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header :is(
+   .ss-workspace-header__tabs button,
+   .ss-workspace-header__tabs .ss-section-tab,
+   .connections-header-navigation .ss-section-tab,
+   .board-view-toggle button
+ ){
+  font-family:var(--ss-font-body);
+  font-size:var(--ss-workspace-type-body);
+  font-weight:750;
+  line-height:1.2;
+  letter-spacing:normal;
+ }
+ /* More, Columns and Overview are tool labels, not decorative heading text. */
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more > summary,.connections-section-more > button,
+  .board-pipeline-more-trigger,.connections-columns-menu > summary,
+  .tasks-overview-menu > summary
+ ){
+  font-family:var(--ss-font-body);
+  font-size:var(--ss-workspace-type-body);
+  font-weight:750;
+  line-height:1.2;
+ }
+ :root[data-sales-theme] .sales-app .connections-columns-menu > summary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app :is(
+  .ss-workspace-more > summary,.connections-section-more > button,
+  .board-pipeline-more-trigger,.connections-columns-menu > summary,
+  .tasks-overview-menu > summary
+ ) .ss-chrome-icon{
+  width:var(--ss-workspace-icon-size);
+  height:var(--ss-workspace-icon-size);
+  flex-basis:var(--ss-workspace-icon-size);
+  opacity:.82;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header :is(
+  .ss-workspace-header__search input,.connections-header-search input,
+  .board-header-search input
+ ){
+  font:500 var(--ss-workspace-type-body)/1.3 var(--ss-font-body);
+ }
+ /* Repeated labels under the six headers use a consistent muted scale. */
+ :root[data-sales-theme] .sales-app :is(
+  .connections-grid-toolbar > span,
+  .tasks-directory-caption,
+  .qmb-library-directory-caption,
+  .connections-footer,
+  .connections-grid-pagination,
+  .catalog-tags-summary > span
+ ){
+  color:var(--ss-theme-muted);
+  font:500 var(--ss-workspace-type-caption)/1.4 var(--ss-font-body);
+ }
+ /* Directory metadata should be informative but subordinate to names. */
+ :root[data-sales-theme] .sales-app :is(
+  .connections-data-table tbody td,
+  .connections-data-table .connections-table-open,
+  .tasks-row-top strong,
+  .catalog-tags-summary > strong
+ ){
+  font-family:var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app .connections-data-table
+ .connections-table-open{
+  font-size:var(--ss-workspace-type-body);
+  font-weight:750;
+  line-height:1.3;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-top strong{
+  font-size:var(--ss-workspace-type-section);
+  line-height:1.35;
+  font-weight:750;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks :is(
+  .tasks-row-meta,.tasks-row-body>small
+ ){
+  color:var(--ss-theme-muted);
+  font:500 var(--ss-workspace-type-caption)/1.4 var(--ss-font-body);
+ }
+ /* Board columns previously used 9px counts and 10px stage labels. The
+    slightly stronger hierarchy improves scanning without enlarging cards
+    in compact mode or changing column widths. */
+ :root[data-sales-theme] .sales-app.view-board .board-column-stage-name{
+  font:750 var(--ss-workspace-type-caption)/1.25 var(--ss-font-body);
+  letter-spacing:.01em;
+ }
+ :root[data-sales-theme] .sales-app.view-board .board-column-count{
+  font:500 var(--ss-workspace-type-eyebrow)/1.3 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app.view-board .board-column-hint .ss-chrome-icon{
+  width:14px;
+  height:14px;
+  flex-basis:14px;
+  opacity:.8;
+ }
+ :root[data-sales-theme] .sales-app.view-board
+ .board-view:not(.is-compact) :is(.project-card-title-row h3,.account-card-title-row h3){
+  font:750 var(--ss-workspace-type-section)/1.3 var(--ss-font-body);
+  color:var(--ss-board-ink,var(--ss-theme-ink));
+  margin-block:4px 6px;
+ }
+ :root[data-sales-theme] .sales-app.view-board
+ .board-view:not(.is-compact) .project-card-company{
+  font:750 var(--ss-workspace-type-eyebrow)/1.3 var(--ss-font-body);
+  letter-spacing:.04em;
+  color:var(--ss-board-muted,var(--ss-theme-muted));
+ }
+ :root[data-sales-theme] .sales-app.view-board
+ .board-view:not(.is-compact) :is(.project-card-facts,.account-card-stats){
+  font-family:var(--ss-font-body);
+  font-size:var(--ss-workspace-type-caption);
+  line-height:1.35;
+ }
+ /* Catalog nested pages are a lower hierarchy than the global Catalog
+    heading; their card titles shouldn't compete with it. */
+ :root[data-sales-theme] .sales-app.view-catalog :is(
+  .rates-reference-card > header strong,.sinks-navigator > header strong,
+  .catalog-tags-summary > strong
+ ){
+  color:var(--ss-theme-ink);
+  font:750 var(--ss-workspace-type-section)/1.3 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-tags-heading h2{
+  margin:4px 0;
+  font:750 18px/1.25 var(--ss-font-body);
+  letter-spacing:-.02em;
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog :is(
+  .rates-reference-card > header small,.catalog-tags-heading small,
+  .catalog-tags-heading p
+ ){
+  color:var(--ss-theme-muted);
+  font:600 var(--ss-workspace-type-caption)/1.35 var(--ss-font-body);
+ }
+ /* Notebook's editable paper retains its editorial typeface. Only the
+    side navigation and companion controls receive shared chrome typography. */
+ :root[data-sales-theme] .sales-app.view-notebook :is(
+  .notebook-split-controls > strong,
+  .notebook-sidebar .notebook-filter-help
+ ){
+  color:var(--ss-theme-muted);
+  font:650 var(--ss-workspace-type-caption)/1.35 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app.view-notebook .notebook-sidebar
+ .page-tab-title{
+  font:750 var(--ss-workspace-type-body)/1.3 var(--ss-font-body);
+ }
+}

@@ -157,6 +157,8 @@ import './workspace-table-polish.css';
 import './workspace-overlay-parity.css';
 // Shared popover/menu surfaces (in-app and portaled) without layout changes.
 import './workspace-popover-parity.css';
+// Common workspace typography and consistent SVG control icon sizing.
+import './workspace-type-icon-parity.css';
 
 recordSalesShopBoot();
 
