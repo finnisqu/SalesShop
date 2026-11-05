@@ -49,7 +49,7 @@
 ) {
   box-sizing:border-box;
   width:100%;
-  max-width:calc(var(--ss-workspace-width,1360px) + 2 * var(--ss-page-inset,24px));
+  max-width:calc(var(--ss-workspace-width,1360px) + var(--ss-page-inset,24px) + var(--ss-page-inset,24px));
   min-width:0;
   margin-inline:auto;
   padding-inline:var(--ss-page-inset,24px);
