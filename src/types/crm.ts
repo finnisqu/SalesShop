@@ -128,6 +128,11 @@ export interface ActivityMetadata {
   quoteNumber?: string;
   revision?: number;
   amount?: number;
+  /** Submission created in a different quoting tool; no native quote document is implied. */
+  externalQuoteSent?: boolean;
+  externalQuoteFormat?: string;
+  bidSentDate?: string;
+  bidDueDate?: string;
   documentType?: 'quote' | 'pricing-schedule' | 'change-order';
   parentQuoteId?: string;
   fromStage?: ProjectStage;
