@@ -413,6 +413,8 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   },
 
   updateProject: (projectId, patch, context) => {
+    const current = get().projects.find((project) => project.id === projectId);
+    if (!current) return;
     const timestamp = now();
     let companies = get().companies;
     let normalizedCompany: { companyId?: string; companyName?: string } | undefined;
@@ -422,8 +424,13 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       normalizedCompany = { companyId: ensured.companyId, companyName: ensured.companyName };
     }
 
-    const current = get().projects.find((project) => project.id === projectId);
-    const stageTransition = current && patch.stage
+    // Stage, name and pipeline updates must never wipe a Deal's value.
+    // An explicit undefined clears it; a non-finite value is ignored.
+    const amount = !Object.prototype.hasOwnProperty.call(patch, 'amount')
+      ? current.amount
+      : patch.amount === undefined || (typeof patch.amount === 'number' && Number.isFinite(patch.amount))
+        ? patch.amount : current.amount;
+    const stageTransition = patch.stage
       ? applyProjectStageTransition(current, patch.stage, get().activities, timestamp)
       : null;
     const effectiveStage = stageTransition?.project.stage ?? patch.stage;
@@ -436,7 +443,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         ...(stageTransition?.changed ? { stageChangedAt: timestamp } : {}),
         ...(normalizedCompany ?? {}),
         name: patch.name?.trim() || project.name,
-        amount: typeof patch.amount === 'number' && Number.isFinite(patch.amount) ? patch.amount : patch.amount,
+        amount,
         updatedAt: timestamp,
       };
     });
