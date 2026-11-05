@@ -1,4 +1,4 @@
-import {beforeEach,describe,expect,it,vi} from 'vitest';
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {mergePrivateTasks} from '../services/personalTaskCloudSync';
 import {nextTaskEditTimestamp,usePersonalTaskStore,type PersonalTask} from './personalTaskStore';
 
@@ -16,6 +16,7 @@ describe('fast mobile Task edits and private cloud merge',()=>{
     usePersonalTaskStore.setState({scope,tasks:[task('task-a')],
       syncStatus:'local',syncError:null});
   });
+  afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();});
 
   it('moves forward at least one millisecond when edits share a clock tick',()=>{
     const clock=Date.parse(stamp);
@@ -50,11 +51,12 @@ describe('fast mobile Task edits and private cloud merge',()=>{
   });
 
   it('does not replace deletion tombstones when removing repeatedly',()=>{
-    const active=task('task-a');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(stamp));
     usePersonalTaskStore.getState().remove('task-a');
     const first=usePersonalTaskStore.getState().tasks[0];
-    expect(first.deletedAt).toBeTruthy();
-    expect(Date.parse(first.updatedAt)).toBeGreaterThan(Date.parse(active.updatedAt));
+    expect(first.deletedAt).toBe('2026-11-05T14:00:00.001Z');
+    expect(first.updatedAt).toBe(first.deletedAt);
     const snapshot=usePersonalTaskStore.getState().tasks;
     usePersonalTaskStore.getState().remove('task-a');
     expect(usePersonalTaskStore.getState().tasks).toBe(snapshot);
