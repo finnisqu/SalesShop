@@ -166,7 +166,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
     </div>}
    {toolbarTarget===undefined?toolbar:toolbarTarget?createPortal(toolbar,toolbarTarget):null}
    {pins.length>0&&<div className="connections-pin-tray" aria-label="Pinned comparisons">
-     <header><strong>📌 Pinned ({pins.length})</strong><button type="button" onClick={()=>setPinned([])}>Clear pins</button></header>
+     <header><strong><WorkspaceChromeIcon name="pin"/> Pinned ({pins.length})</strong><button type="button" onClick={()=>setPinned([])}>Clear pins</button></header>
      <div className="connections-pin-items">{pins.map(item=><div key={item.id}>
        <button type="button" onClick={()=>onOpen(item.id)}>
          <strong>{item.name}</strong>
@@ -186,7 +186,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
          {visible.map(col=><th key={col.key} aria-sort={sort.key===col.key?(sort.reverse?'descending':'ascending'):'none'}>
            <button type="button" aria-label={'Sort by '+col.label}
              onClick={()=>{setSort(s=>({key:col.key,reverse:s.key===col.key?!s.reverse:false}));setPage(1);}}>
-             {col.label}{sort.key===col.key?(sort.reverse?' ↓':' ↑'):' ↕'}
+             {col.label}<WorkspaceChromeIcon name={sort.key===col.key?(sort.reverse?'sort-desc':'sort-asc'):'sort'}/>
            </button></th>)}
          {hasRowActions&&<th className="connections-row-actions-heading">Quick actions</th>}
        </tr></thead>

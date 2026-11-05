@@ -182,3 +182,39 @@
   font:750 var(--ss-workspace-type-body)/1.3 var(--ss-font-body);
  }
 }
+
+/* Shared sort arrows and pinned comparison title: no emoji and no text glyph
+   layout jitter as table sorting changes. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app .connections-data-table thead th > button {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+ }
+ :root[data-sales-theme] .sales-app .connections-data-table thead th > button .ss-chrome-icon {
+  width:13px;
+  height:13px;
+  flex-basis:13px;
+  opacity:.58;
+ }
+ :root[data-sales-theme] .sales-app .connections-data-table
+ thead th[aria-sort="ascending"] > button .ss-chrome-icon,
+ :root[data-sales-theme] .sales-app .connections-data-table
+ thead th[aria-sort="descending"] > button .ss-chrome-icon {
+  opacity:1;
+  color:var(--ss-theme-accent);
+ }
+ :root[data-sales-theme] .sales-app .connections-pin-tray header strong {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font:750 12px/1.3 var(--ss-font-body);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .sales-app .connections-pin-tray header strong .ss-chrome-icon {
+  width:15px;
+  height:15px;
+  flex-basis:15px;
+  color:var(--ss-theme-accent);
+ }
+}
