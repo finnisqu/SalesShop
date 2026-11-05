@@ -1,0 +1,132 @@
+/* SalesShop shared workbook/table finish — Batch 2 (desktop).
+   Uses the same heading, cell, and empty-state vocabulary across CRM,
+   personal Tasks, document library, and Catalog reference tables.
+   The existing per-table column sizing, pinning, sort handling, responsive
+   layouts, spreadsheet-style quote inputs, and density setting are unchanged. */
+@media (min-width:821px) {
+ :root[data-sales-theme] .sales-app {
+  --ss-workbook-heading-height:40px;
+  --ss-workbook-heading-size:10px;
+  --ss-workbook-heading-pad:11px;
+  --ss-workbook-empty-pad:24px;
+ }
+ /* Heading cell heights and ink previously ranged from 32px/8.5px in
+    Catalog to 38px/11px in Connections, Tasks and Quotes. */
+ :root[data-sales-theme] .sales-app :is(
+  .connections-data-table,.rates-reference-table,.supplier-directory-table
+ ) thead th {
+  box-sizing:border-box;
+  height:var(--ss-workbook-heading-height);
+  min-height:var(--ss-workbook-heading-height);
+  padding-inline:var(--ss-workbook-heading-pad);
+  border-bottom:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-tint);
+  color:var(--ss-theme-muted);
+  font:750 var(--ss-workbook-heading-size)/1.2 var(--ss-font-body);
+  letter-spacing:.035em;
+  white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app .connections-data-table thead th > button {
+  box-sizing:border-box;
+  height:var(--ss-workbook-heading-height);
+  min-height:var(--ss-workbook-heading-height);
+  padding-block:0;
+  color:var(--ss-theme-ink);
+  font:750 var(--ss-workbook-heading-size)/1.2 var(--ss-font-body);
+ }
+ /* Keep checkbox and pin columns narrow and centered; never resize the
+    material/variant table's name or dimensions. */
+ :root[data-sales-theme] .sales-app .connections-data-table thead
+  :is(th.connections-check-cell,th.connections-pin-cell) {
+  padding-inline:5px;
+  text-align:center;
+ }
+ :root[data-sales-theme] .sales-app .connections-data-table tbody>tr,
+ :root[data-sales-theme] .sales-app.view-catalog :is(
+   .rates-reference-table,.supplier-directory-table
+ ) tbody>tr {
+  height:var(--ss-workbook-row-height,51px);
+ }
+ :root[data-sales-theme] .sales-app .connections-data-table tbody>tr>td,
+ :root[data-sales-theme] .sales-app.view-catalog :is(
+   .rates-reference-table,.supplier-directory-table
+ ) tbody>tr>td {
+  border-bottom:1px solid var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+  font-variant-numeric:tabular-nums;
+ }
+ /* Catalog once hard-coded beige table cells even in dark themes. Preserve
+    material pin highlights and expanded-variant details, using theme tokens
+    only for the ordinary reference rows. */
+ :root[data-sales-theme] .sales-app.view-catalog .rates-reference-table
+   tbody>tr:not(.has-pinned-variant):not(.materials-variant-expanded-row)>td {
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .rates-reference-table
+   tbody>tr:not(.has-pinned-variant):not(.materials-variant-expanded-row):nth-child(even)>td {
+  background:var(--ss-theme-base);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .rates-reference-table
+   tbody>tr:not(.has-pinned-variant):not(.materials-variant-expanded-row):is(:hover,:focus-within)>td {
+  background:var(--ss-theme-tint);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .rates-reference-table
+  :is(.rates-reference-item strong,.rates-reference-sell strong) {
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .rates-reference-table
+  :is(.rates-reference-item small,.rates-reference-sell small) {
+  color:var(--ss-theme-muted);
+ }
+ :root[data-sales-theme] .sales-app .connections-data-table
+   tbody>tr:is(:hover,:focus-within,.is-selected) {
+  background:var(--ss-theme-tint);
+ }
+ /* The table's empty row is a single readable row, not a separate nested
+    panel. Dedicated whole-page empty states are intentionally untouched. */
+ :root[data-sales-theme] .sales-app :is(
+   .connections-data-table,.rates-reference-table,.supplier-directory-table
+ ) tbody td[colspan] {
+  padding:var(--ss-workbook-empty-pad) 14px;
+  font-size:12px;
+  line-height:1.45;
+  color:var(--ss-theme-muted);
+  text-align:center;
+  white-space:normal;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .rates-reference-empty {
+  padding:0;
+  margin:0;
+  color:var(--ss-theme-muted);
+  font:500 12px/1.45 var(--ss-font-body);
+  text-align:center;
+ }
+ /* Quotes, Tasks and Connections already share the same component for
+    pagination. Normalize only geometry; keep page count/order untouched. */
+ :root[data-sales-theme] .sales-app .connections-grid-pagination {
+  box-sizing:border-box;
+  min-height:42px;
+  gap:12px;
+  padding:6px 0;
+  color:var(--ss-theme-muted);
+  font:500 11px/1.3 var(--ss-font-body);
+  font-variant-numeric:tabular-nums;
+ }
+ :root[data-sales-theme] .sales-app .connections-grid-pagination button {
+  box-sizing:border-box;
+  height:34px;
+  min-height:34px;
+  border:1px solid var(--ss-theme-border);
+  border-radius:7px;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+ }
+ :root[data-sales-theme] .sales-app :is(
+   .connections-count,.tasks-directory-caption,
+   .qmb-library-directory-caption
+ ) {
+  color:var(--ss-theme-muted);
+  font:500 11px/1.3 var(--ss-font-body);
+ }
+}

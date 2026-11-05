@@ -151,6 +151,8 @@ import './workspace-scroll-shell-parity.css';
 import './workspace-control-parity.css';
 // Shared visual surfaces, spacing rhythm, and nested Catalog strip cleanup.
 import './workspace-surface-parity.css';
+// Shared workbook header/empty-row/pagination styling across directory views.
+import './workspace-table-polish.css';
 
 recordSalesShopBoot();
 
