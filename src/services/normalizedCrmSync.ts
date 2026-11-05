@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import {forEachCloudWriteBatch} from './cloudWriteBatches';
 import type {
   Activity,
   ActivityMetadata,
@@ -129,10 +130,12 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
 
 async function upsertRows(table: CrmTable, rows: Record<string, unknown>[]) {
   if (!supabase || !rows.length) return;
-  const { error } = await supabase.from(table).upsert(rows, {
-    onConflict: 'organization_id,id',
+  await forEachCloudWriteBatch(rows,async batch=>{
+    const {error}=await supabase.from(table).upsert(batch,{
+      onConflict:'organization_id,id',
+    });
+    if(error)throw error;
   });
-  if (error) throw error;
 }
 
 /** A server row is authoritative for assignment; routine document saves

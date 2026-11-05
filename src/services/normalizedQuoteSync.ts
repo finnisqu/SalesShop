@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import {forEachCloudWriteBatch} from './cloudWriteBatches';
 import {chooseActiveQuoteId} from './quoteActiveSelection';
 import {slabPoolsFromAreaScopes} from './quoteSharedSlabs';
 import { useAuthStore } from '../store/authStore';
@@ -216,16 +217,20 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
 
 async function upsertRows(table: Exclude<QuoteTable, 'quote_revisions'>, rows: Record<string, unknown>[]) {
   if (!supabase || !rows.length) return;
-  const { error } = await supabase.from(table).upsert(rows, { onConflict: 'organization_id,id' });
-  if (error) throw error;
+  await forEachCloudWriteBatch(rows,async batch=>{
+    const {error}=await supabase.from(table).upsert(batch,{onConflict:'organization_id,id'});
+    if(error)throw error;
+  });
 }
 
 async function insertRevisionSnapshots(rows: Record<string, unknown>[]) {
   if (!supabase || !rows.length) return;
-  const { error } = await supabase.from('quote_revisions').upsert(rows, {
-    onConflict: 'organization_id,quote_id,revision', ignoreDuplicates: true,
+  await forEachCloudWriteBatch(rows,async batch=>{
+    const {error}=await supabase.from('quote_revisions').upsert(batch,{
+      onConflict:'organization_id,quote_id,revision',ignoreDuplicates:true,
+    });
+    if(error)throw error;
   });
-  if (error) throw error;
 }
 
 interface ServerQuoteGuard {
@@ -405,8 +410,10 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   const freshQuotes=quotes.filter(row=>!guards.has(String(row.id)));
   const existingQuotes=quotes.filter(row=>guards.has(String(row.id)));
   if(supabase&&freshQuotes.length){
-    const {error}=await supabase.from('quotes').insert(freshQuotes);
-    if(error)throw error;
+    await forEachCloudWriteBatch(freshQuotes,async batch=>{
+      const {error}=await supabase.from('quotes').insert(batch);
+      if(error)throw error;
+    });
   }
   await upsertRows('quotes', existingQuotes);
   await upsertRows('quote_sections', sections);
