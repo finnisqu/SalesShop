@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
 import type {TaskDuePreset} from '../services/taskSchedule';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import '../connections-table.css';
@@ -16,7 +17,9 @@ interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tas
  onBulkComplete?:(records:ConnectionTableRow[])=>void;
  onTaskDuePreset?:(id:string,preset:TaskDuePreset)=>void;
  onTaskToggleComplete?:(id:string,finished:boolean)=>void;
- onDocumentArchive?:(id:string)=>void;onDocumentRestore?:(id:string)=>void;}
+ onDocumentArchive?:(id:string)=>void;onDocumentRestore?:(id:string)=>void;
+ /** Optional host for rendering the existing selection/column controls in the page's single toolbar row. */
+ toolbarTarget?:HTMLElement|null;}
 const PAGE_SIZE=25;
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
@@ -25,7 +28,7 @@ function read(key:string):string[]{
  catch{return[];}
 }
 export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,
- onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore}:Props){
+ onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
@@ -91,6 +94,39 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
    if(key==='name')return next; // Every row needs a visible way to open the record.
    return next.includes(key)?(next.length>1?next.filter(x=>x!==key):next):[...next,key];
  });
+ const toolbar=(
+   <div className="connections-grid-toolbar">
+     <span>{rows.length} records · {chosen.length} selected</span>
+     {chosen.length>0&&<>
+       {onBulkEdit&&['companies','people','deals'].includes(tableKey)&&<button type="button"
+         className="connections-bulk-edit-action" onClick={()=>setBulkEditing(true)}>Bulk edit ({chosen.length})</button>}
+       {onBulkTaskProperty&&tableKey==='tasks'&&<button type="button" className="connections-bulk-edit-action"
+         onClick={()=>setBulkTaskEditing(true)}>Bulk edit ({chosen.length})</button>}
+       {onBulkTask&&<button type="button" onClick={()=>onBulkTask(chosen)}>Create task with selected ({chosen.length})</button>}
+       {onBulkComplete&&<button type="button" onClick={()=>{
+         if(window.confirm('Mark '+chosen.length+' selected tasks complete?')){
+           onBulkComplete(chosen);setSelected([]);
+         }
+       }}>Complete selected ({chosen.length})</button>}
+       <button type="button" onClick={()=>setSelected([])}>Clear</button>
+     </>}
+     <details className="connections-columns-menu" ref={columnsMenuRef}><summary>⚙ Columns</summary>
+       <div className="connections-columns-popover"><strong>Columns</strong>
+         <small>Choose and reorder. Saved on this device.</small>
+         {columns.map(col=><div key={col.key} className="connections-column-choice">
+           <label><input type="checkbox" checked={active.includes(col.key)}
+             disabled={col.key==='name'||(active.length===1&&active.includes(col.key))}
+             onChange={()=>toggleColumn(col.key)}/>{col.label}</label>
+           <button type="button" disabled={!active.includes(col.key)||active.indexOf(col.key)===0}
+             onClick={()=>move(col.key,-1)} aria-label={'Move '+col.label+' left'}>←</button>
+           <button type="button" disabled={!active.includes(col.key)||active.indexOf(col.key)===active.length-1}
+             onClick={()=>move(col.key,1)} aria-label={'Move '+col.label+' right'}>→</button>
+         </div>)}
+         <button type="button" onClick={()=>setKeys(columns.map(c=>c.key))}>Reset columns</button>
+       </div>
+     </details>
+   </div>
+ );
  return <section className="connections-grid-shell" aria-label={tableKey+' table'}>
    {(onBulkEdit&&['companies','people','deals'].includes(tableKey)||onBulkTaskProperty&&tableKey==='tasks')&&
     <div className={'connections-mobile-bulk'+(mobileBulkMode?' is-selecting':'')}>
@@ -123,37 +159,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
        </div>
      </div>}
     </div>}
-   <div className="connections-grid-toolbar">
-     <span>{rows.length} records · {chosen.length} selected</span>
-     {chosen.length>0&&<>
-       {onBulkEdit&&['companies','people','deals'].includes(tableKey)&&<button type="button"
-         className="connections-bulk-edit-action" onClick={()=>setBulkEditing(true)}>Bulk edit ({chosen.length})</button>}
-       {onBulkTaskProperty&&tableKey==='tasks'&&<button type="button" className="connections-bulk-edit-action"
-         onClick={()=>setBulkTaskEditing(true)}>Bulk edit ({chosen.length})</button>}
-       {onBulkTask&&<button type="button" onClick={()=>onBulkTask(chosen)}>Create task with selected ({chosen.length})</button>}
-       {onBulkComplete&&<button type="button" onClick={()=>{
-         if(window.confirm('Mark '+chosen.length+' selected tasks complete?')){
-           onBulkComplete(chosen);setSelected([]);
-         }
-       }}>Complete selected ({chosen.length})</button>}
-       <button type="button" onClick={()=>setSelected([])}>Clear</button>
-     </>}
-     <details className="connections-columns-menu" ref={columnsMenuRef}><summary>⚙ Columns</summary>
-       <div className="connections-columns-popover"><strong>Columns</strong>
-         <small>Choose and reorder. Saved on this device.</small>
-         {columns.map(col=><div key={col.key} className="connections-column-choice">
-           <label><input type="checkbox" checked={active.includes(col.key)}
-             disabled={col.key==='name'||(active.length===1&&active.includes(col.key))}
-             onChange={()=>toggleColumn(col.key)}/>{col.label}</label>
-           <button type="button" disabled={!active.includes(col.key)||active.indexOf(col.key)===0}
-             onClick={()=>move(col.key,-1)} aria-label={'Move '+col.label+' left'}>←</button>
-           <button type="button" disabled={!active.includes(col.key)||active.indexOf(col.key)===active.length-1}
-             onClick={()=>move(col.key,1)} aria-label={'Move '+col.label+' right'}>→</button>
-         </div>)}
-         <button type="button" onClick={()=>setKeys(columns.map(c=>c.key))}>Reset columns</button>
-       </div>
-     </details>
-   </div>
+   {toolbarTarget===undefined?toolbar:toolbarTarget?createPortal(toolbar,toolbarTarget):null}
    {pins.length>0&&<div className="connections-pin-tray" aria-label="Pinned comparisons">
      <header><strong>📌 Pinned ({pins.length})</strong><button type="button" onClick={()=>setPinned([])}>Clear pins</button></header>
      <div className="connections-pin-items">{pins.map(item=><div key={item.id}>

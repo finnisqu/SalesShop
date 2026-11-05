@@ -211,6 +211,7 @@ export function TasksWorkspace(){
   },[scope]);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
+  const [taskToolbarHost,setTaskToolbarHost]=useState<HTMLDivElement|null>(null);
   const today=localDay();
   useEffect(()=>{
     const launch=()=>{
@@ -336,29 +337,33 @@ export function TasksWorkspace(){
       primary={<button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})}
         disabled={!scope}>+ Task</button>}
     />
-    <div className="tasks-summary" aria-label="Task counts">
-      {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
-        <button key={key} type="button" onClick={()=>setFilter(key)} aria-pressed={filter===key}
-          title={key==='scheduled'?'Tasks you plan to start later':label+' tasks'}
-          className={filter===key?'is-selected':''}>
-          <strong>{counts[key]}</strong><span>{label}</span>
-        </button>)}
+    <div className="tasks-compact-controls" aria-label="Task filters and table controls">
+      <div className="tasks-summary" aria-label="Task counts">
+        {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
+          <button key={key} type="button" onClick={()=>setFilter(key)} aria-pressed={filter===key}
+            title={key==='scheduled'?'Tasks you plan to start later':label+' tasks'}
+            className={filter===key?'is-selected':''}>
+            <strong>{counts[key]}</strong><span>{label}</span>
+          </button>)}
+      </div>
+      <div className="tasks-tools">
+        <SalesCalendarLauncher compact />
+        <label className="tasks-queue-filter">Queue
+          <select aria-label="Filter task queue" value={queueFilter} onChange={e=>setQueueFilter(e.target.value)}>
+            <option value="all">All queues</option>
+            {queues.map(q=><option key={q} value={q}>{q}</option>)}
+          </select>
+        </label>
+        <details className="tasks-filter-help"><summary aria-label="About task dates" title="About task dates">ⓘ</summary>
+          <p>A due date never hides a task from All open. “Start later” is for tasks you don't plan to work on yet.</p>
+        </details>
+      </div>
+      <div className="tasks-toolbar-slot" ref={setTaskToolbarHost} />
     </div>
-    <div className="tasks-tools">
-      <SalesCalendarLauncher compact />
-      <label className="tasks-queue-filter">Queue
-        <select aria-label="Filter task queue" value={queueFilter} onChange={e=>setQueueFilter(e.target.value)}>
-          <option value="all">All queues</option>
-          {queues.map(q=><option key={q} value={q}>{q}</option>)}
-        </select>
-      </label>
-    </div>
-    <details className="tasks-filter-help"><summary>About task dates</summary>
-      <p>A due date never hides a task from All open. “Start later” is for tasks you don't plan to work on yet.</p>
-    </details>
     {!scope&&<p className="tasks-state">Your personal Tasks workspace will load after you sign in to a company.</p>}
     {scope&&<div className="tasks-table-container">
       <ConnectionsTable tableKey="tasks" columns={taskColumns} rows={taskTableRows}
+        toolbarTarget={taskToolbarHost}
         onOpen={id=>{const selected=visible.find(task=>task.id===id);if(selected)setViewingId(selected.id);}}
         onTaskDuePreset={quickDue}
         onTaskToggleComplete={(id,finished)=>finished?reopen(id):complete(id)}

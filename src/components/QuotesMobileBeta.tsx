@@ -562,6 +562,7 @@ export function QuotesMobileBeta() {
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
   const [search,setSearch]=useState('');
+  const [documentToolbarHost,setDocumentToolbarHost]=useState<HTMLDivElement|null>(null);
   const [statusFilter,setStatusFilter]=useState<SalesDocumentStatusFilter>('active');
   const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
@@ -1095,7 +1096,8 @@ export function QuotesMobileBeta() {
          {followUpsTab
            ?<QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>
            :<>
-         <div className="qmb-library-tools">
+         <div className="qmb-library-compact-controls" aria-label="Document filters and table controls">
+          <div className="qmb-library-tools">
            <label><span>Show</span>
              <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
                <option value="active">Active ({counts.active})</option>
@@ -1117,8 +1119,11 @@ export function QuotesMobileBeta() {
              <small>{list.length} {list.length===1?'document':'documents'} shown</small></div>
 
          </div>
+         <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost} />
+         </div>
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
+             toolbarTarget={documentToolbarHost}
              onOpen={id=>setDocumentPreviewId(id)}
              onDocumentArchive={canManageLibrary?id=>setLibraryAction({id,kind:'archive'}):undefined}
              onDocumentRestore={canManageLibrary?id=>restoreQuote(id):undefined}

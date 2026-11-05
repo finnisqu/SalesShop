@@ -1,0 +1,182 @@
+/* One desktop controls row directly under Tasks and Quotes workspace headers.
+   Table selection/columns controls are portaled into these real row slots; the
+   table itself still owns the selection state, menu behavior and pagination. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace>.tasks-compact-controls{
+  box-sizing:border-box;display:flex;align-items:center;gap:9px;flex-wrap:nowrap;
+  width:calc(100% - 36px);max-width:var(--ss-workspace-width,1360px);
+  min-width:0;min-height:49px;margin:0 auto 8px;padding:5px 0;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls>.tasks-summary{
+  display:flex!important;align-items:center;flex:1 1 0;flex-wrap:nowrap;
+  grid-template-columns:none!important;gap:5px!important;
+  min-width:0;width:auto!important;max-width:none!important;
+  margin:0!important;padding:0!important;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls>.tasks-summary>button{
+  box-sizing:border-box;display:flex;flex:1 1 0;align-items:center;
+  justify-content:center;gap:6px;min-width:0;min-height:38px;height:38px;
+  margin:0;padding:6px 7px;border-radius:8px;
+  white-space:nowrap;overflow:hidden;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls .tasks-summary strong{
+  flex:0 0 auto;font:800 15px/1.1 var(--ss-font-body);
+  font-variant-numeric:tabular-nums;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls .tasks-summary span{
+  display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font:650 10px/1.2 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls>.tasks-tools{
+  display:flex;align-items:center;justify-content:flex-start;
+  flex:0 0 auto;flex-wrap:nowrap;gap:6px;
+  min-width:0;width:auto!important;max-width:none!important;
+  margin:0!important;padding:0!important;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls .tasks-queue-filter{
+  display:inline-flex;align-items:center;gap:5px;margin:0;
+  white-space:nowrap;font-size:10px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls .tasks-queue-filter select{
+  box-sizing:border-box;min-width:0;width:120px;max-width:120px;
+  min-height:36px;height:36px;margin:0;padding:6px 7px;font-size:11px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls .tasks-filter-help{
+  position:relative;flex:0 0 auto;margin:0;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls .tasks-filter-help>summary{
+  box-sizing:border-box;display:grid;place-items:center;
+  width:35px;height:36px;min-width:35px;min-height:36px;
+  padding:0;margin:0;list-style:none;cursor:pointer;
+  border:1px solid var(--ss-theme-border);border-radius:8px;
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  font:750 16px/1 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls .tasks-filter-help>summary::-webkit-details-marker{
+  display:none;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls .tasks-filter-help>p{
+  position:absolute;top:calc(100% + 6px);right:0;z-index:30;
+  box-sizing:border-box;width:270px;max-width:calc(100vw - 35px);
+  margin:0;padding:11px 13px;
+  border:1px solid var(--ss-theme-border);border-radius:9px;
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);
+  box-shadow:0 10px 30px #0003;font-size:11px;line-height:1.5;
+  white-space:normal;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls>.tasks-toolbar-slot{
+  flex:0 0 auto;min-width:0;width:auto;max-width:42%;margin:0 0 0 auto;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-toolbar-slot>.connections-grid-toolbar{
+  box-sizing:border-box;display:flex;justify-content:flex-end;
+  flex-wrap:nowrap;align-items:center;gap:5px;
+  min-height:38px;width:auto;margin:0;padding:0;
+  border:0;border-radius:0;background:transparent;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-toolbar-slot>.connections-grid-toolbar>span{
+  margin:0;white-space:nowrap;flex:0 0 auto;
+  color:var(--ss-theme-muted);font-size:10px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-toolbar-slot .connections-columns-menu summary{
+  min-height:36px;white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-table-container{
+  margin-top:0!important;
+ }
+}
+/* Quotes library: title, document status/sort, record counts and Columns
+   share a single compact horizontal row. Editor steps and Follow-ups differ. */
+@media(min-width:1000px) and (min-height:550px){
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls{
+  display:flex;align-items:center;flex-wrap:nowrap;gap:14px;
+  box-sizing:border-box;width:100%;min-width:0;min-height:47px;
+  margin:0 0 8px;padding:4px 0;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls>.qmb-library-results-head{
+  display:flex;flex:0 0 auto;order:0;align-items:center;
+  width:auto;min-width:0;min-height:37px;
+  margin:0!important;padding:0!important;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls .qmb-library-results-head>div{
+  display:flex;align-items:baseline;gap:8px;flex-wrap:nowrap;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls .qmb-library-results-head h3{
+  margin:0;font:750 14px/1.2 var(--ss-font-body);
+  white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls .qmb-library-results-head small{
+  white-space:nowrap;font-size:10px;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls>.qmb-library-tools{
+  display:flex!important;align-items:center;justify-content:flex-start;
+  flex:0 0 auto;order:1;gap:9px;flex-wrap:nowrap;
+  width:auto!important;min-width:0;max-width:none;
+  margin:0!important;padding:0!important;
+  border:0;background:transparent;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls .qmb-library-tools>label{
+  display:inline-flex;align-items:center;gap:6px;
+  width:auto!important;min-width:0;margin:0;
+  font-size:11px;white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls .qmb-library-tools select{
+  box-sizing:border-box;height:36px;min-height:36px;
+  max-width:172px;padding:6px 9px;font-size:11px;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-compact-controls>.qmb-library-toolbar-slot{
+  display:flex;align-items:center;justify-content:flex-end;
+  flex:0 0 auto;order:2;width:auto;max-width:42%;margin-left:auto;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-toolbar-slot>.connections-grid-toolbar{
+  display:flex;align-items:center;justify-content:flex-end;
+  flex-wrap:nowrap;gap:7px;width:auto;min-height:37px;
+  padding:0;margin:0;border:0;background:transparent;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-toolbar-slot>.connections-grid-toolbar>span{
+  margin:0;white-space:nowrap;font-size:10px;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-library-toolbar-slot .connections-columns-menu summary{
+  min-height:36px;white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb .qmb-desktop-frame.is-library
+ .qmb-documents-table>.connections-grid-shell{
+  gap:7px;
+ }
+}
+/* Phone and tablet remain usable when the desktop row cannot fit. */
+@media(max-width:820px){
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls{
+  display:grid;gap:8px;min-width:0;
+  width:calc(100% - 20px);margin:0 auto 10px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls>.tasks-summary{
+  margin:0!important;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls>.tasks-tools{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  margin:0!important;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-compact-controls>.tasks-toolbar-slot,
+ :root[data-sales-theme] .sales-app.view-quotes .qmb-library-toolbar-slot{
+  display:none;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb-library-compact-controls{
+  display:grid;gap:8px;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes .qmb-library-compact-controls
+ :is(.qmb-library-tools,.qmb-library-results-head){
+  margin:0;
+ }
+}

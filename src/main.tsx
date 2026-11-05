@@ -135,6 +135,8 @@ import './workbook-scrollbar-gutters.css';
 import './workspace-header-standard.css';
 // Restore Connections-style visual parity for all six workspace headers.
 import './workspace-header-parity.css';
+// Single compact controls rows in Tasks and the Quotes document library.
+import './workspace-table-control-strip.css';
 
 recordSalesShopBoot();
 
