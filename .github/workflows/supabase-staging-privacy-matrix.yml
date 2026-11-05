@@ -18,7 +18,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
+      # The repository has no npm lockfile; npm ci would fail before the privacy matrix.
+      - run: npm install --no-audit --no-fund
       - name: Validate real signed-in users, direct RLS and Shop Outcomes
         env:
           STAGING_RELEASE_ACK: disposable-auth-fixtures
