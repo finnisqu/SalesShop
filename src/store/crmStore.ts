@@ -52,6 +52,8 @@ interface CrmState {
   /** Server-confirmed, conflict-aware reassignment; no optimistic silent save. */
   assignProject: (projectId:string,assignedUserId?:string)=>Promise<void>;
   updateProject: (projectId: string, patch: ProjectPatch, context?: StageChangeContext) => void;
+  /** Record an externally delivered bid without creating a native SalesShop quote. */
+  recordExternalQuoteSent: (projectId:string, amount:number, bidSentDate:string, format?:string)=>boolean;
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
   deleteProject: (projectId: string) => void;
   deleteContact: (contactId:string)=>Promise<void>;
@@ -464,6 +466,48 @@ export const useCrmStore = create<CrmState>((set, get) => ({
 
     persist(companies, get().contacts, projects, activities);
     set({ companies, projects, activities });
+  },
+
+  recordExternalQuoteSent:(projectId,amount,bidSentDate,format)=>{
+    const current=get().projects.find(project=>project.id===projectId);
+    if(!current||!Number.isFinite(amount)||amount<0||
+       !/^\d{4}-\d{2}-\d{2}$/.test(bidSentDate)||
+       Number.isNaN(new Date(bidSentDate+'T12:00:00').getTime())||
+       ['Closed Won','Completed','Closed Lost','Discarded'].includes(current.stage))return false;
+    // Preserve more advanced stages if a previous bid was already recorded.
+    const requestedStage:ProjectStage=
+      ['Discovery','Intent to Bid','Bid Development'].includes(current.stage)?'Bid Sent':current.stage;
+    const occurredAt=new Date(bidSentDate+'T12:00:00').toISOString();
+    const transition=applyProjectStageTransition(current,requestedStage,get().activities,occurredAt);
+    if(transition.blockedReason)return false;
+    const timestamp=now();
+    const projects=get().projects.map(project=>project.id===projectId
+      ?{...project,stage:transition.project.stage,
+        stageChangedAt:transition.changed?occurredAt:project.stageChangedAt,
+        amount,dueDate:undefined,
+        lastTouchpoint:!project.lastTouchpoint||project.lastTouchpoint<bidSentDate
+          ?bidSentDate:project.lastTouchpoint,
+        updatedAt:timestamp}:project);
+    const actor=useAuthStore.getState();
+    const activity:Activity={
+      id:id('activity'),type:'quote-sent',projectId,
+      companyId:current.companyId,occurredAt,
+      summary:'External quote sent · '+new Intl.NumberFormat('en-US',{
+        style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2,
+      }).format(amount),
+      metadata:{
+        source:'manual',documentType:'quote',amount,
+        externalQuoteSent:true,externalQuoteFormat:format?.trim().slice(0,120)||undefined,
+        bidSentDate,bidDueDate:current.dueDate,
+        fromStage:current.stage,toStage:transition.project.stage,
+        recordedByUserId:actor.mode==='cloud'?actor.user?.id:undefined,
+      },
+    };
+    const activities=[...get().activities,activity];
+    // One CRM persistence update keeps deal value, submission date and history together.
+    persist(get().companies,get().contacts,projects,activities);
+    set({projects,activities});
+    return true;
   },
 
   moveProject: (projectId, stage, context) => {
