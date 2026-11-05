@@ -391,6 +391,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ busy: false, error: error.message });
       return false;
     }
+    // Invalidate any older hydration before clearing the private cache.
+    sessionApplyEpoch++;
+    stopCloudSync();
+    clearCloudIdentityCache();
     await supabase.auth.signOut();
     set({ passwordRecovery: false, busy: false, user: null, session: null,
       organizationId: null, teamRole: null, teamDepartment: 'general', error: null, notice: 'Password updated. Sign in with your new password.' });
@@ -398,6 +402,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
+    // An in-flight old-session read must not write records after sign-out
+    // clears this user's cache, even before the auth event is dispatched.
+    sessionApplyEpoch++;
     stopCloudSync();
     clearCloudIdentityCache();
     clearJoinWelcome();

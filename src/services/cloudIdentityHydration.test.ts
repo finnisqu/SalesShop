@@ -17,6 +17,11 @@ describe('Cloud identity and hydration generation contract',()=>{
     expect(sync).toContain('assertCurrent();\n    writeLocalDocument(key,value,false)');
     expect(sync).toContain('assertCurrent();\n  writeCacheScope(');
   });
+  it('invalidates hydration immediately on explicit sign-out and password reset',()=>{
+    expect(auth).toContain("signOut: async () => {\n    // An in-flight old-session read");
+    expect(auth).toContain("sessionApplyEpoch++;\n    stopCloudSync();\n    clearCloudIdentityCache();");
+    expect(auth).toContain("await supabase.auth.signOut()");
+  });
   it('guards bootstrap writes, notebook hydration, and stale errors',()=>{
     expect(sync).toContain('assertCurrent();\n      await syncNormalizedCrm(orgId, localCrm)');
     expect(sync).toContain('assertCurrent();\n      await syncNormalizedQuotes(orgId, starter)');
