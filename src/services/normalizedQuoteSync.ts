@@ -91,12 +91,17 @@ async function selectRows(table: QuoteTable, organizationId: string, orderColumn
   }
 }
 
+/** Group paginated quote children in linear time. Repeated array spreads
+ * copied every prior entry and could exhaust memory on long revision trails. */
 function groupByQuote<T>(rows: DbRow[], mapper: (row: DbRow) => T) {
   const grouped = new Map<string, T[]>();
-  rows.forEach((row) => {
-    const quoteId = String(row.quote_id);
-    grouped.set(quoteId, [...(grouped.get(quoteId) ?? []), mapper(row)]);
-  });
+  for(const row of rows){
+    const quoteId=String(row.quote_id);
+    const item=mapper(row);
+    const current=grouped.get(quoteId);
+    if(current)current.push(item);
+    else grouped.set(quoteId,[item]);
+  }
   return grouped;
 }
 
