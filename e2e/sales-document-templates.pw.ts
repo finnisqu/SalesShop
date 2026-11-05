@@ -8,7 +8,7 @@ async function library(page:import('@playwright/test').Page){
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
   return beta;
 }
 /** Quick Quotes hide the old desktop navigator; Back advances toward the library.
@@ -18,11 +18,11 @@ async function backToDocuments(page:import('@playwright/test').Page){
   for(let attempt=0;attempt<3&&await beta.locator('.qmb-quote-editor').isVisible();attempt++){
     await beta.locator('.qmb-quote-footer .qmb-guided-back').click();
   }
-  await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
 }
 async function create(page:import('@playwright/test').Page,template:string,starting?:string){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
+  await beta.getByRole('button',{name:/^\+ Document$/}).first().click();
   const dialog=page.getByRole('dialog',{name:'New Sales Document'});
   await dialog.getByRole('button',{name:new RegExp('^'+template)}).click();
   if(starting)await dialog.getByRole('button',{name:new RegExp(starting)}).click();
@@ -35,7 +35,7 @@ async function create(page:import('@playwright/test').Page,template:string,start
 test('document library creates independent Quick Quote and Builder Rate editors',async({page},info)=>{
   test.skip(info.project.name!=='desktop-1280','Desktop new-template workflow');
   const beta=await library(page);
-  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
+  await beta.getByRole('button',{name:/^\+ Document$/}).first().click();
   const dialog=page.getByRole('dialog',{name:'New Sales Document'});
   await expect(dialog.getByRole('button',{name:/^Quick Quote/})).toContainText(/commercial projects/i);
   await expect(dialog.getByRole('button',{name:/^Multi-Family/})).toContainText(/wholesale/i);
@@ -67,7 +67,7 @@ test('create new community from a previous builder rate agreement without making
   const editor=beta.getByRole('region',{name:'Builder Rate Schedule editor'});
   await editor.getByRole('button',{name:/Add material|\+ Material|material level/i}).first().click();
   await backToDocuments(page);
-  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
+  await beta.getByRole('button',{name:/^\+ Document$/}).first().click();
   const dialog=page.getByRole('dialog',{name:'New Sales Document'});
   await dialog.getByRole('button',{name:/^Community Plan Pricing/}).click();
   await dialog.getByRole('button',{name:/Copy previous agreement/}).click();
@@ -79,7 +79,7 @@ test('create new community from a previous builder rate agreement without making
   await expect(beta.getByRole('button',{name:/Spreadsheet/})).toHaveCount(0);
   await backToDocuments(page);
   await beta.getByRole('button',{name:'Community Plan Pricing',exact:true}).click();
-  await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
   await expect(beta.getByRole('region',{name:'documents table'})
     .getByRole('button',{name:'QC 1 Document'})).toBeVisible();
 });
@@ -122,7 +122,7 @@ test('Builder Rate company template snapshots stock colors and approved level se
     }));
   });
   const beta=await library(page);
-  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
+  await beta.getByRole('button',{name:/^\+ Document$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:/^Builder Rate Schedule/}).click();
   const company=picker.getByRole('button',{name:/Company stock levels/});

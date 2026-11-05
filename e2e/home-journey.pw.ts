@@ -52,7 +52,7 @@ test('HOME Quick Create opens a named Quote and its recent Quote can be reopened
   for(let attempt=0;attempt<3&&await editor.locator('.qmb-quote-editor').isVisible();attempt++)
     await editor.locator('.qmb-quote-footer .qmb-guided-back').click();
  }
- await expect(editor.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
+ await expect(editor.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
 });
 
 test('HOME Quick Create saves a due Task, daily Notebook note, Deal and Account',

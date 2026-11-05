@@ -11,7 +11,7 @@ for(const device of ['phone-390','desktop-1280']){
     });
     await page.reload();
     const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-    await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
+    await beta.getByRole('button',{name:/^\+ Document$/}).first().click();
     const picker=page.getByRole('dialog',{name:'New Sales Document'});
     await picker.getByRole('button',{name:/^Quick Quote/}).click();
     await picker.getByRole('textbox',{name:'Quote name'}).fill('Slim Details QC');

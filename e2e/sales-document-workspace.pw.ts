@@ -10,12 +10,12 @@ async function library(page:Page){
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
   return beta;
 }
 async function newTemplate(page:Page,title:string,name:string){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
+  await beta.getByRole('button',{name:/^\+ Document$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:new RegExp('^'+title)}).click();
   const input=picker.getByRole('textbox',{name:title==='Quick Quote'?'Quote name':'Document name'});
@@ -65,7 +65,7 @@ test('mobile Quick Quote requires a name; defended copy retains original and res
   await expect(title).toHaveValue('Smith Residence Copy A');
   await expect(beta.locator('.qmb-document-origin')).toContainText('Independent working copy');
   await page.getByRole('button',{name:'Back to Documents'}).click();
-  await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
   await expect(beta.locator('.qmb-listcard').filter({hasText:'Smith Residence'})).toHaveCount(2);
   await beta.locator('.qmb-listcard').filter({hasText:'Smith Residence Copy A'}).click();
   await page.reload();

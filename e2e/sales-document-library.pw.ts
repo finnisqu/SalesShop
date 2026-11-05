@@ -10,12 +10,12 @@ async function openLibrary(page:Page){
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
   return beta;
 }
 async function makeDocument(page:Page,template:string,name:string){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first().click();
+  await beta.getByRole('button',{name:/^\+ Document$/}).first().click();
   const picker=page.getByRole('dialog',{name:'New Sales Document'});
   await picker.getByRole('button',{name:new RegExp('^'+template)}).click();
   await picker.getByRole('textbox',{name:template==='Quick Quote'?'Quote name':'Document name'}).fill(name);
@@ -28,7 +28,7 @@ async function makeDocument(page:Page,template:string,name:string){
     for(let attempt=0;attempt<3&&await beta.locator('.qmb-quote-editor').isVisible();attempt++)
       await beta.locator('.qmb-quote-footer .qmb-guided-back').click();
   }
-  await expect(beta.getByRole('heading',{name:'Sales Documents'})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
 }
 test('mobile documents search by name/template and filter by status without losing the new action',async({page},info)=>{
   test.skip(info.project.name!=='phone-390','Mobile document discovery and filters');
@@ -49,7 +49,7 @@ test('mobile documents search by name/template and filter by status without losi
   await beta.getByRole('button',{name:'Clear filters'}).click();
   await expect(beta.locator('.qmb-library-entry').filter({hasText:'Smith Kitchen'})).toBeVisible();
   await expect(beta.locator('.qmb-library-entry').filter({hasText:'Oakwood Pricing'})).toBeVisible();
-  await expect(beta.getByRole('button',{name:/^\+ New(?: document)?$/}).first()).toBeVisible();
+  await expect(beta.getByRole('button',{name:/^\+ Document$/}).first()).toBeVisible();
 });
 test('desktop library sorts documents and safely restores an archived draft',async({page},info)=>{
   test.skip(info.project.name!=='desktop-1280','Desktop document list and archive controls');
