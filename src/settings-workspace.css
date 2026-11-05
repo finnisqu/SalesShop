@@ -343,8 +343,8 @@
   .rates-mobile-price-details span
 ){font-size:12px!important;line-height:1.4}
 :root[data-sales-contrast='high'] .sales-app{
-  --ink-muted:#565044;
-  --muted:#565044;
+  --ink-muted:var(--ss-theme-ink);
+  --muted:var(--ss-theme-ink);
 }
 :root[data-sales-contrast='high'] .sales-app :is(
   .mobile-catalog-reference-card,
@@ -352,13 +352,13 @@
   .company-settings-card,
   .mobile-catalog-reference-trigger,
   .settings-tabs button.active
-){border-color:#857259!important}
+){border-color:var(--ss-theme-ink)!important}
 :root[data-sales-contrast='high'] .sales-app :is(
   .mobile-catalog-reference-name>small,
   .company-settings-card small,
   .project-card-company,
   .settings-preference-row small
-){color:#5c5245!important}
+){color:var(--ss-theme-ink)!important}
 :root[data-sales-controls='large'] .sales-app :is(
   .mobile-catalog-reference-trigger,
   .mobile-catalog-filter-trigger,
