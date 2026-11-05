@@ -85,7 +85,7 @@ async function selectRows(table: QuoteTable, organizationId: string, orderColumn
     const ordered=tieBreaker===orderColumn?base:base.order(tieBreaker,{ascending:true});
     const {data,error}=await ordered.range(start,start+QUOTE_PAGE_SIZE-1);
     if(error)throw error;
-    const page=(data??[]) as DbRow[];
+    const page=(data??[]) as unknown as DbRow[];
     rows.push(...page);
     if(page.length<QUOTE_PAGE_SIZE)return rows;
   }
@@ -221,17 +221,19 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
 }
 
 async function upsertRows(table: Exclude<QuoteTable, 'quote_revisions'>, rows: Record<string, unknown>[]) {
-  if (!supabase || !rows.length) return;
+  const client=supabase;
+  if (!client || !rows.length) return;
   await forEachCloudWriteBatch(rows,async batch=>{
-    const {error}=await supabase.from(table).upsert(batch,{onConflict:'organization_id,id'});
+    const {error}=await client.from(table).upsert(batch,{onConflict:'organization_id,id'});
     if(error)throw error;
   });
 }
 
 async function insertRevisionSnapshots(rows: Record<string, unknown>[]) {
-  if (!supabase || !rows.length) return;
+  const client=supabase;
+  if (!client || !rows.length) return;
   await forEachCloudWriteBatch(rows,async batch=>{
-    const {error}=await supabase.from('quote_revisions').upsert(batch,{
+    const {error}=await client.from('quote_revisions').upsert(batch,{
       onConflict:'organization_id,quote_id,revision',ignoreDuplicates:true,
     });
     if(error)throw error;
@@ -414,9 +416,10 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
   // This preserves the strict owner/org RLS rules instead of relaxing them.
   const freshQuotes=quotes.filter(row=>!guards.has(String(row.id)));
   const existingQuotes=quotes.filter(row=>guards.has(String(row.id)));
-  if(supabase&&freshQuotes.length){
+  const client=supabase;
+  if(client&&freshQuotes.length){
     await forEachCloudWriteBatch(freshQuotes,async batch=>{
-      const {error}=await supabase.from('quotes').insert(batch);
+      const {error}=await client.from('quotes').insert(batch);
       if(error)throw error;
     });
   }

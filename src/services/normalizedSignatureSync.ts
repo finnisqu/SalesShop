@@ -21,7 +21,7 @@ async function selectSignatureRows(organizationId:string,columns:string,orderCol
     const query=orderColumn==='id'?base:base.order('id',{ascending:true});
     const {data,error}=await query.range(start,start+SIGNATURE_PAGE_SIZE-1);
     if(error)throw error;
-    const page=(data??[]) as DbRow[];
+    const page=(data??[]) as unknown as DbRow[];
     rows.push(...page);
     if(page.length<SIGNATURE_PAGE_SIZE)return rows;
   }
@@ -54,7 +54,8 @@ export async function loadNormalizedSignatures(organizationId: string): Promise<
 }
 
 export async function syncNormalizedSignatures(organizationId: string, document: SignatureDocument) {
-  if (!supabase) return;
+  const client=supabase;
+  if (!client) return;
   if (document.schemaVersion !== 1) throw new Error('Unsupported Signature document schema.');
   if (!document.signatures.length) return;
 
@@ -82,7 +83,7 @@ export async function syncNormalizedSignatures(organizationId: string, document:
     }));
 
   await forEachCloudWriteBatch(missing,async batch=>{
-    const {error}=await supabase.from('signatures').insert(batch);
+    const {error}=await client.from('signatures').insert(batch);
     if(error)throw error;
   });
 }

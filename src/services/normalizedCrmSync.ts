@@ -129,9 +129,10 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
 }
 
 async function upsertRows(table: CrmTable, rows: Record<string, unknown>[]) {
-  if (!supabase || !rows.length) return;
+  const client=supabase;
+  if (!client || !rows.length) return;
   await forEachCloudWriteBatch(rows,async batch=>{
-    const {error}=await supabase.from(table).upsert(batch,{
+    const {error}=await client.from(table).upsert(batch,{
       onConflict:'organization_id,id',
     });
     if(error)throw error;
@@ -175,7 +176,7 @@ async function selectGuardRows(table:CrmTable,organizationId:string,columns:stri
       .order('id',{ascending:true})
       .range(start,start+CRM_PAGE_SIZE-1);
     if(error)throw error;
-    const page=(data??[]) as DbRow[];
+    const page=(data??[]) as unknown as DbRow[];
     rows.push(...page);
     if(page.length<CRM_PAGE_SIZE)return rows;
   }
