@@ -1,10 +1,11 @@
-import {useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote} from '../types/quote';
 import {quoteLinesTotal} from '../types/quote';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {PHONE_LAYOUT_QUERY} from '../lib/mobileViewport';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {useQuoteStore} from '../store/quoteStore';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
@@ -30,6 +31,11 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
  const index=areas.findIndex(a=>a.id===areaId);
  const [showFullNote,setShowFullNote]=useState(false);
  const sheetSwipeStart=useRef<number|null>(null);
+ const sheetBodyRef=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+   if(window.matchMedia(PHONE_LAYOUT_QUERY).matches&&sheetBodyRef.current)
+     sheetBodyRef.current.scrollTop=0;
+ },[areaId,initialTab]);
  if(!section)return null;
  const total=quoteLinesTotal(quote.lines.filter(l=>l.sectionId===section.id));
  const defaults={splashHeightIn:section.scope?.takeoffDefaultSplashHeightIn??4,
@@ -62,7 +68,7 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
          <button key={key} type="button" role="tab" aria-selected={initialTab===key}
            onClick={()=>onTab(key)}>{label}</button>)}
      </div>
-     <div className="qmb-quick-area-body">
+     <div className="qmb-quick-area-body" ref={sheetBodyRef}>
        {initialTab==='overview'&&<>
          <label className="qmb-quick-area-field">Area name
            <QuoteInlineAreaName quote={quote} section={section}/>

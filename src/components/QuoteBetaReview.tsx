@@ -18,6 +18,7 @@ import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {projectAreaCost} from '../services/quoteAreaCost';
 import './quote-pricing-review-workspace.css';
 import {InitialOpenDetails} from './InitialOpenDetails';
+import {PHONE_LAYOUT_QUERY} from '../lib/mobileViewport';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
 
@@ -39,10 +40,32 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
   const createRevision=useQuoteStore(state=>state.createRevision);
   const [signatureOpen,setSignatureOpen]=useState(false);
   const reviewNavRef=useRef<HTMLElement>(null);
+  const reviewBodyRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
-   if(quote.documentType!=='pricing-schedule')
-    reviewNavRef.current?.scrollIntoView({block:'nearest',behavior:'instant'});
+    if(quote.documentType==='pricing-schedule')return;
+    if(window.matchMedia(PHONE_LAYOUT_QUERY).matches){
+      // Both the review body and the parent quote workspace can own scroll
+      // depending on the device height. Reset both after changing steps.
+      const body=reviewBodyRef.current;
+      if(body)body.scrollTop=0;
+      const quoteScroller=body?.closest<HTMLElement>('.qmb-quote-scroll');
+      if(quoteScroller)quoteScroller.scrollTop=0;
+    }else reviewNavRef.current?.scrollIntoView({block:'nearest',behavior:'instant'});
   },[reviewStep,quote.documentType]);
+  useEffect(()=>{
+    if(!initialFindingId||reviewStep!==2||
+      quote.documentType==='pricing-schedule'||
+      !window.matchMedia(PHONE_LAYOUT_QUERY).matches)return;
+    const body=reviewBodyRef.current;
+    const target=Array.from(body?.querySelectorAll<HTMLElement>('[data-audit-id]')??[])
+      .find(element=>element.dataset.auditId===initialFindingId);
+    if(!body||!target)return;
+    const scroller=body.scrollHeight>body.clientHeight+2
+      ?body:body.closest<HTMLElement>('.qmb-quote-scroll');
+    if(!scroller)return;
+    scroller.scrollTop=Math.max(0,scroller.scrollTop+
+      target.getBoundingClientRect().top-scroller.getBoundingClientRect().top-12);
+  },[initialFindingId,reviewStep,quote.id]);
   const deliverySectionRef=useRef<HTMLElement>(null);
   const checklistSectionRef=useRef<HTMLElement>(null);
   const previousStatusRef=useRef(quote.status);
@@ -160,7 +183,7 @@ export function QuoteBetaReview({quote,onBack,onFix,onPreview,initialFindingId,
        {index===2&&report.blockers.length>0&&<small>{report.blockers.length} issues</small>}
      </button>)}
     </nav>
-    <div className="qmb-pad qmb-pagecontent qqr-body">
+    <div ref={reviewBodyRef} className="qmb-pad qmb-pagecontent qqr-body">
     {reviewStep===0&&<section className="qqr-stage">
      <h3>Confirm Area totals</h3><p>These are your existing customer selling amounts, not new charges.</p>
      <div className="qqr-table-scroll"><table><thead><tr>
