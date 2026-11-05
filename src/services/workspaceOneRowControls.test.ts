@@ -18,7 +18,7 @@ describe('Connections-style Tasks and Quotes directory rows',()=>{
   expect(tasks).toContain('toolbarControls={<>');
   expect(tasks).toContain('tasks-overview-menu');
   expect(tasks).toContain('className="tasks-queue-filter"');
-  expect(tasks).toContain('aria-label="About task dates"');
+  expect(tasks).toContain('WorkspaceHelp page="tasks"');
   expect(css).toContain('.tasks-directory-controls .tasks-directory-caption');
   expect(css).toContain('.tasks-toolbar-slot>.connections-grid-toolbar');
   expect(css).toContain('min-height:62px');

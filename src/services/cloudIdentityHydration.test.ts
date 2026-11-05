@@ -11,7 +11,7 @@ describe('Cloud identity and hydration generation contract',()=>{
     expect(auth).toContain('isActive:isCurrent');
   });
   it('prevents stale network reads from overwriting the next account cache',()=>{
-    expect(auth).toContain('allowCrmRecovery: membership.role !== \'viewer\',\n      isCurrent,');
+    expect(auth).toContain('allowCrmRecovery:canWriteCrm,\n      allowQuoteRecovery:canWriteQuotes,\n      isCurrent,');
     expect(sync).toContain('assertCurrent();\n  // The existing local cache');
     expect(sync).toContain('const writeHydrated=(key:CloudDocumentKey,value:unknown)=>{');
     expect(sync).toContain('assertCurrent();\n    writeLocalDocument(key,value,false)');

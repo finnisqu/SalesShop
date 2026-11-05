@@ -132,7 +132,8 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(review).toContain('money.format(data.sinkPrice)');
   expect(review).toContain('money.format(data.specialtyPrice)');
   expect(review).toContain('money.format(data.total)');
-  expect(review).toContain('quickGeneralSummary(quote).total');
+  expect(review).toContain('const generalSummary=useMemo(()=>quickGeneralSummary(quote),[quote]);');
+  expect(review).toContain('generalSummary.total');
  });
  it('floats icon-only bulk actions sideways instead of adding a selected-row toolbar',()=>{
   const popover=source('src/components/QuoteBulkActionPopover.tsx');

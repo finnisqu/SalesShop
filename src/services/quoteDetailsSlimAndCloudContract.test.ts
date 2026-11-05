@@ -47,7 +47,8 @@ describe('Quick Quote Details single-column and secure cloud-save contract',()=>
   });
   it('inserts fresh owned quotes before upserting existing ones without widening RLS',()=>{
     expect(sync).toContain("const freshQuotes=quotes.filter(row=>!guards.has(String(row.id)));");
-    expect(sync).toContain("supabase.from('quotes').insert(freshQuotes)");
+    expect(sync).toContain("await forEachCloudWriteBatch(freshQuotes,async batch=>{");
+    expect(sync).toContain("supabase.from('quotes').insert(batch)");
     expect(sync).toContain("await upsertRows('quotes', existingQuotes)");
     expect(sync).toContain("const acceptedQuotes = document.quotes.filter");
     expect(sync).toContain('quote.ownerUserId === actorId');

@@ -15,7 +15,7 @@ describe('Workspace data hydration feedback',()=>{
     expect(crm).toContain("style={!recordsReady?{display:'none'}:undefined}");
     expect(crm).toContain("const recordsReady=crmReady&&quotesReady;");
   });
-  it('keeps the Tasks table scoped to the loaded user's records',()=>{
+  it("keeps the Tasks table scoped to the loaded user's records",()=>{
     expect(tasks).toContain('scope&&storedScope!==scope&&<WorkspaceLoadingState');
     expect(tasks).toContain('scope&&storedScope===scope&&<div className="tasks-table-container">');
     expect(tasks).toContain("title=\"Loading Tasks\"");

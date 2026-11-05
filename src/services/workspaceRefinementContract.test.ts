@@ -16,7 +16,7 @@ describe('SalesShop streamlined workspace contract',()=>{
   expect(tasks).toContain('aria-pressed={filter===key}');
   expect(tasks).toContain("label:'All history'");
    expect(tasks).toContain('WorkspaceMoreMenu');
-  expect(tasks).toContain('tasks-filter-help');
+  expect(tasks).toContain('WorkspaceHelp page="tasks"');
   expect(tasks).not.toContain('className="tasks-filter-row"');
  });
  it('removes duplicate Catalog context but keeps editor tabs',()=>{

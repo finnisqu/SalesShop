@@ -11,8 +11,8 @@ describe('Batch 16A profile and Connections cleanup',()=>{
    expect(connections).toContain("chooseTab('quotes')");
    expect(connections).toContain("tab === 'quotes'");
    expect(connections).toContain('Quote metadata directory');
-   expect(connections).toContain('quotesForCompany(company, projects, quotes)');
-   expect(connections).toContain('quotesForProject(project, quotes)');
+   expect(connections).toContain('counts.quotesByCompany.get(c.id)');
+   expect(connections).toContain('counts.quotesByDeal.get(project.id)');
  });
  it('puts personal appearance controls in desktop and mobile profile areas',()=>{
    for(const source of [account,mobile]){

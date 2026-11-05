@@ -9,6 +9,7 @@ const recordsCss = readFileSync(new URL('../connections-record-pages.css', impor
 const entry = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
 const headerCss = readFileSync(new URL('../connections-header-v2.css', import.meta.url), 'utf8');
 const gutterCss = readFileSync(new URL('../workbook-scrollbar-gutters.css', import.meta.url), 'utf8');
+const scrollShellCss = readFileSync(new URL('../workspace-scroll-shell-parity.css', import.meta.url), 'utf8');
 const connectionsHeaderCss = readFileSync(new URL('../connections-header-v2.css', import.meta.url), 'utf8');
 
 describe('Connections foundation — privacy-first navigation', () => {
@@ -48,7 +49,7 @@ describe('Connections foundation — privacy-first navigation', () => {
       "'companies'", "'people'", "'deals'", '<SectionTabs', '<PageHeader', '<Field', '<StatusText',
       'resolveCompany(name, newCompanyKind)', 'createContact({', 'previewRecord(\'person\'', 'openPerson(id)',
       'previewRecord(\'company\'', 'previewRecord(\'deal\'',
-      'quotesForCompany(company, projects, quotes)', 'quotesForProject(project, quotes)',
+      'counts.quotesByCompany.get(c.id)', 'counts.quotesByDeal.get(project.id)',
       'setCompanyFilter', 'setQuery', 'connections-section-more', "chooseTab('activity')",
     ]) expect(page, `Missing Connections capability: ${code}`).toContain(code);
     expect(page).not.toContain("id: 'overview'");
@@ -101,7 +102,8 @@ describe('Connections foundation — privacy-first navigation', () => {
     expect(headerCss).toContain('.connections-header-search input[type="search"]');
     expect(headerCss).toContain('grid-column:1/-1;grid-row:3');
     expect(gutterCss).toContain('.connections-table-scroll');
-    expect(gutterCss).toContain('.tasks-workspace');
+    expect(scrollShellCss).toContain('.tasks-workspace');
+    expect(scrollShellCss).toContain('.tasks-directory-content');
     expect(gutterCss).toContain('.supplier-directory-table-scroll');
     expect(gutterCss).toContain('.qmb-quote-scroll');
     expect(gutterCss).toContain('scrollbar-gutter:stable');

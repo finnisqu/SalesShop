@@ -12,7 +12,7 @@ const tableCss=read('src/connections-table.css');
 describe('Connections bulk record editing',()=>{
  it('exposes the action only for editable CRM table records with selection',()=>{
   expect(table).toContain('onBulkEdit?:(records:ConnectionTableRow[],change:BulkEditChange)=>Promise<void>');
-  expect(table).toContain("chosen=rows.filter(x=>selection.has(x.id))");
+  expect(table).toContain("chosen=useMemo(()=>rows.filter(row=>selection.has(row.id)),[rows,selection])");
   expect(table).toContain("onBulkEdit&&['companies','people','deals'].includes(tableKey)");
   expect(table).toContain('onBulkEdit(chosen,change)');
   expect(table).toContain('setSelected([])');

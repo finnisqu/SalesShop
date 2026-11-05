@@ -12,6 +12,7 @@ const fixture=vi.hoisted(()=>({
 }));
 
 vi.mock('../lib/supabase',()=>({
+  supabaseConfigured:false,
   supabase:{
     from(table:keyof typeof fixture.rows){
       return {
