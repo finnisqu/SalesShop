@@ -17,6 +17,12 @@ describe('Cloud sync reconnect and stale-session safety contract',()=>{
     expect(cloud).toContain('if(!options.readOnlyShared&&retryableFailures.has(QUOTES_DOCUMENT_KEY)');
     expect(cloud).toContain('if(!options.readOnlyShared&&retryableFailures.has(SIGNATURES_DOCUMENT_KEY))');
   });
+  it('treats missing metadata markers as recoverable only within the active session',()=>{
+    expect(cloud).toContain("if(key===QUOTES_DOCUMENT_KEY&&!readPendingQuoteSync(scope))");
+    expect(cloud).toContain("if(!options.readOnlyShared&&retryableFailures.has(CRM_DOCUMENT_KEY))");
+    expect(cloud).toContain("if(!options.readOnlyShared&&retryableFailures.has(QUOTES_DOCUMENT_KEY))");
+    expect(cloud).toContain("const active=()=>!disposed&&options.isActive?.()!==false");
+  });
   it('replays CRM, Quotes and private Notebook only with scoped recovery markers',()=>{
     expect(cloud).toContain('if(!options.readOnlyShared&&readPendingQuoteSync(scope))');
     expect(cloud).toContain('if(!options.readOnlyShared&&readPendingCrmSync(scope))');

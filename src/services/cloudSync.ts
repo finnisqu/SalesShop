@@ -309,7 +309,9 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
           baselineCrm=document as CrmDocument;
         if(key===PRIVATE_DOCUMENT_KEY&&!readPendingNotebookSync(scope))
           baselineNotebook=document as NotebookDocument;
-        if(key===QUOTES_DOCUMENT_KEY&&token&&!readPendingQuoteSync(scope))
+        // A recovery marker can fail to persist (storage quota/private mode).
+        // Cloud confirmation still means this particular write was saved.
+        if(key===QUOTES_DOCUMENT_KEY&&!readPendingQuoteSync(scope))
           setQuoteSaveStatus('saved');
         if(recoveredFailure&&!retryableFailures.size&&
           !readPendingCrmSync(scope)&&!readPendingQuoteSync(scope)&&!readPendingNotebookSync(scope))
@@ -338,13 +340,15 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     if(!active())return;
     if(Date.now()-lastRecoveryRetry<15000)return;
     let attempted=false;
-    if(!options.readOnlyShared&&retryableFailures.has(CRM_DOCUMENT_KEY)&&readPendingCrmSync(scope)){
+    // Within this live, identity-checked session a failed write is retryable
+    // even if browser storage rejected the metadata recovery marker.
+    if(!options.readOnlyShared&&retryableFailures.has(CRM_DOCUMENT_KEY)){
       const doc=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
       if(doc?.schemaVersion===3){
         schedule(CRM_DOCUMENT_KEY,doc);attempted=true;
       }
     }
-    if(!options.readOnlyShared&&retryableFailures.has(QUOTES_DOCUMENT_KEY)&&readPendingQuoteSync(scope)){
+    if(!options.readOnlyShared&&retryableFailures.has(QUOTES_DOCUMENT_KEY)){
       const doc=readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument|null;
       if(doc?.schemaVersion===2){
         schedule(QUOTES_DOCUMENT_KEY,doc);attempted=true;
