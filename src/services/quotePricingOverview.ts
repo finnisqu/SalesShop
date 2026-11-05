@@ -18,16 +18,38 @@ export interface PricingAreaRow {
 export function quotePricingOverview(quote: Quote, report: QuoteAuditReport = auditQuoteDraft(quote)) {
   const areas = quote.sections.filter(section => !isGeneralTakeoffSection(section));
   const areaIds = new Set(areas.map(s => s.id));
+  // Index line ownership and audit destinations once. Earlier rendering
+  // filtered every line and finding again for EACH Area (O(A × (L + F))).
+  // Keep the same quoteLinesTotal function to preserve exact billing math.
+  const areaLines=new Map<string,typeof quote.lines>();
+  const generalLines:typeof quote.lines=[];
+  for(const line of quote.lines){
+    if(line.sectionId&&areaIds.has(line.sectionId)){
+      const lines=areaLines.get(line.sectionId);
+      if(lines)lines.push(line);
+      else areaLines.set(line.sectionId,[line]);
+    }else generalLines.push(line);
+  }
+  const countAreaFindings=(findings:typeof report.blockers)=>{
+    const counts=new Map<string,number>();
+    for(const finding of findings){
+      const target=finding.destination;
+      if(target.view!=='area'||!target.areaId)continue;
+      counts.set(target.areaId,(counts.get(target.areaId)??0)+1);
+    }
+    return counts;
+  };
+  const blockerCounts=countAreaFindings(report.blockers);
+  const reviewCounts=countAreaFindings(report.review);
   const rows: PricingAreaRow[] = areas.map(section => ({
     section,
     measuredSf: totalBillableTakeoffSf(section.scope?.takeoffPieces ?? []),
     material: section.scope?.takeoffMaterial?.trim() || 'Material not selected',
-    amount: quoteLinesTotal(quote.lines.filter(l => l.sectionId === section.id)),
+    amount: quoteLinesTotal(areaLines.get(section.id)??[]),
     sinkCount: (section.scope?.takeoffSinks ?? []).reduce((n,s) => n + s.count, 0),
-    blockers: report.blockers.filter(f => f.destination.view === 'area' && f.destination.areaId === section.id).length,
-    reviewItems: report.review.filter(f => f.destination.view === 'area' && f.destination.areaId === section.id).length,
+    blockers: blockerCounts.get(section.id)??0,
+    reviewItems: reviewCounts.get(section.id)??0,
   }));
-  const generalLines = quote.lines.filter(line => !line.sectionId || !areaIds.has(line.sectionId));
   return {
     rows,
     generalAmount: quoteLinesTotal(generalLines),
