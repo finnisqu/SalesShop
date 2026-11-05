@@ -34,7 +34,10 @@ export function TaskAssociationsField({options,value,onChange}:{
    if(!anchor)return;
    const rect=anchor.getBoundingClientRect();
    const actualHeight=popoverRef.current?.scrollHeight;
-   const pos=taskAssociationPopoverPlacement(rect,{width:window.innerWidth,height:window.innerHeight},actualHeight);
+   const visual=window.visualViewport;
+   const pos=taskAssociationPopoverPlacement(rect,visual
+     ?{width:visual.width,height:visual.height,offsetTop:visual.offsetTop,offsetLeft:visual.offsetLeft}
+     :{width:window.innerWidth,height:window.innerHeight},actualHeight);
    const style=getComputedStyle(anchor);
    const colors=Object.fromEntries(themeKeys.map(key=>[key,style.getPropertyValue(key).trim()]));
    setPlacement({...pos,...colors,position:'fixed',zIndex:9500} as CSSProperties&{maxHeight:number});
