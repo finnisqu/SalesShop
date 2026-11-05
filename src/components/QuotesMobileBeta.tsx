@@ -239,9 +239,10 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
   </article>;
 }
 
-function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNextArea,onDuplicate,onSaveLayout,onReview,returnLabel}:{
+function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNextArea,onDuplicate,onSaveLayout,onReview,onReturnToReview,returnLabel}:{
   quote:Quote;section:QuoteSection;tab:AreaTab;setTab:(v:AreaTab)=>void;
   goBack:()=>void;onPricingOverview:()=>void;onNextArea:()=>void;onDuplicate:()=>void;onSaveLayout:()=>void;onReview:()=>void;
+  onReturnToReview?:()=>void;
   returnLabel:string;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
@@ -466,8 +467,10 @@ function AreaWorkspace({quote,section,tab,setTab,goBack,onPricingOverview,onNext
           {tab==='measure'?'Materials ›':tab==='materials'&&!desktopLab?'Pricing ›':
             tab==='materials'&&desktopLab?'Calculator ›':nextArea.label}
         </button>}
-        <button type="button" className="qmb-outline qmb-area-review"
-          aria-label="Review quote from Area" onClick={onReview}>Review ›</button>
+        {onReturnToReview?<button type="button" className="qmb-primary qmb-area-return-review"
+          aria-label="Return to Pricing Review" onClick={onReturnToReview}>Return to Review ›</button>:
+          <button type="button" className="qmb-outline qmb-area-review"
+            aria-label="Review quote from Area" onClick={onReview}>Review ›</button>}
         <button type="button" className="qmb-primary" onClick={goBack}>{returnLabel} ›</button>
       </div>
     </footer>
@@ -1340,7 +1343,9 @@ export function QuotesMobileBeta() {
     </div>:page==='area'&&quote&&area?<AreaWorkspace key={area.id} quote={quote} section={area} tab={areaTab}
       setTab={setAreaTab} goBack={goBack} onPricingOverview={openPricingStage}
       returnLabel="Done · Takeoffs"
-      onNextArea={advanceToNextArea} onReview={openSend} onDuplicate={duplicateCurrentArea}
+      onNextArea={advanceToNextArea} onReview={openSend}
+      onReturnToReview={isPhoneLayout&&reviewReturn?.quoteId===quote.id?returnToReview:undefined}
+      onDuplicate={duplicateCurrentArea}
        onSaveLayout={()=>{if(area)setSavingLayoutAreaId(area.id);}}
       />:null}
       </div>

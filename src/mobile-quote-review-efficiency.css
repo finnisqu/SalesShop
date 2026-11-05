@@ -76,3 +76,16 @@
   overflow-wrap:anywhere;
  }
 }
+
+/* Existing Area footer gains a Return to Pricing Review action only when
+   the user came from Pricing Review; no fourth footer button is added. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app .qmb .qmb-area-footer-actions .qmb-area-return-review{
+  box-sizing:border-box;min-height:44px;padding:8px 10px;
+  border-radius:8px;white-space:normal;
+  font:750 11px/1.2 var(--ss-font-body);
+ }
+ :root[data-sales-theme] .sales-app .qmb .qmb-area-footer-actions .qmb-area-return-review:focus-visible{
+  outline:2px solid var(--ss-focus,var(--qmb-accent));outline-offset:2px;
+ }
+}
