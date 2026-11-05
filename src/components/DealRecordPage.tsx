@@ -10,6 +10,7 @@ import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {DealAssigneeSelect,useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
+import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const displayDate = (value?: string) => {
@@ -39,6 +40,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const [saveError,setSaveError]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
   const deal = deals.find(item => item.id === dealId);
   const [draft, setDraft] = useState({
     name: deal?.name ?? '', stage: deal?.stage ?? 'Discovery' as ProjectStage,
@@ -52,7 +54,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   });
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
-  useEffect(() => { setEditing(false);setHistoryOpen(false);setSaveError('');setNotice(null); }, [dealId]);
+  useEffect(() => { setEditing(false);setHistoryOpen(false);setExternalQuoteOpen(false);setSaveError('');setNotice(null); }, [dealId]);
   useEffect(() => {
     if (!editing && deal) setDraft({
       name: deal.name, stage: deal.stage,
@@ -66,6 +68,9 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     () => deal ? dealRecordView(deal, companies, contacts, quotes, activities) : null,
     [deal, companies, contacts, quotes, activities],
   );
+
+  const outsideQuotes=activities.filter(activity=>activity.projectId===dealId&&activity.metadata?.externalQuoteSent)
+    .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
 
   if (!hydrated) return <section className="connections-record-missing" role="status">Loading deal record…</section>;
   if (!deal || !related) return <section className="connections-record-missing" role="status">
@@ -108,6 +113,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => {setNotice(null);setSaveError('');setEditing(value=>!value);}}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
+      {!["Closed Won","Completed","Closed Lost","Discarded"].includes(deal.stage)&&
+        <button type="button" onClick={()=>setExternalQuoteOpen(open=>!open)}>
+          {externalQuoteOpen?"Cancel external quote":"Record external quote sent"}
+        </button>}
       <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>
     </>}
     left={<>
@@ -150,6 +159,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           <RecordProperty label="Pipeline">{dealPipelineLabel(deal.pipeline)}</RecordProperty>
           <RecordProperty label="Amount">{deal.amount === undefined ? 'Not set' : money.format(deal.amount)}</RecordProperty>
           <RecordProperty label="Bid due date">{displayDate(deal.dueDate)}</RecordProperty>
+          {outsideQuotes.length>0&&<RecordProperty label="External bid sent">{displayDate(outsideQuotes[0].metadata?.bidSentDate||outsideQuotes[0].occurredAt)}</RecordProperty>}
           <RecordProperty label="Assigned salesperson">{dealAssigneeLabel(deal.assignedUserId,assignees)}</RecordProperty>
           <RecordProperty label="Next action">{deal.nextAction || 'Not set'}</RecordProperty>
           <RecordProperty label="Last touchpoint">{displayDate(deal.lastTouchpoint)}</RecordProperty>
@@ -158,14 +168,25 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       </RecordCard>
     </>}
     center={<>
-      <RecordCard title="Quotes" extra={<span>{related.linkedQuotes.length}</span>}>
+      <RecordCard title="Quotes" extra={<span>{related.linkedQuotes.length} SalesShop</span>}>
+        {externalQuoteOpen&&<ExternalQuoteSentForm key={deal.id} deal={deal}
+          onCancel={()=>setExternalQuoteOpen(false)}
+          onRecorded={()=>{setExternalQuoteOpen(false);setNotice({kind:"applied",message:"External quote recorded. Bid due date cleared and submission tasks completed."});}}/>}
         <div className="connections-record-entity-list">
           {related.linkedQuotes.map(quote => <button type="button" key={quote.id} onClick={() => openQuote(quote.id)}>
             <strong>{quote.title || displayQuoteNumber(quote)}</strong>
             <small>{displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
           </button>)}
-          {!related.linkedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this deal.</p>}
+          {!related.linkedQuotes.length && <p className="connections-record-empty">No SalesShop quotes linked to this deal.</p>}
         </div>
+        {outsideQuotes.length>0&&<div className="external-quote-history">
+          <strong>Submitted with another tool or format</strong>
+          {outsideQuotes.slice(0,5).map(activity=><div className="external-quote-history-entry" key={activity.id}>
+            <span><b>{activity.metadata?.amount===undefined?"External bid":money.format(activity.metadata.amount)}</b>
+              <small>{activity.metadata?.externalQuoteFormat||"External quote"} · Sent {displayDate(activity.metadata?.bidSentDate||activity.occurredAt)}</small></span>
+            <small>{activity.metadata?.bidDueDate?`Original due ${displayDate(activity.metadata.bidDueDate)}`:"Bid sent"}</small>
+          </div>)}
+        </div>}
       </RecordCard>
       <RecordCard title="Notebook">
         <ProjectNotebookLinks project={deal} />
