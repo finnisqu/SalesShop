@@ -167,16 +167,16 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
     ?readPendingCrmSync({organizationId:orgId,userId}):null;
   const recoveredCrm=mergePendingCrmChanges(normalizedCrm,localCrm,pendingCrm);
   if (recoveredCrm) {
-    writeHydrated(CRM_DOCUMENT_KEY, recoveredCrm, false);
+    writeHydrated(CRM_DOCUMENT_KEY, recoveredCrm);
   } else if (canSeedOrgFromLocal) {
     if (localCrm?.schemaVersion === 3) {
       assertCurrent();
       await syncNormalizedCrm(orgId, localCrm);
     } else {
-      writeHydrated(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
+      writeHydrated(CRM_DOCUMENT_KEY, emptyCrmDocument());
     }
   } else {
-    writeHydrated(CRM_DOCUMENT_KEY, emptyCrmDocument(), false);
+    writeHydrated(CRM_DOCUMENT_KEY, emptyCrmDocument());
   }
 
   // Quotes use normalized current rows + immutable revision snapshots.
@@ -186,13 +186,13 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   // quotes, even if the server has newer versions.
   const recoveredQuotes=mergePendingQuoteDrafts(normalizedQuotes,localQuotes,pendingQuoteSync);
   if (recoveredQuotes) {
-    writeHydrated(QUOTES_DOCUMENT_KEY,recoveredQuotes,false);
+    writeHydrated(QUOTES_DOCUMENT_KEY,recoveredQuotes);
   } else if (canSeedOrgFromLocal && localQuotes?.schemaVersion === 2 &&
     localQuotes.quotes.length > 0 && localQuotes.quotes.every(quote=>quote.ownerUserId===userId)) {
     assertCurrent();
     await syncNormalizedQuotes(orgId, localQuotes);
     const seededQuotes = await loadNormalizedQuotes(orgId, preferredActiveQuoteId);
-    writeHydrated(QUOTES_DOCUMENT_KEY, seededQuotes ?? localQuotes, false);
+    writeHydrated(QUOTES_DOCUMENT_KEY, seededQuotes ?? localQuotes);
   } else {
     // Collaborators never seed a company with their own local/demo data.
     // Only a workspace owner initializing a new shop creates the starter quote.
@@ -200,27 +200,27 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
       const starter = starterQuoteDocument(userId);
       assertCurrent();
       await syncNormalizedQuotes(orgId, starter);
-      writeHydrated(QUOTES_DOCUMENT_KEY, starter, false);
+      writeHydrated(QUOTES_DOCUMENT_KEY, starter);
     } else {
-      writeHydrated(QUOTES_DOCUMENT_KEY, { schemaVersion: 2, activeQuoteId: null, quotes: [] }, false);
+      writeHydrated(QUOTES_DOCUMENT_KEY, { schemaVersion: 2, activeQuoteId: null, quotes: [] });
     }
   }
 
   // Signatures are immutable business records. Existing cloud records always win.
   if (normalizedSignatures) {
-    writeHydrated(SIGNATURES_DOCUMENT_KEY, normalizedSignatures, false);
+    writeHydrated(SIGNATURES_DOCUMENT_KEY, normalizedSignatures);
   } else if (canSeedOrgFromLocal) {
     const localSignatures = readLocalDocument(SIGNATURES_DOCUMENT_KEY) as SignatureDocument | null;
     if (localSignatures?.schemaVersion === 1) {
       assertCurrent();
       await syncNormalizedSignatures(orgId, localSignatures);
       const seededSignatures = await loadNormalizedSignatures(orgId);
-      writeHydrated(SIGNATURES_DOCUMENT_KEY, seededSignatures ?? emptySignatureDocument(), false);
+      writeHydrated(SIGNATURES_DOCUMENT_KEY, seededSignatures ?? emptySignatureDocument());
     } else {
-      writeHydrated(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument(), false);
+      writeHydrated(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument());
     }
   } else {
-    writeHydrated(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument(), false);
+    writeHydrated(SIGNATURES_DOCUMENT_KEY, emptySignatureDocument());
   }
 
   // Notebook remains intentionally private and document-shaped.
@@ -228,7 +228,7 @@ export async function hydrateCloudDocuments(orgId: string, userId: string, optio
   if (notebookError) throw notebookError;
 
   if (notebookRow?.document !== undefined) {
-    writeHydrated(PRIVATE_DOCUMENT_KEY, notebookRow.document, false);
+    writeHydrated(PRIVATE_DOCUMENT_KEY, notebookRow.document);
   } else if (canSeedNotebookFromLocal) {
     const localNotebook = readLocalDocument(PRIVATE_DOCUMENT_KEY);
     if (localNotebook !== null){assertCurrent();await upsertPrivateDocument(userId, localNotebook);}
