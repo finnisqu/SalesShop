@@ -40,7 +40,7 @@ function subscribeToDensityChange(callback:()=>void){
 }
 /** Synchronizes controls across workspaces, tabs and the same browser window. */
 export function useWorkbookTableDensity(){
- const density=useSyncExternalStore(subscribeToDensityChange,getWorkbookTableDensity,()=> 'comfortable');
+ const density=useSyncExternalStore<WorkbookTableDensity>(subscribeToDensityChange,getWorkbookTableDensity,():WorkbookTableDensity=> 'comfortable');
  useEffect(()=>applyWorkbookTableDensity(density),[density]);
  return [density,setWorkbookTableDensity] as const;
 }
