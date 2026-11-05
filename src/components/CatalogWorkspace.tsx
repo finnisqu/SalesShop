@@ -7,6 +7,7 @@ import { CatalogTagsWorkspace } from './CatalogTagsWorkspace';
 import { useNavigationStore, type CatalogSection } from '../store/navigationStore';
 import { SectionTabs, Panel } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useWorkbookTableDensity} from '../services/workbookTableDensity';
@@ -109,7 +110,7 @@ export function CatalogWorkspace() {
 
   return (
     <main className="catalog-workspace">
-      <WorkspaceHeader title="Catalog" className="catalog-header catalog-foundation-heading"
+      <WorkspaceHeader title="Catalog" help={<WorkspaceHelp page="catalog" section={section}/>} className="catalog-header catalog-foundation-heading"
         tabs={<SectionTabs className="catalog-section-nav catalog-foundation-tabs"
           aria-label="Catalog sections" items={CATALOG_SECTIONS.map(({ id, label }) => ({ id, label }))}
           selected={section} onSelect={next=>{setCatalogSearch('');setSection(next);}} />}

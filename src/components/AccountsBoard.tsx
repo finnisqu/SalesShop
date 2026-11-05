@@ -25,6 +25,7 @@ import { Button, PageHeader } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
@@ -248,7 +249,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   return (
     <main className={'board-view accounts-view'+(compactCards?' is-compact':'')}>
       <PageHeader className="board-header-panel accounts-header-panel board-foundation-header ss-workspace-header"
-        eyebrow="Relationship health" title="Accounts"
+        eyebrow="Relationship health" title="Accounts" titleAdornment={<WorkspaceHelp page="board" section="accounts"/>}
         description="Same CRM data, viewed by customer relationship instead of deal stage."
         actions={<>
           <div className="board-view-toggle" role="group" aria-label="Board type">

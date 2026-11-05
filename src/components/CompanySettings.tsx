@@ -8,6 +8,7 @@ import { PersonalDateTimeSettings } from './PersonalDateTimeSettings';
 import { CompanyDocumentTermsReference } from './CompanyDocumentTermsReference';
 import { OwnerRolePreviewSettings } from './RolePerspectiveControls';
 import { PageHeader, Panel, Button } from '../design-system/components';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import { SettingsIdentityFields, SettingsProfileFields } from './SettingsIdentityFields';
 import { TeamAccessSettings } from './TeamAccessSettings';
 import { SalesTeamManagement } from './SalesTeamManagement';
@@ -143,7 +144,7 @@ export function CompanySettings() {
         <PageHeader
           className="company-settings-header settings-foundation-page-header"
           eyebrow="Your workspace"
-          title="Settings"
+          title="Settings" titleAdornment={<WorkspaceHelp page="settings" section={tab}/>}
           description="Company identity, account information, and the way SalesShop feels to you."
           actions={tab === 'company' ? <div className="company-settings-save-state" role="status">{error ? <strong className="has-error">{error}</strong> : <span>{saving ? 'Saving…' : 'Saved automatically'}</span>}</div> : undefined}
         />

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {createPortal} from 'react-dom';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useQuoteStore } from '../store/quoteStore';
 import { useCrmStore } from '../store/crmStore';
@@ -1057,7 +1058,7 @@ export function QuotesMobileBeta() {
         </div>}
       {page==='area'&&quoteProgress}
     {page==='library'?<>
-      <WorkspaceHeader title="Quotes" className="qmb-library-workspace-header"
+      <WorkspaceHeader title="Quotes" help={<WorkspaceHelp page="quotes" section={followUpsTab?'follow-ups':documentFilter}/>} className="qmb-library-workspace-header"
         tabs={<nav className="qmb-library-filter-row" aria-label="Document library sections">
           {([
             {id:'all',title:'All'},

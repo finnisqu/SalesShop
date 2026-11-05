@@ -4,6 +4,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {QuickCreate} from './QuickCreate';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import '../home-workspace.css';
@@ -22,7 +23,7 @@ export function HomeWorkspace(){
   <header className="sales-home-heading">
    <div className="sales-home-heading-copy">
     <span className="sales-home-eyebrow">MY WORKSPACE</span>
-    <h1>Today</h1><p>{dateLabel.format(new Date())}</p>
+    <div className="ss-workspace-title-row"><h1>Today</h1><WorkspaceHelp page="home"/></div><p>{dateLabel.format(new Date())}</p>
    </div>
    <div className="sales-home-top-actions" aria-label="Start work">
     {canLog&&<button type="button" className="sales-log-launcher"

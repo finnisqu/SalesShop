@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {createPortal} from 'react-dom';
 import {useDismissiblePopover} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
@@ -334,7 +335,7 @@ export function Connections() {
     <main className="connections-workspace connections-directory-layout">
       <PageHeader className="connections-heading connections-foundation-heading ss-workspace-header"
         eyebrow="CRM"
-        title="Connections"
+        title="Connections" titleAdornment={<WorkspaceHelp page="connections" section={tab}/>}
         description="Your accounts, contacts and deals."
         actions={<>
           <div className="connections-header-navigation">

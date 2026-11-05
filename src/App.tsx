@@ -74,6 +74,7 @@ import { MobileAppChrome } from './components/MobileAppChrome';
 import { NotebookObjectLayer } from './components/NotebookObjectLayer';
 import { QuickCreate } from './components/QuickCreate';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './components/WorkspaceHeader';
+import {WorkspaceHelp} from './components/WorkspaceHelp';
 import { AccountMenu } from './components/AccountMenu';
 import { BuildBadge } from './components/BuildBadge';
 import { GlobalPostItLauncher, GlobalPostItLayer } from './components/GlobalPostIt';
@@ -294,7 +295,7 @@ function App() {
         <div className="loading-screen" role="status">Opening Notebook…</div>
       ) : (
         <main className={`notebook-workspace ${companion?'is-side-by-side':''}`}>
-          <WorkspaceHeader title="Notebook"
+          <WorkspaceHeader title="Notebook" help={<WorkspaceHelp page="notebook" section={notebookHeaderSection}/>}
             tabs={<nav className="notebook-header-tabs" aria-label="Notebook views">
               <button type="button" className={notebookHeaderSection==='pages'?'active':''}
                 aria-pressed={notebookHeaderSection==='pages'} onClick={()=>{

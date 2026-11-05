@@ -7,6 +7,7 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
@@ -341,7 +342,7 @@ export function TasksWorkspace(){
   };
   if(rolePreview)return <main className="tasks-workspace"><h1>Tasks</h1><p>Personal tasks are not shown in role preview.</p></main>;
   return <main className="tasks-workspace" aria-label="SalesShop tasks">
-    <WorkspaceHeader title="Tasks" className="tasks-header"
+    <WorkspaceHeader title="Tasks" help={<WorkspaceHelp page="tasks" section={filter}/>} className="tasks-header"
       tabs={<nav className="tasks-header-tabs" aria-label="Task views">
        {([['active','Open'],['today','Today'],['upcoming','Upcoming'],
          ['completed','Completed']] as const).map(([key,label])=>
@@ -405,10 +406,6 @@ export function TasksWorkspace(){
               {queues.map(q=><option key={q} value={q}>{q}</option>)}
             </select>
           </label>
-          <details className="tasks-filter-help">
-            <summary aria-label="About task dates" title="About task dates">ⓘ</summary>
-            <p>A due date never hides a task from All open. “Start later” is for tasks you don't plan to work on yet.</p>
-          </details>
         </>}
         onOpen={id=>{const selected=visible.find(task=>task.id===id);if(selected)setViewingId(selected.id);}}
         onTaskDuePreset={quickDue}
