@@ -71,11 +71,23 @@ function atLeastAsNew(localValue: string, serverValue?: string) {
   return localTime > serverTime;
 }
 
-async function selectRows(table: QuoteTable, organizationId: string, orderColumn: string) {
+/** PostgREST commonly caps table reads at 1,000 rows. Load every page,
+ * including older line items and revisions, using a deterministic sort. */
+const QUOTE_PAGE_SIZE=500;
+async function selectRows(table: QuoteTable, organizationId: string, orderColumn: string, columns='*') {
   if (!supabase) return [] as DbRow[];
-  const { data, error } = await supabase.from(table).select('*').eq('organization_id', organizationId).order(orderColumn, { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as DbRow[];
+  const rows:DbRow[]=[];
+  const tieBreaker=table==='quote_revisions'?'quote_id':'id';
+  for(let start=0;;start+=QUOTE_PAGE_SIZE){
+    const base=supabase.from(table).select(columns)
+      .eq('organization_id',organizationId).order(orderColumn,{ascending:true});
+    const ordered=tieBreaker===orderColumn?base:base.order(tieBreaker,{ascending:true});
+    const {data,error}=await ordered.range(start,start+QUOTE_PAGE_SIZE-1);
+    if(error)throw error;
+    const page=(data??[]) as DbRow[];
+    rows.push(...page);
+    if(page.length<QUOTE_PAGE_SIZE)return rows;
+  }
 }
 
 function groupByQuote<T>(rows: DbRow[], mapper: (row: DbRow) => T) {
@@ -231,12 +243,9 @@ interface ServerQuoteGuard {
 async function serverQuoteGuards(organizationId: string) {
   const guards = new Map<string, ServerQuoteGuard>();
   if (!supabase) return guards;
-  const { data, error } = await supabase
-    .from('quotes')
-    .select('id,revision,status,quote_number,document_type,parent_quote_id,change_order_number,viewed_at,signed_at,updated_at')
-    .eq('organization_id', organizationId);
-  if (error) throw error;
-  (data ?? []).forEach((row) => guards.set(String(row.id), {
+  const rows=await selectRows('quotes',organizationId,'id',
+    'id,revision,status,quote_number,document_type,parent_quote_id,change_order_number,viewed_at,signed_at,updated_at');
+  rows.forEach((row) => guards.set(String(row.id), {
     revision: Number(row.revision) || 0,
     status: String(row.status) as QuoteStatus,
     quoteNumber: String(row.quote_number),
