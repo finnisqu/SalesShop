@@ -48,7 +48,7 @@ import { QuoteBetaDesktopCommerce } from './QuoteBetaDesktopCommerce';
 import { QuoteBetaAdditionalScope } from './QuoteBetaAdditionalScope';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { selectedMaterialCost } from '../services/selectedMaterialCost';
-import { QuoteBetaSelections } from './QuoteBetaSelections';
+import { QuoteBetaSelections,type QuoteSelectionsDraft } from './QuoteBetaSelections';
 import { QuoteBetaReview } from './QuoteBetaReview';
 import { QuoteBetaReviewOverlay } from './QuoteBetaReviewOverlay';
 import { QuoteBetaDesktopRails, QuoteBetaInspector } from './QuoteBetaDesktopRails';
@@ -609,6 +609,7 @@ export function QuotesMobileBeta() {
   const deleteQuote=useQuoteStore(s=>s.deleteQuote);
 
   const [selectionsOpen,setSelectionsOpen]=useState(false);
+  const selectionsDraftRef=useRef<{quoteId:string;draft:QuoteSelectionsDraft}|null>(null);
   const [reviewOpen,setReviewOpen]=useState(false);
   const [reviewFocus,setReviewFocus]=useState<string|null>(null);
   const [reviewReturn,setReviewReturn]=useState<{quoteId:string;findingId:string|null}|null>(null);
@@ -1354,7 +1355,11 @@ export function QuotesMobileBeta() {
       quote={quote} editable={editable}
       onClose={()=>setCustomerQuickOpen(false)}
       onDetails={()=>navigateDocument('details')}/>}
-    {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote} onClose={()=>setSelectionsOpen(false)}/>}
+    {quote&&page!=='library'&&selectionsOpen&&<QuoteBetaSelections quote={quote}
+      draft={selectionsDraftRef.current?.quoteId===quote.id?selectionsDraftRef.current.draft:undefined}
+      onDraftChange={next=>{selectionsDraftRef.current=next?{quoteId:quote.id,draft:next}:null;}}
+      onClose={()=>setSelectionsOpen(false)}/>}
+
     {showDeleteGeneralTakeoff&&generalTakeoff&&quote&&createPortal(
       <div className="qmb qmb-area-manager-backdrop" onPointerDown={e=>{
         if(e.target===e.currentTarget)setShowDeleteGeneralTakeoff(false);}}>

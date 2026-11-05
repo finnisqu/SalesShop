@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Quote, QuoteLineMaterialReference } from '../types/quote';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import { useQuoteStore } from '../store/quoteStore';
@@ -7,12 +7,18 @@ import { TakeoffMaterialCatalog } from './TakeoffCatalogPickers';
 import { DEFAULT_EDGE_PROFILE, DEFAULT_SPLASH_HEIGHT_IN } from '../services/quoteTakeoffsLite';
 
 const edgeOptions=['Flat','Eased','Beveled','Bullnose','Ogee','Mitered','Custom'];
+export type QuoteSelectionsDraft={
+  edge:string;height:string;material:string;
+  materialRef?:QuoteLineMaterialReference;applyMaterial:boolean;
+};
 
 /** Reuses the real material Catalog, quote pinboard and Area takeoff defaults.
  * "Apply to all" is explicit: never silently overwrite individual piece overrides.
  */
-export function QuoteBetaSelections({quote,onClose}:{
+export function QuoteBetaSelections({quote,onClose,draft,onDraftChange}:{
   quote:Quote;onClose:()=>void;
+  draft?:QuoteSelectionsDraft;
+  onDraftChange?:(next:QuoteSelectionsDraft|null)=>void;
 }) {
   const editable=quoteIsCommerciallyEditable(quote);
   const pinMaterial=useQuoteStore(s=>s.pinProjectMaterial);
@@ -20,12 +26,16 @@ export function QuoteBetaSelections({quote,onClose}:{
   const updateQuote=useQuoteStore(s=>s.updateQuote);
   const first=quote.sections.find(s=>s.scope?.takeoffDefaultEdgeProfile!==undefined||
     s.scope?.takeoffDefaultSplashHeightIn!==undefined)??quote.sections[0];
-  const [edge,setEdge]=useState(first?.scope?.takeoffDefaultEdgeProfile??DEFAULT_EDGE_PROFILE);
-  const [height,setHeight]=useState(String(first?.scope?.takeoffDefaultSplashHeightIn??DEFAULT_SPLASH_HEIGHT_IN));
-  const [material,setMaterial]=useState('');
-  const [materialRef,setMaterialRef]=useState<QuoteLineMaterialReference|undefined>();
-  const [applyMaterial,setApplyMaterial]=useState(false);
+  const [edge,setEdge]=useState(draft?.edge??first?.scope?.takeoffDefaultEdgeProfile??DEFAULT_EDGE_PROFILE);
+  const [height,setHeight]=useState(draft?.height??String(first?.scope?.takeoffDefaultSplashHeightIn??DEFAULT_SPLASH_HEIGHT_IN));
+  const [material,setMaterial]=useState(draft?.material??'');
+  const [materialRef,setMaterialRef]=useState<QuoteLineMaterialReference|undefined>(draft?.materialRef);
+  const [applyMaterial,setApplyMaterial]=useState(draft?.applyMaterial??false);
   const [message,setMessage]=useState('');
+  // Retain unfinished choices when this sheet closes. This does not persist
+  // anything to the quote until the salesperson explicitly applies it.
+  const retainDraft=(patch:Partial<QuoteSelectionsDraft>)=>
+    onDraftChange?.({edge,height,material,materialRef,applyMaterial,...patch});
   const bodyRef=useRef<HTMLDivElement>(null);
   const materialsRef=useRef<HTMLDivElement>(null);
   const sinksRef=useRef<HTMLDivElement>(null);
@@ -44,12 +54,9 @@ export function QuoteBetaSelections({quote,onClose}:{
     .map(sink=>({id:area.id+':'+sink.id,name:sink.name,qty:sink.count,area:area.title})));
   const manualSinks=quote.lines.filter(line=>line.kind==='sink'&&!line.takeoffSinkId&&line.description.trim())
     .map(line=>({id:line.id,name:line.description,qty:line.quantity??1,area:quote.sections.find(area=>area.id===line.sectionId)?.title??'General'}));
-  useEffect(()=>{setEdge(first?.scope?.takeoffDefaultEdgeProfile??DEFAULT_EDGE_PROFILE);
-    setHeight(String(first?.scope?.takeoffDefaultSplashHeightIn??DEFAULT_SPLASH_HEIGHT_IN));
-  },[quote.id,first?.scope?.takeoffDefaultEdgeProfile,first?.scope?.takeoffDefaultSplashHeightIn]);
   const apply=(includeExistingPieces:boolean)=>{
     const n=Number(height);
-    if(!Number.isFinite(n)||n<0||n>120){setMessage('Backsplash height must be between 0 and 120 inches.');return;}
+    if(!height.trim()||!Number.isFinite(n)||n<0||n>120){setMessage('Backsplash height must be between 0 and 120 inches.');return;}
     if(!quote.sections.length){
       setMessage('Materials can be pinned now. Add an Area to save fabrication defaults to the quote.');
       if(material.trim())pinMaterial(quote.id,material,materialRef);
@@ -60,6 +67,9 @@ export function QuoteBetaSelections({quote,onClose}:{
       material:material.trim()||undefined,materialReference:materialRef,
       assignMaterialToAreas:applyMaterial,
     });
+    // The confirmed values now live on the quote; do not restore an old
+    // uncommitted snapshot over newer defaults on the next opening.
+    onDraftChange?.(null);
     setMessage(includeExistingPieces?'Applied defaults to all current pieces.':'Saved defaults for new pieces in all current Areas.');
   };
   return <div className="qmb-selections-backdrop" onPointerDown={e=>{if(e.target===e.currentTarget)onClose();}}>
@@ -93,11 +103,14 @@ export function QuoteBetaSelections({quote,onClose}:{
           <strong>Find a job material</strong>
           <TakeoffMaterialCatalog disabled={!editable} value={material} selected={materialRef}
             pinned={quote.projectMaterials??[]}
-            onTextChange={text=>{setMaterial(text);setMaterialRef(undefined);}}
-            onSelect={(ref,label)=>{setMaterial(label);setMaterialRef(ref);}}/>
+            onTextChange={text=>{setMaterial(text);setMaterialRef(undefined);
+              retainDraft({material:text,materialRef:undefined});}}
+            onSelect={(ref,label)=>{setMaterial(label);setMaterialRef(ref);
+              retainDraft({material:label,materialRef:ref});}}/>
           <label className="qmb-check">
             <input type="checkbox" disabled={!editable} checked={applyMaterial}
-              onChange={e=>setApplyMaterial(e.target.checked)}/>
+              onChange={e=>{setApplyMaterial(e.target.checked);
+                retainDraft({applyMaterial:e.target.checked});}}/>
             Also assign this material to all current Areas
           </label>
           <button type="button" className="qmb-outline qmb-block" disabled={!editable||!material.trim()}
@@ -110,10 +123,12 @@ export function QuoteBetaSelections({quote,onClose}:{
             <label className="qmb-field"><span>Backsplash height</span>
               <input type="number" min="0" max="120" step=".5" inputMode="decimal"
                 aria-label="Job backsplash height in inches" value={height} disabled={!editable}
-                onChange={e=>setHeight(e.target.value)}/></label>
+                onChange={e=>{setHeight(e.target.value);
+                  retainDraft({height:e.target.value});}}/></label>
             <label className="qmb-field"><span>Edge profile</span>
               <select aria-label="Job default edge profile" value={edge} disabled={!editable}
-                onChange={e=>setEdge(e.target.value)}>
+                onChange={e=>{setEdge(e.target.value);
+                  retainDraft({edge:e.target.value});}}>
                 {edgeOptions.map(item=><option key={item}>{item}</option>)}
               </select></label>
           </div>
@@ -123,7 +138,7 @@ export function QuoteBetaSelections({quote,onClose}:{
             <button type="button" className="qmb-primary" disabled={!editable}
               onClick={()=>apply(true)}>Apply to all pieces</button>
           </div>
-          <p className="qmb-help">Set defaults affects new pieces in existing Areas. Apply to all also updates individual pieces. You can override any piece later.</p>
+          <p className="qmb-help">Set defaults affects new pieces in existing Areas. Apply to all also updates individual pieces. You can override any piece later. Unapplied choices are retained here when the sheet closes, not saved to the quote.</p>
         </div>
         <div ref={appendixRef} className="qmb-selections-card">
           <strong>Customer selections appendix</strong>
