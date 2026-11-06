@@ -145,8 +145,10 @@ export function TaskEditor({initial,onCancel,onSave}:{
       noValidate onChange={()=>setFormError('')} onSubmit={submit}>
       <header><strong>{'id'in initial?'Edit task':'New task'}</strong>
         <PreviewPanelClose label="Close task editor" onClose={close} initialFocus={false}/></header>
+      <div className="tasks-editor-scroll">
       <RecordEditField label="Task title" required error={formError==='Enter a task title.'?formError:undefined}>
-        {control=><input {...control} autoFocus data-dialog-initial-focus maxLength={240}
+        {control=><input {...control} autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
+          data-dialog-initial-focus maxLength={240}
           value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/>}
       </RecordEditField>
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
@@ -197,6 +199,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
        placeholder="Context or next steps…"/></label>
       <p className="tasks-editor-due-hint">Unsaved changes are kept on this device if you close or reload SalesShop.</p>
       <RecordFormFeedback notice={formError&&formError!=='Enter a task title.'?{kind:'error',message:formError}:null}/>
+      </div>
       <PreviewPanelActions className="ss-record-editor-actions"><button type="button" onClick={discard}>Discard draft</button>
        <button type="button" onClick={close}>Close</button>
        <button type="submit" className="tasks-primary">Save task</button></PreviewPanelActions>
