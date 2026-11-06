@@ -41,6 +41,7 @@ export function CompanySettings() {
   const error = useCompanySettingsStore((state) => state.error);
   const mode = useAuthStore((state) => state.mode);
   const actualRole = useAuthStore((state) => state.teamRole);
+  const actualDepartment = useAuthStore((state) => state.teamDepartment);
   const perspective = useRolePerspectiveStore((state) => state.activePerspective);
   const user = useAuthStore((state) => state.user);
   const organizationId = useAuthStore((state) => state.organizationId);
@@ -64,6 +65,8 @@ export function CompanySettings() {
   const canEditCompany = mode === 'local' || companyRole === 'owner' || companyRole === 'admin';
   // Shared-record deletion is deliberate maintenance, not ordinary CRM editing.
   const canManageRecords = !perspective && (mode === 'local' || actualRole === 'owner' || actualRole === 'admin');
+  const canQuickCreate=!perspective&&(mode==='local'||actualRole==='owner'||actualRole==='admin'||
+    (actualRole==='member'&&actualDepartment==='general'));
   const visibleTabs = TABS.filter((item) => item.id === 'data' ? canManageRecords :
     item.id !== 'advanced' || (mode === 'cloud' && actualRole === 'owner'));
   useEffect(() => {
@@ -161,7 +164,7 @@ export function CompanySettings() {
               if(value.trim()&&found)setTab(found.id);
             }}/>}
           primary={<button type="button" aria-label="Quick create" title="Quick create"
-            disabled={!!perspective||actualRole==='viewer'}
+            disabled={!canQuickCreate}
             onClick={()=>document.querySelector<HTMLButtonElement>('.mobile-app-hidden-launchers .quick-create-launcher')?.click()}>
             + Create</button>}
         />
