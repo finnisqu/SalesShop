@@ -12,6 +12,7 @@ import '../home-workspace.css';
 import './home-layout-custom.css';
 
 const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'short',day:'numeric'});
+const compactDateLabel=new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric'});
 
 export function HomeWorkspace(){
  const hydrate=useQuoteStore(s=>s.hydrate);
@@ -76,7 +77,8 @@ export function HomeWorkspace(){
    <div className="sales-home-heading-copy">
     <span className="sales-home-eyebrow">MY WORKSPACE</span>
     <div className="ss-workspace-title-row"><h1>Today</h1><HomeCalendarGearButton/></div>
-    <p>{dateLabel.format(new Date())}</p>
+    <p className="sales-home-date"><span className="sales-home-date-long">{dateLabel.format(new Date())}</span>
+     <span className="sales-home-date-short">{compactDateLabel.format(new Date())}</span></p>
    </div>
    {quickInHeader&&<div className="sales-home-heading-actions">{quickActions}</div>}
   </header>
