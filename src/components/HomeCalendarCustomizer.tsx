@@ -174,7 +174,7 @@ export function HomeCalendarCustomizer(){
     </div>
     <section className="home-calendar-customize-layout" aria-label="Home layout options">
      <h3>Home layout</h3>
-     <p>Choose which sections appear and move them up or down. Calendar and recent work can swap positions.</p>
+     <p>Choose which sections appear and move them up or down. The dated On this day navigator and Recent work share one section.</p>
      {draft.sectionOrder.map((id,index)=>{
       const labels:Record<HomeSectionId,string>={
        quickActions:'Quick actions',calendar:'Calendar & agenda',recent:'On this day / Recent work'};
