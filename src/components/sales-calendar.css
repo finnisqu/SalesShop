@@ -621,3 +621,38 @@
   padding:0 3px;font-size:8px;border-radius:5px;
  }
 }
+
+
+/* Four customizable badge slots. Allow a compact 2×2 wrap on phone day cells. */
+.sales-calendar-day .home-calendar-custom-dots{
+ box-sizing:border-box;display:flex;flex-wrap:wrap;align-content:start;align-items:center;
+ gap:2px 3px;width:100%;max-width:100%;min-height:0;
+}
+.sales-calendar-day .home-calendar-custom-dots i{
+ box-sizing:border-box;display:grid;place-items:center;flex:0 0 auto;
+ min-width:16px;height:15px;min-height:15px;
+ padding:0 3px;border-radius:5px;color:#fff!important;
+ font:800 9px/1 system-ui,sans-serif;
+ overflow:hidden;white-space:nowrap;
+}
+.sales-calendar-day .home-calendar-custom-dots i:hover{filter:brightness(1.05)}
+.home-calendar-agenda-legend{
+ box-sizing:border-box;
+ border-top:1px solid var(--ss-theme-border,#d4c9b5);
+ padding:9px 12px 12px;
+ margin-top:8px;
+ background:var(--ss-theme-card,#fffaf0);
+}
+@media(max-width:760px){
+ .sales-calendar-inline .sales-calendar-day:has(.home-calendar-custom-dots i){
+  min-height:62px;
+ }
+ .sales-calendar-inline .sales-calendar-day .home-calendar-custom-dots{
+  gap:2px;justify-content:flex-start;
+ }
+ .sales-calendar-inline .sales-calendar-day .home-calendar-custom-dots i{
+  min-width:13px;height:13px;min-height:13px;
+  padding:0 2px;border-radius:4px;font-size:8px;
+ }
+ .home-calendar-agenda-legend{padding:10px 11px}
+}
