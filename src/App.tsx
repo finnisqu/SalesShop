@@ -34,6 +34,7 @@ import './viewer-workspace.css';
 import './role-perspective.css';
 import './appearance-themes.css';
 import './appearance-picker.css';
+import './deal-editor-polish.css';
 
 import { DeveloperPlaygroundToolbar } from './components/DeveloperPlaygroundToolbar';
 import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
