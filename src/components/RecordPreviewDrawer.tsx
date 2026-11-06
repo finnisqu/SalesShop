@@ -30,6 +30,22 @@ const shortDate=(date?:string)=>date?new Date(date.includes('T')?date:date+'T12:
  * Full record pages and document editors stay separate from preview clicks. */
 export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard}:Props){
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
+ // Keep the underlying SalesShop viewport still while a CRM drawer is open.
+ // This matters on iOS, where touch gestures can chain to the page behind.
+ useEffect(()=>{
+   const scroller=document.querySelector<HTMLElement>('.sales-app .role-perspective-content');
+   const oldScrollerOverflow=scroller?.style.overflow;
+   const oldBodyOverflow=document.body.style.overflow;
+   const oldHtmlOverflow=document.documentElement.style.overflow;
+   if(scroller)scroller.style.overflow='hidden';
+   document.body.style.overflow='hidden';
+   document.documentElement.style.overflow='hidden';
+   return()=>{
+     if(scroller)scroller.style.overflow=oldScrollerOverflow??'';
+     document.body.style.overflow=oldBodyOverflow;
+     document.documentElement.style.overflow=oldHtmlOverflow;
+   };
+ },[]);
  // Follow related records in the same preview; the phone Back control
  // returns through the prior previews without resetting the directory.
  const [previewTrail,setPreviewTrail]=useState<PreviewRecord[]>([]);
@@ -257,5 +273,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
      </PreviewPanelActions>}
    </aside>
  </div>;
- return center?createPortal(preview,document.body):preview;
+ // Portal every preview: a fixed iPhone sheet should never inherit Board's
+ // horizontal scroll container or any transformed ancestor.
+ return createPortal(preview,document.body);
 }
