@@ -2,9 +2,36 @@ import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {useDismissibleDetails} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import '../workspace-header-standard.css';
+import '../mobile-workspace-headers.css';
 
-/** Shared top-level workspace chrome. Stable slots across all six workspaces. */
 export interface MobileWorkspaceTab{value:string;label:string}
+
+export function MobileWorkspaceTabs({title,items,value,onChange}:{
+ title:string;items:readonly MobileWorkspaceTab[];value:string;onChange?:(value:string)=>void;
+}){
+ const menuRef=useRef<HTMLDetailsElement>(null);
+ useDismissibleDetails(menuRef);
+ const selected=items.find(item=>item.value===value)??items[0];
+ useEffect(()=>{if(menuRef.current)menuRef.current.open=false;},[value,title]);
+ if(!selected)return null;
+ return <details className="ss-mobile-tab-picker" ref={menuRef}>
+  <summary aria-label={title+' sections, selected '+selected.label}
+   aria-haspopup="menu">
+   <span>{selected.label}</span><WorkspaceChromeIcon name="chevron-down"/>
+  </summary>
+  <div role="group" className="ss-mobile-tab-menu" aria-label={title+' sections'}>
+   {items.map(item=><button type="button" key={item.value}
+     className={item.value===value?'is-selected':''}
+     aria-current={item.value===value?'page':undefined}
+     onClick={()=>{menuRef.current?.removeAttribute('open');onChange?.(item.value);}}>
+     <span>{item.label}</span>{item.value===value&&<span aria-hidden="true">✓</span>}
+   </button>)}
+  </div>
+ </details>;
+}
+
+/** One shared desktop header; on phone the title lives in the global app bar.
+ * The local header is exactly: selected tab | More | Search | Add. */
 export function WorkspaceHeader({title,tabs,more,search,primary,className='',
  mobileTabs,mobileTabValue,onMobileTabChange}:{
  title:string;help?:ReactNode;tabs?:ReactNode;more?:ReactNode;search?:ReactNode;primary?:ReactNode;className?:string;
@@ -12,24 +39,39 @@ export function WorkspaceHeader({title,tabs,more,search,primary,className='',
 }){
  const [searchOpen,setSearchOpen]=useState(false);
  const searchPanelRef=useRef<HTMLDivElement>(null);
+ const searchButtonRef=useRef<HTMLButtonElement>(null);
+ const searchAreaRef=useRef<HTMLDivElement>(null);
  useEffect(()=>{
   if(searchOpen)searchPanelRef.current?.querySelector<HTMLInputElement>('input')?.focus({preventScroll:true});
+ },[searchOpen]);
+ useEffect(()=>{
+  if(!searchOpen)return;
+  const dismiss=(event:PointerEvent)=>{
+   if(searchAreaRef.current&&!searchAreaRef.current.contains(event.target as Node))setSearchOpen(false);
+  };
+  const escape=(event:KeyboardEvent)=>{
+   if(event.key!=='Escape')return;
+   event.stopPropagation();setSearchOpen(false);searchButtonRef.current?.focus({preventScroll:true});
+  };
+  document.addEventListener('pointerdown',dismiss,true);
+  document.addEventListener('keydown',escape,true);
+  return()=>{document.removeEventListener('pointerdown',dismiss,true);
+   document.removeEventListener('keydown',escape,true);};
  },[searchOpen]);
  return <header className={'ss-workspace-header '+className}>
   <div className="ss-workspace-header__intro"><h1>{title}</h1></div>
   <div className="ss-workspace-header__tabs">{tabs}</div>
   {mobileTabs&&mobileTabs.length>0&&<div className="ss-workspace-header__mobile-nav">
-   <select aria-label={title+' sections'} value={mobileTabValue??mobileTabs[0].value}
-    onChange={e=>onMobileTabChange?.(e.target.value)}>
-    {mobileTabs.map(tab=><option value={tab.value} key={tab.value}>{tab.label}</option>)}
-   </select>
+   <MobileWorkspaceTabs title={title} items={mobileTabs} value={mobileTabValue??mobileTabs[0].value}
+    onChange={onMobileTabChange}/>
   </div>}
   <div className="ss-workspace-header__tools">
    <div className="ss-workspace-header__more">{more}</div>
-   <div className={'ss-workspace-header__search'+(searchOpen?' is-open':'')}>
-    {search&&<button type="button" className="ss-workspace-header__search-toggle"
+   <div ref={searchAreaRef} className={'ss-workspace-header__search'+(searchOpen?' is-open':'')}>
+    {search&&<button ref={searchButtonRef} type="button" className="ss-workspace-header__search-toggle"
      onClick={()=>setSearchOpen(open=>!open)}
-     aria-expanded={searchOpen} aria-label={searchOpen?'Close '+title+' search':'Search '+title}>
+     aria-expanded={searchOpen} aria-label={searchOpen?'Close '+title+' search':'Search '+title}
+     aria-haspopup="true">
      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
