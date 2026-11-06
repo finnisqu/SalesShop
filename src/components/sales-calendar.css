@@ -763,3 +763,72 @@
  .home-calendar-drilldown-heading button{min-height:44px}
  .home-calendar-drilldown-list>button{min-height:48px}
 }
+
+
+/* Restore day numbers to the upper-left after date selection changed from a
+   full-cell button to a sibling of the optional clickable badge controls. */
+.sales-calendar-day .sales-calendar-day-select{
+ display:flex!important;
+ flex-direction:column!important;
+ justify-content:flex-start!important;
+ align-items:flex-start!important;
+ text-align:left!important;
+ padding:7px!important;
+ line-height:1.2;
+ white-space:nowrap;
+}
+.sales-calendar-day .sales-calendar-day-select>span:first-child{
+ display:block;
+ position:relative;
+ flex:0 0 auto;
+ align-self:flex-start;
+ width:auto;
+ height:auto;
+ margin:0;
+ padding:0;
+ line-height:1.2;
+ font-weight:700;
+}
+/* Counts sit within each day's border, not flush against the edges. */
+.sales-calendar-day .home-calendar-custom-dots{
+ box-sizing:border-box;
+ left:7px;
+ right:7px;
+ bottom:7px;
+ width:auto;
+ max-width:calc(100% - 14px);
+ gap:3px;
+}
+@media(max-width:760px){
+ .sales-calendar-day .sales-calendar-day-select{padding:6px!important}
+ .sales-calendar-day .home-calendar-custom-dots{
+  left:5px;
+  right:5px;
+  bottom:5px;
+  width:auto;
+  max-width:calc(100% - 10px);
+  gap:2px;
+ }
+ .sales-calendar-day .home-calendar-custom-dots :is(i,.home-calendar-badge-action){
+  min-width:13px;
+  min-height:13px;
+  height:13px;
+  padding:0 2px;
+ }
+ .sales-calendar-day .home-calendar-custom-dots .home-calendar-badge-action{
+  min-width:18px;
+  min-height:18px;
+  height:18px;
+ }
+ .sales-calendar-inline .sales-calendar-popover.is-week .sales-calendar-day{
+  min-height:64px;
+ }
+ .sales-calendar-inline .sales-calendar-day:has(
+  .home-calendar-custom-dots>:nth-child(3)){
+  min-height:66px;
+ }
+ .sales-calendar-inline .sales-calendar-day:has(
+  .home-calendar-badge-action:nth-child(3)){
+  min-height:76px;
+ }
+}
