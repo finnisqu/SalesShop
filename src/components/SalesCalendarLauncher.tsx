@@ -298,7 +298,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const recentPanel=embedded&&showRecent?(
   <aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
       <div className="sales-calendar-sidecar-topline">
-       <h3>Pick up where you left off</h3>
+       <h3>{sidecarMode==='day'?'On this day':'Pick up where you left off'}</h3>
        <div className="home-sidecar-create" ref={sidecarCreateRef}>
         <button ref={sidecarCreateButton} type="button"
          className="home-note-sidecar-add" title="Quick create"
@@ -336,6 +336,49 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         </div>,document.body)}
        </div>
       </div>
+      <div className="home-day-mode-tabs" role="group" aria-label="Home record view">
+       <button type="button" aria-pressed={sidecarMode==='day'} onClick={()=>{
+        setSidecarMode('day');setSidecarCreateOpen(false);
+       }}>On this day</button>
+       <button type="button" aria-pressed={sidecarMode==='recent'} onClick={()=>{
+        setSidecarMode('recent');setSidecarCreateOpen(false);
+       }}>Recent</button>
+      </div>
+      {sidecarMode==='day'?<>
+       <div className="home-day-date-nav">
+        <button type="button" aria-label="Previous day" title="Previous day"
+         onClick={()=>shiftSidecarDay(-1)}>‹</button>
+        <strong aria-live="polite">{dateLabel(selected)}</strong>
+        <button type="button" aria-label="Next day" title="Next day"
+         onClick={()=>shiftSidecarDay(1)}>›</button>
+        {selected!==today&&<button type="button" className="home-day-today"
+         onClick={()=>{
+          const date=new Date();
+          setSelected(localDateKey(date));setBadgeDrilldown(null);
+          setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
+         }}>Today</button>}
+       </div>
+       <div className="home-day-records" aria-label={'Records on '+dateLabel(selected)}>
+        {dayGroups.length?<>
+         <p className="home-day-total">{dayTotal} {dayTotal===1?'item':'items'} on this day</p>
+         {dayGroups.map(group=><section key={group.key} className="home-day-record-group">
+          <h4><span>{group.label}</span><span>{group.entries.length}</span></h4>
+          {group.entries.map(record=><button type="button" key={record.key}
+            onClick={()=>openDayRecord(record)}
+            aria-label={'Open '+record.title}>
+            <span><strong>{record.title}</strong><small>{record.detail}</small></span>
+            <span aria-hidden="true">›</span>
+           </button>)}
+         </section>)}
+        </>:<div className="home-day-empty">
+         <strong>No records for this date</strong>
+         <p>Choose another day to browse scheduled work and history, or add a task to this date.</p>
+         <button type="button" onClick={()=>requestTaskModal({mode:'create',dueDate:selected})}>
+          + Task for this day
+         </button>
+        </div>}
+       </div>
+      </>:<>
       <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
        <button type="button" role="tab" aria-selected={sidecarTab==='quotes'}
         onClick={()=>{setSidecarTab('quotes');setSidecarCreateOpen(false);}}>Quotes</button>
@@ -372,6 +415,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
            <p>No notes yet. Use + to start today's Notebook page.</p>}
          </div>}
       </div>
+      </>}
     </aside>
  ):null;
  const calendarPanel=(
@@ -422,7 +466,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       const badges=badgeSettings.slots.map(slot=>({...slot,
        count:slot.metric==='none'?0:metricCount(badgeIndex,key,slot.metric)})).filter(slot=>slot.count>0);
       const selectDate=()=>{
-       setSelected(key);setBadgeDrilldown(null);
+       setSidecarMode('day');setSelected(key);setBadgeDrilldown(null);
        if(!inMonth){const date=new Date(key+'T12:00:00');
         setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
       };
@@ -450,7 +494,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
             aria-label={slot.count+' '+badgeLabel(slot.metric)+' on '+dateLabel(key)+'. View records'}
             title={'View '+badgeLabel(slot.metric)}
             onClick={()=>{
-             setSelected(key);setBadgeDrilldown({date:key,metric:slot.metric});
+             setSidecarMode('day');setSelected(key);setBadgeDrilldown({date:key,metric:slot.metric});
              if(!inMonth){const date=new Date(key+'T12:00:00');
               setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
             }}>{slot.count>99?'99+':slot.count}</button>
@@ -466,7 +510,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key);
       return <button key={key} type="button" className={key===selected?'is-selected':''}
-       onClick={()=>{setSelected(key);setBadgeDrilldown(null);}}>
+       onClick={()=>{setSidecarMode('day');setSelected(key);setBadgeDrilldown(null);}}>
        <span>{new Date(key+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}</span>
        <small>{counts.total} {counts.total===1?'item':'items'}{counts.urgent?' · Urgent':''}</small>
        {counts.urgent>0&&<b aria-label="Urgent">!</b>}
