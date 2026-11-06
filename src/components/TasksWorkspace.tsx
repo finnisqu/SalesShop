@@ -148,7 +148,8 @@ export function TaskEditor({initial,onCancel,onSave}:{
       <div className="tasks-editor-scroll">
       <RecordEditField label="Task title" required error={formError==='Enter a task title.'?formError:undefined}>
         {control=><input {...control} autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
-          data-dialog-initial-focus maxLength={240}
+          data-dialog-initial-focus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches?'true':undefined}
+          maxLength={240}
           value={title} onChange={e=>setTitle(e.target.value)} placeholder="What needs to happen?"/>}
       </RecordEditField>
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
