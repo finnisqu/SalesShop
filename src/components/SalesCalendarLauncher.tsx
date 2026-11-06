@@ -19,7 +19,7 @@ import {homeRecentQuotes} from '../services/homeOverview';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent} from '../services/salesCalendar';
-import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel} from '../store/homeCalendarSettings';
+import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel,type CalendarBadgeMetric} from '../store/homeCalendarSettings';
 import {buildCalendarBadgeIndex,metricCount} from '../services/homeCalendarBadges';
 import {homeCalendarBadgeEntries,type HomeBadgeRecord} from '../services/homeCalendarDrilldown';
 import {homeAgendaDotColors} from '../services/homeCalendarAgendaColors';
@@ -63,7 +63,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [addOpen,setAddOpen]=useState(false);
  const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
- const [badgeDrilldown,setBadgeDrilldown]=useState<{date:string;metric:ReturnType<typeof badgeLabel> extends never?never:import('../store/homeCalendarSettings').CalendarBadgeMetric}|null>(null);
+ const [badgeDrilldown,setBadgeDrilldown]=useState<{date:string;metric:CalendarBadgeMetric}|null>(null);
  const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
  const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
  const [sidecarMenuPosition,setSidecarMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
@@ -354,7 +354,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       <button type="button" className="sales-calendar-today" title="Jump to today"
        aria-label="Jump to today" onClick={()=>{
         const now=new Date();setMonth(new Date(now.getFullYear(),now.getMonth(),1,12));
-        setSelected(localDateKey(now));
+        setSelected(localDateKey(now));setBadgeDrilldown(null);
        }}>
        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
@@ -391,27 +391,44 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       const hasNotebookDate=notebookReady&&notebookCalendarDates(notebookEntries,key).length>0;
       const badges=badgeSettings.slots.map(slot=>({...slot,
        count:slot.metric==='none'?0:metricCount(badgeIndex,key,slot.metric)})).filter(slot=>slot.count>0);
-      return <button type="button" key={key}
-        className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
-         (key===today?' is-today':'')+(key===selected?' is-selected':'')}
-        aria-pressed={key===selected}
-        aria-label={dateLabel(key)+(badges.length?', '+badges.map(slot=>
-         slot.count+' '+badgeLabel(slot.metric)).join(', '):', no tracked badges')+
-         (badgeSettings.showUrgentBadge&&counts.urgent?', urgent task':'')+
-         (hasNotebookDate?', has calendar date':'')}
-        onClick={()=>{setSelected(key);if(!inMonth){
-         const date=new Date(key+'T12:00:00');setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
-        }}}>
-        <span>{Number(key.slice(-2))}</span>
-        {badgeSettings.showUrgentBadge&&counts.urgent>0&&<span className="sales-calendar-urgent"
-          aria-hidden="true" title={counts.urgent+' urgent task(s)'}>!</span>}
-        <span className="sales-calendar-dots home-calendar-custom-dots" aria-hidden="true">
-         {badges.map((slot,i)=><i key={i} style={{backgroundColor:badgeColor(slot.color)}}
-           title={slot.count+' '+badgeLabel(slot.metric)}>{slot.count>99?'99+':slot.count}</i>)}
+      const selectDate=()=>{
+       setSelected(key);setBadgeDrilldown(null);
+       if(!inMonth){const date=new Date(key+'T12:00:00');
+        setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
+      };
+      return <div key={key} className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
+         (key===today?' is-today':'')+(key===selected?' is-selected':'')}>
+        <button type="button" className="sales-calendar-day-select"
+         aria-pressed={key===selected}
+         aria-label={dateLabel(key)+(badges.length?', '+badges.map(slot=>
+          slot.count+' '+badgeLabel(slot.metric)).join(', '):', no tracked badges')+
+          (badgeSettings.showUrgentBadge&&counts.urgent?', urgent task':'')+
+          (hasNotebookDate?', has calendar date':'')}
+         onClick={selectDate}>
+         <span>{Number(key.slice(-2))}</span>
+         {badgeSettings.showUrgentBadge&&counts.urgent>0&&
+          <span className="sales-calendar-urgent" aria-hidden="true"
+           title={counts.urgent+' urgent task(s)'}>!</span>}
+         {hasNotebookDate&&<span className="notebook-calendar-dot"
+          title="Calendar date" aria-hidden="true"/>}
+        </button>
+        <span className="sales-calendar-dots home-calendar-custom-dots"
+         aria-hidden={!canDrillIntoBadges}>
+         {badges.map((slot,i)=>canDrillIntoBadges
+          ?<button type="button" key={i} className="home-calendar-badge-action"
+            style={{backgroundColor:badgeColor(slot.color)}}
+            aria-label={slot.count+' '+badgeLabel(slot.metric)+' on '+dateLabel(key)+'. View records'}
+            title={'View '+badgeLabel(slot.metric)}
+            onClick={()=>{
+             setSelected(key);setBadgeDrilldown({date:key,metric:slot.metric});
+             if(!inMonth){const date=new Date(key+'T12:00:00');
+              setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
+            }}>{slot.count>99?'99+':slot.count}</button>
+          :<i key={i} style={{backgroundColor:badgeColor(slot.color)}}
+             title={slot.count+' '+badgeLabel(slot.metric)}>
+             {slot.count>99?'99+':slot.count}</i>)}
         </span>
-        {hasNotebookDate&&<span className="notebook-calendar-dot" title="Calendar date"
-         aria-hidden="true"/>}
-       </button>;
+       </div>;
      })}
     </div>
     {embedded&&weekMode&&!isPhone&&<div className="sales-calendar-week-glimpse">
@@ -419,7 +436,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key);
       return <button key={key} type="button" className={key===selected?'is-selected':''}
-       onClick={()=>setSelected(key)}>
+       onClick={()=>{setSelected(key);setBadgeDrilldown(null);}}>
        <span>{new Date(key+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}</span>
        <small>{counts.total} {counts.total===1?'item':'items'}{counts.urgent?' · Urgent':''}</small>
        {counts.urgent>0&&<b aria-label="Urgent">!</b>}
@@ -429,7 +446,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      </div>
     <section className="sales-calendar-day-preview" aria-label={'Items for '+dateLabel(selected)}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
-      <div><span>{eventsForDay.length} remaining</span>
+      <div><span>{activeDrilldown?drilldownEntries.length+' '+badgeLabel(activeDrilldown.metric):eventsForDay.length+' remaining'}</span>
        {embedded&&<div className="sales-calendar-add-wrap">
         <button type="button" className="sales-calendar-add" aria-haspopup="menu"
          aria-expanded={addOpen} aria-label={'Add to '+dateLabel(selected)}
@@ -456,6 +473,21 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        </div>}
  
       </div></div>
+     {activeDrilldown&&<div className="home-calendar-drilldown">
+      <div className="home-calendar-drilldown-heading">
+       <button type="button" onClick={()=>setBadgeDrilldown(null)}>← Agenda</button>
+       <strong>{badgeLabel(activeDrilldown.metric)}</strong>
+       <small>{dateLabel(selected)}</small>
+      </div>
+      <div className="home-calendar-drilldown-list" aria-label={badgeLabel(activeDrilldown.metric)+' records'}>
+       {drilldownEntries.length?drilldownEntries.map(record=><button type="button"
+         key={record.key} onClick={()=>openBadgeRecord(record)}>
+         <span><strong>{record.title}</strong><small>{record.detail}</small></span>
+         <span aria-hidden="true">›</span>
+        </button>):<p>No matching records for this day.</p>}
+      </div>
+     </div>}
+     {!activeDrilldown&&<>
      {eventsForDay.length?<div className="sales-calendar-agenda">
        {shownDayEvents.map(event=><button type="button" key={event.id}
         onClick={()=>openRecord(event)}>
@@ -483,6 +515,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <small>{item.time||'All day'}{item.annual?' · Yearly':''}</small>
        </button>)}
      </div>}
+     </>}
     </section>
     </div>
 
