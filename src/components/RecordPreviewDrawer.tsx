@@ -34,7 +34,30 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  // returns through the prior previews without resetting the directory.
  const [previewTrail,setPreviewTrail]=useState<PreviewRecord[]>([]);
  const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
+ const [captureViewport,setCaptureViewport]=useState<{height:number;top:number}|null>(null);
  useEffect(()=>{setExternalQuoteOpen(false);},[record.kind,record.id]);
+ // iOS Safari's visual viewport contracts when the keyboard opens, but CSS
+ // 100dvh can remain anchored to the taller layout viewport.
+ useEffect(()=>{
+   if(!externalQuoteOpen){setCaptureViewport(null);return;}
+   const visual=window.visualViewport;
+   const measure=()=>{
+     if(window.innerWidth>700){setCaptureViewport(null);return;}
+     const next={height:Math.round(visual?.height??window.innerHeight),
+       top:Math.round(visual?.offsetTop??0)};
+     setCaptureViewport(previous=>previous?.height===next.height&&previous.top===next.top
+       ?previous:next);
+   };
+   measure();
+   visual?.addEventListener('resize',measure);
+   visual?.addEventListener('scroll',measure);
+   window.addEventListener('resize',measure);
+   return()=>{
+     visual?.removeEventListener('resize',measure);
+     visual?.removeEventListener('scroll',measure);
+     window.removeEventListener('resize',measure);
+   };
+ },[externalQuoteOpen]);
  const previousRecordRef=useRef(record);
  const returningRef=useRef(false);
  useEffect(()=>{
@@ -113,19 +136,31 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  useEffect(()=>{if(!company&&!person&&!deal&&!quote)onClose();},[company,person,deal,quote,onClose]);
  if(!company&&!person&&!deal&&!quote)return null;
  const center=record.kind==='quote';
- const preview=<div className={center
+ const capture=Boolean(deal&&externalQuoteOpen);
+ const preview=<div className={(center
      ?'tasks-dialog-backdrop record-preview-center-backdrop'
-     :'project-editor-backdrop record-preview-backdrop'}
+     :'project-editor-backdrop record-preview-backdrop')+
+     (capture?' record-preview-capture-backdrop':'')}
+   style={capture&&captureViewport
+     ?{top:captureViewport.top,height:captureViewport.height,bottom:'auto'}:undefined}
    onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
-   <aside ref={ref} role="dialog" aria-modal="true" aria-label={label+' preview'}
-     className={center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel'}>
+   <aside ref={ref} role="dialog" aria-modal="true"
+     aria-label={capture?'Record external quote for '+heading:label+' preview'}
+     className={(center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel')+
+       (capture?' record-preview-capture-panel':'')}>
      <header>
        {Boolean(onSelect&&previewTrail.length)&&<button type="button" className="record-preview-back"
          onClick={backToRelated} aria-label="Back to previous related record">← Back</button>}
-       <PreviewPanelHeading eyebrow={center?'QUOTE · QUICK VIEW':label+' · Quick preview'} title={heading}/>
+       <PreviewPanelHeading eyebrow={capture?'Deal · Record external quote':center?'QUOTE · QUICK VIEW':label+' · Quick preview'} title={heading}/>
        <PreviewPanelClose onClose={onClose} label="Close preview" className="editor-close"/>
      </header>
-     <div className={center?'tasks-preview-body record-preview-body':'record-preview-body'}>
+     <div className={(center?'tasks-preview-body record-preview-body':'record-preview-body')+
+       (capture?' record-preview-capture-body':'')}>
+       {capture&&deal
+         ?<ExternalQuoteSentForm key={deal.id} deal={deal}
+            onCancel={()=>setExternalQuoteOpen(false)}
+            onRecorded={()=>setExternalQuoteOpen(false)}/>
+         :<>
        {company&&<>
          <section><h3>About this company</h3>
            <dl><dt>Relationship</dt><dd>{company.kind==='customer'?'Customer / prospect':'Partner / supplier'}</dd>
@@ -170,8 +205,6 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
                  <small>{a.metadata?.externalQuoteFormat||'External quote'} · Sent {shortDate(a.metadata?.bidSentDate||a.occurredAt)}</small></span>
              </div>)}
            </div>}
-           {externalQuoteOpen&&<ExternalQuoteSentForm key={deal.id} deal={deal}
-             onCancel={()=>setExternalQuoteOpen(false)} onRecorded={()=>setExternalQuoteOpen(false)}/>}
          </section>
        </>}
        {quote&&<>
@@ -201,8 +234,9 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
             <p className="record-preview-empty">No linked company or deal.</p>}
          </div>
        </>}
+       </>}
      </div>
-     <PreviewPanelActions className="record-preview-actions">
+     {!capture&&<PreviewPanelActions className="record-preview-actions">
        {center&&<button type="button" onClick={onClose}>Close</button>}
        {!perspective&&<button type="button" onClick={()=>{
         onClose();requestTaskModal({mode:'create',associations:contextualLinks});
@@ -220,7 +254,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {quote&&<button type="button" className={center?'tasks-primary record-preview-open-quote':'record-preview-open-quote'}
          disabled={Boolean(quote.archivedAt)} title={quote.archivedAt?'Restore this document before opening it':undefined}
          onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
-     </PreviewPanelActions>
+     </PreviewPanelActions>}
    </aside>
  </div>;
  return center?createPortal(preview,document.body):preview;
