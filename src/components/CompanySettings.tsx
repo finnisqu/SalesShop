@@ -171,7 +171,7 @@ export function CompanySettings() {
         <PageHeader
           className="company-settings-header settings-foundation-page-header"
           eyebrow="Your workspace"
-          title="Settings" titleAdornment={<WorkspaceHelp page="settings" section={tab}/>}
+          title="Settings"
           description="Company identity, account information, and the way SalesShop feels to you."
           actions={tab === 'company' ? <div className="company-settings-save-state" role="status">{error ? <strong className="has-error">{error}</strong> : <span>{saving ? 'Saving…' : 'Saved automatically'}</span>}</div> : undefined}
         />
