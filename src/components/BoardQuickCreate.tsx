@@ -1,4 +1,4 @@
-import {useId,useRef,useState,type FormEvent} from 'react';
+import {useEffect,useId,useRef,useState,type FormEvent} from 'react';
 import {createPortal} from 'react-dom';
 
 /** Name-only creation on the Board: do not navigate away or open a full editor.
@@ -12,6 +12,22 @@ export function BoardQuickCreate({kind,onCreate}:{
   const [error,setError]=useState('');
   const trigger=useRef<HTMLButtonElement>(null);
   const inputId=useId();
+  // Board quick-create is a modal. The board must not move underneath it.
+  useEffect(()=>{
+    if(!open)return;
+    const scroller=document.querySelector<HTMLElement>('.sales-app .role-perspective-content');
+    const priorScroller=scroller?.style.overflow;
+    const priorBody=document.body.style.overflow;
+    const priorRoot=document.documentElement.style.overflow;
+    if(scroller)scroller.style.overflow='hidden';
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+    return()=>{
+      if(scroller)scroller.style.overflow=priorScroller??'';
+      document.body.style.overflow=priorBody;
+      document.documentElement.style.overflow=priorRoot;
+    };
+  },[open]);
   const close=()=>{
     setOpen(false);setName('');setError('');
     trigger.current?.focus();
@@ -43,10 +59,13 @@ export function BoardQuickCreate({kind,onCreate}:{
           }}>
           <header>
             <div><small>BOARD · QUICK CREATE</small><h2>New {kind.toLowerCase()}</h2></div>
-            <button type="button" onClick={close} aria-label="Close quick create">×</button>
+            <button type="button" onClick={close} aria-label="Close quick create"
+              autoFocus={typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches}>×</button>
           </header>
           <label htmlFor={inputId}>{kind} name</label>
-          <input id={inputId} autoFocus required value={name}
+          <input id={inputId}
+            autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
+            required value={name}
             onChange={event=>{setName(event.target.value);setError('');}}
             maxLength={180} placeholder={kind==='Deal'?'Name of the opportunity':'Company or account name'}/>
           {error&&<p role="alert">{error}</p>}
