@@ -312,6 +312,8 @@ export function Board() {
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
   const [boardSearch,setBoardSearch]=useState('');
   const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
+  const boardSearchInputRef=useRef<HTMLInputElement>(null);
+  useEffect(()=>{if(mobileSearchOpen)boardSearchInputRef.current?.focus({preventScroll:true});},[mobileSearchOpen]);
   const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
   const [pipelineMenuOpen,setPipelineMenuOpen]=useState(false);
   const pipelineMenuRef=useRef<HTMLDivElement>(null);
@@ -464,7 +466,7 @@ export function Board() {
                   <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
                 </svg>
               </button>
-              <div className="ss-workspace-header__search-popover"><input type="search"
+              <div className="ss-workspace-header__search-popover"><input ref={boardSearchInputRef} type="search"
                 aria-label="Search Board deals" placeholder="Search deals…"
                 autoFocus={mobileSearchOpen}
                 value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/></div>
