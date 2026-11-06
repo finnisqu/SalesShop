@@ -26,14 +26,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.quick-create-handle {
-  width: 34px;
-  height: 4px;
-  margin: 2px auto 6px;
-  border-radius: 999px;
-  background: rgba(87, 78, 65, .23);
-}
-
 .quick-create-header {
   display: flex;
   align-items: center;
@@ -280,4 +272,57 @@
  .quick-create-options{grid-template-columns:1fr}
  .quick-create-option{min-height:63px!important}
  .quick-create-option.compact{min-height:63px!important}
+}
+
+
+/* Shared mobile sheet: its handle, keyboard-safe viewport and body scrolling
+   are provided by MobileSheetHandle instead of separate legacy rules. */
+@media(max-width:760px){
+ .quick-create-sheet.ss-mobile-sheet{
+  display:flex!important;
+  flex-direction:column!important;
+  box-sizing:border-box!important;
+  min-width:0!important;
+  width:100%!important;
+  max-width:100vw!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:var(--ss-theme-card,#fffaf0);
+  color:var(--ss-theme-ink,#302d27);
+ }
+ .quick-create-sheet.ss-mobile-sheet .quick-create-header{
+  flex:0 0 auto;
+  min-width:0;
+  gap:10px;
+ }
+ .quick-create-sheet.ss-mobile-sheet .quick-create-options.ss-mobile-sheet-body{
+  display:grid;
+  align-content:start;
+  gap:8px;
+  padding:12px 14px max(16px,env(safe-area-inset-bottom))!important;
+ }
+ .quick-create-sheet.ss-mobile-sheet .quick-create-name-form.ss-mobile-sheet-body{
+  display:grid;
+  align-content:start;
+  gap:12px;
+  min-height:0;
+  padding:14px 14px max(16px,env(safe-area-inset-bottom))!important;
+ }
+ .quick-create-sheet.ss-mobile-sheet .quick-create-name-form>div{
+  position:sticky;
+  bottom:0;
+  z-index:1;
+  padding:9px 0 0;
+  background:var(--ss-theme-card,#fffaf0);
+ }
+ .quick-create-sheet.ss-mobile-sheet .quick-create-name-form button{
+  min-height:44px;
+  border-radius:10px;
+ }
+ .quick-create-sheet.ss-mobile-sheet .quick-create-name-form input{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  font-size:16px!important;
+ }
 }
