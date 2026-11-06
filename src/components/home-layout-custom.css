@@ -1,0 +1,116 @@
+/* Home sections are separately hideable and reorderable.
+   Recents is rendered into its own host without extra CRM subscriptions. */
+.sales-home .sales-home-section-list{
+ box-sizing:border-box;display:flex;flex-direction:column;
+ width:100%;min-width:0;gap:12px;
+}
+.sales-home .sales-home-section-list>[hidden]{display:none!important}
+.sales-home .sales-home-section-list>section{box-sizing:border-box;min-width:0}
+.sales-home .sales-home-actions-section{display:flex;align-items:center;justify-content:flex-end;
+ padding:8px 0;min-height:46px}
+.sales-home .sales-home-actions-section .sales-home-top-actions{display:flex;
+ flex-wrap:wrap;justify-content:flex-end;max-width:100%;margin-left:auto}
+.sales-home-no-actions{font-size:12px;color:var(--ss-theme-muted)}
+.sales-home .sales-home-recent-card{
+ box-sizing:border-box;min-width:0;overflow:hidden;
+ border:1px solid var(--ss-theme-border);border-radius:12px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+}
+.sales-home .sales-home-recent-host{min-width:0;height:100%}
+.sales-home .sales-home-recent-card .sales-calendar-sidecar{
+ box-sizing:border-box;display:grid;
+ grid-template-rows:auto auto minmax(0,1fr);
+ width:100%;height:100%;min-height:0;
+ gap:8px;padding:12px;
+}
+.sales-home .sales-home-recent-card .sales-calendar-sidecar-list{
+ min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+}
+.sales-home .sales-home-calendar-card .sales-calendar-inline{min-width:0}
+.sales-home .sales-home-calendar-card .sales-calendar-popover.is-inline.is-calendar-hidden{
+ display:none!important;
+}
+@media(min-width:1100px){
+ .sales-home .sales-home-section-list.is-two-column{
+  display:grid;grid-template-columns:minmax(0,2.65fr) minmax(225px,.82fr);
+  align-items:stretch;grid-auto-flow:row;gap:12px;
+ }
+ .sales-home .sales-home-section-list.is-two-column.is-recent-first{
+  grid-template-columns:minmax(225px,.82fr) minmax(0,2.65fr);
+ }
+ .sales-home .sales-home-section-list.is-two-column:not(.is-recent-first)>.sales-home-calendar-card{grid-column:1}
+ .sales-home .sales-home-section-list.is-two-column:not(.is-recent-first)>.sales-home-recent-card{grid-column:2}
+ .sales-home .sales-home-section-list.is-two-column.is-recent-first>.sales-home-calendar-card{grid-column:2}
+ .sales-home .sales-home-section-list.is-two-column.is-recent-first>.sales-home-recent-card{grid-column:1}
+ .sales-home .sales-home-section-list.is-two-column>.sales-home-actions-section{grid-column:1/-1}
+ .sales-home .sales-home-section-list.is-two-column .sales-home-recent-card{height:470px}
+}
+/* The in-calendar sidecar was moved into its own neighboring card. Let the
+   actual calendar + agenda fill their card rather than reserving a ghost column. */
+@media(min-width:760px){
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline{
+  box-sizing:border-box!important;
+  display:flex!important;flex-direction:column!important;
+  width:100%!important;max-width:100%!important;
+  height:auto!important;min-height:390px!important;max-height:none!important;
+  border:1px solid var(--ss-theme-border);
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline .sales-calendar-heading{
+  flex:0 0 52px!important;min-height:52px!important;width:100%!important;
+  grid-column:auto!important;grid-row:auto!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline .sales-calendar-main{
+  box-sizing:border-box;display:grid!important;
+  grid-template-columns:minmax(0,1.32fr) minmax(165px,.9fr)!important;
+  flex:1 1 auto!important;min-height:0!important;
+  width:100%!important;max-width:100%!important;
+  grid-column:auto!important;grid-row:auto!important;
+  overflow:hidden!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline .sales-calendar-month{
+  grid-column:1!important;grid-row:1!important;
+  display:grid!important;grid-template-rows:30px minmax(0,1fr)!important;
+  min-height:0!important;overflow:hidden!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline .sales-calendar-day-preview{
+  grid-column:2!important;grid-row:1!important;
+  display:flex!important;flex-direction:column!important;
+  min-height:0!important;max-height:none!important;
+  overflow:hidden!important;border-left:1px solid var(--ss-theme-border)!important;border-top:0!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline .sales-calendar-agenda{
+  min-height:0!important;flex:1 1 0!important;max-height:none!important;
+  overflow-y:auto!important;overscroll-behavior-y:contain;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline:not(.is-week){
+  height:470px!important;max-height:470px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline.is-week{
+  height:392px!important;min-height:392px!important;max-height:392px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline.is-week .sales-calendar-main{
+  display:flex!important;flex-direction:column!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline.is-week .sales-calendar-month{
+  display:grid!important;flex:0 0 94px!important;grid-template-rows:25px 69px!important;
+  height:94px!important;min-height:94px!important;max-height:94px!important;width:100%!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline.is-week .sales-calendar-day-preview{
+  flex:1 1 0!important;width:100%!important;height:0!important;
+  border-left:0!important;border-top:1px solid var(--ss-theme-border)!important;
+ }
+}
+@media(min-width:760px) and (max-width:1099px){
+ .sales-home .sales-home-recent-card{min-height:225px;max-height:370px}
+}
+@media(max-width:759px){
+ .sales-home .sales-home-actions-section{
+  justify-content:flex-start;padding:4px 0;
+ }
+ .sales-home .sales-home-actions-section .sales-home-top-actions{
+  justify-content:flex-start;margin-left:0;
+ }
+ .sales-home .sales-home-recent-card{min-height:160px;max-height:310px}
+ .sales-home .sales-home-recent-card .sales-calendar-sidecar-list{max-height:205px}
+ .sales-home .sales-home-section-list{gap:9px}
+}
