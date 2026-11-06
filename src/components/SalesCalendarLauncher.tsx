@@ -46,7 +46,11 @@ const readDisplay=(key:string,phone:boolean):CalendarDisplay=>{
  try{const stored=localStorage.getItem(key);if(stored==='week'||stored==='month')return stored;}catch{/* best effort */}
  return phone?'week':'month';
 };
-export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=false}:{compact?:boolean;label?:string;embedded?:boolean}){
+export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=false,
+ recentPortalTarget=null,showRecent=true,showCalendar=true}:{
+ compact?:boolean;label?:string;embedded?:boolean;recentPortalTarget?:HTMLElement|null;
+ showRecent?:boolean;showCalendar?:boolean;
+}){
  const button=useRef<HTMLButtonElement>(null);
  const [open,setOpen]=useState(false);
  const [position,setPosition]=useState<CSSProperties>({});
@@ -242,8 +246,90 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   setRecordPreview({kind,id});
  };
  if(preview)return null;
+ // Render the Recent panel into a separate Home section without duplicating
+ // any calendar data subscriptions, previews, or quick-create logic.
+ const recentPanel=embedded&&showRecent?(
+  <aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
+      <div className="sales-calendar-sidecar-topline">
+       <h3>Pick up where you left off</h3>
+       <div className="home-sidecar-create" ref={sidecarCreateRef}>
+        <button ref={sidecarCreateButton} type="button"
+         className="home-note-sidecar-add" title="Quick create"
+         aria-label="Quick create" aria-haspopup="menu"
+         aria-expanded={sidecarCreateOpen}
+         onClick={()=>setSidecarCreateOpen(value=>!value)}>+</button>
+        {sidecarCreateOpen&&createPortal(<div ref={sidecarMenuRef}
+          className="home-sidecar-create-menu" style={sidecarMenuPosition} role="menu"
+          aria-label="Quick create"
+          onKeyDown={event=>{
+           if(event.key==='Escape'){
+            event.preventDefault();event.stopPropagation();
+            setSidecarCreateOpen(false);sidecarCreateButton.current?.focus();
+            return;
+           }
+           if(event.key!=='ArrowDown'&&event.key!=='ArrowUp')return;
+           event.preventDefault();
+           const items=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button'));
+           if(!items.length)return;
+           const current=items.indexOf(document.activeElement as HTMLButtonElement);
+           const delta=event.key==='ArrowDown'?1:-1;
+           items[(current+delta+items.length)%items.length].focus();
+          }}>
+         {mayCreateQuote&&<button type="button" role="menuitem"
+           onClick={()=>createFromSidecar('quote')}>
+           <SidecarCreateIcon kind="quote"/><span>New Quote</span>
+         </button>}
+         {mayLogActivity&&<button type="button" role="menuitem"
+           onClick={()=>createFromSidecar('activity')}>
+           <SidecarCreateIcon kind="activity"/><span>Log Activity</span>
+         </button>}
+         <button type="button" role="menuitem" onClick={()=>createFromSidecar('note')}>
+           <SidecarCreateIcon kind="note"/><span>New Note</span>
+         </button>
+        </div>,document.body)}
+       </div>
+      </div>
+      <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
+       <button type="button" role="tab" aria-selected={sidecarTab==='quotes'}
+        onClick={()=>{setSidecarTab('quotes');setSidecarCreateOpen(false);}}>Quotes</button>
+       <button type="button" role="tab" aria-selected={sidecarTab==='recent'}
+        onClick={()=>{setSidecarTab('recent');setSidecarCreateOpen(false);}}>Activity</button>
+       <button type="button" role="tab" aria-selected={sidecarTab==='notes'}
+        onClick={()=>{setSidecarTab('notes');setSidecarCreateOpen(false);}}>Notes</button>
+      </div>
+      <div className={'sales-calendar-sidecar-list'+(sidecarTab==='notes'?' is-notes':'')}>
+       {sidecarTab==='quotes'
+        ?recentQuotes.length?recentQuotes.map(q=><button type="button" key={q.id}
+          onClick={()=>setRecordPreview({kind:'quote',id:q.id})}>
+          <strong>{q.title||'Untitled quote'}</strong>
+          <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
+         </button>):<p>Recently edited quotes will appear here.</p>
+        :sidecarTab==='recent'
+        ?recentItems.length?recentItems.map(item=><button type="button"
+          key={item.id} onClick={()=>openRecent(item)}>
+          <strong>{item.title}</strong>
+          <small>{new Date(item.timestamp).toLocaleDateString()} · {item.detail}</small>
+         </button>):<p>Completed tasks and logged interactions will appear here.</p>
+        :<div className="home-daily-notes-list">
+          {dailyPages.length>0&&<small className="home-note-group-label">Daily pages</small>}
+          {dailyPages.map(page=><button type="button" className="home-note-list-item"
+           key={page.id} onClick={()=>openHomeNote({mode:'preview',entryId:page.id})}>
+           <span className="home-note-list-indicator" aria-hidden="true"/>
+           <span className="home-note-list-copy">
+            <strong>{page.title}</strong>
+            <small>{notebookPlainText(page.contentHtml).slice(0,145)||
+              ((page.agendaItems?.length??0)+' linked items')}</small>
+           </span>
+          </button>)}
+          {!dailyPages.length&&
+           <p>No notes yet. Use + to start today's Notebook page.</p>}
+         </div>}
+      </div>
+    </aside>
+ ):null;
  const calendarPanel=(
-   <section className={"sales-calendar-popover"+(embedded?" is-inline":"")+(weekMode?" is-week":"")} style={embedded?undefined:position}
+   <section className={"sales-calendar-popover"+(embedded?" is-inline":"")+(weekMode?" is-week":"")+
+      (embedded&&!showCalendar?" is-calendar-hidden":"")} style={embedded?undefined:position}
     role={embedded?undefined:'dialog'} aria-modal={embedded?undefined:false} aria-label="SalesShop calendar"
     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
     <header className="sales-calendar-heading">
@@ -382,83 +468,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      </div>}
     </section>
     </div>
-    {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
-      <div className="sales-calendar-sidecar-topline">
-       <h3>Pick up where you left off</h3>
-       <div className="home-sidecar-create" ref={sidecarCreateRef}>
-        <button ref={sidecarCreateButton} type="button"
-         className="home-note-sidecar-add" title="Quick create"
-         aria-label="Quick create" aria-haspopup="menu"
-         aria-expanded={sidecarCreateOpen}
-         onClick={()=>setSidecarCreateOpen(value=>!value)}>+</button>
-        {sidecarCreateOpen&&createPortal(<div ref={sidecarMenuRef}
-          className="home-sidecar-create-menu" style={sidecarMenuPosition} role="menu"
-          aria-label="Quick create"
-          onKeyDown={event=>{
-           if(event.key==='Escape'){
-            event.preventDefault();event.stopPropagation();
-            setSidecarCreateOpen(false);sidecarCreateButton.current?.focus();
-            return;
-           }
-           if(event.key!=='ArrowDown'&&event.key!=='ArrowUp')return;
-           event.preventDefault();
-           const items=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button'));
-           if(!items.length)return;
-           const current=items.indexOf(document.activeElement as HTMLButtonElement);
-           const delta=event.key==='ArrowDown'?1:-1;
-           items[(current+delta+items.length)%items.length].focus();
-          }}>
-         {mayCreateQuote&&<button type="button" role="menuitem"
-           onClick={()=>createFromSidecar('quote')}>
-           <SidecarCreateIcon kind="quote"/><span>New Quote</span>
-         </button>}
-         {mayLogActivity&&<button type="button" role="menuitem"
-           onClick={()=>createFromSidecar('activity')}>
-           <SidecarCreateIcon kind="activity"/><span>Log Activity</span>
-         </button>}
-         <button type="button" role="menuitem" onClick={()=>createFromSidecar('note')}>
-           <SidecarCreateIcon kind="note"/><span>New Note</span>
-         </button>
-        </div>,document.body)}
-       </div>
-      </div>
-      <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
-       <button type="button" role="tab" aria-selected={sidecarTab==='quotes'}
-        onClick={()=>{setSidecarTab('quotes');setSidecarCreateOpen(false);}}>Quotes</button>
-       <button type="button" role="tab" aria-selected={sidecarTab==='recent'}
-        onClick={()=>{setSidecarTab('recent');setSidecarCreateOpen(false);}}>Activity</button>
-       <button type="button" role="tab" aria-selected={sidecarTab==='notes'}
-        onClick={()=>{setSidecarTab('notes');setSidecarCreateOpen(false);}}>Notes</button>
-      </div>
-      <div className={'sales-calendar-sidecar-list'+(sidecarTab==='notes'?' is-notes':'')}>
-       {sidecarTab==='quotes'
-        ?recentQuotes.length?recentQuotes.map(q=><button type="button" key={q.id}
-          onClick={()=>setRecordPreview({kind:'quote',id:q.id})}>
-          <strong>{q.title||'Untitled quote'}</strong>
-          <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
-         </button>):<p>Recently edited quotes will appear here.</p>
-        :sidecarTab==='recent'
-        ?recentItems.length?recentItems.map(item=><button type="button"
-          key={item.id} onClick={()=>openRecent(item)}>
-          <strong>{item.title}</strong>
-          <small>{new Date(item.timestamp).toLocaleDateString()} · {item.detail}</small>
-         </button>):<p>Completed tasks and logged interactions will appear here.</p>
-        :<div className="home-daily-notes-list">
-          {dailyPages.length>0&&<small className="home-note-group-label">Daily pages</small>}
-          {dailyPages.map(page=><button type="button" className="home-note-list-item"
-           key={page.id} onClick={()=>openHomeNote({mode:'preview',entryId:page.id})}>
-           <span className="home-note-list-indicator" aria-hidden="true"/>
-           <span className="home-note-list-copy">
-            <strong>{page.title}</strong>
-            <small>{notebookPlainText(page.contentHtml).slice(0,145)||
-              ((page.agendaItems?.length??0)+' linked items')}</small>
-           </span>
-          </button>)}
-          {!dailyPages.length&&
-           <p>No notes yet. Use + to start today's Notebook page.</p>}
-         </div>}
-      </div>
-    </aside>}
+
    </section>
  );
  return <>
@@ -471,10 +481,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     <path d="M8 14h2M14 14h2M8 18h2"/>
    </svg>
   </button>}
-  {embedded?<div className="sales-calendar-inline">{calendarPanel}</div>
+  {embedded?<div className="sales-calendar-inline">{calendarPanel}{!recentPortalTarget&&recentPanel}</div>
    :open&&createPortal(<div className="sales-calendar-backdrop"
      onPointerDown={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
      {calendarPanel}</div>,document.body)}
+  {recentPortalTarget&&recentPanel&&createPortal(recentPanel,recentPortalTarget)}
   {recordPreview&&<RecordPreviewDrawer record={recordPreview}
    onSelect={setRecordPreview} onClose={()=>setRecordPreview(null)}/>}
   {activityPreview&&<CalendarActivityPreview activityId={activityPreview}
