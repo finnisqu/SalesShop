@@ -251,33 +251,23 @@
  border-top:1px solid var(--ss-theme-border);
  background:var(--ss-theme-card);
 }
-@media(max-width:680px){
- .tasks-dialog-backdrop:has(>.tasks-editor){
-  box-sizing:border-box;
-  top:var(--ss-mobile-visual-top,0px);
-  bottom:auto;
-  height:var(--ss-mobile-visual-height,100dvh);
-  max-height:100dvh;
-  padding:0;
-  place-items:end center;
-  overscroll-behavior:contain;
-  overflow:hidden;
- }
+/* Shared sheet owns modal geometry and viewport; Tasks only owns field density. */
+@media(max-width:760px){
  .tasks-dialog-backdrop>.tasks-editor{
-  box-sizing:border-box;
-  flex:0 1 auto;
-  width:100%!important;
-  max-width:100vw;
-  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 8px)!important;
-  min-height:0;
-  border-radius:17px 17px 0 0!important;
-  border-bottom:0;
-  padding:12px 14px max(10px,env(safe-area-inset-bottom))!important;
+  padding:0 14px max(10px,env(safe-area-inset-bottom))!important;
  }
- .tasks-dialog-backdrop>.tasks-editor .tasks-editor-scroll{gap:9px;padding-bottom:12px}
- .tasks-dialog-backdrop>.tasks-editor .tasks-editor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
- .tasks-dialog-backdrop>.tasks-editor .tasks-editor-date-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
- .tasks-dialog-backdrop>.tasks-editor .tasks-editor-date-grid label:last-child{grid-column:1/-1}
+ .tasks-dialog-backdrop>.tasks-editor>header{flex:0 0 auto}
+ .tasks-dialog-backdrop>.tasks-editor .tasks-editor-scroll{
+  gap:9px;
+  padding-bottom:12px;
+ }
+ .tasks-dialog-backdrop>.tasks-editor .tasks-editor-grid,
+ .tasks-dialog-backdrop>.tasks-editor .tasks-editor-date-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ .tasks-dialog-backdrop>.tasks-editor .tasks-editor-date-grid label:last-child{
+  grid-column:1/-1;
+ }
  .tasks-dialog-backdrop>.tasks-editor .tasks-editor-scroll :is(input,select,textarea){
   font-size:16px!important;
  }
@@ -297,7 +287,6 @@
   font-size:12px;
  }
 }
-
 
 /* Mobile list density: the selected workspace tab dropdown already provides
    Open / Today / Upcoming / Completed, so six summary cards are redundant. */
@@ -392,43 +381,11 @@
 
 
 /* Task quick preview is also a contained, finger-scrollable mobile sheet. */
-@media(max-width:680px){
- .tasks-dialog-backdrop:has(>.tasks-preview-card){
-  box-sizing:border-box;
-  top:var(--ss-mobile-visual-top,0px);
-  bottom:auto;
-  height:var(--ss-mobile-visual-height,100dvh);
-  max-height:100dvh;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  overflow:hidden;
-  padding:0;
-  overscroll-behavior:contain;
- }
- .tasks-dialog-backdrop>.tasks-preview-card{
-  box-sizing:border-box;
-  display:flex;
-  flex-direction:column;
-  flex:0 1 auto;
-  min-height:0;
-  width:100%;
-  max-width:100vw;
-  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 8px);
-  overflow:hidden;
-  border:1px solid var(--ss-theme-border);
-  border-bottom:0;
-  border-radius:17px 17px 0 0;
- }
+/* Task preview keeps its compact two-column footer; the shared sheet owns
+   the viewport, drag handle and independent body scrolling. */
+@media(max-width:760px){
  .tasks-dialog-backdrop>.tasks-preview-card>header{flex:0 0 auto}
  .tasks-dialog-backdrop>.tasks-preview-card>.tasks-preview-body{
-  box-sizing:border-box;
-  flex:1 1 auto;
-  min-height:0;
-  overflow-x:hidden;
-  overflow-y:auto;
-  overscroll-behavior-y:contain;
-  -webkit-overflow-scrolling:touch;
   padding:13px 14px 20px;
  }
  .tasks-dialog-backdrop>.tasks-preview-card>footer{
