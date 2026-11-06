@@ -51,6 +51,16 @@ describe('Home selected-day record navigation',()=>{
   ]);
   expect(homeDayOverview(day,data)).toEqual([]);
  });
+ it('retains the original due day for tasks completed later',()=>{
+  const data={...empty(),tasks:[task('historical',{
+   status:'completed',dueDate:day,completedAt:'2026-11-08T12:00:00',
+  })]};
+  expect(group(data,'tasks-due')?.entries[0]).toMatchObject({
+   kind:'task',id:'historical',detail:'Completed · original due date',
+  });
+  expect(group(data,'tasks-completed')).toBeUndefined();
+  expect(group(data,'tasks-completed','2026-11-08')?.entries[0].id).toBe('historical');
+ });
  it('shows tasks completed on the selected day, not just the original due date',()=>{
   const data={...empty(),tasks:[
    task('finished',{status:'completed',completedAt:noon,dueDate:'2026-11-02'}),
