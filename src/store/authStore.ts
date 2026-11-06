@@ -319,6 +319,12 @@ export const useAuthStore = create<AuthState>((set) => ({
           // Avoid async Supabase RPC/data calls under GoTrue's auth lock.
           // getSession below owns initial hydration; auth changes run in a new task.
           if(event==='INITIAL_SESSION')return;
+          // Updating personal UI preferences changes Auth user_metadata, not
+          // workspace membership. Avoid a full CRM/bootstrap reload.
+          if(event==='USER_UPDATED'){
+            useAuthStore.setState({user:session?.user??null,session});
+            return;
+          }
           window.setTimeout(()=>{void applySession(session,event);},0);
         });
       }
