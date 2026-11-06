@@ -13,6 +13,9 @@ import {activityRelations,primaryActivityRelations,activityMethodSummary,
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
 import {localDateKey} from '../services/salesCalendar';
 import type {ActivityMetadata} from '../types/crm';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {MobileSheetHandle} from './MobileSheetHandle';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -55,6 +58,10 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  const [links,setLinks]=useState<TaskAssociation[]>([]);
  const [saving,setSaving]=useState(false);
  const [error,setError]=useState('');
+ useModalScrollLock(Boolean(activity));
+ const previewRef=useDismissibleLayer<HTMLElement>(Boolean(activity),()=>{
+  if(!saving)onClose();
+ });
 
  const options:AssociationOption[]=useMemo(()=>[
   ...people.map(p=>({key:'contact:'+p.id,label:'Person · '+p.name,
@@ -116,10 +123,12 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   }catch(e){setError(e instanceof Error?e.message:'Activity save was not confirmed. Try again.');}
   finally{setSaving(false);}
  };
- return createPortal(<div className="tasks-dialog-backdrop activity-quick-backdrop"
+ return createPortal(<div className="tasks-dialog-backdrop activity-quick-backdrop ss-mobile-sheet-backdrop"
   onPointerDown={event=>{if(event.target===event.currentTarget)close();}}>
-  <section className="tasks-preview-card record-preview-panel activity-preview-panel activity-quick-card"
+  <section ref={previewRef}
+   className="tasks-preview-card record-preview-panel activity-preview-panel activity-quick-card ss-mobile-sheet"
    role="dialog" aria-modal="true" aria-label={editing?'Edit Activity':'Activity preview'}>
+   <MobileSheetHandle onClose={close}/>
    <header className="activity-preview-header">
     <div><span className="board-eyebrow">CRM · COMPLETED INTERACTION</span>
      <h2>{editing?'Edit activity':activity.summary}</h2>
@@ -128,7 +137,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
     <button type="button" aria-label="Close activity preview" className="editor-close"
      disabled={saving} onClick={close}>×</button>
    </header>
-   <div className="tasks-preview-body record-preview-body activity-preview-body">
+   <div className="tasks-preview-body record-preview-body activity-preview-body ss-mobile-sheet-body">
     {editing?<form id="activity-preview-edit" className="activity-preview-edit" onSubmit={submit}>
       <div className="activity-preview-fields">
        <label>Method<select value={method} onChange={e=>setMethod(e.target.value as Method)}>
@@ -167,7 +176,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       </div>
      </>}
    </div>
-   <footer className="record-preview-actions activity-preview-actions">
+   <footer className="record-preview-actions activity-preview-actions ss-mobile-sheet-actions">
     {editing?<>
       <button type="button" onClick={discard} disabled={saving}>Discard changes</button>
       <button type="button" onClick={()=>setEditing(false)} disabled={saving}>Back to preview</button>
