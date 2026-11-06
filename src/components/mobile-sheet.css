@@ -39,6 +39,14 @@
   overflow:hidden!important;
   overscroll-behavior:contain;
  }
+ /* Old CRM and Activity panels carried stronger max-height rules than
+    the shared utility. Keep them inside the actual visual viewport too. */
+ :root[data-sales-theme] .tasks-preview-card.activity-quick-card.ss-mobile-sheet,
+ :root[data-sales-theme] .tasks-preview-card.record-preview-center-card.ss-mobile-sheet,
+ :root[data-sales-theme] .project-editor.record-preview-panel.ss-mobile-sheet,
+ :root[data-sales-theme] .sales-activity-dialog.ss-mobile-sheet{
+  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 8px)!important;
+ }
  .ss-mobile-sheet-handle{
   box-sizing:border-box;
   display:flex;
