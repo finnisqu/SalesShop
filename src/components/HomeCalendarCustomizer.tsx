@@ -2,10 +2,11 @@ import {useEffect,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {useAuthStore} from '../store/authStore';
-import {CALENDAR_BADGE_OPTIONS,CALENDAR_BADGE_COLORS,
+import {CALENDAR_BADGE_OPTIONS,CALENDAR_BADGE_COLORS,DEFAULT_HOME_CALENDAR_SETTINGS,HOME_SECTION_IDS,
  badgeLabel,badgeColor,homeCalendarScope,readHomeCalendarSettings,
- saveHomeCalendarSettings,useHomeCalendarSettings,
- type CalendarBadgeMetric,type CalendarBadgeColor,type HomeCalendarSettings} from '../store/homeCalendarSettings';
+ saveHomeCalendarSettingsWithSync,useHomeCalendarSettings,
+ type CalendarBadgeMetric,type CalendarBadgeColor,type HomeCalendarSettings,
+ type HomeSectionId} from '../store/homeCalendarSettings';
 import './home-calendar-customizer.css';
 
 const eventName='salesshop:open-home-calendar-settings';
@@ -57,12 +58,14 @@ export function HomeCalendarCustomizer(){
  const current=useHomeCalendarSettings(scope);
  const [open,setOpen]=useState(false);
  const [draft,setDraft]=useState<HomeCalendarSettings>(current);
+ const [syncNotice,setSyncNotice]=useState('');
+ const [saving,setSaving]=useState(false);
  const ref=useDismissibleLayer<HTMLDivElement>(open,()=>setOpen(false));
  useEffect(()=>{
   const launch=()=>{
    setDraft({...readHomeCalendarSettings(scope),
     slots:readHomeCalendarSettings(scope).slots.map(slot=>({...slot})) as HomeCalendarSettings['slots']});
-   setOpen(true);
+   setSyncNotice('');setOpen(true);
   };
   window.addEventListener(eventName,launch);
   return()=>window.removeEventListener(eventName,launch);
@@ -83,7 +86,30 @@ export function HomeCalendarCustomizer(){
   setDraft(previous=>({...previous,slots:previous.slots.map((slot,i)=>
    i===index?{...slot,...change}:slot) as HomeCalendarSettings['slots']}));
  };
- const save=()=>{saveHomeCalendarSettings(scope,draft);setOpen(false);};
+ const save=async()=>{
+  if(saving)return;
+  setSaving(true);setSyncNotice('');
+  try{
+   const result=await saveHomeCalendarSettingsWithSync(scope,draft);
+   if(result==='error'){
+    setSyncNotice('Saved on this device. Cloud sync could not finish; use Save again to retry.');
+    return;
+   }
+   setOpen(false);
+  }finally{setSaving(false);}
+ };
+ const changeSection=(id:HomeSectionId,visible:boolean)=>{
+  setDraft(previous=>({...previous,visibleSections:{...previous.visibleSections,[id]:visible}}));
+ };
+ const moveSection=(id:HomeSectionId,direction:-1|1)=>{
+  setDraft(previous=>{
+   const next=[...previous.sectionOrder],index=next.indexOf(id);
+   const target=index+direction;
+   if(index<0||target<0||target>=next.length)return previous;
+   [next[index],next[target]]=[next[target],next[index]];
+   return {...previous,sectionOrder:next};
+  });
+ };
  if(!open)return null;
  return createPortal(<div className="home-calendar-customize-backdrop"
   onPointerDown={event=>{if(event.target===event.currentTarget)setOpen(false);}}>
@@ -91,7 +117,7 @@ export function HomeCalendarCustomizer(){
    className="home-calendar-customize-sheet">
    <header>
     <div><small>HOME · PERSONALIZE</small><h2>Calendar badges</h2>
-     <p>Choose up to four things to track and give each badge a color. Badges count records by day; your agenda still shows only pending work.</p></div>
+     <p>Choose up to four things to track and give each badge a color. Pending work stays separate from logged history.</p></div>
     <button type="button" aria-label="Close customizer" onClick={()=>setOpen(false)}>×</button>
    </header>
    <div className="home-calendar-customize-body">
@@ -129,21 +155,58 @@ export function HomeCalendarCustomizer(){
       <span><strong>Show urgent ! badge</strong>
        <small>Display a separate exclamation mark on days containing urgent, outstanding tasks.</small></span>
      </label>
+     <label><input type="checkbox" checked={draft.clickableMobileBadges}
+       onChange={event=>setDraft(previous=>({...previous,clickableMobileBadges:event.target.checked}))}/>
+      <span><strong>Clickable badges on mobile</strong>
+       <small>Off by default. When off, tapping a badge only selects its day. Desktop badge drilldowns remain enabled.</small></span>
+     </label>
+     <div className="home-calendar-default-view">
+      <label htmlFor="home-calendar-default-view">Default calendar view</label>
+      <select id="home-calendar-default-view" value={draft.defaultCalendarView}
+       onChange={event=>setDraft(previous=>({...previous,
+        defaultCalendarView:event.target.value as HomeCalendarSettings['defaultCalendarView']}))}>
+       <option value="auto">Automatic (7 days on mobile, month on desktop)</option>
+       <option value="week">7-day focus</option><option value="month">Month</option>
+      </select>
+     </div>
     </div>
+    <section className="home-calendar-customize-layout" aria-label="Home layout options">
+     <h3>Home layout</h3>
+     <p>Choose which sections appear and move them up or down. Calendar and recent work can swap positions.</p>
+     {draft.sectionOrder.map((id,index)=>{
+      const labels:Record<HomeSectionId,string>={
+       quickActions:'Quick actions',calendar:'Calendar & agenda',recent:'Recent work / notes'};
+      return <div className="home-calendar-section-row" key={id}>
+       <label><input type="checkbox" checked={draft.visibleSections[id]}
+         disabled={draft.visibleSections[id]&&HOME_SECTION_IDS.filter(section=>draft.visibleSections[section]).length===1}
+         onChange={event=>changeSection(id,event.target.checked)}/>
+        <span>{labels[id]}</span></label>
+       <div className="home-calendar-section-move" role="group" aria-label={'Reorder '+labels[id]}>
+        <button type="button" aria-label={'Move '+labels[id]+' up'} disabled={index===0}
+         onClick={()=>moveSection(id,-1)}>↑</button>
+        <button type="button" aria-label={'Move '+labels[id]+' down'}
+         disabled={index===draft.sectionOrder.length-1}
+         onClick={()=>moveSection(id,1)}>↓</button>
+       </div>
+      </div>;
+     })}
+    </section>
     <div className="home-calendar-customize-preview"><strong>Legend preview</strong>
      <CalendarBadgeLegend settings={draft} showEmpty/></div>
-    <p className="home-calendar-customize-note">Calls, emails, texts and meetings use logged interactions. Company and person creation badges show workspace records. Quotes sent include external bids recorded in SalesShop.</p>
+    <p className="home-calendar-customize-note">Calls, emails, texts and meetings use logged interactions. Company and person creation badges show workspace records. Quotes sent include external bids recorded in SalesShop. Settings sync to your signed-in account when online.</p>
+    {syncNotice&&<p role="status" className="home-calendar-sync-notice">{syncNotice}</p>}
    </div>
    <footer>
-    <button type="button" onClick={()=>setDraft({
-     slots:[
-      {metric:'tasks',color:'blue'},{metric:'bid-due',color:'orange'},
-      {metric:'activities',color:'teal'},{metric:'quotes-sent',color:'purple'}],
-     countDownCompletedTasks:true,showUrgentBadge:true,
-    })}>Reset</button>
+    <button type="button" disabled={saving}
+      onClick={()=>setDraft({...DEFAULT_HOME_CALENDAR_SETTINGS,
+       slots:DEFAULT_HOME_CALENDAR_SETTINGS.slots.map(slot=>({...slot})) as HomeCalendarSettings['slots'],
+       visibleSections:{...DEFAULT_HOME_CALENDAR_SETTINGS.visibleSections},
+       sectionOrder:[...DEFAULT_HOME_CALENDAR_SETTINGS.sectionOrder]})}>Reset</button>
     <span/>
-    <button type="button" onClick={()=>setOpen(false)}>Cancel</button>
-    <button type="button" className="is-primary" onClick={save}>Save badges</button>
+    <button type="button" disabled={saving} onClick={()=>setOpen(false)}>Cancel</button>
+    <button type="button" disabled={saving} className="is-primary" onClick={()=>{void save();}}>
+      {saving?'Saving…':'Save Home settings'}
+    </button>
    </footer>
   </div>
  </div>,document.body);
