@@ -69,6 +69,8 @@ import {NotebookCompanionPage} from './components/NotebookCompanionPage';
 import {readNotebookSplitPreference,writeNotebookSplitPreference} from './services/notebookSplitPreference';
 import './notebook-split-folders.css';
 import './catalog-collections.css';
+import './mobile-workspace-headers.css';
+import './ios-form-controls.css';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { GlobalSearch } from './components/GlobalSearch';
 import { MobileAppChrome } from './components/MobileAppChrome';
