@@ -1,4 +1,7 @@
-import {useEffect,useId,useRef,useState,type FormEvent} from 'react';
+import {useId,useRef,useState,type FormEvent} from 'react';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {MobileSheetHandle} from './MobileSheetHandle';
 import {createPortal} from 'react-dom';
 import './board-quick-create-mobile.css';
 
@@ -13,22 +16,8 @@ export function BoardQuickCreate({kind,onCreate}:{
   const [error,setError]=useState('');
   const trigger=useRef<HTMLButtonElement>(null);
   const inputId=useId();
-  // Board quick-create is a modal. The board must not move underneath it.
-  useEffect(()=>{
-    if(!open)return;
-    const scroller=document.querySelector<HTMLElement>('.sales-app .role-perspective-content');
-    const priorScroller=scroller?.style.overflow;
-    const priorBody=document.body.style.overflow;
-    const priorRoot=document.documentElement.style.overflow;
-    if(scroller)scroller.style.overflow='hidden';
-    document.body.style.overflow='hidden';
-    document.documentElement.style.overflow='hidden';
-    return()=>{
-      if(scroller)scroller.style.overflow=priorScroller??'';
-      document.body.style.overflow=priorBody;
-      document.documentElement.style.overflow=priorRoot;
-    };
-  },[open]);
+  useModalScrollLock(open);
+  const sheetRef=useDismissibleLayer<HTMLFormElement>(open,()=>close());
   const close=()=>{
     setOpen(false);setName('');setError('');
     trigger.current?.focus();
@@ -50,14 +39,13 @@ export function BoardQuickCreate({kind,onCreate}:{
       aria-haspopup="dialog" aria-expanded={open}
       onClick={()=>{setError('');setOpen(true);}}>+ {kind}</button>
     {open&&createPortal(
-      <div className="board-create-backdrop" onPointerDown={event=>{
+      <div className="board-create-backdrop ss-mobile-sheet-backdrop" onPointerDown={event=>{
         if(event.target===event.currentTarget)close();
       }}>
-        <form className="board-create-sheet" role="dialog" aria-modal="true"
+        <form ref={sheetRef} className="board-create-sheet ss-mobile-sheet" role="dialog" aria-modal="true"
           aria-label={'Quick create '+kind.toLowerCase()} onSubmit={submit}
-          onKeyDown={event=>{
-            if(event.key==='Escape'){event.stopPropagation();close();}
-          }}>
+          >
+          <MobileSheetHandle onClose={close}/>
           <header>
             <div><small>BOARD · QUICK CREATE</small><h2>New {kind.toLowerCase()}</h2></div>
             <button type="button" onClick={close} aria-label="Close quick create"
