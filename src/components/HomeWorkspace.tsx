@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import {useEffect,useState} from 'react';
 import {useQuoteStore} from '../store/quoteStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -7,33 +7,78 @@ import {QuickCreate} from './QuickCreate';
 import {HomeCalendarGearButton,HomeCalendarCustomizer} from './HomeCalendarCustomizer';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
+import {homeCalendarScope,syncHomeCalendarSettings,useHomeCalendarSettings} from '../store/homeCalendarSettings';
 import '../home-workspace.css';
+import './home-layout-custom.css';
 
 const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'short',day:'numeric'});
 
 export function HomeWorkspace(){
  const hydrate=useQuoteStore(s=>s.hydrate);
- const mode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id);
+ const mode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),
+  orgId=useAuthStore(s=>s.organizationId);
  const role=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
  const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
+ const scope=homeCalendarScope(mode,orgId,userId);
+ const settings=useHomeCalendarSettings(scope);
+ const [recentHost,setRecentHost]=useState<HTMLDivElement|null>(null);
  useEffect(()=>hydrate(),[hydrate]);
+ useEffect(()=>{
+  let active=true;
+  const update=()=>{
+   if(active&&document.visibilityState!=='hidden'){
+    void syncHomeCalendarSettings(scope);
+   }
+  };
+  update();
+  window.addEventListener('focus',update);
+  document.addEventListener('visibilitychange',update);
+  return()=>{active=false;window.removeEventListener('focus',update);
+   document.removeEventListener('visibilitychange',update);};
+ },[scope]);
  const canCreate=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'quotes')));
  const canLog=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'crm')));
+ const shown=settings.visibleSections;
+ const order=settings.sectionOrder;
+ const calendarIndex=order.indexOf('calendar');
+ const recentIndex=order.indexOf('recent');
+ const quickIndex=order.indexOf('quickActions');
+ const recentFirst=recentIndex<calendarIndex;
+ const quickBetween=quickIndex>Math.min(calendarIndex,recentIndex)&&
+  quickIndex<Math.max(calendarIndex,recentIndex);
+ const twoColumn=shown.calendar&&shown.recent&&!quickBetween;
+ const sections={
+  quickActions:<section className="sales-home-actions-section" key="quickActions"
+    hidden={!shown.quickActions} aria-label="Quick actions">
+    <div className="sales-home-top-actions" aria-label="Start work">
+     {canLog&&<button type="button" className="sales-log-launcher"
+       onClick={()=>openActivityComposer()}>Log Activity</button>}
+     {canCreate&&<QuickCreate />}
+     {!canCreate&&!canLog&&<p className="sales-home-no-actions">Quick actions are unavailable in the current workspace view.</p>}
+    </div>
+   </section>,
+  calendar:<section className="sales-home-calendar-card" key="calendar"
+    hidden={!shown.calendar} aria-label="Calendar and selected-day agenda">
+    <SalesCalendarLauncher embedded recentPortalTarget={recentHost}
+      showCalendar={shown.calendar} showRecent={shown.recent}/>
+   </section>,
+  recent:<section className="sales-home-recent-card" key="recent"
+    hidden={!shown.recent} aria-label="Recent work and notes">
+    <div ref={setRecentHost} className="sales-home-recent-host"/>
+   </section>,
+ };
  return <main className="sales-home is-calendar-home is-compact-home" aria-label="My SalesShop home">
   <header className="sales-home-heading">
    <div className="sales-home-heading-copy">
     <span className="sales-home-eyebrow">MY WORKSPACE</span>
-    <div className="ss-workspace-title-row"><h1>Today</h1><HomeCalendarGearButton/></div><p>{dateLabel.format(new Date())}</p>
-   </div>
-   <div className="sales-home-top-actions" aria-label="Start work">
-    {canLog&&<button type="button" className="sales-log-launcher"
-      onClick={()=>openActivityComposer()}>Log Activity</button>}
-    {canCreate&&<QuickCreate />}
+    <div className="ss-workspace-title-row"><h1>Today</h1><HomeCalendarGearButton/></div>
+    <p>{dateLabel.format(new Date())}</p>
    </div>
   </header>
-  <section className="sales-home-calendar-card" aria-label="Calendar and selected-day agenda">
-   <SalesCalendarLauncher embedded />
-  </section>
+  <div className={'sales-home-section-list'+(twoColumn?' is-two-column':'')+
+   (recentFirst?' is-recent-first':'')}>
+   {order.map(key=>sections[key])}
+  </div>
   <HomeCalendarCustomizer/>
  </main>;
 }
