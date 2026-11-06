@@ -21,10 +21,9 @@ import {
 } from '../types/crm';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
-import { Button, PageHeader } from '../design-system/components';
+import { Button } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
-import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
-import {WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
@@ -211,9 +210,6 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   const clearFocusedCompany = useNavigationStore((state) => state.clearFocusedCompany);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
-  const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
-  const boardSearchInputRef=useRef<HTMLInputElement>(null);
-  useEffect(()=>{if(mobileSearchOpen)boardSearchInputRef.current?.focus({preventScroll:true});},[mobileSearchOpen]);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
   useBoardShiftWheelScroll(boardRef);
@@ -250,40 +246,21 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
 
   return (
     <main className={'board-view accounts-view'+(compactCards?' is-compact':'')}>
-      <PageHeader className="board-header-panel accounts-header-panel board-foundation-header ss-workspace-header"
-        eyebrow="Relationship health" title="Accounts"
-        description="Same CRM data, viewed by customer relationship instead of deal stage."
-        actions={<>
-          <label className="ss-workspace-header__mobile-nav">
-            <select aria-label="Board sections" value="accounts" onChange={event=>{if(event.target.value==='projects')onShowProjects();}}>
-              <option value="projects">Deals</option><option value="accounts">Accounts</option>
-            </select>
-          </label>
-          <div className="board-view-toggle" role="group" aria-label="Board type">
-            <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Deals</Button>
-            <Button variant="quiet" className="active" aria-pressed={true}>Accounts</Button>
-          </div>
-          <div className="board-header-tools">
-            <WorkspaceMoreMenu items={[{
-              label:compactCards?'Standard cards':'Compact cards',onClick:onToggleCompact,active:compactCards,
-            }]}/>
-            <div className={'board-header-search ss-workspace-header__search'+(mobileSearchOpen?' is-open':'')}>
-              <button type="button" className="ss-workspace-header__search-toggle"
-                aria-label="Search Board accounts" aria-expanded={mobileSearchOpen}
-                onClick={()=>setMobileSearchOpen(value=>!value)}>
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
-                </svg>
-              </button>
-              <div className="ss-workspace-header__search-popover"><input ref={boardSearchInputRef} type="search"
-                aria-label="Search Board accounts" placeholder="Search accounts…"
-                autoFocus={mobileSearchOpen}
-                value={searchQuery} onChange={event=>onSearchChange?.(event.target.value)}/></div>
-            </div>
-            <BoardQuickCreate kind="Account" onCreate={name=>resolveCompany(name,'customer')} />
-          </div>
-        </>}
+      <WorkspaceHeader className="board-header-panel accounts-header-panel board-foundation-header"
+        title="Accounts" mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Accounts'}]}
+        mobileTabValue="accounts" onMobileTabChange={value=>{if(value==='projects')onShowProjects();}}
+        tabs={<div className="board-view-toggle" role="group" aria-label="Board type">
+          <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Deals</Button>
+          <Button variant="quiet" className="active" aria-pressed={true}>Accounts</Button>
+        </div>}
+        more={<WorkspaceMoreMenu label="Board More" items={[{
+          label:compactCards?'Standard cards':'Compact cards',onClick:onToggleCompact,active:compactCards,
+        }]}/>}
+        search={<input type="search" aria-label="Search Board accounts"
+          placeholder="Search accounts…" value={searchQuery}
+          onChange={event=>onSearchChange?.(event.target.value)}/>}
+        primary={<BoardQuickCreate kind="Account"
+          onCreate={name=>resolveCompany(name,'customer')}/>}
       />
 
       <MobileBoardStagePicker
