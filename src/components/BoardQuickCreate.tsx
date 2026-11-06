@@ -1,5 +1,6 @@
 import {useEffect,useId,useRef,useState,type FormEvent} from 'react';
 import {createPortal} from 'react-dom';
+import './board-quick-create-mobile.css';
 
 /** Name-only creation on the Board: do not navigate away or open a full editor.
  * Details can be completed later from the existing record preview. */
