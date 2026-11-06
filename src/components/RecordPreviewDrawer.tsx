@@ -7,6 +7,8 @@ import {useNavigationStore} from '../store/navigationStore';
 import {quotesForProject,quotesForCompany} from '../services/quoteCrmLinks';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import {MobileSheetHandle} from './MobileSheetHandle';
 import {useAuthStore} from '../store/authStore';
 import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
@@ -30,22 +32,7 @@ const shortDate=(date?:string)=>date?new Date(date.includes('T')?date:date+'T12:
  * Full record pages and document editors stay separate from preview clicks. */
 export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard}:Props){
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
- // Keep the underlying SalesShop viewport still while a CRM drawer is open.
- // This matters on iOS, where touch gestures can chain to the page behind.
- useEffect(()=>{
-   const scroller=document.querySelector<HTMLElement>('.sales-app .role-perspective-content');
-   const oldScrollerOverflow=scroller?.style.overflow;
-   const oldBodyOverflow=document.body.style.overflow;
-   const oldHtmlOverflow=document.documentElement.style.overflow;
-   if(scroller)scroller.style.overflow='hidden';
-   document.body.style.overflow='hidden';
-   document.documentElement.style.overflow='hidden';
-   return()=>{
-     if(scroller)scroller.style.overflow=oldScrollerOverflow??'';
-     document.body.style.overflow=oldBodyOverflow;
-     document.documentElement.style.overflow=oldHtmlOverflow;
-   };
- },[]);
+ useModalScrollLock(true);
  // Follow related records in the same preview; the phone Back control
  // returns through the prior previews without resetting the directory.
  const [previewTrail,setPreviewTrail]=useState<PreviewRecord[]>([]);
@@ -156,14 +143,15 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const preview=<div className={(center
      ?'tasks-dialog-backdrop record-preview-center-backdrop'
      :'project-editor-backdrop record-preview-backdrop')+
-     (capture?' record-preview-capture-backdrop':'')}
+     (capture?' record-preview-capture-backdrop':'')+' ss-mobile-sheet-backdrop'}
    style={capture&&captureViewport
      ?{top:captureViewport.top,height:captureViewport.height,bottom:'auto'}:undefined}
    onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
    <aside ref={ref} role="dialog" aria-modal="true"
      aria-label={capture?'Record external quote for '+heading:label+' preview'}
      className={(center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel')+
-       (capture?' record-preview-capture-panel':'')}>
+       (capture?' record-preview-capture-panel':'')+' ss-mobile-sheet'}>
+     <MobileSheetHandle onClose={onClose}/>
      <header>
        {Boolean(onSelect&&previewTrail.length)&&<button type="button" className="record-preview-back"
          onClick={backToRelated} aria-label="Back to previous related record">← Back</button>}
@@ -171,7 +159,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        <PreviewPanelClose onClose={onClose} label="Close preview" className="editor-close"/>
      </header>
      <div className={(center?'tasks-preview-body record-preview-body':'record-preview-body')+
-       (capture?' record-preview-capture-body':'')}>
+       (capture?' record-preview-capture-body':'')+' ss-mobile-sheet-body'}>
        {capture&&deal
          ?<ExternalQuoteSentForm key={deal.id} deal={deal}
             onCancel={()=>setExternalQuoteOpen(false)}
@@ -252,7 +240,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        </>}
        </>}
      </div>
-     {!capture&&<PreviewPanelActions className="record-preview-actions">
+     {!capture&&<PreviewPanelActions className="record-preview-actions ss-mobile-sheet-actions">
        {center&&<button type="button" onClick={onClose}>Close</button>}
        {!perspective&&<button type="button" data-mobile-label="+ Task" onClick={()=>{
         onClose();requestTaskModal({mode:'create',associations:contextualLinks});
