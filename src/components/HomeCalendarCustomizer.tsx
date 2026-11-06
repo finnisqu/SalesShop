@@ -177,7 +177,7 @@ export function HomeCalendarCustomizer(){
      <p>Choose which sections appear and move them up or down. The dated On this day navigator and Recent work share one section.</p>
      {draft.sectionOrder.map((id,index)=>{
       const labels:Record<HomeSectionId,string>={
-       quickActions:'Quick actions',calendar:'Calendar & agenda',recent:'On this day / Recent work'};
+       quickActions:'Quick actions',calendar:'Calendar & agenda',recent:'Recent work / notes'};
       return <div className="home-calendar-section-row" key={id}>
        <label><input type="checkbox" checked={draft.visibleSections[id]}
          disabled={draft.visibleSections[id]&&HOME_SECTION_IDS.filter(section=>draft.visibleSections[section]).length===1}
