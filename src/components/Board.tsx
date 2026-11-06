@@ -9,6 +9,7 @@ import { AccountsBoard } from './AccountsBoard';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import { Button } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {BoardQuickCreate} from './BoardQuickCreate';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError} from './RecordFormFeedback';
