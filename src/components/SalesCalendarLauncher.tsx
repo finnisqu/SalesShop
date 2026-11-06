@@ -71,12 +71,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const sidecarCreateRef=useRef<HTMLDivElement>(null);
  const sidecarCreateButton=useRef<HTMLButtonElement>(null);
  useEffect(()=>{
-  if(!embedded)return;
   const media=window.matchMedia('(max-width:760px)');
   const update=()=>setIsPhone(media.matches);
   update();media.addEventListener('change',update);
   return()=>media.removeEventListener('change',update);
- },[embedded]);
+ },[]);
  const today=localDateKey(new Date());
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id);
