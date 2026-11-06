@@ -151,7 +151,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
      aria-label={capture?'Record external quote for '+heading:label+' preview'}
      className={(center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel')+
        (capture?' record-preview-capture-panel':'')+' ss-mobile-sheet'}>
-     <MobileSheetHandle onClose={onClose}/>
+     <MobileSheetHandle onClose={onClose} disabled={capture}/>
      <header>
        {Boolean(onSelect&&previewTrail.length)&&<button type="button" className="record-preview-back"
          onClick={backToRelated} aria-label="Back to previous related record">← Back</button>}
