@@ -971,15 +971,20 @@
  flex:0 0 auto;
  color:var(--ss-theme-muted,#777);
 }
-/* Restore the taller seven-day squares without inflating month view. */
+/* Mobile 7-day strip should be compact, not taller than the previous
+   calendar. A fixed row prevents badge-count variations stretching cells. */
 @media(max-width:760px){
  .sales-home.is-compact-home .sales-calendar-inline
  .sales-calendar-popover.is-week .sales-calendar-grid{
-  grid-auto-rows:minmax(78px,auto)!important;
+  grid-template-rows:56px!important;
+  grid-auto-rows:56px!important;
  }
  .sales-home.is-compact-home .sales-calendar-inline
  .sales-calendar-popover.is-week .sales-calendar-day{
-  min-height:78px!important;
+  box-sizing:border-box;
+  height:56px!important;
+  min-height:56px!important;
+  max-height:56px!important;
  }
  .sales-calendar-agenda .home-day-agenda-group>summary{min-height:44px}
  .sales-calendar-agenda .home-day-agenda-records>button{min-height:46px}
