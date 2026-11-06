@@ -6,7 +6,7 @@
 .ss-settings-mobile-header{display:none!important}
 @media(max-width:760px){
   :root[data-sales-theme] .sales-app{
-    --ss-workspace-header-height:58px;
+    --ss-workspace-header-height:58px!important;
     --ss-header-control-height:36px;
     --ss-header-create-width:36px;
     --ss-header-more-width:36px;
