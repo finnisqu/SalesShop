@@ -48,7 +48,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded}:{
       <label>Total contract value ($)
         <input type="number" inputMode="decimal" min="0" step="0.01" required
           value={amount} onChange={event=>{setAmount(event.target.value);setError('');}}
-          placeholder="0.00" autoFocus/>
+          placeholder="0.00"/>
       </label>
       <label>Bid sent date
         <input type="date" required max={localToday()} value={bidSentDate}
