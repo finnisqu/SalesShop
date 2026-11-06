@@ -41,6 +41,9 @@ export function WorkspaceHeader({title,tabs,more,search,primary,className='',
  const searchPanelRef=useRef<HTMLDivElement>(null);
  const searchButtonRef=useRef<HTMLButtonElement>(null);
  const searchAreaRef=useRef<HTMLDivElement>(null);
+ // Search belongs to the selected workspace tab. Closing the floating field
+ // on tab changes prevents stale mobile popovers and an orphaned keyboard.
+ useEffect(()=>{setSearchOpen(false);},[title,mobileTabValue]);
  useEffect(()=>{
   if(searchOpen)searchPanelRef.current?.querySelector<HTMLInputElement>('input')?.focus({preventScroll:true});
  },[searchOpen]);
