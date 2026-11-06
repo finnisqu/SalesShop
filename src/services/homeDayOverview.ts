@@ -34,7 +34,7 @@ export interface HomeDaySources{
 
 // A date-only value must not shift to the previous day in western time zones.
 const onDay=(date:string|undefined,day:string)=>!!date&&
- (/^\\d{4}-\\d{2}-\\d{2}$/.test(date)?date===day:isoLocalDay(date)===day);
+ (/^\d{4}-\d{2}-\d{2}$/.test(date)?date===day:isoLocalDay(date)===day);
 const trim=(value:string|undefined,fallback:string)=>value?.trim()||fallback;
 
 /** A dated navigation index, not an Agenda or a second badge-count formula.
