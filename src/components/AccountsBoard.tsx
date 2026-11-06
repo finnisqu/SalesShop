@@ -24,6 +24,7 @@ import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { Button } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
