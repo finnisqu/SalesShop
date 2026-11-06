@@ -226,6 +226,23 @@ export function TasksWorkspace(){
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
   const [taskNotice,setTaskNotice]=useState<RecordFormNotice|null>(null);
   const [viewingId,setViewingId]=useState<string|null>(null);
+  const hasTaskOverlay=Boolean(editing||viewingId);
+  useEffect(()=>{
+    if(!hasTaskOverlay)return;
+    const scrollers=Array.from(document.querySelectorAll<HTMLElement>(
+      '.sales-app.view-tasks .tasks-workspace,.sales-app.view-tasks .role-perspective-content'));
+    const previous=scrollers.map(node=>node.style.overflowY);
+    const originalBody=document.body.style.overflow;
+    const originalRoot=document.documentElement.style.overflow;
+    scrollers.forEach(node=>{node.style.overflowY='hidden';});
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+    return()=>{
+      scrollers.forEach((node,index)=>{node.style.overflowY=previous[index];});
+      document.body.style.overflow=originalBody;
+      document.documentElement.style.overflow=originalRoot;
+    };
+  },[hasTaskOverlay]);
   useEffect(()=>{
    if(previousScope.current===scope)return;
    previousScope.current=scope;
