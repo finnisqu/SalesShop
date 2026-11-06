@@ -68,6 +68,17 @@ export function HomeCalendarCustomizer(){
   return()=>window.removeEventListener(eventName,launch);
  },[scope]);
  useEffect(()=>{setOpen(false);},[scope]);
+ useEffect(()=>{
+  if(!open)return;
+  const oldBody=document.body.style.overflow;
+  const oldHtml=document.documentElement.style.overflow;
+  document.body.style.overflow='hidden';
+  document.documentElement.style.overflow='hidden';
+  return()=>{
+   document.body.style.overflow=oldBody;
+   document.documentElement.style.overflow=oldHtml;
+  };
+ },[open]);
  const changeSlot=(index:number,change:Partial<{metric:CalendarBadgeMetric;color:CalendarBadgeColor}>)=>{
   setDraft(previous=>({...previous,slots:previous.slots.map((slot,i)=>
    i===index?{...slot,...change}:slot) as HomeCalendarSettings['slots']}));
