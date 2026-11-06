@@ -23,7 +23,7 @@ import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel,type Cal
 import {buildCalendarBadgeIndex,metricCount} from '../services/homeCalendarBadges';
 import {homeCalendarBadgeEntries,type HomeBadgeRecord} from '../services/homeCalendarDrilldown';
 import {homeAgendaDotColors} from '../services/homeCalendarAgendaColors';
-import {homeDayOverview,type HomeDayRecord} from '../services/homeDayOverview';
+import {homeAgendaExtras,homeDayOverview,type HomeDayRecord} from '../services/homeDayOverview';
 import './sales-calendar.css';
 
 type SidecarCreateKind='quote'|'activity'|'note';
@@ -199,12 +199,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      companies,contacts,notebookReady,notebookEntries]);
  // Pending agenda items already appear above; show other dated history
  // below without duplicating their Task/Bid rows.
- const otherDayGroups=useMemo(()=>dayGroups.map(group=>({
-  ...group,
-  entries:group.key==='tasks-due'
-   ?group.entries.filter(entry=>entry.key.startsWith('historical-task-due:'))
-   :group.key==='bids-due'||group.key==='notebook-dates'?[]:group.entries,
- })).filter(group=>group.entries.length>0),[dayGroups]);
+ const otherDayGroups=useMemo(()=>homeAgendaExtras(dayGroups),[dayGroups]);
  const otherDayTotal=useMemo(()=>otherDayGroups.reduce((total,group)=>
   total+group.entries.length,0),[otherDayGroups]);
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
