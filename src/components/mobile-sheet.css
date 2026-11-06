@@ -74,6 +74,7 @@
   pointer-events:none;
  }
  .ss-mobile-sheet-handle:active{cursor:grabbing}
+ .ss-mobile-sheet-handle.is-disabled{opacity:.45;cursor:default;touch-action:auto}
  .ss-mobile-sheet .ss-mobile-sheet-body{
   box-sizing:border-box;
   flex:1 1 auto;
