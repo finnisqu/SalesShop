@@ -68,7 +68,7 @@ export function HomeWorkspace(){
       showCalendar={shown.calendar} showRecent={shown.recent}/>
    </section>,
   recent:<section className="sales-home-recent-card" key="recent"
-    hidden={!shown.recent} aria-label="On this day and recent work">
+    hidden={!shown.recent} aria-label="Recent work and notes">
     <div ref={setRecentHost} className="sales-home-recent-host"/>
    </section>,
  };
