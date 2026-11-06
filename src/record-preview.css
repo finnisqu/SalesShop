@@ -482,3 +482,42 @@
     padding:9px 12px max(10px,env(safe-area-inset-bottom))!important;
   }
 }
+
+/* Single low-profile Deal preview action row on phones. The original button
+   text stays in the DOM for accessibility and wider viewports. */
+@media(max-width:700px){
+  :root[data-sales-theme] .project-editor.record-preview-panel:not(.record-preview-capture-panel)
+    .record-preview-actions{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    align-items:stretch;
+    justify-content:space-between;
+    gap:5px!important;
+    padding:9px 10px max(11px,env(safe-area-inset-bottom))!important;
+  }
+  :root[data-sales-theme] .project-editor.record-preview-panel:not(.record-preview-capture-panel)
+    .record-preview-actions>button[data-mobile-label]{
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+    min-width:0!important;
+    max-width:none!important;
+    flex:1 1 0!important;
+    min-height:41px!important;
+    height:auto!important;
+    border-radius:9px;
+    padding:6px 3px!important;
+    font-size:0!important;
+    line-height:0!important;
+    overflow:hidden;
+  }
+  :root[data-sales-theme] .project-editor.record-preview-panel:not(.record-preview-capture-panel)
+    .record-preview-actions>button[data-mobile-label]::after{
+    content:attr(data-mobile-label);
+    display:block;
+    color:inherit;
+    font:750 10px/1.2 system-ui,sans-serif;
+    text-align:center;
+    overflow-wrap:anywhere;
+  }
+}
