@@ -344,6 +344,12 @@ export function TasksWorkspace(){
   if(rolePreview)return <main className="tasks-workspace"><h1>Tasks</h1><p>Personal tasks are not shown in role preview.</p></main>;
   return <main className="tasks-workspace" aria-label="SalesShop tasks">
     <WorkspaceHeader title="Tasks" help={<WorkspaceHelp page="tasks" section={filter}/>} className="tasks-header"
+      mobileTabs={[
+       {value:'active',label:'Open'},{value:'today',label:'Today'},
+       {value:'upcoming',label:'Upcoming'},{value:'completed',label:'Completed'},
+       {value:'overdue',label:'Overdue'},{value:'scheduled',label:'Start later'},
+       {value:'all',label:'All history'},
+      ]} mobileTabValue={filter} onMobileTabChange={value=>setFilter(value as typeof filter)}
       tabs={<nav className="tasks-header-tabs" aria-label="Task views">
        {([['active','Open'],['today','Today'],['upcoming','Upcoming'],
          ['completed','Completed']] as const).map(([key,label])=>
