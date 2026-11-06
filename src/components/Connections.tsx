@@ -91,6 +91,8 @@ export function Connections() {
   const [query, setQuery] = useState('');
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
+  const connectionsSearchInputRef=useRef<HTMLInputElement>(null);
+  useEffect(()=>{if(mobileSearchOpen)connectionsSearchInputRef.current?.focus({preventScroll:true});},[mobileSearchOpen]);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [quoteRecordId,setQuoteRecordId]=useState<string|null>(null);
   useEffect(()=>{
@@ -378,7 +380,7 @@ export function Connections() {
                 </svg>
               </button>
               <div className="ss-workspace-header__search-popover">
-                <input id="connections-directory-search" type="search"
+                <input ref={connectionsSearchInputRef} id="connections-directory-search" type="search"
                   aria-label={`Search ${tab}`} value={query}
                   autoFocus={mobileSearchOpen} onChange={event=>setQuery(event.target.value)}
                   placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':tab==='deals'?'Search deals…':tab==='quotes'?'Search quotes…':'Search activities…'} />
