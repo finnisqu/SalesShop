@@ -16,10 +16,12 @@ export function openHomeCalendarCustomizer(){
 export function HomeCalendarGearButton({className=''}:{className?:string}){
  return <button type="button" className={'home-calendar-gear '+className}
   onClick={openHomeCalendarCustomizer} aria-label="Customize Home calendar" title="Customize Home calendar">
-  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-   strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-   <path d="M10.4 2.8h3.2l.6 2.3a7.5 7.5 0 0 1 1.6.9l2.3-.7 2.2 2.2-.8 2.3c.4.5.6 1 .9 1.6l2.3.6v3.2l-2.3.6a7 7 0 0 1-.9 1.6l.8 2.3-2.2 2.2-2.3-.7c-.5.4-1 .6-1.6.9l-.6 2.3h-3.2l-.6-2.3a7 7 0 0 1-1.6-.9l-2.3.7-2.2-2.2.8-2.3a7 7 0 0 1-.9-1.6l-2.3-.6V10l2.3-.6c.2-.6.5-1.1.9-1.6l-.8-2.3L6 3.3l2.3.7a7 7 0 0 1 1.6-.9z"/>
-   <circle cx="12" cy="12" r="3.2"/>
+  <svg className="home-calendar-gear-icon" width="20" height="20"
+   viewBox="0 0 24 24" fill="none" stroke="currentColor"
+   strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+   aria-hidden="true" focusable="false">
+   <path d="M9.51 4.77 L9.98 2.51 L14.02 2.51 L14.49 4.77 L15.35 5.12 L17.28 3.86 L20.14 6.72 L18.88 8.65 L19.23 9.51 L21.49 9.98 L21.49 14.02 L19.23 14.49 L18.88 15.35 L20.14 17.28 L17.28 20.14 L15.35 18.88 L14.49 19.23 L14.02 21.49 L9.98 21.49 L9.51 19.23 L8.65 18.88 L6.72 20.14 L3.86 17.28 L5.12 15.35 L4.77 14.49 L2.51 14.02 L2.51 9.98 L4.77 9.51 L5.12 8.65 L3.86 6.72 L6.72 3.86 L8.65 5.12 Z"/>
+   <circle cx="12" cy="12" r="3.0"/>
   </svg>
  </button>;
 }
