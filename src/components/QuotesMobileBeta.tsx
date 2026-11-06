@@ -1128,6 +1128,18 @@ export function QuotesMobileBeta() {
       {page==='area'&&quoteProgress}
     {page==='library'?<>
       <WorkspaceHeader title="Quotes" help={<WorkspaceHelp page="quotes" section={followUpsTab?'follow-ups':documentFilter}/>} className="qmb-library-workspace-header"
+        mobileTabs={[
+          {value:'all',label:'All'},{value:'quick-quote',label:'Quick Quote'},
+          {value:'builder-rates',label:'Builder Rate Schedule'},
+          {value:'community-pricing',label:'Community Plan Pricing'},
+          {value:'spreadsheet',label:'Custom Spreadsheet'},
+          {value:'follow-ups',label:'Follow-ups'},
+        ]}
+        mobileTabValue={followUpsTab?'follow-ups':documentFilter}
+        onMobileTabChange={value=>{
+          if(value==='follow-ups')setFollowUpsTab(true);
+          else{setFollowUpsTab(false);setDocumentFilter(value as SalesDocumentTemplate|'all');}
+        }}
         tabs={<nav className="qmb-library-filter-row" aria-label="Document library sections">
           {([
             {id:'all',title:'All'},
