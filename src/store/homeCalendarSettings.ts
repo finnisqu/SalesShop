@@ -194,7 +194,6 @@ export async function saveHomeCalendarSettingsWithSync(scope:string,settings:Hom
  if(running)await running;
  return syncHomeCalendarSettings(scope);
 }
-}
 function subscribe(listener:()=>void){
  listeners.add(listener);
  return()=>{listeners.delete(listener);};
