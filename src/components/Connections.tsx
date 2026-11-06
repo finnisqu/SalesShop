@@ -90,6 +90,7 @@ export function Connections() {
   },[]);
   const [query, setQuery] = useState('');
   const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [quoteRecordId,setQuoteRecordId]=useState<string|null>(null);
   useEffect(()=>{
@@ -346,6 +347,13 @@ export function Connections() {
         title="Connections" titleAdornment={<WorkspaceHelp page="connections" section={tab}/>}
         description="Your accounts, contacts and deals."
         actions={<>
+          <label className="ss-workspace-header__mobile-nav">
+            <select aria-label="Connections sections" value={tab}
+              onChange={event=>chooseTab(event.target.value as ConnectionsTab)}>
+              {CONNECTIONS_TABS.map(item=><option value={item.id} key={item.id}>{item.label}</option>)}
+              <option value="quotes">Quotes</option><option value="activity">Activity history</option>
+            </select>
+          </label>
           <div className="connections-header-navigation">
             <SectionTabs className="connections-tabs" aria-label="Connections sections"
               items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
@@ -360,11 +368,21 @@ export function Connections() {
                 <button type="button" onClick={() => chooseTab('quotes')}>Quotes · metadata</button>
               </div>}
             </div>
-            <div className="connections-header-search">
-              <input id="connections-directory-search" type="search"
-                aria-label={`Search ${tab}`} value={query}
-                onChange={event=>setQuery(event.target.value)}
-                placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':tab==='deals'?'Search deals…':tab==='quotes'?'Search quotes…':'Search activities…'} />
+            <div className={'connections-header-search ss-workspace-header__search'+(mobileSearchOpen?' is-open':'')}>
+              <button type="button" className="ss-workspace-header__search-toggle"
+                aria-label="Search Connections" aria-expanded={mobileSearchOpen}
+                onClick={()=>setMobileSearchOpen(value=>!value)}>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
+                </svg>
+              </button>
+              <div className="ss-workspace-header__search-popover">
+                <input id="connections-directory-search" type="search"
+                  aria-label={`Search ${tab}`} value={query}
+                  autoFocus={mobileSearchOpen} onChange={event=>setQuery(event.target.value)}
+                  placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':tab==='deals'?'Search deals…':tab==='quotes'?'Search quotes…':'Search activities…'} />
+              </div>
             </div>
             {tab === 'companies' && <Button variant="primary" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</Button>}
             {tab === 'people' && <Button variant="primary" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</Button>}
