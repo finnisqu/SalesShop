@@ -38,6 +38,12 @@ const list=(metric:Parameters<typeof homeCalendarBadgeEntries>[0],prefs=settings
  homeCalendarBadgeEntries(metric,date,activeEvents,tasks,history,companies,contacts,prefs);
 
 describe('Home badge drilldowns',()=>{
+ it('keeps badge drilldowns opt-in on phones and supports Home sections',()=>{
+  expect(DEFAULT_HOME_CALENDAR_SETTINGS.clickableMobileBadges).toBe(false);
+  expect(DEFAULT_HOME_CALENDAR_SETTINGS.defaultCalendarView).toBe('auto');
+  expect(DEFAULT_HOME_CALENDAR_SETTINGS.sectionOrder).toEqual(['quickActions','calendar','recent']);
+  expect(DEFAULT_HOME_CALENDAR_SETTINGS.visibleSections.calendar).toBe(true);
+ });
  it('matches task and deadline event counts without inserting history in the agenda',()=>{
   expect(list('tasks').map(x=>x.id)).toEqual(['one']);
   expect(list('bid-due').map(x=>x.kind)).toEqual(['deal']);
