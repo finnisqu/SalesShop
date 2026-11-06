@@ -1,0 +1,240 @@
+/* Deal editor: one scrollable content region and a fixed-in-sheet action bar.
+   Scoped so the other Board/CRM preview panels keep their own layouts. */
+.project-editor--deal-edit{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  padding:0;
+}
+:root[data-sales-theme] .project-editor--deal-edit{
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border-color:var(--ss-theme-border);
+}
+.project-editor--deal-edit>header{
+  box-sizing:border-box;
+  flex:0 0 auto;
+  margin:0;
+  padding:14px 18px;
+  min-height:0;
+  position:relative;
+  z-index:2;
+}
+:root[data-sales-theme] .project-editor--deal-edit>header{
+  background:var(--ss-theme-card);
+  border-color:var(--ss-theme-border);
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .project-editor--deal-edit>header :is(h2,.ss-preview-heading){
+  color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .project-editor--deal-edit>header .editor-close{
+  border:1px solid var(--ss-theme-border);
+  background:var(--ss-theme-tint);
+  color:var(--ss-theme-ink);
+  border-radius:10px;
+  min-height:36px;
+  min-width:36px;
+}
+.project-editor--deal-edit .project-editor-form{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+}
+.project-editor--deal-edit .project-editor-form-scroll{
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  max-width:100%;
+  padding:16px 18px 24px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+}
+.project-editor--deal-edit .project-editor-form-scroll :is(label,.ss-field,.editor-two-up,section){
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.project-editor--deal-edit .project-editor-form-scroll .editor-two-up{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.project-editor--deal-edit .project-editor-form-scroll .editor-two-up>*{
+  min-width:0;
+  max-width:100%;
+}
+.project-editor--deal-edit .project-editor-form-scroll .ss-field{
+  margin-bottom:14px;
+}
+.project-editor--deal-edit .project-editor-form-scroll label.ss-field__label{
+  display:inline-flex;
+  width:auto;
+  max-width:100%;
+  align-items:baseline;
+  justify-content:flex-start;
+  gap:3px;
+  margin:0 0 6px;
+  white-space:normal;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.35;
+}
+.project-editor--deal-edit .project-editor-form-scroll label.ss-field__label>.ss-field__required{
+  display:inline!important;
+  flex:0 0 auto;
+  margin:0!important;
+  font:inherit;
+  line-height:inherit;
+  letter-spacing:normal;
+  color:var(--ss-theme-accent,#8d6e30);
+  white-space:nowrap;
+}
+.project-editor--deal-edit .project-editor-form-scroll :is(input:not([type="checkbox"]),select,textarea){
+  box-sizing:border-box;
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  min-inline-size:0;
+  max-inline-size:100%;
+  border-radius:9px;
+  border:1px solid var(--ss-theme-border,#cfc5b4);
+  background:var(--ss-theme-base,#fffaf0);
+  color:var(--ss-theme-ink,#302d27);
+  font:normal 14px/1.35 system-ui,sans-serif;
+  box-shadow:none;
+}
+.project-editor--deal-edit .project-editor-form-scroll :is(input:not([type="checkbox"]),select){
+  height:41px;
+  min-height:41px;
+  padding:0 10px;
+}
+.project-editor--deal-edit .project-editor-form-scroll input[type="date"]{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  min-inline-size:0;
+  -webkit-min-logical-width:0;
+  appearance:auto;
+  padding-inline:10px;
+}
+.project-editor--deal-edit .project-editor-form-scroll textarea{
+  min-height:80px;
+  padding:10px;
+  resize:vertical;
+}
+.project-editor--deal-edit .project-editor-form-scroll :is(input,select,textarea):focus-visible,
+.project-editor--deal-edit .project-editor-action-bar button:focus-visible{
+  outline:2px solid var(--ss-theme-accent,#8d6e30);
+  outline-offset:2px;
+}
+.project-editor--deal-edit .project-editor-action-bar{
+  box-sizing:border-box;
+  position:relative;
+  bottom:auto;
+  z-index:3;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  margin:0;
+  padding:11px 16px max(12px,env(safe-area-inset-bottom));
+  border-top:1px solid var(--ss-theme-border,#cfc5b4);
+  background:var(--ss-theme-card,#fffaf0);
+  box-shadow:0 -4px 16px rgba(0,0,0,.055);
+}
+.project-editor--deal-edit .project-editor-action-bar .editor-action-spacer{
+  flex:1 1 0;
+  min-width:0;
+}
+.project-editor--deal-edit .project-editor-action-bar button{
+  box-sizing:border-box;
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  height:41px;
+  min-height:41px;
+  max-width:100%;
+  padding:0 12px;
+  border-radius:9px;
+  border:1px solid var(--ss-theme-border,#cfc5b4);
+  background:var(--ss-theme-tint,#ebe2ce);
+  color:var(--ss-theme-ink,#302d27);
+  font:700 12px/1.25 system-ui,sans-serif;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.project-editor--deal-edit .project-editor-action-bar button.primary-button{
+  background:var(--ss-theme-accent,#8d6e30);
+  border-color:var(--ss-theme-accent,#8d6e30);
+  color:var(--ss-theme-contrast,#fff);
+}
+.project-editor--deal-edit .project-editor-action-bar button.danger-button{
+  color:color-mix(in srgb,#c4443d 75%,var(--ss-theme-ink,#302d27));
+  background:color-mix(in srgb,#c4443d 6%,var(--ss-theme-card,#fffaf0));
+  border-color:color-mix(in srgb,#c4443d 33%,var(--ss-theme-border,#cfc5b4));
+}
+.project-editor--deal-edit .project-editor-action-bar button.project-editor-go-to-page{
+  background:transparent;
+  border-color:var(--ss-theme-border,#cfc5b4);
+}
+.project-editor--deal-edit .project-editor-action-bar button:disabled{
+  opacity:.55;
+  cursor:default;
+}
+@media(max-width:580px){
+  .project-editor--deal-edit{
+    width:100%;
+    max-width:100vw;
+    height:100%;
+    max-height:100%;
+    border-radius:18px 18px 0 0;
+  }
+  .project-editor--deal-edit .project-editor-form-scroll{
+    padding:14px 14px 28px;
+    scrollbar-gutter:auto;
+  }
+  .project-editor--deal-edit .project-editor-form-scroll .editor-two-up{
+    grid-template-columns:minmax(0,1fr);
+    gap:0;
+  }
+  .project-editor--deal-edit .project-editor-form-scroll :is(input:not([type="checkbox"]),select,textarea){
+    font-size:16px;
+  }
+  .project-editor--deal-edit .project-editor-action-bar{
+    gap:7px;
+    padding:10px 12px max(12px,env(safe-area-inset-bottom));
+  }
+  .project-editor--deal-edit .project-editor-action-bar button{
+    min-height:42px;
+    height:42px;
+    padding:0 10px;
+    border-radius:10px;
+  }
+  .project-editor--deal-edit .project-editor-action-bar .project-editor-go-to-page-label{
+    display:none;
+  }
+  .project-editor--deal-edit .project-editor-action-bar button.project-editor-go-to-page{
+    min-width:42px;
+    font-size:19px;
+    padding:0 10px;
+  }
+}
