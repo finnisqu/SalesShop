@@ -311,6 +311,7 @@ export function Board() {
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
   const [boardSearch,setBoardSearch]=useState('');
+  const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
   const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
   const [pipelineMenuOpen,setPipelineMenuOpen]=useState(false);
   const pipelineMenuRef=useRef<HTMLDivElement>(null);
@@ -417,6 +418,12 @@ export function Board() {
         eyebrow="Sales pipeline" title="Deals" titleAdornment={<WorkspaceHelp page="board" section="deals"/>}
         description="Move deals from opportunity to completion."
         actions={<>
+          <label className="ss-workspace-header__mobile-nav">
+            <select aria-label="Board sections" value="projects"
+              onChange={event=>{if(event.target.value==='accounts')setBoardMode('accounts');}}>
+              <option value="projects">Deals</option><option value="accounts">Accounts</option>
+            </select>
+          </label>
           <div className="board-view-toggle" role="group" aria-label="Board type">
             <Button variant="quiet" className="active" aria-pressed={true}>Deals</Button>
             <Button variant="quiet" aria-pressed={false} onClick={() => setBoardMode('accounts')}>Accounts</Button>
@@ -448,9 +455,20 @@ export function Board() {
                  </button>
                </div>}
              </div>
-             <div className="board-header-search"><input type="search"
-              aria-label="Search Board deals" placeholder="Search deals…"
-              value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/></div>
+             <div className={'board-header-search ss-workspace-header__search'+(mobileSearchOpen?' is-open':'')}>
+              <button type="button" className="ss-workspace-header__search-toggle"
+                aria-label="Search Board deals" aria-expanded={mobileSearchOpen}
+                onClick={()=>setMobileSearchOpen(value=>!value)}>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
+                </svg>
+              </button>
+              <div className="ss-workspace-header__search-popover"><input type="search"
+                aria-label="Search Board deals" placeholder="Search deals…"
+                autoFocus={mobileSearchOpen}
+                value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/></div>
+             </div>
             <BoardQuickCreate kind="Deal" onCreate={name=>createProject(name,'Discovery',{
                pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
              })} />
