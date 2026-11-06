@@ -111,6 +111,9 @@ export function CatalogWorkspace() {
   return (
     <main className="catalog-workspace">
       <WorkspaceHeader title="Catalog" help={<WorkspaceHelp page="catalog" section={section}/>} className="catalog-header catalog-foundation-heading"
+        mobileTabs={CATALOG_SECTIONS.map(({id,label})=>({value:id,label}))}
+        mobileTabValue={section}
+        onMobileTabChange={value=>{setCatalogSearch('');setSection(value as typeof section);}}
         tabs={<SectionTabs className="catalog-section-nav catalog-foundation-tabs"
           aria-label="Catalog sections" items={CATALOG_SECTIONS.map(({ id, label }) => ({ id, label }))}
           selected={section} onSelect={next=>{setCatalogSearch('');setSection(next);}} />}
