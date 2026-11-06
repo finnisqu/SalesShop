@@ -188,6 +188,10 @@ export async function syncHomeCalendarSettings(scope:string):Promise<'saved'|'lo
 }
 export async function saveHomeCalendarSettingsWithSync(scope:string,settings:HomeCalendarSettings){
  saveHomeCalendarSettings(scope,settings);
+ // A load triggered on Home mount may already be running. Finish it first,
+ // then always upload this newly saved preference snapshot.
+ const running=inflight.get(scope);
+ if(running)await running;
  return syncHomeCalendarSettings(scope);
 }
 }
