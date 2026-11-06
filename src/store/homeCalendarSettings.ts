@@ -59,8 +59,9 @@ function parseSettings(value:unknown):HomeCalendarSettings{
  if(!value||typeof value!=='object')return settings;
  const obj=value as Record<string,unknown>;
  const seen=new Set<string>();
- if(Array.isArray(obj.slots))settings.slots=settings.slots.map((fallback,index)=>{
-  const slot=obj.slots[index];
+ const savedSlots=obj.slots;
+ if(Array.isArray(savedSlots))settings.slots=settings.slots.map((fallback,index)=>{
+  const slot=savedSlots[index];
   if(!slot||typeof slot!=='object')return fallback;
   const input=slot as Record<string,unknown>;
   const metric=typeof input.metric==='string'&&metricIds.has(input.metric)&&
