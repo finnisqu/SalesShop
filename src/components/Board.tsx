@@ -10,7 +10,6 @@ import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import { Button, PageHeader } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
-import {WorkspaceHelp} from './WorkspaceHelp';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError} from './RecordFormFeedback';
 import {useDismissiblePopover} from './useDismissibleDetails';
@@ -417,7 +416,7 @@ export function Board() {
   return (
     <main className={'board-view'+(compactCards?' is-compact':'')}>
       <PageHeader className="board-header-panel board-foundation-header ss-workspace-header"
-        eyebrow="Sales pipeline" title="Deals" titleAdornment={<WorkspaceHelp page="board" section="deals"/>}
+        eyebrow="Sales pipeline" title="Deals"
         description="Move deals from opportunity to completion."
         actions={<>
           <label className="ss-workspace-header__mobile-nav">
