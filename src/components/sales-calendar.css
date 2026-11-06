@@ -669,3 +669,97 @@
   grid-template-rows:52px minmax(0,1fr)!important;
  }
 }
+
+
+/* Independent calendar day and badge controls; no nested <button> elements.
+   The day remains fully tappable on phones when badge drilldowns are disabled. */
+.sales-calendar-day{position:relative;isolation:isolate}
+.sales-calendar-day .sales-calendar-day-select{
+ box-sizing:border-box;position:absolute;inset:0;z-index:0;
+ width:100%;height:100%;min-width:0;
+ display:block;text-align:left;
+ padding:6px 5px;margin:0;
+ border:0;border-radius:inherit;background:transparent;
+ color:inherit;font:inherit;cursor:pointer;
+}
+.sales-calendar-day .sales-calendar-day-select:focus-visible{
+ outline:2px solid var(--ss-theme-accent,#917246);outline-offset:-3px;
+}
+.sales-calendar-day .home-calendar-custom-dots{
+ position:absolute;left:5px;right:4px;bottom:4px;z-index:2;
+ width:auto;max-width:calc(100% - 9px);
+ pointer-events:none;
+}
+.sales-calendar-day .home-calendar-custom-dots :is(i,.home-calendar-badge-action){
+ box-sizing:border-box;display:grid;place-items:center;flex:0 0 auto;
+ min-width:17px;min-height:16px;height:16px;
+ border:0;border-radius:5px;padding:0 3px;
+ font:800 9px/1 system-ui,sans-serif;
+ color:#fff!important;white-space:nowrap;
+}
+.sales-calendar-day .home-calendar-custom-dots .home-calendar-badge-action{
+ pointer-events:auto;cursor:pointer;
+ box-shadow:0 0 0 1px #0001;
+}
+.sales-calendar-day .home-calendar-custom-dots .home-calendar-badge-action:hover{
+ filter:brightness(1.08);
+}
+.sales-calendar-day .home-calendar-custom-dots .home-calendar-badge-action:focus-visible{
+ outline:2px solid var(--ss-theme-ink,#302d27);outline-offset:1px;
+}
+.home-calendar-drilldown{
+ box-sizing:border-box;display:flex;flex:1 1 auto;
+ flex-direction:column;gap:5px;
+ min-height:0;min-width:0;overflow:hidden;
+ padding:8px 10px 12px;
+}
+.home-calendar-drilldown-heading{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.home-calendar-drilldown-heading button{
+ box-sizing:border-box;min-height:36px;
+ padding:7px 10px;border:1px solid var(--ss-theme-border,#d4c9b5);
+ border-radius:9px;color:var(--ss-theme-ink,#302d27);
+ background:var(--ss-theme-card,#fffaf0);font-weight:750;font-size:11px;cursor:pointer;
+}
+.home-calendar-drilldown-heading strong{font-size:12px}
+.home-calendar-drilldown-heading small{font-size:10px;color:var(--ss-theme-muted,#777)}
+.home-calendar-drilldown-list{
+ display:grid;align-content:start;gap:0;
+ flex:1 1 auto;min-height:0;
+ overflow-y:auto;overscroll-behavior-y:contain;
+ -webkit-overflow-scrolling:touch;
+}
+.home-calendar-drilldown-list>button{
+ display:flex;justify-content:space-between;align-items:center;gap:8px;
+ width:100%;min-width:0;min-height:45px;
+ padding:8px 4px;border:0;
+ border-bottom:1px solid var(--ss-theme-border,#d4c9b5);
+ background:transparent;color:var(--ss-theme-ink,#302d27);
+ text-align:left;cursor:pointer;
+}
+.home-calendar-drilldown-list>button:hover{background:var(--ss-theme-tint,#eee6d8)}
+.home-calendar-drilldown-list>button>span:first-child{display:grid;gap:3px;min-width:0}
+.home-calendar-drilldown-list>button strong{
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;
+}
+.home-calendar-drilldown-list>button small{
+ color:var(--ss-theme-muted,#777);font-size:10px;line-height:1.4;
+ white-space:normal;overflow-wrap:anywhere;
+}
+.home-calendar-drilldown-list>p{
+ color:var(--ss-theme-muted,#777);font-size:12px;margin:12px 0;
+}
+@media(max-width:760px){
+ .sales-calendar-day .sales-calendar-day-select{padding:4px 3px}
+ .sales-calendar-day .home-calendar-custom-dots{
+  left:3px;right:2px;bottom:2px;max-width:calc(100% - 5px);gap:2px;
+ }
+ .sales-calendar-day .home-calendar-custom-dots :is(i,.home-calendar-badge-action){
+  min-width:13px;min-height:13px;height:13px;
+  border-radius:4px;padding:0 2px;font-size:8px;
+ }
+ .sales-calendar-day .home-calendar-custom-dots .home-calendar-badge-action{
+  min-width:21px;min-height:19px;height:19px;
+ }
+ .home-calendar-drilldown-heading button{min-height:44px}
+ .home-calendar-drilldown-list>button{min-height:48px}
+}
