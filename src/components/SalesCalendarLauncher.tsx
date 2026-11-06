@@ -18,7 +18,10 @@ import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {homeRecentQuotes} from '../services/homeOverview';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
- type SalesCalendarEvent,type SalesCalendarKind} from '../services/salesCalendar';
+ type SalesCalendarEvent} from '../services/salesCalendar';
+import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel} from '../store/homeCalendarSettings';
+import {buildCalendarBadgeIndex,metricCount} from '../services/homeCalendarBadges';
+import {CalendarBadgeLegend} from './HomeCalendarCustomizer';
 import './sales-calendar.css';
 
 type SidecarCreateKind='quote'|'activity'|'note';
@@ -35,9 +38,6 @@ function SidecarCreateIcon({kind}:{kind:SidecarCreateKind}){
 }
 
 const week=['S','M','T','W','T','F','S'];
-const labels:Record<SalesCalendarKind,string>={
- task:'To-do',bid:'Bid due',
-};
 const dateLabel=(key:string)=>new Date(key+'T12:00:00').toLocaleDateString(undefined,{
  weekday:'long',month:'long',day:'numeric'});
 const plainName=(date:Date)=>date.toLocaleDateString(undefined,{month:'long',year:'numeric'});
@@ -86,6 +86,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const notebookReady=useNotebookStore(s=>s.hydrated);
  const nav=useNavigationStore();
  const personal=taskScope(mode,org,userId);
+ const badgeSettings=useHomeCalendarSettings(homeCalendarScope(mode,org,userId));
  const createFromSidecar=(kind:SidecarCreateKind)=>{
   setSidecarCreateOpen(false);
   if(kind==='quote'&&mayCreateQuote)openGuidedQuoteCreation();
@@ -164,6 +165,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   [mode,userId,ownQuotes,ownTasks,deals,activities]);
  const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,sources.deals,sources.activities,
   ownQuotes,{contacts,companies}),[ownTasks,sources,ownQuotes,contacts,companies]);
+ const badgeIndex=useMemo(()=>buildCalendarBadgeIndex(events,ownTasks,sources.activities,
+  companies,contacts,badgeSettings),[events,ownTasks,sources.activities,companies,contacts,badgeSettings]);
  const days=useMemo(()=>calendarMonthDays(month.getFullYear(),month.getMonth()),[month]);
  const compactDays=useMemo(()=>calendarCompactMonthDays(month.getFullYear(),month.getMonth()),[month]);
  const weekDays=useMemo(()=>calendarWeekDays(selected),[selected]);
@@ -282,25 +285,25 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key),inMonth=key.slice(0,7)===localDateKey(month).slice(0,7);
       const hasNotebookDate=notebookReady&&notebookCalendarDates(notebookEntries,key).length>0;
-      const kindCounts:Record<SalesCalendarKind,number>={task:counts.task,bid:counts.bid};
+      const badges=badgeSettings.slots.map(slot=>({...slot,
+       count:slot.metric==='none'?0:metricCount(badgeIndex,key,slot.metric)})).filter(slot=>slot.count>0);
       return <button type="button" key={key}
         className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
          (key===today?' is-today':'')+(key===selected?' is-selected':'')}
         aria-pressed={key===selected}
-        aria-label={dateLabel(key)+(counts.total?', '+[
-         counts.task&&counts.task+' tasks',counts.bid&&counts.bid+' bids'
-        ].filter(Boolean).join(', '):', all caught up')+(counts.urgent?', urgent task':'')+
+        aria-label={dateLabel(key)+(badges.length?', '+badges.map(slot=>
+         slot.count+' '+badgeLabel(slot.metric)).join(', '):', no tracked badges')+
+         (badgeSettings.showUrgentBadge&&counts.urgent?', urgent task':'')+
          (hasNotebookDate?', has calendar date':'')}
         onClick={()=>{setSelected(key);if(!inMonth){
          const date=new Date(key+'T12:00:00');setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
         }}}>
         <span>{Number(key.slice(-2))}</span>
-        {counts.urgent>0&&<span className="sales-calendar-urgent"
+        {badgeSettings.showUrgentBadge&&counts.urgent>0&&<span className="sales-calendar-urgent"
           aria-hidden="true" title={counts.urgent+' urgent task(s)'}>!</span>}
-        <span className="sales-calendar-dots" aria-hidden="true">
-         {(['task','bid'] as const).filter(kind=>kindCounts[kind]>0)
-          .map(kind=><i key={kind} className={'is-'+kind} title={kindCounts[kind]+' '+labels[kind]}>
-           {kindCounts[kind]}</i>)}
+        <span className="sales-calendar-dots home-calendar-custom-dots" aria-hidden="true">
+         {badges.map((slot,i)=><i key={i} style={{backgroundColor:badgeColor(slot.color)}}
+           title={slot.count+' '+badgeLabel(slot.metric)}>{slot.count>99?'99+':slot.count}</i>)}
         </span>
         {hasNotebookDate&&<span className="notebook-calendar-dot" title="Calendar date"
          aria-hidden="true"/>}
@@ -375,6 +378,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <small>{item.time||'All day'}{item.annual?' · Yearly':''}</small>
        </button>)}
      </div>}
+     <div className="home-calendar-agenda-legend"><CalendarBadgeLegend settings={badgeSettings}/></div>
     </section>
     </div>
     {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
@@ -454,10 +458,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          </div>}
       </div>
     </aside>}
-    <div className="sales-calendar-legend" aria-label="Calendar event types">
-     {(['task','bid'] as const).map(kind=><span key={kind}>
-      <i className={'is-'+kind}/>{labels[kind]}</span>)}
-    </div>
    </section>
  );
  return <>
