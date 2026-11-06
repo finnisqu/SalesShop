@@ -213,6 +213,8 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   const [editingId, setEditingId] = useState<string | null>(null);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
+  const boardSearchInputRef=useRef<HTMLInputElement>(null);
+  useEffect(()=>{if(mobileSearchOpen)boardSearchInputRef.current?.focus({preventScroll:true});},[mobileSearchOpen]);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
   useBoardShiftWheelScroll(boardRef);
@@ -275,7 +277,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
                   <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
                 </svg>
               </button>
-              <div className="ss-workspace-header__search-popover"><input type="search"
+              <div className="ss-workspace-header__search-popover"><input ref={boardSearchInputRef} type="search"
                 aria-label="Search Board accounts" placeholder="Search accounts…"
                 autoFocus={mobileSearchOpen}
                 value={searchQuery} onChange={event=>onSearchChange?.(event.target.value)}/></div>
