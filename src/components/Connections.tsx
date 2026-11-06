@@ -148,7 +148,7 @@ export function Connections() {
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
     setPreview(null);setQuoteRecordId(null);
-    setTab(next); setQuery(''); setNotice(''); setMoreOpen(false);
+    setTab(next); setQuery(''); setNotice('');
     setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
     // Activity history is an on-demand utility, never the default landing page.
     if (CONNECTIONS_TABS.some((item) => item.id === next)) {
