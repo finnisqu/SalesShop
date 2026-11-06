@@ -88,7 +88,7 @@ export function MobileAppChrome() {
       const hiddenBottom=viewport
         ?Math.max(0,window.innerHeight-viewport.height-viewport.offsetTop)
         :0;
-      if(Number.isFinite(height)&&height>200)
+      if(Number.isFinite(height)&&height>120)
         root.style.setProperty('--ss-mobile-visual-height',Math.floor(height)+'px');
       if(Number.isFinite(hiddenBottom)){
         root.style.setProperty('--ss-mobile-footer-inset',Math.min(180,Math.ceil(hiddenBottom))+'px');
@@ -107,11 +107,17 @@ export function MobileAppChrome() {
     viewport?.addEventListener('scroll',sync);
     window.addEventListener('resize',sync);
     window.addEventListener('orientationchange',sync);
+    // Focus may switch between inputs without a viewport resize. Recheck the
+    // keyboard state so sheet gestures and bottom actions stay predictable.
+    document.addEventListener('focusin',sync);
+    document.addEventListener('focusout',sync);
     return ()=>{
       viewport?.removeEventListener('resize',sync);
       viewport?.removeEventListener('scroll',sync);
       window.removeEventListener('resize',sync);
       window.removeEventListener('orientationchange',sync);
+      document.removeEventListener('focusin',sync);
+      document.removeEventListener('focusout',sync);
       root.style.removeProperty('--ss-mobile-visual-height');
       root.style.removeProperty('--ss-mobile-footer-inset');
       root.style.removeProperty('--ss-mobile-occluded-bottom');
