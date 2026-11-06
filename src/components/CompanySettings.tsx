@@ -9,6 +9,7 @@ import { CompanyDocumentTermsReference } from './CompanyDocumentTermsReference';
 import { OwnerRolePreviewSettings } from './RolePerspectiveControls';
 import { PageHeader, Panel, Button } from '../design-system/components';
 import {WorkspaceHelp} from './WorkspaceHelp';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import { SettingsIdentityFields, SettingsProfileFields } from './SettingsIdentityFields';
 import { TeamAccessSettings } from './TeamAccessSettings';
 import { SalesTeamManagement } from './SalesTeamManagement';
@@ -48,6 +49,7 @@ export function CompanySettings() {
   const updateAppearance = useAppearanceStore((state) => state.update);
   const resetAppearance = useAppearanceStore((state) => state.reset);
   const [tab, setTab] = useState<SettingsTab>('company');
+  const [sectionSearch,setSectionSearch]=useState('');
   const quotesBetaEnabled = useQuotesMobileBetaStore((state) => state.enabled);
   const setQuotesBetaEnabled = useQuotesMobileBetaStore((state) => state.setEnabled);
   const setAppView = useNavigationStore((state) => state.setView);
@@ -141,6 +143,28 @@ export function CompanySettings() {
   return (
     <main className="company-settings-view">
       <div className="settings-layout">
+        <WorkspaceHeader title="Settings" help={<WorkspaceHelp page="settings" section={tab}/>}
+          className="ss-settings-mobile-header"
+          mobileTabs={visibleTabs.map(item=>({value:item.id,label:item.title}))}
+          mobileTabValue={tab}
+          onMobileTabChange={value=>setTab(value as SettingsTab)}
+          tabs={<nav aria-label="Settings quick views"><button type="button" onClick={()=>setTab('company')}>Company</button>
+            <button type="button" onClick={()=>setTab('account')}>My Account</button></nav>}
+          more={<WorkspaceMoreMenu items={visibleTabs.map(item=>({
+            label:item.title,onClick:()=>setTab(item.id),active:tab===item.id,
+          }))}/>}
+          search={<input type="search" aria-label="Find settings section"
+            placeholder="Find settings section…" value={sectionSearch}
+            onChange={event=>{
+              const value=event.target.value;setSectionSearch(value);
+              const found=visibleTabs.find(item=>(item.title+' '+item.subtitle).toLowerCase().includes(value.toLowerCase()));
+              if(value.trim()&&found)setTab(found.id);
+            }}/>}
+          primary={<button type="button" aria-label="Quick create" title="Quick create"
+            disabled={!!perspective||actualRole==='viewer'}
+            onClick={()=>document.querySelector<HTMLButtonElement>('.mobile-app-hidden-launchers .quick-create-launcher')?.click()}>
+            + Create</button>}
+        />
         <PageHeader
           className="company-settings-header settings-foundation-page-header"
           eyebrow="Your workspace"
