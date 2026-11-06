@@ -1,0 +1,101 @@
+/* Board/Accounts quick-create follows the same iPhone sheet rules as
+   other SalesShop modals. Desktop styles are unchanged. */
+@media(max-width:760px){
+ :root[data-sales-theme] .board-create-backdrop{
+  box-sizing:border-box!important;
+  position:fixed!important;
+  inset:var(--ss-mobile-visual-top,0px) 0 auto 0!important;
+  height:var(--ss-mobile-visual-height,100dvh)!important;
+  max-height:100dvh!important;
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  padding:0!important;
+  overflow:hidden!important;
+  overscroll-behavior:contain;
+  z-index:9200;
+ }
+ :root[data-sales-theme] .board-create-sheet{
+  box-sizing:border-box!important;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  flex:0 1 auto;
+  align-self:flex-end;
+  width:100%!important;
+  max-width:100vw!important;
+  min-width:0!important;
+  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 8px)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  margin:0!important;
+  padding:15px 15px max(14px,env(safe-area-inset-bottom))!important;
+  border:1px solid var(--ss-theme-border)!important;
+  border-bottom:0!important;
+  border-radius:18px 18px 0 0!important;
+  background:var(--ss-theme-card)!important;
+  color:var(--ss-theme-ink)!important;
+ }
+ :root[data-sales-theme] .board-create-sheet>header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  min-width:0;
+ }
+ :root[data-sales-theme] .board-create-sheet>header>div{min-width:0}
+ :root[data-sales-theme] .board-create-sheet>header h2{font-size:18px;line-height:1.3}
+ :root[data-sales-theme] .board-create-sheet>header button{
+  box-sizing:border-box;
+  flex:0 0 44px;
+  min-width:44px;
+  min-height:44px;
+  border-radius:10px;
+ }
+ :root[data-sales-theme] .board-create-sheet>label{
+  display:block;
+  min-width:0;
+  max-width:100%;
+  font-size:12px;
+  font-weight:700;
+ }
+ :root[data-sales-theme] .board-create-sheet>input{
+  box-sizing:border-box;
+  display:block;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-height:44px;
+  border:1px solid var(--ss-theme-border)!important;
+  border-radius:9px!important;
+  padding:10px 12px!important;
+  background:var(--ss-theme-base)!important;
+  color:var(--ss-theme-ink)!important;
+  font-size:16px!important;
+ }
+ :root[data-sales-theme] .board-create-sheet>footer{
+  box-sizing:border-box;
+  position:sticky;
+  bottom:0;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  background:var(--ss-theme-card);
+  margin:0;
+  padding:10px 0 0;
+  border-top:1px solid var(--ss-theme-border);
+ }
+ :root[data-sales-theme] .board-create-sheet>footer button{
+  flex:1 1 0;
+  box-sizing:border-box;
+  min-width:0;
+  min-height:44px;
+  padding:9px 12px;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:700;
+ }
+}
