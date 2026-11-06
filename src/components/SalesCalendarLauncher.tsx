@@ -21,6 +21,7 @@ import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calenda
  type SalesCalendarEvent} from '../services/salesCalendar';
 import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel} from '../store/homeCalendarSettings';
 import {buildCalendarBadgeIndex,metricCount} from '../services/homeCalendarBadges';
+import {homeCalendarBadgeEntries,type HomeBadgeRecord} from '../services/homeCalendarDrilldown';
 import {homeAgendaDotColors} from '../services/homeCalendarAgendaColors';
 import './sales-calendar.css';
 
@@ -42,7 +43,8 @@ const dateLabel=(key:string)=>new Date(key+'T12:00:00').toLocaleDateString(undef
  weekday:'long',month:'long',day:'numeric'});
 const plainName=(date:Date)=>date.toLocaleDateString(undefined,{month:'long',year:'numeric'});
 type CalendarDisplay='week'|'month';
-const readDisplay=(key:string,phone:boolean):CalendarDisplay=>{
+const readDisplay=(key:string,phone:boolean,preferred:'auto'|'week'|'month'):CalendarDisplay=>{
+ if(preferred==='week'||preferred==='month')return preferred;
  try{const stored=localStorage.getItem(key);if(stored==='week'||stored==='month')return stored;}catch{/* best effort */}
  return phone?'week':'month';
 };
@@ -61,6 +63,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [addOpen,setAddOpen]=useState(false);
  const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
+ const [badgeDrilldown,setBadgeDrilldown]=useState<{date:string;metric:ReturnType<typeof badgeLabel> extends never?never:import('../store/homeCalendarSettings').CalendarBadgeMetric}|null>(null);
  const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
  const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
  const [sidecarMenuPosition,setSidecarMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
@@ -155,11 +158,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   };
  },[sidecarCreateOpen]);
  const prefKey=scopedStorageKey('salesshop-calendar-display-v1:')+(personal??'pending');
+ const displayKey=prefKey+':'+badgeSettings.defaultCalendarView;
  const [savedDisplay,setSavedDisplay]=useState<{key:string;display:CalendarDisplay}>(
-  ()=>({key:prefKey,display:readDisplay(prefKey,isPhone)}));
- const display=savedDisplay.key===prefKey?savedDisplay.display:readDisplay(prefKey,isPhone);
+  ()=>({key:displayKey,display:readDisplay(prefKey,isPhone,badgeSettings.defaultCalendarView)}));
+ const display=savedDisplay.key===displayKey?savedDisplay.display:
+  readDisplay(prefKey,isPhone,badgeSettings.defaultCalendarView);
  const chooseDisplay=(next:CalendarDisplay)=>{
-  setSavedDisplay({key:prefKey,display:next});
+  setSavedDisplay({key:displayKey,display:next});
   try{localStorage.setItem(prefKey,next);}catch{/* optional preference */}
  };
  const ownTasks=useMemo(()=>!preview&&!!personal&&storedScope===personal
@@ -180,6 +185,12 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected).sort((a,b)=>
   Number(Boolean(b.urgent))-Number(Boolean(a.urgent))||a.kind.localeCompare(b.kind)||a.title.localeCompare(b.title)),[events,selected]);
  const shownDayEvents=embedded&&isPhone&&!showAllDay?eventsForDay.slice(0,5):eventsForDay;
+ const activeDrilldown=badgeDrilldown?.date===selected?badgeDrilldown:null;
+ const drilldownEntries=useMemo(()=>activeDrilldown
+  ?homeCalendarBadgeEntries(activeDrilldown.metric,selected,events,ownTasks,
+    sources.activities,companies,contacts,badgeSettings):[],
+  [activeDrilldown,selected,events,ownTasks,sources.activities,companies,contacts,badgeSettings]);
+ const canDrillIntoBadges=!isPhone||badgeSettings.clickableMobileBadges;
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
@@ -220,13 +231,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  },[open]);
  const changeMonth=(delta:number)=>{
   const next=new Date(month.getFullYear(),month.getMonth()+delta,1,12);
-  setMonth(next);setSelected(localDateKey(next));
+  setMonth(next);setSelected(localDateKey(next));setBadgeDrilldown(null);
  };
  const changePeriod=(delta:number)=>{
   if(!weekMode){changeMonth(delta);return;}
   const date=new Date(selected+'T12:00:00');
   date.setDate(date.getDate()+7*delta);
-  setSelected(localDateKey(date));
+  setSelected(localDateKey(date));setBadgeDrilldown(null);
   setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
  };
  const openRecord=(event:SalesCalendarEvent)=>{
@@ -235,6 +246,12 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   if(recordType==='task'){requestTaskModal({mode:'preview',id:recordId});return;}
    const kind=recordType==='project'?'deal':recordType==='quote'?'quote':null;
   if(kind)setRecordPreview({kind,id:recordId});
+ };
+ const openBadgeRecord=(record:HomeBadgeRecord)=>{
+  setOpen(false);
+  if(record.kind==='task')requestTaskModal({mode:'preview',id:record.id});
+  else if(record.kind==='activity')setActivityPreview(record.id);
+  else setRecordPreview({kind:record.kind,id:record.id});
  };
  const openRecent=(item:ReturnType<typeof recentHomeItems>[number])=>{
   setOpen(false);
