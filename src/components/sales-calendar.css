@@ -601,8 +601,8 @@
  color:var(--ss-theme-muted,#777)}
 
 
-/* A day's counts describe outstanding work only: Tasks (including
-   follow-ups) and bids. History never creates a third or fourth badge. */
+/* Legacy task/bid styles stay for agenda dots. Calendar count chips now
+   use four user-defined metrics, including optional historical activity. */
 .sales-calendar-dots{gap:3px;flex-wrap:nowrap;min-width:0}
 .sales-calendar-dots i.is-task,
 .sales-calendar-dots i.is-bid{
@@ -655,4 +655,17 @@
   padding:0 2px;border-radius:4px;font-size:8px;
  }
  .home-calendar-agenda-legend{padding:10px 11px}
+}
+
+
+/* Keep the personalized legend fixed below the scrollable agenda on desktop.
+   The previous outer legend row is no longer required. */
+.sales-calendar-day-preview .home-calendar-agenda-legend{
+ flex:0 0 auto;
+ margin-top:auto;
+}
+@media(min-width:760px){
+ .sales-home-calendar-card .sales-calendar-inline .sales-calendar-popover.is-inline.is-week{
+  grid-template-rows:52px minmax(0,1fr)!important;
+ }
 }
