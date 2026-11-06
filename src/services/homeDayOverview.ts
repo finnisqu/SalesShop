@@ -48,15 +48,27 @@ export function homeDayOverview(day:string,data:HomeDaySources):HomeDayGroup[]{
   entries.sort((a,b)=>a.title.localeCompare(b.title));
   groups.push({key,label,entries});
  };
- append('tasks-due','Tasks due',data.events
-  .filter(event=>event.date===day&&event.kind==='task')
-  .map(event=>({
+ const taskDueEvents=data.events.filter(event=>event.date===day&&event.kind==='task');
+ const taskDueIds=new Set(taskDueEvents.filter(event=>event.recordType==='task')
+  .map(event=>event.recordId));
+ append('tasks-due','Tasks due',[
+  ...taskDueEvents.map(event=>({
    key:event.id,
    kind:event.recordType==='project'?'deal' as const:event.recordType,
    id:event.recordId,
    title:event.title,
    detail:event.detail||'Scheduled for this date',
-  })));
+  })),
+  // Preserve the original due date in historical navigation after the task
+  // is completed. It must not reappear in the pending-work agenda.
+  ...data.tasks.filter(task=>!task.deletedAt&&task.dueDate===day&&
+   !taskDueIds.has(task.id)&&task.status!=='canceled')
+   .map(task=>({
+    key:'historical-task-due:'+task.id,kind:'task' as const,id:task.id,
+    title:task.title,
+    detail:task.completedAt?'Completed · original due date':'Originally due this day',
+   })),
+ ]);
  append('bids-due','Bids due',data.events
   .filter(event=>event.date===day&&event.kind==='bid')
   .map(event=>({
