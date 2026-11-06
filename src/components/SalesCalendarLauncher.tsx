@@ -66,7 +66,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
  const [badgeDrilldown,setBadgeDrilldown]=useState<{date:string;metric:CalendarBadgeMetric}|null>(null);
  const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
- const [sidecarMode,setSidecarMode]=useState<'day'|'recent'>('day');
  const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
  const [sidecarMenuPosition,setSidecarMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
  const sidecarMenuRef=useRef<HTMLDivElement>(null);
@@ -198,7 +197,16 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   notebook:notebookReady?notebookEntries:[],
  }),[selected,events,ownTasks,sources.activities,ownQuotes,sources.deals,
      companies,contacts,notebookReady,notebookEntries]);
- const dayTotal=useMemo(()=>dayGroups.reduce((sum,group)=>sum+group.entries.length,0),[dayGroups]);
+ // Pending agenda items already appear above; show other dated history
+ // below without duplicating their Task/Bid rows.
+ const otherDayGroups=useMemo(()=>dayGroups.map(group=>({
+  ...group,
+  entries:group.key==='tasks-due'
+   ?group.entries.filter(entry=>entry.key.startsWith('historical-task-due:'))
+   :group.key==='bids-due'||group.key==='notebook-dates'?[]:group.entries,
+ })).filter(group=>group.entries.length>0),[dayGroups]);
+ const otherDayTotal=useMemo(()=>otherDayGroups.reduce((total,group)=>
+  total+group.entries.length,0),[otherDayGroups]);
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
@@ -206,11 +214,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   [notebookEntries,notebookReady]);
  const calendarDatesForDay=useMemo(()=>notebookReady?notebookCalendarDates(notebookEntries,selected):[],
   [notebookEntries,notebookReady,selected]);
- useEffect(()=>{
-  setShowAllDay(false);setAddOpen(false);
-  // Selecting a date returns Home to its date-specific navigation view.
-  if(embedded)setSidecarMode('day');
- },[selected,embedded]);
+ useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
  useEffect(()=>{
   if(!addOpen)return;
   const dismiss=(event:PointerEvent)=>{
@@ -276,13 +280,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   }
   setRecordPreview({kind:record.kind,id:record.id});
  };
- const shiftSidecarDay=(delta:number)=>{
-  const date=new Date(selected+'T12:00:00');
-  date.setDate(date.getDate()+delta);
-  const next=localDateKey(date);
-  setSelected(next);setBadgeDrilldown(null);
-  setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
- };
  const openRecent=(item:ReturnType<typeof recentHomeItems>[number])=>{
   setOpen(false);
   if(item.kind==='completed-task')requestTaskModal({mode:'preview',id:item.recordId});
@@ -296,9 +293,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  // Render the Recent panel into a separate Home section without duplicating
  // any calendar data subscriptions, previews, or quick-create logic.
  const recentPanel=embedded&&showRecent?(
-  <aside className="sales-calendar-sidecar" aria-label={sidecarMode==='day'?'Records for '+dateLabel(selected):'Recent work and private notes'}>
+  <aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
       <div className="sales-calendar-sidecar-topline">
-       <h3>{sidecarMode==='day'?'On this day':'Pick up where you left off'}</h3>
+       <h3>Pick up where you left off</h3>
        <div className="home-sidecar-create" ref={sidecarCreateRef}>
         <button ref={sidecarCreateButton} type="button"
          className="home-note-sidecar-add" title="Quick create"
@@ -336,49 +333,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         </div>,document.body)}
        </div>
       </div>
-      <div className="home-day-mode-tabs" role="group" aria-label="Home record view">
-       <button type="button" aria-pressed={sidecarMode==='day'} onClick={()=>{
-        setSidecarMode('day');setSidecarCreateOpen(false);
-       }}>On this day</button>
-       <button type="button" aria-pressed={sidecarMode==='recent'} onClick={()=>{
-        setSidecarMode('recent');setSidecarCreateOpen(false);
-       }}>Recent</button>
-      </div>
-      {sidecarMode==='day'?<>
-       <div className="home-day-date-nav">
-        <button type="button" aria-label="Previous day" title="Previous day"
-         onClick={()=>shiftSidecarDay(-1)}>‹</button>
-        <strong aria-live="polite">{dateLabel(selected)}</strong>
-        <button type="button" aria-label="Next day" title="Next day"
-         onClick={()=>shiftSidecarDay(1)}>›</button>
-        {selected!==today&&<button type="button" className="home-day-today"
-         onClick={()=>{
-          const date=new Date();
-          setSelected(localDateKey(date));setBadgeDrilldown(null);
-          setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
-         }}>Today</button>}
-       </div>
-       <div className="home-day-records" aria-label={'Records on '+dateLabel(selected)}>
-        {dayGroups.length?<>
-         <p className="home-day-total">{dayTotal} {dayTotal===1?'item':'items'} on this day</p>
-         {dayGroups.map(group=><section key={group.key} className="home-day-record-group">
-          <h4><span>{group.label}</span><span>{group.entries.length}</span></h4>
-          {group.entries.map(record=><button type="button" key={record.key}
-            onClick={()=>openDayRecord(record)}
-            aria-label={'Open '+record.title}>
-            <span><strong>{record.title}</strong><small>{record.detail}</small></span>
-            <span aria-hidden="true">›</span>
-           </button>)}
-         </section>)}
-        </>:<div className="home-day-empty">
-         <strong>No records for this date</strong>
-         <p>Choose another day to browse scheduled work and history, or add a task to this date.</p>
-         <button type="button" onClick={()=>requestTaskModal({mode:'create',dueDate:selected})}>
-          + Task for this day
-         </button>
-        </div>}
-       </div>
-      </>:<>
       <div className="sales-calendar-sidecar-tabs" role="tablist" aria-label="Recent work">
        <button type="button" role="tab" aria-selected={sidecarTab==='quotes'}
         onClick={()=>{setSidecarTab('quotes');setSidecarCreateOpen(false);}}>Quotes</button>
@@ -415,7 +369,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
            <p>No notes yet. Use + to start today's Notebook page.</p>}
          </div>}
       </div>
-      </>}
     </aside>
  ):null;
  const calendarPanel=(
@@ -466,7 +419,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       const badges=badgeSettings.slots.map(slot=>({...slot,
        count:slot.metric==='none'?0:metricCount(badgeIndex,key,slot.metric)})).filter(slot=>slot.count>0);
       const selectDate=()=>{
-       setSidecarMode('day');setSelected(key);setBadgeDrilldown(null);
+       setSelected(key);setBadgeDrilldown(null);
        if(!inMonth){const date=new Date(key+'T12:00:00');
         setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
       };
@@ -494,7 +447,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
             aria-label={slot.count+' '+badgeLabel(slot.metric)+' on '+dateLabel(key)+'. View records'}
             title={'View '+badgeLabel(slot.metric)}
             onClick={()=>{
-             setSidecarMode('day');setSelected(key);setBadgeDrilldown({date:key,metric:slot.metric});
+             setSelected(key);setBadgeDrilldown({date:key,metric:slot.metric});
              if(!inMonth){const date=new Date(key+'T12:00:00');
               setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
             }}>{slot.count>99?'99+':slot.count}</button>
@@ -510,7 +463,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key);
       return <button key={key} type="button" className={key===selected?'is-selected':''}
-       onClick={()=>{setSidecarMode('day');setSelected(key);setBadgeDrilldown(null);}}>
+       onClick={()=>{setSelected(key);setBadgeDrilldown(null);}}>
        <span>{new Date(key+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}</span>
        <small>{counts.total} {counts.total===1?'item':'items'}{counts.urgent?' · Urgent':''}</small>
        {counts.urgent>0&&<b aria-label="Urgent">!</b>}
