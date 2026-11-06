@@ -21,7 +21,7 @@ import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calenda
  type SalesCalendarEvent} from '../services/salesCalendar';
 import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel} from '../store/homeCalendarSettings';
 import {buildCalendarBadgeIndex,metricCount} from '../services/homeCalendarBadges';
-import {CalendarBadgeLegend} from './HomeCalendarCustomizer';
+import {homeAgendaDotColors} from '../services/homeCalendarAgendaColors';
 import './sales-calendar.css';
 
 type SidecarCreateKind='quote'|'activity'|'note';
@@ -87,6 +87,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const nav=useNavigationStore();
  const personal=taskScope(mode,org,userId);
  const badgeSettings=useHomeCalendarSettings(homeCalendarScope(mode,org,userId));
+ const agendaDotColors=useMemo(()=>homeAgendaDotColors(badgeSettings),[badgeSettings]);
  const createFromSidecar=(kind:SidecarCreateKind)=>{
   setSidecarCreateOpen(false);
   if(kind==='quote'&&mayCreateQuote)openGuidedQuoteCreation();
@@ -355,7 +356,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {eventsForDay.length?<div className="sales-calendar-agenda">
        {shownDayEvents.map(event=><button type="button" key={event.id}
         onClick={()=>openRecord(event)}>
-         <span className={'sales-calendar-event-dot is-'+event.kind} aria-hidden="true"/>
+         <span className={'sales-calendar-event-dot is-'+event.kind}
+           style={{backgroundColor:agendaDotColors[event.kind]}} aria-hidden="true"/>
          <span className="sales-calendar-event-text"><strong>{event.title}</strong>
           <small>{event.detail}</small></span>
          {event.urgent&&<span className="sales-calendar-agenda-urgent" title="Urgent task" aria-label="Urgent task">!</span>}
@@ -378,7 +380,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <small>{item.time||'All day'}{item.annual?' · Yearly':''}</small>
        </button>)}
      </div>}
-     <div className="home-calendar-agenda-legend"><CalendarBadgeLegend settings={badgeSettings}/></div>
     </section>
     </div>
     {embedded&&<aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
