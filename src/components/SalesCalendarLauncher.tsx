@@ -23,6 +23,7 @@ import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel,type Cal
 import {buildCalendarBadgeIndex,metricCount} from '../services/homeCalendarBadges';
 import {homeCalendarBadgeEntries,type HomeBadgeRecord} from '../services/homeCalendarDrilldown';
 import {homeAgendaDotColors} from '../services/homeCalendarAgendaColors';
+import {homeDayOverview,type HomeDayRecord} from '../services/homeDayOverview';
 import './sales-calendar.css';
 
 type SidecarCreateKind='quote'|'activity'|'note';
@@ -65,6 +66,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
  const [badgeDrilldown,setBadgeDrilldown]=useState<{date:string;metric:CalendarBadgeMetric}|null>(null);
  const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
+ const [sidecarMode,setSidecarMode]=useState<'day'|'recent'>('day');
  const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
  const [sidecarMenuPosition,setSidecarMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
  const sidecarMenuRef=useRef<HTMLDivElement>(null);
@@ -190,6 +192,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     sources.activities,companies,contacts,badgeSettings):[],
   [activeDrilldown,selected,events,ownTasks,sources.activities,companies,contacts,badgeSettings]);
  const canDrillIntoBadges=!isPhone||badgeSettings.clickableMobileBadges;
+ const dayGroups=useMemo(()=>homeDayOverview(selected,{
+  events,tasks:ownTasks,activities:sources.activities,quotes:ownQuotes,
+  deals:sources.deals,companies,contacts,
+  notebook:notebookReady?notebookEntries:[],
+ }),[selected,events,ownTasks,sources.activities,ownQuotes,sources.deals,
+     companies,contacts,notebookReady,notebookEntries]);
+ const dayTotal=useMemo(()=>dayGroups.reduce((sum,group)=>sum+group.entries.length,0),[dayGroups]);
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
@@ -197,7 +206,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   [notebookEntries,notebookReady]);
  const calendarDatesForDay=useMemo(()=>notebookReady?notebookCalendarDates(notebookEntries,selected):[],
   [notebookEntries,notebookReady,selected]);
- useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
+ useEffect(()=>{
+  setShowAllDay(false);setAddOpen(false);
+  // Selecting a date returns Home to its date-specific navigation view.
+  if(embedded)setSidecarMode('day');
+ },[selected,embedded]);
  useEffect(()=>{
   if(!addOpen)return;
   const dismiss=(event:PointerEvent)=>{
@@ -251,6 +264,24 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   if(record.kind==='task')requestTaskModal({mode:'preview',id:record.id});
   else if(record.kind==='activity')setActivityPreview(record.id);
   else setRecordPreview({kind:record.kind,id:record.id});
+ };
+ const openDayRecord=(record:HomeDayRecord)=>{
+  setOpen(false);
+  if(record.kind==='task'){requestTaskModal({mode:'preview',id:record.id});return;}
+  if(record.kind==='activity'){setActivityPreview(record.id);return;}
+  if(record.kind==='note'){openHomeNote({mode:'preview',entryId:record.id});return;}
+  if(record.kind==='calendar-date'){
+   openNotebookCalendarDate({entryId:record.id,itemId:record.itemId});
+   return;
+  }
+  setRecordPreview({kind:record.kind,id:record.id});
+ };
+ const shiftSidecarDay=(delta:number)=>{
+  const date=new Date(selected+'T12:00:00');
+  date.setDate(date.getDate()+delta);
+  const next=localDateKey(date);
+  setSelected(next);setBadgeDrilldown(null);
+  setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
  };
  const openRecent=(item:ReturnType<typeof recentHomeItems>[number])=>{
   setOpen(false);
