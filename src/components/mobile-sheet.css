@@ -20,6 +20,7 @@
   overflow:hidden!important;
   overscroll-behavior:contain!important;
   padding:0!important;
+  background:rgba(17,21,26,.42);
  }
  .ss-mobile-sheet{
   box-sizing:border-box!important;
@@ -32,6 +33,7 @@
   min-height:0!important;
   max-height:calc(var(--ss-mobile-visual-height,100dvh) - 8px)!important;
   margin:0!important;
+  gap:0!important;
   border-radius:18px 18px 0 0!important;
   border-bottom:0!important;
   overflow:hidden!important;
