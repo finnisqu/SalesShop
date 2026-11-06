@@ -296,7 +296,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  // Render the Recent panel into a separate Home section without duplicating
  // any calendar data subscriptions, previews, or quick-create logic.
  const recentPanel=embedded&&showRecent?(
-  <aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
+  <aside className="sales-calendar-sidecar" aria-label={sidecarMode==='day'?'Records for '+dateLabel(selected):'Recent work and private notes'}>
       <div className="sales-calendar-sidecar-topline">
        <h3>{sidecarMode==='day'?'On this day':'Pick up where you left off'}</h3>
        <div className="home-sidecar-create" ref={sidecarCreateRef}>
