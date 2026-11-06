@@ -89,8 +89,8 @@ export function homeDayOverview(day:string,data:HomeDaySources):HomeDayGroup[]{
  // A quote's CRM sent event is authoritative. Fall back to sentAt only
  // for legacy quotes with no sent activity anywhere in the accessible history.
  const quotedSentIds=new Set(data.activities
-  .filter(activity=>activity.type==='quote-sent'&&!!activity.quoteId)
-  .map(activity=>activity.quoteId));
+  .filter(activity=>activity.type==='quote-sent')
+  .flatMap(activity=>activity.quoteId?[activity.quoteId]:[]));
  append('quotes-sent','Quotes sent',[
   ...sentActivities.map(activity=>({
    key:'quote-sent:'+activity.id,
