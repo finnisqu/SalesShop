@@ -1,0 +1,72 @@
+/* Shared iOS/WebKit native date input normalization.
+ * Chrome on iOS and Safari both use WebKit. Native date segments can
+ * maintain an intrinsic width even when input {width:100%} is set. */
+.sales-app :is(input[type="date"],input[type="datetime-local"],input[type="time"]){
+  display:block;
+  box-sizing:border-box;
+  min-width:0;
+  min-inline-size:0;
+  max-width:100%;
+  max-inline-size:100%;
+  width:100%;
+  -webkit-appearance:none;
+  appearance:none;
+  overflow:hidden;
+  text-align:start;
+  border-radius:9px;
+}
+.sales-app :is(input[type="date"],input[type="datetime-local"],input[type="time"])::-webkit-date-and-time-value{
+  min-width:0;
+  width:100%;
+  text-align:start;
+  padding:0;
+  margin:0;
+}
+.sales-app :is(input[type="date"],input[type="datetime-local"],input[type="time"])::-webkit-datetime-edit{
+  display:inline-flex;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-align:start;
+  padding:0;
+}
+.sales-app :is(input[type="date"],input[type="datetime-local"],input[type="time"])::-webkit-calendar-picker-indicator{
+  flex:0 0 auto;
+  margin:0 0 0 auto;
+  padding:0 2px;
+  opacity:.78;
+}
+.sales-app :is(label,.ss-field,.editor-two-up,.tasks-editor-grid,.record-preview-body) > input[type="date"]{
+  max-width:100%;
+}
+@media(max-width:760px){
+  .sales-app :is(input[type="date"],input[type="datetime-local"],input[type="time"]){
+    font-size:16px;
+    min-height:40px;
+    -webkit-text-size-adjust:100%;
+  }
+}
+/* Reapply the same width guard inside CRM modals rendered through portals. */
+:root[data-sales-theme] :is(.project-editor,.record-preview-panel,.tasks-dialog-backdrop)
+  :is(input[type="date"],input[type="datetime-local"],input[type="time"]){
+  box-sizing:border-box!important;
+  min-width:0!important;
+  min-inline-size:0!important;
+  max-width:100%!important;
+  max-inline-size:100%!important;
+  width:100%!important;
+  -webkit-appearance:none;
+  appearance:none;
+  overflow:hidden;
+}
+:root[data-sales-theme] :is(.project-editor,.record-preview-panel,.tasks-dialog-backdrop)
+  :is(input[type="date"],input[type="datetime-local"],input[type="time"])::-webkit-date-and-time-value{
+  text-align:start;
+  min-width:0;
+  width:100%;
+}
+:root[data-sales-theme] :is(.project-editor,.record-preview-panel,.tasks-dialog-backdrop)
+  :is(input[type="date"],input[type="datetime-local"],input[type="time"])::-webkit-datetime-edit{
+  min-width:0;
+  overflow:hidden;
+}
