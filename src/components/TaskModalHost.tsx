@@ -1,4 +1,7 @@
 import {useEffect,useState} from 'react';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {MobileSheetHandle} from './MobileSheetHandle';
 import {TaskEditor} from './TasksWorkspace';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskChanges,type TaskLink} from '../store/personalTaskStore';
@@ -36,6 +39,9 @@ export function TaskModalHost(){
  const notebookEntries=useNotebookStore(s=>s.entries);
  const [request,setRequest]=useState<CalendarTaskRequest|null>(null);
  const [linkedPreview,setLinkedPreview]=useState<PreviewRecord|null>(null);
+ useModalScrollLock(Boolean(request||linkedPreview));
+ const previewRef=useDismissibleLayer<HTMLElement>(
+  request?.mode==='preview',()=>setRequest(null));
  useEffect(()=>{
   const receive=(event:Event)=>{
    const detail=(event as CustomEvent<CalendarTaskRequest>).detail;
@@ -100,14 +106,15 @@ export function TaskModalHost(){
  return <>{editTarget?<TaskEditor
   key={(request?.mode??'create')+':'+(request?.id??request?.dueDate??'new')}
   initial={editTarget} onCancel={close} onSave={save}
- />:task?<div className="tasks-dialog-backdrop" onMouseDown={event=>{
+ />:task?<div className="tasks-dialog-backdrop ss-mobile-sheet-backdrop" onPointerDown={event=>{
     if(event.target===event.currentTarget)close();
    }}>
-    <section className="tasks-preview-card" role="dialog" aria-modal="true"
+    <section ref={previewRef} className="tasks-preview-card ss-mobile-sheet" role="dialog" aria-modal="true"
      aria-label={'Task '+task.title}>
+     <MobileSheetHandle onClose={close}/>
      <header><div><small>TASK · QUICK VIEW</small><h2>{task.title}</h2></div>
       <button type="button" aria-label="Close task preview" onClick={close}>×</button></header>
-     <div className="tasks-preview-body">
+     <div className="tasks-preview-body ss-mobile-sheet-body">
       <div className="tasks-preview-meta">
        <span>{task.type==='follow-up'?'Follow-up':task.type??'To-do'}</span>
        <span>{task.status??'open'}</span><span>{task.priority??'normal'} priority</span>
@@ -122,7 +129,7 @@ export function TaskModalHost(){
          {link.label??link.type} ↗</button>)}
       </div>}
      </div>
-     <footer>
+     <footer className="ss-mobile-sheet-actions">
       <button type="button" onClick={close}>Close</button>
       {task.sourceObjectId?.startsWith('home-note:')&&
         homeNotes(notebookEntries).some(note=>
