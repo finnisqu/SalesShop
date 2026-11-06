@@ -45,7 +45,7 @@ describe('Home badge drilldowns',()=>{
   expect(list('activities')).toHaveLength(3);
  });
  it('respects the completed-task count toggle and navigates to the task record',()=>{
-  expect(list('tasks',{...settings,countDownCompletedTasks:false}).map(x=>x.id)).toEqual(['one','done'].sort());
+  expect(list('tasks',{...settings,countDownCompletedTasks:false}).map(x=>x.id)).toEqual(['one','done']);
   expect(list('due-dates',{...settings,countDownCompletedTasks:false})).toHaveLength(3);
  });
  it('opens history as activities and external quotes as their real Deals',()=>{
