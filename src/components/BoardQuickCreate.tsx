@@ -16,12 +16,12 @@ export function BoardQuickCreate({kind,onCreate}:{
   const [error,setError]=useState('');
   const trigger=useRef<HTMLButtonElement>(null);
   const inputId=useId();
-  useModalScrollLock(open);
-  const sheetRef=useDismissibleLayer<HTMLFormElement>(open,()=>close());
   const close=()=>{
     setOpen(false);setName('');setError('');
     trigger.current?.focus();
   };
+  useModalScrollLock(open);
+  const sheetRef=useDismissibleLayer<HTMLFormElement>(open,close);
   const submit=(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
     const clean=name.trim();
@@ -43,22 +43,24 @@ export function BoardQuickCreate({kind,onCreate}:{
         if(event.target===event.currentTarget)close();
       }}>
         <form ref={sheetRef} className="board-create-sheet ss-mobile-sheet" role="dialog" aria-modal="true"
-          aria-label={'Quick create '+kind.toLowerCase()} onSubmit={submit}
-          >
+          aria-label={'Quick create '+kind.toLowerCase()} onSubmit={submit}>
           <MobileSheetHandle onClose={close}/>
           <header>
             <div><small>BOARD · QUICK CREATE</small><h2>New {kind.toLowerCase()}</h2></div>
             <button type="button" onClick={close} aria-label="Close quick create"
               autoFocus={typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches}>×</button>
           </header>
-          <label htmlFor={inputId}>{kind} name</label>
-          <input id={inputId}
-            autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
-            required value={name}
-            onChange={event=>{setName(event.target.value);setError('');}}
-            maxLength={180} placeholder={kind==='Deal'?'Name of the opportunity':'Company or account name'}/>
-          {error&&<p role="alert">{error}</p>}
-          <footer>
+          <div className="board-create-fields ss-mobile-sheet-body">
+            <label htmlFor={inputId}>{kind} name</label>
+            <input id={inputId}
+              autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
+              data-dialog-initial-focus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches?true:undefined}
+              required value={name}
+              onChange={event=>{setName(event.target.value);setError('');}}
+              maxLength={180} placeholder={kind==='Deal'?'Name of the opportunity':'Company or account name'}/>
+            {error&&<p role="alert">{error}</p>}
+          </div>
+          <footer className="ss-mobile-sheet-actions">
             <button type="button" onClick={close}>Cancel</button>
             <button type="submit" className="is-primary" disabled={!name.trim()}>
               Create {kind.toLowerCase()}
