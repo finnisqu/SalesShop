@@ -230,10 +230,10 @@ export function MobileAppChrome() {
           {canGoBack&&<button type="button" className="mobile-app-back-button"
             onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
           <div className="mobile-app-current">
-            <strong>{contextTitle}</strong>
+            <strong>{view==='home'?contextTitle:'SalesShop'}</strong>
           </div>
         </>}
-        {!isEditingQuote&&<div className="mobile-app-help">
+        {!isEditingQuote&&view==='home'&&<div className="mobile-app-help">
           <WorkspaceHelp page={view==='dashboard'?'connections':view}
             section={view==='catalog'?catalogSection:view==='board'?(boardMode==='accounts'?'accounts':'deals'):undefined}/>
         </div>}
