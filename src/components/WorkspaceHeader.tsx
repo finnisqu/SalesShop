@@ -5,7 +5,7 @@ import '../workspace-header-standard.css';
 
 /** Shared top-level workspace chrome. Stable slots across all six workspaces. */
 export interface MobileWorkspaceTab{value:string;label:string}
-export function WorkspaceHeader({title,help,tabs,more,search,primary,className='',
+export function WorkspaceHeader({title,tabs,more,search,primary,className='',
  mobileTabs,mobileTabValue,onMobileTabChange}:{
  title:string;help?:ReactNode;tabs?:ReactNode;more?:ReactNode;search?:ReactNode;primary?:ReactNode;className?:string;
  mobileTabs?:readonly MobileWorkspaceTab[];mobileTabValue?:string;onMobileTabChange?:(value:string)=>void;
@@ -16,7 +16,7 @@ export function WorkspaceHeader({title,help,tabs,more,search,primary,className='
   if(searchOpen)searchPanelRef.current?.querySelector<HTMLInputElement>('input')?.focus({preventScroll:true});
  },[searchOpen]);
  return <header className={'ss-workspace-header '+className}>
-  <div className="ss-workspace-header__intro">{help ? <div className="ss-workspace-title-row"><h1>{title}</h1>{help}</div> : <h1>{title}</h1>}</div>
+  <div className="ss-workspace-header__intro"><h1>{title}</h1></div>
   <div className="ss-workspace-header__tabs">{tabs}</div>
   {mobileTabs&&mobileTabs.length>0&&<div className="ss-workspace-header__mobile-nav">
    <select aria-label={title+' sections'} value={mobileTabValue??mobileTabs[0].value}
