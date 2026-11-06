@@ -230,7 +230,7 @@ export function MobileAppChrome() {
           {canGoBack&&<button type="button" className="mobile-app-back-button"
             onClick={goBack} aria-label="Back to previous SalesShop tab" title="Go back">‹</button>}
           <div className="mobile-app-current">
-            <strong>{view==='home'?contextTitle:'SalesShop'}</strong>
+            <strong>{contextTitle}</strong>
           </div>
         </>}
         {!isEditingQuote&&<div className="mobile-app-help">
