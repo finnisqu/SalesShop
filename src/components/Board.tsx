@@ -188,14 +188,15 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
     <div className="project-editor-backdrop" onPointerDown={(event) => {
       if(!saving&&event.target===event.currentTarget)onClose();
     }}>
-      <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor" aria-label="Edit deal">
+      <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor project-editor--deal-edit" aria-label="Edit deal">
         <header>
           <PreviewPanelHeading eyebrow="Deal card" title={project.name}/>
           <PreviewPanelClose className="editor-close" disabled={saving}
             onClose={()=>{if(!saving)onClose();}} label="Close editor"/>
         </header>
 
-        <form onSubmit={submit} noValidate onChange={()=>setSaveError('')} aria-busy={saving}>
+        <form className="project-editor-form" onSubmit={submit} noValidate onChange={()=>setSaveError('')} aria-busy={saving}>
+          <div className="project-editor-form-scroll">
           <RecordEditField label="Deal name" required error={saveError==='Enter a deal name.'?saveError:undefined}>
             {control=><input {...control} value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
           </RecordEditField>
@@ -242,8 +243,6 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
             }}>+ New quote for deal</button>
           </section>
 
-          <button type="button" className="crm-linked-create" disabled={saving}
-            onClick={() => { onClose(); openDeal(project.id); }}>Open full deal page →</button>
           <ProjectNotebookLinks project={project} />
 
           <details className="project-activity-panel" aria-label="Deal activity history">
@@ -277,7 +276,8 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
           <RecordFormFeedback notice={saveError&&!saveError.startsWith('Deal amount')&&saveError!=='Enter a deal name.'
             ?{kind:'error',message:saveError}:saving?{kind:'saving',message:'Saving deal…'}:null}
             className="project-editor-save-error"/>
-          <div className="editor-actions ss-preview-actions ss-record-editor-actions">
+          </div>
+          <footer className="editor-actions ss-preview-actions ss-record-editor-actions project-editor-action-bar">
             <button type="button" className="danger-button" disabled={saving} onClick={() => {
               if (window.confirm(`Delete ${project.name}?`)) {
                 detachNotebookPagesForProject(project.id);
@@ -285,10 +285,15 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
                 onClose();
               }
             }}>Delete</button>
+            <button type="button" className="project-editor-go-to-page" disabled={saving}
+              title="Open full deal page" aria-label="Open full deal page"
+              onClick={() => { onClose(); openDeal(project.id); }}>
+              <span aria-hidden="true">↗</span><span className="project-editor-go-to-page-label">Full page</span>
+            </button>
             <div className="editor-action-spacer" />
             <button type="button" className="secondary-button" onClick={onClose} disabled={saving}>Cancel</button>
             <button type="submit" className="primary-button" disabled={saving}>{saving?'Saving…':'Save deal'}</button>
-          </div>
+          </footer>
         </form>
       </aside>
     </div>
