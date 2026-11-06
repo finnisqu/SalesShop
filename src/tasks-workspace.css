@@ -297,3 +297,95 @@
   font-size:12px;
  }
 }
+
+
+/* Mobile list density: the selected workspace tab dropdown already provides
+   Open / Today / Upcoming / Completed, so six summary cards are redundant. */
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-mobile-controls>.tasks-summary{
+  display:none!important;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-mobile-controls{
+  min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-mobile-controls .tasks-tools{
+  box-sizing:border-box;
+  display:flex;
+  justify-content:flex-start;
+  align-items:center;
+  flex-wrap:nowrap;
+  gap:8px;
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  margin:0 0 12px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-mobile-controls .tasks-queue-filter{
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex:1 1 auto;
+  min-width:0;
+  max-width:100%;
+  margin:0;
+  font-size:12px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-mobile-controls .tasks-queue-filter select{
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-width:0;
+  max-width:100%;
+  height:42px;
+  border-radius:9px;
+  padding:6px 8px;
+  background:var(--ss-theme-card);
+  color:var(--ss-theme-ink);
+  border:1px solid var(--ss-theme-border);
+  font-size:14px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row{
+  box-sizing:border-box;
+  gap:9px;
+  padding:10px 11px;
+  border-radius:11px;
+  min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-body{
+  gap:5px;
+  min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-top{
+  align-items:baseline;
+  gap:5px 8px;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-body :is(p,blockquote){
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  overflow:hidden;
+  max-height:3.3em;
+  margin:0;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-meta{
+  gap:3px 9px;
+  line-height:1.4;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-actions{
+  box-sizing:border-box;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:6px;
+  flex-wrap:wrap;
+  min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-actions :is(button,select){
+  box-sizing:border-box;
+  min-height:38px;
+  border-radius:9px;
+  max-width:100%;
+ }
+}
