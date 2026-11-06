@@ -236,7 +236,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
    }}>
    <form ref={activityRef} role="dialog" aria-modal="true" aria-label="Log Activity"
     className="sales-activity-dialog ss-mobile-sheet" onSubmit={submit}>
-    <MobileSheetHandle onClose={()=>{if(!saving)close();}}/>
+    <MobileSheetHandle onClose={close} disabled={saving}/>
     <header><PreviewPanelHeading eyebrow="CRM · Completed interaction"
       title={workflowTaskId?'Log & complete task':'Log Activity'}/>
       <PreviewPanelClose onClose={close} label="Close Log Activity" initialFocus={false}/></header>
