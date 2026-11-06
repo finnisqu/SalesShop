@@ -9,6 +9,8 @@ import {TaskAssociationsField} from './TaskAssociationsField';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordFormFeedback} from './RecordFormFeedback';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import {MobileSheetHandle} from './MobileSheetHandle';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
 import {completedTaskActivityId,taskActivityMethod,type ActivityComposerRequest}
@@ -139,6 +141,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
     .map(q=>({key:'quote:'+q.id,linked:{type:'quote' as const,id:q.id,label:'Quote · '+q.title},label:'Quote · '+q.title})),
  ],[contacts,companies,projects,quotes,mode,currentUser]);
  const close=()=>{setOpen(false);setError('');};
+ useModalScrollLock(open&&permitted);
  const activityRef=useDismissibleLayer<HTMLFormElement>(open&&permitted,()=>{if(!saving)close();});
  const discard=()=>{
   clearSavedDraft(draftKey);
@@ -228,15 +231,16 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
    onClick={()=>{setOpen(true);}}>
    {tile&&<span aria-hidden="true">◉</span>}{tile?<><strong>{label}</strong><small>Call, email or meeting</small></>:label}
   </button>}
-  {open&&createPortal(<div className="sales-activity-backdrop" onPointerDown={e=>{
+  {open&&createPortal(<div className="sales-activity-backdrop ss-mobile-sheet-backdrop" onPointerDown={e=>{
     if(e.target===e.currentTarget)close();
    }}>
    <form ref={activityRef} role="dialog" aria-modal="true" aria-label="Log Activity"
-    className="sales-activity-dialog" onSubmit={submit}>
+    className="sales-activity-dialog ss-mobile-sheet" onSubmit={submit}>
+    <MobileSheetHandle onClose={()=>{if(!saving)close();}}/>
     <header><PreviewPanelHeading eyebrow="CRM · Completed interaction"
       title={workflowTaskId?'Log & complete task':'Log Activity'}/>
       <PreviewPanelClose onClose={close} label="Close Log Activity" initialFocus={false}/></header>
-    <div className="sales-activity-form-body">
+    <div className="sales-activity-form-body ss-mobile-sheet-body">
      {workflowTaskId&&<p className="sales-activity-task-context">
       <strong>Task-linked interaction</strong>
       <span>Saving this Activity will mark the original task complete. Related records are prefilled; schedule another follow-up below if needed.</span>
@@ -268,7 +272,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
      <RecordFormFeedback notice={error?{kind:'error',message:error}:saving?{kind:'saving',message:'Logging activity…'}:null}
        className="sales-activity-error"/>
     </div>
-    <PreviewPanelActions className="ss-record-editor-actions">
+    <PreviewPanelActions className="ss-record-editor-actions ss-mobile-sheet-actions">
      <button type="button" onClick={discard} disabled={saving} title="Erase this unsaved activity draft">Discard draft</button>
      <button type="button" onClick={close} disabled={saving}>Close</button>
      <button type="submit" disabled={saving}>{saving?'Saving…':workflowTaskId?'Log & complete task':'Save activity'}</button>
