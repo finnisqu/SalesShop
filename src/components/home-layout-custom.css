@@ -114,3 +114,134 @@
  .sales-home .sales-home-recent-card .sales-calendar-sidecar-list{max-height:205px}
  .sales-home .sales-home-section-list{gap:9px}
 }
+
+
+/* Home heading regression fix (Nov 6): restore one compact row by default.
+   Quick Actions move back into this row when they are first in the user's
+   section order; moving that section still makes it independently reorderable. */
+.sales-home.is-compact-home .sales-home-heading{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap!important;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  gap:12px;
+}
+.sales-home.is-compact-home .sales-home-heading-copy{
+  box-sizing:border-box;
+  display:flex!important;
+  flex:1 1 auto;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start;
+  gap:12px!important;
+  width:auto;
+  min-width:0;
+  max-width:100%;
+}
+.sales-home.is-compact-home .sales-home-heading-copy .ss-workspace-title-row{
+  display:inline-flex!important;
+  flex:0 0 auto;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  gap:8px;
+  min-width:0;
+  white-space:nowrap;
+}
+.sales-home.is-compact-home .sales-home-heading-copy .ss-workspace-title-row>h1{
+  flex:0 0 auto;
+  white-space:nowrap;
+  min-width:0;
+  margin:0!important;
+  line-height:1.1;
+}
+.sales-home.is-compact-home .sales-home-heading-copy>.sales-home-date{
+  box-sizing:border-box;
+  display:block;
+  flex:0 1 auto;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap!important;
+  margin:0!important;
+}
+.sales-home .sales-home-date-short{display:none}
+.sales-home.is-compact-home .sales-home-heading-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex:0 0 auto;
+  margin-left:auto;
+  min-width:0;
+}
+.sales-home.is-compact-home .sales-home-heading-actions .sales-home-top-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:nowrap;
+  width:auto;
+  gap:8px;
+  margin:0;
+}
+@media(max-width:760px){
+  .sales-home.is-compact-home .sales-home-heading{gap:8px}
+  .sales-home.is-compact-home .sales-home-heading-copy{
+    gap:8px!important;
+    flex:1 1 auto;
+  }
+  .sales-home.is-compact-home .sales-home-heading-copy .ss-workspace-title-row{gap:7px}
+  .sales-home.is-compact-home .sales-home-heading-copy>.sales-home-date{
+    font-size:11px;
+    line-height:1.25;
+  }
+  .sales-home.is-compact-home .sales-home-heading-actions .sales-home-top-actions{
+    width:auto!important;
+    gap:7px;
+  }
+  .sales-home.is-compact-home .sales-home-heading-actions .sales-log-launcher{
+    box-sizing:border-box;
+    min-height:40px;
+    max-height:40px;
+    padding:6px 9px;
+    border-radius:10px;
+    white-space:nowrap;
+    font-size:11px!important;
+  }
+  .sales-home.is-compact-home .sales-home-heading-actions .quick-create-launcher{
+    box-sizing:border-box;
+    flex:0 0 40px;
+    width:40px;
+    min-width:40px;
+    max-width:40px;
+    height:40px;
+    min-height:40px;
+    max-height:40px;
+  }
+}
+@media(max-width:430px){
+  .sales-home.is-compact-home .sales-home-heading-copy{gap:6px!important}
+  .sales-home .sales-home-date-long{display:none}
+  .sales-home .sales-home-date-short{display:inline}
+  .sales-home.is-compact-home .sales-home-heading-actions .sales-log-launcher{
+    font-size:0!important;
+    min-width:44px;
+    padding:6px 9px;
+  }
+  .sales-home.is-compact-home .sales-home-heading-actions .sales-log-launcher::after{
+    content:"Log";
+    display:block;
+    font:750 12px/1.2 system-ui,sans-serif;
+  }
+}
+@media(max-width:350px){
+  .sales-home.is-compact-home .sales-home-heading h1{font-size:21px}
+  .sales-home.is-compact-home .sales-home-heading-copy .ss-workspace-title-row{gap:4px}
+  .sales-home.is-compact-home .sales-home-heading-copy>.sales-home-date{font-size:10px}
+  .sales-home.is-compact-home .sales-home-heading-actions .sales-home-top-actions{gap:5px}
+}
