@@ -7,12 +7,11 @@ import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useQuoteStore } from '../store/quoteStore';
 import { AccountsBoard } from './AccountsBoard';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
-import { Button, PageHeader } from '../design-system/components';
+import { Button } from '../design-system/components';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {BoardQuickCreate} from './BoardQuickCreate';
-import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError} from './RecordFormFeedback';
-import {useDismissiblePopover} from './useDismissibleDetails';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
@@ -310,13 +309,7 @@ export function Board() {
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
   const [boardSearch,setBoardSearch]=useState('');
-  const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
-  const boardSearchInputRef=useRef<HTMLInputElement>(null);
-  useEffect(()=>{if(mobileSearchOpen)boardSearchInputRef.current?.focus({preventScroll:true});},[mobileSearchOpen]);
   const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
-  const [pipelineMenuOpen,setPipelineMenuOpen]=useState(false);
-  const pipelineMenuRef=useRef<HTMLDivElement>(null);
-  useDismissiblePopover(pipelineMenuRef,pipelineMenuOpen,()=>setPipelineMenuOpen(false),'.board-pipeline-more-trigger');
   const [compactCards,setCompactCards]=useState(()=>{
     try{return window.localStorage.getItem(BOARD_COMPACT_KEY)==='true';}
     catch{return false;}
@@ -415,66 +408,30 @@ export function Board() {
 
   return (
     <main className={'board-view'+(compactCards?' is-compact':'')}>
-      <PageHeader className="board-header-panel board-foundation-header ss-workspace-header"
-        eyebrow="Sales pipeline" title="Deals"
-        description="Move deals from opportunity to completion."
-        actions={<>
-          <label className="ss-workspace-header__mobile-nav">
-            <select aria-label="Board sections" value="projects"
-              onChange={event=>{if(event.target.value==='accounts')setBoardMode('accounts');}}>
-              <option value="projects">Deals</option><option value="accounts">Accounts</option>
-            </select>
-          </label>
-          <div className="board-view-toggle" role="group" aria-label="Board type">
-            <Button variant="quiet" className="active" aria-pressed={true}>Deals</Button>
-            <Button variant="quiet" aria-pressed={false} onClick={() => setBoardMode('accounts')}>Accounts</Button>
-          </div>
-          <div className="board-header-tools">
-            <div className="board-pipeline-more" ref={pipelineMenuRef}>
-               <button type="button" className="board-pipeline-more-trigger"
-                 aria-controls="board-pipeline-menu" aria-expanded={pipelineMenuOpen}
-                 aria-haspopup="true"
-                 aria-label={'Choose pipeline, currently '+(pipelineView==='all'?'All pipelines':dealPipelineLabel(pipelineView))}
-                 onClick={()=>setPipelineMenuOpen(open=>!open)}>
-                 More <WorkspaceChromeIcon name="more"/>
-               </button>
-               {pipelineMenuOpen&&<div id="board-pipeline-menu" className="board-pipeline-menu" role="group" aria-label="Filter deal pipelines">
-                 <span className="board-pipeline-menu-label">SHOW PIPELINE</span>
-                 <button type="button" aria-pressed={pipelineView==='all'} onClick={()=>{
-                   setPipelineView('all');setPipelineMenuOpen(false);boardRef.current?.scrollTo({left:0});
-                 }}>All pipelines {pipelineView==='all'&&<span aria-hidden="true">✓</span>}</button>
-                 {DEAL_PIPELINES.map(item=><button type="button" key={item.id}
-                   aria-pressed={pipelineView===item.id} onClick={()=>{
-                     setPipelineView(item.id);setPipelineMenuOpen(false);boardRef.current?.scrollTo({left:0});
-                   }}>{item.label}{pipelineView===item.id&&<span aria-hidden="true">✓</span>}</button>)}
-                 <button type="button" aria-pressed={pipelineView==='unassigned'} onClick={()=>{
-                   setPipelineView('unassigned');setPipelineMenuOpen(false);boardRef.current?.scrollTo({left:0});
-                 }}>Unassigned {pipelineView==='unassigned'&&<span aria-hidden="true">✓</span>}</button>
-                 <button type="button" className="board-density-toggle" aria-pressed={compactCards}
-                   onClick={()=>{toggleCompact();setPipelineMenuOpen(false);}}>
-                   {compactCards?'Standard cards':'Compact cards'} {compactCards&&<span aria-hidden="true">✓</span>}
-                 </button>
-               </div>}
-             </div>
-             <div className={'board-header-search ss-workspace-header__search'+(mobileSearchOpen?' is-open':'')}>
-              <button type="button" className="ss-workspace-header__search-toggle"
-                aria-label="Search Board deals" aria-expanded={mobileSearchOpen}
-                onClick={()=>setMobileSearchOpen(value=>!value)}>
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
-                </svg>
-              </button>
-              <div className="ss-workspace-header__search-popover"><input ref={boardSearchInputRef} type="search"
-                aria-label="Search Board deals" placeholder="Search deals…"
-                autoFocus={mobileSearchOpen}
-                value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/></div>
-             </div>
-            <BoardQuickCreate kind="Deal" onCreate={name=>createProject(name,'Discovery',{
-               pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
-             })} />
-          </div>
-        </>}
+      <WorkspaceHeader className="board-header-panel board-foundation-header"
+        title="Deals" mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Accounts'}]}
+        mobileTabValue="projects" onMobileTabChange={value=>{
+          if(value==='accounts')setBoardMode('accounts');
+        }}
+        tabs={<div className="board-view-toggle" role="group" aria-label="Board type">
+          <Button variant="quiet" className="active" aria-pressed={true}>Deals</Button>
+          <Button variant="quiet" aria-pressed={false}
+            onClick={()=>setBoardMode('accounts')}>Accounts</Button>
+        </div>}
+        more={<WorkspaceMoreMenu label="Board More" items={[
+          {label:'All pipelines',active:pipelineView==='all',onClick:()=>{
+            setPipelineView('all');boardRef.current?.scrollTo({left:0});}},
+          ...DEAL_PIPELINES.map(item=>({label:item.label,active:pipelineView===item.id,
+            onClick:()=>{setPipelineView(item.id);boardRef.current?.scrollTo({left:0});}})),
+          {label:'Unassigned',active:pipelineView==='unassigned',onClick:()=>{
+            setPipelineView('unassigned');boardRef.current?.scrollTo({left:0});}},
+          {label:compactCards?'Standard cards':'Compact cards',active:compactCards,onClick:toggleCompact},
+        ]}/>}
+        search={<input type="search" aria-label="Search Board deals" placeholder="Search deals…"
+          value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/>}
+        primary={<BoardQuickCreate kind="Deal" onCreate={name=>createProject(name,'Discovery',{
+          pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
+        })}/>}
       />
 
       <MobileBoardStagePicker
