@@ -128,7 +128,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   <section ref={previewRef}
    className="tasks-preview-card record-preview-panel activity-preview-panel activity-quick-card ss-mobile-sheet"
    role="dialog" aria-modal="true" aria-label={editing?'Edit Activity':'Activity preview'}>
-   <MobileSheetHandle onClose={close}/>
+   <MobileSheetHandle onClose={close} disabled={saving}/>
    <header className="activity-preview-header">
     <div><span className="board-eyebrow">CRM · COMPLETED INTERACTION</span>
      <h2>{editing?'Edit activity':activity.summary}</h2>
