@@ -1,12 +1,13 @@
 import {useEffect,useRef} from 'react';
 import {useDismissibleDetails} from './useDismissibleDetails';
+import {HomeCalendarHelpLegend} from './HomeCalendarCustomizer';
 
 export type WorkspaceHelpPage='home'|'quotes'|'tasks'|'board'|'connections'|'notebook'|'catalog'|'settings';
 type Tip={label:string;text:string};
 type Article={name:string;intro:string;tips:readonly Tip[]};
 const pages:Record<WorkspaceHelpPage,Article>={
  home:{name:'Home',intro:'A view of your schedule and an easy place to start work.',tips:[
-  {label:'Calendar',text:'Select a day to see tasks, bid dates, and recorded activities.'},
+  {label:'Calendar',text:'Tap a date to review pending work. Customize four daily badge metrics and colors using the Home gear; logged history never becomes an agenda task.'},
   {label:'Log Activity',text:'Record a call, email, text, video meeting, or visit and link it to a CRM record.'},
   {label:'Create',text:'Use quick-create tools to start a quote, task, or note.'}]},
  quotes:{name:'Quotes',intro:'Find, create, and manage pricing documents.',tips:[
@@ -103,6 +104,7 @@ export function WorkspaceHelp({page,section}:{page:WorkspaceHelpPage;section?:st
    <p className="ss-workspace-help__intro">{article.intro}</p>
    {current&&<div className="ss-workspace-help__current"><strong>{current.label}</strong><p>{current.text}</p></div>}
    <ul>{article.tips.map(tip=><li key={tip.label}><strong>{tip.label}</strong><span>{tip.text}</span></li>)}</ul>
+   {page==='home'&&<HomeCalendarHelpLegend/>}
    <small className="ss-workspace-help__dismiss">Click outside or press Esc to close.</small>
   </section>
  </details>;
