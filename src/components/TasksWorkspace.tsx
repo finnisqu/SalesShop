@@ -13,6 +13,8 @@ import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import {MobileSheetHandle} from './MobileSheetHandle';
 import type {TaskBulkChange} from './TaskBulkEditDialog';
 import '../tasks-table.css';
 import {useQuoteStore} from '../store/quoteStore';
@@ -140,12 +142,13 @@ export function TaskEditor({initial,onCancel,onSave}:{
       clearSavedDraft(scopeKey);clearSavedDraft(activeKey);
     }catch(reason){setFormError(reason instanceof Error?reason.message:'Unable to apply task changes. Draft preserved.');}
   };
-  return <div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)close();}}>
-    <form ref={editorRef} className="tasks-editor" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
+  return <div className="tasks-dialog-backdrop ss-mobile-sheet-backdrop" onPointerDown={event=>{if(event.target===event.currentTarget)close();}}>
+    <form ref={editorRef} className="tasks-editor ss-mobile-sheet" role="dialog" aria-modal="true" aria-label={'Edit task '+(title||'new')}
       noValidate onChange={()=>setFormError('')} onSubmit={submit}>
+      <MobileSheetHandle onClose={close}/>
       <header><strong>{'id'in initial?'Edit task':'New task'}</strong>
         <PreviewPanelClose label="Close task editor" onClose={close} initialFocus={false}/></header>
-      <div className="tasks-editor-scroll">
+      <div className="tasks-editor-scroll ss-mobile-sheet-body">
       <RecordEditField label="Task title" required error={formError==='Enter a task title.'?formError:undefined}>
         {control=><input {...control} autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
           data-dialog-initial-focus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches?'true':undefined}
@@ -201,7 +204,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
       <p className="tasks-editor-due-hint">Unsaved changes are kept on this device if you close or reload SalesShop.</p>
       <RecordFormFeedback notice={formError&&formError!=='Enter a task title.'?{kind:'error',message:formError}:null}/>
       </div>
-      <PreviewPanelActions className="ss-record-editor-actions"><button type="button" onClick={discard}>Discard draft</button>
+      <PreviewPanelActions className="ss-record-editor-actions ss-mobile-sheet-actions"><button type="button" onClick={discard}>Discard draft</button>
        <button type="button" onClick={close}>Close</button>
        <button type="submit" className="tasks-primary">Save task</button></PreviewPanelActions>
     </form>
@@ -227,22 +230,7 @@ export function TasksWorkspace(){
   const [taskNotice,setTaskNotice]=useState<RecordFormNotice|null>(null);
   const [viewingId,setViewingId]=useState<string|null>(null);
   const hasTaskOverlay=Boolean(editing||viewingId);
-  useEffect(()=>{
-    if(!hasTaskOverlay)return;
-    const scrollers=Array.from(document.querySelectorAll<HTMLElement>(
-      '.sales-app.view-tasks .tasks-workspace,.sales-app.view-tasks .role-perspective-content'));
-    const previous=scrollers.map(node=>node.style.overflowY);
-    const originalBody=document.body.style.overflow;
-    const originalRoot=document.documentElement.style.overflow;
-    scrollers.forEach(node=>{node.style.overflowY='hidden';});
-    document.body.style.overflow='hidden';
-    document.documentElement.style.overflow='hidden';
-    return()=>{
-      scrollers.forEach((node,index)=>{node.style.overflowY=previous[index];});
-      document.body.style.overflow=originalBody;
-      document.documentElement.style.overflow=originalRoot;
-    };
-  },[hasTaskOverlay]);
+  useModalScrollLock(hasTaskOverlay);
   useEffect(()=>{
    if(previousScope.current===scope)return;
    previousScope.current=scope;
@@ -521,11 +509,12 @@ export function TasksWorkspace(){
       {' · '}Reminder dates are tracked in SalesShop. Background emails and push alerts are not enabled.
     </footer>
     </div>
-    {viewing&&<div className="tasks-dialog-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setViewingId(null);}}>
-      <section ref={previewRef} className="tasks-preview-card" role="dialog" aria-modal="true" aria-label={'Task '+viewing.title}>
+    {viewing&&<div className="tasks-dialog-backdrop ss-mobile-sheet-backdrop" onPointerDown={event=>{if(event.target===event.currentTarget)setViewingId(null);}}>
+      <section ref={previewRef} className="tasks-preview-card ss-mobile-sheet" role="dialog" aria-modal="true" aria-label={'Task '+viewing.title}>
+       <MobileSheetHandle onClose={()=>setViewingId(null)}/>
        <header><PreviewPanelHeading eyebrow="TASK · QUICK VIEW" title={viewing.title}/>
         <PreviewPanelClose label="Close task preview" onClose={()=>setViewingId(null)}/></header>
-       <div className="tasks-preview-body">
+       <div className="tasks-preview-body ss-mobile-sheet-body">
         <div className="tasks-preview-meta">
          <span>{viewing.type??'To-do'}</span><span>{viewing.status??'open'}</span>
          <span>{viewing.priority??'normal'} priority</span>
@@ -542,7 +531,7 @@ export function TasksWorkspace(){
            {link.label??link.type} ↗</button>)}
         </div>}
        </div>
-       <PreviewPanelActions>
+       <PreviewPanelActions className="ss-mobile-sheet-actions">
         <button type="button" onClick={()=>setViewingId(null)}>Close</button>
         {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&
          <button type="button" className="tasks-flow-action" onClick={()=>{
