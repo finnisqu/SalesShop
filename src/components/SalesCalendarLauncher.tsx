@@ -540,7 +540,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <small>{item.time||'All day'}{item.annual?' · Yearly':''}</small>
        </button>)}
       </div>}
-      {otherDayTotal>0&&<section className="home-day-agenda-extra"
+      {embedded&&otherDayTotal>0&&<section className="home-day-agenda-extra"
        aria-label={'Other records on '+dateLabel(selected)}>
        <div className="home-day-agenda-extra-title">
         <strong>On this day</strong>
