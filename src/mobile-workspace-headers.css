@@ -308,7 +308,8 @@
     grid-row:auto;
   }
   :root[data-sales-theme] .sales-app .settings-layout>.company-settings-header,
-  :root[data-sales-theme] .sales-app .settings-layout>.settings-mobile-section-select{
+  :root[data-sales-theme] .sales-app .settings-layout>.settings-mobile-section-select,
+  :root[data-sales-theme] .sales-app .settings-layout>.settings-tabs{
     display:none!important;
   }
   :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace >
