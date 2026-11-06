@@ -6,6 +6,7 @@ import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
 import { DealRecordPage } from './DealRecordPage';
@@ -389,6 +390,14 @@ export function Connections() {
             {tab === 'companies' && <Button variant="primary" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</Button>}
             {tab === 'people' && <Button variant="primary" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</Button>}
             {tab === 'deals' && <Button variant="primary" className="connections-add" onClick={() => setDealCreating((v) => !v)}>+ Deal</Button>}
+            {tab === 'activity' && <Button variant="primary" className="connections-add"
+              aria-label="Record activity" onClick={()=>openActivityComposer({})}>+ Activity</Button>}
+            {tab === 'quotes' && <Button variant="primary" className="connections-add"
+              aria-label="Create a quote" onClick={()=>{
+                const launch=document.querySelector<HTMLButtonElement>('.mobile-app-hidden-launchers .quick-create-launcher')
+                  ??document.querySelector<HTMLButtonElement>('.app-primary-actions .quick-create-launcher');
+                launch?.click();
+              }}>+ Quote</Button>}
           </div>
         </>}
       />
