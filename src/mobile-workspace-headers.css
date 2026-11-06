@@ -114,6 +114,8 @@
     max-width:calc(100vw - 24px);
     max-height:min(55dvh,350px);
     overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
     padding:7px;
     border:1px solid var(--ss-theme-border);
     border-radius:11px;
@@ -127,7 +129,7 @@
     align-items:center;
     justify-content:space-between;
     gap:12px;
-    min-height:39px;
+    min-height:44px;
     border:0;
     border-radius:7px;
     background:transparent;
@@ -295,6 +297,11 @@
     z-index:510!important;
     right:0!important;
     left:auto!important;
+    box-sizing:border-box;
+    max-height:min(55dvh,350px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
   }
   :root[data-sales-theme] .sales-app .ss-workspace-header.ss-workspace-header
     :is(button,summary,input):focus-visible{
