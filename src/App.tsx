@@ -262,6 +262,8 @@ function App() {
           <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')}>Catalog</button>
         </nav>
         <div className="app-primary-actions" role="group" aria-label="Calendar, search, create and notebook tools">
+          <WorkspaceHelp page={view==='dashboard'?'connections':view}
+            section={view==='board'?'deals':undefined}/>
           {!inRolePreview&&<div className="sales-calendar-global"><SalesCalendarLauncher compact /></div>}
           {!viewer && !inRolePreview && <GlobalSearch />}
           {!viewer && !scopedMember && !inRolePreview && <QuickCreate />}
