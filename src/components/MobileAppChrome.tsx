@@ -233,7 +233,7 @@ export function MobileAppChrome() {
             <strong>{view==='home'?contextTitle:'SalesShop'}</strong>
           </div>
         </>}
-        {!isEditingQuote&&view==='home'&&<div className="mobile-app-help">
+        {!isEditingQuote&&<div className="mobile-app-help">
           <WorkspaceHelp page={view==='dashboard'?'connections':view}
             section={view==='catalog'?catalogSection:view==='board'?(boardMode==='accounts'?'accounts':'deals'):undefined}/>
         </div>}
