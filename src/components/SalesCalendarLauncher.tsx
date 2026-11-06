@@ -515,33 +515,59 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       </div>
      </div>}
      {!activeDrilldown&&<>
-     {eventsForDay.length?<div className="sales-calendar-agenda">
-       {shownDayEvents.map(event=><button type="button" key={event.id}
-        onClick={()=>openRecord(event)}>
-         <span className={'sales-calendar-event-dot is-'+event.kind}
-           style={{backgroundColor:agendaDotColors[event.kind]}} aria-hidden="true"/>
-         <span className="sales-calendar-event-text"><strong>{event.title}</strong>
-          <small>{event.detail}</small></span>
-         {event.urgent&&<span className="sales-calendar-agenda-urgent" title="Urgent task" aria-label="Urgent task">!</span>}
-         <span className="sales-calendar-agenda-chevron" aria-hidden="true">›</span>
-        </button>)}
-       {embedded&&isPhone&&eventsForDay.length>5&&
-        <button type="button" className="sales-calendar-show-more"
-         onClick={()=>setShowAllDay(value=>!value)}>
-         {showAllDay?'Show fewer':'Show '+(eventsForDay.length-5)+' more'}
-        </button>}
-      </div>:<p className="sales-calendar-empty">All caught up for this day.</p>}
-     {calendarDatesForDay.length>0&&<div className="sales-calendar-on-calendar"
+     <div className="sales-calendar-agenda">
+      {eventsForDay.length?shownDayEvents.map(event=><button type="button" key={event.id}
+       onClick={()=>openRecord(event)}>
+        <span className={'sales-calendar-event-dot is-'+event.kind}
+         style={{backgroundColor:agendaDotColors[event.kind]}} aria-hidden="true"/>
+        <span className="sales-calendar-event-text"><strong>{event.title}</strong>
+         <small>{event.detail}</small></span>
+        {event.urgent&&<span className="sales-calendar-agenda-urgent"
+         title="Urgent task" aria-label="Urgent task">!</span>}
+        <span className="sales-calendar-agenda-chevron" aria-hidden="true">›</span>
+       </button>):
+       <p className="sales-calendar-empty">
+        {otherDayTotal||calendarDatesForDay.length?'No pending work for this day.':'All caught up for this day.'}
+       </p>}
+      {embedded&&isPhone&&eventsForDay.length>5&&
+       <button type="button" className="sales-calendar-show-more"
+        onClick={()=>setShowAllDay(value=>!value)}>
+        {showAllDay?'Show fewer':'Show '+(eventsForDay.length-5)+' more'}
+       </button>}
+      {calendarDatesForDay.length>0&&<div className="sales-calendar-on-calendar"
        aria-label="Calendar dates and events">
-      <h4>On the calendar</h4>
-      {calendarDatesForDay.map(({entryId,item})=><button type="button"
+       <h4>On the calendar</h4>
+       {calendarDatesForDay.map(({entryId,item})=><button type="button"
         key={entryId+':'+item.id}
         onClick={()=>openNotebookCalendarDate({entryId,itemId:item.id})}>
         <span className="notebook-calendar-dot-inline" aria-hidden="true">◦</span>
         <span>{item.title}</span>
         <small>{item.time||'All day'}{item.annual?' · Yearly':''}</small>
        </button>)}
-     </div>}
+      </div>}
+      {otherDayTotal>0&&<section className="home-day-agenda-extra"
+       aria-label={'Other records on '+dateLabel(selected)}>
+       <div className="home-day-agenda-extra-title">
+        <strong>On this day</strong>
+        <span>{otherDayTotal} {otherDayTotal===1?'record':'records'}</span>
+       </div>
+       {otherDayGroups.map(group=><details key={selected+':'+group.key}
+        className="home-day-agenda-group">
+        <summary>
+         <span className="home-day-agenda-group-label">{group.label}</span>
+         <span className="home-day-agenda-group-count">{group.entries.length}</span>
+         <span className="home-day-agenda-group-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div className="home-day-agenda-records">
+         {group.entries.map(record=><button type="button" key={record.key}
+          onClick={()=>openDayRecord(record)} aria-label={'Open '+record.title}>
+          <span><strong>{record.title}</strong><small>{record.detail}</small></span>
+          <span aria-hidden="true">›</span>
+         </button>)}
+        </div>
+       </details>)}
+      </section>}
+     </div>
      </>}
     </section>
     </div>
