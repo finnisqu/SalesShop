@@ -40,6 +40,9 @@ export function HomeWorkspace(){
  const canLog=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'crm')));
  const shown=settings.visibleSections;
  const order=settings.sectionOrder;
+ // In the default arrangement, Quick Actions belongs in the heading row
+ // as before. If reordered, it remains a movable standalone section.
+ const quickInHeader=shown.quickActions&&order[0]==='quickActions';
  const calendarIndex=order.indexOf('calendar');
  const recentIndex=order.indexOf('recent');
  const quickIndex=order.indexOf('quickActions');
@@ -47,15 +50,16 @@ export function HomeWorkspace(){
  const quickBetween=quickIndex>Math.min(calendarIndex,recentIndex)&&
   quickIndex<Math.max(calendarIndex,recentIndex);
  const twoColumn=shown.calendar&&shown.recent&&!quickBetween;
+ const quickActions=<div className="sales-home-top-actions" aria-label="Start work">
+   {canLog&&<button type="button" className="sales-log-launcher"
+     onClick={()=>openActivityComposer()}>Log Activity</button>}
+   {canCreate&&<QuickCreate />}
+   {!canCreate&&!canLog&&<p className="sales-home-no-actions">Quick actions are unavailable in the current workspace view.</p>}
+  </div>;
  const sections={
   quickActions:<section className="sales-home-actions-section" key="quickActions"
     hidden={!shown.quickActions} aria-label="Quick actions">
-    <div className="sales-home-top-actions" aria-label="Start work">
-     {canLog&&<button type="button" className="sales-log-launcher"
-       onClick={()=>openActivityComposer()}>Log Activity</button>}
-     {canCreate&&<QuickCreate />}
-     {!canCreate&&!canLog&&<p className="sales-home-no-actions">Quick actions are unavailable in the current workspace view.</p>}
-    </div>
+    {quickActions}
    </section>,
   calendar:<section className="sales-home-calendar-card" key="calendar"
     hidden={!shown.calendar} aria-label="Calendar and selected-day agenda">
@@ -74,10 +78,11 @@ export function HomeWorkspace(){
     <div className="ss-workspace-title-row"><h1>Today</h1><HomeCalendarGearButton/></div>
     <p>{dateLabel.format(new Date())}</p>
    </div>
+   {quickInHeader&&<div className="sales-home-heading-actions">{quickActions}</div>}
   </header>
   <div className={'sales-home-section-list'+(twoColumn?' is-two-column':'')+
    (recentFirst?' is-recent-first':'')}>
-   {order.map(key=>sections[key])}
+   {order.map(key=>key==='quickActions'&&quickInHeader?null:sections[key])}
   </div>
   <HomeCalendarCustomizer/>
  </main>;
