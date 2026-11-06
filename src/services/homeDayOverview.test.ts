@@ -4,7 +4,7 @@ import type {PersonalTask} from '../store/personalTaskStore';
 import type {Quote} from '../types/quote';
 import type {NotebookEntry} from '../types/notebook';
 import type {SalesCalendarEvent} from './salesCalendar';
-import {homeDayOverview,type HomeDaySources} from './homeDayOverview';
+import {homeAgendaExtras,homeDayOverview,type HomeDaySources} from './homeDayOverview';
 
 const day='2026-11-06';
 const noon=day+'T12:00:00';
@@ -117,4 +117,23 @@ describe('Home selected-day record navigation',()=>{
    kind:'calendar-date',id:'page-1',itemId:'agenda-1',
   });
  });
+ it('keeps On this day disclosures separate from pending agenda and notebook date rows',()=>{
+  const data={...empty(),
+   events:[event('pending','task'),event('bid-due','bid')],
+   tasks:[task('historical',{status:'completed',dueDate:day,
+    completedAt:'2026-11-08T12:00:00'})],
+   activities:[activity('call','manual-touchpoint',{metadata:{interactionMethod:'call'}})],
+   notebook:[{id:'page-1',title:'Friday notes',dailyDate:day,contentHtml:'',
+    agendaItems:[{id:'agenda-1',kind:'calendar-date',date:day,title:'Site visit'}],
+   } as NotebookEntry],
+  };
+  const extras=homeAgendaExtras(homeDayOverview(day,data));
+  expect(extras.some(group=>group.key==='bids-due')).toBe(false);
+  expect(extras.some(group=>group.key==='notebook-dates')).toBe(false);
+  expect(extras.find(group=>group.key==='tasks-due')?.entries.map(x=>x.id)).toEqual(['historical']);
+  expect(extras.find(group=>group.key==='activities')?.entries.map(x=>x.id)).toEqual(['call']);
+  expect(extras.find(group=>group.key==='notebook-pages')?.entries[0].id).toBe('page-1');
+  expect(homeAgendaExtras(homeDayOverview('2026-11-20',data))).toEqual([]);
+ });
+
 });
