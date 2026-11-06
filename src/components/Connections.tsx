@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {createPortal} from 'react-dom';
-import {useDismissiblePopover} from './useDismissibleDetails';
-import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
@@ -9,7 +7,8 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
 import { DealRecordPage } from './DealRecordPage';
-import { Button, Field, PageHeader, SectionTabs, StatusText } from '../design-system/components';
+import { Button, Field, SectionTabs, StatusText } from '../design-system/components';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -89,18 +88,12 @@ export function Connections() {
    return()=>window.removeEventListener('salesshop:open-activity-history',show);
   },[]);
   const [query, setQuery] = useState('');
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
-  const connectionsSearchInputRef=useRef<HTMLInputElement>(null);
-  useEffect(()=>{if(mobileSearchOpen)connectionsSearchInputRef.current?.focus({preventScroll:true});},[mobileSearchOpen]);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [quoteRecordId,setQuoteRecordId]=useState<string|null>(null);
   useEffect(()=>{
     const id=consumeQuoteMetadataRequest();
     if(id){setQuoteRecordId(id);setTab('quotes');}
   },[]);
-  const moreRef = useRef<HTMLDivElement>(null);
-  useDismissiblePopover(moreRef,moreOpen,()=>setMoreOpen(false));
   const [companyFilter, setCompanyFilter] = useState<CompanyFilter>('all');
   const [companyCreating, setCompanyCreating] = useState(false);
   const [newCompany, setNewCompany] = useState('');
@@ -344,60 +337,36 @@ export function Connections() {
   const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
   return (
     <main className="connections-workspace connections-directory-layout">
-      <PageHeader className="connections-heading connections-foundation-heading ss-workspace-header"
-        eyebrow="CRM"
-        title="Connections"
-        description="Your accounts, contacts and deals."
-        actions={<>
-          <label className="ss-workspace-header__mobile-nav">
-            <select aria-label="Connections sections" value={tab}
-              onChange={event=>chooseTab(event.target.value as ConnectionsTab)}>
-              {CONNECTIONS_TABS.map(item=><option value={item.id} key={item.id}>{item.label}</option>)}
-              <option value="quotes">Quotes</option><option value="activity">Activity history</option>
-            </select>
-          </label>
-          <div className="connections-header-navigation">
-            <SectionTabs className="connections-tabs" aria-label="Connections sections"
-              items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab} />
-
-          </div>
-          <div className="connections-header-tools">
-            <div ref={moreRef} className="connections-section-more">
-              <button type="button" aria-expanded={moreOpen} aria-haspopup="menu" aria-controls="connections-more-menu"
-                onClick={() => setMoreOpen((value) => !value)}>More <WorkspaceChromeIcon name="more"/></button>
-              {moreOpen && <div id="connections-more-menu" className="connections-more-menu">
-                <button type="button" onClick={() => chooseTab('activity')}>Activity history</button>
-                <button type="button" onClick={() => chooseTab('quotes')}>Quotes · metadata</button>
-              </div>}
-            </div>
-            <div className={'connections-header-search ss-workspace-header__search'+(mobileSearchOpen?' is-open':'')}>
-              <button type="button" className="ss-workspace-header__search-toggle"
-                aria-label="Search Connections" aria-expanded={mobileSearchOpen}
-                onClick={()=>setMobileSearchOpen(value=>!value)}>
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
-                </svg>
-              </button>
-              <div className="ss-workspace-header__search-popover">
-                <input ref={connectionsSearchInputRef} id="connections-directory-search" type="search"
-                  aria-label={`Search ${tab}`} value={query}
-                  autoFocus={mobileSearchOpen} onChange={event=>setQuery(event.target.value)}
-                  placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':tab==='deals'?'Search deals…':tab==='quotes'?'Search quotes…':'Search activities…'} />
-              </div>
-            </div>
-            {tab === 'companies' && <Button variant="primary" className="connections-add" onClick={() => setCompanyCreating((v) => !v)}>+ Company</Button>}
-            {tab === 'people' && <Button variant="primary" className="connections-add" onClick={() => setPersonCreating((v) => !v)}>+ Person</Button>}
-            {tab === 'deals' && <Button variant="primary" className="connections-add" onClick={() => setDealCreating((v) => !v)}>+ Deal</Button>}
-            {tab === 'activity' && <Button variant="primary" className="connections-add"
-              aria-label="Record activity" onClick={()=>openActivityComposer({})}>+ Activity</Button>}
-            {tab === 'quotes' && <Button variant="primary" className="connections-add"
-              aria-label="Create a quote" onClick={()=>{
-                const launch=document.querySelector<HTMLButtonElement>('.mobile-app-hidden-launchers .quick-create-launcher')
-                  ??document.querySelector<HTMLButtonElement>('.app-primary-actions .quick-create-launcher');
-                launch?.click();
-              }}>+ Quote</Button>}
-          </div>
+      <WorkspaceHeader title="Connections"
+        className="connections-heading connections-foundation-heading"
+        mobileTabs={[...CONNECTIONS_TABS.map(item=>({value:item.id,label:item.label})),
+          {value:'quotes',label:'Quotes'},{value:'activity',label:'Activity history'}]}
+        mobileTabValue={tab} onMobileTabChange={value=>chooseTab(value as ConnectionsTab)}
+        tabs={<SectionTabs className="connections-tabs" aria-label="Connections sections"
+          items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
+        more={<WorkspaceMoreMenu label="Connections More" items={[
+          {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
+          {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
+        ]}/>}
+        search={<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
+          value={query} onChange={event=>setQuery(event.target.value)}
+          placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
+            tab==='deals'?'Search deals…':tab==='quotes'?'Search quotes…':'Search activities…'}/>}
+        primary={<>
+          {tab==='companies'&&<Button variant="primary" className="connections-add"
+            onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
+          {tab==='people'&&<Button variant="primary" className="connections-add"
+            onClick={()=>setPersonCreating(value=>!value)}>+ Person</Button>}
+          {tab==='deals'&&<Button variant="primary" className="connections-add"
+            onClick={()=>setDealCreating(value=>!value)}>+ Deal</Button>}
+          {tab==='activity'&&<Button variant="primary" className="connections-add"
+            onClick={()=>openActivityComposer({})}>+ Activity</Button>}
+          {tab==='quotes'&&<Button variant="primary" className="connections-add"
+            onClick={()=>{
+              const launch=document.querySelector<HTMLButtonElement>('.mobile-app-hidden-launchers .quick-create-launcher')
+                ??document.querySelector<HTMLButtonElement>('.app-primary-actions .quick-create-launcher');
+              launch?.click();
+            }}>+ Quote</Button>}
         </>}
       />
       {!recordsReady&&<WorkspaceLoadingState title="Loading Connections"
