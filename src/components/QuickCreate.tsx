@@ -1,4 +1,7 @@
 import { useState, type FormEvent } from 'react';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {MobileSheetHandle} from './MobileSheetHandle';
 import { createPortal } from 'react-dom';
 import { useCrmStore } from '../store/crmStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -37,6 +40,8 @@ export function QuickCreate() {
     setNamedMode(null);
     setName('');
   };
+  useModalScrollLock(open);
+  const sheetRef=useDismissibleLayer<HTMLElement>(open,close);
 
   const openDocumentPicker = () => {
     close();
@@ -72,19 +77,20 @@ export function QuickCreate() {
   };
 
   const sheet = open ? createPortal(
-    <div className="quick-create-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
-      <section className="quick-create-sheet" role="dialog" aria-modal="true" aria-label="Create in SalesShop">
-        <div className="quick-create-handle" aria-hidden="true" />
+    <div className="quick-create-backdrop ss-mobile-sheet-backdrop" role="presentation" onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}>
+      <section ref={sheetRef} className="quick-create-sheet ss-mobile-sheet" role="dialog" aria-modal="true" aria-label="Create in SalesShop">
+        <MobileSheetHandle onClose={close}/>
         <header className="quick-create-header">
           <div><span>Quick create</span><strong>{namedMode ? `New ${namedMode === 'project' ? 'deal' : 'account'}` : 'What are you working on?'}</strong></div>
           <button type="button" onClick={close} aria-label="Close quick create">×</button>
         </header>
 
         {namedMode ? (
-          <form className="quick-create-name-form" onSubmit={submitNamedCreate}>
+          <form className="quick-create-name-form ss-mobile-sheet-body" onSubmit={submitNamedCreate}>
             <label>
               <span>{namedMode === 'project' ? 'Deal name' : 'Account / company name'}</span>
-              <input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : 'e.g. DeVane Builders'} />
+              <input autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
+                value={name} onChange={(event) => setName(event.target.value)} placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : 'e.g. DeVane Builders'} />
             </label>
             <div>
               <button type="button" className="quick-create-secondary" onClick={() => { setNamedMode(null); setName(''); }}>Back</button>
@@ -92,7 +98,7 @@ export function QuickCreate() {
             </div>
           </form>
         ) : (
-          <div className="quick-create-options">
+          <div className="quick-create-options ss-mobile-sheet-body">
             <button type="button" className="quick-create-option quick-create-option-primary" onClick={openDocumentPicker}>
               <span className="quick-create-icon"><CreateGlyph kind="quote"/></span>
               <span><strong>New Quote / Schedule</strong><small>Choose a template, then follow the guided editor.</small></span>
