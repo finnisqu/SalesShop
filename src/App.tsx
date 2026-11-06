@@ -297,6 +297,12 @@ function App() {
       ) : (
         <main className={`notebook-workspace ${companion?'is-side-by-side':''}`}>
           <WorkspaceHeader title="Notebook" help={<WorkspaceHelp page="notebook" section={notebookHeaderSection}/>}
+            mobileTabs={[{value:'pages',label:'Pages'},{value:'agenda',label:'Agenda'}]}
+            mobileTabValue={notebookHeaderSection}
+            onMobileTabChange={value=>{
+              setNotebookHeaderSection(value as 'pages'|'agenda');
+              if(value==='agenda')document.querySelector<HTMLElement>('.notebook-linked-agenda')?.scrollIntoView({block:'nearest'});
+            }}
             tabs={<nav className="notebook-header-tabs" aria-label="Notebook views">
               <button type="button" className={notebookHeaderSection==='pages'?'active':''}
                 aria-pressed={notebookHeaderSection==='pages'} onClick={()=>{
