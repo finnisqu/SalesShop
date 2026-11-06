@@ -7,7 +7,7 @@ type Tip={label:string;text:string};
 type Article={name:string;intro:string;tips:readonly Tip[]};
 const pages:Record<WorkspaceHelpPage,Article>={
  home:{name:'Home',intro:'A view of your schedule and an easy place to start work.',tips:[
-  {label:'Calendar',text:'Select any date to see pending work in the Agenda and all matching records under On this day. Open tasks, sent quotes, logged activities, people, companies, and Notebook entries. Switch to Recent for your latest work; badge drilldowns are optional on mobile.'},
+  {label:'Calendar',text:'Select any calendar date to show its pending tasks. Expand the collapsed On this day categories directly under the agenda to open sent quotes, logged activities, completed tasks, new people, companies, and Notebook entries. Recent work remains independent; badge tapping is optional on mobile.'},
   {label:'Log Activity',text:'Record a call, email, text, video meeting, or visit and link it to a CRM record.'},
   {label:'Create',text:'Use quick-create tools to start a quote, task, or note.'}]},
  quotes:{name:'Quotes',intro:'Find, create, and manage pricing documents.',tips:[
