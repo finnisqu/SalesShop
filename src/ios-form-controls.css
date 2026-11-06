@@ -30,6 +30,12 @@
   text-align:start;
   padding:0;
 }
+.sales-app :is(input[type="date"],input[type="datetime-local"],input[type="time"])::-webkit-datetime-edit-fields-wrapper{
+  display:inline-flex;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+}
 .sales-app :is(input[type="date"],input[type="datetime-local"],input[type="time"])::-webkit-calendar-picker-indicator{
   flex:0 0 auto;
   margin:0 0 0 auto;
