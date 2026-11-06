@@ -389,3 +389,66 @@
   max-width:100%;
  }
 }
+
+
+/* Task quick preview is also a contained, finger-scrollable mobile sheet. */
+@media(max-width:680px){
+ .tasks-dialog-backdrop:has(>.tasks-preview-card){
+  box-sizing:border-box;
+  top:var(--ss-mobile-visual-top,0px);
+  bottom:auto;
+  height:var(--ss-mobile-visual-height,100dvh);
+  max-height:100dvh;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  overflow:hidden;
+  padding:0;
+  overscroll-behavior:contain;
+ }
+ .tasks-dialog-backdrop>.tasks-preview-card{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  flex:0 1 auto;
+  min-height:0;
+  width:100%;
+  max-width:100vw;
+  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 8px);
+  overflow:hidden;
+  border:1px solid var(--ss-theme-border);
+  border-bottom:0;
+  border-radius:17px 17px 0 0;
+ }
+ .tasks-dialog-backdrop>.tasks-preview-card>header{flex:0 0 auto}
+ .tasks-dialog-backdrop>.tasks-preview-card>.tasks-preview-body{
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:13px 14px 20px;
+ }
+ .tasks-dialog-backdrop>.tasks-preview-card>footer{
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  justify-content:stretch;
+  flex:0 0 auto;
+  gap:7px;
+  padding:10px 12px max(12px,env(safe-area-inset-bottom));
+  background:var(--ss-theme-card);
+ }
+ .tasks-dialog-backdrop>.tasks-preview-card>footer button{
+  box-sizing:border-box;
+  min-width:0;
+  min-height:44px;
+  padding:8px 7px;
+  border-radius:9px;
+  font-size:11px;
+  font-weight:750;
+  white-space:normal;
+ }
+}
