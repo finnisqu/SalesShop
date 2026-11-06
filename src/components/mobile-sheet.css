@@ -66,7 +66,6 @@
  .ss-mobile-sheet-handle:active{cursor:grabbing}
  .ss-mobile-sheet .ss-mobile-sheet-body{
   box-sizing:border-box;
-  display:block;
   flex:1 1 auto;
   min-width:0;
   min-height:0;
