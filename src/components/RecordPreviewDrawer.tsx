@@ -254,19 +254,19 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
      </div>
      {!capture&&<PreviewPanelActions className="record-preview-actions">
        {center&&<button type="button" onClick={onClose}>Close</button>}
-       {!perspective&&<button type="button" onClick={()=>{
+       {!perspective&&<button type="button" data-mobile-label="+ Task" onClick={()=>{
         onClose();requestTaskModal({mode:'create',associations:contextualLinks});
        }}>New task</button>}
        {deal&&canLog&&!['Closed Won','Completed','Closed Lost','Discarded'].includes(deal.stage)&&
-         <button type="button" onClick={()=>setExternalQuoteOpen(value=>!value)}>
+         <button type="button" data-mobile-label="Bid sent" onClick={()=>setExternalQuoteOpen(value=>!value)}>
            {externalQuoteOpen?'Cancel external quote':'Record external quote sent'}
          </button>}
-       {canLog&&<button type="button" onClick={()=>{
+       {canLog&&<button type="button" data-mobile-label="Activity" onClick={()=>{
         onClose();openActivityComposer({associations:contextualLinks});
        }}>Log activity</button>}
        {onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&
-         <button type="button" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
-       <button type="button" className="record-preview-full" onClick={goToPage}>Go to page</button>
+         <button type="button" data-mobile-label="Edit" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
+       <button type="button" className="record-preview-full" data-mobile-label="Full page" onClick={goToPage}>Go to page</button>
        {quote&&<button type="button" className={center?'tasks-primary record-preview-open-quote':'record-preview-open-quote'}
          disabled={Boolean(quote.archivedAt)} title={quote.archivedAt?'Restore this document before opening it':undefined}
          onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
