@@ -212,6 +212,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   const clearFocusedCompany = useNavigationStore((state) => state.clearFocusedCompany);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
+  const [mobileSearchOpen,setMobileSearchOpen]=useState(false);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
   useBoardShiftWheelScroll(boardRef);
@@ -252,6 +253,11 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
         eyebrow="Relationship health" title="Accounts" titleAdornment={<WorkspaceHelp page="board" section="accounts"/>}
         description="Same CRM data, viewed by customer relationship instead of deal stage."
         actions={<>
+          <label className="ss-workspace-header__mobile-nav">
+            <select aria-label="Board sections" value="accounts" onChange={event=>{if(event.target.value==='projects')onShowProjects();}}>
+              <option value="projects">Deals</option><option value="accounts">Accounts</option>
+            </select>
+          </label>
           <div className="board-view-toggle" role="group" aria-label="Board type">
             <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Deals</Button>
             <Button variant="quiet" className="active" aria-pressed={true}>Accounts</Button>
@@ -260,9 +266,20 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
             <WorkspaceMoreMenu items={[{
               label:compactCards?'Standard cards':'Compact cards',onClick:onToggleCompact,active:compactCards,
             }]}/>
-            <div className="board-header-search"><input type="search"
-              aria-label="Search Board accounts" placeholder="Search accounts…"
-              value={searchQuery} onChange={event=>onSearchChange?.(event.target.value)}/></div>
+            <div className={'board-header-search ss-workspace-header__search'+(mobileSearchOpen?' is-open':'')}>
+              <button type="button" className="ss-workspace-header__search-toggle"
+                aria-label="Search Board accounts" aria-expanded={mobileSearchOpen}
+                onClick={()=>setMobileSearchOpen(value=>!value)}>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
+                </svg>
+              </button>
+              <div className="ss-workspace-header__search-popover"><input type="search"
+                aria-label="Search Board accounts" placeholder="Search accounts…"
+                autoFocus={mobileSearchOpen}
+                value={searchQuery} onChange={event=>onSearchChange?.(event.target.value)}/></div>
+            </div>
             <BoardQuickCreate kind="Account" onCreate={name=>resolveCompany(name,'customer')} />
           </div>
         </>}
