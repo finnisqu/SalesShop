@@ -157,38 +157,6 @@
   .ss-workspace-header__tools,.board-header-tools,.connections-header-tools
  ){grid-column:2;grid-row:1}
 }
-/* Mobile row 1 = title + fixed create; row 2 = tabs;
-   row 3 = More + search. Identical slot positions across sections. */
-@media(max-width:760px){
- :root[data-sales-theme] .sales-app {--ss-workspace-header-height:142px;
-  --ss-header-search-width: min(65vw,250px)}
- :root[data-sales-theme] .sales-app .ss-workspace-header{
-  height:auto;min-height:var(--ss-workspace-header-height);
-  padding:9px 12px;grid-template-columns:minmax(0,1fr) var(--ss-header-create-width);
-  grid-template-rows:38px 37px 42px;row-gap:4px;
- }
- :root[data-sales-theme] .sales-app .ss-workspace-header > :is(
-  .ss-workspace-header__intro,.ss-page-header__intro
- ){grid-column:1;grid-row:1}
- :root[data-sales-theme] .sales-app .ss-workspace-header > :is(
-  .ss-workspace-header__intro,.ss-page-header__intro
- ) h1{font-size:21px}
- :root[data-sales-theme] .sales-app .ss-workspace-header > :is(
-  .ss-workspace-header__tabs,.board-view-toggle,.connections-header-navigation
- ){grid-row:2;grid-column:1/-1;justify-self:stretch}
- :root[data-sales-theme] .sales-app .ss-workspace-header > :is(
-  .ss-workspace-header__tools,.board-header-tools,.connections-header-tools
- ){display:contents!important}
- :root[data-sales-theme] .sales-app .ss-workspace-header :is(
-  .ss-workspace-header__primary,.board-add-button,.connections-add
- ){grid-column:2;grid-row:1;justify-self:end}
- :root[data-sales-theme] .sales-app .ss-workspace-header :is(
-  .ss-workspace-header__more,.board-pipeline-more,.connections-section-more
- ){grid-column:1;grid-row:3;justify-self:start}
- :root[data-sales-theme] .sales-app .ss-workspace-header :is(
-  .ss-workspace-header__search,.board-header-search,.connections-header-search
- ){grid-column:1/-1;grid-row:3;justify-self:end;width:calc(100% - 96px)}
-}
 /* Notebook's column grid gains the same independent header row. */
 :root[data-sales-theme] .sales-app .notebook-workspace:has(>.ss-workspace-header){
  grid-template-rows:var(--ss-workspace-header-height) minmax(0,1fr);
@@ -284,24 +252,5 @@
  :root[data-sales-theme] .sales-app .ss-workspace-header :is(
   .board-header-tools,.connections-header-tools){
   grid-column:2;grid-row:1;
- }
-}
-@media(max-width:760px){
- :root[data-sales-theme] .sales-app.view-board .board-header-panel.board-foundation-header.ss-workspace-header,
- :root[data-sales-theme] .sales-app.view-dashboard
- .connections-directory-layout>.connections-heading.connections-foundation-heading.ss-workspace-header{
-  grid-template-columns:minmax(0,1fr) 126px;grid-template-rows:38px 37px 42px;
-  row-gap:4px;padding:9px 12px;
-  height:var(--ss-workspace-header-height);min-height:var(--ss-workspace-header-height);
- }
- :root[data-sales-theme] .sales-app .ss-workspace-header :is(
-  .board-view-toggle,.connections-header-navigation){
-  grid-column:1/-1;grid-row:2;width:100%;
- }
- :root[data-sales-theme] .sales-app .ss-workspace-header :is(
-  .board-header-tools,.connections-header-tools){display:contents!important}
- :root[data-sales-theme] .sales-app.view-tasks .tasks-workspace >
- :is(.tasks-summary,.tasks-tools,.tasks-list,.tasks-table-container,.tasks-footer,.tasks-filter-help,.tasks-state){
-  width:calc(100% - 20px);
  }
 }
