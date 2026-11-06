@@ -6,7 +6,7 @@ type DragState={pointerId:number;originY:number;distance:number;sheet:HTMLElemen
  * Dragging 88px down closes; otherwise the sheet springs back.
  * The ordinary close button remains the keyboard-accessible way to dismiss.
  */
-export function MobileSheetHandle({onClose}:{onClose:()=>void}){
+export function MobileSheetHandle({onClose,disabled=false}:{onClose:()=>void;disabled?:boolean}){
  const dragging=useRef<DragState|null>(null);
  const reset=(sheet:HTMLElement)=>{
   sheet.style.transition='transform 160ms ease-out';
@@ -16,7 +16,7 @@ export function MobileSheetHandle({onClose}:{onClose:()=>void}){
   },180);
  };
  const down=(event:PointerEvent<HTMLDivElement>)=>{
-  if(event.button!==0||window.matchMedia('(min-width:761px)').matches||
+  if(disabled||event.button!==0||window.matchMedia('(min-width:761px)').matches||
      document.documentElement.dataset.ssMobileKeyboard==='open')return;
   const sheet=event.currentTarget.closest<HTMLElement>('.ss-mobile-sheet');
   if(!sheet)return;
@@ -36,11 +36,11 @@ export function MobileSheetHandle({onClose}:{onClose:()=>void}){
   dragging.current=null;
   if(event.currentTarget.hasPointerCapture(event.pointerId))
    event.currentTarget.releasePointerCapture(event.pointerId);
-  if(!cancelled&&drag.distance>=88){
+  if(!cancelled&&!disabled&&drag.distance>=88){
    onClose();
   }else reset(drag.sheet);
  };
- return <div className="ss-mobile-sheet-handle" aria-hidden="true"
+ return <div className={'ss-mobile-sheet-handle'+(disabled?' is-disabled':'')} aria-hidden="true"
   onPointerDown={down} onPointerMove={move}
   onPointerUp={event=>finish(event,false)}
   onPointerCancel={event=>finish(event,true)}>
