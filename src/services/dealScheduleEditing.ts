@@ -3,7 +3,6 @@ import {
   validateDealScheduleRows,
   type DealScheduleDraft,
   type DealScheduleRow,
-  type DealScheduleScope,
 } from './dealScheduleTemplates';
 
 export type SchedulePhase = 'import' | 'building';
