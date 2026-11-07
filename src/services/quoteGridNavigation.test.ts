@@ -32,6 +32,30 @@ describe('Quick Quote grid navigation',()=>{
   expect(nextQuickGridCell(cells,-1,'down')).toBeNull();
   expect(nextQuickGridCell(cells,999,'right')).toBeNull();
  });
+ it('advances iPhone Prev/Next across consecutive measurement cells and rows',()=>{
+  // A takeoff row has editable Piece, Qty, Length and Width followed by the
+  // next row's cells; computed SF, prices and action buttons aren't included.
+  const takeoff:QuickGridCell[]=[
+   {row:0,column:2},{row:0,column:3},{row:0,column:4},{row:0,column:5},
+   {row:1,column:2},{row:1,column:3},{row:1,column:4},{row:1,column:5},
+  ];
+  expect(nextQuickGridCell(takeoff,1,'next')).toBe(2);
+  expect(nextQuickGridCell(takeoff,2,'next')).toBe(3);
+  expect(nextQuickGridCell(takeoff,3,'next')).toBe(4);
+  expect(nextQuickGridCell(takeoff,4,'previous')).toBe(3);
+  expect(nextQuickGridCell(takeoff,7,'next')).toBeNull();
+ });
+ it('skips derived cells in mixed sink and charge rows without leaving the worksheet',()=>{
+  const mixed:QuickGridCell[]=[
+   {row:0,column:2},{row:0,column:3},{row:0,column:7},
+   {row:1,column:2},{row:1,column:7},
+  ];
+  expect(nextQuickGridCell(mixed,1,'next')).toBe(2);
+  expect(nextQuickGridCell(mixed,2,'next')).toBe(3);
+  expect(nextQuickGridCell(mixed,3,'previous')).toBe(2);
+  expect(nextQuickGridCell(mixed,2,'down')).toBe(4);
+  expect(nextQuickGridCell(mixed,3,'left')).toBeNull();
+ });
  it('does not mutate geometry while navigating',()=>{
   const before=JSON.stringify(cells);
   nextQuickGridCell(cells,7,'left');
