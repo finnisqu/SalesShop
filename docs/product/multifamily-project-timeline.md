@@ -1,6 +1,6 @@
 # SalesShop — Contracted Deal Timeline / Multifamily Starter
 
-**Status:** Template foundation in `src/services/dealScheduleTemplates.ts` (not yet exposed as a live editor).
+**Status (2026-11-07 feature branch):** Working device-local Deal editor and portfolio Gantt prototype in `src/components/DealScheduleWorkspace.tsx`, backed by `src/store/dealScheduleStore.ts`. Not deployed, cloud-synced, or production-ready. The earlier template foundation remains in `src/services/dealScheduleTemplates.ts`.
 **CRM location:** CONNECTIONS → DEALS → Timeline, with a filtered Portfolio Gantt and a Deal-specific Gantt.
 **Selection:** Contracted/open project execution means stage `Closed Won`; `Completed` remains discoverable via a show-completed filter. Earlier deals may opt in to plan ahead, without changing the sales stage.
 
@@ -70,3 +70,24 @@ First iteration: show predecessor relationships as advisory, including shop draw
 4. Test multi-company isolation, permissions, partial imports, repeated invoice milestones, cross-batch dependencies, and fresh reload/cloud sync before enabling a production flag.
 
 The repository README currently holds a staging/auth rollout gate. Creating or applying production database migrations is a separate action and was **not** part of the template foundation.
+
+
+## Implemented in first functional batch (not yet released)
+
+- The Deal detail page has a **Project timeline** action opening a full-width workspace.
+- CONNECTIONS → DEALS can switch between **List** and **Timeline**; completed Deals are optional.
+- A Deal's multifamily starter is created **only on explicit click**, preventing repeated opens from duplicating phases.
+- Imports and buildings can be added and deleted independently. Removing a phase also cleans dependent ID references.
+- Users can edit planned and actual dates, phase labels, status, invoice amounts and retainage percentages.
+- A building can be linked to multiple imports, updating advisory delivery predecessors.
+- Date ranges appear as Gantt bars and milestones; mobile defaults to a compact milestone list.
+- Device-local draft persistence uses an organization-and-user-scoped key in cloud mode to prevent one login's cache being shown to another.
+- Test cases for phased imports, building billing, dependencies, date validation and deletion are added, but not yet executed in CI or a local full build.
+
+### Explicit limitations before team launch
+
+- **No Supabase schedule schema or RLS migration has been applied.** Cloud users see a **device-only draft** notice. Changes do **not** sync to other devices or teammates; clearing browser data will erase that device's schedule.
+- No automatic generation of tasks, calendar entries, invoice records or payments. Dates and amounts are manual schedule references.
+- Bars are selectable, not yet drag-to-reschedule; no real-time change conflict management.
+- No role-matrix/cloud sync verification, no browser visual QA and no production deployment as part of this feature branch.
+- A future migration must store all schedule rows under an existing Deal and tenant-scoped normalized tables with role-appropriate SELECT/INSERT/UPDATE/DELETE policies. Following the README's staging release gate remains mandatory.
