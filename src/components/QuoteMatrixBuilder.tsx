@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState,type ReactNode,type KeyboardEvent} from 'react';
 import {createPortal} from 'react-dom';
+import {PHONE_LAYOUT_QUERY} from '../lib/mobileViewport';
 import {useQuoteStore} from '../store/quoteStore';
 import type {Quote,QuoteLine,QuoteSection,QuoteTakeoffPiece,QuoteTakeoffSink} from '../types/quote';
 import {quoteLineAmount,quoteLinesTotal,quoteTotal} from '../types/quote';
@@ -74,24 +75,38 @@ function PopupCell({value,label,disabled=false,render}:{
   const outside=(event:PointerEvent)=>{
    if(!panel.current?.contains(event.target as Node)&&!trigger.current?.contains(event.target as Node))setOpen(false);
   };
-  const escape=(event:globalThis.KeyboardEvent)=>{if(event.key==='Escape')setOpen(false);};
+  const escape=(event:globalThis.KeyboardEvent)=>{
+   if(event.key==='Escape'){
+    event.preventDefault();event.stopPropagation();
+    setOpen(false);trigger.current?.focus({preventScroll:true});
+   }
+  };
   const scroll=(event:Event)=>{if(!(event.target instanceof Node)||!panel.current?.contains(event.target))setOpen(false);};
   document.addEventListener('pointerdown',outside);
   document.addEventListener('keydown',escape);
-  window.addEventListener('resize',dismiss);
+  // iOS keyboard resizing must not close a picker being edited.
+  const resized=()=>{if(!window.matchMedia(PHONE_LAYOUT_QUERY).matches)dismiss();};
+  window.addEventListener('resize',resized);
   window.addEventListener('scroll',scroll,true);
   return()=>{
    document.removeEventListener('pointerdown',outside);
    document.removeEventListener('keydown',escape);
-   window.removeEventListener('resize',dismiss);
+   window.removeEventListener('resize',resized);
    window.removeEventListener('scroll',scroll,true);
   };
  },[open]);
  const launch=()=>{
   if(open){setOpen(false);return;}
   const rect=trigger.current?.getBoundingClientRect();
-  if(rect)setPosition({top:Math.min(rect.bottom+5,window.innerHeight-290),
-   left:Math.max(10,Math.min(rect.left,window.innerWidth-370))});
+  if(rect){
+   const visual=window.visualViewport;
+   const top=visual?.offsetTop??0,height=visual?.height??window.innerHeight;
+   const popWidth=Math.min(350,window.innerWidth-20);
+   setPosition({
+    top:Math.max(top+8,Math.min(rect.bottom+5,top+height-240)),
+    left:Math.max(10,Math.min(rect.left,window.innerWidth-popWidth-10)),
+   });
+  }
   setOpen(true);
  };
  return <><button ref={trigger} type="button" className="qmx-picker" onClick={launch}
