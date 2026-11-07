@@ -23,12 +23,52 @@ export function nextQuickGridCell(cells:readonly QuickGridCell[],
    ||Math.abs(a.column-here.column)-Math.abs(b.column-here.column));
  return choices[0]?.index??null;
 }
+/** Navigate by stable row/column identity, even when React exchanges an
+ * editable cell's input for its resting button after a blur/commit.
+ * activate=true is used by the mobile keyboard accessory: it opens the next
+ * editable button rather than leaving the user to tap it again. */
+export function moveQuickGridFocus(root:HTMLElement,from:HTMLElement,
+ direction:QuickGridDirection,activate=false):boolean{
+ const rows=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-row]'));
+ const controls=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'));
+ const index=controls.findIndex(el=>el===from||el.contains(from));
+ if(index<0)return false;
+ const coordinate=(el:HTMLElement):QuickGridCell=>{
+  const row=el.closest<HTMLElement>('[data-quick-grid-row]');
+  const cell=el.closest<HTMLElement>('.qqs-cell,.qqt-cell');
+  return {row:rows.indexOf(row!),column:cell?
+   Array.from(cell.parentElement?.children??[]).indexOf(cell):-1};
+ };
+ const cells=controls.map(coordinate);
+ const next=nextQuickGridCell(cells,index,direction);
+ if(next===null)return false;
+ const target=cells[next];
+ if(from.matches('input,textarea,[contenteditable="true"]'))from.blur();
+ requestAnimationFrame(()=>{
+  const updated=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'));
+  const currentRows=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-row]'));
+  const nextControl=updated.find(el=>{
+   const row=el.closest<HTMLElement>('[data-quick-grid-row]');
+   const cell=el.closest<HTMLElement>('.qqs-cell,.qqt-cell');
+   return currentRows.indexOf(row!)===target.row
+    &&(cell?Array.from(cell.parentElement?.children??[]).indexOf(cell):-1)===target.column;
+  });
+  if(!nextControl)return;
+  // Keep the target visible within the quotation's scrollable worksheet,
+  // without jumping back to the top or sideways to an unrelated column.
+  nextControl.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'});
+  if(activate&&nextControl instanceof HTMLButtonElement)nextControl.click();
+  else nextControl.focus({preventScroll:true});
+ });
+ return true;
+}
+
 type GridKeyEvent={
  key:string;shiftKey:boolean;ctrlKey:boolean;metaKey:boolean;target:EventTarget|null;
  preventDefault:()=>void;
 };
 /** Called on the worksheet root, on the capture phase.
- * Tab and Enter commit the active input before focusing the next cell.
+ * Tab and Enter commit the active input before focusing the next editable cell.
  * Arrow keys navigate display cells, not text within active inputs. */
 export function handleQuickGridKey(event:GridKeyEvent,root:HTMLElement):void{
  const target=event.target;
@@ -48,36 +88,11 @@ export function handleQuickGridKey(event:GridKeyEvent,root:HTMLElement):void{
  }
  const direction:QuickGridDirection|undefined=
   event.key==='Tab'?(event.shiftKey?'previous':'next'):
-  event.key==='Enter'&&editing?'down':
+  event.key==='Enter'&&editing?'next':
   !editing&&event.key==='ArrowRight'?'right':
   !editing&&event.key==='ArrowLeft'?'left':
   !editing&&event.key==='ArrowDown'?'down':
   !editing&&event.key==='ArrowUp'?'up':undefined;
  if(!direction)return;
- const rows=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-row]'));
- const controls=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'));
- const index=controls.findIndex(el=>el===target||el.contains(target));
- if(index<0)return; // Native keyboard behavior elsewhere in the table.
- const cells=controls.map(el=>{
-  const row=el.closest<HTMLElement>('[data-quick-grid-row]');
-  const cell=el.closest<HTMLElement>('.qqs-cell,.qqt-cell');
-  return {row:rows.indexOf(row!),column:cell?Array.from(cell.parentElement?.children??[]).indexOf(cell):-1};
- });
- const next=nextQuickGridCell(cells,index,direction);
- if(next===null)return; // Let Tab leave the table naturally at the end.
- event.preventDefault();
- if(editing)target.blur(); // Triggers the normal commit or cancellation path.
- requestAnimationFrame(()=>{
-  const updated=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'));
-  // Re-evaluate after the edit has changed React's rendered buttons/inputs.
-  const nextCell=cells[next];
-  const activeRows=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-row]'));
-  const selected=updated.find(el=>{
-   const row=el.closest<HTMLElement>('[data-quick-grid-row]');
-   const cell=el.closest<HTMLElement>('.qqs-cell,.qqt-cell');
-   return activeRows.indexOf(row!)===nextCell.row
-    &&(cell?Array.from(cell.parentElement?.children??[]).indexOf(cell):-1)===nextCell.column;
-  });
-  selected?.focus({preventScroll:false});
- });
+ if(moveQuickGridFocus(root,target,direction))event.preventDefault();
 }
