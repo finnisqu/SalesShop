@@ -47,6 +47,8 @@ interface VisualRow {
   status:DealScheduleStatus;
   start?:string;
   end?:string;
+  actualStart?:string;
+  actualEnd?:string;
   isGroup?:boolean;
   collapsed?:boolean;
   progress?:number;
@@ -75,7 +77,8 @@ function visibleRows(schedule:DealScheduleDraft,collapsed:Set<string>):VisualRow
     for(const row of schedule.rows.filter(item=>item.parentId===parentId)){
       const dates=rowDates(row,schedule.rows);
       result.push({id:row.id,label:row.label,level,kind:row.kind,status:row.status,
-        start:dates.start,end:dates.end,isGroup:row.kind==='group',collapsed:collapsed.has(row.id)});
+        start:dates.start,end:dates.end,actualStart:row.actualStart,actualEnd:row.actualFinish,
+        isGroup:row.kind==='group',collapsed:collapsed.has(row.id)});
       if(row.kind==='group'&&!collapsed.has(row.id))walk(row.id,level+1);
     }
   };
@@ -83,7 +86,8 @@ function visibleRows(schedule:DealScheduleDraft,collapsed:Set<string>):VisualRow
   return result;
 }
 function bounds(rows:readonly VisualRow[]):{start:number;days:number;width:number}{
-  const days=rows.flatMap(row=>[dayNumber(row.start),dayNumber(row.end)])
+  const days=rows.flatMap(row=>[dayNumber(row.start),dayNumber(row.end),
+    dayNumber(row.actualStart),dayNumber(row.actualEnd)])
     .filter((n):n is number=>n!==undefined);
   const today=Math.floor(Date.now()/MS);
   const start=days.length?Math.min(...days)-7:today-7;
@@ -110,6 +114,9 @@ function GanttChart({rows,onSelect,onCollapse,selectedId}:{
         const begin=dayNumber(row.start),end=dayNumber(row.end);
         const left=begin===undefined?undefined:Math.max(0,(begin-range.start)*scale);
         const width=begin===undefined?0:Math.max(10,((end??begin)-begin+1)*scale);
+        const actual=dayNumber(row.actualStart),actualEnd=dayNumber(row.actualEnd);
+        const actualLeft=actual===undefined?undefined:Math.max(0,(actual-range.start)*scale);
+        const actualWidth=actual===undefined?0:Math.max(10,((actualEnd??actual)-actual+1)*scale);
         return <div className={'ss-gantt-line'+(selectedId===row.id?' is-selected':'')} key={row.id}>
           <div className="ss-gantt-row-heading">
             <span className="ss-gantt-indent" style={{width:row.level*13}}/>
@@ -126,6 +133,9 @@ function GanttChart({rows,onSelect,onCollapse,selectedId}:{
               title={row.label+': '+compactDate(row.start)+' – '+compactDate(row.end)}
               className={'ss-gantt-bar ss-gantt-'+row.status+(row.kind==='milestone'||row.kind==='financial'?' is-milestone':'')+(row.isGroup?' is-summary':'')}
               style={{left,width}}><span>{width>65?row.label:''}</span></button>}
+            {actualLeft!==undefined&&<button type="button" onClick={()=>onSelect(row.id)}
+              className="ss-gantt-actual" style={{left:actualLeft,width:actualWidth}}
+              title={'Actual: '+compactDate(row.actualStart)+' – '+compactDate(row.actualEnd)}/>}
           </div>
         </div>;
       })}
@@ -258,6 +268,7 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
         {modeView==='gantt'?<GanttChart rows={rows} onSelect={setSelectedId} selectedId={selectedId}
           onCollapse={id=>setCollapsed(previous=>previous.includes(id)?previous.filter(key=>key!==id):[...previous,id])}/>:
           <ScheduleMilestoneList schedule={schedule} rows={visibleRows(schedule,new Set())} onSelect={setSelectedId}/>}
+        {modeView==='gantt'&&<p className="ss-schedule-legend">Solid bar: planned dates · Dark line: actual dates · Orange line: today</p>}
         {rows.every(row=>!row.start)&&<p className="ss-schedule-tip">Select a milestone and enter planned dates to populate the Gantt bars. No delivery or installation dates are assumed.</p>}
         {selected&&<RowEditor row={selected} schedule={schedule} dealId={deal.id} canEdit={canEdit}/>}
         {error&&<p role="alert" className="ss-schedule-error">{error}</p>}
