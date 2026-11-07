@@ -46,8 +46,13 @@ export function QuoteMobileCellToolbar({grid}:{grid:RefObject<HTMLElement|null>}
    cancelAnimationFrame(pending);
    pending=requestAnimationFrame(()=>{
     const active=document.activeElement;
-    if(active instanceof HTMLInputElement&&root.contains(active)&&
-       active.matches('[data-quick-grid-editable].is-editing'))
+    if(!(active instanceof HTMLInputElement)||!root.contains(active)||
+       !active.matches('[data-quick-grid-editable].is-editing'))return;
+    const visible=window.visualViewport;
+    const top=(visible?.offsetTop??0)+12;
+    const bottom=(visible?.offsetTop??0)+(visible?.height??window.innerHeight)-56;
+    const bounds=active.getBoundingClientRect();
+    if(bounds.top<top||bounds.bottom>bottom)
      active.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'});
    });
   };
