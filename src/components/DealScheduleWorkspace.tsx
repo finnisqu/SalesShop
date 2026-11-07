@@ -77,7 +77,7 @@ function visibleRows(schedule:DealScheduleDraft,collapsed:Set<string>):VisualRow
     for(const row of schedule.rows.filter(item=>item.parentId===parentId)){
       const dates=rowDates(row,schedule.rows);
       result.push({id:row.id,label:row.label,level,kind:row.kind,status:row.status,
-        start:dates.start,end:dates.end,actualStart:row.actualStart,actualEnd:row.actualFinish,
+        start:dates.start,end:dates.end,actualStart:row.actualStart??row.actualFinish,actualEnd:row.actualFinish,
         isGroup:row.kind==='group',collapsed:collapsed.has(row.id)});
       if(row.kind==='group'&&!collapsed.has(row.id))walk(row.id,level+1);
     }
