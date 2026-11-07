@@ -72,3 +72,9 @@
 .ss-schedule-top-toggle button{border:1px solid var(--ss-border,var(--color-border,#d5d9de));border-radius:6px;padding:5px 12px;background:transparent;color:inherit;font-size:.78rem;cursor:pointer}
 .ss-schedule-top-toggle button[aria-pressed=true]{background:var(--ss-surface-raised,var(--color-surface-hover,#e4e9ef));font-weight:700}
 .ss-schedule-top-toggle button:focus-visible{outline:2px solid #3187c5;outline-offset:2px}
+
+.ss-workspace-header__primary .ss-schedule-top-toggle{padding:0;gap:3px;flex-wrap:nowrap}
+.ss-workspace-header__primary .ss-schedule-top-toggle button{white-space:nowrap;min-height:32px}
+@media(max-width:700px){
+ .ss-workspace-header__primary .ss-schedule-top-toggle{display:none}
+}
