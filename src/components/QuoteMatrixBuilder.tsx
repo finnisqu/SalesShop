@@ -400,7 +400,16 @@ export function QuoteMatrixBuilder({quote,onAddArea,onLayouts,onCopyArea,onAdvan
      </select>}
      <button type="button" onClick={applyBulk} disabled={!editable||(operation==='move'&&!target)}>Apply</button>
      <button type="button" onClick={()=>setSelected([])}>Clear</button></div>}
-   <div className="qmx-hscroll" role="region" aria-label="Scroll detailed takeoff columns horizontally" tabIndex={0}>
+   <div className="qmx-hscroll" role="region" aria-label="Scroll detailed takeoff columns horizontally"
+     tabIndex={0} onFocusCapture={event=>{
+      const target=event.target;
+      if(!(target instanceof HTMLElement)||!target.matches('input,select,button'))return;
+      // Reveal the specific measurement column without forcing a full-page
+      // scroll or keeping a wide second column pinned on an iPhone.
+      requestAnimationFrame(()=>target.scrollIntoView({
+       block:'nearest',inline:'nearest',behavior:'auto',
+      }));
+     }}>
     <div className="qmx-details-grid" onKeyDown={onSheetKey}>
      <div className="qmx-grid qmx-detail-groups" aria-hidden="true">
       <span className="qmx-sticky-area">Area / Room</span><span className="qmx-sticky-description">Item</span>
