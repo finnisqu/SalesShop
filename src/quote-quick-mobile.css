@@ -693,3 +693,107 @@
  .sales-app .qmb .qmb-quick-area-panel.qmb-quick-area-panel{
   animation:none!important}
 }
+
+
+/* Batch 2: retain the worksheet feel while making mobile editing reliable.
+   Keep one vertical quote scroll, reveal the focused cell, and don't freeze
+   secondary columns that consume the entire iPhone viewport. */
+@media(max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ .sales-app .qmb .qqt-workspace .qqt-scroll{
+  scroll-padding-block:60px 72px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+ }
+ .sales-app .qmb .qqt-row:focus-within>.qqt-cell:not(.qqt-derived-cell){
+  background:var(--qmb-tint)!important;
+ }
+ .sales-app .qmb .qqt-row>.qqt-cell:focus-within{
+  box-shadow:inset 0 0 0 2px var(--qmb-accent);
+  position:relative;
+  z-index:1;
+ }
+ .sales-app .qmb .qqt-cell :is(.qqt-input.is-editing,.qqt-text.is-editing){
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  font-size:16px!important;
+  scroll-margin-block:72px;
+ }
+ .sales-app .qmb .qqt-cell .qqt-cell-value.is-editable{
+  min-height:31px;
+  touch-action:manipulation;
+ }
+ .sales-app .qmb .qqt-row>.qqt-cell:nth-child(10){
+  min-height:44px!important;
+ }
+ .sales-app .qmb .qqt-actions .qqt-more-button{
+  min-width:44px!important;
+  min-height:44px!important;
+  width:44px!important;
+  height:44px!important;
+  border-radius:9px;
+  touch-action:manipulation;
+ }
+ /* Only the first identity column is frozen in the technical sheet.
+    The second previously hid measurements on narrow phones. */
+ .sales-app .qmb .qmx-hscroll{
+  max-width:100%;
+  overflow-x:auto!important;
+  overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-inline:10px;
+ }
+ .sales-app .qmb .qmx-area-grid .qmx-sticky-material,
+ .sales-app .qmb .qmx-details-grid .qmx-sticky-description{
+  position:relative!important;
+  left:auto!important;
+  z-index:1!important;
+ }
+ .sales-app .qmb .qmx-area-grid .qmx-sticky-area,
+ .sales-app .qmb .qmx-details-grid .qmx-sticky-area{
+  position:sticky!important;
+  left:0!important;
+  z-index:4!important;
+ }
+ .sales-app .qmb .qmx-hscroll :is(input,select,.qmx-picker){
+  scroll-margin-inline:12px;
+ }
+ .sales-app .qmb .qmx-hscroll :is(input,select,.qmx-picker):focus-visible{
+  outline:2px solid var(--qmb-accent);
+  outline-offset:-2px;
+ }
+ /* Picker size follows the iOS visual viewport instead of the layout
+    viewport, which remains tall after the keyboard opens in Safari. */
+ .sales-app .qmb.qmx-popup{
+  box-sizing:border-box!important;
+  top:calc(var(--ss-mobile-visual-top,0px) + 8px)!important;
+  left:8px!important;
+  width:min(460px,calc(100vw - 16px))!important;
+  max-width:calc(100vw - 16px)!important;
+  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 16px)!important;
+  overflow:hidden!important;
+  border-radius:14px!important;
+ }
+ .sales-app .qmb.qmx-popup>header{
+  flex:0 0 auto;
+  min-height:43px;
+ }
+ .sales-app .qmb.qmx-popup>header button{
+  min-width:40px;
+  min-height:40px;
+  border-radius:8px;
+ }
+ .sales-app .qmb.qmx-popup .qmx-popup-body{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+ }
+ .sales-app .qmb.qmx-popup :is(input,select){
+  min-width:0;
+  max-width:100%;
+  font-size:16px!important;
+ }
+}
