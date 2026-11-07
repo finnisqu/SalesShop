@@ -81,7 +81,12 @@ function PopupCell({value,label,disabled=false,render}:{
     setOpen(false);trigger.current?.focus({preventScroll:true});
    }
   };
-  const scroll=(event:Event)=>{if(!(event.target instanceof Node)||!panel.current?.contains(event.target))setOpen(false);};
+  const scroll=(event:Event)=>{
+   // Phone pickers are fixed to the visible viewport. Safari scrolls the
+   // document when it raises the keyboard, which must not dismiss the menu.
+   if(window.matchMedia(PHONE_LAYOUT_QUERY).matches)return;
+   if(!(event.target instanceof Node)||!panel.current?.contains(event.target))setOpen(false);
+  };
   document.addEventListener('pointerdown',outside);
   document.addEventListener('keydown',escape);
   // iOS keyboard resizing must not close a picker being edited.
