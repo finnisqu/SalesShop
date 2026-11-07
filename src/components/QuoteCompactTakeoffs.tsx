@@ -5,6 +5,7 @@ import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
+import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {newTakeoffPiece,newTakeoffSink,takeoffPieceSf,takeoffPieceSplashSf,
@@ -55,7 +56,7 @@ function SmallInput({value,label,commit,inches=false,integer=false,disabled=fals
   }}>{value===undefined?'—':String(value)}</button>;
  return <input className="qqt-input is-editing" data-quick-grid-editable={alwaysInput?undefined:'true'}
    autoFocus={editing} disabled={disabled} type="text" aria-label={label}
-  inputMode="decimal" value={draft} onChange={e=>setDraft(e.target.value)}
+  inputMode={integer?'numeric':'decimal'} value={draft} onChange={e=>setDraft(e.target.value)}
   onFocus={e=>{if(selectOriginal.current)e.currentTarget.select();}}
   onBlur={save} onKeyDown={e=>{
    if(e.key==='Enter'||e.key==='Tab')e.currentTarget.blur();
@@ -547,6 +548,7 @@ export function QuoteCompactTakeoffs({quote,onAdvanced,focusArea}:{
       index===5?<span aria-hidden="true">⋯</span>:null)}</div>)}
   </div>;
  return <section className="qqt-workspace" aria-label="Takeoffs spreadsheet">
+  <QuoteMobileCellToolbar grid={list}/>
   <header className="qqt-heading">
    <div className="qqt-heading-instructions"><h3>Takeoffs</h3>
     <span className="qqt-desktop-hint">Click, type or paste to edit · Tab/Enter to move · pencil for more</span>
