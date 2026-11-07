@@ -1,0 +1,64 @@
+/* Native-keyboard accessory for Quick Quote sheet editing. Rendered in a
+ * portal so no table, sheet or transformed ancestor can clip it. */
+.qqt-mobile-cell-toolbar{display:none}
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ .qqt-mobile-cell-toolbar{
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  position:fixed;
+  z-index:12000;
+  left:0;
+  right:0;
+  top:calc(var(--ss-mobile-visual-top,0px) + var(--ss-mobile-visual-height,100dvh) - 48px);
+  height:48px;
+  max-height:48px;
+  gap:5px;
+  padding:5px max(10px,env(safe-area-inset-left)) 5px max(10px,env(safe-area-inset-right));
+  border-top:1px solid var(--ss-theme-border,#c9bdac);
+  background:var(--ss-theme-card,#fffaf0);
+  color:var(--ss-theme-ink,#302d27);
+  box-shadow:0 -3px 14px #0002;
+  touch-action:manipulation;
+ }
+ .qqt-mobile-cell-toolbar-label{
+  flex:1 1 0;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--ss-theme-muted,#777);
+  font:700 11px/1.2 system-ui,sans-serif;
+ }
+ .qqt-mobile-cell-toolbar>button{
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  flex:0 0 auto;
+  min-width:52px;
+  min-height:38px;
+  padding:6px 9px;
+  border:1px solid var(--ss-theme-border,#c9bdac);
+  border-radius:9px;
+  background:var(--ss-theme-tint,#ebe3d2);
+  color:var(--ss-theme-ink,#302d27);
+  font:750 12px/1.1 system-ui,sans-serif;
+  cursor:pointer;
+ }
+ .qqt-mobile-cell-toolbar>button.is-done{
+  background:var(--ss-theme-accent,#917246);
+  border-color:var(--ss-theme-accent,#917246);
+  color:var(--ss-theme-accent-ink,#fff);
+ }
+ .qqt-mobile-cell-toolbar>button:focus-visible{
+  outline:2px solid var(--ss-theme-accent,#917246);
+  outline-offset:1px;
+ }
+ @media(max-width:370px){
+  .qqt-mobile-cell-toolbar-label{font-size:10px}
+  .qqt-mobile-cell-toolbar>button{min-width:45px;padding:6px}
+ }
+}
