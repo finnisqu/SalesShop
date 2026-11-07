@@ -43,6 +43,15 @@ export function moveQuickGridFocus(root:HTMLElement,from:HTMLElement,
  const next=nextQuickGridCell(cells,index,direction);
  if(next===null)return false;
  const target=cells[next];
+ // An iPhone only opens its software keyboard reliably when the next edit
+ // begins synchronously inside the user's tap. The next resting button
+ // already exists, so activate it before allowing React to replace cells.
+ const immediate=controls[next];
+ if(activate&&immediate instanceof HTMLButtonElement){
+  immediate.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'});
+  immediate.click();
+  return true;
+ }
  if(from.matches('input,textarea,[contenteditable="true"]'))from.blur();
  requestAnimationFrame(()=>{
   const updated=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'));
@@ -94,5 +103,5 @@ export function handleQuickGridKey(event:GridKeyEvent,root:HTMLElement):void{
   !editing&&event.key==='ArrowDown'?'down':
   !editing&&event.key==='ArrowUp'?'up':undefined;
  if(!direction)return;
- if(moveQuickGridFocus(root,target,direction))event.preventDefault();
+ if(moveQuickGridFocus(root,target,direction,editing&&event.key==='Enter'))event.preventDefault();
 }
