@@ -1,6 +1,6 @@
 # SalesShop — Contracted Deal Timeline / Multifamily Starter
 
-**Status (2026-11-07 feature branch):** Working device-local Deal editor and portfolio Gantt prototype in `src/components/DealScheduleWorkspace.tsx`, backed by `src/store/dealScheduleStore.ts`. Not deployed, cloud-synced, or production-ready. The earlier template foundation remains in `src/services/dealScheduleTemplates.ts`.
+**Status (2026-11-08 feature branch):** Editable Gantt and portfolio view plus planned/actual milestone dates, manual personal Task linking, and Home calendar milestones. Device-local drafts work by default; a feature-gated shared Supabase adapter is implemented but **cannot be enabled until the staged database schema and security release gate are approved and tested**. This branch is not deployed or production-ready.
 **CRM location:** CONNECTIONS → DEALS → Timeline, with a filtered Portfolio Gantt and a Deal-specific Gantt.
 **Selection:** Contracted/open project execution means stage `Closed Won`; `Completed` remains discoverable via a show-completed filter. Earlier deals may opt in to plan ahead, without changing the sales stage.
 
@@ -91,3 +91,21 @@ The repository README currently holds a staging/auth rollout gate. Creating or a
 - Bars are selectable, not yet drag-to-reschedule; no real-time change conflict management.
 - No role-matrix/cloud sync verification, no browser visual QA and no production deployment as part of this feature branch.
 - A future migration must store all schedule rows under an existing Deal and tenant-scoped normalized tables with role-appropriate SELECT/INSERT/UPDATE/DELETE policies. Following the README's staging release gate remains mandatory.
+
+## Shared storage + Home integrations (2026-11-08 batch)
+
+- `docs/staging/deal-execution-schedules.schema.sql`: **staged-only** tenant-scoped schedule table keyed by `(organization_id, deal_id)` with a composite Deal FK, CRM editor RLS and revision counter. No SQL was executed or migration applied in production.
+- `src/services/dealScheduleCloud.ts` and `src/store/sharedDealScheduleStore.ts`: organization-wide read with authenticated CRM edit access; creating a shared schedule is explicit, never automatic. Edits use a revision compare-and-swap, not last-write-wins. On a stale revision, reload the authoritative server copy and require the user to reapply their changes.
+- `src/services/useDealExecutionSchedules.ts`: an adapter that uses local drafts by default and activates shared storage only with `VITE_DEAL_SCHEDULE_CLOUD_ENABLED=true` on a verified deployment. Cloud mode does not silently publish old device drafts; a separate Publish action is available if no server schedule exists.
+- `src/services/dealScheduleCalendar.ts`: projects schedule dates into **Home → On this day → Project milestones**. These do not count as overdue personal Tasks or inflate task/bid badges. Only Deals visible to the user through assignment or existing task/quote links feed their personal Home calendar.
+- The selected milestone offers a manually requested follow-up Task with a stable source ID and Deal link. The milestone's completion and personal Task completion remain independent.
+- Added tests for calendar milestones, cross-deal filtering, stable reminder IDs and date projection. Tests and full build require execution before release.
+
+### Activation order
+
+1. Keep GitHub PR #67 as a draft. Run `npm run build`, `npm test`, and mobile/desktop visual QC using a disposable or checked-out working tree with dependencies installed.
+2. Approve staging provisioning separately (see repo `README.md` and security release gate) and confirm Supabase costs before creating any billable branch.
+3. Apply the SQL **only to staging**. Test all role, tenant, FK, CAS, deletion and malformed-document cases with synthetic Deals.
+4. Point a staging frontend at the staging backend with `VITE_DEAL_SCHEDULE_CLOUD_ENABLED=true`. Verify from two distinct browsers that concurrent revisions cannot silently clobber one another, and that an old device draft is published only after explicit action.
+5. Verify that the Home calendar shows only authorized Deals' milestones, manually created follow-up Tasks do not duplicate, and every relevant building invoice / import phase survives fresh reload.
+6. Only after separate production approval: add a formal migration to the approved deployment process, apply SQL, then enable the shared schedule flag. Never deploy the flag before the schema and RLS.
