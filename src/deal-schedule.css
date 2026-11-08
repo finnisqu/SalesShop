@@ -81,3 +81,8 @@
 
 .ss-gantt-actual{position:absolute;top:29px;height:5px;border:0;border-radius:3px;background:#27384a;cursor:pointer;z-index:2}
 .ss-schedule-legend{font-size:.71rem;opacity:.7;margin:0}
+
+.ss-schedule-task-action{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.73rem}
+.ss-schedule-task-action small{font-size:.7rem;opacity:.72}
+.ss-calendar-project-dot{display:inline-block;width:5px;height:5px;min-width:5px;min-height:5px;border-radius:50%;background:#398f78;position:absolute;right:3px;bottom:3px}
+.ss-schedule-error button{margin-left:8px;border:1px solid currentColor;border-radius:5px;padding:3px 8px;background:transparent;color:inherit;font-size:.76rem}
