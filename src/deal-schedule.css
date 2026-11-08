@@ -49,6 +49,11 @@
 .ss-schedule-sources small,.ss-schedule-predecessors{margin:0;font-size:.71rem;opacity:.7}
 .ss-schedule-error{padding:8px;color:#b34936;font-size:.78rem}
 .ss-schedule-list{display:grid;border:1px solid var(--ss-border,var(--color-border,#d9dde2));border-radius:8px;overflow:hidden}
+.ss-schedule-list-line{display:flex;align-items:center;min-width:0;border-bottom:1px solid var(--ss-border,var(--color-border,#e0e4e8))}
+.ss-schedule-list-line:last-child{border-bottom:0}
+.ss-schedule-list-line .ss-schedule-list-row{flex:1;min-width:0;width:100%;border-bottom:0}
+.ss-schedule-list-group-edit{background:transparent;color:inherit;border:0;border-left:1px solid var(--ss-border,var(--color-border,#ddd));padding:9px;cursor:pointer;font-size:.72rem;opacity:.8}
+.ss-schedule-list-group-edit:focus-visible{outline:2px solid #3187c5;outline-offset:-2px}
 .ss-schedule-list-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(74px,auto);align-items:center;gap:7px;text-align:left;border:0;border-bottom:1px solid var(--ss-border,var(--color-border,#e0e4e8));background:transparent;color:inherit;padding:8px 10px;font-size:.77rem;cursor:pointer}
 .ss-schedule-list-row:last-child{border-bottom:0}
 .ss-schedule-list-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -86,3 +91,8 @@
 .ss-schedule-task-action small{font-size:.7rem;opacity:.72}
 .ss-calendar-project-dot{display:inline-block;width:5px;height:5px;min-width:5px;min-height:5px;border-radius:50%;background:#398f78;position:absolute;right:3px;bottom:3px}
 .ss-schedule-error button{margin-left:8px;border:1px solid currentColor;border-radius:5px;padding:3px 8px;background:transparent;color:inherit;font-size:.76rem}
+
+@media(max-width:420px){
+ .ss-schedule-editor-grid{grid-template-columns:minmax(0,1fr)}
+ .ss-schedule-list-group-edit{padding:8px 6px}
+}
