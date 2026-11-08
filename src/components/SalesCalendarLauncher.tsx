@@ -181,6 +181,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   [mode,userId,deals,sources.deals]);
  const projectMilestones=useMemo(()=>dealScheduleCalendarMilestones(projectSchedules,scheduleDeals),
   [projectSchedules,scheduleDeals]);
+ const projectMilestoneDays=useMemo(()=>new Set(projectMilestones.map(item=>item.date)),[projectMilestones]);
  const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,sources.deals,sources.activities,
   ownQuotes,{contacts,companies}),[ownTasks,sources,ownQuotes,contacts,companies]);
  const badgeIndex=useMemo(()=>buildCalendarBadgeIndex(events,ownTasks,sources.activities,
@@ -421,7 +422,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key),inMonth=key.slice(0,7)===localDateKey(month).slice(0,7);
       const hasNotebookDate=notebookReady&&notebookCalendarDates(notebookEntries,key).length>0;
-      const hasProjectMilestones=projectMilestones.some(item=>item.date===key);
+      const hasProjectMilestones=projectMilestoneDays.has(key);
       const badges=badgeSettings.slots.map(slot=>({...slot,
        count:slot.metric==='none'?0:metricCount(badgeIndex,key,slot.metric)})).filter(slot=>slot.count>0);
       const selectDate=()=>{
