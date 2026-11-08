@@ -160,6 +160,22 @@ function RowEditor({row,schedule,deal,canEdit}:{
   const enabled=canEdit&&!busy;
   const imports=schedule.rows.filter(item=>item.scope==='import'&&item.kind==='group');
   const isPhase=row.kind==='group'&&(row.scope==='import'||row.scope==='building');
+  // Buffer text/number editing until blur. Per-keystroke network writes would
+  // interrupt typing and race against another revision-guarded cloud save.
+  const [labelDraft,setLabelDraft]=useState(row.label);
+  const [amountDraft,setAmountDraft]=useState(row.amount?.toString()??'');
+  const [retainageDraft,setRetainageDraft]=useState(row.retainagePercent?.toString()??'');
+  useEffect(()=>{
+    setLabelDraft(row.label);
+    setAmountDraft(row.amount?.toString()??'');
+    setRetainageDraft(row.retainagePercent?.toString()??'');
+  },[row.id,row.label,row.amount,row.retainagePercent]);
+  const saveNumber=(field:'amount'|'retainagePercent',input:string)=>{
+    const value=input.trim();
+    const n=Number(value);
+    if(value&&( !Number.isFinite(n)||n<0||(field==='retainagePercent'&&n>100)))return;
+    if((row[field]??'').toString()!==value)edit(dealId,row.id,{[field]:value===''?undefined:n});
+  };
   const dateField=(field:'plannedStart'|'plannedFinish'|'actualStart'|'actualFinish',label:string)=>
     <label className="ss-schedule-field"><span>{label}</span><input type="date" disabled={!enabled}
       value={row[field]??''} onChange={event=>edit(dealId,row.id,{[field]:event.target.value||undefined})}/></label>;
@@ -172,7 +188,9 @@ function RowEditor({row,schedule,deal,canEdit}:{
     </div>
     <div className="ss-schedule-editor-grid">
       <label className="ss-schedule-field"><span>Name</span><input type="text" disabled={!enabled}
-        value={row.label} onChange={event=>edit(dealId,row.id,{label:event.target.value})}/></label>
+        value={labelDraft} onChange={event=>setLabelDraft(event.target.value)}
+        onBlur={()=>{const name=labelDraft.trim();if(name&&name!==row.label)edit(dealId,row.id,{label:name});else setLabelDraft(row.label);}}
+        onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();}}/></label>
       <label className="ss-schedule-field"><span>Status</span><select disabled={!enabled} value={row.status}
         onChange={event=>edit(dealId,row.id,{status:event.target.value as DealScheduleStatus})}>
         {STATES.map(state=><option key={state.id} value={state.id}>{state.label}</option>)}
@@ -183,17 +201,13 @@ function RowEditor({row,schedule,deal,canEdit}:{
       {dateField('actualFinish','Actual finish')}
       {row.kind==='financial'&&<>
         <label className="ss-schedule-field"><span>Amount ($)</span><input type="number" min="0" step="0.01"
-          disabled={!enabled} value={row.amount??''} onChange={event=>{
-            const value=event.target.value;
-            if(!value||Number.isFinite(Number(value))&&Number(value)>=0)
-              edit(dealId,row.id,{amount:value===''?undefined:Number(value)});
-          }}/></label>
+          disabled={!enabled} value={amountDraft} onChange={event=>setAmountDraft(event.target.value)}
+          onBlur={()=>saveNumber('amount',amountDraft)}
+          onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();}}/></label>
         <label className="ss-schedule-field"><span>Retainage (%)</span><input type="number" min="0" max="100" step="0.1"
-          disabled={!enabled} value={row.retainagePercent??''} onChange={event=>{
-            const value=event.target.value;
-            if(!value||Number.isFinite(Number(value))&&Number(value)>=0&&Number(value)<=100)
-              edit(dealId,row.id,{retainagePercent:value===''?undefined:Number(value)});
-          }}/></label>
+          disabled={!enabled} value={retainageDraft} onChange={event=>setRetainageDraft(event.target.value)}
+          onBlur={()=>saveNumber('retainagePercent',retainageDraft)}
+          onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();}}/></label>
       </>}
     </div>
     {row.kind==='group'&&row.scope==='building'&&<div className="ss-schedule-sources">
