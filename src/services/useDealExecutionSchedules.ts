@@ -46,6 +46,7 @@ export function useDealExecutionSchedules(){
     ?sharedScope===scope&&(sharedStatus==='ready'||sharedStatus==='saving'||sharedStatus==='conflict')
     :localLoaded&&localScope===scope);
   const busy=cloud&&sharedStatus==='saving';
+  const mutable=!cloud||sharedStatus==='ready';
   const error=cloud?sharedScope===scope?sharedError:null
     :localScope===scope?localError:null;
   const schedules:Record<string,DealScheduleDraft>=ready
@@ -53,7 +54,7 @@ export function useDealExecutionSchedules(){
   const deviceDrafts=localLoaded&&localScope===scope?localSchedules:{};
 
   return {
-    cloud,scope,ready,busy,error,schedules,deviceDrafts,
+    cloud,scope,ready,busy,mutable,error,schedules,deviceDrafts,
     storageLabel:cloud?'Shared schedule · organization CRM access':'Device-only draft · not yet synced to teammates.',
     begin:(dealId:string)=>cloud?void sharedBegin(dealId):localBegin(dealId),
     publish:(dealId:string)=>cloud&&deviceDrafts[dealId]
