@@ -5,6 +5,8 @@ import {scheduleProgress} from '../services/dealScheduleEditing';
 import {useDealExecutionSchedules} from '../services/useDealExecutionSchedules';
 import {useAuthStore} from '../store/authStore';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {resolveOwnerPerspective} from '../services/rolePerspective';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import {requestTaskModal} from './TaskModalHost';
 import {milestoneFollowupFields} from '../services/dealScheduleCalendar';
@@ -242,7 +244,10 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
   const mode=useAuthStore(state=>state.mode);
   const role=useAuthStore(state=>state.teamRole);
   const department=useAuthStore(state=>state.teamDepartment);
-  const canEdit=(mode!=='cloud'||canEditTeamArea(role,department,'crm'))&&!busy&&mutable;
+  const perspectiveId=useRolePerspectiveStore(state=>state.activePerspective);
+  const simulated=resolveOwnerPerspective(perspectiveId,role,mode);
+  const canEdit=(mode!=='cloud'||canEditTeamArea(simulated?.role??role,
+    simulated?.department??department,'crm'))&&!busy&&mutable;
   const schedule=ready?schedules[deal.id]:undefined;
   const [modeView,setModeView]=useState<'gantt'|'milestones'>('gantt');
   const [collapsed,setCollapsed]=useState<string[]>([]);
