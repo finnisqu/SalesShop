@@ -237,12 +237,12 @@ function RowEditor({row,schedule,deal,canEdit}:{
 }
 
 export function DealScheduleWorkspace({deal}: {deal:Project}){
-  const {scope,ready,schedules,deviceDrafts,cloud,busy,error,begin,publish,addPhase,
+  const {scope,ready,schedules,deviceDrafts,cloud,busy,mutable,error,begin,publish,addPhase,
     storageLabel,refresh}=useDealExecutionSchedules();
   const mode=useAuthStore(state=>state.mode);
   const role=useAuthStore(state=>state.teamRole);
   const department=useAuthStore(state=>state.teamDepartment);
-  const canEdit=(mode!=='cloud'||canEditTeamArea(role,department,'crm'))&&!busy;
+  const canEdit=(mode!=='cloud'||canEditTeamArea(role,department,'crm'))&&!busy&&mutable;
   const schedule=ready?schedules[deal.id]:undefined;
   const [modeView,setModeView]=useState<'gantt'|'milestones'>('gantt');
   const [collapsed,setCollapsed]=useState<string[]>([]);
