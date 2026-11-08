@@ -133,19 +133,32 @@ function GanttChart({rows,onSelect,onCollapse,selectedId}:{
     </div>
   </div>;
 }
-function ScheduleMilestoneList({schedule,rows,onSelect}:{
+function ScheduleMilestoneList({schedule,rows,onSelect,onCollapse}:{
   schedule:DealScheduleDraft;rows:VisualRow[];onSelect:(id:string)=>void;
+  onCollapse:(id:string)=>void;
 }){
   const byId=new Map(schedule.rows.map(row=>[row.id,row]));
   return <div className="ss-schedule-list">
     {rows.map(item=>{
       const row=byId.get(item.id);
-      return <button type="button" key={item.id} className="ss-schedule-list-row"
-        onClick={()=>onSelect(item.id)} style={{paddingLeft:10+item.level*14}}>
-        <span className="ss-schedule-list-name">{item.isGroup?'▾ ':''}{item.label}</span>
-        <span className={'ss-schedule-state ss-schedule-'+item.status}>{item.isGroup?'Group':STATES.find(state=>state.id===item.status)?.label}</span>
-        <span className="ss-schedule-list-date">{compactDate(row?.plannedStart)} {row?.plannedFinish?'– '+compactDate(row.plannedFinish):''}</span>
-      </button>;
+      return <div key={item.id} className="ss-schedule-list-line"
+        style={{paddingLeft:4+item.level*14}}>
+        <button type="button" className="ss-schedule-list-row"
+          aria-expanded={item.isGroup?!item.collapsed:undefined}
+          onClick={()=>item.isGroup?onCollapse(item.id):onSelect(item.id)}>
+          <span className="ss-schedule-list-name">
+            {item.isGroup?(item.collapsed?'▸ ':'▾ '):''}{item.label}
+          </span>
+          <span className={'ss-schedule-state ss-schedule-'+item.status}>
+            {item.isGroup?'Group':STATES.find(state=>state.id===item.status)?.label}
+          </span>
+          <span className="ss-schedule-list-date">
+            {compactDate(row?.plannedStart)} {row?.plannedFinish?'– '+compactDate(row.plannedFinish):''}
+          </span>
+        </button>
+        {item.isGroup&&<button type="button" className="ss-schedule-list-group-edit"
+          onClick={()=>onSelect(item.id)} aria-label={'Edit '+item.label}>Edit</button>}
+      </div>;
     })}
   </div>;
 }
@@ -252,11 +265,16 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
   const [modeView,setModeView]=useState<'gantt'|'milestones'>('gantt');
   const [collapsed,setCollapsed]=useState<string[]>([]);
   const [selectedId,setSelectedId]=useState<string|undefined>();
-  useEffect(()=>{setSelectedId(undefined);setCollapsed([]);},[deal.id,scope]);
+  useEffect(()=>{
+    setSelectedId(undefined);
+    setCollapsed(window.matchMedia('(max-width: 700px)').matches?['imports','buildings','closeout']:[]);
+  },[deal.id,scope]);
   useEffect(()=>{
     if(window.matchMedia('(max-width: 700px)').matches)setModeView('milestones');
   },[]);
   const rows=useMemo(()=>schedule?visibleRows(schedule,new Set(collapsed)):[],[schedule,collapsed]);
+  const toggleCollapsed=(id:string)=>setCollapsed(previous=>
+    previous.includes(id)?previous.filter(key=>key!==id):[...previous,id]);
   const selected=schedule?.rows.find(row=>row.id===selectedId);
   const progress=schedule?scheduleProgress(schedule):null;
   return <section className="ss-deal-schedule" aria-label="Project timeline">
@@ -289,8 +307,9 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
           <span>{schedule.rows.filter(row=>row.scope==='building'&&row.kind==='group').length} buildings</span>
         </div>
         {modeView==='gantt'?<GanttChart rows={rows} onSelect={setSelectedId} selectedId={selectedId}
-          onCollapse={id=>setCollapsed(previous=>previous.includes(id)?previous.filter(key=>key!==id):[...previous,id])}/>:
-          <ScheduleMilestoneList schedule={schedule} rows={visibleRows(schedule,new Set())} onSelect={setSelectedId}/>}
+          onCollapse={toggleCollapsed}/>:
+          <ScheduleMilestoneList schedule={schedule} rows={rows}
+            onSelect={setSelectedId} onCollapse={toggleCollapsed}/>}
         {modeView==='gantt'&&<p className="ss-schedule-legend">Solid bar: planned dates · Dark line: actual dates · Orange line: today</p>}
         {rows.every(row=>!row.start)&&<p className="ss-schedule-tip">Select a milestone and enter planned dates to populate the Gantt bars. No delivery or installation dates are assumed.</p>}
         {selected&&<RowEditor row={selected} schedule={schedule} deal={deal} canEdit={canEdit}/>}
