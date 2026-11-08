@@ -50,8 +50,9 @@ export const useSharedDealScheduleStore=create<SharedScheduleState>((set,get)=>{
   }
   async function mutate(dealId:string,change:(draft:DealScheduleDraft)=>DealScheduleDraft){
     const before=get();
-    const parsed=before.scope?parts(before.scope):null;
-    if(!parsed||before.status!=='ready')return;
+    const scope=before.scope;
+    const parsed=scope?parts(scope):null;
+    if(!scope||!parsed||before.status!=='ready')return;
     const original=before.schedules[dealId],revision=before.revisions[dealId];
     if(!original||!revision)return;
     let next:DealScheduleDraft;
@@ -69,7 +70,7 @@ export const useSharedDealScheduleStore=create<SharedScheduleState>((set,get)=>{
     }catch(error){
       if(get().scope!==before.scope)return;
       if(error instanceof SharedScheduleConflict){
-        await reload(before.scope,false);
+        await reload(scope,false);
         if(get().scope===before.scope)set({status:'conflict',error:error.message});
       }else set({status:'error',error:error instanceof Error?error.message:'Unable to save shared timeline.'});
     }
@@ -86,8 +87,9 @@ export const useSharedDealScheduleStore=create<SharedScheduleState>((set,get)=>{
     refresh:async()=>{const scope=get().scope;if(scope)await reload(scope);},
     begin:async(dealId,deviceDraft)=>{
       const current=get();
-      const parsed=current.scope?parts(current.scope):null;
-      if(!parsed||current.status!=='ready'||current.schedules[dealId])return;
+      const scope=current.scope;
+      const parsed=scope?parts(scope):null;
+      if(!scope||!parsed||current.status!=='ready'||current.schedules[dealId])return;
       const draft=deviceDraft??createMultifamilyStarterSchedule({dealId});
       if(draft.dealId!==dealId){
         set({error:'Device draft belongs to a different Deal.'});return;
@@ -103,7 +105,7 @@ export const useSharedDealScheduleStore=create<SharedScheduleState>((set,get)=>{
       }catch(error){
         if(get().scope!==current.scope)return;
         if(error instanceof SharedScheduleConflict){
-          await reload(current.scope,false);
+          await reload(scope,false);
           if(get().scope===current.scope)set({status:'conflict',
             error:'A shared schedule already exists. Loaded the server version; your device draft was not overwritten.'});
         }else set({status:'error',error:error instanceof Error?error.message:'Unable to create shared timeline.'});
