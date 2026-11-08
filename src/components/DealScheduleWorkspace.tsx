@@ -5,6 +5,9 @@ import {scheduleProgress} from '../services/dealScheduleEditing';
 import {useDealExecutionSchedules} from '../services/useDealExecutionSchedules';
 import {useAuthStore} from '../store/authStore';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {usePersonalTaskStore} from '../store/personalTaskStore';
+import {requestTaskModal} from './TaskModalHost';
+import {milestoneFollowupFields} from '../services/dealScheduleCalendar';
 import '../deal-schedule.css';
 
 const STATES: {id:DealScheduleStatus;label:string}[]=[
@@ -144,9 +147,15 @@ function ScheduleMilestoneList({schedule,rows,onSelect}:{
     })}
   </div>;
 }
-function RowEditor({row,schedule,dealId,canEdit}:{
-  row:DealScheduleRow;schedule:DealScheduleDraft;dealId:string;canEdit:boolean;
+function RowEditor({row,schedule,deal,canEdit}:{
+  row:DealScheduleRow;schedule:DealScheduleDraft;deal:Project;canEdit:boolean;
 }){
+  const dealId=deal.id;
+  const createTask=usePersonalTaskStore(state=>state.createTask);
+  const taskScope=usePersonalTaskStore(state=>state.scope);
+  const personalTasks=usePersonalTaskStore(state=>state.tasks);
+  const taskKey='deal-schedule:'+dealId+':'+row.id;
+  const linkedTask=personalTasks.find(task=>task.sourceObjectId===taskKey&&!task.deletedAt);
   const {edit,assignImports,removePhase,busy}=useDealExecutionSchedules();
   const enabled=canEdit&&!busy;
   const imports=schedule.rows.filter(item=>item.scope==='import'&&item.kind==='group');
@@ -197,6 +206,15 @@ function RowEditor({row,schedule,dealId,canEdit}:{
           }}/>{item.label}</label>)}
       </div>
       <small>Import deliveries become advisory predecessors of this building's material delivery.</small>
+    </div>}
+    {row.kind!=='group'&&<div className="ss-schedule-task-action">
+      {linkedTask?<button type="button" onClick={()=>requestTaskModal({mode:'preview',id:linkedTask.id})}>Open linked Task</button>:
+        <button type="button" disabled={!taskScope} onClick={()=>{
+          const fields=milestoneFollowupFields(deal,row);
+          const id=createTask(fields.title,fields);
+          if(id)requestTaskModal({mode:'preview',id});
+        }}>+ Create personal follow-up Task</button>}
+      <small>Optional · does not create duplicate tasks or change the milestone status</small>
     </div>}
     {row.predecessorIds.length>0&&<p className="ss-schedule-predecessors">
       Follows: {row.predecessorIds.map(id=>schedule.rows.find(item=>item.id===id)?.label??id).join(' · ')}
@@ -255,7 +273,7 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
           <ScheduleMilestoneList schedule={schedule} rows={visibleRows(schedule,new Set())} onSelect={setSelectedId}/>}
         {modeView==='gantt'&&<p className="ss-schedule-legend">Solid bar: planned dates · Dark line: actual dates · Orange line: today</p>}
         {rows.every(row=>!row.start)&&<p className="ss-schedule-tip">Select a milestone and enter planned dates to populate the Gantt bars. No delivery or installation dates are assumed.</p>}
-        {selected&&<RowEditor row={selected} schedule={schedule} dealId={deal.id} canEdit={canEdit}/>}
+        {selected&&<RowEditor row={selected} schedule={schedule} deal={deal} canEdit={canEdit}/>}
         {error&&<p role="alert" className="ss-schedule-error">{error}{cloud&&<button type="button" onClick={refresh}>Refresh</button>}</p>}
       </>}
   </section>;
