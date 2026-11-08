@@ -258,6 +258,7 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
     <header className="ss-schedule-toolbar">
       <div><h2>Project timeline</h2><p>Phased procurement, building installation and invoicing</p></div>
       {schedule&&<div className="ss-schedule-actions">
+        {cloud&&<button type="button" disabled={busy} onClick={refresh}>Refresh</button>}
         <button type="button" disabled={!canEdit} onClick={()=>addPhase(deal.id,'import')}>+ Import</button>
         <button type="button" disabled={!canEdit} onClick={()=>addPhase(deal.id,'building')}>+ Building</button>
         <div className="ss-schedule-switch" role="group" aria-label="Timeline display">
@@ -297,7 +298,7 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
 export function DealTimelinePortfolio({projects,onOpen}:{
   projects:Project[];onOpen:(dealId:string)=>void;
 }){
-  const {ready,schedules,storageLabel,error,refresh}=useDealExecutionSchedules();
+  const {ready,schedules,cloud,busy,storageLabel,error,refresh}=useDealExecutionSchedules();
   const [showCompleted,setShowCompleted]=useState(false);
   const [expanded,setExpanded]=useState<string[]>([]);
   const eligible=projects.filter(project=>
@@ -331,8 +332,11 @@ export function DealTimelinePortfolio({projects,onOpen}:{
   return <section className="ss-deal-schedule ss-schedule-portfolio" aria-label="Contracted deals timeline">
     <header className="ss-schedule-toolbar">
       <div><h2>Contracted project timeline</h2><p>Planned work across active deals</p></div>
-      <label className="ss-schedule-show-complete"><input type="checkbox" checked={showCompleted}
-        onChange={event=>setShowCompleted(event.target.checked)}/>Show completed</label>
+      <div className="ss-schedule-actions">
+       <label className="ss-schedule-show-complete"><input type="checkbox" checked={showCompleted}
+         onChange={event=>setShowCompleted(event.target.checked)}/>Show completed</label>
+       {cloud&&<button type="button" disabled={busy} onClick={refresh}>Refresh</button>}
+      </div>
     </header>
     <p className="ss-schedule-storage-note">{storageLabel}</p>
     {error&&<p role="alert" className="ss-schedule-error">{error} <button type="button" onClick={refresh}>Retry</button></p>}
