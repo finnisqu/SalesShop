@@ -19,6 +19,15 @@ describe('editable multifamily Deal execution schedule',()=>{
     expect(original.rows.filter(row=>row.scope==='import'&&row.kind==='group')).toHaveLength(2);
   });
 
+  it('keeps sequential phase names unique after deleting a middle phase',()=>{
+    const original=createMultifamilyStarterSchedule({importNames:['Import 1','Import 2','Import 3']});
+    const trimmed=removeSchedulePhase(original,'import-2');
+    const next=appendSchedulePhase(trimmed,'import');
+    const names=next.rows.filter(row=>row.scope==='import'&&row.kind==='group').map(row=>row.label);
+    expect(names).toEqual(['Import 1','Import 3','Import 4']);
+    expect(validateDealScheduleRows(next.rows)).toEqual([]);
+  });
+
   it('adds a building and updates project closeout dependencies',()=>{
     const initial=createMultifamilyStarterSchedule();
     const extended=appendSchedulePhase(initial,'building');
