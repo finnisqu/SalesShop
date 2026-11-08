@@ -2,7 +2,7 @@ import {useEffect,useMemo,useState} from 'react';
 import type {Project} from '../types/crm';
 import type {DealScheduleDraft,DealScheduleRow,DealScheduleStatus} from '../services/dealScheduleTemplates';
 import {scheduleProgress} from '../services/dealScheduleEditing';
-import {useDealScheduleStore} from '../store/dealScheduleStore';
+import {useDealExecutionSchedules} from '../services/useDealExecutionSchedules';
 import {useAuthStore} from '../store/authStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import '../deal-schedule.css';
@@ -24,20 +24,6 @@ function dateLabel(day:number):string{
 }
 function compactDate(value?:string):string{
   const d=dayNumber(value);return d===undefined?'—':dateLabel(d);
-}
-function useScope():string{
-  const mode=useAuthStore(state=>state.mode);
-  const org=useAuthStore(state=>state.organizationId);
-  const user=useAuthStore(state=>state.user?.id);
-  return mode==='cloud'?'org:'+String(org??'none')+':user:'+String(user??'none'):'offline';
-}
-function useScheduleScope():{scope:string;ready:boolean}{
-  const scope=useScope();
-  const load=useDealScheduleStore(state=>state.load);
-  const loaded=useDealScheduleStore(state=>state.loaded);
-  const current=useDealScheduleStore(state=>state.scope);
-  useEffect(()=>load(scope),[scope,load]);
-  return {scope,ready:loaded&&scope===current};
 }
 interface VisualRow {
   id:string;
@@ -161,25 +147,24 @@ function ScheduleMilestoneList({schedule,rows,onSelect}:{
 function RowEditor({row,schedule,dealId,canEdit}:{
   row:DealScheduleRow;schedule:DealScheduleDraft;dealId:string;canEdit:boolean;
 }){
-  const edit=useDealScheduleStore(state=>state.edit);
-  const assignImports=useDealScheduleStore(state=>state.assignImports);
-  const removePhase=useDealScheduleStore(state=>state.removePhase);
+  const {edit,assignImports,removePhase,busy}=useDealExecutionSchedules();
+  const enabled=canEdit&&!busy;
   const imports=schedule.rows.filter(item=>item.scope==='import'&&item.kind==='group');
   const isPhase=row.kind==='group'&&(row.scope==='import'||row.scope==='building');
   const dateField=(field:'plannedStart'|'plannedFinish'|'actualStart'|'actualFinish',label:string)=>
-    <label className="ss-schedule-field"><span>{label}</span><input type="date" disabled={!canEdit}
+    <label className="ss-schedule-field"><span>{label}</span><input type="date" disabled={!enabled}
       value={row[field]??''} onChange={event=>edit(dealId,row.id,{[field]:event.target.value||undefined})}/></label>;
   return <section className="ss-schedule-row-editor" aria-label={'Edit '+row.label}>
     <div className="ss-schedule-editor-heading">
       <strong>{row.label}</strong>
-      {isPhase&&canEdit&&<button type="button" className="ss-schedule-danger" onClick={()=>{
+      {isPhase&&enabled&&<button type="button" className="ss-schedule-danger" onClick={()=>{
         if(window.confirm('Remove '+row.label+' and all its milestones?'))removePhase(dealId,row.id);
       }}>Delete phase</button>}
     </div>
     <div className="ss-schedule-editor-grid">
-      <label className="ss-schedule-field"><span>Name</span><input type="text" disabled={!canEdit}
+      <label className="ss-schedule-field"><span>Name</span><input type="text" disabled={!enabled}
         value={row.label} onChange={event=>edit(dealId,row.id,{label:event.target.value})}/></label>
-      <label className="ss-schedule-field"><span>Status</span><select disabled={!canEdit} value={row.status}
+      <label className="ss-schedule-field"><span>Status</span><select disabled={!enabled} value={row.status}
         onChange={event=>edit(dealId,row.id,{status:event.target.value as DealScheduleStatus})}>
         {STATES.map(state=><option key={state.id} value={state.id}>{state.label}</option>)}
       </select></label>
@@ -189,13 +174,13 @@ function RowEditor({row,schedule,dealId,canEdit}:{
       {dateField('actualFinish','Actual finish')}
       {row.kind==='financial'&&<>
         <label className="ss-schedule-field"><span>Amount ($)</span><input type="number" min="0" step="0.01"
-          disabled={!canEdit} value={row.amount??''} onChange={event=>{
+          disabled={!enabled} value={row.amount??''} onChange={event=>{
             const value=event.target.value;
             if(!value||Number.isFinite(Number(value))&&Number(value)>=0)
               edit(dealId,row.id,{amount:value===''?undefined:Number(value)});
           }}/></label>
         <label className="ss-schedule-field"><span>Retainage (%)</span><input type="number" min="0" max="100" step="0.1"
-          disabled={!canEdit} value={row.retainagePercent??''} onChange={event=>{
+          disabled={!enabled} value={row.retainagePercent??''} onChange={event=>{
             const value=event.target.value;
             if(!value||Number.isFinite(Number(value))&&Number(value)>=0&&Number(value)<=100)
               edit(dealId,row.id,{retainagePercent:value===''?undefined:Number(value)});
@@ -205,7 +190,7 @@ function RowEditor({row,schedule,dealId,canEdit}:{
     {row.kind==='group'&&row.scope==='building'&&<div className="ss-schedule-sources">
       <strong>Imports supplying this building</strong>
       <div className="ss-schedule-source-options">
-        {imports.map(item=><label key={item.id}><input type="checkbox" disabled={!canEdit}
+        {imports.map(item=><label key={item.id}><input type="checkbox" disabled={!enabled}
           checked={(row.sourceImportIds??[]).includes(item.id)} onChange={event=>{
             const current=row.sourceImportIds??[];
             assignImports(dealId,row.id,event.target.checked?[...current,item.id]:current.filter(id=>id!==item.id));
@@ -220,15 +205,12 @@ function RowEditor({row,schedule,dealId,canEdit}:{
 }
 
 export function DealScheduleWorkspace({deal}: {deal:Project}){
-  const {scope,ready}=useScheduleScope();
-  const schedules=useDealScheduleStore(state=>state.schedules);
-  const error=useDealScheduleStore(state=>state.error);
-  const begin=useDealScheduleStore(state=>state.begin);
-  const addPhase=useDealScheduleStore(state=>state.addPhase);
+  const {scope,ready,schedules,deviceDrafts,cloud,busy,error,begin,publish,addPhase,
+    storageLabel,refresh}=useDealExecutionSchedules();
   const mode=useAuthStore(state=>state.mode);
   const role=useAuthStore(state=>state.teamRole);
   const department=useAuthStore(state=>state.teamDepartment);
-  const canEdit=mode!=='cloud'||canEditTeamArea(role,department,'crm');
+  const canEdit=(mode!=='cloud'||canEditTeamArea(role,department,'crm'))&&!busy;
   const schedule=ready?schedules[deal.id]:undefined;
   const [modeView,setModeView]=useState<'gantt'|'milestones'>('gantt');
   const [collapsed,setCollapsed]=useState<string[]>([]);
@@ -252,11 +234,14 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
         </div>
       </div>}
     </header>
-    <p className="ss-schedule-storage-note">Device-only draft · not yet synced to your team or other devices.</p>
-    {!ready?<p>Loading project timeline…</p>:!schedule?
+    <p className="ss-schedule-storage-note">{storageLabel}{busy?' · Saving…':''}</p>
+    {!ready?(error?<div role="alert" className="ss-schedule-error">{error} <button type="button" onClick={refresh}>Retry</button></div>
+       :<p>Loading project timeline…</p>):!schedule?
       <div className="ss-schedule-empty">
         <p>No execution timeline has been started for this deal. The multifamily starter includes shop drawings, deposit, phased imports, building installs, invoices and retainage; all dates start blank.</p>
         <button type="button" disabled={!canEdit} onClick={()=>begin(deal.id)}>Start multifamily timeline</button>
+        {cloud&&deviceDrafts[deal.id]&&<button type="button" disabled={!canEdit} onClick={()=>publish(deal.id)}>
+          Publish existing device draft to team (only if no shared schedule exists)</button>}
       </div>:
       <>
         <div className="ss-schedule-overview">
@@ -271,7 +256,7 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
         {modeView==='gantt'&&<p className="ss-schedule-legend">Solid bar: planned dates · Dark line: actual dates · Orange line: today</p>}
         {rows.every(row=>!row.start)&&<p className="ss-schedule-tip">Select a milestone and enter planned dates to populate the Gantt bars. No delivery or installation dates are assumed.</p>}
         {selected&&<RowEditor row={selected} schedule={schedule} dealId={deal.id} canEdit={canEdit}/>}
-        {error&&<p role="alert" className="ss-schedule-error">{error}</p>}
+        {error&&<p role="alert" className="ss-schedule-error">{error}{cloud&&<button type="button" onClick={refresh}>Refresh</button>}</p>}
       </>}
   </section>;
 }
@@ -280,8 +265,7 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
 export function DealTimelinePortfolio({projects,onOpen}:{
   projects:Project[];onOpen:(dealId:string)=>void;
 }){
-  const {ready}=useScheduleScope();
-  const schedules=useDealScheduleStore(state=>state.schedules);
+  const {ready,schedules,storageLabel,error,refresh}=useDealExecutionSchedules();
   const [showCompleted,setShowCompleted]=useState(false);
   const [expanded,setExpanded]=useState<string[]>([]);
   const eligible=projects.filter(project=>
@@ -318,7 +302,8 @@ export function DealTimelinePortfolio({projects,onOpen}:{
       <label className="ss-schedule-show-complete"><input type="checkbox" checked={showCompleted}
         onChange={event=>setShowCompleted(event.target.checked)}/>Show completed</label>
     </header>
-    <p className="ss-schedule-storage-note">Draft timelines saved only on this device. Team sync is not active.</p>
+    <p className="ss-schedule-storage-note">{storageLabel}</p>
+    {error&&<p role="alert" className="ss-schedule-error">{error} <button type="button" onClick={refresh}>Retry</button></p>}
     {ready&&eligible.length?<GanttChart rows={chartRows} onSelect={id=>onOpen(resolveDeal(id))}
       onCollapse={id=>setExpanded(previous=>previous.includes(id)
         ?previous.filter(key=>key!==id):[...previous,id])}/>:
