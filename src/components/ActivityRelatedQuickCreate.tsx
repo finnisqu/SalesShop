@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {useCrmStore} from '../store/crmStore';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
+import {recordEmailError} from './RecordFormFeedback';
 import '../activity-related-create.css';
 
 type Kind='company'|'person'|'deal';
@@ -44,6 +45,8 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
     if(!id)throw new Error('Could not create the company.');
     link={type:'company',id,label:'Company · '+clean};
    }else if(kind==='person'){
+    const emailIssue=recordEmailError(email);
+    if(emailIssue){setError(emailIssue);return;}
     if(people.some(p=>(email.trim()&&p.email?.toLowerCase()===email.trim().toLowerCase())||
       (p.name.toLowerCase()===clean.toLowerCase()&&(p.companyId??'')===companyId))){
      setError('That person may already exist. Find and link their record above.');return;
