@@ -5,7 +5,7 @@ import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
-import {isOurOrgCompany,ourOrgCompanyIds} from '../services/ourOrganizationDirectory';
+import {isOurOrgCompany,ourOrgCompanyIds,isOurOrgContact} from '../services/ourOrganizationDirectory';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
@@ -199,10 +199,10 @@ export function Connections() {
     .filter((company) => findText(company.name, ...visibleCompanyAliases(company)).includes(needle))
     .sort((a, b) => a.name.localeCompare(b.name)), [companies, companyFilter, needle]);
   const peopleRows = useMemo(() => contacts
-    .filter(person=>!internalCompanyIds.has(person.companyId??''))
+    .filter(person=>!isOurOrgContact(person,companies))
     .filter((person) => findText(person.name, person.email, person.phone, person.title,
       companiesById.get(person.companyId ?? '')?.name).includes(needle))
-    .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById, internalCompanyIds, needle]);
+    .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById, companies, needle]);
   const projectRows = useMemo(() => projects
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction, dealPipelineLabel(project.pipeline)).includes(needle))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
@@ -353,7 +353,7 @@ export function Connections() {
   };
   const backToPeople = () => {
     const person=contacts.find(c=>c.id===focusedContactId);
-    chooseTab(person&&internalCompanyIds.has(person.companyId??'')?'organization':'people');
+    chooseTab(person&&isOurOrgContact(person,companies)?'organization':'people');
     setView('dashboard');
   };
   const backToCompanies = () => {
