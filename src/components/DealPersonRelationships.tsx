@@ -11,7 +11,7 @@ function useLinks(){
   user=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   department=useAuthStore(s=>s.teamDepartment);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
- const scope=dealPeopleScope(mode,org);
+ const scope=mode==='cloud'&&!user?null:dealPeopleScope(mode,org);
  const active=useDealPeopleStore(s=>s.scope),loaded=useDealPeopleStore(s=>s.loaded),
   loading=useDealPeopleStore(s=>s.loading),error=useDealPeopleStore(s=>s.error),
   links=useDealPeopleStore(s=>s.links),load=useDealPeopleStore(s=>s.load);
