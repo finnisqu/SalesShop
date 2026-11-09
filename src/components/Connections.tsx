@@ -7,6 +7,7 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
 import { DealRecordPage } from './DealRecordPage';
+import {DealTimelinePortfolio} from './DealScheduleWorkspace';
 import { Button, Field, SectionTabs, StatusText } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import { useCrmStore } from '../store/crmStore';
@@ -82,6 +83,7 @@ function findText(...items: Array<string | undefined>) {
 
 export function Connections() {
   const [tab, setTab] = useState<ConnectionsTab>(initialTab);
+  const [dealsView,setDealsView]=useState<'list'|'timeline'>('list');
   useEffect(()=>{
    const show=()=>setTab('activity');
    window.addEventListener('salesshop:open-activity-history',show);
@@ -347,6 +349,10 @@ export function Connections() {
         more={<WorkspaceMoreMenu label="Connections More" items={[
           {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
           {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
+          ...(tab==='deals'?[
+            {label:'Deals · list',active:dealsView==='list',onClick:()=>setDealsView('list')},
+            {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>setDealsView('timeline')},
+          ]:[]),
         ]}/>}
         search={<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
           value={query} onChange={event=>setQuery(event.target.value)}
@@ -357,6 +363,10 @@ export function Connections() {
             onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
           {tab==='people'&&<Button variant="primary" className="connections-add"
             onClick={()=>setPersonCreating(value=>!value)}>+ Person</Button>}
+          {tab==='deals'&&<div className="ss-schedule-top-toggle" role="group" aria-label="Deal display">
+            <button type="button" aria-pressed={dealsView==='list'} onClick={()=>setDealsView('list')}>List</button>
+            <button type="button" aria-pressed={dealsView==='timeline'} onClick={()=>setDealsView('timeline')}>Timeline</button>
+          </div>}
           {tab==='deals'&&<Button variant="primary" className="connections-add"
             onClick={()=>setDealCreating(value=>!value)}>+ Deal</Button>}
           {tab==='activity'&&<Button variant="primary" className="connections-add"
@@ -452,7 +462,8 @@ export function Connections() {
 
             </section>
           )}
-          {tab === 'deals' && <section className="connections-directory" aria-label="Deals directory">
+          {tab==='deals'&&dealsView==='timeline'&&<DealTimelinePortfolio projects={projectRows} onOpen={openProject}/>}
+          {tab === 'deals' && dealsView==='list' && <section className="connections-directory" aria-label="Deals directory">
             
             <p className="connections-count">{projectRows.length} deals · stages, bid dates and linked quotes</p>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}

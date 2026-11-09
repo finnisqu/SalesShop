@@ -63,6 +63,23 @@ describe('multifamily deal Gantt starter',()=>{
     }
   });
 
+  it('rejects parent loops before a Gantt can recurse indefinitely',()=>{
+    const draft=createMultifamilyStarterSchedule();
+    const cyclic=draft.rows.map(row=>row.id==='imports'?{...row,parentId:'import-1'}:row);
+    expect(validateDealScheduleRows(cyclic)).toContain('Circular parent reference: imports');
+  });
+
+  it('rejects advisory dependency loops and invalid building import references',()=>{
+    const draft=createMultifamilyStarterSchedule();
+    const cyclic=draft.rows.map(row=>row.id==='deposit-invoiced'
+      ?{...row,predecessorIds:['deposit-received']}:row);
+    expect(validateDealScheduleRows(cyclic).some(error=>error.startsWith('Circular dependency'))).toBe(true);
+    const wrongImport=draft.rows.map(row=>row.id==='building-1'
+      ?{...row,sourceImportIds:['building-2']}:row);
+    expect(validateDealScheduleRows(wrongImport))
+      .toContain('Invalid source import for building-1: building-2');
+  });
+
   it('reports broken template references',()=>{
     const draft=createMultifamilyStarterSchedule();
     const broken=draft.rows.map(row=>row.id==='retainage-received'

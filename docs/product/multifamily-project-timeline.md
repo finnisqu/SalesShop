@@ -1,6 +1,6 @@
 # SalesShop — Contracted Deal Timeline / Multifamily Starter
 
-**Status:** Template foundation in `src/services/dealScheduleTemplates.ts` (not yet exposed as a live editor).
+**Status (2026-11-08 feature branch):** Editable Gantt and portfolio view plus planned/actual milestone dates, manual personal Task linking, and Home calendar milestones. Device-local drafts work by default; a feature-gated shared Supabase adapter is implemented but **cannot be enabled until the staged database schema and security release gate are approved and tested**. This branch is not deployed or production-ready.
 **CRM location:** CONNECTIONS → DEALS → Timeline, with a filtered Portfolio Gantt and a Deal-specific Gantt.
 **Selection:** Contracted/open project execution means stage `Closed Won`; `Completed` remains discoverable via a show-completed filter. Earlier deals may opt in to plan ahead, without changing the sales stage.
 
@@ -70,3 +70,51 @@ First iteration: show predecessor relationships as advisory, including shop draw
 4. Test multi-company isolation, permissions, partial imports, repeated invoice milestones, cross-batch dependencies, and fresh reload/cloud sync before enabling a production flag.
 
 The repository README currently holds a staging/auth rollout gate. Creating or applying production database migrations is a separate action and was **not** part of the template foundation.
+
+
+## Implemented in first functional batch (not yet released)
+
+- The Deal detail page has a **Project timeline** action opening a full-width workspace.
+- CONNECTIONS → DEALS can switch between **List** and **Timeline**; completed Deals are optional.
+- A Deal's multifamily starter is created **only on explicit click**, preventing repeated opens from duplicating phases.
+- Imports and buildings can be added and deleted independently. Removing a phase also cleans dependent ID references.
+- Users can edit planned and actual dates, phase labels, status, invoice amounts and retainage percentages.
+- A building can be linked to multiple imports, updating advisory delivery predecessors.
+- Date ranges appear as Gantt bars and milestones; mobile defaults to a compact milestone list.
+- Device-local draft persistence uses an organization-and-user-scoped key in cloud mode to prevent one login's cache being shown to another.
+- Test cases for phased imports, building billing, dependencies, date validation and deletion are added, but not yet executed in CI or a local full build.
+
+### Explicit limitations before team launch
+
+- **No Supabase schedule schema or RLS migration has been applied.** Cloud users see a **device-only draft** notice. Changes do **not** sync to other devices or teammates; clearing browser data will erase that device's schedule.
+- No automatic generation of tasks, calendar entries, invoice records or payments. Dates and amounts are manual schedule references.
+- Bars are selectable, not yet drag-to-reschedule; no real-time change conflict management.
+- No role-matrix/cloud sync verification, no browser visual QA and no production deployment as part of this feature branch.
+- A future migration must store all schedule rows under an existing Deal and tenant-scoped normalized tables with role-appropriate SELECT/INSERT/UPDATE/DELETE policies. Following the README's staging release gate remains mandatory.
+
+## Shared storage + Home integrations (2026-11-08 batch)
+
+- `docs/staging/deal-execution-schedules.schema.sql`: **staged-only** tenant-scoped schedule table keyed by `(organization_id, deal_id)` with a composite Deal FK, CRM editor RLS and revision counter. No SQL was executed or migration applied in production.
+- `src/services/dealScheduleCloud.ts` and `src/store/sharedDealScheduleStore.ts`: organization-wide read with authenticated CRM edit access; creating a shared schedule is explicit, never automatic. Edits use a revision compare-and-swap, not last-write-wins. On a stale revision, reload the authoritative server copy and require the user to reapply their changes.
+- `src/services/useDealExecutionSchedules.ts`: an adapter that uses local drafts by default and activates shared storage only with `VITE_DEAL_SCHEDULE_CLOUD_ENABLED=true` on a verified deployment. Cloud mode does not silently publish old device drafts; a separate Publish action is available if no server schedule exists.
+- `src/services/dealScheduleCalendar.ts`: projects schedule dates into **Home → On this day → Project milestones**. These do not count as overdue personal Tasks or inflate task/bid badges. Only Deals visible to the user through assignment or existing task/quote links feed their personal Home calendar.
+- The selected milestone offers a manually requested follow-up Task with a stable source ID and Deal link. The milestone's completion and personal Task completion remain independent.
+- Added tests for calendar milestones, cross-deal filtering, stable reminder IDs and date projection. Tests and full build require execution before release.
+
+### Activation order
+
+1. Keep GitHub PR #67 as a draft. Run `npm run build`, `npm test`, and mobile/desktop visual QC using a disposable or checked-out working tree with dependencies installed.
+2. Approve staging provisioning separately (see repo `README.md` and security release gate) and confirm Supabase costs before creating any billable branch.
+3. Apply the SQL **only to staging**. Test all role, tenant, FK, CAS, deletion and malformed-document cases with synthetic Deals.
+4. Point a staging frontend at the staging backend with `VITE_DEAL_SCHEDULE_CLOUD_ENABLED=true`. Verify from two distinct browsers that concurrent revisions cannot silently clobber one another, and that an old device draft is published only after explicit action.
+5. Verify that the Home calendar shows only authorized Deals' milestones, manually created follow-up Tasks do not duplicate, and every relevant building invoice / import phase survives fresh reload.
+6. Only after separate production approval: add a formal migration to the approved deployment process, apply SQL, then enable the shared schedule flag. Never deploy the flag before the schema and RLS.
+
+## November 9 hardening and execution details
+
+- Added a generic milestone reference for purchase orders, vessel/container and shipment tracking, or building invoice/payment references. These references are descriptive only, not invoices posted to accounting.
+- Milestone notes support manual field/production/shipping context; both reference and notes are bounded in the editor and normalized before saving.
+- Added advisory warnings for incomplete milestones past planned finish and for a successor planned before the end of a predecessor. They are visible in a collapsible alert group and never automatically modify dates, create Tasks, or modify CRM stage.
+- Progress is explicitly separated into **materials**, **building work** and **billing/retainage**. Physical completion does not imply financial closeout.
+- Hardened imported/cloud schedule validation: reject parent cycles, dependency cycles, invalid linked imports, impossible calendar dates, invalid invoice amounts and retainage percentages before loading or saving.
+- Extended timeline regression tests for these cases. Tests have been committed but not executed in an actual project checkout; no production SQL, CI triggers, or deployment changes have been made.

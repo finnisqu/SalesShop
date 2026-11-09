@@ -68,6 +68,13 @@ export function nextTaskEditTimestamp(previous:string,clock=Date.now()):string {
 export const dealNeedsSubmission=(deal:Project)=>!!deal.dueDate&&validDate(deal.dueDate)&&
  ['Discovery','Intent to Bid','Bid Development'].includes(deal.stage);
 const trim=(value?:string,max=240)=>value?.trim().slice(0,max)||undefined;
+/** Milestone follow-ups use one stable private Task ID across devices so task
+ * cloud merge cannot create two copies from simultaneous opt-in clicks. */
+export function milestoneTaskId(sourceObjectId:string|undefined):string|undefined {
+  if(!sourceObjectId?.startsWith('deal-schedule:'))return undefined;
+  return 'task_schedule_'+sourceObjectId.slice('deal-schedule:'.length)
+    .replace(/[^a-zA-Z0-9_-]/g,'_');
+}
 function read(scope:string):PersonalTask[]{
   try{
     const value=JSON.parse(window.localStorage.getItem(storageKey(scope))??'[]') as unknown;
@@ -120,8 +127,16 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     if(!scope||!clean)return null;
     const now=new Date().toISOString();
     const fields=sanitize(changes);
+    const stableId=milestoneTaskId(fields.sourceObjectId);
+    if(stableId){
+      const prior=get().tasks.find(task=>
+        task.id===stableId||task.sourceObjectId===fields.sourceObjectId);
+      // Tombstones remain authoritative; deleting a reminder must not create
+      // a fresh ID that cloud sync could silently resurrect.
+      if(prior)return prior.deletedAt?null:prior.id;
+    }
     const nextStatus=fields.status??'open';
-    const task:PersonalTask={...fields,id:'task_'+crypto.randomUUID(),title:clean,workspaceScope:scope,
+    const task:PersonalTask={...fields,id:stableId??'task_'+crypto.randomUUID(),title:clean,workspaceScope:scope,
       type:fields.type??'todo',priority:fields.priority??'normal',
       status:nextStatus,completedAt:nextStatus==='completed'?now:undefined,
       createdAt:now,updatedAt:now};

@@ -1,0 +1,177 @@
+import {
+  createMultifamilyStarterSchedule,
+  validateDealScheduleRows,
+  type DealScheduleDraft,
+  type DealScheduleRow,
+} from './dealScheduleTemplates';
+
+export type SchedulePhase = 'import' | 'building';
+export type ScheduleRowChanges = Partial<Pick<DealScheduleRow,
+  'label'|'status'|'plannedStart'|'plannedFinish'|'actualStart'|'actualFinish'|'amount'|'retainagePercent'|'reference'|'notes'>>;
+
+function idFor(scope:SchedulePhase):string {
+  return scope + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+
+export function updateScheduleRow(
+  schedule:DealScheduleDraft,rowId:string,changes:ScheduleRowChanges,
+):DealScheduleDraft {
+  if(!schedule.rows.some(row=>row.id===rowId))throw new Error('Milestone no longer exists: '+rowId);
+  const patch={...changes,
+    ...('reference' in changes?{reference:changes.reference?.trim().slice(0,160)||undefined}:{}),
+    ...('notes' in changes?{notes:changes.notes?.trim().slice(0,2500)||undefined}:{}),
+  };
+  const rows=schedule.rows.map(row=>row.id===rowId?{...row,...patch}:row);
+  return {...schedule,rows};
+}
+
+/** Every new phase has its own stable IDs, independent from other imports/buildings. */
+export function appendSchedulePhase(
+  schedule:DealScheduleDraft,scope:SchedulePhase,
+):DealScheduleDraft {
+  const root=scope==='import'?'imports':'buildings';
+  const prefix=idFor(scope);
+  const phaseLabel=scope==='import'?'Import':'Building';
+  const existing=schedule.rows.filter(row=>row.parentId===root);
+  const highest=existing.reduce((max,row)=>{
+    if(!row.label.startsWith(phaseLabel+' '))return max;
+    const serial=Number(row.label.slice(phaseLabel.length+1));
+    return Number.isInteger(serial)&&serial>0?Math.max(max,serial):max;
+  },0);
+  const number=Math.max(highest,existing.length)+1;
+  const reference=createMultifamilyStarterSchedule({importNames:['Import'],buildingNames:['Building']});
+  const source=scope==='import'?'import-1':'building-1';
+  const children=reference.rows.filter(row=>row.id===source||row.parentId===source);
+  const mapped=children.map(row=>{
+    const id=prefix+row.id.slice(source.length);
+    return {
+      ...row,id,
+      label:row.id===source?(scope==='import'?'Import ':'Building ')+number:row.label,
+      parentId:row.id===source?root:prefix,
+      predecessorIds:row.predecessorIds.map(dep=>dep.startsWith(source+'-')
+        ?prefix+dep.slice(source.length):dep),
+      sourceImportIds:row.sourceImportIds?.slice(),
+    };
+  });
+  let rows=schedule.rows.slice();
+  const last=rows.reduce((position,row,index)=>
+    row.id===root||row.parentId===root||childrenBelongToRoot(row,root,rows)
+      ?index:position,-1);
+  rows.splice(last+1,0,...mapped);
+  if(scope==='building'){
+    rows=rows.map(row=>row.id==='all-buildings-complete'
+      ?{...row,predecessorIds:[...row.predecessorIds,prefix+'-punch']}
+      :row.id==='final-billing'
+        ?{...row,predecessorIds:[...row.predecessorIds,prefix+'-invoice']}
+        :row);
+  }
+  return {...schedule,rows};
+}
+function childrenBelongToRoot(row:DealScheduleRow,root:string,rows:DealScheduleRow[]):boolean {
+  const parent=rows.find(item=>item.id===row.parentId);
+  return parent?.parentId===root;
+}
+
+/** Removing an import also unlinks it from every building and delivery dependency. */
+export function removeSchedulePhase(
+  schedule:DealScheduleDraft,groupId:string,
+):DealScheduleDraft {
+  const group=schedule.rows.find(row=>row.id===groupId);
+  if(!group||group.kind!=='group'||(group.scope!=='import'&&group.scope!=='building'))return schedule;
+  const removed=new Set([groupId]);
+  let changed=true;
+  while(changed){
+    changed=false;
+    for(const row of schedule.rows){
+      if(row.parentId&&removed.has(row.parentId)&&!removed.has(row.id)){
+        removed.add(row.id);changed=true;
+      }
+    }
+  }
+  const rows=schedule.rows.filter(row=>!removed.has(row.id)).map(row=>({
+    ...row,
+    predecessorIds:row.predecessorIds.filter(id=>!removed.has(id)),
+    ...(row.sourceImportIds?{sourceImportIds:row.sourceImportIds.filter(id=>!removed.has(id))}:{}),
+  }));
+  return {...schedule,rows};
+}
+
+/** Buildings may take materials from several independent import waves. */
+export function assignBuildingImports(
+  schedule:DealScheduleDraft,buildingId:string,requestedIds:string[],
+):DealScheduleDraft {
+  const building=schedule.rows.find(row=>row.id===buildingId&&row.scope==='building'&&row.kind==='group');
+  if(!building)return schedule;
+  const imports=new Set(schedule.rows.filter(row=>row.scope==='import'&&row.kind==='group').map(row=>row.id));
+  const ids=[...new Set(requestedIds.filter(id=>imports.has(id)))];
+  const deliveryId=buildingId+'-delivery';
+  const rows=schedule.rows.map(row=>{
+    if(row.id===buildingId)return {...row,sourceImportIds:ids};
+    if(row.id===deliveryId)return {...row,predecessorIds:[
+      buildingId+'-site-ready',...ids.map(id=>id+'-site'),
+    ]};
+    return row;
+  });
+  return {...schedule,rows};
+}
+
+/** Prevent reversed date ranges without changing dates automatically. */
+export function scheduleDateIssues(rows:readonly DealScheduleRow[]):string[] {
+  const issues:string[]=[];
+  const validDate=(value:string):boolean=>{
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+    const date=new Date(value+'T00:00:00Z');
+    return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value;
+  };
+  for(const row of rows){
+    for(const date of [row.plannedStart,row.plannedFinish,row.actualStart,row.actualFinish]){
+      if(date&&!validDate(date))issues.push(row.label+': invalid calendar date '+date);
+    }
+    if(row.plannedStart&&row.plannedFinish&&row.plannedFinish<row.plannedStart)
+      issues.push(row.label+': planned finish precedes start');
+    if(row.actualStart&&row.actualFinish&&row.actualFinish<row.actualStart)
+      issues.push(row.label+': actual finish precedes start');
+  }
+  return issues;
+}
+
+export function scheduleProgress(schedule:DealScheduleDraft):{done:number;total:number;percent:number}{
+  const tasks=schedule.rows.filter(row=>row.kind!=='group');
+  const done=tasks.filter(row=>row.status==='complete').length;
+  return {done,total:tasks.length,percent:tasks.length?Math.round(done/tasks.length*100):0};
+}
+
+export interface ScheduleProgressTrack {
+  done:number;total:number;
+}
+export interface ScheduleProgressTracks {
+  materials:ScheduleProgressTrack;
+  building:ScheduleProgressTrack;
+  financial:ScheduleProgressTrack;
+}
+
+/** Installation completion and cash collection must never be conflated. */
+export function scheduleProgressTracks(schedule:DealScheduleDraft):ScheduleProgressTracks {
+  const count=(predicate:(row:DealScheduleRow)=>boolean):ScheduleProgressTrack=>{
+    const tasks=schedule.rows.filter(row=>row.kind!=='group'&&predicate(row));
+    return {done:tasks.filter(row=>row.status==='complete').length,total:tasks.length};
+  };
+  return {
+    materials:count(row=>row.scope==='import'),
+    building:count(row=>row.scope==='building'&&row.kind!=='financial'),
+    financial:count(row=>row.kind==='financial'),
+  };
+}
+
+export function assertValidSchedule(schedule:DealScheduleDraft):void {
+  const errors=[...validateDealScheduleRows(schedule.rows),...scheduleDateIssues(schedule.rows)];
+  for(const row of schedule.rows){
+    if(!row.label.trim())errors.push('Milestone has an empty label: '+row.id);
+    if(row.amount!==undefined&&(!Number.isFinite(row.amount)||row.amount<0))
+      errors.push(row.label+': amount must be nonnegative and finite');
+    if(row.retainagePercent!==undefined&&(!Number.isFinite(row.retainagePercent)||
+      row.retainagePercent<0||row.retainagePercent>100))
+      errors.push(row.label+': invalid retainage percentage');
+  }
+  if(errors.length)throw new Error(errors.join('; '));
+}

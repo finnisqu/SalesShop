@@ -989,3 +989,11 @@
  .sales-calendar-agenda .home-day-agenda-group>summary{min-height:44px}
  .sales-calendar-agenda .home-day-agenda-records>button{min-height:46px}
 }
+
+/* Dated execution milestones are informational, not Task badges. Keep this
+   marker distinct from the urgent corner and bottom calendar badge strip. */
+.sales-calendar-day .ss-calendar-project-dot{
+ position:absolute;top:5px;right:23px;z-index:1;pointer-events:none;
+ width:6px;height:6px;border-radius:50%;
+ background:var(--ss-theme-accent,#398f78);
+}

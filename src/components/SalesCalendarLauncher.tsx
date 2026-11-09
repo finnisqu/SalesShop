@@ -8,6 +8,8 @@ import {openHomeNote} from '../services/homeNotes';
 import {dailyNotebookPages,notebookPlainText,notebookCalendarDates,openNotebookCalendarDate} from '../services/notebookDaily';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {useDealExecutionSchedules} from '../services/useDealExecutionSchedules';
+import {dealScheduleCalendarMilestones} from '../services/dealScheduleCalendar';
 import {useNavigationStore} from '../store/navigationStore';
 import {scopedStorageKey} from '../lib/developerPlayground';
 import {canEditTeamArea} from '../services/teamDepartments';
@@ -173,6 +175,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   [quotes,mode,userId]);
  const sources=useMemo(()=>personalCalendarSources(mode,userId,ownQuotes,ownTasks,deals,activities),
   [mode,userId,ownQuotes,ownTasks,deals,activities]);
+ const {schedules:projectSchedules}=useDealExecutionSchedules();
+ const scheduleDeals=useMemo(()=>mode==='local'?deals:deals.filter(deal=>
+  deal.assignedUserId===userId||sources.deals.some(item=>item.id===deal.id)),
+  [mode,userId,deals,sources.deals]);
+ const projectMilestones=useMemo(()=>dealScheduleCalendarMilestones(projectSchedules,scheduleDeals),
+  [projectSchedules,scheduleDeals]);
+ const projectMilestoneDays=useMemo(()=>new Set(projectMilestones.map(item=>item.date)),[projectMilestones]);
  const events=useMemo(()=>buildSalesCalendarEvents(ownTasks,sources.deals,sources.activities,
   ownQuotes,{contacts,companies}),[ownTasks,sources,ownQuotes,contacts,companies]);
  const badgeIndex=useMemo(()=>buildCalendarBadgeIndex(events,ownTasks,sources.activities,
@@ -182,6 +191,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const weekDays=useMemo(()=>calendarWeekDays(selected),[selected]);
  const weekMode=embedded&&display==='week';
  const visibleDays=weekMode?weekDays:embedded?compactDays:days;
+ const milestonesForDay=useMemo(()=>projectMilestones.filter(item=>item.date===selected),
+  [projectMilestones,selected]);
  const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected).sort((a,b)=>
   Number(Boolean(b.urgent))-Number(Boolean(a.urgent))||a.kind.localeCompare(b.kind)||a.title.localeCompare(b.title)),[events,selected]);
  const shownDayEvents=embedded&&isPhone&&!showAllDay?eventsForDay.slice(0,5):eventsForDay;
@@ -411,6 +422,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key),inMonth=key.slice(0,7)===localDateKey(month).slice(0,7);
       const hasNotebookDate=notebookReady&&notebookCalendarDates(notebookEntries,key).length>0;
+      const hasProjectMilestones=projectMilestoneDays.has(key);
       const badges=badgeSettings.slots.map(slot=>({...slot,
        count:slot.metric==='none'?0:metricCount(badgeIndex,key,slot.metric)})).filter(slot=>slot.count>0);
       const selectDate=()=>{
@@ -425,12 +437,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          aria-label={dateLabel(key)+(badges.length?', '+badges.map(slot=>
           slot.count+' '+badgeLabel(slot.metric)).join(', '):', no tracked badges')+
           (badgeSettings.showUrgentBadge&&counts.urgent?', urgent task':'')+
-          (hasNotebookDate?', has calendar date':'')}
+          (hasNotebookDate?', has calendar date':'')+
+          (hasProjectMilestones?', has project milestone':'')}
          onClick={selectDate}>
          <span>{Number(key.slice(-2))}</span>
          {badgeSettings.showUrgentBadge&&counts.urgent>0&&
           <span className="sales-calendar-urgent" aria-hidden="true"
            title={counts.urgent+' urgent task(s)'}>!</span>}
+         {hasProjectMilestones&&<span className="ss-calendar-project-dot" title="Project milestone" aria-hidden="true"/>}
          {hasNotebookDate&&<span className="notebook-calendar-dot"
           title="Calendar date" aria-hidden="true"/>}
         </button>
@@ -522,7 +536,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <span className="sales-calendar-agenda-chevron" aria-hidden="true">›</span>
        </button>):
        <p className="sales-calendar-empty">
-        {otherDayTotal||calendarDatesForDay.length?'No pending work for this day.':'All caught up for this day.'}
+        {otherDayTotal||calendarDatesForDay.length||milestonesForDay.length?'No pending work for this day.':'All caught up for this day.'}
        </p>}
       {embedded&&isPhone&&eventsForDay.length>5&&
        <button type="button" className="sales-calendar-show-more"
@@ -540,12 +554,24 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <small>{item.time||'All day'}{item.annual?' · Yearly':''}</small>
        </button>)}
       </div>}
-      {embedded&&otherDayTotal>0&&<section className="home-day-agenda-extra"
+      {embedded&&(otherDayTotal>0||milestonesForDay.length>0)&&<section className="home-day-agenda-extra"
        aria-label={'Other records on '+dateLabel(selected)}>
        <div className="home-day-agenda-extra-title">
         <strong>On this day</strong>
-        <span>{otherDayTotal} {otherDayTotal===1?'record':'records'}</span>
+        <span>{otherDayTotal+milestonesForDay.length} {otherDayTotal+milestonesForDay.length===1?'record':'records'}</span>
        </div>
+       {milestonesForDay.length>0&&<details key={selected+':project-milestones'} className="home-day-agenda-group">
+        <summary><span className="home-day-agenda-group-label">Project milestones</span>
+         <span className="home-day-agenda-group-count">{milestonesForDay.length}</span>
+         <span className="home-day-agenda-group-chevron" aria-hidden="true">⌄</span></summary>
+        <div className="home-day-agenda-records">
+         {milestonesForDay.map(item=><button key={item.id} type="button"
+          onClick={()=>{setOpen(false);setRecordPreview({kind:'deal',id:item.dealId});}}>
+          <span><strong>{item.title}</strong><small>{item.detail}{item.actual?' · Actual':''}</small></span>
+          <span aria-hidden="true">›</span>
+         </button>)}
+        </div>
+       </details>}
        {otherDayGroups.map(group=><details key={selected+':'+group.key}
         className="home-day-agenda-group">
         <summary>

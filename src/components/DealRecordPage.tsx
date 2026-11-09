@@ -11,6 +11,7 @@ import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {DealAssigneeSelect,useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
+import {DealScheduleWorkspace} from './DealScheduleWorkspace';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const displayDate = (value?: string) => {
@@ -40,6 +41,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const [saveError,setSaveError]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [timelineOpen,setTimelineOpen]=useState(false);
   const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
   const deal = deals.find(item => item.id === dealId);
   const [draft, setDraft] = useState({
@@ -54,7 +56,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   });
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
-  useEffect(() => { setEditing(false);setHistoryOpen(false);setExternalQuoteOpen(false);setSaveError('');setNotice(null); }, [dealId]);
+  useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setExternalQuoteOpen(false);setSaveError('');setNotice(null); }, [dealId]);
   useEffect(() => {
     if (!editing && deal) setDraft({
       name: deal.name, stage: deal.stage,
@@ -108,10 +110,18 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     openQuote(id);
   };
 
+  if(timelineOpen)return <section className="connections-record-page ss-schedule-full-page">
+    <nav className="connections-record-breadcrumb"><button type="button" onClick={()=>setTimelineOpen(false)}>← Deal details</button>
+      <span aria-hidden="true">/</span><span>{deal.name}</span><span aria-hidden="true">/</span><span>Timeline</span>
+    </nav>
+    <DealScheduleWorkspace deal={deal}/>
+  </section>;
+
   return <RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack}
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length} linked quotes</span></>}
     actions={<>
+      <button type="button" onClick={()=>setTimelineOpen(true)}>Project timeline</button>
       <button type="button" onClick={() => {setNotice(null);setSaveError('');setEditing(value=>!value);}}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
       {!["Closed Won","Completed","Closed Lost","Discarded"].includes(deal.stage)&&
         <button type="button" onClick={()=>setExternalQuoteOpen(open=>!open)}>
@@ -168,6 +178,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       </RecordCard>
     </>}
     center={<>
+      <RecordCard title="Project timeline">
+        <p className="connections-record-helper">Track shop drawings, deposits, imports, buildings, installation and invoices together.</p>
+        <button type="button" onClick={()=>setTimelineOpen(true)}>Open Gantt timeline</button>
+      </RecordCard>
       <RecordCard title="Quotes" extra={<span>{related.linkedQuotes.length} SalesShop</span>}>
         {externalQuoteOpen&&<ExternalQuoteSentForm key={deal.id} deal={deal}
           onCancel={()=>setExternalQuoteOpen(false)}

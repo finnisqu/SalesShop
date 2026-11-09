@@ -1,0 +1,122 @@
+/* Deal execution timelines: scoped visuals, independent from quote and board tables. */
+.ss-deal-schedule{min-width:0;border:1px solid var(--ss-border,var(--color-border,#d9dde2));border-radius:12px;background:var(--ss-surface,var(--color-surface,#fff));color:var(--ss-text,inherit);padding:14px;display:grid;gap:10px}
+.ss-schedule-toolbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.ss-schedule-toolbar h2{margin:0;font-size:1.05rem;font-weight:700;line-height:1.3}
+.ss-schedule-toolbar p{margin:3px 0 0;font-size:.78rem;opacity:.75}
+.ss-schedule-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ss-schedule-actions>button,.ss-schedule-switch button,.ss-schedule-empty button,.ss-schedule-row-editor button{border:1px solid var(--ss-border,var(--color-border,#cbd2d9));border-radius:7px;padding:6px 9px;background:transparent;color:inherit;font:inherit;font-size:.78rem;cursor:pointer}
+.ss-schedule-actions>button:disabled,.ss-schedule-row-editor button:disabled{opacity:.45;cursor:default}
+.ss-schedule-switch{display:flex;border:1px solid var(--ss-border,var(--color-border,#cbd2d9));border-radius:8px;overflow:hidden}
+.ss-schedule-switch button{border:0;border-radius:0}
+.ss-schedule-switch button[aria-pressed=true]{background:var(--ss-surface-raised,var(--color-surface-hover,#e4e9ef));font-weight:700}
+.ss-schedule-storage-note{margin:0;font-size:.72rem;opacity:.68}
+.ss-schedule-overview{display:flex;gap:8px;flex-wrap:wrap;font-size:.73rem}
+.ss-schedule-overview span{border:1px solid var(--ss-border,var(--color-border,#d6dce2));padding:4px 7px;border-radius:6px}
+.ss-schedule-empty{margin:0;padding:15px 10px;background:var(--ss-surface-subtle,rgba(128,128,128,.05));border-radius:9px;font-size:.84rem}
+.ss-schedule-empty p{margin:0 0 12px}
+.ss-gantt-scroll{overflow:auto;max-width:100%;border:1px solid var(--ss-border,var(--color-border,#d6dce2));border-radius:8px;scrollbar-width:thin}
+.ss-gantt-sheet{position:relative;min-width:100%}
+.ss-gantt-axis,.ss-gantt-line{display:flex;align-items:stretch;width:100%;min-height:37px;border-bottom:1px solid var(--ss-border,var(--color-border,#e6e8eb))}
+.ss-gantt-axis{height:33px;min-height:33px;background:var(--ss-surface-subtle,rgba(128,128,128,.05))}
+.ss-gantt-sticky-title,.ss-gantt-row-heading{position:sticky;left:0;z-index:3;display:flex;align-items:center;flex:0 0 244px;width:244px;box-sizing:border-box;padding:0 6px 0 9px;background:var(--ss-surface,var(--color-surface,#fff));border-right:1px solid var(--ss-border,var(--color-border,#e4e6e9))}
+.ss-gantt-sticky-title{font-size:10px;font-weight:700;background:var(--ss-surface-subtle,var(--color-surface,#f7f7f8))}
+.ss-gantt-axis-ticks{position:relative;flex-shrink:0;font-size:10px;opacity:.75;white-space:nowrap}
+.ss-gantt-axis-ticks span{position:absolute;top:8px;padding-left:5px}
+.ss-gantt-line:last-child{border-bottom:0}
+.ss-gantt-line.is-selected .ss-gantt-row-heading{box-shadow:inset 3px 0 #4b8fbd}
+.ss-gantt-indent{display:block;flex:0 0 auto}
+.ss-gantt-expand{background:transparent;border:0;padding:3px 4px;cursor:pointer;color:inherit}
+.ss-gantt-row-title{display:block;border:0;background:transparent;color:inherit;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;text-align:left;font-size:11px;cursor:pointer;min-width:0;flex:1;padding:6px 2px}
+.ss-gantt-row-title.is-group{font-weight:700}
+.ss-gantt-track{position:relative;min-height:37px;flex-shrink:0;background-image:linear-gradient(to right,var(--ss-border,var(--color-border,rgba(128,128,128,.15))) 1px,transparent 1px);background-repeat:repeat}
+.ss-gantt-today{position:absolute;top:0;bottom:0;width:2px;background:#c76d38;opacity:.7;pointer-events:none;z-index:1}
+.ss-gantt-bar{position:absolute;top:11px;height:17px;border:0;border-radius:4px;padding:1px 5px;background:#4c87bd;color:white;text-align:left;font-size:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer}
+.ss-gantt-in-progress{background:#398f78}.ss-gantt-complete{background:#729e81}.ss-gantt-on-hold{background:#b88944}.ss-gantt-not-started{background:#517ea7}
+.ss-gantt-bar.is-summary{height:11px;top:14px;opacity:.8}
+.ss-gantt-bar.is-milestone{height:11px;width:11px!important;top:13px;transform:rotate(45deg);border-radius:2px;overflow:visible}
+.ss-gantt-bar.is-milestone span{display:none}
+.ss-schedule-tip{margin:0;font-size:.77rem;opacity:.75}
+.ss-schedule-row-editor{border:1px solid var(--ss-border,var(--color-border,#d6dce2));padding:12px;border-radius:8px;display:grid;gap:10px}
+.ss-schedule-editor-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ss-schedule-editor-heading strong{font-size:.86rem}
+.ss-schedule-editor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+.ss-schedule-field{display:grid;gap:4px;min-width:0;font-size:.73rem;opacity:.95}
+.ss-schedule-field input,.ss-schedule-field select{width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid var(--ss-border,var(--color-border,#cbd2d9));border-radius:6px;background:var(--ss-surface,var(--color-surface,#fff));color:inherit;padding:7px;font-size:.82rem}
+.ss-schedule-danger{color:#c05343!important}
+.ss-schedule-sources{display:grid;gap:6px;font-size:.8rem}
+.ss-schedule-source-options{display:flex;flex-wrap:wrap;gap:9px}
+.ss-schedule-source-options label,.ss-schedule-show-complete{display:flex;align-items:center;gap:5px;font-size:.76rem}
+.ss-schedule-sources small,.ss-schedule-predecessors{margin:0;font-size:.71rem;opacity:.7}
+.ss-schedule-error{padding:8px;color:#b34936;font-size:.78rem}
+.ss-schedule-list{display:grid;border:1px solid var(--ss-border,var(--color-border,#d9dde2));border-radius:8px;overflow:hidden}
+.ss-schedule-list-line{display:flex;align-items:center;min-width:0;border-bottom:1px solid var(--ss-border,var(--color-border,#e0e4e8))}
+.ss-schedule-list-line:last-child{border-bottom:0}
+.ss-schedule-list-line .ss-schedule-list-row{flex:1;min-width:0;width:100%;border-bottom:0}
+.ss-schedule-list-group-edit{background:transparent;color:inherit;border:0;border-left:1px solid var(--ss-border,var(--color-border,#ddd));padding:9px;cursor:pointer;font-size:.72rem;opacity:.8}
+.ss-schedule-list-group-edit:focus-visible{outline:2px solid #3187c5;outline-offset:-2px}
+.ss-schedule-list-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(74px,auto);align-items:center;gap:7px;text-align:left;border:0;border-bottom:1px solid var(--ss-border,var(--color-border,#e0e4e8));background:transparent;color:inherit;padding:8px 10px;font-size:.77rem;cursor:pointer}
+.ss-schedule-list-row:last-child{border-bottom:0}
+.ss-schedule-list-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-schedule-state{font-size:.68rem;white-space:nowrap;padding:2px 5px;border-radius:5px;background:rgba(128,128,128,.1)}
+.ss-schedule-complete{color:#37846e}.ss-schedule-on-hold{color:#b07925}.ss-schedule-list-date{opacity:.7;font-size:.69rem;text-align:right}
+.ss-deal-schedule button:focus-visible,.ss-deal-schedule input:focus-visible{outline:2px solid #3187c5;outline-offset:2px}
+@media(max-width:700px){
+ .ss-deal-schedule{padding:10px;border-radius:9px}
+ .ss-schedule-toolbar{gap:8px}
+ .ss-schedule-toolbar h2{font-size:.97rem}
+ .ss-gantt-sticky-title,.ss-gantt-row-heading{flex-basis:170px;width:170px}
+ .ss-gantt-sheet{width:max-content!important}
+ .ss-schedule-list-row{grid-template-columns:minmax(0,1fr) auto;gap:4px}
+ .ss-schedule-list-date{grid-column:1/-1;text-align:left;padding-left:4px}
+ .ss-schedule-editor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+.ss-schedule-full-page{max-width:none;min-width:0}
+.ss-schedule-portfolio{margin-top:6px}
+.ss-schedule-top-toggle{display:flex;gap:3px;align-items:center;justify-content:flex-start;padding:2px 0 5px}
+.ss-schedule-top-toggle button{border:1px solid var(--ss-border,var(--color-border,#d5d9de));border-radius:6px;padding:5px 12px;background:transparent;color:inherit;font-size:.78rem;cursor:pointer}
+.ss-schedule-top-toggle button[aria-pressed=true]{background:var(--ss-surface-raised,var(--color-surface-hover,#e4e9ef));font-weight:700}
+.ss-schedule-top-toggle button:focus-visible{outline:2px solid #3187c5;outline-offset:2px}
+
+.ss-workspace-header__primary .ss-schedule-top-toggle{padding:0;gap:3px;flex-wrap:nowrap}
+.ss-workspace-header__primary .ss-schedule-top-toggle button{white-space:nowrap;min-height:32px}
+@media(max-width:700px){
+ .ss-workspace-header__primary .ss-schedule-top-toggle{display:none}
+}
+
+.ss-gantt-actual{position:absolute;top:29px;height:5px;border:0;border-radius:3px;background:#27384a;cursor:pointer;z-index:2}
+.ss-schedule-legend{font-size:.71rem;opacity:.7;margin:0}
+
+.ss-schedule-task-action{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.73rem}
+.ss-schedule-task-action small{font-size:.7rem;opacity:.72}
+.ss-calendar-project-dot{display:inline-block;width:5px;height:5px;min-width:5px;min-height:5px;border-radius:50%;background:#398f78;position:absolute;right:3px;bottom:3px}
+.ss-schedule-error button{margin-left:8px;border:1px solid currentColor;border-radius:5px;padding:3px 8px;background:transparent;color:inherit;font-size:.76rem}
+
+@media(max-width:420px){
+ .ss-schedule-editor-grid{grid-template-columns:minmax(0,1fr)}
+ .ss-schedule-list-group-edit{padding:8px 6px}
+}
+
+/* Dense milestone metadata and advisory dependency checks. */
+.ss-schedule-notes-field textarea{
+ width:100%;box-sizing:border-box;resize:vertical;min-height:64px;
+ border:1px solid var(--ss-border,var(--color-border,#cbd2d9));
+ border-radius:6px;background:var(--ss-surface,var(--color-surface,#fff));
+ color:inherit;padding:8px;font:inherit;font-size:.8rem;line-height:1.4;
+}
+.ss-schedule-warnings{border:1px solid var(--ss-border,var(--color-border,#d6dce2));border-radius:7px;overflow:hidden;font-size:.78rem;}
+.ss-schedule-warnings summary{cursor:pointer;padding:9px 11px;font-weight:650;}
+.ss-schedule-warnings summary:focus-visible{outline:2px solid #3187c5;outline-offset:-2px;}
+.ss-schedule-warning-list{display:grid;max-height:230px;overflow:auto;border-top:1px solid var(--ss-border,var(--color-border,#d6dce2));}
+.ss-schedule-warning-list button{display:grid;gap:3px;text-align:left;color:inherit;background:transparent;
+ border:0;border-bottom:1px solid var(--ss-border,var(--color-border,#e0e4e8));
+ padding:8px 11px;font:inherit;cursor:pointer;}
+.ss-schedule-warning-list button:last-child{border-bottom:0;}
+.ss-schedule-warning-list button strong{font-size:.77rem;}
+.ss-schedule-warning-list button span{font-size:.72rem;opacity:.76;line-height:1.35;}
+.ss-schedule-warning-list button:focus-visible{outline:2px solid #3187c5;outline-offset:-2px;}
+
+.ss-schedule-track-progress{display:flex;gap:7px;flex-wrap:wrap;font-size:.73rem;}
+.ss-schedule-track-progress span{display:flex;gap:8px;align-items:center;
+ padding:5px 8px;border-radius:6px;background:var(--ss-surface-subtle,rgba(128,128,128,.07));}
+.ss-schedule-track-progress strong{font-variant-numeric:tabular-nums;}
