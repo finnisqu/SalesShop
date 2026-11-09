@@ -219,7 +219,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       // item later can then complete the parent without requiring a second,
       // duplicate customer-delivery event.
       const pending=normalizedSubtasks(task.subtasks).some(item=>!item.completed);
-      if(pending&&automated&&task.submissionConfirmedAt)return task;
+      if(pending&&(!automated||task.submissionConfirmedAt))return task;
       const proof=automated?{submissionConfirmedAt:task.submissionConfirmedAt??timestamp}:{};
       changed=true;
       return pending
