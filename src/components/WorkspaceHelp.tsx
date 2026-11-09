@@ -13,7 +13,8 @@ const pages:Record<WorkspaceHelpPage,Article>={
  quotes:{name:'Quotes',intro:'Find, create, and manage pricing documents.',tips:[
   {label:'New documents',text:'Use + Document to choose a template. Quick Quote combines takeoffs, selections, and pricing.'},
   {label:'Find work',text:'Use the tabs, More menu, and status filters to find drafts, issued documents, or archived work.'},
-  {label:'Table tools',text:'Click a name for its record preview. Select rows for group actions; Columns controls fields and row spacing.'}]},
+  {label:'Table tools',text:'Click a name for its record preview. Select rows for group actions; Columns controls fields and row spacing.'},
+  {label:'Older quotes',text:'Record external quote in the detailed Quotes sidebar or under Connections → Deals. Choose an existing Deal or create one to log an earlier submission without making a SalesShop quote.'}]},
  tasks:{name:'Tasks',intro:'Personal tasks connected to the rest of SalesShop.',tips:[
   {label:'Dates',text:'A due date never hides a task from All open. Start later is for work you do not plan to begin yet.'},
   {label:'Queue & Overview',text:'Filter by workstream, check daily totals, and open Calendar for dated tasks.'},
@@ -24,7 +25,9 @@ const pages:Record<WorkspaceHelpPage,Article>={
   {label:'Reduce clutter',text:'Collapse column headings or use More to show compact cards.'}]},
  connections:{name:'Connections',intro:'Your CRM directory of companies, people, deals, and their relationships.',tips:[
   {label:'Explore related records',text:'Tap a name to preview. Follow related records inside the preview and use Back on mobile to return to the previous one.'},
-  {label:'Related records',text:'Link people to companies and deals to quotes so everyone can find the connected work.'},
+  {label:'Related records',text:'Select multiple People or Deals, then Bulk edit → Connect to company to assign or clear their Company. Explicit direct Deal-to-Person membership is a future relationship type.'},
+  {label:'Prospects vs Customers',text:'Classify each Company as Prospect, Customer or Partner. Legacy companies remain Unclassified until you choose. Filter the Companies directory by status.'},
+  {label:'Historical quotes',text:'Connections → Deals → Record external quote. Completed Deals retain their stage, totals and tasks when you enter an older quote.'},
   {label:'Quick actions',text:'On mobile, change company type or deal stage inline, call or email a contact, or open its full record directly.'},
   {label:'Activity links',text:'Open an Activity from Activity history to edit its People, Company, Deal or Quote links. Create missing records without leaving the logging form.'},
   {label:'Our Organization',text:'Keep employees and subcontractors in their own internal directory, separate from customer People. Use Settings → Team to manage logins and permissions.'}]},
