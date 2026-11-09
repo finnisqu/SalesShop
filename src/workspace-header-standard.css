@@ -254,3 +254,46 @@
   grid-column:2;grid-row:1;
  }
 }
+
+/* Shared interaction primitives — keep these in chrome, not page-specific overrides. */
+:root[data-sales-theme]{
+ --ss-ui-control-radius:9px;
+ --ss-ui-menu-radius:11px;
+ --ss-ui-row-radius:7px;
+ --ss-ui-dialog-radius:15px;
+}
+:root[data-sales-theme] .sales-app .ss-workspace-header__intro{
+ display:flex;align-items:center;gap:11px;min-width:0;
+}
+:root[data-sales-theme] .sales-app .ss-workspace-header__intro h1{
+ min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app .ss-workspace-header__help{
+ position:relative;flex:0 0 auto;display:flex;align-items:center;
+ line-height:1;opacity:.72;
+}
+:root[data-sales-theme] .sales-app .ss-workspace-header__help:is(:hover,:focus-within){opacity:1}
+:root[data-sales-theme] .sales-app .ss-workspace-more__menu{
+ max-height:min(65dvh,440px);overflow-y:auto;overscroll-behavior:contain;
+ border-radius:var(--ss-ui-menu-radius);
+}
+:root[data-sales-theme] .sales-app .ss-workspace-more__menu>button{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:12px;min-height:40px;border-radius:var(--ss-ui-row-radius);
+}
+:root[data-sales-theme] .sales-app .ss-workspace-more__menu>button:disabled{
+ opacity:.46;cursor:not-allowed;
+}
+:root[data-sales-theme] .sales-app .ss-workspace-more__selected{
+ flex:0 0 auto;color:var(--ss-theme-accent);
+ font-weight:850;font-size:13px;
+}
+/* Global Help covers the app bar; page-specific Help replaces it only on desktop.
+   Phone retains the persistent app bar Help because local page titles are hidden. */
+@media(min-width:761px){
+ :root[data-sales-theme] .sales-app:has(.ss-workspace-header__help)
+ >.app-header .ss-workspace-help{display:none}
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app .ss-workspace-more__menu>button{min-height:44px}
+}
