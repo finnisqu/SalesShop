@@ -141,6 +141,28 @@ export function scheduleProgress(schedule:DealScheduleDraft):{done:number;total:
   return {done,total:tasks.length,percent:tasks.length?Math.round(done/tasks.length*100):0};
 }
 
+export interface ScheduleProgressTrack {
+  done:number;total:number;
+}
+export interface ScheduleProgressTracks {
+  materials:ScheduleProgressTrack;
+  building:ScheduleProgressTrack;
+  financial:ScheduleProgressTrack;
+}
+
+/** Installation completion and cash collection must never be conflated. */
+export function scheduleProgressTracks(schedule:DealScheduleDraft):ScheduleProgressTracks {
+  const count=(predicate:(row:DealScheduleRow)=>boolean):ScheduleProgressTrack=>{
+    const tasks=schedule.rows.filter(row=>row.kind!=='group'&&predicate(row));
+    return {done:tasks.filter(row=>row.status==='complete').length,total:tasks.length};
+  };
+  return {
+    materials:count(row=>row.scope==='import'),
+    building:count(row=>row.scope==='building'&&row.kind!=='financial'),
+    financial:count(row=>row.kind==='financial'),
+  };
+}
+
 export function assertValidSchedule(schedule:DealScheduleDraft):void {
   const errors=[...validateDealScheduleRows(schedule.rows),...scheduleDateIssues(schedule.rows)];
   for(const row of schedule.rows){
