@@ -499,3 +499,39 @@
   flex:0 0 auto;min-height:44px;margin-right:auto;
  }
 }
+
+/* Stable action alignment in both Task quick-view implementations. */
+.tasks-preview-card>footer.tasks-preview-action-groups{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+.tasks-preview-card .tasks-preview-actions-left,
+.tasks-preview-card .tasks-preview-actions-right{
+ display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0;
+}
+.tasks-preview-card .tasks-preview-actions-left{justify-content:flex-start;flex:0 0 auto}
+.tasks-preview-card .tasks-preview-actions-right{justify-content:flex-end;flex:1 1 auto}
+.tasks-preview-card .tasks-preview-action-groups button{
+ box-sizing:border-box;min-height:36px;padding:7px 10px;margin:0;
+ display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ border-radius:8px;white-space:nowrap;font-size:12px;font-weight:700;cursor:pointer;
+}
+.tasks-preview-card .tasks-preview-action-groups button:disabled{opacity:.5;cursor:not-allowed}
+.tasks-preview-card .tasks-preview-actions-left button.tasks-preview-delete{
+ color:var(--ss-danger,#c44a46);
+ background:color-mix(in srgb,var(--ss-danger,#c44a46) 9%,var(--ss-theme-card,transparent));
+ border:1px solid color-mix(in srgb,var(--ss-danger,#c44a46) 42%,var(--ss-theme-border,#cbd4d9));
+}
+.tasks-preview-card .tasks-preview-actions-left button.tasks-preview-edit{
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ border:1px solid var(--ss-theme-border);
+}
+.tasks-preview-card .tasks-preview-actions-left :is(.ss-trash-icon,.ss-pencil-icon){flex:none}
+.tasks-bid-guard-help{margin:4px 0;padding:8px 10px;border-left:2px solid var(--ss-theme-accent);
+ color:var(--ss-theme-muted);background:var(--ss-theme-base);font-size:11px;line-height:1.4}
+@media(max-width:700px){
+ .tasks-preview-card>footer.tasks-preview-action-groups{gap:10px}
+ .tasks-preview-card .tasks-preview-actions-left,
+ .tasks-preview-card .tasks-preview-actions-right{width:100%;flex:1 1 100%;justify-content:flex-start}
+ .tasks-preview-card .tasks-preview-actions-right{justify-content:flex-end}
+ .tasks-preview-card .tasks-preview-action-groups button{min-height:44px}
+}

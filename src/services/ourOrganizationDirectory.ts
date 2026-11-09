@@ -1,4 +1,5 @@
 import type {Company,Contact} from '../types/crm';
+import {isOurCompany} from './companyRelationship';
 
 /**
  * Internal roster backed by two tagged, non-customer CRM companies.
@@ -28,6 +29,9 @@ export function rosterGroupForContact(contact:Contact,companies:readonly Company
  const group=companies.find(c=>c.id===contact.companyId);
  const direct=group?ourOrgGroup(group):undefined;
  if(direct)return direct;
+ // A Person linked directly to the SELF Company is part of Employees,
+ // while tagged subcontractors continue to retain their own firm.
+ if(group&&isOurCompany(group))return 'employees';
  const sub=companies.find(c=>ourOrgGroup(c)==='subcontractors');
  return sub?.aliases?.includes(ourOrgMemberMarker(contact.id))?'subcontractors':undefined;
 }

@@ -2,10 +2,11 @@ import {useEffect,useState} from 'react';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {MobileSheetHandle} from './MobileSheetHandle';
-import {TrashIcon} from './TrashIcon';
+import {TrashIcon,PencilIcon} from './TrashIcon';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {TaskEditor} from './TasksWorkspace';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
- type TaskChanges,type TaskLink,normalizedSubtasks,subtaskProgress} from '../store/personalTaskStore';
+ type TaskChanges,type TaskLink,normalizedSubtasks,subtaskProgress,isProtectedBidTask,bidTaskDealId} from '../store/personalTaskStore';
 import type {CalendarTaskRequest} from '../services/taskModalEvents';
 export {requestTaskModal} from '../services/taskModalEvents';
 export type {CalendarTaskRequest} from '../services/taskModalEvents';
@@ -41,7 +42,8 @@ export function TaskModalHost(){
  const notebookEntries=useNotebookStore(s=>s.entries);
  const [request,setRequest]=useState<CalendarTaskRequest|null>(null);
  const [linkedPreview,setLinkedPreview]=useState<PreviewRecord|null>(null);
- useModalScrollLock(Boolean(request||linkedPreview));
+ const [externalDealId,setExternalDealId]=useState<string|null>(null);
+ useModalScrollLock(Boolean(request||linkedPreview||externalDealId));
  const previewRef=useDismissibleLayer<HTMLElement>(
   request?.mode==='preview',()=>setRequest(null));
  useEffect(()=>{
@@ -53,8 +55,8 @@ export function TaskModalHost(){
   window.addEventListener('salesshop:task-modal',receive);
   return()=>window.removeEventListener('salesshop:task-modal',receive);
  },[]);
- useEffect(()=>{setRequest(null);setLinkedPreview(null);},[scope]);
- if((!request&&!linkedPreview)||!scope||storedScope!==scope||previewRole)return null;
+ useEffect(()=>{setRequest(null);setLinkedPreview(null);setExternalDealId(null);},[scope]);
+ if((!request&&!linkedPreview&&!externalDealId)||!scope||storedScope!==scope||previewRole)return null;
  const task=request?.mode==='preview'?tasks.find(t=>t.id===request.id&&!t.deletedAt):null;
  const linkedDealId=task?.sourceObjectId?.startsWith('deal-submit:')
   ?task.sourceObjectId.slice('deal-submit:'.length)
@@ -76,6 +78,11 @@ export function TaskModalHost(){
   }:{}),
  }:request?.mode==='edit'?tasks.find(t=>t.id===request.id&&!t.deletedAt):null;
  const close=()=>setRequest(null);
+ const recordExternal=()=>{
+  const dealId=task?bidTaskDealId(task):null;
+  if(!dealId)return;
+  close();setExternalDealId(dealId);
+ };
  const save=(changes:TaskChanges&{title:string})=>{
   if(request?.mode==='create'){
    const newId=create(changes.title,changes);
@@ -142,38 +149,55 @@ export function TaskModalHost(){
          {link.label??link.type} ↗</button>)}
       </div>}
      </div>
-     <footer className="ss-mobile-sheet-actions">
-      <button type="button" className="tasks-preview-delete" onClick={()=>{
-       if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
-       remove(task.id);close();
-      }}><TrashIcon/> Delete</button>
-      {task.sourceObjectId?.startsWith('home-note:')&&
-        homeNotes(notebookEntries).some(note=>
-         note.objectId===task.sourceObjectId?.slice('home-note:'.length))&&
-        <button type="button" onClick={()=>{
-         close();openHomeNote({mode:'preview',
-          objectId:task.sourceObjectId!.slice('home-note:'.length)});
-        }}>Open source note</button>}
-      {relatedQuote&&<button type="button" onClick={()=>{
-       close();nav.openQuote(relatedQuote.id);
-      }}>Open linked quote ↗</button>}
-      {canLog&&task.status!=='completed'&&task.status!=='canceled'&&subtaskProgress(task).remaining===0&&
-       <button type="button" className="tasks-flow-action" onClick={()=>{
-        close();openActivityComposer({taskId:task.id});
-       }}>Complete + log activity</button>}
-      <button type="button" disabled={task.status!=='completed'&&subtaskProgress(task).remaining>0}
-       title={task.status!=='completed'&&subtaskProgress(task).remaining>0?'Complete the checklist first':undefined}
-       onClick={()=>{
-       if(task.status==='completed')reopen(task.id);else complete(task.id);
-       close();
-      }}>{task.status==='completed'?'Reopen':'Mark complete'}</button>
-      <button type="button" className="tasks-primary"
-       onClick={()=>setRequest({mode:'edit',id:task.id})}>Edit task</button>
-
+     <footer className="ss-mobile-sheet-actions tasks-preview-action-groups">
+      <div className="tasks-preview-actions-left">
+       <button type="button" className="tasks-preview-delete" onClick={()=>{
+        if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
+        remove(task.id);close();
+       }}><TrashIcon/> Delete</button>
+       <button type="button" className="tasks-preview-edit tasks-primary"
+        onClick={()=>setRequest({mode:'edit',id:task.id})}>
+        <PencilIcon/> Edit</button>
+      </div>
+      <div className="tasks-preview-actions-right">
+       {isProtectedBidTask(task)&&!task.submissionConfirmedAt?<>
+        {relatedQuote&&<button type="button" onClick={()=>{
+         close();nav.openQuote(relatedQuote.id);
+        }}>Open linked Quote ↗</button>}
+        {canLog&&<button type="button" className="tasks-flow-action"
+          onClick={recordExternal}>Record external quote</button>}
+        <button type="button" disabled
+          title="Requires confirmed customer delivery or a recorded external submission">Complete · quote required</button>
+       </>:<>
+        {task.sourceObjectId?.startsWith('home-note:')&&
+          homeNotes(notebookEntries).some(note=>
+           note.objectId===task.sourceObjectId?.slice('home-note:'.length))&&
+           <button type="button" onClick={()=>{
+            close();openHomeNote({mode:'preview',
+             objectId:task.sourceObjectId!.slice('home-note:'.length)});
+           }}>Open source note</button>}
+        {relatedQuote&&<button type="button" onClick={()=>{
+         close();nav.openQuote(relatedQuote.id);
+        }}>Open linked Quote ↗</button>}
+        <button type="button" disabled={task.status!=='completed'&&subtaskProgress(task).remaining>0}
+         title={task.status!=='completed'&&subtaskProgress(task).remaining>0?'Complete the checklist first':undefined}
+         onClick={()=>{
+          if(task.status==='completed')reopen(task.id);else complete(task.id);
+          close();
+         }}>{task.status==='completed'?'Reopen task':'Complete'}</button>
+        {canLog&&task.status!=='completed'&&task.status!=='canceled'&&subtaskProgress(task).remaining===0&&
+         <button type="button" className="tasks-flow-action" onClick={()=>{
+          close();openActivityComposer({taskId:task.id});
+         }}>Complete + Log Activity</button>}
+       </>}
+      </div>
      </footer>
     </section>
    </div>:null}
    {linkedPreview&&<RecordPreviewDrawer record={linkedPreview}
     onClose={()=>setLinkedPreview(null)} onSelect={setLinkedPreview}/>}
+   {externalDealId&&<ExternalQuoteBackfillDialog key={externalDealId}
+    initialDealId={externalDealId} onClose={()=>setExternalDealId(null)}
+    onRecorded={()=>setExternalDealId(null)}/>}
   </>;
 }

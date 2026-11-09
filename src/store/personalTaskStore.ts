@@ -18,6 +18,12 @@ export type TaskType='todo'|'call'|'email'|'meeting'|'follow-up';
 export type TaskPriority='low'|'normal'|'high'|'urgent';
 export type TaskStatus='open'|'in-progress'|'waiting'|'completed'|'canceled';
 export interface TaskSubtask{id:string;title:string;completed:boolean;}
+/** Generated bid-due tasks can be completed only by confirmed quote delivery
+ * or a recorded external quote submission, never by a manual Task action. */
+export const isProtectedBidTask=(task:Pick<PersonalTask,'sourceObjectId'>):boolean=>
+ Boolean(task.sourceObjectId?.startsWith('deal-submit:'));
+export const bidTaskDealId=(task:Pick<PersonalTask,'sourceObjectId'>):string|null=>
+ isProtectedBidTask(task)?task.sourceObjectId!.slice('deal-submit:'.length):null;
 export function normalizedSubtasks(value:unknown):TaskSubtask[]{
  if(!Array.isArray(value))return[];
  const seen=new Set<string>();
@@ -46,6 +52,8 @@ export interface PersonalTask {
   notes?:string;type?:TaskType;priority?:TaskPriority;status?:TaskStatus;
   queue?:string;reminderAt?:string;subtasks?:TaskSubtask[];
   createdAt:string;updatedAt:string;completedAt?:string;
+  /** Trusted quote delivery/external-submission proof for generated bid Tasks. */
+  submissionConfirmedAt?:string;
 }
 export type TaskChanges=Partial<Omit<PersonalTask,'id'|'createdAt'|'updatedAt'>>;
 export type NotebookPromotionKind='task'|'touchpoint'|'deal'|'contact'|'company';
@@ -144,7 +152,9 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     if(!scope||!clean)return null;
     const now=new Date().toISOString();
     const fields=sanitize(changes);
-    const nextStatus=deriveSubtaskStatus(fields.status??'open',fields.subtasks??[]);
+    const proposedStatus=deriveSubtaskStatus(fields.status??'open',fields.subtasks??[]);
+    const nextStatus=isProtectedBidTask(fields)&&!fields.submissionConfirmedAt&&
+      proposedStatus==='completed'?'open':proposedStatus;
     const task:PersonalTask={...fields,id:'task_'+crypto.randomUUID(),title:clean,workspaceScope:scope,
       type:fields.type??'todo',priority:fields.priority??'normal',
       status:nextStatus,completedAt:nextStatus==='completed'?now:undefined,
@@ -159,10 +169,20 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       task.workspaceScope===scope&&!task.deletedAt);
     if(!original)return;
     const now=nextTaskEditTimestamp(original.updatedAt),patch=sanitize(changes);
+    // Do not allow changing the protected identity or marking a submission task
+    // complete via editor, bulk actions, checklists, or manual Task controls.
+    if(isProtectedBidTask(original)){
+      delete patch.sourceObjectId;
+      delete patch.submissionConfirmedAt;
+      if(patch.status==='completed'&&!original.submissionConfirmedAt)
+        patch.status=original.status==='completed'?'completed':'open';
+    }
     const next=tasks.map(task=>{
       if(task.id!==id)return task;
-      const status=deriveSubtaskStatus(patch.status??task.status??'open',
+      const proposed=deriveSubtaskStatus(patch.status??task.status??'open',
         patch.subtasks??normalizedSubtasks(task.subtasks));
+      const status=isProtectedBidTask(task)&&!task.submissionConfirmedAt&&
+        task.status!=='completed'&&proposed==='completed'?'open':proposed;
       return {...task,...patch,title:patch.title||task.title,
         completedAt:status==='completed'?(task.completedAt??now):undefined,
         status,updatedAt:now};
@@ -194,12 +214,17 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       const authored=/submit.*(quote|bid)|send.*(quote|bid)/i.test(task.title)&&
         normalizedTaskAssociations(task).some(link=>link.type==='project'&&link.id===dealId);
       if(!automated&&!authored)return task;
-      // Quoting events cannot bypass an unfinished checklist. The user can
-      // still finish the supporting documents after submitting the bid.
-      if(normalizedSubtasks(task.subtasks).some(item=>!item.completed))return task;
-      changed=true;
       const timestamp=nextTaskEditTimestamp(task.updatedAt);
-      return {...task,status:'completed' as const,completedAt:timestamp,updatedAt:timestamp};
+      // Store proof even when the checklist isn't complete. Finishing its last
+      // item later can then complete the parent without requiring a second,
+      // duplicate customer-delivery event.
+      const pending=normalizedSubtasks(task.subtasks).some(item=>!item.completed);
+      if(pending&&(!automated||task.submissionConfirmedAt))return task;
+      const proof=automated?{submissionConfirmedAt:task.submissionConfirmedAt??timestamp}:{};
+      changed=true;
+      return pending
+        ?{...task,...proof,updatedAt:timestamp}
+        :{...task,...proof,status:'completed' as const,completedAt:timestamp,updatedAt:timestamp};
     });
     if(changed){set({tasks:updated});persist(scope,updated);}
   },
@@ -221,13 +246,12 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       if(!deal){
        if(task.status==='canceled'||task.status==='completed')return task;
        const stage=allDeals.get(dealId)?.stage;
-       const submitted=stage!==undefined&&
-        ['Bid Sent','Negotiation','Closed Won','Completed'].includes(stage);
-       if(submitted&&normalizedSubtasks(task.subtasks).some(item=>!item.completed))return task;
+       // A manually changed CRM stage is NOT evidence of customer delivery.
+       // Preserve the submission Task until a confirmed quote or external
+       // submission calls completeDealSubmissionTasks for this Deal.
+       if(stage&&['Bid Sent','Negotiation','Closed Won','Completed'].includes(stage))return task;
        changed=true;
-       return submitted
-        ?{...task,status:'completed' as const,completedAt:now,updatedAt:now}
-        :{...task,status:'canceled' as const,updatedAt:now};
+       return {...task,status:'canceled' as const,updatedAt:now};
       }
       // An intentional cancel is a user override, not a retry condition.
       if(task.status==='canceled'||task.dueDate===deal.dueDate)return task;
@@ -250,7 +274,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
        linked:{type:'project',id:deal.id},
        associations:[{type:'project',id:deal.id,label:'Deal · '+deal.name}],
        sourceLabel:'Deal · '+deal.name,
-       notes:'Automatically linked to the deal bid due date. Complete after submitting the quote.',
+       notes:'Automatic bid deadline. Completion requires confirmed customer delivery of a linked SalesShop Quote, or a recorded external quote submission.',
        workspaceScope:scope,createdAt:now,updatedAt:now,
       });
     }

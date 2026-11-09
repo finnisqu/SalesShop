@@ -11,8 +11,8 @@ import {PreviewPanelClose} from './PreviewPanelChrome';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import '../external-quote.css';
 
-export function ExternalQuoteBackfillDialog({onClose,onRecorded}:{
- onClose:()=>void;onRecorded?:(dealName:string)=>void;
+export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId}:{
+ onClose:()=>void;onRecorded?:(dealName:string)=>void;initialDealId?:string;
 }){
  const deals=useCrmStore(s=>s.projects);
  const companies=useCrmStore(s=>s.companies);
@@ -24,7 +24,7 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded}:{
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const editable=!perspective&&(mode==='local'||Boolean(orgId&&userId&&canEditTeamArea(role,department,'crm')));
  const [query,setQuery]=useState('');
- const [selectedId,setSelectedId]=useState('');
+ const [selectedId,setSelectedId]=useState(initialDealId??'');
  const [newDealOpen,setNewDealOpen]=useState(false);
  const [newDealName,setNewDealName]=useState('');
  const [newCompanyId,setNewCompanyId]=useState('');

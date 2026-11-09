@@ -20,6 +20,33 @@ describe('Task checklist subtasks',()=>{
   usePersonalTaskStore.getState().complete(task.id);
   expect(usePersonalTaskStore.getState().tasks[0].status).toBe('open');
  });
+ it('blocks manual completion and checklist-only completion for a generated bid Task',()=>{
+  usePersonalTaskStore.setState({scope:'local:user',tasks:[{
+   ...task,sourceObjectId:'deal-submit:deal-1',subtasks:[],
+  }]});
+  usePersonalTaskStore.getState().complete(task.id);
+  expect(usePersonalTaskStore.getState().tasks[0].status).toBe('open');
+  usePersonalTaskStore.getState().updateTask(task.id,{status:'completed'});
+  expect(usePersonalTaskStore.getState().tasks[0].status).toBe('open');
+  usePersonalTaskStore.getState().updateTask(task.id,{subtasks:[
+   item('w9','W9',true),item('coi','COI',true)]});
+  expect(usePersonalTaskStore.getState().tasks[0].status).toBe('open');
+  expect(usePersonalTaskStore.getState().tasks[0].submissionConfirmedAt).toBeUndefined();
+  usePersonalTaskStore.getState().completeDealSubmissionTasks('deal-1');
+  expect(usePersonalTaskStore.getState().tasks[0].status).toBe('completed');
+  expect(usePersonalTaskStore.getState().tasks[0].submissionConfirmedAt).toBeTruthy();
+ });
+ it('does not infer quote delivery from a manually changed Bid Sent stage',()=>{
+  usePersonalTaskStore.setState({scope:'local:user',tasks:[{
+   ...task,sourceObjectId:'deal-submit:deal-1',subtasks:[],
+  }]});
+  usePersonalTaskStore.getState().syncDealSubmissionTasks([{
+   id:'deal-1',name:'Mill District',stage:'Bid Sent',
+   createdAt:'2026-11-09T11:00:00.000Z',updatedAt:'2026-11-09T11:00:00.000Z',
+  }]);
+  expect(usePersonalTaskStore.getState().tasks[0].status).toBe('open');
+  expect(usePersonalTaskStore.getState().tasks[0].submissionConfirmedAt).toBeUndefined();
+ });
  it('keeps a Deal submission task open when quote submission leaves required documents unchecked',()=>{
   usePersonalTaskStore.setState({scope:'local:user',tasks:[{
    ...task,sourceObjectId:'deal-submit:deal-1',
@@ -28,6 +55,7 @@ describe('Task checklist subtasks',()=>{
   }]});
   usePersonalTaskStore.getState().completeDealSubmissionTasks('deal-1');
   expect(usePersonalTaskStore.getState().tasks[0].status).toBe('open');
+  expect(usePersonalTaskStore.getState().tasks[0].submissionConfirmedAt).toBeTruthy();
   usePersonalTaskStore.getState().updateTask(task.id,{subtasks:[
    item('w9','W9',true),item('coi','COI',true)]});
   expect(usePersonalTaskStore.getState().tasks[0].status).toBe('completed');

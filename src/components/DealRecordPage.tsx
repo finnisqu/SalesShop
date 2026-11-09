@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
-import {LinkExistingRecord,RecordNewCompany} from './RecordRelatedActions';
+import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {DealPeopleRelationships} from './DealPersonRelationships';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
@@ -37,7 +37,6 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const companies = useCrmStore(state => state.companies);
   const contacts = useCrmStore(state => state.contacts);
   const activities = useCrmStore(state => state.activities);
-  const createContact=useCrmStore(state=>state.createContact);
   const mode=useAuthStore(state=>state.mode);
   const teamRole=useAuthStore(state=>state.teamRole);
   const department=useAuthStore(state=>state.teamDepartment);
@@ -66,12 +65,6 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
-  const [personCreating,setPersonCreating]=useState(false);
-  const [personName,setPersonName]=useState('');
-  const [personEmail,setPersonEmail]=useState('');
-  const [personTitle,setPersonTitle]=useState('');
-  const [personPhone,setPersonPhone]=useState('');
-  const [personError,setPersonError]=useState('');
   const [timelineOpen,setTimelineOpen]=useState(false);
   const timelineBetaEnabled=useDealTimelineBetaStore(state=>state.enabled);
   const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
@@ -88,7 +81,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   });
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
-  useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setActivityPreviewId(null);setPersonCreating(false);
+  useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setActivityPreviewId(null);
     setExternalQuoteOpen(false);setSaveError('');setNotice(null); }, [dealId]);
   useEffect(()=>{if(!timelineBetaEnabled)setTimelineOpen(false);},[timelineBetaEnabled]);
   useEffect(() => {
@@ -144,24 +137,6 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     const person=personId?useCrmStore.getState().contacts.find(p=>p.id===personId):undefined;
     openActivityComposer({associations:[dealAssociation,
       ...(person?[{type:'contact' as const,id:person.id,label:'Person · '+person.name}]:[])]});
-  };
-  const createDealPerson=(event:FormEvent)=>{
-    event.preventDefault();
-    if(!canEditCrm)return;
-    const name=personName.trim(),email=personEmail.trim();
-    if(!name){setPersonError('Enter a name.');return;}
-    if(contacts.some(p=>(email&&p.email?.toLowerCase()===email.toLowerCase())||
-      (p.name.toLowerCase()===name.toLowerCase()&&(p.companyId??'')===(deal.companyId??'')))){
-      setPersonError('That person already exists. Use the company people list or search in the Activity editor.');return;
-    }
-    const personId=createContact({name,email,phone:personPhone.trim(),
-      title:personTitle.trim(),companyId:deal.companyId,source:'manual'});
-    if(!personId){setPersonError('Could not create that person.');return;}
-    setPersonName('');setPersonEmail('');setPersonTitle('');setPersonPhone('');
-    setPersonCreating(false);setPersonError('');
-    // Creating a Person does not imply that every Company person belongs to the Deal.
-    // Open a prelinked interaction so the user's explicit association is recorded.
-    logDealActivity(personId);
   };
   const newQuote = () => {
     const id = createQuote({ title: deal.name, projectId: deal.id, companyId: deal.companyId, companyName: deal.companyName });
@@ -253,8 +228,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </button>)}
           {!related.linkedQuotes.length && <p className="connections-record-empty">No SalesShop quotes linked to this deal.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={newQuote}>+ New Quote</button>
-        <LinkExistingRecord source={{kind:'deal',id:deal.id,name:deal.name}} target="quote"/>
+        <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="quote"/>
         {outsideQuotes.length>0&&<div className="external-quote-history">
           <strong>Submitted with another tool or format</strong>
           {outsideQuotes.slice(0,5).map(activity=><div className="external-quote-history-entry" key={activity.id}>
@@ -276,8 +250,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             <strong>{related.company.name}</strong><small>Open company →</small>
           </button>
         </div> : <p className="connections-record-empty">No associated company. Edit the deal to select one.</p>}
-        <RecordNewCompany source={{kind:'deal',id:deal.id}}/>
-        <LinkExistingRecord source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
+        <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
       </RecordCard>
       <RecordCard title="People" extra={<span>{new Set([
         ...related.dealPeople.map(person=>person.id),...directIds]).size} linked</span>}>
@@ -290,7 +263,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             </button>
             {canEditCrm&&<button type="button" onClick={()=>logDealActivity(person.id)}>Log</button>}
           </div>)}
-          {!related.dealPeople.length&&<p className="connections-record-empty">No people linked yet. Log an interaction with a person or add a contact to a quote.</p>}
+          {!related.dealPeople.length&&<p className="connections-record-empty">No contacts linked through Quotes or Activities. Add a direct Deal Person below.</p>}
         </div>
         <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson}/>
         {related.companyPeople.some(person=>!directIds.has(person.id))&&<details className="ss-deal-company-people">
@@ -305,20 +278,6 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             </div>)}
           </div>
         </details>}
-        {canEditCrm&&<>
-          <button type="button" onClick={()=>{setPersonCreating(v=>!v);setPersonError('');}}>
-            {personCreating?'Cancel new person':'+ New Person'}
-          </button>
-          {personCreating&&<form className="ss-deal-person-form" onSubmit={createDealPerson}>
-            <label>Name<input required autoFocus value={personName} onChange={e=>setPersonName(e.target.value)}/></label>
-            <label>Title / role<input value={personTitle} onChange={e=>setPersonTitle(e.target.value)}/></label>
-            <label>Email<input type="email" value={personEmail} onChange={e=>setPersonEmail(e.target.value)}/></label>
-            <label>Phone<input type="tel" value={personPhone} onChange={e=>setPersonPhone(e.target.value)}/></label>
-            <p className="connections-record-helper">Creates a Person and starts an Activity with this Deal preselected. Save the Activity to record their Deal link.</p>
-            {personError&&<p role="alert" className="connections-record-error">{personError}</p>}
-            <button type="submit" className="connections-record-primary">Create & log activity</button>
-          </form>}
-        </>}
       </RecordCard>
       <PrivateDealContactRoles dealId={deal.id} contacts={contacts} quotes={related.linkedQuotes} />
       <section className="connections-record-panel connections-record-history">

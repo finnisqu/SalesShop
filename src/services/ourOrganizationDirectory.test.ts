@@ -3,6 +3,7 @@ import {OUR_ORG_GROUPS,ensureOurOrgCompany,isOurOrgCompany,ourOrgCompanyIds,
  ourOrgGroup,ourOrgPeople,ourOrgRoles,rosterGroupForContact,
  ourOrgMemberMarker,ourOrgRoleMarker,isOurOrgContact} from './ourOrganizationDirectory';
 import type {Company,Contact} from '../types/crm';
+import {OUR_COMPANY_MARKER} from './companyRelationship';
 
 const employeeCompany={id:'emp',name:'Internal Employees',kind:'non-customer',
  aliases:[OUR_ORG_GROUPS[0].marker]} as Company;
@@ -25,6 +26,15 @@ describe('Our Organization directory',()=>{
    .map(p=>p.id)).toEqual(['p1']);
   expect(ourOrgPeople(contacts,[employeeCompany,subcontractCompany,outside],'subcontractors')
    .map(p=>p.id)).toEqual(['p2']);
+ });
+ it('treats People directly assigned to SELF company as employees',()=>{
+  const self={id:'self',name:'World Stone',kind:'non-customer',
+   aliases:[OUR_COMPANY_MARKER]} as Company;
+  const person={id:'p-self',name:'Office Manager',companyId:'self'} as Contact;
+  expect(rosterGroupForContact(person,[self,employeeCompany,subcontractCompany])).toBe('employees');
+  expect(ourOrgPeople([person],[self,employeeCompany,subcontractCompany],'employees'))
+    .toEqual([person]);
+  expect(isOurOrgContact(person,[self,employeeCompany,subcontractCompany])).toBe(true);
  });
  it('keeps subcontractors in Our Organization while linking their external company',()=>{
   const vendor={id:'vendor',name:'Specialty Installers LLC',kind:'non-customer'} as Company;

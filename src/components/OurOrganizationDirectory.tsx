@@ -1,5 +1,7 @@
 import {useEffect,useState,type FormEvent} from 'react';
 import {useCrmStore} from '../store/crmStore';
+import {useNavigationStore} from '../store/navigationStore';
+import {isOurCompany} from '../services/companyRelationship';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
@@ -15,6 +17,8 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
  onCreateConsumed:()=>void;
 }){
  const companies=useCrmStore(s=>s.companies);
+ const openCompany=useNavigationStore(s=>s.openCompany);
+ const ownCompany=companies.find(isOurCompany);
  const contacts=useCrmStore(s=>s.contacts);
  const resolveCompany=useCrmStore(s=>s.resolveCompany);
  const updateCompany=useCrmStore(s=>s.updateCompany);
@@ -115,7 +119,12 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
    <div><h2>Our Organization</h2>
     <p>Employees and subcontractors. Separate from customer and partner contacts; not a Team login directory.</p>
    </div>
-   {editable&&<span className="our-org-heading-note">Use + Person in the header to add someone.</span>}
+   <div className="our-org-heading-actions">
+    {ownCompany&&<button type="button" className="our-org-self-company-link"
+       onClick={()=>openCompany(ownCompany.id)}>
+       View {ownCompany.name} · SELF ↗</button>}
+    {editable&&<span className="our-org-heading-note">Use + Person in the header to add someone.</span>}
+   </div>
   </div>
   <div className="our-org-tabs" role="group" aria-label="Internal people type">
    {OUR_ORG_GROUPS.map(item=><button type="button" key={item.id}
