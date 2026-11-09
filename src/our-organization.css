@@ -47,3 +47,11 @@
 @media(max-width:760px){
  .connections-directory-layout .our-org-directory{max-width:100%;padding:10px}
 }
+
+.our-org-heading-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.our-org-self-company-link{display:inline-flex;align-items:center;min-height:34px;
+ padding:6px 9px;border:1px solid var(--ss-theme-border);border-radius:7px;
+ color:var(--ss-theme-accent);background:var(--ss-theme-card);font-size:11px;
+ font-weight:750;cursor:pointer}
+@media(max-width:760px){.our-org-heading-actions{justify-content:flex-start}
+ .our-org-self-company-link{min-height:44px}}
