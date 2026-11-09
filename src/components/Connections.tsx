@@ -36,14 +36,14 @@ import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
 import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,type DealPipeline,type ProjectStage} from '../types/crm';
 import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
- companyMatchesRelationship,visibleCompanyAliases,type CompanyRelationship,
+ companyMatchesRelationship,isOurCompany,visibleCompanyAliases,type CompanyRelationship,
  type EditableCompanyRelationship} from '../services/companyRelationship';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from '../services/activityLogFilters';
 
 type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'suppliers' | 'quotes' | 'activity';
-type CompanyFilter = CompanyRelationship | 'all';
+type CompanyFilter = CompanyRelationship | 'self' | 'all';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
   { id: 'companies', label: 'Companies', description: 'Accounts & partners' },
@@ -242,7 +242,8 @@ export function Connections() {
       activityFilters,companies,contacts,projects,visibleQuotes,needle]);
 
   const companyTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='companies'?companyRows.map(c=>({
-    id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
+    id:c.id,name:c.name,isSelfCompany:isOurCompany(c),
+    association:{type:'company',id:c.id,label:'Company · '+c.name},
     values:{name:c.name,type:companyRelationshipLabel(c),
       people:String(counts.peopleByCompany.get(c.id)??0),
       deals:String(counts.dealsByCompany.get(c.id)??0),
@@ -291,7 +292,8 @@ export function Connections() {
       try{
         if(change.scope==='companies'){
           const company=useCrmStore.getState().companies.find(c=>c.id===item.id);
-          if(!company||isOurOrgCompany(company))throw new Error('Company is unavailable for reclassification.');
+          if(!company||isOurOrgCompany(company)||isOurCompany(company))
+            throw new Error('Our Company records must be reclassified from their Company page.');
           updateCompany(item.id,companyRelationshipPatch(company,change.value));
         }else if(change.scope==='people'){
           if(change.property==='companyId')
@@ -482,6 +484,7 @@ export function Connections() {
                     <option value="customer">Customers</option>
                     <option value="unclassified">Not classified</option>
                     <option value="partner">Partners / other</option>
+                    <option value="self">Our Company (SELF)</option>
                   </select>
                 </label>}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
@@ -493,12 +496,13 @@ export function Connections() {
                   return <div key={company.id} className="connections-mobile-record-group">
                     <button type="button" className="connections-record" onClick={() => previewRecord('company',company.id)}>
                     <span className="connections-record-eyebrow">{companyRelationshipLabel(company)}</span>
-                    <strong>{company.name}</strong>
+                    <strong>{company.name}{isOurCompany(company)&&
+                      <span className="connections-table-self-badge">SELF</span>}</strong>
                     <small>{peopleCount} people · {projectCount} deals · {companyQuoteCount} linked quotes</small>
                     <span className="connections-record-arrow" aria-hidden="true">↗</span>
                   </button>
                   <div className="connections-mobile-inline">
-                      {canBulkEdit&&<label>Relationship
+                      {canBulkEdit&&!isOurCompany(company)&&<label>Relationship
                         <select aria-label={'Relationship for '+company.name} value={companyRelationship(company)}
                           onChange={event=>{const next=event.currentTarget.value as EditableCompanyRelationship;
                             if(next!=='prospect'&&next!=='customer'&&next!=='partner')return;
