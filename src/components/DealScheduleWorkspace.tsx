@@ -2,6 +2,7 @@ import {useEffect,useMemo,useState} from 'react';
 import type {Project} from '../types/crm';
 import type {DealScheduleDraft,DealScheduleRow,DealScheduleStatus} from '../services/dealScheduleTemplates';
 import {scheduleProgress} from '../services/dealScheduleEditing';
+import {dealScheduleWarnings} from '../services/dealScheduleWarnings';
 import {useDealExecutionSchedules} from '../services/useDealExecutionSchedules';
 import {useAuthStore} from '../store/authStore';
 import {canEditTeamArea} from '../services/teamDepartments';
@@ -298,6 +299,7 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
     previous.includes(id)?previous.filter(key=>key!==id):[...previous,id]);
   const selected=schedule?.rows.find(row=>row.id===selectedId);
   const progress=schedule?scheduleProgress(schedule):null;
+  const warnings=useMemo(()=>schedule?dealScheduleWarnings(schedule):[],[schedule]);
   return <section className="ss-deal-schedule" aria-label="Project timeline">
     <header className="ss-schedule-toolbar">
       <div><h2>Project timeline</h2><p>Phased procurement, building installation and invoicing</p></div>
@@ -327,6 +329,19 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
           <span>{schedule.rows.filter(row=>row.scope==='import'&&row.kind==='group').length} imports</span>
           <span>{schedule.rows.filter(row=>row.scope==='building'&&row.kind==='group').length} buildings</span>
         </div>
+        {warnings.length>0&&<details className="ss-schedule-warnings">
+          <summary>{warnings.length} schedule {warnings.length===1?'warning':'warnings'} ·
+            {warnings.filter(item=>item.kind==='overdue').length} overdue ·
+            {warnings.filter(item=>item.kind==='sequence').length} dependency overlaps
+          </summary>
+          <div className="ss-schedule-warning-list">
+            {warnings.map(item=><button key={item.id} type="button"
+              onClick={()=>setSelectedId(item.rowId)}>
+              <strong>{item.kind==='overdue'?'Overdue':'Sequence'} · {item.label}</strong>
+              <span>{item.detail}</span>
+            </button>)}
+          </div>
+        </details>}
         {modeView==='gantt'?<GanttChart rows={rows} onSelect={setSelectedId} selectedId={selectedId}
           onCollapse={toggleCollapsed}/>:
           <ScheduleMilestoneList schedule={schedule} rows={rows}
