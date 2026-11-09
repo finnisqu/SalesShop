@@ -30,6 +30,14 @@ describe('shared workspace chrome',()=>{
     expect(html).toContain('Disabled');
   });
 
+  it('uses consistent More button copy while preserving a contextual accessible name',()=>{
+    const html=renderToStaticMarkup(<WorkspaceMoreMenu label="Board More"
+      items={[{label:'All pipelines',onClick:()=>{}}]}/>);
+    expect(html).toContain('aria-label="Board More menu"');
+    expect(html).toContain('<span>More</span>');
+    expect(html).not.toContain('>Board More<');
+  });
+
   it('marks the selected mobile section without creating duplicate active tabs',()=>{
     const html=renderToStaticMarkup(<MobileWorkspaceTabs title="Connections"
       items={[{value:'companies',label:'Companies'},{value:'people',label:'People'}]}
