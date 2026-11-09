@@ -11,6 +11,7 @@ import {DealTimelineBetaOverview} from './DealTimelineBeta';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
 import { Button, Field, SectionTabs, StatusText } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -355,7 +356,7 @@ export function Connections() {
   const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
   return (
     <main className="connections-workspace connections-directory-layout">
-      <WorkspaceHeader title="Connections"
+      <WorkspaceHeader title="Connections" help={<WorkspaceHelp page="connections" section={tab}/>} 
         className="connections-heading connections-foundation-heading"
         mobileTabs={[...CONNECTIONS_TABS.map(item=>({value:item.id,label:item.label})),
           {value:'quotes',label:'Quotes'},{value:'activity',label:'Activity history'}]}
