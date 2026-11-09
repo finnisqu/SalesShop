@@ -387,7 +387,7 @@ export function Connections() {
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
         more={<WorkspaceMoreMenu label="Connections More" items={[
           {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
-          {label:'Record external quote',onClick:()=>setExternalQuotePickerOpen(true)},
+          {label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
           {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
           ...(tab==='deals'&&timelineBetaEnabled?[
             {label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
@@ -430,7 +430,7 @@ export function Connections() {
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
           <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
         <div className="connections-activity-tools">
-         {tab==='quotes'&&<button type="button" onClick={()=>setExternalQuotePickerOpen(true)}>
+         {tab==='quotes'&&canBulkEdit&&<button type="button" onClick={()=>setExternalQuotePickerOpen(true)}>
            Record external quote</button>}
          {tab==='activity'&&<><SalesCalendarLauncher compact /><QuickActivityLauncher label="Log Activity" compact /></>}
          <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
@@ -521,7 +521,7 @@ export function Connections() {
             
             <div className="connections-deals-capture-bar">
               <span>{projectRows.length} Deals · stages, bid dates and linked quotes</span>
-              <button type="button" onClick={()=>setExternalQuotePickerOpen(true)}>
+              <button type="button" disabled={!canBulkEdit} onClick={()=>setExternalQuotePickerOpen(true)}>
                <span aria-hidden="true">+</span> Record external quote
               </button>
             </div>
