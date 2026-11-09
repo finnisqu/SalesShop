@@ -13,8 +13,9 @@ const properties:ReadonlyArray<{key:TaskBulkField;label:string}>=[
  {key:'queue',label:'Queue'},{key:'startDate',label:'Start date'},
  {key:'dueDate',label:'Due date'},
 ];
-export function TaskBulkEditDialog({count,onApply,onClose}:{
+export function TaskBulkEditDialog({count,onApply,onClose,onDelete}:{
  count:number;onApply:(change:TaskBulkChange)=>Promise<void>;onClose:()=>void;
+ onDelete?:()=>Promise<void>;
 }){
  const [property,setProperty]=useState<TaskBulkField|''>('');
  const [value,setValue]=useState('');
@@ -88,7 +89,17 @@ export function TaskBulkEditDialog({count,onApply,onClose}:{
    {notes&&<p role="status" className="connections-bulk-hint">{notes}</p>}
    <RecordFormFeedback notice={error?{kind:'error',message:error}:saving?{kind:'saving',message:'Updating selected tasks…'}:null}
      className="connections-bulk-error"/>
-   <footer><button type="button" onClick={onClose} disabled={saving}>Cancel</button>
+   <footer>
+    {onDelete&&<button type="button" className="tasks-bulk-delete"
+      disabled={saving} onClick={async()=>{
+        if(!window.confirm('Delete '+count+' selected '+(count===1?'task':'tasks')+
+          '? They will be removed from Tasks and Agenda.'))return;
+        setSaving(true);setError('');
+        try{await onDelete();}catch(reason){
+          setError(reason instanceof Error?reason.message:'Could not delete selected tasks.');
+        }finally{setSaving(false);}
+      }}>Delete selected ({count})</button>}
+    <button type="button" onClick={onClose} disabled={saving}>Cancel</button>
     <button className="connections-bulk-primary" type="submit" disabled={!valid}>
      {saving?'Updating…':'Update '+count}
     </button></footer>
