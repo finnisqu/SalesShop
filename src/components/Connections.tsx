@@ -12,7 +12,7 @@ import { PersonRecordPage } from './PersonRecordPage';
 import { DealRecordPage } from './DealRecordPage';
 import {DealTimelineBetaOverview} from './DealTimelineBeta';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
-import { Button, Field, SectionTabs, StatusText } from '../design-system/components';
+import { Button, SectionTabs, StatusText } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import { useCrmStore } from '../store/crmStore';
@@ -443,17 +443,7 @@ export function Connections() {
         </div>
       </div>}
 
-          {tab === 'companies' && <div className="connections-directory-toolbar">
-            <Field className="connections-filter" id="connections-company-filter" label="Type">
-              {(control) => <select {...control} value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyFilter)}>
-                <option value="all">All companies</option>
-                <option value="prospect">Prospects</option>
-                <option value="customer">Customers</option>
-                <option value="unclassified">Not classified</option>
-                <option value="partner">Partners & other</option>
-              </select>}
-            </Field>
-          </div>}
+
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab === 'companies' && (
             <section className="connections-directory" aria-label="Company directory">
@@ -461,6 +451,17 @@ export function Connections() {
               <p className="connections-count">{companyRows.length} companies · preview or open full details</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
+                toolbarControls={<label className="connections-filter connections-inline-type-filter">
+                  Type
+                  <select aria-label="Filter Companies by type" value={companyFilter}
+                    onChange={e=>setCompanyFilter(e.target.value as CompanyFilter)}>
+                    <option value="all">All</option>
+                    <option value="prospect">Prospects</option>
+                    <option value="customer">Customers</option>
+                    <option value="unclassified">Not classified</option>
+                    <option value="partner">Partners / other</option>
+                  </select>
+                </label>}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
