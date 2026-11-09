@@ -27,7 +27,7 @@ export function companyRelationship(company:Pick<Company,'kind'|'aliases'>):Comp
 export function companyRelationshipLabel(company:Pick<Company,'kind'|'aliases'>):string{
  const relationship=companyRelationship(company);
  return relationship==='prospect'?'Prospect':relationship==='customer'?'Customer':
-  relationship==='partner'?'Partner / other':'Unclassified · Customer or Prospect';
+  relationship==='partner'?'Partner / other':'Unclassified';
 }
 export function companyRelationshipPatch(company:Pick<Company,'aliases'>,
  relationship:EditableCompanyRelationship):CompanyPatch{
