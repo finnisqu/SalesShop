@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {LinkExistingRecord,RecordNewCompany} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
+import {DealPeopleRelationships} from './DealPersonRelationships';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import { ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { dealRecordView } from '../services/dealRecordView';
@@ -273,8 +274,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         <RecordNewCompany source={{kind:'deal',id:deal.id}}/>
         <LinkExistingRecord source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
       </RecordCard>
-      <RecordCard title="People" extra={<span>{related.dealPeople.length} linked</span>}>
-        <p className="connections-record-helper">People explicitly linked by a quote or recorded interaction. Other contacts at this company are suggestions, not automatically assigned to the Deal.</p>
+      <RecordCard title="People" extra={<span>{related.dealPeople.length} from Quotes/Activities</span>}>
+        <p className="connections-record-helper">People associated through Quotes and logged Activities appear below. Direct Deal contacts can be assigned independently with an optional role.</p>
         <div className="connections-record-entity-list">
           {related.dealPeople.map(person=><div key={person.id} className="ss-deal-person-entry">
             <button type="button" onClick={()=>openPerson(person.id)}>
@@ -285,6 +286,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </div>)}
           {!related.dealPeople.length&&<p className="connections-record-empty">No people linked yet. Log an interaction with a person or add a contact to a quote.</p>}
         </div>
+        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson}/>
         {related.companyPeople.length>0&&<details className="ss-deal-company-people">
           <summary>Other people at this company ({related.companyPeople.length})</summary>
           <div className="connections-record-entity-list">
