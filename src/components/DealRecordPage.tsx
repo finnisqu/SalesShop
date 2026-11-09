@@ -129,7 +129,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   };
   const dealAssociation={type:'project' as const,id:deal.id,label:'Deal · '+deal.name};
   const logDealActivity=(personId?:string)=>{
-    const person=personId?contacts.find(p=>p.id===personId):undefined;
+    const person=personId?useCrmStore.getState().contacts.find(p=>p.id===personId):undefined;
     openActivityComposer({associations:[dealAssociation,
       ...(person?[{type:'contact' as const,id:person.id,label:'Person · '+person.name}]:[])]});
   };
@@ -164,7 +164,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     <DealTimelineBeta deal={deal}/>
   </section>;
 
-  return <RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack}
+  return <><RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack}
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length} linked quotes</span></>}
     actions={<>
@@ -322,5 +322,15 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         </div>}
       </section>
     </>}
-  />;
+  />
+  {activityPreviewId&&<CalendarActivityPreview activityId={activityPreviewId}
+   onClose={()=>setActivityPreviewId(null)}
+   onSelect={(kind,id)=>{
+     setActivityPreviewId(null);
+     if(kind==='person')openPerson(id);
+     else if(kind==='company')openCompany(id);
+     else if(kind==='deal')useNavigationStore.getState().openProject(id);
+     else if(kind==='quote')openQuote(id);
+   }}/>}
+  </>;
 }
