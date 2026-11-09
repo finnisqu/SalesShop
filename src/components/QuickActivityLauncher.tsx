@@ -5,6 +5,8 @@ import {useQuoteStore} from '../store/quoteStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {ActivityRelatedQuickCreate} from './ActivityRelatedQuickCreate';
+import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordFormFeedback} from './RecordFormFeedback';
@@ -133,13 +135,17 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
  const record=useCrmStore(s=>s.recordActivity);
  const quotes=useQuoteStore(s=>s.quotes);
  const permitted=!perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'));
- const options=useMemo(()=>[
-  ...contacts.map(c=>({key:'contact:'+c.id,linked:{type:'contact' as const,id:c.id,label:'Person · '+c.name},label:'Person · '+c.name})),
-  ...companies.map(c=>({key:'company:'+c.id,linked:{type:'company' as const,id:c.id,label:'Company · '+c.name},label:'Company · '+c.name})),
+ const options=useMemo(()=>{
+  return [
+  ...contacts.map(c=>({key:'contact:'+c.id,
+    linked:{type:'contact' as const,id:c.id,label:'Person · '+c.name},
+    label:'Person · '+c.name})),
+  ...companies.filter(c=>!isOurOrgCompany(c))
+    .map(c=>({key:'company:'+c.id,linked:{type:'company' as const,id:c.id,label:'Company · '+c.name},label:'Company · '+c.name})),
   ...projects.map(d=>({key:'project:'+d.id,linked:{type:'project' as const,id:d.id,label:'Deal · '+d.name},label:'Deal · '+d.name})),
   ...quotes.filter(q=>!q.archivedAt&&(mode!=='cloud'||q.ownerUserId===currentUser))
     .map(q=>({key:'quote:'+q.id,linked:{type:'quote' as const,id:q.id,label:'Quote · '+q.title},label:'Quote · '+q.title})),
- ],[contacts,companies,projects,quotes,mode,currentUser]);
+ ];},[contacts,companies,projects,quotes,mode,currentUser]);
  const close=()=>{setOpen(false);setError('');};
  useModalScrollLock(open&&permitted);
  const activityRef=useDismissibleLayer<HTMLFormElement>(open&&permitted,()=>{if(!saving)close();});
@@ -255,6 +261,8 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
      <label>When<input type="datetime-local" max={dateTimeLocal()} value={occurred}
       onChange={e=>setOccurred(e.target.value)} required/></label>
       <TaskAssociationsField options={options} value={links} onChange={addLinks}/>
+      <ActivityRelatedQuickCreate disabled={saving}
+        onCreated={link=>addLinks([...links,link])}/>
      <label>Notes (optional)
       <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3}
        maxLength={5000} placeholder="Key details, questions, next steps…"/></label>

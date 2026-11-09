@@ -5,6 +5,8 @@ import {useQuoteStore} from '../store/quoteStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {ActivityRelatedQuickCreate} from './ActivityRelatedQuickCreate';
+import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {TaskAssociationsField,type AssociationOption} from './TaskAssociationsField';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import type {PreviewRecord} from './RecordPreviewDrawer';
@@ -63,17 +65,19 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   if(!saving)onClose();
  });
 
- const options:AssociationOption[]=useMemo(()=>[
-  ...people.map(p=>({key:'contact:'+p.id,label:'Person · '+p.name,
+ const options:AssociationOption[]=useMemo(()=>{
+  return [
+  ...people.map(p=>({key:'contact:'+p.id,
+   label:'Person · '+p.name,
    linked:{type:'contact' as const,id:p.id,label:'Person · '+p.name}})),
-  ...companies.map(c=>({key:'company:'+c.id,label:'Company · '+c.name,
+  ...companies.filter(c=>!isOurOrgCompany(c)).map(c=>({key:'company:'+c.id,label:'Company · '+c.name,
    linked:{type:'company' as const,id:c.id,label:'Company · '+c.name}})),
   ...deals.map(d=>({key:'project:'+d.id,label:'Deal · '+d.name,
    linked:{type:'project' as const,id:d.id,label:'Deal · '+d.name}})),
   ...quotes.filter(q=>!q.archivedAt&&(mode!=='cloud'||q.ownerUserId===userId))
    .map(q=>({key:'quote:'+q.id,label:'Quote · '+(q.title||q.quoteNumber),
     linked:{type:'quote' as const,id:q.id,label:'Quote · '+(q.title||q.quoteNumber)}})),
- ],[people,companies,deals,quotes,mode,userId]);
+ ];},[people,companies,deals,quotes,mode,userId]);
  const optionLabels=useMemo(()=>new Map(options.map(option=>[option.key,option.label])),[options]);
  const relationList=activity?activityRelations(activity).map(link=>({
   ...link,label:optionLabels.get(link.type+':'+link.id)??link.label??labels[link.type],
@@ -151,6 +155,9 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
        placeholder="Details, questions and next steps…"
        onChange={e=>setNotes(e.target.value)}/></label>
       <TaskAssociationsField options={options} value={links} onChange={setLinks}/>
+      <ActivityRelatedQuickCreate disabled={saving}
+       onCreated={link=>setLinks(previous=>previous.some(item=>
+         item.type===link.type&&item.id===link.id)?previous:[...previous,link])}/>
       <p className="activity-preview-hint">Changes are saved to your CRM activity. Unsubmitted edits remain on this device if you close the panel.</p>
       {error&&<p className="activity-preview-error" role="alert">{error}</p>}
      </form>:<>

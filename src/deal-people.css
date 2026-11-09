@@ -1,0 +1,22 @@
+.ss-deal-person-entry{display:flex;gap:6px;align-items:center;min-width:0;border-bottom:1px solid var(--ss-theme-border)}
+.ss-deal-person-entry>button:first-child{flex:1 1 auto;min-width:0;display:grid;gap:3px;text-align:left;
+ background:transparent;border:0;color:var(--ss-theme-ink);padding:9px 5px;cursor:pointer}
+.ss-deal-person-entry>button:first-child strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-deal-person-entry>button:first-child small{font-size:10px;color:var(--ss-theme-muted)}
+.ss-deal-person-entry>button:last-child:not(:first-child){flex:0 0 auto;min-height:30px;padding:5px 8px;
+ border:1px solid var(--ss-theme-border);background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ border-radius:7px;font-size:11px;cursor:pointer}
+.ss-deal-company-people{margin:9px 0;border:1px solid var(--ss-theme-border);border-radius:8px;overflow:hidden}
+.ss-deal-company-people>summary{cursor:pointer;font-size:12px;font-weight:700;padding:9px;background:var(--ss-theme-base)}
+.ss-deal-company-people>.connections-record-entity-list{padding:0 7px}
+.ss-deal-person-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+ padding:11px;margin-top:8px;border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-base)}
+.ss-deal-person-form label{min-width:0;display:grid;gap:4px;font-size:11px;color:var(--ss-theme-muted)}
+.ss-deal-person-form input{box-sizing:border-box;min-width:0;width:100%;height:35px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ border:1px solid var(--ss-theme-border);border-radius:7px;padding:6px 8px}
+.ss-deal-person-form>p,.ss-deal-person-form>button{grid-column:1/-1}
+.ss-deal-person-form>button{justify-self:end}
+.connections-record-history .connections-record-timeline li>div>button{background:transparent;border:0;padding:0;color:var(--ss-theme-accent);text-align:left;cursor:pointer}
+.ss-deal-person-entry button:focus-visible,.ss-deal-person-form :is(button,input):focus-visible{outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px}
+@media(max-width:640px){.ss-deal-person-form{grid-template-columns:1fr}.ss-deal-person-form input{height:44px;font-size:16px}.ss-deal-person-entry>button:last-child:not(:first-child){min-height:40px}}

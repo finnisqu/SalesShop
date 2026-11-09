@@ -5,6 +5,7 @@ import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
+import {isOurOrgCompany,ourOrgGroup} from '../services/ourOrganizationDirectory';
 
 const dateLabel = (value: string) => {
   const date = new Date(value);
@@ -76,10 +77,11 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
     }catch(reason){setEditError(reason instanceof Error?reason.message:'Unable to apply person changes.');}
   };
   const displayName = person.name || person.email || 'Unnamed contact';
+  const isInternal=Boolean(related.company&&isOurOrgCompany(related.company));
 
   return <RecordPageLayout entityType="person" title={displayName} onBack={onBack}
-    subtitle={[person.title, related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
-    badge={<span>{related.company ? 'Associated company' : 'Unassigned'}</span>}
+    subtitle={[person.title, isInternal?'Our Organization':related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
+    badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
     actions={<button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(value=>!value);}}>
       {editing ? 'Cancel editing' : 'Edit person'}
     </button>}
@@ -98,8 +100,11 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           <label>Job title<input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
           <label>Company<select value={draft.companyId} onChange={(event) => setDraft({ ...draft, companyId: event.target.value })}>
             <option value="">Unassigned company</option>
-            {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((item) =>
-              <option key={item.id} value={item.id}>{item.name}</option>)}
+            {companies.filter(item=>!isOurOrgCompany(item)||item.id===person.companyId)
+             .slice().sort((a,b) => a.name.localeCompare(b.name)).map(item=>
+              <option key={item.id} value={item.id}>
+               {isOurOrgCompany(item)?'Our Organization · '+(ourOrgGroup(item)==='employees'?'Employees':'Subcontractors'):item.name}
+              </option>)}
           </select></label>
           <RecordFormFeedback notice={editError&&!['Enter a name or email.','Enter a valid email address.'].includes(editError)?{kind:'error',message:editError}:null}/>
           <div className="connections-record-form-actions ss-record-editor-actions">
@@ -111,7 +116,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           <RecordProperty label="Job title">{person.title || 'Not set'}</RecordProperty>
           <RecordProperty label="Email">{person.email || 'Not set'}</RecordProperty>
           <RecordProperty label="Phone">{person.phone || 'Not set'}</RecordProperty>
-          <RecordProperty label="Company">{related.company?.name || 'Not assigned'}</RecordProperty>
+          <RecordProperty label="Company">{isInternal?'Our Organization':related.company?.name || 'Not assigned'}</RecordProperty>
           <RecordProperty label="Created">{dateLabel(person.createdAt)}</RecordProperty>
           <RecordProperty label="Updated">{dateLabel(person.updatedAt)}</RecordProperty>
         </div>}
@@ -120,10 +125,12 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
     center={<>
       <RecordCard title="Company">
         {related.company ? <div className="connections-record-entity-list">
-          <button type="button" onClick={() => openCompany(related.company!.id)}>
+          {isInternal?<button type="button" onClick={onBack}>
+            <strong>Our Organization</strong><small>Return to internal employee and subcontractor directory →</small>
+          </button>:<button type="button" onClick={() => openCompany(related.company!.id)}>
             <strong>{related.company.name}</strong>
             <small>{related.company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'} · View company record →</small>
-          </button>
+          </button>}
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
       </RecordCard>
       <RecordCard title="Deals linked through quotes" extra={<span>{related.linkedDeals.length}</span>}>

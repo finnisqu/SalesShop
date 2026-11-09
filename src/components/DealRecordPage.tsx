@@ -13,6 +13,12 @@ import {DealAssigneeSelect,useDealAssigneeDirectory,dealAssigneeLabel} from '../
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
 import {DealTimelineBeta} from './DealTimelineBeta';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {canEditTeamArea} from '../services/teamDepartments';
+import '../deal-people.css';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const displayDate = (value?: string) => {
@@ -27,6 +33,15 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const companies = useCrmStore(state => state.companies);
   const contacts = useCrmStore(state => state.contacts);
   const activities = useCrmStore(state => state.activities);
+  const createContact=useCrmStore(state=>state.createContact);
+  const mode=useAuthStore(state=>state.mode);
+  const teamRole=useAuthStore(state=>state.teamRole);
+  const department=useAuthStore(state=>state.teamDepartment);
+  const orgId=useAuthStore(state=>state.organizationId);
+  const userId=useAuthStore(state=>state.user?.id);
+  const previewRole=useRolePerspectiveStore(state=>state.activePerspective);
+  const canEditCrm=!previewRole&&(mode==='local'||Boolean(orgId&&userId&&
+    canEditTeamArea(teamRole,department,'crm')));
   const updateDeal = useCrmStore(state => state.updateProject);
   const assignDeal = useCrmStore(state => state.assignProject);
   const {members:assignees}=useDealAssigneeDirectory();
@@ -42,6 +57,13 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const [saveError,setSaveError]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
+  const [personCreating,setPersonCreating]=useState(false);
+  const [personName,setPersonName]=useState('');
+  const [personEmail,setPersonEmail]=useState('');
+  const [personTitle,setPersonTitle]=useState('');
+  const [personPhone,setPersonPhone]=useState('');
+  const [personError,setPersonError]=useState('');
   const [timelineOpen,setTimelineOpen]=useState(false);
   const timelineBetaEnabled=useDealTimelineBetaStore(state=>state.enabled);
   const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
@@ -58,7 +80,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   });
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
-  useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setExternalQuoteOpen(false);setSaveError('');setNotice(null); }, [dealId]);
+  useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setActivityPreviewId(null);setPersonCreating(false);
+    setExternalQuoteOpen(false);setSaveError('');setNotice(null); }, [dealId]);
   useEffect(()=>{if(!timelineBetaEnabled)setTimelineOpen(false);},[timelineBetaEnabled]);
   useEffect(() => {
     if (!editing && deal) setDraft({
@@ -108,6 +131,30 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     }catch(reason){setSaveError(reason instanceof Error?reason.message:'Unable to save Deal assignment.');}
     finally{setSaving(false);}
   };
+  const dealAssociation={type:'project' as const,id:deal.id,label:'Deal · '+deal.name};
+  const logDealActivity=(personId?:string)=>{
+    const person=personId?useCrmStore.getState().contacts.find(p=>p.id===personId):undefined;
+    openActivityComposer({associations:[dealAssociation,
+      ...(person?[{type:'contact' as const,id:person.id,label:'Person · '+person.name}]:[])]});
+  };
+  const createDealPerson=(event:FormEvent)=>{
+    event.preventDefault();
+    if(!canEditCrm)return;
+    const name=personName.trim(),email=personEmail.trim();
+    if(!name){setPersonError('Enter a name.');return;}
+    if(contacts.some(p=>(email&&p.email?.toLowerCase()===email.toLowerCase())||
+      (p.name.toLowerCase()===name.toLowerCase()&&(p.companyId??'')===(deal.companyId??'')))){
+      setPersonError('That person already exists. Use the company people list or search in the Activity editor.');return;
+    }
+    const personId=createContact({name,email,phone:personPhone.trim(),
+      title:personTitle.trim(),companyId:deal.companyId,source:'manual'});
+    if(!personId){setPersonError('Could not create that person.');return;}
+    setPersonName('');setPersonEmail('');setPersonTitle('');setPersonPhone('');
+    setPersonCreating(false);setPersonError('');
+    // Creating a Person does not imply that every Company person belongs to the Deal.
+    // Open a prelinked interaction so the user's explicit association is recorded.
+    logDealActivity(personId);
+  };
   const newQuote = () => {
     const id = createQuote({ title: deal.name, projectId: deal.id, companyId: deal.companyId, companyName: deal.companyName });
     openQuote(id);
@@ -121,7 +168,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     <DealTimelineBeta deal={deal}/>
   </section>;
 
-  return <RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack}
+  return <><RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack}
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length} linked quotes</span></>}
     actions={<>
@@ -131,6 +178,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         <button type="button" onClick={()=>setExternalQuoteOpen(open=>!open)}>
           {externalQuoteOpen?"Cancel external quote":"Record external quote sent"}
         </button>}
+      {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
       <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>
     </>}
     left={<>
@@ -218,15 +266,44 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </button>
         </div> : <p className="connections-record-empty">No associated company. Edit the deal to select one.</p>}
       </RecordCard>
-      <RecordCard title="Quote contacts" extra={<span>{related.quoteContacts.length}</span>}>
-        <p className="connections-record-helper">People explicitly linked to this deal's quotes. Deal-specific contact roles have not been assigned.</p>
+      <RecordCard title="People" extra={<span>{related.dealPeople.length} linked</span>}>
+        <p className="connections-record-helper">People explicitly linked by a quote or recorded interaction. Other contacts at this company are suggestions, not automatically assigned to the Deal.</p>
         <div className="connections-record-entity-list">
-          {related.quoteContacts.map(person => <button type="button" key={person.id} onClick={() => openPerson(person.id)}>
-            <strong>{person.name || person.email || 'Unnamed contact'}</strong>
-            <small>Quote contact · {related.linkedQuotes.filter(quote => quote.contactId === person.id).length} linked {related.linkedQuotes.filter(quote => quote.contactId === person.id).length === 1 ? 'quote' : 'quotes'} →</small>
-          </button>)}
-          {!related.quoteContacts.length && <p className="connections-record-empty">No quote contacts linked yet.</p>}
+          {related.dealPeople.map(person=><div key={person.id} className="ss-deal-person-entry">
+            <button type="button" onClick={()=>openPerson(person.id)}>
+              <strong>{person.name||person.email||'Unnamed person'}</strong>
+              <small>{person.title||'Linked contact'} · Open person →</small>
+            </button>
+            {canEditCrm&&<button type="button" onClick={()=>logDealActivity(person.id)}>Log</button>}
+          </div>)}
+          {!related.dealPeople.length&&<p className="connections-record-empty">No people linked yet. Log an interaction with a person or add a contact to a quote.</p>}
         </div>
+        {related.companyPeople.length>0&&<details className="ss-deal-company-people">
+          <summary>Other people at this company ({related.companyPeople.length})</summary>
+          <div className="connections-record-entity-list">
+            {related.companyPeople.map(person=><div key={person.id} className="ss-deal-person-entry">
+              <button type="button" onClick={()=>openPerson(person.id)}>
+               <strong>{person.name||person.email||'Unnamed person'}</strong>
+               <small>{person.title||'Company contact'}</small>
+              </button>
+              {canEditCrm&&<button type="button" onClick={()=>logDealActivity(person.id)}>Log</button>}
+            </div>)}
+          </div>
+        </details>}
+        {canEditCrm&&<>
+          <button type="button" onClick={()=>{setPersonCreating(v=>!v);setPersonError('');}}>
+            {personCreating?'Cancel new person':'+ New person'}
+          </button>
+          {personCreating&&<form className="ss-deal-person-form" onSubmit={createDealPerson}>
+            <label>Name<input required autoFocus value={personName} onChange={e=>setPersonName(e.target.value)}/></label>
+            <label>Title / role<input value={personTitle} onChange={e=>setPersonTitle(e.target.value)}/></label>
+            <label>Email<input type="email" value={personEmail} onChange={e=>setPersonEmail(e.target.value)}/></label>
+            <label>Phone<input type="tel" value={personPhone} onChange={e=>setPersonPhone(e.target.value)}/></label>
+            <p className="connections-record-helper">Creates a Person and starts an Activity with this Deal preselected. Save the Activity to record their Deal link.</p>
+            {personError&&<p role="alert" className="connections-record-error">{personError}</p>}
+            <button type="submit" className="connections-record-primary">Create & log activity</button>
+          </form>}
+        </>}
       </RecordCard>
       <PrivateDealContactRoles dealId={deal.id} contacts={contacts} quotes={related.linkedQuotes} />
       <section className="connections-record-panel connections-record-history">
@@ -238,7 +315,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           <p className="connections-record-helper">Only events explicitly linked to this deal or its quotes.</p>
           <ol className="connections-record-timeline">
             {related.directHistory.map(activity => <li key={activity.id}>
-              <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{displayDate(activity.occurredAt)}</time></div>
+              <div><button type="button" onClick={()=>setActivityPreviewId(activity.id)}><strong>{activity.summary}</strong></button>
+                <time dateTime={activity.occurredAt}>{displayDate(activity.occurredAt)}</time></div>
               <small>{activity.type.replaceAll('-', ' ')}</small>
               {activity.quoteId && related.linkedQuotes.some(quote => quote.id === activity.quoteId) &&
                 <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
@@ -248,5 +326,15 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         </div>}
       </section>
     </>}
-  />;
+  />
+  {activityPreviewId&&<CalendarActivityPreview activityId={activityPreviewId}
+   onClose={()=>setActivityPreviewId(null)}
+   onSelect={(kind,id)=>{
+     setActivityPreviewId(null);
+     if(kind==='person')openPerson(id);
+     else if(kind==='company')openCompany(id);
+     else if(kind==='deal')useNavigationStore.getState().openProject(id);
+     else if(kind==='quote')openQuote(id);
+   }}/>}
+  </>;
 }
