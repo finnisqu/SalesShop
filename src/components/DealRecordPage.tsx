@@ -37,8 +37,11 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const mode=useAuthStore(state=>state.mode);
   const teamRole=useAuthStore(state=>state.teamRole);
   const department=useAuthStore(state=>state.teamDepartment);
+  const orgId=useAuthStore(state=>state.organizationId);
+  const userId=useAuthStore(state=>state.user?.id);
   const previewRole=useRolePerspectiveStore(state=>state.activePerspective);
-  const canEditCrm=!previewRole&&(mode==='local'||canEditTeamArea(teamRole,department,'crm'));
+  const canEditCrm=!previewRole&&(mode==='local'||Boolean(orgId&&userId&&
+    canEditTeamArea(teamRole,department,'crm')));
   const updateDeal = useCrmStore(state => state.updateProject);
   const assignDeal = useCrmStore(state => state.assignProject);
   const {members:assignees}=useDealAssigneeDirectory();
