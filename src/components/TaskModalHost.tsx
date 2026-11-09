@@ -160,7 +160,7 @@ export function TaskModalHost(){
         <PencilIcon/> Edit</button>
       </div>
       <div className="tasks-preview-actions-right">
-       {isProtectedBidTask(task)?<>
+       {isProtectedBidTask(task)&&!task.submissionConfirmedAt?<>
         {relatedQuote&&<button type="button" onClick={()=>{
          close();nav.openQuote(relatedQuote.id);
         }}>Open linked Quote ↗</button>}
