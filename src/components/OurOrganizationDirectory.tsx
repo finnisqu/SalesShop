@@ -64,7 +64,7 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
      title:draft.title.trim(),companyId,source:'manual'});
     if(!id)throw new Error('Could not create this person.');
    }
-   setShowEditor(false);setEditingId(null);setDraft(empty(group));
+   setShowEditor(false);setEditingId(null);setGroup(draft.group);setDraft(empty(draft.group));
   }catch(e){setError(e instanceof Error?e.message:'Unable to save the roster entry.');}
  };
  return <section className="our-org-directory">
