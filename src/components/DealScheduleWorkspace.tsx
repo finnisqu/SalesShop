@@ -180,11 +180,17 @@ function RowEditor({row,schedule,deal,canEdit}:{
   const [labelDraft,setLabelDraft]=useState(row.label);
   const [amountDraft,setAmountDraft]=useState(row.amount?.toString()??'');
   const [retainageDraft,setRetainageDraft]=useState(row.retainagePercent?.toString()??'');
+  const [referenceDraft,setReferenceDraft]=useState(row.reference??'');
+  const [notesDraft,setNotesDraft]=useState(row.notes??'');
+  const referenceLabel=row.kind==='financial'?'Invoice / payment reference':
+    row.scope==='import'?'PO / vessel / tracking reference':'Reference';
   useEffect(()=>{
     setLabelDraft(row.label);
     setAmountDraft(row.amount?.toString()??'');
     setRetainageDraft(row.retainagePercent?.toString()??'');
-  },[row.id,row.label,row.amount,row.retainagePercent]);
+    setReferenceDraft(row.reference??'');
+    setNotesDraft(row.notes??'');
+  },[row.id,row.label,row.amount,row.retainagePercent,row.reference,row.notes]);
   const saveNumber=(field:'amount'|'retainagePercent',input:string)=>{
     const value=input.trim();
     const n=Number(value);
@@ -214,6 +220,14 @@ function RowEditor({row,schedule,deal,canEdit}:{
       {dateField('plannedFinish','Planned finish')}
       {dateField('actualStart','Actual start')}
       {dateField('actualFinish','Actual finish')}
+      {row.kind!=='group'&&<label className="ss-schedule-field">
+        <span>{referenceLabel}</span>
+        <input type="text" maxLength={160} disabled={!enabled} value={referenceDraft}
+          placeholder="Optional reference"
+          onChange={event=>setReferenceDraft(event.target.value)}
+          onBlur={()=>{if(referenceDraft.trim()!==(row.reference??''))edit(dealId,row.id,{reference:referenceDraft});}}
+          onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();}}/>
+      </label>}
       {row.kind==='financial'&&<>
         <label className="ss-schedule-field"><span>Amount ($)</span><input type="number" min="0" step="0.01"
           disabled={!enabled} value={amountDraft} onChange={event=>setAmountDraft(event.target.value)}
@@ -225,6 +239,13 @@ function RowEditor({row,schedule,deal,canEdit}:{
           onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();}}/></label>
       </>}
     </div>
+    <label className="ss-schedule-field ss-schedule-notes-field">
+      <span>Milestone notes</span>
+      <textarea rows={2} maxLength={2500} disabled={!enabled} value={notesDraft}
+        placeholder="Delivery details, invoice notes, field instructions…"
+        onChange={event=>setNotesDraft(event.target.value)}
+        onBlur={()=>{if(notesDraft.trim()!==(row.notes??''))edit(dealId,row.id,{notes:notesDraft});}}/>
+    </label>
     {row.kind==='group'&&row.scope==='building'&&<div className="ss-schedule-sources">
       <strong>Imports supplying this building</strong>
       <div className="ss-schedule-source-options">
