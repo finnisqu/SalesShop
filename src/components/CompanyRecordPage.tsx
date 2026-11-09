@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,RECORD_ADDED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
-import { companyAnnualPotential, companyEstimatedAnnualWork, type CompanyKind } from '../types/crm';
+import { companyAnnualPotential, companyEstimatedAnnualWork } from '../types/crm';
+import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
+ visibleCompanyAliases,type EditableCompanyRelationship} from '../services/companyRelationship';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -42,7 +44,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const company = companies.find((candidate) => candidate.id === companyId);
   const [draft, setDraft] = useState({
-    name: company?.name ?? '', kind: company?.kind ?? 'customer' as CompanyKind,
+    name: company?.name ?? '', relationship: company?companyRelationship(company):'unclassified' as const,
     annualUnits: company?.annualUnits?.toString() ?? '',
     averageUnitValue: company?.averageUnitValue?.toString() ?? '',
     expectedSharePct: company?.expectedSharePct?.toString() ?? '',
@@ -59,7 +61,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   }, [companyId]);
   useEffect(() => {
     if (!editing && company) setDraft({
-      name: company.name, kind: company.kind,
+      name: company.name, relationship: companyRelationship(company),
       annualUnits: company.annualUnits?.toString() ?? '',
       averageUnitValue: company.averageUnitValue?.toString() ?? '',
       expectedSharePct: company.expectedSharePct?.toString() ?? '',
@@ -94,7 +96,9 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     setEditError('');
     try{
       updateCompany(company.id, {
-        name: draft.name.trim(), kind: draft.kind,
+        name: draft.name.trim(),
+        ...(draft.relationship==='unclassified'?{}:
+          companyRelationshipPatch(company,draft.relationship)),
         annualUnits: optionalNumber(draft.annualUnits),
         averageUnitValue: optionalNumber(draft.averageUnitValue),
         expectedSharePct: optionalNumber(draft.expectedSharePct),
@@ -129,8 +133,8 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   };
 
   return <RecordPageLayout entityType="company" title={company.name} onBack={onBack}
-    subtitle={company.kind === 'non-customer' ? 'Partner / non-customer relationship' : 'Customer / prospect'}
-    badge={<><span className="connections-record-stage">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</span><span>{related.relatedProjects.length} deals</span><span>{related.relatedQuotes.length} linked quotes</span></>}
+    subtitle={companyRelationshipLabel(company)}
+    badge={<><span className="connections-record-stage">{companyRelationshipLabel(company)}</span><span>{related.relatedProjects.length} deals</span><span>{related.relatedQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(current=>!current);}}>{editing ? 'Cancel editing' : 'Edit company'}</button>
       {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>}
@@ -142,8 +146,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <RecordEditField label="Company name" required error={editError==='Enter a company name.'?editError:undefined}>
             {control=><input {...control} autoFocus value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
           </RecordEditField>
-          <label>Relationship<select value={draft.kind} onChange={(event) => setDraft({ ...draft, kind: event.target.value as CompanyKind })}>
-            <option value="customer">Customer / prospect</option><option value="non-customer">Partner / non-customer</option>
+          <label>Relationship<select value={draft.relationship}
+            onChange={event=>setDraft({...draft,relationship:event.target.value as EditableCompanyRelationship})}>
+            <option value="unclassified" disabled>Not classified</option>
+            <option value="prospect">Prospect</option>
+            <option value="customer">Customer</option>
+            <option value="partner">Partner / other</option>
           </select></label>
           <label>Annual units<input type="number" min="0" step="1" value={draft.annualUnits} onChange={(event) => setDraft({ ...draft, annualUnits: event.target.value })} /></label>
           <label>Average revenue / unit<input type="number" min="0" step="0.01" value={draft.averageUnitValue} onChange={(event) => setDraft({ ...draft, averageUnitValue: event.target.value })} /></label>
@@ -154,7 +162,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
             <button type="submit" className="connections-record-primary">Save changes</button>
           </div>
         </form> : <div className="connections-record-properties-list">
-          <RecordProperty label="Relationship">{company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'}</RecordProperty>
+          <RecordProperty label="Relationship">{companyRelationshipLabel(company)}</RecordProperty>
           <RecordProperty label="Created">{dateLabel(company.createdAt)}</RecordProperty>
           <RecordProperty label="Last updated">{dateLabel(company.updatedAt)}</RecordProperty>
         </div>}
@@ -170,10 +178,10 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       </RecordCard>}
       <RecordCard title="Known aliases">
         <div className="connections-record-aliases">
-          {(company.aliases ?? []).map((alias) => <span key={alias}>{alias}
+          {visibleCompanyAliases(company).map((alias) => <span key={alias}>{alias}
             <button type="button" aria-label={'Remove alias ' + alias} onClick={() => updateCompany(company.id, { aliases: (company.aliases ?? []).filter((item) => item !== alias) })}>×</button>
           </span>)}
-          {!company.aliases?.length && <p className="connections-record-helper">No alternate names saved.</p>}
+          {!visibleCompanyAliases(company).length && <p className="connections-record-helper">No alternate names saved.</p>}
         </div>
         <form className="connections-record-alias-form" onSubmit={addAlias}>
           <input value={newAlias} onChange={(event) => setNewAlias(event.target.value)} aria-label="New company alias" placeholder="Add an alternate name" />
