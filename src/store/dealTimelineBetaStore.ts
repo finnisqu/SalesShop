@@ -56,7 +56,7 @@ function appendPhase(draft:DealScheduleDraft,scope:PhaseType):DealScheduleDraft{
     predecessorIds:row.predecessorIds.map(pre=>
       pre===sample||pre.startsWith(sample+'-')?id+pre.slice(sample.length):pre),
   }));
-  const result=draft.rows.slice();
+  const result=draft.rows.map(row=>({...row,predecessorIds:row.predecessorIds.slice()}));
   const last=result.reduce((index,row,pos)=>{
     if(row.id===root||row.parentId===root||
       result.some(group=>group.parentId===root&&row.parentId===group.id))return pos;
@@ -100,10 +100,11 @@ export const useDealTimelineBetaStore=create<State>((set,get)=>{
       set({drafts:next,error:null});
     }catch{set({error:'Timeline could not be saved on this device. Check browser storage.'});}
   };
-  const modify=(scope:string,dealId:string,change:(draft:DealScheduleDraft)=>DealScheduleDraft)=>{
+  const modify=(scope:string,dealId:string,change:(draft:DealScheduleDraft)=>DealScheduleDraft|null)=>{
     if(get().loadedScope!==scope)return;
     const previous=get().drafts[dealId];if(!previous)return;
     const next=change(previous);
+    if(!next)return;
     if(!verify(next,dealId)){set({error:'Invalid timeline changes. Nothing was saved.'});return;}
     persist(scope,{...get().drafts,[dealId]:next});
   };
@@ -127,7 +128,7 @@ export const useDealTimelineBetaStore=create<State>((set,get)=>{
       const row=draft.rows.find(item=>item.id===rowId);
       if(!row||row.kind==='group'||!validatePatch(row,change)){
         set({error:'Check the planned dates. The finish cannot be before the start.'});
-        return draft;
+        return null;
       }
       return {...draft,rows:draft.rows.map(item=>item.id===rowId?{...item,...change}:item)};
     }),
