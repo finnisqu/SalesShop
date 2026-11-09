@@ -354,21 +354,23 @@ export function TasksWorkspace(){
   return <main className="tasks-workspace" aria-label="SalesShop tasks">
     <WorkspaceHeader title="Tasks" help={<WorkspaceHelp page="tasks" section={filter}/>} className="tasks-header"
       mobileTabs={[
-       {value:'active',label:'Open'},{value:'today',label:'Today'},
-       {value:'upcoming',label:'Upcoming'},{value:'completed',label:'Completed'},
-       {value:'overdue',label:'Overdue'},{value:'scheduled',label:'Start later'},
-       {value:'all',label:'All history'},
+       {value:'active',label:'Open'},{value:'completed',label:'Completed'},
       ]} mobileTabValue={filter} onMobileTabChange={value=>setFilter(value as typeof filter)}
       tabs={<nav className="tasks-header-tabs" aria-label="Task views">
-       {([['active','Open'],['today','Today'],['upcoming','Upcoming'],
-         ['completed','Completed']] as const).map(([key,label])=>
+       {([['active','Open'],['completed','Completed']] as const).map(([key,label])=>
          <button type="button" key={key} className={filter===key?'active':''}
            aria-pressed={filter===key} onClick={()=>setFilter(key)}>{label}</button>)}
       </nav>}
       more={<WorkspaceMoreMenu items={[
+        {label:'Due today',onClick:()=>setFilter('today'),active:filter==='today'},
+        {label:'Upcoming tasks',onClick:()=>setFilter('upcoming'),active:filter==='upcoming'},
         {label:'Overdue tasks',onClick:()=>setFilter('overdue'),active:filter==='overdue'},
         {label:'Start later',onClick:()=>setFilter('scheduled'),active:filter==='scheduled'},
         {label:'All history',onClick:()=>setFilter('all'),active:filter==='all'},
+        {label:'Activity history',onClick:()=>{
+          try{window.sessionStorage.setItem('salesshop-open-activity-history-v1','1');}catch{}
+          nav.setView('dashboard');window.dispatchEvent(new Event('salesshop:open-activity-history'));
+        }},
       ]}/>}
       search={<input type="search" aria-label="Search tasks" placeholder="Search tasks…"
         value={search} onChange={event=>setSearch(event.target.value)}/>}
