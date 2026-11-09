@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {LinkExistingRecord,RecordNewDeal} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
+import {ourOrgPeople,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,RECORD_ADDED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork,type CompanyPatch } from '../types/crm';
@@ -76,6 +77,16 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     () => company ? companyRecordView(company, contacts, projects, activities, quotes) : null,
     [company, contacts, projects, activities, quotes],
   );
+  // Our Organization is a roster, not a second copy of World Stone contacts.
+  // Include its members on the SELF company record without replacing anyone's
+  // real Company (especially subcontractors' own firms).
+  const listedPeople=useMemo(()=>{
+    if(!related)return[];
+    if(!company||!isOurCompany(company))return related.relatedContacts;
+    const members=ourOrgPeople(contacts,companies);
+    const seen=new Set(related.relatedContacts.map(person=>person.id));
+    return [...related.relatedContacts,...members.filter(person=>!seen.has(person.id))];
+  },[related,company,companies,contacts]);
   if (!crmHydrated) return <section className="connections-record-missing" role="status">Loading company record…</section>;
   if (!company || !related) return <section className="connections-record-missing" role="status">
     <h1>Company not available</h1>
@@ -237,18 +248,20 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
 
     </>}
     right={<>
-      <RecordCard title="People" extra={<span>{related.relatedContacts.length}</span>}>
+      <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
         <div className="connections-record-entity-list">
-          {related.relatedContacts.map((person) => <article key={person.id}>
+          {listedPeople.map((person) => <article key={person.id}>
             <button type="button" className="connections-person-entity-open" onClick={() => openPerson(person.id)}>
               <strong>{person.name || person.email || 'Unnamed contact'}</strong>
-              <small>Open person →</small>
+              <small>{isOurCompany(company)&&rosterGroupForContact(person,companies)?
+                rosterGroupForContact(person,companies)==='employees'?'Employee · ':'Subcontractor · ':''}
+                Open person →</small>
             </button>
             {person.title && <small>{person.title}</small>}
             {person.email && <a href={'mailto:' + person.email}>{person.email}</a>}
             {person.phone && <a href={'tel:' + person.phone}>{person.phone}</a>}
           </article>)}
-          {!related.relatedContacts.length && <p className="connections-record-empty">No people linked yet.</p>}
+          {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
         </div>
         <button type="button" className="connections-record-add" onClick={() => setAddingContact((value) => !value)}>{addingContact ? 'Cancel' : '+ New Person'}</button>
         {addingContact && <form className="connections-record-edit-form" noValidate onChange={()=>setContactError('')} onSubmit={addContact}>
