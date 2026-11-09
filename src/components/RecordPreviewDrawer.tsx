@@ -19,6 +19,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {dealPipelineLabel} from '../types/crm';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
+import {companyRelationshipLabel,visibleCompanyAliases} from '../services/companyRelationship';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -167,8 +168,8 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          :<>
        {company&&<>
          <section><h3>About this company</h3>
-           <dl><dt>Relationship</dt><dd>{company.kind==='customer'?'Customer / prospect':'Partner / supplier'}</dd>
-             <dt>Aliases</dt><dd>{company.aliases?.join(', ')||'—'}</dd>
+           <dl><dt>Relationship</dt><dd>{companyRelationshipLabel(company)}</dd>
+             <dt>Aliases</dt><dd>{visibleCompanyAliases(company).join(', ')||'—'}</dd>
              <dt>Last updated</dt><dd>{shortDate(company.updatedAt)}</dd></dl>
          </section>
          <section><h3>People <span>{relatedPeople.length}</span></h3>
@@ -245,9 +246,9 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {!perspective&&<button type="button" data-mobile-label="+ Task" onClick={()=>{
         onClose();requestTaskModal({mode:'create',associations:contextualLinks});
        }}>New task</button>}
-       {deal&&canLog&&!['Closed Won','Completed','Closed Lost','Discarded'].includes(deal.stage)&&
+       {deal&&canLog&&
          <button type="button" data-mobile-label="Bid sent" onClick={()=>setExternalQuoteOpen(value=>!value)}>
-           {externalQuoteOpen?'Cancel external quote':'Record external quote sent'}
+           {externalQuoteOpen?'Cancel external quote':'Record external quote'}
          </button>}
        {canLog&&<button type="button" data-mobile-label="Activity" onClick={()=>{
         onClose();openActivityComposer({associations:contextualLinks});
