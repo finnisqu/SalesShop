@@ -13,7 +13,7 @@
     "test:visual": "playwright test",
     "test:quick-quote": "vitest run src/services/quoteGridNavigation.test.ts src/services/quoteGridValue.test.ts src/services/quoteQuickPricingParity.test.ts src/services/quoteQuickAreaSummary.test.ts src/services/quoteScopeRowBatch.test.ts src/services/quoteDeliveryApproval.test.ts src/services/quoteAreaDuplicate.test.ts src/services/quoteRecommendedRates.test.ts src/services/quoteIssuedPolish.test.ts src/services/quoteScopeRowDuplicate.test.ts src/services/quoteQuickMobileUx.test.ts src/services/quoteTableOrder.test.ts",
     "test:calendar": "vitest run src/services/salesCalendar.test.ts",
-    "test:timeline": "vitest run src/services/dealScheduleTemplates.test.ts"
+    "test:timeline": "vitest run src/services/dealScheduleTemplates.test.ts src/store/dealTimelineBetaStore.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
