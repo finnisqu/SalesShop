@@ -6,7 +6,6 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {companyRelationshipPatch} from '../services/companyRelationship';
-import {RecordCard} from './RecordPageLayout';
 import '../record-related-actions.css';
 
 export type RelatedEntityKind='company'|'person'|'deal';
