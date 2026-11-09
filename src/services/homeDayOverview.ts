@@ -167,14 +167,10 @@ export function homeDayOverview(day:string,data:HomeDaySources):HomeDayGroup[]{
  return groups;
 }
 
-/** The live Agenda already owns pending Tasks/Bids and Notebook calendar
- * entries. Only dated history and other CRM records belong in disclosures,
- * so the same record does not appear twice in the selected-day panel. */
+/** The live Agenda already owns Tasks/Bids due and Notebook calendar dates.
+ * Keep these groups in homeDayOverview for calendar navigation/badges, but
+ * never repeat them inside "On this day" disclosures. */
 export function homeAgendaExtras(groups:readonly HomeDayGroup[]):HomeDayGroup[]{
- return groups.map(group=>({
-  ...group,
-  entries:group.key==='tasks-due'
-   ?group.entries.filter(entry=>entry.key.startsWith('historical-task-due:'))
-   :group.key==='bids-due'||group.key==='notebook-dates'?[]:group.entries,
- })).filter(group=>group.entries.length>0);
+ return groups.filter(group=>group.key!=='tasks-due'&&group.key!=='bids-due'&&
+   group.key!=='notebook-dates'&&group.entries.length>0);
 }
