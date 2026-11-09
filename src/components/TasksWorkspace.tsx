@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react';
-import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType,type TaskSubtask,subtaskProgress,normalizedSubtasks} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType,type TaskSubtask,subtaskProgress,normalizedSubtasks,
+ isProtectedBidTask,bidTaskDealId} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
@@ -10,7 +11,8 @@ import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
-import {TrashIcon} from './TrashIcon';
+import {TrashIcon,PencilIcon} from './TrashIcon';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
@@ -179,13 +181,18 @@ export function TaskEditor({initial,onCancel,onSave}:{
         <label>Priority<select value={priority} onChange={e=>setPriority(e.target.value as TaskPriority)}>
          {priorities.map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
         <label>Status<select value={status} onChange={e=>setStatus(e.target.value as TaskStatus)}>
-         {statusOptions.map(x=><option value={x} key={x}>{x==='in-progress'?'In progress':x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
+         {statusOptions.filter(x=>!isProtectedBidTask(initial)||x!=='completed').map(x=>
+          <option value={x} key={x}>{x==='in-progress'?'In progress':x[0].toUpperCase()+x.slice(1)}</option>)}
+        </select></label>
         <label>Queue / category<input list="tasks-queue-choices" value={queue} maxLength={80}
          placeholder="e.g. Quotes" onChange={e=>setQueue(e.target.value)}/>
          <datalist id="tasks-queue-choices">{commonQueues.map(q=><option key={q} value={q}/>)}</datalist>
         </label>
        </div>
       </section>
+      {isProtectedBidTask(initial)&&<p className="tasks-bid-guard-help" role="note">
+       Bid submission completion is recorded through confirmed Quote delivery or an external quote submission, not the Task status selector.
+      </p>}
       <section className="tasks-editor-section">
        <div className="tasks-editor-section-heading"><strong>Schedule</strong>
         <small>Leave Start blank if available now.</small></div>
@@ -271,12 +278,13 @@ export function TasksWorkspace(){
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
   const [taskNotice,setTaskNotice]=useState<RecordFormNotice|null>(null);
   const [viewingId,setViewingId]=useState<string|null>(null);
-  const hasTaskOverlay=Boolean(editing||viewingId);
+  const [externalDealId,setExternalDealId]=useState<string|null>(null);
+  const hasTaskOverlay=Boolean(editing||viewingId||externalDealId);
   useModalScrollLock(hasTaskOverlay);
   useEffect(()=>{
    if(previousScope.current===scope)return;
    previousScope.current=scope;
-   setEditing(null);setViewingId(null);setTaskNotice(null);
+   setEditing(null);setViewingId(null);setExternalDealId(null);setTaskNotice(null);
   },[scope]);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
@@ -364,6 +372,7 @@ export function TasksWorkspace(){
       due:task.dueDate?formatDate(task.dueDate):'',
       related:normalizedTaskAssociations(task).map(link=>link.label||link.type).join(' · '),
       subtaskRemaining:String(subtaskProgress(task).remaining),
+      protectedBid:isProtectedBidTask(task)?'1':'0',
       updated:new Date(task.updatedAt).toLocaleDateString()},
     sortValues:{due:task.dueDate??'9999-12-31',start:task.startDate??'',
       updated:task.updatedAt,priority:({urgent:0,high:1,normal:2,low:3})[task.priority??'normal']},
@@ -484,10 +493,19 @@ export function TasksWorkspace(){
           setTaskNotice({kind:'applied',message:items.length+' tasks deleted.'});
         }}
         onTaskDuePreset={quickDue}
-        onTaskToggleComplete={(id,finished)=>finished?reopen(id):complete(id)}
-        onBulkComplete={items=>items.forEach(item=>{
-          if(own.some(task=>task.id===item.id&&!taskComplete(task)))complete(item.id);
-        })}
+        onTaskToggleComplete={(id,finished)=>{
+          const task=own.find(item=>item.id===id);
+          if(task&&!finished&&isProtectedBidTask(task))return;
+          if(finished)reopen(id);else complete(id);
+        }}
+        onBulkComplete={items=>{
+          const protectedCount=items.filter(item=>own.some(task=>task.id===item.id&&isProtectedBidTask(task))).length;
+          items.forEach(item=>{
+           if(own.some(task=>task.id===item.id&&!taskComplete(task)&&!isProtectedBidTask(task)))complete(item.id);
+          });
+          if(protectedCount)setTaskNotice({kind:'error',
+            message:protectedCount+' bid submission task(s) require confirmed Quote delivery or a recorded external quote.'});
+        }}
         onBulkTaskProperty={async(items,change:TaskBulkChange)=>{
           const current=usePersonalTaskStore.getState();
           if(!scope||current.scope!==scope)throw new Error('Task workspace changed. Reopen Tasks before editing.');
@@ -600,24 +618,41 @@ export function TasksWorkspace(){
            {link.label??link.type} ↗</button>)}
         </div>}
        </div>
-       <PreviewPanelActions className="ss-mobile-sheet-actions">
-        <button type="button" className="tasks-preview-delete" onClick={()=>{
-         if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
-         remove(viewing.id);setViewingId(null);
-        }}><TrashIcon/> Delete</button>
-        {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&subtaskProgress(viewing).remaining===0&&
-         <button type="button" className="tasks-flow-action" onClick={()=>{
-          setViewingId(null);openActivityComposer({taskId:viewing.id});
-         }}>Complete + log activity</button>}
-        <button type="button" disabled={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0}
-          title={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0?'Complete the checklist first':undefined}
-          onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
-         {taskComplete(viewing)?'Reopen task':'Mark complete'}</button>
-        <button type="button" className="tasks-primary" onClick={()=>{setViewingId(null);setEditing(viewing);}}>Edit task</button>
-
+       <PreviewPanelActions className="ss-mobile-sheet-actions tasks-preview-action-groups">
+        <div className="tasks-preview-actions-left">
+         <button type="button" className="tasks-preview-delete" onClick={()=>{
+          if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
+          remove(viewing.id);setViewingId(null);
+         }}><TrashIcon/> Delete</button>
+         <button type="button" className="tasks-primary tasks-preview-edit"
+          onClick={()=>{setViewingId(null);setEditing(viewing);}}>
+          <PencilIcon/> Edit</button>
+        </div>
+        <div className="tasks-preview-actions-right">
+         {isProtectedBidTask(viewing)?<>
+          {canLog&&<button type="button" className="tasks-flow-action"
+           onClick={()=>{setViewingId(null);setExternalDealId(bidTaskDealId(viewing));}}>
+           Record external quote</button>}
+          <button type="button" disabled
+           title="Completion requires confirmed customer delivery or a recorded external submission">
+           Complete · quote required</button>
+         </>:<>
+          <button type="button" disabled={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0}
+           title={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0?'Complete the checklist first':undefined}
+           onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
+           {taskComplete(viewing)?'Reopen task':'Complete'}</button>
+          {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&subtaskProgress(viewing).remaining===0&&
+           <button type="button" className="tasks-flow-action" onClick={()=>{
+            setViewingId(null);openActivityComposer({taskId:viewing.id});
+           }}>Complete + Log Activity</button>}
+         </>}
+        </div>
        </PreviewPanelActions>
       </section>
      </div>}
     {editing&&<TaskEditor key={'id'in editing?editing.id:editing.title+'new'} initial={editing} onCancel={()=>setEditing(null)} onSave={save}/>}
+    {externalDealId&&<ExternalQuoteBackfillDialog key={externalDealId}
+      initialDealId={externalDealId} onClose={()=>setExternalDealId(null)}
+      onRecorded={()=>setExternalDealId(null)}/>}
   </main>;
 }
