@@ -218,6 +218,9 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
                :onDocumentArchive&&<button type="button" aria-label={'Archive '+row.name}
                   onClick={()=>onDocumentArchive(row.id)}>Archive</button>)}
            {onTaskToggleComplete&&<button type="button"
+             disabled={row.values.status!=='completed'&&Number(row.values.subtaskRemaining||0)>0}
+             title={row.values.status!=='completed'&&Number(row.values.subtaskRemaining||0)>0
+               ?'Finish all subtasks first':undefined}
              onClick={()=>onTaskToggleComplete(row.id,row.values.status==='completed'||row.values.status==='canceled')}>
              {row.values.status==='completed'||row.values.status==='canceled'?'Reopen':'Complete'}
            </button>}
