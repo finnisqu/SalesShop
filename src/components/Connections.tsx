@@ -20,6 +20,9 @@ import type {BulkEditChange} from './ConnectionsBulkEditDialog';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
+import {PreviewPanelClose} from './PreviewPanelChrome';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
@@ -319,6 +322,9 @@ export function Connections() {
   const closeNewRecord=()=>{
     setCompanyCreating(false);setPersonCreating(false);setDealCreating(false);
   };
+  const isCreateOpen=companyCreating||personCreating||dealCreating;
+  const newRecordRef=useDismissibleLayer<HTMLElement>(isCreateOpen,closeNewRecord);
+  useModalScrollLock(isCreateOpen);
   const backToDeals = () => {
     chooseTab('deals');
     setView('dashboard');
@@ -552,14 +558,13 @@ export function Connections() {
         <div className="connections-create-backdrop" onPointerDown={event=>{
           if(event.target===event.currentTarget)closeNewRecord();
         }}>
-          <section className="connections-create-dialog" role="dialog" aria-modal="true"
-            aria-label={companyCreating?'New company':personCreating?'New person':'New deal'}
-            onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();closeNewRecord();}}}>
+          <section ref={newRecordRef} className="connections-create-dialog" role="dialog" aria-modal="true"
+            aria-label={companyCreating?'New company':personCreating?'New person':'New deal'}>
             <header className="connections-create-heading">
               <div><small>CONNECTIONS · CREATE</small>
                 <h2>{companyCreating?'New company':personCreating?'New person':'New deal'}</h2>
               </div>
-              <button type="button" onClick={closeNewRecord} aria-label="Close new record">×</button>
+              <PreviewPanelClose onClose={closeNewRecord} label="Close new record" initialFocus={false}/>
             </header>
             {companyCreating && <form className="connections-add-form" onSubmit={addCompany}>
                 
