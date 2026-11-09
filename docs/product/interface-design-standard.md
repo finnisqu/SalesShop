@@ -9,7 +9,7 @@ Preserve the compact, spreadsheet-forward direction that was approved for Connec
 | --- | --- | --- |
 | Workspace header | `WorkspaceHeader.tsx`, `workspace-header-standard.css` | One height per viewport tier, left title, truly centered tabs, fixed More/Search/Create tools; on mobile a single selected-tab row |
 | Page Help | `WorkspaceHelp.tsx` via `WorkspaceHeader.help` | One context-aware, subdued info control at a time: local on desktop, global app bar on phones |
-| More menus | `WorkspaceMoreMenu`, `useDismissibleDetails` | Click-only native details, active option clearly indicated, Escape/outside closes, keyboard focus returns to trigger |
+| More menus | `WorkspaceMoreMenu`, `useDismissibleDetails` | Visually always “More” (context stays in aria-label), click-only native details, active option indicated, Escape/outside closes, keyboard focus returns to trigger |
 | Table actions | `ConnectionsTable`, `connections-table.css`, `workbookTableDensity` | Compact row density, consistent toolbar control heights, focus-visible feedback, selection and column tools never mutate content |
 | Record panes | `RecordPageLayout`, `RecordPreviewDrawer`, `PreviewPanelChrome` | One record information hierarchy and an explicit action row; on mobile use existing bottom-sheet patterns |
 | Modal/dialog | `useDismissibleLayer`, `useModalScrollLock`, `PreviewPanelClose` | Preserve invoking focus, Trap Tab within dialog, Escape closes when allowed, lock background scroll and use visible named close action |
