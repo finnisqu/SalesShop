@@ -95,7 +95,7 @@ export function WorkspaceMoreMenu({items,label='More'}:{items:readonly Workspace
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
  return <details className="ss-workspace-more" ref={ref}>
-  <summary aria-label={label+' menu'}>{label} <WorkspaceChromeIcon name="more"/></summary>
+  <summary aria-label={label+' menu'}><span>More</span> <WorkspaceChromeIcon name="more"/></summary>
   <div className="ss-workspace-more__menu" role="group" aria-label={label+' options'}>
    {items.map((item,index)=><button type="button" key={index} disabled={item.disabled}
     aria-pressed={item.active===undefined?undefined:item.active}
