@@ -2,6 +2,7 @@ import {useState,type FormEvent} from 'react';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {RecordFormFeedback} from './RecordFormFeedback';
 import {PreviewPanelClose} from './PreviewPanelChrome';
+import {TrashIcon} from './TrashIcon';
 import {createPortal} from 'react-dom';
 import type {TaskChanges,TaskPriority,TaskStatus,TaskType} from '../store/personalTaskStore';
 import '../connections-bulk-edit.css';
@@ -98,7 +99,7 @@ export function TaskBulkEditDialog({count,onApply,onClose,onDelete}:{
         try{await onDelete();}catch(reason){
           setError(reason instanceof Error?reason.message:'Could not delete selected tasks.');
         }finally{setSaving(false);}
-      }}>Delete selected ({count})</button>}
+      }}><TrashIcon/> Delete selected ({count})</button>}
     <button type="button" onClick={onClose} disabled={saving}>Cancel</button>
     <button className="connections-bulk-primary" type="submit" disabled={!valid}>
      {saving?'Updating…':'Update '+count}
