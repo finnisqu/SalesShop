@@ -194,6 +194,9 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       const authored=/submit.*(quote|bid)|send.*(quote|bid)/i.test(task.title)&&
         normalizedTaskAssociations(task).some(link=>link.type==='project'&&link.id===dealId);
       if(!automated&&!authored)return task;
+      // Quoting events cannot bypass an unfinished checklist. The user can
+      // still finish the supporting documents after submitting the bid.
+      if(normalizedSubtasks(task.subtasks).some(item=>!item.completed))return task;
       changed=true;
       const timestamp=nextTaskEditTimestamp(task.updatedAt);
       return {...task,status:'completed' as const,completedAt:timestamp,updatedAt:timestamp};
@@ -220,6 +223,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
        const stage=allDeals.get(dealId)?.stage;
        const submitted=stage!==undefined&&
         ['Bid Sent','Negotiation','Closed Won','Completed'].includes(stage);
+       if(submitted&&normalizedSubtasks(task.subtasks).some(item=>!item.completed))return task;
        changed=true;
        return submitted
         ?{...task,status:'completed' as const,completedAt:now,updatedAt:now}
