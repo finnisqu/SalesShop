@@ -59,3 +59,13 @@
  .external-quote-picker-body{padding:13px 14px max(18px,env(safe-area-inset-bottom))}
  .external-quote-picker-body :is(input,select){min-height:44px;font-size:16px}
  .external-quote-newdeal-form{grid-template-columns:1fr}}
+
+/* Accessible from the detailed Quote sidebar as well as Connections → Deals. */
+.quote-external-backfill-launch{padding:7px 10px;border-bottom:1px solid var(--ss-theme-border,#ddd)}
+.quote-external-backfill-launch button{box-sizing:border-box;display:block;width:100%;
+ min-height:35px;text-align:center;padding:7px 9px;border-radius:7px;
+ border:1px solid var(--ss-theme-border,#ddd);background:var(--ss-theme-card,#fff);
+ color:var(--ss-theme-ink,#17242f);font-size:12px;font-weight:700;cursor:pointer}
+.quote-external-backfill-launch button:hover{background:var(--ss-theme-tint,rgba(128,128,128,.06))}
+.quote-external-backfill-launch button:focus-visible{outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px}
+@media(max-width:760px){.quote-external-backfill-launch button{min-height:44px}}
