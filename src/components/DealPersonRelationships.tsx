@@ -21,7 +21,7 @@ function useLinks(){
  return {ready:loaded&&active===scope,loading,error,links:active===scope?links:[],
   editable:!perspective&&Boolean(scope)&&(mode==='local'||
     Boolean(user&&org&&canEditTeamArea(role,department,'crm'))),
-  add,setRole,remove};
+  add,setRole,remove,retry:()=>void load(scope,true)};
 }
 
 export function DealPeopleRelationships({dealId,people,onOpenPerson}:{
@@ -45,7 +45,8 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson}:{
   <div className="ss-deal-relations-heading"><strong>Direct Deal contacts</strong><span>{direct.length}</span></div>
   <p className="connections-record-helper">Shared contact assignments. Link people without creating an Activity or changing a Quote.</p>
   {!manager.ready&&<p role="status" className="connections-record-helper">
-   {manager.error?'Unable to load direct links: '+manager.error:'Loading Deal contacts…'}</p>}
+   {manager.error?'Unable to load direct links: '+manager.error:'Loading Deal contacts…'}
+   {manager.error&&<button type="button" onClick={manager.retry}>Retry</button>}</p>}
   {manager.ready&&<div className="ss-deal-relations-list">
    {direct.map(link=>{
     const person=people.find(p=>p.id===link.personId);
@@ -106,7 +107,8 @@ export function PersonDealRelationships({personId,deals,onOpenDeal}:{
  return <section className="ss-deal-relations" aria-label="Directly linked Deals">
   <div className="ss-deal-relations-heading"><strong>Directly linked Deals</strong><span>{direct.length}</span></div>
   {!manager.ready?<p role="status" className="connections-record-helper">
-   {manager.error?'Unable to load links: '+manager.error:'Loading shared Deal links…'}</p>:
+   {manager.error?'Unable to load links: '+manager.error:'Loading shared Deal links…'}
+   {manager.error&&<button type="button" onClick={manager.retry}>Retry</button>}</p>:
   <div className="ss-deal-relations-list">
    {direct.map(link=>{
     const deal=deals.find(item=>item.id===link.dealId);
