@@ -18,6 +18,7 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
+import '../deal-people.css';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const displayDate = (value?: string) => {
