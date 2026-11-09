@@ -160,13 +160,14 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <RecordEditField label="Company name" required error={editError==='Enter a company name.'?editError:undefined}>
             {control=><input {...control} autoFocus value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
           </RecordEditField>
-          <label className="connections-company-self-toggle">
-            <input type="checkbox" checked={draft.isSelf}
-              onChange={event=>setDraft({...draft,isSelf:event.target.checked})}/>
-            <span><strong>This is our company</strong>
-              <small>Keep this Company in Connections with a SELF label, separate from Prospects and Customers.</small>
-            </span>
-          </label>
+          <details className="connections-company-advanced-identity">
+            <summary>Company identity <span>{draft.isSelf?'· SELF':''}</span></summary>
+            <label className="connections-company-self-compact">
+              <input type="checkbox" checked={draft.isSelf}
+                onChange={event=>setDraft({...draft,isSelf:event.target.checked})}/>
+              This is our company
+            </label>
+          </details>
           {!draft.isSelf&&<label>Relationship<select value={draft.relationship}
             onChange={event=>setDraft({...draft,relationship:event.target.value as EditableCompanyRelationship})}>
             <option value="unclassified" disabled>Not classified</option>
@@ -184,9 +185,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Relationship">{companyRelationshipLabel(company)}</RecordProperty>
-          {isOurCompany(company)&&<p className="connections-record-helper">
-            This is your company's own CRM record. Future email/domain integrations can reference it without treating it as a customer.
-          </p>}
+          {isOurCompany(company)&&<span className="connections-company-self-inline">SELF · Linked to Our Organization</span>}
           <RecordProperty label="Created">{dateLabel(company.createdAt)}</RecordProperty>
           <RecordProperty label="Last updated">{dateLabel(company.updatedAt)}</RecordProperty>
         </div>}
