@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {LinkExistingRecord,RecordNewDeal} from './RecordRelatedActions';
+import {RecordTasksPanel} from './RecordTasksPanel';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,RECORD_ADDED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork } from '../types/crm';
@@ -197,6 +199,8 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </button>)}
           {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
         </div>
+        <RecordNewDeal companyId={company.id} companyName={company.name} onCreated={openProject}/>
+        <LinkExistingRecord source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
       </RecordCard>
       <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length}</span>}>
         <div className="connections-record-entity-list">
@@ -206,6 +210,8 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </button>)}
           {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its deals.</p>}
         </div>
+        <button type="button" className="connections-record-add" onClick={newQuote}>+ New quote</button>
+        <LinkExistingRecord source={{kind:'company',id:company.id,name:company.name}} target="quote"/>
       </RecordCard>
 
     </>}
@@ -235,7 +241,9 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
             <button type="submit" className="connections-record-primary" disabled={!contactName.trim() && !contactEmail.trim()}>Save person</button>
           </div>
         </form>}
+        <LinkExistingRecord source={{kind:'company',id:company.id,name:company.name}} target="person"/>
       </RecordCard>
+      <RecordTasksPanel kind="company" id={company.id} name={company.name}/>
 
       <section className="connections-record-panel connections-record-history">
         <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}

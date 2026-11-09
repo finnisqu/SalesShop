@@ -4,7 +4,7 @@ import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {MobileSheetHandle} from './MobileSheetHandle';
 import {TaskEditor} from './TasksWorkspace';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
- type TaskChanges,type TaskLink} from '../store/personalTaskStore';
+ type TaskChanges,type TaskLink,normalizedSubtasks,subtaskProgress} from '../store/personalTaskStore';
 import type {CalendarTaskRequest} from '../services/taskModalEvents';
 export {requestTaskModal} from '../services/taskModalEvents';
 export type {CalendarTaskRequest} from '../services/taskModalEvents';
@@ -122,6 +122,17 @@ export function TaskModalHost(){
       </div>
       <dl><div><dt>Due</dt><dd>{task.dueDate||'No due date'}{task.dueTime?' · '+task.dueTime:''}</dd></div></dl>
       {task.notes&&<p className="tasks-preview-notes">{task.notes}</p>}
+      {normalizedSubtasks(task.subtasks).length>0&&<section className="tasks-preview-subtasks"
+       aria-label="Subtasks">
+        <strong>Checklist · {subtaskProgress(task).done}/{subtaskProgress(task).total}</strong>
+        {normalizedSubtasks(task.subtasks).map(item=><label key={item.id}
+         className={item.completed?'is-done':''}>
+          <input type="checkbox" checked={item.completed} disabled={Boolean(task.deletedAt)}
+           onChange={e=>update(task.id,{subtasks:normalizedSubtasks(task.subtasks).map(sub=>
+            sub.id===item.id?{...sub,completed:e.target.checked}:sub)})}/>
+          <span>{item.title}</span>
+        </label>)}
+       </section>}
       {normalizedTaskAssociations(task).length>0&&<div className="tasks-preview-related">
        <strong>Related records</strong>
        {normalizedTaskAssociations(task).map(link=><button type="button"
@@ -141,11 +152,13 @@ export function TaskModalHost(){
       {relatedQuote&&<button type="button" onClick={()=>{
        close();nav.openQuote(relatedQuote.id);
       }}>Open linked quote ↗</button>}
-      {canLog&&task.status!=='completed'&&task.status!=='canceled'&&
+      {canLog&&task.status!=='completed'&&task.status!=='canceled'&&subtaskProgress(task).remaining===0&&
        <button type="button" className="tasks-flow-action" onClick={()=>{
         close();openActivityComposer({taskId:task.id});
        }}>Complete + log activity</button>}
-      <button type="button" onClick={()=>{
+      <button type="button" disabled={task.status!=='completed'&&subtaskProgress(task).remaining>0}
+       title={task.status!=='completed'&&subtaskProgress(task).remaining>0?'Complete the checklist first':undefined}
+       onClick={()=>{
        if(task.status==='completed')reopen(task.id);else complete(task.id);
        close();
       }}>{task.status==='completed'?'Reopen':'Mark complete'}</button>

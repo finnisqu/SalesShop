@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react';
-import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType,type TaskSubtask,subtaskProgress,normalizedSubtasks} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
@@ -62,7 +62,7 @@ function reminderValue(value?:string){
 type TaskEditorRecovery={
  title:string;type:TaskType;priority:TaskPriority;status:TaskStatus;
  dueDate:string;startDate:string;dueTime:string;reminderAt:string;
- queue:string;notes:string;selectedLinks:TaskAssociation[];
+ queue:string;notes:string;selectedLinks:TaskAssociation[];subtasks:TaskSubtask[];newSubtask?:string;
 };
 type ActiveTaskDraft={kind:'new'|'existing';id?:string;draftIdentity?:string};
 export function TaskEditor({initial,onCancel,onSave}:{
@@ -96,17 +96,26 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [showReminder,setShowReminder]=useState(Boolean(recovered?.reminderAt??draft.reminderAt));
   const [queue,setQueue]=useState(recovered?.queue??draft.queue??'');
   const [notes,setNotes]=useState(recovered?.notes??draft.notes??'');
+  const [subtasks,setSubtasks]=useState<TaskSubtask[]>(()=>normalizedSubtasks(
+    recovered?.subtasks??draft.subtasks));
+  const [newSubtask,setNewSubtask]=useState(recovered?.newSubtask??'');
+  const addSubtask=()=>{
+    const text=newSubtask.trim();
+    if(!text||subtasks.length>=60)return;
+    setSubtasks(old=>[...old,{id:'sub_'+crypto.randomUUID(),title:text.slice(0,180),completed:false}]);
+    setNewSubtask('');
+  };
   const [formError,setFormError]=useState('');
   const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>recovered?.selectedLinks??normalizedTaskAssociations(initial));
   // Every form change is durable locally before submission. No unsaved task is sent to cloud.
   useEffect(()=>{
-   writeSavedDraft(scopeKey,{title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks});
+   writeSavedDraft(scopeKey,{title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks,newSubtask});
    writeSavedDraft<ActiveTaskDraft>(activeKey,{
     kind:initialTaskId?'existing':'new',
     id:initialTaskId??undefined,
     draftIdentity:initialTaskId?undefined:draftIdentity,
    });
-  },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks]);
+  },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks,newSubtask]);
   const close=()=>{clearSavedDraft(activeKey);onCancel();};
   const editorRef=useDismissibleLayer<HTMLFormElement>(true,close);
   const discard=()=>{clearSavedDraft(scopeKey);close();};
@@ -134,9 +143,12 @@ export function TaskEditor({initial,onCancel,onSave}:{
     if(!title.trim()){setFormError('Enter a task title.');return;}
     setFormError('');
     try{
+      const pending=newSubtask.trim().slice(0,180);
+      const savedSubtasks=pending&&subtasks.length<60?
+        [...subtasks,{id:'sub_'+crypto.randomUUID(),title:pending,completed:false}]:subtasks;
       onSave({title:title.trim(),type,priority,status,startDate:startDate||undefined,dueDate:dueDate||undefined,
         dueTime:dueDate?dueTime||undefined:undefined,reminderAt:normalizeLocalReminder(reminderAt),
-        notes,queue,associations:selectedLinks,
+        notes,queue,subtasks:savedSubtasks,associations:selectedLinks,
         linked:selectedLinks[0]?{type:selectedLinks[0].type,id:selectedLinks[0].id}:undefined,
         sourceLabel:selectedLinks[0]?.label??sourceLabel,sourceText,sourceObjectId});
       clearSavedDraft(scopeKey);clearSavedDraft(activeKey);
@@ -197,6 +209,35 @@ export function TaskEditor({initial,onCancel,onSave}:{
         Reminder (in-app only)<input type="datetime-local" value={reminderAt}
          onChange={e=>setReminderAt(e.target.value)}/>
        </label>}
+      </section>
+      <section className="tasks-editor-section tasks-subtasks-section" aria-label="Subtasks">
+       <div className="tasks-editor-section-heading"><strong>Subtasks</strong>
+        <small>{subtasks.length?subtasks.filter(s=>s.completed).length+' of '+subtasks.length+' completed':
+         'Simple checklist — no separate dates or assignments'}</small></div>
+       <div className="tasks-subtask-list">
+        {subtasks.map(subtask=><div className="tasks-subtask-row" key={subtask.id}>
+         <input type="checkbox" checked={subtask.completed}
+          aria-label={'Complete '+subtask.title}
+          onChange={e=>setSubtasks(rows=>rows.map(item=>item.id===subtask.id?
+           {...item,completed:e.target.checked}:item))}/>
+         <input type="text" aria-label="Subtask name" maxLength={180}
+          value={subtask.title} onChange={e=>setSubtasks(rows=>rows.map(item=>
+           item.id===subtask.id?{...item,title:e.target.value}:item))}/>
+         <button type="button" title="Remove subtask" aria-label={'Remove '+subtask.title}
+          onClick={()=>setSubtasks(rows=>rows.filter(item=>item.id!==subtask.id))}>×</button>
+        </div>)}
+       </div>
+       <div className="tasks-subtask-add">
+        <input value={newSubtask} maxLength={180} placeholder="Add a checklist item…"
+          aria-label="New subtask"
+          onChange={e=>setNewSubtask(e.target.value)}
+          onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addSubtask();}}}/>
+        <button type="button" disabled={!newSubtask.trim()||subtasks.length>=60}
+          onClick={addSubtask}>+ Add</button>
+       </div>
+       {subtasks.length>0&&<p className="tasks-subtask-help">
+        The parent task completes automatically when all checklist items are checked.
+        Unchecking one reopens it.</p>}
       </section>
       <label className="tasks-editor-notes">Notes<textarea rows={2} maxLength={5000}
        value={notes} onChange={e=>setNotes(e.target.value)}
@@ -321,6 +362,7 @@ export function TasksWorkspace(){
       status:task.status||'open',queue:task.queue||'',start:task.startDate?formatDate(task.startDate):'',
       due:task.dueDate?formatDate(task.dueDate):'',
       related:normalizedTaskAssociations(task).map(link=>link.label||link.type).join(' · '),
+      subtaskRemaining:String(subtaskProgress(task).remaining),
       updated:new Date(task.updatedAt).toLocaleDateString()},
     sortValues:{due:task.dueDate??'9999-12-31',start:task.startDate??'',
       updated:task.updatedAt,priority:({urgent:0,high:1,normal:2,low:3})[task.priority??'normal']},
@@ -527,6 +569,16 @@ export function TasksWorkspace(){
          {viewing.startDate&&<div><dt>Start</dt><dd>{formatDate(viewing.startDate)}</dd></div>}
         </dl>
         {viewing.notes&&<p className="tasks-preview-notes">{viewing.notes}</p>}
+        {normalizedSubtasks(viewing.subtasks).length>0&&<section className="tasks-preview-subtasks" aria-label="Subtasks">
+         <strong>Checklist · {subtaskProgress(viewing).done}/{subtaskProgress(viewing).total}</strong>
+         {normalizedSubtasks(viewing.subtasks).map(item=><label key={item.id}
+           className={item.completed?'is-done':''}>
+           <input type="checkbox" checked={item.completed} aria-label={'Complete '+item.title}
+             onChange={e=>update(viewing.id,{subtasks:normalizedSubtasks(viewing.subtasks).map(row=>
+               row.id===item.id?{...row,completed:e.target.checked}:row)})}/>
+           <span>{item.title}</span>
+         </label>)}
+        </section>}
         {!!normalizedTaskAssociations(viewing).length&&<div className="tasks-preview-related">
          <strong>Related records</strong>{normalizedTaskAssociations(viewing).map(link=>
           <button key={link.type+':'+link.id} type="button" onClick={()=>{setViewingId(null);openSource(link);}}>
@@ -535,11 +587,13 @@ export function TasksWorkspace(){
        </div>
        <PreviewPanelActions className="ss-mobile-sheet-actions">
         <button type="button" onClick={()=>setViewingId(null)}>Close</button>
-        {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&
+        {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&subtaskProgress(viewing).remaining===0&&
          <button type="button" className="tasks-flow-action" onClick={()=>{
           setViewingId(null);openActivityComposer({taskId:viewing.id});
          }}>Complete + log activity</button>}
-        <button type="button" onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
+        <button type="button" disabled={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0}
+          title={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0?'Complete the checklist first':undefined}
+          onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
          {taskComplete(viewing)?'Reopen task':'Mark complete'}</button>
         <button type="button" className="tasks-primary" onClick={()=>{setViewingId(null);setEditing(viewing);}}>Edit task</button>
        </PreviewPanelActions>

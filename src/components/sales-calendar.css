@@ -989,3 +989,19 @@
  .sales-calendar-agenda .home-day-agenda-group>summary{min-height:44px}
  .sales-calendar-agenda .home-day-agenda-records>button{min-height:46px}
 }
+
+/* Badge clicks navigate into the ordinary agenda, not a second drilldown panel. */
+.sales-calendar-day-preview .is-badge-highlighted {
+ position:relative;z-index:1;
+ outline:2px solid var(--ss-theme-accent,#638ca1);
+ outline-offset:-2px;border-radius:8px;
+ background:var(--ss-theme-tint,rgba(70,105,125,.10))!important;
+ box-shadow:0 0 0 3px color-mix(in srgb,var(--ss-theme-accent,#638ca1) 14%,transparent);
+ transition:background .18s ease,outline-color .18s ease;
+}
+.sales-calendar-day-preview .home-day-agenda-group:has(.is-badge-highlighted)>summary {
+ background:var(--ss-theme-tint,rgba(70,105,125,.10));border-radius:7px;
+}
+@media(prefers-reduced-motion:reduce){
+ .sales-calendar-day-preview .is-badge-highlighted {transition:none}
+}

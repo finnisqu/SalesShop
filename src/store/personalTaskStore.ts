@@ -17,12 +17,34 @@ export function normalizedTaskAssociations(task:Pick<PersonalTask,'associations'
 export type TaskType='todo'|'call'|'email'|'meeting'|'follow-up';
 export type TaskPriority='low'|'normal'|'high'|'urgent';
 export type TaskStatus='open'|'in-progress'|'waiting'|'completed'|'canceled';
+export interface TaskSubtask{id:string;title:string;completed:boolean;}
+export function normalizedSubtasks(value:unknown):TaskSubtask[]{
+ if(!Array.isArray(value))return[];
+ const seen=new Set<string>();
+ return value.slice(0,60).flatMap((item):TaskSubtask[]=>{
+  if(!item||typeof item!=='object')return [];
+  const row=item as Record<string,unknown>;
+  const id=typeof row.id==='string'?row.id.trim().slice(0,90):'';
+  const title=typeof row.title==='string'?row.title.trim().slice(0,180):'';
+  if(!id||!title||seen.has(id))return[];
+  seen.add(id);return [{id,title,completed:row.completed===true}];
+ });
+}
+export function subtaskProgress(task:Pick<PersonalTask,'subtasks'>){
+ const items=normalizedSubtasks(task.subtasks);
+ const done=items.filter(item=>item.completed).length;
+ return {total:items.length,done,remaining:items.length-done};
+}
+function deriveSubtaskStatus(status:TaskStatus,subtasks:TaskSubtask[]):TaskStatus{
+ if(!subtasks.length||status==='canceled')return status;
+ return subtasks.every(item=>item.completed)?'completed':status==='completed'?'open':status;
+}
 export interface PersonalTask {
   id:string;title:string;dueDate?:string;dueTime?:string;sourceObjectId?:string;deletedAt?:string;workspaceScope?:string;
   linked?:TaskLink;associations?:TaskAssociation[];sourceLabel?:string;sourceText?:string;
   startDate?:string;
   notes?:string;type?:TaskType;priority?:TaskPriority;status?:TaskStatus;
-  queue?:string;reminderAt?:string;
+  queue?:string;reminderAt?:string;subtasks?:TaskSubtask[];
   createdAt:string;updatedAt:string;completedAt?:string;
 }
 export type TaskChanges=Partial<Omit<PersonalTask,'id'|'createdAt'|'updatedAt'>>;
@@ -78,7 +100,8 @@ function read(scope:string):PersonalTask[]{
       typeof item.createdAt==='string'&&typeof item.updatedAt==='string')
       .map(item=>({...item,workspaceScope:item.workspaceScope??scope,title:item.title.slice(0,240),
         status:item.status??(item.completedAt?'completed':'open'),
-        type:item.type??'todo',priority:item.priority??'normal'}));
+        type:item.type??'todo',priority:item.priority??'normal',
+        subtasks:normalizedSubtasks(item.subtasks)}));
   }catch{return[];}
 }
 function persist(scope:string,tasks:PersonalTask[]){
@@ -90,6 +113,7 @@ function sanitize(change:TaskChanges):TaskChanges {
   if('title'in next)next.title=trim(next.title);
   if('notes'in next)next.notes=trim(next.notes,5000);
   if('queue'in next)next.queue=trim(next.queue,80);
+  if('subtasks'in next)next.subtasks=normalizedSubtasks(next.subtasks);
   if('dueDate'in next&&!validDate(next.dueDate))next.dueDate=undefined;
   if('startDate'in next&&!validDate(next.startDate))next.startDate=undefined;
   if('associations'in next){
@@ -120,7 +144,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     if(!scope||!clean)return null;
     const now=new Date().toISOString();
     const fields=sanitize(changes);
-    const nextStatus=fields.status??'open';
+    const nextStatus=deriveSubtaskStatus(fields.status??'open',fields.subtasks??[]);
     const task:PersonalTask={...fields,id:'task_'+crypto.randomUUID(),title:clean,workspaceScope:scope,
       type:fields.type??'todo',priority:fields.priority??'normal',
       status:nextStatus,completedAt:nextStatus==='completed'?now:undefined,
@@ -137,7 +161,8 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     const now=nextTaskEditTimestamp(original.updatedAt),patch=sanitize(changes);
     const next=tasks.map(task=>{
       if(task.id!==id)return task;
-      const status=patch.status??task.status??'open';
+      const status=deriveSubtaskStatus(patch.status??task.status??'open',
+        patch.subtasks??normalizedSubtasks(task.subtasks));
       return {...task,...patch,title:patch.title||task.title,
         completedAt:status==='completed'?(task.completedAt??now):undefined,
         status,updatedAt:now};
@@ -169,6 +194,9 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       const authored=/submit.*(quote|bid)|send.*(quote|bid)/i.test(task.title)&&
         normalizedTaskAssociations(task).some(link=>link.type==='project'&&link.id===dealId);
       if(!automated&&!authored)return task;
+      // Quoting events cannot bypass an unfinished checklist. The user can
+      // still finish the supporting documents after submitting the bid.
+      if(normalizedSubtasks(task.subtasks).some(item=>!item.completed))return task;
       changed=true;
       const timestamp=nextTaskEditTimestamp(task.updatedAt);
       return {...task,status:'completed' as const,completedAt:timestamp,updatedAt:timestamp};
@@ -195,6 +223,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
        const stage=allDeals.get(dealId)?.stage;
        const submitted=stage!==undefined&&
         ['Bid Sent','Negotiation','Closed Won','Completed'].includes(stage);
+       if(submitted&&normalizedSubtasks(task.subtasks).some(item=>!item.completed))return task;
        changed=true;
        return submitted
         ?{...task,status:'completed' as const,completedAt:now,updatedAt:now}

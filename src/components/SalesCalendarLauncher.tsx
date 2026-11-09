@@ -21,7 +21,7 @@ import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calenda
  type SalesCalendarEvent} from '../services/salesCalendar';
 import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel,type CalendarBadgeMetric} from '../store/homeCalendarSettings';
 import {buildCalendarBadgeIndex,metricCount} from '../services/homeCalendarBadges';
-import {homeCalendarBadgeEntries,type HomeBadgeRecord} from '../services/homeCalendarDrilldown';
+import {homeCalendarBadgeEntries} from '../services/homeCalendarDrilldown';
 import {homeAgendaDotColors} from '../services/homeCalendarAgendaColors';
 import {homeAgendaExtras,homeDayOverview,type HomeDayRecord} from '../services/homeDayOverview';
 import './sales-calendar.css';
@@ -64,7 +64,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [addOpen,setAddOpen]=useState(false);
  const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
- const [badgeDrilldown,setBadgeDrilldown]=useState<{date:string;metric:CalendarBadgeMetric}|null>(null);
+ const [badgeFocus,setBadgeFocus]=useState<{date:string;metric:CalendarBadgeMetric}|null>(null);
+ const [expandedHistory,setExpandedHistory]=useState<Set<string>>(()=>new Set());
+ const agendaRef=useRef<HTMLElement>(null);
  const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
  const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
  const [sidecarMenuPosition,setSidecarMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
@@ -185,11 +187,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const eventsForDay=useMemo(()=>events.filter(item=>item.date===selected).sort((a,b)=>
   Number(Boolean(b.urgent))-Number(Boolean(a.urgent))||a.kind.localeCompare(b.kind)||a.title.localeCompare(b.title)),[events,selected]);
  const shownDayEvents=embedded&&isPhone&&!showAllDay?eventsForDay.slice(0,5):eventsForDay;
- const activeDrilldown=badgeDrilldown?.date===selected?badgeDrilldown:null;
- const drilldownEntries=useMemo(()=>activeDrilldown
-  ?homeCalendarBadgeEntries(activeDrilldown.metric,selected,events,ownTasks,
+ const activeFocus=badgeFocus?.date===selected?badgeFocus:null;
+ const focusEntries=useMemo(()=>activeFocus
+  ?homeCalendarBadgeEntries(activeFocus.metric,selected,events,ownTasks,
     sources.activities,companies,contacts,badgeSettings):[],
-  [activeDrilldown,selected,events,ownTasks,sources.activities,companies,contacts,badgeSettings]);
+  [activeFocus,selected,events,ownTasks,sources.activities,companies,contacts,badgeSettings]);
+ const focusKeys=useMemo(()=>new Set(focusEntries.map(entry=>entry.kind+':'+entry.id)),[focusEntries]);
+ const hasFocus=(kind:string,id:string)=>Boolean(activeFocus&&focusKeys.has(kind+':'+id));
  const canDrillIntoBadges=!isPhone||badgeSettings.clickableMobileBadges;
  const dayGroups=useMemo(()=>homeDayOverview(selected,{
   events,tasks:ownTasks,activities:sources.activities,quotes:ownQuotes,
@@ -202,6 +206,29 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const otherDayGroups=useMemo(()=>homeAgendaExtras(dayGroups),[dayGroups]);
  const otherDayTotal=useMemo(()=>otherDayGroups.reduce((total,group)=>
   total+group.entries.length,0),[otherDayGroups]);
+ useEffect(()=>{
+  if(!activeFocus)return;
+  const matching=otherDayGroups.filter(group=>group.entries.some(entry=>
+   focusKeys.has(entry.kind+':'+entry.id)));
+  if(matching.length)setExpandedHistory(previous=>{
+   const next=new Set(previous);
+   matching.forEach(group=>next.add(selected+':'+group.key));
+   return next;
+  });
+ },[activeFocus,selected,otherDayGroups,focusKeys]);
+ useEffect(()=>{
+  if(!activeFocus)return;
+  const timeout=window.setTimeout(()=>setBadgeFocus(null),5200);
+  const frame=window.requestAnimationFrame(()=>{
+   window.requestAnimationFrame(()=>{
+    const matching=agendaRef.current?.querySelector<HTMLElement>('[data-home-badge-match="true"]');
+    const fallback=agendaRef.current?.querySelector<HTMLElement>('.home-day-agenda-extra');
+    (matching??fallback??agendaRef.current)?.scrollIntoView({
+     behavior:'smooth',block:'nearest',inline:'nearest'});
+   });
+  });
+  return()=>{window.clearTimeout(timeout);window.cancelAnimationFrame(frame);};
+ },[activeFocus,selected,expandedHistory,focusKeys]);
  const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
@@ -242,13 +269,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  },[open]);
  const changeMonth=(delta:number)=>{
   const next=new Date(month.getFullYear(),month.getMonth()+delta,1,12);
-  setMonth(next);setSelected(localDateKey(next));setBadgeDrilldown(null);
+  setMonth(next);setSelected(localDateKey(next));setBadgeFocus(null);
  };
  const changePeriod=(delta:number)=>{
   if(!weekMode){changeMonth(delta);return;}
   const date=new Date(selected+'T12:00:00');
   date.setDate(date.getDate()+7*delta);
-  setSelected(localDateKey(date));setBadgeDrilldown(null);
+  setSelected(localDateKey(date));setBadgeFocus(null);
   setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));
  };
  const openRecord=(event:SalesCalendarEvent)=>{
@@ -257,12 +284,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   if(recordType==='task'){requestTaskModal({mode:'preview',id:recordId});return;}
    const kind=recordType==='project'?'deal':recordType==='quote'?'quote':null;
   if(kind)setRecordPreview({kind,id:recordId});
- };
- const openBadgeRecord=(record:HomeBadgeRecord)=>{
-  setOpen(false);
-  if(record.kind==='task')requestTaskModal({mode:'preview',id:record.id});
-  else if(record.kind==='activity')setActivityPreview(record.id);
-  else setRecordPreview({kind:record.kind,id:record.id});
  };
  const openDayRecord=(record:HomeDayRecord)=>{
   setOpen(false);
@@ -376,7 +397,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       <button type="button" className="sales-calendar-today" title="Jump to today"
        aria-label="Jump to today" onClick={()=>{
         const now=new Date();setMonth(new Date(now.getFullYear(),now.getMonth(),1,12));
-        setSelected(localDateKey(now));setBadgeDrilldown(null);
+        setSelected(localDateKey(now));setBadgeFocus(null);
        }}>
        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
@@ -414,7 +435,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       const badges=badgeSettings.slots.map(slot=>({...slot,
        count:slot.metric==='none'?0:metricCount(badgeIndex,key,slot.metric)})).filter(slot=>slot.count>0);
       const selectDate=()=>{
-       setSelected(key);setBadgeDrilldown(null);
+       setSelected(key);setBadgeFocus(null);
        if(!inMonth){const date=new Date(key+'T12:00:00');
         setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
       };
@@ -439,10 +460,10 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          {badges.map((slot,i)=>canDrillIntoBadges
           ?<button type="button" key={i} className="home-calendar-badge-action"
             style={{backgroundColor:badgeColor(slot.color)}}
-            aria-label={slot.count+' '+badgeLabel(slot.metric)+' on '+dateLabel(key)+'. View records'}
-            title={'View '+badgeLabel(slot.metric)}
+            aria-label={slot.count+' '+badgeLabel(slot.metric)+' on '+dateLabel(key)+'. Highlight in agenda'}
+            title={'Highlight '+badgeLabel(slot.metric)+' in agenda'}
             onClick={()=>{
-             setSelected(key);setBadgeDrilldown({date:key,metric:slot.metric});
+             setSelected(key);setBadgeFocus({date:key,metric:slot.metric});
              if(!inMonth){const date=new Date(key+'T12:00:00');
               setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
             }}>{slot.count>99?'99+':slot.count}</button>
@@ -458,7 +479,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      {visibleDays.map(key=>{
       const counts=calendarDayCounts(events,key);
       return <button key={key} type="button" className={key===selected?'is-selected':''}
-       onClick={()=>{setSelected(key);setBadgeDrilldown(null);}}>
+       onClick={()=>{setSelected(key);setBadgeFocus(null);}}>
        <span>{new Date(key+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}</span>
        <small>{counts.total} {counts.total===1?'item':'items'}{counts.urgent?' · Urgent':''}</small>
        {counts.urgent>0&&<b aria-label="Urgent">!</b>}
@@ -466,9 +487,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      })}
     </div>}
      </div>
-    <section className="sales-calendar-day-preview" aria-label={'Items for '+dateLabel(selected)}>
+    <section ref={agendaRef} className="sales-calendar-day-preview"
+     aria-label={'Items for '+dateLabel(selected)}
+     onClickCapture={()=>{if(activeFocus)setBadgeFocus(null);}}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
-      <div><span>{activeDrilldown?drilldownEntries.length+' '+badgeLabel(activeDrilldown.metric):eventsForDay.length+' remaining'}</span>
+      <div><span>{eventsForDay.length+' remaining'}</span>
        {embedded&&<div className="sales-calendar-add-wrap">
         <button type="button" className="sales-calendar-add" aria-haspopup="menu"
          aria-expanded={addOpen} aria-label={'Add to '+dateLabel(selected)}
@@ -495,23 +518,10 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        </div>}
  
       </div></div>
-     {activeDrilldown&&<div className="home-calendar-drilldown">
-      <div className="home-calendar-drilldown-heading">
-       <button type="button" onClick={()=>setBadgeDrilldown(null)}>← Agenda</button>
-       <strong>{badgeLabel(activeDrilldown.metric)}</strong>
-       <small>{dateLabel(selected)}</small>
-      </div>
-      <div className="home-calendar-drilldown-list" aria-label={badgeLabel(activeDrilldown.metric)+' records'}>
-       {drilldownEntries.length?drilldownEntries.map(record=><button type="button"
-         key={record.key} onClick={()=>openBadgeRecord(record)}>
-         <span><strong>{record.title}</strong><small>{record.detail}</small></span>
-         <span aria-hidden="true">›</span>
-        </button>):<p>No matching records for this day.</p>}
-      </div>
-     </div>}
-     {!activeDrilldown&&<>
      <div className="sales-calendar-agenda">
       {eventsForDay.length?shownDayEvents.map(event=><button type="button" key={event.id}
+       data-home-badge-match={hasFocus(event.recordType==='project'?'deal':event.recordType,event.recordId)}
+       className={hasFocus(event.recordType==='project'?'deal':event.recordType,event.recordId)?'is-badge-highlighted':''}
        onClick={()=>openRecord(event)}>
         <span className={'sales-calendar-event-dot is-'+event.kind}
          style={{backgroundColor:agendaDotColors[event.kind]}} aria-hidden="true"/>
@@ -547,14 +557,25 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         <span>{otherDayTotal} {otherDayTotal===1?'record':'records'}</span>
        </div>
        {otherDayGroups.map(group=><details key={selected+':'+group.key}
-        className="home-day-agenda-group">
-        <summary>
+        className="home-day-agenda-group"
+        open={expandedHistory.has(selected+':'+group.key)}>
+        <summary onClick={event=>{
+          event.preventDefault();
+          const id=selected+':'+group.key;
+          setExpandedHistory(previous=>{
+           const next=new Set(previous);
+           if(next.has(id))next.delete(id);else next.add(id);
+           return next;
+          });
+        }}>
          <span className="home-day-agenda-group-label">{group.label}</span>
          <span className="home-day-agenda-group-count">{group.entries.length}</span>
          <span className="home-day-agenda-group-chevron" aria-hidden="true">⌄</span>
         </summary>
         <div className="home-day-agenda-records">
          {group.entries.map(record=><button type="button" key={record.key}
+          className={hasFocus(record.kind,record.id)?'is-badge-highlighted':''}
+          data-home-badge-match={hasFocus(record.kind,record.id)}
           onClick={()=>openDayRecord(record)} aria-label={'Open '+record.title}>
           <span><strong>{record.title}</strong><small>{record.detail}</small></span>
           <span aria-hidden="true">›</span>
@@ -563,7 +584,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        </details>)}
       </section>}
      </div>
-     </>}
     </section>
     </div>
 
