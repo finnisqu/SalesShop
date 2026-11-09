@@ -214,13 +214,14 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       const authored=/submit.*(quote|bid)|send.*(quote|bid)/i.test(task.title)&&
         normalizedTaskAssociations(task).some(link=>link.type==='project'&&link.id===dealId);
       if(!automated&&!authored)return task;
-      changed=true;
       const timestamp=nextTaskEditTimestamp(task.updatedAt);
       // Store proof even when the checklist isn't complete. Finishing its last
       // item later can then complete the parent without requiring a second,
       // duplicate customer-delivery event.
       const pending=normalizedSubtasks(task.subtasks).some(item=>!item.completed);
+      if(pending&&automated&&task.submissionConfirmedAt)return task;
       const proof=automated?{submissionConfirmedAt:task.submissionConfirmedAt??timestamp}:{};
+      changed=true;
       return pending
         ?{...task,...proof,updatedAt:timestamp}
         :{...task,...proof,status:'completed' as const,completedAt:timestamp,updatedAt:timestamp};
