@@ -98,7 +98,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       updateCompany(company.id, {
         name: draft.name.trim(),
         ...(draft.relationship==='unclassified'?{}:
-          companyRelationshipPatch(company,draft.relationship)),
+          companyRelationshipPatch(company,draft.relationship as EditableCompanyRelationship)),
         annualUnits: optionalNumber(draft.annualUnits),
         averageUnitValue: optionalNumber(draft.averageUnitValue),
         expectedSharePct: optionalNumber(draft.expectedSharePct),
