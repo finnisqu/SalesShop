@@ -16,11 +16,37 @@ export const isOurOrgCompany=(company:Company)=>Boolean(ourOrgGroup(company));
 export function ourOrgCompanyIds(companies:readonly Company[]):Set<string>{
  return new Set(companies.filter(isOurOrgCompany).map(item=>item.id));
 }
+const MEMBER_PREFIX='__ss_our_org_sub_member_v1_';
+const ROLE_PREFIX='__ss_our_org_role_v1_';
+export const ourOrgMemberMarker=(contactId:string)=>MEMBER_PREFIX+encodeURIComponent(contactId)+'__';
+export const ourOrgRoleMarker=(role:string)=>ROLE_PREFIX+encodeURIComponent(role.trim())+'__';
+const storedRole=(alias:string):string|undefined=>{
+ if(!alias.startsWith(ROLE_PREFIX)||!alias.endsWith('__'))return undefined;
+ try{return decodeURIComponent(alias.slice(ROLE_PREFIX.length,-2))}catch{return undefined}
+};
+export function rosterGroupForContact(contact:Contact,companies:readonly Company[]):RosterGroup|undefined{
+ const group=companies.find(c=>c.id===contact.companyId);
+ const direct=group?ourOrgGroup(group):undefined;
+ if(direct)return direct;
+ const sub=companies.find(c=>ourOrgGroup(c)==='subcontractors');
+ return sub?.aliases?.includes(ourOrgMemberMarker(contact.id))?'subcontractors':undefined;
+}
+export function isOurOrgContact(contact:Contact,companies:readonly Company[]):boolean{
+ return Boolean(rosterGroupForContact(contact,companies));
+}
+export function ourOrgRoles(contacts:readonly Contact[],companies:readonly Company[],group:RosterGroup):string[]{
+ const owned=companies.find(c=>ourOrgGroup(c)===group);
+ const saved=(owned?.aliases??[]).map(storedRole).filter((x):x is string=>Boolean(x));
+ const used=contacts.filter(c=>rosterGroupForContact(c,companies)===group)
+  .map(c=>c.title?.trim()).filter((x):x is string=>Boolean(x));
+ return [...new Set([...saved,...used])].sort((a,b)=>a.localeCompare(b));
+}
 export function ourOrgPeople(contacts:readonly Contact[],companies:readonly Company[],
  group?:RosterGroup):Contact[]{
- const ids=new Set(companies.filter(c=>group?ourOrgGroup(c)===group:isOurOrgCompany(c)).map(c=>c.id));
- return contacts.filter(c=>Boolean(c.companyId&&ids.has(c.companyId)))
-  .slice().sort((a,b)=>a.name.localeCompare(b.name));
+ return contacts.filter(c=>{
+  const category=rosterGroupForContact(c,companies);
+  return Boolean(category&&(!group||category===group));
+ }).slice().sort((a,b)=>a.name.localeCompare(b.name));
 }
 /** Never silently reuse an unrelated customer/partner company's name. */
 export function ensureOurOrgCompany(group:RosterGroup,companies:readonly Company[],
