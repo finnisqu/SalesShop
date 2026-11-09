@@ -9,6 +9,7 @@ import { AccountsBoard } from './AccountsBoard';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import { Button } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {BoardQuickCreate} from './BoardQuickCreate';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
@@ -410,7 +411,7 @@ export function Board() {
   return (
     <main className={'board-view'+(compactCards?' is-compact':'')}>
       <WorkspaceHeader className="board-header-panel board-foundation-header"
-        title="Deals" mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Accounts'}]}
+        title="Deals" help={<WorkspaceHelp page="board" section="deals"/>} mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Accounts'}]}
         mobileTabValue="projects" onMobileTabChange={value=>{
           if(value==='accounts')setBoardMode('accounts');
         }}

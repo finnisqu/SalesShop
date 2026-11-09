@@ -11,6 +11,7 @@ import {DealTimelineBetaOverview} from './DealTimelineBeta';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
 import { Button, Field, SectionTabs, StatusText } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -20,6 +21,9 @@ import type {BulkEditChange} from './ConnectionsBulkEditDialog';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
+import {PreviewPanelClose} from './PreviewPanelChrome';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
@@ -319,6 +323,9 @@ export function Connections() {
   const closeNewRecord=()=>{
     setCompanyCreating(false);setPersonCreating(false);setDealCreating(false);
   };
+  const isCreateOpen=companyCreating||personCreating||dealCreating;
+  const newRecordRef=useDismissibleLayer<HTMLElement>(isCreateOpen,closeNewRecord);
+  useModalScrollLock(isCreateOpen);
   const backToDeals = () => {
     chooseTab('deals');
     setView('dashboard');
@@ -349,7 +356,7 @@ export function Connections() {
   const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
   return (
     <main className="connections-workspace connections-directory-layout">
-      <WorkspaceHeader title="Connections"
+      <WorkspaceHeader title="Connections" help={<WorkspaceHelp page="connections" section={tab}/>} 
         className="connections-heading connections-foundation-heading"
         mobileTabs={[...CONNECTIONS_TABS.map(item=>({value:item.id,label:item.label})),
           {value:'quotes',label:'Quotes'},{value:'activity',label:'Activity history'}]}
@@ -552,18 +559,17 @@ export function Connections() {
         <div className="connections-create-backdrop" onPointerDown={event=>{
           if(event.target===event.currentTarget)closeNewRecord();
         }}>
-          <section className="connections-create-dialog" role="dialog" aria-modal="true"
-            aria-label={companyCreating?'New company':personCreating?'New person':'New deal'}
-            onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();closeNewRecord();}}}>
+          <section ref={newRecordRef} className="connections-create-dialog" role="dialog" aria-modal="true"
+            aria-label={companyCreating?'New company':personCreating?'New person':'New deal'}>
             <header className="connections-create-heading">
               <div><small>CONNECTIONS · CREATE</small>
                 <h2>{companyCreating?'New company':personCreating?'New person':'New deal'}</h2>
               </div>
-              <button type="button" onClick={closeNewRecord} aria-label="Close new record">×</button>
+              <PreviewPanelClose onClose={closeNewRecord} label="Close new record" initialFocus={false}/>
             </header>
             {companyCreating && <form className="connections-add-form" onSubmit={addCompany}>
                 
-                <label><span>Company name</span><input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} autoFocus required placeholder="Builder or supplier name" /></label>
+                <label><span>Company name</span><input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} data-dialog-initial-focus autoFocus required placeholder="Builder or supplier name" /></label>
                 <label><span>Relationship</span><select value={newCompanyKind} onChange={(e) => setNewCompanyKind(e.target.value as CompanyKind)}>
                   <option value="customer">Customer / prospect</option><option value="non-customer">Partner / non-customer</option>
                 </select></label>
@@ -571,7 +577,7 @@ export function Connections() {
               </form>}
             {personCreating && <form className="connections-add-form" onSubmit={addPerson}>
                 
-                <label><span>Name</span><input autoFocus value={newPerson} onChange={(e) => setNewPerson(e.target.value)} placeholder="Contact name" /></label>
+                <label><span>Name</span><input data-dialog-initial-focus autoFocus value={newPerson} onChange={(e) => setNewPerson(e.target.value)} placeholder="Contact name" /></label>
                 <label><span>Email</span><input type="email" value={newPersonEmail} onChange={(e) => setNewPersonEmail(e.target.value)} placeholder="Email address" /></label>
                 <label><span>Company</span><select value={newPersonCompany} onChange={(e) => setNewPersonCompany(e.target.value)}>
                   <option value="">No company yet</option>{companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
@@ -580,7 +586,7 @@ export function Connections() {
               </form>}
             {dealCreating && <form className="connections-add-form" onSubmit={addDeal}>
               
-              <label><span>Deal name</span><input autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
+              <label><span>Deal name</span><input data-dialog-initial-focus autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
               <label><span>Pipeline</span><select value={newDealPipeline}
                  onChange={event=>setNewDealPipeline(event.target.value as DealPipeline | '')}>
                  <option value="">Unassigned</option>

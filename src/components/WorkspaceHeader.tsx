@@ -23,7 +23,9 @@ export function MobileWorkspaceTabs({title,items,value,onChange}:{
    {items.map(item=><button type="button" key={item.value}
      className={item.value===value?'is-selected':''}
      aria-current={item.value===value?'page':undefined}
-     onClick={()=>{menuRef.current?.removeAttribute('open');onChange?.(item.value);}}>
+     onClick={()=>{menuRef.current?.removeAttribute('open');
+       menuRef.current?.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
+       onChange?.(item.value);}}>
      <span>{item.label}</span>{item.value===value&&<span aria-hidden="true">✓</span>}
    </button>)}
   </div>
@@ -32,7 +34,7 @@ export function MobileWorkspaceTabs({title,items,value,onChange}:{
 
 /** One shared desktop header; on phone the title lives in the global app bar.
  * The local header is exactly: selected tab | More | Search | Add. */
-export function WorkspaceHeader({title,tabs,more,search,primary,className='',
+export function WorkspaceHeader({title,help,tabs,more,search,primary,className='',
  mobileTabs,mobileTabValue,onMobileTabChange}:{
  title:string;help?:ReactNode;tabs?:ReactNode;more?:ReactNode;search?:ReactNode;primary?:ReactNode;className?:string;
  mobileTabs?:readonly MobileWorkspaceTab[];mobileTabValue?:string;onMobileTabChange?:(value:string)=>void;
@@ -62,7 +64,9 @@ export function WorkspaceHeader({title,tabs,more,search,primary,className='',
    document.removeEventListener('keydown',escape,true);};
  },[searchOpen]);
  return <header className={'ss-workspace-header '+className}>
-  <div className="ss-workspace-header__intro"><h1>{title}</h1></div>
+  <div className="ss-workspace-header__intro"><h1>{title}</h1>
+   {help&&<div className="ss-workspace-header__help">{help}</div>}
+  </div>
   <div className="ss-workspace-header__tabs">{tabs}</div>
   {mobileTabs&&mobileTabs.length>0&&<div className="ss-workspace-header__mobile-nav">
    <MobileWorkspaceTabs title={title} items={mobileTabs} value={mobileTabValue??mobileTabs[0].value}
@@ -91,11 +95,16 @@ export function WorkspaceMoreMenu({items,label='More'}:{items:readonly Workspace
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
  return <details className="ss-workspace-more" ref={ref}>
-  <summary aria-label={label+' menu'}>{label} <WorkspaceChromeIcon name="more"/></summary>
+  <summary aria-label={label+' menu'}><span>More</span> <WorkspaceChromeIcon name="more"/></summary>
   <div className="ss-workspace-more__menu" role="group" aria-label={label+' options'}>
    {items.map((item,index)=><button type="button" key={index} disabled={item.disabled}
     aria-pressed={item.active===undefined?undefined:item.active}
-    onClick={()=>{ref.current?.removeAttribute('open');item.onClick();}}>{item.label}</button>)}
+    onClick={()=>{ref.current?.removeAttribute('open');
+     ref.current?.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
+     item.onClick();}}>
+     <span>{item.label}</span>
+     {item.active&&<span className="ss-workspace-more__selected" aria-hidden="true">✓</span>}
+    </button>)}
   </div>
  </details>;
 }

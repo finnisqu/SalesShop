@@ -187,10 +187,10 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
    <RecordFormFeedback notice={error?{kind:'error',message:error}:saving?{kind:'saving',message:'Updating selected records…'}:null}
      className="connections-bulk-error"/>
     <footer>
+     <button type="button" onClick={onClose} disabled={saving}>Cancel</button>
      <button type="submit" className="connections-bulk-primary" disabled={!canSubmit}>
       {saving?'Updating…':'Update '+count}
      </button>
-     <button type="button" onClick={onClose} disabled={saving}>Cancel</button>
     </footer>
    </form>
   </section>

@@ -88,9 +88,10 @@ export function TaskBulkEditDialog({count,onApply,onClose}:{
    {notes&&<p role="status" className="connections-bulk-hint">{notes}</p>}
    <RecordFormFeedback notice={error?{kind:'error',message:error}:saving?{kind:'saving',message:'Updating selected tasks…'}:null}
      className="connections-bulk-error"/>
-   <footer><button className="connections-bulk-primary" type="submit" disabled={!valid}>
-    {saving?'Updating…':'Update '+count}
-   </button><button type="button" onClick={onClose} disabled={saving}>Cancel</button></footer>
+   <footer><button type="button" onClick={onClose} disabled={saving}>Cancel</button>
+    <button className="connections-bulk-primary" type="submit" disabled={!valid}>
+     {saving?'Updating…':'Update '+count}
+    </button></footer>
   </form>
  </section>
  </div>,document.body);
