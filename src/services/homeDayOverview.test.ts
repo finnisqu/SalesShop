@@ -130,10 +130,18 @@ describe('Home selected-day record navigation',()=>{
   const extras=homeAgendaExtras(homeDayOverview(day,data));
   expect(extras.some(group=>group.key==='bids-due')).toBe(false);
   expect(extras.some(group=>group.key==='notebook-dates')).toBe(false);
-  expect(extras.find(group=>group.key==='tasks-due')?.entries.map(x=>x.id)).toEqual(['historical']);
+  // Even completed historical tasks with an original due date are excluded:
+  // the selected-day Agenda owns due work, not the On this day history.
+  expect(extras.some(group=>group.key==='tasks-due')).toBe(false);
   expect(extras.find(group=>group.key==='activities')?.entries.map(x=>x.id)).toEqual(['call']);
   expect(extras.find(group=>group.key==='notebook-pages')?.entries[0].id).toBe('page-1');
   expect(homeAgendaExtras(homeDayOverview('2026-11-20',data))).toEqual([]);
+ });
+ it('never repeats Tasks due in On this day, even if the day only has pending work',()=>{
+  const data={...empty(),events:[event('pending','task')],
+   tasks:[task('due-today',{dueDate:day})]};
+  expect(homeDayOverview(day,data).some(group=>group.key==='tasks-due')).toBe(true);
+  expect(homeAgendaExtras(homeDayOverview(day,data))).toEqual([]);
  });
 
 });
