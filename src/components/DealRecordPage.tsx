@@ -253,7 +253,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </button>)}
           {!related.linkedQuotes.length && <p className="connections-record-empty">No SalesShop quotes linked to this deal.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={newQuote}>+ New quote</button>
+        <button type="button" className="connections-record-add" onClick={newQuote}>+ New Quote</button>
         <LinkExistingRecord source={{kind:'deal',id:deal.id,name:deal.name}} target="quote"/>
         {outsideQuotes.length>0&&<div className="external-quote-history">
           <strong>Submitted with another tool or format</strong>
