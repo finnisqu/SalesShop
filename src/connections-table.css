@@ -279,3 +279,17 @@
 .connections-data-table .connections-task-delete{font-size:11px;
  color:var(--ss-theme-muted,#667785);border-color:var(--ss-theme-border,#cbd4d9)}
 .connections-data-table .connections-task-delete:hover{color:var(--ss-danger,#a34840)}
+
+.connections-data-table .connections-task-delete{
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ color:var(--ss-danger,#c44a46);
+ background:color-mix(in srgb,var(--ss-danger,#c44a46) 8%,var(--ss-theme-card,transparent));
+ border:1px solid color-mix(in srgb,var(--ss-danger,#c44a46) 42%,var(--ss-theme-border,#cbd4d9));
+ border-radius:7px;padding:6px 9px;font-weight:700;white-space:nowrap;
+}
+.connections-data-table .connections-task-delete:hover{
+ color:var(--ss-danger,#c44a46);
+ background:color-mix(in srgb,var(--ss-danger,#c44a46) 15%,var(--ss-theme-card,transparent));
+ border-color:var(--ss-danger,#c44a46);
+}
+.connections-data-table .connections-task-delete .ss-trash-icon{flex:none}
