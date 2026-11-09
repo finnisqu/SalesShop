@@ -569,7 +569,7 @@ export function Connections() {
             </header>
             {companyCreating && <form className="connections-add-form" onSubmit={addCompany}>
                 
-                <label><span>Company name</span><input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} autoFocus required placeholder="Builder or supplier name" /></label>
+                <label><span>Company name</span><input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} data-dialog-initial-focus autoFocus required placeholder="Builder or supplier name" /></label>
                 <label><span>Relationship</span><select value={newCompanyKind} onChange={(e) => setNewCompanyKind(e.target.value as CompanyKind)}>
                   <option value="customer">Customer / prospect</option><option value="non-customer">Partner / non-customer</option>
                 </select></label>
@@ -577,7 +577,7 @@ export function Connections() {
               </form>}
             {personCreating && <form className="connections-add-form" onSubmit={addPerson}>
                 
-                <label><span>Name</span><input autoFocus value={newPerson} onChange={(e) => setNewPerson(e.target.value)} placeholder="Contact name" /></label>
+                <label><span>Name</span><input data-dialog-initial-focus autoFocus value={newPerson} onChange={(e) => setNewPerson(e.target.value)} placeholder="Contact name" /></label>
                 <label><span>Email</span><input type="email" value={newPersonEmail} onChange={(e) => setNewPersonEmail(e.target.value)} placeholder="Email address" /></label>
                 <label><span>Company</span><select value={newPersonCompany} onChange={(e) => setNewPersonCompany(e.target.value)}>
                   <option value="">No company yet</option>{companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
@@ -586,7 +586,7 @@ export function Connections() {
               </form>}
             {dealCreating && <form className="connections-add-form" onSubmit={addDeal}>
               
-              <label><span>Deal name</span><input autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
+              <label><span>Deal name</span><input data-dialog-initial-focus autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
               <label><span>Pipeline</span><select value={newDealPipeline}
                  onChange={event=>setNewDealPipeline(event.target.value as DealPipeline | '')}>
                  <option value="">Unassigned</option>
