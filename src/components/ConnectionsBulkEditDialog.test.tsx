@@ -24,7 +24,7 @@ describe('Connections bulk record editing',()=>{
  it('uses the same property options as individual CRM record editors',()=>{
   for(const property of [
    "key:'pipeline'","key:'stage'","key:'dueDate'","key:'assignedUserId'",
-   "key:'amount'","key:'nextAction'","key:'kind'","key:'companyId'","key:'title'","key:'phone'"
+   "key:'amount'","key:'nextAction'","key:'relationship'","key:'companyId'","key:'title'","key:'phone'"
   ])expect(dialog).toContain(property);
   expect(dialog).toContain('DEAL_PIPELINES.map(');
   expect(dialog).toContain('PROJECT_STAGES.map(');
@@ -35,6 +35,11 @@ describe('Connections bulk record editing',()=>{
   expect(dialog).toContain('disabled={!canSubmit}');
   expect(dialog).toContain('if(!canSubmit)return');
   expect(dialog).toContain('Clear this property on selected records');
+  expect(dialog).toContain("scope:'deals';property:'companyId'");
+  expect(dialog).toContain("scope:'companies';property:'relationship'");
+  expect(dialog).toContain('Connect all selected Deals to this Company');
+  expect(screen).toContain('setProjectCompany(item.id,change.value||undefined)');
+  expect(screen).toContain('companyRelationshipPatch(company,change.value)');
  });
  it('preserves stage history and server confirmation for owner changes',()=>{
   expect(screen).toContain("updateDeal(item.id,{pipeline:change.pipeline,stage:change.stage},{source:'manual'})");

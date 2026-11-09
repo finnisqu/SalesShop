@@ -46,6 +46,8 @@ interface CrmState {
   updateContact: (contactId: string, patch: ContactPatch) => void;
   mergeContactRecords: (primaryId: string, duplicateId: string) => void;
   relinkProjectCompany: (projectId: string, companyId: string) => void;
+  /** Apply or clear an exact Deal-to-Company link without manufacturing CRM activity. */
+  setProjectCompany: (projectId:string,companyId?:string)=>void;
   relinkContactCompany: (contactId: string, companyId?: string) => void;
   resolveContact: (input: ContactInput) => string | undefined;
   createProject: (name: string, stage?: ProjectStage, details?: CreateProjectDetails) => string | null;
@@ -252,6 +254,19 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       : project);
     persist(get().companies, get().contacts, projects, get().activities);
     set({ projects });
+  },
+
+  setProjectCompany:(projectId,companyId)=>{
+    const current=get();
+    const match=companyId?current.companies.find(c=>c.id===companyId):undefined;
+    if(companyId&&!match)throw new Error('This company is not available in the current workspace.');
+    if(!current.projects.some(p=>p.id===projectId))
+      throw new Error('This Deal is not available in the current workspace.');
+    const projects=current.projects.map(p=>p.id===projectId?{
+      ...p,companyId:match?.id,companyName:match?.name,updatedAt:now(),
+    }:p);
+    persist(current.companies,current.contacts,projects,current.activities);
+    set({projects});
   },
 
   relinkContactCompany: (contactId, companyId) => {
@@ -473,15 +488,19 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     if(!current||!Number.isFinite(amount)||amount<0||
        !/^\d{4}-\d{2}-\d{2}$/.test(bidSentDate)||
        Number.isNaN(new Date(bidSentDate+'T12:00:00').getTime())||
-       ['Closed Won','Completed','Closed Lost','Discarded'].includes(current.stage))return false;
+       new Date(bidSentDate+'T00:00:00').getTime()>Date.now())return false;
+    const historical=['Closed Won','Completed','Closed Lost','Discarded'].includes(current.stage);
     // Preserve more advanced stages if a previous bid was already recorded.
     const requestedStage:ProjectStage=
       ['Discovery','Intent to Bid','Bid Development'].includes(current.stage)?'Bid Sent':current.stage;
     const occurredAt=new Date(bidSentDate+'T12:00:00').toISOString();
-    const transition=applyProjectStageTransition(current,requestedStage,get().activities,occurredAt);
-    if(transition.blockedReason)return false;
+    const transition=historical?{project:current,changed:false}:
+      applyProjectStageTransition(current,requestedStage,get().activities,occurredAt);
+    if('blockedReason' in transition&&transition.blockedReason)return false;
     const timestamp=now();
-    const projects=get().projects.map(project=>project.id===projectId
+    // Historical backfill must not regress a completed/lost Deal, replace its
+    // final amount, or clear its original bid deadline.
+    const projects=historical?get().projects:get().projects.map(project=>project.id===projectId
       ?{...project,stage:transition.project.stage,
         stageChangedAt:transition.changed?occurredAt:project.stageChangedAt,
         amount,dueDate:undefined,

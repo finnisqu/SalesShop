@@ -27,6 +27,9 @@ import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
+import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
+ visibleCompanyAliases,type EditableCompanyRelationship} from '../services/companyRelationship';
+import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 
 type AccountRow = { company: Company; health: ReturnType<typeof inferAccountHealth> };
 
@@ -95,17 +98,24 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
 
         <label className="account-kind-control">
           <span>Relationship type</span>
-          <select value={company.kind} onChange={(event) => updateCompany(company.id, { kind: event.target.value as Company['kind'] })}>
-            <option value="customer">Customer / prospect</option>
-            <option value="non-customer">Non-customer relationship</option>
+          <select value={companyRelationship(company)}
+            onChange={event=>{
+              const choice=event.target.value as EditableCompanyRelationship;
+              if(choice==='prospect'||choice==='customer'||choice==='partner')
+                updateCompany(company.id,companyRelationshipPatch(company,choice));
+            }}>
+            <option value="unclassified" disabled>Not classified</option>
+            <option value="prospect">Prospect</option>
+            <option value="customer">Customer</option>
+            <option value="partner">Partner / other</option>
           </select>
         </label>
 
         <section className="account-editor-section account-alias-section">
-          <header><strong>Known aliases</strong><span>{company.aliases?.length ?? 0}</span></header>
+          <header><strong>Known aliases</strong><span>{visibleCompanyAliases(company).length}</span></header>
           <p className="account-forecast-help">Exact aliases resolve back to this account when a salesperson types an alternate company name on a quote.</p>
           <div className="account-alias-list">
-            {(company.aliases ?? []).map((item) => (
+            {visibleCompanyAliases(company).map((item) => (
               <span className="account-alias-chip" key={item}>{item}<button type="button" aria-label={`Remove alias ${item}`} onClick={() => updateCompany(company.id, { aliases: (company.aliases ?? []).filter((candidate) => candidate !== item) })}>×</button></span>
             ))}
           </div>
@@ -223,7 +233,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   const accountsByStage = useMemo(() => {
     const grouped = new Map<AccountStage, AccountRow[]>();
     ACCOUNT_STAGES.forEach((stage) => grouped.set(stage, []));
-    companies.filter(company=>[company.name,...(company.aliases??[])].some(text=>
+    companies.filter(company=>!isOurOrgCompany(company)).filter(company=>[company.name,...visibleCompanyAliases(company)].some(text=>
       text.toLowerCase().includes(searchQuery.trim().toLowerCase()))).forEach((company) => {
       const health = inferAccountHealth(company, contacts, projects, activities);
       grouped.get(health.stage)?.push({ company, health });
@@ -262,7 +272,13 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
           placeholder="Search accounts…" value={searchQuery}
           onChange={event=>onSearchChange?.(event.target.value)}/>}
         primary={<BoardQuickCreate kind="Account"
-          onCreate={name=>resolveCompany(name,'customer')}/>}
+          onCreate={name=>{
+            const before=new Set(useCrmStore.getState().companies.map(c=>c.id));
+            const id=resolveCompany(name,'customer');
+            if(id&&!before.has(id))
+              useCrmStore.getState().updateCompany(id,companyRelationshipPatch({aliases:[]},'prospect'));
+            return id;
+          }}/>}
       />
 
       <MobileBoardStagePicker
@@ -326,6 +342,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
                         {expectedAnnualWork !== undefined && <strong className="account-card-title-value">{money.format(expectedAnnualWork)}</strong>}
                       </div>
                       <div className="account-card-stats">
+                        <span>{companyRelationshipLabel(company)}</span>
                         <span>{health.openProjectCount} open</span>
                         <span>{health.contactCount} contacts</span>
                         {company.annualUnits !== undefined && <span>{company.annualUnits} units/yr</span>}

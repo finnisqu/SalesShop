@@ -3,24 +3,27 @@ import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {RecordFormFeedback} from './RecordFormFeedback';
 import {PreviewPanelClose} from './PreviewPanelChrome';
 import {createPortal} from 'react-dom';
-import {DEAL_PIPELINES,PROJECT_STAGES,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
+import {DEAL_PIPELINES,PROJECT_STAGES,type DealPipeline,type ProjectStage} from '../types/crm';
 import {useDealAssigneeDirectory} from '../services/dealAssignees';
 import {useAuthStore} from '../store/authStore';
 import type {Company} from '../types/crm';
+import {type EditableCompanyRelationship} from '../services/companyRelationship';
+import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import '../connections-bulk-edit.css';
 
 export type BulkEditScope='companies'|'people'|'deals';
 export type BulkEditChange =
- | {scope:'companies';property:'kind';value:CompanyKind}
+ | {scope:'companies';property:'relationship';value:EditableCompanyRelationship}
  | {scope:'people';property:'companyId'|'title'|'phone';value:string}
  | {scope:'deals';property:'pipeline';pipeline:DealPipeline|undefined;stage:ProjectStage}
  | {scope:'deals';property:'stage';value:ProjectStage}
+ | {scope:'deals';property:'companyId';value:string}
  | {scope:'deals';property:'dueDate'|'nextAction'|'amount'|'assignedUserId';value:string};
 
 const fields:Record<BulkEditScope,ReadonlyArray<{key:string;label:string}>>={
- companies:[{key:'kind',label:'Relationship type'}],
- people:[{key:'companyId',label:'Company'},{key:'title',label:'Job title'},{key:'phone',label:'Phone number'}],
- deals:[{key:'pipeline',label:'Pipeline'},{key:'stage',label:'Deal stage'},
+ companies:[{key:'relationship',label:'Prospect / Customer / Partner'}],
+ people:[{key:'companyId',label:'Connect to company'},{key:'title',label:'Job title'},{key:'phone',label:'Phone number'}],
+ deals:[{key:'companyId',label:'Connect to company'},{key:'pipeline',label:'Pipeline'},{key:'stage',label:'Deal stage'},
   {key:'dueDate',label:'Bid due date'},{key:'assignedUserId',label:'Deal owner'},
   {key:'amount',label:'Deal value'},{key:'nextAction',label:'Next action'}],
 };
@@ -59,7 +62,7 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
  const canSubmit=Boolean(property&&eligible&&amountValid&&!saving);
  const dialogRef=useDismissibleLayer<HTMLElement>(true,()=>{if(!saving)onClose();});
  const chooseProperty=(key:string)=>{
-  setProperty(key);setValue(key==='kind'||key==='pipeline'||key==='companyId'||key==='assignedUserId'?'__choose__':'');
+  setProperty(key);setValue(key==='relationship'||key==='pipeline'||key==='companyId'||key==='assignedUserId'?'__choose__':'');
   setStage('');setClearValue(false);setError('');setOwnerSearch('');
  };
  async function submit(event:FormEvent){
@@ -67,10 +70,12 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
   if(!canSubmit)return;
   let change:BulkEditChange;
   if(scope==='companies'){
-   change={scope,property:'kind',value:value as CompanyKind};
+   change={scope,property:'relationship',value:value as EditableCompanyRelationship};
   }else if(scope==='people'){
    change={scope,property:property as 'companyId'|'title'|'phone',
      value:requiresText&&clearValue?'':value};
+  }else if(property==='companyId'){
+   change={scope,property:'companyId',value};
   }else if(property==='pipeline'){
    change={scope,property,pipeline:value?value as DealPipeline:undefined,stage:stage as ProjectStage};
   }else if(property==='stage'){
@@ -128,18 +133,20 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
       {PROJECT_STAGES.map(item=><option key={item} value={item}>{item}</option>)}
      </select>
     </label>}
-    {property==='kind'&&<label className="connections-bulk-field"><span>Relationship type</span>
+    {property==='relationship'&&<label className="connections-bulk-field"><span>Relationship</span>
      <select value={value} disabled={saving} onChange={event=>setValue(event.target.value)}>
       <option value="__choose__">Choose relationship</option>
-      <option value="customer">Customer / prospect</option>
-      <option value="non-customer">Partner / other</option>
+      <option value="prospect">Prospect</option>
+      <option value="customer">Customer</option>
+      <option value="partner">Partner / other</option>
      </select>
     </label>}
-    {property==='companyId'&&<label className="connections-bulk-field"><span>Company</span>
+    {property==='companyId'&&<label className="connections-bulk-field"><span>Company connection</span>
      <select value={value} disabled={saving} onChange={event=>setValue(event.target.value)}>
       <option value="__choose__">Select a company</option>
       <option value="">No company (clear link)</option>
-      {companies.map(company=><option key={company.id} value={company.id}>{company.name}</option>)}
+      {companies.filter(company=>!isOurOrgCompany(company))
+        .map(company=><option key={company.id} value={company.id}>{company.name}</option>)}
      </select>
     </label>}
     {property==='assignedUserId'&&<>
@@ -166,6 +173,11 @@ export function ConnectionsBulkEditDialog({scope,count,companies,onClose,onApply
      </div>
      {selectedOwner&&<small className="connections-bulk-chosen">Selected owner: {selectedOwner.name}</small>}
     </>}
+    {property==='companyId'&&<p className="connections-bulk-hint">
+     {scope==='deals'
+      ?'Connect all selected Deals to this Company, or clear their Company link. Existing People and quotes are not reassigned.'
+      :'Move all selected People to this Company, or clear the Company link. Other CRM records are unchanged.'}
+    </p>}
     {requiresText&&<>
      <label className="connections-bulk-field"><span>{label||inputLabel}</span>
       {property==='dueDate'

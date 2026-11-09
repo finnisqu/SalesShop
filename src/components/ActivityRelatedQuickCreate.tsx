@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {useCrmStore} from '../store/crmStore';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
+import {companyRelationshipPatch} from '../services/companyRelationship';
 import {recordEmailError} from './RecordFormFeedback';
 import '../activity-related-create.css';
 
@@ -21,6 +22,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
  const people=useCrmStore(s=>s.contacts);
  const deals=useCrmStore(s=>s.projects);
  const resolveCompany=useCrmStore(s=>s.resolveCompany);
+ const updateCompany=useCrmStore(s=>s.updateCompany);
  const createContact=useCrmStore(s=>s.createContact);
  const createDeal=useCrmStore(s=>s.createProject);
  const relinkDealCompany=useCrmStore(s=>s.relinkProjectCompany);
@@ -41,8 +43,11 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
     if(companies.some(c=>c.name.trim().toLowerCase()===clean.toLowerCase())){
      setError('That company already exists. Find and link it above.');return;
     }
+    const existingIds=new Set(useCrmStore.getState().companies.map(c=>c.id));
     id=resolveCompany(clean,'customer');
     if(!id)throw new Error('Could not create the company.');
+    if(!existingIds.has(id))
+      updateCompany(id,companyRelationshipPatch({aliases:[]},'prospect'));
     link={type:'company',id,label:'Company · '+clean};
    }else if(kind==='person'){
     const emailIssue=recordEmailError(email);

@@ -21,7 +21,8 @@ import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import { useNavigationStore, type AppView } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useAuthStore } from '../store/authStore';
-import { canIssueTeamQuote } from '../services/teamDepartments';
+import { canIssueTeamQuote,canEditTeamArea } from '../services/teamDepartments';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import { resolveOwnerPerspective } from '../services/rolePerspective';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { GlobalSearch } from './GlobalSearch';
@@ -1263,6 +1264,7 @@ export function Quotes() {
   const clearCatalogInsert = useQuoteStore((state) => state.clearCatalogInsert);
   const hydrateCrm = useCrmStore((state) => state.hydrate);
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = useState(false);
+  const [historicalQuoteOpen,setHistoricalQuoteOpen]=useState(false);
   const navigatorRef = useDismissibleLayer<HTMLElement>(mobileNavigatorOpen, () => setMobileNavigatorOpen(false));
   const [mode, setMode] = useState<QuoteViewMode>(() => (
     typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(PHONE_LAYOUT_QUERY).matches
@@ -1276,6 +1278,10 @@ export function Quotes() {
   const teamRole = useAuthStore((state) => state.teamRole);
   const userId = useAuthStore((state) => state.user?.id);
   const previewRole = useRolePerspectiveStore((state) => state.activePerspective);
+  const teamDepartment=useAuthStore(s=>s.teamDepartment);
+  const authOrgId=useAuthStore(s=>s.organizationId);
+  const canRecordHistorical=!previewRole&&(authMode==='local'||
+    Boolean(authOrgId&&userId&&canEditTeamArea(teamRole,teamDepartment,'crm')));
   const canBrowseTeam = authMode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin') && !previewRole;
   const setBetaEnabled = useQuotesMobileBetaStore((state) => state.setEnabled);
   const openBeta = (quoteId?: string) => {
@@ -1324,7 +1330,9 @@ export function Quotes() {
   if (canBrowseTeam && quoteLibraryMode === 'team') return (
     <section className="quotes-classic-team-shell">
       <header className="quotes-classic-team-switch"><strong>Detailed Editor</strong>
-        <button type="button" onClick={() => openBeta()}>Open Quick Quote</button></header>
+        <button type="button" onClick={() => openBeta()}>Open Quick Quote</button>
+      {canRecordHistorical&&<button type="button" onClick={()=>setHistoricalQuoteOpen(true)}>
+       Record external quote</button>}</header>
       {signedShopOutcomesEnabled
           ? <ShopOutcomesWorkspace onShowMine={() => setQuoteLibraryMode('mine')} />
           : <TeamQuotesWorkspace quotes={quotes} onShowMine={() => setQuoteLibraryMode('mine')} />}
@@ -1338,6 +1346,9 @@ export function Quotes() {
       <button type="button" onClick={() => openBeta()}>Open Quick Quote</button>
       {canBrowseTeam && <button type="button" onClick={() => setQuoteLibraryMode('team')}>{signedShopOutcomesEnabled ? 'View Shop Outcomes' : 'View Team Quotes'}</button>}
     </section>
+    {historicalQuoteOpen&&<ExternalQuoteBackfillDialog
+      onClose={()=>setHistoricalQuoteOpen(false)}
+      onRecorded={()=>setHistoricalQuoteOpen(false)}/>}
   </main>;
 
   const appDestinations: Array<{ view: AppView; label: string }> = [
@@ -1350,6 +1361,9 @@ export function Quotes() {
   ];
 
   return <main className="quotes-view">
+    {historicalQuoteOpen&&<ExternalQuoteBackfillDialog
+      onClose={()=>setHistoricalQuoteOpen(false)}
+      onRecorded={()=>setHistoricalQuoteOpen(false)}/>}
 
     {mobileNavigatorOpen && <div className="quote-mobile-navigator-backdrop" onPointerDown={() => setMobileNavigatorOpen(false)}>
       <section ref={navigatorRef} className="quote-mobile-navigator" role="dialog" aria-modal="true" aria-label="Quotes navigation" onPointerDown={(event) => event.stopPropagation()}>
@@ -1374,6 +1388,9 @@ export function Quotes() {
           <button type="button" onClick={() => { createQuote(); setMobileNavigatorOpen(false); }}>+ New</button>
         </div>
 
+        {canRecordHistorical&&<button type="button" className="quote-mobile-archive-toggle"
+         onClick={()=>{setMobileNavigatorOpen(false);setHistoricalQuoteOpen(true);}}>
+         Record external quote</button>}
         {archivedCount > 0 && <button type="button" className="quote-mobile-archive-toggle" onClick={() => setShowArchived((value) => !value)}>{showArchived ? 'Hide archived' : `Show archived · ${archivedCount}`}</button>}
 
         <div className="quote-mobile-document-list">
@@ -1386,6 +1403,9 @@ export function Quotes() {
     </div>}
 
     <aside className="quotes-sidebar"><header><div><span>My documents</span><strong>My Quotes & COs</strong></div><button type="button" onClick={() => createQuote()}>+ New</button></header>
+    {canRecordHistorical&&<div className="quote-external-backfill-launch">
+      <button type="button" onClick={()=>setHistoricalQuoteOpen(true)}>+ Record external quote</button>
+     </div>}
     <div className="quote-editor-mode-chooser" role="group" aria-label="Quote editor">
       <span>Editor</span>
       <button type="button" aria-pressed={true}>Detailed Editor</button>

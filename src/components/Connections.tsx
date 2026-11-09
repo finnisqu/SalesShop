@@ -32,10 +32,14 @@ import {useAuthStore} from '../store/authStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
-import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
+import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,type DealPipeline,type ProjectStage} from '../types/crm';
+import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
+ companyMatchesRelationship,visibleCompanyAliases,type CompanyRelationship,
+ type EditableCompanyRelationship} from '../services/companyRelationship';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 
 type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'quotes' | 'activity';
-type CompanyFilter = 'all' | 'customer' | 'non-customer';
+type CompanyFilter = CompanyRelationship | 'all';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
   { id: 'companies', label: 'Companies', description: 'Accounts & partners' },
@@ -119,7 +123,8 @@ export function Connections() {
   const [companyFilter, setCompanyFilter] = useState<CompanyFilter>('all');
   const [companyCreating, setCompanyCreating] = useState(false);
   const [newCompany, setNewCompany] = useState('');
-  const [newCompanyKind, setNewCompanyKind] = useState<CompanyKind>('customer');
+  const [newCompanyRelationship, setNewCompanyRelationship] = useState<EditableCompanyRelationship>('prospect');
+  const [externalQuotePickerOpen,setExternalQuotePickerOpen]=useState(false);
   const [personCreating, setPersonCreating] = useState(false);
   const [dealCreating, setDealCreating] = useState(false);
   const [newDeal, setNewDeal] = useState('');
@@ -157,6 +162,7 @@ export function Connections() {
   const updateDeal = useCrmStore((state) => state.updateProject);
   const assignDeal = useCrmStore((state) => state.assignProject);
   const relinkDealCompany = useCrmStore((state) => state.relinkProjectCompany);
+  const setProjectCompany=useCrmStore(state=>state.setProjectCompany);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const focusedContactId = useNavigationStore((state) => state.focusedContactId);
@@ -189,8 +195,8 @@ export function Connections() {
     ?quotes.filter(q=>q.ownerUserId===authUser):quotes,[quotes,authMode,authUser]);
   const companyRows = useMemo(() => companies
     .filter(company=>!isOurOrgCompany(company))
-    .filter((company) => companyFilter === 'all' || company.kind === companyFilter)
-    .filter((company) => findText(company.name, ...(company.aliases ?? [])).includes(needle))
+    .filter((company) => companyMatchesRelationship(company,companyFilter))
+    .filter((company) => findText(company.name, ...visibleCompanyAliases(company)).includes(needle))
     .sort((a, b) => a.name.localeCompare(b.name)), [companies, companyFilter, needle]);
   const peopleRows = useMemo(() => contacts
     .filter(person=>!internalCompanyIds.has(person.companyId??''))
@@ -214,7 +220,7 @@ export function Connections() {
 
   const companyTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='companies'?companyRows.map(c=>({
     id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
-    values:{name:c.name,type:c.kind==='customer'?'Customer / prospect':'Partner / other',
+    values:{name:c.name,type:companyRelationshipLabel(c),
       people:String(counts.peopleByCompany.get(c.id)??0),
       deals:String(counts.dealsByCompany.get(c.id)??0),
       quotes:String(counts.quotesByCompany.get(c.id)??0),
@@ -261,12 +267,16 @@ export function Connections() {
     for(const item of items){
       try{
         if(change.scope==='companies'){
-          updateCompany(item.id,{kind:change.value});
+          const company=useCrmStore.getState().companies.find(c=>c.id===item.id);
+          if(!company||isOurOrgCompany(company))throw new Error('Company is unavailable for reclassification.');
+          updateCompany(item.id,companyRelationshipPatch(company,change.value));
         }else if(change.scope==='people'){
           if(change.property==='companyId')
             relinkContactCompany(item.id,change.value||undefined);
           else if(change.property==='title')updateContact(item.id,{title:change.value});
           else updateContact(item.id,{phone:change.value});
+        }else if(change.property==='companyId'){
+          setProjectCompany(item.id,change.value||undefined);
         }else if(change.property==='assignedUserId'){
           // Owner changes are server-confirmed one at a time. Never imply all
           // succeeded if a membership/permission/conflict check rejects one.
@@ -296,9 +306,13 @@ export function Connections() {
     event.preventDefault();
     const name = newCompany.trim();
     if (!name) return;
-    const id = resolveCompany(name, newCompanyKind);
+    const knownIds=new Set(useCrmStore.getState().companies.map(c=>c.id));
+    const id = resolveCompany(name,newCompanyRelationship==='partner'?'non-customer':'customer');
+    if(id&&!knownIds.has(id)){
+      updateCompany(id,companyRelationshipPatch({aliases:[]},newCompanyRelationship));
+    }
     if (id) {
-      setNewCompany(''); setCompanyCreating(false); setNotice('Company ready in your directory.');
+      setNewCompany('');setNewCompanyRelationship('prospect'); setCompanyCreating(false); setNotice('Company ready in your directory.');
       openCompany(id);
     } else setNotice('Several accounts may match this name. Review existing records before creating another.');
   };
@@ -373,6 +387,7 @@ export function Connections() {
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
         more={<WorkspaceMoreMenu label="Connections More" items={[
           {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
+          {label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
           {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
           ...(tab==='deals'&&timelineBetaEnabled?[
             {label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
@@ -415,6 +430,8 @@ export function Connections() {
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
           <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
         <div className="connections-activity-tools">
+         {tab==='quotes'&&canBulkEdit&&<button type="button" onClick={()=>setExternalQuotePickerOpen(true)}>
+           Record external quote</button>}
          {tab==='activity'&&<><SalesCalendarLauncher compact /><QuickActivityLauncher label="Log Activity" compact /></>}
          <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
         </div>
@@ -423,7 +440,11 @@ export function Connections() {
           {tab === 'companies' && <div className="connections-directory-toolbar">
             <Field className="connections-filter" id="connections-company-filter" label="Type">
               {(control) => <select {...control} value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyFilter)}>
-                <option value="all">All companies</option><option value="customer">Customers & prospects</option><option value="non-customer">Partners & other</option>
+                <option value="all">All companies</option>
+                <option value="prospect">Prospects</option>
+                <option value="customer">Customers</option>
+                <option value="unclassified">Not classified</option>
+                <option value="partner">Partners & other</option>
               </select>}
             </Field>
           </div>}
@@ -434,7 +455,7 @@ export function Connections() {
               <p className="connections-count">{companyRows.length} companies · preview or open full details</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
-                 onBulkEdit={canBulkEdit?bulkEdit:undefined}/>
+                 onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
                   const peopleCount=counts.peopleByCompany.get(company.id)??0;
@@ -442,17 +463,21 @@ export function Connections() {
                   const companyQuoteCount=counts.quotesByCompany.get(company.id)??0;
                   return <div key={company.id} className="connections-mobile-record-group">
                     <button type="button" className="connections-record" onClick={() => previewRecord('company',company.id)}>
-                    <span className="connections-record-eyebrow">{company.kind === 'non-customer' ? 'Partner / other' : 'Customer / prospect'}</span>
+                    <span className="connections-record-eyebrow">{companyRelationshipLabel(company)}</span>
                     <strong>{company.name}</strong>
                     <small>{peopleCount} people · {projectCount} deals · {companyQuoteCount} linked quotes</small>
                     <span className="connections-record-arrow" aria-hidden="true">↗</span>
                   </button>
                   <div className="connections-mobile-inline">
                       {canBulkEdit&&<label>Relationship
-                        <select aria-label={'Relationship for '+company.name} value={company.kind}
-                          onChange={event=>updateCompany(company.id,{kind:event.currentTarget.value as CompanyKind})}>
-                          <option value="customer">Customer / prospect</option>
-                          <option value="non-customer">Partner / other</option>
+                        <select aria-label={'Relationship for '+company.name} value={companyRelationship(company)}
+                          onChange={event=>{const next=event.currentTarget.value as EditableCompanyRelationship;
+                            if(next!=='prospect'&&next!=='customer'&&next!=='partner')return;
+                            updateCompany(company.id,companyRelationshipPatch(company,next));}}>
+                          <option value="unclassified" disabled>Unclassified</option>
+                          <option value="prospect">Prospect</option>
+                          <option value="customer">Customer</option>
+                          <option value="partner">Partner / other</option>
                         </select>
                       </label>}
                       <button type="button" className="connections-mobile-open-full"
@@ -494,10 +519,15 @@ export function Connections() {
             <DealTimelineBetaOverview projects={projectRows} onOpen={openProject}/>}
           {tab === 'deals' && (!timelineBetaEnabled||dealsView==='list') && <section className="connections-directory" aria-label="Deals directory">
             
-            <p className="connections-count">{projectRows.length} deals · stages, bid dates and linked quotes</p>
+            <div className="connections-deals-capture-bar">
+              <span>{projectRows.length} Deals · stages, bid dates and linked quotes</span>
+              <button type="button" disabled={!canBulkEdit} onClick={()=>setExternalQuotePickerOpen(true)}>
+               <span aria-hidden="true">+</span> Record external quote
+              </button>
+            </div>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
-               onBulkEdit={canBulkEdit?bulkEdit:undefined}/>
+               onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
                 const linkedQuoteCount=counts.quotesByDeal.get(project.id)??0;
@@ -564,6 +594,10 @@ export function Connections() {
         <button type="button" onClick={() => setView('settings')}>Open team settings →</button>
       </footer>
       </div>
+      {externalQuotePickerOpen&&<ExternalQuoteBackfillDialog
+        onClose={()=>setExternalQuotePickerOpen(false)}
+        onRecorded={dealName=>{setExternalQuotePickerOpen(false);
+          setNotice('External quote recorded for '+dealName+'.');}}/>}
       {activityPreview&&<CalendarActivityPreview activityId={activityPreview}
         onClose={()=>setActivityPreview(null)}
         onSelect={(kind,id)=>{setActivityPreview(null);setPreview({kind,id});}}/>}
@@ -585,8 +619,11 @@ export function Connections() {
             {companyCreating && <form className="connections-add-form" onSubmit={addCompany}>
                 
                 <label><span>Company name</span><input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} data-dialog-initial-focus autoFocus required placeholder="Builder or supplier name" /></label>
-                <label><span>Relationship</span><select value={newCompanyKind} onChange={(e) => setNewCompanyKind(e.target.value as CompanyKind)}>
-                  <option value="customer">Customer / prospect</option><option value="non-customer">Partner / non-customer</option>
+                <label><span>Relationship</span><select value={newCompanyRelationship}
+                  onChange={e=>setNewCompanyRelationship(e.target.value as EditableCompanyRelationship)}>
+                  <option value="prospect">Prospect</option>
+                  <option value="customer">Customer</option>
+                  <option value="partner">Partner / other</option>
                 </select></label>
                 <div><button type="button" onClick={() => setCompanyCreating(false)}>Cancel</button><button type="submit" className="primary">Save & open</button></div>
               </form>}

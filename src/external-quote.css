@@ -30,3 +30,42 @@
 .external-quote-history-entry small{font-size:11px;opacity:.76}
 .external-quote-history-entry>span{display:grid;gap:3px}
 @media(max-width:520px){.external-quote-fields{grid-template-columns:1fr}}
+
+/* Historical quote capture: searchable entry point, consistent with record dialogs. */
+.external-quote-picker-backdrop{position:fixed;inset:0;z-index:10010;display:flex;align-items:center;
+ justify-content:center;padding:16px;background:rgba(10,17,25,.54)}
+.external-quote-picker{display:flex;flex-direction:column;width:min(590px,100%);max-height:min(90dvh,850px);
+ min-width:0;background:var(--ss-theme-card,#fff);border:1px solid var(--ss-theme-border,#ddd);
+ color:var(--ss-theme-ink,#17242f);border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.18);overflow:hidden}
+.external-quote-picker>header{display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding:14px 17px;border-bottom:1px solid var(--ss-theme-border,#ddd)}
+.external-quote-picker>header h2{margin:3px 0 0;font-size:17px}
+.external-quote-picker>header small{font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--ss-theme-muted)}
+.external-quote-picker-body{padding:14px 17px 18px;overflow-y:auto;min-height:0;display:grid;gap:11px}
+.external-quote-picker-body>label,.external-quote-newdeal-form>label{display:grid;gap:5px;font-size:12px;font-weight:700}
+.external-quote-picker-body :is(input,select){box-sizing:border-box;width:100%;min-height:38px;
+ border:1px solid var(--ss-theme-border,#ccc);border-radius:7px;padding:7px 10px;
+ color:var(--ss-theme-ink);background:var(--ss-theme-card);font:inherit}
+.external-quote-picker-intro,.external-quote-picker-empty{margin:0;color:var(--ss-theme-muted);font-size:12px}
+.external-quote-newdeal-toggle{justify-self:start;padding:7px 10px;border:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);border-radius:7px;cursor:pointer}
+.external-quote-newdeal-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:11px;
+ border:1px solid var(--ss-theme-border);border-radius:9px}
+.external-quote-newdeal-form button{grid-column:1/-1;justify-self:end;background:var(--ss-theme-accent);
+ border:0;color:white;padding:9px 12px;border-radius:7px;cursor:pointer}
+.external-quote-picker :is(button,input,select):focus-visible{outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px}
+@media(max-width:700px){.external-quote-picker-backdrop{align-items:flex-end;padding:0}
+ .external-quote-picker{max-height:95dvh;width:100%;border-radius:16px 16px 0 0}
+ .external-quote-picker-body{padding:13px 14px max(18px,env(safe-area-inset-bottom))}
+ .external-quote-picker-body :is(input,select){min-height:44px;font-size:16px}
+ .external-quote-newdeal-form{grid-template-columns:1fr}}
+
+/* Accessible from the detailed Quote sidebar as well as Connections → Deals. */
+.quote-external-backfill-launch{padding:7px 10px;border-bottom:1px solid var(--ss-theme-border,#ddd)}
+.quote-external-backfill-launch button{box-sizing:border-box;display:block;width:100%;
+ min-height:35px;text-align:center;padding:7px 9px;border-radius:7px;
+ border:1px solid var(--ss-theme-border,#ddd);background:var(--ss-theme-card,#fff);
+ color:var(--ss-theme-ink,#17242f);font-size:12px;font-weight:700;cursor:pointer}
+.quote-external-backfill-launch button:hover{background:var(--ss-theme-tint,rgba(128,128,128,.06))}
+.quote-external-backfill-launch button:focus-visible{outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px}
+@media(max-width:760px){.quote-external-backfill-launch button{min-height:44px}}

@@ -1,4 +1,5 @@
 import type { CrmDocument, Company, Contact, Project } from '../types/crm';
+import {visibleCompanyAliases} from './companyRelationship';
 import type { Quote } from '../types/quote';
 
 export type DuplicateConfidence = 'high' | 'review';
@@ -120,7 +121,7 @@ function uniqueStrings(values: Array<string | undefined>) {
 
 export function companyIdentityKeys(company: Pick<Company, 'name' | 'aliases'>) {
   return new Set(
-    [company.name, ...(company.aliases ?? [])]
+    [company.name, ...visibleCompanyAliases(company)]
       .map(normalizeCompanyIdentity)
       .filter(Boolean),
   );

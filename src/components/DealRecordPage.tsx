@@ -174,9 +174,9 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     actions={<>
       {timelineBetaEnabled&&<button type="button" onClick={()=>setTimelineOpen(true)}>Project timeline <small>Beta</small></button>}
       <button type="button" onClick={() => {setNotice(null);setSaveError('');setEditing(value=>!value);}}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
-      {!["Closed Won","Completed","Closed Lost","Discarded"].includes(deal.stage)&&
+      {canEditCrm&&
         <button type="button" onClick={()=>setExternalQuoteOpen(open=>!open)}>
-          {externalQuoteOpen?"Cancel external quote":"Record external quote sent"}
+          {externalQuoteOpen?"Cancel external quote":"Record external quote"}
         </button>}
       {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
       <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>
