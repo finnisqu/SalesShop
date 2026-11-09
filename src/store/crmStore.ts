@@ -488,15 +488,19 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     if(!current||!Number.isFinite(amount)||amount<0||
        !/^\d{4}-\d{2}-\d{2}$/.test(bidSentDate)||
        Number.isNaN(new Date(bidSentDate+'T12:00:00').getTime())||
-       ['Closed Won','Completed','Closed Lost','Discarded'].includes(current.stage))return false;
+       bidSentDate>new Date().toLocaleDateString('en-CA'))return false;
+    const historical=['Closed Won','Completed','Closed Lost','Discarded'].includes(current.stage);
     // Preserve more advanced stages if a previous bid was already recorded.
     const requestedStage:ProjectStage=
       ['Discovery','Intent to Bid','Bid Development'].includes(current.stage)?'Bid Sent':current.stage;
     const occurredAt=new Date(bidSentDate+'T12:00:00').toISOString();
-    const transition=applyProjectStageTransition(current,requestedStage,get().activities,occurredAt);
-    if(transition.blockedReason)return false;
+    const transition=historical?{project:current,changed:false}:
+      applyProjectStageTransition(current,requestedStage,get().activities,occurredAt);
+    if('blockedReason' in transition&&transition.blockedReason)return false;
     const timestamp=now();
-    const projects=get().projects.map(project=>project.id===projectId
+    // Historical backfill must not regress a completed/lost Deal, replace its
+    // final amount, or clear its original bid deadline.
+    const projects=historical?get().projects:get().projects.map(project=>project.id===projectId
       ?{...project,stage:transition.project.stage,
         stageChangedAt:transition.changed?occurredAt:project.stageChangedAt,
         amount,dueDate:undefined,
