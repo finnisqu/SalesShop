@@ -170,6 +170,8 @@ export function Connections() {
   const previewPerspective=useRolePerspectiveStore(state=>state.activePerspective);
   const canBulkEdit=!previewPerspective&&(authMode==='local'||
     Boolean(authOrgId&&authUser&&canEditTeamArea(authRole,authDepartment,'crm')));
+  const canManageSuppliers=!previewPerspective&&(authMode==='local'||
+    Boolean(authOrgId&&authUser&&canEditTeamArea(authRole,authDepartment,'supplier')));
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createContact = useCrmStore((state) => state.createContact);
   const createDeal = useCrmStore((state) => state.createProject);
@@ -429,6 +431,7 @@ export function Connections() {
           {tab==='organization'&&<Button variant="primary" className="connections-add"
             disabled={!canBulkEdit} onClick={()=>setOrgCreateRequest(value=>value+1)}>+ Person</Button>}
           {tab==='suppliers'&&<Button variant="primary" className="connections-add"
+            disabled={!canManageSuppliers}
             onClick={()=>window.dispatchEvent(new Event('sales-shop:catalog-create'))}>+ Supplier</Button>}
           {tab==='deals'&&timelineBetaEnabled&&<div className="ss-timeline-beta-actions ss-timeline-beta-view-toggle" role="group" aria-label="Deals display">
             <button type="button" aria-pressed={dealsView==='list'} onClick={()=>chooseDealsView('list')}>List</button>
