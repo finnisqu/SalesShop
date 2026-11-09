@@ -61,6 +61,7 @@ import { CompanySettings } from './components/CompanySettings';
 import { Connections } from './components/Connections';
 import {HomeWorkspace} from './components/HomeWorkspace';
 import {taskScope,usePersonalTaskStore} from './store/personalTaskStore';
+import {confirmedBidSubmissionDealIds} from './services/confirmedBidSubmissions';
 import {startPersonalTaskCloudSync} from './services/personalTaskCloudSync';
 import {TasksWorkspace} from './components/TasksWorkspace';
 import {SalesCalendarLauncher} from './components/SalesCalendarLauncher';
@@ -137,6 +138,7 @@ function App() {
   const loadedTaskScope=usePersonalTaskStore((state)=>state.scope);
   const personalSyncStatus=usePersonalTaskStore((state)=>state.syncStatus);
   const syncDealSubmissionTasks=usePersonalTaskStore((state)=>state.syncDealSubmissionTasks);
+  const completeDealSubmissionTasks=usePersonalTaskStore(state=>state.completeDealSubmissionTasks);
   const taskUserId=useAuthStore(s=>s.user?.id);
   const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
   const [notebookHeaderSearch,setNotebookHeaderSearch]=useState('');
@@ -172,6 +174,17 @@ function App() {
   },[crmHydrated,tasksScope,loadedTaskScope,inRolePreview,mode,personalSyncStatus,teamRole,
     submissionDeals,syncDealSubmissionTasks]);
 
+
+  useEffect(()=>{
+    // Reconcile durable CRM evidence after private Tasks load or another device
+    // confirms customer delivery. Issuing alone and manual Deal stage changes
+    // are deliberately not evidence of submission.
+    if(!crmHydrated||!tasksScope||loadedTaskScope!==tasksScope||inRolePreview)return;
+    if(mode==='cloud'&&(personalSyncStatus!=='saved'||teamRole==='viewer'))return;
+    confirmedBidSubmissionDealIds(activities).forEach(dealId=>
+      completeDealSubmissionTasks(dealId));
+  },[crmHydrated,tasksScope,loadedTaskScope,inRolePreview,mode,personalSyncStatus,
+    teamRole,activities,completeDealSubmissionTasks]);
 
   // Browser back/forward updates the same store used by internal navigation.
   useEffect(()=>{
