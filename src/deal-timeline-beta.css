@@ -68,3 +68,8 @@
  .ss-timeline-beta-overview button>span:nth-child(3){display:none}
  .ss-timeline-beta-summary label{margin-left:0}
 }
+
+.ss-timeline-beta-view-toggle{gap:4px;white-space:nowrap}
+.ss-timeline-beta-view-toggle button[aria-pressed=true]{font-weight:750;background:var(--ss-theme-soft,rgba(128,128,128,.09))}
+.ss-timeline-beta-view-toggle button small{font-size:.6rem;opacity:.7}
+@media(max-width:700px){.ss-timeline-beta-view-toggle{display:none}}
