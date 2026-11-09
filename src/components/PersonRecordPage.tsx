@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {LinkExistingRecord,RecordNewCompany} from './RecordRelatedActions';
+import {RecordTasksPanel} from './RecordTasksPanel';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
@@ -22,6 +24,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const projects = useCrmStore((state) => state.projects);
   const quotes = useQuoteStore((state) => state.quotes);
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
+  const createQuote=useQuoteStore(state=>state.createQuote);
   const updateContact = useCrmStore((state) => state.updateContact);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const openProject = useNavigationStore((state) => state.openProject);
@@ -132,6 +135,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             <small>{related.company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'} · View company record →</small>
           </button>}
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
+        <RecordNewCompany source={{kind:'person',id:person.id}}/>
+        <LinkExistingRecord source={{kind:'person',id:person.id,name:displayName}} target="company"/>
       </RecordCard>
       <RecordCard title="Deals linked through quotes" extra={<span>{related.linkedDeals.length}</span>}>
         <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
@@ -143,9 +148,30 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             </button>)}
           {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
         </div>
+        <p className="connections-record-helper">A direct Deal–Person assignment is separate from quote-contact links and needs a shared relationship record. No interaction is fabricated.</p>
+      </RecordCard>
+      <RecordCard title="Quotes" extra={<span>{quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}</span>}>
+       <div className="connections-record-entity-list">
+        {quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).map(q=><button
+          type="button" key={q.id} onClick={()=>openQuote(q.id)}>
+          <strong>{q.title||displayName+' quote'}</strong>
+          <small>{q.status} · Open quote →</small>
+         </button>)}
+        {!quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&
+         <p className="connections-record-empty">No Quotes have this Person as their primary contact.</p>}
+       </div>
+       <button type="button" className="connections-record-add"
+        onClick={()=>{
+          const id=createQuote({title:'Quote · '+displayName,contactId:person.id,
+           contactName:person.name,contactEmail:person.email,
+           companyId:person.companyId,companyName:related.company?.name});
+          openQuote(id);
+        }}>+ New quote</button>
+       <LinkExistingRecord source={{kind:'person',id:person.id,name:displayName}} target="quote"/>
       </RecordCard>
     </>}
     right={<>
+      <RecordTasksPanel kind="person" id={person.id} name={displayName}/>
       <RecordCard title="Contact details">
         <div className="connections-person-contact-actions">
           {person.email ? <a href={'mailto:' + person.email}>✉ Email</a> : <span>Email not provided</span>}
