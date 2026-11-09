@@ -5,6 +5,7 @@ import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
+import {SuppliersWorkspace} from './SuppliersWorkspace';
 import {isOurOrgCompany,ourOrgCompanyIds,isOurOrgContact} from '../services/ourOrganizationDirectory';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
@@ -40,7 +41,7 @@ import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from '../services/activityLogFilters';
 
-type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'quotes' | 'activity';
+type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'suppliers' | 'quotes' | 'activity';
 type CompanyFilter = CompanyRelationship | 'all';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
@@ -48,6 +49,7 @@ export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; descri
   { id: 'people', label: 'People', description: 'Contacts' },
   { id: 'deals', label: 'Deals', description: 'Opportunities & jobs' },
   { id: 'organization', label: 'Our Organization', description: 'Employees & subcontractors' },
+  { id: 'suppliers', label: 'Suppliers', description: 'Vendors, sourcing & imports' },
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
@@ -75,6 +77,10 @@ export function resolveConnectionsLandingTab(stored: string | null): Connections
 function initialTab(): ConnectionsTab {
   if (typeof window === 'undefined') return 'companies';
   try{
+   if(window.sessionStorage.getItem('salesshop-connections-open-suppliers-v1')==='1'){
+    window.sessionStorage.removeItem('salesshop-connections-open-suppliers-v1');
+    return 'suppliers';
+   }
    if(window.sessionStorage.getItem('salesshop-open-activity-history-v1')==='1'){
     window.sessionStorage.removeItem('salesshop-open-activity-history-v1');
     return 'activity';
@@ -112,6 +118,14 @@ export function Connections() {
    const show=()=>setTab('activity');
    window.addEventListener('salesshop:open-activity-history',show);
    return()=>window.removeEventListener('salesshop:open-activity-history',show);
+  },[]);
+  useEffect(()=>{
+   const show=()=>{
+    setTab('suppliers');
+    try{window.sessionStorage.setItem(TAB_KEY,'suppliers');}catch{}
+   };
+   window.addEventListener('salesshop:open-suppliers',show);
+   return()=>window.removeEventListener('salesshop:open-suppliers',show);
   },[]);
   const [query, setQuery] = useState('');
   const [activityFilters,setActivityFilters]=useState<ActivityLogFilters>(DEFAULT_ACTIVITY_LOG_FILTERS);
@@ -393,6 +407,7 @@ export function Connections() {
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
         more={<WorkspaceMoreMenu label="Connections More" items={[
           {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
+          {label:'Suppliers',active:tab==='suppliers',onClick:()=>chooseTab('suppliers')},
           {label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
           {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
           ...(tab==='deals'&&timelineBetaEnabled?[
@@ -404,6 +419,7 @@ export function Connections() {
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
             tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':
+            tab==='suppliers'?'Search suppliers and brands…':
             tab==='quotes'?'Search quotes…':'Search activities…'}/>}
         primary={<>
           {tab==='companies'&&<Button variant="primary" className="connections-add"
@@ -412,6 +428,8 @@ export function Connections() {
             onClick={()=>setPersonCreating(value=>!value)}>+ Person</Button>}
           {tab==='organization'&&<Button variant="primary" className="connections-add"
             disabled={!canBulkEdit} onClick={()=>setOrgCreateRequest(value=>value+1)}>+ Person</Button>}
+          {tab==='suppliers'&&<Button variant="primary" className="connections-add"
+            onClick={()=>window.dispatchEvent(new Event('sales-shop:catalog-create'))}>+ Supplier</Button>}
           {tab==='deals'&&timelineBetaEnabled&&<div className="ss-timeline-beta-actions ss-timeline-beta-view-toggle" role="group" aria-label="Deals display">
             <button type="button" aria-pressed={dealsView==='list'} onClick={()=>chooseDealsView('list')}>List</button>
             <button type="button" aria-pressed={dealsView==='timeline'} onClick={()=>chooseDealsView('timeline')}>Timeline <small>Beta</small></button>
@@ -579,6 +597,9 @@ export function Connections() {
           </section>}
           {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}
             createRequest={orgCreateRequest} onCreateConsumed={()=>setOrgCreateRequest(0)}/>}
+          {tab==='suppliers'&&<div className="connections-suppliers-host">
+            <SuppliersWorkspace externalQuery={query}/>
+          </div>}
           {tab==='activity'&&<section className="connections-activity-filters" aria-label="Filter Activity history">
             <label>Method
               <select value={activityFilters.method} onChange={e=>setActivityFilters(f=>({
