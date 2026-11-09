@@ -14,6 +14,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded}:{
   deal:Project;onCancel:()=>void;onRecorded?:()=>void;
 }){
   const recordExternalQuoteSent=useCrmStore(s=>s.recordExternalQuoteSent);
+  const historical=['Closed Won','Completed','Closed Lost','Discarded'].includes(deal.stage);
   const completeSubmissionTasks=usePersonalTaskStore(s=>s.completeDealSubmissionTasks);
   const [amount,setAmount]=useState(deal.amount===undefined?'':String(deal.amount));
   const [bidSentDate,setBidSentDate]=useState(localToday);
@@ -34,7 +35,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded}:{
     try{
       const saved=recordExternalQuoteSent(deal.id,total,bidSentDate,format);
       if(!saved){setError('Unable to record this submission. Check the Deal stage and date.');return;}
-      completeSubmissionTasks(deal.id);
+      if(!historical)completeSubmissionTasks(deal.id);
       onRecorded?.();
     }catch(reason){
       setError(reason instanceof Error?reason.message:'Unable to save this external quote.');
@@ -43,7 +44,8 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded}:{
   return <form className="external-quote-form" onSubmit={submit}
     aria-label="Record quote sent using another tool" aria-busy={saving}>
     <strong>Quote sent outside SalesShop</strong>
-    <p>Record the submitted contract value and actual send date. No SalesShop quote will be created.</p>
+    <p>Record the submitted contract value and actual send date. No SalesShop quote will be created.
+      {historical?' This is a historical entry: your Deal stage, final amount, deadline, and tasks remain unchanged.':''}</p>
     <div className="external-quote-fields">
       <label>Total contract value ($)
         <input type="number" inputMode="decimal" min="0" step="0.01" required
@@ -60,7 +62,9 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded}:{
         onChange={event=>setFormat(event.target.value)}/>
     </label>
     <small className="external-quote-explanation">
-      This marks the deal Bid Sent, clears its outstanding bid deadline and completes related Submit Quote tasks. The original due date stays in activity history.
+      {historical
+        ?'Historical backfill adds a dated CRM quote-sent event only. Existing Deal status, totals and tasks stay intact.'
+        :'For an open Deal this records the submission, updates the Deal to Bid Sent when appropriate, clears its bid deadline and completes Submit Quote tasks.'}
     </small>
     {error&&<p role="alert" className="external-quote-error">{error}</p>}
     <div className="external-quote-actions">
