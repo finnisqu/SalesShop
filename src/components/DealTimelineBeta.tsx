@@ -89,7 +89,7 @@ export function DealTimelineBeta({deal}:{deal:Project}){
       !ready?<p className="ss-timeline-beta-empty">Loading timeline…</p>:
       !schedule?<div className="ss-timeline-beta-empty">
         <p>Start with shop drawings, deposit, import batches, delivery, installation by building, invoices and retainage. All dates begin blank.</p>
-        <button type="button" disabled={!editable} onClick={()=>start(scope,deal.id)}>Start multifamily timeline</button>
+        <button type="button" disabled={!editable} onClick={()=>{if(scope)start(scope,deal.id);}}>Start multifamily timeline</button>
       </div>:<>
         <div className="ss-timeline-beta-summary">
           <strong>{done}/{total} complete</strong>
@@ -119,13 +119,13 @@ export function DealTimelineBeta({deal}:{deal:Project}){
                 <>
                   <td><input type="date" aria-label={'Start for '+row.label}
                     disabled={!editable} value={row.plannedStart??''}
-                    onChange={e=>patch(scope,deal.id,row.id,{plannedStart:e.target.value||undefined})}/></td>
+                    onChange={e=>{if(scope)patch(scope,deal.id,row.id,{plannedStart:e.target.value||undefined});}}/></td>
                   <td><input type="date" aria-label={'Finish for '+row.label}
                     disabled={!editable} value={row.plannedFinish??''}
-                    onChange={e=>patch(scope,deal.id,row.id,{plannedFinish:e.target.value||undefined})}/></td>
+                    onChange={e=>{if(scope)patch(scope,deal.id,row.id,{plannedFinish:e.target.value||undefined});}}/></td>
                   <td><select aria-label={'Status for '+row.label} disabled={!editable}
-                    value={row.status} onChange={e=>patch(scope,deal.id,row.id,
-                      {status:e.target.value as DealScheduleRow['status']})}>
+                    value={row.status} onChange={e=>{if(scope)patch(scope,deal.id,row.id,
+                      {status:e.target.value as DealScheduleRow['status']});}}>
                     {timelineBetaStatuses.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}
                   </select></td>
                   {showBars&&<td><div className="ss-timeline-beta-track">
