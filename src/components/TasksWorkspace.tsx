@@ -565,6 +565,16 @@ export function TasksWorkspace(){
          {viewing.startDate&&<div><dt>Start</dt><dd>{formatDate(viewing.startDate)}</dd></div>}
         </dl>
         {viewing.notes&&<p className="tasks-preview-notes">{viewing.notes}</p>}
+        {normalizedSubtasks(viewing.subtasks).length>0&&<section className="tasks-preview-subtasks" aria-label="Subtasks">
+         <strong>Checklist · {subtaskProgress(viewing).done}/{subtaskProgress(viewing).total}</strong>
+         {normalizedSubtasks(viewing.subtasks).map(item=><label key={item.id}
+           className={item.completed?'is-done':''}>
+           <input type="checkbox" checked={item.completed} aria-label={'Complete '+item.title}
+             onChange={e=>update(viewing.id,{subtasks:normalizedSubtasks(viewing.subtasks).map(row=>
+               row.id===item.id?{...row,completed:e.target.checked}:row)})}/>
+           <span>{item.title}</span>
+         </label>)}
+        </section>}
         {!!normalizedTaskAssociations(viewing).length&&<div className="tasks-preview-related">
          <strong>Related records</strong>{normalizedTaskAssociations(viewing).map(link=>
           <button key={link.type+':'+link.id} type="button" onClick={()=>{setViewingId(null);openSource(link);}}>
@@ -577,7 +587,9 @@ export function TasksWorkspace(){
          <button type="button" className="tasks-flow-action" onClick={()=>{
           setViewingId(null);openActivityComposer({taskId:viewing.id});
          }}>Complete + log activity</button>}
-        <button type="button" onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
+        <button type="button" disabled={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0}
+          title={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0?'Complete the checklist first':undefined}
+          onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
          {taskComplete(viewing)?'Reopen task':'Mark complete'}</button>
         <button type="button" className="tasks-primary" onClick={()=>{setViewingId(null);setEditing(viewing);}}>Edit task</button>
        </PreviewPanelActions>
