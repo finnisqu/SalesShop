@@ -115,3 +115,8 @@
 .ss-schedule-warning-list button strong{font-size:.77rem;}
 .ss-schedule-warning-list button span{font-size:.72rem;opacity:.76;line-height:1.35;}
 .ss-schedule-warning-list button:focus-visible{outline:2px solid #3187c5;outline-offset:-2px;}
+
+.ss-schedule-track-progress{display:flex;gap:7px;flex-wrap:wrap;font-size:.73rem;}
+.ss-schedule-track-progress span{display:flex;gap:8px;align-items:center;
+ padding:5px 8px;border-radius:6px;background:var(--ss-surface-subtle,rgba(128,128,128,.07));}
+.ss-schedule-track-progress strong{font-variant-numeric:tabular-nums;}
