@@ -9,7 +9,9 @@ import '../our-organization.css';
 
 interface Draft{name:string;email:string;phone:string;title:string;group:RosterGroup;}
 const empty=(group:RosterGroup):Draft=>({name:'',email:'',phone:'',title:'',group});
-export function OurOrganizationDirectory({onOpenPerson}:{onOpenPerson:(id:string)=>void}){
+export function OurOrganizationDirectory({onOpenPerson,query}:{
+ onOpenPerson:(id:string)=>void;query:string;
+}){
  const companies=useCrmStore(s=>s.companies);
  const contacts=useCrmStore(s=>s.contacts);
  const resolveCompany=useCrmStore(s=>s.resolveCompany);
@@ -25,7 +27,6 @@ export function OurOrganizationDirectory({onOpenPerson}:{onOpenPerson:(id:string
  const [showEditor,setShowEditor]=useState(false);
  const [draft,setDraft]=useState<Draft>(()=>empty('employees'));
  const [error,setError]=useState('');
- const [query,setQuery]=useState('');
  const records=ourOrgPeople(contacts,companies,group).filter(c=>
   [c.name,c.title,c.email,c.phone].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
  const count=(name:RosterGroup)=>ourOrgPeople(contacts,companies,name).length;
@@ -44,7 +45,7 @@ export function OurOrganizationDirectory({onOpenPerson}:{onOpenPerson:(id:string
   const same=contacts.find(c=>c.id!==editingId&&
    ((draft.email.trim()&&c.email?.toLowerCase()===draft.email.trim().toLowerCase())||
     (c.name.trim().toLowerCase()===draft.name.trim().toLowerCase()&&
-     ourOrgGroup(companies.find(company=>company.id===c.companyId)??({} as typeof companies[number]))===draft.group)));
+     companies.some(company=>company.id===c.companyId&&ourOrgGroup(company)===draft.group))));
   if(same){setError('A person with this name or email already exists. Check the directory first.');return;}
   setError('');
   try{
@@ -71,9 +72,6 @@ export function OurOrganizationDirectory({onOpenPerson}:{onOpenPerson:(id:string
     aria-pressed={group===item.id} onClick={()=>{setGroup(item.id);setShowEditor(false);setError('');}}>
     {item.title} <span>{count(item.id)}</span></button>)}
   </div>
-  <label className="our-org-search">Search internal people
-   <input type="search" value={query} placeholder="Name, role, email, phone…"
-    onChange={e=>setQuery(e.target.value)}/></label>
   {showEditor&&editable&&<form className="our-org-form" onSubmit={save}>
    <div className="our-org-form-title"><strong>{editingId?'Edit':'Add'} person</strong>
     <button type="button" onClick={()=>{setShowEditor(false);setError('');}}>Cancel</button></div>
