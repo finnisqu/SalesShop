@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import type {Project} from '../types/crm';
 import type {DealScheduleDraft,DealScheduleRow,DealScheduleStatus} from '../services/dealScheduleTemplates';
-import {scheduleProgress} from '../services/dealScheduleEditing';
+import {scheduleProgress,scheduleProgressTracks} from '../services/dealScheduleEditing';
 import {dealScheduleWarnings} from '../services/dealScheduleWarnings';
 import {useDealExecutionSchedules} from '../services/useDealExecutionSchedules';
 import {useAuthStore} from '../store/authStore';
@@ -299,6 +299,7 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
     previous.includes(id)?previous.filter(key=>key!==id):[...previous,id]);
   const selected=schedule?.rows.find(row=>row.id===selectedId);
   const progress=schedule?scheduleProgress(schedule):null;
+  const tracks=schedule?scheduleProgressTracks(schedule):null;
   const warnings=useMemo(()=>schedule?dealScheduleWarnings(schedule):[],[schedule]);
   return <section className="ss-deal-schedule" aria-label="Project timeline">
     <header className="ss-schedule-toolbar">
@@ -329,6 +330,11 @@ export function DealScheduleWorkspace({deal}: {deal:Project}){
           <span>{schedule.rows.filter(row=>row.scope==='import'&&row.kind==='group').length} imports</span>
           <span>{schedule.rows.filter(row=>row.scope==='building'&&row.kind==='group').length} buildings</span>
         </div>
+        {tracks&&<div className="ss-schedule-track-progress" aria-label="Separated project progress">
+          <span>Materials <strong>{tracks.materials.done}/{tracks.materials.total}</strong></span>
+          <span>Building work <strong>{tracks.building.done}/{tracks.building.total}</strong></span>
+          <span>Billing & retainage <strong>{tracks.financial.done}/{tracks.financial.total}</strong></span>
+        </div>}
         {warnings.length>0&&<details className="ss-schedule-warnings">
           <summary>{warnings.length} schedule {warnings.length===1?'warning':'warnings'} ·
             {warnings.filter(item=>item.kind==='overdue').length} overdue ·
