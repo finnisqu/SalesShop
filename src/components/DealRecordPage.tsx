@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {LinkExistingRecord,RecordNewCompany} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
+import {DealPeopleRelationships} from './DealPersonRelationships';
+import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import { ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { dealRecordView } from '../services/dealRecordView';
@@ -44,6 +46,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const previewRole=useRolePerspectiveStore(state=>state.activePerspective);
   const canEditCrm=!previewRole&&(mode==='local'||Boolean(orgId&&userId&&
     canEditTeamArea(teamRole,department,'crm')));
+  const directScope=useDealPeopleStore(state=>state.scope);
+  const allDirectLinks=useDealPeopleStore(state=>state.links);
+  const directIds=new Set(directScope===dealPeopleScope(mode,orgId)
+    ?allDirectLinks.filter(link=>link.dealId===dealId).map(link=>link.personId):[]);
   const updateDeal = useCrmStore(state => state.updateProject);
   const assignDeal = useCrmStore(state => state.assignProject);
   const {members:assignees}=useDealAssigneeDirectory();
@@ -273,8 +279,9 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         <RecordNewCompany source={{kind:'deal',id:deal.id}}/>
         <LinkExistingRecord source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
       </RecordCard>
-      <RecordCard title="People" extra={<span>{related.dealPeople.length} linked</span>}>
-        <p className="connections-record-helper">People explicitly linked by a quote or recorded interaction. Other contacts at this company are suggestions, not automatically assigned to the Deal.</p>
+      <RecordCard title="People" extra={<span>{new Set([
+        ...related.dealPeople.map(person=>person.id),...directIds]).size} linked</span>}>
+        <p className="connections-record-helper">People associated through Quotes and logged Activities appear below. Direct Deal contacts can be assigned independently with an optional role.</p>
         <div className="connections-record-entity-list">
           {related.dealPeople.map(person=><div key={person.id} className="ss-deal-person-entry">
             <button type="button" onClick={()=>openPerson(person.id)}>
@@ -285,10 +292,11 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </div>)}
           {!related.dealPeople.length&&<p className="connections-record-empty">No people linked yet. Log an interaction with a person or add a contact to a quote.</p>}
         </div>
-        {related.companyPeople.length>0&&<details className="ss-deal-company-people">
-          <summary>Other people at this company ({related.companyPeople.length})</summary>
+        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson}/>
+        {related.companyPeople.some(person=>!directIds.has(person.id))&&<details className="ss-deal-company-people">
+          <summary>Other people at this company ({related.companyPeople.filter(person=>!directIds.has(person.id)).length})</summary>
           <div className="connections-record-entity-list">
-            {related.companyPeople.map(person=><div key={person.id} className="ss-deal-person-entry">
+            {related.companyPeople.filter(person=>!directIds.has(person.id)).map(person=><div key={person.id} className="ss-deal-person-entry">
               <button type="button" onClick={()=>openPerson(person.id)}>
                <strong>{person.name||person.email||'Unnamed person'}</strong>
                <small>{person.title||'Company contact'}</small>
