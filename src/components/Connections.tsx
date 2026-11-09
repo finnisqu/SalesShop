@@ -110,6 +110,7 @@ export function Connections() {
   const [query, setQuery] = useState('');
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [activityPreview,setActivityPreview]=useState<string|null>(null);
+  const [orgCreateRequest,setOrgCreateRequest]=useState(0);
   const [quoteRecordId,setQuoteRecordId]=useState<string|null>(null);
   useEffect(()=>{
     const id=consumeQuoteMetadataRequest();
@@ -388,6 +389,8 @@ export function Connections() {
             onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
           {tab==='people'&&<Button variant="primary" className="connections-add"
             onClick={()=>setPersonCreating(value=>!value)}>+ Person</Button>}
+          {tab==='organization'&&<Button variant="primary" className="connections-add"
+            disabled={!canBulkEdit} onClick={()=>setOrgCreateRequest(value=>value+1)}>+ Person</Button>}
           {tab==='deals'&&timelineBetaEnabled&&<div className="ss-timeline-beta-actions ss-timeline-beta-view-toggle" role="group" aria-label="Deals display">
             <button type="button" aria-pressed={dealsView==='list'} onClick={()=>chooseDealsView('list')}>List</button>
             <button type="button" aria-pressed={dealsView==='timeline'} onClick={()=>chooseDealsView('timeline')}>Timeline <small>Beta</small></button>
@@ -537,7 +540,7 @@ export function Connections() {
               No quote metadata matches. Check My Sales Documents or your search.
             </StatusText>}
           </section>}
-          {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}/>}
+          {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query} createRequest={orgCreateRequest}/>}
           {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
             <p className="connections-count">{activityRows.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
             <div className="connections-activity-list">
