@@ -3,7 +3,7 @@ import type {Activity,Company,Contact,Project} from '../types/crm';
 import type {Quote} from '../types/quote';
 import {activityAudience,matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from './activityLogFilters';
-import {RELATIONSHIP_MARKERS} from './companyRelationship';
+import {RELATIONSHIP_MARKERS,OUR_COMPANY_MARKER} from './companyRelationship';
 
 const companies=[
  {id:'prospect',name:'Prospect LLC',kind:'customer',aliases:[RELATIONSHIP_MARKERS.prospect]},
@@ -39,6 +39,16 @@ describe('Activity history filters',()=>{
   const legacy={...system,companyId:'legacy',projectId:undefined};
   expect(filtered(legacy,{audience:'unclassified'})).toBe(true);
   expect(filtered(legacy,{audience:'customer'})).toBe(false);
+ });
+ it('treats an Our Company activity as internal, not as a partner or customer',()=>{
+  const own={id:'self',name:'World Stone',kind:'non-customer',
+   aliases:[OUR_COMPANY_MARKER]} as Company;
+  const ownActivity={...call,metadata:{interactionMethod:'call' as const,
+   relatedRecords:[{type:'company' as const,id:'self'}]}};
+  const found=activityAudience(ownActivity,[...companies,own],contacts,projects,allQuotes,internal);
+  expect(found.has('internal')).toBe(true);
+  expect(found.has('partner')).toBe(false);
+  expect(found.has('customer')).toBe(false);
  });
  it('supports toggling system events and rolling windows',()=>{
   expect(filtered(system,{kind:'system',period:'7'})).toBe(true);
