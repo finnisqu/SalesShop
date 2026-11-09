@@ -6,7 +6,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {ActivityRelatedQuickCreate} from './ActivityRelatedQuickCreate';
-import {isOurOrgCompany,ourOrgCompanyIds} from '../services/ourOrganizationDirectory';
+import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordFormFeedback} from './RecordFormFeedback';
@@ -136,11 +136,10 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
  const quotes=useQuoteStore(s=>s.quotes);
  const permitted=!perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'));
  const options=useMemo(()=>{
-  const internal=ourOrgCompanyIds(companies);
   return [
   ...contacts.map(c=>({key:'contact:'+c.id,
-    linked:{type:'contact' as const,id:c.id,label:(internal.has(c.companyId??'')?'Team':'Person')+' · '+c.name},
-    label:(internal.has(c.companyId??'')?'Team':'Person')+' · '+c.name})),
+    linked:{type:'contact' as const,id:c.id,label:'Person · '+c.name},
+    label:'Person · '+c.name})),
   ...companies.filter(c=>!isOurOrgCompany(c))
     .map(c=>({key:'company:'+c.id,linked:{type:'company' as const,id:c.id,label:'Company · '+c.name},label:'Company · '+c.name})),
   ...projects.map(d=>({key:'project:'+d.id,linked:{type:'project' as const,id:d.id,label:'Deal · '+d.name},label:'Deal · '+d.name})),
