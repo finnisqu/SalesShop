@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
-import {LinkExistingRecord,RecordNewCompany} from './RecordRelatedActions';
+import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {PersonDealRelationships} from './DealPersonRelationships';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
@@ -26,7 +26,6 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const projects = useCrmStore((state) => state.projects);
   const quotes = useQuoteStore((state) => state.quotes);
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
-  const createQuote=useQuoteStore(state=>state.createQuote);
   const updateContact = useCrmStore((state) => state.updateContact);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const openProject = useNavigationStore((state) => state.openProject);
@@ -147,8 +146,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           </p>}
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
         {!isInternal&&<>
-          <RecordNewCompany source={{kind:'person',id:person.id}}/>
-          <LinkExistingRecord source={{kind:'person',id:person.id,name:displayName}} target="company"/>
+          <RecordRelationshipPicker source={{kind:'person',id:person.id,name:displayName}} target="company"/>
         </>}
         {isInternal&&<p className="connections-record-helper">
           Change an internal Person's Company from Our Organization to preserve their roster membership.</p>}
@@ -175,14 +173,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
         {!quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&
          <p className="connections-record-empty">No Quotes have this Person as their primary contact.</p>}
        </div>
-       <button type="button" className="connections-record-add"
-        onClick={()=>{
-          const id=createQuote({title:'Quote · '+displayName,contactId:person.id,
-           contactName:person.name,contactEmail:person.email,
-           companyId:person.companyId,companyName:related.company?.name});
-          openQuote(id);
-        }}>+ New Quote</button>
-       <LinkExistingRecord source={{kind:'person',id:person.id,name:displayName}} target="quote"/>
+       <RecordRelationshipPicker source={{kind:'person',id:person.id,name:displayName}} target="quote"/>
       </RecordCard>
     </>}
     right={<>
