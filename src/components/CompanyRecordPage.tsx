@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
-import {LinkExistingRecord,RecordNewDeal} from './RecordRelatedActions';
+import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {ourOrgPeople,rosterGroupForContact} from '../services/ourOrganizationDirectory';
-import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,RECORD_ADDED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
+import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork,type CompanyPatch } from '../types/crm';
 import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
@@ -29,7 +29,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
   const updateCompany = useCrmStore((state) => state.updateCompany);
-  const createContact = useCrmStore((state) => state.createContact);
   const quotes = useQuoteStore((state) => state.quotes);
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
   const createQuote = useQuoteStore((state) => state.createQuote);
@@ -37,14 +36,11 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const openProject = useNavigationStore((state) => state.openProject);
   const openPerson = useNavigationStore((state) => state.openPerson);
   const [editing, setEditing] = useState(false);
-  const [addingContact, setAddingContact] = useState(false);
-  const [contactName, setContactName] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
+    setNewAlias('');
   const [newAlias, setNewAlias] = useState('');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
   const [historyOpen, setHistoryOpen] = useState(false);
   const [editError,setEditError]=useState('');
-  const [contactError,setContactError]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const company = companies.find((candidate) => candidate.id === companyId);
   const [draft, setDraft] = useState({
@@ -58,11 +54,10 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   useEffect(() => {
     setEditing(false);
-    setAddingContact(false);
     setActivityFilter('all');
     setHistoryOpen(false);
-    setContactName(''); setContactEmail(''); setNewAlias('');
-    setEditError('');setContactError('');setNotice(null);
+    setNewAlias('');
+    setEditError('');setNotice(null);
   }, [companyId]);
   useEffect(() => {
     if (!editing && company) setDraft({
@@ -128,19 +123,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       setEditing(false);
       setNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
     }catch(reason){setEditError(reason instanceof Error?reason.message:'Unable to apply company changes.');}
-  };
-  const addContact = (event: FormEvent) => {
-    event.preventDefault();
-    if (!contactName.trim() && !contactEmail.trim()){setContactError('Enter a name or email.');return;}
-    const emailError=recordEmailError(contactEmail);
-    if(emailError){setContactError(emailError);return;}
-    setContactError('');
-    try{
-      const id=createContact({companyId:company.id,name:contactName,email:contactEmail,source:'manual'});
-      if(!id){setContactError('Unable to add this person. Please retry.');return;}
-      setContactName('');setContactEmail('');setAddingContact(false);
-      setNotice({kind:'applied',message:RECORD_ADDED_MESSAGE});
-    }catch(reason){setContactError(reason instanceof Error?reason.message:'Unable to add this person.');}
   };
   const newQuote = () => {
     const quoteId = createQuote({ title: 'Quote · ' + company.name, companyId: company.id, companyName: company.name });
@@ -231,8 +213,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </button>)}
           {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
         </div>
-        <RecordNewDeal companyId={company.id} companyName={company.name} onCreated={openProject}/>
-        <LinkExistingRecord source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
+        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
       </RecordCard>
       <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length}</span>}>
         <div className="connections-record-entity-list">
@@ -242,8 +223,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </button>)}
           {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its deals.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={newQuote}>+ New Quote</button>
-        <LinkExistingRecord source={{kind:'company',id:company.id,name:company.name}} target="quote"/>
+        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="quote"/>
       </RecordCard>
 
     </>}
@@ -263,19 +243,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </article>)}
           {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={() => setAddingContact((value) => !value)}>{addingContact ? 'Cancel' : '+ New Person'}</button>
-        {addingContact && <form className="connections-record-edit-form" noValidate onChange={()=>setContactError('')} onSubmit={addContact}>
-          <label>Name<input autoFocus value={contactName} onChange={(event) => setContactName(event.target.value)} /></label>
-          <RecordEditField label="Email" error={contactError==='Enter a valid email address.'?contactError:undefined}>
-            {control=><input {...control} type="email" value={contactEmail} onChange={event=>setContactEmail(event.target.value)}/>}
-          </RecordEditField>
-          <RecordFormFeedback notice={contactError&&contactError!=='Enter a valid email address.'?{kind:'error',message:contactError}:null}/>
-          <div className="connections-record-form-actions ss-record-editor-actions">
-            <button type="button" onClick={() => setAddingContact(false)}>Cancel</button>
-            <button type="submit" className="connections-record-primary" disabled={!contactName.trim() && !contactEmail.trim()}>Save person</button>
-          </div>
-        </form>}
-        <LinkExistingRecord source={{kind:'company',id:company.id,name:company.name}} target="person"/>
+        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="person"/>
       </RecordCard>
       <RecordTasksPanel kind="company" id={company.id} name={company.name}/>
 
