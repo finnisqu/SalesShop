@@ -85,7 +85,11 @@ export function CatalogWorkspace() {
     window.dispatchEvent(new Event('salesshop:open-suppliers'));
   };
   useEffect(()=>{
-    if(section==='suppliers')openSuppliers();
+    if(section!=='suppliers')return;
+    // Clear the legacy Catalog section before leaving, otherwise returning
+    // to Catalog could immediately bounce back into Suppliers.
+    useNavigationStore.setState({catalogSection:'materials'});
+    openSuppliers();
   },[section]);
   const sectionScrollRef = useRef<HTMLElement>(null);
   const [catalogSearch,setCatalogSearch]=useState('');
