@@ -1,7 +1,7 @@
 import type {Activity,Company,Contact,Project,ActivityMetadata} from '../types/crm';
 import type {Quote} from '../types/quote';
 import {activityRelations} from './activityRelations';
-import {companyRelationship, type CompanyRelationship} from './companyRelationship';
+import {companyRelationship,isOurCompany,type CompanyRelationship} from './companyRelationship';
 
 export type ActivityMethodFilter='all'|NonNullable<ActivityMetadata['interactionMethod']>;
 export type ActivityAudienceFilter='all'|CompanyRelationship|'internal'|'unlinked';
@@ -30,7 +30,7 @@ export function activityAudience(activity:Activity,companies:readonly Company[],
    person?.companyId??(link.type==='project'?byDeal.get(link.id)?.companyId:
    link.type==='quote'?byQuote.get(link.id)?.companyId:undefined);
   const company=companyId?byCompany.get(companyId):undefined;
-  if(company)found.add(companyRelationship(company));
+  if(company)found.add(isOurCompany(company)?'internal':companyRelationship(company));
  }
  if(!found.size)found.add('unlinked');
  return found;
