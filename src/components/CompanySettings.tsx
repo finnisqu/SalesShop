@@ -324,7 +324,7 @@ export function CompanySettings() {
                     window.sessionStorage.setItem('salesshop-connections-tab-v1','deals');
                     window.sessionStorage.setItem('salesshop-connections-deals-timeline-beta-v1','timeline');
                   }catch{/* optional navigation preference */}
-                  setAppView('connections');
+                  setAppView('dashboard');
                 }}>Explore Deal Timelines</Button>
             </div>
           </article>
