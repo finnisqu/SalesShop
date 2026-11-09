@@ -601,7 +601,7 @@ export function Connections() {
           {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}
             createRequest={orgCreateRequest} onCreateConsumed={()=>setOrgCreateRequest(0)}/>}
           {tab==='suppliers'&&<div className="connections-suppliers-host">
-            <SuppliersWorkspace externalQuery={query}/>
+            <SuppliersWorkspace externalQuery={query} embeddedInConnections/>
           </div>}
           {tab==='activity'&&<section className="connections-activity-filters" aria-label="Filter Activity history">
             <label>Method
