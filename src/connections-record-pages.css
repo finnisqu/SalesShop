@@ -463,3 +463,27 @@
 .sales-app.view-dashboard .connections-company-self-toggle small{
  font-size:11px;color:var(--ss-theme-muted);line-height:1.4;
 }
+
+/* Own-company identity is an occasional administration setting, never a
+   full-size edit-form section. */
+.sales-app.view-dashboard .connections-company-advanced-identity{
+ border:0;border-top:1px solid var(--ss-theme-border);
+ padding:5px 0 0;margin:2px 0 0;background:transparent;
+}
+.sales-app.view-dashboard .connections-company-advanced-identity summary{
+ width:max-content;max-width:100%;padding:4px 0;cursor:pointer;
+ color:var(--ss-theme-muted);font-size:11px;font-weight:650;
+}
+.sales-app.view-dashboard .connections-company-advanced-identity summary span{
+ color:var(--ss-theme-accent);font-size:10px;
+}
+.sales-app.view-dashboard .connections-company-self-compact{
+ display:inline-flex;align-items:center;gap:7px;margin:5px 0;padding:3px 0;
+ font-size:12px;color:var(--ss-theme-ink);font-weight:600;
+}
+.sales-app.view-dashboard .connections-company-self-compact input[type=checkbox]{
+ width:16px;height:16px;min-height:16px;margin:0;accent-color:var(--ss-theme-accent);
+}
+.sales-app.view-dashboard .connections-company-self-inline{
+ color:var(--ss-theme-muted);font-size:11px;
+}
