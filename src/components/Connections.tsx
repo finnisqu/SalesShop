@@ -5,14 +5,15 @@ import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
-import {isOurOrgCompany,ourOrgCompanyIds} from '../services/ourOrganizationDirectory';
+import {SuppliersWorkspace} from './SuppliersWorkspace';
+import {isOurOrgCompany,ourOrgCompanyIds,isOurOrgContact} from '../services/ourOrganizationDirectory';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
 import { DealRecordPage } from './DealRecordPage';
 import {DealTimelineBetaOverview} from './DealTimelineBeta';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
-import { Button, Field, SectionTabs, StatusText } from '../design-system/components';
+import { Button, SectionTabs, StatusText } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import { useCrmStore } from '../store/crmStore';
@@ -37,8 +38,10 @@ import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,visibleCompanyAliases,type CompanyRelationship,
  type EditableCompanyRelationship} from '../services/companyRelationship';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
+import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
+ type ActivityLogFilters} from '../services/activityLogFilters';
 
-type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'quotes' | 'activity';
+type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'suppliers' | 'quotes' | 'activity';
 type CompanyFilter = CompanyRelationship | 'all';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
@@ -46,6 +49,7 @@ export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; descri
   { id: 'people', label: 'People', description: 'Contacts' },
   { id: 'deals', label: 'Deals', description: 'Opportunities & jobs' },
   { id: 'organization', label: 'Our Organization', description: 'Employees & subcontractors' },
+  { id: 'suppliers', label: 'Suppliers', description: 'Vendors, sourcing & imports' },
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
@@ -73,6 +77,10 @@ export function resolveConnectionsLandingTab(stored: string | null): Connections
 function initialTab(): ConnectionsTab {
   if (typeof window === 'undefined') return 'companies';
   try{
+   if(window.sessionStorage.getItem('salesshop-connections-open-suppliers-v1')==='1'){
+    window.sessionStorage.removeItem('salesshop-connections-open-suppliers-v1');
+    return 'suppliers';
+   }
    if(window.sessionStorage.getItem('salesshop-open-activity-history-v1')==='1'){
     window.sessionStorage.removeItem('salesshop-open-activity-history-v1');
     return 'activity';
@@ -111,7 +119,16 @@ export function Connections() {
    window.addEventListener('salesshop:open-activity-history',show);
    return()=>window.removeEventListener('salesshop:open-activity-history',show);
   },[]);
+  useEffect(()=>{
+   const show=()=>{
+    setTab('suppliers');
+    try{window.sessionStorage.setItem(TAB_KEY,'suppliers');}catch{}
+   };
+   window.addEventListener('salesshop:open-suppliers',show);
+   return()=>window.removeEventListener('salesshop:open-suppliers',show);
+  },[]);
   const [query, setQuery] = useState('');
+  const [activityFilters,setActivityFilters]=useState<ActivityLogFilters>(DEFAULT_ACTIVITY_LOG_FILTERS);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [activityPreview,setActivityPreview]=useState<string|null>(null);
   const [orgCreateRequest,setOrgCreateRequest]=useState(0);
@@ -153,6 +170,8 @@ export function Connections() {
   const previewPerspective=useRolePerspectiveStore(state=>state.activePerspective);
   const canBulkEdit=!previewPerspective&&(authMode==='local'||
     Boolean(authOrgId&&authUser&&canEditTeamArea(authRole,authDepartment,'crm')));
+  const canManageSuppliers=!previewPerspective&&(authMode==='local'||
+    Boolean(authOrgId&&authUser&&canEditTeamArea(authRole,authDepartment,'supplier')));
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createContact = useCrmStore((state) => state.createContact);
   const createDeal = useCrmStore((state) => state.createProject);
@@ -199,10 +218,10 @@ export function Connections() {
     .filter((company) => findText(company.name, ...visibleCompanyAliases(company)).includes(needle))
     .sort((a, b) => a.name.localeCompare(b.name)), [companies, companyFilter, needle]);
   const peopleRows = useMemo(() => contacts
-    .filter(person=>!internalCompanyIds.has(person.companyId??''))
+    .filter(person=>!isOurOrgContact(person,companies))
     .filter((person) => findText(person.name, person.email, person.phone, person.title,
       companiesById.get(person.companyId ?? '')?.name).includes(needle))
-    .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById, internalCompanyIds, needle]);
+    .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById, companies, needle]);
   const projectRows = useMemo(() => projects
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction, dealPipelineLabel(project.pipeline)).includes(needle))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
@@ -212,11 +231,14 @@ export function Connections() {
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[visibleQuotes,projectsById,needle]);
   const activityRows = useMemo(() => [...activities]
     .filter(a=>!(a.type==='contact-created'&&internalCompanyIds.has(a.companyId??'')))
+    .filter(activity=>matchesActivityFilters(activity,activityFilters,companies,contacts,
+      projects,visibleQuotes,person=>isOurOrgContact(person,companies)))
     .filter((activity) => findText(activity.summary, activity.type,
       companiesById.get(activity.companyId ?? '')?.name,
       projectsById.get(activity.projectId ?? '')?.name).includes(needle))
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
-    .slice(0, 150), [activities, companiesById, projectsById,internalCompanyIds, needle]);
+    .slice(0, 150), [activities, companiesById, projectsById,internalCompanyIds,
+      activityFilters,companies,contacts,projects,visibleQuotes,needle]);
 
   const companyTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='companies'?companyRows.map(c=>({
     id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
@@ -353,7 +375,7 @@ export function Connections() {
   };
   const backToPeople = () => {
     const person=contacts.find(c=>c.id===focusedContactId);
-    chooseTab(person&&internalCompanyIds.has(person.companyId??'')?'organization':'people');
+    chooseTab(person&&isOurOrgContact(person,companies)?'organization':'people');
     setView('dashboard');
   };
   const backToCompanies = () => {
@@ -387,6 +409,7 @@ export function Connections() {
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
         more={<WorkspaceMoreMenu label="Connections More" items={[
           {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
+          {label:'Suppliers',active:tab==='suppliers',onClick:()=>chooseTab('suppliers')},
           {label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
           {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
           ...(tab==='deals'&&timelineBetaEnabled?[
@@ -398,6 +421,7 @@ export function Connections() {
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
             tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':
+            tab==='suppliers'?'Search suppliers and brands…':
             tab==='quotes'?'Search quotes…':'Search activities…'}/>}
         primary={<>
           {tab==='companies'&&<Button variant="primary" className="connections-add"
@@ -406,6 +430,9 @@ export function Connections() {
             onClick={()=>setPersonCreating(value=>!value)}>+ Person</Button>}
           {tab==='organization'&&<Button variant="primary" className="connections-add"
             disabled={!canBulkEdit} onClick={()=>setOrgCreateRequest(value=>value+1)}>+ Person</Button>}
+          {tab==='suppliers'&&<Button variant="primary" className="connections-add"
+            disabled={!canManageSuppliers}
+            onClick={()=>window.dispatchEvent(new Event('sales-shop:catalog-create'))}>+ Supplier</Button>}
           {tab==='deals'&&timelineBetaEnabled&&<div className="ss-timeline-beta-actions ss-timeline-beta-view-toggle" role="group" aria-label="Deals display">
             <button type="button" aria-pressed={dealsView==='list'} onClick={()=>chooseDealsView('list')}>List</button>
             <button type="button" aria-pressed={dealsView==='timeline'} onClick={()=>chooseDealsView('timeline')}>Timeline <small>Beta</small></button>
@@ -437,17 +464,7 @@ export function Connections() {
         </div>
       </div>}
 
-          {tab === 'companies' && <div className="connections-directory-toolbar">
-            <Field className="connections-filter" id="connections-company-filter" label="Type">
-              {(control) => <select {...control} value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyFilter)}>
-                <option value="all">All companies</option>
-                <option value="prospect">Prospects</option>
-                <option value="customer">Customers</option>
-                <option value="unclassified">Not classified</option>
-                <option value="partner">Partners & other</option>
-              </select>}
-            </Field>
-          </div>}
+
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab === 'companies' && (
             <section className="connections-directory" aria-label="Company directory">
@@ -455,6 +472,17 @@ export function Connections() {
               <p className="connections-count">{companyRows.length} companies · preview or open full details</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
+                toolbarControls={<label className="connections-filter connections-inline-type-filter">
+                  Type
+                  <select aria-label="Filter Companies by type" value={companyFilter}
+                    onChange={e=>setCompanyFilter(e.target.value as CompanyFilter)}>
+                    <option value="all">All</option>
+                    <option value="prospect">Prospects</option>
+                    <option value="customer">Customers</option>
+                    <option value="unclassified">Not classified</option>
+                    <option value="partner">Partners / other</option>
+                  </select>
+                </label>}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
@@ -572,6 +600,54 @@ export function Connections() {
           </section>}
           {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}
             createRequest={orgCreateRequest} onCreateConsumed={()=>setOrgCreateRequest(0)}/>}
+          {tab==='suppliers'&&<div className="connections-suppliers-host">
+            <SuppliersWorkspace externalQuery={query}/>
+          </div>}
+          {tab==='activity'&&<section className="connections-activity-filters" aria-label="Filter Activity history">
+            <label>Method
+              <select value={activityFilters.method} onChange={e=>setActivityFilters(f=>({
+                ...f,method:e.target.value as ActivityLogFilters['method']}))}>
+               <option value="all">Any method</option>
+               <option value="call">Phone calls</option>
+               <option value="email">Email</option>
+               <option value="text">Text</option>
+               <option value="video-call">Video call</option>
+               <option value="in-person">In person</option>
+              </select>
+            </label>
+            <label>Relationship
+              <select value={activityFilters.audience} onChange={e=>setActivityFilters(f=>({
+                ...f,audience:e.target.value as ActivityLogFilters['audience']}))}>
+               <option value="all">All relationships</option>
+               <option value="prospect">Prospects</option>
+               <option value="customer">Customers</option>
+               <option value="partner">Partners / other</option>
+               <option value="unclassified">Unclassified</option>
+               <option value="internal">Our Organization</option>
+               <option value="unlinked">No identified company</option>
+              </select>
+            </label>
+            <label>Record type
+              <select value={activityFilters.kind} onChange={e=>setActivityFilters(f=>({
+                ...f,kind:e.target.value as ActivityLogFilters['kind']}))}>
+               <option value="all">All events</option>
+               <option value="interactions">Logged interactions</option>
+               <option value="system">System history</option>
+              </select>
+            </label>
+            <label>When
+              <select value={activityFilters.period} onChange={e=>setActivityFilters(f=>({
+                ...f,period:e.target.value as ActivityLogFilters['period']}))}>
+               <option value="all">Any date</option>
+               <option value="7">Last 7 days</option>
+               <option value="30">Last 30 days</option>
+               <option value="90">Last 90 days</option>
+              </select>
+            </label>
+            <button type="button" disabled={JSON.stringify(activityFilters)===
+              JSON.stringify(DEFAULT_ACTIVITY_LOG_FILTERS)}
+              onClick={()=>setActivityFilters(DEFAULT_ACTIVITY_LOG_FILTERS)}>Clear filters</button>
+           </section>}
           {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
             <p className="connections-count">{activityRows.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
             <div className="connections-activity-list">

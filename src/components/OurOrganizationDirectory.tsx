@@ -3,12 +3,13 @@ import {useCrmStore} from '../store/crmStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
-import {OUR_ORG_GROUPS,ensureOurOrgCompany,ourOrgGroup,ourOrgPeople,type RosterGroup}
+import {OUR_ORG_GROUPS,ensureOurOrgCompany,ourOrgGroup,ourOrgPeople,ourOrgRoles,
+ rosterGroupForContact,ourOrgMemberMarker,ourOrgRoleMarker,type RosterGroup}
  from '../services/ourOrganizationDirectory';
 import '../our-organization.css';
 
-interface Draft{name:string;email:string;phone:string;title:string;group:RosterGroup;}
-const empty=(group:RosterGroup):Draft=>({name:'',email:'',phone:'',title:'',group});
+interface Draft{name:string;email:string;phone:string;title:string;group:RosterGroup;companyName:string;}
+const empty=(group:RosterGroup):Draft=>({name:'',email:'',phone:'',title:'',group,companyName:''});
 export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCreateConsumed}:{
  onOpenPerson:(id:string)=>void;query:string;createRequest:number;
  onCreateConsumed:()=>void;
@@ -30,19 +31,28 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
  const [showEditor,setShowEditor]=useState(false);
  const [draft,setDraft]=useState<Draft>(()=>empty('employees'));
  const [error,setError]=useState('');
+ const [roleCreating,setRoleCreating]=useState(false);
+ const [newRole,setNewRole]=useState('');
+ const roles=ourOrgRoles(contacts,companies,draft.group);
  const records=ourOrgPeople(contacts,companies,group).filter(c=>
-  [c.name,c.title,c.email,c.phone].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
+  [c.name,c.title,c.email,c.phone,
+    companies.find(company=>company.id===c.companyId&&!ourOrgGroup(company))?.name??'']
+   .join(' ').toLowerCase().includes(query.trim().toLowerCase()));
  const count=(name:RosterGroup)=>ourOrgPeople(contacts,companies,name).length;
  useEffect(()=>{
   if(!createRequest||!editable)return;
   setDraft(empty(group));setEditingId(null);setShowEditor(true);setError('');
+  setRoleCreating(false);setNewRole('');
   onCreateConsumed();
  },[createRequest,editable,group,onCreateConsumed]);
  const beginEdit=(contactId:string)=>{
   const person=contacts.find(c=>c.id===contactId);if(!person)return;
   const current=companies.find(c=>c.id===person.companyId);
+  const category=rosterGroupForContact(person,companies)??group;
   setDraft({name:person.name,email:person.email??'',phone:person.phone??'',
-    title:person.title??'',group:current?ourOrgGroup(current)??group:group});
+    title:person.title??'',group:category,
+    companyName:category==='subcontractors'&&current&&!ourOrgGroup(current)?current.name:''});
+  setRoleCreating(false);setNewRole('');
   setEditingId(contactId);setShowEditor(true);setError('');
  };
  const save=(event:FormEvent)=>{
@@ -52,20 +62,53 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
   const same=contacts.find(c=>c.id!==editingId&&
    ((draft.email.trim()&&c.email?.toLowerCase()===draft.email.trim().toLowerCase())||
     (c.name.trim().toLowerCase()===draft.name.trim().toLowerCase()&&
-     companies.some(company=>company.id===c.companyId&&ourOrgGroup(company)===draft.group))));
+     rosterGroupForContact(c,companies)===draft.group)));
   if(same){setError('A person with this name or email already exists. Check the directory first.');return;}
   setError('');
   try{
-   const companyId=ensureOurOrgCompany(draft.group,companies,resolveCompany,updateCompany);
+   const groupId=ensureOurOrgCompany(draft.group,useCrmStore.getState().companies,resolveCompany,updateCompany);
+   let companyId=groupId;
+   // People belong to Our Organization by membership, while a subcontractor's
+   // actual company remains a normal, linkable non-customer CRM Company.
+   if(draft.group==='subcontractors'&&draft.companyName.trim()){
+    const name=draft.companyName.trim();
+    const resolved=resolveCompany(name,'non-customer');
+    if(!resolved)throw new Error('Could not link the subcontractor company.');
+    if(useCrmStore.getState().companies.some(c=>c.id===resolved&&ourOrgGroup(c)))
+      throw new Error('Choose a subcontractor company outside Our Organization.');
+    companyId=resolved;
+   }
+   const personId=editingId??createContact({name:draft.name.trim(),email:draft.email.trim(),
+     phone:draft.phone.trim(),title:draft.title.trim(),companyId,source:'manual'});
+   if(!personId)throw new Error('Could not create this person.');
    if(editingId)updateContact(editingId,{name:draft.name.trim(),email:draft.email.trim(),
      phone:draft.phone.trim(),title:draft.title.trim(),companyId});
-   else{
-    const id=createContact({name:draft.name.trim(),email:draft.email.trim(),phone:draft.phone.trim(),
-     title:draft.title.trim(),companyId,source:'manual'});
-    if(!id)throw new Error('Could not create this person.');
+   const saved=useCrmStore.getState().companies;
+   const sub=saved.find(c=>ourOrgGroup(c)==='subcontractors');
+   const marker=ourOrgMemberMarker(personId);
+   if(sub){
+    const existing=new Set(sub.aliases??[]);
+    if(draft.group==='subcontractors'&&companyId!==groupId)existing.add(marker);
+    else existing.delete(marker);
+    if(existing.size!==(sub.aliases??[]).length)
+      updateCompany(sub.id,{aliases:[...existing]});
    }
    setShowEditor(false);setEditingId(null);setGroup(draft.group);setDraft(empty(draft.group));
   }catch(e){setError(e instanceof Error?e.message:'Unable to save the roster entry.');}
+ };
+ const addRole=()=>{
+  if(!editable)return;
+  const role=newRole.trim();
+  if(!role||role.length>120){setError('Enter a role under 120 characters.');return;}
+  if(roles.some(item=>item.toLowerCase()===role.toLowerCase())){
+   setError('That role already exists. Select it above.');return;
+  }
+  try{
+   const id=ensureOurOrgCompany(draft.group,useCrmStore.getState().companies,resolveCompany,updateCompany);
+   const existing=useCrmStore.getState().companies.find(c=>c.id===id);
+   updateCompany(id,{aliases:[...new Set([...(existing?.aliases??[]),ourOrgRoleMarker(role)])]});
+   setDraft(d=>({...d,title:role}));setRoleCreating(false);setNewRole('');setError('');
+  }catch(e){setError(e instanceof Error?e.message:'Could not add role.');}
  };
  return <section className="our-org-directory">
   <div className="our-org-heading">
@@ -84,11 +127,31 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
     <button type="button" onClick={()=>{setShowEditor(false);setError('');}}>Cancel</button></div>
    <label>Name<input autoFocus required maxLength={180} value={draft.name}
     onChange={e=>setDraft(d=>({...d,name:e.target.value}))}/></label>
-   <label>Relationship<select value={draft.group} onChange={e=>setDraft(d=>({...d,group:e.target.value as RosterGroup}))}>
+   <label>Relationship<select value={draft.group} onChange={e=>setDraft(d=>({...d,group:e.target.value as RosterGroup,title:''}))}>
     {OUR_ORG_GROUPS.map(item=><option key={item.id} value={item.id}>{item.title.slice(0,-1)}</option>)}
    </select></label>
-   <label>Role / trade<input value={draft.title} maxLength={120}
-    placeholder="Project Manager, Installer, Electrical…" onChange={e=>setDraft(d=>({...d,title:e.target.value}))}/></label>
+   <label>Role / trade
+    <select value={draft.title} onChange={e=>{
+      if(e.target.value==='__add_role__'){setRoleCreating(true);setNewRole('');}
+      else{setRoleCreating(false);setDraft(d=>({...d,title:e.target.value}));}
+    }}>
+     <option value="">Select role</option>
+     {draft.title&&!roles.includes(draft.title)&&<option value={draft.title}>{draft.title}</option>}
+     {roles.map(item=><option key={item} value={item}>{item}</option>)}
+     <option value="__add_role__">+ Add role…</option>
+    </select>
+   </label>
+   {roleCreating&&<div className="our-org-inline-option" role="group" aria-label="Add role option">
+    <input type="text" value={newRole} maxLength={120} placeholder="New role or trade"
+     onChange={e=>setNewRole(e.target.value)}
+     onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();event.stopPropagation();addRole();}}}/>
+    <button type="button" disabled={!newRole.trim()} onClick={addRole}>+ Save role</button>
+    <button type="button" onClick={()=>setRoleCreating(false)}>Cancel</button>
+   </div>}
+   {draft.group==='subcontractors'&&<label>Subcontractor company
+    <input value={draft.companyName} maxLength={180}
+     placeholder="Company / trade firm" onChange={e=>setDraft(d=>({...d,companyName:e.target.value}))}/>
+   </label>}
    <label>Email<input type="email" value={draft.email} onChange={e=>setDraft(d=>({...d,email:e.target.value}))}/></label>
    <label>Phone<input type="tel" value={draft.phone} onChange={e=>setDraft(d=>({...d,phone:e.target.value}))}/></label>
    {error&&<p role="alert" className="our-org-error">{error}</p>}
@@ -96,11 +159,12 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
   </form>}
   <div className="our-org-table-scroll" role="region" aria-label={group+' directory'} tabIndex={0}>
    <table className="our-org-table"><thead><tr>
-    <th>Person</th><th>Role / trade</th><th>Email</th><th>Phone</th><th>Actions</th>
+    <th>Person</th><th>Role / trade</th>{group==='subcontractors'&&<th>Company</th>}<th>Email</th><th>Phone</th><th>Actions</th>
    </tr></thead><tbody>
     {records.map(person=><tr key={person.id}>
      <th scope="row"><button type="button" className="our-org-person" onClick={()=>onOpenPerson(person.id)}>{person.name}</button></th>
      <td>{person.title??'—'}</td>
+     {group==='subcontractors'&&<td>{companies.find(c=>c.id===person.companyId&&!ourOrgGroup(c))?.name??'—'}</td>}
      <td>{person.email?<a href={'mailto:'+person.email}>{person.email}</a>:'—'}</td>
      <td>{person.phone?<a href={'tel:'+person.phone}>{person.phone}</a>:'—'}</td>
      <td>{editable&&<button type="button" onClick={()=>beginEdit(person.id)}>Edit</button>}</td>

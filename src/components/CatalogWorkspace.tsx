@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { MaterialsWorkspace } from './MaterialsWorkspace';
 import { RatesWorkspace } from './RatesWorkspace';
 import { SinksWorkspace } from './SinksWorkspace';
-import { SuppliersWorkspace } from './SuppliersWorkspace';
 import { CatalogTagsWorkspace } from './CatalogTagsWorkspace';
 import { useNavigationStore, type CatalogSection } from '../store/navigationStore';
 import { SectionTabs, Panel } from '../design-system/components';
@@ -43,12 +42,6 @@ export const CATALOG_SECTIONS: Array<{
     description: 'Fabrication, installation, sink services, add-ons, and standard material pricing policy.',
   },
   {
-    id: 'suppliers',
-    label: 'Suppliers',
-    eyebrow: 'Sources & price lists',
-    description: 'The vendors behind materials, sinks, accessories, consumables, and future catalog purchasing.',
-  },
-  {
     id: 'tags',
     label: 'Tags',
     eyebrow: 'Material classifications',
@@ -85,6 +78,19 @@ function OtherCatalogComingSoon() {
 export function CatalogWorkspace() {
   const section = useNavigationStore((state) => state.catalogSection);
   const setSection = useNavigationStore((state) => state.setCatalogSection);
+  const setView=useNavigationStore(state=>state.setView);
+  const openSuppliers=()=>{
+    try{window.sessionStorage.setItem('salesshop-connections-open-suppliers-v1','1');}catch{}
+    setView('dashboard');
+    window.dispatchEvent(new Event('salesshop:open-suppliers'));
+  };
+  useEffect(()=>{
+    if(section!=='suppliers')return;
+    // Clear the legacy Catalog section before leaving, otherwise returning
+    // to Catalog could immediately bounce back into Suppliers.
+    useNavigationStore.setState({catalogSection:'materials'});
+    openSuppliers();
+  },[section]);
   const sectionScrollRef = useRef<HTMLElement>(null);
   const [catalogSearch,setCatalogSearch]=useState('');
   const [tableDensity,setTableDensity]=useWorkbookTableDensity();
@@ -120,7 +126,7 @@ export function CatalogWorkspace() {
         more={<WorkspaceMoreMenu items={[
           {label:'Builder material levels',onClick:openBuilderRates},
           {label:'Clear catalog search',onClick:()=>setCatalogSearch(''),disabled:!catalogSearch.trim()},
-          {label:'Supplier directory',onClick:()=>setSection('suppliers')},
+          {label:'Suppliers · Connections',onClick:openSuppliers},
           {label:tableDensity==='compact'?'Use comfortable table rows':'Use compact table rows',
             onClick:()=>setTableDensity(tableDensity==='compact'?'comfortable':'compact'),active:tableDensity==='compact'},
         ]}/>}
@@ -143,7 +149,7 @@ export function CatalogWorkspace() {
         ) : section === 'tags' ? (
           <CatalogTagsWorkspace externalQuery={catalogSearch} />
         ) : (
-          <SuppliersWorkspace externalQuery={catalogSearch} />
+          <p role="status">Opening Suppliers in Connections…</p>
         )}
       </section>
     </main>

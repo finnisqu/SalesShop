@@ -1,6 +1,7 @@
 import {describe,expect,it,vi} from 'vitest';
 import {OUR_ORG_GROUPS,ensureOurOrgCompany,isOurOrgCompany,ourOrgCompanyIds,
- ourOrgGroup,ourOrgPeople} from './ourOrganizationDirectory';
+ ourOrgGroup,ourOrgPeople,ourOrgRoles,rosterGroupForContact,
+ ourOrgMemberMarker,ourOrgRoleMarker,isOurOrgContact} from './ourOrganizationDirectory';
 import type {Company,Contact} from '../types/crm';
 
 const employeeCompany={id:'emp',name:'Internal Employees',kind:'non-customer',
@@ -24,6 +25,26 @@ describe('Our Organization directory',()=>{
    .map(p=>p.id)).toEqual(['p1']);
   expect(ourOrgPeople(contacts,[employeeCompany,subcontractCompany,outside],'subcontractors')
    .map(p=>p.id)).toEqual(['p2']);
+ });
+ it('keeps subcontractors in Our Organization while linking their external company',()=>{
+  const vendor={id:'vendor',name:'Specialty Installers LLC',kind:'non-customer'} as Company;
+  const sub={...subcontractCompany,aliases:[
+   OUR_ORG_GROUPS[1].marker,ourOrgMemberMarker('p4'),
+  ]};
+  const person={id:'p4',name:'Taylor Installer',companyId:'vendor',title:'Installer'} as Contact;
+  const entities=[employeeCompany,sub,vendor];
+  expect(rosterGroupForContact(person,entities)).toBe('subcontractors');
+  expect(isOurOrgContact(person,entities)).toBe(true);
+  expect(ourOrgPeople([person],entities,'subcontractors').map(p=>p.id)).toEqual(['p4']);
+  expect(ourOrgPeople([person],entities,'employees')).toEqual([]);
+ });
+ it('reuses saved role options and roles from current roster entries',()=>{
+  const employee={...employeeCompany,aliases:[
+   OUR_ORG_GROUPS[0].marker,ourOrgRoleMarker('Project Manager'),
+  ]};
+  const existing={id:'p1',name:'Jess',companyId:'emp',title:'Installer'} as Contact;
+  expect(ourOrgRoles([existing],[employee],'employees')).toEqual(['Installer','Project Manager']);
+  expect(ourOrgRoles([existing],[employee],'subcontractors')).toEqual([]);
  });
  it('reuses the tagged internal company without making duplicate records',()=>{
   const resolve=vi.fn(()=>undefined);

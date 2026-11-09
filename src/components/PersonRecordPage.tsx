@@ -5,7 +5,7 @@ import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
-import {isOurOrgCompany,ourOrgGroup} from '../services/ourOrganizationDirectory';
+import {isOurOrgCompany,ourOrgGroup,isOurOrgContact,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 
 const dateLabel = (value: string) => {
   const date = new Date(value);
@@ -77,7 +77,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
     }catch(reason){setEditError(reason instanceof Error?reason.message:'Unable to apply person changes.');}
   };
   const displayName = person.name || person.email || 'Unnamed contact';
-  const isInternal=Boolean(related.company&&isOurOrgCompany(related.company));
+  const isInternal=isOurOrgContact(person,companies);
 
   return <RecordPageLayout entityType="person" title={displayName} onBack={onBack}
     subtitle={[person.title, isInternal?'Our Organization':related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
@@ -116,7 +116,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           <RecordProperty label="Job title">{person.title || 'Not set'}</RecordProperty>
           <RecordProperty label="Email">{person.email || 'Not set'}</RecordProperty>
           <RecordProperty label="Phone">{person.phone || 'Not set'}</RecordProperty>
-          <RecordProperty label="Company">{isInternal?'Our Organization':related.company?.name || 'Not assigned'}</RecordProperty>
+          <RecordProperty label="Company">{isInternal&&rosterGroupForContact(person,companies)==='employees'?'Our Organization':related.company?.name||'Not assigned'}</RecordProperty>
           <RecordProperty label="Created">{dateLabel(person.createdAt)}</RecordProperty>
           <RecordProperty label="Updated">{dateLabel(person.updatedAt)}</RecordProperty>
         </div>}
