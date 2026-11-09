@@ -109,3 +109,12 @@ The repository README currently holds a staging/auth rollout gate. Creating or a
 4. Point a staging frontend at the staging backend with `VITE_DEAL_SCHEDULE_CLOUD_ENABLED=true`. Verify from two distinct browsers that concurrent revisions cannot silently clobber one another, and that an old device draft is published only after explicit action.
 5. Verify that the Home calendar shows only authorized Deals' milestones, manually created follow-up Tasks do not duplicate, and every relevant building invoice / import phase survives fresh reload.
 6. Only after separate production approval: add a formal migration to the approved deployment process, apply SQL, then enable the shared schedule flag. Never deploy the flag before the schema and RLS.
+
+## November 9 hardening and execution details
+
+- Added a generic milestone reference for purchase orders, vessel/container and shipment tracking, or building invoice/payment references. These references are descriptive only, not invoices posted to accounting.
+- Milestone notes support manual field/production/shipping context; both reference and notes are bounded in the editor and normalized before saving.
+- Added advisory warnings for incomplete milestones past planned finish and for a successor planned before the end of a predecessor. They are visible in a collapsible alert group and never automatically modify dates, create Tasks, or modify CRM stage.
+- Progress is explicitly separated into **materials**, **building work** and **billing/retainage**. Physical completion does not imply financial closeout.
+- Hardened imported/cloud schedule validation: reject parent cycles, dependency cycles, invalid linked imports, impossible calendar dates, invalid invoice amounts and retainage percentages before loading or saving.
+- Extended timeline regression tests for these cases. Tests have been committed but not executed in an actual project checkout; no production SQL, CI triggers, or deployment changes have been made.
