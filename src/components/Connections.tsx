@@ -3,6 +3,9 @@ import {createPortal} from 'react-dom';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import { CompanyRecordPage } from './CompanyRecordPage';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {OurOrganizationDirectory} from './OurOrganizationDirectory';
+import {isOurOrgCompany,ourOrgCompanyIds} from '../services/ourOrganizationDirectory';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import { PersonRecordPage } from './PersonRecordPage';
@@ -31,13 +34,14 @@ import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
 import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
 
-type ConnectionsTab = 'companies' | 'people' | 'deals' | 'quotes' | 'activity';
+type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'quotes' | 'activity';
 type CompanyFilter = 'all' | 'customer' | 'non-customer';
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
   { id: 'companies', label: 'Companies', description: 'Accounts & partners' },
   { id: 'people', label: 'People', description: 'Contacts' },
   { id: 'deals', label: 'Deals', description: 'Opportunities & jobs' },
+  { id: 'organization', label: 'Our Organization', description: 'Employees & subcontractors' },
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
@@ -105,6 +109,7 @@ export function Connections() {
   },[]);
   const [query, setQuery] = useState('');
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
+  const [activityPreview,setActivityPreview]=useState<string|null>(null);
   const [quoteRecordId,setQuoteRecordId]=useState<string|null>(null);
   useEffect(()=>{
     const id=consumeQuoteMetadataRequest();
@@ -163,7 +168,7 @@ export function Connections() {
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
-    setPreview(null);setQuoteRecordId(null);
+    setPreview(null);setActivityPreview(null);setQuoteRecordId(null);
     setTab(next); setQuery(''); setNotice('');
     setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
     // Activity history is an on-demand utility, never the default landing page.
@@ -173,6 +178,7 @@ export function Connections() {
   };
 
   const companiesById = useMemo(() => new Map(companies.map((company) => [company.id, company])), [companies]);
+  const internalCompanyIds=useMemo(()=>ourOrgCompanyIds(companies),[companies]);
   const projectsById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
   const counts=useMemo(()=>indexConnectionsCounts(contacts,projects,quotes),[contacts,projects,quotes]);
   const needle = query.trim().toLowerCase();
@@ -181,13 +187,15 @@ export function Connections() {
   const visibleQuotes=useMemo(()=>authMode==='cloud'
     ?quotes.filter(q=>q.ownerUserId===authUser):quotes,[quotes,authMode,authUser]);
   const companyRows = useMemo(() => companies
+    .filter(company=>!isOurOrgCompany(company))
     .filter((company) => companyFilter === 'all' || company.kind === companyFilter)
     .filter((company) => findText(company.name, ...(company.aliases ?? [])).includes(needle))
     .sort((a, b) => a.name.localeCompare(b.name)), [companies, companyFilter, needle]);
   const peopleRows = useMemo(() => contacts
+    .filter(person=>!internalCompanyIds.has(person.companyId??''))
     .filter((person) => findText(person.name, person.email, person.phone, person.title,
       companiesById.get(person.companyId ?? '')?.name).includes(needle))
-    .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById, needle]);
+    .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById, internalCompanyIds, needle]);
   const projectRows = useMemo(() => projects
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction, dealPipelineLabel(project.pipeline)).includes(needle))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
@@ -196,11 +204,12 @@ export function Connections() {
       projectsById.get(q.projectId??'')?.name).includes(needle))
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[visibleQuotes,projectsById,needle]);
   const activityRows = useMemo(() => [...activities]
+    .filter(a=>!(a.type==='contact-created'&&internalCompanyIds.has(a.companyId??'')))
     .filter((activity) => findText(activity.summary, activity.type,
       companiesById.get(activity.companyId ?? '')?.name,
       projectsById.get(activity.projectId ?? '')?.name).includes(needle))
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
-    .slice(0, 150), [activities, companiesById, projectsById, needle]);
+    .slice(0, 150), [activities, companiesById, projectsById,internalCompanyIds, needle]);
 
   const companyTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='companies'?companyRows.map(c=>({
     id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
@@ -314,10 +323,7 @@ export function Connections() {
     openProject(id);
   };
   const openActivity = (activity: (typeof activities)[number]) => {
-    if (activity.quoteId) openQuote(activity.quoteId);
-    else if (activity.projectId) openProject(activity.projectId);
-    else if (activity.companyId) openCompany(activity.companyId);
-    else if (activity.contactId) openPerson(activity.contactId);
+    setPreview(null);setActivityPreview(activity.id);
   };
 
   const closeNewRecord=()=>{
@@ -331,7 +337,8 @@ export function Connections() {
     setView('dashboard');
   };
   const backToPeople = () => {
-    chooseTab('people');
+    const person=contacts.find(c=>c.id===focusedContactId);
+    chooseTab(person&&internalCompanyIds.has(person.companyId??'')?'organization':'people');
     setView('dashboard');
   };
   const backToCompanies = () => {
@@ -374,7 +381,8 @@ export function Connections() {
         search={<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
-            tab==='deals'?'Search deals…':tab==='quotes'?'Search quotes…':'Search activities…'}/>}
+            tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':
+            tab==='quotes'?'Search quotes…':'Search activities…'}/>}
         primary={<>
           {tab==='companies'&&<Button variant="primary" className="connections-add"
             onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
@@ -529,12 +537,12 @@ export function Connections() {
               No quote metadata matches. Check My Sales Documents or your search.
             </StatusText>}
           </section>}
+          {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}/>}
           {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
             <p className="connections-count">{activityRows.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
             <div className="connections-activity-list">
               {activityRows.map((activity) => {
-                const actionable = Boolean(activity.quoteId || activity.projectId || activity.companyId || activity.contactId);
-                return <button type="button" key={activity.id} disabled={!actionable} onClick={() => openActivity(activity)}>
+                return <button type="button" key={activity.id} onClick={() => openActivity(activity)}>
                   <span><strong>{activity.summary}</strong><small>{[
                    activity.metadata?.interactionMethod?.replaceAll('-',' '),
                    companiesById.get(activity.companyId ?? '')?.name,
@@ -552,6 +560,9 @@ export function Connections() {
         <button type="button" onClick={() => setView('settings')}>Open team settings →</button>
       </footer>
       </div>
+      {activityPreview&&<CalendarActivityPreview activityId={activityPreview}
+        onClose={()=>setActivityPreview(null)}
+        onSelect={(kind,id)=>{setActivityPreview(null);setPreview({kind,id});}}/>}
       {preview&&<RecordPreviewDrawer record={preview}
         onClose={()=>setPreview(null)} onSelect={setPreview}
         onGoToQuotePage={id=>{setPreview(null);setQuoteRecordId(id);setTab('quotes');}}/>}
