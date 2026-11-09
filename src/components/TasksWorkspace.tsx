@@ -586,7 +586,6 @@ export function TasksWorkspace(){
         </div>}
        </div>
        <PreviewPanelActions className="ss-mobile-sheet-actions">
-        <button type="button" onClick={()=>setViewingId(null)}>Close</button>
         {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&subtaskProgress(viewing).remaining===0&&
          <button type="button" className="tasks-flow-action" onClick={()=>{
           setViewingId(null);openActivityComposer({taskId:viewing.id});
@@ -596,6 +595,10 @@ export function TasksWorkspace(){
           onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
          {taskComplete(viewing)?'Reopen task':'Mark complete'}</button>
         <button type="button" className="tasks-primary" onClick={()=>{setViewingId(null);setEditing(viewing);}}>Edit task</button>
+        <button type="button" className="tasks-preview-delete" onClick={()=>{
+         if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
+         remove(viewing.id);setViewingId(null);
+        }}>Delete</button>
        </PreviewPanelActions>
       </section>
      </div>}
