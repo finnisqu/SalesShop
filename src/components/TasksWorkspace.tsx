@@ -583,7 +583,7 @@ export function TasksWorkspace(){
        </div>
        <PreviewPanelActions className="ss-mobile-sheet-actions">
         <button type="button" onClick={()=>setViewingId(null)}>Close</button>
-        {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&
+        {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&subtaskProgress(viewing).remaining===0&&
          <button type="button" className="tasks-flow-action" onClick={()=>{
           setViewingId(null);openActivityComposer({taskId:viewing.id});
          }}>Complete + log activity</button>}
