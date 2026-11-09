@@ -6,6 +6,7 @@ import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
 import {SuppliersWorkspace} from './SuppliersWorkspace';
+import '../suppliers-connections.css';
 import {isOurOrgCompany,ourOrgCompanyIds,isOurOrgContact} from '../services/ourOrganizationDirectory';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
@@ -601,7 +602,7 @@ export function Connections() {
           {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}
             createRequest={orgCreateRequest} onCreateConsumed={()=>setOrgCreateRequest(0)}/>}
           {tab==='suppliers'&&<div className="connections-suppliers-host">
-            <SuppliersWorkspace externalQuery={query}/>
+            <SuppliersWorkspace externalQuery={query} embeddedInConnections/>
           </div>}
           {tab==='activity'&&<section className="connections-activity-filters" aria-label="Filter Activity history">
             <label>Method

@@ -39,6 +39,7 @@ import { MobileCatalogActiveFilters, MobileCatalogToolsSheet, type MobileCatalog
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { Button, Field } from '../design-system/components';
 import { SupplierProfileFields } from './SupplierProfileFields';
+import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
 
 type SupplierFreshness = 'missing' | 'stale' | 'due-soon' | 'current' | 'inactive';
 type SupplierFilter = 'all' | 'attention' | 'current' | 'missing';
@@ -125,7 +126,7 @@ function emptyRule(supplierId: string, sortOrder: number): SupplierRule {
   return { id: `supplier_rule_${crypto.randomUUID()}`, supplierId, ruleType: 'General', ruleText: '', active: true, notes: '', sortOrder };
 }
 
-export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
+export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{externalQuery?:string;embeddedInConnections?:boolean}={}) {
   const materials = useCompanySettingsStore((state) => state.settings.stockMaterials);
   const updateSettings = useCompanySettingsStore((state) => state.update);
   const [profiles, setProfiles] = useState<SupplierProfile[]>([]);
@@ -255,6 +256,26 @@ export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
       return !needle || `${supplier.name} ${supplier.brands.join(' ')} ${statusLabels[supplier.freshness]}`.toLowerCase().includes(needle);
     });
   }, [rollups, query, filter]);
+
+  const supplierColumns:ConnectionColumn[]=[
+    {key:'name',label:'Supplier'}, {key:'brands',label:'Brands'},
+    {key:'materials',label:'Materials'}, {key:'pricing',label:'Pricing status'},
+    {key:'effective',label:'Effective'}, {key:'review',label:'Next review'},
+  ];
+  const supplierTableRows:ConnectionTableRow[]=filtered.map(supplier=>({
+    id:supplier.key,name:supplier.name,
+    values:{
+      name:supplier.name,brands:supplier.brands.join(' · ')||'—',
+      materials:String(supplier.materials.length),pricing:statusLabels[supplier.freshness],
+      effective:displayDate(supplier.latestEffectiveDate),
+      review:displayDate(supplier.nextReviewDate),
+    },
+    sortValues:{
+      materials:supplier.materials.length,
+      effective:supplier.latestEffectiveDate??'',
+      review:supplier.nextReviewDate??'',
+    },
+  }));
 
   const activeMobileFilters: MobileCatalogFilterChip[] = [
     ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
@@ -404,57 +425,61 @@ export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
 
   return (
     <>
-      <section className={'supplier-directory-page'+(directoryOpen?' is-active':'')} aria-label="Supplier directory">
-        <header className="supplier-directory-heading">
-          <div>
-            <h2>Suppliers</h2>
-            <span>{rollups.length} suppliers · {filtered.length} shown</span>
+      {directoryOpen&&<section className="supplier-directory-page" aria-label="Supplier directory">
+        {loadError&&<p className="supplier-directory-error" role="alert">{loadError}</p>}
+        {embeddedInConnections ? (
+          <ConnectionsTable tableKey="suppliers" columns={supplierColumns} rows={supplierTableRows}
+            onOpen={chooseSupplier}
+            toolbarControls={<label className="supplier-status-filter">Pricing status
+              <select value={filter} aria-label="Filter suppliers by pricing status"
+                onChange={event=>setFilter(event.target.value as SupplierFilter)}>
+                <option value="all">All statuses</option>
+                <option value="attention">Needs attention</option>
+                <option value="current">Current pricing</option>
+                <option value="missing">Missing pricing</option>
+              </select>
+            </label>}/>
+        ) : <>
+          <header className="supplier-directory-heading">
+            <div><h2>Suppliers</h2><span>{rollups.length} suppliers · {filtered.length} shown</span></div>
+            <Button variant="primary" onClick={()=>setSupplierCreateOpen(true)}>+ Supplier</Button>
+          </header>
+          <div className="supplier-directory-toolbar">
+            <input type="search" value={query} onChange={event=>setQuery(event.target.value)}
+              aria-label="Search suppliers" placeholder="Search suppliers and brands…"/>
+            <select value={filter} onChange={event=>setFilter(event.target.value as SupplierFilter)}
+              aria-label="Supplier status filter">
+              <option value="all">All suppliers</option>
+              <option value="attention">Needs attention</option>
+              <option value="current">Current pricing</option>
+              <option value="missing">Missing pricing</option>
+            </select>
           </div>
-          <Button variant="primary" onClick={() => setSupplierCreateOpen(true)}>+ Supplier</Button>
-        </header>
-        <div className="supplier-directory-toolbar">
-          <input type="search" value={query} onChange={event => setQuery(event.target.value)}
-            aria-label="Search suppliers" placeholder="Search suppliers and brands…" />
-          <select value={filter} onChange={event => setFilter(event.target.value as SupplierFilter)}
-            aria-label="Supplier status filter">
-            <option value="all">All suppliers</option>
-            <option value="attention">Needs attention</option>
-            <option value="current">Current pricing</option>
-            <option value="missing">Missing pricing</option>
-          </select>
-        </div>
-        {loadError && <p className="supplier-directory-error" role="alert">{loadError}</p>}
-        <div className="supplier-directory-table-scroll">
-          <table className="supplier-directory-table">
-            <thead><tr>
-              <th scope="col">Supplier</th>
-              <th scope="col">Brands</th>
-              <th scope="col">Materials</th>
-              <th scope="col">Pricing status</th>
-              <th scope="col">Effective</th>
-              <th scope="col">Next review</th>
-            </tr></thead>
-            <tbody>
-              {filtered.map(supplier => <tr key={supplier.key}>
-                <th scope="row"><button type="button" onClick={() => chooseSupplier(supplier.key)}>
-                  {supplier.name}<span aria-hidden="true">›</span>
-                </button></th>
-                <td>{supplier.brands.length ? supplier.brands.join(' · ') : '—'}</td>
+          <div className="supplier-directory-table-scroll">
+            <table className="supplier-directory-table">
+              <thead><tr>
+                <th scope="col">Supplier</th><th scope="col">Brands</th>
+                <th scope="col">Materials</th><th scope="col">Pricing status</th>
+                <th scope="col">Effective</th><th scope="col">Next review</th>
+              </tr></thead>
+              <tbody>{filtered.map(supplier=><tr key={supplier.key}>
+                <th scope="row"><button type="button" onClick={()=>chooseSupplier(supplier.key)}>
+                  {supplier.name}<span aria-hidden="true">›</span></button></th>
+                <td>{supplier.brands.length?supplier.brands.join(' · '):'—'}</td>
                 <td>{supplier.materials.length}</td>
                 <td><span className={'supplier-directory-status freshness-'+supplier.freshness}>
                   {statusLabels[supplier.freshness]}</span></td>
                 <td>{displayDate(supplier.latestEffectiveDate)}</td>
                 <td>{displayDate(supplier.nextReviewDate)}</td>
-              </tr>)}
-            </tbody>
-          </table>
-          {!filtered.length && <p className="supplier-directory-empty">
-            No suppliers match. Clear the search or select another status.
-          </p>}
-        </div>
-      </section>
-      <div className={'supplier-workbench'+(directoryOpen?' is-directory-hidden':' is-record-mode')}>
-      <aside className="supplier-navigator">
+              </tr>)}</tbody>
+            </table>
+            {!filtered.length&&<p className="supplier-directory-empty">
+              No suppliers match. Clear the search or select another status.</p>}
+          </div>
+        </>}
+      </section>}
+      {!directoryOpen&&<div className="supplier-workbench is-record-mode">
+      {!embeddedInConnections&&<aside className="supplier-navigator">
         <header><div><span className="board-eyebrow">Reverse CRM</span><strong>Suppliers</strong></div><span>{rollups.length}</span></header>
         <div className="supplier-nav-search">
           <div className="supplier-mobile-search-row">
@@ -532,7 +557,7 @@ export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
           <Button variant="secondary" onClick={() => void addSupplier()}
             disabled={!newSupplierName.trim() || adding} aria-label="Add supplier">+</Button>
         </div>
-      </aside>
+      </aside>}
 
       {mobileToolsOpen && (
         <MobileCatalogToolsSheet title="Supplier tools" section="Suppliers"
@@ -667,7 +692,7 @@ export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
           </>
         )}
       </section>
-    </div>
+    </div>}
     {supplierCreateOpen && createPortal(
       <div className="connections-create-backdrop" onPointerDown={event => {
         if (event.currentTarget === event.target) setSupplierCreateOpen(false);

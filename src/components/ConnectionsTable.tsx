@@ -12,7 +12,7 @@ import {useDismissibleDetails} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;}
-interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags';columns:ConnectionColumn[];rows:ConnectionTableRow[];
+interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
  onBulkEdit?:(records:ConnectionTableRow[],change:BulkEditChange)=>Promise<void>;
  bulkEditCompanies?:readonly Company[];
