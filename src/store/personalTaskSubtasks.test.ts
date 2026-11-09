@@ -20,6 +20,18 @@ describe('Task checklist subtasks',()=>{
   usePersonalTaskStore.getState().complete(task.id);
   expect(usePersonalTaskStore.getState().tasks[0].status).toBe('open');
  });
+ it('keeps a Deal submission task open when quote submission leaves required documents unchecked',()=>{
+  usePersonalTaskStore.setState({scope:'local:user',tasks:[{
+   ...task,sourceObjectId:'deal-submit:deal-1',
+   linked:{type:'project',id:'deal-1'},
+   associations:[{type:'project',id:'deal-1',label:'Deal'}],
+  }]});
+  usePersonalTaskStore.getState().completeDealSubmissionTasks('deal-1');
+  expect(usePersonalTaskStore.getState().tasks[0].status).toBe('open');
+  usePersonalTaskStore.getState().updateTask(task.id,{subtasks:[
+   item('w9','W9',true),item('coi','COI',true)]});
+  expect(usePersonalTaskStore.getState().tasks[0].status).toBe('completed');
+ });
  it('automatically completes on the final checkbox and reopens on uncheck',()=>{
   usePersonalTaskStore.getState().updateTask(task.id,{subtasks:[item('w9','W9',true),item('coi','COI',true)]});
   const done=usePersonalTaskStore.getState().tasks[0];
