@@ -470,6 +470,18 @@ export function TasksWorkspace(){
           </label>
         </>}
         onOpen={id=>{const selected=visible.find(task=>task.id===id);if(selected)setViewingId(selected.id);}}
+        onTaskDelete={id=>{
+          if(!own.some(item=>item.id===id))return;
+          if(window.confirm('Delete this task? It will disappear from Tasks and Agenda.'))remove(id);
+        }}
+        onBulkTaskDelete={async items=>{
+          const store=usePersonalTaskStore.getState();
+          if(!scope||store.scope!==scope)throw new Error('Task workspace changed. Select tasks again.');
+          const eligible=new Set(store.tasks.filter(t=>t.workspaceScope===scope&&!t.deletedAt).map(t=>t.id));
+          if(items.some(item=>!eligible.has(item.id)))throw new Error('Some selected tasks are no longer available.');
+          items.forEach(item=>remove(item.id));
+          setTaskNotice({kind:'applied',message:items.length+' tasks deleted.'});
+        }}
         onTaskDuePreset={quickDue}
         onTaskToggleComplete={(id,finished)=>finished?reopen(id):complete(id)}
         onBulkComplete={items=>items.forEach(item=>{
