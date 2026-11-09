@@ -122,20 +122,54 @@ export function createMultifamilyStarterSchedule(options: MultifamilyStarterOpti
     label:'Multifamily · phased procurement, installation & billing',rows};
 }
 
-/** Lightweight consistency checks to protect template edits and future import tools. */
+/** Structural checks protect the renderer from cycles in imported/cloud data. */
 export function validateDealScheduleRows(rows: readonly DealScheduleRow[]): string[] {
   const ids = new Set<string>();
   const errors: string[] = [];
+  const byId=new Map<string,DealScheduleRow>();
   for(const row of rows){
-    if(ids.has(row.id))errors.push(`Duplicate row ID: ${row.id}`);
+    if(!row.id?.trim())errors.push('Empty schedule row ID');
+    if(ids.has(row.id))errors.push('Duplicate row ID: '+row.id);
     ids.add(row.id);
+    byId.set(row.id,row);
   }
   for(const row of rows){
-    if(row.parentId&&!ids.has(row.parentId))errors.push(`Missing parent for ${row.id}: ${row.parentId}`);
+    if(row.parentId&&!ids.has(row.parentId))
+      errors.push('Missing parent for '+row.id+': '+row.parentId);
+    if(row.parentId===row.id)errors.push('Self-parented row: '+row.id);
+    if(row.parentId&&byId.get(row.parentId)?.kind!=='group')
+      errors.push('Parent must be a group for '+row.id+': '+row.parentId);
     for(const predecessor of row.predecessorIds){
-      if(!ids.has(predecessor))errors.push(`Missing predecessor for ${row.id}: ${predecessor}`);
-      if(predecessor===row.id)errors.push(`Self-dependent row: ${row.id}`);
+      if(!ids.has(predecessor))
+        errors.push('Missing predecessor for '+row.id+': '+predecessor);
+      if(predecessor===row.id)errors.push('Self-dependent row: '+row.id);
+    }
+    for(const importId of row.sourceImportIds??[]){
+      const imp=byId.get(importId);
+      if(!imp||imp.scope!=='import'||imp.kind!=='group')
+        errors.push('Invalid source import for '+row.id+': '+importId);
     }
   }
+
+  /** Detect both hierarchy and advisory-predecessor cycles before rendering. */
+  const cycles=(name:string,neighbors:(row:DealScheduleRow)=>readonly string[])=>{
+    const visited=new Set<string>(),active=new Set<string>(),reported=new Set<string>();
+    const visit=(id:string):void=>{
+      if(active.has(id)){
+        if(!reported.has(id))errors.push('Circular '+name+' reference: '+id);
+        reported.add(id);
+        return;
+      }
+      if(visited.has(id))return;
+      const row=byId.get(id);if(!row)return;
+      active.add(id);
+      for(const neighbor of neighbors(row))visit(neighbor);
+      active.delete(id);
+      visited.add(id);
+    };
+    for(const id of ids)visit(id);
+  };
+  cycles('parent',row=>row.parentId?[row.parentId]:[]);
+  cycles('dependency',row=>row.predecessorIds);
   return errors;
 }
