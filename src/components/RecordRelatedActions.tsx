@@ -34,7 +34,7 @@ export function LinkExistingRecord({source,target,label,onLinked}:{
  const options=target==='company'?companies.filter(c=>!isOurOrgCompany(c)).map(c=>({id:c.id,name:c.name})):
   target==='person'?people.map(p=>({id:p.id,name:p.name||p.email||'Unnamed person'})):
   target==='deal'?deals.map(p=>({id:p.id,name:p.name})):
-  quotes.filter(q=>!q.archivedAt&&(source.kind!=='deal'||q.status==='Draft'||q.status==='Ready')&&
+  quotes.filter(q=>!q.archivedAt&&(q.status==='Draft'||q.status==='Ready')&&
    (mode!=='cloud'||q.ownerUserId===user))
    .map(q=>({id:q.id,name:q.title||q.quoteNumber||'Untitled quote'}));
  const visible=options.filter(x=>x.id!==source.id).sort((a,b)=>a.name.localeCompare(b.name));
@@ -42,6 +42,9 @@ export function LinkExistingRecord({source,target,label,onLinked}:{
   if(!id)return;
   setError('');
   try{
+   if(target==='quote'&&!quotes.some(q=>q.id===id&&!q.archivedAt&&
+      (q.status==='Draft'||q.status==='Ready')))
+    throw new Error('Only editable draft Quotes can be reassigned from here.');
    if(source.kind==='company'&&target==='person')updateContact(id,{companyId:source.id});
    else if(source.kind==='company'&&target==='deal')setProjectCompany(id,source.id);
    else if(source.kind==='company'&&target==='quote')linkQuoteCompany(id,{id:source.id,name:source.name});
@@ -73,7 +76,7 @@ export function LinkExistingRecord({source,target,label,onLinked}:{
     {visible.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
    </select>
    <button type="button" disabled={!id} onClick={apply}>Link</button>
-   {target==='quote'&&<small>Updates the quote's primary {source.kind==='person'?'contact':source.kind==='company'?'company':'Deal'} link. Review any existing assignment before linking.</small>}
+   {target==='quote'&&<small>Draft and Ready Quotes only. Updates the quote's primary {source.kind==='person'?'contact':source.kind==='company'?'company':'Deal'} link. Review any existing assignment before linking.</small>}
    {error&&<p role="alert">{error}</p>}
   </div>}
  </div>;
