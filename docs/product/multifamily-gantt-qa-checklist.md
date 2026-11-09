@@ -62,3 +62,16 @@ These commands are **not verified as passing** in the current connector-only env
 3. Obtain explicit approval for an isolated staging database if it incurs cost.
 4. Validate the SQL, run auth matrix and two-browser concurrency in staging.
 5. Only after fresh production approval: formal migration, secure RLS verification, then independently enable `VITE_DEAL_SCHEDULE_CLOUD_ENABLED`.
+
+## November 9 additional functional QA (pending execution)
+
+- [ ] Invoice number / payment reference survives save, reload, phase add/remove and cloud revision conflict
+- [ ] Import PO, vessel/container/tracking reference and milestone notes survive fresh reload
+- [ ] Invalid dates (including non-existent calendar dates such as Feb 30), negative amounts and retainage greater than 100% are rejected
+- [ ] Schedule warnings flag an overdue incomplete milestone but not a completed one
+- [ ] Dependency overlap warning is advisory: no automatic shift of shipping, installation or invoice dates
+- [ ] Parent/dependency cycles and invalid source-import references are rejected before Gantt rendering
+- [ ] Material progress, building work and financial/retainage progress display independently
+- [ ] No new automatic Tasks or changes to the sales Deal stage arise from these warnings
+
+**Verification note:** The private repository is not mountable or cloneable in the current execution container (DNS to github.com unavailable). A standalone compiler is installed, but the complete source/dependency tree cannot be checked out. Connector-level source inspection is not an actual `npm run build` or Vitest execution. The PR stays in draft.
