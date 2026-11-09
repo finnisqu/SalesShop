@@ -232,7 +232,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </button>)}
           {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its deals.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={newQuote}>+ New quote</button>
+        <button type="button" className="connections-record-add" onClick={newQuote}>+ New Quote</button>
         <LinkExistingRecord source={{kind:'company',id:company.id,name:company.name}} target="quote"/>
       </RecordCard>
 
