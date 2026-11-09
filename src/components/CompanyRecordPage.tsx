@@ -36,7 +36,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const openProject = useNavigationStore((state) => state.openProject);
   const openPerson = useNavigationStore((state) => state.openPerson);
   const [editing, setEditing] = useState(false);
-    setNewAlias('');
   const [newAlias, setNewAlias] = useState('');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
   const [historyOpen, setHistoryOpen] = useState(false);
