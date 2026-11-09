@@ -135,8 +135,12 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             <small>{related.company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'} · View company record →</small>
           </button>}
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
-        <RecordNewCompany source={{kind:'person',id:person.id}}/>
-        <LinkExistingRecord source={{kind:'person',id:person.id,name:displayName}} target="company"/>
+        {!isInternal&&<>
+          <RecordNewCompany source={{kind:'person',id:person.id}}/>
+          <LinkExistingRecord source={{kind:'person',id:person.id,name:displayName}} target="company"/>
+        </>}
+        {isInternal&&<p className="connections-record-helper">
+          Change an internal Person's Company from Our Organization to preserve their roster membership.</p>
       </RecordCard>
       <RecordCard title="Deals linked through quotes" extra={<span>{related.linkedDeals.length}</span>}>
         <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
