@@ -21,8 +21,10 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
  const updateContact=useCrmStore(s=>s.updateContact);
  const mode=useAuthStore(s=>s.mode),role=useAuthStore(s=>s.teamRole);
  const department=useAuthStore(s=>s.teamDepartment);
+ const orgId=useAuthStore(s=>s.organizationId),userId=useAuthStore(s=>s.user?.id);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
- const editable=!perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'));
+ const editable=!perspective&&(mode==='local'||Boolean(orgId&&userId&&
+  canEditTeamArea(role,department,'crm')));
  const [group,setGroup]=useState<RosterGroup>('employees');
  const [editingId,setEditingId]=useState<string|null>(null);
  const [showEditor,setShowEditor]=useState(false);
