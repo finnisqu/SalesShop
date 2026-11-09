@@ -454,3 +454,16 @@
  .tasks-preview-card>footer.ss-mobile-sheet-actions{flex-wrap:wrap;gap:7px}
  .tasks-preview-card>footer.ss-mobile-sheet-actions>button{min-height:42px;font-size:12px;flex:1 1 auto}
 }
+
+.tasks-preview-card>footer.ss-mobile-sheet-actions>button.tasks-preview-delete{
+ background:transparent;color:var(--ss-theme-muted,#687783);
+ border:1px solid var(--ss-theme-border,#cad2d8);font-weight:650;
+}
+.tasks-preview-card>footer.ss-mobile-sheet-actions>button.tasks-preview-delete:hover{
+ color:var(--ss-danger,#a34840);
+ border-color:var(--ss-danger,#a34840);
+}
+.connections-bulk-dialog .tasks-bulk-delete{
+ margin-right:auto;color:var(--ss-danger,#a34840);background:transparent;
+ border:1px solid var(--ss-theme-border,#cad2d8);
+}
