@@ -181,7 +181,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
         <label>Priority<select value={priority} onChange={e=>setPriority(e.target.value as TaskPriority)}>
          {priorities.map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
         <label>Status<select value={status} onChange={e=>setStatus(e.target.value as TaskStatus)}>
-         {statusOptions.filter(x=>!isProtectedBidTask(initial)||Boolean(initial.submissionConfirmedAt)||x!=='completed').map(x=>
+         {statusOptions.filter(x=>!isProtectedBidTask(initial)||('submissionConfirmedAt'in initial&&Boolean(initial.submissionConfirmedAt))||x!=='completed').map(x=>
           <option value={x} key={x}>{x==='in-progress'?'In progress':x[0].toUpperCase()+x.slice(1)}</option>)}
         </select></label>
         <label>Queue / category<input list="tasks-queue-choices" value={queue} maxLength={80}
