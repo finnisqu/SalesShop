@@ -1,4 +1,6 @@
 import {useEffect,useState} from 'react';
+import {UnifiedRecordPicker} from './UnifiedRecordPicker';
+import {useCrmStore} from '../store/crmStore';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -28,10 +30,12 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson}:{
  dealId:string;people:readonly Contact[];onOpenPerson:(id:string)=>void;
 }){
  const manager=useLinks();
- const [selected,setSelected]=useState(''),[role,setRole]=useState(''),
+ const createPerson=useCrmStore(s=>s.createContact);
+ const deals=useCrmStore(s=>s.projects);
+ const [role,setRole]=useState(''),
   [editingRole,setEditingRole]=useState<string|null>(null),[editedRole,setEditedRole]=useState(''),
   [busy,setBusy]=useState(false),[error,setError]=useState('');
- useEffect(()=>{setSelected('');setRole('');setError('');setEditingRole(null);},[dealId]);
+ useEffect(()=>{setRole('');setError('');setEditingRole(null);},[dealId]);
  const direct=manager.links.filter(link=>link.dealId===dealId);
  const linkedIds=new Set(direct.map(link=>link.personId));
  const choices=people.filter(p=>!linkedIds.has(p.id))
@@ -72,18 +76,23 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson}:{
    })}
    {!direct.length&&<p className="connections-record-empty">No direct contacts assigned yet.</p>}
   </div>}
-  {manager.ready&&manager.editable&&<div className="ss-deal-relations-add">
-   <select aria-label="Person to link to Deal" value={selected} disabled={busy}
-    onChange={e=>setSelected(e.target.value)}>
-    <option value="">Choose a Person…</option>
-    {choices.map(person=><option key={person.id} value={person.id}>{person.name||person.email}</option>)}
-   </select>
-   <input type="text" aria-label="Deal contact role (optional)" value={role} maxLength={120}
-    disabled={busy} placeholder="Role (optional)" onChange={e=>setRole(e.target.value)}/>
-   <button type="button" disabled={busy||!selected}
-    onClick={()=>void update(async()=>{await manager.add(dealId,selected,role);
-      setSelected('');setRole('');})}>+ Link Existing Person</button>
-  </div>}
+  {manager.ready&&manager.editable&&<UnifiedRecordPicker kind="Person"
+    items={choices.map(person=>({id:person.id,name:person.name||person.email||'Unnamed person',
+      detail:person.email||person.title}))}
+    disabled={busy}
+    extra={<input type="text" aria-label="Role on this Deal (optional)"
+      placeholder="Project role (optional)" maxLength={120} value={role}
+      onChange={e=>setRole(e.target.value)}/>}
+    onLink={async id=>{await manager.add(dealId,id,role);setRole('');}}
+    onCreate={async name=>{
+      if(people.some(p=>p.name.trim().toLowerCase()===name.trim().toLowerCase()))
+        throw new Error('This Person already exists. Select them above.');
+      const deal=deals.find(d=>d.id===dealId);
+      const personId=createPerson({name,companyId:deal?.companyId,source:'manual'});
+      if(!personId)throw new Error('Unable to create Person.');
+      await manager.add(dealId,personId,role);setRole('');
+    }}
+    helper="Links directly to the Deal without creating an Activity or changing a Quote."/>}
   {error&&<p role="alert" className="ss-deal-relations-error">{error}</p>}
  </section>;
 }
@@ -92,9 +101,10 @@ export function PersonDealRelationships({personId,deals,onOpenDeal}:{
  personId:string;deals:readonly Project[];onOpenDeal:(id:string)=>void;
 }){
  const manager=useLinks();
- const [selected,setSelected]=useState(''),[role,setRole]=useState(''),
+ const createDeal=useCrmStore(s=>s.createProject);
+ const [role,setRole]=useState(''),
   [busy,setBusy]=useState(false),[error,setError]=useState('');
- useEffect(()=>{setSelected('');setRole('');setError('');},[personId]);
+ useEffect(()=>{setRole('');setError('');},[personId]);
  const direct=manager.links.filter(link=>link.personId===personId);
  const known=new Set(direct.map(link=>link.dealId));
  const choices=deals.filter(d=>!known.has(d.id)).slice()
@@ -124,18 +134,21 @@ export function PersonDealRelationships({personId,deals,onOpenDeal}:{
    })}
    {!direct.length&&<p className="connections-record-empty">Not assigned directly to any Deals.</p>}
   </div>}
-  {manager.ready&&manager.editable&&<div className="ss-deal-relations-add">
-    <select aria-label="Deal to link to Person" value={selected} disabled={busy}
-     onChange={e=>setSelected(e.target.value)}>
-     <option value="">Choose a Deal…</option>
-     {choices.map(deal=><option value={deal.id} key={deal.id}>{deal.name}</option>)}
-    </select>
-    <input type="text" aria-label="Contact role (optional)" value={role} maxLength={120}
-     disabled={busy} placeholder="Role (optional)" onChange={e=>setRole(e.target.value)}/>
-    <button type="button" disabled={!selected||busy}
-     onClick={()=>void apply(async()=>{await manager.add(selected,personId,role);
-      setSelected('');setRole('');})}>+ Link Existing Deal</button>
-   </div>}
+  {manager.ready&&manager.editable&&<UnifiedRecordPicker kind="Deal"
+    items={choices.map(deal=>({id:deal.id,name:deal.name,detail:deal.stage}))}
+    disabled={busy}
+    extra={<input type="text" aria-label="Person's role on Deal (optional)"
+      value={role} maxLength={120} placeholder="Project role (optional)"
+      onChange={e=>setRole(e.target.value)}/>}
+    onLink={async id=>{await manager.add(id,personId,role);setRole('');}}
+    onCreate={async name=>{
+      if(deals.some(d=>d.name.trim().toLowerCase()===name.trim().toLowerCase()))
+        throw new Error('This Deal already exists. Select it above.');
+      const id=createDeal(name,'Discovery');
+      if(!id)throw new Error('Unable to create Deal.');
+      await manager.add(id,personId,role);setRole('');
+    }}
+    helper="Direct Deal contact roles are shared; no Activity is created."/>}
   {error&&<p role="alert" className="ss-deal-relations-error">{error}</p>}
  </section>;
 }
