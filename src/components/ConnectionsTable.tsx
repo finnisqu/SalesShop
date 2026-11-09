@@ -18,6 +18,8 @@ interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tas
  bulkEditCompanies?:readonly Company[];
  onBulkTaskProperty?:(records:ConnectionTableRow[],change:TaskBulkChange)=>Promise<void>;
  onBulkComplete?:(records:ConnectionTableRow[])=>void;
+ onTaskDelete?:(id:string)=>void;
+ onBulkTaskDelete?:(records:ConnectionTableRow[])=>Promise<void>;
  onTaskDuePreset?:(id:string,preset:TaskDuePreset)=>void;
  onTaskToggleComplete?:(id:string,finished:boolean)=>void;
  onDocumentArchive?:(id:string)=>void;onDocumentRestore?:(id:string)=>void;
@@ -32,7 +34,7 @@ function read(key:string):string[]{
  return Array.isArray(data)?data.filter((x):x is string=>typeof x==='string'):[];}
  catch{return[];}
 }
-export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,
+export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,onTaskDelete,onBulkTaskDelete,
  onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
@@ -54,7 +56,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
    const ids=new Set(rows.map(row=>row.id));
    setSelected(old=>old.every(id=>ids.has(id))?old:old.filter(id=>ids.has(id)));
  },[rows]);
- const hasTaskActions=tableKey==='tasks'&&Boolean(onTaskDuePreset||onTaskToggleComplete);
+ const hasTaskActions=tableKey==='tasks'&&Boolean(onTaskDuePreset||onTaskToggleComplete||onTaskDelete);
  const hasDocumentActions=tableKey==='documents'&&Boolean(onDocumentArchive||onDocumentRestore);
  const hasRowActions=hasTaskActions||hasDocumentActions;
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'cols'),JSON.stringify(keys));}catch{/* preference storage is optional */}},[tableKey,keys]);
@@ -224,6 +226,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
              onClick={()=>onTaskToggleComplete(row.id,row.values.status==='completed'||row.values.status==='canceled')}>
              {row.values.status==='completed'||row.values.status==='canceled'?'Reopen':'Complete'}
            </button>}
+           {onTaskDelete&&<button type="button" className="connections-task-delete"
+             aria-label={'Delete '+row.name} onClick={()=>onTaskDelete(row.id)}>Delete</button>}
            {onTaskDuePreset&&<select defaultValue="" aria-label={'Quick due date for '+row.name}
              disabled={row.values.status==='completed'||row.values.status==='canceled'}
              onChange={event=>{
@@ -251,7 +255,12 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
        setSelected([]);
      }}/>} 
    {bulkTaskEditing&&onBulkTaskProperty&&tableKey==='tasks'&&<TaskBulkEditDialog count={chosen.length}
-     onClose={()=>setBulkTaskEditing(false)} onApply={async change=>{
+     onClose={()=>setBulkTaskEditing(false)}
+     onDelete={onBulkTaskDelete?async()=>{
+       await onBulkTaskDelete(chosen);
+       setBulkTaskEditing(false);setMobileBulkMode(false);setSelected([]);
+     }:undefined}
+     onApply={async change=>{
        await onBulkTaskProperty(chosen,change);
        setBulkTaskEditing(false);setMobileBulkMode(false);setSelected([]);
      }}/>} 
