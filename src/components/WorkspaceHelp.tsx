@@ -25,7 +25,9 @@ const pages:Record<WorkspaceHelpPage,Article>={
  connections:{name:'Connections',intro:'Your CRM directory of companies, people, deals, and their relationships.',tips:[
   {label:'Explore related records',text:'Tap a name to preview. Follow related records inside the preview and use Back on mobile to return to the previous one.'},
   {label:'Related records',text:'Link people to companies and deals to quotes so everyone can find the connected work.'},
-  {label:'Quick actions',text:'On mobile, change company type or deal stage inline, call or email a contact, or open its full record directly.'}]},
+  {label:'Quick actions',text:'On mobile, change company type or deal stage inline, call or email a contact, or open its full record directly.'},
+  {label:'Activity links',text:'Open an Activity from Activity history to edit its People, Company, Deal or Quote links. Create missing records without leaving the logging form.'},
+  {label:'Our Organization',text:'Keep employees and subcontractors in their own internal directory, separate from customer People. Use Settings → Team to manage logins and permissions.'}]},
  notebook:{name:'Notebook',intro:'Pages, daily notes, and a linked agenda.',tips:[
   {label:'Daily pages',text:'A daily page is created when you use Notes on Home, not automatically every day.'},
   {label:'Linked agenda',text:'Keep calendar items alongside your notes without disrupting the page layout.'},
@@ -62,8 +64,9 @@ const contexts:Record<WorkspaceHelpPage,Record<string,Tip>>={
  connections:{
   companies:{label:'Companies',text:'Inspect customer and partner accounts and their related people and deals.'},
   people:{label:'People',text:'Review contacts and the companies they belong to.'},
-  deals:{label:'Deals',text:'Link companies, next actions, stages, and quote documents.'},
-  activity:{label:'Activity history',text:'Browse recorded interactions and touchpoints.'},
+  deals:{label:'Deals',text:'Link companies, next actions, stages, quote documents and People connected by recorded activities or quotes.'},
+  organization:{label:'Our Organization',text:'Add employee and subcontractor contact details here. These records are separate from external customer directories; Team logins remain in Settings.'},
+  activity:{label:'Activity history',text:'Open a logged interaction to edit its date, notes and linked records. Automatic events are view-only.'},
   quotes:{label:'Quote metadata',text:'View document records and CRM links here; edit pricing in Quotes.'}},
  notebook:{
   pages:{label:'Pages',text:'Browse, search, and organize notebook pages.'},
