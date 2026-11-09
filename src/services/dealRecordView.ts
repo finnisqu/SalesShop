@@ -1,6 +1,7 @@
 import type { Activity, Company, Contact, Project } from '../types/crm';
 import type { Quote } from '../types/quote';
 import { quotesForProject } from './quoteCrmLinks';
+import {activityRelations} from './activityRelations';
 
 /** Strict ID relationships: no name matching, no company-wide activity inheritance. */
 export function dealRecordView(
@@ -18,7 +19,20 @@ export function dealRecordView(
   const linkedQuoteIds = new Set(linkedQuotes.map(quote => quote.id));
   const directHistory = activities.filter(activity =>
     activity.projectId === deal.id ||
-    Boolean(activity.quoteId && linkedQuoteIds.has(activity.quoteId))
+    Boolean(activity.quoteId && linkedQuoteIds.has(activity.quoteId)) ||
+    activityRelations(activity).some(link=>link.type==='project'&&link.id===deal.id)
   ).slice().sort((a,b) => b.occurredAt.localeCompare(a.occurredAt));
-  return { company, linkedQuotes, quoteContacts, directHistory };
+  const linkedPeopleIds=new Set(explicitContactIds);
+  for(const activity of directHistory){
+    for(const link of activityRelations(activity)){
+      if(link.type==='contact')linkedPeopleIds.add(link.id);
+    }
+  }
+  const dealPeople=contacts.filter(person=>linkedPeopleIds.has(person.id))
+    .slice().sort((a,b)=>a.name.localeCompare(b.name));
+  // Company contacts are useful suggestions, not automatically Deal members.
+  const companyPeople=contacts.filter(person=>Boolean(deal.companyId)&&person.companyId===deal.companyId&&
+    !linkedPeopleIds.has(person.id))
+    .slice().sort((a,b)=>a.name.localeCompare(b.name));
+  return {company,linkedQuotes,quoteContacts,directHistory,dealPeople,companyPeople};
 }
