@@ -3,7 +3,7 @@ import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {RecordFormFeedback} from './RecordFormFeedback';
 import {PreviewPanelClose} from './PreviewPanelChrome';
 import {createPortal} from 'react-dom';
-import {DEAL_PIPELINES,PROJECT_STAGES,type CompanyKind,type DealPipeline,type ProjectStage} from '../types/crm';
+import {DEAL_PIPELINES,PROJECT_STAGES,type DealPipeline,type ProjectStage} from '../types/crm';
 import {useDealAssigneeDirectory} from '../services/dealAssignees';
 import {useAuthStore} from '../store/authStore';
 import type {Company} from '../types/crm';
