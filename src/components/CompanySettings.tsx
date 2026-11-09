@@ -319,7 +319,13 @@ export function CompanySettings() {
             <p className="settings-help">This first beta uses your existing Deals, but timeline edits are private drafts saved in this browser only. They do not update CRM stages, create tasks, generate invoices, or sync across devices. Turning it off hides the timeline without deleting your drafts.</p>
             <div className="settings-inline-actions">
               <Button variant="primary" disabled={!timelineBetaEnabled}
-                onClick={()=>setAppView('connections')}>Explore Deal Timelines</Button>
+                onClick={()=>{
+                  try {
+                    window.sessionStorage.setItem('salesshop-connections-tab-v1','deals');
+                    window.sessionStorage.setItem('salesshop-connections-deals-timeline-beta-v1','timeline');
+                  }catch{/* optional navigation preference */}
+                  setAppView('connections');
+                }}>Explore Deal Timelines</Button>
             </div>
           </article>
         </section>}
