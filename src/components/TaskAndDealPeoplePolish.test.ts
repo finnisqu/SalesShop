@@ -44,6 +44,29 @@ describe('Task agenda and quick-view polish',()=>{
   expect(css).toContain('var(--ss-danger');
   expect(read('src/components/TrashIcon.tsx')).toContain('ss-trash-icon');
  });
+ it('groups Delete and pencil Edit on left, completion actions on right',()=>{
+  const global=read('src/components/TaskModalHost.tsx');
+  const workspace=read('src/components/TasksWorkspace.tsx');
+  const css=read('src/tasks-workspace.css');
+  for(const file of [global,workspace]){
+   expect(file).toContain('tasks-preview-actions-left');
+   expect(file).toContain('tasks-preview-actions-right');
+   expect(file).toContain('<TrashIcon/> Delete');
+   expect(file).toContain('<PencilIcon/> Edit');
+   expect(file).toContain('Complete + Log Activity');
+  }
+  expect(css).toContain('tasks-preview-action-groups');
+ });
+ it('opens preselected external submission for generated bid tasks',()=>{
+  const global=read('src/components/TaskModalHost.tsx');
+  const workspace=read('src/components/TasksWorkspace.tsx');
+  expect(global).toContain('initialDealId={externalDealId}');
+  expect(workspace).toContain('initialDealId={externalDealId}');
+  expect(global).toContain('Complete · quote required');
+  expect(workspace).toContain('Complete · quote required');
+  expect(read('src/components/ExternalQuoteBackfillDialog.tsx'))
+   .toContain('initialDealId?:string');
+ });
  it('keeps internal roster workbook inside standard centered Connections width',()=>{
   const css=read('src/our-organization.css');
   expect(css).toContain('.connections-directory-layout .our-org-directory');
