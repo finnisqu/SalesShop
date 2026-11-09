@@ -7,7 +7,7 @@ import {
 
 export type SchedulePhase = 'import' | 'building';
 export type ScheduleRowChanges = Partial<Pick<DealScheduleRow,
-  'label'|'status'|'plannedStart'|'plannedFinish'|'actualStart'|'actualFinish'|'amount'|'retainagePercent'>>;
+  'label'|'status'|'plannedStart'|'plannedFinish'|'actualStart'|'actualFinish'|'amount'|'retainagePercent'|'reference'|'notes'>>;
 
 function idFor(scope:SchedulePhase):string {
   return scope + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
@@ -16,7 +16,12 @@ function idFor(scope:SchedulePhase):string {
 export function updateScheduleRow(
   schedule:DealScheduleDraft,rowId:string,changes:ScheduleRowChanges,
 ):DealScheduleDraft {
-  const rows=schedule.rows.map(row=>row.id===rowId?{...row,...changes}:row);
+  if(!schedule.rows.some(row=>row.id===rowId))throw new Error('Milestone no longer exists: '+rowId);
+  const patch={...changes,
+    ...('reference' in changes?{reference:changes.reference?.trim().slice(0,160)||undefined}:{}),
+    ...('notes' in changes?{notes:changes.notes?.trim().slice(0,2500)||undefined}:{}),
+  };
+  const rows=schedule.rows.map(row=>row.id===rowId?{...row,...patch}:row);
   return {...schedule,rows};
 }
 
@@ -113,7 +118,15 @@ export function assignBuildingImports(
 /** Prevent reversed date ranges without changing dates automatically. */
 export function scheduleDateIssues(rows:readonly DealScheduleRow[]):string[] {
   const issues:string[]=[];
+  const validDate=(value:string):boolean=>{
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+    const date=new Date(value+'T00:00:00Z');
+    return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value;
+  };
   for(const row of rows){
+    for(const date of [row.plannedStart,row.plannedFinish,row.actualStart,row.actualFinish]){
+      if(date&&!validDate(date))issues.push(row.label+': invalid calendar date '+date);
+    }
     if(row.plannedStart&&row.plannedFinish&&row.plannedFinish<row.plannedStart)
       issues.push(row.label+': planned finish precedes start');
     if(row.actualStart&&row.actualFinish&&row.actualFinish<row.actualStart)
@@ -130,5 +143,13 @@ export function scheduleProgress(schedule:DealScheduleDraft):{done:number;total:
 
 export function assertValidSchedule(schedule:DealScheduleDraft):void {
   const errors=[...validateDealScheduleRows(schedule.rows),...scheduleDateIssues(schedule.rows)];
+  for(const row of schedule.rows){
+    if(!row.label.trim())errors.push('Milestone has an empty label: '+row.id);
+    if(row.amount!==undefined&&(!Number.isFinite(row.amount)||row.amount<0))
+      errors.push(row.label+': amount must be nonnegative and finite');
+    if(row.retainagePercent!==undefined&&(!Number.isFinite(row.retainagePercent)||
+      row.retainagePercent<0||row.retainagePercent>100))
+      errors.push(row.label+': invalid retainage percentage');
+  }
   if(errors.length)throw new Error(errors.join('; '));
 }
