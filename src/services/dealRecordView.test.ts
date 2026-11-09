@@ -20,7 +20,25 @@ describe('Deal record relationships', () => {
     expect(result.company?.id).toBe(company.id);
     expect(result.linkedQuotes.map(item => item.id)).toEqual([quote.id]);
     expect(result.quoteContacts.map(item => item.id)).toEqual([contact.id]);
+    expect(result.dealPeople.map(item=>item.id)).toEqual([contact.id]);
+    expect(result.companyPeople.map(item=>item.id)).toEqual([otherContact.id]);
     expect(result.directHistory.map(item => item.id)).toEqual(['quote','direct']);
+  });
+  it('includes people from direct multi-link activity metadata but never infers all company contacts',()=>{
+    const records=[
+      {id:'with-metadata',type:'manual-touchpoint',projectId:deal.id,
+       occurredAt:'2026-11-09T12:00:00Z',metadata:{relatedRecords:[
+        {type:'project',id:deal.id},{type:'contact',id:otherContact.id},
+       ]}},
+      {id:'company-only',type:'manual-touchpoint',companyId:company.id,
+       occurredAt:'2026-11-09T11:00:00Z',metadata:{relatedRecords:[
+        {type:'contact',id:'unknown'}, {type:'company',id:company.id},
+       ]}},
+    ] as Activity[];
+    const result=dealRecordView(deal,[company],[contact,otherContact],[],records);
+    expect(result.dealPeople.map(p=>p.id)).toEqual(['contact-2']);
+    expect(result.companyPeople.map(p=>p.id)).toEqual(['contact-1']);
+    expect(result.directHistory.map(a=>a.id)).toEqual(['with-metadata']);
   });
   it('ignores matching names, other deals, and archived quotes', () => {
     const unrelated = { ...quote, id: 'other', projectId: 'project-2', updatedAt: '2026-10-16' };
