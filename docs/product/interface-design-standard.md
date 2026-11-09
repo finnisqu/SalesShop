@@ -29,6 +29,7 @@ Preserve the compact, spreadsheet-forward direction that was approved for Connec
 | Area | Finding | Action |
 | --- | --- | --- |
 | Tasks, Quotes beta, Catalog, Notebook and Settings | `WorkspaceHeader` accepted Help but discarded the prop | Fixed: desktop contextual Help beside title; retain single global Help icon on mobile |
+| Deals Board, Accounts Board and Connections | Page Help was only global, so guidance missed the active section | Fixed: page-specific contextual Help in the shared header |
 | Connections and other workspace More menus | Active choices shaded but not always obvious; selected action could drop focus | Fixed: selected check, focus return on selection, uniform menu sizing and disabled style |
 | Connections table, reused task table | Toolbar and column controls had disparate sizing; focused rows lacked full-row feedback | Fixed: shared radius, height, column popover limits, keyboard focus/selection styling |
 | CRM and Tasks bulk edit | Primary/secondary controls differed from compact action patterns | Fixed: consistent modal fields and buttons; Cancel precedes Update in DOM and appearance |
