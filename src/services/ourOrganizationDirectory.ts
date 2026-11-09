@@ -36,6 +36,8 @@ export function ensureOurOrgCompany(group:RosterGroup,companies:readonly Company
  const id=resolve(spec.companyName,'non-customer');
  if(!id)throw new Error('Could not initialize the internal directory.');
  const company=companies.find(c=>c.id===id);
+ if(company&&!isOurOrgCompany(company))
+  throw new Error('An existing company matches this reserved directory. No existing company was converted.');
  const aliases=[...new Set([...(company?.aliases??[]),spec.marker])];
  update(id,{aliases});
  return id;
