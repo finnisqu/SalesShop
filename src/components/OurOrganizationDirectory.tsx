@@ -127,7 +127,7 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
     <button type="button" onClick={()=>{setShowEditor(false);setError('');}}>Cancel</button></div>
    <label>Name<input autoFocus required maxLength={180} value={draft.name}
     onChange={e=>setDraft(d=>({...d,name:e.target.value}))}/></label>
-   <label>Relationship<select value={draft.group} onChange={e=>setDraft(d=>({...d,group:e.target.value as RosterGroup}))}>
+   <label>Relationship<select value={draft.group} onChange={e=>setDraft(d=>({...d,group:e.target.value as RosterGroup,title:''}))}>
     {OUR_ORG_GROUPS.map(item=><option key={item.id} value={item.id}>{item.title.slice(0,-1)}</option>)}
    </select></label>
    <label>Role / trade
