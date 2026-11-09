@@ -275,3 +275,7 @@
  :root[data-sales-theme] .sales-app .connections-activity-filters select,
  :root[data-sales-theme] .sales-app .connections-activity-filters button{min-height:44px;font-size:16px}
 }
+
+.connections-data-table .connections-task-delete{font-size:11px;
+ color:var(--ss-theme-muted,#667785);border-color:var(--ss-theme-border,#cbd4d9)}
+.connections-data-table .connections-task-delete:hover{color:var(--ss-danger,#a34840)}
