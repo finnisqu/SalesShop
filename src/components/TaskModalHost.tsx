@@ -152,7 +152,7 @@ export function TaskModalHost(){
       {relatedQuote&&<button type="button" onClick={()=>{
        close();nav.openQuote(relatedQuote.id);
       }}>Open linked quote ↗</button>}
-      {canLog&&task.status!=='completed'&&task.status!=='canceled'&&
+      {canLog&&task.status!=='completed'&&task.status!=='canceled'&&subtaskProgress(task).remaining===0&&
        <button type="button" className="tasks-flow-action" onClick={()=>{
         close();openActivityComposer({taskId:task.id});
        }}>Complete + log activity</button>}
