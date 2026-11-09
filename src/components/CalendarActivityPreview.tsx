@@ -6,7 +6,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {ActivityRelatedQuickCreate} from './ActivityRelatedQuickCreate';
-import {isOurOrgCompany,ourOrgCompanyIds} from '../services/ourOrganizationDirectory';
+import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {TaskAssociationsField,type AssociationOption} from './TaskAssociationsField';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import type {PreviewRecord} from './RecordPreviewDrawer';
@@ -66,11 +66,10 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  });
 
  const options:AssociationOption[]=useMemo(()=>{
-  const internal=ourOrgCompanyIds(companies);
   return [
   ...people.map(p=>({key:'contact:'+p.id,
-   label:(internal.has(p.companyId??'')?'Team':'Person')+' · '+p.name,
-   linked:{type:'contact' as const,id:p.id,label:(internal.has(p.companyId??'')?'Team':'Person')+' · '+p.name}})),
+   label:'Person · '+p.name,
+   linked:{type:'contact' as const,id:p.id,label:'Person · '+p.name}})),
   ...companies.filter(c=>!isOurOrgCompany(c)).map(c=>({key:'company:'+c.id,label:'Company · '+c.name,
    linked:{type:'company' as const,id:c.id,label:'Company · '+c.name}})),
   ...deals.map(d=>({key:'project:'+d.id,label:'Deal · '+d.name,
