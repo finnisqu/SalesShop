@@ -1,4 +1,5 @@
 import { useCrmStore } from '../store/crmStore';
+import {usePersonalTaskStore} from '../store/personalTaskStore';
 import { commercialDocumentLabel, displayQuoteNumber, quoteTotal, type Quote, type QuoteStatus } from '../types/quote';
 import type { ActivityType, Project, ProjectStage } from '../types/crm';
 import {confirmedQuoteDeliveries,projectStageAfterDelivery,projectStageAfterIssue,QUOTE_DELIVERY_METHOD_LABELS,type QuoteDeliveryMethod} from './quoteDeliveryLifecycle';
@@ -205,6 +206,11 @@ export function recordQuoteDelivered(quote:Quote,method:QuoteDeliveryMethod):boo
     if(stage)getCrm().moveProject(project.id,stage,{
       source:'quote',quoteId:quote.id,quoteNumber:displayQuoteNumber(quote),
     });
+    // Issuing a quote is not delivery. Only this seller-confirmed delivery
+    // event (or ExternalQuoteSentForm's successful submission recording) can
+    // finish a generated bid-due Task, and only for an explicitly linked Deal.
+    if(quote.projectId===project.id)
+      usePersonalTaskStore.getState().completeDealSubmissionTasks(project.id);
   }
   return true;
 }
