@@ -18,7 +18,8 @@ const pages:Record<WorkspaceHelpPage,Article>={
  tasks:{name:'Tasks',intro:'Personal tasks connected to the rest of SalesShop.',tips:[
   {label:'Dates',text:'A due date never hides a task from All open. Start later is for work you do not plan to begin yet.'},
   {label:'Queue & Overview',text:'Filter by workstream, check daily totals, and open Calendar for dated tasks.'},
-  {label:'Quick changes',text:'On mobile, tap the title to preview, set priority inline, or tap Due today. Use bulk editing to update several tasks.'}]},
+  {label:'Quick changes',text:'On mobile, tap the title to preview, set priority inline, or tap Due today. Use bulk editing to update several tasks.'},
+  {label:'Two main views',text:'Open and Completed are the only primary tabs. Due today, Upcoming, Overdue, Start later, and Activity history remain available from More or Overview.'}]},
  board:{name:'Board',intro:'Deals and accounts organized into visual columns.',tips:[
   {label:'Preview',text:'Click a card name to see its record without leaving Board.'},
   {label:'Scroll',text:'Shift + mouse wheel moves across the whole Board, even over a column. Ordinary wheel scrolls within columns.'},
@@ -30,12 +31,14 @@ const pages:Record<WorkspaceHelpPage,Article>={
   {label:'Historical quotes',text:'Connections → Deals → Record external quote. Completed Deals retain their stage, totals and tasks when you enter an older quote.'},
   {label:'Quick actions',text:'On mobile, change company type or deal stage inline, call or email a contact, or open its full record directly.'},
   {label:'Activity links',text:'Open an Activity from Activity history to edit its People, Company, Deal or Quote links. Create missing records without leaving the logging form.'},
-  {label:'Our Organization',text:'Keep employees and subcontractors in their own internal directory, separate from customer People. Use Settings → Team to manage logins and permissions.'}]},
+  {label:'Our Organization',text:'Keep employees and subcontractors in their own directory. Add reusable roles via + Add role, and give subcontractors a linked external Company. This does not grant Team access.'},
+  {label:'Activity filters',text:'Combine Method, Relationship (Prospect/Customer/etc), Record type and When to find interactions such as recent phone calls with Prospects.'},
+  {label:'Suppliers',text:'Suppliers now live in Connections, separate from customers. Their specialized profiles, pricing history, locations and importing rules are preserved.'}]},
  notebook:{name:'Notebook',intro:'Pages, daily notes, and a linked agenda.',tips:[
   {label:'Daily pages',text:'A daily page is created when you use Notes on Home, not automatically every day.'},
   {label:'Linked agenda',text:'Keep calendar items alongside your notes without disrupting the page layout.'},
   {label:'Split view',text:'Use More to open or swap a second notebook page.'}]},
- catalog:{name:'Catalog',intro:'Materials, sinks, rates, suppliers, and classification tags.',tips:[
+ catalog:{name:'Catalog',intro:'Materials, sinks, rates and classification tags.',tips:[
   {label:'Browse',text:'Choose a Catalog section to inspect its prices, variants, or references.'},
   {label:'Compare',text:'Pin material variants to reveal the comparison board. It stays hidden with no pins.'},
   {label:'Pricing setup',text:'Rates and builder material levels help maintain standard selling prices.'}]},
@@ -69,7 +72,8 @@ const contexts:Record<WorkspaceHelpPage,Record<string,Tip>>={
   people:{label:'People',text:'Review contacts and the companies they belong to.'},
   deals:{label:'Deals',text:'Link companies, next actions, stages, quote documents and People connected by recorded activities or quotes.'},
   organization:{label:'Our Organization',text:'Add employee and subcontractor contact details here. These records are separate from external customer directories; Team logins remain in Settings.'},
-  activity:{label:'Activity history',text:'Open a logged interaction to edit its date, notes and linked records. Automatic events are view-only.'},
+  activity:{label:'Activity history',text:'Filter by method, relationship, event kind and date range. Open logged interactions to edit links and notes; automatic events are view-only.'},
+  suppliers:{label:'Suppliers',text:'Review supplier companies, primary contacts, warehouses, pricing publications, imported material costs and procurement rules without cluttering customer accounts.'},
   quotes:{label:'Quote metadata',text:'View document records and CRM links here; edit pricing in Quotes.'}},
  notebook:{
   pages:{label:'Pages',text:'Browse, search, and organize notebook pages.'},
@@ -78,7 +82,7 @@ const contexts:Record<WorkspaceHelpPage,Record<string,Tip>>={
   materials:{label:'Materials',text:'Expand products to see variants and supplier pricing.'},
   sinks:{label:'Sinks',text:'Browse sink models, variants, customer prices, and costs.'},
   rates:{label:'Rates',text:'Maintain fabrication, installation, and service rates.'},
-  suppliers:{label:'Suppliers',text:'Review vendors and their catalog price sources.'},
+  suppliers:{label:'Suppliers',text:'Open Suppliers under Connections. Existing Catalog supplier links redirect there.'},
   tags:{label:'Tags',text:'Use and define tags for materials and slab variants.'},
   other:{label:'Other — planned',text:'Accessories and shop consumables are not yet editable here.'}},
  settings:{
