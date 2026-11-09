@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {LinkExistingRecord,RecordNewCompany} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
+import {PersonDealRelationships} from './DealPersonRelationships';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
@@ -142,7 +143,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
         {isInternal&&<p className="connections-record-helper">
           Change an internal Person's Company from Our Organization to preserve their roster membership.</p>}
       </RecordCard>
-      <RecordCard title="Deals linked through quotes" extra={<span>{related.linkedDeals.length}</span>}>
+      <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
         <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
         <div className="connections-record-entity-list">
           {related.linkedDeals.map(({ project, quoteCount }) =>
@@ -152,7 +153,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             </button>)}
           {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
         </div>
-        <p className="connections-record-helper">A direct Deal–Person assignment is separate from quote-contact links and needs a shared relationship record. No interaction is fabricated.</p>
+        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject}/>
       </RecordCard>
       <RecordCard title="Quotes" extra={<span>{quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}</span>}>
        <div className="connections-record-entity-list">
