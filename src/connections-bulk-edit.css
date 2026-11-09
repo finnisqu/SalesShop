@@ -103,8 +103,6 @@
 
 /* Shared action hierarchy for Tasks/Connections bulk editors. */
 .connections-bulk-dialog footer{justify-content:flex-end}
-.connections-bulk-dialog footer .connections-bulk-primary{order:1}
-.connections-bulk-dialog footer button:not(.connections-bulk-primary){order:0}
 .connections-bulk-heading .ss-preview-close:is(:hover,:focus-visible){
  background:var(--ss-theme-tint,#edeae4);
 }
