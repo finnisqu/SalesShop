@@ -10,8 +10,9 @@ import {TaskBulkEditDialog,type TaskBulkChange} from './TaskBulkEditDialog';
 import {useWorkbookTableDensity} from '../services/workbookTableDensity';
 import {useDismissibleDetails} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
+import {TrashIcon} from './TrashIcon';
 export interface ConnectionColumn {key:string;label:string;}
-export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;}
+export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;isSelfCompany?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
  onBulkEdit?:(records:ConnectionTableRow[],change:BulkEditChange)=>Promise<void>;
@@ -207,7 +208,9 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
            aria-label={(pinned.includes(row.id)?'Unpin ':'Pin ')+row.name}
            onClick={()=>togglePin(row.id)} title={(pinned.includes(row.id)?'Unpin ':'Pin ')+row.name}><WorkspaceChromeIcon name="pin"/></button></td>
          {visible.map(col=><td key={col.key}>
-           {col.key==='name'?<button type="button" className="connections-table-open" onClick={()=>onOpen(row.id)}>{row.name}</button>
+           {col.key==='name'?<button type="button" className="connections-table-open" onClick={()=>onOpen(row.id)}>
+            {row.name}{tableKey==='companies'&&row.isSelfCompany&&<span className="connections-table-self-badge">SELF</span>}
+           </button>
              :tableKey==='tasks'&&col.key==='priority'?<span className={'tasks-priority is-'+(row.values.priority||'normal')}>
                {row.values.priority||'Normal'}</span>
              :(row.values[col.key]||'—')}
@@ -227,7 +230,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
              {row.values.status==='completed'||row.values.status==='canceled'?'Reopen':'Complete'}
            </button>}
            {onTaskDelete&&<button type="button" className="connections-task-delete"
-             aria-label={'Delete '+row.name} onClick={()=>onTaskDelete(row.id)}>Delete</button>}
+             aria-label={'Delete '+row.name} onClick={()=>onTaskDelete(row.id)}><TrashIcon/> Delete</button>}
            {onTaskDuePreset&&<select defaultValue="" aria-label={'Quick due date for '+row.name}
              disabled={row.values.status==='completed'||row.values.status==='canceled'}
              onChange={event=>{

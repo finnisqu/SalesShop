@@ -34,6 +34,6 @@ export function RecordTasksPanel({kind,id,name}:{kind:RelatedEntityKind;id:strin
    {!related.length&&<p className="connections-record-empty">No tasks linked yet.</p>}
   </div>
   {!preview&&Boolean(scope)&&storedScope===scope&&<button type="button"
-   className="connections-record-add" onClick={create}>+ Task</button>}
+   className="connections-record-add" onClick={create}>+ New Task</button>}
  </RecordCard>;
 }

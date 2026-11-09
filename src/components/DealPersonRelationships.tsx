@@ -82,7 +82,7 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson}:{
     disabled={busy} placeholder="Role (optional)" onChange={e=>setRole(e.target.value)}/>
    <button type="button" disabled={busy||!selected}
     onClick={()=>void update(async()=>{await manager.add(dealId,selected,role);
-      setSelected('');setRole('');})}>+ Link Person</button>
+      setSelected('');setRole('');})}>+ Link Existing Person</button>
   </div>}
   {error&&<p role="alert" className="ss-deal-relations-error">{error}</p>}
  </section>;
@@ -134,7 +134,7 @@ export function PersonDealRelationships({personId,deals,onOpenDeal}:{
      disabled={busy} placeholder="Role (optional)" onChange={e=>setRole(e.target.value)}/>
     <button type="button" disabled={!selected||busy}
      onClick={()=>void apply(async()=>{await manager.add(selected,personId,role);
-      setSelected('');setRole('');})}>+ Link Deal</button>
+      setSelected('');setRole('');})}>+ Link Existing Deal</button>
    </div>}
   {error&&<p role="alert" className="ss-deal-relations-error">{error}</p>}
  </section>;

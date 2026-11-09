@@ -443,3 +443,23 @@
 .sales-app.view-dashboard .connections-record-error{
   color:var(--ss-danger,#ad4242);font-size:12px;
 }
+
+/* Distinguish the signed-in organization's own Company without hiding it from CRM. */
+.sales-app.view-dashboard .connections-record-stage.is-self-company{
+ color:var(--ss-theme-accent,#476d80);
+ background:color-mix(in srgb,var(--ss-theme-accent,#476d80) 10%,var(--ss-theme-card,#fff));
+ border:1px solid color-mix(in srgb,var(--ss-theme-accent,#476d80) 36%,var(--ss-theme-border,#cbd4d9));
+}
+.sales-app.view-dashboard .connections-company-self-toggle{
+ display:flex;align-items:flex-start;gap:9px;min-width:0;
+ padding:10px 11px;border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-base);
+}
+.sales-app.view-dashboard .connections-company-self-toggle input[type="checkbox"]{
+ flex:0 0 auto;width:17px;height:17px;margin:2px 0 0;accent-color:var(--ss-theme-accent);
+}
+.sales-app.view-dashboard .connections-company-self-toggle span{display:grid;gap:3px;min-width:0}
+.sales-app.view-dashboard .connections-company-self-toggle strong{font-size:12px;color:var(--ss-theme-ink)}
+.sales-app.view-dashboard .connections-company-self-toggle small{
+ font-size:11px;color:var(--ss-theme-muted);line-height:1.4;
+}

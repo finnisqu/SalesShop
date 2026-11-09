@@ -10,6 +10,7 @@ import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
+import {TrashIcon} from './TrashIcon';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
@@ -549,7 +550,9 @@ export function TasksWorkspace(){
             </select>
             {state==='complete'&&<button type="button" onClick={()=>reopen(task.id)}>Reopen</button>}
             <button type="button" onClick={()=>setEditing(task)}>Edit</button>
-            <button type="button" onClick={()=>{if(window.confirm('Permanently delete this task record?'))remove(task.id);}}>Delete</button>
+            <button type="button" className="tasks-row-delete"
+              onClick={()=>{if(window.confirm('Delete this task? It will be removed from Tasks and Agenda.'))remove(task.id);}}>
+              <TrashIcon/> Delete</button>
           </div>
         </article>;
       })}
@@ -598,6 +601,10 @@ export function TasksWorkspace(){
         </div>}
        </div>
        <PreviewPanelActions className="ss-mobile-sheet-actions">
+        <button type="button" className="tasks-preview-delete" onClick={()=>{
+         if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
+         remove(viewing.id);setViewingId(null);
+        }}><TrashIcon/> Delete</button>
         {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&subtaskProgress(viewing).remaining===0&&
          <button type="button" className="tasks-flow-action" onClick={()=>{
           setViewingId(null);openActivityComposer({taskId:viewing.id});
@@ -607,10 +614,7 @@ export function TasksWorkspace(){
           onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
          {taskComplete(viewing)?'Reopen task':'Mark complete'}</button>
         <button type="button" className="tasks-primary" onClick={()=>{setViewingId(null);setEditing(viewing);}}>Edit task</button>
-        <button type="button" className="tasks-preview-delete" onClick={()=>{
-         if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
-         remove(viewing.id);setViewingId(null);
-        }}>Delete</button>
+
        </PreviewPanelActions>
       </section>
      </div>}

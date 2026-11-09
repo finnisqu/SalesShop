@@ -187,7 +187,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           {externalQuoteOpen?"Cancel external quote":"Record external quote"}
         </button>}
       {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
-      <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>
+      <button type="button" className="connections-record-primary" onClick={newQuote}>+ New Quote</button>
     </>}
     left={<>
       <RecordCard title="About this deal">
@@ -253,7 +253,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </button>)}
           {!related.linkedQuotes.length && <p className="connections-record-empty">No SalesShop quotes linked to this deal.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={newQuote}>+ New quote</button>
+        <button type="button" className="connections-record-add" onClick={newQuote}>+ New Quote</button>
         <LinkExistingRecord source={{kind:'deal',id:deal.id,name:deal.name}} target="quote"/>
         {outsideQuotes.length>0&&<div className="external-quote-history">
           <strong>Submitted with another tool or format</strong>
@@ -307,7 +307,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         </details>}
         {canEditCrm&&<>
           <button type="button" onClick={()=>{setPersonCreating(v=>!v);setPersonError('');}}>
-            {personCreating?'Cancel new person':'+ New person'}
+            {personCreating?'Cancel new person':'+ New Person'}
           </button>
           {personCreating&&<form className="ss-deal-person-form" onSubmit={createDealPerson}>
             <label>Name<input required autoFocus value={personName} onChange={e=>setPersonName(e.target.value)}/></label>

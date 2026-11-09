@@ -30,6 +30,20 @@ describe('Task agenda and quick-view polish',()=>{
   expect(bulk).toContain('Delete selected (');
   expect(read('src/store/personalTaskStore.ts')).toContain('deletedAt:now');
  });
+ it('uses a red trash icon at the left of both Task quick views and for bulk deletion',()=>{
+  const modal=read('src/components/TaskModalHost.tsx');
+  const page=read('src/components/TasksWorkspace.tsx');
+  const table=read('src/components/ConnectionsTable.tsx');
+  const bulk=read('src/components/TaskBulkEditDialog.tsx');
+  const css=read('src/tasks-workspace.css');
+  expect(modal).toContain('<TrashIcon/> Delete');
+  expect(page).toContain('<TrashIcon/> Delete');
+  expect(table).toContain('<TrashIcon/> Delete');
+  expect(bulk).toContain('<TrashIcon/> Delete selected');
+  expect(css).toContain('order:-1');
+  expect(css).toContain('var(--ss-danger');
+  expect(read('src/components/TrashIcon.tsx')).toContain('ss-trash-icon');
+ });
  it('keeps internal roster workbook inside standard centered Connections width',()=>{
   const css=read('src/our-organization.css');
   expect(css).toContain('.connections-directory-layout .our-org-directory');

@@ -171,7 +171,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
            contactName:person.name,contactEmail:person.email,
            companyId:person.companyId,companyName:related.company?.name});
           openQuote(id);
-        }}>+ New quote</button>
+        }}>+ New Quote</button>
        <LinkExistingRecord source={{kind:'person',id:person.id,name:displayName}} target="quote"/>
       </RecordCard>
     </>}

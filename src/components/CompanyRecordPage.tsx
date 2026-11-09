@@ -4,9 +4,10 @@ import {LinkExistingRecord,RecordNewDeal} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,RECORD_ADDED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
-import { companyAnnualPotential, companyEstimatedAnnualWork } from '../types/crm';
+import { companyAnnualPotential, companyEstimatedAnnualWork,type CompanyPatch } from '../types/crm';
 import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
- visibleCompanyAliases,type EditableCompanyRelationship} from '../services/companyRelationship';
+ isOurCompany,ourCompanyPatch,visibleCompanyAliases,type EditableCompanyRelationship}
+ from '../services/companyRelationship';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -47,6 +48,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const company = companies.find((candidate) => candidate.id === companyId);
   const [draft, setDraft] = useState({
     name: company?.name ?? '', relationship: company?companyRelationship(company):'unclassified' as const,
+    isSelf:company?isOurCompany(company):false,
     annualUnits: company?.annualUnits?.toString() ?? '',
     averageUnitValue: company?.averageUnitValue?.toString() ?? '',
     expectedSharePct: company?.expectedSharePct?.toString() ?? '',
@@ -63,7 +65,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   }, [companyId]);
   useEffect(() => {
     if (!editing && company) setDraft({
-      name: company.name, relationship: companyRelationship(company),
+      name: company.name, relationship: companyRelationship(company),isSelf:isOurCompany(company),
       annualUnits: company.annualUnits?.toString() ?? '',
       averageUnitValue: company.averageUnitValue?.toString() ?? '',
       expectedSharePct: company.expectedSharePct?.toString() ?? '',
@@ -97,10 +99,17 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     if(message){setEditError(message);return;}
     setEditError('');
     try{
+      // "Our Company" is a designation on this same CRM record, never a new
+      // customer/prospect or a separate duplicate internal company.
+      const relationshipPatch:CompanyPatch=draft.isSelf
+        ?companyRelationshipPatch(company,'partner')
+        :draft.relationship==='unclassified'?{}
+          :companyRelationshipPatch(company,draft.relationship as EditableCompanyRelationship);
       updateCompany(company.id, {
         name: draft.name.trim(),
-        ...(draft.relationship==='unclassified'?{}:
-          companyRelationshipPatch(company,draft.relationship as EditableCompanyRelationship)),
+        ...relationshipPatch,
+        ...ourCompanyPatch({aliases:relationshipPatch.aliases??company.aliases},draft.isSelf),
+        ...(draft.isSelf?{kind:'non-customer' as const}:{}),
         annualUnits: optionalNumber(draft.annualUnits),
         averageUnitValue: optionalNumber(draft.averageUnitValue),
         expectedSharePct: optionalNumber(draft.expectedSharePct),
@@ -136,10 +145,13 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
 
   return <RecordPageLayout entityType="company" title={company.name} onBack={onBack}
     subtitle={companyRelationshipLabel(company)}
-    badge={<><span className="connections-record-stage">{companyRelationshipLabel(company)}</span><span>{related.relatedProjects.length} deals</span><span>{related.relatedQuotes.length} linked quotes</span></>}
+    badge={<><span className={'connections-record-stage'+(isOurCompany(company)?' is-self-company':'')}>
+      {isOurCompany(company)?'SELF · Our Company':companyRelationshipLabel(company)}
+      </span><span>{related.relatedProjects.length} deals</span>
+      <span>{related.relatedQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(current=>!current);}}>{editing ? 'Cancel editing' : 'Edit company'}</button>
-      {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New quote</button>}
+      {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New Quote</button>}
     </>}
     left={<>
       <RecordCard title="About this company">
@@ -148,13 +160,20 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <RecordEditField label="Company name" required error={editError==='Enter a company name.'?editError:undefined}>
             {control=><input {...control} autoFocus value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
           </RecordEditField>
-          <label>Relationship<select value={draft.relationship}
+          <label className="connections-company-self-toggle">
+            <input type="checkbox" checked={draft.isSelf}
+              onChange={event=>setDraft({...draft,isSelf:event.target.checked})}/>
+            <span><strong>This is our company</strong>
+              <small>Keep this Company in Connections with a SELF label, separate from Prospects and Customers.</small>
+            </span>
+          </label>
+          {!draft.isSelf&&<label>Relationship<select value={draft.relationship}
             onChange={event=>setDraft({...draft,relationship:event.target.value as EditableCompanyRelationship})}>
             <option value="unclassified" disabled>Not classified</option>
             <option value="prospect">Prospect</option>
             <option value="customer">Customer</option>
             <option value="partner">Partner / other</option>
-          </select></label>
+          </select></label>}
           <label>Annual units<input type="number" min="0" step="1" value={draft.annualUnits} onChange={(event) => setDraft({ ...draft, annualUnits: event.target.value })} /></label>
           <label>Average revenue / unit<input type="number" min="0" step="0.01" value={draft.averageUnitValue} onChange={(event) => setDraft({ ...draft, averageUnitValue: event.target.value })} /></label>
           <label>Expected share (%)<input type="number" min="0" max="100" step="0.1" value={draft.expectedSharePct} onChange={(event) => setDraft({ ...draft, expectedSharePct: event.target.value })} /></label>
@@ -165,6 +184,9 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Relationship">{companyRelationshipLabel(company)}</RecordProperty>
+          {isOurCompany(company)&&<p className="connections-record-helper">
+            This is your company's own CRM record. Future email/domain integrations can reference it without treating it as a customer.
+          </p>}
           <RecordProperty label="Created">{dateLabel(company.createdAt)}</RecordProperty>
           <RecordProperty label="Last updated">{dateLabel(company.updatedAt)}</RecordProperty>
         </div>}
@@ -210,7 +232,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </button>)}
           {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its deals.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={newQuote}>+ New quote</button>
+        <button type="button" className="connections-record-add" onClick={newQuote}>+ New Quote</button>
         <LinkExistingRecord source={{kind:'company',id:company.id,name:company.name}} target="quote"/>
       </RecordCard>
 
@@ -229,7 +251,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </article>)}
           {!related.relatedContacts.length && <p className="connections-record-empty">No people linked yet.</p>}
         </div>
-        <button type="button" className="connections-record-add" onClick={() => setAddingContact((value) => !value)}>{addingContact ? 'Cancel' : '+ Add person'}</button>
+        <button type="button" className="connections-record-add" onClick={() => setAddingContact((value) => !value)}>{addingContact ? 'Cancel' : '+ New Person'}</button>
         {addingContact && <form className="connections-record-edit-form" noValidate onChange={()=>setContactError('')} onSubmit={addContact}>
           <label>Name<input autoFocus value={contactName} onChange={(event) => setContactName(event.target.value)} /></label>
           <RecordEditField label="Email" error={contactError==='Enter a valid email address.'?contactError:undefined}>

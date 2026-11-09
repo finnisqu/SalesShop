@@ -467,3 +467,35 @@
  margin-right:auto;color:var(--ss-danger,#a34840);background:transparent;
  border:1px solid var(--ss-theme-border,#cad2d8);
 }
+
+/* Consistent destructive Task affordance: red trash + left-anchored quick-view action. */
+.tasks-preview-card>footer.ss-mobile-sheet-actions>button.tasks-preview-delete{
+ order:-1;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ flex:0 0 auto;margin-right:auto;
+ color:var(--ss-danger,#c44a46);
+ background:color-mix(in srgb,var(--ss-danger,#c44a46) 9%,var(--ss-theme-card,transparent));
+ border:1px solid color-mix(in srgb,var(--ss-danger,#c44a46) 42%,var(--ss-theme-border,#cbd4d9));
+ font-weight:750;
+}
+.tasks-preview-card>footer.ss-mobile-sheet-actions>button.tasks-preview-delete:hover{
+ color:var(--ss-danger,#c44a46);
+ background:color-mix(in srgb,var(--ss-danger,#c44a46) 15%,var(--ss-theme-card,transparent));
+ border-color:var(--ss-danger,#c44a46);
+}
+.tasks-row-actions button.tasks-row-delete,.connections-bulk-dialog button.tasks-bulk-delete{
+ display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ color:var(--ss-danger,#c44a46);
+ background:color-mix(in srgb,var(--ss-danger,#c44a46) 8%,var(--ss-theme-card,transparent));
+ border:1px solid color-mix(in srgb,var(--ss-danger,#c44a46) 42%,var(--ss-theme-border,#cbd4d9));
+ border-radius:8px;font-weight:750;
+}
+.tasks-row-actions button.tasks-row-delete:hover,.connections-bulk-dialog button.tasks-bulk-delete:hover{
+ background:color-mix(in srgb,var(--ss-danger,#c44a46) 15%,var(--ss-theme-card,transparent));
+ border-color:var(--ss-danger,#c44a46);
+}
+.ss-trash-icon{display:inline-block;vertical-align:middle;flex:none}
+@media(max-width:700px){
+ .tasks-preview-card>footer.ss-mobile-sheet-actions>button.tasks-preview-delete{
+  flex:0 0 auto;min-height:44px;margin-right:auto;
+ }
+}

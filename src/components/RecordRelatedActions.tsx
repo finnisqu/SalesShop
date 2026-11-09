@@ -63,11 +63,12 @@ export function LinkExistingRecord({source,target,label,onLinked}:{
   (source.kind==='person'&&['company','quote'].includes(target))||
   (source.kind==='deal'&&['company','quote'].includes(target));
  if(!supported||!eligible)return null;
- const targetLabel=label??(target==='person'?'person':target);
+ const targetLabel=label??(target==='person'?'Person':target==='company'?'Company':
+  target==='deal'?'Deal':'Quote');
  return <div className="ss-record-link-existing">
   <button type="button" className="connections-record-add"
    aria-expanded={open} onClick={()=>{setOpen(v=>!v);setError('');setId('');}}>
-   {open?'Cancel link':'Link existing '+targetLabel}
+   {open?'Cancel link':'+ Link Existing '+targetLabel}
   </button>
   {open&&<div className="ss-record-link-inline" role="group" aria-label={'Link existing '+targetLabel}>
    <select aria-label={'Choose '+targetLabel} value={id} onChange={e=>setId(e.target.value)}>
@@ -106,7 +107,7 @@ export function RecordNewDeal({companyId,companyName,onCreated}:{
  };
  return <div className="ss-record-link-existing">
   <button type="button" className="connections-record-add"
-   onClick={()=>{setOpen(v=>!v);setError('');}}>{open?'Cancel new deal':'+ Add Deal'}</button>
+   onClick={()=>{setOpen(v=>!v);setError('');}}>{open?'Cancel new deal':'+ New Deal'}</button>
   {open&&<div className="ss-record-link-inline" role="group" aria-label="Create Deal">
    <input aria-label="New Deal name" value={name} maxLength={180}
     placeholder={'New Deal at '+companyName}
@@ -154,7 +155,7 @@ export function RecordNewCompany({source,onCreated}:{
  };
  return <div className="ss-record-link-existing">
   <button type="button" className="connections-record-add"
-    onClick={()=>{setOpen(v=>!v);setError('');}}>{open?'Cancel new company':'+ New company'}</button>
+    onClick={()=>{setOpen(v=>!v);setError('');}}>{open?'Cancel new company':'+ New Company'}</button>
   {open&&<div role="group" aria-label="Create and link company" className="ss-record-link-inline">
    <input aria-label="Company name" placeholder="Company name" maxLength={180}
     value={name} onChange={e=>setName(e.target.value)}
