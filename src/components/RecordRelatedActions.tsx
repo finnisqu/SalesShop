@@ -5,6 +5,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
+import {companyRelationshipPatch} from '../services/companyRelationship';
 import {RecordCard} from './RecordPageLayout';
 import '../record-related-actions.css';
 
@@ -140,7 +141,7 @@ export function RecordNewCompany({source,onCreated}:{
    if(!id)throw new Error('Unable to create Company.');
    if(!before.has(id)){
     const created=useCrmStore.getState().companies.find(c=>c.id===id);
-    if(created)update(id,{aliases:[...(created.aliases??[]),'__ss_account_prospect_v1__']});
+    if(created)update(id,companyRelationshipPatch(created,'prospect'));
    }
    if(source.kind==='person')updatePerson(source.id,{companyId:id});
    else setDealCompany(source.id,id);
