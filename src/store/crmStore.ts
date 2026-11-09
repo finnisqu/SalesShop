@@ -488,7 +488,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     if(!current||!Number.isFinite(amount)||amount<0||
        !/^\d{4}-\d{2}-\d{2}$/.test(bidSentDate)||
        Number.isNaN(new Date(bidSentDate+'T12:00:00').getTime())||
-       bidSentDate>new Date().toLocaleDateString('en-CA'))return false;
+       new Date(bidSentDate+'T00:00:00').getTime()>Date.now())return false;
     const historical=['Closed Won','Completed','Closed Lost','Discarded'].includes(current.stage);
     // Preserve more advanced stages if a previous bid was already recorded.
     const requestedStage:ProjectStage=
