@@ -460,8 +460,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          {badges.map((slot,i)=>canDrillIntoBadges
           ?<button type="button" key={i} className="home-calendar-badge-action"
             style={{backgroundColor:badgeColor(slot.color)}}
-            aria-label={slot.count+' '+badgeLabel(slot.metric)+' on '+dateLabel(key)+'. View records'}
-            title={'View '+badgeLabel(slot.metric)}
+            aria-label={slot.count+' '+badgeLabel(slot.metric)+' on '+dateLabel(key)+'. Highlight in agenda'}
+            title={'Highlight '+badgeLabel(slot.metric)+' in agenda'}
             onClick={()=>{
              setSelected(key);setBadgeFocus({date:key,metric:slot.metric});
              if(!inMonth){const date=new Date(key+'T12:00:00');
