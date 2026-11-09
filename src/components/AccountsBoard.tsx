@@ -24,6 +24,7 @@ import { MobileBoardStagePicker } from './MobileBoardStagePicker';
 import { Button } from '../design-system/components';
 import {BoardQuickCreate} from './BoardQuickCreate';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 
@@ -248,7 +249,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   return (
     <main className={'board-view accounts-view'+(compactCards?' is-compact':'')}>
       <WorkspaceHeader className="board-header-panel accounts-header-panel board-foundation-header"
-        title="Accounts" mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Accounts'}]}
+        title="Accounts" help={<WorkspaceHelp page="board" section="accounts"/>} mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Accounts'}]}
         mobileTabValue="accounts" onMobileTabChange={value=>{if(value==='projects')onShowProjects();}}
         tabs={<div className="board-view-toggle" role="group" aria-label="Board type">
           <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Deals</Button>
