@@ -9,6 +9,7 @@ import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {isOurOrgCompany,ourOrgGroup,isOurOrgContact,rosterGroupForContact} from '../services/ourOrganizationDirectory';
+import {isOurCompany} from '../services/companyRelationship';
 
 const dateLabel = (value: string) => {
   const date = new Date(value);
@@ -82,9 +83,11 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   };
   const displayName = person.name || person.email || 'Unnamed contact';
   const isInternal=isOurOrgContact(person,companies);
+  const ownCompany=companies.find(isOurCompany);
+  const associatedOwnCompany=isInternal?ownCompany:undefined;
 
   return <RecordPageLayout entityType="person" title={displayName} onBack={onBack}
-    subtitle={[person.title, isInternal?'Our Organization':related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
+    subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
     actions={<button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(value=>!value);}}>
       {editing ? 'Cancel editing' : 'Edit person'}
@@ -120,7 +123,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           <RecordProperty label="Job title">{person.title || 'Not set'}</RecordProperty>
           <RecordProperty label="Email">{person.email || 'Not set'}</RecordProperty>
           <RecordProperty label="Phone">{person.phone || 'Not set'}</RecordProperty>
-          <RecordProperty label="Company">{isInternal&&rosterGroupForContact(person,companies)==='employees'?'Our Organization':related.company?.name||'Not assigned'}</RecordProperty>
+          <RecordProperty label="Company">{associatedOwnCompany?.name??(isInternal&&rosterGroupForContact(person,companies)==='employees'?
+              'Our Organization':related.company?.name||'Not assigned')}</RecordProperty>
           <RecordProperty label="Created">{dateLabel(person.createdAt)}</RecordProperty>
           <RecordProperty label="Updated">{dateLabel(person.updatedAt)}</RecordProperty>
         </div>}
@@ -128,13 +132,19 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
     </>}
     center={<>
       <RecordCard title="Company">
-        {related.company ? <div className="connections-record-entity-list">
-          {isInternal?<button type="button" onClick={onBack}>
-            <strong>Our Organization</strong><small>Return to internal employee and subcontractor directory →</small>
-          </button>:<button type="button" onClick={() => openCompany(related.company!.id)}>
-            <strong>{related.company.name}</strong>
-            <small>{related.company.kind === 'customer' ? 'Customer / prospect' : 'Partner / other'} · View company record →</small>
+        {(related.company||associatedOwnCompany) ? <div className="connections-record-entity-list">
+          {associatedOwnCompany&&<button type="button" onClick={()=>openCompany(associatedOwnCompany.id)}>
+            <strong>{associatedOwnCompany.name} · SELF</strong>
+            <small>Our Organization · View company record →</small>
           </button>}
+          {related.company&&!isOurOrgCompany(related.company)&&related.company.id!==associatedOwnCompany?.id&&
+           <button type="button" onClick={()=>openCompany(related.company!.id)}>
+             <strong>{related.company.name}</strong>
+             <small>{isInternal?'Subcontractor firm':'Associated company'} · View company record →</small>
+           </button>}
+          {isInternal&&!associatedOwnCompany&&<p className="connections-record-helper">
+            Listed in Our Organization. Mark your company SELF to connect its record automatically.
+          </p>}
         </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
         {!isInternal&&<>
           <RecordNewCompany source={{kind:'person',id:person.id}}/>
