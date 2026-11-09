@@ -540,7 +540,8 @@ export function Connections() {
               No quote metadata matches. Check My Sales Documents or your search.
             </StatusText>}
           </section>}
-          {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query} createRequest={orgCreateRequest}/>}
+          {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}
+            createRequest={orgCreateRequest} onCreateConsumed={()=>setOrgCreateRequest(0)}/>}
           {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
             <p className="connections-count">{activityRows.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
             <div className="connections-activity-list">
