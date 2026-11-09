@@ -9,8 +9,9 @@ import '../our-organization.css';
 
 interface Draft{name:string;email:string;phone:string;title:string;group:RosterGroup;}
 const empty=(group:RosterGroup):Draft=>({name:'',email:'',phone:'',title:'',group});
-export function OurOrganizationDirectory({onOpenPerson,query,createRequest}:{
+export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCreateConsumed}:{
  onOpenPerson:(id:string)=>void;query:string;createRequest:number;
+ onCreateConsumed:()=>void;
 }){
  const companies=useCrmStore(s=>s.companies);
  const contacts=useCrmStore(s=>s.contacts);
@@ -33,7 +34,8 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest}:{
  useEffect(()=>{
   if(!createRequest||!editable)return;
   setDraft(empty(group));setEditingId(null);setShowEditor(true);setError('');
- },[createRequest,editable,group]);
+  onCreateConsumed();
+ },[createRequest,editable,group,onCreateConsumed]);
  const beginEdit=(contactId:string)=>{
   const person=contacts.find(c=>c.id===contactId);if(!person)return;
   const current=companies.find(c=>c.id===person.companyId);
