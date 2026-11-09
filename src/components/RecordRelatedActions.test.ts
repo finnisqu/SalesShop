@@ -5,56 +5,51 @@ const read=(name:string)=>readFileSync(join(process.cwd(),name),'utf8');
 const company=read('src/components/CompanyRecordPage.tsx');
 const person=read('src/components/PersonRecordPage.tsx');
 const deal=read('src/components/DealRecordPage.tsx');
-const link=read('src/components/RecordRelatedActions.tsx');
+const relation=read('src/components/RecordRelatedActions.tsx');
 const tasks=read('src/components/RecordTasksPanel.tsx');
+const picker=read('src/components/UnifiedRecordPicker.tsx');
 
-describe('CRM record page linking and private Tasks',()=>{
- it('offers Company Add Deal and link-existing controls without manufacturing activities',()=>{
-  expect(company).toContain('<RecordNewDeal companyId={company.id}');
-  for(const kind of ['person','deal','quote']){
-   expect(company).toContain('target="'+kind+'"');
-  }
-  expect(link).toContain('setProjectCompany(id,source.id)');
-  expect(link).toContain('updateContact(id,{companyId:source.id})');
-  expect(link).not.toContain('recordActivity(');
- });
- it('offers Person Company/Quote links and preserves internal roster access',()=>{
+describe('Unified CRM Add existing / Create new actions',()=>{
+ it('uses one searchable picker for all core Company/Person/Deal links',()=>{
+  expect(company).toContain('target="deal"');
+  expect(company).toContain('target="quote"');
+  expect(company).toContain('target="person"');
+  expect(company).toContain('<RecordRelationshipPicker');
   expect(person).toContain('target="company"');
   expect(person).toContain('target="quote"');
-  expect(person).toContain('Change an internal Person');
-  expect(person).toContain('<RecordNewCompany source={{kind:\'person\'');
- });
- it('offers Deal Company and Quote links, and all records include Tasks',()=>{
   expect(deal).toContain('target="company"');
   expect(deal).toContain('target="quote"');
-  for(const [file,kind] of [[company,'company'],[person,'person'],[deal,'deal']] as const){
-   expect(file).toContain('<RecordTasksPanel kind="'+kind+'"');
-  }
-  expect(tasks).toContain("requestTaskModal({mode:'create'");
-  expect(tasks).toContain('normalizedTaskAssociations(task)');
+  expect(picker).toContain('type="search"');
+  expect(picker).toContain('+ Create New ');
+  expect(picker).toContain('onLink(option.id)');
+  expect(relation).toContain('setProjectCompany(id,source.id)');
+  expect(relation).toContain('updateContact(id,{companyId:source.id})');
+  expect(relation).not.toContain('recordActivity(');
  });
- it('distinguishes + New from + Link Existing with consistent labels',()=>{
-  expect(link).toContain("'+ Link Existing '+targetLabel");
-  expect(link).toContain("'+ New Deal'");
-  expect(link).toContain("'+ New Company'");
-  expect(tasks).toContain('>+ New Task</button>');
-  expect(company).toContain("'+ New Person'");
-  expect(company).toContain('>+ New Quote</button>');
-  expect(deal).toContain("'+ New Person'");
-  expect(deal).toContain('>+ New Quote</button>');
-  expect(person).toContain('>+ New Quote</button>');
+ it('links/creates direct Deal People without creating fake Activity records',()=>{
+  const direct=read('src/components/DealPersonRelationships.tsx');
+  expect(direct).toContain('<UnifiedRecordPicker kind="Person"');
+  expect(direct).toContain('<UnifiedRecordPicker kind="Deal"');
+  expect(direct).toContain("await manager.add(dealId,id,role)");
+  expect(direct).toContain("await manager.add(id,personId,role)");
+  expect(direct).not.toContain('recordActivity(');
+  expect(tasks).toContain('<UnifiedRecordPicker kind="Task"');
+  expect(tasks).toContain("requestTaskModal({mode:'create',title");
+  expect(tasks).toContain("normalizedTaskAssociations(task)");
  });
- it('retains the company SELF designation without turning it into a customer',()=>{
+ it('retains SELF Company membership and hides identity behind advanced edit section',()=>{
+  expect(company).toContain('Company identity');
   expect(company).toContain('This is our company');
   expect(company).toContain('ourCompanyPatch');
-  expect(company).toContain("kind:'non-customer' as const");
+  expect(company).toContain('ourOrgPeople(contacts,companies)');
+  const roster=read('src/components/OurOrganizationDirectory.tsx');
+  expect(roster).toContain('View {ownCompany.name} · SELF');
   const list=read('src/components/Connections.tsx');
   expect(list).toContain('<option value="self">Our Company (SELF)</option>');
-  expect(list).toContain('isSelfCompany:isOurCompany(c)');
-  expect(read('src/components/ConnectionsTable.tsx')).toContain('connections-table-self-badge');
  });
- it('does not silently reassign issued quote contracts',()=>{
-  expect(link).toContain("q.status==='Draft'||q.status==='Ready'");
-  expect(link).toContain('Only editable draft Quotes can be reassigned');
+ it('protects issued/signed quotes from quick reassignment',()=>{
+  expect(relation).toContain("['Draft','Ready'].includes(q.status)");
+  expect(relation).toContain('Only Draft/Ready Quotes can be reassigned');
+  expect(picker).toContain('Matching existing records');
  });
 });
