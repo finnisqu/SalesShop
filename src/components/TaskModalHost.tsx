@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {MobileSheetHandle} from './MobileSheetHandle';
+import {TrashIcon} from './TrashIcon';
 import {TaskEditor} from './TasksWorkspace';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskChanges,type TaskLink,normalizedSubtasks,subtaskProgress} from '../store/personalTaskStore';
@@ -142,6 +143,10 @@ export function TaskModalHost(){
       </div>}
      </div>
      <footer className="ss-mobile-sheet-actions">
+      <button type="button" className="tasks-preview-delete" onClick={()=>{
+       if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
+       remove(task.id);close();
+      }}><TrashIcon/> Delete</button>
       {task.sourceObjectId?.startsWith('home-note:')&&
         homeNotes(notebookEntries).some(note=>
          note.objectId===task.sourceObjectId?.slice('home-note:'.length))&&
@@ -164,10 +169,7 @@ export function TaskModalHost(){
       }}>{task.status==='completed'?'Reopen':'Mark complete'}</button>
       <button type="button" className="tasks-primary"
        onClick={()=>setRequest({mode:'edit',id:task.id})}>Edit task</button>
-      <button type="button" className="tasks-preview-delete" onClick={()=>{
-       if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
-       remove(task.id);close();
-      }}>Delete</button>
+
      </footer>
     </section>
    </div>:null}
