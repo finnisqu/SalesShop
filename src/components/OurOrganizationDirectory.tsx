@@ -62,7 +62,7 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
   const same=contacts.find(c=>c.id!==editingId&&
    ((draft.email.trim()&&c.email?.toLowerCase()===draft.email.trim().toLowerCase())||
     (c.name.trim().toLowerCase()===draft.name.trim().toLowerCase()&&
-     companies.some(company=>company.id===c.companyId&&ourOrgGroup(company)===draft.group))));
+     rosterGroupForContact(c,companies)===draft.group)));
   if(same){setError('A person with this name or email already exists. Check the directory first.');return;}
   setError('');
   try{
@@ -71,11 +71,10 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
    // People belong to Our Organization by membership, while a subcontractor's
    // actual company remains a normal, linkable non-customer CRM Company.
    if(draft.group==='subcontractors'&&draft.companyName.trim()){
-    const existing=useCrmStore.getState().companies;
     const name=draft.companyName.trim();
     const resolved=resolveCompany(name,'non-customer');
     if(!resolved)throw new Error('Could not link the subcontractor company.');
-    if(!existing.some(c=>c.id===resolved)&&resolved===groupId)
+    if(useCrmStore.getState().companies.some(c=>c.id===resolved&&ourOrgGroup(c)))
       throw new Error('Choose a subcontractor company outside Our Organization.');
     companyId=resolved;
    }
