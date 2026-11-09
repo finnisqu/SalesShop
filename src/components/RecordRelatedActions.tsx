@@ -114,3 +114,48 @@ export function RecordNewDeal({companyId,companyName,onCreated}:{
   </div>}
  </div>;
 }
+
+export function RecordNewCompany({source,onCreated}:{
+ source:{kind:'person'|'deal';id:string};onCreated?:(id:string)=>void;
+}){
+ const [open,setOpen]=useState(false),[name,setName]=useState(''),[error,setError]=useState('');
+ const resolve=useCrmStore(s=>s.resolveCompany),update=useCrmStore(s=>s.updateCompany);
+ const updatePerson=useCrmStore(s=>s.updateContact);
+ const setDealCompany=useCrmStore(s=>s.setProjectCompany);
+ const companies=useCrmStore(s=>s.companies);
+ const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
+  user=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
+  department=useAuthStore(s=>s.teamDepartment);
+ const perspective=useRolePerspectiveStore(s=>s.activePerspective);
+ const eligible=!perspective&&(mode==='local'||Boolean(org&&user&&canEditTeamArea(role,department,'crm')));
+ if(!eligible)return null;
+ const save=()=>{
+  const cleaned=name.trim();if(!cleaned)return;
+  if(companies.some(c=>c.name.toLowerCase()===cleaned.toLowerCase())){
+   setError('That Company already exists. Use Link existing instead.');return;
+  }
+  try{
+   const before=new Set(companies.map(c=>c.id));
+   const id=resolve(cleaned,'customer');
+   if(!id)throw new Error('Unable to create Company.');
+   if(!before.has(id)){
+    const created=useCrmStore.getState().companies.find(c=>c.id===id);
+    if(created)update(id,{aliases:[...(created.aliases??[]),'__ss_account_prospect_v1__']});
+   }
+   if(source.kind==='person')updatePerson(source.id,{companyId:id});
+   else setDealCompany(source.id,id);
+   setName('');setOpen(false);onCreated?.(id);
+  }catch(e){setError(e instanceof Error?e.message:'Unable to create Company.');}
+ };
+ return <div className="ss-record-link-existing">
+  <button type="button" className="connections-record-add"
+    onClick={()=>{setOpen(v=>!v);setError('');}}>{open?'Cancel new company':'+ New company'}</button>
+  {open&&<div role="group" aria-label="Create and link company" className="ss-record-link-inline">
+   <input aria-label="Company name" placeholder="Company name" maxLength={180}
+    value={name} onChange={e=>setName(e.target.value)}
+    onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();save();}}}/>
+   <button type="button" disabled={!name.trim()} onClick={save}>Create & link</button>
+   {error&&<p role="alert">{error}</p>}
+  </div>}
+ </div>;
+}
