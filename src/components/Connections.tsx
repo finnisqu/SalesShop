@@ -37,6 +37,8 @@ import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,visibleCompanyAliases,type CompanyRelationship,
  type EditableCompanyRelationship} from '../services/companyRelationship';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
+import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
+ type ActivityLogFilters} from '../services/activityLogFilters';
 
 type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'quotes' | 'activity';
 type CompanyFilter = CompanyRelationship | 'all';
@@ -112,6 +114,7 @@ export function Connections() {
    return()=>window.removeEventListener('salesshop:open-activity-history',show);
   },[]);
   const [query, setQuery] = useState('');
+  const [activityFilters,setActivityFilters]=useState<ActivityLogFilters>(DEFAULT_ACTIVITY_LOG_FILTERS);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [activityPreview,setActivityPreview]=useState<string|null>(null);
   const [orgCreateRequest,setOrgCreateRequest]=useState(0);
@@ -212,11 +215,14 @@ export function Connections() {
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[visibleQuotes,projectsById,needle]);
   const activityRows = useMemo(() => [...activities]
     .filter(a=>!(a.type==='contact-created'&&internalCompanyIds.has(a.companyId??'')))
+    .filter(activity=>matchesActivityFilters(activity,activityFilters,companies,contacts,
+      projects,visibleQuotes,person=>isOurOrgContact(person,companies)))
     .filter((activity) => findText(activity.summary, activity.type,
       companiesById.get(activity.companyId ?? '')?.name,
       projectsById.get(activity.projectId ?? '')?.name).includes(needle))
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
-    .slice(0, 150), [activities, companiesById, projectsById,internalCompanyIds, needle]);
+    .slice(0, 150), [activities, companiesById, projectsById,internalCompanyIds,
+      activityFilters,companies,contacts,projects,visibleQuotes,needle]);
 
   const companyTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='companies'?companyRows.map(c=>({
     id:c.id,name:c.name,association:{type:'company',id:c.id,label:'Company · '+c.name},
@@ -572,6 +578,51 @@ export function Connections() {
           </section>}
           {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}
             createRequest={orgCreateRequest} onCreateConsumed={()=>setOrgCreateRequest(0)}/>}
+          {tab==='activity'&&<section className="connections-activity-filters" aria-label="Filter Activity history">
+            <label>Method
+              <select value={activityFilters.method} onChange={e=>setActivityFilters(f=>({
+                ...f,method:e.target.value as ActivityLogFilters['method']}))}>
+               <option value="all">Any method</option>
+               <option value="call">Phone calls</option>
+               <option value="email">Email</option>
+               <option value="text">Text</option>
+               <option value="video-call">Video call</option>
+               <option value="in-person">In person</option>
+              </select>
+            </label>
+            <label>Relationship
+              <select value={activityFilters.audience} onChange={e=>setActivityFilters(f=>({
+                ...f,audience:e.target.value as ActivityLogFilters['audience']}))}>
+               <option value="all">All relationships</option>
+               <option value="prospect">Prospects</option>
+               <option value="customer">Customers</option>
+               <option value="partner">Partners / other</option>
+               <option value="unclassified">Unclassified</option>
+               <option value="internal">Our Organization</option>
+               <option value="unlinked">No identified company</option>
+              </select>
+            </label>
+            <label>Record type
+              <select value={activityFilters.kind} onChange={e=>setActivityFilters(f=>({
+                ...f,kind:e.target.value as ActivityLogFilters['kind']}))}>
+               <option value="all">All events</option>
+               <option value="interactions">Logged interactions</option>
+               <option value="system">System history</option>
+              </select>
+            </label>
+            <label>When
+              <select value={activityFilters.period} onChange={e=>setActivityFilters(f=>({
+                ...f,period:e.target.value as ActivityLogFilters['period']}))}>
+               <option value="all">Any date</option>
+               <option value="7">Last 7 days</option>
+               <option value="30">Last 30 days</option>
+               <option value="90">Last 90 days</option>
+              </select>
+            </label>
+            <button type="button" disabled={JSON.stringify(activityFilters)===
+              JSON.stringify(DEFAULT_ACTIVITY_LOG_FILTERS)}
+              onClick={()=>setActivityFilters(DEFAULT_ACTIVITY_LOG_FILTERS)}>Clear filters</button>
+           </section>}
           {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
             <p className="connections-count">{activityRows.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
             <div className="connections-activity-list">
