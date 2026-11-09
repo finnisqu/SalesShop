@@ -125,7 +125,7 @@ function emptyRule(supplierId: string, sortOrder: number): SupplierRule {
   return { id: `supplier_rule_${crypto.randomUUID()}`, supplierId, ruleType: 'General', ruleText: '', active: true, notes: '', sortOrder };
 }
 
-export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
+export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{externalQuery?:string;embeddedInConnections?:boolean}={}) {
   const materials = useCompanySettingsStore((state) => state.settings.stockMaterials);
   const updateSettings = useCompanySettingsStore((state) => state.update);
   const [profiles, setProfiles] = useState<SupplierProfile[]>([]);
@@ -404,7 +404,7 @@ export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
 
   return (
     <>
-      <section className={'supplier-directory-page'+(directoryOpen?' is-active':'')} aria-label="Supplier directory">
+      {directoryOpen&&<section className="supplier-directory-page" aria-label="Supplier directory">
         <header className="supplier-directory-heading">
           <div>
             <h2>Suppliers</h2>
@@ -452,9 +452,9 @@ export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
             No suppliers match. Clear the search or select another status.
           </p>}
         </div>
-      </section>
-      <div className={'supplier-workbench'+(directoryOpen?' is-directory-hidden':' is-record-mode')}>
-      <aside className="supplier-navigator">
+      </section>}
+      {!directoryOpen&&<div className="supplier-workbench is-record-mode">
+      {!embeddedInConnections&&<aside className="supplier-navigator">
         <header><div><span className="board-eyebrow">Reverse CRM</span><strong>Suppliers</strong></div><span>{rollups.length}</span></header>
         <div className="supplier-nav-search">
           <div className="supplier-mobile-search-row">
@@ -532,7 +532,7 @@ export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
           <Button variant="secondary" onClick={() => void addSupplier()}
             disabled={!newSupplierName.trim() || adding} aria-label="Add supplier">+</Button>
         </div>
-      </aside>
+      </aside>}
 
       {mobileToolsOpen && (
         <MobileCatalogToolsSheet title="Supplier tools" section="Suppliers"
@@ -667,7 +667,7 @@ export function SuppliersWorkspace({externalQuery}:{externalQuery?:string}={}) {
           </>
         )}
       </section>
-    </div>
+    </div>}
     {supplierCreateOpen && createPortal(
       <div className="connections-create-backdrop" onPointerDown={event => {
         if (event.currentTarget === event.target) setSupplierCreateOpen(false);
