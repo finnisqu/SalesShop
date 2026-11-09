@@ -141,6 +141,8 @@ export function RecordNewCompany({source,onCreated}:{
    const before=new Set(companies.map(c=>c.id));
    const id=resolve(cleaned,'customer');
    if(!id)throw new Error('Unable to create Company.');
+   if(before.has(id))
+    throw new Error('That name matches an existing Company. Choose Link existing to confirm it.');
    if(!before.has(id)){
     const created=useCrmStore.getState().companies.find(c=>c.id===id);
     if(created)update(id,companyRelationshipPatch(created,'prospect'));
