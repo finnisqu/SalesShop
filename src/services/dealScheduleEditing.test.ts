@@ -2,7 +2,7 @@ import {describe,expect,it} from 'vitest';
 import {createMultifamilyStarterSchedule,validateDealScheduleRows} from './dealScheduleTemplates';
 import {
   appendSchedulePhase,assignBuildingImports,assertValidSchedule,removeSchedulePhase,
-  scheduleDateIssues,scheduleProgress,updateScheduleRow,
+  scheduleDateIssues,scheduleProgress,scheduleProgressTracks,updateScheduleRow,
 } from './dealScheduleEditing';
 
 describe('editable multifamily Deal execution schedule',()=>{
@@ -94,6 +94,20 @@ describe('editable multifamily Deal execution schedule',()=>{
     });
     expect(scheduleDateIssues(invalid.rows)).toHaveLength(1);
     expect(()=>assertValidSchedule(invalid)).toThrow('planned finish precedes start');
+  });
+
+  it('separates installation completion from invoices and retainage',()=>{
+    let schedule=createMultifamilyStarterSchedule();
+    schedule=updateScheduleRow(schedule,'building-1-install',{status:'complete'});
+    schedule=updateScheduleRow(schedule,'building-1-punch',{status:'complete'});
+    schedule=updateScheduleRow(schedule,'import-1-production',{status:'complete'});
+    schedule=updateScheduleRow(schedule,'building-1-invoice',{status:'complete'});
+    const progress=scheduleProgressTracks(schedule);
+    expect(progress.materials.done).toBe(1);
+    expect(progress.building.done).toBe(2);
+    expect(progress.financial.done).toBe(1);
+    expect(progress.financial.total).toBeGreaterThan(progress.financial.done);
+    expect(progress.building.total).toBeGreaterThan(progress.building.done);
   });
 
   it('counts progress on executable tasks, not roll-up group rows',()=>{
