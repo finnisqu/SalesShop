@@ -156,7 +156,9 @@ export function TaskModalHost(){
        <button type="button" className="tasks-flow-action" onClick={()=>{
         close();openActivityComposer({taskId:task.id});
        }}>Complete + log activity</button>}
-      <button type="button" onClick={()=>{
+      <button type="button" disabled={task.status!=='completed'&&subtaskProgress(task).remaining>0}
+       title={task.status!=='completed'&&subtaskProgress(task).remaining>0?'Complete the checklist first':undefined}
+       onClick={()=>{
        if(task.status==='completed')reopen(task.id);else complete(task.id);
        close();
       }}>{task.status==='completed'?'Reopen':'Mark complete'}</button>
