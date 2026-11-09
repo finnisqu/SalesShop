@@ -24,6 +24,10 @@ export interface DealScheduleRow {
   actualFinish?: string;
   amount?: number;
   retainagePercent?: number;
+  /** PO, vessel/container, shipment tracking, or invoice number; no automatic ledger posting. */
+  reference?: string;
+  /** Optional per-milestone scheduling and billing context. */
+  notes?: string;
 }
 
 export interface DealScheduleDraft {
