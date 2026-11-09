@@ -4,7 +4,7 @@ import {LinkExistingRecord,RecordNewDeal} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,RECORD_ADDED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
-import { companyAnnualPotential, companyEstimatedAnnualWork } from '../types/crm';
+import { companyAnnualPotential, companyEstimatedAnnualWork,type CompanyPatch } from '../types/crm';
 import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
  isOurCompany,ourCompanyPatch,visibleCompanyAliases,type EditableCompanyRelationship}
  from '../services/companyRelationship';
@@ -101,7 +101,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     try{
       // "Our Company" is a designation on this same CRM record, never a new
       // customer/prospect or a separate duplicate internal company.
-      const relationshipPatch=draft.isSelf
+      const relationshipPatch:CompanyPatch=draft.isSelf
         ?companyRelationshipPatch(company,'partner')
         :draft.relationship==='unclassified'?{}
           :companyRelationshipPatch(company,draft.relationship as EditableCompanyRelationship);
