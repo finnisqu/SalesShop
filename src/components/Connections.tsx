@@ -387,6 +387,7 @@ export function Connections() {
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
         more={<WorkspaceMoreMenu label="Connections More" items={[
           {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
+          {label:'Record external quote',onClick:()=>setExternalQuotePickerOpen(true)},
           {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
           ...(tab==='deals'&&timelineBetaEnabled?[
             {label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
@@ -429,6 +430,8 @@ export function Connections() {
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
           <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
         <div className="connections-activity-tools">
+         {tab==='quotes'&&<button type="button" onClick={()=>setExternalQuotePickerOpen(true)}>
+           Record external quote</button>}
          {tab==='activity'&&<><SalesCalendarLauncher compact /><QuickActivityLauncher label="Log Activity" compact /></>}
          <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
         </div>
@@ -516,7 +519,12 @@ export function Connections() {
             <DealTimelineBetaOverview projects={projectRows} onOpen={openProject}/>}
           {tab === 'deals' && (!timelineBetaEnabled||dealsView==='list') && <section className="connections-directory" aria-label="Deals directory">
             
-            <p className="connections-count">{projectRows.length} deals · stages, bid dates and linked quotes</p>
+            <div className="connections-deals-capture-bar">
+              <span>{projectRows.length} Deals · stages, bid dates and linked quotes</span>
+              <button type="button" onClick={()=>setExternalQuotePickerOpen(true)}>
+               <span aria-hidden="true">+</span> Record external quote
+              </button>
+            </div>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
                onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
@@ -586,6 +594,10 @@ export function Connections() {
         <button type="button" onClick={() => setView('settings')}>Open team settings →</button>
       </footer>
       </div>
+      {externalQuotePickerOpen&&<ExternalQuoteBackfillDialog
+        onClose={()=>setExternalQuotePickerOpen(false)}
+        onRecorded={dealName=>{setExternalQuotePickerOpen(false);
+          setNotice('External quote recorded for '+dealName+'.');}}/>}
       {activityPreview&&<CalendarActivityPreview activityId={activityPreview}
         onClose={()=>setActivityPreview(null)}
         onSelect={(kind,id)=>{setActivityPreview(null);setPreview({kind,id});}}/>}
