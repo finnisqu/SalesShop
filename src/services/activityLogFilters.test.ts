@@ -34,7 +34,7 @@ describe('Activity history filters',()=>{
   expect(filtered(system,options)).toBe(false);
  });
  it('reads linked People and Deals, but does not call legacy customer-kind records Customers',()=>{
-  expect(activityAudience(call,companies,contacts,projects,allQuotes,internal)).toContain('prospect');
+  expect(activityAudience(call,companies,contacts,projects,allQuotes,internal).has('prospect')).toBe(true);
   expect(filtered(email,{audience:'customer'})).toBe(true);
   const legacy={...system,companyId:'legacy',projectId:undefined};
   expect(filtered(legacy,{audience:'unclassified'})).toBe(true);
