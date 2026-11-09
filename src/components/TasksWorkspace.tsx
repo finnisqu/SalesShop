@@ -181,7 +181,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
         <label>Priority<select value={priority} onChange={e=>setPriority(e.target.value as TaskPriority)}>
          {priorities.map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
         <label>Status<select value={status} onChange={e=>setStatus(e.target.value as TaskStatus)}>
-         {statusOptions.filter(x=>!isProtectedBidTask(initial)||x!=='completed').map(x=>
+         {statusOptions.filter(x=>!isProtectedBidTask(initial)||Boolean(initial.submissionConfirmedAt)||x!=='completed').map(x=>
           <option value={x} key={x}>{x==='in-progress'?'In progress':x[0].toUpperCase()+x.slice(1)}</option>)}
         </select></label>
         <label>Queue / category<input list="tasks-queue-choices" value={queue} maxLength={80}
@@ -372,7 +372,7 @@ export function TasksWorkspace(){
       due:task.dueDate?formatDate(task.dueDate):'',
       related:normalizedTaskAssociations(task).map(link=>link.label||link.type).join(' · '),
       subtaskRemaining:String(subtaskProgress(task).remaining),
-      protectedBid:isProtectedBidTask(task)?'1':'0',
+      protectedBid:isProtectedBidTask(task)&&!task.submissionConfirmedAt?'1':'0',
       updated:new Date(task.updatedAt).toLocaleDateString()},
     sortValues:{due:task.dueDate??'9999-12-31',start:task.startDate??'',
       updated:task.updatedAt,priority:({urgent:0,high:1,normal:2,low:3})[task.priority??'normal']},
@@ -495,13 +495,13 @@ export function TasksWorkspace(){
         onTaskDuePreset={quickDue}
         onTaskToggleComplete={(id,finished)=>{
           const task=own.find(item=>item.id===id);
-          if(task&&!finished&&isProtectedBidTask(task))return;
+          if(task&&!finished&&isProtectedBidTask(task)&&!task.submissionConfirmedAt)return;
           if(finished)reopen(id);else complete(id);
         }}
         onBulkComplete={items=>{
-          const protectedCount=items.filter(item=>own.some(task=>task.id===item.id&&isProtectedBidTask(task))).length;
+          const protectedCount=items.filter(item=>own.some(task=>task.id===item.id&&isProtectedBidTask(task)&&!task.submissionConfirmedAt)).length;
           items.forEach(item=>{
-           if(own.some(task=>task.id===item.id&&!taskComplete(task)&&!isProtectedBidTask(task)))complete(item.id);
+           if(own.some(task=>task.id===item.id&&!taskComplete(task)&&(!isProtectedBidTask(task)||Boolean(task.submissionConfirmedAt))))complete(item.id);
           });
           if(protectedCount)setTaskNotice({kind:'error',
             message:protectedCount+' bid submission task(s) require confirmed Quote delivery or a recorded external quote.'});
@@ -629,7 +629,7 @@ export function TasksWorkspace(){
           <PencilIcon/> Edit</button>
         </div>
         <div className="tasks-preview-actions-right">
-         {isProtectedBidTask(viewing)?<>
+         {isProtectedBidTask(viewing)&&!viewing.submissionConfirmedAt?<>
           {canLog&&<button type="button" className="tasks-flow-action"
            onClick={()=>{setViewingId(null);setExternalDealId(bidTaskDealId(viewing));}}>
            Record external quote</button>}
