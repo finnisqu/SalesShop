@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {LinkExistingRecord,RecordNewCompany} from './RecordRelatedActions';
+import {RecordTasksPanel} from './RecordTasksPanel';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import { ProjectNotebookLinks } from './ProjectNotebookLinks';
 import { dealRecordView } from '../services/dealRecordView';
@@ -245,6 +247,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </button>)}
           {!related.linkedQuotes.length && <p className="connections-record-empty">No SalesShop quotes linked to this deal.</p>}
         </div>
+        <button type="button" className="connections-record-add" onClick={newQuote}>+ New quote</button>
+        <LinkExistingRecord source={{kind:'deal',id:deal.id,name:deal.name}} target="quote"/>
         {outsideQuotes.length>0&&<div className="external-quote-history">
           <strong>Submitted with another tool or format</strong>
           {outsideQuotes.slice(0,5).map(activity=><div className="external-quote-history-entry" key={activity.id}>
@@ -257,6 +261,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       <RecordCard title="Notebook">
         <ProjectNotebookLinks project={deal} />
       </RecordCard>
+      <RecordTasksPanel kind="deal" id={deal.id} name={deal.name}/>
     </>}
     right={<>
       <RecordCard title="Company">
@@ -265,6 +270,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             <strong>{related.company.name}</strong><small>Open company →</small>
           </button>
         </div> : <p className="connections-record-empty">No associated company. Edit the deal to select one.</p>}
+        <RecordNewCompany source={{kind:'deal',id:deal.id}}/>
+        <LinkExistingRecord source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
       </RecordCard>
       <RecordCard title="People" extra={<span>{related.dealPeople.length} linked</span>}>
         <p className="connections-record-helper">People explicitly linked by a quote or recorded interaction. Other contacts at this company are suggestions, not automatically assigned to the Deal.</p>
