@@ -36,3 +36,14 @@
 .our-org-inline-option button:first-of-type{background:var(--ss-theme-accent);color:white;border-color:var(--ss-theme-accent)}
 .our-org-inline-option button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:760px){.our-org-inline-option button{min-height:44px}}
+
+/* Match the standard centered Connections workbook; wide tables scroll inside it. */
+.connections-directory-layout .our-org-directory{
+ box-sizing:border-box;width:100%;min-width:0;max-width:var(--ss-workspace-width,1360px);
+ margin:0 auto;justify-self:stretch;overflow:hidden;
+}
+.connections-directory-layout .our-org-table-scroll{max-width:100%;width:100%;box-sizing:border-box;overflow-x:auto}
+.connections-directory-layout .our-org-table{width:100%;min-width:620px;table-layout:auto}
+@media(max-width:760px){
+ .connections-directory-layout .our-org-directory{max-width:100%;padding:10px}
+}
