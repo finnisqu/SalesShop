@@ -362,6 +362,7 @@ export function TasksWorkspace(){
       status:task.status||'open',queue:task.queue||'',start:task.startDate?formatDate(task.startDate):'',
       due:task.dueDate?formatDate(task.dueDate):'',
       related:normalizedTaskAssociations(task).map(link=>link.label||link.type).join(' · '),
+      subtaskRemaining:String(subtaskProgress(task).remaining),
       updated:new Date(task.updatedAt).toLocaleDateString()},
     sortValues:{due:task.dueDate??'9999-12-31',start:task.startDate??'',
       updated:task.updatedAt,priority:({urgent:0,high:1,normal:2,low:3})[task.priority??'normal']},
