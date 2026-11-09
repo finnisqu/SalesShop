@@ -32,6 +32,7 @@ export function TaskModalHost(){
  const update=usePersonalTaskStore(s=>s.updateTask);
  const complete=usePersonalTaskStore(s=>s.complete);
  const reopen=usePersonalTaskStore(s=>s.reopen);
+ const remove=usePersonalTaskStore(s=>s.remove);
  const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
  const canLog=mode==='local'||canEditTeamArea(teamRole,department,'crm');
  const nav=useNavigationStore();
@@ -141,7 +142,6 @@ export function TaskModalHost(){
       </div>}
      </div>
      <footer className="ss-mobile-sheet-actions">
-      <button type="button" onClick={close}>Close</button>
       {task.sourceObjectId?.startsWith('home-note:')&&
         homeNotes(notebookEntries).some(note=>
          note.objectId===task.sourceObjectId?.slice('home-note:'.length))&&
@@ -164,6 +164,10 @@ export function TaskModalHost(){
       }}>{task.status==='completed'?'Reopen':'Mark complete'}</button>
       <button type="button" className="tasks-primary"
        onClick={()=>setRequest({mode:'edit',id:task.id})}>Edit task</button>
+      <button type="button" className="tasks-preview-delete" onClick={()=>{
+       if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
+       remove(task.id);close();
+      }}>Delete</button>
      </footer>
     </section>
    </div>:null}
