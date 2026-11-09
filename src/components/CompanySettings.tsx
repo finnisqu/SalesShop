@@ -154,8 +154,14 @@ export function CompanySettings() {
           mobileTabs={visibleTabs.map(item=>({value:item.id,label:item.title}))}
           mobileTabValue={tab}
           onMobileTabChange={value=>setTab(value as SettingsTab)}
-          tabs={<nav aria-label="Settings quick views"><button type="button" onClick={()=>setTab('company')}>Company</button>
-            <button type="button" onClick={()=>setTab('account')}>My Account</button></nav>}
+          tabs={<nav aria-label="Settings quick views">
+            <button type="button" aria-current={tab==='company'?'page':undefined}
+              onClick={()=>setTab('company')}>Company</button>
+            <button type="button" aria-current={tab==='account'?'page':undefined}
+              onClick={()=>setTab('account')}>My Account</button>
+            <button type="button" aria-current={tab==='beta'?'page':undefined}
+              onClick={()=>setTab('beta')}>Beta Features</button>
+          </nav>}
           more={<WorkspaceMoreMenu items={visibleTabs.map(item=>({
             label:item.title,onClick:()=>setTab(item.id),active:tab===item.id,
           }))}/>}
