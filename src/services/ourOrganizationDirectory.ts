@@ -31,8 +31,8 @@ export function ensureOurOrgCompany(group:RosterGroup,companies:readonly Company
  if(found)return found.id;
  // Reserved internal name is not exposed in the customer directory.
  const existing=companies.find(c=>c.name===spec.companyName);
- if(existing&&existing.kind!=='non-customer')
-  throw new Error('Reserved internal directory name is already used by a customer.');
+ if(existing)
+  throw new Error('The reserved internal directory name is already in use. Rename that company before adding roster entries.');
  const id=resolve(spec.companyName,'non-customer');
  if(!id)throw new Error('Could not initialize the internal directory.');
  const company=companies.find(c=>c.id===id);
