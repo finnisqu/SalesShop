@@ -1,4 +1,4 @@
-import {useState,type FormEvent} from 'react';
+import {useEffect,useState,type FormEvent} from 'react';
 import {useCrmStore} from '../store/crmStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -9,8 +9,8 @@ import '../our-organization.css';
 
 interface Draft{name:string;email:string;phone:string;title:string;group:RosterGroup;}
 const empty=(group:RosterGroup):Draft=>({name:'',email:'',phone:'',title:'',group});
-export function OurOrganizationDirectory({onOpenPerson,query}:{
- onOpenPerson:(id:string)=>void;query:string;
+export function OurOrganizationDirectory({onOpenPerson,query,createRequest}:{
+ onOpenPerson:(id:string)=>void;query:string;createRequest:number;
 }){
  const companies=useCrmStore(s=>s.companies);
  const contacts=useCrmStore(s=>s.contacts);
@@ -30,7 +30,10 @@ export function OurOrganizationDirectory({onOpenPerson,query}:{
  const records=ourOrgPeople(contacts,companies,group).filter(c=>
   [c.name,c.title,c.email,c.phone].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
  const count=(name:RosterGroup)=>ourOrgPeople(contacts,companies,name).length;
- const beginCreate=()=>{setDraft(empty(group));setEditingId(null);setShowEditor(true);setError('');};
+ useEffect(()=>{
+  if(!createRequest||!editable)return;
+  setDraft(empty(group));setEditingId(null);setShowEditor(true);setError('');
+ },[createRequest,editable,group]);
  const beginEdit=(contactId:string)=>{
   const person=contacts.find(c=>c.id===contactId);if(!person)return;
   const current=companies.find(c=>c.id===person.companyId);
@@ -65,7 +68,7 @@ export function OurOrganizationDirectory({onOpenPerson,query}:{
    <div><h2>Our Organization</h2>
     <p>Employees and subcontractors. Separate from customer and partner contacts; not a Team login directory.</p>
    </div>
-   {editable&&<button type="button" className="our-org-add" onClick={beginCreate}>+ Person</button>}
+   {editable&&<span className="our-org-heading-note">Use + Person in the header to add someone.</span>}
   </div>
   <div className="our-org-tabs" role="group" aria-label="Internal people type">
    {OUR_ORG_GROUPS.map(item=><button type="button" key={item.id}
