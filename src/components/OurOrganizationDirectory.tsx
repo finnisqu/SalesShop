@@ -143,7 +143,8 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
    </label>
    {roleCreating&&<div className="our-org-inline-option" role="group" aria-label="Add role option">
     <input type="text" value={newRole} maxLength={120} placeholder="New role or trade"
-     onChange={e=>setNewRole(e.target.value)}/>
+     onChange={e=>setNewRole(e.target.value)}
+     onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();event.stopPropagation();addRole();}}}/>
     <button type="button" disabled={!newRole.trim()} onClick={addRole}>+ Save role</button>
     <button type="button" onClick={()=>setRoleCreating(false)}>Cancel</button>
    </div>}
