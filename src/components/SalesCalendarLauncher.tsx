@@ -1,7 +1,7 @@
 import {useEffect,useLayoutEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
-import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,subtaskProgress} from '../store/personalTaskStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {useNotebookStore} from '../store/notebookStore';
 import {openHomeNote} from '../services/homeNotes';
@@ -527,6 +527,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          style={{backgroundColor:agendaDotColors[event.kind]}} aria-hidden="true"/>
         <span className="sales-calendar-event-text"><strong>{event.title}</strong>
          <small>{event.detail}</small></span>
+        {event.kind==='task'&&event.recordType==='task'&&(()=>{
+          const task=ownTasks.find(item=>item.id===event.recordId);
+          const progress=task?subtaskProgress(task):null;
+          return progress&&progress.total>0?<span className="sales-calendar-subtask-count"
+            title={progress.done+' of '+progress.total+' subtasks complete'}
+            aria-label={progress.done+' of '+progress.total+' subtasks complete'}>
+            {progress.done}/{progress.total}</span>:null;
+        })()}
         {event.urgent&&<span className="sales-calendar-agenda-urgent"
          title="Urgent task" aria-label="Urgent task">!</span>}
         <span className="sales-calendar-agenda-chevron" aria-hidden="true">›</span>
