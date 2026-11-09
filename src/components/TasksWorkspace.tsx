@@ -62,7 +62,7 @@ function reminderValue(value?:string){
 type TaskEditorRecovery={
  title:string;type:TaskType;priority:TaskPriority;status:TaskStatus;
  dueDate:string;startDate:string;dueTime:string;reminderAt:string;
- queue:string;notes:string;selectedLinks:TaskAssociation[];subtasks:TaskSubtask[];
+ queue:string;notes:string;selectedLinks:TaskAssociation[];subtasks:TaskSubtask[];newSubtask?:string;
 };
 type ActiveTaskDraft={kind:'new'|'existing';id?:string;draftIdentity?:string};
 export function TaskEditor({initial,onCancel,onSave}:{
@@ -98,7 +98,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [notes,setNotes]=useState(recovered?.notes??draft.notes??'');
   const [subtasks,setSubtasks]=useState<TaskSubtask[]>(()=>normalizedSubtasks(
     recovered?.subtasks??draft.subtasks));
-  const [newSubtask,setNewSubtask]=useState('');
+  const [newSubtask,setNewSubtask]=useState(recovered?.newSubtask??'');
   const addSubtask=()=>{
     const text=newSubtask.trim();
     if(!text||subtasks.length>=60)return;
@@ -109,13 +109,13 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>recovered?.selectedLinks??normalizedTaskAssociations(initial));
   // Every form change is durable locally before submission. No unsaved task is sent to cloud.
   useEffect(()=>{
-   writeSavedDraft(scopeKey,{title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks});
+   writeSavedDraft(scopeKey,{title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks,newSubtask});
    writeSavedDraft<ActiveTaskDraft>(activeKey,{
     kind:initialTaskId?'existing':'new',
     id:initialTaskId??undefined,
     draftIdentity:initialTaskId?undefined:draftIdentity,
    });
-  },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks]);
+  },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks,newSubtask]);
   const close=()=>{clearSavedDraft(activeKey);onCancel();};
   const editorRef=useDismissibleLayer<HTMLFormElement>(true,close);
   const discard=()=>{clearSavedDraft(scopeKey);close();};
@@ -143,9 +143,12 @@ export function TaskEditor({initial,onCancel,onSave}:{
     if(!title.trim()){setFormError('Enter a task title.');return;}
     setFormError('');
     try{
+      const pending=newSubtask.trim().slice(0,180);
+      const savedSubtasks=pending&&subtasks.length<60?
+        [...subtasks,{id:'sub_'+crypto.randomUUID(),title:pending,completed:false}]:subtasks;
       onSave({title:title.trim(),type,priority,status,startDate:startDate||undefined,dueDate:dueDate||undefined,
         dueTime:dueDate?dueTime||undefined:undefined,reminderAt:normalizeLocalReminder(reminderAt),
-        notes,queue,subtasks,associations:selectedLinks,
+        notes,queue,subtasks:savedSubtasks,associations:selectedLinks,
         linked:selectedLinks[0]?{type:selectedLinks[0].type,id:selectedLinks[0].id}:undefined,
         sourceLabel:selectedLinks[0]?.label??sourceLabel,sourceText,sourceObjectId});
       clearSavedDraft(scopeKey);clearSavedDraft(activeKey);
