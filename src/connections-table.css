@@ -233,3 +233,45 @@
 @media(max-width:760px){
  :root[data-sales-theme] .sales-app .connections-deals-capture-bar>button{min-height:44px}
 }
+
+/* Type filter lives beside # records / # selected / Columns, not in a second strip. */
+:root[data-sales-theme] .sales-app .connections-inline-type-filter{display:inline-flex;align-items:center;gap:6px;
+ white-space:nowrap;font-size:11px;font-weight:700;color:var(--ss-theme-muted)}
+:root[data-sales-theme] .sales-app .connections-inline-type-filter select{min-width:110px;max-width:190px;min-height:36px;
+ box-sizing:border-box;border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);font:600 12px inherit;padding:6px 8px}
+/* Activity log compound filters use the same compact, controlled vocabulary style. */
+:root[data-sales-theme] .sales-app .connections-activity-filters{display:flex;flex-wrap:wrap;gap:8px;
+ align-items:end;padding:10px 12px;border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-card);margin:0 0 10px}
+:root[data-sales-theme] .sales-app .connections-activity-filters label{display:grid;gap:4px;
+ color:var(--ss-theme-muted);font-size:11px;font-weight:700;min-width:122px;flex:1 1 130px}
+:root[data-sales-theme] .sales-app .connections-activity-filters select{width:100%;box-sizing:border-box;min-height:36px;
+ border:1px solid var(--ss-theme-border);background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ padding:7px 9px;border-radius:7px;font-size:12px}
+:root[data-sales-theme] .sales-app .connections-activity-filters button{min-height:36px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);border:1px solid var(--ss-theme-border);
+ padding:7px 11px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700}
+:root[data-sales-theme] .sales-app .connections-activity-filters button:disabled{opacity:.45;cursor:not-allowed}
+/* Keep Suppliers in Connections without replacing its pricing/import services. */
+:root[data-sales-theme] .sales-app .connections-suppliers-host{min-width:0;display:grid;gap:8px}
+:root[data-sales-theme] .sales-app .connections-suppliers-host .supplier-directory-heading{
+ padding:9px 11px;border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-card)}
+:root[data-sales-theme] .sales-app .connections-suppliers-host .supplier-directory-heading>button{display:none}
+:root[data-sales-theme] .sales-app .connections-suppliers-host .supplier-directory-toolbar input[type="search"]{display:none}
+:root[data-sales-theme] .sales-app .connections-suppliers-host .supplier-directory-toolbar{justify-content:flex-end}
+:root[data-sales-theme] .sales-app .connections-suppliers-host .supplier-directory-table-scroll{
+ border:1px solid var(--ss-theme-border);border-radius:9px;overflow-x:auto}
+:root[data-sales-theme] .sales-app .connections-suppliers-host .supplier-directory-table{
+ font-size:12px;color:var(--ss-theme-ink)}
+:root[data-sales-theme] .sales-app .connections-suppliers-host .supplier-directory-table :is(th,td){
+ border-color:var(--ss-theme-border)}
+:root[data-sales-theme] .sales-app .connections-suppliers-host :is(button,select,input):focus-visible,
+:root[data-sales-theme] .sales-app .connections-activity-filters :is(button,select):focus-visible{
+ outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app .connections-inline-type-filter select{min-height:44px}
+ :root[data-sales-theme] .sales-app .connections-activity-filters select,
+ :root[data-sales-theme] .sales-app .connections-activity-filters button{min-height:44px;font-size:16px}
+}
