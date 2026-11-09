@@ -46,6 +46,8 @@ interface CrmState {
   updateContact: (contactId: string, patch: ContactPatch) => void;
   mergeContactRecords: (primaryId: string, duplicateId: string) => void;
   relinkProjectCompany: (projectId: string, companyId: string) => void;
+  /** Apply or clear an exact Deal-to-Company link without manufacturing CRM activity. */
+  setProjectCompany: (projectId:string,companyId?:string)=>void;
   relinkContactCompany: (contactId: string, companyId?: string) => void;
   resolveContact: (input: ContactInput) => string | undefined;
   createProject: (name: string, stage?: ProjectStage, details?: CreateProjectDetails) => string | null;
@@ -252,6 +254,19 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       : project);
     persist(get().companies, get().contacts, projects, get().activities);
     set({ projects });
+  },
+
+  setProjectCompany:(projectId,companyId)=>{
+    const current=get();
+    const match=companyId?current.companies.find(c=>c.id===companyId):undefined;
+    if(companyId&&!match)throw new Error('This company is not available in the current workspace.');
+    if(!current.projects.some(p=>p.id===projectId))
+      throw new Error('This Deal is not available in the current workspace.');
+    const projects=current.projects.map(p=>p.id===projectId?{
+      ...p,companyId:match?.id,companyName:match?.name,updatedAt:now(),
+    }:p);
+    persist(current.companies,current.contacts,projects,current.activities);
+    set({projects});
   },
 
   relinkContactCompany: (contactId, companyId) => {
