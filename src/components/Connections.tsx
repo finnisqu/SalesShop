@@ -6,6 +6,7 @@ import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
 import {SuppliersWorkspace} from './SuppliersWorkspace';
+import '../suppliers-connections.css';
 import {isOurOrgCompany,ourOrgCompanyIds,isOurOrgContact} from '../services/ourOrganizationDirectory';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
