@@ -1,4 +1,4 @@
-import {useState,type FormEvent} from 'react';
+import {useState} from 'react';
 import {useCrmStore} from '../store/crmStore';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
@@ -27,10 +27,8 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
   .sort((a,b)=>a.name.localeCompare(b.name));
  const choose=(next:Kind)=>{setKind(next);setName('');setEmail('');setPhone('');
   setTitle('');setCompanyId('');setError('');};
- const submit=(event:FormEvent)=>{
-  event.preventDefault();
+ const submit=()=>{
   // This component lives inside the activity form. Never submit that form.
-  event.stopPropagation();
   if(disabled||!kind)return;
   const clean=name.trim();
   if(!clean){setError('Enter a name to create this record.');return;}
@@ -77,7 +75,12 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
     onClick={()=>kind===option?setKind(null):choose(option)}>+ {option==='person'?'Person':option==='deal'?'Deal':'Company'}</button>)}
   </div>
   {kind&&<div className="activity-related-quick-fields" role="group"
-    aria-label={'Create new '+kind+' while logging'}>
+    aria-label={'Create new '+kind+' while logging'}
+    onKeyDown={event=>{
+      if(event.key==='Enter'&&event.target instanceof HTMLInputElement){
+        event.preventDefault();event.stopPropagation();submit();
+      }
+    }}>
     <label>{kind==='person'?'Full name':kind==='deal'?'Deal name':'Company name'}
      <input autoFocus value={name} maxLength={180} disabled={disabled}
       onChange={e=>setName(e.target.value)}/></label>
@@ -99,7 +102,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
     <div className="activity-related-quick-buttons">
      <button type="button" onClick={()=>setKind(null)} disabled={disabled}>Cancel</button>
      <button type="button" disabled={disabled||!name.trim()}
-      onClick={event=>submit(event)}>Create & link {kind}</button>
+      onClick={submit}>Create & link {kind}</button>
     </div>
   </div>}
  </div>;
