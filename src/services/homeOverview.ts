@@ -39,9 +39,11 @@ export function homeRecentQuoteEntries(quotes:readonly Quote[],activities:readon
  // assigned a fabricated logging timestamp.
  const order=(a:HomeRecentQuoteEntry,b:HomeRecentQuoteEntry)=>
   Date.parse(b.timestamp)-Date.parse(a.timestamp)||a.id.localeCompare(b.id);
- const externalSlots=Math.min(2,limit,external.length);
- return [...external.sort(order).slice(0,externalSlots),
-  ...normal.sort(order).slice(0,Math.max(0,limit-externalSlots))];
+ const sortedExternal=external.sort(order);
+ const externalSlots=Math.min(2,limit,sortedExternal.length);
+ const prioritized=sortedExternal.slice(0,externalSlots);
+ const remaining=[...normal,...sortedExternal.slice(externalSlots)].sort(order);
+ return [...prioritized,...remaining.slice(0,Math.max(0,limit-prioritized.length))];
 }
 export function homeQuoteAttention(quotes:readonly Quote[],activities:readonly Activity[],today=followUpLocalDate()){
   const queue=buildQuoteFollowUpQueue(quotes,activities,today);
