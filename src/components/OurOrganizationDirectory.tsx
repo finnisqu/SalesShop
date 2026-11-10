@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {useCrmStore} from '../store/crmStore';
+import {ConnectionsTable} from './ConnectionsTable';
 import {useNavigationStore} from '../store/navigationStore';
 import {isOurCompany} from '../services/companyRelationship';
 import {useAuthStore} from '../store/authStore';
@@ -172,20 +173,20 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
    {error&&<p role="alert" className="our-org-error">{error}</p>}
    <div className="our-org-form-actions"><button type="submit">Save person</button></div>
   </form>}
-  <div className="our-org-table-scroll" role="region" aria-label={group+' directory'} tabIndex={0}>
-   <table className="our-org-table"><thead><tr>
-    <th>Person</th><th>Role / trade</th>{group==='subcontractors'&&<th>Company</th>}<th>Email</th><th>Phone</th><th>Actions</th>
-   </tr></thead><tbody>
-    {records.map(person=><tr key={person.id}>
-     <th scope="row"><button type="button" className="our-org-person" onClick={()=>onOpenPerson(person.id)}>{person.name}</button></th>
-     <td>{person.title??'—'}</td>
-     {group==='subcontractors'&&<td>{companies.find(c=>c.id===person.companyId&&!ourOrgGroup(c))?.name??'—'}</td>}
-     <td>{person.email?<a href={'mailto:'+person.email}>{person.email}</a>:'—'}</td>
-     <td>{person.phone?<a href={'tel:'+person.phone}>{person.phone}</a>:'—'}</td>
-     <td>{editable&&<button type="button" onClick={()=>beginEdit(person.id)}>Edit</button>}</td>
-    </tr>)}
-   </tbody></table>
-  </div>
+  <ConnectionsTable tableKey="organization" onOpen={onOpenPerson}
+   onRecordEdit={editable?beginEdit:undefined}
+   columns={[
+    {key:'name',label:'Person'},{key:'role',label:'Role / trade'},
+    {key:'company',label:'Company'},{key:'email',label:'Email'},{key:'phone',label:'Phone'}
+   ]}
+   rows={records.map(person=>({
+    id:person.id,name:person.name,
+    values:{name:person.name,role:person.title||'—',
+     company:group==='subcontractors'
+      ?companies.find(item=>item.id===person.companyId&&!ourOrgGroup(item))?.name||'—'
+      :ownCompany?.name||'Our Organization',
+     email:person.email||'—',phone:person.phone||'—'}
+   }))}/>
   <div className="our-org-mobile-cards" aria-label={group+' mobile directory'}>
    {records.map(person=><article key={person.id} className="connections-mobile-record-group">
     <button type="button" className="connections-record" onClick={()=>onOpenPerson(person.id)}>
