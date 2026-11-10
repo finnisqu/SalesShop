@@ -222,3 +222,18 @@
   outline-offset:2px;
  }
 }
+
+/* Shared touch sheets already render a real draggable grip. The former
+   header pseudo-element was drawing a second, noninteractive grip below it. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .ss-mobile-sheet:has(> .ss-mobile-sheet-handle)>header::before{
+  display:none!important;content:none!important;
+ }
+ /* Also reclaim the old pseudo-handle's empty top padding. */
+ :root[data-sales-theme] .tasks-dialog-backdrop
+ .tasks-preview-card.ss-mobile-sheet:has(> .ss-mobile-sheet-handle)>header,
+ :root[data-sales-theme] .project-editor.record-preview-panel.ss-mobile-sheet:has(> .ss-mobile-sheet-handle)>header{
+  min-height:58px!important;
+  padding:10px 13px!important;
+ }
+}

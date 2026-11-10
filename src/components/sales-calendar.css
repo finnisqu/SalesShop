@@ -1022,3 +1022,28 @@
 .home-recent-activity-icon{flex:0 0 28px;width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--ss-theme-border,#ddd);border-radius:8px;background:var(--ss-theme-tint,#eee);color:var(--ss-theme-muted,#777)}
 .home-recent-activity-copy{flex:1;min-width:0;display:grid;gap:5px}
 .home-recent-activity-copy :is(strong,small){display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Month cells are fixed-height like the compact 7-day strip.
+   Badge count can wrap within a cell but cannot resize its whole week row. */
+@media(max-width:760px){
+ .sales-home.is-compact-home .sales-calendar-inline
+ .sales-calendar-popover.is-inline:not(.is-week) .sales-calendar-grid{
+  grid-template-rows:none!important;
+  grid-auto-rows:56px!important;
+  align-content:start!important;
+ }
+ .sales-home.is-compact-home .sales-calendar-inline
+ .sales-calendar-popover.is-inline:not(.is-week) .sales-calendar-day,
+ .sales-home.is-compact-home .sales-calendar-inline
+ .sales-calendar-popover.is-inline:not(.is-week) .sales-calendar-day:has(.home-calendar-custom-dots>:nth-child(3)),
+ .sales-home.is-compact-home .sales-calendar-inline
+ .sales-calendar-popover.is-inline:not(.is-week) .sales-calendar-day:has(.home-calendar-badge-action:nth-child(3)){
+  box-sizing:border-box!important;
+  height:56px!important;min-height:56px!important;max-height:56px!important;
+  overflow:hidden!important;
+ }
+ .sales-home.is-compact-home .sales-calendar-inline
+ .sales-calendar-popover.is-inline:not(.is-week) .sales-calendar-day .home-calendar-custom-dots{
+  align-content:end!important;max-height:30px!important;overflow:hidden!important;
+ }
+}

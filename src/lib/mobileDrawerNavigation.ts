@@ -1,11 +1,9 @@
-import type { AppView } from '../store/navigationStore';
+import type {AppView} from '../store/navigationStore';
 
-export type MobileDrawerChoice =
-  | { kind: 'toggle-catalog'; expanded: boolean }
-  | { kind: 'navigate'; view: Exclude<AppView, 'catalog'> };
+/** Every top-level destination, including Catalog, opens directly.
+ * Nested Catalog navigation belongs to the Catalog workspace header. */
+export type MobileDrawerChoice={kind:'navigate';view:AppView};
 
-/** Catalog requires a second-level choice; other destinations navigate immediately. */
-export function resolveMobileDrawerChoice(view: AppView, catalogExpanded: boolean): MobileDrawerChoice {
-  if (view === 'catalog') return { kind: 'toggle-catalog', expanded: !catalogExpanded };
-  return { kind: 'navigate', view };
+export function resolveMobileDrawerChoice(view:AppView):MobileDrawerChoice{
+ return {kind:'navigate',view};
 }
