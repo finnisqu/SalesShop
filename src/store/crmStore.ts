@@ -555,7 +555,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const current=get().projects.find(project=>project.id===projectId);
     const sentAt=new Date(bidSentDate+'T12:00:00');
     if(!current||!Number.isFinite(amount)||amount<0||
-       !/^\\d{4}-\\d{2}-\\d{2}$/.test(bidSentDate)||
+       !/^\d{4}-\d{2}-\d{2}$/.test(bidSentDate)||
        !Number.isFinite(sentAt.getTime())||
        [sentAt.getFullYear(),String(sentAt.getMonth()+1).padStart(2,'0'),
         String(sentAt.getDate()).padStart(2,'0')].join('-')!==bidSentDate||
