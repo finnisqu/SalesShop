@@ -1,4 +1,5 @@
-import type {Contact,Project} from '../types/crm';
+import type {Activity,Contact,Project} from '../types/crm';
+import {isExternalQuoteActivity} from './salesQuoteRegistry';
 import type {Quote} from '../types/quote';
 
 export interface ConnectionsCounts {
@@ -18,6 +19,7 @@ export function indexConnectionsCounts(
  contacts:readonly Pick<Contact,'companyId'>[],
  projects:readonly Pick<Project,'id'|'companyId'>[],
  quotes:readonly QuoteLink[],
+ activities:readonly Activity[]=[],
 ):ConnectionsCounts{
  const peopleByCompany=new Map<string,number>();
  const dealsByCompany=new Map<string,number>();
@@ -38,6 +40,15 @@ export function indexConnectionsCounts(
   if(quote.companyId)companyIds.add(quote.companyId);
   const linkedCompany=quote.projectId?projectCompanies.get(quote.projectId):undefined;
   if(linkedCompany)companyIds.add(linkedCompany);
+  for(const companyId of companyIds)bump(quotesByCompany,companyId);
+ }
+ for(const activity of activities){
+  if(!isExternalQuoteActivity(activity))continue;
+  bump(quotesByDeal,activity.projectId);
+  const companyIds=new Set<string>();
+  if(activity.companyId)companyIds.add(activity.companyId);
+  const company=activity.projectId?projectCompanies.get(activity.projectId):undefined;
+  if(company)companyIds.add(company);
   for(const companyId of companyIds)bump(quotesByCompany,companyId);
  }
  return {peopleByCompany,dealsByCompany,quotesByCompany,quotesByDeal};
