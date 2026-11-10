@@ -28,7 +28,8 @@ describe('Cloud sync reconnect and stale-session safety contract',()=>{
     expect(cloud).toContain('if(canWriteCrm&&readPendingCrmSync(scope))');
     expect(cloud).toContain('if(readPendingNotebookSync(scope))');
     expect(cloud).toContain('mergePendingNotebookChanges(notebookRow?.document,');
-    expect(cloud).toContain('window.addEventListener(\'online\',retryFailed)');
+    expect(cloud).toContain('window.addEventListener(\'online\',retryWhenOnline)');
+    expect(cloud).toContain('window.addEventListener(CLOUD_DOCUMENT_RETRY_EVENT,retryOnDemand)');
     expect(cloud).toContain('document.addEventListener(\'visibilitychange\',retryWhenVisible)');
   });
 });
