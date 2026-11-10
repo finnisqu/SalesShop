@@ -120,4 +120,14 @@ describe('mobile shared navigation for restricted roles', () => {
     expect(css).toContain('.sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) > .mobile-app-commandbar');
     expect(css).toContain('.sales-app.sales-app-viewer > .mobile-app-commandbar');
   });
+  it('keeps hamburger navigation to seven primary pages without duplicated page-specific controls',()=>{
+    const source=readFileSync(new URL('./MobileAppChrome.tsx',import.meta.url),'utf8');
+    expect(source).toContain('APP_DESTINATIONS.map(item=>');
+    expect(source).toContain('<MobileDestinationIcon view={item.view}/>');
+    expect(source).not.toContain('mobile-board-context-section');
+    expect(source).not.toContain('mobile-notebook-page-list');
+    expect(source).not.toContain('Notebook pages</strong>');
+    expect(source).not.toContain('Board view</strong>');
+  });
+
 });
