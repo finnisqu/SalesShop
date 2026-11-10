@@ -21,7 +21,8 @@ describe('Notebook single-page mobile header and paper alignment',()=>{
   expect(app).toContain('const companion = !notebookCompact');
   expect(app).toContain('if(notebookCompact)return;');
   expect(app).toContain('{!notebookCompact&&<Sidebar');
-  expect(app).toContain('{!notebookCompact&&<button type="button" disabled={!companion');
+  expect(app).toContain('{!notebookCompact&&<div className="notebook-split-controls">');
+  expect(app).toContain('more={notebookCompact?<SalesCalendarLauncher compact label="Notebook calendar"/>');
   expect(app).toContain('writeNotebookSplitPreference(splitScope,{rightId:companionId,stacked:splitStacked})');
   expect(app).toContain('onClick={()=>useNotebookStore.getState().createEntry()}');
  });
