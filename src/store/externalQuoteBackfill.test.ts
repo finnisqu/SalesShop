@@ -15,9 +15,9 @@ describe('historical external quote backfill',()=>{
     activities:[],hydrated:true});
  });
  afterEach(()=>vi.restoreAllMocks());
- it('logs a historical external quote without changing completed Deal stage, value, due date or touchpoint',()=>{
+ it('logs a historical external quote without changing completed Deal stage, value, due date or touchpoint',async()=>{
   const original=useCrmStore.getState().projects[0];
-  const saved=useCrmStore.getState().recordExternalQuoteSent('deal-test',4200,'2025-05-11','Spreadsheet');
+  const saved=await useCrmStore.getState().recordExternalQuoteSent('deal-test',4200,'2025-05-11','Spreadsheet');
   expect(saved).toBe(true);
   const state=useCrmStore.getState();
   expect(state.projects[0]).toEqual(original);
@@ -27,20 +27,33 @@ describe('historical external quote backfill',()=>{
   expect(state.activities[0].metadata?.amount).toBe(4200);
   expect(state.activities[0].metadata?.bidSentDate).toBe('2025-05-11');
  });
- it('records lost Deals without reopening the pipeline',()=>{
+ it('records lost Deals without reopening the pipeline',async()=>{
   useCrmStore.setState({projects:[deal('Closed Lost')],activities:[]});
-  expect(useCrmStore.getState().recordExternalQuoteSent('deal-test',3500,'2025-05-11','PDF')).toBe(true);
+  expect(await useCrmStore.getState().recordExternalQuoteSent('deal-test',3500,'2025-05-11','PDF')).toBe(true);
   expect(useCrmStore.getState().projects[0].stage).toBe('Closed Lost');
  });
- it('retains existing open-Deal submission semantics',()=>{
+ it('retains existing open-Deal submission semantics',async()=>{
   useCrmStore.setState({projects:[deal('Bid Development')],activities:[]});
-  expect(useCrmStore.getState().recordExternalQuoteSent('deal-test',4400,'2025-05-11','Excel')).toBe(true);
+  expect(await useCrmStore.getState().recordExternalQuoteSent('deal-test',4400,'2025-05-11','Excel')).toBe(true);
   expect(useCrmStore.getState().projects[0].stage).toBe('Bid Sent');
   expect(useCrmStore.getState().projects[0].amount).toBe(4400);
   expect(useCrmStore.getState().projects[0].dueDate).toBeUndefined();
  });
- it('rejects impossible future dates',()=>{
-  expect(useCrmStore.getState().recordExternalQuoteSent('deal-test',4400,'2099-01-01','PDF')).toBe(false);
+ it('rejects impossible future dates',async()=>{
+  expect(await useCrmStore.getState().recordExternalQuoteSent('deal-test',4400,'2099-01-01','PDF')).toBe(false);
   expect(useCrmStore.getState().activities).toHaveLength(0);
  });
+  it('does not duplicate a retried submission ID',async()=>{
+   const first=await useCrmStore.getState().recordExternalQuoteSent(
+     'deal-test',2500,'2025-05-11','PDF','activity_retried','2026-11-10T17:00:00.000Z');
+   const again=await useCrmStore.getState().recordExternalQuoteSent(
+     'deal-test',2500,'2025-05-11','PDF','activity_retried','2026-11-10T17:00:00.000Z');
+   expect(first).toBe(true);expect(again).toBe(true);
+   expect(useCrmStore.getState().activities.filter(x=>x.id==='activity_retried')).toHaveLength(1);
+  });
+  it('rejects invalid dates that Date would otherwise normalize',async()=>{
+   expect(await useCrmStore.getState().recordExternalQuoteSent('deal-test',4400,'2025-02-31','PDF')).toBe(false);
+   expect(useCrmStore.getState().activities).toHaveLength(0);
+  });
+
 });
