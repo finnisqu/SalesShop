@@ -12,7 +12,7 @@ import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import '../external-quote.css';
 
 export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,initialSentDate}:{
- onClose:()=>void;onRecorded?:(dealName:string)=>void;initialDealId?:string;initialSentDate?:string;
+ onClose:()=>void;onRecorded?:(dealName:string,bidSentDate:string)=>void;initialDealId?:string;initialSentDate?:string;
 }){
  const deals=useCrmStore(s=>s.projects);
  const companies=useCrmStore(s=>s.companies);
@@ -87,7 +87,7 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,in
      </form>}
      {error&&<p className="external-quote-error" role="alert">{error}</p>}
      {selected&&editable&&<ExternalQuoteSentForm key={selected.id} deal={selected}
-       initialSentDate={initialSentDate} onCancel={onClose} onRecorded={()=>onRecorded?.(selected.name)}/>}
+       initialSentDate={initialSentDate} onCancel={onClose} onRecorded={date=>onRecorded?.(selected.name,date)}/>}
      {!editable&&<p className="external-quote-error">Your current role cannot record shared CRM quotes.</p>}
      {!selected&&<p className="external-quote-picker-empty">Select a Deal to enter its historical bid amount and sent date.</p>}
     </div>
