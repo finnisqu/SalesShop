@@ -36,6 +36,7 @@ import {useAuthStore} from '../store/authStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
+import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
 import {DEAL_PIPELINES,dealPipelineLabel,type DealPipeline,type ProjectStage} from '../types/crm';
 import {companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,isOurCompany,visibleCompanyAliases,type CompanyRelationship,
@@ -69,7 +70,7 @@ const dealColumns:ConnectionColumn[]=[
  {key:'due',label:'Due'},{key:'amount',label:'Value'},{key:'next',label:'Next action'},
  {key:'updated',label:'Updated'}];
 const quoteColumns:ConnectionColumn[]=[
- {key:'name',label:'Document'},{key:'number',label:'Number'},{key:'type',label:'Type'},
+ {key:'name',label:'Quote / document'},{key:'number',label:'Number'},{key:'type',label:'Source / type'},
  {key:'company',label:'Company'},{key:'deal',label:'Deal'},{key:'status',label:'Status'},
  {key:'value',label:'Value'},{key:'updated',label:'Updated'}];
 
@@ -237,7 +238,7 @@ export function Connections() {
   const companiesById = useMemo(() => new Map(companies.map((company) => [company.id, company])), [companies]);
   const internalCompanyIds=useMemo(()=>ourOrgCompanyIds(companies),[companies]);
   const projectsById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
-  const counts=useMemo(()=>indexConnectionsCounts(contacts,projects,quotes),[contacts,projects,quotes]);
+  const counts=useMemo(()=>indexConnectionsCounts(contacts,projects,quotes,activities),[contacts,projects,quotes,activities]);
   const needle = query.trim().toLowerCase();
   // The Connections metadata directory mirrors My Documents ownership, not
   // team-wide private quotes or the old global sales dashboard.
@@ -259,10 +260,14 @@ export function Connections() {
   const projectRows = useMemo(() => projects
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction, dealPipelineLabel(project.pipeline)).includes(needle))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
-  const quoteRows=useMemo(()=>visibleQuotes.filter(q=>
-    findText(q.title,q.companyName,q.contactName,displayQuoteNumber(q),q.status,
-      projectsById.get(q.projectId??'')?.name).includes(needle))
-    .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[visibleQuotes,projectsById,needle]);
+  const quoteRegistry=useMemo(()=>buildSalesQuoteRegistry(quotes,activities,projects),
+    [quotes,activities,projects]);
+  const personalQuoteRecords=useMemo(()=>mySalesQuoteRegistry(
+    quoteRegistry,authMode,authUser,projects),[quoteRegistry,authMode,authUser,projects]);
+  const quoteRows=useMemo(()=>personalQuoteRecords.filter(q=>
+    findText(q.name,q.companyName,q.number,q.documentType,q.source,q.platform,
+      q.status,q.dealName,companiesById.get(q.companyId??'')?.name).includes(needle)),
+    [personalQuoteRecords,companiesById,needle]);
   const activityRows = useMemo(() => [...activities]
     .filter(a=>!(a.type==='contact-created'&&internalCompanyIds.has(a.companyId??'')))
     .filter(activity=>matchesActivityFilters(activity,activityFilters,companies,contacts,
@@ -295,18 +300,20 @@ export function Connections() {
       pipeline:dealPipelineLabel(d.pipeline),stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
       next:d.nextAction??'',updated:timeLabel(d.updatedAt)},
     sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}})):[],[tab,projectRows,companiesById]);
-  const quoteTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='quotes'?quoteRows.map(q=>{
-    const total=quoteTotal(q);
-    return {
-    id:q.id,name:q.title||'Untitled document',
-    association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
-    values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
-      type:q.documentType==='pricing-schedule'?'Pricing schedule':q.documentType==='change-order'?'Change order':'Quote',
-      company:q.companyName??'',deal:projectsById.get(q.projectId??'')?.name??'',
-      status:q.status+(q.archivedAt?' · Archived':''),
-      value:money.format(total),updated:timeLabel(q.updatedAt)},
-    sortValues:{value:total,updated:q.updatedAt}};
-  }):[],[tab,quoteRows,projectsById]);
+  const quoteTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='quotes'?quoteRows.map(q=>({
+    id:q.id,name:q.name,
+    association:q.source==='external'&&q.projectId
+      ?{type:'project' as const,id:q.projectId,label:'External quote · '+q.name}
+      :{type:'quote' as const,id:q.sourceId,label:'Quote · '+q.name},
+    values:{name:q.name,number:q.number||'—',
+      type:q.source==='external'?'External'+(q.platform?' · '+q.platform:''):
+        'SalesShop · '+q.documentType,
+      company:q.companyName??companiesById.get(q.companyId??'')?.name??'',
+      deal:q.dealName??'',status:q.status,
+      value:q.value===undefined?'':money.format(q.value),
+      updated:timeLabel(q.sentDate??q.updatedAt)},
+    sortValues:{value:q.value??0,updated:q.sentDate??q.updatedAt},
+  })):[],[tab,quoteRows,companiesById]);
   const bulkTask=(items:ConnectionTableRow[])=>{
     beginTaskPromotion({target:'task',title:'Follow up: '+items.length+' '+tab,
       sourceLabel:'Connections selection',associations:items.flatMap(x=>x.association?[x.association]:[])});
