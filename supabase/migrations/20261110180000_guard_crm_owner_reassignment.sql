@@ -18,24 +18,25 @@ begin
     return new;
   end if;
 
-  if tg_op = 'INSERT' and new.owner_user_id is null then
-    new.owner_user_id := actor;
+  if tg_op = 'INSERT' then
+    if new.owner_user_id is null then
+      new.owner_user_id := actor;
+      return new;
+    end if;
+    if new.owner_user_id = actor then return new; end if;
+  elsif new.owner_user_id is not distinct from old.owner_user_id then
     return new;
   end if;
 
-  if tg_op = 'INSERT' or new.owner_user_id is distinct from old.owner_user_id then
-    if new.owner_user_id is distinct from actor or tg_op = 'UPDATE' then
-      select exists(
-        select 1 from public.organization_members m
-        where m.organization_id = new.organization_id
-          and m.user_id = actor
-          and m.role in ('owner', 'admin')
-      ) into manager;
-      if not manager then
-        raise exception 'Only organization owners and admins can reassign CRM records.'
-          using errcode = '42501';
-      end if;
-    end if;
+  select exists(
+    select 1 from public.organization_members m
+    where m.organization_id = new.organization_id
+      and m.user_id = actor
+      and m.role in ('owner', 'admin')
+  ) into manager;
+  if not manager then
+    raise exception 'Only organization owners and admins can reassign CRM records.'
+      using errcode = '42501';
   end if;
   return new;
 end;
