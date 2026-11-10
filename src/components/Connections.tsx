@@ -534,7 +534,8 @@ export function Connections() {
                 {peopleRows.map((person) => <div key={person.id} className="connections-mobile-record-group">
                 <button type="button" className="connections-record connections-person-record" onClick={() => previewRecord('person',person.id)}>
                   <span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
-                  <strong>{person.name || person.email || 'Unnamed contact'}</strong>
+                  <strong>{person.name&&person.name.trim().toLowerCase()!==person.email?.trim().toLowerCase()
+                    ?person.name:'Unnamed contact'}</strong>
                   <span className="connections-person-card-meta">
                     <small>{lastContactByPerson.has(person.id)
                       ?'Last contacted · '+timeLabel(lastContactByPerson.get(person.id)?.occurredAt)
