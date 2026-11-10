@@ -17,6 +17,7 @@ import {requestTaskModal} from './TaskModalHost';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {homeRecentQuotes} from '../services/homeOverview';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent} from '../services/salesCalendar';
 import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel,type CalendarBadgeMetric} from '../store/homeCalendarSettings';
@@ -76,6 +77,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [isPhone,setIsPhone]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches);
  const [showAllDay,setShowAllDay]=useState(false);
  const [addOpen,setAddOpen]=useState(false);
+ const [externalQuoteDialogOpen,setExternalQuoteDialogOpen]=useState(false);
  const addButtonRef=useRef<HTMLButtonElement>(null);
  const addMenuRef=useRef<HTMLDivElement>(null);
  const [addMenuPosition,setAddMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
@@ -566,6 +568,12 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
            strokeLinejoin="round" aria-hidden="true">
             <path d="M5 3h3l2.1 5.2-2.3 2.1a16 16 0 0 0 6 6l2.1-2.3L21 16v3.1a2 2 0 0 1-2.2 2C10.6 20.4 3.6 13.4 3 5.2A2 2 0 0 1 5 3Z"/>
            </svg> Log Activity</button>}
+          {mayLogActivity&&selected<=today&&<button type="button" role="menuitem" onClick={()=>{
+           setAddOpen(false);setExternalQuoteDialogOpen(true);
+          }}><svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+            aria-hidden="true"><rect x="5" y="3" width="13" height="18" rx="2"/>
+            <path d="M8 8h7M8 12h5m0 4h7m0 0-3-3m3 3-3 3"/></svg> Record external quote</button>}
         </div>,document.body)}
        </div>}
  
@@ -664,6 +672,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      onPointerDown={e=>{if(e.target===e.currentTarget)setOpen(false);}}>
      {calendarPanel}</div>,document.body)}
   {recentPortalTarget&&recentPanel&&createPortal(recentPanel,recentPortalTarget)}
+  {externalQuoteDialogOpen&&<ExternalQuoteBackfillDialog initialSentDate={selected}
+    onClose={()=>setExternalQuoteDialogOpen(false)}
+    onRecorded={()=>{setExternalQuoteDialogOpen(false);setBadgeFocus({date:selected,metric:'quotes-sent'});}}/>}
   {recordPreview&&<RecordPreviewDrawer record={recordPreview}
    onSelect={setRecordPreview} onClose={()=>setRecordPreview(null)}/>}
   {activityPreview&&<CalendarActivityPreview activityId={activityPreview}
