@@ -197,17 +197,11 @@
 :root[data-sales-theme] .sales-app.view-notebook .paper-toolbar{
  --ss-notebook-toolbar-control-height:34px;
 }
-:root[data-sales-theme] .sales-app.view-notebook .paper-toolbar :is(
-  > .notebook-history-tools > button,
-  > button.notebook-toolbar-icon,
-  > .notebook-toolbar-menu > button,
-  > .rich-text-tools > button,
-  > .notebook-input-toggle > button,
-  > .tool-group > button,
-  > .tool-group > select,
-  > button.tool-button,
-  > select.paper-select
-){
+:root[data-sales-theme] .sales-app.view-notebook .paper-toolbar
+ > :is(.notebook-history-tools,.rich-text-tools,.notebook-input-toggle,.notebook-toolbar-menu,.tool-group)
+ > :is(button,select),
+:root[data-sales-theme] .sales-app.view-notebook .paper-toolbar
+ > :is(button.notebook-toolbar-icon,button.tool-button,select.paper-select){
  box-sizing:border-box!important;
  height:var(--ss-notebook-toolbar-control-height)!important;
  min-height:var(--ss-notebook-toolbar-control-height)!important;
@@ -218,13 +212,8 @@
  flex-shrink:0;
  line-height:1.2;
 }
-:root[data-sales-theme] .sales-app.view-notebook .paper-toolbar :is(
- > .notebook-history-tools,
- > .rich-text-tools,
- > .notebook-input-toggle,
- > .notebook-toolbar-menu,
- > .tool-group
-){
+:root[data-sales-theme] .sales-app.view-notebook .paper-toolbar
+ > :is(.notebook-history-tools,.rich-text-tools,.notebook-input-toggle,.notebook-toolbar-menu,.tool-group){
  align-items:center;
 }
 @media(max-width:820px){
