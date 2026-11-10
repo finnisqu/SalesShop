@@ -200,7 +200,9 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       contactId: contact.id,
       quoteId: input.quoteId,
       occurredAt: timestamp,
-      metadata: { source: input.source ?? 'manual' },
+      metadata: { source: input.source ?? 'manual',
+        recordedByUserId:useAuthStore.getState().mode==='cloud'
+          ?useAuthStore.getState().user?.id:undefined },
     };
     const activities = [...get().activities, activity];
     persist(get().companies, contacts, get().projects, activities);
@@ -359,6 +361,9 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       companyName: ensured.companyName,
       stage,
       pipeline: details.pipeline,
+      // Newly created Deals are mine by default; reassignment remains explicit.
+      assignedUserId:useAuthStore.getState().mode==='cloud'
+        ?useAuthStore.getState().user?.id:undefined,
       stageChangedAt: timestamp,
       amount: typeof details.amount === 'number' && Number.isFinite(details.amount) ? details.amount : undefined,
       lastTouchpoint: details.lastTouchpoint,
