@@ -95,6 +95,8 @@ function ensureCompany(companies: Company[], companyName: string | undefined, ti
   if (matches.length > 1) return { companies, companyId: undefined, companyName: cleanName };
   const company: Company = {
     id: id('company'),
+    ownerUserId:useAuthStore.getState().mode==='cloud'
+      ?useAuthStore.getState().user?.id:undefined,
     name: cleanName,
     kind,
     createdAt: timestamp,
@@ -183,6 +185,8 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const timestamp = now();
     const contact: Contact = {
       id: id('contact'),
+      ownerUserId:useAuthStore.getState().mode==='cloud'
+        ?useAuthStore.getState().user?.id:undefined,
       companyId: input.companyId,
       name: cleanName,
       email: input.email?.trim() || undefined,
