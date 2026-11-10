@@ -8,7 +8,7 @@ import {completedTaskActivityId} from './taskActivityWorkflow';
 
 export type CompanyHistoryCategory='interaction'|'quote'|'deal'|'task'|'people'|'system';
 export type CompanyHistoryFilter='all'|'interactions'|'quotes'|'deals'|'tasks';
-export type CompanyHistoryTarget={kind:'person'|'deal'|'quote'|'task';id:string};
+export type CompanyHistoryTarget={kind:'activity'|'person'|'deal'|'quote'|'task';id:string};
 export interface CompanyHistoryItem{
  id:string;at:string;category:CompanyHistoryCategory;title:string;
  detail:string;target?:CompanyHistoryTarget;method?:string;pending?:boolean;
@@ -85,12 +85,9 @@ export function companyRelationshipHistory({
    category==='quote'&&document?document.title:undefined,
   ].filter(Boolean).join(' · ')||
    (activity.type==='quote-sent'?'Quote sent':activity.type.replaceAll('-',' '));
-  const target:CompanyHistoryTarget|undefined=category==='quote'&&document
-   ?{kind:'quote',id:document.id}:category==='deal'&&deal
-   ?{kind:'deal',id:deal.id}:person
-   ?{kind:'person',id:person.id}:deal
-   ?{kind:'deal',id:deal.id}:document
-   ?{kind:'quote',id:document.id}:undefined;
+  // Every recorded Activity opens its own details, not the linked Deal or
+  // Person. The details view provides navigation to all associated records.
+  const target:CompanyHistoryTarget={kind:'activity',id:activity.id};
   result.push({id:'activity:'+activity.id,at:activity.occurredAt,category,
    title:activity.metadata?.externalQuoteSent&&activity.type==='quote-sent'
     ?'External quote sent':activity.summary,
