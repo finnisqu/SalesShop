@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import {timeStartupStep} from './appLifecycleDiagnostics';
 import {
   CLOUD_DOCUMENT_SAVED_EVENT,
+  CLOUD_DOCUMENT_RETRY_EVENT,
   readLocalDocument,
   removeLocalDocument,
   writeLocalDocument,
@@ -346,9 +347,9 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   window.addEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
   // Retry failed saves within the active session, even if metadata storage
   // was blocked. Reload recovery still requires scoped pending markers.
-  const retryFailed=()=>{
+  const retryFailed=(force=false)=>{
     if(!active())return;
-    if(Date.now()-lastRecoveryRetry<15000)return;
+    if(!force&&Date.now()-lastRecoveryRetry<15000)return;
     let attempted=false;
     // Within this live, identity-checked session a failed write is retryable
     // even if browser storage rejected the metadata recovery marker.
@@ -378,13 +379,17 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     if(attempted)lastRecoveryRetry=Date.now();
   };
   const retryWhenVisible=()=>{if(document.visibilityState==='visible')retryFailed();};
-  window.addEventListener('online',retryFailed);
+  const retryWhenOnline=()=>retryFailed();
+  const retryOnDemand=()=>retryFailed(true);
+  window.addEventListener('online',retryWhenOnline);
   document.addEventListener('visibilitychange',retryWhenVisible);
+  window.addEventListener(CLOUD_DOCUMENT_RETRY_EVENT,retryOnDemand);
   activeCleanup=()=>{
     disposed=true;
     window.removeEventListener(CLOUD_DOCUMENT_SAVED_EVENT,handler);
-    window.removeEventListener('online',retryFailed);
+    window.removeEventListener('online',retryWhenOnline);
     document.removeEventListener('visibilitychange',retryWhenVisible);
+    window.removeEventListener(CLOUD_DOCUMENT_RETRY_EVENT,retryOnDemand);
   };
 
   // A previously interrupted debounced save survives a browser reload.
