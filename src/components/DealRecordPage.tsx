@@ -15,6 +15,7 @@ import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {DealAssigneeSelect,useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
 import {DealTimelineBeta} from './DealTimelineBeta';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
@@ -68,6 +69,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const [timelineOpen,setTimelineOpen]=useState(false);
   const timelineBetaEnabled=useDealTimelineBetaStore(state=>state.enabled);
   const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
+  const [externalQuoteDialogOpen,setExternalQuoteDialogOpen]=useState(false);
   const deal = deals.find(item => item.id === dealId);
   const [draft, setDraft] = useState({
     name: deal?.name ?? '', stage: deal?.stage ?? 'Discovery' as ProjectStage,
@@ -82,7 +84,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setActivityPreviewId(null);
-    setExternalQuoteOpen(false);setSaveError('');setNotice(null); }, [dealId]);
+    setExternalQuoteOpen(false);setExternalQuoteDialogOpen(false);setSaveError('');setNotice(null); }, [dealId]);
   useEffect(()=>{if(!timelineBetaEnabled)setTimelineOpen(false);},[timelineBetaEnabled]);
   useEffect(() => {
     if (!editing && deal) setDraft({
@@ -158,7 +160,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       {timelineBetaEnabled&&<button type="button" onClick={()=>setTimelineOpen(true)}>Project timeline <small>Beta</small></button>}
       <button type="button" onClick={() => {setNotice(null);setSaveError('');setEditing(value=>!value);}}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
       {canEditCrm&&
-        <button type="button" onClick={()=>setExternalQuoteOpen(open=>!open)}>
+        <button type="button" onClick={()=>{
+           if(window.matchMedia('(max-width:760px)').matches){setExternalQuoteDialogOpen(true);setExternalQuoteOpen(false);}
+           else setExternalQuoteOpen(open=>!open);
+          }}>
           {externalQuoteOpen?"Cancel external quote":"Record external quote"}
         </button>}
       {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
@@ -301,6 +306,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       </section>
     </>}
   />
+  {externalQuoteDialogOpen&&<ExternalQuoteBackfillDialog initialDealId={deal.id}
+   onClose={()=>setExternalQuoteDialogOpen(false)}
+   onRecorded={()=>{setExternalQuoteDialogOpen(false);
+    setNotice({kind:'applied',message:'External quote recorded as a dated Quote Sent activity.'});}}/>}
   {activityPreviewId&&<CalendarActivityPreview activityId={activityPreviewId}
    onClose={()=>setActivityPreviewId(null)}
    onSelect={(kind,id)=>{
