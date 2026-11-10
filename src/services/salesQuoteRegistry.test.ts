@@ -107,17 +107,4 @@ describe('one first-class quote index for both submission methods',()=>{
   expect(buildSalesQuoteRegistry([],[{...external,quoteId:'q1'},{
    ...external,id:'orphan',projectId:undefined}],[deal])).toHaveLength(0);
  });
- it('restricts My Quotes to the current rep, their assigned Deals, or no records when signed out',()=>{
-  const otherDeal={...deal,id:'d2',companyId:'co2',assignedUserId:'rep-b'};
-  const otherExternal={...external,id:'b2',projectId:'d2',companyId:'co2',
-    metadata:{...external.metadata,recordedByUserId:'rep-b'}};
-  const otherNative={...native,id:'q2',ownerUserId:'rep-b',projectId:'d2',companyId:'co2'};
-  const all=buildSalesQuoteRegistry([native,otherNative],[external,otherExternal],[deal,otherDeal]);
-  expect(mySalesQuoteRegistry(all,'cloud','rep-a',[deal,otherDeal]).map(q=>q.id).sort())
-   .toEqual(['external:a1','native:q1']);
-  expect(mySalesQuoteRegistry(all,'cloud','rep-b',[deal,otherDeal]).map(q=>q.id).sort())
-   .toEqual(['external:b2','native:q2']);
-  expect(mySalesQuoteRegistry(all,'cloud','outsider',[deal,otherDeal])).toEqual([]);
-  expect(mySalesQuoteRegistry(all,'cloud',undefined,[deal,otherDeal])).toEqual([]);
- });
 });

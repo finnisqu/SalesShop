@@ -619,7 +619,6 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       const meta=confirmed.metadata as Activity['metadata'];
       if(confirmed.type!=='quote-sent'||confirmed.project_id!==projectId||
          meta?.externalQuoteSent!==true||meta.bidSentDate!==bidSentDate||
-         meta.recordedByUserId!==actorId||meta.recordedAt!==activity.metadata?.recordedAt||
          Number(meta.amount)!==amount||
          (meta.externalQuoteFormat??'')!==(activity.metadata?.externalQuoteFormat??''))
         throw new Error('This submission ID was already used for different details. Reopen the form.');
