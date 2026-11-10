@@ -11,8 +11,8 @@ import {PreviewPanelClose} from './PreviewPanelChrome';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import '../external-quote.css';
 
-export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId}:{
- onClose:()=>void;onRecorded?:(dealName:string)=>void;initialDealId?:string;
+export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,initialSentDate}:{
+ onClose:()=>void;onRecorded?:(dealName:string)=>void;initialDealId?:string;initialSentDate?:string;
 }){
  const deals=useCrmStore(s=>s.projects);
  const companies=useCrmStore(s=>s.companies);
@@ -55,7 +55,7 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId}:{
     <header><div><small>CRM · HISTORICAL RECORD</small><h2>Record external quote</h2></div>
      <PreviewPanelClose onClose={onClose} label="Close external quote" initialFocus={false}/></header>
     <div className="external-quote-picker-body">
-     <p className="external-quote-picker-intro">Enter a quote sent before you started using SalesShop. Choose the Deal first; no SalesShop quote document is created.</p>
+     <p className="external-quote-picker-intro">Record a quote sent outside SalesShop, including one you sent today. Choose the Deal and the actual date sent; no SalesShop quote document is created.</p>
      <label>Search Deals
       <input type="search" autoFocus data-dialog-initial-focus value={query}
        onChange={e=>setQuery(e.target.value)} placeholder="Project, builder, or company name…"/>
@@ -72,7 +72,7 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId}:{
      </label>
      {editable&&<button type="button" className="external-quote-newdeal-toggle"
       onClick={()=>{setNewDealOpen(v=>!v);setError('');}}>
-      {newDealOpen?'Cancel new Deal':'+ Create Deal for historical quote'}
+      {newDealOpen?'Cancel new Deal':'+ Create Deal for external quote'}
      </button>}
      {newDealOpen&&editable&&<form className="external-quote-newdeal-form" onSubmit={create}>
       <label>Deal name<input required value={newDealName} maxLength={180}
@@ -87,7 +87,7 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId}:{
      </form>}
      {error&&<p className="external-quote-error" role="alert">{error}</p>}
      {selected&&editable&&<ExternalQuoteSentForm key={selected.id} deal={selected}
-       onCancel={onClose} onRecorded={()=>onRecorded?.(selected.name)}/>}
+       initialSentDate={initialSentDate} onCancel={onClose} onRecorded={()=>onRecorded?.(selected.name)}/>}
      {!editable&&<p className="external-quote-error">Your current role cannot record shared CRM quotes.</p>}
      {!selected&&<p className="external-quote-picker-empty">Select a Deal to enter its historical bid amount and sent date.</p>}
     </div>

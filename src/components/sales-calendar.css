@@ -1013,3 +1013,12 @@
  color:var(--ss-theme-muted,#687884);font:700 10px/1.3 var(--ss-font-body,system-ui,sans-serif);
  white-space:nowrap;font-variant-numeric:tabular-nums;
 }
+
+/* Portal-hosted calendar Add menu stays visible even when the agenda has one row. */
+.sales-calendar-add-menu.is-floating{position:fixed;right:auto;bottom:auto;z-index:10050;max-width:calc(100vw - 16px);color:var(--ss-theme-ink,#333)}
+
+/* Recent interactions share compact Agenda typography, with recognizable method icons. */
+.sales-calendar-sidecar-list button.home-recent-activity-row{display:flex;align-items:center;gap:10px;min-width:0}
+.home-recent-activity-icon{flex:0 0 28px;width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--ss-theme-border,#ddd);border-radius:8px;background:var(--ss-theme-tint,#eee);color:var(--ss-theme-muted,#777)}
+.home-recent-activity-copy{flex:1;min-width:0;display:grid;gap:5px}
+.home-recent-activity-copy :is(strong,small){display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

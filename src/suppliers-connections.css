@@ -188,3 +188,16 @@
  :root[data-sales-theme] .sales-app.view-dashboard .connections-suppliers-host
  .supplier-record-back {min-height:44px}
 }
+
+/* Connections worktables hide their desktop grid on phones; suppliers now have the matching mobile cards. */
+.supplier-mobile-directory-list{display:none}
+@media(max-width:820px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-suppliers-host .supplier-mobile-directory-list{display:grid;gap:8px;padding:4px 0 14px}
+ .supplier-mobile-directory-card{width:100%;min-width:0;display:flex;align-items:center;gap:10px;text-align:left;min-height:62px;padding:11px 12px;border:1px solid var(--ss-theme-border);border-radius:11px;background:var(--ss-theme-card);color:var(--ss-theme-ink)}
+ .supplier-mobile-directory-main{flex:1;min-width:0;display:grid;gap:4px}
+ .supplier-mobile-directory-main :is(strong,small){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .supplier-mobile-directory-main small{font-size:11px;color:var(--ss-theme-muted)}
+ .supplier-mobile-directory-card .supplier-directory-status{flex:none;font-size:10px}
+ .supplier-mobile-directory-arrow{font-size:23px;color:var(--ss-theme-muted)}
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-suppliers-host .supplier-record{display:block;visibility:visible}
+}

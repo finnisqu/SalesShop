@@ -427,7 +427,7 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
     <>
       {directoryOpen&&<section className="supplier-directory-page" aria-label="Supplier directory">
         {loadError&&<p className="supplier-directory-error" role="alert">{loadError}</p>}
-        {embeddedInConnections ? (
+        {embeddedInConnections ? (<>
           <ConnectionsTable tableKey="suppliers" columns={supplierColumns} rows={supplierTableRows}
             onOpen={chooseSupplier}
             toolbarControls={<label className="supplier-status-filter">Pricing status
@@ -439,7 +439,20 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
                 <option value="missing">Missing pricing</option>
               </select>
             </label>}/>
-        ) : <>
+          <div className="supplier-mobile-directory-list" aria-label="Supplier cards">
+           {filtered.map(supplier=><button type="button" key={supplier.key}
+             className="supplier-mobile-directory-card" onClick={()=>chooseSupplier(supplier.key)}>
+             <span className="supplier-mobile-directory-main">
+              <strong>{supplier.name}</strong>
+              <small>{supplier.brands.slice(0,2).join(', ')||'Supplier record'}</small>
+             </span>
+             <span className={'supplier-directory-status freshness-'+supplier.freshness}>
+              {statusLabels[supplier.freshness]}</span>
+             <span className="supplier-mobile-directory-arrow" aria-hidden="true">›</span>
+           </button>)}
+           {!filtered.length&&<p className="supplier-directory-empty">No suppliers match your search or filters.</p>}
+          </div>
+         </>) : <>
           <header className="supplier-directory-heading">
             <div><h2>Suppliers</h2><span>{rollups.length} suppliers · {filtered.length} shown</span></div>
             <Button variant="primary" onClick={()=>setSupplierCreateOpen(true)}>+ Supplier</Button>

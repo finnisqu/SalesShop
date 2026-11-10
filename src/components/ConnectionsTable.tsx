@@ -13,8 +13,8 @@ import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;isSelfCompany?:boolean;}
-interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers';columns:ConnectionColumn[];rows:ConnectionTableRow[];
- onOpen:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
+interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization';columns:ConnectionColumn[];rows:ConnectionTableRow[];
+ onOpen:(id:string)=>void;onRecordEdit?:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
  onBulkEdit?:(records:ConnectionTableRow[],change:BulkEditChange)=>Promise<void>;
  bulkEditCompanies?:readonly Company[];
  onBulkTaskProperty?:(records:ConnectionTableRow[],change:TaskBulkChange)=>Promise<void>;
@@ -35,7 +35,7 @@ function read(key:string):string[]{
  return Array.isArray(data)?data.filter((x):x is string=>typeof x==='string'):[];}
  catch{return[];}
 }
-export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,onTaskDelete,onBulkTaskDelete,
+export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,onTaskDelete,onBulkTaskDelete,
  onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
@@ -59,7 +59,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
  },[rows]);
  const hasTaskActions=tableKey==='tasks'&&Boolean(onTaskDuePreset||onTaskToggleComplete||onTaskDelete);
  const hasDocumentActions=tableKey==='documents'&&Boolean(onDocumentArchive||onDocumentRestore);
- const hasRowActions=hasTaskActions||hasDocumentActions;
+ const hasRowActions=hasTaskActions||hasDocumentActions||Boolean(onRecordEdit);
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'cols'),JSON.stringify(keys));}catch{/* preference storage is optional */}},[tableKey,keys]);
  useEffect(()=>{try{localStorage.setItem(storage(tableKey,'pins'),JSON.stringify(pinned));}catch{/* preference storage is optional */}},[tableKey,pinned]);
  const active=useMemo(()=>visibleConnectionColumns(keys,columns.map(c=>c.key)),[keys,columns]);
@@ -216,6 +216,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onBulkTask,onBulk
              :(row.values[col.key]||'—')}
          </td>)}
          {hasRowActions&&<td className="connections-row-actions">
+           {onRecordEdit&&<button type="button" aria-label={'Edit '+row.name}
+             onClick={()=>onRecordEdit(row.id)}>Edit</button>}
            {hasDocumentActions&&
              (row.archived
                ?onDocumentRestore&&<button type="button" aria-label={'Restore '+row.name}
