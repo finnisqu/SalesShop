@@ -1,8 +1,6 @@
 -- New Company/Person CRM records belong to their creator by default.
 -- Existing records remain unassigned; no retroactive ownership assumptions.
 -- Apply as additive migration before deploying the matching client.
-begin;
-
 alter table public.companies add column if not exists owner_user_id uuid;
 alter table public.contacts add column if not exists owner_user_id uuid;
 
@@ -39,4 +37,3 @@ comment on column public.companies.owner_user_id is
  'The authenticated member who created this Company. Existing shared Companies are unassigned; default applied only to future inserts.';
 comment on column public.contacts.owner_user_id is
  'The authenticated member who created this Person. Existing shared People are unassigned; default applied only to future inserts.';
-commit;
