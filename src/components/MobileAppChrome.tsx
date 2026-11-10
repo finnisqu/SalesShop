@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { WorkspaceToolbar } from '../design-system/shell';
 import { useNavigationStore, type AppView, type CatalogSection } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
@@ -83,8 +83,6 @@ export function MobileAppChrome() {
 
   const entries = useNotebookStore((state) => state.entries);
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
-  const selectEntry = useNotebookStore((state) => state.selectEntry);
-  const createEntry = useNotebookStore((state) => state.createEntry);
 
   // Keep the mobile quote dock above iOS Safari's expanding browser toolbar.
   // visualViewport describes what is actually visible; the layout viewport
@@ -179,12 +177,6 @@ export function MobileAppChrome() {
 
 
   const activeEntry = entries.find((entry) => entry.id === activeEntryId) ?? null;
-  const visibleEntries = useMemo(
-    () => entries
-      .filter((entry) => !entry.hidden || entry.id === activeEntryId)
-      .sort((a, b) => Number(b.favorite) - Number(a.favorite) || b.updatedAt.localeCompare(a.updatedAt)),
-    [entries, activeEntryId],
-  );
 
   if (view === 'quotes' && !betaQuotesEnabled && !quoteReadOnly && !preview && !(quoteLibraryMode === 'team' && mode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin'))) return null;
 
@@ -302,41 +294,7 @@ export function MobileAppChrome() {
              </button>)}
            </nav>
 
-          {view === 'notebook' && !preview && <section className="mobile-app-context-section">
-            <header>
-              <div><strong>Notebook pages</strong><small>{visibleEntries.length} visible</small></div>
-              <button type="button" onClick={() => { createEntry(); setOpen(false); }}>+ New</button>
-            </header>
-            <div className="mobile-notebook-page-list">
-              {visibleEntries.map((entry) => (
-                <button type="button" key={entry.id} className={entry.id === activeEntryId ? 'active' : ''} onClick={() => { selectEntry(entry.id); setOpen(false); }}>
-                  <span>{entry.favorite ? '★' : 'PAGE'}</span>
-                  <strong>{entry.title || 'Untitled page'}</strong>
-                  <small>{new Date(entry.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small>
-                </button>
-              ))}
-            </div>
-          </section>}
-
-          {view === 'board' && !viewer && !preview && !(scopedMember && !canEditTeamArea(effectiveRole, effectiveDepartment, 'crm')) && <section className="mobile-app-context-section mobile-board-context-section">
-            <header><div><strong>Board view</strong><small>One CRM, two lenses</small></div></header>
-            <div className="mobile-board-mode-list">
-              <button type="button" className={boardMode === 'projects' ? 'active' : ''} onClick={() => {
-                setBoardMode('projects');
-                window.dispatchEvent(new CustomEvent('sales-shop:board-mode-request', { detail: { mode: 'projects' } }));
-                setOpen(false);
-              }}>
-                <strong>Deals</strong><small>Work we are trying to win or perform</small>
-              </button>
-              <button type="button" className={boardMode === 'accounts' ? 'active' : ''} onClick={() => {
-                setBoardMode('accounts');
-                window.dispatchEvent(new CustomEvent('sales-shop:board-mode-request', { detail: { mode: 'accounts' } }));
-                setOpen(false);
-              }}>
-                <strong>Accounts</strong><small>Customer relationship health</small>
-              </button>
-            </div>
-          </section>}
+          
 
           
 
