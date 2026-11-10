@@ -1,4 +1,4 @@
-import {useEffect,useState,type FormEvent} from 'react';
+import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {useCrmStore} from '../store/crmStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {isOurCompany} from '../services/companyRelationship';
@@ -33,6 +33,12 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
  const [group,setGroup]=useState<RosterGroup>('employees');
  const [editingId,setEditingId]=useState<string|null>(null);
  const [showEditor,setShowEditor]=useState(false);
+ const formRef=useRef<HTMLFormElement>(null);
+ useEffect(()=>{
+  if(!showEditor)return;
+  const frame=window.requestAnimationFrame(()=>formRef.current?.scrollIntoView({block:'start',behavior:'smooth'}));
+  return()=>window.cancelAnimationFrame(frame);
+ },[showEditor,editingId]);
  const [draft,setDraft]=useState<Draft>(()=>empty('employees'));
  const [error,setError]=useState('');
  const [roleCreating,setRoleCreating]=useState(false);
@@ -131,10 +137,10 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
     aria-pressed={group===item.id} onClick={()=>{setGroup(item.id);setShowEditor(false);setError('');}}>
     {item.title} <span>{count(item.id)}</span></button>)}
   </div>
-  {showEditor&&editable&&<form className="our-org-form" onSubmit={save}>
+  {showEditor&&editable&&<form ref={formRef} className="our-org-form" onSubmit={save}>
    <div className="our-org-form-title"><strong>{editingId?'Edit':'Add'} person</strong>
     <button type="button" onClick={()=>{setShowEditor(false);setError('');}}>Cancel</button></div>
-   <label>Name<input autoFocus required maxLength={180} value={draft.name}
+   <label>Name<input required maxLength={180} value={draft.name}
     onChange={e=>setDraft(d=>({...d,name:e.target.value}))}/></label>
    <label>Relationship<select value={draft.group} onChange={e=>setDraft(d=>({...d,group:e.target.value as RosterGroup,title:''}))}>
     {OUR_ORG_GROUPS.map(item=><option key={item.id} value={item.id}>{item.title.slice(0,-1)}</option>)}
@@ -179,6 +185,21 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
      <td>{editable&&<button type="button" onClick={()=>beginEdit(person.id)}>Edit</button>}</td>
     </tr>)}
    </tbody></table>
+  </div>
+  <div className="our-org-mobile-cards" aria-label={group+' mobile directory'}>
+   {records.map(person=><article key={person.id} className="connections-mobile-record-group">
+    <button type="button" className="connections-record" onClick={()=>onOpenPerson(person.id)}>
+     <span className="connections-record-eyebrow">{person.title||(group==='employees'?'Employee':'Subcontractor')}</span>
+     <strong>{person.name}</strong>
+     <small>{[
+      group==='subcontractors'?companies.find(item=>item.id===person.companyId&&!ourOrgGroup(item))?.name:undefined,
+      person.email,person.phone
+     ].filter(Boolean).join(' · ')||'Open person'}</small>
+     <span className="connections-record-arrow" aria-hidden="true">↗</span>
+    </button>
+    {editable&&<div className="connections-mobile-inline"><button type="button"
+      onClick={()=>beginEdit(person.id)}>Edit person</button></div>}
+   </article>)}
   </div>
   {!records.length&&<p className="our-org-empty">{query?'No people match this search.':'No '+group+' added yet.'}</p>}
   <p className="our-org-footnote">Stored as shared CRM people and tagged internal directory records. These entries do not grant SalesShop access or change Team permissions.</p>
