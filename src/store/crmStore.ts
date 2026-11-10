@@ -310,7 +310,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
   updateActivity:async(activityId,patch)=>{
     const auth=useAuthStore.getState();
     const source=get().activities.find(item=>item.id===activityId);
-    if(!source||source.type!=='manual-touchpoint')
+    if(!source||(source.type!=='manual-touchpoint'&&source.type!=='notebook-touchpoint'))
       throw new Error('Only manually logged interactions can be edited here.');
     if(auth.mode==='cloud'){
       if(!auth.organizationId||!supabase||!canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm'))

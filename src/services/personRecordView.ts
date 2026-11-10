@@ -1,5 +1,6 @@
 import type { Activity, Company, Contact, Project } from '../types/crm';
 import type { Quote } from '../types/quote';
+import {activityRelations} from './activityRelations';
 
 /** A person's history must never silently inherit their company's activity log. */
 export function personRecordView(
@@ -10,7 +11,11 @@ export function personRecordView(
   quotes: readonly Quote[] = [],
 ) {
   const company = companies.find((item) => item.id === person.companyId) ?? null;
-  const directActivities = activities.filter((activity) => activity.contactId === person.id)
+  // Multiple People can participate in one interaction; later-added
+  // associations must appear in every explicitly linked Person's history.
+  const directActivities = activities.filter(activity =>
+    activity.contactId===person.id||
+    activityRelations(activity).some(link=>link.type==='contact'&&link.id===person.id))
     .slice().sort((a,b) => b.occurredAt.localeCompare(a.occurredAt));
   // A matching company or name is never evidence that someone participates
   // in a Deal. Only this person's explicit, accessible Quote contact link counts.

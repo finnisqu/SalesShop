@@ -34,9 +34,9 @@ describe('Company unified relationship history',()=>{
   expect(timeline.map(item=>item.id)).toEqual([
    'activity:external','activity:call','activity:qsent','activity:created','activity:createddeal']);
   expect(timeline.find(item=>item.id==='activity:external')).toMatchObject({
-   category:'quote',title:'External quote sent',target:{kind:'deal',id:'d'}});
+   category:'quote',title:'External quote sent',target:{kind:'activity',id:'external'}});
   expect(timeline.find(item=>item.id==='activity:call')).toMatchObject({
-   category:'interaction',target:{kind:'person',id:'p'}});
+   category:'interaction',target:{kind:'activity',id:'call'}});
   expect(companyHistoryByFilter(timeline,'interactions').map(item=>item.id)).toEqual(['activity:call']);
  });
  it('includes metadata-only links, deduplicates multi-linked Activities, and excludes namesakes',()=>{

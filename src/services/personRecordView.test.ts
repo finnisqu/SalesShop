@@ -31,6 +31,18 @@ describe('Person record relationship boundaries', () => {
     const related = personRecordView(person,[company],[],[deal,otherDeal,unrelatedSameName],quotes);
     expect(related.linkedDeals.map(item=>[item.project.id,item.quoteCount])).toEqual([['deal-a',2]]);
   });
+  it('shows a logged interaction when a Person is added as a secondary participant', () => {
+    const activities = [
+      {id:'multi',type:'manual-touchpoint',summary:'Call with team',
+       contactId:'other',occurredAt:'2026-11-10T12:00:00Z',
+       metadata:{interactionMethod:'call',relatedRecords:[
+        {type:'contact',id:'other'},{type:'contact',id:person.id}]}},
+      {id:'not-mine',type:'manual-touchpoint',summary:'Unrelated',
+       contactId:'other',occurredAt:'2026-11-10T13:00:00Z'},
+    ] as Activity[];
+    const history=personRecordView(person,[company],activities);
+    expect(history.directActivities.map(item=>item.id)).toEqual(['multi']);
+  });
   it('does not infer a Deal role from merely sharing a company', () => {
     const project = { id:'p1', name:'Job',companyId:company.id,updatedAt:'2026-10-10' } as Project;
     const result = personRecordView(person,[company],[],[project],[]);

@@ -31,7 +31,7 @@ describe('Company relationship timeline integration',()=>{
   expect(component).toContain("label:'Quotes'");
   expect(component).toContain("label:'Deals'");
   expect(component).toContain("label:'Tasks'");
-  expect(component).toContain('onOpenTarget(item.target!)');
+  expect(component).toContain('onOpenTarget?.(item.target)');
   expect(component).toContain('setVisibleCount(count=>count+25)');
  });
 });

@@ -18,7 +18,7 @@ function HistoryGlyph({item}:{item:CompanyHistoryItem}){
   item.category==='interaction'&&item.method==='email'?'mail':
   item.category==='interaction'&&item.method==='text'?'message':
   item.category==='task'?'task':item.category==='deal'?'deal':
-  item.category==='quote'?'quote':'system';
+  item.category==='quote'?'quote':item.method==='in-person'?'person':'system';
  return <span className={'company-history-symbol is-'+item.category} aria-hidden="true">
   <svg viewBox="0 0 24 24" width="17" height="17" fill="none"
    stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -28,6 +28,8 @@ function HistoryGlyph({item}:{item:CompanyHistoryItem}){
     name==='task'?<><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3 3 7-7"/></>:
     name==='deal'?<><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></>:
     name==='quote'?<><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v5h4M9 12h7M9 16h7"/></>:
+    name==='person'?<><rect x="3" y="2" width="18" height="20" rx="3"/>
+      <circle cx="12" cy="9" r="3.1"/><path d="M6.5 18c.7-3 2.7-4.5 5.5-4.5s4.8 1.5 5.5 4.5"/></>:
     <><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></>}
   </svg>
  </span>;
@@ -55,15 +57,20 @@ export function CompanyRelationshipTimeline({items,compact=false,onOpenTarget}:{
   </div>}
   <ol className="company-history-list">
    {shown.map(item=><li key={item.id}>
-    <HistoryGlyph item={item}/>
-    <div className="company-history-entry">
-     <strong>{item.title}</strong>
-     <small>{item.detail}</small>
-     <time dateTime={item.at}>{historyDate(item.at)}</time>
-    </div>
-    {item.target&&onOpenTarget&&<button type="button" className="company-history-open"
-     aria-label={'Open related '+item.target.kind+' for '+item.title}
-     onClick={()=>onOpenTarget(item.target!)}>Open</button>}
+    <button type="button" className="company-history-row"
+     disabled={!item.target||!onOpenTarget}
+     aria-label={(item.target?.kind==='activity'?'View Activity details: ':'Open related record: ')+item.title}
+     onClick={()=>{if(item.target)onOpenTarget?.(item.target);}}>
+     <HistoryGlyph item={item}/>
+     <span className="company-history-entry">
+      <strong>{item.title}</strong>
+      <small>{item.detail}</small>
+      <time dateTime={item.at}>{historyDate(item.at)}</time>
+     </span>
+     <span className="company-history-open" aria-hidden="true">
+      {item.target?.kind==='activity'?'Details':'Open'}
+     </span>
+    </button>
    </li>)}
   </ol>
   {!shown.length&&<p className="company-history-empty">No linked history in this category yet.</p>}

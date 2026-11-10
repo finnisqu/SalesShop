@@ -41,7 +41,8 @@ function ActivityMethodIcon({method}:{method:Method}){
    method==='email'?<><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></>:
    method==='text'?<path d="M20.5 16a3 3 0 0 1-3 3H9l-5.5 3V6a3 3 0 0 1 3-3h11a3 3 0 0 1 3 3v10ZM7 9h10M7 13h7"/>:
    method==='video-call'?<><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m17 10 5-3v10l-5-3"/></>:
-   <><circle cx="9" cy="7.5" r="3"/><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2M17 6a3 3 0 0 1 0 6M19 15a5 5 0 0 1 2.5 4.5"/></>}
+   <><rect x="3.5" y="2.5" width="17" height="19" rx="3.3"/>
+    <circle cx="12" cy="9" r="3.1"/><path d="M6.5 18c.5-3 2.6-4.5 5.5-4.5s5 1.5 5.5 4.5"/></>}
  </svg>;
 }
 const tomorrowKey=()=>{

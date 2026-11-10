@@ -16,6 +16,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {companyRelationshipHistory} from '../services/companyRelationshipHistory';
 import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {requestTaskModal} from '../services/taskModalEvents';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -40,6 +41,8 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const openQuote = useNavigationStore((state) => state.openQuote);
   const openProject = useNavigationStore((state) => state.openProject);
   const openPerson = useNavigationStore((state) => state.openPerson);
+  const openCompany = useNavigationStore((state) => state.openCompany);
+  const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editing, setEditing] = useState(false);
   const [newAlias, setNewAlias] = useState('');
   const [editError,setEditError]=useState('');
@@ -56,6 +59,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   useEffect(() => {
     setEditing(false);
+    setActivityPreviewId(null);
     setNewAlias('');
     setEditError('');setNotice(null);
   }, [companyId]);
@@ -146,7 +150,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     setNewAlias('');
   };
 
-  return <RecordPageLayout entityType="company" title={company.name} onBack={onBack}
+  return <><RecordPageLayout entityType="company" title={company.name} onBack={onBack}
     subtitle={companyRelationshipLabel(company)}
     badge={<><span className={'connections-record-stage'+(isOurCompany(company)?' is-self-company':'')}>
       {isOurCompany(company)?'SELF · Our Company':companyRelationshipLabel(company)}
@@ -259,6 +263,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
 
       <RecordCard title="Relationship history" extra={<span>{timeline.length} events</span>}>
         <CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{
+          if(target.kind==='activity'){setActivityPreviewId(target.id);return;}
           if(target.kind==='person')openPerson(target.id);
           if(target.kind==='deal')openProject(target.id);
           if(target.kind==='quote')openQuote(target.id);
@@ -266,5 +271,15 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
         }}/>
       </RecordCard>
     </>}
-  />;
+  />
+  {activityPreviewId&&<CalendarActivityPreview activityId={activityPreviewId}
+    onClose={()=>setActivityPreviewId(null)}
+    onSelect={(kind,id)=>{
+      setActivityPreviewId(null);
+      if(kind==='person')openPerson(id);
+      else if(kind==='deal')openProject(id);
+      else if(kind==='quote')openQuote(id);
+      else if(kind==='company')openCompany(id);
+    }}/>}
+  </>;
 }
