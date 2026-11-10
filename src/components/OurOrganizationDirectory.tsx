@@ -196,10 +196,9 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
       group==='subcontractors'?companies.find(item=>item.id===person.companyId&&!ourOrgGroup(item))?.name:undefined,
       person.email,person.phone
      ].filter(Boolean).join(' · ')||'Open person'}</small>
-     <span className="connections-record-arrow" aria-hidden="true">↗</span>
     </button>
-    {editable&&<div className="connections-mobile-inline"><button type="button"
-      onClick={()=>beginEdit(person.id)}>Edit person</button></div>}
+    {editable&&<button type="button" className="connections-mobile-top-action"
+      onClick={()=>beginEdit(person.id)} aria-label={'Edit '+person.name}>Edit</button>}
    </article>)}
   </div>
   {!records.length&&<p className="our-org-empty">{query?'No people match this search.':'No '+group+' added yet.'}</p>}
