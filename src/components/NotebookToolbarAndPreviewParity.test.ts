@@ -43,12 +43,21 @@ describe('Notebook mobile toolbar + shared preview chrome',()=>{
   expect(record).toContain('PreviewPanelClose');
   expect(record).toContain('PreviewPanelActions');
  });
- it('disambiguates untitled and favorited Notebook pages by date in picker',()=>{
+ it('shows only the date for untitled Notebook pages in both navigation menus',()=>{
   const app=read('src/App.tsx');
-  expect(app).toContain("candidate.favorite?'★ ':'");
-  expect(app).toContain("candidate.title.trim()!=='Untitled page'");
-  expect(app).toContain("month:'short',day:'numeric'");
-  expect(app).toContain("hour:'numeric',minute:'2-digit'");
+  expect(app).toContain('label:notebookPageNavigationLabel(candidate)');
   expect(app).toContain('mobileTabs={notebookPageOptions}');
+  expect(app).toContain('notebookPageOptions.map(page=>');
+  const helper=read('src/services/notebookPageNavigationLabel.ts');
+  expect(helper).toContain("month:'short',day:'numeric',year:'numeric'");
+  expect(helper).not.toContain("hour:'numeric'");
+ });
+ it('uses consistent main-toolbar button heights on phone and desktop',()=>{
+  const css=read('src/notebook-responsive-polish.css');
+  expect(css).toContain('--ss-notebook-toolbar-control-height:34px');
+  expect(css).toContain('--ss-notebook-toolbar-control-height:43px');
+  expect(css).toContain('min-height:var(--ss-notebook-toolbar-control-height)!important');
+  expect(css).toContain('max-height:var(--ss-notebook-toolbar-control-height)!important');
+  expect(css).toContain('> :is(.notebook-history-tools,.rich-text-tools,.notebook-input-toggle,.notebook-toolbar-menu,.tool-group)');
  });
 });
