@@ -372,7 +372,7 @@ function App() {
             onFocusPane={setFocusedPane}/>}
           <section className="binder-stage">
             {!notebookCompact&&<div className="notebook-split-controls">
-              {!notebookCompact&&<strong>{companion?(splitStacked?'Stacked pages':'Split pages'):'Single page'}</strong>}
+              <strong>{companion?(splitStacked?'Stacked pages':'Split pages'):'Single page'}</strong>
               <SalesCalendarLauncher compact />
               {companion&&<select aria-label="Choose second Notebook page" value={companion.id}
                 onChange={event=>openCompanion(event.target.value)}>
@@ -380,13 +380,13 @@ function App() {
               </select>}
               {companion&&<button type="button" onClick={()=>setSplitStacked(s=>!s)}
                 aria-pressed={splitStacked}>{splitStacked?'◫ Side by side':'▤ Stack'}</button>}
-              {!notebookCompact&&<button type="button" disabled={!companion&&companionOptions.length===0}
+              <button type="button" disabled={!companion&&companionOptions.length===0}
                 aria-pressed={!!companion} onClick={()=>{
                   if(companion)closeRightPane();
                   else if(companionOptions[0])openCompanion(companionOptions[0].id);
-                }}>{companion?'Close split':'▥ Side by side'}</button>}
+                }}>{companion?'Close split':'▥ Side by side'}</button>
             </div>}
-            <div className={`notebook-panes ${companion?'is-split':''} ${splitStacked?'is-stacked':''}`}>
+            <div className={`notebook-panes ${companion?'is-split':''} ${companion&&splitStacked?'is-stacked':''}`}>
             <div data-notebook-pane="left"
               className={`notebook-primary-pane ${focusedPane==='left'||!companion?'is-focused-pane':''}`}
               onPointerDownCapture={()=>setFocusedPane('left')}
