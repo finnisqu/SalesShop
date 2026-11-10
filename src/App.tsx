@@ -351,7 +351,7 @@ function App() {
               </select>
               <span aria-hidden="true">{notebookPageOptions.length} pages</span>
             </div>}
-            more={notebookCompact?null:<WorkspaceMoreMenu items={[
+            more={notebookCompact?<SalesCalendarLauncher compact label="Notebook calendar"/>:<WorkspaceMoreMenu items={[
               {label:companion?'Close split page':'Open split page',
                 disabled:!companion&&companionOptions.length===0,
                 onClick:()=>companion?closeRightPane():companionOptions[0]&&openCompanion(companionOptions[0].id)},
@@ -371,7 +371,7 @@ function App() {
             onSwap={swapPanes} onCloseLeft={closeLeftPane} onCloseRight={closeRightPane}
             onFocusPane={setFocusedPane}/>}
           <section className="binder-stage">
-            <div className="notebook-split-controls">
+            {!notebookCompact&&<div className="notebook-split-controls">
               {!notebookCompact&&<strong>{companion?(splitStacked?'Stacked pages':'Split pages'):'Single page'}</strong>}
               <SalesCalendarLauncher compact />
               {companion&&<select aria-label="Choose second Notebook page" value={companion.id}
@@ -385,7 +385,7 @@ function App() {
                   if(companion)closeRightPane();
                   else if(companionOptions[0])openCompanion(companionOptions[0].id);
                 }}>{companion?'Close split':'▥ Side by side'}</button>}
-            </div>
+            </div>}
             <div className={`notebook-panes ${companion?'is-split':''} ${splitStacked?'is-stacked':''}`}>
             <div data-notebook-pane="left"
               className={`notebook-primary-pane ${focusedPane==='left'||!companion?'is-focused-pane':''}`}
