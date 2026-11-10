@@ -93,6 +93,7 @@ import { useCompanySettingsStore } from './store/companySettingsStore';
 import { useCrmStore } from './store/crmStore';
 import { useNavigationStore } from './store/navigationStore';
 import { useNotebookStore } from './store/notebookStore';
+import {notebookPageNavigationLabel} from './services/notebookPageNavigationLabel';
 import {useQuoteStore} from './store/quoteStore';
 
 function App() {
@@ -253,11 +254,7 @@ function App() {
         b.updatedAt.localeCompare(a.updatedAt))
       .map(candidate=>({
         value:candidate.id,
-        label:(candidate.favorite?'★ ':'')+
-          (candidate.title&&candidate.title.trim()!=='Untitled page'
-            ?candidate.title.trim():'Page')+
-          ' · '+new Date(candidate.createdAt).toLocaleString(undefined,{
-            month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}),
+        label:notebookPageNavigationLabel(candidate),
       }));
   },[entries,activeEntryId,notebookHeaderSearch]);
   const openCompanion=(id:string)=>{
