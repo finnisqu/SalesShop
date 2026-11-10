@@ -51,7 +51,8 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  const allowed=!rolePreview&&(mode==='local'||canEditTeamArea(role,department,'crm'))&&
   (!activity?.metadata?.recordedByUserId||
     activity.metadata.recordedByUserId===userId||role==='owner'||role==='admin');
- const canEdit=allowed&&activity?.type==='manual-touchpoint';
+ const loggedInteraction=activity?.type==='manual-touchpoint'||activity?.type==='notebook-touchpoint';
+ const canEdit=allowed&&loggedInteraction;
  const scopeKey=draftStorageKey('activity-edit:'+activityId,mode,orgId,userId);
  const [editing,setEditing]=useState(false);
  const [method,setMethod]=useState<Method>('call');
@@ -134,9 +135,9 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
    role="dialog" aria-modal="true" aria-label={editing?'Edit Activity':'Activity preview'}>
    <MobileSheetHandle onClose={close} disabled={saving}/>
    <header className="activity-preview-header">
-    <div><span className="board-eyebrow">CRM · COMPLETED INTERACTION</span>
+    <div><span className="board-eyebrow">{loggedInteraction?'CRM · LOGGED INTERACTION':'CRM · ACTIVITY DETAILS'}</span>
      <h2>{editing?'Edit activity':activity.summary}</h2>
-     {editing&&<p>Correct details or add related people without leaving Home.</p>}
+     {editing&&<p>Correct the date, time, notes or participants in this Activity.</p>}
     </div>
     <button type="button" aria-label="Close activity preview" className="editor-close"
      disabled={saving} onClick={close}>×</button>
@@ -163,10 +164,21 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
      </form>:<>
       <div className="tasks-preview-meta activity-quick-meta">
        <span>{activity.metadata?.interactionMethod?
-        methodLabel(activity.metadata.interactionMethod):'Interaction'}</span>
-       <span>Completed</span>
+        methodLabel(activity.metadata.interactionMethod):activity.type.replaceAll('-',' ')}</span>
+       <span>{loggedInteraction?'Completed':'Recorded'}</span>
        <span>{new Date(activity.occurredAt).toLocaleString()}</span>
       </div>
+      <dl className="activity-preview-event-details">
+       <div><dt>Activity type</dt><dd>{activity.type.replaceAll('-',' ')}</dd></div>
+       <div><dt>Date & time</dt><dd>{new Date(activity.occurredAt).toLocaleString()}</dd></div>
+       {activity.metadata?.externalQuoteSent&&<div><dt>Quote source</dt><dd>Outside SalesShop</dd></div>}
+       {activity.metadata?.bidSentDate&&<div><dt>Sent on</dt><dd>{activity.metadata.bidSentDate}</dd></div>}
+       {activity.metadata?.externalQuoteFormat&&<div><dt>Format</dt><dd>{activity.metadata.externalQuoteFormat}</dd></div>}
+       {activity.metadata?.amount!==undefined&&<div><dt>Amount</dt><dd>{new Intl.NumberFormat('en-US',{
+        style:'currency',currency:'USD'}).format(activity.metadata.amount)}</dd></div>}
+       {activity.metadata?.quoteNumber&&<div><dt>Quote</dt><dd>{activity.metadata.quoteNumber}</dd></div>}
+       {activity.metadata?.revision!==undefined&&<div><dt>Revision</dt><dd>{activity.metadata.revision}</dd></div>}
+      </dl>
       {activity.metadata?.notes?
        <p className="tasks-preview-notes activity-quick-notes">{activity.metadata.notes}</p>:
        <p className="activity-preview-empty">No notes were recorded.</p>}
