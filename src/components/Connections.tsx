@@ -20,7 +20,9 @@ import {WorkspaceHelp} from './WorkspaceHelp';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
-import {usePersonalTaskStore} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
+import {personFollowUpIndex,matchesPersonAttentionFilter,localCalendarDay,
+ type PeopleAttentionFilter} from '../services/personFollowUpIntelligence';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
 import type {BulkEditChange} from './ConnectionsBulkEditDialog';
 import {canEditTeamArea} from '../services/teamDepartments';
@@ -100,6 +102,11 @@ function timeLabel(value?: string) {
     : value;
 }
 
+function followUpDateLabel(day:string){
+ const date=new Date(day+'T12:00:00');
+ return Number.isFinite(date.getTime())
+  ?date.toLocaleDateString(undefined,{month:'short',day:'numeric'}):day;
+}
 function findText(...items: Array<string | undefined>) {
   return items.filter(Boolean).join(' ').toLowerCase();
 }
@@ -143,6 +150,7 @@ export function Connections() {
    return()=>window.removeEventListener('salesshop:open-suppliers',show);
   },[]);
   const [query, setQuery] = useState('');
+  const [peopleAttention,setPeopleAttention]=useState<PeopleAttentionFilter>('all');
   const [activityFilters,setActivityFilters]=useState<ActivityLogFilters>(DEFAULT_ACTIVITY_LOG_FILTERS);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [activityPreview,setActivityPreview]=useState<string|null>(null);
@@ -183,6 +191,13 @@ export function Connections() {
   const authOrgId=useAuthStore(state=>state.organizationId);
   const authRole=useAuthStore(state=>state.teamRole);
   const authDepartment=useAuthStore(state=>state.teamDepartment);
+  const personalTaskScope=usePersonalTaskStore(state=>state.scope);
+  const personalTasks=usePersonalTaskStore(state=>state.tasks);
+  const todayKey=localCalendarDay(new Date());
+  const expectedTaskScope=taskScope(authMode,authOrgId,authUser);
+  const followUpByPerson=useMemo(()=>personFollowUpIndex(
+    expectedTaskScope&&personalTaskScope===expectedTaskScope?personalTasks:[],todayKey),
+    [expectedTaskScope,personalTaskScope,personalTasks,todayKey]);
   const previewPerspective=useRolePerspectiveStore(state=>state.activePerspective);
   const canBulkEdit=!previewPerspective&&(authMode==='local'||
     Boolean(authOrgId&&authUser&&canEditTeamArea(authRole,authDepartment,'crm')));
@@ -211,7 +226,7 @@ export function Connections() {
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
     setPreview(null);setActivityPreview(null);setQuoteRecordId(null);
-    setTab(next); setQuery(''); setNotice('');
+    setTab(next); setQuery(''); setNotice('');setPeopleAttention('all');
     setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
     // Activity history is an on-demand utility, never the default landing page.
     if (CONNECTIONS_TABS.some((item) => item.id === next)) {
@@ -237,7 +252,10 @@ export function Connections() {
     .filter(person=>!isOurOrgContact(person,companies))
     .filter((person) => findText(person.name, person.email, person.phone, person.title,
       companiesById.get(person.companyId ?? '')?.name).includes(needle))
-    .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById, companies, needle]);
+    .filter(person=>matchesPersonAttentionFilter(person.id,peopleAttention,
+      lastContactByPerson,followUpByPerson,todayKey))
+    .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById,
+      companies,needle,peopleAttention,lastContactByPerson,followUpByPerson,todayKey]);
   const projectRows = useMemo(() => projects
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction, dealPipelineLabel(project.pipeline)).includes(needle))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
@@ -527,6 +545,14 @@ export function Connections() {
             <section className="connections-directory" aria-label="People directory">
               
               <p className="connections-count">{peopleRows.length} people · preview or open full details</p>
+              <div className="connections-people-attention-filters" role="group" aria-label="People follow-up filters">
+               {([
+                 ['all','All'],['never','Never contacted'],
+                 ['stale','Inactive 30+ days'],['overdue','Follow-up overdue'],
+                ] as const).map(([value,label])=><button type="button" key={value}
+                aria-pressed={peopleAttention===value} onClick={()=>setPeopleAttention(value)}>
+                {label}</button>)}
+              </div>
               <ConnectionsTable key="people" tableKey="people" columns={peopleColumns}
                 rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
@@ -537,9 +563,19 @@ export function Connections() {
                   <strong>{person.name&&person.name.trim().toLowerCase()!==person.email?.trim().toLowerCase()
                     ?person.name:'Unnamed contact'}</strong>
                   <span className="connections-person-card-meta">
-                    <small>{lastContactByPerson.has(person.id)
-                      ?'Last contacted · '+timeLabel(lastContactByPerson.get(person.id)?.occurredAt)
-                      :'Never contacted'}</small>
+                    <span className="connections-person-card-relationship">
+                     <small>{lastContactByPerson.has(person.id)
+                       ?'Last contacted · '+timeLabel(lastContactByPerson.get(person.id)?.occurredAt)
+                       :'Never contacted'}</small>
+                     {followUpByPerson.get(person.id)&&<small
+                       className={'connections-person-follow-up'+
+                         (followUpByPerson.get(person.id)?.overdue?' is-overdue':'')}>
+                       {followUpByPerson.get(person.id)?.overdue?'Overdue follow-up':'Follow-up'}
+                       {' · '}{followUpByPerson.get(person.id)?.dueDate
+                         ?followUpDateLabel(followUpByPerson.get(person.id)!.dueDate!)
+                         :'No due date'}
+                     </small>}
+                    </span>
                     <span className="connections-person-card-methods" aria-label="Contact information available">
                       {Boolean(person.phone?.trim())&&<ContactOnFileIcon kind="phone"/>}
                       {Boolean(person.email?.trim())&&<ContactOnFileIcon kind="email"/>}
@@ -552,7 +588,11 @@ export function Connections() {
                   onClick={()=>openPerson(person.id)} aria-label={'Open full page for '+(person.name||person.email||'person')}>Full page</button>
               </div>)}
               </div>
-              {!peopleRows.length && <StatusText state="empty" className="connections-empty">No contacts match. Adjust your search or add a person.</StatusText>}
+              {!peopleRows.length && <StatusText state="empty" className="connections-empty">
+                No people match the search and follow-up filters.
+                {peopleAttention!=='all'&&<button type="button" onClick={()=>setPeopleAttention('all')}>
+                  Clear follow-up filter</button>}
+               </StatusText>}
 
             </section>
           )}
