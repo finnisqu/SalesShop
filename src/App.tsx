@@ -256,7 +256,8 @@ function App() {
         label:(candidate.favorite?'★ ':'')+
           (candidate.title&&candidate.title.trim()!=='Untitled page'
             ?candidate.title.trim():'Page')+
-          ' · '+new Date(candidate.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'}),
+          ' · '+new Date(candidate.createdAt).toLocaleString(undefined,{
+            month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}),
       }));
   },[entries,activeEntryId,notebookHeaderSearch]);
   const openCompanion=(id:string)=>{
