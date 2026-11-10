@@ -35,7 +35,7 @@ import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
 import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,type DealPipeline,type ProjectStage} from '../types/crm';
-import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
+import {companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,isOurCompany,visibleCompanyAliases,type CompanyRelationship,
  type EditableCompanyRelationship} from '../services/companyRelationship';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
