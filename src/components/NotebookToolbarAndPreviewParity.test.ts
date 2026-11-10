@@ -48,6 +48,7 @@ describe('Notebook mobile toolbar + shared preview chrome',()=>{
   expect(app).toContain("candidate.favorite?'★ ':'");
   expect(app).toContain("candidate.title.trim()!=='Untitled page'");
   expect(app).toContain("month:'short',day:'numeric'");
+  expect(app).toContain("hour:'numeric',minute:'2-digit'");
   expect(app).toContain('mobileTabs={notebookPageOptions}');
  });
 });
