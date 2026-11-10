@@ -95,3 +95,32 @@
   cursor:not-allowed;
  }
 }
+
+/* Phone Tasks deliberately mirror compact Agenda items; the preview owns secondary controls. */
+.tasks-mobile-more{display:none}
+@media(max-width:820px){
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-list{gap:5px}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row{
+  display:flex;align-items:center;gap:11px;min-height:61px;padding:10px 12px;
+  border:1px solid var(--ss-theme-border);border-radius:10px;background:var(--ss-theme-card)
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-body{flex:1;min-width:0;gap:4px}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-top{display:block;min-width:0}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-title{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-meta{display:block;min-width:0;font-size:11px}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-meta>span:not(.tasks-due-label),
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-body>p,
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-body>blockquote,
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-body>.tasks-source,
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-body>small{display:none!important}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-meta .tasks-due-label{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-actions{display:flex;flex:0 0 auto;align-items:center;justify-content:flex-end;gap:0;width:auto;min-width:0}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-actions>:not(.tasks-mobile-more){display:none!important}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-row-actions>.tasks-mobile-more{
+  display:grid;place-items:center;width:38px;min-width:38px;min-height:42px;
+  padding:0;border:1px solid var(--ss-theme-border);border-radius:9px;
+  background:var(--ss-theme-base);color:var(--ss-theme-ink);font-size:23px;line-height:1
+ }
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-complete{flex:0 0 auto;margin:0;padding:0}
+ :root[data-sales-theme] .sales-app.view-tasks .tasks-complete input{width:20px;height:20px}
+}
