@@ -77,6 +77,13 @@ describe('one first-class quote index for both submission methods',()=>{
   expect(library).toContain('readOnly:true');
   expect(library).toContain('setExternalQuotePreviewId');
   expect(dealPage).toContain('related.linkedQuotes.length+outsideQuotes.length');
+  expect(read('src/components/CompanyRecordPage.tsx')).toContain(
+   'related.relatedQuotes.length+externalQuotes.length');
+  const team=read('src/components/TeamQuotesWorkspace.tsx');
+  expect(team).toContain('metrics.total+externalFiltered.length');
+  expect(team).toContain('metrics.value+externalValue');
+  expect(team).toContain('metrics.delivered+externalFiltered.length');
+  expect(team).toContain('View external quote details');
   expect(read('src/components/ConnectionsTable.tsx')).toContain('hasDocumentActions&&!row.readOnly');
  });
  it('has one secure database register that respects native quote permissions',()=>{
