@@ -18,6 +18,7 @@ import {companyRelationshipHistory} from '../services/companyRelationshipHistory
 import {CrmOwnerControl} from './CrmOwnerControl';
 import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {isExternalQuoteActivity} from '../services/salesQuoteRegistry';
 import {requestTaskModal} from '../services/taskModalEvents';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -93,6 +94,10 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       ?personalScope:null,
   }):[],[company,contacts,projects,activities,timelineQuotes,privateTasks,
       personalScope,storedTaskScope,perspective]);
+  const companyDealIds=new Set(projects.filter(p=>p.companyId===companyId).map(p=>p.id));
+  const externalQuotes=activities.filter(a=>isExternalQuoteActivity(a)&&
+    (a.companyId===companyId||!!a.projectId&&companyDealIds.has(a.projectId)))
+    .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
   // Our Organization is a roster, not a second copy of World Stone contacts.
   // Include its members on the SELF company record without replacing anyone's
   // real Company (especially subcontractors' own firms).
@@ -156,7 +161,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     badge={<><span className={'connections-record-stage'+(isOurCompany(company)?' is-self-company':'')}>
       {isOurCompany(company)?'SELF · Our Company':companyRelationshipLabel(company)}
       </span><span>{related.relatedProjects.length} deals</span>
-      <span>{related.relatedQuotes.length} linked quotes</span></>}
+      <span>{related.relatedQuotes.length+externalQuotes.length} linked quotes</span></>}
     actions={<>
       <button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(current=>!current);}}>{editing ? 'Cancel editing' : 'Edit company'}</button>
       {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New Quote</button>}
@@ -231,13 +236,20 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
         </div>
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
       </RecordCard>
-      <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length}</span>}>
+      <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length+externalQuotes.length}</span>}>
         <div className="connections-record-entity-list">
           {related.relatedQuotes.map((quote) => <button type="button" key={quote.id} onClick={() => openQuote(quote.id)}>
             <strong>{quote.title || displayQuoteNumber(quote)}</strong>
-            <small>{displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
+            <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
           </button>)}
-          {!related.relatedQuotes.length && <p className="connections-record-empty">No quotes explicitly linked to this company or its deals.</p>}
+          {externalQuotes.map(activity=><button type="button" key={activity.id}
+            onClick={()=>setActivityPreviewId(activity.id)}
+            aria-label={'View external quote details '+activity.summary}>
+            <strong>External quote · {activity.metadata?.amount===undefined?'Value not recorded':money.format(activity.metadata.amount)}</strong>
+            <small>{activity.metadata?.externalQuoteFormat||'Builder platform'} · Sent {activity.metadata?.bidSentDate||activity.occurredAt.slice(0,10)}</small>
+          </button>)}
+          {!related.relatedQuotes.length&&!externalQuotes.length&&
+            <p className="connections-record-empty">No quotes linked yet. Create a SalesShop quote or record an external bid through a Deal.</p>}
         </div>
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="quote"/>
       </RecordCard>
