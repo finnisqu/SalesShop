@@ -76,6 +76,9 @@ export function personalCalendarSources(
    if(link.type==='project')relatedDealIds.add(link.id);
   });
  });
+ // Assigned Deals remain visible to their owner even when no linked native
+ // Quote or open bid Task exists, including independently sent external quotes.
+ deals.forEach(deal=>{if(deal.assignedUserId===userId)relatedDealIds.add(deal.id);});
  return {
   deals:deals.filter(deal=>relatedDealIds.has(deal.id)),
   activities:activities.filter(activity=>
