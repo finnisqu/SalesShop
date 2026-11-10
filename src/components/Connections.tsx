@@ -33,7 +33,6 @@ import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
-import {displayQuoteNumber,quoteTotal} from '../types/quote';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
