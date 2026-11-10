@@ -31,7 +31,7 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import {useRolePerspectiveStore} from './rolePerspectiveStore';
 import {useQuoteStore} from './quoteStore';
 import {canDeleteAutomaticCrmHistory} from '../services/recordManagementActivity';
-import {initialCrmOwnerUserId} from '../services/crmRecordOwnership';
+import {initialCrmOwnerUserId,canReassignCrmOwner} from '../services/crmRecordOwnership';
 
 interface CrmState {
   companies: Company[];
@@ -42,6 +42,8 @@ interface CrmState {
   hydrate: () => void;
   resolveCompany: (name?: string, kind?: CompanyKind) => string | undefined;
   updateCompany: (companyId: string, patch: CompanyPatch) => void;
+  /** Server-confirmed and conflict-aware owner reassignment; never optimistic. */
+  assignCrmRecordOwner:(kind:'company'|'contact',recordId:string,ownerUserId?:string)=>Promise<void>;
   mergeCompanyRecords: (primaryId: string, duplicateId: string) => void;
   createContact: (input: ContactInput) => string | null;
   updateContact: (contactId: string, patch: ContactPatch) => void;
@@ -162,6 +164,61 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     set({ companies });
   },
 
+  assignCrmRecordOwner:async(kind,recordId,ownerUserId)=>{
+    const current=kind==='company'
+      ?get().companies.find(c=>c.id===recordId):get().contacts.find(p=>p.id===recordId);
+    if(!current)throw new Error('This record is no longer available.');
+    const selected=ownerUserId||undefined;
+    if(current.ownerUserId===selected)return;
+    const auth=useAuthStore.getState();
+    const perspective=Boolean(useRolePerspectiveStore.getState().activePerspective);
+    if(!canReassignCrmOwner(auth.teamRole,auth.mode,perspective)||
+      !auth.organizationId||!auth.user?.id||!supabase)
+      throw new Error('Only organization owners and admins can reassign CRM records.');
+    if(selected&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(selected))
+      throw new Error('Choose a valid teammate.');
+    const organizationId=auth.organizationId;
+    const actorId=auth.user.id;
+    const timestamp=now();
+    const table=kind==='company'?'companies':'contacts';
+    // Ownership is a separate server-authoritative update. Ordinary CRM
+    // upserts intentionally omit owner_user_id so a stale tab cannot revert it.
+    // The database trigger independently enforces admin/owner permission, and
+    // the organization membership FK disallows cross-workspace assignees.
+    let query=supabase.from(table)
+      .update({owner_user_id:selected??null,updated_at:timestamp})
+      .eq('organization_id',organizationId).eq('id',recordId);
+    query=current.ownerUserId?query.eq('owner_user_id',current.ownerUserId):
+      query.is('owner_user_id',null);
+    const {data,error}=await query.select('owner_user_id,updated_at').maybeSingle();
+    if(error)throw error;
+    if(!data)throw new Error(
+      'Ownership changed elsewhere, or this record has not finished cloud saving. Reopen and retry.');
+    const confirmed=typeof data.owner_user_id==='string'?data.owner_user_id:undefined;
+    if(confirmed!==selected)
+      throw new Error('The server returned an unexpected owner. Reload this record.');
+    const latestAuth=useAuthStore.getState();
+    if(latestAuth.mode!=='cloud'||latestAuth.organizationId!==organizationId||
+      latestAuth.user?.id!==actorId)
+      throw new Error('Workspace changed during assignment. Reopen the record in your current account.');
+    const latest=kind==='company'
+      ?get().companies.find(c=>c.id===recordId):get().contacts.find(p=>p.id===recordId);
+    if(!latest||latest.ownerUserId!==current.ownerUserId)
+      throw new Error('This record changed while assigning its owner. Reload before another change.');
+    const serverTime=String(data.updated_at??timestamp);
+    const updatedAt=Date.parse(serverTime)>Date.parse(latest.updatedAt)?serverTime:now();
+    if(kind==='company'){
+      const companies=get().companies.map(c=>c.id===recordId
+        ?{...c,ownerUserId:confirmed,updatedAt}:c);
+      persist(companies,get().contacts,get().projects,get().activities);
+      set({companies});
+    }else{
+      const contacts=get().contacts.map(p=>p.id===recordId
+        ?{...p,ownerUserId:confirmed,updatedAt}:p);
+      persist(get().companies,contacts,get().projects,get().activities);
+      set({contacts});
+    }
+  },
   mergeCompanyRecords: (primaryId, duplicateId) => {
     const timestamp = now();
     const document = mergeCompanyCrmDocument({

@@ -38,8 +38,8 @@ describe('Creator ownership defaults',()=>{
   expect(migration).toContain('on delete set null (owner_user_id)');
  });
  it('shows actual owner/legacy state across full and quick CRM record views',()=>{
-  expect(source('src/components/CompanyRecordPage.tsx')).toContain('crmOwnerLabel(company.ownerUserId,userId,authMode)');
-  expect(source('src/components/PersonRecordPage.tsx')).toContain('crmOwnerLabel(person.ownerUserId,userId,authMode)');
+  expect(source('src/components/CompanyRecordPage.tsx')).toContain('<CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId}/>');
+  expect(source('src/components/PersonRecordPage.tsx')).toContain('<CrmOwnerControl kind="contact" recordId={person.id} ownerUserId={person.ownerUserId}/>');
   const preview=source('src/components/RecordPreviewDrawer.tsx');
   expect(preview).toContain('crmOwnerLabel(company.ownerUserId,userId,authMode)');
   expect(preview).toContain('crmOwnerLabel(person.ownerUserId,userId,authMode)');

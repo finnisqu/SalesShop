@@ -11,8 +11,7 @@ import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {isOurOrgCompany,ourOrgGroup,isOurOrgContact,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 import {isOurCompany} from '../services/companyRelationship';
-import {useAuthStore} from '../store/authStore';
-import {crmOwnerLabel} from '../services/crmRecordOwnership';
+import {CrmOwnerControl} from './CrmOwnerControl';
 
 const dateLabel = (value: string) => {
   const date = new Date(value);
@@ -23,8 +22,6 @@ const dateLabel = (value: string) => {
 
 export function PersonRecordPage({ contactId, onBack }: { contactId: string; onBack: () => void }) {
   const hydrated = useCrmStore((state) => state.hydrated);
-  const authMode=useAuthStore(state=>state.mode);
-  const userId=useAuthStore(state=>state.user?.id);
   const people = useCrmStore((state) => state.contacts);
   const companies = useCrmStore((state) => state.companies);
   const activities = useCrmStore((state) => state.activities);
@@ -132,7 +129,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           <RecordProperty label="Phone">{person.phone || 'Not set'}</RecordProperty>
           <RecordProperty label="Company">{associatedOwnCompany?.name??(isInternal&&rosterGroupForContact(person,companies)==='employees'?
               'Our Organization':related.company?.name||'Not assigned')}</RecordProperty>
-          <RecordProperty label="Assigned to">{crmOwnerLabel(person.ownerUserId,userId,authMode)}</RecordProperty>
+          <CrmOwnerControl kind="contact" recordId={person.id} ownerUserId={person.ownerUserId}/>
           <RecordProperty label="Created">{dateLabel(person.createdAt)}</RecordProperty>
           <RecordProperty label="Updated">{dateLabel(person.updatedAt)}</RecordProperty>
         </div>}
