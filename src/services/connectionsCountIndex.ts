@@ -42,8 +42,10 @@ export function indexConnectionsCounts(
   if(linkedCompany)companyIds.add(linkedCompany);
   for(const companyId of companyIds)bump(quotesByCompany,companyId);
  }
+ const countedExternalIds=new Set<string>();
  for(const activity of activities){
-  if(!isExternalQuoteActivity(activity))continue;
+  if(!isExternalQuoteActivity(activity)||countedExternalIds.has(activity.id))continue;
+  countedExternalIds.add(activity.id);
   bump(quotesByDeal,activity.projectId);
   const companyIds=new Set<string>();
   if(activity.companyId)companyIds.add(activity.companyId);
