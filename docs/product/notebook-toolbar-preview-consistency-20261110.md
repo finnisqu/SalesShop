@@ -11,7 +11,7 @@
 ## Manual mobile QC
 1. Notebook iPhone: verify one toolbar row; tap **Aa**, format a word Bold/Italic, create a bullet list, change H2. Ensure selection persists with iOS keyboard and Aa menu doesn't clip offscreen.
 2. Use Pencil/Finger controls from Aa and draw, then switch to selector. Confirm Drawing Tools, Insert and Page Options remain functional.
-3. Create two Untitled pages; page picker distinguishes them by date (same-day pages still have distinct IDs, but identical date labels may require a future inline renaming flow).
+3. Create two Untitled pages; page picker distinguishes them by date (creation time distinguishes multiple pages from the same day).
 4. Open Task quick preview from Home Agenda and Tasks; verify identical header/close location to an Activity preview and no second grip. Complete an ordinary Task, and confirm bid-guarded Task still requires actual quote submission.
 5. From Home Recents and Company Relationship History open Activity details; check edit and readonly modes, long titles, linked-record actions, Cancel/Save/Close and safe-area padding.
 6. On mobile & desktop test Light / Dark / Warm themes, scroll with the iPhone keyboard open, backdrop tap, Escape and focus restoration.
