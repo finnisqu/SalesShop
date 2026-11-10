@@ -9,7 +9,7 @@ import { StationeryInsertMenu } from './StationeryInsertMenu';
 
 interface ToolbarProps { entry: NotebookEntry; editor?: Editor | null; enableShortcuts?: boolean;
  splitMode?:boolean; activePane?:boolean; }
-type ToolbarMenu = 'drawing' | 'page' | null;
+type ToolbarMenu = 'drawing' | 'page' | 'format' | null;
 
 type IconName = ActiveNotebookTool | 'tools' | 'settings' | 'pencil-input' | 'finger-input' | 'favorite' | 'duplicate' | 'clear' | 'undo' | 'redo';
 
@@ -175,6 +175,48 @@ export function Toolbar({ entry, editor, enableShortcuts = true,splitMode=false,
 
       <StationeryInsertMenu entryId={entry.id} />
 
+      <div className="notebook-toolbar-menu notebook-mobile-format">
+        <button type="button" className={'notebook-toolbar-format-button'+(openMenu==='format'?' active':'')}
+          title="Text formatting and drawing input" aria-label="Text formatting and drawing input"
+          aria-expanded={openMenu==='format'} aria-controls="notebook-mobile-format-panel"
+          onClick={()=>setOpenMenu(value=>value==='format'?null:'format')}>Aa <span aria-hidden="true">⌄</span></button>
+        {openMenu==='format'&&<div id="notebook-mobile-format-panel"
+          className="notebook-toolbar-popover notebook-mobile-format-popover" role="group"
+          aria-label="Formatting controls">
+          <div className="notebook-toolbar-popover-heading">
+            <div><span>Notebook</span><strong>Format & input</strong></div>
+            <button type="button" className="notebook-popover-close"
+              aria-label="Close formatting options" onClick={()=>setOpenMenu(null)}>×</button>
+          </div>
+          <div className="notebook-mobile-format-grid">
+            <button type="button" disabled={!editor} aria-label="Bold" aria-pressed={Boolean(editor?.isActive('bold'))}
+              className={editor?.isActive('bold')?'active':''} onMouseDown={event=>event.preventDefault()}
+              onClick={()=>editor?.chain().focus().toggleBold().run()}><strong>B</strong></button>
+            <button type="button" disabled={!editor} aria-label="Italic" aria-pressed={Boolean(editor?.isActive('italic'))}
+              className={editor?.isActive('italic')?'active':''} onMouseDown={event=>event.preventDefault()}
+              onClick={()=>editor?.chain().focus().toggleItalic().run()}><em>I</em></button>
+            <button type="button" disabled={!editor} aria-label="Heading" aria-pressed={Boolean(editor?.isActive('heading',{level:2}))}
+              className={editor?.isActive('heading',{level:2})?'active':''} onMouseDown={event=>event.preventDefault()}
+              onClick={()=>editor?.chain().focus().toggleHeading({level:2}).run()}>H2</button>
+            <button type="button" disabled={!editor} aria-label="Bulleted list" aria-pressed={Boolean(editor?.isActive('bulletList'))}
+              className={editor?.isActive('bulletList')?'active':''} onMouseDown={event=>event.preventDefault()}
+              onClick={()=>editor?.chain().focus().toggleBulletList().run()}>• List</button>
+            <button type="button" disabled={!editor} aria-label="Numbered list" aria-pressed={Boolean(editor?.isActive('orderedList'))}
+              className={editor?.isActive('orderedList')?'active':''} onMouseDown={event=>event.preventDefault()}
+              onClick={()=>editor?.chain().focus().toggleOrderedList().run()}>1. List</button>
+            <button type="button" disabled={!editor} aria-label="Blockquote" aria-pressed={Boolean(editor?.isActive('blockquote'))}
+              className={editor?.isActive('blockquote')?'active':''} onMouseDown={event=>event.preventDefault()}
+              onClick={()=>editor?.chain().focus().toggleBlockquote().run()}>“ Quote</button>
+          </div>
+          <div className="notebook-mobile-format-input" role="group" aria-label="Drawing input method">
+            <span>Drawing input</span>
+            <button type="button" aria-pressed={inputMode==='pencil'} className={inputMode==='pencil'?'active':''}
+              onClick={()=>setInputMode('pencil')}><ToolbarIcon name="pencil-input"/> Pencil</button>
+            <button type="button" aria-pressed={inputMode==='finger'} className={inputMode==='finger'?'active':''}
+              onClick={()=>setInputMode('finger')}><ToolbarIcon name="finger-input"/> Finger</button>
+          </div>
+        </div>}
+      </div>
       <div className="rich-text-tools" aria-label="Rich text formatting">
         <button type="button" className={editor?.isActive('bold') ? 'active' : ''} disabled={!editor} onMouseDown={(event) => event.preventDefault()} onClick={() => editor?.chain().focus().toggleBold().run()} title="Bold"><strong>B</strong></button>
         <button type="button" className={editor?.isActive('italic') ? 'active' : ''} disabled={!editor} onMouseDown={(event) => event.preventDefault()} onClick={() => editor?.chain().focus().toggleItalic().run()} title="Italic"><em>I</em></button>
