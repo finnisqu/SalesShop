@@ -10,14 +10,16 @@ function localToday() {
     String(today.getDate()).padStart(2,'0')].join('-');
 }
 
-export function ExternalQuoteSentForm({deal,onCancel,onRecorded}:{
-  deal:Project;onCancel:()=>void;onRecorded?:()=>void;
+export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}:{
+  deal:Project;onCancel:()=>void;onRecorded?:()=>void;initialSentDate?:string;
 }){
   const recordExternalQuoteSent=useCrmStore(s=>s.recordExternalQuoteSent);
   const historical=['Closed Won','Completed','Closed Lost','Discarded'].includes(deal.stage);
   const completeSubmissionTasks=usePersonalTaskStore(s=>s.completeDealSubmissionTasks);
   const [amount,setAmount]=useState(deal.amount===undefined?'':String(deal.amount));
-  const [bidSentDate,setBidSentDate]=useState(localToday);
+  const [bidSentDate,setBidSentDate]=useState(()=>
+    initialSentDate&&/^\d{4}-\d{2}-\d{2}$/.test(initialSentDate)&&initialSentDate<=localToday()
+      ?initialSentDate:localToday());
   const [format,setFormat]=useState('');
   const [error,setError]=useState('');
   const [saving,setSaving]=useState(false);
