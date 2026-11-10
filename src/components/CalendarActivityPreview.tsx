@@ -136,7 +136,8 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
    role="dialog" aria-modal="true" aria-label={editing?'Edit Activity':'Activity preview'}>
    <MobileSheetHandle onClose={close} disabled={saving}/>
    <header className="activity-preview-header ss-unified-preview-header">
-    <PreviewPanelHeading eyebrow={loggedInteraction?'CRM · LOGGED INTERACTION':'CRM · ACTIVITY DETAILS'}
+    <PreviewPanelHeading eyebrow={activity.metadata?.externalQuoteSent?'CRM · EXTERNAL QUOTE SENT':
+      loggedInteraction?'CRM · LOGGED INTERACTION':'CRM · ACTIVITY DETAILS'}
       title={editing?'Edit activity':activity.summary}
       detail={editing?'Correct the date, time, notes or participants in this Activity.':undefined}/>
     <PreviewPanelClose onClose={close} label="Close activity preview"
