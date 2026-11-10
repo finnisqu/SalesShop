@@ -14,7 +14,8 @@ export const DEFAULT_ACTIVITY_LOG_FILTERS:ActivityLogFilters={
  method:'all',audience:'all',kind:'all',period:'all',
 };
 const interaction=(activity:Activity)=>Boolean(activity.metadata?.interactionMethod)||
- activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint';
+ activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint'||
+ (activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true);
 export function activityAudience(activity:Activity,companies:readonly Company[],
  contacts:readonly Contact[],projects:readonly Project[],quotes:readonly Quote[],
  isInternal:(contact:Contact)=>boolean):Set<ActivityAudienceFilter>{

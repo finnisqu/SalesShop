@@ -10,6 +10,41 @@ export function personalHomeQuotes(quotes:readonly Quote[],actorId:string|undefi
 export function homeRecentQuotes(quotes:readonly Quote[],limit=3){
   return [...quotes].sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)).slice(0,limit);
 }
+/** A sent bid created in another tool is still a quote in Home Recents.
+ * Do not manufacture a native SalesShop Quote for it; open its real CRM Activity.
+ */
+export interface HomeRecentQuoteEntry{
+ kind:'quote'|'external';id:string;recordId:string;
+ title:string;detail:string;timestamp:string;
+}
+export function homeRecentQuoteEntries(quotes:readonly Quote[],activities:readonly Activity[],
+ limit=5):HomeRecentQuoteEntry[]{
+ const normal:HomeRecentQuoteEntry[]=quotes.map(quote=>({
+  kind:'quote',id:'quote:'+quote.id,recordId:quote.id,
+  title:quote.title||'Untitled quote',
+  detail:quote.companyName||quote.quoteNumber||'Quote draft',
+  timestamp:quote.updatedAt,
+ }));
+ const external:HomeRecentQuoteEntry[]=activities
+  .filter(activity=>activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true)
+  .map(activity=>({
+   kind:'external',id:'external:'+activity.id,recordId:activity.id,
+   title:activity.summary,
+   detail:'Outside SalesShop · Sent '+(activity.metadata?.bidSentDate??activity.occurredAt.slice(0,10)),
+   timestamp:activity.metadata?.recordedAt&&Number.isFinite(Date.parse(activity.metadata.recordedAt))
+    ?activity.metadata.recordedAt:activity.occurredAt,
+  }));
+ // Keep a small, explicitly labeled external history visible even for
+ // legacy backfills that predate recordedAt metadata. They cannot safely be
+ // assigned a fabricated logging timestamp.
+ const order=(a:HomeRecentQuoteEntry,b:HomeRecentQuoteEntry)=>
+  Date.parse(b.timestamp)-Date.parse(a.timestamp)||a.id.localeCompare(b.id);
+ const sortedExternal=external.sort(order);
+ const externalSlots=Math.min(2,limit,sortedExternal.length);
+ const prioritized=sortedExternal.slice(0,externalSlots);
+ const remaining=[...normal,...sortedExternal.slice(externalSlots)].sort(order);
+ return [...prioritized,...remaining.slice(0,Math.max(0,limit-prioritized.length))];
+}
 export function homeQuoteAttention(quotes:readonly Quote[],activities:readonly Activity[],today=followUpLocalDate()){
   const queue=buildQuoteFollowUpQueue(quotes,activities,today);
   const immediate=queue.filter(item=>['due','needs-delivery','ready-to-review'].includes(item.priority));

@@ -1,4 +1,4 @@
-import {useState,type FormEvent} from 'react';
+import {useRef,useState,type FormEvent} from 'react';
 import type {Project} from '../types/crm';
 import {useCrmStore} from '../store/crmStore';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
@@ -11,7 +11,7 @@ function localToday() {
 }
 
 export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}:{
-  deal:Project;onCancel:()=>void;onRecorded?:()=>void;initialSentDate?:string;
+  deal:Project;onCancel:()=>void;onRecorded?:(bidSentDate:string)=>void;initialSentDate?:string;
 }){
   const recordExternalQuoteSent=useCrmStore(s=>s.recordExternalQuoteSent);
   const historical=['Closed Won','Completed','Closed Lost','Discarded'].includes(deal.stage);
@@ -23,7 +23,10 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
   const [format,setFormat]=useState('');
   const [error,setError]=useState('');
   const [saving,setSaving]=useState(false);
-  const submit=(event:FormEvent<HTMLFormElement>)=>{
+  // Stable across retries, so a lost acknowledgement cannot create two sent events.
+  const submissionId=useRef('activity_'+crypto.randomUUID());
+  const recordedAt=useRef(new Date().toISOString());
+  const submit=async(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
     if(saving)return;
     const total=Number(amount);
@@ -35,10 +38,11 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
     }
     setSaving(true);setError('');
     try{
-      const saved=recordExternalQuoteSent(deal.id,total,bidSentDate,format);
+      const saved=await recordExternalQuoteSent(deal.id,total,bidSentDate,format,
+        submissionId.current,recordedAt.current);
       if(!saved){setError('Unable to record this submission. Check the Deal stage and date.');return;}
       if(!historical)completeSubmissionTasks(deal.id);
-      onRecorded?.();
+      onRecorded?.(bidSentDate);
     }catch(reason){
       setError(reason instanceof Error?reason.message:'Unable to save this external quote.');
     }finally{setSaving(false);}
@@ -49,21 +53,23 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
     <p>Record the submitted contract value and actual send date. No SalesShop quote will be created.
       {historical?' This is a historical entry: your Deal stage, final amount, deadline, and tasks remain unchanged.':''}</p>
     <div className="external-quote-fields">
+      <label>Date sent <span>(defaults to today)</span>
+        <input type="date" required max={localToday()} aria-label="Date quote was sent"
+          value={bidSentDate}
+          onChange={event=>{setBidSentDate(event.target.value);setError('');}}/>
+      </label>
       <label>Total contract value ($)
         <input type="number" inputMode="decimal" min="0" step="0.01" required
           value={amount} onChange={event=>{setAmount(event.target.value);setError('');}}
           placeholder="0.00"/>
-      </label>
-      <label>Bid sent date
-        <input type="date" required max={localToday()} value={bidSentDate}
-          onChange={event=>{setBidSentDate(event.target.value);setError('');}}/>
       </label>
     </div>
     <label>Tool or format <span>(optional)</span>
       <input maxLength={120} value={format} placeholder="Excel, PDF, another quoting tool…"
         onChange={event=>setFormat(event.target.value)}/>
     </label>
-    <small className="external-quote-explanation">
+    <small className="external-quote-explanation">The Quote Sent calendar badge uses Date sent.
+      The Activity history shows when you recorded it.
       {historical
         ?'Historical backfill adds a dated CRM quote-sent event only. Existing Deal status, totals and tasks stay intact.'
         :'For an open Deal this records the submission, updates the Deal to Bid Sent when appropriate, clears its bid deadline and completes Submit Quote tasks.'}
@@ -72,7 +78,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
     <div className="external-quote-actions">
       <button type="button" onClick={onCancel} disabled={saving}>Cancel</button>
       <button type="submit" className="connections-record-primary" disabled={saving||!amount.trim()||!bidSentDate}>
-        {saving?'Recording…':'Mark bid sent'}
+        {saving?'Saving…':'Mark bid sent'}
       </button>
     </div>
   </form>;
