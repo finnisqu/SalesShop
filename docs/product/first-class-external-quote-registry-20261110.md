@@ -13,6 +13,7 @@ A quote's *source* describes its authoring tool, not its importance as sales wor
 - **Primary Quotes workspace:** external entries now appear in the standard All and Issued document table and responsive cards, searchable by Deal, customer, platform and amount. Clicking an external entry opens its existing CRM Activity detail modal. The normal native template builder and editor remain unchanged. External records cannot use native Archive/Delete actions.
 - **Connections → Quotes directory:** one searchable and sortable table shows both sources. External quote rows link to an Activity detail modal; native rows retain native quote metadata previews. Bulk follow-up task creation uses the linked Deal when the quote is external rather than inventing a native quote ID.
 - **Company and Deal records:** both sources appear under a single Quotes section, counted together and clickable. Company/Deal list counters include external submissions once per submission ID.
+- **Team Quotes reporting:** external submissions appear as their own quote cards and participate in issued/delivered totals and quoted value. Their actual outcome is not inferred as Signed, and they cannot be edited as native documents. The existing salesperson/status filters apply; external submissions have no artificial division or team assignment.
 - Home Activity, calendar quote-sent badges, and successful external cloud acknowledgement remain as implemented in the previous release; no Gantt/timeline work or automatic CI configuration changes.
 
 ## Database verification
