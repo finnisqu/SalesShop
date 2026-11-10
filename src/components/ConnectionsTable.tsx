@@ -12,7 +12,7 @@ import {useDismissibleDetails} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
 export interface ConnectionColumn {key:string;label:string;}
-export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;isSelfCompany?:boolean;}
+export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;readOnly?:boolean;isSelfCompany?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onRecordEdit?:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
  onBulkEdit?:(records:ConnectionTableRow[],change:BulkEditChange)=>Promise<void>;
@@ -218,7 +218,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
          {hasRowActions&&<td className="connections-row-actions">
            {onRecordEdit&&<button type="button" aria-label={'Edit '+row.name}
              onClick={()=>onRecordEdit(row.id)}>Edit</button>}
-           {hasDocumentActions&&
+           {hasDocumentActions&&!row.readOnly&&
              (row.archived
                ?onDocumentRestore&&<button type="button" aria-label={'Restore '+row.name}
                   onClick={()=>onDocumentRestore(row.id)}>Restore</button>
