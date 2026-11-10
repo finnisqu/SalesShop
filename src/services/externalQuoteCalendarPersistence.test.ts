@@ -75,6 +75,8 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   expect(store).toContain("await supabase.from('activities').insert({");
   expect(store).toContain(".select('id,type,project_id,metadata')");
   expect(store).toContain("if(lookupError||!confirmed)");
+  expect(store).toContain("meta.recordedByUserId!==actorId");
+  expect(store).toContain("meta.recordedAt!==activity.metadata?.recordedAt");
   const externalStore=store.slice(store.indexOf('recordExternalQuoteSent:async'));
   expect(externalStore.indexOf(".select('id,type,project_id,metadata')"))
     .toBeLessThan(externalStore.indexOf('persist(get().companies,get().contacts,projects,activities)'));
