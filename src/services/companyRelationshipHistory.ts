@@ -105,7 +105,9 @@ export function companyRelationshipHistory({
  }
  for(const doc of documents){
   if(validDate(doc.createdAt)&&!includedActivities.some(event=>
-   event.type==='quote-created'&&(event.quoteId===doc.id||
+   (event.type==='quote-created'||event.type==='quote-revision-created'||
+    event.type==='change-order-created'||event.type==='change-order-revision-created')&&
+    (event.quoteId===doc.id||
     activityRelations(event).some(link=>link.type==='quote'&&link.id===doc.id)))){
    result.push({id:'quote-created:'+doc.id,at:doc.createdAt,category:'quote',
     title:'Quote created · '+(doc.title||doc.quoteNumber||'Quote'),
