@@ -15,7 +15,7 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
 import {requestTaskModal} from './TaskModalHost';
 import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
-import {homeRecentQuotes} from '../services/homeOverview';
+import {homeRecentQuoteEntries} from '../services/homeOverview';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
@@ -249,7 +249,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   });
   return()=>{window.clearTimeout(timeout);window.cancelAnimationFrame(frame);};
  },[activeFocus,selected,expandedHistory,focusKeys]);
- const recentQuotes=useMemo(()=>homeRecentQuotes(ownQuotes,5),[ownQuotes]);
+ const recentQuotes=useMemo(()=>homeRecentQuoteEntries(ownQuotes,sources.activities,5),
+  [ownQuotes,sources.activities]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
  const dailyPages=useMemo(()=>notebookReady?dailyNotebookPages(notebookEntries):[],
@@ -412,10 +413,11 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
       <div className={'sales-calendar-sidecar-list'+(sidecarTab==='notes'?' is-notes':'')}>
        {sidecarTab==='quotes'
         ?recentQuotes.length?recentQuotes.map(q=><button type="button" key={q.id}
-          onClick={()=>setRecordPreview({kind:'quote',id:q.id})}>
-          <strong>{q.title||'Untitled quote'}</strong>
-          <small>{q.companyName||q.quoteNumber||'Quote draft'}</small>
-         </button>):<p>Recently edited quotes will appear here.</p>
+          onClick={()=>q.kind==='external'
+           ?setActivityPreview(q.recordId):setRecordPreview({kind:'quote',id:q.recordId})}>
+          <strong>{q.title}</strong>
+          <small>{q.detail}</small>
+         </button>):<p>Native and external quotes will appear here.</p>
         :sidecarTab==='recent'
         ?recentItems.length?recentItems.map(item=><button type="button"
           className="home-recent-activity-row" key={item.id} onClick={()=>openRecent(item)}>
@@ -675,7 +677,12 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   {recentPortalTarget&&recentPanel&&createPortal(recentPanel,recentPortalTarget)}
   {externalQuoteDialogOpen&&<ExternalQuoteBackfillDialog initialSentDate={selected}
     onClose={()=>setExternalQuoteDialogOpen(false)}
-    onRecorded={()=>{setExternalQuoteDialogOpen(false);setBadgeFocus({date:selected,metric:'quotes-sent'});}}/>}
+    onRecorded={(_deal,date)=>{
+     setExternalQuoteDialogOpen(false);setSelected(date);
+     setMonth(new Date(date+'T12:00:00'));
+     setBadgeFocus({date,metric:'quotes-sent'});
+     setSidecarTab('recent');
+   }}/>}
   {recordPreview&&<RecordPreviewDrawer record={recordPreview}
    onSelect={setRecordPreview} onClose={()=>setRecordPreview(null)}/>}
   {activityPreview&&<CalendarActivityPreview activityId={activityPreview}
