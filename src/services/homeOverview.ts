@@ -34,8 +34,14 @@ export function homeRecentQuoteEntries(quotes:readonly Quote[],activities:readon
    timestamp:activity.metadata?.recordedAt&&Number.isFinite(Date.parse(activity.metadata.recordedAt))
     ?activity.metadata.recordedAt:activity.occurredAt,
   }));
- return [...normal,...external].sort((a,b)=>Date.parse(b.timestamp)-Date.parse(a.timestamp)||
-  a.id.localeCompare(b.id)).slice(0,limit);
+ // Keep a small, explicitly labeled external history visible even for
+ // legacy backfills that predate recordedAt metadata. They cannot safely be
+ // assigned a fabricated logging timestamp.
+ const order=(a:HomeRecentQuoteEntry,b:HomeRecentQuoteEntry)=>
+  Date.parse(b.timestamp)-Date.parse(a.timestamp)||a.id.localeCompare(b.id);
+ const externalSlots=Math.min(2,limit,external.length);
+ return [...external.sort(order).slice(0,externalSlots),
+  ...normal.sort(order).slice(0,Math.max(0,limit-externalSlots))];
 }
 export function homeQuoteAttention(quotes:readonly Quote[],activities:readonly Activity[],today=followUpLocalDate()){
   const queue=buildQuoteFollowUpQueue(quotes,activities,today);
