@@ -1,8 +1,8 @@
-import type {Activity} from '../types/crm';
+import type {Activity,ActivityMetadata} from '../types/crm';
 
 /** Last completed interaction with a person, excluding account creation,
  * automatic stage changes and other CRM system activity. */
-export interface PersonLastContact {occurredAt:string;method?:Activity['metadata'] extends infer M ? NonNullable<M>['interactionMethod'] : never;}
+export interface PersonLastContact {occurredAt:string;method?:ActivityMetadata['interactionMethod'];}
 
 export function personLastContactIndex(activities:readonly Activity[]):Map<string,PersonLastContact>{
  const latest=new Map<string,PersonLastContact>();
