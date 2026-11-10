@@ -771,9 +771,22 @@ export function QuotesMobileBeta() {
   const list=filterSalesDocuments(myQuotes,{
     query:search,template:documentFilter,status:statusFilter,sort:documentSort,
   });
-  const documentTableRows:ConnectionTableRow[]=list.map(q=>({
+  const externalList=useMemo(()=>{
+    if(documentFilter!=='all'||(statusFilter!=='active'&&statusFilter!=='issued'))return [];
+    const needle=search.toLocaleLowerCase().trim();
+    const matching=externalQuoteRecords.filter(record=>!needle||
+      [record.name,record.companyName,record.dealName,record.platform,
+       record.status,String(record.value??'')].join(' ').toLocaleLowerCase().includes(needle));
+    return [...matching].sort((a,b)=>
+      documentSort==='name'?a.name.localeCompare(b.name):
+      documentSort==='company'?(a.companyName??'').localeCompare(b.companyName??''):
+      documentSort==='oldest'?a.updatedAt.localeCompare(b.updatedAt):
+      b.updatedAt.localeCompare(a.updatedAt));
+  },[externalQuoteRecords,documentFilter,statusFilter,search,documentSort]);
+  const documentTableRows:ConnectionTableRow[]=[
+   ...list.map(q=>({
     id:q.id,name:q.title||'Untitled document',archived:!!q.archivedAt,
-    association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
+    association:{type:'quote' as const,id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
     values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
       company:q.companyName||q.contactName||'',
       type:salesTemplateLabel(salesDocumentTemplate(q)),
@@ -785,7 +798,20 @@ export function QuotesMobileBeta() {
         readPersonalDateTimePreferences(userId??null)),
     },
     sortValues:{amount:quoteTotal(q),updated:q.updatedAt},
-  }));
+   })),
+   ...externalList.map(x=>({
+    id:x.id,name:x.name,readOnly:true,
+    association:x.projectId?{type:'project' as const,id:x.projectId,
+      label:'External bid · '+x.name}:undefined,
+    values:{name:x.name,number:'—',
+      company:x.companyName||x.dealName||'',
+      type:'External'+(x.platform?' · '+x.platform:''),
+      status:'Sent',
+      amount:x.value===undefined?'—':money.format(x.value),
+      updated:x.sentDate||x.updatedAt.slice(0,10)},
+    sortValues:{amount:x.value??0,updated:x.updatedAt},
+   })),
+  ];
   const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active';
   const resetLibraryFilters=()=>{
     setSearch('');setDocumentFilter('all');setStatusFilter('active');setDocumentSort('recent');
