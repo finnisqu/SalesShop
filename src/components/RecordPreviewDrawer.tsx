@@ -187,7 +187,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
     setPersonActionError('Your personal Tasks have not loaded in this account. Reopen this preview and try again.');
     return;
    }
-   if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(quickFollowUpDate)||
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(quickFollowUpDate)||
       quickFollowUpDate<localCalendarDay(new Date())){
     setPersonActionError('Choose today or a future follow-up date.');
     return;
