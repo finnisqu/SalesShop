@@ -502,17 +502,6 @@ export function Connections() {
                     <span className="connections-record-arrow" aria-hidden="true">↗</span>
                   </button>
                   <div className="connections-mobile-inline">
-                      {canBulkEdit&&!isOurCompany(company)&&<label>Relationship
-                        <select aria-label={'Relationship for '+company.name} value={companyRelationship(company)}
-                          onChange={event=>{const next=event.currentTarget.value as EditableCompanyRelationship;
-                            if(next!=='prospect'&&next!=='customer'&&next!=='partner')return;
-                            updateCompany(company.id,companyRelationshipPatch(company,next));}}>
-                          <option value="unclassified" disabled>Unclassified</option>
-                          <option value="prospect">Prospect</option>
-                          <option value="customer">Customer</option>
-                          <option value="partner">Partner / other</option>
-                        </select>
-                      </label>}
                       <button type="button" className="connections-mobile-open-full"
                         onClick={()=>openCompany(company.id)}>Full record</button>
                     </div>
