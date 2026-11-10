@@ -11,7 +11,7 @@ function localToday() {
 }
 
 export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}:{
-  deal:Project;onCancel:()=>void;onRecorded?:()=>void;initialSentDate?:string;
+  deal:Project;onCancel:()=>void;onRecorded?:(bidSentDate:string)=>void;initialSentDate?:string;
 }){
   const recordExternalQuoteSent=useCrmStore(s=>s.recordExternalQuoteSent);
   const historical=['Closed Won','Completed','Closed Lost','Discarded'].includes(deal.stage);
@@ -42,7 +42,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
         submissionId.current,recordedAt.current);
       if(!saved){setError('Unable to record this submission. Check the Deal stage and date.');return;}
       if(!historical)completeSubmissionTasks(deal.id);
-      onRecorded?.();
+      onRecorded?.(bidSentDate);
     }catch(reason){
       setError(reason instanceof Error?reason.message:'Unable to save this external quote.');
     }finally{setSaving(false);}
@@ -67,7 +67,8 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
       <input maxLength={120} value={format} placeholder="Excel, PDF, another quoting tool…"
         onChange={event=>setFormat(event.target.value)}/>
     </label>
-    <small className="external-quote-explanation">The Quote Sent calendar badge uses Date sent.\n      The Activity history shows when you recorded it.
+    <small className="external-quote-explanation">The Quote Sent calendar badge uses Date sent.
+      The Activity history shows when you recorded it.
       {historical
         ?'Historical backfill adds a dated CRM quote-sent event only. Existing Deal status, totals and tasks stay intact.'
         :'For an open Deal this records the submission, updates the Deal to Bid Sent when appropriate, clears its bid deadline and completes Submit Quote tasks.'}
@@ -76,7 +77,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
     <div className="external-quote-actions">
       <button type="button" onClick={onCancel} disabled={saving}>Cancel</button>
       <button type="submit" className="connections-record-primary" disabled={saving||!amount.trim()||!bidSentDate}>
-        {saving?'Saving to cloud…':'Mark bid sent'}
+        {saving?'Saving…':'Mark bid sent'}
       </button>
     </div>
   </form>;
