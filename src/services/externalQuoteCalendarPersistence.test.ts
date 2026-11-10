@@ -46,7 +46,7 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   const many=Array.from({length:8},(_,i)=>({
    id:'native-'+i,title:'Native '+i,quoteNumber:'Q-'+i,
    updatedAt:'2026-11-10T18:00:00.000Z',
-  })) as Quote[];
+  })) as unknown as Quote[];
   const entries=homeRecentQuoteEntries(many,[legacy],5);
   expect(entries).toHaveLength(5);
   expect(entries[0]).toMatchObject({kind:'external',recordId:'legacy-external'});
@@ -75,8 +75,9 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   expect(store).toContain("await supabase.from('activities').insert({");
   expect(store).toContain(".select('id,type,project_id,metadata')");
   expect(store).toContain("if(lookupError||!confirmed)");
-  expect(store.indexOf(".select('id,type,project_id,metadata')"))
-    .toBeLessThan(store.indexOf('persist(get().companies,get().contacts,projects,activities)'));
+  const externalStore=store.slice(store.indexOf('recordExternalQuoteSent:async'));
+  expect(externalStore.indexOf(".select('id,type,project_id,metadata')"))
+    .toBeLessThan(externalStore.indexOf('persist(get().companies,get().contacts,projects,activities)'));
   expect(form).toContain('const saved=await recordExternalQuoteSent(');
   expect(form).toContain('submissionId.current,recordedAt.current');
   expect(form).toContain('onRecorded?.(bidSentDate)');
