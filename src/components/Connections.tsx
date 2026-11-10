@@ -499,12 +499,9 @@ export function Connections() {
                     <strong>{company.name}{isOurCompany(company)&&
                       <span className="connections-table-self-badge">SELF</span>}</strong>
                     <small>{peopleCount} people · {projectCount} deals · {companyQuoteCount} linked quotes</small>
-                    <span className="connections-record-arrow" aria-hidden="true">↗</span>
                   </button>
-                  <div className="connections-mobile-inline">
-                      <button type="button" className="connections-mobile-open-full"
-                        onClick={()=>openCompany(company.id)}>Full record</button>
-                    </div>
+                    <button type="button" className="connections-mobile-top-action"
+                      onClick={()=>openCompany(company.id)} aria-label={'Open full page for '+company.name}>Full page</button>
                 </div>;
                 })}
               </div>
@@ -524,13 +521,9 @@ export function Connections() {
                   <span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
                   <strong>{person.name || person.email || 'Unnamed contact'}</strong>
                   <small>{[person.title,person.email,person.phone].filter(Boolean).join(' · ') || 'No contact details'}</small>
-                  <span className="connections-record-arrow" aria-hidden="true">↗</span>
                 </button>
-                <div className="connections-mobile-inline connections-mobile-contact-actions">
-                  {person.email&&<a href={'mailto:'+person.email} aria-label={'Email '+(person.name||person.email)}>Email</a>}
-                  {person.phone&&<a href={'tel:'+person.phone} aria-label={'Call '+(person.name||person.phone)}>Call</a>}
-                  <button type="button" className="connections-mobile-open-full" onClick={()=>openPerson(person.id)}>Full record</button>
-                </div>
+                <button type="button" className="connections-mobile-top-action"
+                  onClick={()=>openPerson(person.id)} aria-label={'Open full page for '+(person.name||person.email||'person')}>Full page</button>
               </div>)}
               </div>
               {!peopleRows.length && <StatusText state="empty" className="connections-empty">No contacts match. Adjust your search or add a person.</StatusText>}
@@ -559,18 +552,9 @@ export function Connections() {
                   <strong>{project.name}</strong>
                   <small>{[project.companyName,project.dueDate ? `Due ${timeLabel(project.dueDate)}` : undefined,`${linkedQuoteCount} linked quotes`].filter(Boolean).join(' · ')}</small>
                   {project.amount !== undefined && <b>{money.format(project.amount)}</b>}
-                  <span className="connections-record-arrow" aria-hidden="true">↗</span>
                 </button>
-                  <div className="connections-mobile-inline">
-                    {canBulkEdit&&<label>Stage
-                      <select aria-label={'Stage for '+project.name} value={project.stage}
-                        onChange={event=>updateDeal(project.id,{stage:event.currentTarget.value as ProjectStage},{source:'manual'})}>
-                        {PROJECT_STAGES.map(stage=><option key={stage} value={stage}>{stage}</option>)}
-                      </select>
-                    </label>}
-                    <button type="button" className="connections-mobile-open-full"
-                      onClick={()=>openProject(project.id)}>Full record</button>
-                  </div>
+                  <button type="button" className="connections-mobile-top-action"
+                    onClick={()=>openProject(project.id)} aria-label={'Open full page for '+project.name}>Full page</button>
                 </div>;
               })}
             </div>
@@ -581,12 +565,16 @@ export function Connections() {
             <ConnectionsTable key="quotes" tableKey="quotes" columns={quoteColumns}
               rows={quoteTableRows} onOpen={id=>previewRecord('quote',id)} onBulkTask={bulkTask}/>
             <div className="connections-mobile-quote-records">
-              {quoteRows.map(q=><button type="button" key={q.id} className="connections-record"
+              {quoteRows.map(q=><div key={q.id} className="connections-mobile-record-group"><button type="button" className="connections-record"
                 onClick={()=>previewRecord('quote',q.id)}>
                 <strong>{q.title||displayQuoteNumber(q)}</strong>
                 <small>{displayQuoteNumber(q)} · {q.companyName||'No company'} · {q.status}</small>
-                <span className="connections-record-arrow" aria-hidden="true">›</span>
-              </button>)}
+              
+                </button>
+                <button type="button" className="connections-mobile-top-action"
+                  onClick={()=>{setQuoteRecordId(q.id);setTab('quotes');}}
+                  aria-label={'Open full quote record '+(q.title||displayQuoteNumber(q))}>Full page</button>
+              </div>)}
             </div>
             {!quoteRows.length&&<StatusText state="empty" className="connections-empty">
               No quote metadata matches. Check My Sales Documents or your search.
