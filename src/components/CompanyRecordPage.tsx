@@ -11,6 +11,12 @@ import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
  from '../services/companyRelationship';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
+import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {companyRelationshipHistory} from '../services/companyRelationshipHistory';
+import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
+import {requestTaskModal} from '../services/taskModalEvents';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
 
@@ -20,7 +26,6 @@ const dateLabel = (value: string) => {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 };
 const optionalNumber = (value: string) => value.trim() === '' ? undefined : Number(value);
-type ActivityFilter = 'all' | 'quote' | 'project' | 'contact';
 
 export function CompanyRecordPage({ companyId, onBack }: { companyId: string; onBack: () => void }) {
   const companies = useCrmStore((state) => state.companies);
@@ -37,8 +42,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const openPerson = useNavigationStore((state) => state.openPerson);
   const [editing, setEditing] = useState(false);
   const [newAlias, setNewAlias] = useState('');
-  const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [editError,setEditError]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const company = companies.find((candidate) => candidate.id === companyId);
@@ -53,8 +56,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   useEffect(() => {
     setEditing(false);
-    setActivityFilter('all');
-    setHistoryOpen(false);
     setNewAlias('');
     setEditError('');setNotice(null);
   }, [companyId]);
@@ -71,6 +72,22 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     () => company ? companyRecordView(company, contacts, projects, activities, quotes) : null,
     [company, contacts, projects, activities, quotes],
   );
+  const privateTasks=usePersonalTaskStore(state=>state.tasks);
+  const storedTaskScope=usePersonalTaskStore(state=>state.scope);
+  const authMode=useAuthStore(state=>state.mode);
+  const userId=useAuthStore(state=>state.user?.id);
+  const organizationId=useAuthStore(state=>state.organizationId);
+  const perspective=useRolePerspectiveStore(state=>state.activePerspective);
+  const personalScope=taskScope(authMode,organizationId,userId);
+  const timelineQuotes=useMemo(()=>authMode==='cloud'
+    ?quotes.filter(q=>q.ownerUserId===userId):quotes,[authMode,quotes,userId]);
+  const timeline=useMemo(()=>company?companyRelationshipHistory({
+    company,contacts,projects,activities,quotes:timelineQuotes,
+    tasks:personalScope&&storedTaskScope===personalScope&&!perspective?privateTasks:[],
+    personalTaskScope:personalScope&&storedTaskScope===personalScope&&!perspective
+      ?personalScope:null,
+  }):[],[company,contacts,projects,activities,timelineQuotes,privateTasks,
+      personalScope,storedTaskScope,perspective]);
   // Our Organization is a roster, not a second copy of World Stone contacts.
   // Include its members on the SELF company record without replacing anyone's
   // real Company (especially subcontractors' own firms).
@@ -88,12 +105,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     <button type="button" onClick={onBack}>Back to Companies</button>
   </section>;
 
-  const filteredActivities = related.relatedActivities.filter((activity) => {
-    if (activityFilter === 'all') return true;
-    if (activityFilter === 'contact') return activity.type.startsWith('contact-');
-    if (activityFilter === 'project') return activity.type.startsWith('project-');
-    return activity.type.startsWith('quote-') || activity.type.startsWith('change-order-');
-  });
   const saveCompany = (event: FormEvent) => {
     event.preventDefault();
     const message=!draft.name.trim()?'Enter a company name.':
@@ -246,34 +257,14 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       </RecordCard>
       <RecordTasksPanel kind="company" id={company.id} name={company.name}/>
 
-      <section className="connections-record-panel connections-record-history">
-        <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
-          onClick={() => setHistoryOpen((value) => !value)}>
-          <span>Activity history</span><small>{historyOpen ? 'Hide' : 'View'} <span aria-hidden="true">{historyOpen ? '▴' : '▾'}</span></small>
-        </button>
-        {historyOpen && <div className="connections-record-panel-body">
-
-        <div className="connections-record-filter" role="group" aria-label="Filter company activities">
-          {(['all', 'quote', 'project', 'contact'] as const).map((filter) =>
-            <button type="button" key={filter} aria-pressed={activityFilter === filter} onClick={() => setActivityFilter(filter)}>
-              {filter === 'all' ? 'All' : filter === 'quote' ? 'Quotes' : filter === 'project' ? 'Deals' : 'Contacts'}
-            </button>)}
-        </div>
-        <ol className="connections-record-timeline">
-          {filteredActivities.map((activity) => <li key={activity.id}>
-            <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{dateLabel(activity.occurredAt)}</time></div>
-            <small>{activity.type.replaceAll('-', ' ')}</small>
-            {activity.quoteId && related.relatedQuotes.some((quote) => quote.id === activity.quoteId) &&
-              <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
-            {!activity.quoteId && activity.projectId && related.relatedProjects.some((project) => project.id === activity.projectId) &&
-              <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked deal →</button>}
-          </li>)}
-        </ol>
-        {!filteredActivities.length && <p className="connections-record-empty">No activity history matches these filters.</p>}
-
-
-        </div>}
-      </section>
+      <RecordCard title="Relationship history" extra={<span>{timeline.length} events</span>}>
+        <CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{
+          if(target.kind==='person')openPerson(target.id);
+          if(target.kind==='deal')openProject(target.id);
+          if(target.kind==='quote')openQuote(target.id);
+          if(target.kind==='task')requestTaskModal({mode:'preview',id:target.id});
+        }}/>
+      </RecordCard>
     </>}
   />;
 }
