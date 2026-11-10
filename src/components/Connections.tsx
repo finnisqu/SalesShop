@@ -39,6 +39,7 @@ import {companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,isOurCompany,visibleCompanyAliases,type CompanyRelationship,
  type EditableCompanyRelationship} from '../services/companyRelationship';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
+import {personLastContactIndex} from '../services/personLastContact';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from '../services/activityLogFilters';
 
@@ -103,6 +104,19 @@ function findText(...items: Array<string | undefined>) {
   return items.filter(Boolean).join(' ').toLowerCase();
 }
 
+function ContactOnFileIcon({kind}:{kind:'phone'|'email'}){
+ return <span className="connections-person-card-method" role="img"
+  aria-label={kind==='phone'?'Phone number on file':'Email address on file'}
+  title={kind==='phone'?'Phone number on file':'Email address on file'}>
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+   stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+   strokeLinejoin="round" aria-hidden="true">
+   {kind==='phone'
+    ?<path d="M5 3h3l2 5-2 2a16 16 0 0 0 6 6l2-2 5 2v3a2 2 0 0 1-2 2C11 20 4 13 3 5a2 2 0 0 1 2-2Z"/>
+    :<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 7 9-7"/></>}
+  </svg>
+ </span>;
+}
 export function Connections() {
   const [tab, setTab] = useState<ConnectionsTab>(initialTab);
   const [dealsView,setDealsView]=useState<'list'|'timeline'>(()=>{
@@ -162,6 +176,7 @@ export function Connections() {
   const contacts = useCrmStore((state) => state.contacts);
   const projects = useCrmStore((state) => state.projects);
   const activities = useCrmStore((state) => state.activities);
+  const lastContactByPerson=useMemo(()=>personLastContactIndex(activities),[activities]);
   const quotes = useQuoteStore((state) => state.quotes);
   const authMode=useAuthStore(state=>state.mode);
   const authUser=useAuthStore(state=>state.user?.id);
@@ -519,8 +534,19 @@ export function Connections() {
                 {peopleRows.map((person) => <div key={person.id} className="connections-mobile-record-group">
                 <button type="button" className="connections-record connections-person-record" onClick={() => previewRecord('person',person.id)}>
                   <span className="connections-record-eyebrow">{companiesById.get(person.companyId ?? '')?.name ?? 'Unassigned company'}</span>
-                  <strong>{person.name || person.email || 'Unnamed contact'}</strong>
-                  <small>{[person.title,person.email,person.phone].filter(Boolean).join(' · ') || 'No contact details'}</small>
+                  <strong>{person.name&&person.name.trim().toLowerCase()!==person.email?.trim().toLowerCase()
+                    ?person.name:'Unnamed contact'}</strong>
+                  <span className="connections-person-card-meta">
+                    <small>{lastContactByPerson.has(person.id)
+                      ?'Last contacted · '+timeLabel(lastContactByPerson.get(person.id)?.occurredAt)
+                      :'Never contacted'}</small>
+                    <span className="connections-person-card-methods" aria-label="Contact information available">
+                      {Boolean(person.phone?.trim())&&<ContactOnFileIcon kind="phone"/>}
+                      {Boolean(person.email?.trim())&&<ContactOnFileIcon kind="email"/>}
+                      {!person.phone?.trim()&&!person.email?.trim()&&
+                        <span className="connections-person-card-no-info">No phone or email</span>}
+                    </span>
+                  </span>
                 </button>
                 <button type="button" className="connections-mobile-top-action"
                   onClick={()=>openPerson(person.id)} aria-label={'Open full page for '+(person.name||person.email||'person')}>Full page</button>
