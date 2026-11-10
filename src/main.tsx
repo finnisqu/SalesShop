@@ -181,6 +181,8 @@ import './mobile-quote-selections-efficiency.css';
 import './mobile-quote-review-efficiency.css';
 // Keyboard-safe Quick Quote sheets and measured footer scroll clearance.
 import './mobile-quote-viewport-reliability.css';
+// Notebook's page navigator and text/rule baseline correction run after global mobile styles.
+import './notebook-responsive-polish.css';
 
 recordSalesShopBoot();
 

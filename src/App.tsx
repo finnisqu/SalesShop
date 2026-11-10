@@ -142,7 +142,19 @@ function App() {
   const taskUserId=useAuthStore(s=>s.user?.id);
   const [notebookEditor, setNotebookEditor] = useState<Editor | null>(null);
   const [notebookHeaderSearch,setNotebookHeaderSearch]=useState('');
-  const [notebookHeaderSection,setNotebookHeaderSection]=useState<'pages'|'agenda'>('pages');
+  // Split view is desktop-only. Preserve the device's desktop split preference
+  // while showing exactly one editable page on a phone.
+  const [notebookCompact,setNotebookCompact]=useState(()=>
+    typeof window!=='undefined'&&typeof window.matchMedia==='function'&&
+    window.matchMedia('(max-width:820px)').matches);
+  useEffect(()=>{
+    if(typeof window==='undefined'||typeof window.matchMedia!=='function')return;
+    const query=window.matchMedia('(max-width:820px)');
+    const sync=()=>setNotebookCompact(query.matches);
+    sync();
+    query.addEventListener?.('change',sync);
+    return()=>query.removeEventListener?.('change',sync);
+  },[]);
   const [companionId,setCompanionId]=useState<string|null>(null);
   const [focusedPane,setFocusedPane]=useState<'left'|'right'>('left');
   const [splitStacked,setSplitStacked]=useState(false);
@@ -227,9 +239,22 @@ function App() {
     writeNotebookSplitPreference(splitScope,{rightId:companionId,stacked:splitStacked});
   },[hydrated,splitScope,restoredSplitScope,companionId,splitStacked]);
   const entry = entries.find((candidate) => candidate.id === activeEntryId) ?? null;
-  const companion = entries.find(candidate=>candidate.id===companionId&&candidate.id!==activeEntryId)??null;
+  const companion = !notebookCompact
+    ?entries.find(candidate=>candidate.id===companionId&&candidate.id!==activeEntryId)??null:null;
   const companionOptions=entries.filter(candidate=>candidate.id!==activeEntryId&&(!candidate.hidden||candidate.id===companionId));
+  // Use the same page list for the desktop selector and the mobile header
+  // navigator. Even when searching, keep the currently open page visible.
+  const notebookPageOptions=useMemo(()=>{
+    const search=notebookHeaderSearch.trim().toLowerCase();
+    return entries.filter(candidate=>(!candidate.isPostItInbox||candidate.id===activeEntryId)&&
+      (!candidate.hidden||candidate.id===activeEntryId)&&
+      (!search||candidate.id===activeEntryId||candidate.title.toLowerCase().includes(search)))
+      .sort((a,b)=>Number(b.favorite)-Number(a.favorite)||
+        b.updatedAt.localeCompare(a.updatedAt))
+      .map(candidate=>({value:candidate.id,label:candidate.title||'Untitled page'}));
+  },[entries,activeEntryId,notebookHeaderSearch]);
   const openCompanion=(id:string)=>{
+    if(notebookCompact)return;
     if(id!==activeEntryId&&entries.some(candidate=>candidate.id===id)){
       setCompanionId(id);setFocusedPane('right');
     }
@@ -237,7 +262,7 @@ function App() {
   const openPrimary=(id:string)=>{
     if(id===activeEntryId){setFocusedPane('left');return;}
     if(!entries.some(candidate=>candidate.id===id))return;
-    if(id===companionId)setCompanionId(activeEntryId);
+    if(!notebookCompact&&id===companionId)setCompanionId(activeEntryId);
     useNotebookStore.getState().selectEntry(id);
     setFocusedPane('left');
   };
@@ -313,26 +338,20 @@ function App() {
         <div className="loading-screen" role="status">Opening Notebook…</div>
       ) : (
         <main className={`notebook-workspace ${companion?'is-side-by-side':''}`}>
-          <WorkspaceHeader title="Notebook" help={<WorkspaceHelp page="notebook" section={notebookHeaderSection}/>}
-            mobileTabs={[{value:'pages',label:'Pages'},{value:'agenda',label:'Agenda'}]}
-            mobileTabValue={notebookHeaderSection}
-            onMobileTabChange={value=>{
-              setNotebookHeaderSection(value as 'pages'|'agenda');
-              if(value==='agenda')document.querySelector<HTMLElement>('.notebook-linked-agenda')?.scrollIntoView({block:'nearest'});
-            }}
-            tabs={<nav className="notebook-header-tabs" aria-label="Notebook views">
-              <button type="button" className={notebookHeaderSection==='pages'?'active':''}
-                aria-pressed={notebookHeaderSection==='pages'} onClick={()=>{
-                  setNotebookHeaderSection('pages');
-                  document.querySelector<HTMLElement>('.notebook-sidebar .notebook-page-search input')?.focus();
-                }}>Pages</button>
-              <button type="button" className={notebookHeaderSection==='agenda'?'active':''}
-                aria-pressed={notebookHeaderSection==='agenda'} onClick={()=>{
-                  setNotebookHeaderSection('agenda');
-                  document.querySelector<HTMLElement>('.notebook-linked-agenda')?.scrollIntoView({block:'nearest'});
-                }}>Agenda</button>
-            </nav>}
-            more={<WorkspaceMoreMenu items={[
+          <WorkspaceHeader title="Notebook" help={<WorkspaceHelp page="notebook" section="pages"/>}
+            mobileTabs={notebookPageOptions}
+            mobileTabValue={entry.id}
+            onMobileTabChange={openPrimary}
+            tabs={<div className="notebook-header-page-navigator">
+              <label htmlFor="notebook-header-page-select">Page</label>
+              <select id="notebook-header-page-select" aria-label="Choose Notebook page"
+                value={entry.id} onChange={event=>openPrimary(event.currentTarget.value)}>
+                {notebookPageOptions.map(page=><option key={page.value} value={page.value}>
+                  {page.label}</option>)}
+              </select>
+              <span aria-hidden="true">{notebookPageOptions.length} pages</span>
+            </div>}
+            more={notebookCompact?<SalesCalendarLauncher compact label="Notebook calendar"/>:<WorkspaceMoreMenu items={[
               {label:companion?'Close split page':'Open split page',
                 disabled:!companion&&companionOptions.length===0,
                 onClick:()=>companion?closeRightPane():companionOptions[0]&&openCompanion(companionOptions[0].id)},
@@ -345,14 +364,14 @@ function App() {
             primary={<button type="button" disabled={inRolePreview}
               onClick={()=>useNotebookStore.getState().createEntry()}>+ Page</button>}
           />
-          <Sidebar externalQuery={notebookHeaderSearch}
+          {!notebookCompact&&<Sidebar externalQuery={notebookHeaderSearch}
             onOpenBeside={openCompanion} onOpenLeft={openPrimary}
             companionId={companion?.id??null} activePane={companion?focusedPane:'left'}
             stacked={splitStacked} onToggleStack={()=>setSplitStacked(s=>!s)}
             onSwap={swapPanes} onCloseLeft={closeLeftPane} onCloseRight={closeRightPane}
-            onFocusPane={setFocusedPane}/>
+            onFocusPane={setFocusedPane}/>}
           <section className="binder-stage">
-            <div className="notebook-split-controls">
+            {!notebookCompact&&<div className="notebook-split-controls">
               <strong>{companion?(splitStacked?'Stacked pages':'Split pages'):'Single page'}</strong>
               <SalesCalendarLauncher compact />
               {companion&&<select aria-label="Choose second Notebook page" value={companion.id}
@@ -366,8 +385,8 @@ function App() {
                   if(companion)closeRightPane();
                   else if(companionOptions[0])openCompanion(companionOptions[0].id);
                 }}>{companion?'Close split':'▥ Side by side'}</button>
-            </div>
-            <div className={`notebook-panes ${companion?'is-split':''} ${splitStacked?'is-stacked':''}`}>
+            </div>}
+            <div className={`notebook-panes ${companion?'is-split':''} ${companion&&splitStacked?'is-stacked':''}`}>
             <div data-notebook-pane="left"
               className={`notebook-primary-pane ${focusedPane==='left'||!companion?'is-focused-pane':''}`}
               onPointerDownCapture={()=>setFocusedPane('left')}
