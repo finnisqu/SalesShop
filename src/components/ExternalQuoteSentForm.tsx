@@ -1,4 +1,4 @@
-import {useState,type FormEvent} from 'react';
+import {useRef,useState,type FormEvent} from 'react';
 import type {Project} from '../types/crm';
 import {useCrmStore} from '../store/crmStore';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
@@ -23,7 +23,10 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
   const [format,setFormat]=useState('');
   const [error,setError]=useState('');
   const [saving,setSaving]=useState(false);
-  const submit=(event:FormEvent<HTMLFormElement>)=>{
+  // Stable across retries, so a lost acknowledgement cannot create two sent events.
+  const submissionId=useRef('activity_'+crypto.randomUUID());
+  const recordedAt=useRef(new Date().toISOString());
+  const submit=async(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
     if(saving)return;
     const total=Number(amount);
@@ -35,7 +38,8 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
     }
     setSaving(true);setError('');
     try{
-      const saved=recordExternalQuoteSent(deal.id,total,bidSentDate,format);
+      const saved=await recordExternalQuoteSent(deal.id,total,bidSentDate,format,
+        submissionId.current,recordedAt.current);
       if(!saved){setError('Unable to record this submission. Check the Deal stage and date.');return;}
       if(!historical)completeSubmissionTasks(deal.id);
       onRecorded?.();
@@ -54,7 +58,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
           value={amount} onChange={event=>{setAmount(event.target.value);setError('');}}
           placeholder="0.00"/>
       </label>
-      <label>Bid sent date
+      <label>Date sent
         <input type="date" required max={localToday()} value={bidSentDate}
           onChange={event=>{setBidSentDate(event.target.value);setError('');}}/>
       </label>
@@ -63,7 +67,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
       <input maxLength={120} value={format} placeholder="Excel, PDF, another quoting tool…"
         onChange={event=>setFormat(event.target.value)}/>
     </label>
-    <small className="external-quote-explanation">
+    <small className="external-quote-explanation">The Quote Sent calendar badge uses Date sent.\n      The Activity history shows when you recorded it.
       {historical
         ?'Historical backfill adds a dated CRM quote-sent event only. Existing Deal status, totals and tasks stay intact.'
         :'For an open Deal this records the submission, updates the Deal to Bid Sent when appropriate, clears its bid deadline and completes Submit Quote tasks.'}
@@ -72,7 +76,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
     <div className="external-quote-actions">
       <button type="button" onClick={onCancel} disabled={saving}>Cancel</button>
       <button type="submit" className="connections-record-primary" disabled={saving||!amount.trim()||!bidSentDate}>
-        {saving?'Recording…':'Mark bid sent'}
+        {saving?'Saving to cloud…':'Mark bid sent'}
       </button>
     </div>
   </form>;
