@@ -198,3 +198,20 @@
  border-radius:7px;padding:7px 10px;background:var(--ss-theme-tint);
  color:var(--ss-theme-ink);font-size:11px;font-weight:700;
 }
+
+/* Person Activity history is a tappable details entry, not an inert heading. */
+:root[data-sales-theme] .connections-record-timeline .connections-activity-history-open{
+ display:inline-block;max-width:100%;padding:2px 0;border:0;
+ text-align:left;background:transparent;color:var(--ss-theme-ink);
+ font:inherit;cursor:pointer;
+}
+:root[data-sales-theme] .connections-record-timeline .connections-activity-history-open strong{
+ color:inherit;text-decoration:none;
+}
+:root[data-sales-theme] .connections-record-timeline .connections-activity-history-open:hover strong{
+ text-decoration:underline;text-underline-offset:3px;
+}
+:root[data-sales-theme] .connections-record-timeline .connections-activity-history-open:focus-visible{
+ outline:2px solid var(--ss-focus,var(--ss-theme-accent));
+ outline-offset:2px;border-radius:4px;
+}
