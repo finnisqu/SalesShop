@@ -19,8 +19,6 @@ export interface CompanyHistoryInput{
  /** Only pass the signed-in user's personal Tasks with a verified scope. */
  tasks?:readonly PersonalTask[];personalTaskScope?:string|null;
 }
-const isActivityInteraction=(activity:Activity)=>
- activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint';
 const validDate=(date:string|undefined):date is string=>
  Boolean(date&&Number.isFinite(Date.parse(date)));
 const normalizeSort=(items:CompanyHistoryItem[])=>items.sort((a,b)=>
