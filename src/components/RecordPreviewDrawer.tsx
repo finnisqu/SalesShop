@@ -47,13 +47,15 @@ const personContactLabel=(method:PersonQuickMethod)=>method==='call'?'Phone call
 /** A consistent, nondestructive focus preview across Board and Connections.
  * Full record pages and document editors stay separate from preview clicks. */
 export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard}:Props){
- const ref=useDismissibleLayer<HTMLElement>(true,onClose);
+ const [pendingPersonMethod,setPendingPersonMethod]=useState<PersonQuickMethod|null>(null);
+ const ref=useDismissibleLayer<HTMLElement>(!pendingPersonMethod,onClose);
+ const confirmRef=useDismissibleLayer<HTMLDivElement>(Boolean(pendingPersonMethod),
+  ()=>setPendingPersonMethod(null));
  useModalScrollLock(true);
  // Follow related records in the same preview; the phone Back control
  // returns through the prior previews without resetting the directory.
  const [previewTrail,setPreviewTrail]=useState<PreviewRecord[]>([]);
  const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
- const [pendingPersonMethod,setPendingPersonMethod]=useState<PersonQuickMethod|null>(null);
  const [personActionNotice,setPersonActionNotice]=useState('');
  const [personActionError,setPersonActionError]=useState('');
  const [captureViewport,setCaptureViewport]=useState<{height:number;top:number}|null>(null);
@@ -318,7 +320,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
      </PreviewPanelActions>}
      {person&&pendingPersonMethod&&canLog&&<div className="record-preview-contact-confirm-cover">
-      <div className="record-preview-contact-confirm" role="alertdialog" aria-modal="true"
+      <div ref={confirmRef} className="record-preview-contact-confirm" role="alertdialog" aria-modal="true"
         aria-labelledby="record-preview-contact-confirm-title"
         aria-describedby="record-preview-contact-confirm-detail"
         onKeyDown={event=>{if(event.key==='Escape'){
