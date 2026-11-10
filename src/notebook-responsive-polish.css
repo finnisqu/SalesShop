@@ -99,3 +99,19 @@
   min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;
  }
 }
+
+@media(max-width:820px){
+ /* The calendar is a header action now; no extra single/split toolbar row. */
+ :root[data-sales-theme] .sales-app.view-notebook
+ .ss-workspace-header__more .sales-calendar-trigger.is-compact{
+  display:grid;place-items:center;box-sizing:border-box;
+  width:44px;height:44px;min-width:44px;min-height:44px;
+  padding:0;border:1px solid var(--ss-theme-border,#cdc1a8);
+  border-radius:10px;background:var(--ss-theme-card,#fffaf0);
+  color:var(--ss-theme-ink,#36312b);
+ }
+ :root[data-sales-theme] .sales-app.view-notebook
+ .ss-workspace-header__more .sales-calendar-trigger.is-compact:focus-visible{
+  outline:2px solid var(--ss-theme-accent,#957943);outline-offset:2px;
+ }
+}
