@@ -53,6 +53,10 @@ export function companyRelationshipHistory({
   if(activity.quoteId&&!quoteIds.has(activity.quoteId)&&
    (activity.type.startsWith('quote-')||activity.type.startsWith('change-order-')))continue;
   const links=activityRelations(activity);
+  // A direct/metadata Quote link must not expose private or archived documents
+  // through this account timeline, even when the Company or Deal is also linked.
+  if((activity.type.startsWith('quote-')||activity.type.startsWith('change-order-'))&&
+   links.some(link=>link.type==='quote'&&!quoteIds.has(link.id)))continue;
   const belongs=activity.companyId===company.id||
    Boolean(activity.contactId&&memberIds.has(activity.contactId))||
    Boolean(activity.projectId&&dealIds.has(activity.projectId))||
