@@ -24,6 +24,7 @@ import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 import {companyRelationshipLabel,visibleCompanyAliases} from '../services/companyRelationship';
 import {companyRelationshipHistory} from '../services/companyRelationshipHistory';
 import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -55,7 +56,8 @@ const nextContactDay=()=>{
  * Full record pages and document editors stay separate from preview clicks. */
 export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard}:Props){
  const [pendingPersonMethod,setPendingPersonMethod]=useState<PersonQuickMethod|null>(null);
- const ref=useDismissibleLayer<HTMLElement>(!pendingPersonMethod,onClose);
+ const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
+ const ref=useDismissibleLayer<HTMLElement>(!pendingPersonMethod&&!activityPreviewId,onClose);
  const confirmRef=useDismissibleLayer<HTMLDivElement>(Boolean(pendingPersonMethod),
   ()=>setPendingPersonMethod(null));
  useModalScrollLock(true);
@@ -71,6 +73,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const [captureViewport,setCaptureViewport]=useState<{height:number;top:number}|null>(null);
  useEffect(()=>{
   setExternalQuoteOpen(false);setPendingPersonMethod(null);
+  setActivityPreviewId(null);
   setPersonActionNotice('');setPersonActionError('');
   setQuickFollowUpEnabled(false);setQuickFollowUpDate(nextContactDay());
   pendingLoggedActivityRef.current=null;
@@ -248,10 +251,12 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const preview=<div className={(center
      ?'tasks-dialog-backdrop record-preview-center-backdrop'
      :'project-editor-backdrop record-preview-backdrop')+
-     (capture?' record-preview-capture-backdrop':'')+' ss-mobile-sheet-backdrop'}
+     (capture?' record-preview-capture-backdrop':'')+
+     (activityPreviewId?' is-activity-underlay':'')+' ss-mobile-sheet-backdrop'}
+   aria-hidden={activityPreviewId?true:undefined}
    style={capture&&captureViewport
      ?{top:captureViewport.top,height:captureViewport.height,bottom:'auto'}:undefined}
-   onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
+   onPointerDown={event=>{if(!activityPreviewId&&event.target===event.currentTarget)onClose();}}>
    <aside ref={ref} role="dialog" aria-modal="true"
      aria-label={capture?'Record external quote for '+heading:label+' preview'}
      className={(center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel')+
@@ -303,6 +308,9 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
              onOpenTarget={target=>{
                if(target.kind==='task'){
                  onClose();requestTaskModal({mode:'preview',id:target.id});return;
+               }
+               if(target.kind==='activity'){
+                 setActivityPreviewId(target.id);return;
                }
                open(target.kind,target.id);
              }}/>
@@ -426,5 +434,13 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  </div>;
  // Portal every preview: a fixed iPhone sheet should never inherit Board's
  // horizontal scroll container or any transformed ancestor.
- return createPortal(preview,document.body);
+ return <>
+  {createPortal(preview,document.body)}
+  {activityPreviewId&&<CalendarActivityPreview activityId={activityPreviewId}
+   onClose={()=>setActivityPreviewId(null)}
+   onSelect={(kind,id)=>{
+    setActivityPreviewId(null);
+    open(kind,id);
+   }}/>}
+ </>;
 }
