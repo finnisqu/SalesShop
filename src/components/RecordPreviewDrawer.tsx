@@ -17,7 +17,9 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import {useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {dealPipelineLabel} from '../types/crm';
-import type {TaskAssociation} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,type TaskAssociation} from '../store/personalTaskStore';
+import {localCalendarDay} from '../services/personFollowUpIntelligence';
+import {personQuickFollowUp} from '../services/personQuickFollowUp';
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 import {companyRelationshipLabel,visibleCompanyAliases} from '../services/companyRelationship';
 import '../record-preview.css';
@@ -43,6 +45,9 @@ function PersonQuickMethodIcon({method}:{method:PersonQuickMethod}){
 }
 const personContactLabel=(method:PersonQuickMethod)=>method==='call'?'Phone call':
  method==='text'?'Text message':'Email';
+const nextContactDay=()=>{
+ const day=new Date();day.setDate(day.getDate()+1);return localCalendarDay(day);
+};
 
 /** A consistent, nondestructive focus preview across Board and Connections.
  * Full record pages and document editors stay separate from preview clicks. */
@@ -58,10 +63,15 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
  const [personActionNotice,setPersonActionNotice]=useState('');
  const [personActionError,setPersonActionError]=useState('');
+ const [quickFollowUpEnabled,setQuickFollowUpEnabled]=useState(false);
+ const [quickFollowUpDate,setQuickFollowUpDate]=useState(nextContactDay);
+ const pendingLoggedActivityRef=useRef<string|null>(null);
  const [captureViewport,setCaptureViewport]=useState<{height:number;top:number}|null>(null);
  useEffect(()=>{
   setExternalQuoteOpen(false);setPendingPersonMethod(null);
   setPersonActionNotice('');setPersonActionError('');
+  setQuickFollowUpEnabled(false);setQuickFollowUpDate(nextContactDay());
+  pendingLoggedActivityRef.current=null;
  },[record.kind,record.id]);
  // iOS Safari's visual viewport contracts when the keyboard opens, but CSS
  // 100dvh can remain anchored to the taller layout viewport.
@@ -103,9 +113,12 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  };
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
  const logPersonActivity=useCrmStore(s=>s.recordActivity);
+ const createPersonFollowUpTask=usePersonalTaskStore(s=>s.createTask);
+ const currentPersonalTaskScope=usePersonalTaskStore(s=>s.scope);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities),allQuotes=useQuoteStore(s=>s.quotes);
  const {members:assignees}=useDealAssigneeDirectory();
  const authMode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),
+  organizationId=useAuthStore(s=>s.organizationId),
   teamRole=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const canLog=!perspective&&(authMode==='local'||canEditTeamArea(teamRole,department,'crm'));
@@ -158,21 +171,57 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
      else requestQuoteMetadataPage(record.id,()=>navigate.setView('dashboard'));
    }
  };
+ const beginPersonContact=(method:PersonQuickMethod)=>{
+  if(!canLog)return;
+  pendingLoggedActivityRef.current=null;
+  setPendingPersonMethod(method);setPersonActionError('');
+  setQuickFollowUpEnabled(false);setQuickFollowUpDate(nextContactDay());
+ };
  const logConfirmedPersonInteraction=()=>{
   if(!person||!pendingPersonMethod||!canLog)return;
   const method=pendingPersonMethod;
+  const links=contextualLinks.filter(link=>link.type==='contact'||link.type==='company');
+  const localScope=taskScope(authMode,organizationId,userId);
+  if(quickFollowUpEnabled){
+   if(!localScope||currentPersonalTaskScope!==localScope){
+    setPersonActionError('Your personal Tasks have not loaded in this account. Reopen this preview and try again.');
+    return;
+   }
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(quickFollowUpDate)||
+      quickFollowUpDate<localCalendarDay(new Date())){
+    setPersonActionError('Choose today or a future follow-up date.');
+    return;
+   }
+  }
   try{
-   logPersonActivity({
+   const loggedId=pendingLoggedActivityRef.current??logPersonActivity({
     type:'manual-touchpoint',
     summary:personContactLabel(method)+' with '+(person.name||person.email||person.phone||'contact'),
     contactId:person.id,companyId:person.companyId,
     occurredAt:new Date().toISOString(),
     metadata:{source:'manual',interactionMethod:method,
-     relatedRecords:contextualLinks.filter(link=>link.type==='contact'||link.type==='company').map(link=>({
+     relatedRecords:links.map(link=>({
       type:link.type as 'contact'|'company',id:link.id,label:link.label,
      }))},
    });
-   setPersonActionNotice(personContactLabel(method)+' recorded in Activity.');
+   // A failed follow-up retry must never create a duplicate CRM Activity.
+   pendingLoggedActivityRef.current=loggedId;
+   if(quickFollowUpEnabled){
+    const followUp=personQuickFollowUp({
+     activityId:loggedId,personName:person.name||'contact',method,
+     dueDate:quickFollowUpDate,associations:links,
+    });
+    const exists=usePersonalTaskStore.getState().tasks.some(task=>
+     !task.deletedAt&&task.sourceObjectId===followUp.changes.sourceObjectId);
+    if(!exists&&!createPersonFollowUpTask(followUp.title,followUp.changes)){
+     throw new Error('Activity was logged, but the follow-up could not be saved. Retry to create the task.');
+    }
+   }
+   setPersonActionNotice(personContactLabel(method)+
+    (quickFollowUpEnabled?' recorded. Follow-up due '+new Date(quickFollowUpDate+'T12:00:00')
+     .toLocaleDateString(undefined,{month:'short',day:'numeric'})+'.':' recorded in Activity.'));
+   pendingLoggedActivityRef.current=null;
+   setQuickFollowUpEnabled(false);
    setPendingPersonMethod(null);setPersonActionError('');
   }catch(reason){
    setPersonActionError(reason instanceof Error?reason.message:'Could not record this Activity.');
@@ -206,12 +255,12 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
           href={(method==='call'?'tel:':'sms:')+person.phone!.replace(/[^0-9+*#]/g,'')}
           title={method==='call'?'Call '+person.name:'Text '+person.name}
           aria-label={method==='call'?'Call '+person.name:'Text '+person.name}
-          onClick={()=>{if(canLog){setPersonActionError('');setPendingPersonMethod(method);}}}>
+          onClick={()=>beginPersonContact(method)}>
           <PersonQuickMethodIcon method={method}/>
         </a>)}
         {person.email&&<a href={'mailto:'+encodeURIComponent(person.email.trim())}
           title={'Email '+person.name} aria-label={'Email '+person.name}
-          onClick={()=>{if(canLog){setPersonActionError('');setPendingPersonMethod('email');}}}>
+          onClick={()=>beginPersonContact('email')}>
           <PersonQuickMethodIcon method="email"/>
         </a>}
        </div>}
@@ -330,11 +379,26 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        <p id="record-preview-contact-confirm-detail">Did you {pendingPersonMethod==='call'
         ?'complete the call':pendingPersonMethod==='text'?'send the text':'send the email'} to {person.name}?
         Only a confirmed interaction will be saved as an Activity.</p>
+       <label className="record-preview-contact-follow-up">
+        <input type="checkbox" checked={quickFollowUpEnabled} onChange={event=>{
+         setQuickFollowUpEnabled(event.currentTarget.checked);setPersonActionError('');
+        }}/>
+        <span>Create follow-up task</span>
+       </label>
+       {quickFollowUpEnabled&&<label className="record-preview-contact-due-date">
+        Follow up on
+        <input type="date" min={localCalendarDay(new Date())}
+         value={quickFollowUpDate} onChange={event=>{
+          setQuickFollowUpDate(event.currentTarget.value);setPersonActionError('');
+         }}/>
+       </label>}
        {personActionError&&<p role="alert" className="record-preview-contact-error">{personActionError}</p>}
        <div className="record-preview-contact-confirm-actions">
-        <button type="button" onClick={()=>{setPendingPersonMethod(null);setPersonActionError('');}}>No</button>
+        <button type="button" onClick={()=>{
+         setPendingPersonMethod(null);setPersonActionError('');
+        }}>{pendingLoggedActivityRef.current?'Close':'No'}</button>
         <button type="button" className="is-primary" onClick={logConfirmedPersonInteraction}
-         data-dialog-initial-focus>Yes, log it</button>
+         data-dialog-initial-focus>{quickFollowUpEnabled?'Yes, log + follow up':'Yes, log it'}</button>
        </div>
       </div>
      </div>}
