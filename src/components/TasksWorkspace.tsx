@@ -523,13 +523,14 @@ export function TasksWorkspace(){
         return <article className={'tasks-row is-'+state} key={task.id}>
           <label className="tasks-complete"><input type="checkbox" checked={isDone}
             aria-label={(isDone?'Reopen ':'Complete ')+task.title}
+            disabled={!isDone&&isProtectedBidTask(task)&&!task.submissionConfirmedAt}
             onChange={()=>isDone?reopen(task.id):complete(task.id)}/></label>
           <div className="tasks-row-body">
             <div className="tasks-row-top"><button type="button" className="tasks-row-title"
               onClick={()=>setViewingId(task.id)} aria-label={'Preview task '+task.title}>{task.title}</button>
               <span className={'tasks-priority is-'+(task.priority??'normal')}>{task.priority??'normal'}</span></div>
             <div className="tasks-row-meta"><span>{task.type==='todo'||!task.type?'To-do':task.type}</span>
-              <span className={state==='overdue'?'is-overdue':''}>{task.dueDate?'Due '+formatDate(task.dueDate)+(task.dueTime?' · '+task.dueTime:''):'No due date'}</span>
+              <span className={'tasks-due-label'+(state==='overdue'?' is-overdue':'')}>{task.dueDate?'Due '+formatDate(task.dueDate)+(task.dueTime?' · '+task.dueTime:''):'No due date'}</span>
               <span>{isDone?'Completed':task.status==='canceled'?'Canceled':task.status==='in-progress'?'In progress':task.status==='waiting'?'Waiting':state==='scheduled'?'Scheduled':'Open'}</span>
               {task.queue&&<span>Queue: {task.queue}</span>}
               {task.startDate&&<span>Start {formatDate(task.startDate)}</span>}
@@ -571,6 +572,9 @@ export function TasksWorkspace(){
             <button type="button" className="tasks-row-delete"
               onClick={()=>{if(window.confirm('Delete this task? It will be removed from Tasks and Agenda.'))remove(task.id);}}>
               <TrashIcon/> Delete</button>
+            <button type="button" className="tasks-mobile-more"
+              aria-label={'More options for '+task.title}
+              onClick={()=>setViewingId(task.id)}>…</button>
           </div>
         </article>;
       })}
