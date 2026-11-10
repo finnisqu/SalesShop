@@ -6,7 +6,7 @@ import {companyRelationshipHistory,companyHistoryByFilter} from './companyRelati
 
 const company={id:'co',name:'Acme',createdAt:'2026-01-01',updatedAt:'2026-11-01'} as Company;
 const person={id:'p',companyId:'co',name:'Alex'} as Contact;
-const deal={id:'d',companyId:'co',name:'Building A',stage:'discovery',
+const deal={id:'d',companyId:'co',name:'Building A',stage:'Discovery',
  createdAt:'2026-10-20T13:00:00Z',updatedAt:'2026-11-08T13:00:00Z'} as Project;
 const doc={id:'q',projectId:'d',title:'Kitchen scope',quoteNumber:'Q-12',status:'Sent',
  createdAt:'2026-10-21T12:00:00Z',sentAt:'2026-11-01T12:00:00Z',
