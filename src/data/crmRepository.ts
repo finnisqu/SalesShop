@@ -61,6 +61,7 @@ function normalizeContact(raw: Partial<Contact>, timestamp: string): Contact | n
   if (!raw.id || !raw.name) return null;
   return {
     id: raw.id,
+    ownerUserId: raw.ownerUserId,
     companyId: raw.companyId,
     name: raw.name,
     email: raw.email,

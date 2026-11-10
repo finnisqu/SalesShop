@@ -1,6 +1,6 @@
 import type {Quote} from '../types/quote';
 import {useQuoteCloudStatusStore} from '../store/quoteCloudStatusStore';
-import {useQuoteStore} from '../store/quoteStore';
+import {CLOUD_DOCUMENT_RETRY_EVENT} from '../data/cloudAwareStorage';
 import '../sales-document-workspace.css';
 import '../sales-document-cloud-save.css';
 
@@ -32,6 +32,6 @@ export function SalesDocumentSaveStatus({quote,cloudMode,compact=false}:{quote:Q
     <span aria-hidden="true">{cloudMode&&status==='error'?'!':cloudMode&&status!=='saved'?'◷':'✓'}</span>
     {compact?compactLabel:label}{changed&&!compact?' · '+changed:''}
     {cloudMode&&status==='error'&&<button type="button" aria-label="Retry saving quote to cloud"
-      title="Retry cloud save" onClick={()=>useQuoteStore.getState().selectQuote(quote.id)}>Retry</button>}
+      title="Retry cloud save" onClick={()=>window.dispatchEvent(new Event(CLOUD_DOCUMENT_RETRY_EVENT))}>Retry</button>}
   </span>;
 }

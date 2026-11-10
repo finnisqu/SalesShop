@@ -15,6 +15,7 @@ import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {companyRelationshipHistory} from '../services/companyRelationshipHistory';
+import {crmOwnerLabel} from '../services/crmRecordOwnership';
 import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {requestTaskModal} from '../services/taskModalEvents';
@@ -192,6 +193,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Relationship">{companyRelationshipLabel(company)}</RecordProperty>
+          <RecordProperty label="Assigned to">{crmOwnerLabel(company.ownerUserId,userId,authMode)}</RecordProperty>
           {isOurCompany(company)&&<span className="connections-company-self-inline">SELF · Linked to Our Organization</span>}
           <RecordProperty label="Created">{dateLabel(company.createdAt)}</RecordProperty>
           <RecordProperty label="Last updated">{dateLabel(company.updatedAt)}</RecordProperty>

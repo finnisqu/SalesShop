@@ -74,6 +74,8 @@ export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 export interface Company {
   id: string;
+  /** Creator-assigned owner. Shared organization access remains unchanged. */
+  ownerUserId?: string;
   name: string;
   aliases?: string[];
   identityExclusions?: string[];
@@ -87,6 +89,8 @@ export interface Company {
 
 export interface Contact {
   id: string;
+  /** Creator-assigned owner; null on pre-ownership legacy records. */
+  ownerUserId?: string;
   companyId?: string;
   name: string;
   identityExclusions?: string[];

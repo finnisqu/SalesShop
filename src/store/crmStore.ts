@@ -31,6 +31,7 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import {useRolePerspectiveStore} from './rolePerspectiveStore';
 import {useQuoteStore} from './quoteStore';
 import {canDeleteAutomaticCrmHistory} from '../services/recordManagementActivity';
+import {initialCrmOwnerUserId} from '../services/crmRecordOwnership';
 
 interface CrmState {
   companies: Company[];
@@ -95,6 +96,8 @@ function ensureCompany(companies: Company[], companyName: string | undefined, ti
   if (matches.length > 1) return { companies, companyId: undefined, companyName: cleanName };
   const company: Company = {
     id: id('company'),
+    ownerUserId:initialCrmOwnerUserId(
+      useAuthStore.getState().mode,useAuthStore.getState().user?.id),
     name: cleanName,
     kind,
     createdAt: timestamp,
@@ -183,6 +186,8 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const timestamp = now();
     const contact: Contact = {
       id: id('contact'),
+      ownerUserId:initialCrmOwnerUserId(
+        useAuthStore.getState().mode,useAuthStore.getState().user?.id),
       companyId: input.companyId,
       name: cleanName,
       email: input.email?.trim() || undefined,

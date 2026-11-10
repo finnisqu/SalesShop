@@ -3,6 +3,8 @@ import { scopedStorageKey } from '../lib/developerPlayground';
 export type CloudDocumentKey = 'crm' | 'quotes' | 'signatures' | 'notebook';
 
 export const CLOUD_DOCUMENT_SAVED_EVENT = 'salesshop:document-saved';
+/** Request immediate cloud retry without changing active/selected records. */
+export const CLOUD_DOCUMENT_RETRY_EVENT = 'salesshop:retry-cloud-document';
 
 export const LOCAL_STORAGE_KEYS: Record<CloudDocumentKey, string> = {
   crm: 'salesshop-react-crm-v1',

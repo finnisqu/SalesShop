@@ -26,6 +26,7 @@ import {companyRelationshipHistory} from '../services/companyRelationshipHistory
 import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
 import {activityRelations} from '../services/activityRelations';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {crmOwnerLabel} from '../services/crmRecordOwnership';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -296,6 +297,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {company&&<>
          <section><h3>About this company</h3>
            <dl><dt>Relationship</dt><dd>{companyRelationshipLabel(company)}</dd>
+             <dt>Assigned to</dt><dd>{crmOwnerLabel(company.ownerUserId,userId,authMode)}</dd>
              <dt>Aliases</dt><dd>{visibleCompanyAliases(company).join(', ')||'—'}</dd>
              <dt>Last updated</dt><dd>{shortDate(company.updatedAt)}</dd></dl>
          </section>
@@ -323,6 +325,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {person&&<>
          {personActionNotice&&<p className="record-preview-contact-notice" role="status">{personActionNotice}</p>}
          <section><h3>About this person</h3><dl>
+           <dt>Assigned to</dt><dd>{crmOwnerLabel(person.ownerUserId,userId,authMode)}</dd>
            <dt>Job title</dt><dd>{person.title||'—'}</dd>
            <dt>Email</dt><dd>{person.email||'—'}</dd>
            <dt>Phone</dt><dd>{person.phone||'—'}</dd></dl></section>
