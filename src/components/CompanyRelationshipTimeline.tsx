@@ -70,7 +70,7 @@ export function CompanyRelationshipTimeline({items,compact=false,onOpenTarget}:{
   {!compact&&filtered.length>limit&&<button type="button" className="company-history-show-more"
    onClick={()=>setVisibleCount(count=>count+25)}>Show more ({filtered.length-limit} remaining)</button>}
   {!compact&&visibleCount>9&&<button type="button" className="company-history-show-less"
-   onClick={()=>setVisibleCount(9)}>Show less</button>
+   onClick={()=>setVisibleCount(9)}>Show less</button>}
   {compact&&items.length>shown.length&&<small className="company-history-more">
    {items.length-shown.length} more events on the Company page
   </small>}
