@@ -27,6 +27,7 @@ import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
 import {activityRelations} from '../services/activityRelations';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {crmOwnerLabel} from '../services/crmRecordOwnership';
+import {isExternalQuoteActivity} from '../services/salesQuoteRegistry';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -136,7 +137,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const person=record.kind==='person'?people.find(x=>x.id===record.id):undefined;
  const deal=record.kind==='deal'?deals.find(x=>x.id===record.id):undefined;
  const quote=record.kind==='quote'?quotes.find(x=>x.id===record.id):undefined;
- const externalQuotes=deal?activities.filter(a=>a.projectId===deal.id&&a.metadata?.externalQuoteSent)
+ const externalQuotes=deal?activities.filter(a=>a.projectId===deal.id&&isExternalQuoteActivity(a))
    .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)):[];
  const personActivities=person?activities.filter(a=>a.contactId===person.id||
    activityRelations(a).some(link=>link.type==='contact'&&link.id===person.id))
@@ -354,16 +355,18 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
             <dt>Stage</dt><dd>{deal.stage}</dd><dt>Value</dt><dd>{deal.amount===undefined?'—':money.format(deal.amount)}</dd>
            <dt>Assigned salesperson</dt><dd>{dealAssigneeLabel(deal.assignedUserId,assignees)}</dd>
            <dt>Due date</dt><dd>{shortDate(deal.dueDate)}</dd><dt>Next action</dt><dd>{deal.nextAction||'—'}</dd></dl></section>
-         <section><h3>Quotes <span>{relatedQuotes.length} SalesShop</span></h3>
-           {relatedQuotes.slice(0,12).map(q=>related('quote',q.id,q.title||displayQuoteNumber(q),q.status))}
-           {!relatedQuotes.length&&<p className="record-preview-empty">No SalesShop quotes linked.</p>}
-           {externalQuotes.length>0&&<div className="external-quote-history">
-             <strong>Outside SalesShop</strong>
-             {externalQuotes.slice(0,3).map(a=><div className="external-quote-history-entry" key={a.id}>
-               <span><b>{a.metadata?.amount===undefined?'External bid':money.format(a.metadata.amount)}</b>
-                 <small>{a.metadata?.externalQuoteFormat||'External quote'} · Sent {shortDate(a.metadata?.bidSentDate||a.occurredAt)}</small></span>
-             </div>)}
-           </div>}
+         <section><h3>Quotes <span>{relatedQuotes.length+externalQuotes.length} total</span></h3>
+           {relatedQuotes.slice(0,12).map(q=>related('quote',q.id,q.title||displayQuoteNumber(q),
+             'SalesShop · '+q.status))}
+           {externalQuotes.slice(0,12).map(a=><button type="button" key={a.id}
+             className="record-preview-related" onClick={()=>setActivityPreviewId(a.id)}
+             aria-label={'View external quote details '+a.summary}>
+             <span><strong>External quote · {a.metadata?.amount===undefined?'Value not recorded':money.format(a.metadata.amount)}</strong>
+               <small>{a.metadata?.externalQuoteFormat||'Builder platform'} · Sent {shortDate(a.metadata?.bidSentDate||a.occurredAt)}</small>
+             </span><span aria-hidden="true">›</span>
+           </button>)}
+           {!relatedQuotes.length&&!externalQuotes.length&&
+             <p className="record-preview-empty">No linked quotes yet.</p>}
          </section>
        </>}
        {quote&&<>
