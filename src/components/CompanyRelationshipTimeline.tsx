@@ -37,9 +37,9 @@ export function CompanyRelationshipTimeline({items,compact=false,onOpenTarget}:{
  onOpenTarget?:(target:CompanyHistoryTarget)=>void;
 }){
  const [filter,setFilter]=useState<CompanyHistoryFilter>('all');
- const [expanded,setExpanded]=useState(false);
+ const [visibleCount,setVisibleCount]=useState(9);
  const filtered=companyHistoryByFilter(items,compact?'all':filter);
- const limit=compact?4:expanded?80:9;
+ const limit=compact?4:visibleCount;
  const shown=filtered.slice(0,limit);
  const lastInteraction=items.find(item=>item.category==='interaction');
  const pending=items.filter(item=>item.category==='task'&&item.pending).length;
@@ -50,7 +50,7 @@ export function CompanyRelationshipTimeline({items,compact=false,onOpenTarget}:{
   </div>
   {!compact&&<div className="company-history-filters" role="group" aria-label="Filter company relationship history">
    {filters.map(choice=><button type="button" key={choice.key}
-    aria-pressed={filter===choice.key} onClick={()=>{setFilter(choice.key);setExpanded(false);}}>
+    aria-pressed={filter===choice.key} onClick={()=>{setFilter(choice.key);setVisibleCount(9);}}>
     {choice.label}</button>)}
   </div>}
   <ol className="company-history-list">
@@ -68,9 +68,9 @@ export function CompanyRelationshipTimeline({items,compact=false,onOpenTarget}:{
   </ol>
   {!shown.length&&<p className="company-history-empty">No linked history in this category yet.</p>}
   {!compact&&filtered.length>limit&&<button type="button" className="company-history-show-more"
-   onClick={()=>setExpanded(true)}>Show more ({filtered.length-limit} remaining)</button>}
-  {!compact&&expanded&&filtered.length>9&&<button type="button" className="company-history-show-less"
-   onClick={()=>setExpanded(false)}>Show less</button>}
+   onClick={()=>setVisibleCount(count=>count+25)}>Show more ({filtered.length-limit} remaining)</button>}
+  {!compact&&visibleCount>9&&<button type="button" className="company-history-show-less"
+   onClick={()=>setVisibleCount(9)}>Show less</button>
   {compact&&items.length>shown.length&&<small className="company-history-more">
    {items.length-shown.length} more events on the Company page
   </small>}
