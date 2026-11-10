@@ -1215,16 +1215,16 @@ export function QuotesMobileBeta() {
            :<>
          <div className="qmb-library-directory-controls" aria-label="Document directory controls">
            <p className="qmb-library-results-head qmb-library-directory-caption">
-             {statusFilter==='archived'?'Archived documents':'My documents'} · {list.length} {list.length===1?'document':'documents'} · click a name to preview its record
+             {statusFilter==='archived'?'Archived documents':'My documents'} · {documentTableRows.length} {documentTableRows.length===1?'record':'records'} · click a name to preview its record
            </p>
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
            <div className="qmb-library-mobile-filters">
              <div className="qmb-library-tools">
              <label><span>Show</span>
                <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
-                 <option value="active">Active ({counts.active})</option>
+                 <option value="active">Active ({counts.active+externalQuoteRecords.length})</option>
                  <option value="drafts">Drafts ({counts.drafts})</option>
-                 <option value="issued">Issued ({counts.issued})</option>
+                 <option value="issued">Issued ({counts.issued+externalQuoteRecords.length})</option>
                  <option value="archived">Archived ({counts.archived})</option>
                </select>
              </label>
@@ -1244,9 +1244,9 @@ export function QuotesMobileBeta() {
              toolbarControls={<div className="qmb-library-tools">
              <label><span>Show</span>
                <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
-                 <option value="active">Active ({counts.active})</option>
+                 <option value="active">Active ({counts.active+externalQuoteRecords.length})</option>
                  <option value="drafts">Drafts ({counts.drafts})</option>
-                 <option value="issued">Issued ({counts.issued})</option>
+                 <option value="issued">Issued ({counts.issued+externalQuoteRecords.length})</option>
                  <option value="archived">Archived ({counts.archived})</option>
                </select>
              </label>
@@ -1258,7 +1258,9 @@ export function QuotesMobileBeta() {
                <option value="oldest">Oldest edited</option>
              </select></label>
            </div>}
-             onOpen={id=>setDocumentPreviewId(id)}
+             onOpen={id=>id.startsWith('external:')
+                ?setExternalQuotePreviewId(id.slice('external:'.length))
+                :setDocumentPreviewId(id)}
              onDocumentArchive={canManageLibrary?id=>setLibraryAction({id,kind:'archive'}):undefined}
              onDocumentRestore={canManageLibrary?id=>restoreQuote(id):undefined}
              onBulkTask={items=>beginTaskPromotion({
@@ -1291,8 +1293,24 @@ export function QuotesMobileBeta() {
               </>}
           </div>}
         </div>)}
+        {externalList.map(x=><div className="qmb-library-entry" key={x.id}>
+          <button type="button" className="qmb-card qmb-listcard"
+            onClick={()=>setExternalQuotePreviewId(x.sourceId)}
+            aria-label={'Open external quote details for '+x.name}>
+            <div className="qmb-split">
+              <small>External · {x.platform||'Builder platform'}</small>
+              <span className="qmb-chip">Sent</span>
+            </div>
+            <strong>{x.name}</strong>
+            <div className="qmb-library-updated">Sent {x.sentDate||'Date not recorded'}</div>
+            <div className="qmb-split">
+              <small>{x.companyName||x.dealName||'Linked Deal'} · External quote</small>
+              <b>{x.value===undefined?'Value not recorded':money.format(x.value)}</b>
+            </div>
+          </button>
+        </div>)}
         </div>
-        {!list.length&&<div className="qmb-empty">
+        {!documentTableRows.length&&<div className="qmb-empty">
           {statusFilter==='archived'&&!search.trim()&&documentFilter==='all'?
             'No archived documents yet. Archiving keeps agreements available for later.':
             hasLibraryFilters?'No documents match these filters. Try clearing the search or selecting a different status.':
@@ -1506,6 +1524,16 @@ export function QuotesMobileBeta() {
       onGoToQuotePage={id=>{
         setDocumentPreviewId(null);
         requestQuoteMetadataPage(id,()=>setView('dashboard'));
+      }}/>}
+    {externalQuotePreviewId&&<CalendarActivityPreview activityId={externalQuotePreviewId}
+      onClose={()=>setExternalQuotePreviewId(null)}
+      onSelect={(kind,id)=>{
+        setExternalQuotePreviewId(null);
+        const nav=useNavigationStore.getState();
+        if(kind==='deal')nav.openProject(id);
+        else if(kind==='company')nav.openCompany(id);
+        else if(kind==='person')nav.openPerson(id);
+        else if(kind==='quote')openQuote(id);
       }}/>}
     {quote&&page!=='library'&&editable&&areaPresetsOpen&&<QuoteAreaPresetPicker
       savedLayouts={savedLayouts} onSelectSaved={addPersonalAreaLayout}
