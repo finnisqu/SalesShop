@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   fetchSupplierImportPublicationHistory,
@@ -166,31 +166,40 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
   const [mergeOpen, setMergeOpen] = useState(false);
   const [mergeTargetId, setMergeTargetId] = useState('');
 
+  // Supplier data comes from six independent sources. A failure in one must
+  // never hide the entire directory (especially on phones with spotty signal).
+  const fetchRevision=useRef(0);
   const refresh = async () => {
+    const request=++fetchRevision.current;
+    setLoading(true);
     setLoadError(null);
-    try {
-      const [p, pub, act, con, loc, ruleRows] = await Promise.all([
-        fetchSupplierProfiles(),
-        fetchSupplierImportPublicationHistory(200),
-        fetchSupplierActivities(),
-        fetchSupplierContacts(),
-        fetchSupplierLocations(),
-        fetchSupplierRules(),
-      ]);
-      setProfiles(p);
-      setPublications(pub);
-      setActivities(act);
-      setContacts(con);
-      setLocations(loc);
-      setRules(ruleRows);
-    } catch (reason) {
-      setLoadError(reason instanceof Error ? reason.message : 'Supplier data could not be loaded.');
-    } finally {
-      setLoading(false);
-    }
+    const results = await Promise.allSettled([
+      fetchSupplierProfiles(),
+      fetchSupplierImportPublicationHistory(200),
+      fetchSupplierActivities(),
+      fetchSupplierContacts(),
+      fetchSupplierLocations(),
+      fetchSupplierRules(),
+    ] as const);
+    if(request!==fetchRevision.current)return;
+    const [p,pub,act,con,loc,ruleRows]=results;
+    if(p.status==='fulfilled')setProfiles(p.value);
+    if(pub.status==='fulfilled')setPublications(pub.value);
+    if(act.status==='fulfilled')setActivities(act.value);
+    if(con.status==='fulfilled')setContacts(con.value);
+    if(loc.status==='fulfilled')setLocations(loc.value);
+    if(ruleRows.status==='fulfilled')setRules(ruleRows.value);
+    const failed=results.filter(result=>result.status==='rejected').length;
+    if(failed)setLoadError(failed===results.length
+      ?'Supplier records could not be loaded. Check your connection and retry.'
+      :'Some supplier details could not be loaded. Available records are shown; retry to restore the rest.');
+    setLoading(false);
   };
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    void refresh();
+    return()=>{fetchRevision.current+=1;};
+  }, []);
 
   const rollups = useMemo(() => {
     const names = new Map<string, string>();
@@ -426,7 +435,10 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
   return (
     <>
       {directoryOpen&&<section className="supplier-directory-page" aria-label="Supplier directory">
-        {loadError&&<p className="supplier-directory-error" role="alert">{loadError}</p>}
+        {loadError&&<div className="supplier-directory-recovery" role="alert">
+          <p className="supplier-directory-error">{loadError}</p>
+          <button type="button" onClick={()=>void refresh()}>Retry loading suppliers</button>
+         </div>}
         {embeddedInConnections ? (<>
           <ConnectionsTable tableKey="suppliers" columns={supplierColumns} rows={supplierTableRows}
             onOpen={chooseSupplier}
@@ -593,7 +605,10 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
       <section className="supplier-record">
         <button type="button" className="supplier-record-back"
           onClick={() => setDirectoryOpen(true)}>‹ All suppliers</button>
-        {loadError && <div className="supplier-directory-error">{loadError}</div>}
+        {loadError&&<div className="supplier-directory-recovery" role="alert">
+           <p className="supplier-directory-error">{loadError}</p>
+           <button type="button" onClick={()=>void refresh()}>Retry loading suppliers</button>
+          </div>}
         {!selected ? <div className="supplier-record-empty"><strong>No supplier selected</strong><span>Add or select a supplier from the navigator.</span></div> : (
           <>
             <header className="supplier-record-header">
