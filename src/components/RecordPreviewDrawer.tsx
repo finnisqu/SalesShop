@@ -24,6 +24,7 @@ import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 import {companyRelationshipLabel,visibleCompanyAliases} from '../services/companyRelationship';
 import {companyRelationshipHistory} from '../services/companyRelationshipHistory';
 import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
+import {activityRelations} from '../services/activityRelations';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import '../record-preview.css';
 import '../tasks-workspace.css';
@@ -136,6 +137,9 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const quote=record.kind==='quote'?quotes.find(x=>x.id===record.id):undefined;
  const externalQuotes=deal?activities.filter(a=>a.projectId===deal.id&&a.metadata?.externalQuoteSent)
    .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)):[];
+ const personActivities=person?activities.filter(a=>a.contactId===person.id||
+   activityRelations(a).some(link=>link.type==='contact'&&link.id===person.id))
+   .slice().sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)).slice(0,5):[];
  const linkedCompany=person?companies.find(x=>x.id===person.companyId)
     :deal?companies.find(x=>x.id===deal.companyId):quote?companies.find(x=>x.id===quote.companyId):undefined;
  const relatedPeople=company?people.filter(p=>p.companyId===company.id):[];
@@ -324,6 +328,17 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
            <dt>Phone</dt><dd>{person.phone||'—'}</dd></dl></section>
          <section><h3>Company</h3>
            {linkedCompany?related('company',linkedCompany.id,linkedCompany.name):<p className="record-preview-empty">No company linked.</p>}
+         </section>
+         <section><h3>Recent activities <span>{personActivities.length}</span></h3>
+           {personActivities.map(a=><button type="button" key={a.id}
+             className="record-preview-related"
+             onClick={()=>setActivityPreviewId(a.id)}
+             aria-label={'View Activity details: '+a.summary}>
+             <span><strong>{a.summary}</strong>
+              <small>{new Date(a.occurredAt).toLocaleString()}</small></span>
+             <span aria-hidden="true">›</span>
+           </button>)}
+           {!personActivities.length&&<p className="record-preview-empty">No logged activities for this person.</p>}
          </section>
        </>}
        {deal&&<>
