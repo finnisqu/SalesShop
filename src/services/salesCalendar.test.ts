@@ -309,4 +309,25 @@ describe('SalesShop shared Calendar',()=>{
   expect(isoLocalDay(clock.toISOString())).toBe(localDateKey(clock));
   expect(isoLocalDay('not-a-date')).toBeNull();
  });
+ it('keeps assigned Deals and their external quote history in personal cloud sources',()=>{
+  const assigned={...deal('2026-11-09'),id:'mine',assignedUserId:'me'};
+  const sent=activity('external','quote-sent','2026-11-09T17:00:00Z',
+   {recordedByUserId:'me',externalQuoteSent:true,bidSentDate:'2026-11-09'},
+   {projectId:'mine'});
+  const sources=personalCalendarSources('cloud','me',[],[],[assigned],[sent]);
+  expect(sources.deals.map(item=>item.id)).toEqual(['mine']);
+  expect(sources.activities.map(item=>item.id)).toEqual(['external']);
+ });
+ it('shows external sent quotes and created records as system Activity with method icons',()=>{
+  const sent=activity('sent','quote-sent','2026-11-09T18:00:00Z',
+   {externalQuoteSent:true,bidSentDate:'2026-11-09'});
+  const created=activity('created','project-created','2026-11-08T18:00:00Z');
+  const email=activity('email','manual-touchpoint','2026-11-07T18:00:00Z',
+   {interactionMethod:'email'});
+  const recent=recentHomeItems([],[sent,created,email],[],null);
+  expect(recent.map(item=>item.kind)).toEqual(['system','system','activity']);
+  expect(recent[0]).toMatchObject({activityType:'quote-sent'});
+  expect(recent[2]).toMatchObject({method:'email'});
+ });
+
 });
