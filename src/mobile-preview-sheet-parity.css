@@ -222,3 +222,11 @@
   outline-offset:2px;
  }
 }
+
+/* Shared touch sheets already render a real draggable grip. The former
+   header pseudo-element was drawing a second, noninteractive grip below it. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .ss-mobile-sheet:has(> .ss-mobile-sheet-handle)>header::before{
+  display:none!important;content:none!important;
+ }
+}
