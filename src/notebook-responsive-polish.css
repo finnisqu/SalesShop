@@ -1,0 +1,101 @@
+/* Notebook polish: page navigation and ruled-paper typography use one rhythm.
+   Scoped to the Notebook workspace; printable/customer pages remain untouched. */
+.notebook-workspace .notebook-header-page-navigator{
+ display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;
+}
+.notebook-workspace .notebook-header-page-navigator label,
+.notebook-workspace .notebook-header-page-navigator>span{
+ flex:none;color:var(--ss-theme-muted,#756f60);font-size:11px;font-weight:700;
+}
+.notebook-workspace .notebook-header-page-navigator select{
+ box-sizing:border-box;min-width:140px;max-width:min(300px,35vw);min-height:36px;
+ padding:6px 10px;border:1px solid var(--ss-theme-border,#c9c1b0);
+ border-radius:8px;background:var(--ss-theme-card,#fffaf2);
+ color:var(--ss-theme-ink,#32302c);font-size:12px;font-weight:700;
+ text-overflow:ellipsis;cursor:pointer;
+}
+.notebook-workspace .notebook-header-page-navigator select:focus-visible{
+ outline:2px solid var(--ss-theme-accent,#987b45);outline-offset:2px;
+}
+
+/* A shared 32px baseline grid eliminates the 30px/32px drift on phones,
+   while removing the old 9px displacement between ink and paper rules. */
+.notebook-workspace .paper-sheet{
+ --notebook-rule-step:32px;
+}
+.notebook-workspace .paper-sheet .paper-prose{
+ line-height:var(--notebook-rule-step)!important;
+}
+.notebook-workspace .paper-sheet .paper-prose p,
+.notebook-workspace .paper-sheet .paper-prose li{
+ margin-block:0;min-height:var(--notebook-rule-step);
+ line-height:var(--notebook-rule-step)!important;
+}
+.notebook-workspace .paper-sheet .paper-prose :is(h1,h2,h3){
+ margin-block:0;
+ line-height:var(--notebook-rule-step)!important;
+}
+.notebook-workspace .paper-sheet .paper-prose h1{
+ line-height:calc(2 * var(--notebook-rule-step))!important;
+}
+.notebook-workspace .paper-sheet .paper-prose :is(ul,ol,blockquote){
+ margin-block:0;
+}
+/* Both lined and sectioned stationery share the same first-rule position. */
+.notebook-workspace .paper-sheet:is(.paper-lined,.paper-cornell,.paper-two-column) .paper-writing-surface{
+ background-image:repeating-linear-gradient(to bottom,
+  transparent 0 calc(var(--notebook-rule-step) - 1px),
+  var(--page-rule,var(--paper-line)) calc(var(--notebook-rule-step) - 1px) var(--notebook-rule-step));
+ background-position:0 0!important;
+ background-size:100% var(--notebook-rule-step);
+}
+.notebook-workspace .paper-sheet.paper-grid .paper-writing-surface{
+ background-image:
+  repeating-linear-gradient(to bottom,
+   transparent 0 calc(var(--notebook-rule-step) - 1px),
+   var(--page-rule,var(--paper-line)) calc(var(--notebook-rule-step) - 1px) var(--notebook-rule-step)),
+  repeating-linear-gradient(to right,
+   transparent 0 calc(var(--notebook-rule-step) - 1px),
+   color-mix(in srgb,var(--page-rule,var(--paper-line)) 78%,transparent)
+    calc(var(--notebook-rule-step) - 1px) var(--notebook-rule-step));
+ background-position:0 0!important;
+ background-size:var(--notebook-rule-step) var(--notebook-rule-step);
+}
+@media(max-width:820px){
+ /* Only one page is ever mounted in mobile Notebook, even if desktop split
+    preference is stored; page selection now lives in the header. */
+ .notebook-workspace>.binder-stage{
+  width:100%;min-width:0;min-height:0;flex:1 1 auto;
+ }
+ .notebook-workspace .notebook-split-controls{
+  box-sizing:border-box;min-height:42px;max-height:48px;
+  justify-content:flex-end;gap:5px;padding:4px 10px;
+ }
+ .notebook-workspace .notebook-split-controls>strong,
+ .notebook-workspace .notebook-split-controls>button,
+ .notebook-workspace .notebook-split-controls>select{
+  display:none!important;
+ }
+ .notebook-workspace .notebook-split-controls .sales-calendar-launcher{
+  margin-left:auto;
+ }
+ .notebook-workspace .paper-sheet .paper-prose{
+  font-size:16px;line-height:var(--notebook-rule-step)!important;
+ }
+ :root[data-sales-theme] .sales-app.view-notebook .ss-workspace-header__mobile-nav{
+  min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-notebook .ss-mobile-tab-picker{
+  max-width:100%;min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-notebook .ss-mobile-tab-picker>summary{
+  max-width:min(45vw,220px);min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-notebook .ss-mobile-tab-menu{
+  max-width:min(88vw,340px);width:270px;min-width:0;
+  max-height:min(60dvh,390px);
+ }
+ :root[data-sales-theme] .sales-app.view-notebook .ss-mobile-tab-menu>button{
+  min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;
+ }
+}
