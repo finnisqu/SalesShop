@@ -67,6 +67,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
 
   const companies: Company[] = companyRows.map((row) => ({
     id: String(row.id),
+    ownerUserId:valueOrUndefined(row.owner_user_id),
     name: String(row.name),
     kind: (row.kind === 'non-customer' ? 'non-customer' : 'customer') as CompanyKind,
     aliases: Array.isArray(row.aliases) ? row.aliases.map(String).filter(Boolean) : [],
@@ -81,6 +82,7 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
 
   const contacts: Contact[] = contactRows.map((row) => ({
     id: String(row.id),
+    ownerUserId:valueOrUndefined(row.owner_user_id),
     companyId: valueOrUndefined(row.company_id),
     name: String(row.name),
     email: valueOrUndefined(row.email),
