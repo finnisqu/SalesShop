@@ -173,3 +173,28 @@
  .connections-section-row .connections-tabs{flex:1 1 100%}
  .connections-record-cleanup{min-height:36px;padding:7px 10px;font-size:11px}
 }
+
+/* People attention filters are shared by desktop worktable and compact phone cards. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-people-attention-filters{
+ display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+ padding:4px 0 8px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-people-attention-filters button{
+ display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+ min-height:33px;padding:7px 11px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;background:var(--ss-theme-card);color:var(--ss-theme-muted);
+ font:700 11px/1.25 var(--ss-font-body,system-ui,sans-serif);
+ white-space:nowrap;cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-people-attention-filters button[aria-pressed=true]{
+ background:var(--ss-theme-tint);color:var(--ss-theme-ink);border-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-people-attention-filters button:focus-visible,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-empty button:focus-visible{
+ outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-empty button{
+ margin:8px auto 0;display:block;border:1px solid var(--ss-theme-border);
+ border-radius:7px;padding:7px 10px;background:var(--ss-theme-tint);
+ color:var(--ss-theme-ink);font-size:11px;font-weight:700;
+}
