@@ -246,7 +246,7 @@ function App() {
   // navigator. Even when searching, keep the currently open page visible.
   const notebookPageOptions=useMemo(()=>{
     const search=notebookHeaderSearch.trim().toLowerCase();
-    return entries.filter(candidate=>!candidate.isPostItInbox&&
+    return entries.filter(candidate=>(!candidate.isPostItInbox||candidate.id===activeEntryId)&&
       (!candidate.hidden||candidate.id===activeEntryId)&&
       (!search||candidate.id===activeEntryId||candidate.title.toLowerCase().includes(search)))
       .sort((a,b)=>Number(b.favorite)-Number(a.favorite)||
