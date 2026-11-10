@@ -29,20 +29,30 @@ const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> =
   { view: 'catalog', label: 'Catalog', short: 'Catalog' },
 ];
 
-const CATALOG_SECTIONS: Array<{ id: CatalogSection; label: string }> = [
-  { id: 'materials', label: 'Materials' },
-  { id: 'sinks', label: 'Sinks' },
-  { id: 'other', label: 'Other' },
-  { id: 'rates', label: 'Rates' },
-  { id: 'suppliers', label: 'Suppliers' },
-];
-
-function viewLabel(view: AppView) {
-  return APP_DESTINATIONS.find((item) => item.view === view)?.label ?? 'SalesShop';
+const CATALOG_LABELS:Partial<Record<CatalogSection,string>>={
+ materials:'Materials',sinks:'Sinks',other:'Other',rates:'Rates',tags:'Tags',
+ suppliers:'Suppliers',
+};
+function viewLabel(view:AppView){
+ return APP_DESTINATIONS.find(item=>item.view===view)?.label??'SalesShop';
 }
-
-function catalogLabel(section: CatalogSection) {
-  return CATALOG_SECTIONS.find((item) => item.id === section)?.label ?? 'Catalog';
+function catalogLabel(section:CatalogSection){
+ return CATALOG_LABELS[section]??'Catalog';
+}
+/** One visual language for the primary SalesShop destinations. */
+function MobileDestinationIcon({view}:{view:AppView}){
+ return <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+  strokeLinejoin="round" aria-hidden="true">
+  {view==='home'?<><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-7h6v7"/></>:
+   view==='quotes'?<><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v5h4M9 12h7M9 16h7"/></>:
+   view==='tasks'?<><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3 3 7-7"/></>:
+   view==='board'?<><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m6-16v16M3 10h18"/></>:
+   view==='dashboard'?<><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 6a3 3 0 0 1 0 6M17 15a5 5 0 0 1 4 5"/></>:
+   view==='notebook'?<><path d="M12 5a9 9 0 0 0-9-1v16a9 9 0 0 1 9 1 9 9 0 0 1 9-1V4a9 9 0 0 0-9 1z"/><path d="M12 5v16"/></>:
+   view==='catalog'?<><path d="M4 4h16v16H4z"/><path d="M4 10h16M10 10v10"/></>:
+   <><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></>}
+ </svg>;
 }
 
 export function MobileAppChrome() {
@@ -70,7 +80,6 @@ export function MobileAppChrome() {
   const goBack = useNavigationStore((state) => state.goBack);
   const canGoBack = useNavigationStore((state) => state.history.length > 0);
   const catalogSection = useNavigationStore((state) => state.catalogSection);
-  const setCatalogSection = useNavigationStore((state) => state.setCatalogSection);
 
   const entries = useNotebookStore((state) => state.entries);
   const activeEntryId = useNotebookStore((state) => state.activeEntryId);
@@ -139,11 +148,8 @@ export function MobileAppChrome() {
   },[profileOpen,profileRef]);
   const searchRef = useRef<HTMLDivElement>(null);
   const createRef = useRef<HTMLDivElement>(null);
-  const [catalogExpanded, setCatalogExpanded] = useState(false);
   const openNavigation = () => {
     setProfileOpen(false);
-    // Every entry starts at the top level: Catalog only expands after an explicit tap.
-    setCatalogExpanded(false);
     setOpen(previous=>!previous);
   };
   const drawerRef = useDismissibleLayer<HTMLElement>(open, () => setOpen(false));
@@ -199,13 +205,8 @@ export function MobileAppChrome() {
         : viewLabel(view);
 
   const chooseView = (next: AppView) => {
-    const choice = resolveMobileDrawerChoice(next, catalogExpanded);
-    if (choice.kind === 'toggle-catalog') {
-      setCatalogExpanded(choice.expanded);
-      return;
-    }
+    const choice = resolveMobileDrawerChoice(next);
     setOpen(false);
-    setCatalogExpanded(false);
     setView(choice.view);
   };
 
@@ -291,19 +292,17 @@ export function MobileAppChrome() {
           </header>
 
           <nav className="mobile-app-drawer-nav" aria-label="SalesShop sections">
-            {APP_DESTINATIONS.map((item) => (
-              <button type="button" key={item.view}
-                className={`${view === item.view ? 'active' : ''} ${item.view === 'catalog' && catalogExpanded ? 'is-expanded' : ''}`.trim()}
-                onClick={() => chooseView(item.view)}
-                aria-expanded={item.view === 'catalog' ? catalogExpanded : undefined}
-                aria-controls={item.view === 'catalog' ? 'mobile-catalog-destinations' : undefined}
-              >
-                {item.short}{item.view === 'catalog' && <span className="mobile-app-catalog-chevron" aria-hidden="true">{catalogExpanded ? '⌃' : '⌄'}</span>}
-              </button>
-            ))}
-          </nav>
+             {APP_DESTINATIONS.map(item=><button type="button" key={item.view}
+               className={view===item.view?'active':''}
+               aria-current={view===item.view?'page':undefined}
+               onClick={()=>chooseView(item.view)}>
+               <span className="mobile-app-drawer-nav-icon"><MobileDestinationIcon view={item.view}/></span>
+               <span className="mobile-app-drawer-nav-label">{item.label}</span>
+               <span className="mobile-app-drawer-nav-chevron" aria-hidden="true">›</span>
+             </button>)}
+           </nav>
 
-          {view === 'notebook' && !catalogExpanded && !preview && <section className="mobile-app-context-section">
+          {view === 'notebook' && !preview && <section className="mobile-app-context-section">
             <header>
               <div><strong>Notebook pages</strong><small>{visibleEntries.length} visible</small></div>
               <button type="button" onClick={() => { createEntry(); setOpen(false); }}>+ New</button>
@@ -319,7 +318,7 @@ export function MobileAppChrome() {
             </div>
           </section>}
 
-          {view === 'board' && !viewer && !preview && !(scopedMember && !canEditTeamArea(effectiveRole, effectiveDepartment, 'crm')) && !catalogExpanded && <section className="mobile-app-context-section mobile-board-context-section">
+          {view === 'board' && !viewer && !preview && !(scopedMember && !canEditTeamArea(effectiveRole, effectiveDepartment, 'crm')) && <section className="mobile-app-context-section mobile-board-context-section">
             <header><div><strong>Board view</strong><small>One CRM, two lenses</small></div></header>
             <div className="mobile-board-mode-list">
               <button type="button" className={boardMode === 'projects' ? 'active' : ''} onClick={() => {
@@ -339,18 +338,7 @@ export function MobileAppChrome() {
             </div>
           </section>}
 
-          {catalogExpanded && <section id="mobile-catalog-destinations" className="mobile-app-context-section mobile-catalog-destinations">
-            <header><div><strong>Choose a Catalog section</strong><small>Select a destination to open it</small></div></header>
-            <div className="mobile-catalog-section-list">
-              {CATALOG_SECTIONS.map((item) => (
-                <button type="button" key={item.id} className={view === 'catalog' && catalogSection === item.id ? 'active' : ''}
-                  aria-current={view === 'catalog' && catalogSection === item.id ? 'page' : undefined}
-                  onClick={() => { setCatalogSection(item.id); setCatalogExpanded(false); setOpen(false); }}>
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </section>}
+          
 
 
         </aside>
