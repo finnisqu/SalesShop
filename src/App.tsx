@@ -251,7 +251,14 @@ function App() {
       (!search||candidate.id===activeEntryId||candidate.title.toLowerCase().includes(search)))
       .sort((a,b)=>Number(b.favorite)-Number(a.favorite)||
         b.updatedAt.localeCompare(a.updatedAt))
-      .map(candidate=>({value:candidate.id,label:candidate.title||'Untitled page'}));
+      .map(candidate=>({
+        value:candidate.id,
+        label:(candidate.favorite?'★ ':'')+
+          (candidate.title&&candidate.title.trim()!=='Untitled page'
+            ?candidate.title.trim():'Page')+
+          ' · '+new Date(candidate.createdAt).toLocaleString(undefined,{
+            month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}),
+      }));
   },[entries,activeEntryId,notebookHeaderSearch]);
   const openCompanion=(id:string)=>{
     if(notebookCompact)return;

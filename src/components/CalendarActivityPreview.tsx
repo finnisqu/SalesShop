@@ -18,6 +18,7 @@ import type {ActivityMetadata} from '../types/crm';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {MobileSheetHandle} from './MobileSheetHandle';
+import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -134,13 +135,12 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
    className="tasks-preview-card record-preview-panel activity-preview-panel activity-quick-card ss-mobile-sheet"
    role="dialog" aria-modal="true" aria-label={editing?'Edit Activity':'Activity preview'}>
    <MobileSheetHandle onClose={close} disabled={saving}/>
-   <header className="activity-preview-header">
-    <div><span className="board-eyebrow">{loggedInteraction?'CRM · LOGGED INTERACTION':'CRM · ACTIVITY DETAILS'}</span>
-     <h2>{editing?'Edit activity':activity.summary}</h2>
-     {editing&&<p>Correct the date, time, notes or participants in this Activity.</p>}
-    </div>
-    <button type="button" aria-label="Close activity preview" className="editor-close"
-     disabled={saving} onClick={close}>×</button>
+   <header className="activity-preview-header ss-unified-preview-header">
+    <PreviewPanelHeading eyebrow={loggedInteraction?'CRM · LOGGED INTERACTION':'CRM · ACTIVITY DETAILS'}
+      title={editing?'Edit activity':activity.summary}
+      detail={editing?'Correct the date, time, notes or participants in this Activity.':undefined}/>
+    <PreviewPanelClose onClose={close} label="Close activity preview"
+      className="editor-close" disabled={saving}/>
    </header>
    <div className="tasks-preview-body record-preview-body activity-preview-body ss-mobile-sheet-body">
     {editing?<form id="activity-preview-edit" className="activity-preview-edit" onSubmit={submit}>
@@ -195,7 +195,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       </div>
      </>}
    </div>
-   <footer className="record-preview-actions activity-preview-actions ss-mobile-sheet-actions">
+   <PreviewPanelActions className="record-preview-actions activity-preview-actions ss-mobile-sheet-actions">
     {editing?<>
       <button type="button" onClick={discard} disabled={saving}>Discard changes</button>
       <button type="button" onClick={()=>setEditing(false)} disabled={saving}>Back to preview</button>
@@ -206,7 +206,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       {canEdit&&<button type="button" className="activity-preview-primary" onClick={openEditor}>
        Edit activity</button>}
      </>}
-   </footer>
+   </PreviewPanelActions>
   </section>
  </div>,document.body);
 }

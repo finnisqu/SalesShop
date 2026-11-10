@@ -237,3 +237,44 @@
   padding:10px 13px!important;
  }
 }
+
+/* Same preview chrome for Tasks, Activities and linked CRM records. */
+:root[data-sales-theme] .tasks-dialog-backdrop .ss-unified-preview-header{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+:root[data-sales-theme] .tasks-dialog-backdrop .ss-unified-preview-header .ss-preview-heading{
+ flex:1 1 auto;min-width:0;max-width:100%;overflow:hidden;
+}
+:root[data-sales-theme] .tasks-dialog-backdrop .ss-unified-preview-header .ss-preview-heading h2{
+ margin:3px 0 0;color:var(--ss-theme-ink);font-weight:760;
+ overflow-wrap:anywhere;
+}
+:root[data-sales-theme] .tasks-dialog-backdrop .ss-unified-preview-header .ss-preview-eyebrow{
+ color:var(--ss-theme-muted);font-size:10px;font-weight:800;
+ letter-spacing:.07em;text-transform:uppercase;
+}
+:root[data-sales-theme] .tasks-dialog-backdrop .ss-unified-preview-header .ss-preview-detail{
+ display:block;margin-top:5px;max-width:100%;
+ color:var(--ss-theme-muted);font-size:11px;line-height:1.4;
+}
+:root[data-sales-theme] .tasks-dialog-backdrop .ss-unified-preview-header .ss-preview-close{
+ flex:0 0 38px;width:38px;min-width:38px;min-height:38px;
+ display:grid;place-items:center;box-sizing:border-box;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font-size:22px;line-height:1;
+}
+:root[data-sales-theme] .tasks-dialog-backdrop .ss-unified-preview-header .ss-preview-close:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+@media(max-width:820px){
+ :root[data-sales-theme] .tasks-dialog-backdrop .ss-unified-preview-header{
+  padding:11px 13px!important;min-height:62px!important;
+ }
+ :root[data-sales-theme] .tasks-dialog-backdrop
+ .ss-mobile-sheet-actions.ss-preview-actions{
+  position:relative;z-index:1;bottom:auto;
+  background:var(--ss-theme-card);
+  padding-bottom:max(12px,env(safe-area-inset-bottom))!important;
+ }
+}

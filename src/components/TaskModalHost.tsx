@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {MobileSheetHandle} from './MobileSheetHandle';
+import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {TrashIcon,PencilIcon} from './TrashIcon';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {TaskEditor} from './TasksWorkspace';
@@ -121,8 +122,10 @@ export function TaskModalHost(){
     <section ref={previewRef} className="tasks-preview-card ss-mobile-sheet" role="dialog" aria-modal="true"
      aria-label={'Task '+task.title}>
      <MobileSheetHandle onClose={close}/>
-     <header><div><small>TASK · QUICK VIEW</small><h2>{task.title}</h2></div>
-      <button type="button" aria-label="Close task preview" onClick={close}>×</button></header>
+     <header className="ss-unified-preview-header">
+       <PreviewPanelHeading eyebrow="TASK · QUICK VIEW" title={task.title}/>
+       <PreviewPanelClose onClose={close} label="Close task preview"/>
+      </header>
      <div className="tasks-preview-body ss-mobile-sheet-body">
       <div className="tasks-preview-meta">
        <span>{task.type==='follow-up'?'Follow-up':task.type??'To-do'}</span>
@@ -149,7 +152,7 @@ export function TaskModalHost(){
          {link.label??link.type} ↗</button>)}
       </div>}
      </div>
-     <footer className="ss-mobile-sheet-actions tasks-preview-action-groups">
+     <PreviewPanelActions className="ss-mobile-sheet-actions tasks-preview-action-groups">
       <div className="tasks-preview-actions-left">
        <button type="button" className="tasks-preview-delete" onClick={()=>{
         if(!window.confirm('Delete this task? It will be removed from your Tasks and Agenda.'))return;
@@ -191,7 +194,7 @@ export function TaskModalHost(){
          }}>Complete + Log Activity</button>}
        </>}
       </div>
-     </footer>
+     </PreviewPanelActions>
     </section>
    </div>:null}
    {linkedPreview&&<RecordPreviewDrawer record={linkedPreview}
