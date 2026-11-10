@@ -616,3 +616,28 @@
 
 /* Suspend the underlying Company preview while its Activity details modal is open. */
 .record-preview-backdrop.is-activity-underlay{pointer-events:none}
+
+/* One Activity detail sheet for Company, Deal, Person, and Home history. */
+:root[data-sales-theme] .activity-preview-event-details{
+ display:grid;gap:0;min-width:0;margin:0;
+ border:1px solid var(--ss-theme-border);
+ border-radius:10px;background:var(--ss-theme-card);
+ overflow:hidden;
+}
+:root[data-sales-theme] .activity-preview-event-details>div{
+ display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;
+ padding:9px 12px;border-top:1px solid var(--ss-theme-border);
+ font-size:11px;line-height:1.45;
+}
+:root[data-sales-theme] .activity-preview-event-details>div:first-child{border-top:0}
+:root[data-sales-theme] .activity-preview-event-details dt{
+ color:var(--ss-theme-muted);font-weight:750;
+}
+:root[data-sales-theme] .activity-preview-event-details dd{
+ min-width:0;margin:0;color:var(--ss-theme-ink);overflow-wrap:anywhere;
+}
+@media(max-width:560px){
+ :root[data-sales-theme] .activity-preview-event-details>div{
+  grid-template-columns:90px minmax(0,1fr);padding:8px 10px;
+ }
+}
