@@ -441,6 +441,11 @@ export function Connections() {
     }} onPreview={()=>{setQuoteRecordId(null);setPreview({kind:'quote',id:quoteRecordId});}}/>
   </main>;
   const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
+  const openRegistryQuote=(id:string)=>{
+    if(id.startsWith('external:')){setActivityPreview(id.slice('external:'.length));return;}
+    const nativeId=id.startsWith('native:')?id.slice('native:'.length):id;
+    setPreview({kind:'quote',id:nativeId});
+  };
   return (
     <main className="connections-workspace connections-directory-layout">
       <WorkspaceHeader title="Connections" help={<WorkspaceHelp page="connections" section={tab}/>} 
@@ -634,23 +639,27 @@ export function Connections() {
             {!projectRows.length && <StatusText state="empty" className="connections-empty">No deals match your search.</StatusText>}
           </section>}
           {tab === 'quotes' && <section className="connections-directory" aria-label="Quote metadata directory">
-            <p className="connections-count">{quoteRows.length} documents · click a name for its preview</p>
+            <p className="connections-count">{quoteRows.length} quote records · SalesShop and external submissions</p>
             <ConnectionsTable key="quotes" tableKey="quotes" columns={quoteColumns}
-              rows={quoteTableRows} onOpen={id=>previewRecord('quote',id)} onBulkTask={bulkTask}/>
+              rows={quoteTableRows} onOpen={openRegistryQuote} onBulkTask={bulkTask}/>
             <div className="connections-mobile-quote-records">
-              {quoteRows.map(q=><div key={q.id} className="connections-mobile-record-group"><button type="button" className="connections-record"
-                onClick={()=>previewRecord('quote',q.id)}>
-                <strong>{q.title||displayQuoteNumber(q)}</strong>
-                <small>{displayQuoteNumber(q)} · {q.companyName||'No company'} · {q.status}</small>
-              
+              {quoteRows.map(q=><div key={q.id} className="connections-mobile-record-group">
+                <button type="button" className="connections-record" onClick={()=>openRegistryQuote(q.id)}>
+                  <strong>{q.name}</strong>
+                  <small>{q.source==='external'?'External'+(q.platform?' · '+q.platform:''):
+                    'SalesShop · '+q.number} · {q.companyName??companiesById.get(q.companyId??'')?.name??'No company'} · {q.status}</small>
+                  <small>{q.value===undefined?'Value not recorded':money.format(q.value)}
+                    {q.sentDate?' · Sent '+timeLabel(q.sentDate):''}</small>
                 </button>
                 <button type="button" className="connections-mobile-top-action"
-                  onClick={()=>{setQuoteRecordId(q.id);setTab('quotes');}}
-                  aria-label={'Open full quote record '+(q.title||displayQuoteNumber(q))}>Full page</button>
+                  onClick={()=>q.source==='external'?setActivityPreview(q.sourceId):
+                    (setQuoteRecordId(q.sourceId),setTab('quotes'))}
+                  aria-label={(q.source==='external'?'View external quote details ':'Open full quote record ')+q.name}>
+                  {q.source==='external'?'Details':'Full page'}</button>
               </div>)}
             </div>
             {!quoteRows.length&&<StatusText state="empty" className="connections-empty">
-              No quote metadata matches. Check My Sales Documents or your search.
+              No quote records match. Search SalesShop and external quotes or record an external bid.
             </StatusText>}
           </section>}
           {tab==='organization'&&<OurOrganizationDirectory onOpenPerson={openPerson} query={query}
