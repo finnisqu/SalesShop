@@ -70,6 +70,8 @@ import {InitialOpenDetails} from './InitialOpenDetails';
 import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
 import {RecordPreviewDrawer} from './RecordPreviewDrawer';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
 import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import '../sales-documents-table.css';
@@ -505,6 +507,8 @@ export function QuotesMobileBeta() {
   const undoDepth=useQuoteStore(s=>activeQuoteId?s.undoStacks[activeQuoteId]?.length??0:0);
   const redoDepth=useQuoteStore(s=>activeQuoteId?s.redoStacks[activeQuoteId]?.length??0:0);
   const hydrateCrm=useCrmStore(s=>s.hydrate);
+  const crmActivities=useCrmStore(s=>s.activities);
+  const crmDeals=useCrmStore(s=>s.projects);
   const authMode=useAuthStore(s=>s.mode);
   const teamRole=useAuthStore(s=>s.teamRole);
   const department=useAuthStore(s=>s.teamDepartment);
@@ -587,6 +591,7 @@ export function QuotesMobileBeta() {
     setSavingLayoutAreaId(null);setAreaPresetsOpen(false);
   },[layoutScope]);
   const [documentPreviewId,setDocumentPreviewId]=useState<string|null>(null);
+  const [externalQuotePreviewId,setExternalQuotePreviewId]=useState<string|null>(null);
   const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
   // Keep the new-document library first; follow-ups are a secondary destination.
@@ -705,6 +710,9 @@ export function QuotesMobileBeta() {
   const myQuotes=useMemo(()=>authMode==='cloud'?quotes.filter(q=>q.ownerUserId===userId):quotes,
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
+  const externalQuoteRecords=useMemo(()=>mySalesQuoteRegistry(
+    buildSalesQuoteRegistry([],crmActivities,crmDeals),authMode,userId,crmDeals),
+    [crmActivities,crmDeals,authMode,userId]);
   const generalTakeoff=quote?.sections.find(isGeneralTakeoffSection);
   const [showDeleteGeneralTakeoff,setShowDeleteGeneralTakeoff]=useState(false);
   const deleteGeneralTakeoff=useQuoteStore(s=>s.deleteSection);
