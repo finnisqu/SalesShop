@@ -613,3 +613,6 @@
 :root[data-sales-theme] .record-preview-contact-confirm :is(input,button):focus-visible{
  outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px;
 }
+
+/* Suspend the underlying Company preview while its Activity details modal is open. */
+.record-preview-backdrop.is-activity-underlay{pointer-events:none}
