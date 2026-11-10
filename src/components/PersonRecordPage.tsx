@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {PersonDealRelationships} from './DealPersonRelationships';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
 import { personRecordView } from '../services/personRecordView';
@@ -30,10 +31,12 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const openCompany = useNavigationStore((state) => state.openCompany);
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
+  const openPerson=useNavigationStore((state)=>state.openPerson);
 
   const person = people.find((candidate) => candidate.id === contactId);
   const [editing, setEditing] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editError,setEditError]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const [draft, setDraft] = useState({
@@ -48,7 +51,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
 
   useEffect(() => {
     setEditing(false);
-    setHistoryOpen(false);setEditError('');setNotice(null);
+    setHistoryOpen(false);setActivityPreviewId(null);
+    setEditError('');setNotice(null);
   }, [contactId]);
   useEffect(() => {
     if (!editing && person) setDraft({
@@ -85,7 +89,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const ownCompany=companies.find(isOurCompany);
   const associatedOwnCompany=isInternal?ownCompany:undefined;
 
-  return <RecordPageLayout entityType="person" title={displayName} onBack={onBack}
+  return <><RecordPageLayout entityType="person" title={displayName} onBack={onBack}
     subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
     actions={<button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(value=>!value);}}>
@@ -194,7 +198,11 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           <p className="connections-record-helper">Only events explicitly linked to this person appear here.</p>
           <ol className="connections-record-timeline">
             {related.directActivities.map((activity) => <li key={activity.id}>
-              <div><strong>{activity.summary}</strong><time dateTime={activity.occurredAt}>{dateLabel(activity.occurredAt)}</time></div>
+              <div><button type="button" className="connections-activity-history-open"
+                onClick={()=>setActivityPreviewId(activity.id)}
+                aria-label={'View Activity details: '+activity.summary}>
+                <strong>{activity.summary}</strong>
+              </button><time dateTime={activity.occurredAt}>{dateLabel(activity.occurredAt)}</time></div>
               <small>{activity.type.replaceAll('-', ' ')}</small>
               {activity.quoteId && <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
               {!activity.quoteId && activity.projectId && <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked deal →</button>}
@@ -204,5 +212,15 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
         </div>}
       </section>
     </>}
-  />;
+  />
+  {activityPreviewId&&<CalendarActivityPreview activityId={activityPreviewId}
+    onClose={()=>setActivityPreviewId(null)}
+    onSelect={(kind,id)=>{
+      setActivityPreviewId(null);
+      if(kind==='person')openPerson(id);
+      else if(kind==='company')openCompany(id);
+      else if(kind==='deal')openProject(id);
+      else if(kind==='quote')openQuote(id);
+    }}/>}
+  </>;
 }
