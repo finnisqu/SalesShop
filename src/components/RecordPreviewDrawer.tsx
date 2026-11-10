@@ -28,6 +28,21 @@ type Props={record:PreviewRecord;onClose:()=>void;onSelect?:(record:PreviewRecor
   onGoToQuotePage?:(id:string)=>void;onEditBoard?:(record:PreviewRecord)=>void};
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
 const shortDate=(date?:string)=>date?new Date(date.includes('T')?date:date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
+type PersonQuickMethod='call'|'text'|'email';
+function PersonQuickMethodIcon({method}:{method:PersonQuickMethod}){
+ return <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+   stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+   aria-hidden="true">
+   {method==='call'
+    ?<path d="M5 3h3l2 5-2 2a16 16 0 0 0 6 6l2-2 5 2v3a2 2 0 0 1-2 2C11 20 4 13 3 5a2 2 0 0 1 2-2Z"/>
+    :method==='text'
+    ?<path d="M21 11a8 8 0 0 1-8 8H5l2-4a8 8 0 1 1 14-4Z"/>
+    :<><rect x="3" y="5" width="18" height="14" rx="2"/>
+      <path d="m3 7 9 7 9-7"/></>}
+  </svg>;
+}
+const personContactLabel=(method:PersonQuickMethod)=>method==='call'?'Phone call':
+ method==='text'?'Text message':'Email';
 
 /** A consistent, nondestructive focus preview across Board and Connections.
  * Full record pages and document editors stay separate from preview clicks. */
@@ -38,8 +53,14 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  // returns through the prior previews without resetting the directory.
  const [previewTrail,setPreviewTrail]=useState<PreviewRecord[]>([]);
  const [externalQuoteOpen,setExternalQuoteOpen]=useState(false);
+ const [pendingPersonMethod,setPendingPersonMethod]=useState<PersonQuickMethod|null>(null);
+ const [personActionNotice,setPersonActionNotice]=useState('');
+ const [personActionError,setPersonActionError]=useState('');
  const [captureViewport,setCaptureViewport]=useState<{height:number;top:number}|null>(null);
- useEffect(()=>{setExternalQuoteOpen(false);},[record.kind,record.id]);
+ useEffect(()=>{
+  setExternalQuoteOpen(false);setPendingPersonMethod(null);
+  setPersonActionNotice('');setPersonActionError('');
+ },[record.kind,record.id]);
  // iOS Safari's visual viewport contracts when the keyboard opens, but CSS
  // 100dvh can remain anchored to the taller layout viewport.
  useEffect(()=>{
@@ -79,6 +100,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
   onSelect(previous);
  };
  const companies=useCrmStore(s=>s.companies),people=useCrmStore(s=>s.contacts);
+ const logPersonActivity=useCrmStore(s=>s.recordActivity);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities),allQuotes=useQuoteStore(s=>s.quotes);
  const {members:assignees}=useDealAssigneeDirectory();
  const authMode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),
@@ -134,6 +156,26 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
      else requestQuoteMetadataPage(record.id,()=>navigate.setView('dashboard'));
    }
  };
+ const logConfirmedPersonInteraction=()=>{
+  if(!person||!pendingPersonMethod||!canLog)return;
+  const method=pendingPersonMethod;
+  try{
+   logPersonActivity({
+    type:'manual-touchpoint',
+    summary:personContactLabel(method)+' with '+(person.name||person.email||person.phone||'contact'),
+    contactId:person.id,companyId:person.companyId,
+    occurredAt:new Date().toISOString(),
+    metadata:{source:'manual',interactionMethod:method,
+     relatedRecords:contextualLinks.filter(link=>link.type==='contact'||link.type==='company').map(link=>({
+      type:link.type as 'contact'|'company',id:link.id,label:link.label,
+     }))},
+   });
+   setPersonActionNotice(personContactLabel(method)+' recorded in Activity.');
+   setPendingPersonMethod(null);setPersonActionError('');
+  }catch(reason){
+   setPersonActionError(reason instanceof Error?reason.message:'Could not record this Activity.');
+  }
+ };
  const related=(kind:PreviewRecord['kind'],id:string,title:string,description?:string)=>
    <button type="button" className="record-preview-related" key={kind+id}
      onClick={()=>open(kind,id)}><span><strong>{title}</strong>{description&&<small>{description}</small>}</span><span aria-hidden="true">›</span></button>;
@@ -153,10 +195,24 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
      className={(center?'tasks-preview-card record-preview-center-card':'project-editor record-preview-panel')+
        (capture?' record-preview-capture-panel':'')+' ss-mobile-sheet'}>
      <MobileSheetHandle onClose={onClose} disabled={capture}/>
-     <header>
+     <header className={person?'record-preview-person-header':undefined}>
        {Boolean(onSelect&&previewTrail.length)&&<button type="button" className="record-preview-back"
          onClick={backToRelated} aria-label="Back to previous related record">← Back</button>}
        <PreviewPanelHeading eyebrow={capture?'Deal · Record external quote':center?'QUOTE · QUICK VIEW':label+' · Quick preview'} title={heading}/>
+       {person&&<div className="record-preview-person-quick-actions" aria-label="Contact this person">
+        {person.phone&&(['call','text'] as const).map(method=><a key={method}
+          href={(method==='call'?'tel:':'sms:')+person.phone!.replace(/[^0-9+*#]/g,'')}
+          title={method==='call'?'Call '+person.name:'Text '+person.name}
+          aria-label={method==='call'?'Call '+person.name:'Text '+person.name}
+          onClick={()=>{if(canLog){setPersonActionError('');setPendingPersonMethod(method);}}}>
+          <PersonQuickMethodIcon method={method}/>
+        </a>)}
+        {person.email&&<a href={'mailto:'+encodeURIComponent(person.email.trim())}
+          title={'Email '+person.name} aria-label={'Email '+person.name}
+          onClick={()=>{if(canLog){setPersonActionError('');setPendingPersonMethod('email');}}}>
+          <PersonQuickMethodIcon method="email"/>
+        </a>}
+       </div>}
        <PreviewPanelClose onClose={onClose} label="Close preview" className="editor-close"/>
      </header>
      <div className={(center?'tasks-preview-body record-preview-body':'record-preview-body')+
@@ -182,6 +238,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          </section>
        </>}
        {person&&<>
+         {personActionNotice&&<p className="record-preview-contact-notice" role="status">{personActionNotice}</p>}
          <section><h3>About this person</h3><dl>
            <dt>Job title</dt><dd>{person.title||'—'}</dd>
            <dt>Email</dt><dd>{person.email||'—'}</dd>
@@ -260,6 +317,25 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          disabled={Boolean(quote.archivedAt)} title={quote.archivedAt?'Restore this document before opening it':undefined}
          onClick={()=>{onClose();navigate.openQuote(quote.id);}}>Open quote</button>}
      </PreviewPanelActions>}
+     {person&&pendingPersonMethod&&canLog&&<div className="record-preview-contact-confirm-cover">
+      <div className="record-preview-contact-confirm" role="alertdialog" aria-modal="true"
+        aria-labelledby="record-preview-contact-confirm-title"
+        aria-describedby="record-preview-contact-confirm-detail"
+        onKeyDown={event=>{if(event.key==='Escape'){
+         event.preventDefault();event.stopPropagation();setPendingPersonMethod(null);
+        }}}>
+       <h3 id="record-preview-contact-confirm-title">Log {personContactLabel(pendingPersonMethod)}?</h3>
+       <p id="record-preview-contact-confirm-detail">Did you {pendingPersonMethod==='call'
+        ?'complete the call':pendingPersonMethod==='text'?'send the text':'send the email'} to {person.name}?
+        Only a confirmed interaction will be saved as an Activity.</p>
+       {personActionError&&<p role="alert" className="record-preview-contact-error">{personActionError}</p>}
+       <div className="record-preview-contact-confirm-actions">
+        <button type="button" onClick={()=>{setPendingPersonMethod(null);setPersonActionError('');}}>No</button>
+        <button type="button" className="is-primary" onClick={logConfirmedPersonInteraction}
+         data-dialog-initial-focus>Yes, log it</button>
+       </div>
+      </div>
+     </div>}
    </aside>
  </div>;
  // Portal every preview: a fixed iPhone sheet should never inherit Board's
