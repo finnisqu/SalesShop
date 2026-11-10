@@ -2,6 +2,7 @@ import type {Activity,Company,Contact} from '../types/crm';
 import type {PersonalTask} from '../store/personalTaskStore';
 import {isoLocalDay,outstandingTask,type SalesCalendarEvent} from './salesCalendar';
 import type {CalendarBadgeMetric,HomeCalendarSettings} from '../store/homeCalendarSettings';
+import {dedupeExternalQuoteActivities,isExternalQuoteActivity} from './salesQuoteRegistry';
 
 export type HomeBadgeRecordKind='task'|'deal'|'quote'|'activity'|'company'|'person';
 export interface HomeBadgeRecord{
@@ -55,16 +56,19 @@ export function homeCalendarBadgeEntries(
     title:contact.name,detail:'Customer / prospect person created'});
   }
  }else{
-  for(const activity of activities){
+  for(const activity of dedupeExternalQuoteActivities(activities)){
    const date=activity.metadata?.externalQuoteSent&&activity.metadata.bidSentDate
     ?activity.metadata.bidSentDate:isoLocalDay(activity.occurredAt);
    if(date!==day)continue;
    if(metric==='quotes-sent'){
     if(activity.type!=='quote-sent')continue;
-    const kind:HomeBadgeRecordKind=activity.quoteId?'quote':activity.projectId?'deal':'activity';
+    // External bids open their actual Activity details, not just their Deal.
+    const external=isExternalQuoteActivity(activity);
+    const kind:HomeBadgeRecordKind=external?'activity':
+     activity.quoteId?'quote':activity.projectId?'deal':'activity';
     include({key:'quote-sent:'+activity.id,kind,
-     id:activity.quoteId??activity.projectId??activity.id,
-     title:activity.summary||'Quote sent',detail:activity.metadata?.externalQuoteSent
+     id:external?activity.id:activity.quoteId??activity.projectId??activity.id,
+     title:activity.summary||'Quote sent',detail:external
       ?'External quote sent':'SalesShop quote sent'});
     continue;
    }

@@ -18,6 +18,21 @@ export function isExternalQuoteActivity(activity:Activity):boolean{
  return activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true&&
   Boolean(activity.projectId)&&!activity.quoteId;
 }
+/** Retry/hydration caches can contain repeated copies of one submission.
+ * De-duplicate by immutable Activity ID without touching native quote events. */
+export function dedupeExternalQuoteActivities<T extends Activity>(activities:readonly T[]):T[]{
+ const seen=new Set<string>();
+ return activities.filter(activity=>{
+  if(!isExternalQuoteActivity(activity))return true;
+  if(seen.has(activity.id))return false;
+  seen.add(activity.id);
+  return true;
+ });
+}
+export function externalQuoteActivities(activities:readonly Activity[]):Activity[]{
+ return dedupeExternalQuoteActivities(activities).filter(isExternalQuoteActivity);
+}
+
 export function buildSalesQuoteRegistry(quotes:readonly Quote[],activities:readonly Activity[],
  deals:readonly DealSummary[]):SalesQuoteRecord[]{
  const dealMap=new Map(deals.map(deal=>[deal.id,deal]));
@@ -33,7 +48,7 @@ export function buildSalesQuoteRegistry(quotes:readonly Quote[],activities:reado
   sentDate:q.sentAt?.slice(0,10),updatedAt:q.updatedAt,
   ownerUserId:q.ownerUserId,
  }));
- const external:SalesQuoteRecord[]=activities.filter(isExternalQuoteActivity).map(a=>{
+ const external:SalesQuoteRecord[]=externalQuoteActivities(activities).map(a=>{
   const deal=dealMap.get(a.projectId??'');
   const amount=a.metadata?.amount;
   const recordedAt=a.metadata?.recordedAt;

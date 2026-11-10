@@ -35,7 +35,7 @@ import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
-import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
+import {buildSalesQuoteRegistry,mySalesQuoteRegistry,dedupeExternalQuoteActivities} from '../services/salesQuoteRegistry';
 import {DEAL_PIPELINES,dealPipelineLabel,type DealPipeline,type ProjectStage} from '../types/crm';
 import {companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,isOurCompany,visibleCompanyAliases,type CompanyRelationship,
@@ -267,7 +267,7 @@ export function Connections() {
     findText(q.name,q.companyName,q.number,q.documentType,q.source,q.platform,
       q.status,q.dealName,companiesById.get(q.companyId??'')?.name).includes(needle)),
     [personalQuoteRecords,companiesById,needle]);
-  const activityRows = useMemo(() => [...activities]
+  const activityRows = useMemo(() => dedupeExternalQuoteActivities(activities)
     .filter(a=>!(a.type==='contact-created'&&internalCompanyIds.has(a.companyId??'')))
     .filter(activity=>matchesActivityFilters(activity,activityFilters,companies,contacts,
       projects,visibleQuotes,person=>isOurOrgContact(person,companies)))

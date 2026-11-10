@@ -54,11 +54,11 @@ describe('Home badge drilldowns',()=>{
   expect(list('tasks',{...settings,countDownCompletedTasks:false}).map(x=>x.id)).toEqual(['one','done']);
   expect(list('due-dates',{...settings,countDownCompletedTasks:false})).toHaveLength(3);
  });
- it('opens history as activities and external quotes as their real Deals',()=>{
+ it('opens history and external bids as their real Activity records',()=>{
   expect(list('calls')[0]).toMatchObject({kind:'activity',id:'call'});
   expect(list('emails')[0]).toMatchObject({kind:'activity',id:'email'});
   expect(list('meetings')[0]).toMatchObject({kind:'activity',id:'meeting'});
-  expect(list('quotes-sent')[0]).toMatchObject({kind:'deal',id:'deal'});
+  expect(list('quotes-sent')[0]).toMatchObject({kind:'activity',id:'external'});
  });
  it('filters vendors from customer/prospect creation drilldowns',()=>{
   expect(list('companies-created')).toHaveLength(1);
@@ -73,5 +73,14 @@ describe('Home badge drilldowns',()=>{
   for(const metric of metrics){
    expect(list(metric).length,metric).toBe(metricCount(idx,date,metric));
   }
+ });
+ it('preserves one badge and one details link with duplicated cloud cache records',()=>{
+  const duplicates=[...history,history[3]];
+  const badges=buildCalendarBadgeIndex(activeEvents,tasks,duplicates,companies,contacts,settings);
+  const entries=homeCalendarBadgeEntries('quotes-sent',date,activeEvents,tasks,
+   duplicates,companies,contacts,settings);
+  expect(metricCount(badges,date,'quotes-sent')).toBe(1);
+  expect(entries).toHaveLength(1);
+  expect(entries[0]).toMatchObject({kind:'activity',id:'external'});
  });
 });

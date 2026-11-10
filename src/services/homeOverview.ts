@@ -2,6 +2,7 @@ import type {Quote} from '../types/quote';
 import type {Activity} from '../types/crm';
 import {quoteTotal} from '../types/quote';
 import {buildQuoteFollowUpQueue,followUpLocalDate} from './quoteFollowUps';
+import {externalQuoteActivities} from './salesQuoteRegistry';
 
 export function personalHomeQuotes(quotes:readonly Quote[],actorId:string|undefined,isCloud:boolean):Quote[]{
   if(isCloud&&!actorId)return[];
@@ -25,8 +26,7 @@ export function homeRecentQuoteEntries(quotes:readonly Quote[],activities:readon
   detail:quote.companyName||quote.quoteNumber||'Quote draft',
   timestamp:quote.updatedAt,
  }));
- const external:HomeRecentQuoteEntry[]=activities
-  .filter(activity=>activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true)
+ const external:HomeRecentQuoteEntry[]=externalQuoteActivities(activities)
   .map(activity=>({
    kind:'external',id:'external:'+activity.id,recordId:activity.id,
    title:activity.summary,

@@ -95,4 +95,16 @@ describe('one first-class quote index for both submission methods',()=>{
   expect(sql).toContain('revoke all on public.sales_quote_registry from public, anon');
   expect(sql).toContain('grant select on public.sales_quote_registry to authenticated');
  });
+ it('counts repeated cloud cache copies as one quote in the unified registry',()=>{
+  const duplicate={...external,metadata:{...external.metadata}};
+  const rows=buildSalesQuoteRegistry([native],[external,duplicate],[deal]);
+  expect(rows.map(row=>row.id).sort()).toEqual(['external:a1','native:q1']);
+  expect(rows.filter(row=>row.source==='external').reduce((sum,row)=>sum+(row.value??0),0))
+   .toBe(75000);
+  const distinct={...external,id:'a2'};
+  expect(buildSalesQuoteRegistry([],[external,duplicate,distinct],[deal]).map(q=>q.id))
+   .toEqual(['external:a1','external:a2']);
+  expect(buildSalesQuoteRegistry([],[{...external,quoteId:'q1'},{
+   ...external,id:'orphan',projectId:undefined}],[deal])).toHaveLength(0);
+ });
 });

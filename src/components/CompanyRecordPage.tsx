@@ -18,7 +18,7 @@ import {companyRelationshipHistory} from '../services/companyRelationshipHistory
 import {CrmOwnerControl} from './CrmOwnerControl';
 import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
-import {isExternalQuoteActivity} from '../services/salesQuoteRegistry';
+import {externalQuoteActivities} from '../services/salesQuoteRegistry';
 import {requestTaskModal} from '../services/taskModalEvents';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
@@ -95,7 +95,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   }):[],[company,contacts,projects,activities,timelineQuotes,privateTasks,
       personalScope,storedTaskScope,perspective]);
   const companyDealIds=new Set(projects.filter(p=>p.companyId===companyId).map(p=>p.id));
-  const externalQuotes=activities.filter(a=>isExternalQuoteActivity(a)&&
+  const externalQuotes=externalQuoteActivities(activities).filter(a=>
     (a.companyId===companyId||!!a.projectId&&companyDealIds.has(a.projectId)))
     .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
   // Our Organization is a roster, not a second copy of World Stone contacts.

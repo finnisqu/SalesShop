@@ -19,7 +19,7 @@ import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
 import {DealTimelineBeta} from './DealTimelineBeta';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
-import {isExternalQuoteActivity} from '../services/salesQuoteRegistry';
+import {externalQuoteActivities} from '../services/salesQuoteRegistry';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -101,7 +101,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     [deal, companies, contacts, quotes, activities],
   );
 
-  const outsideQuotes=activities.filter(activity=>activity.projectId===dealId&&isExternalQuoteActivity(activity))
+  const outsideQuotes=externalQuoteActivities(activities).filter(activity=>activity.projectId===dealId)
     .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
 
   if (!hydrated) return <section className="connections-record-missing" role="status">Loading deal record…</section>;

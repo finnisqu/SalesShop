@@ -90,4 +90,17 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   expect(migration).toContain("metadata->>'externalQuoteSent'='true'");
   expect(migration).toContain('private.can_read_quote(organization_id,quote_id)');
  });
+ it('keeps duplicate cache copies from inflating calendar, Quotes and Recents',()=>{
+  const duplicates=[external,{...external,metadata:{...external.metadata}}];
+  expect(personalCalendarSources('cloud','user-a',[],[],[deal],duplicates).activities)
+   .toHaveLength(1);
+  expect(personalCalendarSources('local',undefined,[],[],[deal],duplicates).activities)
+   .toHaveLength(1);
+  const badges=buildCalendarBadgeIndex([],[],duplicates,[],[],
+   DEFAULT_HOME_CALENDAR_SETTINGS);
+  expect(metricCount(badges,'2026-10-20','quotes-sent')).toBe(1);
+  expect(recentHomeItems([],duplicates,[],null).filter(e=>e.recordId==='external-a'))
+   .toHaveLength(1);
+  expect(homeRecentQuoteEntries([],duplicates).map(e=>e.id)).toEqual(['external:external-a']);
+ });
 });

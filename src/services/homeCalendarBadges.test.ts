@@ -87,4 +87,12 @@ describe('Home calendar custom badges',()=>{
   expect(metricCount(index,day,'quotes-sent')).toBe(1);
   expect(metricCount(index,'2026-11-06','quotes-sent')).toBe(0);
  });
+ it('counts a repeated genuine external submission ID once on its sent day',()=>{
+  const bid:Activity={id:'external-1',projectId:'deal-1',type:'quote-sent',
+   summary:'Builder portal bid',occurredAt:'2026-11-07T12:00:00Z',
+   metadata:{externalQuoteSent:true,bidSentDate:day,amount:24000}};
+  const index=buildCalendarBadgeIndex([],[],[bid,{...bid}],[],[],
+   DEFAULT_HOME_CALENDAR_SETTINGS);
+  expect(metricCount(index,day,'quotes-sent')).toBe(1);
+ });
 });

@@ -2,6 +2,7 @@ import type {Activity,Company,Contact,Project} from '../types/crm';
 import {dealNeedsSubmission,type PersonalTask,type TaskAssociation,normalizedTaskAssociations} from '../store/personalTaskStore';
 import {completedTaskActivityId} from './taskActivityWorkflow';
 import type {Quote} from '../types/quote';
+import {dedupeExternalQuoteActivities} from './salesQuoteRegistry';
 
 /** A calendar count represents unfinished obligations, not CRM history. */
 export type SalesCalendarKind='task'|'bid';
@@ -66,7 +67,7 @@ export function personalCalendarSources(
  ownQuotes:readonly Quote[],ownTasks:readonly PersonalTask[],
  deals:readonly Project[],activities:readonly Activity[],
 ):{deals:Project[];activities:Activity[]}{
- if(mode==='local')return {deals:[...deals],activities:[...activities]};
+ if(mode==='local')return {deals:[...deals],activities:dedupeExternalQuoteActivities(activities)};
  if(!userId)return {deals:[],activities:[]};
  const quoteIds=new Set(ownQuotes.map(q=>q.id));
  const relatedDealIds=new Set<string>();
@@ -81,12 +82,12 @@ export function personalCalendarSources(
  deals.forEach(deal=>{if(deal.assignedUserId===userId)relatedDealIds.add(deal.id);});
  return {
   deals:deals.filter(deal=>relatedDealIds.has(deal.id)),
-  activities:activities.filter(activity=>
+  activities:dedupeExternalQuoteActivities(activities.filter(activity=>
    (!activity.quoteId||quoteIds.has(activity.quoteId))&&
    (activity.metadata?.recordedByUserId===userId||
     !!(activity.quoteId&&quoteIds.has(activity.quoteId))||
     !!(activity.projectId&&relatedDealIds.has(activity.projectId)))
-  ),
+  )),
  };
 }
 export const outstandingTask=(task:PersonalTask):boolean=>
@@ -198,7 +199,7 @@ export function recentHomeItems(
  visibleQuotes:readonly Quote[],personalScope:string|null,limit=8,
 ):HomeRecentItem[]{
  const quoteIds=new Set(visibleQuotes.map(q=>q.id));
- const logged=activities.filter(activity=>
+ const logged=dedupeExternalQuoteActivities(activities).filter(activity=>
   (!activity.quoteId||quoteIds.has(activity.quoteId))&&
   // Recent Activity includes record creation and quote submissions, not just calls.
   (activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint'||
