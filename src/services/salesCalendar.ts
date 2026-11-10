@@ -15,8 +15,8 @@ export interface SalesCalendarRelatedRecords {
  contacts:readonly Contact[];
 }
 export interface HomeRecentItem{
- id:string;timestamp:string;kind:'activity'|'completed-task';
- title:string;detail:string;recordId:string;
+ id:string;timestamp:string;kind:'activity'|'completed-task'|'system';
+ title:string;detail:string;recordId:string;method?:string;activityType?:string;
 }
 const datePattern=/^\d{4}-\d{2}-\d{2}$/;
 // Match whole CRM names already visible in a title, not incidental substrings
@@ -196,15 +196,23 @@ export function recentHomeItems(
 ):HomeRecentItem[]{
  const quoteIds=new Set(visibleQuotes.map(q=>q.id));
  const logged=activities.filter(activity=>
-  (activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint')&&
-  (!activity.quoteId||quoteIds.has(activity.quoteId)));
+  (!activity.quoteId||quoteIds.has(activity.quoteId))&&
+  // Recent Activity includes record creation and quote submissions, not just calls.
+  (activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint'||
+   activity.type==='quote-sent'||activity.type.endsWith('-created')||
+   activity.type==='project-stage-changed'));
  const recordedIds=new Set(logged.map(activity=>activity.id));
  const items:HomeRecentItem[]=logged
   .filter(activity=>Number.isFinite(Date.parse(activity.occurredAt)))
   .map(activity=>({
-   id:'activity:'+activity.id,timestamp:activity.occurredAt,kind:'activity',
+   id:'activity:'+activity.id,timestamp:activity.occurredAt,
+   kind:activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint'
+    ?'activity' as const:'system' as const,
    title:activity.summary,
-   detail:(activity.metadata?.interactionMethod??'Interaction').replaceAll('-',' ')+
+   method:activity.metadata?.interactionMethod,
+   activityType:activity.type,
+   detail:(activity.metadata?.interactionMethod??(activity.type==='quote-sent'
+    ?'Quote sent':'System activity')).replaceAll('-',' ')+
     (activity.metadata?.notes?' · '+activity.metadata.notes.slice(0,80):''),
    recordId:activity.id,
   }));
