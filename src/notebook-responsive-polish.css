@@ -190,3 +190,47 @@
  :root[data-sales-theme] .sales-app.view-notebook .paper-toolbar{gap:3px;padding-inline:5px}
  :root[data-sales-theme] .sales-app.view-notebook .notebook-mobile-format-popover{right:-22px!important}
 }
+
+/* Notebook toolbar height parity. Legacy controls independently used 27px,
+   34px, 40px and 43px; only the primary toolbar receives this single token.
+   Popover action grids retain their separate touch-friendly layout. */
+:root[data-sales-theme] .sales-app.view-notebook .paper-toolbar{
+ --ss-notebook-toolbar-control-height:34px;
+}
+:root[data-sales-theme] .sales-app.view-notebook .paper-toolbar :is(
+  > .notebook-history-tools > button,
+  > button.notebook-toolbar-icon,
+  > .notebook-toolbar-menu > button,
+  > .rich-text-tools > button,
+  > .notebook-input-toggle > button,
+  > .tool-group > button,
+  > .tool-group > select,
+  > button.tool-button,
+  > select.paper-select
+){
+ box-sizing:border-box!important;
+ height:var(--ss-notebook-toolbar-control-height)!important;
+ min-height:var(--ss-notebook-toolbar-control-height)!important;
+ max-height:var(--ss-notebook-toolbar-control-height)!important;
+ padding-block:0!important;
+ display:inline-flex;align-items:center;justify-content:center;
+ vertical-align:middle;
+ flex-shrink:0;
+ line-height:1.2;
+}
+:root[data-sales-theme] .sales-app.view-notebook .paper-toolbar :is(
+ > .notebook-history-tools,
+ > .rich-text-tools,
+ > .notebook-input-toggle,
+ > .notebook-toolbar-menu,
+ > .tool-group
+){
+ align-items:center;
+}
+@media(max-width:820px){
+ :root[data-sales-theme] .sales-app.view-notebook .paper-toolbar{
+  --ss-notebook-toolbar-control-height:43px;
+  box-sizing:border-box!important;
+  height:53px!important;min-height:53px!important;flex:0 0 53px!important;
+ }
+}
