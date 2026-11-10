@@ -2,6 +2,7 @@ import {describe,expect,it} from 'vitest';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import type {Activity,Project} from '../types/crm';
+import type {Quote} from '../types/quote';
 import {personalCalendarSources,recentHomeItems} from './salesCalendar';
 import {buildCalendarBadgeIndex,metricCount} from './homeCalendarBadges';
 import {homeRecentQuoteEntries} from './homeOverview';
@@ -37,6 +38,19 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
    activityType:'quote-sent',
   });
   expect(recent[0].detail).toContain('Sent 2026-10-20');
+ });
+ it('keeps historical external backfills visible in Quotes even with newer native drafts',()=>{
+  const legacy:Activity={...external,id:'legacy-external',
+   metadata:{...external.metadata,recordedAt:undefined,bidSentDate:'2026-09-01'},
+   occurredAt:'2026-09-01T12:00:00Z'};
+  const many=Array.from({length:8},(_,i)=>({
+   id:'native-'+i,title:'Native '+i,quoteNumber:'Q-'+i,
+   updatedAt:'2026-11-10T18:00:00.000Z',
+  })) as Quote[];
+  const entries=homeRecentQuoteEntries(many,[legacy],5);
+  expect(entries).toHaveLength(5);
+  expect(entries[0]).toMatchObject({kind:'external',recordId:'legacy-external'});
+  expect(entries[0].detail).toContain('2026-09-01');
  });
  it('includes genuine external submissions in the Home Quotes list',()=>{
   const quotes=homeRecentQuoteEntries([], [external]);
