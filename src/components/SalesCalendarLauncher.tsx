@@ -62,6 +62,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [isPhone,setIsPhone]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches);
  const [showAllDay,setShowAllDay]=useState(false);
  const [addOpen,setAddOpen]=useState(false);
+ const addButtonRef=useRef<HTMLButtonElement>(null);
+ const addMenuRef=useRef<HTMLDivElement>(null);
+ const [addMenuPosition,setAddMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
  const [recordPreview,setRecordPreview]=useState<PreviewRecord|null>(null);
  const [activityPreview,setActivityPreview]=useState<string|null>(null);
  const [badgeFocus,setBadgeFocus]=useState<{date:string;metric:CalendarBadgeMetric}|null>(null);
@@ -240,11 +243,43 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  useEffect(()=>{
   if(!addOpen)return;
   const dismiss=(event:PointerEvent)=>{
-   if(!(event.target as HTMLElement).closest('.sales-calendar-add-wrap'))setAddOpen(false);
+   const target=event.target as Node;
+   if(!addButtonRef.current?.contains(target)&&!addMenuRef.current?.contains(target))
+    setAddOpen(false);
   };
+  const escape=(event:KeyboardEvent)=>{
+   if(event.key==='Escape'){setAddOpen(false);addButtonRef.current?.focus();}
+  };
+  // Position a body-level portal above clipped one-item agendas.
+  const place=()=>{
+   const anchor=addButtonRef.current?.getBoundingClientRect(),menu=addMenuRef.current;
+   if(!anchor||!menu)return;
+   const viewport=window.visualViewport;
+   const minX=(viewport?.offsetLeft??0)+8,minY=(viewport?.offsetTop??0)+8;
+   const maxX=(viewport?.offsetLeft??0)+(viewport?.width??window.innerWidth)-8;
+   const maxY=(viewport?.offsetTop??0)+(viewport?.height??window.innerHeight)-8;
+   const width=menu.offsetWidth||210,height=menu.offsetHeight||94;
+   const left=Math.min(Math.max(minX,anchor.right-width),Math.max(minX,maxX-width));
+   const below=anchor.bottom+6;
+   const top=below+height<=maxY?below:Math.max(minY,anchor.top-height-6);
+   setAddMenuPosition({position:'fixed',left:Math.round(left),top:Math.round(top)});
+  };
+  place();
   document.addEventListener('pointerdown',dismiss);
-  return()=>document.removeEventListener('pointerdown',dismiss);
- },[addOpen]);
+  document.addEventListener('keydown',escape);
+  document.addEventListener('scroll',place,true);
+  window.addEventListener('resize',place);
+  window.visualViewport?.addEventListener('resize',place);
+  window.visualViewport?.addEventListener('scroll',place);
+  return()=>{
+   document.removeEventListener('pointerdown',dismiss);
+   document.removeEventListener('keydown',escape);
+   document.removeEventListener('scroll',place,true);
+   window.removeEventListener('resize',place);
+   window.visualViewport?.removeEventListener('resize',place);
+   window.visualViewport?.removeEventListener('scroll',place);
+  };
+ },[addOpen,selected]);
  const placement=()=>{
   if(!button.current)return;
   const rect=button.current.getBoundingClientRect();
@@ -493,10 +528,10 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
       <div><span>{eventsForDay.length+' remaining'}</span>
        {embedded&&<div className="sales-calendar-add-wrap">
-        <button type="button" className="sales-calendar-add" aria-haspopup="menu"
+        <button ref={addButtonRef} type="button" className="sales-calendar-add" aria-haspopup="menu"
          aria-expanded={addOpen} aria-label={'Add to '+dateLabel(selected)}
          title={'Add to '+dateLabel(selected)} onClick={()=>setAddOpen(value=>!value)}>+</button>
-        {addOpen&&<div className="sales-calendar-add-menu" role="menu">
+        {addOpen&&createPortal(<div ref={addMenuRef} className="sales-calendar-add-menu is-floating" style={addMenuPosition} role="menu">
          <button type="button" role="menuitem" onClick={()=>{
           setAddOpen(false);requestTaskModal({mode:'create',dueDate:selected});
          }}><svg viewBox="0 0 24 24" width="17" height="17" fill="none"
@@ -513,8 +548,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
            strokeLinejoin="round" aria-hidden="true">
             <path d="M5 3h3l2.1 5.2-2.3 2.1a16 16 0 0 0 6 6l2.1-2.3L21 16v3.1a2 2 0 0 1-2.2 2C10.6 20.4 3.6 13.4 3 5.2A2 2 0 0 1 5 3Z"/>
-           </svg> Log completed activity</button>}
-        </div>}
+           </svg> Log Activity</button>}
+        </div>,document.body)}
        </div>}
  
       </div></div>
