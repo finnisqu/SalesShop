@@ -64,7 +64,7 @@ describe('one first-class quote index for both submission methods',()=>{
   expect(count.quotesByDeal.get('d1')).toBe(2);
   expect(count.quotesByCompany.get('co1')).toBe(2);
   expect(indexConnectionsCounts([],[deal],[],[external,external]).quotesByDeal.get('d1'))
-   .toBe(2); // one event per row; duplicate copies must be deduped separately
+   .toBe(1); // duplicate cache copies of one submission are not separate bids
  });
  it('shows both in Connections directory and primary Quotes library without counterfeit editable documents',()=>{
   const directory=read('src/components/Connections.tsx');
