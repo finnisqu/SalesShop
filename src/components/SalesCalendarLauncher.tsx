@@ -36,7 +36,8 @@ function RecentActivityIcon({kind,method,activityType}:{kind:'activity'|'complet
    method==='email'?<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 7 9-7"/></>:
    method==='text'?<path d="M21 11a8 8 0 0 1-8 8H5l2-4a8 8 0 1 1 14-4Z"/>:
    method==='video-call'?<><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></>:
-   method==='in-person'?<><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 6a3 3 0 0 1 0 6M17 15a5 5 0 0 1 4 5"/></>:
+   method==='in-person'?<><rect x="3.5" y="2.5" width="17" height="19" rx="3.3"/>
+    <circle cx="12" cy="9" r="3.1"/><path d="M6.5 18c.5-3 2.6-4.5 5.5-4.5s5 1.5 5.5 4.5"/></>:
    activityType==='quote-sent'?<><rect x="5" y="3" width="13" height="18" rx="2"/><path d="M8 8h7M8 12h7m-3 4h7m0 0-3-3m3 3-3 3"/></>:
    <><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></>}
  </svg></span>;
