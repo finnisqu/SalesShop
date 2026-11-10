@@ -144,9 +144,12 @@
   background:var(--ss-nb-tint,var(--ss-theme-tint));
  }
  :root[data-sales-theme] .sales-app.view-notebook .notebook-mobile-format-popover{
-  position:absolute;display:grid;gap:12px;top:calc(100% + 8px);right:-48px;
-  z-index:1800;box-sizing:border-box;width:min(315px,calc(100vw - 28px));
-  max-width:calc(100vw - 28px);padding:13px;
+  position:absolute!important;display:grid;gap:12px;
+  top:calc(100% + 8px)!important;bottom:auto!important;
+  right:-40px!important;left:auto!important;transform:none!important;
+  z-index:1800;box-sizing:border-box;width:min(280px,calc(100vw - 24px));
+  max-width:calc(100vw - 24px);max-height:min(65dvh,375px);
+  overflow-y:auto;overscroll-behavior:contain;padding:13px;
   border:1px solid var(--ss-nb-border,var(--ss-theme-border));border-radius:13px;
   box-shadow:0 12px 34px rgba(0,0,0,.2);
   background:var(--ss-nb-base,var(--ss-theme-card));
@@ -185,5 +188,5 @@
 }
 @media(max-width:370px){
  :root[data-sales-theme] .sales-app.view-notebook .paper-toolbar{gap:3px;padding-inline:5px}
- :root[data-sales-theme] .sales-app.view-notebook .notebook-mobile-format-popover{right:-30px}
+ :root[data-sales-theme] .sales-app.view-notebook .notebook-mobile-format-popover{right:-22px!important}
 }
