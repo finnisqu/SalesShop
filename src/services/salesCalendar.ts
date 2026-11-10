@@ -207,18 +207,27 @@ export function recentHomeItems(
  const recordedIds=new Set(logged.map(activity=>activity.id));
  const items:HomeRecentItem[]=logged
   .filter(activity=>Number.isFinite(Date.parse(activity.occurredAt)))
-  .map(activity=>({
-   id:'activity:'+activity.id,timestamp:activity.occurredAt,
-   kind:activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint'
-    ?'activity' as const:'system' as const,
-   title:activity.summary,
-   method:activity.metadata?.interactionMethod,
-   activityType:activity.type,
-   detail:(activity.metadata?.interactionMethod??(activity.type==='quote-sent'
-    ?'Quote sent':'System activity')).replaceAll('-',' ')+
-    (activity.metadata?.notes?' · '+activity.metadata.notes.slice(0,80):''),
-   recordId:activity.id,
-  }));
+  .map(activity=>{
+   const external=activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true;
+   // A historical submission belongs on its actual Date sent in the calendar.
+   // Recents, however, should show it when the salesperson logged it.
+   const loggedAt=external&&Number.isFinite(Date.parse(activity.metadata?.recordedAt??''))
+    ?activity.metadata!.recordedAt!:activity.occurredAt;
+   const sentDay=external?activity.metadata?.bidSentDate:undefined;
+   return {
+    id:'activity:'+activity.id,timestamp:loggedAt,
+    kind:external||activity.type==='manual-touchpoint'||activity.type==='notebook-touchpoint'
+     ?'activity' as const:'system' as const,
+    title:activity.summary,
+    method:activity.metadata?.interactionMethod,
+    activityType:activity.type,
+    detail:external?'External quote · Sent '+(sentDay??activity.occurredAt.slice(0,10)):
+      (activity.metadata?.interactionMethod??(activity.type==='quote-sent'
+       ?'Quote sent':'System activity')).replaceAll('-',' ')+
+      (activity.metadata?.notes?' · '+activity.metadata.notes.slice(0,80):''),
+    recordId:activity.id,
+   };
+  });
  for(const task of tasks){
   if(task.deletedAt||!(task.status==='completed'||!!task.completedAt))continue;
   const timestamp=task.completedAt??task.updatedAt;
